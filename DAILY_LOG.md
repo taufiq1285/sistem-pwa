@@ -37,6 +37,31 @@
 - [x] Supabase CLI installed (optional)
 - [x] Git commit completed
 
+### Day 8-9: Core Tables ✅
+- [x] Created extensions migration (uuid-ossp, pgcrypto, pg_trgm)
+- [x] Created core enums (user_role, gender_type, day_of_week)
+- [x] Created users table (extends auth.users)
+- [x] Created profile tables (mahasiswa, dosen, laboran, admin)
+- [x] Created mata_kuliah table
+- [x] Created laboratorium table
+- [x] Created kelas table
+- [x] Created kelas_mahasiswa table (enrollments)
+- [x] Created jadwal_praktikum table
+- [x] Added indexes for all core tables
+- [x] Added updated_at triggers
+- [x] Copied database-complete.sql as single source of truth
+- [x] Generated TypeScript types
+- [x] Connection test passing
+- [x] Git commit completed
+
+**Files Created**: 
+- ✅ supabase/migrations/00_extensions.sql
+- ✅ supabase/migrations/01_tables.sql
+- ✅ supabase/database-complete.sql
+- ✅ src/types/database.types.ts (generated)
+
+**Next**: Day 10-11 - Authentication & RBAC System
+
 **Status**: ✅ Week 1 Complete!
 **Next**: Week 2 - Database Schema & Authentication System
 

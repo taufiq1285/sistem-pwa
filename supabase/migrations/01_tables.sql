@@ -6,16 +6,31 @@
 -- ENUMS
 -- ============================================================================
 
-CREATE TYPE user_role AS ENUM ('admin', 'dosen', 'mahasiswa', 'laboran');
-CREATE TYPE gender_type AS ENUM ('L', 'P');
-CREATE TYPE day_of_week AS ENUM ('senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu', 'minggu');
+-- Create enums with error handling
+DO $$ BEGIN
+    CREATE TYPE user_role AS ENUM ('admin', 'dosen', 'mahasiswa', 'laboran');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+    CREATE TYPE gender_type AS ENUM ('L', 'P');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+    CREATE TYPE day_of_week AS ENUM ('senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu', 'minggu');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
 -- ============================================================================
 -- USERS & PROFILES
 -- ============================================================================
 
 -- Users table (extends Supabase auth.users)
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
     email VARCHAR(255) UNIQUE NOT NULL,
     full_name VARCHAR(255) NOT NULL,
@@ -31,7 +46,7 @@ CREATE TABLE users (
 );
 
 -- Mahasiswa profiles
-CREATE TABLE mahasiswa (
+CREATE TABLE IF NOT EXISTS mahasiswa (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID UNIQUE NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     nim VARCHAR(20) UNIQUE NOT NULL,
@@ -50,7 +65,7 @@ CREATE TABLE mahasiswa (
 );
 
 -- Dosen profiles
-CREATE TABLE dosen (
+CREATE TABLE IF NOT EXISTS dosen (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID UNIQUE NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     nip VARCHAR(20) UNIQUE NOT NULL,
@@ -68,7 +83,7 @@ CREATE TABLE dosen (
 );
 
 -- Laboran profiles
-CREATE TABLE laboran (
+CREATE TABLE IF NOT EXISTS laboran (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID UNIQUE NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     nip VARCHAR(20) UNIQUE NOT NULL,
@@ -79,7 +94,7 @@ CREATE TABLE laboran (
 );
 
 -- Admin profiles
-CREATE TABLE admin (
+CREATE TABLE IF NOT EXISTS admin (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID UNIQUE NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     level VARCHAR(20) DEFAULT 'standard',
@@ -93,7 +108,7 @@ CREATE TABLE admin (
 -- ============================================================================
 
 -- Mata Kuliah (Courses)
-CREATE TABLE mata_kuliah (
+CREATE TABLE IF NOT EXISTS mata_kuliah (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     kode_mk VARCHAR(20) UNIQUE NOT NULL,
     nama_mk VARCHAR(255) NOT NULL,
@@ -111,7 +126,7 @@ CREATE TABLE mata_kuliah (
 );
 
 -- Laboratorium (Laboratory Rooms)
-CREATE TABLE laboratorium (
+CREATE TABLE IF NOT EXISTS laboratorium (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     kode_lab VARCHAR(50) UNIQUE NOT NULL,
     nama_lab VARCHAR(255) NOT NULL,
@@ -127,7 +142,7 @@ CREATE TABLE laboratorium (
 );
 
 -- Kelas (Classes)
-CREATE TABLE kelas (
+CREATE TABLE IF NOT EXISTS kelas (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     mata_kuliah_id UUID NOT NULL REFERENCES mata_kuliah(id) ON DELETE CASCADE,
     dosen_id UUID NOT NULL REFERENCES dosen(id) ON DELETE RESTRICT,
@@ -146,7 +161,7 @@ CREATE TABLE kelas (
 );
 
 -- Kelas Mahasiswa (Class Enrollment) - ENROLLMENTS
-CREATE TABLE kelas_mahasiswa (
+CREATE TABLE IF NOT EXISTS kelas_mahasiswa (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     kelas_id UUID NOT NULL REFERENCES kelas(id) ON DELETE CASCADE,
     mahasiswa_id UUID NOT NULL REFERENCES mahasiswa(id) ON DELETE CASCADE,
@@ -161,7 +176,7 @@ CREATE TABLE kelas_mahasiswa (
 -- ============================================================================
 
 -- Jadwal Praktikum (Lab Schedule)
-CREATE TABLE jadwal_praktikum (
+CREATE TABLE IF NOT EXISTS jadwal_praktikum (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     kelas_id UUID NOT NULL REFERENCES kelas(id) ON DELETE CASCADE,
     laboratorium_id UUID NOT NULL REFERENCES laboratorium(id) ON DELETE RESTRICT,
@@ -228,20 +243,26 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Apply to core tables
+DROP TRIGGER IF EXISTS update_users_updated_at ON users;
 CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users 
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
     
+DROP TRIGGER IF EXISTS update_mahasiswa_updated_at ON mahasiswa;
 CREATE TRIGGER update_mahasiswa_updated_at BEFORE UPDATE ON mahasiswa 
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
     
+DROP TRIGGER IF EXISTS update_dosen_updated_at ON dosen;
 CREATE TRIGGER update_dosen_updated_at BEFORE UPDATE ON dosen 
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
     
+DROP TRIGGER IF EXISTS update_mata_kuliah_updated_at ON mata_kuliah;
 CREATE TRIGGER update_mata_kuliah_updated_at BEFORE UPDATE ON mata_kuliah 
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
     
+DROP TRIGGER IF EXISTS update_kelas_updated_at ON kelas;
 CREATE TRIGGER update_kelas_updated_at BEFORE UPDATE ON kelas 
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
     
+DROP TRIGGER IF EXISTS update_jadwal_updated_at ON jadwal_praktikum;
 CREATE TRIGGER update_jadwal_updated_at BEFORE UPDATE ON jadwal_praktikum 
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
