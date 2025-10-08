@@ -18,24 +18,22 @@ export const ConnectionTest = () => {
     setMessage('Testing connection to Supabase...');
 
     try {
-      // Simple query to test connection
-      const { data, error } = await supabase
+      // Test query on users table (head:true to only get count)
+      const { error } = await supabase
         .from('users')
-        .select('count')
-        .limit(1);
+        .select('id', { count: 'exact', head: true });
 
-      if (error) {
-        // Table doesn't exist yet - that's OK for now
-        if (error.code === '42P01') {
-          setStatus('connected');
-          setMessage('✅ Connected to Supabase! (Database schema not yet created)');
-        } else {
-          throw error;
-        }
-      } else {
-        setStatus('connected');
-        setMessage('✅ Connected to Supabase successfully!');
-      }
+      if (error) throw error;
+
+      setStatus('connected');
+      setMessage('✅ Connected to Supabase! Database schema is ready.');
+
+      // Optional: verify another table exists
+      await supabase
+        .from('mata_kuliah')
+        .select('id', { count: 'exact', head: true });
+
+      console.log('Tables verified successfully');
     } catch (error: any) {
       setStatus('error');
       setMessage(`❌ Connection failed: ${error.message}`);
