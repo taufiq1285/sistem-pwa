@@ -1,10 +1,15 @@
-import { ConnectionTest } from '@/components/common/ConnectionTest';
+import { AuthProvider } from '@/providers/AuthProvider';
 
 function App() {
   return (
-    <div className="flex min-h-svh flex-col items-center justify-center gap-4 p-4">
-      <ConnectionTest />
-    </div>
+    <AuthProvider>
+      <div className="min-h-screen bg-gray-50">
+        <h1 className="text-3xl font-bold text-center py-8">
+          Sistem Praktikum Kebidanan
+        </h1>
+        {/* Routes will go here */}
+      </div>
+    </AuthProvider>
   );
 }
 

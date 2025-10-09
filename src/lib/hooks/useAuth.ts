@@ -1,14 +1,17 @@
 /**
- * TODO: Implement [filename]
- * 
- * Purpose: [Brief description]
- * Priority: [High/Medium/Low]
- * Dependencies: [List dependencies]
- * 
- * Related files:
- * - [File 1]
- * - [File 2]
+ * useAuth Hook
+ * Custom hook to access auth context
  */
 
-// TODO: Add implementation
-export {};
+import { useContext } from 'react';
+import { AuthContext } from '@/context/AuthContext';
+
+export function useAuth() {
+  const context = useContext(AuthContext);
+
+  if (context === undefined) {
+    throw new Error('useAuth must be used within AuthProvider');
+  }
+
+  return context;
+}
