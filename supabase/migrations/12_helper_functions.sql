@@ -4,6 +4,18 @@
 -- ============================================================================
 
 -- ============================================================================
+-- DROP EXISTING FUNCTIONS (if any)
+-- ============================================================================
+
+DROP FUNCTION IF EXISTS get_user_role();
+DROP FUNCTION IF EXISTS user_has_role(user_role);
+DROP FUNCTION IF EXISTS get_active_kuis_for_mahasiswa(UUID);
+DROP FUNCTION IF EXISTS get_quiz_attempt_details(UUID);
+DROP FUNCTION IF EXISTS get_table_count(TEXT);
+DROP FUNCTION IF EXISTS check_connection();
+DROP FUNCTION IF EXISTS cleanup_old_sync_history(INTEGER);
+
+-- ============================================================================
 -- USER ROLE HELPER
 -- ============================================================================
 
