@@ -171,7 +171,7 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
             <Label htmlFor="nim">NIM</Label>
             <Input
               id="nim"
-              placeholder="12345678"
+              placeholder="BD2321001"
               {...register('nim')}
               disabled={isSubmitting}
             />
@@ -232,7 +232,7 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
             <Label htmlFor="nip">NIP</Label>
             <Input
               id="nip"
-              placeholder="1234567890"
+              placeholder="1234567890123456"
               {...register('nip')}
               disabled={isSubmitting}
             />

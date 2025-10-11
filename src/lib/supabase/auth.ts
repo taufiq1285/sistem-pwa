@@ -53,6 +53,8 @@ export async function login(credentials: LoginCredentials): Promise<AuthResponse
  * Register new user
  */
 export async function register(data: RegisterData): Promise<AuthResponse> {
+  let userId: string | null = null;
+  
   try {
     // 1. Create auth user
     const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -68,32 +70,48 @@ export async function register(data: RegisterData): Promise<AuthResponse> {
 
     if (authError) throw authError;
     if (!authData.user) throw new Error('No user created');
+    
+    userId = authData.user.id;
 
-    // 2. Create user profile
-    const { error: profileError } = await supabase
+    // 2. Wait for trigger to complete
+    await new Promise(resolve => setTimeout(resolve, 1500));
+
+    // 3. Check if profile was created
+    const { data: existingProfile, error: checkError } = await supabase
       .from('users')
-      .insert({
-        id: authData.user.id,
-        email: data.email,
-        full_name: data.full_name,
-        role: data.role,
-        phone: data.phone,
-      });
+      .select('id')
+      .eq('id', userId)
+      .single();
 
-    if (profileError) throw profileError;
+    // 4. Create profile manually if trigger failed
+    if (checkError || !existingProfile) {
+      console.log('Creating profile manually...');
+      
+      const { error: profileError } = await supabase
+        .from('users')
+        .insert({
+          id: userId,
+          email: data.email,
+          full_name: data.full_name,
+          role: data.role,
+          phone: data.phone,
+        });
 
-    // 3. Create role-specific profile
-    await createRoleProfile(authData.user.id, data);
+      if (profileError) {
+        console.error('Profile creation error:', profileError);
+        throw new Error('Failed to create user profile');
+      }
+    }
 
-    // 4. Get complete user profile
-    const user = await getUserProfile(authData.user.id);
+    // 5. Create role-specific profile
+    await createRoleProfile(userId, data);
 
     return {
       success: true,
-      user,
-      message: 'Registration successful. Please check your email for verification.',
+      message: 'Registration successful! You can now log in.',
     };
   } catch (error: any) {
+    console.error('Registration error:', error);
     return {
       success: false,
       error: error.message || 'Registration failed',
@@ -215,24 +233,65 @@ export async function updatePassword(password: string): Promise<AuthResponse> {
 
 /**
  * Get user profile with role-specific data
+ * FIXED: Simplified version without nested query
  */
 async function getUserProfile(userId: string): Promise<AuthUser> {
-  const { data: user, error } = await supabase
+  // First, get basic user profile
+  const { data: user, error: userError } = await supabase
     .from('users')
-    .select(`
-      *,
-      mahasiswa (*),
-      dosen (*),
-      laboran (*),
-      admin (*)
-    `)
+    .select('*')
     .eq('id', userId)
     .single();
 
-  if (error) throw error;
+  if (userError) throw userError;
   if (!user) throw new Error('User not found');
 
-  return user as unknown as AuthUser;
+  // Then get role-specific data based on role
+  let roleData = null;
+  
+  try {
+    switch (user.role) {
+      case 'mahasiswa':
+        const { data: mahasiswaData } = await supabase
+          .from('mahasiswa')
+          .select('*')
+          .eq('user_id', userId)
+          .single();
+        roleData = { mahasiswa: mahasiswaData };
+        break;
+        
+      case 'dosen':
+        const { data: dosenData } = await supabase
+          .from('dosen')
+          .select('*')
+          .eq('user_id', userId)
+          .single();
+        roleData = { dosen: dosenData };
+        break;
+        
+      case 'laboran':
+        const { data: laboranData } = await supabase
+          .from('laboran')
+          .select('*')
+          .eq('user_id', userId)
+          .single();
+        roleData = { laboran: laboranData };
+        break;
+        
+      case 'admin':
+        const { data: adminData } = await supabase
+          .from('admin')
+          .select('*')
+          .eq('user_id', userId)
+          .single();
+        roleData = { admin: adminData };
+        break;
+    }
+  } catch (roleError) {
+    console.warn('Failed to fetch role-specific data:', roleError);
+  }
+
+  return { ...user, ...roleData } as AuthUser;
 }
 
 /**

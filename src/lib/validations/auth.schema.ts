@@ -53,7 +53,11 @@ const mahasiswaFields = z.object({
   nim: z
     .string()
     .min(1, 'NIM is required')
-    .min(8, 'NIM must be at least 8 characters'),
+    .regex(
+      /^[A-Z]{2}\d{7}$/,
+      'NIM must be in format: BD2321001 (2 letters + 7 digits)'
+    )
+    .length(9, 'NIM must be exactly 9 characters'),
   program_studi: z
     .string()
     .min(1, 'Program studi is required'),
@@ -67,14 +71,22 @@ const mahasiswaFields = z.object({
     .max(14, 'Semester must not exceed 14'),
 });
 
-// Dosen/Laboran/Admin fields
+// Staff fields (Dosen/Laboran - need NIP)
 const staffFields = z.object({
   nip: z
     .string()
     .min(1, 'NIP is required')
-    .min(8, 'NIP must be at least 8 characters'),
+    .regex(
+      /^\d{10,18}$/,
+      'NIP must be 10-18 digits'
+    ),
   gelar_depan: z.string().optional(),
   gelar_belakang: z.string().optional(),
+});
+
+// Admin fields (no NIP needed)
+const adminFields = z.object({
+  level: z.enum(['admin', 'super_admin']).default('admin').optional(),
 });
 
 // Full register schema with conditional validation
@@ -84,7 +96,7 @@ export const registerSchema = baseRegisterSchema
       z.object({ role: z.literal('mahasiswa') }).merge(mahasiswaFields),
       z.object({ role: z.literal('dosen') }).merge(staffFields),
       z.object({ role: z.literal('laboran') }).merge(staffFields),
-      z.object({ role: z.literal('admin') }).merge(staffFields),
+      z.object({ role: z.literal('admin') }).merge(adminFields),
     ])
   )
   .refine((data) => data.password === data.confirmPassword, {
