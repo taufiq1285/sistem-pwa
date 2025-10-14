@@ -43,7 +43,7 @@ const baseRegisterSchema = z.object({
       (val) => !val || /^[0-9+\-\s()]*$/.test(val),
       'Invalid phone number format'
     ),
-  role: z.enum(['mahasiswa', 'dosen', 'laboran', 'admin'], {
+  role: z.enum(['mahasiswa', 'dosen', 'laboran'], {
     message: 'Please select a role',
   }),
 });
@@ -84,11 +84,6 @@ const staffFields = z.object({
   gelar_belakang: z.string().optional(),
 });
 
-// Admin fields (no NIP needed)
-const adminFields = z.object({
-  level: z.enum(['admin', 'super_admin']).default('admin').optional(),
-});
-
 // Full register schema with conditional validation
 export const registerSchema = baseRegisterSchema
   .and(
@@ -96,7 +91,6 @@ export const registerSchema = baseRegisterSchema
       z.object({ role: z.literal('mahasiswa') }).merge(mahasiswaFields),
       z.object({ role: z.literal('dosen') }).merge(staffFields),
       z.object({ role: z.literal('laboran') }).merge(staffFields),
-      z.object({ role: z.literal('admin') }).merge(adminFields),
     ])
   )
   .refine((data) => data.password === data.confirmPassword, {

@@ -5,14 +5,20 @@
 
 import type { Database } from './database.types';
 
-// User role type from database
+// User role type from database (includes all roles)
 export type UserRole = Database['public']['Enums']['user_role'];
+
+// Registerable roles only (admin excluded)
+export type RegisterableRole = 'mahasiswa' | 'dosen' | 'laboran';
 
 // User from database
 type UserTable = Database['public']['Tables']['users']['Row'];
 
 // Extended user with profile data
 export interface AuthUser extends UserTable {
+  // Contact information
+  phone?: string | null;
+
   // Profile data based on role
   mahasiswa?: {
     nim: string;
@@ -55,12 +61,12 @@ export interface LoginCredentials {
   password: string;
 }
 
-// Register data
+// Register data - only allows registerable roles
 export interface RegisterData {
   email: string;
   password: string;
   full_name: string;
-  role: UserRole;
+  role: RegisterableRole;  // Only mahasiswa, dosen, laboran
   phone?: string;
   
   // Role-specific data

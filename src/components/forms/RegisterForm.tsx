@@ -153,11 +153,10 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
             <SelectValue placeholder="Select your role" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="mahasiswa">Mahasiswa</SelectItem>
-            <SelectItem value="dosen">Dosen</SelectItem>
-            <SelectItem value="laboran">Laboran</SelectItem>
-            <SelectItem value="admin">Admin</SelectItem>
-          </SelectContent>
+  <SelectItem value="mahasiswa">Mahasiswa</SelectItem>
+  <SelectItem value="dosen">Dosen</SelectItem>
+  <SelectItem value="laboran">Laboran</SelectItem>
+</SelectContent>
         </Select>
         {errors.role && (
           <p className="text-sm text-red-500">{errors.role.message}</p>

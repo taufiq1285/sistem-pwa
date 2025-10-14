@@ -47,11 +47,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     // Listen to auth changes
     const { data: authListener } = authApi.onAuthStateChange((newSession: AuthSession | null) => {
-      if (mounted) {
-        setSession(newSession);
-        setUser(newSession?.user || null);
-      }
-    });
+  if (mounted) {
+    setSession(newSession);
+    setUser(newSession?.user || null);
+    setLoading(false); 
+  }
+});
 
     return () => {
       mounted = false;

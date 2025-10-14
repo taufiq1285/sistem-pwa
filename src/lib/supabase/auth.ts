@@ -1,6 +1,6 @@
 /**
- * Supabase Auth Helper
- * Wrapper functions for Supabase authentication
+ * Supabase Auth Helper - DEBUG DIAGNOSTIC VERSION
+ * Wrapper functions for Supabase authentication with comprehensive logging
  */
 
 import { supabase } from './client';
@@ -17,10 +17,14 @@ import type {
  */
 export async function login(credentials: LoginCredentials): Promise<AuthResponse> {
   try {
+    console.log('🔵 login: START', { email: credentials.email });
+    
     const { data, error } = await supabase.auth.signInWithPassword({
       email: credentials.email,
       password: credentials.password,
     });
+
+    console.log('🔵 login: Supabase response', { hasUser: !!data.user, error });
 
     if (error) throw error;
 
@@ -28,8 +32,9 @@ export async function login(credentials: LoginCredentials): Promise<AuthResponse
       throw new Error('No user returned from login');
     }
 
-    // Get user profile data
+    console.log('🔵 login: Calling getUserProfile for', data.user.id);
     const user = await getUserProfile(data.user.id);
+    console.log('🔵 login: getUserProfile success', { userId: user.id, role: user.role });
 
     return {
       success: true,
@@ -42,6 +47,7 @@ export async function login(credentials: LoginCredentials): Promise<AuthResponse
       },
     };
   } catch (error: any) {
+    console.error('❌ login error:', error);
     return {
       success: false,
       error: error.message || 'Login failed',
@@ -53,10 +59,9 @@ export async function login(credentials: LoginCredentials): Promise<AuthResponse
  * Register new user
  */
 export async function register(data: RegisterData): Promise<AuthResponse> {
-  let userId: string | null = null;
-  
   try {
-    // 1. Create auth user
+    console.log('🔵 register: START', { email: data.email, role: data.role });
+
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email: data.email,
       password: data.password,
@@ -64,57 +69,60 @@ export async function register(data: RegisterData): Promise<AuthResponse> {
         data: {
           full_name: data.full_name,
           role: data.role,
+          phone: data.phone || null,
+          ...(data.role === 'mahasiswa' && {
+            nim: data.nim,
+            program_studi: data.program_studi,
+            angkatan: data.angkatan,
+            semester: data.semester,
+          }),
+          ...(data.role === 'dosen' && {
+            nip: data.nip,
+            gelar_depan: data.gelar_depan,
+            gelar_belakang: data.gelar_belakang,
+          }),
+          ...(data.role === 'laboran' && {
+            nip: data.nip,
+          }),
         },
       },
     });
 
-    if (authError) throw authError;
-    if (!authData.user) throw new Error('No user created');
-    
-    userId = authData.user.id;
+    console.log('🔵 register: Supabase response', { hasUser: !!authData.user, error: authError });
 
-    // 2. Wait for trigger to complete
-    await new Promise(resolve => setTimeout(resolve, 1500));
-
-    // 3. Check if profile was created
-    const { data: existingProfile, error: checkError } = await supabase
-      .from('users')
-      .select('id')
-      .eq('id', userId)
-      .single();
-
-    // 4. Create profile manually if trigger failed
-    if (checkError || !existingProfile) {
-      console.log('Creating profile manually...');
-      
-      const { error: profileError } = await supabase
-        .from('users')
-        .insert({
-          id: userId,
-          email: data.email,
-          full_name: data.full_name,
-          role: data.role,
-          phone: data.phone,
-        });
-
-      if (profileError) {
-        console.error('Profile creation error:', profileError);
-        throw new Error('Failed to create user profile');
+    if (authError) {
+      if (authError.message.includes('already registered')) {
+        throw new Error('Email sudah terdaftar. Silakan gunakan email lain atau login.');
       }
+      throw authError;
     }
 
-    // 5. Create role-specific profile
-    await createRoleProfile(userId, data);
+    if (!authData.user) throw new Error('No user created');
+
+    console.log('🔵 register: Success', { userId: authData.user.id });
 
     return {
       success: true,
-      message: 'Registration successful! You can now log in.',
+      message: 'Registrasi berhasil! Silakan cek email Anda untuk verifikasi akun.',
     };
   } catch (error: any) {
-    console.error('Registration error:', error);
+    console.error('❌ Registration error:', error);
+    
+    let errorMessage = 'Registrasi gagal';
+    
+    if (error.message.includes('already registered') || error.message.includes('sudah terdaftar')) {
+      errorMessage = error.message;
+    } else if (error.message.includes('Invalid email')) {
+      errorMessage = 'Format email tidak valid';
+    } else if (error.message.includes('Password')) {
+      errorMessage = 'Password harus minimal 6 karakter';
+    } else if (error.message) {
+      errorMessage = error.message;
+    }
+    
     return {
       success: false,
-      error: error.message || 'Registration failed',
+      error: errorMessage,
     };
   }
 }
@@ -124,14 +132,20 @@ export async function register(data: RegisterData): Promise<AuthResponse> {
  */
 export async function logout(): Promise<AuthResponse> {
   try {
+    console.log('🔵 logout: START');
+    
     const { error } = await supabase.auth.signOut();
+    console.log('🔵 logout: Supabase response', { error });
+    
     if (error) throw error;
 
+    console.log('🔵 logout: Success');
     return {
       success: true,
       message: 'Logged out successfully',
     };
   } catch (error: any) {
+    console.error('❌ Logout error:', error);
     return {
       success: false,
       error: error.message || 'Logout failed',
@@ -143,12 +157,40 @@ export async function logout(): Promise<AuthResponse> {
  * Get current session
  */
 export async function getSession(): Promise<AuthSession | null> {
+  console.log('🔵 getSession: START');
+  
   try {
     const { data, error } = await supabase.auth.getSession();
+    console.log('🔵 getSession: Supabase response', { 
+      hasData: !!data, 
+      hasSession: !!data?.session,
+      error 
+    });
+    
     if (error) throw error;
-    if (!data.session) return null;
+    if (!data.session) {
+      console.log('🔵 getSession: No session found');
+      return null;
+    }
 
-    const user = await getUserProfile(data.session.user.id);
+    // ✅ Use session user metadata directly - no database query
+    const authUser = data.session.user;
+    
+    const user: AuthUser = {
+      id: authUser.id,
+      email: authUser.email || '',
+      full_name: authUser.user_metadata?.full_name || 'User',
+      role: authUser.user_metadata?.role || 'mahasiswa',
+      phone: authUser.user_metadata?.phone || null,
+      avatar_url: authUser.user_metadata?.avatar_url || null,
+      is_active: true,
+      last_seen_at: null,
+      metadata: {},
+      created_at: authUser.created_at,
+      updated_at: authUser.updated_at || authUser.created_at,
+    };
+
+    console.log('✅ getSession: User constructed from metadata', { userId: user.id, role: user.role });
 
     return {
       user,
@@ -157,7 +199,7 @@ export async function getSession(): Promise<AuthSession | null> {
       expires_at: data.session.expires_at,
     };
   } catch (error) {
-    console.error('Get session error:', error);
+    console.error('❌ getSession error:', error);
     return null;
   }
 }
@@ -167,11 +209,23 @@ export async function getSession(): Promise<AuthSession | null> {
  */
 export async function refreshSession(): Promise<AuthSession | null> {
   try {
+    console.log('🔵 refreshSession: START');
+    
     const { data, error } = await supabase.auth.refreshSession();
+    console.log('🔵 refreshSession: Supabase response', { 
+      hasSession: !!data.session, 
+      error 
+    });
+    
     if (error) throw error;
-    if (!data.session) return null;
+    if (!data.session) {
+      console.log('🔵 refreshSession: No session after refresh');
+      return null;
+    }
 
+    console.log('🔵 refreshSession: Calling getUserProfile for', data.session.user.id);
     const user = await getUserProfile(data.session.user.id);
+    console.log('🔵 refreshSession: Success', { userId: user.id, role: user.role });
 
     return {
       user,
@@ -180,7 +234,7 @@ export async function refreshSession(): Promise<AuthSession | null> {
       expires_at: data.session.expires_at,
     };
   } catch (error) {
-    console.error('Refresh session error:', error);
+    console.error('❌ Refresh session error:', error);
     return null;
   }
 }
@@ -190,17 +244,23 @@ export async function refreshSession(): Promise<AuthSession | null> {
  */
 export async function resetPassword(email: string): Promise<AuthResponse> {
   try {
+    console.log('🔵 resetPassword: START', { email });
+    
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`,
     });
 
+    console.log('🔵 resetPassword: Supabase response', { error });
+
     if (error) throw error;
 
+    console.log('🔵 resetPassword: Success');
     return {
       success: true,
       message: 'Password reset email sent',
     };
   } catch (error: any) {
+    console.error('❌ Password reset error:', error);
     return {
       success: false,
       error: error.message || 'Password reset failed',
@@ -213,17 +273,23 @@ export async function resetPassword(email: string): Promise<AuthResponse> {
  */
 export async function updatePassword(password: string): Promise<AuthResponse> {
   try {
+    console.log('🔵 updatePassword: START');
+    
     const { error } = await supabase.auth.updateUser({
       password,
     });
 
+    console.log('🔵 updatePassword: Supabase response', { error });
+
     if (error) throw error;
 
+    console.log('🔵 updatePassword: Success');
     return {
       success: true,
       message: 'Password updated successfully',
     };
   } catch (error: any) {
+    console.error('❌ Password update error:', error);
     return {
       success: false,
       error: error.message || 'Password update failed',
@@ -233,117 +299,145 @@ export async function updatePassword(password: string): Promise<AuthResponse> {
 
 /**
  * Get user profile with role-specific data
- * FIXED: Simplified version without nested query
+ * Includes fallback to auth metadata if database query fails
  */
 async function getUserProfile(userId: string): Promise<AuthUser> {
-  // First, get basic user profile
-  const { data: user, error: userError } = await supabase
-    .from('users')
-    .select('*')
-    .eq('id', userId)
-    .single();
-
-  if (userError) throw userError;
-  if (!user) throw new Error('User not found');
-
-  // Then get role-specific data based on role
-  let roleData = null;
+  console.log('🔵 getUserProfile: START', { userId });
   
   try {
-    switch (user.role) {
-      case 'mahasiswa':
-        const { data: mahasiswaData } = await supabase
-          .from('mahasiswa')
-          .select('*')
-          .eq('user_id', userId)
-          .single();
-        roleData = { mahasiswa: mahasiswaData };
-        break;
-        
-      case 'dosen':
-        const { data: dosenData } = await supabase
-          .from('dosen')
-          .select('*')
-          .eq('user_id', userId)
-          .single();
-        roleData = { dosen: dosenData };
-        break;
-        
-      case 'laboran':
-        const { data: laboranData } = await supabase
-          .from('laboran')
-          .select('*')
-          .eq('user_id', userId)
-          .single();
-        roleData = { laboran: laboranData };
-        break;
-        
-      case 'admin':
-        const { data: adminData } = await supabase
-          .from('admin')
-          .select('*')
-          .eq('user_id', userId)
-          .single();
-        roleData = { admin: adminData };
-        break;
+    // Add 3 second timeout to database query
+    const queryPromise = supabase
+      .from('users')
+      .select('*')
+      .eq('id', userId)
+      .single();
+
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('getUserProfile timeout after 3s')), 3000);
+    });
+
+    const { data: user, error: userError } = await Promise.race([
+      queryPromise,
+      timeoutPromise
+    ]) as any;
+
+    console.log('🔵 getUserProfile: Query result', { 
+      hasUser: !!user, 
+      role: user?.role,
+      error: userError 
+    });
+
+    if (userError) {
+      console.warn('⚠️ getUserProfile: Database error, attempting fallback', userError);
+      throw userError;
     }
-  } catch (roleError) {
-    console.warn('Failed to fetch role-specific data:', roleError);
-  }
+    
+    if (!user) {
+      console.warn('⚠️ getUserProfile: User not found in database, attempting fallback');
+      throw new Error('User not found');
+    }
 
-  return { ...user, ...roleData } as AuthUser;
-}
+    console.log('🔵 getUserProfile: Database query SUCCESS', { 
+      userId: user.id, 
+      role: user.role,
+      fullName: user.full_name 
+    });
 
-/**
- * Create role-specific profile
- */
-async function createRoleProfile(userId: string, data: RegisterData): Promise<void> {
-  const roleData = {
-    user_id: userId,
-  };
-
-  switch (data.role) {
-    case 'mahasiswa':
-      if (!data.nim || !data.program_studi || !data.angkatan || !data.semester) {
-        throw new Error('Missing required mahasiswa data');
+    // Get role-specific data
+    let roleData = null;
+    try {
+      console.log('🔵 getUserProfile: Fetching role-specific data for role:', user.role);
+      
+      switch (user.role) {
+        case 'mahasiswa':
+          const { data: mahasiswaData, error: mahasiswaError } = await supabase
+            .from('mahasiswa')
+            .select('*')
+            .eq('user_id', userId)
+            .single();
+          console.log('🔵 getUserProfile: mahasiswa data', { hasMahasiswaData: !!mahasiswaData, error: mahasiswaError });
+          roleData = { mahasiswa: mahasiswaData };
+          break;
+          
+        case 'dosen':
+          const { data: dosenData, error: dosenError } = await supabase
+            .from('dosen')
+            .select('*')
+            .eq('user_id', userId)
+            .single();
+          console.log('🔵 getUserProfile: dosen data', { hasDosenData: !!dosenData, error: dosenError });
+          roleData = { dosen: dosenData };
+          break;
+          
+        case 'laboran':
+          const { data: laboranData, error: laboranError } = await supabase
+            .from('laboran')
+            .select('*')
+            .eq('user_id', userId)
+            .single();
+          console.log('🔵 getUserProfile: laboran data', { hasLaboranData: !!laboranData, error: laboranError });
+          roleData = { laboran: laboranData };
+          break;
+          
+        case 'admin':
+          const { data: adminData, error: adminError } = await supabase
+            .from('admin')
+            .select('*')
+            .eq('user_id', userId)
+            .single();
+          console.log('🔵 getUserProfile: admin data', { hasAdminData: !!adminData, error: adminError });
+          roleData = { admin: adminData };
+          break;
       }
-      await supabase.from('mahasiswa').insert({
-        ...roleData,
-        nim: data.nim,
-        program_studi: data.program_studi,
-        angkatan: data.angkatan,
-        semester: data.semester,
-      });
-      break;
+    } catch (roleError) {
+      console.warn('⚠️ getUserProfile: Failed to fetch role-specific data:', roleError);
+    }
 
-    case 'dosen':
-      if (!data.nip) throw new Error('Missing NIP for dosen');
-      await supabase.from('dosen').insert({
-        ...roleData,
-        nip: data.nip,
-        gelar_depan: data.gelar_depan,
-        gelar_belakang: data.gelar_belakang,
-      });
-      break;
+    console.log('🔵 getUserProfile: SUCCESS', { 
+      userId: user.id, 
+      role: user.role,
+      fullName: user.full_name,
+      hasRoleData: !!roleData 
+    });
 
-    case 'laboran':
-      if (!data.nip) throw new Error('Missing NIP for laboran');
-      await supabase.from('laboran').insert({
-        ...roleData,
-        nip: data.nip,
-      });
-      break;
+    return { ...user, ...roleData } as AuthUser;
+  } catch (error) {
+    console.error('❌ getUserProfile ERROR, using fallback from auth metadata', error);
+    
+    // FALLBACK: Get user from auth.getUser() metadata
+    try {
+      const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
+      
+      if (authError || !authUser) {
+        console.error('❌ getUserProfile: Cannot get user from auth fallback', authError);
+        throw new Error('Cannot get user data from either database or auth');
+      }
 
-    case 'admin':
-      if (!data.nip) throw new Error('Missing NIP for admin');
-      await supabase.from('admin').insert({
-        ...roleData,
-        nip: data.nip,
+      console.log('✅ getUserProfile: Using fallback from auth metadata', { 
+        userId: authUser.id,
+        email: authUser.email,
+        role: authUser.user_metadata?.role,
+        fullName: authUser.user_metadata?.full_name 
       });
-      break;
-
-    default:
-      throw new Error('Invalid role');
+      
+      // Return user from auth metadata (temporary fallback)
+      return {
+        id: authUser.id,
+        email: authUser.email || '',
+        full_name: authUser.user_metadata?.full_name || 'User',
+        role: authUser.user_metadata?.role || 'mahasiswa',
+        phone: authUser.user_metadata?.phone || null,
+        avatar_url: authUser.user_metadata?.avatar_url || null,
+        is_active: true,
+        last_seen_at: null,
+        metadata: {},
+        created_at: authUser.created_at,
+        updated_at: authUser.updated_at || authUser.created_at,
+      } as AuthUser;
+    } catch (fallbackError) {
+      console.error('❌ getUserProfile: Fallback also failed', fallbackError);
+      throw fallbackError;
+    }
   }
 }
 
@@ -353,10 +447,36 @@ async function createRoleProfile(userId: string, data: RegisterData): Promise<vo
 export function onAuthStateChange(
   callback: (session: AuthSession | null) => void
 ) {
-  return supabase.auth.onAuthStateChange(async (_event, session) => {
+  console.log('🔵 onAuthStateChange: Setting up listener');
+  
+  return supabase.auth.onAuthStateChange(async (event, session) => {
+    console.log('🔵 onAuthStateChange: Event triggered', { 
+      event, 
+      hasSession: !!session, 
+      hasUser: !!session?.user 
+    });
+    
     if (session?.user) {
       try {
-        const user = await getUserProfile(session.user.id);
+        // ✅ Use session user metadata directly - no database query
+        const authUser = session.user;
+        
+        const user: AuthUser = {
+          id: authUser.id,
+          email: authUser.email || '',
+          full_name: authUser.user_metadata?.full_name || 'User',
+          role: authUser.user_metadata?.role || 'mahasiswa',
+          phone: authUser.user_metadata?.phone || null,
+          avatar_url: authUser.user_metadata?.avatar_url || null,
+          is_active: true,
+          last_seen_at: null,
+          metadata: {},
+          created_at: authUser.created_at,
+          updated_at: authUser.updated_at || authUser.created_at,
+        };
+
+        console.log('✅ onAuthStateChange: User constructed from metadata', { userId: user.id, role: user.role });
+        
         callback({
           user,
           access_token: session.access_token,
@@ -364,11 +484,61 @@ export function onAuthStateChange(
           expires_at: session.expires_at,
         });
       } catch (error) {
-        console.error('Error getting user profile:', error);
+        console.error('❌ onAuthStateChange: Error constructing user', error);
         callback(null);
       }
     } else {
+      console.log('🔵 onAuthStateChange: No session, calling callback with null');
       callback(null);
     }
   });
+}
+
+/**
+ * Get current user
+ */
+export async function getCurrentUser(): Promise<AuthUser | null> {
+  try {
+    console.log('🔵 getCurrentUser: START');
+    
+    const { data: { user }, error } = await supabase.auth.getUser();
+    
+    console.log('🔵 getCurrentUser: Supabase response', { 
+      hasUser: !!user, 
+      error 
+    });
+    
+    if (!user) {
+      console.log('🔵 getCurrentUser: No user found');
+      return null;
+    }
+    
+    console.log('🔵 getCurrentUser: Calling getUserProfile for', user.id);
+    const profile = await getUserProfile(user.id);
+    console.log('🔵 getCurrentUser: Success', { userId: profile.id, role: profile.role });
+    
+    return profile;
+  } catch (error) {
+    console.error('❌ Get current user error:', error);
+    return null;
+  }
+}
+
+/**
+ * Check if user is authenticated
+ */
+export async function isAuthenticated(): Promise<boolean> {
+  try {
+    console.log('🔵 isAuthenticated: START');
+    
+    const { data: { session }, error } = await supabase.auth.getSession();
+    const authenticated = !!session;
+    
+    console.log('🔵 isAuthenticated: Result', { authenticated, error });
+    
+    return authenticated;
+  } catch (error) {
+    console.error('❌ isAuthenticated error:', error);
+    return false;
+  }
 }
