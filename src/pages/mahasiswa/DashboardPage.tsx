@@ -1,6 +1,7 @@
 import { useAuth } from '@/lib/hooks/useAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { RoleTest } from '@/components/test/RoleTest';
 
 export function DashboardPage() {
   const { user, logout } = useAuth();
@@ -69,6 +70,12 @@ export function DashboardPage() {
             </p>
           </CardContent>
         </Card>
+
+        {/* RBAC System Test */}
+        <div className="mt-8">
+          <h2 className="text-2xl font-bold mb-4">🧪 RBAC System Test</h2>
+          <RoleTest />
+        </div>
       </div>
     </div>
   );
