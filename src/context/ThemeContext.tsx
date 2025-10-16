@@ -1,20 +1,28 @@
 /**
- * TODO: Implement [ComponentName]
- * 
- * Purpose: [Brief description]
- * Priority: [High/Medium/Low]
- * Props: [List expected props]
- * 
- * Related components:
- * - [Component 1]
- * - [Component 2]
+ * Theme Context
+ * Context for theme (dark/light mode) management
  */
 
-export const ComponentName = () => {
-  // TODO: Add implementation
-  return (
-    <div>
-      <p>TODO: Implement [ComponentName]</p>
-    </div>
-  );
-};
+import { createContext } from 'react';
+
+// ============================================================================
+// TYPES
+// ============================================================================
+
+export type Theme = 'light' | 'dark' | 'system';
+
+export interface ThemeContextValue {
+  theme: Theme;
+  systemTheme: 'light' | 'dark';
+  effectiveTheme: 'light' | 'dark';
+  setTheme: (theme: Theme) => void;
+  toggleTheme: () => void;
+}
+
+// ============================================================================
+// CONTEXT
+// ============================================================================
+
+export const ThemeContext = createContext<ThemeContextValue | undefined>(
+  undefined
+);

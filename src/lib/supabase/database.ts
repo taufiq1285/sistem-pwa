@@ -6,6 +6,21 @@ import { supabase } from './client';
 import type { PostgrestError } from '@supabase/supabase-js';
 
 /**
+ * Valid table names in the database
+ */
+export type TableName = 
+  | 'users'
+  | 'kelas'
+  | 'laboratorium'
+  | 'dosen'
+  | 'mata_kuliah'
+  | 'mahasiswa'
+  | 'admin'
+  | 'laboran'
+  | 'jadwal_praktikum'
+  | 'kelas_mahasiswa';
+
+/**
  * Generic fetch function with error handling
  */
 export async function fetchData<T>(
@@ -41,7 +56,7 @@ export async function checkConnection(): Promise<boolean> {
 /**
  * Get table row count
  */
-export async function getTableCount(tableName: string): Promise<number> {
+export async function getTableCount(tableName: TableName): Promise<number> {
   const { count, error } = await supabase
     .from(tableName)
     .select('*', { count: 'exact', head: true });
