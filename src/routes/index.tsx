@@ -11,6 +11,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { ProtectedRoute } from '@/components/common/ProtectedRoute';
 import { RoleGuard } from '@/components/common/RoleGuard';
+import { AppLayout } from '@/components/layout/AppLayout';
 import { ROUTES } from '@/config/routes.config';
 
 // Auth Pages
@@ -19,7 +20,7 @@ import { RegisterPage } from '@/pages/auth/RegisterPage';
 
 // Public Pages
 import { NotFoundPage } from '@/pages/public/NotFoundPage';
-import { UnauthorizedPage } from '@/pages/public/UnauthorizedPage';//
+import { UnauthorizedPage } from '@/pages/public/UnauthorizedPage';
 
 // Admin Pages
 import { DashboardPage as AdminDashboard } from '@/pages/admin/DashboardPage';
@@ -71,7 +72,7 @@ export function AppRouter() {
       {/* Add more admin routes here as needed */}
 
       {/* ============================================================ */}
-      {/* DOSEN ROUTES (Require dosen role) */}
+      {/* DOSEN ROUTES (Require dosen role) - WRAPPED WITH APPLAYOUT */}
       {/* ============================================================ */}
       <Route
         path={ROUTES.DOSEN.ROOT}
@@ -88,13 +89,29 @@ export function AppRouter() {
         element={
           <ProtectedRoute>
             <RoleGuard allowedRoles={['dosen']}>
-              <DosenDashboard />
+              <AppLayout>
+                <DosenDashboard />
+              </AppLayout>
             </RoleGuard>
           </ProtectedRoute>
         }
       />
       
-      {/* Add more dosen routes here as needed */}
+      {/* Add more dosen routes here as needed - wrap each with AppLayout */}
+      {/* Example:
+      <Route
+        path={ROUTES.DOSEN.MATA_KULIAH}
+        element={
+          <ProtectedRoute>
+            <RoleGuard allowedRoles={['dosen']}>
+              <AppLayout>
+                <MataKuliahPage />
+              </AppLayout>
+            </RoleGuard>
+          </ProtectedRoute>
+        }
+      />
+      */}
 
       {/* ============================================================ */}
       {/* MAHASISWA ROUTES (Require mahasiswa role) */}

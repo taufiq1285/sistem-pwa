@@ -5,8 +5,8 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/lib/hooks/useAuth';
-import { useRole } from '@/lib/hooks/useRole';
+import { useAuth } from '@/lib/hooks/useAuth';  // ✅ UNCOMMENT
+import { useRole } from '@/lib/hooks/useRole';   // ✅ UNCOMMENT
 import { Header } from './Header';
 import { Sidebar } from './Sidebar';
 import { MobileNav } from './MobileNav';
@@ -27,15 +27,18 @@ interface AppLayoutProps {
 
 export function AppLayout({ children, className }: AppLayoutProps) {
   const navigate = useNavigate();
+  
+  // ✅ USE REAL AUTH (Uncomment these lines)
   const { user, logout } = useAuth();
   const { role } = useRole();
+  
   
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   // Handle logout
   const handleLogout = async () => {
     try {
-      await logout();
+      await logout();  // ✅ USE REAL LOGOUT (remove comment)
       navigate('/login');
     } catch (error) {
       console.error('Logout error:', error);
@@ -106,7 +109,7 @@ export function AppLayout({ children, className }: AppLayoutProps) {
         />
 
         {/* Page Content */}
-        <main className={cn('flex-1 overflow-auto', className)}>
+        <main className={cn('flex-1 overflow-auto bg-gray-50', className)}>
           {children}
         </main>
       </div>
