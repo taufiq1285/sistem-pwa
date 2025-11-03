@@ -209,6 +209,12 @@ export async function getCalendarEvents(
 
     jadwalList.forEach((j) => {
       try {
+        // Skip if tanggal_praktikum is null
+        if (!j.tanggal_praktikum) {
+          console.warn('⚠️ Skipping jadwal with null tanggal_praktikum:', j.id);
+          return;
+        }
+        
         // ✅ FIX: Parse tanggal dengan benar (timezone-safe)
         // Gunakan format YYYY-MM-DD langsung tanpa timezone conversion
         const [year, month, day] = j.tanggal_praktikum.split('-').map(Number);
@@ -304,7 +310,7 @@ export async function createJadwal(data: CreateJadwalData): Promise<Jadwal> {
       ? data.tanggal_praktikum 
       : new Date(data.tanggal_praktikum);
     
-    const hari = format(tanggalPraktikum, 'EEEE', { locale: localeId }).toLowerCase();
+    const hari = format(tanggalPraktikum, 'EEEE', { locale: localeId }).toLowerCase() as "senin" | "selasa" | "rabu" | "kamis" | "jumat" | "sabtu" | "minggu";
     
     // Check for conflicts on the same date
     const hasConflict = await checkJadwalConflictByDate(
@@ -375,7 +381,7 @@ export async function updateJadwal(
         : new Date(data.tanggal_praktikum);
       
       updateData.tanggal_praktikum = format(tanggalPraktikum, 'yyyy-MM-dd');
-      updateData.hari = format(tanggalPraktikum, 'EEEE', { locale: localeId }).toLowerCase();
+      updateData.hari = format(tanggalPraktikum, 'EEEE', { locale: localeId }).toLowerCase() as "senin" | "selasa" | "rabu" | "kamis" | "jumat" | "sabtu" | "minggu";
     }
     
     // Determine final values for conflict check
@@ -384,7 +390,7 @@ export async function updateJadwal(
       ? (data.tanggal_praktikum instanceof Date 
           ? data.tanggal_praktikum 
           : new Date(data.tanggal_praktikum))
-      : new Date(existing.tanggal_praktikum);
+      : (existing.tanggal_praktikum ? new Date(existing.tanggal_praktikum) : new Date());
     const jamMulai = data.jam_mulai || existing.jam_mulai;
     const jamSelesai = data.jam_selesai || existing.jam_selesai;
 

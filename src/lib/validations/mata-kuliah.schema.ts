@@ -1,6 +1,8 @@
 /**
  * Mata Kuliah Validation Schemas
  * Zod schemas for mata kuliah form validation
+ * 
+ * FIXED: BUG #1 - Added minimum 10 characters validation for nama_mk
  */
 
 import { z } from 'zod';
@@ -34,10 +36,15 @@ const baseMataKuliahSchema = z.object({
   
   nama_mk: z
     .string()
-    .min(1, 'Nama MK is required')
-    .min(3, 'Nama MK must be at least 3 characters')
-    .max(100, 'Nama MK must not exceed 100 characters')
-    .trim(),
+    .min(1, 'Nama mata kuliah harus diisi')
+    // ✅ FIXED: Changed from min(3) to min(10)
+    .min(10, 'Nama mata kuliah minimal 10 karakter untuk nama yang jelas dan profesional')
+    .max(100, 'Nama mata kuliah maksimal 100 karakter')
+    .trim()
+    .refine(
+      (val) => val.length >= 10,
+      'Nama mata kuliah harus minimal 10 karakter (contoh: "Asuhan Kebidanan I")'
+    ),
   
   sks: z
     .number({
@@ -62,6 +69,7 @@ const baseMataKuliahSchema = z.object({
       (val) => isValidSemester(val),
       'Semester must be between 1 and 14'
     ),
+  
   program_studi: z
     .enum(PROGRAM_STUDI_OPTIONS as any, {
       message: 'Program studi is required',

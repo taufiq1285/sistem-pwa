@@ -90,7 +90,16 @@ const jadwalSchema = z.object({
   tanggal_praktikum: z.date({ message: 'Tanggal praktikum harus dipilih' }),
   jam_mulai: z.string().min(1, 'Jam mulai harus dipilih'),
   jam_selesai: z.string().min(1, 'Jam selesai harus dipilih'),
-  topik: z.string().optional(),
+  
+  // ✅ FIXED: Added minimum 10 characters validation for topik
+  topik: z
+    .string()
+    .optional()
+    .refine(
+      (val) => !val || val.length >= 10,
+      'Topik harus minimal 10 karakter untuk menjelaskan materi praktikum (contoh: "Praktikum ANC: Pemeriksaan Leopold I-IV")'
+    ),
+  
   catatan: z.string().optional(),
   is_active: z.boolean().optional(),
 }).refine((data) => data.jam_mulai < data.jam_selesai, {
