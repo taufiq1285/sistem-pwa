@@ -9,18 +9,19 @@ interface RoleGuardProps {
 }
 
 export function RoleGuard({ children, allowedRoles }: RoleGuardProps) {
-  // 🔓 TEMPORARY BYPASS - Supabase Auth Issue
-  // TODO: Remove after fixing database
-  const BYPASS_ROLE = true;
+  // --- PERBAIKAN: Pindahkan Hook ke paling atas ---
+  const { user, loading, initialized } = useAuth();
+  // --- Batas Perbaikan ---
+
+  const BYPASS_ROLE = false;
   
   if (BYPASS_ROLE) {
     console.log('🔓 ROLE GUARD BYPASSED FOR TESTING - Allowed roles:', allowedRoles);
     return <>{children}</>;
   }
 
-  const { user, loading, initialized } = useAuth();
+  // Pemanggilan useAuth() tadinya ada di sini
 
-  // 🛠 DEBUG: Log all role guard states
   console.log('🛡️ RoleGuard Check:', {
     loading,
     initialized,
@@ -30,7 +31,6 @@ export function RoleGuard({ children, allowedRoles }: RoleGuardProps) {
     timestamp: new Date().toISOString(),
   });
 
-  // Show loading spinner while checking roles
   if (loading || !initialized) {
     console.log('⏳ RoleGuard: LOADING STATE', { loading, initialized });
     return (
@@ -46,16 +46,13 @@ export function RoleGuard({ children, allowedRoles }: RoleGuardProps) {
     );
   }
 
-  // User must be authenticated to check roles
   if (!user) {
     console.log('❌ RoleGuard: NO USER, redirecting to login');
     return <Navigate to={ROUTES.LOGIN} replace />;
   }
 
-  // Check if user's role is in the allowed roles
   const hasPermission = allowedRoles.includes(user.role);
 
-  // Redirect to unauthorized page if user doesn't have permission
   if (!hasPermission) {
     console.log('🚫 RoleGuard: UNAUTHORIZED, redirecting to 403', {
       userRole: user.role,
@@ -71,3 +68,5 @@ export function RoleGuard({ children, allowedRoles }: RoleGuardProps) {
   
   return <>{children}</>;
 }
+
+export default RoleGuard;

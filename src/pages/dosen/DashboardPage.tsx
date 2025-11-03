@@ -58,7 +58,8 @@ export function DashboardPage() {
       setLoading(true);
       setError(null);
 
-      const [statsData, mkData, practicumData, gradingData, kuisData, peminjamanData] = await Promise.all([
+      // ✅ FIX: Fetch data with better error handling and logging
+      const [statsData, mkData, practicumData, gradingData, kuisData, peminjamanData] = await Promise.allSettled([
         getDosenStats(),
         getMyMataKuliah(5),
         getUpcomingPracticum(5),
@@ -67,12 +68,55 @@ export function DashboardPage() {
         getMyBorrowingRequests(5),
       ]);
 
-      setStats(statsData);
-      setMataKuliah(mkData);
-      setUpcomingPracticum(practicumData);
-      setPendingGrading(gradingData);
-      setActiveKuis(kuisData);
-      setPeminjamanRequests(peminjamanData);
+      // Set stats
+      if (statsData.status === 'fulfilled') {
+        setStats(statsData.value);
+      } else {
+        console.error('Error fetching stats:', statsData.reason);
+      }
+
+      // ✅ FIX: Set mata kuliah with detailed logging
+      if (mkData.status === 'fulfilled') {
+        console.log('✅ Mata Kuliah data:', mkData.value);
+        setMataKuliah(mkData.value || []);
+      } else {
+        console.error('❌ Error fetching mata kuliah:', mkData.reason);
+        setMataKuliah([]);
+      }
+
+      // Set practicum
+      if (practicumData.status === 'fulfilled') {
+        console.log('✅ Practicum data:', practicumData.value);
+        setUpcomingPracticum(practicumData.value || []);
+      } else {
+        console.error('❌ Error fetching practicum:', practicumData.reason);
+        setUpcomingPracticum([]);
+      }
+
+      // Set grading
+      if (gradingData.status === 'fulfilled') {
+        setPendingGrading(gradingData.value || []);
+      } else {
+        console.error('Error fetching grading:', gradingData.reason);
+        setPendingGrading([]);
+      }
+
+      // Set kuis
+      if (kuisData.status === 'fulfilled') {
+        setActiveKuis(kuisData.value || []);
+      } else {
+        console.error('Error fetching kuis:', kuisData.reason);
+        setActiveKuis([]);
+      }
+
+      // Set peminjaman
+      if (peminjamanData.status === 'fulfilled') {
+        setPeminjamanRequests(peminjamanData.value || []);
+      } else {
+        console.error('Error fetching peminjaman:', peminjamanData.reason);
+        setPeminjamanRequests([]);
+      }
+
     } catch (err) {
       console.error('Error fetching dashboard data:', err);
       setError('Gagal memuat data dashboard. Silakan refresh halaman.');
@@ -110,15 +154,15 @@ export function DashboardPage() {
   // Status badge variant mapping
   const getStatusVariant = (status: string): "default" | "secondary" | "destructive" | "outline" => {
     switch (status) {
-      case 'pending':
+      case 'menunggu':
         return 'outline';
-      case 'approved':
+      case 'disetujui':
         return 'default';
-      case 'rejected':
+      case 'ditolak':
         return 'destructive';
-      case 'borrowed':
+      case 'dipinjam':
         return 'secondary';
-      case 'returned':
+      case 'dikembalikan':
         return 'secondary';
       default:
         return 'outline';
@@ -128,15 +172,15 @@ export function DashboardPage() {
   // Status label mapping
   const getStatusLabel = (status: string): string => {
     switch (status) {
-      case 'pending':
+      case 'menunggu':
         return 'Menunggu';
-      case 'approved':
+      case 'disetujui':
         return 'Disetujui';
-      case 'rejected':
+      case 'ditolak':
         return 'Ditolak';
-      case 'borrowed':
+      case 'dipinjam':
         return 'Dipinjam';
-      case 'returned':
+      case 'dikembalikan':
         return 'Dikembalikan';
       default:
         return status;
@@ -264,7 +308,7 @@ export function DashboardPage() {
         </Card>
 
         <div className="grid gap-6 lg:grid-cols-2">
-          {/* My Courses */}
+          {/* My Courses - ✅ FIXED WITH BETTER ERROR HANDLING */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
@@ -278,7 +322,17 @@ export function DashboardPage() {
             </CardHeader>
             <CardContent>
               {mataKuliah.length === 0 ? (
-                <p className="text-sm text-gray-500 text-center py-8">Belum ada mata kuliah</p>
+                <div className="text-center py-8">
+                  <p className="text-sm text-gray-500">Belum ada mata kuliah</p>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="mt-4"
+                    onClick={() => navigate('/dosen/mata-kuliah')}
+                  >
+                    Kelola Mata Kuliah
+                  </Button>
+                </div>
               ) : (
                 <div className="space-y-3">
                   {mataKuliah.map((mk) => (
@@ -428,7 +482,7 @@ export function DashboardPage() {
           </Card>
         </div>
 
-        {/* NEW SECTION: Borrowing Requests */}
+        {/* Borrowing Requests */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <div>

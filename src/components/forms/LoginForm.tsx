@@ -29,13 +29,20 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
     resolver: zodResolver(loginSchema),
   });
 
-  const onSubmit = async (data: LoginFormData) => {
+ const onSubmit = async (data: LoginFormData) => {
     try {
       setError(null);
       await login(data);
       onSuccess?.();
-    } catch (err: any) {
-      setError(err.message || 'Login failed. Please try again.');
+    } catch (err: unknown) { // <-- PERUBAHAN: dari 'any' ke 'unknown'
+      
+      // PERUBAHAN: Tambahkan type guard
+      let errorMessage = 'Login failed. Please try again.';
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+      
+      setError(errorMessage);
     }
   };
 

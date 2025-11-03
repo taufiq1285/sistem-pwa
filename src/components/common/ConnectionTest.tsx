@@ -34,9 +34,20 @@ export const ConnectionTest = () => {
         .select('id', { count: 'exact', head: true });
 
       console.log('Tables verified successfully');
-    } catch (error: any) {
+    } catch (error: unknown) { // <-- PERUBAHAN: dari 'any' ke 'unknown'
       setStatus('error');
-      setMessage(`❌ Connection failed: ${error.message}`);
+
+      let errorMessage = 'An unknown error occurred';
+      
+      // PERUBAHAN: Kita perlu memeriksa tipe error sebelum menggunakannya
+      if (error instanceof Error) {
+        // Sekarang aman untuk mengakses error.message
+        errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
+
+      setMessage(`❌ Connection failed: ${errorMessage}`);
       console.error('Connection test error:', error);
     }
   };

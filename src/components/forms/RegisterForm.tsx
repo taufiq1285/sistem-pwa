@@ -1,8 +1,3 @@
-/**
- * Register Form Component
- * Form for new user registration
- */
-
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -23,6 +18,9 @@ import {
 interface RegisterFormProps {
   onSuccess?: () => void;
 }
+
+// Tipe untuk peran yang valid
+type ValidRole = RegisterFormData['role'];
 
 export function RegisterForm({ onSuccess }: RegisterFormProps) {
   const { register: registerUser } = useAuth();
@@ -48,14 +46,22 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
       await registerUser(data);
       setSuccess('Registration successful! Please check your email to verify your account.');
       setTimeout(() => onSuccess?.(), 2000);
-    } catch (err: any) {
-      setError(err.message || 'Registration failed. Please try again.');
+    } catch (err: unknown) { // <-- PERBAIKAN 1: 'any' menjadi 'unknown'
+      
+      // Tambahkan type guard
+      let errorMessage = 'Registration failed. Please try again.';
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+      setError(errorMessage);
     }
   };
 
-  // Helper to safely get error message
+  // PERBAIKAN 2: Tipe 'field' diperbaiki agar lebih aman
   const getErrorMessage = (field: string): string | undefined => {
-    return (errors as any)[field]?.message;
+    // Kita bisa mengakses error secara aman dengan casting karena 'errors' memiliki tipe FieldErrors<RegisterFormData>
+    const fieldError = errors[field as keyof RegisterFormData];
+    return fieldError?.message as string | undefined;
   };
 
   return (
@@ -146,17 +152,18 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
       <div className="space-y-2">
         <Label htmlFor="role">Role</Label>
         <Select
-          onValueChange={(value) => setValue('role', value as any)}
+          // PERBAIKAN 3: 'value' di-casting ke tipe 'ValidRole' yang lebih aman
+          onValueChange={(value: string) => setValue('role', value as ValidRole, { shouldValidate: true })}
           disabled={isSubmitting}
         >
           <SelectTrigger>
             <SelectValue placeholder="Select your role" />
           </SelectTrigger>
           <SelectContent>
-  <SelectItem value="mahasiswa">Mahasiswa</SelectItem>
-  <SelectItem value="dosen">Dosen</SelectItem>
-  <SelectItem value="laboran">Laboran</SelectItem>
-</SelectContent>
+            <SelectItem value="mahasiswa">Mahasiswa</SelectItem>
+            <SelectItem value="dosen">Dosen</SelectItem>
+            <SelectItem value="laboran">Laboran</SelectItem>
+          </SelectContent>
         </Select>
         {errors.role && (
           <p className="text-sm text-red-500">{errors.role.message}</p>

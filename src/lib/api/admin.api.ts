@@ -79,16 +79,18 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     const totalLaboratorium = labs?.filter(lab => lab.is_active).length || 0;
 
     // Get total inventaris/peralatan (FIXED)
+    // PERBAIKAN 1: Menghapus 'as any'
     const { data: equipment, error: equipmentError } = await supabase
-      .from('inventaris' as any)
+      .from('inventaris')
       .select('id, is_available_for_borrowing');
     
     if (equipmentError) console.error('Error fetching equipment:', equipmentError);
     const totalPeralatan = equipment?.length || 0;
 
     // Get pending approvals (peminjaman dengan status pending)
+    // PERBAIKAN 2: Menghapus 'as any'
     const { data: pendingData, error: pendingError } = await supabase
-      .from('peminjaman' as any)
+      .from('peminjaman')
       .select('id')
       .eq('status', 'pending');
     
@@ -195,16 +197,18 @@ export async function getUserDistribution(): Promise<UserDistribution[]> {
 
 export async function getLabUsage(): Promise<LabUsageData[]> {
   try {
+    // PERBAIKAN 3: Menghapus 'as any'
     const { data: labs, error } = await supabase
-      .from('laboratorium' as any)
+      .from('laboratorium')
       .select('nama_lab, kode_lab')
       .limit(5);
 
     if (error) throw error;
 
     // Mock usage data (replace with real booking data later)
-    return labs?.map((lab) => ({
-      lab: (lab as any).nama_lab,
+    // PERBAIKAN 4: Memberi tipe pada 'lab' dan menghapus 'as any'
+    return labs?.map((lab: { nama_lab: string }) => ({
+      lab: lab.nama_lab,
       usage: Math.floor(Math.random() * 50) + 10, // Random between 10-60
     })) || [];
   } catch (error) {
@@ -244,10 +248,21 @@ export async function getRecentUsers(limit: number = 5): Promise<RecentUser[]> {
 // RECENT ANNOUNCEMENTS (Last 5)
 // ============================================================================
 
+// Tipe untuk data pengumuman yang diambil
+type PengumumanData = {
+  id: string;
+  judul: string;
+  created_at: string;
+  users: {
+    full_name: string;
+  } | null; // users bisa null jika join gagal
+};
+
 export async function getRecentAnnouncements(limit: number = 5): Promise<RecentAnnouncement[]> {
   try {
+    // PERBAIKAN 5: Menghapus 'as any'
     const { data, error } = await supabase
-      .from('pengumuman' as any)
+      .from('pengumuman')
       .select(`
         id,
         judul,
@@ -260,7 +275,8 @@ export async function getRecentAnnouncements(limit: number = 5): Promise<RecentA
 
     if (error) throw error;
 
-    return data?.map((item: any) => ({
+    // PERBAIKAN 6: Menggunakan tipe 'PengumumanData' (didefinisikan di atas)
+    return (data as PengumumanData[] | null)?.map((item) => ({
       id: item.id,
       title: item.judul,
       created_at: item.created_at,

@@ -1,11 +1,7 @@
 /**
- * Main Application Router
- * Defines all routes with proper protection and role guards
- * 
- * Route Structure:
- * - Public routes (login, register, 404, etc.)
- * - Protected routes (require authentication)
- * - Role-specific routes (require specific roles)
+ * Main Application Router - FIXED VERSION
+ * ✅ BUG #1 FIXED: Added /dosen/jadwal route
+ * All TypeScript errors resolved
  */
 
 import { Routes, Route, Navigate } from 'react-router-dom';
@@ -27,9 +23,12 @@ import { DashboardPage as AdminDashboard } from '@/pages/admin/DashboardPage';
 
 // Dosen Pages
 import { DashboardPage as DosenDashboard } from '@/pages/dosen/DashboardPage';
+import MataKuliahPage from '@/pages/dosen/MataKuliahPage';
+import DosenJadwalPage from '@/pages/dosen/JadwalPage'; // ✅ ADDED
 
 // Mahasiswa Pages
 import { DashboardPage as MahasiswaDashboard } from '@/pages/mahasiswa/DashboardPage';
+import MahasiswaJadwalPage from '@/pages/mahasiswa/JadwalPage';
 
 // Laboran Pages
 import { DashboardPage as LaboranDashboard } from '@/pages/laboran/DashboardPage';
@@ -37,17 +36,17 @@ import { DashboardPage as LaboranDashboard } from '@/pages/laboran/DashboardPage
 export function AppRouter() {
   return (
     <Routes>
-      {/* ============================================================ */}
+      {/* ================================================================== */}
       {/* PUBLIC ROUTES (No authentication required) */}
-      {/* ============================================================ */}
+      {/* ================================================================== */}
       <Route path={ROUTES.LOGIN} element={<LoginPage />} />
       <Route path={ROUTES.REGISTER} element={<RegisterPage />} />
       <Route path={ROUTES.UNAUTHORIZED} element={<UnauthorizedPage />} />
       <Route path={ROUTES.NOT_FOUND} element={<NotFoundPage />} />
 
-      {/* ============================================================ */}
+      {/* ================================================================== */}
       {/* ADMIN ROUTES (Require admin role) */}
-      {/* ============================================================ */}
+      {/* ================================================================== */}
       <Route
         path={ROUTES.ADMIN.ROOT}
         element={
@@ -63,17 +62,19 @@ export function AppRouter() {
         element={
           <ProtectedRoute>
             <RoleGuard allowedRoles={['admin']}>
-              <AdminDashboard />
+              <AppLayout>
+                <AdminDashboard />
+              </AppLayout>
             </RoleGuard>
           </ProtectedRoute>
         }
       />
-      
-      {/* Add more admin routes here as needed */}
 
-      {/* ============================================================ */}
-      {/* DOSEN ROUTES (Require dosen role) - WRAPPED WITH APPLAYOUT */}
-      {/* ============================================================ */}
+      {/* ================================================================== */}
+      {/* DOSEN ROUTES */}
+      {/* ================================================================== */}
+
+      {/* Root redirect */}
       <Route
         path={ROUTES.DOSEN.ROOT}
         element={
@@ -84,6 +85,8 @@ export function AppRouter() {
           </ProtectedRoute>
         }
       />
+
+      {/* Dashboard */}
       <Route
         path={ROUTES.DOSEN.DASHBOARD}
         element={
@@ -96,11 +99,10 @@ export function AppRouter() {
           </ProtectedRoute>
         }
       />
-      
-      {/* Add more dosen routes here as needed - wrap each with AppLayout */}
-      {/* Example:
+
+      {/* Mata Kuliah - ✅ READY FOR TEST */}
       <Route
-        path={ROUTES.DOSEN.MATA_KULIAH}
+        path="/dosen/mata-kuliah"
         element={
           <ProtectedRoute>
             <RoleGuard allowedRoles={['dosen']}>
@@ -111,11 +113,34 @@ export function AppRouter() {
           </ProtectedRoute>
         }
       />
+
+      {/* ✅ BUG #1 FIX: Jadwal route added */}
+      <Route
+        path="/dosen/jadwal"
+        element={
+          <ProtectedRoute>
+            <RoleGuard allowedRoles={['dosen']}>
+              <AppLayout>
+                <DosenJadwalPage />
+              </AppLayout>
+            </RoleGuard>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* TODO: Add more dosen routes as they are implemented
+      <Route path="/dosen/kuis" element={...} />
+      <Route path="/dosen/peminjaman" element={...} />
+      <Route path="/dosen/mahasiswa" element={...} />
+      <Route path="/dosen/materi" element={...} />
+      <Route path="/dosen/penilaian" element={...} />
       */}
 
-      {/* ============================================================ */}
-      {/* MAHASISWA ROUTES (Require mahasiswa role) */}
-      {/* ============================================================ */}
+      {/* ================================================================== */}
+      {/* MAHASISWA ROUTES */}
+      {/* ================================================================== */}
+
+      {/* Root redirect */}
       <Route
         path={ROUTES.MAHASISWA.ROOT}
         element={
@@ -126,22 +151,49 @@ export function AppRouter() {
           </ProtectedRoute>
         }
       />
+
+      {/* Dashboard */}
       <Route
         path={ROUTES.MAHASISWA.DASHBOARD}
         element={
           <ProtectedRoute>
             <RoleGuard allowedRoles={['mahasiswa']}>
-              <MahasiswaDashboard />
+              <AppLayout>
+                <MahasiswaDashboard />
+              </AppLayout>
             </RoleGuard>
           </ProtectedRoute>
         }
       />
-      
-      {/* Add more mahasiswa routes here as needed */}
 
-      {/* ============================================================ */}
-      {/* LABORAN ROUTES (Require laboran role) */}
-      {/* ============================================================ */}
+      {/* Jadwal Praktikum - ✅ READY FOR TEST */}
+      <Route
+        path="/mahasiswa/jadwal"
+        element={
+          <ProtectedRoute>
+            <RoleGuard allowedRoles={['mahasiswa']}>
+              <AppLayout>
+                <MahasiswaJadwalPage />
+              </AppLayout>
+            </RoleGuard>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* TODO: Add more mahasiswa routes as they are implemented
+      <Route path="/mahasiswa/kuis" element={...} />
+      <Route path="/mahasiswa/materi" element={...} />
+      <Route path="/mahasiswa/nilai" element={...} />
+      <Route path="/mahasiswa/pengumuman" element={...} />
+      <Route path="/mahasiswa/profil" element={...} />
+      <Route path="/mahasiswa/offline-sync" element={...} />
+      */}
+
+      {/* ================================================================== */}
+      {/* LABORAN ROUTES */}
+      {/* ================================================================== */}
+
+      {/* Root redirect */}
       <Route
         path={ROUTES.LABORAN.ROOT}
         element={
@@ -152,26 +204,28 @@ export function AppRouter() {
           </ProtectedRoute>
         }
       />
+
+      {/* Dashboard */}
       <Route
         path={ROUTES.LABORAN.DASHBOARD}
         element={
           <ProtectedRoute>
             <RoleGuard allowedRoles={['laboran']}>
-              <LaboranDashboard />
+              <AppLayout>
+                <LaboranDashboard />
+              </AppLayout>
             </RoleGuard>
           </ProtectedRoute>
         }
       />
-      
-      {/* Add more laboran routes here as needed */}
 
-      {/* ============================================================ */}
+      {/* ================================================================== */}
       {/* FALLBACK ROUTES */}
-      {/* ============================================================ */}
-      
+      {/* ================================================================== */}
+
       {/* Home route - redirect to login */}
       <Route path={ROUTES.HOME} element={<Navigate to={ROUTES.LOGIN} replace />} />
-      
+
       {/* Catch-all route - 404 */}
       <Route path="*" element={<NotFoundPage />} />
     </Routes>

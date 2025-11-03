@@ -1,289 +1,314 @@
 /**
  * Navigation Configuration
- * Centralized navigation items for all roles
+ * Defines navigation items for each role with icons and descriptions
  */
 
-import type { UserRole } from '@/types/auth.types';
-import type { LucideIcon } from 'lucide-react';
 import {
-  LayoutDashboard,
-  Users,
-  Settings,
-  FlaskConical,
-  Wrench,
-  Megaphone,
-  BarChart3,
+  Home,
   BookOpen,
   Calendar,
-  FileQuestion,
   ClipboardList,
-  GraduationCap,
-  User,
+  Award,
+  Users,
+  FileText,
+  Settings,
+  Package,
+  BarChart3,
+  ClipboardCheck,
+  Building2,
+  UserCog,
+  Boxes,
+  type LucideIcon
 } from 'lucide-react';
+import type { UserRole } from '@/types/auth.types';
 
 // ============================================================================
 // TYPES
 // ============================================================================
 
-/**
- * Navigation item structure
- */
-export interface NavItem {
-  icon: LucideIcon;
+export interface NavigationItem {
   label: string;
   href: string;
-  badge?: string | number;
+  icon: LucideIcon;
   description?: string;
-}
-
-/**
- * Navigation section (for grouping)
- */
-export interface NavSection {
-  title?: string;
-  items: NavItem[];
+  badge?: number | string;
 }
 
 // ============================================================================
-// NAVIGATION ITEMS PER ROLE
+// NAVIGATION ITEMS BY ROLE
 // ============================================================================
 
 /**
- * Admin navigation items
+ * Mahasiswa Navigation
  */
-export const ADMIN_NAV_ITEMS: NavItem[] = [
+const mahasiswaNavigation: NavigationItem[] = [
   {
-    icon: LayoutDashboard,
     label: 'Dashboard',
-    href: '/admin',
-    description: 'Overview sistem',
+    href: '/mahasiswa/dashboard',
+    icon: Home,
+    description: 'Ringkasan aktivitas akademik'
   },
   {
-    icon: Users,
-    label: 'Manajemen User',
-    href: '/admin/users',
-    description: 'Kelola pengguna sistem',
-  },
-  {
-    icon: Settings,
-    label: 'Roles & Permissions',
-    href: '/admin/roles',
-    description: 'Kelola role dan permissions',
-  },
-  {
-    icon: FlaskConical,
-    label: 'Laboratorium',
-    href: '/admin/laboratories',
-    description: 'Kelola data laboratorium',
-  },
-  {
-    icon: Wrench,
-    label: 'Peralatan',
-    href: '/admin/equipments',
-    description: 'Kelola inventaris peralatan',
-  },
-  {
-    icon: Megaphone,
-    label: 'Pengumuman',
-    href: '/admin/announcements',
-    description: 'Kelola pengumuman',
-  },
-  {
-    icon: BarChart3,
-    label: 'Analytics',
-    href: '/admin/analytics',
-    description: 'Statistik dan laporan',
-  },
-];
-
-/**
- * Dosen navigation items
- */
-export const DOSEN_NAV_ITEMS: NavItem[] = [
-  {
-    icon: LayoutDashboard,
-    label: 'Dashboard',
-    href: '/dosen',
-    description: 'Overview aktivitas',
-  },
-  {
-    icon: BookOpen,
     label: 'Mata Kuliah',
-    href: '/dosen/mata-kuliah',
-    description: 'Kelola mata kuliah',
-  },
-  {
-    icon: Calendar,
-    label: 'Jadwal',
-    href: '/dosen/jadwal',
-    description: 'Jadwal praktikum',
-  },
-  {
-    icon: FileQuestion,
-    label: 'Kuis',
-    href: '/dosen/kuis',
-    badge: 'New',
-    description: 'Kelola kuis dan soal',
-  },
-  {
-    icon: ClipboardList,
-    label: 'Peminjaman',
-    href: '/dosen/peminjaman',
-    description: 'Kelola peminjaman alat',
-  },
-  {
-    icon: GraduationCap,
-    label: 'Mahasiswa',
-    href: '/dosen/mahasiswa',
-    description: 'Data mahasiswa',
-  },
-  {
+    href: '/mahasiswa/mata-kuliah',
     icon: BookOpen,
-    label: 'Materi',
-    href: '/dosen/materi',
-    description: 'Kelola materi praktikum',
+    description: 'Mata kuliah yang diambil'
   },
   {
-    icon: BarChart3,
-    label: 'Penilaian',
-    href: '/dosen/penilaian',
-    description: 'Kelola nilai mahasiswa',
-  },
-];
-
-/**
- * Mahasiswa navigation items
- */
-export const MAHASISWA_NAV_ITEMS: NavItem[] = [
-  {
-    icon: LayoutDashboard,
-    label: 'Dashboard',
-    href: '/mahasiswa',
-    description: 'Overview aktivitas',
-  },
-  {
-    icon: Calendar,
-    label: 'Jadwal Praktikum',
+    label: 'Jadwal',
     href: '/mahasiswa/jadwal',
-    description: 'Jadwal praktikum',
+    icon: Calendar,
+    description: 'Jadwal praktikum'
   },
   {
-    icon: FileQuestion,
     label: 'Kuis',
     href: '/mahasiswa/kuis',
-    badge: 3,
-    description: 'Kuis yang tersedia',
+    icon: ClipboardList,
+    description: 'Kuis dan ujian'
   },
   {
-    icon: BookOpen,
-    label: 'Materi',
-    href: '/mahasiswa/materi',
-    description: 'Materi praktikum',
-  },
-  {
-    icon: BarChart3,
     label: 'Nilai',
     href: '/mahasiswa/nilai',
-    description: 'Lihat nilai',
+    icon: Award,
+    description: 'Hasil penilaian'
   },
   {
-    icon: Megaphone,
-    label: 'Pengumuman',
-    href: '/mahasiswa/pengumuman',
-    description: 'Pengumuman terbaru',
+    label: 'Presensi',
+    href: '/mahasiswa/presensi',
+    icon: ClipboardCheck,
+    description: 'Kehadiran praktikum'
   },
   {
-    icon: User,
-    label: 'Profil',
-    href: '/mahasiswa/profil',
-    description: 'Kelola profil',
-  },
+    label: 'Materi',
+    href: '/mahasiswa/materi',
+    icon: FileText,
+    description: 'Materi pembelajaran'
+  }
 ];
 
 /**
- * Laboran navigation items
+ * Dosen Navigation
  */
-export const LABORAN_NAV_ITEMS: NavItem[] = [
+const dosenNavigation: NavigationItem[] = [
   {
-    icon: LayoutDashboard,
     label: 'Dashboard',
-    href: '/laboran',
-    description: 'Overview aktivitas',
+    href: '/dosen/dashboard',
+    icon: Home,
+    description: 'Ringkasan aktivitas mengajar'
   },
   {
-    icon: Wrench,
+    label: 'Mata Kuliah',
+    href: '/dosen/mata-kuliah',
+    icon: BookOpen,
+    description: 'Mata kuliah yang diampu'
+  },
+  {
+    label: 'Jadwal',
+    href: '/dosen/jadwal',
+    icon: Calendar,
+    description: 'Jadwal mengajar'
+  },
+  {
+    label: 'Kuis',
+    href: '/dosen/kuis',
+    icon: ClipboardList,
+    description: 'Kelola kuis'
+  },
+  {
+    label: 'Peminjaman',
+    href: '/dosen/peminjaman',
+    icon: Package,
+    description: 'Peminjaman alat'
+  },
+  {
+    label: 'Mahasiswa',
+    href: '/dosen/mahasiswa',
+    icon: Users,
+    description: 'Daftar mahasiswa'
+  },
+  {
+    label: 'Materi',
+    href: '/dosen/materi',
+    icon: FileText,
+    description: 'Upload materi'
+  },
+  {
+    label: 'Penilaian',
+    href: '/dosen/penilaian',
+    icon: Award,
+    description: 'Input nilai mahasiswa'
+  }
+];
+
+/**
+ * Admin Navigation
+ */
+const adminNavigation: NavigationItem[] = [
+  {
+    label: 'Dashboard',
+    href: '/admin/dashboard',
+    icon: Home,
+    description: 'Ringkasan sistem'
+  },
+  {
+    label: 'User Management',
+    href: '/admin/users',
+    icon: UserCog,
+    description: 'Kelola pengguna'
+  },
+  {
+    label: 'Mata Kuliah',
+    href: '/admin/mata-kuliah',
+    icon: BookOpen,
+    description: 'Kelola mata kuliah'
+  },
+  {
+    label: 'Kelas',
+    href: '/admin/kelas',
+    icon: Users,
+    description: 'Kelola kelas'
+  },
+  {
+    label: 'Laboratorium',
+    href: '/admin/laboratorium',
+    icon: Building2,
+    description: 'Kelola laboratorium'
+  },
+  {
+    label: 'Jadwal',
+    href: '/admin/jadwal',
+    icon: Calendar,
+    description: 'Kelola jadwal'
+  },
+  {
+    label: 'Laporan',
+    href: '/admin/laporan',
+    icon: BarChart3,
+    description: 'Laporan sistem'
+  },
+  {
+    label: 'Pengaturan',
+    href: '/admin/pengaturan',
+    icon: Settings,
+    description: 'Pengaturan sistem'
+  }
+];
+
+/**
+ * Laboran Navigation
+ */
+const laboranNavigation: NavigationItem[] = [
+  {
+    label: 'Dashboard',
+    href: '/laboran/dashboard',
+    icon: Home,
+    description: 'Ringkasan aktivitas laboratorium'
+  },
+  {
     label: 'Inventaris',
     href: '/laboran/inventaris',
-    description: 'Kelola inventaris',
+    icon: Package,
+    description: 'Kelola inventaris'
   },
   {
-    icon: ClipboardList,
-    label: 'Persetujuan',
-    href: '/laboran/persetujuan',
-    badge: 5,
-    description: 'Persetujuan peminjaman',
+    label: 'Peminjaman',
+    href: '/laboran/peminjaman',
+    icon: Boxes,
+    description: 'Kelola peminjaman'
   },
   {
-    icon: FlaskConical,
+    label: 'Jadwal',
+    href: '/laboran/jadwal',
+    icon: Calendar,
+    description: 'Jadwal laboratorium'
+  },
+  {
     label: 'Laboratorium',
     href: '/laboran/laboratorium',
-    description: 'Kelola laboratorium',
+    icon: Building2,
+    description: 'Kelola laboratorium'
   },
   {
-    icon: BarChart3,
     label: 'Laporan',
     href: '/laboran/laporan',
-    description: 'Laporan inventaris',
-  },
+    icon: BarChart3,
+    description: 'Laporan inventaris'
+  }
 ];
 
-/**
- * Get navigation items by role
- */
-export const NAVIGATION_ITEMS: Record<UserRole, NavItem[]> = {
-  admin: ADMIN_NAV_ITEMS,
-  dosen: DOSEN_NAV_ITEMS,
-  mahasiswa: MAHASISWA_NAV_ITEMS,
-  laboran: LABORAN_NAV_ITEMS,
+// ============================================================================
+// NAVIGATION MAP
+// ============================================================================
+
+const navigationMap: Record<UserRole, NavigationItem[]> = {
+  mahasiswa: mahasiswaNavigation,
+  dosen: dosenNavigation,
+  admin: adminNavigation,
+  laboran: laboranNavigation
 };
+
+// ============================================================================
+// HELPER FUNCTIONS
+// ============================================================================
 
 /**
  * Get navigation items for a specific role
- * @param role - User role
- * @returns Array of navigation items
  */
-export function getNavigationItems(role: UserRole): NavItem[] {
-  return NAVIGATION_ITEMS[role] || [];
+export function getNavigationItems(role: UserRole): NavigationItem[] {
+  return navigationMap[role] || [];
 }
 
 /**
- * Get navigation item by href
- * @param role - User role
- * @param href - Route href
- * @returns Navigation item or undefined
+ * Check if a route is currently active
+ * Handles exact matches and nested route matching
  */
-export function getNavigationItem(role: UserRole, href: string): NavItem | undefined {
+export function isRouteActive(currentPath: string, itemPath: string): boolean {
+  // Exact match
+  if (currentPath === itemPath) {
+    return true;
+  }
+
+  // Check if current path starts with item path (for nested routes)
+  // But avoid false positives (e.g., /mahasiswa/mata-kuliah matching /mahasiswa/materi)
+  if (itemPath !== '/' && currentPath.startsWith(itemPath + '/')) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * Get current navigation item based on path
+ */
+export function getCurrentNavigationItem(
+  role: UserRole,
+  currentPath: string
+): NavigationItem | undefined {
   const items = getNavigationItems(role);
-  return items.find((item) => item.href === href);
+  return items.find(item => isRouteActive(currentPath, item.href));
 }
 
 /**
- * Check if route is active
- * @param currentPath - Current route path
- * @param itemHref - Navigation item href
- * @returns Whether route is active
+ * Get breadcrumbs for current path
  */
-export function isRouteActive(currentPath: string, itemHref: string): boolean {
-  // Exact match for dashboard routes
-  if (
-    itemHref === '/admin' ||
-    itemHref === '/dosen' ||
-    itemHref === '/mahasiswa' ||
-    itemHref === '/laboran'
-  ) {
-    return currentPath === itemHref;
+export function getBreadcrumbs(
+  role: UserRole,
+  currentPath: string
+): { label: string; href: string }[] {
+  const segments = currentPath.split('/').filter(Boolean);
+  const breadcrumbs: { label: string; href: string }[] = [];
+  
+  let currentHref = '';
+  for (const segment of segments) {
+    currentHref += `/${segment}`;
+    const item = getCurrentNavigationItem(role, currentHref);
+    if (item) {
+      breadcrumbs.push({
+        label: item.label,
+        href: item.href
+      });
+    }
   }
   
-  // Prefix match for other routes
-  return currentPath.startsWith(itemHref);
+  return breadcrumbs;
 }

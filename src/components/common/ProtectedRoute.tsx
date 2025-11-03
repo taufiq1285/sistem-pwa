@@ -8,20 +8,21 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
-  // 🔓 TEMPORARY BYPASS - Supabase Auth Issue
-  // TODO: Remove after fixing database
-  const BYPASS_AUTH = true;
+  // --- PERBAIKAN: Pindahkan Hooks ke paling atas ---
+  const { isAuthenticated, loading, initialized } = useAuth();
+  const location = useLocation();
+  // --- Batas Perbaikan ---
+
+  const BYPASS_AUTH = false;
   
   if (BYPASS_AUTH) {
     console.log('🔓 AUTH BYPASSED FOR TESTING');
     return children ? <>{children}</> : <Outlet />;
   }
 
-  const { isAuthenticated, loading, initialized } = useAuth();
-  const location = useLocation();
+  // Hooks tadinya ada di sini, sekarang sudah dipindah ke atas
 
-  // 🛠 DEBUG: Log all authentication states
-  console.log('🔒 ProtectedRoute Check:', {
+  console.log('🔐 ProtectedRoute Check:', {
     path: location.pathname,
     loading,
     initialized,
@@ -29,7 +30,6 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     timestamp: new Date().toISOString(),
   });
 
-  // Show loading spinner while checking authentication
   if (loading || !initialized) {
     console.log('⏳ ProtectedRoute: LOADING STATE', { loading, initialized });
     return (
@@ -45,7 +45,6 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     );
   }
 
-  // Redirect to login if not authenticated
   if (!isAuthenticated) {
     console.log('❌ ProtectedRoute: NOT AUTHENTICATED, redirecting to login', {
       attemptedPath: location.pathname,
@@ -60,3 +59,5 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   
   return children ? <>{children}</> : <Outlet />;
 }
+
+export default ProtectedRoute;
