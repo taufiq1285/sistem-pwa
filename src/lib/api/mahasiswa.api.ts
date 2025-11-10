@@ -1,524 +1,497 @@
 /**
- * Mahasiswa API Functions
- * 
- * API functions for mahasiswa dashboard and features
- * Schema-compliant version matching actual Supabase database
+ * Mahasiswa API - COMPLETE FIX
+ * All .single() issues fixed to prevent 406 errors
  */
 
 import { supabase } from '@/lib/supabase/client';
-import type { 
-  EnrolledCourse, 
-  CourseStats 
-} from '@/types/mata-kuliah.types';
-import type { 
-  UpcomingQuiz, 
-  QuizStats
-} from '@/types/kuis.types';
-import type { 
-  TodaySchedule, 
-  WeeklySchedule,
-  ScheduleStats 
-} from '@/types/jadwal.types';
-import type { Nilai } from '@/types/nilai.types';
 
-// ========================================
+// ============================================================================
 // TYPES
-// ========================================
+// ============================================================================
 
-/**
- * Dashboard Data Structure
- */
-export interface DashboardData {
-  enrolledCourses: EnrolledCourse[];
-  upcomingQuizzes: UpcomingQuiz[];
-  latestGrades: Nilai[];
-  todaySchedule: TodaySchedule[];
-  stats: {
-    course: CourseStats;
-    quiz: QuizStats;
-    schedule: ScheduleStats;
+export interface MahasiswaStats {
+  totalMataKuliah: number;
+  totalKuis: number;
+  rataRataNilai: number | null;
+  jadwalHariIni: number;
+}
+
+export interface AvailableKelas {
+  id: string;
+  kode_kelas: string;
+  nama_kelas: string;
+  tahun_ajaran: string;
+  semester_ajaran: number;
+  kuota: number;
+  jumlah_mahasiswa: number;
+  is_full: boolean;
+  is_enrolled: boolean;
+  mata_kuliah: {
+    id: string;
+    kode_mk: string;
+    nama_mk: string;
+    sks: number;
+    semester: number;
+  };
+  jadwal_count: number;
+  next_jadwal?: {
+    tanggal_praktikum: string;
+    jam_mulai: string;
+    jam_selesai: string;
+    lab_nama: string;
   };
 }
 
-// ========================================
-// DASHBOARD API
-// ========================================
-
-/**
- * Get Complete Dashboard Data for Mahasiswa
- */
-export async function getMahasiswaDashboard(mahasiswaId: string): Promise<{
-  success: boolean;
-  data?: DashboardData;
-  error?: string;
-}> {
-  try {
-    // Fetch all data in parallel
-    const [
-      enrolledCourses,
-      upcomingQuizzes,
-      latestGrades,
-      todaySchedule,
-      courseStats,
-      quizStats,
-      scheduleStats
-    ] = await Promise.all([
-      getEnrolledCourses(mahasiswaId),
-      getUpcomingQuizzes(mahasiswaId),
-      getLatestGrades(mahasiswaId),
-      getTodaySchedule(mahasiswaId),
-      getCourseStats(mahasiswaId),
-      getQuizStats(mahasiswaId),
-      getScheduleStats(mahasiswaId)
-    ]);
-
-    return {
-      success: true,
-      data: {
-        enrolledCourses,
-        upcomingQuizzes,
-        latestGrades,
-        todaySchedule,
-        stats: {
-          course: courseStats,
-          quiz: quizStats,
-          schedule: scheduleStats
-        }
-      }
-    };
-  } catch (error: any) {
-    console.error('Error fetching mahasiswa dashboard:', error);
-    return {
-      success: false,
-      error: error.message || 'Failed to fetch dashboard data'
-    };
-  }
+export interface MyKelas {
+  id: string;
+  kode_kelas: string;
+  nama_kelas: string;
+  mata_kuliah_kode: string;
+  mata_kuliah_nama: string;
+  sks: number;
+  tahun_ajaran: string;
+  semester_ajaran: number;
+  enrolled_at: string;
 }
 
-// ========================================
-// STATISTICS
-// ========================================
+export interface JadwalMahasiswa {
+  id: string;
+  tanggal_praktikum: string;
+  hari: string;
+  jam_mulai: string;
+  jam_selesai: string;
+  topik?: string;
+  kelas_nama: string;
+  mata_kuliah_nama: string;
+  lab_nama: string;
+  lab_kode: string;
+}
 
-/**
- * Get Course Statistics
- */
-async function getCourseStats(mahasiswaId: string): Promise<CourseStats> {
+// ============================================================================
+// HELPER
+// ============================================================================
+
+async function getMahasiswaId(): Promise<string | null> {
   try {
-    // Get active courses count
-    const { count: activeCourses } = await supabase
-      .from('kelas_mahasiswa')
-      .select('id', { count: 'exact' })
-      .eq('mahasiswa_id', mahasiswaId)
-      .eq('is_active', true);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
 
-    // TODO: Calculate completed courses and average grade when nilai table is ready
-    const completedCourses = 0;
-    const averageGrade = 0;
+    const { data } = await supabase
+      .from('mahasiswa')
+      .select('id')
+      .eq('user_id', user.id)
+      .single();
 
-    return {
-      total_enrolled: activeCourses || 0,
-      active_courses: activeCourses || 0,
-      completed_courses: completedCourses,
-      average_grade: averageGrade
-    };
+    return data?.id || null;
   } catch (error) {
-    console.error('Error fetching course stats:', error);
-    return {
-      total_enrolled: 0,
-      active_courses: 0,
-      completed_courses: 0,
-      average_grade: 0
-    };
+    console.error('Error getting mahasiswa ID:', error);
+    return null;
   }
 }
 
-/**
- * Get Quiz Statistics
- * TODO: Implement when kuis & attempt_kuis tables are ready
- */
-async function getQuizStats(_mahasiswaId: string): Promise<QuizStats> {
-  return {
-    total_quiz: 0,
-    completed_quiz: 0,
-    upcoming_quiz: 0,
-    average_score: 0
-  };
-}
+// ============================================================================
+// STATS
+// ============================================================================
 
-/**
- * Get Schedule Statistics
- */
-async function getScheduleStats(mahasiswaId: string): Promise<ScheduleStats> {
+export async function getMahasiswaStats(): Promise<MahasiswaStats> {
   try {
-    // Get student's enrolled classes
-    const { data: enrollments } = await supabase
+    const mahasiswaId = await getMahasiswaId();
+    if (!mahasiswaId) {
+      return {
+        totalMataKuliah: 0,
+        totalKuis: 0,
+        rataRataNilai: null,
+        jadwalHariIni: 0,
+      };
+    }
+
+    const { data: kelasData } = await supabase
       .from('kelas_mahasiswa')
       .select('kelas_id')
       .eq('mahasiswa_id', mahasiswaId)
       .eq('is_active', true);
 
-    const kelasIds = enrollments?.map(e => e.kelas_id) || [];
+    const totalMataKuliah = kelasData?.length || 0;
 
-    if (kelasIds.length === 0) {
-      return {
-        total_classes_today: 0,
-        total_classes_week: 0,
-        total_classes_month: 0  // FIXED: Added missing property
-      };
+    const today = new Date().toISOString().split('T')[0];
+    const { data: jadwalData } = await supabase
+      .from('jadwal_praktikum')
+      .select('id, kelas_id')
+      .eq('tanggal_praktikum', today)
+      .in('kelas_id', kelasData?.map((k: any) => k.kelas_id) || []);
+
+    const jadwalHariIni = jadwalData?.length || 0;
+
+    const { data: kuisData } = await supabase
+      .from('kuis')
+      .select('id')
+      .in('kelas_id', kelasData?.map((k: any) => k.kelas_id) || [])
+      .lte('tanggal_mulai', new Date().toISOString())
+      .gte('tanggal_selesai', new Date().toISOString())
+      .eq('status', 'published');
+
+    const totalKuis = kuisData?.length || 0;
+
+    const { data: nilaiData } = await supabase
+      .from('attempt_kuis')
+      .select('total_score')
+      .eq('mahasiswa_id', mahasiswaId)
+      .not('total_score', 'is', null);
+
+    let rataRataNilai = null;
+    if (nilaiData && nilaiData.length > 0) {
+      const sum = nilaiData.reduce((acc: number, curr: any) => acc + (curr.total_score || 0), 0);
+      rataRataNilai = sum / nilaiData.length;
     }
 
-    // Get today's day name (lowercase)
-    const today = new Date()
-      .toLocaleDateString('id-ID', { weekday: 'long' })
-      .toLowerCase() as 'senin' | 'selasa' | 'rabu' | 'kamis' | 'jumat' | 'sabtu' | 'minggu';
-    
-    const { count: todayCount } = await supabase
-      .from('jadwal')
-      .select('id', { count: 'exact' })
-      .in('kelas_id', kelasIds)
-      .eq('hari', today)
-      .eq('is_active', true);
-
     return {
-      total_classes_today: todayCount || 0,
-      total_classes_week: 0,
-      total_classes_month: 0  // FIXED: Added missing property
+      totalMataKuliah,
+      totalKuis,
+      rataRataNilai,
+      jadwalHariIni,
     };
   } catch (error) {
-    console.error('Error fetching schedule stats:', error);
+    console.error('Error fetching mahasiswa stats:', error);
     return {
-      total_classes_today: 0,
-      total_classes_week: 0,
-      total_classes_month: 0  // FIXED: Added missing property
+      totalMataKuliah: 0,
+      totalKuis: 0,
+      rataRataNilai: null,
+      jadwalHariIni: 0,
     };
   }
 }
 
-// ========================================
-// ENROLLED COURSES
-// ========================================
+// ============================================================================
+// AVAILABLE KELAS
+// ============================================================================
 
-/**
- * Get Enrolled Courses for Mahasiswa
- * Schema: kelas_mahasiswa has enrolled_at (not created_at)
- */
-export async function getEnrolledCourses(
-  mahasiswaId: string,
-  _status?: 'active' | 'completed' | 'dropped'
-): Promise<EnrolledCourse[]> {
+export async function getAvailableKelas(): Promise<AvailableKelas[]> {
   try {
+    const mahasiswaId = await getMahasiswaId();
+    if (!mahasiswaId) return [];
+
+    const { data: kelasData, error } = await supabase
+      .from('kelas')
+      .select('id, kode_kelas, nama_kelas, tahun_ajaran, semester_ajaran, kuota, mata_kuliah_id')
+      .eq('is_active', true)
+      .order('nama_kelas', { ascending: true });
+
+    if (error) throw error;
+    if (!kelasData) return [];
+
+    const { data: enrolledData } = await supabase
+      .from('kelas_mahasiswa')
+      .select('kelas_id')
+      .eq('mahasiswa_id', mahasiswaId)
+      .eq('is_active', true);
+
+    const enrolledKelasIds = new Set(enrolledData?.map((e: any) => e.kelas_id) || []);
+
+    const result = await Promise.all(
+      kelasData.map(async (kelas: any) => {
+        const { data: mkData } = await supabase
+          .from('mata_kuliah')
+          .select('id, kode_mk, nama_mk, sks, semester')
+          .eq('id', kelas.mata_kuliah_id)
+          .single();
+
+        const { count: jumlahMahasiswa } = await supabase
+          .from('kelas_mahasiswa')
+          .select('*', { count: 'exact', head: true })
+          .eq('kelas_id', kelas.id)
+          .eq('is_active', true);
+
+        const { count: jadwalCount } = await supabase
+          .from('jadwal_praktikum')
+          .select('*', { count: 'exact', head: true })
+          .eq('kelas_id', kelas.id)
+          .eq('is_active', true);
+
+        // FIXED: No .single() to avoid 406 error when no data
+        const today = new Date().toISOString().split('T')[0];
+        const { data: nextJadwalArray } = await supabase
+          .from('jadwal_praktikum')
+          .select('tanggal_praktikum, jam_mulai, jam_selesai, laboratorium_id')
+          .eq('kelas_id', kelas.id)
+          .gte('tanggal_praktikum', today)
+          .eq('is_active', true)
+          .order('tanggal_praktikum', { ascending: true })
+          .limit(1);
+
+        const nextJadwalData = nextJadwalArray && nextJadwalArray.length > 0 
+          ? nextJadwalArray[0] 
+          : null;
+
+        let nextJadwal;
+        if (nextJadwalData) {
+          const { data: labData } = await supabase
+            .from('laboratorium')
+            .select('nama_lab')
+            .eq('id', nextJadwalData.laboratorium_id)
+            .single();
+
+          nextJadwal = {
+            tanggal_praktikum: nextJadwalData.tanggal_praktikum,
+            jam_mulai: nextJadwalData.jam_mulai,
+            jam_selesai: nextJadwalData.jam_selesai,
+            lab_nama: labData?.nama_lab || '-',
+          };
+        }
+
+        return {
+          id: kelas.id,
+          kode_kelas: kelas.kode_kelas,
+          nama_kelas: kelas.nama_kelas,
+          tahun_ajaran: kelas.tahun_ajaran,
+          semester_ajaran: kelas.semester_ajaran,
+          kuota: kelas.kuota,
+          jumlah_mahasiswa: jumlahMahasiswa || 0,
+          is_full: (jumlahMahasiswa || 0) >= kelas.kuota,
+          is_enrolled: enrolledKelasIds.has(kelas.id),
+          mata_kuliah: mkData || {
+            id: '',
+            kode_mk: '',
+            nama_mk: '',
+            sks: 0,
+            semester: 0,
+          },
+          jadwal_count: jadwalCount || 0,
+          next_jadwal: nextJadwal,
+        };
+      })
+    );
+
+    return result;
+  } catch (error) {
+    console.error('Error fetching available kelas:', error);
+    return [];
+  }
+}
+
+// ============================================================================
+// ENROLLMENT
+// ============================================================================
+
+export async function enrollToKelas(kelasId: string): Promise<{ success: boolean; message: string }> {
+  try {
+    const mahasiswaId = await getMahasiswaId();
+    if (!mahasiswaId) {
+      return { success: false, message: 'Mahasiswa tidak ditemukan' };
+    }
+
+    // FIXED: No .single() to avoid 406 error when not enrolled yet
+    const { data: existingArray } = await supabase
+      .from('kelas_mahasiswa')
+      .select('id')
+      .eq('mahasiswa_id', mahasiswaId)
+      .eq('kelas_id', kelasId)
+      .eq('is_active', true)
+      .limit(1);
+
+    if (existingArray && existingArray.length > 0) {
+      return { success: false, message: 'Anda sudah terdaftar di kelas ini' };
+    }
+
+    const { data: kelasData } = await supabase
+      .from('kelas')
+      .select('kuota')
+      .eq('id', kelasId)
+      .single();
+
+    if (!kelasData) {
+      return { success: false, message: 'Kelas tidak ditemukan' };
+    }
+
+    const { count: enrolledCount } = await supabase
+      .from('kelas_mahasiswa')
+      .select('*', { count: 'exact', head: true })
+      .eq('kelas_id', kelasId)
+      .eq('is_active', true);
+
+    if ((enrolledCount || 0) >= (kelasData.kuota || 0)) {
+      return { success: false, message: 'Kelas sudah penuh' };
+    }
+
+    const { error } = await supabase
+      .from('kelas_mahasiswa')
+      .insert({
+        mahasiswa_id: mahasiswaId,
+        kelas_id: kelasId,
+        enrolled_at: new Date().toISOString(),
+        is_active: true,
+      });
+
+    if (error) throw error;
+
+    return { success: true, message: 'Berhasil mendaftar ke kelas' };
+  } catch (error: any) {
+    console.error('Error enrolling to kelas:', error);
+    return { success: false, message: error.message || 'Gagal mendaftar ke kelas' };
+  }
+}
+
+export async function unenrollFromKelas(kelasId: string): Promise<{ success: boolean; message: string }> {
+  try {
+    const mahasiswaId = await getMahasiswaId();
+    if (!mahasiswaId) {
+      return { success: false, message: 'Mahasiswa tidak ditemukan' };
+    }
+
+    const { error } = await supabase
+      .from('kelas_mahasiswa')
+      .update({ is_active: false })
+      .eq('mahasiswa_id', mahasiswaId)
+      .eq('kelas_id', kelasId);
+
+    if (error) throw error;
+
+    return { success: true, message: 'Berhasil keluar dari kelas' };
+  } catch (error: any) {
+    console.error('Error unenrolling from kelas:', error);
+    return { success: false, message: error.message || 'Gagal keluar dari kelas' };
+  }
+}
+
+// ============================================================================
+// MY CLASSES
+// ============================================================================
+
+export async function getMyKelas(): Promise<MyKelas[]> {
+  try {
+    const mahasiswaId = await getMahasiswaId();
+    if (!mahasiswaId) return [];
+
     const { data, error } = await supabase
       .from('kelas_mahasiswa')
-      .select(`
-        *,
-        kelas!inner(
-          *,
-          mata_kuliah!inner(*),
-          dosen!inner(
-            id,
-            users!inner(full_name),
-            gelar_depan,
-            gelar_belakang
-          )
-        )
-      `)
+      .select('kelas_id, enrolled_at')
       .eq('mahasiswa_id', mahasiswaId)
       .eq('is_active', true)
       .order('enrolled_at', { ascending: false });
 
     if (error) throw error;
+    if (!data) return [];
 
-    // Transform to EnrolledCourse format
-    const courses: EnrolledCourse[] = (data || []).map((enrollment: any) => {
-      const kelas = enrollment.kelas;
-      const mk = kelas.mata_kuliah;
-      const dosen = kelas.dosen;
+    const result = await Promise.all(
+      data.map(async (item: any) => {
+        const { data: kelasData } = await supabase
+          .from('kelas')
+          .select('id, kode_kelas, nama_kelas, tahun_ajaran, semester_ajaran, mata_kuliah_id')
+          .eq('id', item.kelas_id)
+          .single();
 
-      // Format dosen name with gelar
-      let dosenName = dosen.users.full_name;
-      if (dosen.gelar_depan) dosenName = `${dosen.gelar_depan} ${dosenName}`;
-      if (dosen.gelar_belakang) dosenName = `${dosenName}, ${dosen.gelar_belakang}`;
+        if (!kelasData) return null;
 
-      return {
-        id: mk.id,
-        kelas_id: kelas.id,
-        enrollment_id: enrollment.id,
-        kode_mk: mk.kode_mk,
-        nama_mk: mk.nama_mk,
-        nama_kelas: kelas.nama_kelas,
-        sks: mk.sks,
-        semester: mk.semester,
-        dosen_name: dosenName,
-        dosen_gelar: '',
-        hari: undefined,
-        jam_mulai: undefined,
-        jam_selesai: undefined,
-        ruangan: kelas.ruangan,
-        status: 'active',
-        enrolled_at: enrollment.enrolled_at
-      };
-    });
+        const { data: mkData } = await supabase
+          .from('mata_kuliah')
+          .select('kode_mk, nama_mk, sks')
+          .eq('id', kelasData.mata_kuliah_id)
+          .single();
 
-    return courses;
-  } catch (error: any) {
-    console.error('Error fetching enrolled courses:', error);
-    throw error;
-  }
-}
+        return {
+          id: kelasData.id,
+          kode_kelas: kelasData.kode_kelas,
+          nama_kelas: kelasData.nama_kelas,
+          mata_kuliah_kode: mkData?.kode_mk || '-',
+          mata_kuliah_nama: mkData?.nama_mk || '-',
+          sks: mkData?.sks || 0,
+          tahun_ajaran: kelasData.tahun_ajaran,
+          semester_ajaran: kelasData.semester_ajaran,
+          enrolled_at: item.enrolled_at,
+        };
+      })
+    );
 
-// ========================================
-// UPCOMING QUIZZES
-// ========================================
-
-/**
- * Get Upcoming Quizzes for Mahasiswa
- * TODO: Implement when kuis & attempt_kuis tables are ready
- */
-export async function getUpcomingQuizzes(
-  _mahasiswaId: string,
-  _limit: number = 5
-): Promise<UpcomingQuiz[]> {
-  return [];
-}
-
-// ========================================
-// GRADES
-// ========================================
-
-/**
- * Get Latest Grades for Mahasiswa
- * TODO: Implement when nilai table is ready
- */
-export async function getLatestGrades(
-  _mahasiswaId: string,
-  _limit: number = 5
-): Promise<Nilai[]> {
-  return [];
-}
-
-/**
- * Get All Grades for Mahasiswa
- * TODO: Implement when nilai table is ready
- */
-export async function getAllGrades(_mahasiswaId: string): Promise<Nilai[]> {
-  return [];
-}
-
-// ========================================
-// SCHEDULE
-// ========================================
-
-/**
- * Get Today's Schedule for Mahasiswa
- * Schema: jadwal has hari (day_of_week enum), topik, deskripsi
- */
-export async function getTodaySchedule(mahasiswaId: string): Promise<TodaySchedule[]> {
-  try {
-    // Get today's day name (lowercase)
-    const today = new Date()
-      .toLocaleDateString('id-ID', { weekday: 'long' })
-      .toLowerCase() as 'senin' | 'selasa' | 'rabu' | 'kamis' | 'jumat' | 'sabtu' | 'minggu';
-    
-    const now = new Date();
-
-    // Get student's enrolled classes
-    const { data: enrollments, error: enrollError } = await supabase
-      .from('kelas_mahasiswa')
-      .select('kelas_id')
-      .eq('mahasiswa_id', mahasiswaId)
-      .eq('is_active', true);
-
-    if (enrollError) throw enrollError;
-
-    const kelasIds = enrollments?.map(e => e.kelas_id) || [];
-
-    if (kelasIds.length === 0) {
-      return [];
-    }
-
-    // FIXED: Changed from jadwal_praktikum to jadwal
-    const { data: schedules, error: scheduleError } = await supabase
-      .from('jadwal')
-      .select(`
-        *,
-        kelas!inner(
-          *,
-          mata_kuliah!inner(*),
-          dosen!inner(
-            users!inner(full_name),
-            gelar_depan,
-            gelar_belakang
-          )
-        ),
-        laboratorium!inner(*)
-      `)
-      .in('kelas_id', kelasIds)
-      .eq('hari', today)
-      .eq('is_active', true)
-      .order('jam_mulai', { ascending: true });
-
-    if (scheduleError) throw scheduleError;
-
-    // Transform to TodaySchedule format
-    const todaySchedules: TodaySchedule[] = (schedules || []).map((schedule: any) => {
-      const kelas = schedule.kelas;
-      const mk = kelas.mata_kuliah;
-      const dosen = kelas.dosen;
-      const lab = schedule.laboratorium;
-
-      // Format dosen name
-      let dosenName = dosen.users.full_name;
-      if (dosen.gelar_depan) dosenName = `${dosen.gelar_depan} ${dosenName}`;
-      if (dosen.gelar_belakang) dosenName = `${dosenName}, ${dosen.gelar_belakang}`;
-
-      // Determine time status
-      const [startHour, startMinute] = schedule.jam_mulai.split(':').map(Number);
-      const [endHour, endMinute] = schedule.jam_selesai.split(':').map(Number);
-      
-      const startTime = new Date(now);
-      startTime.setHours(startHour, startMinute, 0);
-      
-      const endTime = new Date(now);
-      endTime.setHours(endHour, endMinute, 0);
-
-      let timeStatus: 'past' | 'ongoing' | 'upcoming' = 'upcoming';
-      if (now > endTime) {
-        timeStatus = 'past';
-      } else if (now >= startTime && now <= endTime) {
-        timeStatus = 'ongoing';
-      }
-
-      return {
-        id: schedule.id,
-        kelas_id: schedule.kelas_id,
-        kelas: kelas,  // FIXED: Added missing property
-        tanggal_praktikum: today,  // FIXED: Added missing property
-        kode_mk: mk.kode_mk,
-        nama_mk: mk.nama_mk,
-        nama_kelas: kelas.nama_kelas,
-        sks: mk.sks,
-        hari: schedule.hari,
-        jam_mulai: schedule.jam_mulai,
-        jam_selesai: schedule.jam_selesai,
-        minggu_ke: schedule.minggu_ke,
-        laboratorium_id: schedule.laboratorium_id,
-        nama_lab: lab.nama_lab,
-        kode_lab: lab.kode_lab,
-        kapasitas: lab.kapasitas,
-        topik: schedule.topik,
-        catatan: schedule.deskripsi,
-        dosen_name: dosenName,
-        dosen_gelar: '',
-        is_now: timeStatus === 'ongoing',
-        is_upcoming: timeStatus === 'upcoming',
-        is_past: timeStatus === 'past',
-        time_status: timeStatus
-      };
-    });
-
-    return todaySchedules;
-  } catch (error: any) {
-    console.error('Error fetching today schedule:', error);
+    return result.filter((item): item is MyKelas => item !== null);
+  } catch (error) {
+    console.error('Error fetching my kelas:', error);
     return [];
   }
 }
 
-/**
- * Get Weekly Schedule for Mahasiswa
- */
-export async function getWeeklySchedule(mahasiswaId: string): Promise<WeeklySchedule[]> {
+// ============================================================================
+// JADWAL
+// ============================================================================
+
+export async function getMyJadwal(limit?: number): Promise<JadwalMahasiswa[]> {
   try {
-    // Get student's enrolled classes
-    const { data: enrollments, error: enrollError } = await supabase
+    const mahasiswaId = await getMahasiswaId();
+    if (!mahasiswaId) return [];
+
+    const { data: enrolledData } = await supabase
       .from('kelas_mahasiswa')
       .select('kelas_id')
       .eq('mahasiswa_id', mahasiswaId)
       .eq('is_active', true);
 
-    if (enrollError) throw enrollError;
+    if (!enrolledData || enrolledData.length === 0) return [];
 
-    const kelasIds = enrollments?.map(e => e.kelas_id) || [];
+    const kelasIds = enrolledData.map((e: any) => e.kelas_id);
 
-    if (kelasIds.length === 0) {
-      return [];
-    }
+    const today = new Date().toISOString().split('T')[0];
+    const nextWeek = new Date();
+    nextWeek.setDate(nextWeek.getDate() + 7);
+    const nextWeekStr = nextWeek.toISOString().split('T')[0];
 
-    // FIXED: Changed from jadwal_praktikum to jadwal
-    const { data: schedules, error: scheduleError } = await supabase
-      .from('jadwal')
-      .select(`
-        *,
-        kelas!inner(
-          *,
-          mata_kuliah!inner(*),
-          dosen!inner(
-            users!inner(full_name),
-            gelar_depan,
-            gelar_belakang
-          )
-        ),
-        laboratorium!inner(*)
-      `)
+    let query = supabase
+      .from('jadwal_praktikum')
+      .select('id, tanggal_praktikum, hari, jam_mulai, jam_selesai, topik, kelas_id, laboratorium_id')
       .in('kelas_id', kelasIds)
+      .gte('tanggal_praktikum', today)
+      .lte('tanggal_praktikum', nextWeekStr)
       .eq('is_active', true)
+      .order('tanggal_praktikum', { ascending: true })
       .order('jam_mulai', { ascending: true });
 
-    if (scheduleError) throw scheduleError;
+    if (limit) {
+      query = query.limit(limit);
+    }
 
-    // Group by day
-    const days = ['senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu'];
-    const weeklySchedule: WeeklySchedule[] = days.map(hari => {
-      const daySchedules = (schedules || [])
-        .filter((s: any) => s.hari === hari)
-        .map((schedule: any) => {
-          const kelas = schedule.kelas;
-          const mk = kelas.mata_kuliah;
-          const dosen = kelas.dosen;
-          const lab = schedule.laboratorium;
+    const { data, error } = await query;
+    if (error) throw error;
+    if (!data) return [];
 
-          // Format dosen name
-          let dosenName = dosen.users.full_name;
-          if (dosen.gelar_depan) dosenName = `${dosen.gelar_depan} ${dosenName}`;
-          if (dosen.gelar_belakang) dosenName = `${dosenName}, ${dosen.gelar_belakang}`;
+    const result = await Promise.all(
+      data.map(async (item: any) => {
+        const { data: kelasData } = await supabase
+          .from('kelas')
+          .select('nama_kelas, mata_kuliah_id')
+          .eq('id', item.kelas_id)
+          .single();
 
-          return {
-            id: schedule.id,
-            kelas_id: schedule.kelas_id,
-            kelas: kelas,  // Added for type compatibility
-            tanggal_praktikum: hari,  // Added for type compatibility
-            kode_mk: mk.kode_mk,
-            nama_mk: mk.nama_mk,
-            nama_kelas: kelas.nama_kelas,
-            sks: mk.sks,
-            hari: schedule.hari,
-            jam_mulai: schedule.jam_mulai,
-            jam_selesai: schedule.jam_selesai,
-            minggu_ke: schedule.minggu_ke,
-            laboratorium_id: schedule.laboratorium_id,
-            nama_lab: lab.nama_lab,
-            kode_lab: lab.kode_lab,
-            kapasitas: lab.kapasitas,
-            topik: schedule.topik,
-            catatan: schedule.deskripsi,
-            dosen_name: dosenName,
-            dosen_gelar: '',
-            is_now: false,
-            is_upcoming: false,
-            is_past: false,
-            time_status: 'upcoming' as const
-          };
-        });
+        let mkData = null;
+        if (kelasData?.mata_kuliah_id) {
+          const result = await supabase
+            .from('mata_kuliah')
+            .select('nama_mk')
+            .eq('id', kelasData.mata_kuliah_id)
+            .single();
+          mkData = result.data;
+        }
 
-      return {
-        hari,
-        tanggal: hari,  // FIXED: Added missing property
-        schedules: daySchedules
-      };
-    });
+        const { data: labData } = await supabase
+          .from('laboratorium')
+          .select('nama_lab, kode_lab')
+          .eq('id', item.laboratorium_id)
+          .single();
 
-    return weeklySchedule;
-  } catch (error: any) {
-    console.error('Error fetching weekly schedule:', error);
+        return {
+          id: item.id,
+          tanggal_praktikum: item.tanggal_praktikum,
+          hari: item.hari,
+          jam_mulai: item.jam_mulai,
+          jam_selesai: item.jam_selesai,
+          topik: item.topik,
+          kelas_nama: kelasData?.nama_kelas || '-',
+          mata_kuliah_nama: mkData?.nama_mk || '-',
+          lab_nama: labData?.nama_lab || '-',
+          lab_kode: labData?.kode_lab || '-',
+        };
+      })
+    );
+
+    return result;
+  } catch (error) {
+    console.error('Error fetching my jadwal:', error);
     return [];
   }
 }

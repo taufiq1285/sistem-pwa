@@ -1,6 +1,6 @@
 /**
- * Supabase Auth Helper - DEBUG DIAGNOSTIC VERSION
- * Wrapper functions for Supabase authentication with comprehensive logging
+ * Supabase Auth Helper - FIXED: Include profile IDs
+ * Wrapper functions for Supabase authentication with role-specific data
  */
 
 import { supabase } from './client';
@@ -78,6 +78,7 @@ export async function register(data: RegisterData): Promise<AuthResponse> {
           }),
           ...(data.role === 'dosen' && {
             nip: data.nip,
+            nidn: data.nidn,
             gelar_depan: data.gelar_depan,
             gelar_belakang: data.gelar_belakang,
           }),
@@ -173,24 +174,10 @@ export async function getSession(): Promise<AuthSession | null> {
       return null;
     }
 
-    // ✅ Use session user metadata directly - no database query
-    const authUser = data.session.user;
-    
-    const user: AuthUser = {
-      id: authUser.id,
-      email: authUser.email || '',
-      full_name: authUser.user_metadata?.full_name || 'User',
-      role: authUser.user_metadata?.role || 'mahasiswa',
-      phone: authUser.user_metadata?.phone || null,
-      avatar_url: authUser.user_metadata?.avatar_url || null,
-      is_active: true,
-      last_seen_at: null,
-      metadata: {},
-      created_at: authUser.created_at,
-      updated_at: authUser.updated_at || authUser.created_at,
-    };
+    // Fetch full user profile from database
+    const user = await getUserProfile(data.session.user.id);
 
-    console.log('✅ getSession: User constructed from metadata', { userId: user.id, role: user.role });
+    console.log('✅ getSession: User profile loaded', { userId: user.id, role: user.role });
 
     return {
       user,
@@ -299,7 +286,7 @@ export async function updatePassword(password: string): Promise<AuthResponse> {
 
 /**
  * Get user profile with role-specific data
- * Includes fallback to auth metadata if database query fails
+ * ✅ FIXED: Now includes id field from role tables
  */
 async function getUserProfile(userId: string): Promise<AuthUser> {
   console.log('🔵 getUserProfile: START', { userId });
@@ -343,51 +330,72 @@ async function getUserProfile(userId: string): Promise<AuthUser> {
       fullName: user.full_name 
     });
 
-    // Get role-specific data
+    // ✅ FIXED: Get role-specific data with id field
     let roleData = null;
     try {
       console.log('🔵 getUserProfile: Fetching role-specific data for role:', user.role);
       
       switch (user.role) {
-        case 'mahasiswa':
+        case 'mahasiswa': {
           const { data: mahasiswaData, error: mahasiswaError } = await supabase
             .from('mahasiswa')
-            .select('*')
+            .select('id, nim, program_studi, angkatan, semester')
             .eq('user_id', userId)
             .single();
-          console.log('🔵 getUserProfile: mahasiswa data', { hasMahasiswaData: !!mahasiswaData, error: mahasiswaError });
+          console.log('🔵 getUserProfile: mahasiswa data', { 
+            hasMahasiswaData: !!mahasiswaData, 
+            mahasiswaId: mahasiswaData?.id,
+            error: mahasiswaError 
+          });
           roleData = { mahasiswa: mahasiswaData };
           break;
+        }
           
-        case 'dosen':
+        case 'dosen': {
           const { data: dosenData, error: dosenError } = await supabase
             .from('dosen')
-            .select('*')
+            .select('id, nip, nidn, gelar_depan, gelar_belakang, fakultas, program_studi')
             .eq('user_id', userId)
             .single();
-          console.log('🔵 getUserProfile: dosen data', { hasDosenData: !!dosenData, error: dosenError });
+          console.log('🔵 getUserProfile: dosen data', { 
+            hasDosenData: !!dosenData, 
+            dosenId: dosenData?.id,
+            error: dosenError 
+          });
           roleData = { dosen: dosenData };
           break;
+        }
           
-        case 'laboran':
+        case 'laboran': {
           const { data: laboranData, error: laboranError } = await supabase
             .from('laboran')
-            .select('*')
+            .select('id, nip')
             .eq('user_id', userId)
             .single();
-          console.log('🔵 getUserProfile: laboran data', { hasLaboranData: !!laboranData, error: laboranError });
+          console.log('🔵 getUserProfile: laboran data', { 
+            hasLaboranData: !!laboranData, 
+            laboranId: laboranData?.id,
+            error: laboranError 
+          });
           roleData = { laboran: laboranData };
           break;
+        }
           
-        case 'admin':
+        case 'admin': {
           const { data: adminData, error: adminError } = await supabase
             .from('admin')
-            .select('*')
+            .select('id, level, permissions') // ✅ Correct admin fields
             .eq('user_id', userId)
             .single();
-          console.log('🔵 getUserProfile: admin data', { hasAdminData: !!adminData, error: adminError });
+          console.log('🔵 getUserProfile: admin data', { 
+            hasAdminData: !!adminData, 
+            adminId: adminData?.id,
+            adminLevel: adminData?.level,
+            error: adminError 
+          });
           roleData = { admin: adminData };
           break;
+        }
       }
     } catch (roleError) {
       console.warn('⚠️ getUserProfile: Failed to fetch role-specific data:', roleError);
@@ -443,6 +451,7 @@ async function getUserProfile(userId: string): Promise<AuthUser> {
 
 /**
  * Listen to auth state changes
+ * ✅ FIXED: Fetch full user profile instead of using metadata only
  */
 export function onAuthStateChange(
   callback: (session: AuthSession | null) => void
@@ -458,24 +467,15 @@ export function onAuthStateChange(
     
     if (session?.user) {
       try {
-        // ✅ Use session user metadata directly - no database query
-        const authUser = session.user;
-        
-        const user: AuthUser = {
-          id: authUser.id,
-          email: authUser.email || '',
-          full_name: authUser.user_metadata?.full_name || 'User',
-          role: authUser.user_metadata?.role || 'mahasiswa',
-          phone: authUser.user_metadata?.phone || null,
-          avatar_url: authUser.user_metadata?.avatar_url || null,
-          is_active: true,
-          last_seen_at: null,
-          metadata: {},
-          created_at: authUser.created_at,
-          updated_at: authUser.updated_at || authUser.created_at,
-        };
+        // ✅ FIXED: Fetch full profile from database
+        const user = await getUserProfile(session.user.id);
 
-        console.log('✅ onAuthStateChange: User constructed from metadata', { userId: user.id, role: user.role });
+        console.log('✅ onAuthStateChange: User profile loaded', { 
+          userId: user.id, 
+          role: user.role,
+          hasDosen: !!(user as any).dosen,
+          dosenId: (user as any).dosen?.id
+        });
         
         callback({
           user,
@@ -484,7 +484,7 @@ export function onAuthStateChange(
           expires_at: session.expires_at,
         });
       } catch (error) {
-        console.error('❌ onAuthStateChange: Error constructing user', error);
+        console.error('❌ onAuthStateChange: Error loading user profile', error);
         callback(null);
       }
     } else {

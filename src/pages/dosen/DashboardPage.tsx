@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
-  BookOpen, 
   Users, 
   FileQuestion, 
   ClipboardCheck,
@@ -21,13 +20,13 @@ import {
 } from 'lucide-react';
 import {
   getDosenStats,
-  getMyMataKuliah,
+  getMyKelas,
   getUpcomingPracticum,
   getPendingGrading,
   getActiveKuis,
   getMyBorrowingRequests,
   type DosenStats,
-  type MataKuliahWithStats,
+  type KelasWithStats,
   type UpcomingPracticum as UpcomingPracticumType,
   type PendingGrading as PendingGradingType,
   type KuisWithStats,
@@ -38,17 +37,15 @@ export function DashboardPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  // State
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [stats, setStats] = useState<DosenStats | null>(null);
-  const [mataKuliah, setMataKuliah] = useState<MataKuliahWithStats[]>([]);
+  const [myKelas, setMyKelas] = useState<KelasWithStats[]>([]);
   const [upcomingPracticum, setUpcomingPracticum] = useState<UpcomingPracticumType[]>([]);
   const [pendingGrading, setPendingGrading] = useState<PendingGradingType[]>([]);
   const [activeKuis, setActiveKuis] = useState<KuisWithStats[]>([]);
   const [peminjamanRequests, setPeminjamanRequests] = useState<MyBorrowingRequest[]>([]);
 
-  // Fetch all dashboard data
   useEffect(() => {
     fetchDashboardData();
   }, []);
@@ -58,63 +55,37 @@ export function DashboardPage() {
       setLoading(true);
       setError(null);
 
-      // ✅ FIX: Fetch data with better error handling and logging
-      const [statsData, mkData, practicumData, gradingData, kuisData, peminjamanData] = await Promise.allSettled([
+      const [statsData, kelasData, practicumData, gradingData, kuisData, peminjamanData] = await Promise.allSettled([
         getDosenStats(),
-        getMyMataKuliah(5),
+        getMyKelas(5),
         getUpcomingPracticum(5),
         getPendingGrading(5),
         getActiveKuis(5),
         getMyBorrowingRequests(5),
       ]);
 
-      // Set stats
       if (statsData.status === 'fulfilled') {
         setStats(statsData.value);
-      } else {
-        console.error('Error fetching stats:', statsData.reason);
       }
 
-      // ✅ FIX: Set mata kuliah with detailed logging
-      if (mkData.status === 'fulfilled') {
-        console.log('✅ Mata Kuliah data:', mkData.value);
-        setMataKuliah(mkData.value || []);
-      } else {
-        console.error('❌ Error fetching mata kuliah:', mkData.reason);
-        setMataKuliah([]);
+      if (kelasData.status === 'fulfilled') {
+        setMyKelas(kelasData.value || []);
       }
 
-      // Set practicum
       if (practicumData.status === 'fulfilled') {
-        console.log('✅ Practicum data:', practicumData.value);
         setUpcomingPracticum(practicumData.value || []);
-      } else {
-        console.error('❌ Error fetching practicum:', practicumData.reason);
-        setUpcomingPracticum([]);
       }
 
-      // Set grading
       if (gradingData.status === 'fulfilled') {
         setPendingGrading(gradingData.value || []);
-      } else {
-        console.error('Error fetching grading:', gradingData.reason);
-        setPendingGrading([]);
       }
 
-      // Set kuis
       if (kuisData.status === 'fulfilled') {
         setActiveKuis(kuisData.value || []);
-      } else {
-        console.error('Error fetching kuis:', kuisData.reason);
-        setActiveKuis([]);
       }
 
-      // Set peminjaman
       if (peminjamanData.status === 'fulfilled') {
         setPeminjamanRequests(peminjamanData.value || []);
-      } else {
-        console.error('Error fetching peminjaman:', peminjamanData.reason);
-        setPeminjamanRequests([]);
       }
 
     } catch (err) {
@@ -125,7 +96,6 @@ export function DashboardPage() {
     }
   };
 
-  // Format date
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return new Intl.DateTimeFormat('id-ID', {
@@ -135,12 +105,10 @@ export function DashboardPage() {
     }).format(date);
   };
 
-  // Format time
   const formatTime = (timeString: string) => {
     return timeString.slice(0, 5);
   };
 
-  // Day name mapping
   const dayNames: Record<string, string> = {
     monday: 'Senin',
     tuesday: 'Selasa',
@@ -151,39 +119,25 @@ export function DashboardPage() {
     sunday: 'Minggu',
   };
 
-  // Status badge variant mapping
   const getStatusVariant = (status: string): "default" | "secondary" | "destructive" | "outline" => {
     switch (status) {
-      case 'menunggu':
-        return 'outline';
-      case 'disetujui':
-        return 'default';
-      case 'ditolak':
-        return 'destructive';
-      case 'dipinjam':
-        return 'secondary';
-      case 'dikembalikan':
-        return 'secondary';
-      default:
-        return 'outline';
+      case 'menunggu': return 'outline';
+      case 'disetujui': return 'default';
+      case 'ditolak': return 'destructive';
+      case 'dipinjam': return 'secondary';
+      case 'dikembalikan': return 'secondary';
+      default: return 'outline';
     }
   };
 
-  // Status label mapping
   const getStatusLabel = (status: string): string => {
     switch (status) {
-      case 'menunggu':
-        return 'Menunggu';
-      case 'disetujui':
-        return 'Disetujui';
-      case 'ditolak':
-        return 'Ditolak';
-      case 'dipinjam':
-        return 'Dipinjam';
-      case 'dikembalikan':
-        return 'Dikembalikan';
-      default:
-        return status;
+      case 'menunggu': return 'Menunggu';
+      case 'disetujui': return 'Disetujui';
+      case 'ditolak': return 'Ditolak';
+      case 'dipinjam': return 'Dipinjam';
+      case 'dikembalikan': return 'Dikembalikan';
+      default: return status;
     }
   };
 
@@ -207,16 +161,12 @@ export function DashboardPage() {
 
   return (
     <div className="p-8">
-      <div className="max-w-7xl mx-auto space-y-8">
-        {/* Header */}
+      <div className="max-w-7xl mx-auto space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard Dosen</h1>
-          <p className="text-gray-600 mt-1">
-            Selamat datang, {user?.full_name || user?.email}
-          </p>
+          <h1 className="text-3xl font-bold">Dashboard Dosen</h1>
+          <p className="text-gray-500 mt-1">Selamat datang, {user?.email}</p>
         </div>
 
-        {/* Error Alert */}
         {error && (
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
@@ -224,14 +174,11 @@ export function DashboardPage() {
           </Alert>
         )}
 
-        {/* Stats Cards */}
         <div className="grid gap-6 md:grid-cols-4">
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/dosen/mata-kuliah')}>
+          <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">
-                Total Kelas
-              </CardTitle>
-              <BookOpen className="h-4 w-4 text-blue-600" />
+              <CardTitle className="text-sm font-medium text-gray-600">Total Kelas</CardTitle>
+              <Users className="h-4 w-4 text-gray-400" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats?.totalKelas || 0}</div>
@@ -239,12 +186,10 @@ export function DashboardPage() {
             </CardContent>
           </Card>
 
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/dosen/mahasiswa')}>
+          <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">
-                Total Mahasiswa
-              </CardTitle>
-              <Users className="h-4 w-4 text-green-600" />
+              <CardTitle className="text-sm font-medium text-gray-600">Total Mahasiswa</CardTitle>
+              <Users className="h-4 w-4 text-gray-400" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats?.totalMahasiswa || 0}</div>
@@ -252,12 +197,10 @@ export function DashboardPage() {
             </CardContent>
           </Card>
 
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/dosen/kuis')}>
+          <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">
-                Kuis Aktif
-              </CardTitle>
-              <FileQuestion className="h-4 w-4 text-purple-600" />
+              <CardTitle className="text-sm font-medium text-gray-600">Kuis Aktif</CardTitle>
+              <FileQuestion className="h-4 w-4 text-gray-400" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats?.activeKuis || 0}</div>
@@ -265,12 +208,10 @@ export function DashboardPage() {
             </CardContent>
           </Card>
 
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/dosen/penilaian')}>
+          <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">
-                Pending Grading
-              </CardTitle>
-              <ClipboardCheck className="h-4 w-4 text-orange-600" />
+              <CardTitle className="text-sm font-medium text-gray-600">Pending Grading</CardTitle>
+              <ClipboardCheck className="h-4 w-4 text-gray-400" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats?.pendingGrading || 0}</div>
@@ -279,75 +220,62 @@ export function DashboardPage() {
           </Card>
         </div>
 
-        {/* Quick Actions */}
         <Card>
           <CardHeader>
             <CardTitle>Quick Actions</CardTitle>
             <CardDescription>Akses cepat ke fitur utama</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-3 md:grid-cols-4">
-              <Button variant="outline" className="justify-start" onClick={() => navigate('/dosen/kuis')}>
-                <Plus className="mr-2 h-4 w-4" />
-                Buat Kuis
+            <div className="grid gap-4 md:grid-cols-4">
+              <Button variant="outline" className="h-auto flex-col gap-2 py-4" onClick={() => navigate('/dosen/kuis/create')}>
+                <Plus className="h-5 w-5" />
+                <span>Buat Kuis</span>
               </Button>
-              <Button variant="outline" className="justify-start" onClick={() => navigate('/dosen/penilaian')}>
-                <BarChart3 className="mr-2 h-4 w-4" />
-                Input Nilai
+              <Button variant="outline" className="h-auto flex-col gap-2 py-4" onClick={() => navigate('/dosen/penilaian')}>
+                <BarChart3 className="h-5 w-5" />
+                <span>Input Nilai</span>
               </Button>
-              <Button variant="outline" className="justify-start" onClick={() => navigate('/dosen/jadwal')}>
-                <Calendar className="mr-2 h-4 w-4" />
-                Lihat Jadwal
+              <Button variant="outline" className="h-auto flex-col gap-2 py-4" onClick={() => navigate('/dosen/jadwal')}>
+                <Calendar className="h-5 w-5" />
+                <span>Lihat Jadwal</span>
               </Button>
-              <Button variant="outline" className="justify-start" onClick={() => navigate('/dosen/materi')}>
-                <FileText className="mr-2 h-4 w-4" />
-                Upload Materi
+              <Button variant="outline" className="h-auto flex-col gap-2 py-4" onClick={() => navigate('/dosen/materi')}>
+                <FileText className="h-5 w-5" />
+                <span>Upload Materi</span>
               </Button>
             </div>
           </CardContent>
         </Card>
 
         <div className="grid gap-6 lg:grid-cols-2">
-          {/* My Courses - ✅ FIXED WITH BETTER ERROR HANDLING */}
+          {/* ✅ FIXED: Kelas Saya - Removed "Lihat Semua" button */}
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
+            <CardHeader>
               <div>
-                <CardTitle>Mata Kuliah Saya</CardTitle>
-                <CardDescription>Mata kuliah yang diampu</CardDescription>
+                <CardTitle>Kelas Saya</CardTitle>
+                <CardDescription>Kelas yang sedang diampu</CardDescription>
               </div>
-              <Button variant="ghost" size="sm" onClick={() => navigate('/dosen/mata-kuliah')}>
-                Lihat Semua
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
             </CardHeader>
             <CardContent>
-              {mataKuliah.length === 0 ? (
-                <div className="text-center py-8">
-                  <p className="text-sm text-gray-500">Belum ada mata kuliah</p>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="mt-4"
-                    onClick={() => navigate('/dosen/mata-kuliah')}
-                  >
-                    Kelola Mata Kuliah
-                  </Button>
-                </div>
+              {myKelas.length === 0 ? (
+                <p className="text-sm text-gray-500 text-center py-8">Belum ada kelas yang diampu</p>
               ) : (
                 <div className="space-y-3">
-                  {mataKuliah.map((mk) => (
-                    <div
-                      key={mk.id}
-                      className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
-                      onClick={() => navigate('/dosen/mata-kuliah')}
-                    >
+                  {myKelas.map((kelas) => (
+                    <div key={kelas.id} className="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50 transition-colors">
+                      <div className="flex-shrink-0">
+                        <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                          <Users className="h-5 w-5 text-blue-600" />
+                        </div>
+                      </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
-                          <h4 className="font-medium text-sm">{mk.nama_mk}</h4>
-                          <Badge variant="secondary" className="text-xs">{mk.kode_mk}</Badge>
+                          <h4 className="font-medium text-sm">{kelas.mata_kuliah_nama || 'Praktikum'}</h4>
+                          <Badge variant="secondary" className="text-xs">{kelas.kode_kelas}</Badge>
                         </div>
+                        <p className="text-xs text-gray-600 mt-1">{kelas.nama_kelas}</p>
                         <p className="text-xs text-gray-500 mt-1">
-                          {mk.totalKelas} kelas • {mk.totalMahasiswa} mahasiswa • {mk.sks} SKS
+                          {kelas.totalMahasiswa} mahasiswa • {kelas.tahun_ajaran}
                         </p>
                       </div>
                     </div>
@@ -357,7 +285,6 @@ export function DashboardPage() {
             </CardContent>
           </Card>
 
-          {/* Upcoming Practicum */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
@@ -386,9 +313,7 @@ export function DashboardPage() {
                         <p className="text-xs text-gray-500 mt-0.5">{jadwal.kelas_nama} • {jadwal.topik}</p>
                         <div className="flex items-center gap-2 mt-1 text-xs text-gray-600">
                           <Clock className="h-3 w-3" />
-                          {dayNames[jadwal.hari.toLowerCase()] || jadwal.hari},{' '}
-                          {formatDate(jadwal.tanggal_praktikum)},{' '}
-                          {formatTime(jadwal.jam_mulai)}-{formatTime(jadwal.jam_selesai)}
+                          {dayNames[jadwal.hari.toLowerCase()] || jadwal.hari}, {formatDate(jadwal.tanggal_praktikum)}, {formatTime(jadwal.jam_mulai)}-{formatTime(jadwal.jam_selesai)}
                         </div>
                         <p className="text-xs text-gray-500 mt-1">📍 {jadwal.lab_nama}</p>
                       </div>
@@ -401,7 +326,6 @@ export function DashboardPage() {
         </div>
 
         <div className="grid gap-6 lg:grid-cols-2">
-          {/* Pending Grading */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
@@ -419,20 +343,14 @@ export function DashboardPage() {
               ) : (
                 <div className="space-y-3">
                   {pendingGrading.map((item) => (
-                    <div
-                      key={item.id}
-                      className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
-                      onClick={() => navigate('/dosen/penilaian')}
-                    >
+                    <div key={item.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors" onClick={() => navigate('/dosen/penilaian')}>
                       <div className="flex-1 min-w-0">
                         <h4 className="font-medium text-sm truncate">{item.mahasiswa_nama}</h4>
                         <p className="text-xs text-gray-500 mt-0.5">NIM: {item.mahasiswa_nim}</p>
                         <p className="text-xs text-gray-500 mt-0.5">{item.mata_kuliah_nama} • {item.kuis_judul}</p>
                         <p className="text-xs text-gray-500 mt-1">Dikumpulkan: {formatDate(item.submitted_at)}</p>
                       </div>
-                      <Badge variant="outline" className="ml-2 flex-shrink-0">
-                        Attempt #{item.attempt_number}
-                      </Badge>
+                      <Badge variant="outline" className="ml-2 flex-shrink-0">Attempt #{item.attempt_number}</Badge>
                     </div>
                   ))}
                 </div>
@@ -440,7 +358,6 @@ export function DashboardPage() {
             </CardContent>
           </Card>
 
-          {/* Active Kuis */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
@@ -458,17 +375,11 @@ export function DashboardPage() {
               ) : (
                 <div className="space-y-3">
                   {activeKuis.map((kuis) => (
-                    <div
-                      key={kuis.id}
-                      className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
-                      onClick={() => navigate('/dosen/kuis')}
-                    >
+                    <div key={kuis.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors" onClick={() => navigate('/dosen/kuis')}>
                       <div className="flex-1 min-w-0">
                         <h4 className="font-medium text-sm truncate">{kuis.judul}</h4>
                         <p className="text-xs text-gray-500 mt-0.5">{kuis.kelas_nama}</p>
-                        <p className="text-xs text-gray-500 mt-1">
-                          {formatDate(kuis.tanggal_mulai)} - {formatDate(kuis.tanggal_selesai)}
-                        </p>
+                        <p className="text-xs text-gray-500 mt-1">{formatDate(kuis.tanggal_mulai)} - {formatDate(kuis.tanggal_selesai)}</p>
                       </div>
                       <div className="text-right ml-2 flex-shrink-0">
                         <div className="text-sm font-medium">{kuis.submitted_count}/{kuis.total_attempts}</div>
@@ -482,7 +393,6 @@ export function DashboardPage() {
           </Card>
         </div>
 
-        {/* Borrowing Requests */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
@@ -500,11 +410,7 @@ export function DashboardPage() {
             ) : (
               <div className="space-y-3">
                 {peminjamanRequests.map((request) => (
-                  <div
-                    key={request.id}
-                    className="flex gap-3 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
-                    onClick={() => navigate('/dosen/peminjaman')}
-                  >
+                  <div key={request.id} className="flex gap-3 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors" onClick={() => navigate('/dosen/peminjaman')}>
                     <div className="flex-shrink-0">
                       <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
                         <Package className="h-5 w-5 text-purple-600" />
@@ -513,22 +419,12 @@ export function DashboardPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <h4 className="font-medium text-sm truncate">{request.inventaris_nama}</h4>
-                        <Badge variant={getStatusVariant(request.status)} className="text-xs">
-                          {getStatusLabel(request.status)}
-                        </Badge>
+                        <Badge variant={getStatusVariant(request.status)} className="text-xs">{getStatusLabel(request.status)}</Badge>
                       </div>
-                      <p className="text-xs text-gray-500 mt-0.5">
-                        Kode: {request.inventaris_kode} • Lab: {request.laboratorium_nama}
-                      </p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        Jumlah: {request.jumlah_pinjam} • Pinjam: {formatDate(request.tanggal_pinjam)}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        Rencana Kembali: {formatDate(request.tanggal_kembali_rencana)}
-                      </p>
-                      {request.keperluan && (
-                        <p className="text-xs text-gray-600 mt-1 italic">"{request.keperluan}"</p>
-                      )}
+                      <p className="text-xs text-gray-500 mt-0.5">Kode: {request.inventaris_kode} • Lab: {request.laboratorium_nama}</p>
+                      <p className="text-xs text-gray-500 mt-1">Jumlah: {request.jumlah_pinjam} • Pinjam: {formatDate(request.tanggal_pinjam)}</p>
+                      <p className="text-xs text-gray-500">Rencana Kembali: {formatDate(request.tanggal_kembali_rencana)}</p>
+                      {request.keperluan && <p className="text-xs text-gray-600 mt-1 italic">"{request.keperluan}"</p>}
                     </div>
                   </div>
                 ))}

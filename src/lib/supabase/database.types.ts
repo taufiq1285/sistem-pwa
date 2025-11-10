@@ -7,6 +7,8 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "13.0.5"
   }
@@ -373,7 +375,7 @@ export type Database = {
           },
         ]
       }
-      jadwal: {
+      jadwal_praktikum: {
         Row: {
           catatan: string | null
           created_at: string | null
@@ -384,6 +386,7 @@ export type Database = {
           jam_mulai: string
           jam_selesai: string
           kelas: string
+          kelas_id: string | null
           laboratorium_id: string
           minggu_ke: number | null
           tanggal_praktikum: string | null
@@ -400,6 +403,7 @@ export type Database = {
           jam_mulai: string
           jam_selesai: string
           kelas: string
+          kelas_id?: string | null
           laboratorium_id: string
           minggu_ke?: number | null
           tanggal_praktikum?: string | null
@@ -416,6 +420,7 @@ export type Database = {
           jam_mulai?: string
           jam_selesai?: string
           kelas?: string
+          kelas_id?: string | null
           laboratorium_id?: string
           minggu_ke?: number | null
           tanggal_praktikum?: string | null
@@ -424,69 +429,7 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "jadwal_praktikum_laboratorium_id_fkey"
-            columns: ["laboratorium_id"]
-            isOneToOne: false
-            referencedRelation: "laboratorium"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      jadwal_praktikum: {
-        Row: {
-          catatan: string | null
-          created_at: string | null
-          deskripsi: string | null
-          hari: Database["public"]["Enums"]["day_of_week"]
-          id: string
-          is_active: boolean | null
-          jam_mulai: string
-          jam_selesai: string
-          kelas: string | null
-          kelas_id: string | null
-          laboratorium_id: string
-          minggu_ke: number | null
-          tanggal_praktikum: string
-          topik: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          catatan?: string | null
-          created_at?: string | null
-          deskripsi?: string | null
-          hari: Database["public"]["Enums"]["day_of_week"]
-          id?: string
-          is_active?: boolean | null
-          jam_mulai: string
-          jam_selesai: string
-          kelas?: string | null
-          kelas_id?: string | null
-          laboratorium_id: string
-          minggu_ke?: number | null
-          tanggal_praktikum: string
-          topik?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          catatan?: string | null
-          created_at?: string | null
-          deskripsi?: string | null
-          hari?: Database["public"]["Enums"]["day_of_week"]
-          id?: string
-          is_active?: boolean | null
-          jam_mulai?: string
-          jam_selesai?: string
-          kelas?: string | null
-          kelas_id?: string | null
-          laboratorium_id?: string
-          minggu_ke?: number | null
-          tanggal_praktikum?: string
-          topik?: string | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "jadwal_praktikum_kelas_id_fkey"
+            foreignKeyName: "jadwal_kelas_id_fkey"
             columns: ["kelas_id"]
             isOneToOne: false
             referencedRelation: "kelas"
@@ -613,7 +556,7 @@ export type Database = {
             foreignKeyName: "kehadiran_jadwal_id_fkey"
             columns: ["jadwal_id"]
             isOneToOne: false
-            referencedRelation: "jadwal"
+            referencedRelation: "jadwal_praktikum"
             referencedColumns: ["id"]
           },
           {
@@ -623,12 +566,19 @@ export type Database = {
             referencedRelation: "vw_mahasiswa_dashboard"
             referencedColumns: ["jadwal_id"]
           },
+          {
+            foreignKeyName: "kehadiran_mahasiswa_id_fkey"
+            columns: ["mahasiswa_id"]
+            isOneToOne: false
+            referencedRelation: "mahasiswa"
+            referencedColumns: ["id"]
+          },
         ]
       }
       kelas: {
         Row: {
           created_at: string | null
-          dosen_id: string
+          dosen_id: string | null
           id: string
           is_active: boolean | null
           kode_kelas: string
@@ -642,7 +592,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
-          dosen_id: string
+          dosen_id?: string | null
           id?: string
           is_active?: boolean | null
           kode_kelas: string
@@ -656,7 +606,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
-          dosen_id?: string
+          dosen_id?: string | null
           id?: string
           is_active?: boolean | null
           kode_kelas?: string
@@ -884,6 +834,101 @@ export type Database = {
           kode_lab?: string
           lokasi?: string | null
           nama_lab?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      mahasiswa: {
+        Row: {
+          address: string | null
+          angkatan: number
+          created_at: string | null
+          date_of_birth: string | null
+          gender: Database["public"]["Enums"]["gender_type"] | null
+          id: string
+          nim: string
+          phone: string | null
+          program_studi: string
+          semester: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          address?: string | null
+          angkatan: number
+          created_at?: string | null
+          date_of_birth?: string | null
+          gender?: Database["public"]["Enums"]["gender_type"] | null
+          id?: string
+          nim: string
+          phone?: string | null
+          program_studi: string
+          semester?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          address?: string | null
+          angkatan?: number
+          created_at?: string | null
+          date_of_birth?: string | null
+          gender?: Database["public"]["Enums"]["gender_type"] | null
+          id?: string
+          nim?: string
+          phone?: string | null
+          program_studi?: string
+          semester?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mahasiswa_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mata_kuliah: {
+        Row: {
+          created_at: string | null
+          deskripsi: string | null
+          id: string
+          is_active: boolean | null
+          kode_mk: string
+          nama_mk: string
+          program_studi: string
+          semester: number
+          silabus_url: string | null
+          sks: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          deskripsi?: string | null
+          id?: string
+          is_active?: boolean | null
+          kode_mk: string
+          nama_mk: string
+          program_studi: string
+          semester: number
+          silabus_url?: string | null
+          sks: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          deskripsi?: string | null
+          id?: string
+          is_active?: boolean | null
+          kode_mk?: string
+          nama_mk?: string
+          program_studi?: string
+          semester?: number
+          silabus_url?: string | null
+          sks?: number
           updated_at?: string | null
         }
         Relationships: []
@@ -1490,105 +1535,6 @@ export type Database = {
         }
         Relationships: []
       }
-      
-      // -- BLOK KODE YANG DIPINDAHKAN DIMULAI DI SINI --
-      mahasiswa: {
-        Row: {
-          address: string | null
-          angkatan: number
-          created_at: string | null
-          date_of_birth: string | null
-          gender: Database["public"]["Enums"]["gender_type"] | null
-          id: string
-          nim: string
-          phone: string | null
-          program_studi: string
-          semester: number | null
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          address?: string | null
-          angkatan: number
-          created_at?: string | null
-          date_of_birth?: string | null
-          gender?: Database["public"]["Enums"]["gender_type"] | null
-          id?: string
-          nim: string
-          phone?: string | null
-          program_studi: string
-          semester?: number | null
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          address?: string | null
-          angkatan?: number
-          created_at?: string | null
-          date_of_birth?: string | null
-          gender?: Database["public"]["Enums"]["gender_type"] | null
-          id?: string
-          nim?: string
-          phone?: string | null
-          program_studi?: string
-          semester?: number | null
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "mahasiswa_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: true
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      mata_kuliah: {
-        Row: {
-          created_at: string | null
-          deskripsi: string | null
-          id: string
-          is_active: boolean | null
-          kode_mk: string
-          nama_mk: string
-          program_studi: string
-          semester: number
-          silabus_url: string | null
-          sks: number
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          deskripsi?: string | null
-          id?: string
-          is_active?: boolean | null
-          kode_mk: string
-          nama_mk: string
-          program_studi: string
-          semester: number
-          silabus_url?: string | null
-          sks: number
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          deskripsi?: string | null
-          id?: string
-          is_active?: boolean | null
-          kode_mk?: string
-          nama_mk?: string
-          program_studi?: string
-          semester?: number
-          silabus_url?: string | null
-          sks?: number
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
-      // -- BLOK KODE YANG DIPINDAHKAN BERAKHIR DI SINI --
-
     }
     Views: {
       vw_kuis_statistics: {
@@ -1674,6 +1620,28 @@ export type Database = {
           max_attempts: number
           tanggal_mulai: string
           tanggal_selesai: string
+        }[]
+      }
+      get_jadwal_praktikum_mahasiswa: {
+        Args: { p_end_date?: string; p_start_date?: string; p_user_id: string }
+        Returns: {
+          catatan: string
+          deskripsi: string
+          hari: string
+          jadwal_id: string
+          jam_mulai: string
+          jam_selesai: string
+          kode_kelas: string
+          kode_lab: string
+          kode_mk: string
+          lokasi: string
+          minggu_ke: number
+          nama_dosen: string
+          nama_kelas: string
+          nama_lab: string
+          nama_mk: string
+          tanggal_praktikum: string
+          topik: string
         }[]
       }
       get_quiz_attempt_details: {

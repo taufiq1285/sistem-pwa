@@ -9,14 +9,14 @@ type InventarisTable = Database['public']['Tables'] extends { inventaris: { Row:
   : {
       id: string;
       // Fallback shape if 'inventaris' table is not present in generated Database types
-      [key: string]: any;
+      [key: string]: unknown;
     };
 type PeminjamanTable = Database['public']['Tables'] extends { peminjaman: { Row: infer R } }
   ? R
   : {
       id: string;
       // Fallback shape if 'peminjaman' table is not present in generated Database types
-      [key: string]: any;
+      [key: string]: unknown;
     };
 
 export type EquipmentCondition = 'baik' | 'rusak_ringan' | 'rusak_berat' | 'maintenance';

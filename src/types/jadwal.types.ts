@@ -1,110 +1,98 @@
 /**
- * Jadwal (Schedule) Types - DATE-BASED VERSION
- * 
- * Purpose: Define types for specific date schedules
- * Used by: Dosen Dashboard, Schedule Page, Calendar
- * 
- * CHANGE: Now uses tanggal_praktikum (specific date) instead of recurring hari
+ * Jadwal Types - SIMPLIFIED VERSION
+ * Support both kelas (old) and kelas_id (new)
  */
 
-import type { Database } from './database.types';
-
 // ========================================
-// BASE TYPES FROM DATABASE
+// BASE JADWAL TYPE - Support both fields
 // ========================================
 
-type JadwalTable = Database['public']['Tables'] extends { jadwal: { Row: infer R } }
-  ? R
-  : {
-      id: string;
-      kelas: string;
-      laboratorium_id: string;
-      tanggal_praktikum: string;  // ✅ PRIMARY: Specific date
-      hari?: string | null;        // ✅ COMPUTED: Auto from tanggal
-      jam_mulai: string;
-      jam_selesai: string;
-      minggu_ke?: number | null;
-      topik?: string | null;
-      catatan?: string | null;
-      is_active?: boolean;
-      created_at?: string;
-      updated_at?: string;
-    };
-
-type BookingTable = Database['public']['Tables'] extends { booking: { Row: infer R } }
-  ? R
-  : {
-      id: string;
-      kelas_id: string;
-      laboratorium_id: string;
-      dosen_id: string;
-      tanggal: string;
-      jam_mulai: string;
-      jam_selesai: string;
-      keperluan: string;
-      status: 'pending' | 'approved' | 'rejected' | 'cancelled';
-      catatan?: string | null;
-      approval_by?: string | null;
-      approval_at?: string | null;
-      created_at?: string;
-      updated_at?: string;
-    };
-
-type LaboratoriumTable = Database['public']['Tables'] extends { laboratorium: { Row: infer R } }
-  ? R
-  : {
-      id: string;
-      nama_lab: string;
-      kode_lab: string;
-      kapasitas: number;
-      deskripsi?: string | null;
-      fasilitas?: any | null;
-      is_active?: boolean;
-      created_at?: string;
-      updated_at?: string;
-    };
-
-// ========================================
-// EXTENDED TYPES WITH RELATIONS
-// ========================================
-
-export interface Jadwal extends JadwalTable {
-  laboratorium?: Laboratorium;
-}
-
-export interface Booking extends BookingTable {
-  kelas?: {
+export interface Jadwal {
+  id: string;
+  kelas?: string | null;              // ❌ OLD: String field (deprecated)
+  kelas_id?: string | null;           // ✅ NEW: UUID reference to kelas table
+  laboratorium_id: string;
+  tanggal_praktikum: string;
+  hari?: string | null;
+  jam_mulai: string;
+  jam_selesai: string;
+  minggu_ke?: number | null;
+  topik?: string | null;
+  deskripsi?: string | null;
+  catatan?: string | null;
+  is_active?: boolean;
+  created_at?: string;
+  updated_at?: string;
+  laboratorium?: {
+    id: string;
+    nama_lab: string;
+    kode_lab: string;
+    kapasitas: number;
+  };
+  kelas_relation?: {
+    id: string;
     nama_kelas: string;
     mata_kuliah?: {
       nama_mk: string;
     };
   };
-  laboratorium?: Laboratorium;
-  dosen?: {
-    gelar_depan?: string;
-    gelar_belakang?: string;
-    users?: {
-      full_name: string;
-    };
-  };
-  approved_by?: {
-    full_name: string;
-  };
-}
-
-export interface Laboratorium extends LaboratoriumTable {
-  jadwal?: Jadwal[];
-  booking?: Booking[];
 }
 
 // ========================================
-// DASHBOARD SPECIFIC TYPES
+// FORM DATA TYPES
 // ========================================
+
+export interface CreateJadwalData {
+  kelas?: string;                     // ❌ OLD: Keep for backward compatibility
+  kelas_id?: string;                  // ✅ NEW: Primary field to use
+  laboratorium_id: string;
+  tanggal_praktikum: string | Date;
+  jam_mulai: string;
+  jam_selesai: string;
+  minggu_ke?: number;
+  topik?: string;
+  deskripsi?: string;
+  catatan?: string;
+  is_active?: boolean;
+}
+
+export interface UpdateJadwalData extends Partial<CreateJadwalData> {
+  id: string;
+}
+
+// ========================================
+// CALENDAR & DASHBOARD TYPES
+// ========================================
+
+export interface CalendarEvent {
+  id: string;
+  title: string;
+  start: string;
+  end: string;
+  type: 'class' | 'quiz' | 'booking' | 'exam';
+  color?: string;
+  description?: string;
+  location?: string;
+  metadata?: {
+    jadwal_id?: string;
+    kelas?: string;
+    kelas_id?: string;
+    laboratorium_id?: string;
+    tanggal_praktikum?: string;
+    topik?: string;
+    [key: string]: string | number | boolean | null | undefined;
+  };
+}
 
 export interface TodaySchedule {
   id: string;
-  kelas: string;
+  kelas_id?: string;
+  kelas?: string;
   tanggal_praktikum: string;
+  kode_mk: string;
+  nama_mk: string;
+  nama_kelas: string;
+  sks: number;
   hari: string;
   jam_mulai: string;
   jam_selesai: string;
@@ -115,6 +103,8 @@ export interface TodaySchedule {
   kapasitas: number;
   topik?: string;
   catatan?: string;
+  dosen_name: string;
+  dosen_gelar: string;
   is_now: boolean;
   is_upcoming: boolean;
   is_past: boolean;
@@ -139,44 +129,61 @@ export interface ScheduleStats {
   };
 }
 
-export interface CalendarEvent {
-  id: string;
-  title: string;
-  start: string;
-  end: string;
-  type: 'class' | 'quiz' | 'booking' | 'exam';
-  color?: string;
-  description?: string;
-  location?: string;
-  metadata?: {
-    jadwal_id?: string;
-    kelas?: string;
-    laboratorium_id?: string;
-    tanggal_praktikum?: string;
-    topik?: string;
-    [key: string]: any;
-  };
+export interface JadwalPraktikum {
+  jadwal_id: string;
+  hari: string;
+  jam_mulai: string;
+  jam_selesai: string;
+  tanggal_praktikum: string;
+  minggu_ke: number | null;
+  topik: string;
+  deskripsi: string | null;
+  catatan: string | null;
+  kode_mk: string;
+  nama_mk: string;
+  kode_kelas: string;
+  nama_kelas: string;
+  kode_lab: string;
+  nama_lab: string;
+  lokasi: string;
+  nama_dosen: string;
+}
+
+// ========================================
+// FILTER TYPES
+// ========================================
+
+export interface JadwalFilters {
+  kelas?: string;                     // ❌ OLD: String filter
+  kelas_id?: string;                  // ✅ NEW: UUID filter
+  laboratorium_id?: string;
+  tanggal_praktikum?: string;
+  tanggal_mulai?: string;
+  tanggal_selesai?: string;
+  hari?: string;
+  minggu_ke?: number;
+  is_active?: boolean;
 }
 
 // ========================================
 // BOOKING TYPES
 // ========================================
 
-export interface AvailableSlot {
+export interface Booking {
+  id: string;
+  kelas_id: string;
   laboratorium_id: string;
-  nama_lab: string;
+  dosen_id: string;
   tanggal: string;
-  slots: TimeSlot[];
-}
-
-export interface TimeSlot {
   jam_mulai: string;
   jam_selesai: string;
-  is_available: boolean;
-  booked_by?: {
-    dosen_name: string;
-    keperluan: string;
-  };
+  keperluan: string;
+  status: 'pending' | 'approved' | 'rejected' | 'cancelled';
+  catatan?: string | null;
+  approval_by?: string | null;
+  approval_at?: string | null;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface BookingRequest {
@@ -190,27 +197,6 @@ export interface BookingRequest {
   catatan?: string;
 }
 
-// ========================================
-// FORM DATA TYPES - DATE-BASED
-// ========================================
-
-export interface CreateJadwalData {
-  kelas: string;
-  laboratorium_id: string;
-  tanggal_praktikum: string | Date;  // ✅ REQUIRED: Specific date
-  // hari: removed from form (auto-computed in API)
-  jam_mulai: string;
-  jam_selesai: string;
-  minggu_ke?: number;
-  topik?: string;
-  catatan?: string;
-  is_active?: boolean;
-}
-
-export interface UpdateJadwalData extends Partial<CreateJadwalData> {
-  id: string;
-}
-
 export interface CreateBookingData {
   kelas_id: string;
   laboratorium_id: string;
@@ -222,15 +208,29 @@ export interface CreateBookingData {
   catatan?: string;
 }
 
-export interface UpdateBookingData extends Partial<CreateBookingData> {
-  id: string;
+export interface BookingFilters {
+  kelas_id?: string;
+  laboratorium_id?: string;
+  dosen_id?: string;
+  tanggal_mulai?: string;
+  tanggal_selesai?: string;
+  status?: 'pending' | 'approved' | 'rejected' | 'cancelled';
 }
 
-export interface ApproveBookingData {
-  booking_id: string;
-  approval_by: string;
-  status: 'approved' | 'rejected';
-  catatan?: string;
+// ========================================
+// LABORATORIUM TYPES
+// ========================================
+
+export interface Laboratorium {
+  id: string;
+  nama_lab: string;
+  kode_lab: string;
+  kapasitas: number;
+  deskripsi?: string | null;
+  fasilitas?: string[] | null;
+  is_active?: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface CreateLaboratoriumData {
@@ -240,34 +240,6 @@ export interface CreateLaboratoriumData {
   deskripsi?: string;
   fasilitas?: string[];
   is_active?: boolean;
-}
-
-export interface UpdateLaboratoriumData extends Partial<CreateLaboratoriumData> {
-  id: string;
-}
-
-// ========================================
-// FILTER & QUERY TYPES - DATE-BASED
-// ========================================
-
-export interface JadwalFilters {
-  kelas?: string;
-  laboratorium_id?: string;
-  tanggal_praktikum?: string;  // ✅ Filter by specific date
-  tanggal_mulai?: string;      // ✅ Date range start
-  tanggal_selesai?: string;    // ✅ Date range end
-  hari?: string;               // Still available for filtering
-  minggu_ke?: number;
-  is_active?: boolean;
-}
-
-export interface BookingFilters {
-  kelas_id?: string;
-  laboratorium_id?: string;
-  dosen_id?: string;
-  tanggal_mulai?: string;
-  tanggal_selesai?: string;
-  status?: 'pending' | 'approved' | 'rejected' | 'cancelled';
 }
 
 export interface LaboratoriumFilters {
@@ -328,7 +300,7 @@ export const BOOKING_STATUS_COLORS = {
 export const EVENT_TYPE_COLORS = {
   class: '#3b82f6',
   quiz: '#ef4444',
-  red: '#10b981',
+  booking: '#10b981',
   exam: '#f59e0b',
 } as const;
 

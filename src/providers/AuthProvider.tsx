@@ -47,12 +47,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     // Listen to auth changes
     const { data: authListener } = authApi.onAuthStateChange((newSession: AuthSession | null) => {
-  if (mounted) {
-    setSession(newSession);
-    setUser(newSession?.user || null);
-    setLoading(false); 
-  }
-});
+      if (mounted) {
+        setSession(newSession);
+        setUser(newSession?.user || null);
+        setLoading(false); 
+      }
+    });
 
     return () => {
       mounted = false;
@@ -72,7 +72,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       setUser(response.user);
       setSession(response.session);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Login error:', error);
       throw error;
     } finally {
@@ -92,7 +92,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       // Note: User needs to verify email before logging in
       // Don't set user/session here
-    } catch (error: any) {
+    } catch (error) {
       console.error('Registration error:', error);
       throw error;
     } finally {
@@ -105,9 +105,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setLoading(true);
     try {
       // Support either a 'logout' or 'signOut' function in the auth API
-      const performLogout =
-        (authApi as any).logout ||
-        (authApi as any).signOut;
+      const authApiWithLogout = authApi as typeof authApi & {
+        logout?: () => Promise<{ success: boolean; error?: string }>;
+        signOut?: () => Promise<{ success: boolean; error?: string }>;
+      };
+
+      const performLogout = authApiWithLogout.logout || authApiWithLogout.signOut;
 
       if (!performLogout) {
         throw new Error('Logout function not implemented in auth API');
@@ -121,7 +124,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       setUser(null);
       setSession(null);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Logout error:', error);
       throw error;
     } finally {
@@ -138,7 +141,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (!response.success) {
         throw new Error(response.error || 'Password reset failed');
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Password reset error:', error);
       throw error;
     } finally {
@@ -155,7 +158,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (!response.success) {
         throw new Error(response.error || 'Password update failed');
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Password update error:', error);
       throw error;
     } finally {

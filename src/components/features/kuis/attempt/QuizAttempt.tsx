@@ -1,20 +1,701 @@
 /**
- * TODO: Implement [ComponentName]
+ * QuizAttempt Component
  * 
- * Purpose: [Brief description]
- * Priority: [High/Medium/Low]
- * Props: [List expected props]
- * 
- * Related components:
- * - [Component 1]
- * - [Component 2]
+ * Purpose: Main orchestrator for quiz attempt (Mahasiswa)
+ * Used by: KuisAttemptPage
+ * Features: Load quiz, answer questions, auto-save, timer, navigation, submit
  */
 
-export const ComponentName = () => {
-  // TODO: Add implementation
+import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import {
+  ChevronLeft,
+  ChevronRight,
+  Flag,
+  Send,
+  AlertCircle,
+  Loader2,
+} from 'lucide-react';
+
+// UI Components
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+
+// Custom Components
+import { QuizTimer, clearTimerData } from './QuizTimer';
+import {
+  QuizNavigation,
+  createQuestionStatusList,
+  areAllQuestionsAnswered,
+  getUnansweredQuestions,
+  type QuestionStatus,
+} from './QuizNavigation';
+
+// API & Types
+import {
+  getKuisById,
+  getSoalByKuis,
+  startAttempt,
+  submitAnswer,
+  submitQuiz,
+} from '@/lib/api/kuis.api';
+import type { Kuis, Soal, AttemptKuis } from '@/types/kuis.types';
+import { TIPE_SOAL } from '@/types/kuis.types';
+
+// Toast
+import { toast } from 'sonner';
+
+// Utils
+import { cn } from '@/lib/utils';
+
+// ============================================================================
+// TYPES
+// ============================================================================
+
+interface QuizAttemptProps {
+  /**
+   * Quiz ID
+   */
+  kuisId: string;
+  
+  /**
+   * Mahasiswa ID
+   */
+  mahasiswaId: string;
+  
+  /**
+   * Optional existing attempt ID (for resuming)
+   */
+  attemptId?: string;
+}
+
+// ============================================================================
+// COMPONENT
+// ============================================================================
+
+export function QuizAttempt({
+  kuisId,
+  mahasiswaId,
+  attemptId: existingAttemptId,
+}: QuizAttemptProps) {
+  
+  const navigate = useNavigate();
+  
+  // ============================================================================
+  // STATE
+  // ============================================================================
+  
+  // Quiz data
+  const [quiz, setQuiz] = useState<Kuis | null>(null);
+  const [questions, setQuestions] = useState<Soal[]>([]);
+  const [attempt, setAttempt] = useState<AttemptKuis | null>(null);
+  
+  // Current state
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [flaggedQuestions, setFlaggedQuestions] = useState<Set<string>>(new Set());
+  
+  // UI state
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSubmitDialog, setShowSubmitDialog] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
+  // Auto-save state
+  const [lastSaveTime, setLastSaveTime] = useState<Date | null>(null);
+  const [unsavedChanges, setUnsavedChanges] = useState(false);
+  
+  // Ref for remaining time
+  const remainingTimeRef = useRef<number>(0);
+  
+  // ============================================================================
+  // COMPUTED VALUES
+  // ============================================================================
+  
+  const currentQuestion = questions[currentQuestionIndex];
+  const currentAnswer = currentQuestion ? answers[currentQuestion.id] || '' : '';
+  const totalQuestions = questions.length;
+  const isFirstQuestion = currentQuestionIndex === 0;
+  const isLastQuestion = currentQuestionIndex === totalQuestions - 1;
+  const totalPoints = questions.reduce((sum, q) => sum + (q.poin || 0), 0);
+  
+  // Question status for navigation
+  const questionStatus: QuestionStatus[] = createQuestionStatusList(
+    questions,
+    answers
+  );
+  
+  // ============================================================================
+  // EFFECTS
+  // ============================================================================
+  
+  /**
+   * Load quiz and start/resume attempt
+   */
+  useEffect(() => {
+    loadQuizAndStartAttempt();
+  }, [kuisId, mahasiswaId]);
+  
+  /**
+   * Auto-save effect
+   */
+  useEffect(() => {
+    if (!unsavedChanges || !attempt) return;
+    
+    const timeout = setTimeout(() => {
+      handleAutoSave();
+    }, 2000); // Auto-save after 2 seconds of inactivity
+    
+    return () => clearTimeout(timeout);
+  }, [answers, unsavedChanges, attempt]);
+  
+  /**
+   * Prevent accidental page close
+   */
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (unsavedChanges) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [unsavedChanges]);
+  
+  // ============================================================================
+  // HANDLERS - DATA LOADING
+  // ============================================================================
+  
+  /**
+   * Load quiz data and start/resume attempt
+   */
+  const loadQuizAndStartAttempt = async () => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      // Load quiz
+      const quizData = await getKuisById(kuisId);
+      setQuiz(quizData);
+      
+      // Load questions
+      const questionsData = await getSoalByKuis(kuisId);
+      
+      // Shuffle if needed (check for shuffle_soal or randomize_questions)
+      const shouldShuffle = (quizData as any).shuffle_soal || (quizData as any).randomize_questions || false;
+      const orderedQuestions = shouldShuffle
+        ? shuffleArray([...questionsData])
+        : questionsData.sort((a: Soal, b: Soal) => a.urutan - b.urutan);
+      
+      setQuestions(orderedQuestions);
+      
+      // Start or resume attempt
+      if (existingAttemptId) {
+        // Resume existing attempt
+        // TODO: Load existing answers
+        toast.info('Melanjutkan attempt sebelumnya');
+      } else {
+        // Start new attempt
+        const attemptData = await startAttempt({
+          kuis_id: kuisId,
+          mahasiswa_id: mahasiswaId,
+        });
+        setAttempt(attemptData);
+      }
+    } catch (err: any) {
+      const errorMessage = err?.message || 'Gagal memuat kuis';
+      setError(errorMessage);
+      toast.error('Gagal memuat kuis', {
+        description: errorMessage,
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  // ============================================================================
+  // HANDLERS - NAVIGATION
+  // ============================================================================
+  
+  /**
+   * Navigate to specific question
+   */
+  const handleGoToQuestion = (questionNumber: number) => {
+    // Save current answer first
+    if (currentAnswer && !isSaving) {
+      handleAutoSave();
+    }
+    
+    setCurrentQuestionIndex(questionNumber - 1);
+  };
+  
+  /**
+   * Go to previous question
+   */
+  const handlePrevious = () => {
+    if (!isFirstQuestion) {
+      handleGoToQuestion(currentQuestionIndex);
+    }
+  };
+  
+  /**
+   * Go to next question
+   */
+  const handleNext = () => {
+    if (!isLastQuestion) {
+      handleGoToQuestion(currentQuestionIndex + 2);
+    }
+  };
+  
+  /**
+   * Toggle flag on current question
+   */
+  const handleToggleFlag = () => {
+    if (!currentQuestion) return;
+    
+    setFlaggedQuestions((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(currentQuestion.id)) {
+        newSet.delete(currentQuestion.id);
+      } else {
+        newSet.add(currentQuestion.id);
+      }
+      return newSet;
+    });
+  };
+  
+  // ============================================================================
+  // HANDLERS - ANSWERS
+  // ============================================================================
+  
+  /**
+   * Handle answer change
+   */
+  const handleAnswerChange = (value: string) => {
+    if (!currentQuestion) return;
+    
+    setAnswers((prev) => ({
+      ...prev,
+      [currentQuestion.id]: value,
+    }));
+    
+    setUnsavedChanges(true);
+  };
+  
+  /**
+   * Auto-save answers
+   */
+  const handleAutoSave = async () => {
+    if (!attempt || !currentQuestion || !currentAnswer) return;
+    
+    setIsSaving(true);
+    
+    try {
+      await submitAnswer({
+        attempt_id: attempt.id,
+        soal_id: currentQuestion.id,
+        jawaban: currentAnswer,
+      });
+      
+      setLastSaveTime(new Date());
+      setUnsavedChanges(false);
+    } catch (err: any) {
+      console.error('Auto-save failed:', err);
+      // Don't show error to user, will retry
+    } finally {
+      setIsSaving(false);
+    }
+  };
+  
+  // ============================================================================
+  // HANDLERS - SUBMISSION
+  // ============================================================================
+  
+  /**
+   * Open submit confirmation dialog
+   */
+  const handleOpenSubmitDialog = () => {
+    // Check if all questions are answered
+    const unanswered = getUnansweredQuestions(questionStatus);
+    
+    if (unanswered.length > 0) {
+      toast.warning('Ada soal yang belum dijawab', {
+        description: `Soal nomor: ${unanswered.join(', ')}`,
+      });
+    }
+    
+    setShowSubmitDialog(true);
+  };
+  
+  /**
+   * Get remaining time from localStorage or ref
+   */
+  const getRemainingTime = (): number => {
+    if (!attempt) return 0;
+    
+    try {
+      const timerKey = `quiz_timer_${attempt.id}`;
+      const timerData = localStorage.getItem(timerKey);
+      
+      if (timerData) {
+        const parsed = JSON.parse(timerData);
+        return parsed.remainingSeconds || 0;
+      }
+    } catch (err) {
+      console.error('Failed to get remaining time from localStorage:', err);
+    }
+    
+    // Fallback to ref
+    return remainingTimeRef.current || 0;
+  };
+  
+  /**
+   * Submit quiz
+   */
+  const handleSubmitQuiz = async () => {
+    if (!attempt) return;
+    
+    setIsSubmitting(true);
+    
+    try {
+      // Save current answer first
+      if (currentAnswer && !isSaving) {
+        await handleAutoSave();
+      }
+      
+      // Get remaining time
+      const sisaWaktu = getRemainingTime();
+      
+      // Submit attempt
+      await submitQuiz({
+        attempt_id: attempt.id,
+        sisa_waktu: sisaWaktu,
+      });
+      
+      // Clear timer data
+      clearTimerData(attempt.id);
+      
+      toast.success('Kuis berhasil disubmit');
+      
+      // Redirect to results
+      navigate(`/mahasiswa/kuis/${kuisId}/result/${attempt.id}`);
+    } catch (err: any) {
+      const errorMessage = err?.message || 'Terjadi kesalahan';
+      toast.error('Gagal submit kuis', {
+        description: errorMessage,
+      });
+    } finally {
+      setIsSubmitting(false);
+      setShowSubmitDialog(false);
+    }
+  };
+  
+  /**
+   * Handle time up (auto-submit)
+   */
+  const handleTimeUp = () => {
+    toast.warning('Waktu habis! Kuis akan otomatis disubmit');
+    setTimeout(() => {
+      handleSubmitQuiz();
+    }, 2000);
+  };
+  
+  // ============================================================================
+  // RENDER - LOADING
+  // ============================================================================
+  
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center space-y-4">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+          <p className="text-muted-foreground">Memuat kuis...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  // ============================================================================
+  // RENDER - ERROR
+  // ============================================================================
+  
+  if (error || !quiz || !attempt) {
+    return (
+      <Alert variant="destructive">
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>
+          {error || 'Gagal memuat kuis'}
+        </AlertDescription>
+      </Alert>
+    );
+  }
+  
+  // ============================================================================
+  // RENDER - MAIN
+  // ============================================================================
+  
   return (
-    <div>
-      <p>TODO: Implement [ComponentName]</p>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex-1">
+          <h1 className="text-2xl font-bold mb-2">{quiz.judul}</h1>
+          {quiz.deskripsi && (
+            <p className="text-muted-foreground">{quiz.deskripsi}</p>
+          )}
+        </div>
+        
+        {/* Timer (Compact) */}
+        <QuizTimer
+          durationMinutes={(quiz as any).durasi || (quiz as any).durasi_menit || 60}
+          attemptId={attempt.id}
+          onTimeUp={handleTimeUp}
+          compact
+        />
+      </div>
+      
+      {/* Auto-save indicator */}
+      {isSaving && (
+        <Alert>
+          <Loader2 className="h-4 w-4 animate-spin" />
+          <AlertDescription>Menyimpan jawaban...</AlertDescription>
+        </Alert>
+      )}
+      
+      {lastSaveTime && !isSaving && (
+        <Alert className="bg-green-50 border-green-200 text-green-900 dark:bg-green-950 dark:border-green-800 dark:text-green-100">
+          <AlertDescription>
+            Tersimpan otomatis pada {lastSaveTime.toLocaleTimeString('id-ID')}
+          </AlertDescription>
+        </Alert>
+      )}
+      
+      {/* Main Content */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Question Area */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Question Card */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Badge variant="outline">
+                      Soal {currentQuestionIndex + 1}/{totalQuestions}
+                    </Badge>
+                    <Badge variant="secondary">
+                      {currentQuestion?.poin || 0} poin
+                    </Badge>
+                    <Badge variant="secondary">
+                      {currentQuestion?.tipe_soal}
+                    </Badge>
+                  </div>
+                  <CardTitle className="text-lg">
+                    {currentQuestion?.pertanyaan}
+                  </CardTitle>
+                </div>
+                
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleToggleFlag}
+                  className={cn(
+                    flaggedQuestions.has(currentQuestion?.id || '') && "text-yellow-600"
+                  )}
+                >
+                  <Flag className="h-5 w-5" />
+                </Button>
+              </div>
+            </CardHeader>
+            
+            <CardContent className="space-y-4">
+              {/* Answer Input based on question type */}
+              {currentQuestion?.tipe_soal === TIPE_SOAL.PILIHAN_GANDA && (
+                <RadioGroup
+                  value={currentAnswer}
+                  onValueChange={handleAnswerChange}
+                >
+                  {currentQuestion.opsi_jawaban?.map((option: any, index: number) => (
+                    <div
+                      key={option.id || index}
+                      className="flex items-center space-x-3 p-4 rounded-lg border hover:bg-accent cursor-pointer"
+                    >
+                      <RadioGroupItem value={option.id} id={`option-${option.id}`} />
+                      <Label
+                        htmlFor={`option-${option.id}`}
+                        className="flex-1 cursor-pointer"
+                      >
+                        <span className="font-semibold mr-2">{option.label}.</span>
+                        {option.text}
+                      </Label>
+                    </div>
+                  ))}
+                </RadioGroup>
+              )}
+              
+              {currentQuestion?.tipe_soal === TIPE_SOAL.BENAR_SALAH && (
+                <RadioGroup
+                  value={currentAnswer}
+                  onValueChange={handleAnswerChange}
+                >
+                  <div className="flex items-center space-x-3 p-4 rounded-lg border hover:bg-accent cursor-pointer">
+                    <RadioGroupItem value="true" id="answer-true" />
+                    <Label htmlFor="answer-true" className="flex-1 cursor-pointer font-semibold">
+                      Benar
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-3 p-4 rounded-lg border hover:bg-accent cursor-pointer">
+                    <RadioGroupItem value="false" id="answer-false" />
+                    <Label htmlFor="answer-false" className="flex-1 cursor-pointer font-semibold">
+                      Salah
+                    </Label>
+                  </div>
+                </RadioGroup>
+              )}
+              
+              {currentQuestion?.tipe_soal === TIPE_SOAL.ESSAY && (
+                <Textarea
+                  value={currentAnswer}
+                  onChange={(e) => handleAnswerChange(e.target.value)}
+                  placeholder="Tulis jawaban Anda di sini..."
+                  rows={8}
+                  className="resize-none"
+                />
+              )}
+            </CardContent>
+          </Card>
+          
+          {/* Navigation Buttons */}
+          <div className="flex items-center justify-between">
+            <Button
+              variant="outline"
+              onClick={handlePrevious}
+              disabled={isFirstQuestion}
+            >
+              <ChevronLeft className="h-4 w-4 mr-2" />
+              Sebelumnya
+            </Button>
+            
+            {isLastQuestion ? (
+              <Button onClick={handleOpenSubmitDialog} className="gap-2">
+                <Send className="h-4 w-4" />
+                Submit Kuis
+              </Button>
+            ) : (
+              <Button onClick={handleNext}>
+                Selanjutnya
+                <ChevronRight className="h-4 w-4 ml-2" />
+              </Button>
+            )}
+          </div>
+        </div>
+        
+        {/* Sidebar */}
+        <div className="space-y-6">
+          {/* Timer (Full) */}
+          <QuizTimer
+            durationMinutes={(quiz as any).durasi || (quiz as any).durasi_menit || 60}
+            attemptId={attempt.id}
+            onTimeUp={handleTimeUp}
+          />
+          
+          {/* Navigation */}
+          <QuizNavigation
+            questions={questionStatus}
+            currentQuestion={currentQuestionIndex + 1}
+            onQuestionClick={handleGoToQuestion}
+            totalPoints={totalPoints}
+          />
+          
+          {/* Submit Button (Sidebar) */}
+          <Button
+            onClick={handleOpenSubmitDialog}
+            className="w-full gap-2"
+            size="lg"
+          >
+            <Send className="h-4 w-4" />
+            Submit Kuis
+          </Button>
+        </div>
+      </div>
+      
+      {/* Submit Confirmation Dialog */}
+      <AlertDialog open={showSubmitDialog} onOpenChange={setShowSubmitDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Submit Kuis?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {areAllQuestionsAnswered(questionStatus) ? (
+                <>
+                  Anda telah menjawab semua soal. Yakin ingin submit kuis sekarang?
+                  <br /><br />
+                  Setelah submit, Anda tidak dapat mengubah jawaban.
+                </>
+              ) : (
+                <>
+                  <strong>Perhatian!</strong> Anda belum menjawab semua soal.
+                  <br /><br />
+                  Soal yang belum dijawab: {getUnansweredQuestions(questionStatus).join(', ')}
+                  <br /><br />
+                  Yakin ingin submit sekarang?
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isSubmitting}>
+              Batal
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleSubmitQuiz}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Submitting...
+                </>
+              ) : (
+                'Ya, Submit'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
-};
+}
+
+// ============================================================================
+// HELPER FUNCTIONS
+// ============================================================================
+
+/**
+ * Shuffle array (Fisher-Yates algorithm)
+ */
+function shuffleArray<T>(array: T[]): T[] {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}

@@ -1,7 +1,10 @@
 /**
- * Main Application Router - FIXED VERSION
- * ✅ BUG #1 FIXED: Added /dosen/jadwal route
- * All TypeScript errors resolved
+ * Main Application Router - COMPLETE WITH KUIS ROUTES
+ * 
+ * CHANGES:
+ * ✅ ADDED: Complete Kuis/Quiz system routes (Dosen & Mahasiswa)
+ * ✅ KEPT: All other existing routes
+ * ✅ All TypeScript errors resolved
  */
 
 import { Routes, Route, Navigate } from 'react-router-dom';
@@ -23,12 +26,21 @@ import { DashboardPage as AdminDashboard } from '@/pages/admin/DashboardPage';
 
 // Dosen Pages
 import { DashboardPage as DosenDashboard } from '@/pages/dosen/DashboardPage';
-import MataKuliahPage from '@/pages/dosen/MataKuliahPage';
-import DosenJadwalPage from '@/pages/dosen/JadwalPage'; // ✅ ADDED
+import DosenJadwalPage from '@/pages/dosen/JadwalPage';
+
+// Dosen Kuis Pages - NEW! ✅
+import KuisListPage from '@/pages/dosen/kuis/KuisListPage';
+import KuisCreatePage from '@/pages/dosen/kuis/KuisCreatePage';
+import KuisEditPage from '@/pages/dosen/kuis/KuisEditPage';
+import KuisResultsPage from '@/pages/dosen/kuis/KuisResultsPage';
+import AttemptDetailPage from '@/pages/dosen/kuis/AttemptDetailPage';
 
 // Mahasiswa Pages
 import { DashboardPage as MahasiswaDashboard } from '@/pages/mahasiswa/DashboardPage';
 import MahasiswaJadwalPage from '@/pages/mahasiswa/JadwalPage';
+
+// Mahasiswa Kuis Pages - NEW! ✅
+import KuisAttemptPage from '@/pages/mahasiswa/kuis/KuisAttemptPage';
 
 // Laboran Pages
 import { DashboardPage as LaboranDashboard } from '@/pages/laboran/DashboardPage';
@@ -100,21 +112,7 @@ export function AppRouter() {
         }
       />
 
-      {/* Mata Kuliah - ✅ READY FOR TEST */}
-      <Route
-        path="/dosen/mata-kuliah"
-        element={
-          <ProtectedRoute>
-            <RoleGuard allowedRoles={['dosen']}>
-              <AppLayout>
-                <MataKuliahPage />
-              </AppLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        }
-      />
-
-      {/* ✅ BUG #1 FIX: Jadwal route added */}
+      {/* Jadwal Praktikum */}
       <Route
         path="/dosen/jadwal"
         element={
@@ -128,8 +126,81 @@ export function AppRouter() {
         }
       />
 
+      {/* ================================================================== */}
+      {/* DOSEN KUIS ROUTES - COMPLETE QUIZ SYSTEM ✅ */}
+      {/* ================================================================== */}
+
+      {/* Kuis List - View all quizzes */}
+      <Route
+        path="/dosen/kuis"
+        element={
+          <ProtectedRoute>
+            <RoleGuard allowedRoles={['dosen']}>
+              <AppLayout>
+                <KuisListPage />
+              </AppLayout>
+            </RoleGuard>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Kuis Create - Build new quiz */}
+      <Route
+        path="/dosen/kuis/create"
+        element={
+          <ProtectedRoute>
+            <RoleGuard allowedRoles={['dosen']}>
+              <AppLayout>
+                <KuisCreatePage />
+              </AppLayout>
+            </RoleGuard>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Kuis Edit - Edit existing quiz */}
+      <Route
+        path="/dosen/kuis/:kuisId/edit"
+        element={
+          <ProtectedRoute>
+            <RoleGuard allowedRoles={['dosen']}>
+              <AppLayout>
+                <KuisEditPage />
+              </AppLayout>
+            </RoleGuard>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Kuis Results - View analytics & student scores */}
+      <Route
+        path="/dosen/kuis/:kuisId/results"
+        element={
+          <ProtectedRoute>
+            <RoleGuard allowedRoles={['dosen']}>
+              <AppLayout>
+                <KuisResultsPage />
+              </AppLayout>
+            </RoleGuard>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Kuis Attempt Detail - View individual student's answers */}
+      <Route
+        path="/dosen/kuis/:kuisId/attempt/:attemptId"
+        element={
+          <ProtectedRoute>
+            <RoleGuard allowedRoles={['dosen']}>
+              <AppLayout>
+                <AttemptDetailPage />
+              </AppLayout>
+            </RoleGuard>
+          </ProtectedRoute>
+        }
+      />
+
       {/* TODO: Add more dosen routes as they are implemented
-      <Route path="/dosen/kuis" element={...} />
       <Route path="/dosen/peminjaman" element={...} />
       <Route path="/dosen/mahasiswa" element={...} />
       <Route path="/dosen/materi" element={...} />
@@ -166,7 +237,7 @@ export function AppRouter() {
         }
       />
 
-      {/* Jadwal Praktikum - ✅ READY FOR TEST */}
+      {/* Jadwal Praktikum */}
       <Route
         path="/mahasiswa/jadwal"
         element={
@@ -180,8 +251,26 @@ export function AppRouter() {
         }
       />
 
+      {/* ================================================================== */}
+      {/* MAHASISWA KUIS ROUTES - QUIZ ATTEMPT ✅ */}
+      {/* ================================================================== */}
+
+      {/* Kuis Attempt - Take quiz */}
+      <Route
+        path="/mahasiswa/kuis/:kuisId/attempt/:attemptId?"
+        element={
+          <ProtectedRoute>
+            <RoleGuard allowedRoles={['mahasiswa']}>
+              <AppLayout>
+                <KuisAttemptPage />
+              </AppLayout>
+            </RoleGuard>
+          </ProtectedRoute>
+        }
+      />
+
       {/* TODO: Add more mahasiswa routes as they are implemented
-      <Route path="/mahasiswa/kuis" element={...} />
+      <Route path="/mahasiswa/kuis" element={...} /> (list available quizzes)
       <Route path="/mahasiswa/materi" element={...} />
       <Route path="/mahasiswa/nilai" element={...} />
       <Route path="/mahasiswa/pengumuman" element={...} />

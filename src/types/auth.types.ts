@@ -21,20 +21,27 @@ export interface AuthUser extends UserTable {
 
   // Profile data based on role
   mahasiswa?: {
+    id: string; // ✅ ADDED: mahasiswa table id
     nim: string;
     program_studi: string;
     angkatan: number;
     semester: number;
   };
   dosen?: {
+    id: string; // ✅ ADDED: dosen table id
     nip: string;
+    nidn?: string;
     gelar_depan?: string;
     gelar_belakang?: string;
+    fakultas?: string;
+    program_studi?: string;
   };
   laboran?: {
+    id: string; // ✅ ADDED: laboran table id
     nip: string;
   };
   admin?: {
+    id: string; // ✅ ADDED: admin table id
     nip: string;
   };
 }
@@ -72,11 +79,13 @@ export interface RegisterData {
   // Role-specific data
   nim?: string;
   nip?: string;
+  nidn?: string;
   program_studi?: string;
   angkatan?: number;
   semester?: number;
   gelar_depan?: string;
   gelar_belakang?: string;
+  fakultas?: string;
 }
 
 // Password reset

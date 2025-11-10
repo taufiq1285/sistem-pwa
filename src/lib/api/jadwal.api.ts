@@ -83,9 +83,10 @@ export async function getJadwal(filters?: JadwalFilters): Promise<Jadwal[]> {
       },
     };
 
+    // ✅ PERBAIKAN FINAL: Ganti 'jadwalpraktikum' menjadi 'jadwal_praktikum'
     const data = filterConditions.length > 0
-      ? await queryWithFilters<Jadwal>('jadwal', filterConditions, options)
-      : await query<Jadwal>('jadwal', options);
+      ? await queryWithFilters<Jadwal>('jadwal_praktikum', filterConditions, options)
+      : await query<Jadwal>('jadwal_praktikum', options);
 
     return data;
   } catch (error) {
@@ -102,7 +103,8 @@ export async function getJadwal(filters?: JadwalFilters): Promise<Jadwal[]> {
  */
 export async function getJadwalById(id: string): Promise<Jadwal> {
   try {
-    return await getById<Jadwal>('jadwal', id, {
+    // ✅ PERBAIKAN FINAL: Ganti 'jadwalpraktikum' menjadi 'jadwal_praktikum'
+    return await getById<Jadwal>('jadwal_praktikum', id, {
       select: `
         *,
         laboratorium:laboratorium_id (*)
@@ -165,8 +167,8 @@ export async function getCalendarEvents(
       endDateFormatted: format(endDate, 'yyyy-MM-dd'),
     });
 
-    // Query jadwal with tanggal_praktikum in date range
-    const jadwalList = await queryWithFilters<Jadwal>('jadwal', [
+    // ✅ PERBAIKAN FINAL: Ganti 'jadwalpraktikum' menjadi 'jadwal_praktikum'
+    const jadwalList = await queryWithFilters<Jadwal>('jadwal_praktikum', [
       {
         column: 'tanggal_praktikum',
         operator: 'gte' as const,
@@ -260,7 +262,7 @@ export async function getCalendarEvents(
           description: j.topik ?? undefined,
           metadata: {
             jadwal_id: j.id,
-            kelas: j.kelas,
+            kelas: j.kelas ?? undefined,
             laboratorium_id: j.laboratorium_id,
             topik: j.topik ?? undefined,
           },
@@ -326,8 +328,9 @@ export async function createJadwal(data: CreateJadwalData): Promise<Jadwal> {
       );
     }
 
-    return await insert<Jadwal>('jadwal', {
-      kelas: data.kelas,
+    // ✅ PERBAIKAN FINAL: Ganti 'jadwalpraktikum' menjadi 'jadwal_praktikum'
+    return await insert<Jadwal>('jadwal_praktikum', {
+      kelas_id: data.kelas_id,
       laboratorium_id: data.laboratorium_id,
       tanggal_praktikum: format(tanggalPraktikum, 'yyyy-MM-dd'),
       hari,
@@ -366,7 +369,7 @@ export async function updateJadwal(
     const updateData: Partial<Jadwal> = {};
     
     // Copy basic fields
-    if (data.kelas !== undefined) updateData.kelas = data.kelas;
+    if (data.kelas_id !== undefined) updateData.kelas_id = data.kelas_id;
     if (data.laboratorium_id !== undefined) updateData.laboratorium_id = data.laboratorium_id;
     if (data.jam_mulai !== undefined) updateData.jam_mulai = data.jam_mulai;
     if (data.jam_selesai !== undefined) updateData.jam_selesai = data.jam_selesai;
@@ -411,7 +414,8 @@ export async function updateJadwal(
       }
     }
 
-    return await update<Jadwal>('jadwal', id, updateData);
+    // ✅ PERBAIKAN FINAL: Ganti 'jadwalpraktikum' menjadi 'jadwal_praktikum'
+    return await update<Jadwal>('jadwal_praktikum', id, updateData);
   } catch (error) {
     const apiError = handleError(error);
     logError(apiError, `updateJadwal:${id}`);
@@ -430,7 +434,8 @@ export async function updateJadwal(
  */
 export async function deleteJadwal(id: string): Promise<boolean> {
   try {
-    return await remove('jadwal', id);
+    // ✅ PERBAIKAN FINAL: Ganti 'jadwalpraktikum' menjadi 'jadwal_praktikum'
+    return await remove('jadwal_praktikum', id);
   } catch (error) {
     const apiError = handleError(error);
     logError(apiError, `deleteJadwal:${id}`);
@@ -461,8 +466,8 @@ export async function checkJadwalConflictByDate(
   try {
     const dateStr = format(tanggalPraktikum, 'yyyy-MM-dd');
     
-    // Get all jadwal for this lab on this specific date
-    const existingJadwal = await queryWithFilters<Jadwal>('jadwal', [
+    // ✅ PERBAIKAN FINAL: Ganti 'jadwalpraktikum' menjadi 'jadwal_praktikum'
+    const existingJadwal = await queryWithFilters<Jadwal>('jadwal_praktikum', [
       {
         column: 'laboratorium_id',
         operator: 'eq' as const,
@@ -538,11 +543,114 @@ export async function checkJadwalConflict(
     return false;
   }
 }
+// ============================================================================
+// MAHASISWA SPECIFIC OPERATIONS
+// ============================================================================
 
+/**
+ * Get jadwal praktikum untuk mahasiswa (using RPC function)
+ * @param userId - User ID mahasiswa (reserved for future filtering)
+ * @param startDate - Start date (optional)
+ * @param endDate - End date (optional)
+ * @returns Array of jadwal praktikum mahasiswa
+ */
+export async function getJadwalPraktikumMahasiswa(
+  userId: string,
+  startDate?: Date,
+  endDate?: Date
+): Promise<Jadwal[]> {
+  try {
+    // TODO: Implement user-specific filtering when needed
+    // Currently returns all active jadwal in date range
+    void userId; // Acknowledge unused parameter
+    
+    // Build query filters
+    const filters: any[] = [
+      {
+        column: 'is_active',
+        operator: 'eq' as const,
+        value: true,
+      },
+    ];
+
+    if (startDate) {
+      filters.push({
+        column: 'tanggal_praktikum',
+        operator: 'gte' as const,
+        value: format(startDate, 'yyyy-MM-dd'),
+      });
+    }
+
+    if (endDate) {
+      filters.push({
+        column: 'tanggal_praktikum',
+        operator: 'lte' as const,
+        value: format(endDate, 'yyyy-MM-dd'),
+      });
+    }
+
+    // ✅ PERBAIKAN FINAL: Ganti 'jadwalpraktikum' menjadi 'jadwal_praktikum'
+    const data = await queryWithFilters<Jadwal>('jadwal_praktikum', filters, {
+      select: `
+        *,
+        laboratorium:laboratorium_id (
+          nama_lab,
+          kode_lab,
+          kapasitas
+        )
+      `,
+      order: {
+        column: 'tanggal_praktikum',
+        ascending: true,
+      },
+    });
+
+    return data;
+  } catch (error) {
+    const apiError = handleError(error);
+    logError(apiError, 'getJadwalPraktikumMahasiswa');
+    throw apiError;
+  }
+}
+
+/**
+ * Get jadwal hari ini untuk mahasiswa
+ * @param userId - User ID mahasiswa
+ * @returns Array of today's jadwal
+ */
+export async function getJadwalHariIni(userId: string): Promise<Jadwal[]> {
+  const today = new Date();
+  return getJadwalPraktikumMahasiswa(userId, today, today);
+}
+
+/**
+ * Get jadwal minggu ini (7 hari ke depan) untuk mahasiswa
+ * @param userId - User ID mahasiswa
+ * @returns Array of this week's jadwal
+ */
+export async function getJadwalMingguIni(userId: string): Promise<Jadwal[]> {
+  const today = new Date();
+  const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  return getJadwalPraktikumMahasiswa(userId, today, nextWeek);
+}
+
+/**
+ * Get jadwal bulan ini untuk mahasiswa
+ * @param userId - User ID mahasiswa
+ * @returns Array of this month's jadwal
+ */
+export async function getJadwalBulanIni(userId: string): Promise<Jadwal[]> {
+  const today = new Date();
+  const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+  return getJadwalPraktikumMahasiswa(userId, today, endOfMonth);
+}
 // ============================================================================
 // API RESPONSE WRAPPERS
 // ============================================================================
 
+/**
+ * Wrapped API functions with standard response format
+ */
 /**
  * Wrapped API functions with standard response format
  */
@@ -571,7 +679,19 @@ export const jadwalApi = {
   checkConflictByDate: (labId: string, tanggalPraktikum: Date, jamMulai: string, jamSelesai: string, excludeId?: string) =>
     withApiResponse(() => checkJadwalConflictByDate(labId, tanggalPraktikum, jamMulai, jamSelesai, excludeId)),
 
-  // Legacy
   checkConflict: (labId: string, hari: string, jamMulai: string, jamSelesai: string, excludeId?: string) =>
     withApiResponse(() => checkJadwalConflict(labId, hari, jamMulai, jamSelesai, excludeId)),
+
+  // ✅ TAMBAHKAN INI - Mahasiswa functions
+  getMahasiswaJadwal: (userId: string, startDate?: Date, endDate?: Date) =>
+    withApiResponse(() => getJadwalPraktikumMahasiswa(userId, startDate, endDate)),
+
+  getJadwalHariIni: (userId: string) =>
+    withApiResponse(() => getJadwalHariIni(userId)),
+
+  getJadwalMingguIni: (userId: string) =>
+    withApiResponse(() => getJadwalMingguIni(userId)),
+
+  getJadwalBulanIni: (userId: string) =>
+    withApiResponse(() => getJadwalBulanIni(userId)),
 };

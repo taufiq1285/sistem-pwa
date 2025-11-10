@@ -1,11 +1,13 @@
 /**
  * Navigation Configuration
  * Defines navigation items for each role with icons and descriptions
+ * 
+ * UPDATED: Removed "Mata Kuliah" entries
+ * REASON: System focus on PRAKTIKUM operations, not academic course management
  */
 
 import {
   Home,
-  BookOpen,
   Calendar,
   ClipboardList,
   Award,
@@ -48,17 +50,12 @@ const mahasiswaNavigation: NavigationItem[] = [
     icon: Home,
     description: 'Ringkasan aktivitas akademik'
   },
+  // ❌ REMOVED: Mata Kuliah (not needed for praktikum system)
   {
-    label: 'Mata Kuliah',
-    href: '/mahasiswa/mata-kuliah',
-    icon: BookOpen,
-    description: 'Mata kuliah yang diambil'
-  },
-  {
-    label: 'Jadwal',
+    label: 'Jadwal Praktikum',
     href: '/mahasiswa/jadwal',
     icon: Calendar,
-    description: 'Jadwal praktikum'
+    description: 'Jadwal praktikum kebidanan'
   },
   {
     label: 'Kuis',
@@ -96,17 +93,12 @@ const dosenNavigation: NavigationItem[] = [
     icon: Home,
     description: 'Ringkasan aktivitas mengajar'
   },
+  // ❌ REMOVED: Mata Kuliah (not needed for praktikum system)
   {
-    label: 'Mata Kuliah',
-    href: '/dosen/mata-kuliah',
-    icon: BookOpen,
-    description: 'Mata kuliah yang diampu'
-  },
-  {
-    label: 'Jadwal',
+    label: 'Jadwal Praktikum',
     href: '/dosen/jadwal',
     icon: Calendar,
-    description: 'Jadwal mengajar'
+    description: 'Kelola jadwal praktikum'
   },
   {
     label: 'Kuis',
@@ -156,12 +148,7 @@ const adminNavigation: NavigationItem[] = [
     icon: UserCog,
     description: 'Kelola pengguna'
   },
-  {
-    label: 'Mata Kuliah',
-    href: '/admin/mata-kuliah',
-    icon: BookOpen,
-    description: 'Kelola mata kuliah'
-  },
+  // ❌ REMOVED: Mata Kuliah (system focuses on praktikum, not courses)
   {
     label: 'Kelas',
     href: '/admin/kelas',
@@ -175,10 +162,10 @@ const adminNavigation: NavigationItem[] = [
     description: 'Kelola laboratorium'
   },
   {
-    label: 'Jadwal',
+    label: 'Jadwal Praktikum',
     href: '/admin/jadwal',
     icon: Calendar,
-    description: 'Kelola jadwal'
+    description: 'Kelola jadwal praktikum'
   },
   {
     label: 'Laporan',
@@ -217,7 +204,7 @@ const laboranNavigation: NavigationItem[] = [
     description: 'Kelola peminjaman'
   },
   {
-    label: 'Jadwal',
+    label: 'Jadwal Praktikum',
     href: '/laboran/jadwal',
     icon: Calendar,
     description: 'Jadwal laboratorium'

@@ -1,490 +1,300 @@
-/**
- * Mahasiswa Dashboard Page
- * 
- * Displays:
- * - Statistics cards (enrolled courses, upcoming quizzes, grades, schedule)
- * - Today's schedule
- * - Upcoming quizzes
- * - Enrolled courses
- * - Latest grades
- */
 
-import { useEffect, useState, type JSX } from 'react';
+
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { 
-  getMahasiswaDashboard,
-  type DashboardData 
-} from '@/lib/api/mahasiswa.api';
-
-// UI Components
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { LoadingSpinner } from '@/components/common/LoadingSpinner';
-import { EmptyState } from '@/components/common/EmptyState';
-
-// Icons
-import { 
   BookOpen, 
-  Calendar, 
-  ClipboardList, 
-  TrendingUp,
+  FileQuestion, 
+  Award, 
+  Calendar,
   Clock,
   MapPin,
-  User,
-  Award,
-  AlertCircle,
-  ChevronRight
+  ArrowRight,
+  Info, // ✅ NEW: Info icon for messaging
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert'; // ✅ NEW: Alert component
+// ❌ REMOVED: EnrollKelasDialog import
+import {
+  getMahasiswaStats,
+  getMyKelas,
+  getMyJadwal,
+  type MahasiswaStats,
+  type MyKelas,
+  type JadwalMahasiswa,
+} from '@/lib/api/mahasiswa.api';
 
-export default function MahasiswaDashboardPage() {
+export function DashboardPage() {
   const { user } = useAuth();
+  
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+  const [stats, setStats] = useState<MahasiswaStats | null>(null);
+  const [myKelas, setMyKelas] = useState<MyKelas[]>([]);
+  const [myJadwal, setMyJadwal] = useState<JadwalMahasiswa[]>([]);
+  // ❌ REMOVED: enrollDialogOpen state
 
   useEffect(() => {
-    if (user) {
-      loadDashboard();
-    } else {
-      setLoading(true);
-    }
-  }, [user]);
+    fetchDashboardData();
+  }, []);
 
-  async function loadDashboard() {
+  const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      setError(null);
+      const [statsData, kelasData, jadwalData] = await Promise.allSettled([
+        getMahasiswaStats(),
+        getMyKelas(),
+        getMyJadwal(5),
+      ]);
 
-      if (!user) {
-        return;
+      if (statsData.status === 'fulfilled') {
+        setStats(statsData.value);
       }
 
-      // Try multiple ways to get mahasiswa_id
-      let mahasiswaId: string | null = null;
-
-      if ((user as any)?.mahasiswa_id) {
-        mahasiswaId = (user as any).mahasiswa_id;
-      } else if ((user as any)?.mahasiswa?.id) {
-        mahasiswaId = (user as any).mahasiswa.id;
-      } else if (user?.id) {
-        mahasiswaId = user.id;
-      }
-      
-      if (!mahasiswaId) {
-        throw new Error('Mahasiswa ID tidak ditemukan');
+      if (kelasData.status === 'fulfilled') {
+        setMyKelas(kelasData.value);
       }
 
-      const result = await getMahasiswaDashboard(mahasiswaId);
-
-      if (result.success && result.data) {
-        setDashboardData(result.data);
-      } else {
-        throw new Error(result.error || 'Gagal memuat dashboard');
+      if (jadwalData.status === 'fulfilled') {
+        setMyJadwal(jadwalData.value);
       }
-    } catch (err: any) {
-      console.error('Error loading dashboard:', err);
-      setError(err.message || 'Terjadi kesalahan saat memuat dashboard');
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
     } finally {
       setLoading(false);
     }
-  }
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat('id-ID', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    }).format(date);
+  };
+
+  const formatTime = (timeString: string) => {
+    return timeString.slice(0, 5);
+  };
+
+  const dayNames: Record<string, string> = {
+    monday: 'Senin',
+    tuesday: 'Selasa',
+    wednesday: 'Rabu',
+    thursday: 'Kamis',
+    friday: 'Jumat',
+    saturday: 'Sabtu',
+    sunday: 'Minggu',
+    senin: 'Senin',
+    selasa: 'Selasa',
+    rabu: 'Rabu',
+    kamis: 'Kamis',
+    jumat: 'Jumat',
+    sabtu: 'Sabtu',
+    minggu: 'Minggu',
+  };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <LoadingSpinner size="lg" text="Memuat dashboard..." />
+      <div className="p-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="animate-pulse space-y-6">
+            <div className="h-8 bg-gray-200 rounded w-1/4"></div>
+            <div className="grid gap-6 md:grid-cols-4">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="h-32 bg-gray-200 rounded"></div>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
 
-  if (error) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <Card className="border-red-200 bg-red-50">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-2 text-red-600">
-              <AlertCircle className="h-5 w-5" />
-              <p>{error}</p>
-            </div>
-            <Button onClick={loadDashboard} className="mt-4">
-              Coba Lagi
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  const stats = dashboardData?.stats;
-
   return (
-    <div className="container mx-auto px-4 py-6 space-y-6">
-      {/* Welcome Header */}
-      <div>
-        <h1 className="text-3xl font-bold">
-          Selamat Datang, {user?.full_name || 'Mahasiswa'}! 👋
-        </h1>
-        <p className="text-muted-foreground mt-1">
-          Berikut ringkasan aktivitas akademik Anda hari ini
-        </p>
-      </div>
-
-      {/* Statistics Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          title="Total Mata Kuliah"
-          value={stats?.course.total_enrolled || 0}
-          icon={BookOpen}
-          description="Mata kuliah aktif"
-        />
-        <StatCard
-          title="Kuis Mendatang"
-          value={stats?.quiz.upcoming_quiz || 0}
-          icon={ClipboardList}
-          description="Belum dikerjakan"
-          variant="warning"
-        />
-        <StatCard
-          title="Rata-rata Nilai"
-          value={stats?.course.average_grade ? stats.course.average_grade.toFixed(1) : '-'}
-          icon={TrendingUp}
-          description="Semester ini"
-          variant="success"
-        />
-        <StatCard
-          title="Jadwal Hari Ini"
-          value={stats?.schedule.total_classes_today || 0}
-          icon={Calendar}
-          description="Praktikum"
-        />
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Today's Schedule */}
-        <TodayScheduleSection schedules={dashboardData?.todaySchedule || []} />
-
-        {/* Upcoming Quizzes */}
-        <UpcomingQuizzesSection quizzes={dashboardData?.upcomingQuizzes || []} />
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Enrolled Courses */}
-        <EnrolledCoursesSection courses={dashboardData?.enrolledCourses || []} />
-
-        {/* Latest Grades */}
-        <LatestGradesSection grades={dashboardData?.latestGrades || []} />
-      </div>
-    </div>
-  );
-}
-
-// Named export for compatibility
-export { MahasiswaDashboardPage as DashboardPage };
-
-// ========================================
-// STAT CARD COMPONENT
-// ========================================
-
-interface StatCardProps {
-  title: string;
-  value: string | number;
-  icon: any;
-  description?: string;
-  variant?: 'default' | 'success' | 'warning' | 'danger';
-}
-
-function StatCard({ title, value, icon: Icon, description, variant = 'default' }: StatCardProps) {
-  const variantColors = {
-    default: 'text-blue-600 bg-blue-50',
-    success: 'text-green-600 bg-green-50',
-    warning: 'text-amber-600 bg-amber-50',
-    danger: 'text-red-600 bg-red-50'
-  };
-
-  return (
-    <Card>
-      <CardContent className="pt-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-muted-foreground">{title}</p>
-            <h3 className="text-2xl font-bold mt-2">{value}</h3>
-            {description && (
-              <p className="text-xs text-muted-foreground mt-1">{description}</p>
-            )}
-          </div>
-          <div className={`p-3 rounded-lg ${variantColors[variant]}`}>
-            <Icon className="h-6 w-6" />
-          </div>
+    <div className="p-8">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Header */}
+        <div>
+          <h1 className="text-3xl font-bold">Dashboard Mahasiswa</h1>
+          <p className="text-gray-500 mt-1">Selamat datang, {user?.email}</p>
         </div>
-      </CardContent>
-    </Card>
-  );
-}
 
-// ========================================
-// TODAY'S SCHEDULE SECTION
-// ========================================
+        {/* Stats Cards */}
+        <div className="grid gap-6 md:grid-cols-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">Total Mata Kuliah</CardTitle>
+              <BookOpen className="h-4 w-4 text-gray-400" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats?.totalMataKuliah || 0}</div>
+              <p className="text-xs text-gray-500 mt-1">Mata kuliah aktif</p>
+            </CardContent>
+          </Card>
 
-function TodayScheduleSection({ schedules }: { schedules: any[] }) {
-  return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
-              Jadwal Hari Ini
-            </CardTitle>
-            <CardDescription>
-              {new Date().toLocaleDateString('id-ID', { 
-                weekday: 'long', 
-                day: 'numeric', 
-                month: 'long',
-                year: 'numeric'
-              })}
-            </CardDescription>
-          </div>
-          <Link to="/mahasiswa/jadwal">
-            <Button variant="ghost" size="sm">
-              Lihat Semua
-              <ChevronRight className="h-4 w-4 ml-1" />
-            </Button>
-          </Link>
-        </div>
-      </CardHeader>
-      <CardContent>
-        {schedules.length === 0 ? (
-          <EmptyState
-            icon={Calendar}
-            title="Tidak ada jadwal"
-            description="Anda tidak memiliki jadwal praktikum hari ini"
-          />
-        ) : (
-          <div className="space-y-3">
-            {schedules.map((schedule) => (
-              <ScheduleCard key={schedule.id} schedule={schedule} />
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">Kuis Mendatang</CardTitle>
+              <FileQuestion className="h-4 w-4 text-gray-400" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats?.totalKuis || 0}</div>
+              <p className="text-xs text-gray-500 mt-1">Belum dikerjakan</p>
+            </CardContent>
+          </Card>
 
-function ScheduleCard({ schedule }: { schedule: any }) {
-  const statusColors: Record<string, string> = {
-    past: 'bg-gray-100 border-gray-300',
-    ongoing: 'bg-green-50 border-green-300',
-    upcoming: 'bg-blue-50 border-blue-300'
-  };
-
-  const statusBadges: Record<string, JSX.Element> = {
-    past: <Badge variant="secondary">Selesai</Badge>,
-    ongoing: <Badge className="bg-green-600">Berlangsung</Badge>,
-    upcoming: <Badge>Akan Datang</Badge>
-  };
-
-  return (
-    <div className={`p-4 rounded-lg border-l-4 ${statusColors[schedule.time_status]}`}>
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <Clock className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-            <span className="font-semibold">
-              {schedule.jam_mulai} - {schedule.jam_selesai}
-            </span>
-            {statusBadges[schedule.time_status]}
-          </div>
-          <h4 className="font-semibold text-sm truncate">{schedule.nama_mk}</h4>
-          <p className="text-xs text-muted-foreground">{schedule.nama_kelas}</p>
-          
-          <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-            <div className="flex items-center gap-1">
-              <MapPin className="h-3 w-3" />
-              <span>{schedule.nama_lab}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <User className="h-3 w-3" />
-              <span>{schedule.dosen_name}</span>
-            </div>
-          </div>
-
-          {schedule.topik && (
-            <p className="text-xs mt-2 text-muted-foreground">
-              <strong>Topik:</strong> {schedule.topik}
-            </p>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ========================================
-// UPCOMING QUIZZES SECTION
-// ========================================
-
-function UpcomingQuizzesSection({ quizzes }: { quizzes: any[] }) {
-  return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <ClipboardList className="h-5 w-5" />
-              Kuis Mendatang
-            </CardTitle>
-            <CardDescription>Kuis yang perlu dikerjakan</CardDescription>
-          </div>
-          <Link to="/mahasiswa/kuis">
-            <Button variant="ghost" size="sm">
-              Lihat Semua
-              <ChevronRight className="h-4 w-4 ml-1" />
-            </Button>
-          </Link>
-        </div>
-      </CardHeader>
-      <CardContent>
-        {quizzes.length === 0 ? (
-          <EmptyState
-            icon={ClipboardList}
-            title="Tidak ada kuis"
-            description="Anda tidak memiliki kuis yang perlu dikerjakan saat ini"
-          />
-        ) : (
-          <div className="space-y-3">
-            {quizzes.slice(0, 3).map((quiz) => (
-              <div key={quiz.id} className="p-4 rounded-lg border">
-                <h4 className="font-semibold text-sm">{quiz.judul}</h4>
-                <p className="text-xs text-muted-foreground">{quiz.nama_mk}</p>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">Rata-rata Nilai</CardTitle>
+              <Award className="h-4 w-4 text-gray-400" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {stats?.rataRataNilai ? stats.rataRataNilai.toFixed(1) : '-'}
               </div>
-            ))}
-          </div>
+              <p className="text-xs text-gray-500 mt-1">Semester ini</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">Jadwal Hari Ini</CardTitle>
+              <Calendar className="h-4 w-4 text-gray-400" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats?.jadwalHariIni || 0}</div>
+              <p className="text-xs text-gray-500 mt-1">Praktikum</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* ✅ UPDATED: Info Alert (Only if no classes) */}
+        {myKelas.length === 0 && (
+          <Alert className="border-blue-200 bg-blue-50">
+            <Info className="h-4 w-4 text-blue-600" />
+            <AlertDescription className="text-blue-800">
+              Anda belum terdaftar di kelas praktikum manapun. 
+              Hubungi dosen pengampu atau koordinator program studi untuk pendaftaran kelas.
+            </AlertDescription>
+          </Alert>
         )}
-      </CardContent>
-    </Card>
-  );
-}
 
-// ========================================
-// ENROLLED COURSES SECTION
-// ========================================
+        <div className="grid gap-6 lg:grid-cols-2">
+          {/* My Classes */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Kelas Saya</CardTitle>
+              <CardDescription>Kelas yang sedang diikuti</CardDescription>
+              {/* ❌ REMOVED: "+ Tambah" button */}
+            </CardHeader>
+            <CardContent>
+              {myKelas.length === 0 ? (
+                <div className="text-center py-8">
+                  <BookOpen className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                  <p className="text-sm text-gray-600 mb-2">Belum ada kelas yang diikuti</p>
+                  <p className="text-xs text-gray-500 max-w-sm mx-auto">
+                    Pendaftaran kelas dilakukan oleh dosen atau admin. 
+                    Silakan hubungi dosen pengampu untuk informasi lebih lanjut.
+                  </p>
+                  {/* ❌ REMOVED: "Daftar Kelas Sekarang" button */}
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {myKelas.map((kelas) => (
+                    <div 
+                      key={kelas.id}
+                      className="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      <div className="flex-shrink-0">
+                        <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                          <BookOpen className="h-5 w-5 text-blue-600" />
+                        </div>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-medium text-sm">{kelas.mata_kuliah_nama}</h4>
+                          <Badge variant="secondary" className="text-xs">{kelas.mata_kuliah_kode}</Badge>
+                        </div>
+                        <p className="text-xs text-gray-600 mt-1">{kelas.nama_kelas}</p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {kelas.sks} SKS • {kelas.tahun_ajaran}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
-function EnrolledCoursesSection({ courses }: { courses: any[] }) {
-  return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <BookOpen className="h-5 w-5" />
-              Mata Kuliah Aktif
-            </CardTitle>
-            <CardDescription>
-              Total {courses.length} mata kuliah
-            </CardDescription>
-          </div>
-          <Link to="/mahasiswa/mata-kuliah">
-            <Button variant="ghost" size="sm">
-              Lihat Semua
-              <ChevronRight className="h-4 w-4 ml-1" />
-            </Button>
-          </Link>
-        </div>
-      </CardHeader>
-      <CardContent>
-        {courses.length === 0 ? (
-          <EmptyState
-            icon={BookOpen}
-            title="Belum ada mata kuliah"
-            description="Anda belum terdaftar di mata kuliah manapun"
-          />
-        ) : (
-          <div className="space-y-3">
-            {courses.slice(0, 4).map((course) => (
-              <CourseCard key={course.id} course={course} />
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-function CourseCard({ course }: { course: any }) {
-  return (
-    <div className="p-4 rounded-lg border border-gray-200 hover:border-blue-300 transition-colors">
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <Badge variant="outline">{course.kode_mk}</Badge>
-            <Badge variant="secondary">{course.sks} SKS</Badge>
-          </div>
-          <h4 className="font-semibold text-sm truncate">{course.nama_mk}</h4>
-          <p className="text-xs text-muted-foreground">{course.nama_kelas}</p>
-          
-          <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-            <div className="flex items-center gap-1">
-              <User className="h-3 w-3" />
-              <span>{course.dosen_name}</span>
-            </div>
-          </div>
-        </div>
-        
-        <Link to={`/mahasiswa/mata-kuliah/${course.kelas_id}`}>
-          <Button variant="ghost" size="sm">
-            Detail
-          </Button>
-        </Link>
-      </div>
-    </div>
-  );
-}
-
-// ========================================
-// LATEST GRADES SECTION
-// ========================================
-
-function LatestGradesSection({ grades }: { grades: any[] }) {
-  return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <Award className="h-5 w-5" />
-              Nilai Terbaru
-            </CardTitle>
-            <CardDescription>Nilai yang baru diinput</CardDescription>
-          </div>
-          <Link to="/mahasiswa/nilai">
-            <Button variant="ghost" size="sm">
-              Lihat Semua
-              <ChevronRight className="h-4 w-4 ml-1" />
-            </Button>
-          </Link>
-        </div>
-      </CardHeader>
-      <CardContent>
-        {grades.length === 0 ? (
-          <EmptyState
-            icon={Award}
-            title="Belum ada nilai"
-            description="Nilai Anda belum diinput oleh dosen"
-          />
-        ) : (
-          <div className="space-y-3">
-            {grades.slice(0, 4).map((grade) => (
-              <div key={grade.id} className="p-4 rounded-lg border">
-                <h4 className="font-semibold text-sm">{grade.nama_mk}</h4>
-                <p className="text-xs text-muted-foreground">{grade.kelas}</p>
+          {/* Upcoming Schedule */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>Jadwal Praktikum</CardTitle>
+                <CardDescription>7 hari ke depan</CardDescription>
               </div>
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+              {myJadwal.length > 0 && (
+                <Button variant="ghost" size="sm">
+                  Lihat Semua
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              )}
+            </CardHeader>
+            <CardContent>
+              {myJadwal.length === 0 ? (
+                <div className="text-center py-8">
+                  <Calendar className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                  <p className="text-sm text-gray-600">
+                    {myKelas.length === 0 
+                      ? 'Belum ada jadwal praktikum' 
+                      : 'Tidak ada jadwal minggu ini'}
+                  </p>
+                  {myKelas.length === 0 && (
+                    <p className="text-xs text-gray-500 mt-2 max-w-sm mx-auto">
+                      Jadwal akan muncul setelah Anda terdaftar di kelas praktikum
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {myJadwal.map((jadwal) => (
+                    <div 
+                      key={jadwal.id}
+                      className="flex gap-3 p-3 border rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      <div className="flex-shrink-0">
+                        <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                          <Calendar className="h-5 w-5 text-green-600" />
+                        </div>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-medium text-sm truncate">{jadwal.mata_kuliah_nama}</h4>
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          {jadwal.kelas_nama} {jadwal.topik && `• ${jadwal.topik}`}
+                        </p>
+                        <div className="flex items-center gap-2 mt-1 text-xs text-gray-600">
+                          <Clock className="h-3 w-3" />
+                          {dayNames[jadwal.hari] || jadwal.hari}, {formatDate(jadwal.tanggal_praktikum)}, {formatTime(jadwal.jam_mulai)}-{formatTime(jadwal.jam_selesai)}
+                        </div>
+                        <div className="flex items-center gap-1 mt-1 text-xs text-gray-500">
+                          <MapPin className="h-3 w-3" />
+                          {jadwal.lab_nama}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* ❌ REMOVED: EnrollKelasDialog component */}
+    </div>
   );
 }

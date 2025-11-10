@@ -16,7 +16,7 @@ export type ApiMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 /**
  * Standard API response wrapper
  */
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   success: boolean;
   data?: T;
   error?: ApiError;
@@ -27,7 +27,7 @@ export interface ApiResponse<T = any> {
 /**
  * Paginated API response
  */
-export interface PaginatedResponse<T = any> {
+export interface PaginatedResponse<T = unknown> {
   data: T[];
   pagination: PaginationMeta;
   success: boolean;
@@ -56,7 +56,7 @@ export interface PaginationMeta {
 export interface ApiError {
   code: string;
   message: string;
-  details?: Record<string, any>;
+  details?: Record<string, unknown>;
   statusCode?: number;
   timestamp?: string;
 }
@@ -95,8 +95,8 @@ export type ApiErrorCodeType = typeof ApiErrorCode[keyof typeof ApiErrorCode];
 export interface ApiRequestConfig {
   method: ApiMethod;
   url: string;
-  params?: Record<string, any>;
-  data?: any;
+  params?: Record<string, unknown>;
+  data?: unknown;
   headers?: Record<string, string>;
   timeout?: number;
   retry?: RetryConfig;
@@ -137,7 +137,7 @@ export interface QueryParams {
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
   search?: string;
-  filters?: Record<string, any>;
+  filters?: Record<string, unknown>;
 }
 
 /**
@@ -162,7 +162,7 @@ export type FilterOperator =
 export interface FilterCondition {
   field: string;
   operator: FilterOperator;
-  value: any;
+  value: unknown;
 }
 
 // ============================================================================
@@ -172,14 +172,14 @@ export interface FilterCondition {
 /**
  * Create operation payload
  */
-export interface CreatePayload<T = any> {
+export interface CreatePayload<T = Record<string, unknown>> {
   data: T;
 }
 
 /**
  * Update operation payload
  */
-export interface UpdatePayload<T = any> {
+export interface UpdatePayload<T = Record<string, unknown>> {
   id: string;
   data: Partial<T>;
 }
@@ -195,7 +195,7 @@ export interface DeletePayload {
 /**
  * Bulk operation payload
  */
-export interface BulkOperationPayload<T = any> {
+export interface BulkOperationPayload<T = Record<string, unknown>> {
   ids: string[];
   data?: Partial<T>;
   operation: 'create' | 'update' | 'delete';
@@ -247,7 +247,7 @@ export interface SupabaseQueryOptions {
 export interface SupabaseFilter {
   column: string;
   operator: FilterOperator;
-  value: any;
+  value: unknown;
 }
 
 // ============================================================================
@@ -276,5 +276,5 @@ export interface RealtimeConfig {
   table: string;
   event: 'INSERT' | 'UPDATE' | 'DELETE' | '*';
   filter?: string;
-  callback: (payload: any) => void;
+  callback: (payload: Record<string, unknown>) => void;
 }
