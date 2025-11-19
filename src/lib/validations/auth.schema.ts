@@ -1,5 +1,5 @@
 /**
- * Auth Validation Schemas
+ * Auth Validation Schemas - UPDATED for NIDN/NUPTK
  * Zod schemas for auth forms validation
  */
 
@@ -71,8 +71,31 @@ const mahasiswaFields = z.object({
     .max(14, 'Semester must not exceed 14'),
 });
 
-// Staff fields (Dosen/Laboran - need NIP)
-const staffFields = z.object({
+// ✅ UPDATED: Dosen fields - NIDN/NUPTK instead of NIP
+const dosenFields = z.object({
+  nidn: z
+    .string()
+    .min(1, 'NIDN is required')
+    .regex(
+      /^\d{10}$/,
+      'NIDN must be exactly 10 digits'
+    ),
+  nuptk: z
+    .string()
+    .optional()
+    .refine(
+      (val) => !val || /^\d{16}$/.test(val),
+      'NUPTK must be exactly 16 digits if provided'
+    ),
+  nip: z.string().optional(), // NIP opsional (hanya untuk PNS)
+  gelar_depan: z.string().optional(),
+  gelar_belakang: z.string().optional(),
+  fakultas: z.string().optional(),
+  program_studi: z.string().optional(),
+});
+
+// Laboran fields - need NIP
+const laboranFields = z.object({
   nip: z
     .string()
     .min(1, 'NIP is required')
@@ -80,8 +103,6 @@ const staffFields = z.object({
       /^\d{10,18}$/,
       'NIP must be 10-18 digits'
     ),
-  gelar_depan: z.string().optional(),
-  gelar_belakang: z.string().optional(),
 });
 
 // Full register schema with conditional validation
@@ -89,8 +110,8 @@ export const registerSchema = baseRegisterSchema
   .and(
     z.discriminatedUnion('role', [
       z.object({ role: z.literal('mahasiswa') }).merge(mahasiswaFields),
-      z.object({ role: z.literal('dosen') }).merge(staffFields),
-      z.object({ role: z.literal('laboran') }).merge(staffFields),
+      z.object({ role: z.literal('dosen') }).merge(dosenFields),
+      z.object({ role: z.literal('laboran') }).merge(laboranFields),
     ])
   )
   .refine((data) => data.password === data.confirmPassword, {

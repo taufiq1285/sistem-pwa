@@ -47,7 +47,7 @@ import {
 import type { Kuis } from '@/types/kuis.types';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { deleteKuis, duplicateKuis, updateKuis } from '@/lib/api/kuis.api';
+import { deleteKuis, duplicateKuis, publishKuis, unpublishKuis } from '@/lib/api/kuis.api';
 
 // ============================================================================
 // TYPES
@@ -103,19 +103,23 @@ export function QuizCard({
   // ============================================================================
   // COMPUTED VALUES
   // ============================================================================
-  
-  const isActive = (quiz as any).is_active ?? (quiz as any).status === 'active';
-  const isPublished = isActive;
-  
-  // Quiz status based on dates
+
+  // Use 'status' field from database (draft/published/archived)
+  const quizStatus = quiz.status || 'draft';
+  const isPublished = quizStatus === 'published';
+
+  // Quiz status based on dates and publish status
   const now = new Date();
   const startDate = new Date(quiz.tanggal_mulai);
   const endDate = new Date(quiz.tanggal_selesai);
-  
+
   let statusLabel = 'Draft';
   let statusVariant: 'default' | 'secondary' | 'destructive' | 'outline' = 'secondary';
-  
-  if (isPublished) {
+
+  if (quizStatus === 'archived') {
+    statusLabel = 'Diarsipkan';
+    statusVariant = 'destructive';
+  } else if (isPublished) {
     if (now < startDate) {
       statusLabel = 'Terjadwal';
       statusVariant = 'outline';
@@ -157,16 +161,22 @@ export function QuizCard({
    */
   const handleTogglePublish = async () => {
     setIsToggling(true);
-    
+
     try {
-      await updateKuis(quiz.id, {
-        is_active: !isActive,
-      } as any);
-      
-      toast.success(
-        isActive ? 'Kuis berhasil di-unpublish' : 'Kuis berhasil dipublish'
-      );
-      
+      if (isPublished) {
+        // Unpublish: change status from 'published' to 'draft'
+        await unpublishKuis(quiz.id);
+        toast.success('Kuis berhasil di-unpublish', {
+          description: 'Kuis tidak akan muncul di akun mahasiswa'
+        });
+      } else {
+        // Publish: change status from 'draft' to 'published'
+        await publishKuis(quiz.id);
+        toast.success('Kuis berhasil dipublish', {
+          description: 'Kuis sekarang muncul di akun mahasiswa'
+        });
+      }
+
       onUpdate?.();
     } catch (error: any) {
       toast.error('Gagal mengubah status kuis', {
@@ -297,7 +307,7 @@ export function QuizCard({
                     onClick={handleTogglePublish}
                     disabled={isToggling}
                   >
-                    {isActive ? (
+                    {isPublished ? (
                       <>
                         <EyeOff className="h-4 w-4 mr-2" />
                         Unpublish
@@ -305,7 +315,7 @@ export function QuizCard({
                     ) : (
                       <>
                         <Eye className="h-4 w-4 mr-2" />
-                        Publish
+                        Publish / Mulai
                       </>
                     )}
                   </DropdownMenuItem>

@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(sed:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm run type-check:*)",
+      "Bash(cat:*)",
+      "Bash(npm run dev:*)",
+      "Bash(npx prettier:*)",
+      "Bash(npx tsc:*)",
+      "Bash(/tmp/kuis_part1.ts)",
+      "Bash(/tmp/kuis_part3.ts)",
+      "Bash(npm install:*)",
+      "Bash(npm test:*)",
+      "Bash(tasklist:*)",
+      "Bash(findstr:*)",
+      "Bash(taskkill:*)",
+      "Bash(node apply-offline-fix.js:*)",
+      "Bash(node:*)",
+      "Bash(tee:*)",
+      "Bash(timeout 120 npm run build)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

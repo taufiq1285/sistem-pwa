@@ -46,18 +46,18 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
-    // Log error to console in development
-    if (import.meta.env.DEV) {
-      console.error('ErrorBoundary caught an error:', error, errorInfo);
-    }
+    // Import error logger dynamically to avoid circular dependencies
+    import('@/lib/utils/error-logger').then(({ logReactError }) => {
+      // Log error to error logging service
+      logReactError(error, errorInfo, {
+        resetKeys: this.props.resetKeys,
+      });
+    });
 
     // Call custom error handler if provided
     if (this.props.onError) {
       this.props.onError(error, errorInfo);
     }
-
-    // TODO: Log error to external service (Sentry, LogRocket, etc)
-    // logErrorToService(error, errorInfo);
   }
 
   componentDidUpdate(prevProps: ErrorBoundaryProps): void {

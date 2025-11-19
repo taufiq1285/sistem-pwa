@@ -23,6 +23,8 @@ import { UnauthorizedPage } from '@/pages/public/UnauthorizedPage';
 
 // Admin Pages
 import { DashboardPage as AdminDashboard } from '@/pages/admin/DashboardPage';
+import MataKuliahPage from '@/pages/admin/MataKuliahPage';
+import KelasPage from '@/pages/admin/KelasPage';
 
 // Dosen Pages
 import { DashboardPage as DosenDashboard } from '@/pages/dosen/DashboardPage';
@@ -35,12 +37,26 @@ import KuisEditPage from '@/pages/dosen/kuis/KuisEditPage';
 import KuisResultsPage from '@/pages/dosen/kuis/KuisResultsPage';
 import AttemptDetailPage from '@/pages/dosen/kuis/AttemptDetailPage';
 
+// Dosen Materi Page - NEW! ✅
+import DosenMateriPage from '@/pages/dosen/MateriPage';
+
+// Dosen Penilaian Page - NEW! ✅
+import DosenPenilaianPage from '@/pages/dosen/PenilaianPage';
+
 // Mahasiswa Pages
 import { DashboardPage as MahasiswaDashboard } from '@/pages/mahasiswa/DashboardPage';
 import MahasiswaJadwalPage from '@/pages/mahasiswa/JadwalPage';
 
 // Mahasiswa Kuis Pages - NEW! ✅
 import KuisAttemptPage from '@/pages/mahasiswa/kuis/KuisAttemptPage';
+import MahasiswaKuisListPage from '@/pages/mahasiswa/kuis/KuisListPage';
+import KuisResultPage from '@/pages/mahasiswa/kuis/KuisResultPage';
+
+// Mahasiswa Materi Page - NEW! ✅
+import MahasiswaMateriPage from '@/pages/mahasiswa/MateriPage';
+
+// Mahasiswa Nilai Page - NEW! ✅
+import MahasiswaNilaiPage from '@/pages/mahasiswa/NilaiPage';
 
 // Laboran Pages
 import { DashboardPage as LaboranDashboard } from '@/pages/laboran/DashboardPage';
@@ -76,6 +92,34 @@ export function AppRouter() {
             <RoleGuard allowedRoles={['admin']}>
               <AppLayout>
                 <AdminDashboard />
+              </AppLayout>
+            </RoleGuard>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Mata Kuliah Management */}
+      <Route
+        path="/admin/mata-kuliah"
+        element={
+          <ProtectedRoute>
+            <RoleGuard allowedRoles={['admin']}>
+              <AppLayout>
+                <MataKuliahPage />
+              </AppLayout>
+            </RoleGuard>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Kelas Management */}
+      <Route
+        path="/admin/kelas"
+        element={
+          <ProtectedRoute>
+            <RoleGuard allowedRoles={['admin']}>
+              <AppLayout>
+                <KelasPage />
               </AppLayout>
             </RoleGuard>
           </ProtectedRoute>
@@ -200,11 +244,45 @@ export function AppRouter() {
         }
       />
 
+      {/* ================================================================== */}
+      {/* DOSEN MATERI ROUTES - LEARNING MATERIALS ✅ */}
+      {/* ================================================================== */}
+
+      {/* Materi List - Manage learning materials */}
+      <Route
+        path="/dosen/materi"
+        element={
+          <ProtectedRoute>
+            <RoleGuard allowedRoles={['dosen']}>
+              <AppLayout>
+                <DosenMateriPage />
+              </AppLayout>
+            </RoleGuard>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* ================================================================== */}
+      {/* DOSEN PENILAIAN ROUTES - GRADING SYSTEM ✅ */}
+      {/* ================================================================== */}
+
+      {/* Penilaian - Manage student grades */}
+      <Route
+        path="/dosen/penilaian"
+        element={
+          <ProtectedRoute>
+            <RoleGuard allowedRoles={['dosen']}>
+              <AppLayout>
+                <DosenPenilaianPage />
+              </AppLayout>
+            </RoleGuard>
+          </ProtectedRoute>
+        }
+      />
+
       {/* TODO: Add more dosen routes as they are implemented
       <Route path="/dosen/peminjaman" element={...} />
       <Route path="/dosen/mahasiswa" element={...} />
-      <Route path="/dosen/materi" element={...} />
-      <Route path="/dosen/penilaian" element={...} />
       */}
 
       {/* ================================================================== */}
@@ -269,10 +347,71 @@ export function AppRouter() {
         }
       />
 
+      {/* Kuis Result - View quiz results */}
+      <Route
+        path="/mahasiswa/kuis/:kuisId/result/:attemptId"
+        element={
+          <ProtectedRoute>
+            <RoleGuard allowedRoles={['mahasiswa']}>
+              <AppLayout>
+                <KuisResultPage />
+              </AppLayout>
+            </RoleGuard>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Kuis List - Available quizzes */}
+      <Route
+        path="/mahasiswa/kuis"
+        element={
+          <ProtectedRoute>
+            <RoleGuard allowedRoles={['mahasiswa']}>
+              <AppLayout>
+                <MahasiswaKuisListPage />
+              </AppLayout>
+            </RoleGuard>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* ================================================================== */}
+      {/* MAHASISWA MATERI ROUTES - LEARNING MATERIALS ✅ */}
+      {/* ================================================================== */}
+
+      {/* Materi List - View and download learning materials */}
+      <Route
+        path="/mahasiswa/materi"
+        element={
+          <ProtectedRoute>
+            <RoleGuard allowedRoles={['mahasiswa']}>
+              <AppLayout>
+                <MahasiswaMateriPage />
+              </AppLayout>
+            </RoleGuard>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* ================================================================== */}
+      {/* MAHASISWA NILAI ROUTES - VIEW GRADES ✅ */}
+      {/* ================================================================== */}
+
+      {/* Nilai - View academic grades */}
+      <Route
+        path="/mahasiswa/nilai"
+        element={
+          <ProtectedRoute>
+            <RoleGuard allowedRoles={['mahasiswa']}>
+              <AppLayout>
+                <MahasiswaNilaiPage />
+              </AppLayout>
+            </RoleGuard>
+          </ProtectedRoute>
+        }
+      />
+
       {/* TODO: Add more mahasiswa routes as they are implemented
-      <Route path="/mahasiswa/kuis" element={...} /> (list available quizzes)
-      <Route path="/mahasiswa/materi" element={...} />
-      <Route path="/mahasiswa/nilai" element={...} />
       <Route path="/mahasiswa/pengumuman" element={...} />
       <Route path="/mahasiswa/profil" element={...} />
       <Route path="/mahasiswa/offline-sync" element={...} />

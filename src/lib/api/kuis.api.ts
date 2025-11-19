@@ -2,6 +2,7 @@
  * Kuis API - COMPLETE FIXED VERSION
  * Fixed type mismatches between API and type definitions
  * Added missing functions: getAttemptsByKuis and duplicateKuis
+ * Fixed field name mapping for createSoal and updateSoal
  */
 
 import {
@@ -12,7 +13,7 @@ import {
   update,
   remove,
   withApiResponse,
-} from './base.api';
+} from "./base.api";
 import type {
   Kuis,
   Soal,
@@ -28,8 +29,9 @@ import type {
   UpcomingQuiz,
   QuizStats,
   RecentQuizResult,
-} from '@/types/kuis.types';
-import { handleError, logError } from '@/lib/utils/errors';
+} from "@/types/kuis.types";
+import { supabase } from "@/lib/supabase/client";
+import { handleError, logError } from "@/lib/utils/errors";
 
 // ============================================================================
 // EXTENDED TYPES
@@ -57,24 +59,24 @@ export async function getKuis(filters?: KuisFilters): Promise<Kuis[]> {
 
     if (filters?.kelas_id) {
       filterConditions.push({
-        column: 'kelas_id',
-        operator: 'eq' as const,
+        column: "kelas_id",
+        operator: "eq" as const,
         value: filters.kelas_id,
       });
     }
 
     if (filters?.dosen_id) {
       filterConditions.push({
-        column: 'dosen_id',
-        operator: 'eq' as const,
+        column: "dosen_id",
+        operator: "eq" as const,
         value: filters.dosen_id,
       });
     }
 
     if (filters?.status) {
       filterConditions.push({
-        column: 'status',
-        operator: 'eq' as const,
+        column: "status",
+        operator: "eq" as const,
         value: filters.status,
       });
     }
@@ -90,7 +92,7 @@ export async function getKuis(filters?: KuisFilters): Promise<Kuis[]> {
           )
         ),
         dosen:dosen_id (
-          user:user_id (
+          users:user_id (
             full_name
           ),
           gelar_depan,
@@ -98,34 +100,36 @@ export async function getKuis(filters?: KuisFilters): Promise<Kuis[]> {
         )
       `,
       order: {
-        column: 'tanggal_mulai',
+        column: "tanggal_mulai",
         ascending: false,
       },
     };
 
-    const data = filterConditions.length > 0
-      ? await queryWithFilters<Kuis>('kuis', filterConditions, options)
-      : await query<Kuis>('kuis', options);
+    const data =
+      filterConditions.length > 0
+        ? await queryWithFilters<Kuis>("kuis", filterConditions, options)
+        : await query<Kuis>("kuis", options);
 
     if (filters?.search) {
       const searchLower = filters.search.toLowerCase();
-      return data.filter((k) =>
-        k.judul.toLowerCase().includes(searchLower) ||
-        k.deskripsi?.toLowerCase().includes(searchLower)
+      return data.filter(
+        (k) =>
+          k.judul.toLowerCase().includes(searchLower) ||
+          k.deskripsi?.toLowerCase().includes(searchLower),
       );
     }
 
     return data;
   } catch (error) {
     const apiError = handleError(error);
-    logError(apiError, 'getKuis');
+    logError(apiError, "getKuis");
     throw apiError;
   }
 }
 
 export async function getKuisById(id: string): Promise<Kuis> {
   try {
-    return await getById<Kuis>('kuis', id, {
+    return await getById<Kuis>("kuis", id, {
       select: `
         *,
         kelas:kelas_id (
@@ -136,7 +140,7 @@ export async function getKuisById(id: string): Promise<Kuis> {
           )
         ),
         dosen:dosen_id (
-          user:user_id (
+          users:user_id (
             full_name
           ),
           gelar_depan,
@@ -164,20 +168,24 @@ export async function getKuisByKelas(kelasId: string): Promise<Kuis[]> {
 
 export async function createKuis(data: CreateKuisData): Promise<Kuis> {
   try {
-    return await insert<Kuis>('kuis', data);
+    console.log("🔵 API createKuis called with data:", data);
+    const result = await insert<Kuis>("kuis", data);
+    console.log("✅ API createKuis success:", result);
+    return result;
   } catch (error) {
+    console.error("❌ API createKuis error:", error);
     const apiError = handleError(error);
-    logError(apiError, 'createKuis');
+    logError(apiError, "createKuis");
     throw apiError;
   }
 }
 
 export async function updateKuis(
   id: string,
-  data: Partial<CreateKuisData>
+  data: Partial<CreateKuisData>,
 ): Promise<Kuis> {
   try {
-    return await update<Kuis>('kuis', id, data);
+    return await update<Kuis>("kuis", id, data);
   } catch (error) {
     const apiError = handleError(error);
     logError(apiError, `updateKuis:${id}`);
@@ -187,7 +195,7 @@ export async function updateKuis(
 
 export async function deleteKuis(id: string): Promise<boolean> {
   try {
-    return await remove('kuis', id);
+    return await remove("kuis", id);
   } catch (error) {
     const apiError = handleError(error);
     logError(apiError, `deleteKuis:${id}`);
@@ -197,7 +205,9 @@ export async function deleteKuis(id: string): Promise<boolean> {
 
 export async function publishKuis(id: string): Promise<Kuis> {
   try {
-    return await updateKuis(id, { status: 'published' } as Partial<CreateKuisData>);
+    return await updateKuis(id, {
+      status: "published",
+    } as Partial<CreateKuisData>);
   } catch (error) {
     const apiError = handleError(error);
     logError(apiError, `publishKuis:${id}`);
@@ -207,7 +217,7 @@ export async function publishKuis(id: string): Promise<Kuis> {
 
 export async function unpublishKuis(id: string): Promise<Kuis> {
   try {
-    return await updateKuis(id, { status: 'draft' } as Partial<CreateKuisData>);
+    return await updateKuis(id, { status: "draft" } as Partial<CreateKuisData>);
   } catch (error) {
     const apiError = handleError(error);
     logError(apiError, `unpublishKuis:${id}`);
@@ -221,7 +231,7 @@ export async function unpublishKuis(id: string): Promise<Kuis> {
 export async function duplicateKuis(kuisId: string): Promise<Kuis> {
   try {
     const originalKuis = await getKuisById(kuisId);
-    
+
     // Create new quiz data with type safety
     const newKuisData: any = {
       kelas_id: originalKuis.kelas_id,
@@ -231,18 +241,24 @@ export async function duplicateKuis(kuisId: string): Promise<Kuis> {
       tanggal_mulai: originalKuis.tanggal_mulai,
       tanggal_selesai: originalKuis.tanggal_selesai,
       max_attempts: originalKuis.max_attempts ?? 1,
-      status: 'draft',
+      status: "draft",
     };
 
     // Add optional fields if they exist
     const origAny = originalKuis as any;
-    if (origAny.durasi_menit !== undefined) newKuisData.durasi_menit = origAny.durasi_menit;
+    if (origAny.durasi_menit !== undefined)
+      newKuisData.durasi_menit = origAny.durasi_menit;
     if (origAny.durasi !== undefined) newKuisData.durasi = origAny.durasi;
-    if (origAny.passing_grade !== undefined) newKuisData.passing_grade = origAny.passing_grade;
-    if (origAny.passing_score !== undefined) newKuisData.passing_score = origAny.passing_score;
-    if (origAny.show_results !== undefined) newKuisData.show_results = origAny.show_results;
-    if (origAny.shuffle_questions !== undefined) newKuisData.shuffle_questions = origAny.shuffle_questions;
-    if (origAny.tipe_kuis !== undefined) newKuisData.tipe_kuis = origAny.tipe_kuis;
+    if (origAny.passing_grade !== undefined)
+      newKuisData.passing_grade = origAny.passing_grade;
+    if (origAny.passing_score !== undefined)
+      newKuisData.passing_score = origAny.passing_score;
+    if (origAny.show_results !== undefined)
+      newKuisData.show_results = origAny.show_results;
+    if (origAny.shuffle_questions !== undefined)
+      newKuisData.shuffle_questions = origAny.shuffle_questions;
+    if (origAny.tipe_kuis !== undefined)
+      newKuisData.tipe_kuis = origAny.tipe_kuis;
 
     const newKuis = await createKuis(newKuisData as CreateKuisData);
 
@@ -287,18 +303,22 @@ export async function duplicateKuis(kuisId: string): Promise<Kuis> {
 
 export async function getSoalByKuis(kuisId: string): Promise<Soal[]> {
   try {
-    return await queryWithFilters<Soal>('soal', [
+    return await queryWithFilters<Soal>(
+      "soal",
+      [
+        {
+          column: "kuis_id",
+          operator: "eq" as const,
+          value: kuisId,
+        },
+      ],
       {
-        column: 'kuis_id',
-        operator: 'eq' as const,
-        value: kuisId,
+        order: {
+          column: "urutan",
+          ascending: true,
+        },
       },
-    ], {
-      order: {
-        column: 'urutan',
-        ascending: true,
-      },
-    });
+    );
   } catch (error) {
     const apiError = handleError(error);
     logError(apiError, `getSoalByKuis:${kuisId}`);
@@ -308,7 +328,7 @@ export async function getSoalByKuis(kuisId: string): Promise<Soal[]> {
 
 export async function getSoalById(id: string): Promise<Soal> {
   try {
-    return await getById<Soal>('soal', id);
+    return await getById<Soal>("soal", id);
   } catch (error) {
     const apiError = handleError(error);
     logError(apiError, `getSoalById:${id}`);
@@ -318,20 +338,50 @@ export async function getSoalById(id: string): Promise<Soal> {
 
 export async function createSoal(data: CreateSoalData): Promise<Soal> {
   try {
-    return await insert<Soal>('soal', data);
+    const dbData: any = {
+      kuis_id: data.kuis_id,
+      tipe: data.tipe_soal,
+      pertanyaan: data.pertanyaan,
+      poin: data.poin,
+      urutan: data.urutan,
+    };
+
+    if (data.opsi_jawaban !== undefined && data.opsi_jawaban !== null) {
+      dbData.pilihan_jawaban = data.opsi_jawaban;
+    }
+    if (data.jawaban_benar !== undefined && data.jawaban_benar !== null) {
+      dbData.jawaban_benar = data.jawaban_benar;
+    }
+    if (data.penjelasan !== undefined && data.penjelasan !== null) {
+      dbData.pembahasan = data.penjelasan;
+    }
+
+    return await insert<Soal>("soal", dbData);
   } catch (error) {
     const apiError = handleError(error);
-    logError(apiError, 'createSoal');
+    logError(apiError, "createSoal");
     throw apiError;
   }
 }
 
 export async function updateSoal(
   id: string,
-  data: Partial<CreateSoalData>
+  data: Partial<CreateSoalData>,
 ): Promise<Soal> {
   try {
-    return await update<Soal>('soal', id, data);
+    const dbData: any = {};
+
+    if (data.tipe_soal !== undefined) dbData.tipe = data.tipe_soal;
+    if (data.pertanyaan !== undefined) dbData.pertanyaan = data.pertanyaan;
+    if (data.poin !== undefined) dbData.poin = data.poin;
+    if (data.urutan !== undefined) dbData.urutan = data.urutan;
+    if (data.opsi_jawaban !== undefined)
+      dbData.pilihan_jawaban = data.opsi_jawaban;
+    if (data.jawaban_benar !== undefined)
+      dbData.jawaban_benar = data.jawaban_benar;
+    if (data.penjelasan !== undefined) dbData.pembahasan = data.penjelasan;
+
+    return await update<Soal>("soal", id, dbData);
   } catch (error) {
     const apiError = handleError(error);
     logError(apiError, `updateSoal:${id}`);
@@ -341,7 +391,7 @@ export async function updateSoal(
 
 export async function deleteSoal(id: string): Promise<boolean> {
   try {
-    return await remove('soal', id);
+    return await remove("soal", id);
   } catch (error) {
     const apiError = handleError(error);
     logError(apiError, `deleteSoal:${id}`);
@@ -351,11 +401,11 @@ export async function deleteSoal(id: string): Promise<boolean> {
 
 export async function reorderSoal(
   kuisId: string,
-  soalIds: string[]
+  soalIds: string[],
 ): Promise<boolean> {
   try {
     const updates = soalIds.map((id, index) =>
-      updateSoal(id, { urutan: index + 1 })
+      updateSoal(id, { urutan: index + 1 }),
     );
     await Promise.all(updates);
     return true;
@@ -370,38 +420,40 @@ export async function reorderSoal(
 // ATTEMPT OPERATIONS (MAHASISWA)
 // ============================================================================
 
-export async function getAttempts(filters?: AttemptFilters): Promise<AttemptKuis[]> {
+export async function getAttempts(
+  filters?: AttemptFilters,
+): Promise<AttemptKuis[]> {
   try {
     const filterConditions = [];
 
     if (filters?.kuis_id) {
       filterConditions.push({
-        column: 'kuis_id',
-        operator: 'eq' as const,
+        column: "kuis_id",
+        operator: "eq" as const,
         value: filters.kuis_id,
       });
     }
 
     if (filters?.mahasiswa_id) {
       filterConditions.push({
-        column: 'mahasiswa_id',
-        operator: 'eq' as const,
+        column: "mahasiswa_id",
+        operator: "eq" as const,
         value: filters.mahasiswa_id,
       });
     }
 
     if (filters?.status) {
       filterConditions.push({
-        column: 'status',
-        operator: 'eq' as const,
+        column: "status",
+        operator: "eq" as const,
         value: filters.status,
       });
     }
 
     if (filters?.is_synced !== undefined) {
       filterConditions.push({
-        column: 'is_synced',
-        operator: 'eq' as const,
+        column: "is_synced",
+        operator: "eq" as const,
         value: filters.is_synced,
       });
     }
@@ -412,24 +464,28 @@ export async function getAttempts(filters?: AttemptFilters): Promise<AttemptKuis
         kuis:kuis_id (*),
         mahasiswa:mahasiswa_id (
           nim,
-          user:user_id (
+          users:user_id (
             full_name
           )
         ),
         jawaban:jawaban(*)
       `,
       order: {
-        column: 'started_at',
+        column: "started_at",
         ascending: false,
       },
     };
 
     return filterConditions.length > 0
-      ? await queryWithFilters<AttemptKuis>('attempt_kuis', filterConditions, options)
-      : await query<AttemptKuis>('attempt_kuis', options);
+      ? await queryWithFilters<AttemptKuis>(
+          "attempt_kuis",
+          filterConditions,
+          options,
+        )
+      : await query<AttemptKuis>("attempt_kuis", options);
   } catch (error) {
     const apiError = handleError(error);
-    logError(apiError, 'getAttempts');
+    logError(apiError, "getAttempts");
     throw apiError;
   }
 }
@@ -438,30 +494,36 @@ export async function getAttempts(filters?: AttemptFilters): Promise<AttemptKuis
  * Get all attempts for a specific quiz with student information
  * Used by dosen to view results
  */
-export async function getAttemptsByKuis(kuisId: string): Promise<AttemptWithStudent[]> {
+export async function getAttemptsByKuis(
+  kuisId: string,
+): Promise<AttemptWithStudent[]> {
   try {
-    const attempts = await queryWithFilters<AttemptWithStudent>('attempt_kuis', [
+    const attempts = await queryWithFilters<AttemptWithStudent>(
+      "attempt_kuis",
+      [
+        {
+          column: "kuis_id",
+          operator: "eq" as const,
+          value: kuisId,
+        },
+      ],
       {
-        column: 'kuis_id',
-        operator: 'eq' as const,
-        value: kuisId,
-      },
-    ], {
-      select: `
+        select: `
         *,
         mahasiswa:mahasiswa_id (
           nim,
-          user:user_id (
+          users:user_id (
             full_name
           )
         ),
         jawaban:jawaban(*)
       `,
-      order: {
-        column: 'started_at',
-        ascending: false,
+        order: {
+          column: "started_at",
+          ascending: false,
+        },
       },
-    });
+    );
 
     return attempts;
   } catch (error) {
@@ -473,7 +535,7 @@ export async function getAttemptsByKuis(kuisId: string): Promise<AttemptWithStud
 
 export async function getAttemptById(id: string): Promise<AttemptKuis> {
   try {
-    return await getById<AttemptKuis>('attempt_kuis', id, {
+    return await getById<AttemptKuis>("attempt_kuis", id, {
       select: `
         *,
         kuis:kuis_id (
@@ -482,7 +544,7 @@ export async function getAttemptById(id: string): Promise<AttemptKuis> {
         ),
         mahasiswa:mahasiswa_id (
           nim,
-          user:user_id (
+          users:user_id (
             full_name
           )
         ),
@@ -496,7 +558,9 @@ export async function getAttemptById(id: string): Promise<AttemptKuis> {
   }
 }
 
-export async function startAttempt(data: StartAttemptData): Promise<AttemptKuis> {
+export async function startAttempt(
+  data: StartAttemptData,
+): Promise<AttemptKuis> {
   try {
     const existingAttempts = await getAttempts({
       kuis_id: data.kuis_id,
@@ -509,14 +573,14 @@ export async function startAttempt(data: StartAttemptData): Promise<AttemptKuis>
       kuis_id: data.kuis_id,
       mahasiswa_id: data.mahasiswa_id,
       attempt_number: attemptNumber,
-      status: 'in_progress' as const,
+      status: "in_progress" as const,
       started_at: new Date().toISOString(),
     };
 
-    return await insert<AttemptKuis>('attempt_kuis', attemptData);
+    return await insert<AttemptKuis>("attempt_kuis", attemptData);
   } catch (error) {
     const apiError = handleError(error);
-    logError(apiError, 'startAttempt');
+    logError(apiError, "startAttempt");
     throw apiError;
   }
 }
@@ -524,15 +588,19 @@ export async function startAttempt(data: StartAttemptData): Promise<AttemptKuis>
 export async function submitQuiz(data: SubmitQuizData): Promise<AttemptKuis> {
   try {
     const updateData = {
-      status: 'submitted' as const,
+      status: "submitted" as const,
       submitted_at: new Date().toISOString(),
       sisa_waktu: data.sisa_waktu,
     };
 
-    return await update<AttemptKuis>('attempt_kuis', data.attempt_id, updateData);
+    return await update<AttemptKuis>(
+      "attempt_kuis",
+      data.attempt_id,
+      updateData,
+    );
   } catch (error) {
     const apiError = handleError(error);
-    logError(apiError, 'submitQuiz');
+    logError(apiError, "submitQuiz");
     throw apiError;
   }
 }
@@ -541,20 +609,26 @@ export async function submitQuiz(data: SubmitQuizData): Promise<AttemptKuis> {
 // JAWABAN (ANSWER) OPERATIONS
 // ============================================================================
 
-export async function getJawabanByAttempt(attemptId: string): Promise<Jawaban[]> {
+export async function getJawabanByAttempt(
+  attemptId: string,
+): Promise<Jawaban[]> {
   try {
-    return await queryWithFilters<Jawaban>('jawaban', [
+    return await queryWithFilters<Jawaban>(
+      "jawaban",
+      [
+        {
+          column: "attempt_id",
+          operator: "eq" as const,
+          value: attemptId,
+        },
+      ],
       {
-        column: 'attempt_id',
-        operator: 'eq' as const,
-        value: attemptId,
-      },
-    ], {
-      select: `
+        select: `
         *,
         soal:soal_id (*)
       `,
-    });
+      },
+    );
   } catch (error) {
     const apiError = handleError(error);
     logError(apiError, `getJawabanByAttempt:${attemptId}`);
@@ -564,15 +638,15 @@ export async function getJawabanByAttempt(attemptId: string): Promise<Jawaban[]>
 
 export async function submitAnswer(data: SubmitAnswerData): Promise<Jawaban> {
   try {
-    const existing = await queryWithFilters<Jawaban>('jawaban', [
+    const existing = await queryWithFilters<Jawaban>("jawaban", [
       {
-        column: 'attempt_id',
-        operator: 'eq' as const,
+        column: "attempt_id",
+        operator: "eq" as const,
         value: data.attempt_id,
       },
       {
-        column: 'soal_id',
-        operator: 'eq' as const,
+        column: "soal_id",
+        operator: "eq" as const,
         value: data.soal_id,
       },
     ]);
@@ -585,13 +659,13 @@ export async function submitAnswer(data: SubmitAnswerData): Promise<Jawaban> {
     };
 
     if (existing.length > 0) {
-      return await update<Jawaban>('jawaban', existing[0].id, jawabanData);
+      return await update<Jawaban>("jawaban", existing[0].id, jawabanData);
     } else {
-      return await insert<Jawaban>('jawaban', jawabanData);
+      return await insert<Jawaban>("jawaban", jawabanData);
     }
   } catch (error) {
     const apiError = handleError(error);
-    logError(apiError, 'submitAnswer');
+    logError(apiError, "submitAnswer");
     throw apiError;
   }
 }
@@ -600,7 +674,7 @@ export async function gradeAnswer(
   id: string,
   poinDiperoleh: number,
   isCorrect: boolean,
-  feedback?: string
+  feedback?: string,
 ): Promise<Jawaban> {
   try {
     const updateData = {
@@ -609,7 +683,7 @@ export async function gradeAnswer(
       feedback: feedback,
     };
 
-    return await update<Jawaban>('jawaban', id, updateData);
+    return await update<Jawaban>("jawaban", id, updateData);
   } catch (error) {
     const apiError = handleError(error);
     logError(apiError, `gradeAnswer:${id}`);
@@ -621,20 +695,47 @@ export async function gradeAnswer(
 // MAHASISWA DASHBOARD OPERATIONS
 // ============================================================================
 
-export async function getUpcomingQuizzes(mahasiswaId: string): Promise<UpcomingQuiz[]> {
+/**
+ * Helper: Get list of kelas IDs where mahasiswa is actively enrolled
+ * Separate query to avoid PostgREST nested filter issues
+ */
+async function getEnrolledKelasIds(mahasiswaId: string): Promise<string[]> {
+  const { data, error } = await supabase
+    .from("kelas_mahasiswa")
+    .select("kelas_id")
+    .eq("mahasiswa_id", mahasiswaId)
+    .eq("is_active", true); // ✅ FIX: Use is_active (boolean) instead of status (string)
+
+  if (error) {
+    console.error("Error fetching enrolled kelas:", error);
+    return [];
+  }
+
+  return data?.map((row) => row.kelas_id) || [];
+}
+
+export async function getUpcomingQuizzes(
+  mahasiswaId: string,
+): Promise<UpcomingQuiz[]> {
   try {
     const now = new Date().toISOString();
-    
-    const quizzes = await queryWithFilters<Kuis>('kuis', [
-      {
-        column: 'tanggal_selesai',
-        operator: 'gte' as const,
-        value: now,
-      },
-    ], {
-      select: `
+
+    // ✅ STEP 1: Get enrolled kelas IDs (client-side filtering approach)
+    const enrolledKelasIds = await getEnrolledKelasIds(mahasiswaId);
+
+    if (enrolledKelasIds.length === 0) {
+      // No enrolled classes = no quizzes
+      return [];
+    }
+
+    // ✅ STEP 2: Fetch published quizzes (simplified query - no nested kelas_mahasiswa filter)
+    const { data: quizzes, error } = await supabase
+      .from("kuis")
+      .select(
+        `
         *,
         kelas:kelas_id (
+          id,
           nama_kelas,
           mata_kuliah:mata_kuliah_id (
             nama_mk,
@@ -642,7 +743,7 @@ export async function getUpcomingQuizzes(mahasiswaId: string): Promise<UpcomingQ
           )
         ),
         dosen:dosen_id (
-          user:user_id (
+          users:user_id (
             full_name
           ),
           gelar_depan,
@@ -650,14 +751,21 @@ export async function getUpcomingQuizzes(mahasiswaId: string): Promise<UpcomingQ
         ),
         soal:soal(*)
       `,
-      order: {
-        column: 'tanggal_mulai',
-        ascending: true,
-      },
-    });
+      )
+      .eq("status", "published") // Only published quizzes
+      .gte("tanggal_selesai", now)
+      .order("tanggal_mulai", { ascending: true });
+
+    if (error) throw error;
+    if (!quizzes) return [];
+
+    // ✅ STEP 3: Filter client-side by enrolled kelas
+    const enrolledQuizzes = quizzes.filter((quiz) =>
+      enrolledKelasIds.includes(quiz.kelas_id),
+    );
 
     const upcomingQuizzes: UpcomingQuiz[] = await Promise.all(
-      quizzes.map(async (quiz) => {
+      enrolledQuizzes.map(async (quiz) => {
         const attempts = await getAttempts({
           kuis_id: quiz.id,
           mahasiswa_id: mahasiswaId,
@@ -668,32 +776,33 @@ export async function getUpcomingQuizzes(mahasiswaId: string): Promise<UpcomingQ
         const maxAttempts = quiz.max_attempts ?? 1;
         const canAttempt = attemptsUsed < maxAttempts;
 
-        let status: 'upcoming' | 'ongoing' | 'completed' | 'missed';
+        let status: "upcoming" | "ongoing" | "completed" | "missed";
         const startDate = new Date(quiz.tanggal_mulai);
         const endDate = new Date(quiz.tanggal_selesai);
         const nowDate = new Date();
 
         if (nowDate < startDate) {
-          status = 'upcoming';
+          status = "upcoming";
         } else if (nowDate > endDate) {
-          status = attemptsUsed > 0 ? 'completed' : 'missed';
+          status = attemptsUsed > 0 ? "completed" : "missed";
         } else {
-          status = 'ongoing';
+          status = "ongoing";
         }
 
-        const bestScore = attempts.length > 0
-          ? Math.max(...attempts.map((a) => a.total_poin ?? 0))
-          : undefined;
+        const bestScore =
+          attempts.length > 0
+            ? Math.max(...attempts.map((a) => a.total_poin ?? 0))
+            : undefined;
 
         return {
           id: quiz.id,
           kelas_id: quiz.kelas_id,
           judul: quiz.judul,
-          nama_mk: quiz.kelas?.mata_kuliah?.nama_mk || '',
-          kode_mk: quiz.kelas?.mata_kuliah?.kode_mk || '',
-          nama_kelas: quiz.kelas?.nama_kelas || '',
-          dosen_name: quiz.dosen?.user?.full_name || quiz.dosen?.full_name || '',
-          tipe_kuis: (quiz as any).tipe_kuis ?? 'campuran',
+          nama_mk: quiz.kelas?.mata_kuliah?.nama_mk || "",
+          kode_mk: quiz.kelas?.mata_kuliah?.kode_mk || "",
+          nama_kelas: quiz.kelas?.nama_kelas || "",
+          dosen_name: quiz.dosen?.users?.full_name || "",
+          tipe_kuis: (quiz as any).tipe_kuis ?? "campuran",
           durasi_menit: (quiz as any).durasi_menit ?? (quiz as any).durasi ?? 0,
           tanggal_mulai: quiz.tanggal_mulai,
           tanggal_selesai: quiz.tanggal_selesai,
@@ -704,9 +813,10 @@ export async function getUpcomingQuizzes(mahasiswaId: string): Promise<UpcomingQ
           status: status,
           best_score: bestScore,
           last_attempt_at: attempts[0]?.started_at ?? null,
-          passing_grade: (quiz as any).passing_grade ?? (quiz as any).passing_score ?? 70,
+          passing_grade:
+            (quiz as any).passing_grade ?? (quiz as any).passing_score ?? 70,
         };
-      })
+      }),
     );
 
     return upcomingQuizzes;
@@ -717,21 +827,23 @@ export async function getUpcomingQuizzes(mahasiswaId: string): Promise<UpcomingQ
   }
 }
 
+
 export async function getQuizStats(mahasiswaId: string): Promise<QuizStats> {
   try {
     const attempts = await getAttempts({
       mahasiswa_id: mahasiswaId,
-      status: 'graded',
+      status: "graded",
     });
 
     const totalQuiz = attempts.length;
-    const completedQuiz = attempts.filter((a) => a.status === 'graded').length;
-    const averageScore = totalQuiz > 0
-      ? attempts.reduce((sum, a) => sum + (a.total_poin ?? 0), 0) / totalQuiz
-      : 0;
+    const completedQuiz = attempts.filter((a) => a.status === "graded").length;
+    const averageScore =
+      totalQuiz > 0
+        ? attempts.reduce((sum, a) => sum + (a.total_poin ?? 0), 0) / totalQuiz
+        : 0;
 
     const upcoming = await getUpcomingQuizzes(mahasiswaId);
-    const upcomingQuiz = upcoming.filter((q) => q.status === 'upcoming').length;
+    const upcomingQuiz = upcoming.filter((q) => q.status === "upcoming").length;
 
     return {
       total_quiz: totalQuiz,
@@ -748,32 +860,36 @@ export async function getQuizStats(mahasiswaId: string): Promise<QuizStats> {
 
 export async function getRecentQuizResults(
   mahasiswaId: string,
-  limit: number = 5
+  limit: number = 5,
 ): Promise<RecentQuizResult[]> {
   try {
     const attempts = await getAttempts({
       mahasiswa_id: mahasiswaId,
-      status: 'graded',
+      status: "graded",
     });
 
     const recentAttempts = attempts
       .filter((a) => a.submitted_at)
-      .sort((a, b) => 
-        new Date(b.submitted_at!).getTime() - new Date(a.submitted_at!).getTime()
+      .sort(
+        (a, b) =>
+          new Date(b.submitted_at!).getTime() -
+          new Date(a.submitted_at!).getTime(),
       )
       .slice(0, limit);
 
     return recentAttempts.map((attempt) => ({
       id: attempt.kuis_id,
       attempt_id: attempt.id,
-      judul: attempt.kuis?.judul || '',
-      nama_mk: '',
-      submitted_at: attempt.submitted_at || '',
+      judul: attempt.kuis?.judul || "",
+      nama_mk: "",
+      submitted_at: attempt.submitted_at || "",
       total_poin: attempt.total_poin ?? 0,
       max_poin: 100,
       percentage: ((attempt.total_poin ?? 0) / 100) * 100,
-      status: attempt.status as 'graded' | 'pending',
-      passed: (attempt.total_poin ?? 0) >= ((attempt.kuis as any)?.passing_grade ?? 70),
+      status: attempt.status as "graded" | "pending",
+      passed:
+        (attempt.total_poin ?? 0) >=
+        ((attempt.kuis as any)?.passing_grade ?? 70),
     }));
   } catch (error) {
     const apiError = handleError(error);
@@ -788,14 +904,14 @@ export async function getRecentQuizResults(
 
 export async function canAttemptQuiz(
   kuisId: string,
-  mahasiswaId: string
+  mahasiswaId: string,
 ): Promise<{ canAttempt: boolean; reason?: string }> {
   try {
     const quiz = await getKuisById(kuisId);
 
     const status = (quiz as any).status;
-    if (status && status !== 'published') {
-      return { canAttempt: false, reason: 'Kuis tidak aktif' };
+    if (status && status !== "published") {
+      return { canAttempt: false, reason: "Kuis tidak aktif" };
     }
 
     const now = new Date();
@@ -803,11 +919,11 @@ export async function canAttemptQuiz(
     const endDate = new Date(quiz.tanggal_selesai);
 
     if (now < startDate) {
-      return { canAttempt: false, reason: 'Kuis belum dimulai' };
+      return { canAttempt: false, reason: "Kuis belum dimulai" };
     }
 
     if (now > endDate) {
-      return { canAttempt: false, reason: 'Kuis sudah berakhir' };
+      return { canAttempt: false, reason: "Kuis sudah berakhir" };
     }
 
     const attempts = await getAttempts({
@@ -823,11 +939,11 @@ export async function canAttemptQuiz(
       };
     }
 
-    const inProgress = attempts.find((a) => a.status === 'in_progress');
+    const inProgress = attempts.find((a) => a.status === "in_progress");
     if (inProgress) {
       return {
         canAttempt: false,
-        reason: 'Masih ada percobaan yang sedang berlangsung',
+        reason: "Masih ada percobaan yang sedang berlangsung",
       };
     }
 
@@ -835,7 +951,7 @@ export async function canAttemptQuiz(
   } catch (error) {
     const apiError = handleError(error);
     logError(apiError, `canAttemptQuiz:${kuisId}:${mahasiswaId}`);
-    return { canAttempt: false, reason: 'Error checking attempt eligibility' };
+    return { canAttempt: false, reason: "Error checking attempt eligibility" };
   }
 }
 
@@ -844,51 +960,43 @@ export async function canAttemptQuiz(
 // ============================================================================
 
 export const kuisApi = {
-  getAll: (filters?: KuisFilters) =>
-    withApiResponse(() => getKuis(filters)),
-  getById: (id: string) =>
-    withApiResponse(() => getKuisById(id)),
+  getAll: (filters?: KuisFilters) => withApiResponse(() => getKuis(filters)),
+  getById: (id: string) => withApiResponse(() => getKuisById(id)),
   getByKelas: (kelasId: string) =>
     withApiResponse(() => getKuisByKelas(kelasId)),
-  create: (data: CreateKuisData) =>
-    withApiResponse(() => createKuis(data)),
+  create: (data: CreateKuisData) => withApiResponse(() => createKuis(data)),
   update: (id: string, data: Partial<CreateKuisData>) =>
     withApiResponse(() => updateKuis(id, data)),
-  delete: (id: string) =>
-    withApiResponse(() => deleteKuis(id)),
-  publish: (id: string) =>
-    withApiResponse(() => publishKuis(id)),
-  unpublish: (id: string) =>
-    withApiResponse(() => unpublishKuis(id)),
-  duplicate: (id: string) =>
-    withApiResponse(() => duplicateKuis(id)),
-  getSoal: (kuisId: string) =>
-    withApiResponse(() => getSoalByKuis(kuisId)),
-  getSoalById: (id: string) =>
-    withApiResponse(() => getSoalById(id)),
-  createSoal: (data: CreateSoalData) =>
-    withApiResponse(() => createSoal(data)),
+  delete: (id: string) => withApiResponse(() => deleteKuis(id)),
+  publish: (id: string) => withApiResponse(() => publishKuis(id)),
+  unpublish: (id: string) => withApiResponse(() => unpublishKuis(id)),
+  duplicate: (id: string) => withApiResponse(() => duplicateKuis(id)),
+  getSoal: (kuisId: string) => withApiResponse(() => getSoalByKuis(kuisId)),
+  getSoalById: (id: string) => withApiResponse(() => getSoalById(id)),
+  createSoal: (data: CreateSoalData) => withApiResponse(() => createSoal(data)),
   updateSoal: (id: string, data: Partial<CreateSoalData>) =>
     withApiResponse(() => updateSoal(id, data)),
-  deleteSoal: (id: string) =>
-    withApiResponse(() => deleteSoal(id)),
+  deleteSoal: (id: string) => withApiResponse(() => deleteSoal(id)),
   reorderSoal: (kuisId: string, soalIds: string[]) =>
     withApiResponse(() => reorderSoal(kuisId, soalIds)),
   getAttempts: (filters?: AttemptFilters) =>
     withApiResponse(() => getAttempts(filters)),
   getAttemptsByKuis: (kuisId: string) =>
     withApiResponse(() => getAttemptsByKuis(kuisId)),
-  getAttemptById: (id: string) =>
-    withApiResponse(() => getAttemptById(id)),
+  getAttemptById: (id: string) => withApiResponse(() => getAttemptById(id)),
   startAttempt: (data: StartAttemptData) =>
     withApiResponse(() => startAttempt(data)),
-  submitQuiz: (data: SubmitQuizData) =>
-    withApiResponse(() => submitQuiz(data)),
+  submitQuiz: (data: SubmitQuizData) => withApiResponse(() => submitQuiz(data)),
   getJawaban: (attemptId: string) =>
     withApiResponse(() => getJawabanByAttempt(attemptId)),
   submitAnswer: (data: SubmitAnswerData) =>
     withApiResponse(() => submitAnswer(data)),
-  gradeAnswer: (id: string, poinDiperoleh: number, isCorrect: boolean, feedback?: string) =>
+  gradeAnswer: (
+    id: string,
+    poinDiperoleh: number,
+    isCorrect: boolean,
+    feedback?: string,
+  ) =>
     withApiResponse(() => gradeAnswer(id, poinDiperoleh, isCorrect, feedback)),
   getUpcomingQuizzes: (mahasiswaId: string) =>
     withApiResponse(() => getUpcomingQuizzes(mahasiswaId)),

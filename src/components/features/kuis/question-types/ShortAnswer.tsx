@@ -6,11 +6,10 @@
  * Features: Expected answer, keywords, case-sensitive option, character limit
  */
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Type, Plus, X, Key, AlertCircle } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';

@@ -6,7 +6,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { CrudModal } from './CrudModal';
-import { cn } from '@/lib/utils';
 import type { CreateModalProps } from './CrudModal.types';
 
 // ============================================================================

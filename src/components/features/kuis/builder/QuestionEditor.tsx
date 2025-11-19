@@ -19,6 +19,8 @@ import { Save, X, AlertCircle } from 'lucide-react';
 // Question type components
 import { MultipleChoice, validateMultipleChoice, generateDefaultOptions } from '../question-types/MultipleChoice';
 import { TrueFalse, validateTrueFalse } from '../question-types/TrueFalse';
+import { Essay, validateEssay, getDefaultEssaySettings, type EssaySettings } from '../question-types/Essay';
+import { ShortAnswer, validateShortAnswer, getDefaultShortAnswerSettings, type ShortAnswerSettings } from '../question-types/ShortAnswer';
 
 // Types
 import type { Soal, OpsiJawaban } from '@/types/kuis.types';
@@ -109,7 +111,21 @@ export function QuestionEditor({
   const [trueFalseAnswer, setTrueFalseAnswer] = useState<'true' | 'false' | undefined>(
     question?.jawaban_benar as 'true' | 'false' | undefined
   );
-  
+
+  // Essay state
+  const [essaySettings, setEssaySettings] = useState<EssaySettings>(
+    question?.tipe_soal === TIPE_SOAL.ESSAY && question?.jawaban_benar
+      ? JSON.parse(question.jawaban_benar as string)
+      : getDefaultEssaySettings()
+  );
+
+  // Short Answer state
+  const [shortAnswerSettings, setShortAnswerSettings] = useState<ShortAnswerSettings>(
+    question?.tipe_soal === TIPE_SOAL.JAWABAN_SINGKAT && question?.jawaban_benar
+      ? JSON.parse(question.jawaban_benar as string)
+      : getDefaultShortAnswerSettings()
+  );
+
   // UI state
   const [showErrors, setShowErrors] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -124,13 +140,17 @@ export function QuestionEditor({
   const handleTypeChange = (newType: string) => {
     setQuestionType(newType);
     setShowErrors(false);
-    
+
     // Reset type-specific data
     if (newType === TIPE_SOAL.PILIHAN_GANDA) {
       setOptions(generateDefaultOptions());
       setCorrectAnswerId('');
     } else if (newType === TIPE_SOAL.BENAR_SALAH) {
       setTrueFalseAnswer(undefined);
+    } else if (newType === TIPE_SOAL.ESSAY) {
+      setEssaySettings(getDefaultEssaySettings());
+    } else if (newType === TIPE_SOAL.JAWABAN_SINGKAT) {
+      setShortAnswerSettings(getDefaultShortAnswerSettings());
     }
   };
   
@@ -161,6 +181,16 @@ export function QuestionEditor({
       const tfValidation = validateTrueFalse(trueFalseAnswer);
       if (!tfValidation.isValid) {
         errors.push(...tfValidation.errors);
+      }
+    } else if (questionType === TIPE_SOAL.ESSAY) {
+      const essayValidation = validateEssay(essaySettings);
+      if (!essayValidation.isValid) {
+        errors.push(...essayValidation.errors);
+      }
+    } else if (questionType === TIPE_SOAL.JAWABAN_SINGKAT) {
+      const shortAnswerValidation = validateShortAnswer(shortAnswerSettings);
+      if (!shortAnswerValidation.isValid) {
+        errors.push(...shortAnswerValidation.errors);
       }
     }
     
@@ -199,6 +229,10 @@ export function QuestionEditor({
       questionData.opsi_jawaban = options;
     } else if (questionType === TIPE_SOAL.BENAR_SALAH) {
       questionData.jawaban_benar = trueFalseAnswer;
+    } else if (questionType === TIPE_SOAL.ESSAY) {
+      questionData.jawaban_benar = JSON.stringify(essaySettings);
+    } else if (questionType === TIPE_SOAL.JAWABAN_SINGKAT) {
+      questionData.jawaban_benar = JSON.stringify(shortAnswerSettings);
     }
     
     // Add ID if editing
@@ -287,7 +321,12 @@ export function QuestionEditor({
                 <SelectItem value={TIPE_SOAL.BENAR_SALAH}>
                   {TIPE_SOAL_LABELS.benar_salah}
                 </SelectItem>
-                {/* Future: Essay & Short Answer */}
+                <SelectItem value={TIPE_SOAL.ESSAY}>
+                  {TIPE_SOAL_LABELS.essay}
+                </SelectItem>
+                <SelectItem value={TIPE_SOAL.JAWABAN_SINGKAT}>
+                  {TIPE_SOAL_LABELS.jawaban_singkat}
+                </SelectItem>
               </SelectContent>
             </Select>
             {isEditing && (
@@ -354,11 +393,34 @@ export function QuestionEditor({
               showErrors={showErrors}
             />
           )}
-          
+
           {questionType === TIPE_SOAL.BENAR_SALAH && (
             <TrueFalse
               correctAnswer={trueFalseAnswer}
               onChange={setTrueFalseAnswer}
+              showErrors={showErrors}
+            />
+          )}
+
+          {questionType === TIPE_SOAL.ESSAY && (
+            <Essay
+              minWords={essaySettings.minWords}
+              maxWords={essaySettings.maxWords}
+              characterLimit={essaySettings.characterLimit}
+              rubric={essaySettings.rubric}
+              onChange={setEssaySettings}
+              showErrors={showErrors}
+            />
+          )}
+
+          {questionType === TIPE_SOAL.JAWABAN_SINGKAT && (
+            <ShortAnswer
+              expectedAnswer={shortAnswerSettings.expectedAnswer}
+              acceptedAnswers={shortAnswerSettings.acceptedAnswers}
+              keywords={shortAnswerSettings.keywords}
+              caseSensitive={shortAnswerSettings.caseSensitive}
+              maxLength={shortAnswerSettings.maxLength}
+              onChange={setShortAnswerSettings}
               showErrors={showErrors}
             />
           )}

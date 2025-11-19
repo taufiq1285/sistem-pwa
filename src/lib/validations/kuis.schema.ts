@@ -56,21 +56,14 @@ const baseKuisSchema = z.object({
     .min(MIN_QUIZ_DURATION, `Durasi minimal ${MIN_QUIZ_DURATION} menit`)
     .max(MAX_QUIZ_DURATION, `Durasi maksimal ${MAX_QUIZ_DURATION} menit`),
   
+  // ✅ UPDATED: Made optional - will use default values
   tanggal_mulai: z
     .string()
-    .min(1, 'Tanggal mulai harus diisi')
-    .refine(
-      (val) => !isNaN(Date.parse(val)),
-      'Format tanggal mulai tidak valid'
-    ),
-  
+    .optional(),
+
   tanggal_selesai: z
     .string()
-    .min(1, 'Tanggal selesai harus diisi')
-    .refine(
-      (val) => !isNaN(Date.parse(val)),
-      'Format tanggal selesai tidak valid'
-    ),
+    .optional(),
   
   // FIXED: Make these consistent with form defaults
   passing_score: z
@@ -180,29 +173,7 @@ export const createKuisSchema = baseKuisSchema
     dosen_id: z
       .string()
       .uuid('Dosen ID tidak valid'),
-  })
-  .refine(
-    (data) => {
-      const start = new Date(data.tanggal_mulai);
-      const end = new Date(data.tanggal_selesai);
-      return end > start;
-    },
-    {
-      message: 'Tanggal selesai harus setelah tanggal mulai',
-      path: ['tanggal_selesai'],
-    }
-  )
-  .refine(
-    (data) => {
-      const start = new Date(data.tanggal_mulai);
-      const now = new Date();
-      return start >= new Date(now.getTime() - 5 * 60000); 
-    },
-    {
-      message: 'Tanggal mulai tidak boleh di masa lalu',
-      path: ['tanggal_mulai'],
-    }
-  );
+  });
 
 export type CreateKuisFormData = z.infer<typeof createKuisSchema>;
 

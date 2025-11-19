@@ -1,0 +1,67 @@
+=====================================================
+QUICK FIX - Tambah Menu Mata Kuliah (2 Edit Mudah)
+=====================================================
+
+File: src/config/navigation.config.ts
+
+-----------------------------------------------
+EDIT 1: Tambah import BookOpen (Line 23)
+-----------------------------------------------
+
+CARI line 23:
+  Boxes,
+  type LucideIcon
+
+TAMBAHKAN "BookOpen," di atas "type LucideIcon":
+  Boxes,
+  BookOpen,     <-- TAMBAHKAN INI
+  type LucideIcon
+
+-----------------------------------------------
+EDIT 2: Tambah menu Mata Kuliah (Line 151)
+-----------------------------------------------
+
+CARI line 151:
+  // ❌ REMOVED: Mata Kuliah (system focuses on praktikum, not courses)
+
+GANTI SELURUH line tersebut DENGAN:
+  {
+    label: 'Mata Kuliah',
+    href: '/admin/mata-kuliah',
+    icon: BookOpen,
+    description: 'Kelola mata kuliah'
+  },
+
+-----------------------------------------------
+HASIL AKHIR (Line 145-160)
+-----------------------------------------------
+
+  {
+    label: 'User Management',
+    href: '/admin/users',
+    icon: UserCog,
+    description: 'Kelola pengguna'
+  },
+  {
+    label: 'Mata Kuliah',              <-- MENU BARU
+    href: '/admin/mata-kuliah',
+    icon: BookOpen,
+    description: 'Kelola mata kuliah'
+  },
+  {
+    label: 'Kelas',
+    href: '/admin/kelas',
+    icon: Users,
+    description: 'Kelola kelas'
+  },
+
+=====================================================
+SETELAH EDIT:
+=====================================================
+1. Save file
+2. Restart dev server (Ctrl+C, npm run dev)
+3. Login admin
+4. Menu "Mata Kuliah" muncul!
+5. Tambah mata kuliah → Dosen bisa buat kelas
+
+=====================================================

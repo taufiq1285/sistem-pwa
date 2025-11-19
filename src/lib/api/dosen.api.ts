@@ -533,8 +533,10 @@ type GradingData = {
   submitted_at: string;
   attempt_number: number;
   mahasiswa: {
-    nama: string;
     nim: string;
+    user: {
+      full_name: string;
+    } | null;
   } | null;
   kuis: {
     judul: string;
@@ -570,8 +572,10 @@ export async function getPendingGrading(limit?: number): Promise<PendingGrading[
         submitted_at,
         attempt_number,
         mahasiswa (
-          nama,
-          nim
+          nim,
+          users (
+            full_name
+          )
         ),
         kuis (
           judul,
@@ -595,7 +599,7 @@ export async function getPendingGrading(limit?: number): Promise<PendingGrading[
 
     return ((data as unknown) as GradingData[] || []).map(item => ({
       id: item.id,
-      mahasiswa_nama: item.mahasiswa?.nama || '-',
+      mahasiswa_nama: item.mahasiswa?.user?.full_name || '-',
       mahasiswa_nim: item.mahasiswa?.nim || '-',
       mata_kuliah_nama: item.kuis?.kelas?.mata_kuliah?.nama_mk || '-',
       kuis_judul: item.kuis?.judul || '-',

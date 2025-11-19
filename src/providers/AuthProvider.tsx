@@ -1,10 +1,12 @@
 /**
- * Auth Provider
+ * Auth Provider - OPTIMIZED with localStorage cache
  * Provides authentication state and methods to the app
+ * ✅ FIXED: Removed infinite loop issue
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { AuthContext } from '@/context/AuthContext';
+import logger from '@/lib/utils/logger';
 import type { AuthUser, AuthSession, LoginCredentials, RegisterData } from '@/types/auth.types';
 import * as authApi from '@/lib/supabase/auth';
 
@@ -12,30 +14,107 @@ interface AuthProviderProps {
   children: React.ReactNode;
 }
 
-export function AuthProvider({ children }: AuthProviderProps) {
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [session, setSession] = useState<AuthSession | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [initialized, setInitialized] = useState(false);
+// ============================================================================
+// CACHE HELPERS
+// ============================================================================
 
-  // Initialize auth state
+const AUTH_CACHE_KEY = 'auth_cache';
+const CACHE_VERSION = 'v1';
+
+interface AuthCache {
+  version: string;
+  user: AuthUser | null;
+  session: AuthSession | null;
+  timestamp: number;
+}
+
+function getCachedAuth(): { user: AuthUser | null; session: AuthSession | null } | null {
+  try {
+    const cached = localStorage.getItem(AUTH_CACHE_KEY);
+    if (!cached) return null;
+
+    const data: AuthCache = JSON.parse(cached);
+
+    // Invalidate cache if version mismatch or older than 24 hours (increased from 1 hour)
+    const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+    if (data.version !== CACHE_VERSION || Date.now() - data.timestamp > TWENTY_FOUR_HOURS) {
+      localStorage.removeItem(AUTH_CACHE_KEY);
+      return null;
+    }
+
+    return { user: data.user, session: data.session };
+  } catch (error) {
+    console.warn('Failed to read auth cache:', error);
+    return null;
+  }
+}
+
+function setCachedAuth(user: AuthUser | null, session: AuthSession | null) {
+  try {
+    const cache: AuthCache = {
+      version: CACHE_VERSION,
+      user,
+      session,
+      timestamp: Date.now(),
+    };
+    localStorage.setItem(AUTH_CACHE_KEY, JSON.stringify(cache));
+  } catch (error) {
+    console.warn('Failed to cache auth:', error);
+  }
+}
+
+function clearCachedAuth() {
+  try {
+    localStorage.removeItem(AUTH_CACHE_KEY);
+  } catch (error) {
+    console.warn('Failed to clear auth cache:', error);
+  }
+}
+
+// ============================================================================
+// PROVIDER
+// ============================================================================
+
+export function AuthProvider({ children }: AuthProviderProps) {
+  // ✅ FIX 1: Panggil getCachedAuth() hanya sekali, bukan setiap render
+  const [initialCache] = useState(() => getCachedAuth());
+
+  const [user, setUser] = useState<AuthUser | null>(initialCache?.user || null);
+  const [session, setSession] = useState<AuthSession | null>(initialCache?.session || null);
+  const [loading, setLoading] = useState(!initialCache);
+  const [initialized, setInitialized] = useState(!!initialCache);
+
+  const updateAuthState = useCallback((newUser: AuthUser | null, newSession: AuthSession | null) => {
+    setUser(newUser);
+    setSession(newSession);
+    setCachedAuth(newUser, newSession);
+  }, []);
+
+  // ✅ FIX 2: Hapus cachedAuth dari dependency array
   useEffect(() => {
     let mounted = true;
 
     async function initAuth() {
       try {
+        if (initialCache) {
+          logger.auth('Using cached auth ⚡ (instant load!)');
+          setLoading(false);
+          setInitialized(true);
+        }
+
         const currentSession = await authApi.getSession();
-        
+
         if (mounted) {
           if (currentSession) {
-            setSession(currentSession);
-            setUser(currentSession.user);
+            updateAuthState(currentSession.user, currentSession);
+          } else {
+            updateAuthState(null, null);
           }
           setInitialized(true);
           setLoading(false);
         }
       } catch (error) {
-        console.error('Auth initialization error:', error);
+        logger.error('Auth initialization error:', error);
         if (mounted) {
           setInitialized(true);
           setLoading(false);
@@ -45,12 +124,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     initAuth();
 
-    // Listen to auth changes
     const { data: authListener } = authApi.onAuthStateChange((newSession: AuthSession | null) => {
       if (mounted) {
-        setSession(newSession);
-        setUser(newSession?.user || null);
-        setLoading(false); 
+        updateAuthState(newSession?.user || null, newSession);
+        setLoading(false);
       }
     });
 
@@ -58,29 +135,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
       mounted = false;
       authListener?.subscription.unsubscribe();
     };
-  }, []);
+  }, [updateAuthState, initialCache]); // ✅ initialCache adalah stable reference
 
-  // Login
   const login = useCallback(async (credentials: LoginCredentials) => {
     setLoading(true);
     try {
       const response = await authApi.login(credentials);
-      
+
       if (!response.success || !response.user || !response.session) {
         throw new Error(response.error || 'Login failed');
       }
 
-      setUser(response.user);
-      setSession(response.session);
+      updateAuthState(response.user, response.session);
     } catch (error) {
       console.error('Login error:', error);
       throw error;
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [updateAuthState]);
 
-  // Register
   const register = useCallback(async (data: RegisterData) => {
     setLoading(true);
     try {
@@ -89,9 +163,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (!response.success) {
         throw new Error(response.error || 'Registration failed');
       }
-
-      // Note: User needs to verify email before logging in
-      // Don't set user/session here
     } catch (error) {
       console.error('Registration error:', error);
       throw error;
@@ -100,11 +171,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, []);
 
-  // Logout
   const logout = useCallback(async () => {
+    console.log('🔵 logout: START');
     setLoading(true);
+    
     try {
-      // Support either a 'logout' or 'signOut' function in the auth API
       const authApiWithLogout = authApi as typeof authApi & {
         logout?: () => Promise<{ success: boolean; error?: string }>;
         signOut?: () => Promise<{ success: boolean; error?: string }>;
@@ -112,27 +183,42 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       const performLogout = authApiWithLogout.logout || authApiWithLogout.signOut;
 
-      if (!performLogout) {
-        throw new Error('Logout function not implemented in auth API');
+      if (performLogout) {
+        console.log('🔵 Calling auth API logout...');
+        const response = await performLogout();
+        
+        if (!response?.success) {
+          console.warn('⚠️ Logout API error:', response?.error);
+        } else {
+          console.log('✅ Auth API logout success');
+        }
       }
 
-      const response = await performLogout();
-
-      if (!response?.success) {
-        throw new Error(response?.error || 'Logout failed');
-      }
-
-      setUser(null);
-      setSession(null);
+      console.log('🔵 Clearing state & storage...');
+      updateAuthState(null, null);
+      clearCachedAuth();
+      localStorage.clear();
+      sessionStorage.clear();
+      
+      console.log('✅ logout: COMPLETE');
+      
+      // Force redirect
+      window.location.href = '/login';
+      
     } catch (error) {
-      console.error('Logout error:', error);
-      throw error;
+      console.error('❌ Logout error:', error);
+      
+      // Force clear anyway
+      updateAuthState(null, null);
+      clearCachedAuth();
+      localStorage.clear();
+      sessionStorage.clear();
+      window.location.href = '/login';
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [updateAuthState]);
 
-  // Reset password
   const resetPassword = useCallback(async (email: string) => {
     setLoading(true);
     try {
@@ -149,7 +235,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, []);
 
-  // Update password
   const updatePassword = useCallback(async (password: string) => {
     setLoading(true);
     try {
@@ -166,29 +251,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, []);
 
-  // Refresh session
   const refreshSession = useCallback(async () => {
     try {
       const newSession = await authApi.refreshSession();
-      
+
       if (newSession) {
-        setSession(newSession);
-        setUser(newSession.user);
+        updateAuthState(newSession.user, newSession);
       }
     } catch (error) {
       console.error('Refresh session error:', error);
     }
-  }, []);
+  }, [updateAuthState]);
 
-  // Check if user has specific role
   const hasRole = useCallback((role: string) => {
     return user?.role === role;
   }, [user]);
 
-  // Check if authenticated
   const isAuthenticated = !!user && !!session;
 
-  const value = {
+  // ✅ FIX 3: Memoize context value untuk prevent unnecessary re-renders
+  const value = useMemo(() => ({
     user,
     session,
     loading,
@@ -201,7 +283,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
     refreshSession,
     hasRole,
     isAuthenticated,
-  };
+  }), [
+    user,
+    session,
+    loading,
+    initialized,
+    login,
+    register,
+    logout,
+    resetPassword,
+    updatePassword,
+    refreshSession,
+    hasRole,
+    isAuthenticated,
+  ]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

@@ -10,6 +10,12 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  server: {
+    // Disable caching in development
+    headers: {
+      'Cache-Control': 'no-store',
+    },
+  },
   build: {
     rollupOptions: {
       output: {

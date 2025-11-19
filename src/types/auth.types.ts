@@ -41,8 +41,9 @@ export interface AuthUser extends UserTable {
     nip: string;
   };
   admin?: {
-    id: string; // ✅ ADDED: admin table id
-    nip: string;
+    id: string; // ✅ FIXED: admin table id
+    level: string; // ✅ FIXED: Changed from nip to level
+    permissions: Record<string, any>; // ✅ FIXED: Added permissions
   };
 }
 
@@ -75,7 +76,7 @@ export interface RegisterData {
   full_name: string;
   role: RegisterableRole;  // Only mahasiswa, dosen, laboran
   phone?: string;
-  
+
   // Role-specific data
   nim?: string;
   nip?: string;

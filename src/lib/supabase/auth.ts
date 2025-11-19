@@ -1,15 +1,16 @@
 /**
- * Supabase Auth Helper - FIXED: Include profile IDs
+ * Supabase Auth Helper - OPTIMIZED: Reduced console logging
  * Wrapper functions for Supabase authentication with role-specific data
  */
 
 import { supabase } from './client';
-import type { 
-  AuthUser, 
-  AuthSession, 
-  LoginCredentials, 
+import logger from '@/lib/utils/logger';
+import type {
+  AuthUser,
+  AuthSession,
+  LoginCredentials,
   RegisterData,
-  AuthResponse 
+  AuthResponse
 } from '@/types/auth.types';
 
 /**
@@ -17,14 +18,14 @@ import type {
  */
 export async function login(credentials: LoginCredentials): Promise<AuthResponse> {
   try {
-    console.log('🔵 login: START', { email: credentials.email });
-    
+    logger.auth('login: START', { email: credentials.email });
+
     const { data, error } = await supabase.auth.signInWithPassword({
       email: credentials.email,
       password: credentials.password,
     });
 
-    console.log('🔵 login: Supabase response', { hasUser: !!data.user, error });
+    logger.debug('login: Supabase response', { hasUser: !!data.user, error });
 
     if (error) throw error;
 
@@ -32,9 +33,9 @@ export async function login(credentials: LoginCredentials): Promise<AuthResponse
       throw new Error('No user returned from login');
     }
 
-    console.log('🔵 login: Calling getUserProfile for', data.user.id);
+    logger.debug('login: Calling getUserProfile for', data.user.id);
     const user = await getUserProfile(data.user.id);
-    console.log('🔵 login: getUserProfile success', { userId: user.id, role: user.role });
+    logger.auth('login: Success ✅', { userId: user.id, role: user.role });
 
     return {
       success: true,
@@ -158,26 +159,26 @@ export async function logout(): Promise<AuthResponse> {
  * Get current session
  */
 export async function getSession(): Promise<AuthSession | null> {
-  console.log('🔵 getSession: START');
-  
+  logger.debug('getSession: START');
+
   try {
     const { data, error } = await supabase.auth.getSession();
-    console.log('🔵 getSession: Supabase response', { 
-      hasData: !!data, 
+    logger.debug('getSession: Response', {
+      hasData: !!data,
       hasSession: !!data?.session,
-      error 
+      error
     });
-    
+
     if (error) throw error;
     if (!data.session) {
-      console.log('🔵 getSession: No session found');
+      logger.debug('getSession: No session found');
       return null;
     }
 
     // Fetch full user profile from database
     const user = await getUserProfile(data.session.user.id);
 
-    console.log('✅ getSession: User profile loaded', { userId: user.id, role: user.role });
+    logger.auth('getSession: User loaded ✅', { userId: user.id, role: user.role });
 
     return {
       user,
@@ -286,146 +287,131 @@ export async function updatePassword(password: string): Promise<AuthResponse> {
 
 /**
  * Get user profile with role-specific data
- * ✅ FIXED: Now includes id field from role tables
+ * ✅ FIXED: Increased timeout to 10s and better error handling
  */
 async function getUserProfile(userId: string): Promise<AuthUser> {
-  console.log('🔵 getUserProfile: START', { userId });
-  
+  logger.debug('getUserProfile: START', { userId });
+
   try {
-    // Add 3 second timeout to database query
-    const queryPromise = supabase
+    // Increased timeout to 10 seconds with AbortController
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+    const { data: user, error: userError } = await supabase
       .from('users')
       .select('*')
       .eq('id', userId)
+      .abortSignal(controller.signal)
       .single();
 
-    const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('getUserProfile timeout after 3s')), 3000);
-    });
+    clearTimeout(timeoutId);
 
-    const { data: user, error: userError } = await Promise.race([
-      queryPromise,
-      timeoutPromise
-    ]) as any;
-
-    console.log('🔵 getUserProfile: Query result', { 
-      hasUser: !!user, 
+    logger.debug('getUserProfile: Query result', {
+      hasUser: !!user,
       role: user?.role,
-      error: userError 
     });
 
     if (userError) {
-      console.warn('⚠️ getUserProfile: Database error, attempting fallback', userError);
+      logger.warn('getUserProfile: Database error', userError);
       throw userError;
     }
-    
+
     if (!user) {
-      console.warn('⚠️ getUserProfile: User not found in database, attempting fallback');
+      logger.warn('getUserProfile: User not found');
       throw new Error('User not found');
     }
 
-    console.log('🔵 getUserProfile: Database query SUCCESS', { 
-      userId: user.id, 
+    logger.debug('getUserProfile: User found', {
+      userId: user.id,
       role: user.role,
-      fullName: user.full_name 
     });
 
-    // ✅ FIXED: Get role-specific data with id field
+    // Get role-specific data
     let roleData = null;
     try {
-      console.log('🔵 getUserProfile: Fetching role-specific data for role:', user.role);
+      logger.debug('getUserProfile: Fetching role data:', user.role);
       
       switch (user.role) {
         case 'mahasiswa': {
-          const { data: mahasiswaData, error: mahasiswaError } = await supabase
+          const { data: mahasiswaData } = await supabase
             .from('mahasiswa')
             .select('id, nim, program_studi, angkatan, semester')
             .eq('user_id', userId)
-            .single();
-          console.log('🔵 getUserProfile: mahasiswa data', { 
-            hasMahasiswaData: !!mahasiswaData, 
-            mahasiswaId: mahasiswaData?.id,
-            error: mahasiswaError 
-          });
+            .maybeSingle();
+
+          logger.debug('Role data: mahasiswa', { hasData: !!mahasiswaData });
           roleData = { mahasiswa: mahasiswaData };
           break;
         }
-          
+
         case 'dosen': {
-          const { data: dosenData, error: dosenError } = await supabase
+          const { data: dosenData } = await supabase
             .from('dosen')
             .select('id, nip, nidn, gelar_depan, gelar_belakang, fakultas, program_studi')
             .eq('user_id', userId)
-            .single();
-          console.log('🔵 getUserProfile: dosen data', { 
-            hasDosenData: !!dosenData, 
-            dosenId: dosenData?.id,
-            error: dosenError 
-          });
+            .maybeSingle();
+
+          logger.debug('Role data: dosen', { hasData: !!dosenData });
           roleData = { dosen: dosenData };
           break;
         }
-          
+
         case 'laboran': {
-          const { data: laboranData, error: laboranError } = await supabase
+          const { data: laboranData } = await supabase
             .from('laboran')
             .select('id, nip')
             .eq('user_id', userId)
-            .single();
-          console.log('🔵 getUserProfile: laboran data', { 
-            hasLaboranData: !!laboranData, 
-            laboranId: laboranData?.id,
-            error: laboranError 
-          });
+            .maybeSingle();
+
+          logger.debug('Role data: laboran', { hasData: !!laboranData });
           roleData = { laboran: laboranData };
           break;
         }
-          
+
         case 'admin': {
-          const { data: adminData, error: adminError } = await supabase
+          const { data: adminData } = await supabase
             .from('admin')
-            .select('id, level, permissions') // ✅ Correct admin fields
+            .select('id, level, permissions')
             .eq('user_id', userId)
-            .single();
-          console.log('🔵 getUserProfile: admin data', { 
-            hasAdminData: !!adminData, 
-            adminId: adminData?.id,
-            adminLevel: adminData?.level,
-            error: adminError 
-          });
+            .maybeSingle();
+
+          logger.debug('Role data: admin', { hasData: !!adminData });
           roleData = { admin: adminData };
           break;
         }
       }
     } catch (roleError) {
-      console.warn('⚠️ getUserProfile: Failed to fetch role-specific data:', roleError);
+      logger.warn('getUserProfile: Failed to fetch role data', roleError);
+      // Don't throw, just continue without role data
     }
 
-    console.log('🔵 getUserProfile: SUCCESS', { 
-      userId: user.id, 
+    logger.auth('getUserProfile: SUCCESS ✅', {
+      userId: user.id,
       role: user.role,
-      fullName: user.full_name,
-      hasRoleData: !!roleData 
+      hasRoleData: !!roleData
     });
 
     return { ...user, ...roleData } as AuthUser;
-  } catch (error) {
-    console.error('❌ getUserProfile ERROR, using fallback from auth metadata', error);
-    
+  } catch (error: any) {
+    logger.error('getUserProfile: ERROR, using fallback', error);
+
+    // Better error handling for abort errors
+    if (error.name === 'AbortError') {
+      logger.error('getUserProfile: Query timeout (10s)');
+    }
+
     // FALLBACK: Get user from auth.getUser() metadata
     try {
       const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
-      
+
       if (authError || !authUser) {
-        console.error('❌ getUserProfile: Cannot get user from auth fallback', authError);
-        throw new Error('Cannot get user data from either database or auth');
+        logger.error('getUserProfile: Fallback failed', authError);
+        throw new Error('Cannot get user data');
       }
 
-      console.log('✅ getUserProfile: Using fallback from auth metadata', { 
+      logger.warn('getUserProfile: Using fallback', {
         userId: authUser.id,
-        email: authUser.email,
         role: authUser.user_metadata?.role,
-        fullName: authUser.user_metadata?.full_name 
       });
       
       // Return user from auth metadata (temporary fallback)
@@ -456,27 +442,27 @@ async function getUserProfile(userId: string): Promise<AuthUser> {
 export function onAuthStateChange(
   callback: (session: AuthSession | null) => void
 ) {
-  console.log('🔵 onAuthStateChange: Setting up listener');
-  
+  logger.debug('onAuthStateChange: Setting up listener');
+
   return supabase.auth.onAuthStateChange(async (event, session) => {
-    console.log('🔵 onAuthStateChange: Event triggered', { 
-      event, 
-      hasSession: !!session, 
-      hasUser: !!session?.user 
-    });
-    
+    // Only log important events (not INITIAL_SESSION)
+    if (event !== 'INITIAL_SESSION') {
+      logger.auth('onAuthStateChange:', {
+        event,
+        hasSession: !!session,
+      });
+    }
+
     if (session?.user) {
       try {
-        // ✅ FIXED: Fetch full profile from database
+        // Fetch full profile from database
         const user = await getUserProfile(session.user.id);
 
-        console.log('✅ onAuthStateChange: User profile loaded', { 
-          userId: user.id, 
+        logger.debug('onAuthStateChange: Profile loaded', {
+          userId: user.id,
           role: user.role,
-          hasDosen: !!(user as any).dosen,
-          dosenId: (user as any).dosen?.id
         });
-        
+
         callback({
           user,
           access_token: session.access_token,
@@ -484,11 +470,11 @@ export function onAuthStateChange(
           expires_at: session.expires_at,
         });
       } catch (error) {
-        console.error('❌ onAuthStateChange: Error loading user profile', error);
+        logger.error('onAuthStateChange: Error loading profile', error);
         callback(null);
       }
     } else {
-      console.log('🔵 onAuthStateChange: No session, calling callback with null');
+      logger.debug('onAuthStateChange: No session');
       callback(null);
     }
   });

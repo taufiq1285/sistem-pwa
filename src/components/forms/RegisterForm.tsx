@@ -46,9 +46,7 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
       await registerUser(data);
       setSuccess('Registration successful! Please check your email to verify your account.');
       setTimeout(() => onSuccess?.(), 2000);
-    } catch (err: unknown) { // <-- PERBAIKAN 1: 'any' menjadi 'unknown'
-      
-      // Tambahkan type guard
+    } catch (err: unknown) {
       let errorMessage = 'Registration failed. Please try again.';
       if (err instanceof Error) {
         errorMessage = err.message;
@@ -57,9 +55,7 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
     }
   };
 
-  // PERBAIKAN 2: Tipe 'field' diperbaiki agar lebih aman
   const getErrorMessage = (field: string): string | undefined => {
-    // Kita bisa mengakses error secara aman dengan casting karena 'errors' memiliki tipe FieldErrors<RegisterFormData>
     const fieldError = errors[field as keyof RegisterFormData];
     return fieldError?.message as string | undefined;
   };
@@ -152,7 +148,6 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
       <div className="space-y-2">
         <Label htmlFor="role">Role</Label>
         <Select
-          // PERBAIKAN 3: 'value' di-casting ke tipe 'ValidRole' yang lebih aman
           onValueChange={(value: string) => setValue('role', value as ValidRole, { shouldValidate: true })}
           disabled={isSubmitting}
         >
@@ -231,14 +226,42 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
         </>
       )}
 
-      {/* Staff fields (Dosen/Laboran/Admin) */}
-      {selectedRole && ['dosen', 'laboran', 'admin'].includes(selectedRole) && (
+      {/* ✅ UPDATED: Dosen-specific fields */}
+      {selectedRole === 'dosen' && (
         <>
           <div className="space-y-2">
-            <Label htmlFor="nip">NIP</Label>
+            <Label htmlFor="nidn">NIDN *</Label>
+            <Input
+              id="nidn"
+              placeholder="0123456789 (10 digits)"
+              {...register('nidn')}
+              disabled={isSubmitting}
+              maxLength={10}
+            />
+            {getErrorMessage('nidn') && (
+              <p className="text-sm text-red-500">{getErrorMessage('nidn')}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="nuptk">NUPTK (Optional)</Label>
+            <Input
+              id="nuptk"
+              placeholder="1234567890123456 (16 digits)"
+              {...register('nuptk')}
+              disabled={isSubmitting}
+              maxLength={16}
+            />
+            {getErrorMessage('nuptk') && (
+              <p className="text-sm text-red-500">{getErrorMessage('nuptk')}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="nip">NIP (Optional - Hanya untuk PNS)</Label>
             <Input
               id="nip"
-              placeholder="1234567890123456"
+              placeholder="198012312006041001 (18 digits)"
               {...register('nip')}
               disabled={isSubmitting}
             />
@@ -247,30 +270,44 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
             )}
           </div>
 
-          {selectedRole === 'dosen' && (
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="gelar_depan">Gelar Depan (Optional)</Label>
-                <Input
-                  id="gelar_depan"
-                  placeholder="Dr."
-                  {...register('gelar_depan')}
-                  disabled={isSubmitting}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="gelar_belakang">Gelar Belakang (Optional)</Label>
-                <Input
-                  id="gelar_belakang"
-                  placeholder="M.Keb"
-                  {...register('gelar_belakang')}
-                  disabled={isSubmitting}
-                />
-              </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="gelar_depan">Gelar Depan (Optional)</Label>
+              <Input
+                id="gelar_depan"
+                placeholder="Dr."
+                {...register('gelar_depan')}
+                disabled={isSubmitting}
+              />
             </div>
-          )}
+
+            <div className="space-y-2">
+              <Label htmlFor="gelar_belakang">Gelar Belakang (Optional)</Label>
+              <Input
+                id="gelar_belakang"
+                placeholder="M.Keb"
+                {...register('gelar_belakang')}
+                disabled={isSubmitting}
+              />
+            </div>
+          </div>
         </>
+      )}
+
+      {/* ✅ UPDATED: Laboran-specific fields */}
+      {selectedRole === 'laboran' && (
+        <div className="space-y-2">
+          <Label htmlFor="nip">NIP *</Label>
+          <Input
+            id="nip"
+            placeholder="1234567890 (10-18 digits)"
+            {...register('nip')}
+            disabled={isSubmitting}
+          />
+          {getErrorMessage('nip') && (
+            <p className="text-sm text-red-500">{getErrorMessage('nip')}</p>
+          )}
+        </div>
       )}
 
       <Button

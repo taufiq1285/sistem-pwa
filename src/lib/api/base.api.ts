@@ -55,6 +55,11 @@ export async function query<T = any>(
   table: string,
   options: BaseQueryOptions = {}
 ): Promise<T[]> {
+  // Check if offline - return empty array instead of throwing error
+  if (typeof navigator !== 'undefined' && !navigator.onLine) {
+    return [] as T[];
+  }
+
   try {
     let queryBuilder = supabase
       // PERBAIKAN: 'as any' diperlukan di sini untuk generic API
@@ -116,6 +121,11 @@ export async function queryWithFilters<T = any>(
   filters: FilterOptions[],
   options: BaseQueryOptions = {}
 ): Promise<T[]> {
+  // Check if offline - return empty array instead of throwing error
+  if (typeof navigator !== 'undefined' && !navigator.onLine) {
+    return [] as T[];
+  }
+
   try {
     let queryBuilder = supabase
       // PERBAIKAN: 'as any' diperlukan di sini untuk generic API

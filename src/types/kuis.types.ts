@@ -310,11 +310,11 @@ export interface CreateKuisData {
   dosen_id: string;
   judul: string;
   deskripsi?: string;
-  
+
   // UPDATED FIELD NAMES TO MATCH DATABASE
   durasi_menit: number; // ✅ NOT durasi
-  tanggal_mulai: string;
-  tanggal_selesai: string;
+  tanggal_mulai: string; // ✅ Always set automatically (now)
+  tanggal_selesai: string; // ✅ Always set automatically (now + 1 year)
   passing_score?: number | null; // ✅ NOT passing_grade - NULLABLE to match DB
   max_attempts?: number | null; // ✅ NULLABLE to match form and DB
   randomize_questions?: boolean | null; // ✅ NOT shuffle_soal - NULLABLE

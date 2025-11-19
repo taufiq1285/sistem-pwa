@@ -30,15 +30,19 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     timestamp: new Date().toISOString(),
   });
 
+  // Show minimal loading - cache makes this very fast!
   if (loading || !initialized) {
-    console.log('⏳ ProtectedRoute: LOADING STATE', { loading, initialized });
+    console.log('⏳ ProtectedRoute: LOADING STATE (should be fast with cache!)', { loading, initialized });
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto" />
-          <p className="mt-4 text-gray-600">Checking authentication...</p>
-          <p className="mt-2 text-xs text-gray-400">
-            Loading: {loading ? 'true' : 'false'} | Initialized: {initialized ? 'true' : 'false'}
+          <div className="relative">
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-200 dark:border-gray-700 mx-auto" />
+            <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-600 dark:border-blue-500 mx-auto absolute top-0 left-1/2 -translate-x-1/2" />
+          </div>
+          <p className="mt-6 text-gray-700 dark:text-gray-200 font-medium">Loading...</p>
+          <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+            This should be instant with cache!
           </p>
         </div>
       </div>

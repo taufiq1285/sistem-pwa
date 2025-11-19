@@ -309,12 +309,18 @@ export function handleError(error: unknown): BaseApiError {
  */
 export function logError(error: BaseApiError, context?: string): void {
   if (import.meta.env.DEV) {
+    // Skip noisy network errors - only show brief warning
+    if (isNetworkError(error)) {
+      console.warn(`⚠️ Offline ${context ? `(${context})` : ''}`);
+      return;
+    }
+
+    // Full log for other errors
     console.group(`🔴 API Error ${context ? `(${context})` : ''}`);
     console.error('Message:', error.message);
     console.error('Code:', error.code);
-    console.error('Status:', error.statusCode);
-    console.error('Details:', error.details);
-    console.error('Stack:', error.stack);
+    if (error.statusCode) console.error('Status:', error.statusCode);
+    if (error.details) console.error('Details:', error.details);
     console.groupEnd();
   }
 }

@@ -2,8 +2,8 @@
  * Navigation Configuration
  * Defines navigation items for each role with icons and descriptions
  * 
- * UPDATED: Removed "Mata Kuliah" entries
- * REASON: System focus on PRAKTIKUM operations, not academic course management
+ * UPDATED: Added "Mata Kuliah" menu for Admin
+ * REASON: Admin needs to manage courses before Dosen can create classes
  */
 
 import {
@@ -20,6 +20,7 @@ import {
   Building2,
   UserCog,
   Boxes,
+  BookOpen,
   type LucideIcon
 } from 'lucide-react';
 import type { UserRole } from '@/types/auth.types';
@@ -50,7 +51,6 @@ const mahasiswaNavigation: NavigationItem[] = [
     icon: Home,
     description: 'Ringkasan aktivitas akademik'
   },
-  // ❌ REMOVED: Mata Kuliah (not needed for praktikum system)
   {
     label: 'Jadwal Praktikum',
     href: '/mahasiswa/jadwal',
@@ -93,7 +93,6 @@ const dosenNavigation: NavigationItem[] = [
     icon: Home,
     description: 'Ringkasan aktivitas mengajar'
   },
-  // ❌ REMOVED: Mata Kuliah (not needed for praktikum system)
   {
     label: 'Jadwal Praktikum',
     href: '/dosen/jadwal',
@@ -148,7 +147,12 @@ const adminNavigation: NavigationItem[] = [
     icon: UserCog,
     description: 'Kelola pengguna'
   },
-  // ❌ REMOVED: Mata Kuliah (system focuses on praktikum, not courses)
+  {
+    label: 'Mata Kuliah',
+    href: '/admin/mata-kuliah',
+    icon: BookOpen,
+    description: 'Kelola mata kuliah'
+  },
   {
     label: 'Kelas',
     href: '/admin/kelas',
