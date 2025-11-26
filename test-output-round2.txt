@@ -1,0 +1,3233 @@
+
+> vite-project@0.0.0 test
+> vitest
+
+
+[1m[46m RUN [49m[22m [36mv3.2.4 [39m[90mF:/tes 9/sistem-praktikum-pwa[39m
+
+[90mstdout[2m | src/__tests__/unit/providers/SyncProvider.test.tsx[2m > [22m[2mSyncProvider[2m > [22m[2mInitialization[2m > [22m[2mshould render children immediately
+[22m[39mAuto-syncing 5 pending items...
+
+[90mstdout[2m | src/__tests__/unit/providers/SyncProvider.test.tsx[2m > [22m[2mSyncProvider[2m > [22m[2mInitialization[2m > [22m[2mshould provide sync context to children
+[22m[39mAuto-syncing 5 pending items...
+
+[90mstdout[2m | src/__tests__/unit/hooks/useAutoSave.test.ts[2m > [22m[2museAutoSave[2m > [22m[2mAuto-save[2m > [22m[2mshould auto-save after debounce delay
+[22m[39m[AutoSave] Save successful
+
+[90mstdout[2m | src/__tests__/unit/providers/SyncProvider.test.tsx[2m > [22m[2mSyncProvider[2m > [22m[2mInitialization[2m > [22m[2mshould provide stats to children
+[22m[39mAuto-syncing 5 pending items...
+
+[90mstdout[2m | src/__tests__/unit/hooks/useAutoSave.test.ts[2m > [22m[2museAutoSave[2m > [22m[2mAuto-save[2m > [22m[2mshould debounce multiple rapid changes
+[22m[39m[AutoSave] Save successful
+
+[90mstdout[2m | src/__tests__/unit/providers/SyncProvider.test.tsx[2m > [22m[2mSyncProvider[2m > [22m[2mIntegration[2m > [22m[2mshould handle processing state changes
+[22m[39mAuto-syncing 5 pending items...
+
+[90mstdout[2m | src/__tests__/unit/providers/SyncProvider.test.tsx[2m > [22m[2mSyncProvider[2m > [22m[2mCleanup[2m > [22m[2mshould cleanup on unmount
+[22m[39mAuto-syncing 5 pending items...
+
+[90mstdout[2m | src/__tests__/unit/providers/SyncProvider.test.tsx[2m > [22m[2mSyncProvider[2m > [22m[2mCleanup[2m > [22m[2mshould not trigger auto-sync after unmount
+[22m[39mAuto-syncing 5 pending items...
+
+ [31m❯[39m src/__tests__/unit/providers/SyncProvider.test.tsx [2m([22m[2m20 tests[22m[2m | [22m[31m6 failed[39m[2m)[22m[33m 5735[2mms[22m[39m
+   [32m✓[39m SyncProvider[2m > [22mInitialization[2m > [22mshould render children immediately[32m 140[2mms[22m[39m
+   [32m✓[39m SyncProvider[2m > [22mInitialization[2m > [22mshould provide sync context to children[32m 24[2mms[22m[39m
+   [32m✓[39m SyncProvider[2m > [22mInitialization[2m > [22mshould provide stats to children[32m 17[2mms[22m[39m
+   [32m✓[39m SyncProvider[2m > [22mAuto-sync[2m > [22mshould auto-sync when online and has pending items[32m 28[2mms[22m[39m
+   [32m✓[39m SyncProvider[2m > [22mAuto-sync[2m > [22mshould not auto-sync when autoSync is false[32m 144[2mms[22m[39m
+   [32m✓[39m SyncProvider[2m > [22mAuto-sync[2m > [22mshould not auto-sync when offline[32m 119[2mms[22m[39m
+   [32m✓[39m SyncProvider[2m > [22mAuto-sync[2m > [22mshould not auto-sync when not ready[32m 122[2mms[22m[39m
+   [32m✓[39m SyncProvider[2m > [22mAuto-sync[2m > [22mshould not auto-sync when no pending items[32m 108[2mms[22m[39m
+[31m   [31m×[31m SyncProvider[2m > [22mAuto-sync[2m > [22mshould handle auto-sync errors gracefully[39m[33m 1382[2mms[22m[39m
+[31m     → expected "spy" to be called at least once
+
+Ignored nodes: comments, script, style
+[36m<html>[31m
+  [36m<head />[31m
+  [36m<body>[31m
+    [36m<div>[31m
+      [36m<div>[31m
+        [36m<div[31m
+          [33mdata-testid[31m=[32m"isReady"[31m
+        [36m>[31m
+          [0mtrue[0m
+        [36m</div>[31m
+        [36m<div[31m
+          [33mdata-testid[31m=[32m"isProcessing"[31m
+        [36m>[31m
+          [0mfalse[0m
+        [36m</div>[31m
+        [36m<div[31m
+          [33mdata-testid[31m=[32m"pending"[31m
+        [36m>[31m
+          [0m0[0m
+        [36m</div>[31m
+        [36m<div[31m
+          [33mdata-testid[31m=[32m"total"[31m
+        [36m>[31m
+          [0m10[0m
+        [36m</div>[31m
+      [36m</div>[31m
+    [36m</div>[31m
+  [36m</body>[31m
+[36m</html>[31m[39m
+[31m   [31m×[31m SyncProvider[2m > [22mAuto-sync[2m > [22mshould trigger auto-sync when coming back online[39m[33m 1137[2mms[22m[39m
+[31m     → expected "spy" to be called at least once
+
+Ignored nodes: comments, script, style
+[36m<html>[31m
+  [36m<head />[31m
+  [36m<body>[31m
+    [36m<div>[31m
+      [36m<div>[31m
+        [36m<div[31m
+          [33mdata-testid[31m=[32m"isReady"[31m
+        [36m>[31m
+          [0mtrue[0m
+        [36m</div>[31m
+        [36m<div[31m
+          [33mdata-testid[31m=[32m"isProcessing"[31m
+        [36m>[31m
+          [0mfalse[0m
+        [36m</div>[31m
+        [36m<div[31m
+          [33mdata-testid[31m=[32m"pending"[31m
+        [36m>[31m
+          [0m0[0m
+        [36m</div>[31m
+        [36m<div[31m
+          [33mdata-testid[31m=[32m"total"[31m
+        [36m>[31m
+          [0m10[0m
+        [36m</div>[31m
+      [36m</div>[31m
+    [36m</div>[31m
+  [36m</body>[31m
+[36m</html>[31m[39m
+   [32m✓[39m SyncProvider[2m > [22mContext[2m > [22mshould throw error when useSyncContext is used outside provider[32m 41[2mms[22m[39m
+   [32m✓[39m SyncProvider[2m > [22mContext[2m > [22mshould provide all sync methods[32m 7[2mms[22m[39m
+[31m   [31m×[31m SyncProvider[2m > [22mContext[2m > [22mshould share context across multiple children[39m[32m 13[2mms[22m[39m
+[31m     → [2mexpect([22m[31melement[31m[2m).toHaveTextContent()[22m
+
+Expected element to have text content:
+[32m  5[31m
+Received:
+[31m  0[31m[39m
+[31m   [31m×[31m SyncProvider[2m > [22mProps[2m > [22mshould respect autoSync prop[39m[33m 1130[2mms[22m[39m
+[31m     → expected "spy" to be called at least once
+
+Ignored nodes: comments, script, style
+[36m<html>[31m
+  [36m<head />[31m
+  [36m<body>[31m
+    [36m<div>[31m
+      [36m<div>[31m
+        [36m<div[31m
+          [33mdata-testid[31m=[32m"isReady"[31m
+        [36m>[31m
+          [0mtrue[0m
+        [36m</div>[31m
+        [36m<div[31m
+          [33mdata-testid[31m=[32m"isProcessing"[31m
+        [36m>[31m
+          [0mfalse[0m
+        [36m</div>[31m
+        [36m<div[31m
+          [33mdata-testid[31m=[32m"pending"[31m
+        [36m>[31m
+          [0m0[0m
+        [36m</div>[31m
+        [36m<div[31m
+          [33mdata-testid[31m=[32m"total"[31m
+        [36m>[31m
+          [0m10[0m
+        [36m</div>[31m
+      [36m</div>[31m
+    [36m</div>[31m
+  [36m</body>[31m
+[36m</html>[31m[39m
+[31m   [31m×[31m SyncProvider[2m > [22mProps[2m > [22mshould default autoSync to true[39m[33m 1085[2mms[22m[39m
+[31m     → expected "spy" to be called at least once
+
+Ignored nodes: comments, script, style
+[36m<html>[31m
+  [36m<head />[31m
+  [36m<body>[31m
+    [36m<div>[31m
+      [36m<div>[31m
+        [36m<div[31m
+          [33mdata-testid[31m=[32m"isReady"[31m
+        [36m>[31m
+          [0mtrue[0m
+        [36m</div>[31m
+        [36m<div[31m
+          [33mdata-testid[31m=[32m"isProcessing"[31m
+        [36m>[31m
+          [0mfalse[0m
+        [36m</div>[31m
+        [36m<div[31m
+          [33mdata-testid[31m=[32m"pending"[31m
+        [36m>[31m
+          [0m0[0m
+        [36m</div>[31m
+        [36m<div[31m
+          [33mdata-testid[31m=[32m"total"[31m
+        [36m>[31m
+          [0m10[0m
+        [36m</div>[31m
+      [36m</div>[31m
+    [36m</div>[31m
+  [36m</body>[31m
+[36m</html>[31m[39m
+   [32m✓[39m SyncProvider[2m > [22mIntegration[2m > [22mshould work with nested components[32m 20[2mms[22m[39m
+[31m   [31m×[31m SyncProvider[2m > [22mIntegration[2m > [22mshould handle stats updates[39m[32m 17[2mms[22m[39m
+[31m     → [2mexpect([22m[31melement[31m[2m).toHaveTextContent()[22m
+
+Expected element to have text content:
+[32m  5[31m
+Received:
+[31m  0[31m[39m
+   [32m✓[39m SyncProvider[2m > [22mIntegration[2m > [22mshould handle processing state changes[32m 31[2mms[22m[39m
+   [32m✓[39m SyncProvider[2m > [22mCleanup[2m > [22mshould cleanup on unmount[32m 13[2mms[22m[39m
+   [32m✓[39m SyncProvider[2m > [22mCleanup[2m > [22mshould not trigger auto-sync after unmount[32m 143[2mms[22m[39m
+[90mstdout[2m | src/__tests__/unit/hooks/useAutoSave.test.ts[2m > [22m[2museAutoSave[2m > [22m[2mManual Save[2m > [22m[2mshould save manually
+[22m[39m[AutoSave] Save successful
+
+[90mstdout[2m | src/__tests__/unit/hooks/useAutoSave.test.ts[2m > [22m[2museAutoSave[2m > [22m[2mManual Save[2m > [22m[2mshould cancel pending auto-save when saving manually
+[22m[39m[AutoSave] Save successful
+
+ [31m❯[39m src/__tests__/unit/hooks/useAutoSave.test.ts [2m([22m[2m29 tests[22m[2m | [22m[31m22 failed[39m[2m)[22m[33m 15661[2mms[22m[39m
+   [32m✓[39m useAutoSave[2m > [22mInitialization[2m > [22mshould initialize with idle status[32m 49[2mms[22m[39m
+   [32m✓[39m useAutoSave[2m > [22mInitialization[2m > [22mshould initialize with provided data[32m 11[2mms[22m[39m
+   [32m✓[39m useAutoSave[2m > [22mInitialization[2m > [22mshould expose all required methods[32m 18[2mms[22m[39m
+[31m   [31m×[31m useAutoSave[2m > [22mAuto-save[2m > [22mshould auto-save after debounce delay[39m[33m 5120[2mms[22m[39m
+[31m     → Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".[39m
+[31m   [31m×[31m useAutoSave[2m > [22mAuto-save[2m > [22mshould debounce multiple rapid changes[39m[33m 5035[2mms[22m[39m
+[31m     → Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".[39m
+   [32m✓[39m useAutoSave[2m > [22mAuto-save[2m > [22mshould not auto-save when disabled[32m 58[2mms[22m[39m
+   [32m✓[39m useAutoSave[2m > [22mAuto-save[2m > [22mshould not auto-save when no changes detected[32m 14[2mms[22m[39m
+   [32m✓[39m useAutoSave[2m > [22mManual Save[2m > [22mshould save manually[32m 53[2mms[22m[39m
+   [32m✓[39m useAutoSave[2m > [22mManual Save[2m > [22mshould cancel pending auto-save when saving manually[32m 17[2mms[22m[39m
+[31m   [31m×[31m useAutoSave[2m > [22mStatus[2m > [22mshould update status during save[39m[33m 5035[2mms[22m[39m
+[31m     → Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".[39m
+[31m   [31m×[31m useAutoSave[2m > [22mStatus[2m > [22mshould set error status on save failure[39m[32m 17[2mms[22m[39m
+[31m     → Cannot read properties of null (reading 'updateData')[39m
+[31m   [31m×[31m useAutoSave[2m > [22mStatus[2m > [22mshould update lastSaved timestamp on successful save[39m[32m 8[2mms[22m[39m
+[31m     → Cannot read properties of null (reading 'updateData')[39m
+[31m   [31m×[31m useAutoSave[2m > [22mCallbacks[2m > [22mshould call onSuccess callback[39m[32m 6[2mms[22m[39m
+[31m     → Cannot read properties of null (reading 'updateData')[39m
+[31m   [31m×[31m useAutoSave[2m > [22mCallbacks[2m > [22mshould call onError callback[39m[32m 8[2mms[22m[39m
+[31m     → Cannot read properties of null (reading 'updateData')[39m
+[31m   [31m×[31m useAutoSave[2m > [22mOnline Only Mode[2m > [22mshould not save when offline and onlineOnly is true[39m[32m 20[2mms[22m[39m
+[31m     → Cannot find module '@/lib/hooks/useNetworkStatus'
+Require stack:
+- F:\tes 9\sistem-praktikum-pwa\src\__tests__\unit\hooks\useAutoSave.test.ts[39m
+[31m   [31m×[31m useAutoSave[2m > [22mOnline Only Mode[2m > [22mshould save when online even with onlineOnly true[39m[32m 6[2mms[22m[39m
+[31m     → Cannot find module '@/lib/hooks/useNetworkStatus'
+Require stack:
+- F:\tes 9\sistem-praktikum-pwa\src\__tests__\unit\hooks\useAutoSave.test.ts[39m
+[31m   [31m×[31m useAutoSave[2m > [22mOnline Only Mode[2m > [22mshould auto-save when coming back online[39m[32m 8[2mms[22m[39m
+[31m     → Cannot find module '@/lib/hooks/useNetworkStatus'
+Require stack:
+- F:\tes 9\sistem-praktikum-pwa\src\__tests__\unit\hooks\useAutoSave.test.ts[39m
+[31m   [31m×[31m useAutoSave[2m > [22mreset[2m > [22mshould reset to saved state[39m[32m 6[2mms[22m[39m
+[31m     → Cannot read properties of null (reading 'updateData')[39m
+[31m   [31m×[31m useAutoSave[2m > [22mreset[2m > [22mshould cancel pending save on reset[39m[32m 8[2mms[22m[39m
+[31m     → Cannot read properties of null (reading 'updateData')[39m
+[31m   [31m×[31m useAutoSave[2m > [22mmarkAsSaved[2m > [22mshould mark current data as saved[39m[32m 6[2mms[22m[39m
+[31m     → Cannot read properties of null (reading 'updateData')[39m
+[31m   [31m×[31m useAutoSave[2m > [22mmarkAsSaved[2m > [22mshould cancel pending save[39m[32m 39[2mms[22m[39m
+[31m     → Cannot read properties of null (reading 'updateData')[39m
+[31m   [31m×[31m useAutoSave[2m > [22mCustom Equality Check[2m > [22mshould use custom isEqual function[39m[32m 9[2mms[22m[39m
+[31m     → Cannot read properties of null (reading 'updateData')[39m
+[31m   [31m×[31m useAutoSave[2m > [22mPrevent Concurrent Saves[2m > [22mshould not start new save while one is in progress[39m[32m 8[2mms[22m[39m
+[31m     → Cannot read properties of null (reading 'updateData')[39m
+[31m   [31m×[31m useAutoSave[2m > [22mbeforeunload Warning[2m > [22mshould add beforeunload listener when there are unsaved changes[39m[32m 29[2mms[22m[39m
+[31m     → Cannot read properties of null (reading 'updateData')[39m
+[31m   [31m×[31m useAutoSave[2m > [22mbeforeunload Warning[2m > [22mshould remove beforeunload listener when no unsaved changes[39m[32m 17[2mms[22m[39m
+[31m     → Cannot read properties of null (reading 'updateData')[39m
+[31m   [31m×[31m useAutoSave[2m > [22mCleanup[2m > [22mshould clear timeout on unmount[39m[32m 7[2mms[22m[39m
+[31m     → Cannot read properties of null (reading 'updateData')[39m
+[31m   [31m×[31m useAutoSave[2m > [22mCleanup[2m > [22mshould not update state after unmount[39m[32m 11[2mms[22m[39m
+[31m     → Cannot read properties of null (reading 'updateData')[39m
+[31m   [31m×[31m useAutoSave[2m > [22mIntegration[2m > [22mshould handle complete workflow[39m[32m 5[2mms[22m[39m
+[31m     → Cannot read properties of null (reading 'updateData')[39m
+[31m   [31m×[31m useAutoSave[2m > [22mIntegration[2m > [22mshould maintain consistent state across re-renders[39m[32m 25[2mms[22m[39m
+[31m     → Cannot read properties of null (reading 'data')[39m
+ [31m❯[39m src/__tests__/integration/kuis-attempt-offline.test.tsx [2m([22m[2m7 tests[22m[2m | [22m[31m2 failed[39m[2m)[22m[33m 19061[2mms[22m[39m
+   [33m[2m✓[22m[39m Kuis Attempt Offline Integration[2m > [22mshould start quiz online and load data [33m 1222[2mms[22m[39m
+   [33m[2m✓[22m[39m Kuis Attempt Offline Integration[2m > [22mshould save answers online [33m 3357[2mms[22m[39m
+   [33m[2m✓[22m[39m Kuis Attempt Offline Integration[2m > [22mshould detect offline status and show alert [33m 690[2mms[22m[39m
+[31m   [31m×[31m Kuis Attempt Offline Integration[2m > [22mshould save answers to IndexedDB when offline[39m[33m 2213[2mms[22m[39m
+[31m     → expected "spy" to be called with arguments: [ ObjectContaining{…} ][90m
+
+Received: 
+
+[1m  1st spy call:
+
+[22m[2m  [[22m
+[32m-   ObjectContaining {[90m
+[32m-     "action": "save",[90m
+[32m-     "data": ObjectContaining {[90m
+[32m-       "jawaban": "My offline answer",[90m
+[31m+   "kuis_jawaban",[90m
+[31m+   "create",[90m
+[31m+   {[90m
+[31m+     "_metadata": {[90m
+[31m+       "key": "quiz_attempt-1_soal-2",[90m
+[31m+       "timestamp": "2025-11-25T00:06:17.075Z",[90m
+[31m+     },[90m
+[31m+     "attempt_id": "attempt-1",[90m
+[31m+     "jawaban": "M",[90m
+[2m      "soal_id": "soal-2",[22m
+[32m-     },[90m
+[32m-     "type": "quiz_answer",[90m
+[2m    },[22m
+[2m  ][22m
+
+[1m  2nd spy call:
+
+[22m[2m  [[22m
+[32m-   ObjectContaining {[90m
+[32m-     "action": "save",[90m
+[32m-     "data": ObjectContaining {[90m
+[32m-       "jawaban": "My offline answer",[90m
+[31m+   "kuis_jawaban",[90m
+[31m+   "create",[90m
+[31m+   {[90m
+[31m+     "_metadata": {[90m
+[31m+       "key": "quiz_attempt-1_soal-2",[90m
+[31m+       "timestamp": "2025-11-25T00:06:17.105Z",[90m
+[31m+     },[90m
+[31m+     "attempt_id": "attempt-1",[90m
+[31m+     "jawaban": "My",[90m
+[2m      "soal_id": "soal-2",[22m
+[32m-     },[90m
+[32m-     "type": "quiz_answer",[90m
+[2m    },[22m
+[2m  ][22m
+
+[1m  3rd spy call:
+
+[22m[2m  [[22m
+[32m-   ObjectContaining {[90m
+[32m-     "action": "save",[90m
+[32m-     "data": ObjectContaining {[90m
+[32m-       "jawaban": "My offline answer",[90m
+[31m+   "kuis_jawaban",[90m
+[31m+   "create",[90m
+[31m+   {[90m
+[31m+     "_metadata": {[90m
+[31m+       "key": "quiz_attempt-1_soal-2",[90m
+[31m+       "timestamp": "2025-11-25T00:06:17.162Z",[90m
+[31m+     },[90m
+[31m+     "attempt_id": "attempt-1",[90m
+[31m+     "jawaban": "My ",[90m
+[2m      "soal_id": "soal-2",[22m
+[32m-     },[90m
+[32m-     "type": "quiz_answer",[90m
+[2m    },[22m
+[2m  ][22m
+
+[1m  4th spy call:
+
+[22m[2m  [[22m
+[32m-   ObjectContaining {[90m
+[32m-     "action": "save",[90m
+[32m-     "data": ObjectContaining {[90m
+[32m-       "jawaban": "My offline answer",[90m
+[31m+   "kuis_jawaban",[90m
+[31m+   "create",[90m
+[31m+   {[90m
+[31m+     "_metadata": {[90m
+[31m+       "key": "quiz_attempt-1_soal-2",[90m
+[31m+       "timestamp": "2025-11-25T00:06:17.207Z",[90m
+[31m+     },[90m
+[31m+     "attempt_id": "attempt-1",[90m
+[31m+     "jawaban": "My o",[90m
+[2m      "soal_id": "soal-2",[22m
+[32m-     },[90m
+[32m-     "type": "quiz_answer",[90m
+[2m    },[22m
+[2m  ][22m
+
+[1m  5th spy call:
+
+[22m[2m  [[22m
+[32m-   ObjectContaining {[90m
+[32m-     "action": "save",[90m
+[32m-     "data": ObjectContaining {[90m
+[32m-       "jawaban": "My offline answer",[90m
+[31m+   "kuis_jawaban",[90m
+[31m+   "create",[90m
+[31m+   {[90m
+[31m+     "_metadata": {[90m
+[31m+       "key": "quiz_attempt-1_soal-2",[90m
+[31m+       "timestamp": "2025-11-25T00:06:17.239Z",[90m
+[31m+     },[90m
+[31m+     "attempt_id": "attempt-1",[90m
+[31m+     "jawaban": "My of",[90m
+[2m      "soal_id": "soal-2",[22m
+[32m-     },[90m
+[32m-     "type": "quiz_answer",[90m
+[2m    },[22m
+[2m  ][22m
+
+[1m  6th spy call:
+
+[22m[2m  [[22m
+[32m-   ObjectContaining {[90m
+[32m-     "action": "save",[90m
+[32m-     "data": ObjectContaining {[90m
+[32m-       "jawaban": "My offline answer",[90m
+[31m+   "kuis_jawaban",[90m
+[31m+   "create",[90m
+[31m+   {[90m
+[31m+     "_metadata": {[90m
+[31m+       "key": "quiz_attempt-1_soal-2",[90m
+[31m+       "timestamp": "2025-11-25T00:06:17.268Z",[90m
+[31m+     },[90m
+[31m+     "attempt_id": "attempt-1",[90m
+[31m+     "jawaban": "My off",[90m
+[2m      "soal_id": "soal-2",[22m
+[32m-     },[90m
+[32m-     "type": "quiz_answer",[90m
+[2m    },[22m
+[2m  ][22m
+
+[1m  7th spy call:
+
+[22m[2m  [[22m
+[32m-   ObjectContaining {[90m
+[32m-     "action": "save",[90m
+[32m-     "data": ObjectContaining {[90m
+[32m-       "jawaban": "My offline answer",[90m
+[31m+   "kuis_jawaban",[90m
+[31m+   "create",[90m
+[31m+   {[90m
+[31m+     "_metadata": {[90m
+[31m+       "key": "quiz_attempt-1_soal-2",[90m
+[31m+       "timestamp": "2025-11-25T00:06:17.307Z",[90m
+[31m+     },[90m
+[31m+     "attempt_id": "attempt-1",[90m
+[31m+     "jawaban": "My offl",[90m
+[2m      "soal_id": "soal-2",[22m
+[32m-     },[90m
+[32m-     "type": "quiz_answer",[90m
+[2m    },[22m
+[2m  ][22m
+
+[1m  8th spy call:
+
+[22m[2m  [[22m
+[32m-   ObjectContaining {[90m
+[32m-     "action": "save",[90m
+[32m-     "data": ObjectContaining {[90m
+[32m-       "jawaban": "My offline answer",[90m
+[31m+   "kuis_jawaban",[90m
+[31m+   "create",[90m
+[31m+   {[90m
+[31m+     "_metadata": {[90m
+[31m+       "key": "quiz_attempt-1_soal-2",[90m
+[31m+       "timestamp": "2025-11-25T00:06:17.338Z",[90m
+[31m+     },[90m
+[31m+     "attempt_id": "attempt-1",[90m
+[31m+     "jawaban": "My offli",[90m
+[2m      "soal_id": "soal-2",[22m
+[32m-     },[90m
+[32m-     "type": "quiz_answer",[90m
+[2m    },[22m
+[2m  ][22m
+
+[1m  9th spy call:
+
+[22m[2m  [[22m
+[32m-   ObjectContaining {[90m
+[32m-     "action": "save",[90m
+[32m-     "data": ObjectContaining {[90m
+[32m-       "jawaban": "My offline answer",[90m
+[31m+   "kuis_jawaban",[90m
+[31m+   "create",[90m
+[31m+   {[90m
+[31m+     "_metadata": {[90m
+[31m+       "key": "quiz_attempt-1_soal-2",[90m
+[31m+       "timestamp": "2025-11-25T00:06:17.376Z",[90m
+[31m+     },[90m
+[31m+     "attempt_id": "attempt-1",[90m
+[31m+     "jawaban": "My offlin",[90m
+[2m      "soal_id": "soal-2",[22m
+[32m-     },[90m
+[32m-     "type": "quiz_answer",[90m
+[2m    },[22m
+[2m  ][22m
+
+[1m  10th spy call:
+
+[22m[2m  [[22m
+[32m-   ObjectContaining {[90m
+[32m-     "action": "save",[90m
+[32m-     "data": ObjectContaining {[90m
+[32m-       "jawaban": "My offline answer",[90m
+[31m+   "kuis_jawaban",[90m
+[31m+   "create",[90m
+[31m+   {[90m
+[31m+     "_metadata": {[90m
+[31m+       "key": "quiz_attempt-1_soal-2",[90m
+[31m+       "timestamp": "2025-11-25T00:06:17.414Z",[90m
+[31m+     },[90m
+[31m+     "attempt_id": "attempt-1",[90m
+[31m+     "jawaban": "My offline",[90m
+[2m      "soal_id": "soal-2",[22m
+[32m-     },[90m
+[32m-     "type": "quiz_answer",[90m
+[2m    },[22m
+[2m  ][22m
+
+[1m  11th spy call:
+
+[22m[2m  [[22m
+[32m-   ObjectContaining {[90m
+[32m-     "action": "save",[90m
+[32m-     "data": ObjectContaining {[90m
+[32m-       "jawaban": "My offline answer",[90m
+[31m+   "kuis_jawaban",[90m
+[31m+   "create",[90m
+[31m+   {[90m
+[31m+     "_metadata": {[90m
+[31m+       "key": "quiz_attempt-1_soal-2",[90m
+[31m+       "timestamp": "2025-11-25T00:06:17.444Z",[90m
+[31m+     },[90m
+[31m+     "attempt_id": "attempt-1",[90m
+[31m+     "jawaban": "My offline ",[90m
+[2m      "soal_id": "soal-2",[22m
+[32m-     },[90m
+[32m-     "type": "quiz_answer",[90m
+[2m    },[22m
+[2m  ][22m
+
+[1m  12th spy call:
+
+[22m[2m  [[22m
+[32m-   ObjectContaining {[90m
+[32m-     "action": "save",[90m
+[32m-     "data": ObjectContaining {[90m
+[32m-       "jawaban": "My offline answer",[90m
+[31m+   "kuis_jawaban",[90m
+[31m+   "create",[90m
+[31m+   {[90m
+[31m+     "_metadata": {[90m
+[31m+       "key": "quiz_attempt-1_soal-2",[90m
+[31m+       "timestamp": "2025-11-25T00:06:17.487Z",[90m
+[31m+     },[90m
+[31m+     "attempt_id": "attempt-1",[90m
+[31m+     "jawaban": "My offline a",[90m
+[2m      "soal_id": "soal-2",[22m
+[32m-     },[90m
+[32m-     "type": "quiz_answer",[90m
+[2m    },[22m
+[2m  ][22m
+
+[1m  13th spy call:
+
+[22m[2m  [[22m
+[32m-   ObjectContaining {[90m
+[32m-     "action": "save",[90m
+[32m-     "data": ObjectContaining {[90m
+[32m-       "jawaban": "My offline answer",[90m
+[31m+   "kuis_jawaban",[90m
+[31m+   "create",[90m
+[31m+   {[90m
+[31m+     "_metadata": {[90m
+[31m+       "key": "quiz_attempt-1_soal-2",[90m
+[31m+       "timestamp": "2025-11-25T00:06:17.528Z",[90m
+[31m+     },[90m
+[31m+     "attempt_id": "attempt-1",[90m
+[31m+     "jawaban": "My offline an",[90m
+[2m      "soal_id": "soal-2",[22m
+[32m-     },[90m
+[32m-     "type": "quiz_answer",[90m
+[2m    },[22m
+[2m  ][22m
+
+[1m  14th spy call:
+
+[22m[2m  [[22m
+[32m-   ObjectContaining {[90m
+[32m-     "action": "save",[90m
+[32m-     "data": ObjectContaining {[90m
+[32m-       "jawaban": "My offline answer",[90m
+[31m+   "kuis_jawaban",[90m
+[31m+   "create",[90m
+[31m+   {[90m
+[31m+     "_metadata": {[90m
+[31m+       "key": "quiz_attempt-1_soal-2",[90m
+[31m+       "timestamp": "2025-11-25T00:06:17.591Z",[90m
+[31m+     },[90m
+[31m+     "attempt_id": "attempt-1",[90m
+[31m+     "jawaban": "My offline ans",[90m
+[2m      "soal_id": "soal-2",[22m
+[32m-     },[90m
+[32m-     "type": "quiz_answer",[90m
+[2m    },[22m
+[2m  ][22m
+
+[1m  15th spy call:
+
+[22m[2m  [[22m
+[32m-   ObjectContaining {[90m
+[32m-     "action": "save",[90m
+[32m-     "data": ObjectContaining {[90m
+[32m-       "jawaban": "My offline answer",[90m
+[31m+   "kuis_jawaban",[90m
+[31m+   "create",[90m
+[31m+   {[90m
+[31m+     "_metadata": {[90m
+[31m+       "key": "quiz_attempt-1_soal-2",[90m
+[31m+       "timestamp": "2025-11-25T00:06:17.625Z",[90m
+[31m+     },[90m
+[31m+     "attempt_id": "attempt-1",[90m
+[31m+     "jawaban": "My offline answ",[90m
+[2m      "soal_id": "soal-2",[22m
+[32m-     },[90m
+[32m-     "type": "quiz_answer",[90m
+[2m    },[22m
+[2m  ][22m
+
+[1m  16th spy call:
+
+[22m[2m  [[22m
+[32m-   ObjectContaining {[90m
+[32m-     "action": "save",[90m
+[32m-     "data": ObjectContaining {[90m
+[32m-       "jawaban": "My offline answer",[90m
+[31m+   "kuis_jawaban",[90m
+[31m+   "create",[90m
+[31m+   {[90m
+[31m+     "_metadata": {[90m
+[31m+       "key": "quiz_attempt-1_soal-2",[90m
+[31m+       "timestamp": "2025-11-25T00:06:17.676Z",[90m
+[31m+     },[90m
+[31m+     "attempt_id": "attempt-1",[90m
+[31m+     "jawaban": "My offline answe",[90m
+[2m      "soal_id": "soal-2",[22m
+[32m-     },[90m
+[32m-     "type": "quiz_answer",[90m
+[2m    },[22m
+[2m  ][22m
+
+[1m  17th spy call:
+
+[22m[2m  [[22m
+[32m-   ObjectContaining {[90m
+[32m-     "action": "save",[90m
+[32m-     "data": ObjectContaining {[90m
+[31m+   "kuis_jawaban",[90m
+[31m+   "create",[90m
+[31m+   {[90m
+[31m+     "_metadata": {[90m
+[31m+       "key": "quiz_attempt-1_soal-2",[90m
+[31m+       "timestamp": "2025-11-25T00:06:17.722Z",[90m
+[31m+     },[90m
+[31m+     "attempt_id": "attempt-1",[90m
+[2m      "jawaban": "My offline answer",[22m
+[2m      "soal_id": "soal-2",[22m
+[32m-     },[90m
+[32m-     "type": "quiz_answer",[90m
+[2m    },[22m
+[2m  ][22m
+[31m[90m
+
+Number of calls: [1m17[22m
+[31m[39m
+   [32m✓[39m Kuis Attempt Offline Integration[2m > [22mshould persist data after refresh when offline[32m 28[2mms[22m[39m
+   [33m[2m✓[22m[39m Kuis Attempt Offline Integration[2m > [22mshould automatically sync when coming back online [33m 1524[2mms[22m[39m
+[31m   [31m×[31m Kuis Attempt Offline Integration[2m > [22mshould handle complete offline-online flow[39m[33m 10018[2mms[22m[39m
+[31m     → Test timed out in 10000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".[39m
+[90mstderr[2m | src/__tests__/unit/hooks/useLocalData.test.ts[2m > [22m[2museLocalData[2m > [22m[2mInitialization[2m > [22m[2mshould initialize with default state
+[22m[39mAn update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+[90mstderr[2m | src/__tests__/unit/hooks/useLocalData.test.ts[2m > [22m[2museLocalData[2m > [22m[2mInitialization[2m > [22m[2mshould expose all required methods
+[22m[39mAn update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ [31m❯[39m src/__tests__/unit/hooks/useLocalData.test.ts [2m([22m[2m30 tests[22m[2m | [22m[31m9 failed[39m[2m)[22m[33m 2768[2mms[22m[39m
+[31m   [31m×[31m useLocalData[2m > [22mInitialization[2m > [22mshould initialize with default state[39m[32m 147[2mms[22m[39m
+[31m     → expected true to be false // Object.is equality[39m
+   [32m✓[39m useLocalData[2m > [22mInitialization[2m > [22mshould auto-load data by default[32m 92[2mms[22m[39m
+   [32m✓[39m useLocalData[2m > [22mInitialization[2m > [22mshould not auto-load when autoLoad is false[32m 117[2mms[22m[39m
+   [32m✓[39m useLocalData[2m > [22mInitialization[2m > [22mshould expose all required methods[32m 27[2mms[22m[39m
+[31m   [31m×[31m useLocalData[2m > [22mLoading[2m > [22mshould set loading state during load[39m[32m 59[2mms[22m[39m
+[31m     → Timers are not mocked. Try calling "vi.useFakeTimers()" first.[39m
+   [32m✓[39m useLocalData[2m > [22mLoading[2m > [22mshould load data manually[32m 17[2mms[22m[39m
+   [32m✓[39m useLocalData[2m > [22mLoading[2m > [22mshould handle load errors[32m 112[2mms[22m[39m
+   [32m✓[39m useLocalData[2m > [22mLoading[2m > [22mshould apply filter function[32m 113[2mms[22m[39m
+   [32m✓[39m useLocalData[2m > [22mLoading[2m > [22mshould apply sort function[32m 148[2mms[22m[39m
+   [32m✓[39m useLocalData[2m > [22mLoading[2m > [22mshould apply transform function[32m 66[2mms[22m[39m
+   [32m✓[39m useLocalData[2m > [22madd[2m > [22mshould add item with optimistic update[32m 96[2mms[22m[39m
+   [32m✓[39m useLocalData[2m > [22madd[2m > [22mshould add item without optimistic update[32m 150[2mms[22m[39m
+   [32m✓[39m useLocalData[2m > [22madd[2m > [22mshould revert optimistic update on error[32m 91[2mms[22m[39m
+[31m   [31m×[31m useLocalData[2m > [22mupdate[2m > [22mshould update item with optimistic update[39m[32m 128[2mms[22m[39m
+[31m     → expected "spy" to be called with arguments: [ 'kuis', 'kuis-1', …(1) ][90m
+
+Received: 
+
+[1m  1st spy call:
+
+[22m[2m  [[22m
+[2m    "kuis",[22m
+[32m-   "kuis-1",[90m
+[2m    {[22m
+[31m+     "dosen_id": "dosen-2",[90m
+[31m+     "id": "kuis-3",[90m
+[2m      "judul": "Updated",[22m
+[31m+     "kelas_id": "kelas-2",[90m
+[2m    },[22m
+[2m  ][22m
+[31m[90m
+
+Number of calls: [1m1[22m
+[31m[39m
+   [32m✓[39m useLocalData[2m > [22mupdate[2m > [22mshould revert optimistic update on error[32m 103[2mms[22m[39m
+   [32m✓[39m useLocalData[2m > [22mremove[2m > [22mshould remove item with optimistic update[32m 90[2mms[22m[39m
+   [32m✓[39m useLocalData[2m > [22mremove[2m > [22mshould revert optimistic update on error[32m 93[2mms[22m[39m
+   [32m✓[39m useLocalData[2m > [22mclear[2m > [22mshould clear all items[32m 162[2mms[22m[39m
+[31m   [31m×[31m useLocalData[2m > [22mQuery Methods[2m > [22mshould get item by id[39m[32m 151[2mms[22m[39m
+[31m     → expected { id: 'kuis-1', judul: 'Kuis 1', …(2) } to deeply equal { id: 'kuis-3', judul: 'Kuis 3', …(2) }[39m
+   [32m✓[39m useLocalData[2m > [22mQuery Methods[2m > [22mshould return undefined for non-existent id[32m 179[2mms[22m[39m
+   [32m✓[39m useLocalData[2m > [22mQuery Methods[2m > [22mshould find items matching predicate[32m 97[2mms[22m[39m
+   [32m✓[39m useLocalData[2m > [22mQuery Methods[2m > [22mshould check if item exists[32m 171[2mms[22m[39m
+   [32m✓[39m useLocalData[2m > [22mQuery Methods[2m > [22mshould return correct count[32m 59[2mms[22m[39m
+[31m   [31m×[31m useLocalData[2m > [22mRefresh Interval[2m > [22mshould refresh at specified interval[39m[32m 12[2mms[22m[39m
+[31m     → Timers are not mocked. Try calling "vi.useFakeTimers()" first.[39m
+[31m   [31m×[31m useLocalData[2m > [22mRefresh Interval[2m > [22mshould not refresh when interval is 0[39m[32m 7[2mms[22m[39m
+[31m     → Timers are not mocked. Try calling "vi.useFakeTimers()" first.[39m
+[31m   [31m×[31m useLocalData[2m > [22mRefresh Interval[2m > [22mshould clear interval on unmount[39m[32m 5[2mms[22m[39m
+[31m     → Timers are not mocked. Try calling "vi.useFakeTimers()" first.[39m
+   [32m✓[39m useLocalData[2m > [22mrefresh[2m > [22mshould refresh data manually[32m 97[2mms[22m[39m
+[31m   [31m×[31m useLocalData[2m > [22mCleanup[2m > [22mshould not update state after unmount[39m[32m 3[2mms[22m[39m
+[31m     → Timers are not mocked. Try calling "vi.useFakeTimers()" first.[39m
+[31m   [31m×[31m useLocalData[2m > [22mIntegration[2m > [22mshould handle complete CRUD workflow[39m[32m 76[2mms[22m[39m
+[31m     → expected false to be true // Object.is equality[39m
+   [32m✓[39m useLocalData[2m > [22mIntegration[2m > [22mshould maintain consistent state across re-renders[32m 92[2mms[22m[39m
+[90mstderr[2m | src/__tests__/unit/hooks/useSync.test.ts[2m > [22m[2museSync[2m > [22m[2mInitialization[2m > [22m[2mshould initialize with default state
+[22m[39mAn update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+[90mstderr[2m | src/__tests__/unit/hooks/useSync.test.ts[2m > [22m[2museSync[2m > [22m[2mInitialization[2m > [22m[2mshould initialize with default state
+[22m[39mAn update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+[90mstderr[2m | src/__tests__/unit/hooks/useSync.test.ts[2m > [22m[2museSync[2m > [22m[2maddToQueue[2m > [22m[2mshould add item to queue
+[22m[39mAn update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+[90mstderr[2m | src/__tests__/unit/hooks/useSync.test.ts[2m > [22m[2museSync[2m > [22m[2maddToQueue[2m > [22m[2mshould refresh stats after adding
+[22m[39mAn update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+[90mstderr[2m | src/__tests__/unit/hooks/useSync.test.ts[2m > [22m[2museSync[2m > [22m[2maddToQueue[2m > [22m[2mshould handle different entity types
+[22m[39mAn update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+[90mstderr[2m | src/__tests__/unit/hooks/useSync.test.ts[2m > [22m[2museSync[2m > [22m[2maddToQueue[2m > [22m[2mshould handle different operations
+[22m[39mAn update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+[90mstderr[2m | src/__tests__/unit/hooks/useSync.test.ts[2m > [22m[2museSync[2m > [22m[2mprocessQueue[2m > [22m[2mshould process the queue
+[22m[39mAn update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+[90mstderr[2m | src/__tests__/unit/hooks/useSync.test.ts[2m > [22m[2museSync[2m > [22m[2mprocessQueue[2m > [22m[2mshould process the queue
+[22m[39mAn update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+[90mstderr[2m | src/__tests__/unit/hooks/useSync.test.ts[2m > [22m[2museSync[2m > [22m[2mprocessQueue[2m > [22m[2mshould process the queue
+[22m[39mAn update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+[90mstderr[2m | src/__tests__/unit/hooks/useSync.test.ts[2m > [22m[2museSync[2m > [22m[2mprocessQueue[2m > [22m[2mshould set processing state during queue processing
+[22m[39mAn update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+[90mstderr[2m | src/__tests__/unit/hooks/useSync.test.ts[2m > [22m[2museSync[2m > [22m[2mprocessQueue[2m > [22m[2mshould set processing state during queue processing
+[22m[39mAn update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+[90mstderr[2m | src/__tests__/unit/hooks/useSync.test.ts[2m > [22m[2museSync[2m > [22m[2mprocessQueue[2m > [22m[2mshould set processing state during queue processing
+[22m[39mAn update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+[90mstderr[2m | src/__tests__/unit/hooks/useSync.test.ts[2m > [22m[2museSync[2m > [22m[2mprocessQueue[2m > [22m[2mshould refresh stats after processing
+[22m[39mAn update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+[90mstderr[2m | src/__tests__/unit/hooks/useSync.test.ts[2m > [22m[2museSync[2m > [22m[2mprocessQueue[2m > [22m[2mshould refresh stats after processing
+[22m[39mAn update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+[90mstderr[2m | src/__tests__/unit/hooks/useSync.test.ts[2m > [22m[2museSync[2m > [22m[2mprocessQueue[2m > [22m[2mshould refresh stats after processing
+[22m[39mAn update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+[90mstderr[2m | src/__tests__/unit/hooks/useSync.test.ts[2m > [22m[2museSync[2m > [22m[2mretryFailed[2m > [22m[2mshould retry failed items
+[22m[39mAn update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+[90mstderr[2m | src/__tests__/unit/hooks/useSync.test.ts[2m > [22m[2museSync[2m > [22m[2mretryFailed[2m > [22m[2mshould refresh stats after retrying
+[22m[39mAn update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+[90mstderr[2m | src/__tests__/unit/hooks/useSync.test.ts[2m > [22m[2museSync[2m > [22m[2mclearCompleted[2m > [22m[2mshould clear completed items
+[22m[39mAn update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+[90mstderr[2m | src/__tests__/unit/hooks/useSync.test.ts[2m > [22m[2museSync[2m > [22m[2mclearCompleted[2m > [22m[2mshould refresh stats after clearing
+[22m[39mAn update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+[90mstderr[2m | src/__tests__/unit/hooks/useOffline.test.ts[2m > [22m[2museOffline[2m > [22m[2msaveOffline[2m > [22m[2mshould throw error when save fails
+[22m[39mFailed to save offline data to kuis: Error: Save failed
+    at [90mF:\tes 9\sistem-praktikum-pwa\[39msrc\__tests__\unit\hooks\useOffline.test.ts:137:21
+    at [90mfile:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:155:11
+    at [90mfile:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:752:26
+    at [90mfile:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1897:20
+    at new Promise (<anonymous>)
+    at runWithTimeout [90m(file:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1863:10[90m)[39m
+    at runTest [90m(file:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1574:12[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:105:5)[39m
+    at runSuite [90m(file:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1729:8[90m)[39m
+    at runSuite [90m(file:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1729:8[90m)[39m
+
+[90mstderr[2m | src/__tests__/unit/hooks/useSync.test.ts[2m > [22m[2museSync[2m > [22m[2mQueue Events[2m > [22m[2mshould update processing state on processing event
+[22m[39mAn update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+[90mstderr[2m | src/__tests__/unit/hooks/useOffline.test.ts[2m > [22m[2museOffline[2m > [22m[2mdeleteOffline[2m > [22m[2mshould throw error when delete fails
+[22m[39mFailed to delete offline data from kuis: Error: Delete failed
+    at [90mF:\tes 9\sistem-praktikum-pwa\[39msrc\__tests__\unit\hooks\useOffline.test.ts:303:21
+    at [90mfile:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:155:11
+    at [90mfile:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:752:26
+    at [90mfile:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1897:20
+    at new Promise (<anonymous>)
+    at runWithTimeout [90m(file:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1863:10[90m)[39m
+    at runTest [90m(file:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1574:12[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:105:5)[39m
+    at runSuite [90m(file:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1729:8[90m)[39m
+    at runSuite [90m(file:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1729:8[90m)[39m
+
+ [31m❯[39m src/__tests__/unit/hooks/useOffline.test.ts [2m([22m[2m26 tests[22m[2m | [22m[31m2 failed[39m[2m)[22m[32m 271[2mms[22m[39m
+   [32m✓[39m useOffline[2m > [22mInitialization[2m > [22mshould initialize with network status[32m 42[2mms[22m[39m
+   [32m✓[39m useOffline[2m > [22mInitialization[2m > [22mshould expose quality metrics from network status[32m 11[2mms[22m[39m
+   [32m✓[39m useOffline[2m > [22mInitialization[2m > [22mshould expose all required methods[32m 13[2mms[22m[39m
+   [32m✓[39m useOffline[2m > [22msaveOffline[2m > [22mshould save data to IndexedDB[32m 8[2mms[22m[39m
+   [32m✓[39m useOffline[2m > [22msaveOffline[2m > [22mshould handle different store types[32m 8[2mms[22m[39m
+   [32m✓[39m useOffline[2m > [22msaveOffline[2m > [22mshould throw error when save fails[32m 33[2mms[22m[39m
+   [32m✓[39m useOffline[2m > [22msaveOffline[2m > [22mshould log error on save failure[32m 10[2mms[22m[39m
+   [32m✓[39m useOffline[2m > [22msaveOffline[2m > [22mshould work with objects containing id field[32m 6[2mms[22m[39m
+   [32m✓[39m useOffline[2m > [22mgetOffline[2m > [22mshould retrieve data from IndexedDB[32m 9[2mms[22m[39m
+   [32m✓[39m useOffline[2m > [22mgetOffline[2m > [22mshould return undefined for non-existent data[32m 4[2mms[22m[39m
+   [32m✓[39m useOffline[2m > [22mgetOffline[2m > [22mshould handle read errors gracefully[32m 6[2mms[22m[39m
+   [32m✓[39m useOffline[2m > [22mgetOffline[2m > [22mshould support type inference[32m 3[2mms[22m[39m
+   [32m✓[39m useOffline[2m > [22mgetAllOffline[2m > [22mshould retrieve all data from store[32m 8[2mms[22m[39m
+   [32m✓[39m useOffline[2m > [22mgetAllOffline[2m > [22mshould return empty array for empty store[32m 4[2mms[22m[39m
+   [32m✓[39m useOffline[2m > [22mgetAllOffline[2m > [22mshould handle getAll errors gracefully[32m 6[2mms[22m[39m
+   [32m✓[39m useOffline[2m > [22mgetAllOffline[2m > [22mshould support type inference for arrays[32m 7[2mms[22m[39m
+   [32m✓[39m useOffline[2m > [22mdeleteOffline[2m > [22mshould delete data from IndexedDB[32m 5[2mms[22m[39m
+   [32m✓[39m useOffline[2m > [22mdeleteOffline[2m > [22mshould throw error when delete fails[32m 7[2mms[22m[39m
+   [32m✓[39m useOffline[2m > [22mdeleteOffline[2m > [22mshould log error on delete failure[32m 7[2mms[22m[39m
+[31m   [31m×[31m useOffline[2m > [22mNetwork Status Integration[2m > [22mshould reflect offline network status[39m[32m 7[2mms[22m[39m
+[31m     → Cannot find module '@/lib/hooks/useNetworkStatus'
+Require stack:
+- F:\tes 9\sistem-praktikum-pwa\src\__tests__\unit\hooks\useOffline.test.ts[39m
+[31m   [31m×[31m useOffline[2m > [22mNetwork Status Integration[2m > [22mshould reflect unstable network status[39m[32m 7[2mms[22m[39m
+[31m     → Cannot find module '@/lib/hooks/useNetworkStatus'
+Require stack:
+- F:\tes 9\sistem-praktikum-pwa\src\__tests__\unit\hooks\useOffline.test.ts[39m
+   [32m✓[39m useOffline[2m > [22mMemoization[2m > [22mshould memoize callback functions[32m 9[2mms[22m[39m
+   [32m✓[39m useOffline[2m > [22mMemoization[2m > [22mshould not recreate return object unnecessarily[32m 5[2mms[22m[39m
+   [32m✓[39m useOffline[2m > [22mIntegration[2m > [22mshould handle complete offline workflow[32m 11[2mms[22m[39m
+   [32m✓[39m useOffline[2m > [22mIntegration[2m > [22mshould work with multiple stores simultaneously[32m 24[2mms[22m[39m
+   [32m✓[39m useOffline[2m > [22mIntegration[2m > [22mshould maintain consistency across re-renders[32m 5[2mms[22m[39m
+[90mstderr[2m | src/__tests__/unit/hooks/useSync.test.ts[2m > [22m[2museSync[2m > [22m[2mQueue Events[2m > [22m[2mshould update processing state on completed event
+[22m[39mAn update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+[90mstderr[2m | src/__tests__/unit/hooks/useSync.test.ts[2m > [22m[2museSync[2m > [22m[2mQueue Events[2m > [22m[2mshould update processing state on failed event
+[22m[39mAn update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+[90mstderr[2m | src/__tests__/unit/hooks/useSync.test.ts[2m > [22m[2museSync[2m > [22m[2mQueue Events[2m > [22m[2mshould refresh stats on queue events
+[22m[39mAn update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+[90mstderr[2m | src/__tests__/unit/hooks/useSync.test.ts[2m > [22m[2museSync[2m > [22m[2mStats[2m > [22m[2mshould refresh stats manually
+[22m[39mAn update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+[90mstderr[2m | src/__tests__/unit/hooks/useSync.test.ts[2m > [22m[2museSync[2m > [22m[2mIntegration[2m > [22m[2mshould handle complete sync workflow
+[22m[39mAn update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+[90mstderr[2m | src/__tests__/unit/hooks/useSync.test.ts[2m > [22m[2museSync[2m > [22m[2mIntegration[2m > [22m[2mshould handle complete sync workflow
+[22m[39mAn update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+[90mstderr[2m | src/__tests__/unit/hooks/useSync.test.ts[2m > [22m[2museSync[2m > [22m[2mIntegration[2m > [22m[2mshould handle complete sync workflow
+[22m[39mAn update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+[90mstderr[2m | src/__tests__/unit/hooks/useSync.test.ts[2m > [22m[2museSync[2m > [22m[2mIntegration[2m > [22m[2mshould handle complete sync workflow
+[22m[39mAn update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+[90mstderr[2m | src/__tests__/unit/hooks/useSync.test.ts[2m > [22m[2museSync[2m > [22m[2mIntegration[2m > [22m[2mshould handle complete sync workflow
+[22m[39mAn update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ [32m✓[39m src/__tests__/unit/hooks/useSync.test.ts [2m([22m[2m34 tests[22m[2m)[22m[33m 3094[2mms[22m[39m
+ [32m✓[39m src/__tests__/integration/network-reconnect.test.tsx [2m([22m[2m8 tests[22m[2m)[22m[33m 904[2mms[22m[39m
+[90mstderr[2m | src/__tests__/unit/hooks/useNetworkStatus.test.ts[2m > [22m[2museNetworkStatus[2m > [22m[2mStatus Changes[2m > [22m[2mshould update status when going offline
+[22m[39mAn update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+[90mstdout[2m | src/__tests__/unit/providers/OfflineProvider.test.tsx[2m > [22m[2mOfflineProvider[2m > [22m[2mInitialization[2m > [22m[2mshould initialize IndexedDB on mount
+[22m[39m✅ OfflineProvider: IndexedDB initialized
+
+[90mstderr[2m | src/__tests__/unit/hooks/useNetworkStatus.test.ts[2m > [22m[2museNetworkStatus[2m > [22m[2mStatus Changes[2m > [22m[2mshould update status when going online
+[22m[39mAn update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+[90mstdout[2m | src/__tests__/unit/providers/OfflineProvider.test.tsx[2m > [22m[2mOfflineProvider[2m > [22m[2mInitialization[2m > [22m[2mshould render children after IndexedDB is ready
+[22m[39m✅ OfflineProvider: IndexedDB initialized
+
+[90mstderr[2m | src/__tests__/unit/hooks/useNetworkStatus.test.ts[2m > [22m[2museNetworkStatus[2m > [22m[2mStatus Changes[2m > [22m[2mshould update status when becoming unstable
+[22m[39mAn update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+[90mstderr[2m | src/__tests__/unit/hooks/useNetworkStatus.test.ts[2m > [22m[2museNetworkStatus[2m > [22m[2mStatus Changes[2m > [22m[2mshould update lastChanged timestamp on status change
+[22m[39mAn update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+[90mstdout[2m | src/__tests__/unit/providers/OfflineProvider.test.tsx[2m > [22m[2mOfflineProvider[2m > [22m[2mContext[2m > [22m[2mshould provide offline context to children
+[22m[39m✅ OfflineProvider: IndexedDB initialized
+
+[90mstderr[2m | src/__tests__/unit/hooks/useNetworkStatus.test.ts[2m > [22m[2museNetworkStatus[2m > [22m[2mStatus Changes[2m > [22m[2mshould update quality metrics on status change
+[22m[39mAn update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+[90mstdout[2m | src/__tests__/unit/providers/OfflineProvider.test.tsx[2m > [22m[2mOfflineProvider[2m > [22m[2mContext[2m > [22m[2mshould provide all offline methods
+[22m[39m✅ OfflineProvider: IndexedDB initialized
+
+[90mstdout[2m | src/__tests__/unit/providers/OfflineProvider.test.tsx[2m > [22m[2mOfflineProvider[2m > [22m[2mContext[2m > [22m[2mshould provide quality metrics
+[22m[39m✅ OfflineProvider: IndexedDB initialized
+
+[90mstdout[2m | src/__tests__/unit/providers/OfflineProvider.test.tsx[2m > [22m[2mOfflineProvider[2m > [22m[2mCleanup[2m > [22m[2mshould cleanup on unmount
+[22m[39m✅ OfflineProvider: IndexedDB initialized
+
+[90mstderr[2m | src/__tests__/unit/hooks/useNetworkStatus.test.ts[2m > [22m[2museNetworkStatus[2m > [22m[2mQuality Metrics[2m > [22m[2mshould expose quality metrics when available
+[22m[39mAn update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+[90mstderr[2m | src/__tests__/unit/hooks/useNetworkStatus.test.ts[2m > [22m[2museNetworkStatus[2m > [22m[2mQuality Metrics[2m > [22m[2mshould handle undefined quality metrics
+[22m[39mAn update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+[90mstdout[2m | src/__tests__/unit/providers/OfflineProvider.test.tsx[2m > [22m[2mOfflineProvider[2m > [22m[2mIntegration[2m > [22m[2mshould work with multiple children
+[22m[39m✅ OfflineProvider: IndexedDB initialized
+
+[90mstdout[2m | src/__tests__/unit/providers/OfflineProvider.test.tsx[2m > [22m[2mOfflineProvider[2m > [22m[2mIntegration[2m > [22m[2mshould initialize only once with multiple children
+[22m[39m✅ OfflineProvider: IndexedDB initialized
+
+[90mstdout[2m | src/__tests__/unit/providers/OfflineProvider.test.tsx[2m > [22m[2mOfflineProvider[2m > [22m[2mIntegration[2m > [22m[2mshould handle nested components accessing context
+[22m[39m✅ OfflineProvider: IndexedDB initialized
+
+[90mstderr[2m | src/__tests__/unit/hooks/useNetworkStatus.test.ts[2m > [22m[2museNetworkStatus[2m > [22m[2mMultiple Instances[2m > [22m[2mshould sync status across multiple instances
+[22m[39mAn update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+[90mstderr[2m | src/__tests__/unit/hooks/useNetworkStatus.test.ts[2m > [22m[2museNetworkStatus[2m > [22m[2mIntegration[2m > [22m[2mshould handle rapid status changes
+[22m[39mAn update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ [32m✓[39m src/__tests__/unit/hooks/useNetworkStatus.test.ts [2m([22m[2m23 tests[22m[2m)[22m[33m 868[2mms[22m[39m
+[90mstdout[2m | src/__tests__/unit/providers/OfflineProvider.test.tsx[2m > [22m[2mOfflineProvider[2m > [22m[2mError Handling[2m > [22m[2mshould not throw when initialization takes long time
+[22m[39m✅ OfflineProvider: IndexedDB initialized
+
+ [32m✓[39m src/__tests__/unit/providers/OfflineProvider.test.tsx [2m([22m[2m16 tests[22m[2m)[22m[33m 771[2mms[22m[39m
+ [32m✓[39m src/__tests__/unit/lib/offline/indexeddb.test.ts [2m([22m[2m54 tests[22m[2m)[22m[33m 781[2mms[22m[39m
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mInitialization[2m > [22m[2mshould initialize successfully
+[22m[39mSyncManager initialized
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mInitialization[2m > [22m[2mshould initialize successfully
+[22m[39m[SyncManager] Destroyed
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mInitialization[2m > [22m[2mshould not initialize twice
+[22m[39mSyncManager initialized
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mInitialization[2m > [22m[2mshould not initialize twice
+[22m[39m[SyncManager] Destroyed
+
+[90mstderr[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mInitialization[2m > [22m[2mshould handle initialization errors gracefully
+[22m[39mSyncManager init failed: Error: Network detector error
+    at Object.<anonymous> [90m(F:\tes 9\sistem-praktikum-pwa\[39msrc\__tests__\unit\lib\offline\sync-manager.test.ts:132:15[90m)[39m
+    at Object.mockCall [90m(file:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4m@vitest/spy[24m/dist/index.js:96:15[90m)[39m
+    at Object.spy [as on] [90m(file:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4mtinyspy[24m/dist/index.js:47:80[90m)[39m
+    at SyncManager.initialize [90m(F:\tes 9\sistem-praktikum-pwa\[39msrc\lib\offline\sync-manager.ts:151:25[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:105:5)[39m
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mInitialization[2m > [22m[2mshould handle initialization errors gracefully
+[22m[39m[SyncManager] Destroyed
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mInitialization[2m > [22m[2mshould register background sync when supported
+[22m[39mSyncManager initialized
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mInitialization[2m > [22m[2mshould register background sync when supported
+[22m[39m[SyncManager] Destroyed
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mSync Processing[2m > [22m[2mshould process sync successfully
+[22m[39mSyncManager initialized
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mSync Processing[2m > [22m[2mshould process sync successfully
+[22m[39m[SyncManager] Destroyed
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mSync Processing[2m > [22m[2mshould handle empty queue
+[22m[39mSyncManager initialized
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mSync Processing[2m > [22m[2mshould handle empty queue
+[22m[39m[SyncManager] Destroyed
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mSync Processing[2m > [22m[2mshould prevent concurrent syncs
+[22m[39mSyncManager initialized
+
+[90mstderr[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mSync Processing[2m > [22m[2mshould prevent concurrent syncs
+[22m[39m[SyncManager] Sync already in progress
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mSync Processing[2m > [22m[2mshould prevent concurrent syncs
+[22m[39m[SyncManager] Destroyed
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mSync Processing[2m > [22m[2mshould initialize queue manager if not ready
+[22m[39mSyncManager initialized
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mSync Processing[2m > [22m[2mshould initialize queue manager if not ready
+[22m[39m[SyncManager] Destroyed
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mSync Processing[2m > [22m[2mshould update statistics after sync
+[22m[39mSyncManager initialized
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mSync Processing[2m > [22m[2mshould update statistics after sync
+[22m[39m[SyncManager] Destroyed
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mSync Processing[2m > [22m[2mshould send message to service worker on completion
+[22m[39mSyncManager initialized
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mSync Processing[2m > [22m[2mshould send message to service worker on completion
+[22m[39m[SyncManager] Destroyed
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mSync Processing[2m > [22m[2mshould handle sync errors gracefully
+[22m[39mSyncManager initialized
+
+[90mstderr[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mSync Processing[2m > [22m[2mshould handle sync errors gracefully
+[22m[39m[SyncManager] Sync failed: Error: Queue processing failed
+    at [90mF:\tes 9\sistem-praktikum-pwa\[39msrc\__tests__\unit\lib\offline\sync-manager.test.ts:230:9
+    at [90mfile:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:155:11
+    at [90mfile:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:752:26
+    at [90mfile:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1897:20
+    at new Promise (<anonymous>)
+    at runWithTimeout [90m(file:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1863:10[90m)[39m
+    at runTest [90m(file:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1574:12[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:105:5)[39m
+    at runSuite [90m(file:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1729:8[90m)[39m
+    at runSuite [90m(file:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1729:8[90m)[39m
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mSync Processing[2m > [22m[2mshould handle sync errors gracefully
+[22m[39m[SyncManager] Destroyed
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mEvent System[2m > [22m[2mshould emit start event when sync begins
+[22m[39mSyncManager initialized
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mEvent System[2m > [22m[2mshould emit start event when sync begins
+[22m[39m[SyncManager] Destroyed
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mEvent System[2m > [22m[2mshould emit complete event when sync finishes
+[22m[39mSyncManager initialized
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mEvent System[2m > [22m[2mshould emit complete event when sync finishes
+[22m[39m[SyncManager] Destroyed
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mEvent System[2m > [22m[2mshould emit error event on sync failure
+[22m[39mSyncManager initialized
+
+[90mstderr[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mEvent System[2m > [22m[2mshould emit error event on sync failure
+[22m[39m[SyncManager] Sync failed: Error: Sync failed
+    at [90mF:\tes 9\sistem-praktikum-pwa\[39msrc\__tests__\unit\lib\offline\sync-manager.test.ts:275:9
+    at [90mfile:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:155:11
+    at [90mfile:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:752:26
+    at [90mfile:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1897:20
+    at new Promise (<anonymous>)
+    at runWithTimeout [90m(file:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1863:10[90m)[39m
+    at runTest [90m(file:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1574:12[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:105:5)[39m
+    at runSuite [90m(file:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1729:8[90m)[39m
+    at runSuite [90m(file:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1729:8[90m)[39m
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mEvent System[2m > [22m[2mshould emit error event on sync failure
+[22m[39m[SyncManager] Destroyed
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mEvent System[2m > [22m[2mshould allow adding and removing listeners
+[22m[39mSyncManager initialized
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mEvent System[2m > [22m[2mshould allow adding and removing listeners
+[22m[39m[SyncManager] Destroyed
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mEvent System[2m > [22m[2mshould handle listener errors gracefully
+[22m[39mSyncManager initialized
+
+[90mstderr[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mEvent System[2m > [22m[2mshould handle listener errors gracefully
+[22m[39m[SyncManager] Event listener error: Error: Listener error
+    at badListener [90m(F:\tes 9\sistem-praktikum-pwa\[39msrc\__tests__\unit\lib\offline\sync-manager.test.ts:313:15[90m)[39m
+    at [90mF:\tes 9\sistem-praktikum-pwa\[39msrc\lib\offline\sync-manager.ts:478:9
+    at Set.forEach (<anonymous>)
+    at SyncManager.emitEvent [90m(F:\tes 9\sistem-praktikum-pwa\[39msrc\lib\offline\sync-manager.ts:476:20[90m)[39m
+    at [90mF:\tes 9\sistem-praktikum-pwa\[39msrc\__tests__\unit\lib\offline\sync-manager.test.ts:320:30
+    at [90mfile:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:155:11
+    at [90mfile:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:752:26
+    at [90mfile:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1897:20
+    at new Promise (<anonymous>)
+    at runWithTimeout [90m(file:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4m@vitest/runner[24m/dist/chunk-hooks.js:1863:10[90m)[39m
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mEvent System[2m > [22m[2mshould handle listener errors gracefully
+[22m[39m[SyncManager] Destroyed
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mEvent System[2m > [22m[2mshould remove all listeners
+[22m[39mSyncManager initialized
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mEvent System[2m > [22m[2mshould remove all listeners
+[22m[39m[SyncManager] Destroyed
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mPause/Resume[2m > [22m[2mshould pause sync when requested
+[22m[39mSyncManager initialized
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mPause/Resume[2m > [22m[2mshould pause sync when requested
+[22m[39m[SyncManager] Sync paused
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mPause/Resume[2m > [22m[2mshould pause sync when requested
+[22m[39m[SyncManager] Destroyed
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mPause/Resume[2m > [22m[2mshould not allow pause when not syncing
+[22m[39mSyncManager initialized
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mPause/Resume[2m > [22m[2mshould not allow pause when not syncing
+[22m[39m[SyncManager] Destroyed
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mPause/Resume[2m > [22m[2mshould resume paused sync
+[22m[39mSyncManager initialized
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mPause/Resume[2m > [22m[2mshould resume paused sync
+[22m[39m[SyncManager] Sync paused
+[SyncManager] Sync resumed
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mPause/Resume[2m > [22m[2mshould resume paused sync
+[22m[39m[SyncManager] Destroyed
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mPause/Resume[2m > [22m[2mshould emit pause event
+[22m[39mSyncManager initialized
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mPause/Resume[2m > [22m[2mshould emit pause event
+[22m[39m[SyncManager] Sync paused
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mPause/Resume[2m > [22m[2mshould emit pause event
+[22m[39m[SyncManager] Destroyed
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mPause/Resume[2m > [22m[2mshould emit resume event
+[22m[39mSyncManager initialized
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mPause/Resume[2m > [22m[2mshould emit resume event
+[22m[39m[SyncManager] Sync paused
+[SyncManager] Sync resumed
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mPause/Resume[2m > [22m[2mshould emit resume event
+[22m[39m[SyncManager] Destroyed
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mPause/Resume[2m > [22m[2mshould prevent sync when paused
+[22m[39mSyncManager initialized
+
+[90mstderr[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mPause/Resume[2m > [22m[2mshould prevent sync when paused
+[22m[39m[SyncManager] Sync already in progress
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mPause/Resume[2m > [22m[2mshould prevent sync when paused
+[22m[39m[SyncManager] Sync paused
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mPause/Resume[2m > [22m[2mshould prevent sync when paused
+[22m[39m[SyncManager] Destroyed
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mRetry Failed Items[2m > [22m[2mshould retry failed items
+[22m[39mSyncManager initialized
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mRetry Failed Items[2m > [22m[2mshould retry failed items
+[22m[39m[SyncManager] Retrying 2 failed items
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mRetry Failed Items[2m > [22m[2mshould retry failed items
+[22m[39m[SyncManager] Destroyed
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mRetry Failed Items[2m > [22m[2mshould not process if no failed items
+[22m[39mSyncManager initialized
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mRetry Failed Items[2m > [22m[2mshould not process if no failed items
+[22m[39m[SyncManager] Destroyed
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mStatistics[2m > [22m[2mshould track sync statistics
+[22m[39mSyncManager initialized
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mStatistics[2m > [22m[2mshould track sync statistics
+[22m[39m[SyncManager] Destroyed
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mStatistics[2m > [22m[2mshould accumulate statistics across multiple syncs
+[22m[39mSyncManager initialized
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mStatistics[2m > [22m[2mshould accumulate statistics across multiple syncs
+[22m[39m[SyncManager] Destroyed
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mStatistics[2m > [22m[2mshould limit history to 100 entries
+[22m[39mSyncManager initialized
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mStatistics[2m > [22m[2mshould limit history to 100 entries
+[22m[39m[SyncManager] Destroyed
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mStatistics[2m > [22m[2mshould calculate average duration correctly
+[22m[39mSyncManager initialized
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mStatistics[2m > [22m[2mshould calculate average duration correctly
+[22m[39m[SyncManager] Destroyed
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mStatistics[2m > [22m[2mshould clear history
+[22m[39mSyncManager initialized
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mStatistics[2m > [22m[2mshould clear history
+[22m[39m[SyncManager] Sync history cleared
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mStatistics[2m > [22m[2mshould clear history
+[22m[39m[SyncManager] Destroyed
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mStatistics[2m > [22m[2mshould reset all statistics
+[22m[39mSyncManager initialized
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mStatistics[2m > [22m[2mshould reset all statistics
+[22m[39m[SyncManager] Statistics reset
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mStatistics[2m > [22m[2mshould reset all statistics
+[22m[39m[SyncManager] Destroyed
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mStatus Tracking[2m > [22m[2mshould track sync status correctly
+[22m[39mSyncManager initialized
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mStatus Tracking[2m > [22m[2mshould track sync status correctly
+[22m[39m[SyncManager] Destroyed
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mStatus Tracking[2m > [22m[2mshould report sync in progress
+[22m[39mSyncManager initialized
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mStatus Tracking[2m > [22m[2mshould report sync in progress
+[22m[39m[SyncManager] Destroyed
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mLifecycle[2m > [22m[2mshould destroy properly
+[22m[39mSyncManager initialized
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mLifecycle[2m > [22m[2mshould destroy properly
+[22m[39m[SyncManager] Destroyed
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mLifecycle[2m > [22m[2mshould destroy properly
+[22m[39m[SyncManager] Destroyed
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mLifecycle[2m > [22m[2mshould remove event listeners on destroy
+[22m[39mSyncManager initialized
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mLifecycle[2m > [22m[2mshould remove event listeners on destroy
+[22m[39m[SyncManager] Destroyed
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mLifecycle[2m > [22m[2mshould remove event listeners on destroy
+[22m[39m[SyncManager] Destroyed
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mQueue Statistics[2m > [22m[2mshould get queue statistics
+[22m[39mSyncManager initialized
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mQueue Statistics[2m > [22m[2mshould get queue statistics
+[22m[39m[SyncManager] Destroyed
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mConfiguration[2m > [22m[2mshould use default configuration
+[22m[39m[SyncManager] Destroyed
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/sync-manager.test.ts[2m > [22m[2mSyncManager[2m > [22m[2mConfiguration[2m > [22m[2mshould accept custom configuration
+[22m[39m[SyncManager] Destroyed
+
+ [32m✓[39m src/__tests__/unit/lib/offline/sync-manager.test.ts [2m([22m[2m38 tests[22m[2m)[22m[32m 255[2mms[22m[39m
+ [32m✓[39m src/__tests__/unit/lib/pwa/cache-strategies.test.ts [2m([22m[2m35 tests[22m[2m)[22m[33m 421[2mms[22m[39m
+ [32m✓[39m src/__tests__/unit/lib/offline/queue-manager.test.ts [2m([22m[2m47 tests[22m[2m)[22m[33m 961[2mms[22m[39m
+[90mstdout[2m | src/__tests__/unit/lib/offline/conflict-resolver.test.ts[2m > [22m[2mConflictResolver[2m > [22m[2mLast-Write-Wins Strategy[2m > [22m[2mshould choose local when local is newer
+[22m[39m[ConflictResolver] {
+  dataType: [32m'quiz_answer'[39m,
+  dataId: [32m'answer_1'[39m,
+  winner: [32m'local'[39m,
+  reason: [32m'Local is newer (2024-01-02T00:00:00.000Z > 2024-01-01T00:00:00.000Z)'[39m
+}
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/conflict-resolver.test.ts[2m > [22m[2mConflictResolver[2m > [22m[2mLast-Write-Wins Strategy[2m > [22m[2mshould choose remote when remote is newer
+[22m[39m[ConflictResolver] {
+  dataType: [32m'quiz_answer'[39m,
+  dataId: [32m'answer_1'[39m,
+  winner: [32m'remote'[39m,
+  reason: [32m'Remote is newer (2024-01-02T00:00:00.000Z > 2024-01-01T00:00:00.000Z)'[39m
+}
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/conflict-resolver.test.ts[2m > [22m[2mConflictResolver[2m > [22m[2mLast-Write-Wins Strategy[2m > [22m[2mshould prefer remote when timestamps are equal
+[22m[39m[ConflictResolver] {
+  dataType: [32m'quiz_answer'[39m,
+  dataId: [32m'answer_1'[39m,
+  winner: [32m'remote'[39m,
+  reason: [32m'Timestamps equal, preferring remote (server)'[39m
+}
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/conflict-resolver.test.ts[2m > [22m[2mConflictResolver[2m > [22m[2mTimestamp Parsing[2m > [22m[2mshould handle ISO string timestamps
+[22m[39m[ConflictResolver] {
+  dataType: [32m'test'[39m,
+  dataId: [32m'1'[39m,
+  winner: [32m'local'[39m,
+  reason: [32m'Local is newer (2024-01-02T00:00:00.000Z > 2024-01-01T00:00:00.000Z)'[39m
+}
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/conflict-resolver.test.ts[2m > [22m[2mConflictResolver[2m > [22m[2mTimestamp Parsing[2m > [22m[2mshould handle unix timestamps (milliseconds)
+[22m[39m[ConflictResolver] {
+  dataType: [32m'test'[39m,
+  dataId: [32m'1'[39m,
+  winner: [32m'local'[39m,
+  reason: [32m'Local is newer (2024-01-03T00:00:00.000Z > 2024-01-02T00:00:00.000Z)'[39m
+}
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/conflict-resolver.test.ts[2m > [22m[2mConflictResolver[2m > [22m[2mTimestamp Parsing[2m > [22m[2mshould handle mixed timestamp formats
+[22m[39m[ConflictResolver] {
+  dataType: [32m'test'[39m,
+  dataId: [32m'1'[39m,
+  winner: [32m'local'[39m,
+  reason: [32m'Local is newer (2024-01-03T00:00:00.000Z > 2024-01-01T00:00:00.000Z)'[39m
+}
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/conflict-resolver.test.ts[2m > [22m[2mConflictResolver[2m > [22m[2mAlternative Strategies[2m > [22m[2mshould always choose local with local-wins
+[22m[39m[ConflictResolver] {
+  dataType: [32m'test'[39m,
+  dataId: [32m'1'[39m,
+  winner: [32m'local'[39m,
+  reason: [32m'Local-wins strategy'[39m
+}
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/conflict-resolver.test.ts[2m > [22m[2mConflictResolver[2m > [22m[2mAlternative Strategies[2m > [22m[2mshould always choose remote with remote-wins
+[22m[39m[ConflictResolver] {
+  dataType: [32m'test'[39m,
+  dataId: [32m'1'[39m,
+  winner: [32m'remote'[39m,
+  reason: [32m'Remote-wins strategy'[39m
+}
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/conflict-resolver.test.ts[2m > [22m[2mConflictResolver[2m > [22m[2mConflict Logging[2m > [22m[2mshould log conflicts
+[22m[39m[ConflictResolver] {
+  dataType: [32m'quiz_answer'[39m,
+  dataId: [32m'answer_1'[39m,
+  winner: [32m'local'[39m,
+  reason: [32m'Local is newer (2024-01-02T00:00:00.000Z > 2024-01-01T00:00:00.000Z)'[39m
+}
+
+ [32m✓[39m src/__tests__/integration/offline-sync-flow.test.tsx [2m([22m[2m16 tests[22m[2m)[22m[32m 94[2mms[22m[39m
+[90mstdout[2m | src/__tests__/unit/lib/offline/conflict-resolver.test.ts[2m > [22m[2mConflictResolver[2m > [22m[2mConflict Logging[2m > [22m[2mshould filter logs by type
+[22m[39m[ConflictResolver] {
+  dataType: [32m'quiz_answer'[39m,
+  dataId: [32m'1'[39m,
+  winner: [32m'local'[39m,
+  reason: [32m'Local is newer (1970-01-01T00:00:00.100Z > 1970-01-01T00:00:00.050Z)'[39m
+}
+[ConflictResolver] {
+  dataType: [32m'attempt'[39m,
+  dataId: [32m'2'[39m,
+  winner: [32m'local'[39m,
+  reason: [32m'Local is newer (1970-01-01T00:00:00.100Z > 1970-01-01T00:00:00.050Z)'[39m
+}
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/conflict-resolver.test.ts[2m > [22m[2mConflictResolver[2m > [22m[2mConflict Logging[2m > [22m[2mshould filter logs by ID
+[22m[39m[ConflictResolver] {
+  dataType: [32m'test'[39m,
+  dataId: [32m'item_1'[39m,
+  winner: [32m'local'[39m,
+  reason: [32m'Local is newer (1970-01-01T00:00:00.100Z > 1970-01-01T00:00:00.050Z)'[39m
+}
+[ConflictResolver] {
+  dataType: [32m'test'[39m,
+  dataId: [32m'item_2'[39m,
+  winner: [32m'local'[39m,
+  reason: [32m'Local is newer (1970-01-01T00:00:00.100Z > 1970-01-01T00:00:00.050Z)'[39m
+}
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/conflict-resolver.test.ts[2m > [22m[2mConflictResolver[2m > [22m[2mConflict Logging[2m > [22m[2mshould clear logs
+[22m[39m[ConflictResolver] {
+  dataType: [32m'test'[39m,
+  dataId: [32m'1'[39m,
+  winner: [32m'local'[39m,
+  reason: [32m'Local is newer (1970-01-01T00:00:00.100Z > 1970-01-01T00:00:00.050Z)'[39m
+}
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/conflict-resolver.test.ts[2m > [22m[2mConflictResolver[2m > [22m[2mStatistics[2m > [22m[2mshould generate statistics
+[22m[39m[ConflictResolver] {
+  dataType: [32m'quiz_answer'[39m,
+  dataId: [32m'1'[39m,
+  winner: [32m'local'[39m,
+  reason: [32m'Local is newer (1970-01-01T00:00:00.100Z > 1970-01-01T00:00:00.050Z)'[39m
+}
+[ConflictResolver] {
+  dataType: [32m'quiz_answer'[39m,
+  dataId: [32m'2'[39m,
+  winner: [32m'remote'[39m,
+  reason: [32m'Remote is newer (1970-01-01T00:00:00.100Z > 1970-01-01T00:00:00.050Z)'[39m
+}
+[ConflictResolver] {
+  dataType: [32m'attempt'[39m,
+  dataId: [32m'3'[39m,
+  winner: [32m'local'[39m,
+  reason: [32m'Local is newer (1970-01-01T00:00:00.100Z > 1970-01-01T00:00:00.050Z)'[39m
+}
+
+[90mstdout[2m | src/__tests__/unit/lib/offline/conflict-resolver.test.ts[2m > [22m[2mConflictResolver[2m > [22m[2mHelper Functions[2m > [22m[2mresolveConflict should use default resolver
+[22m[39m[ConflictResolver] {
+  dataType: [32m'test'[39m,
+  dataId: [32m'1'[39m,
+  winner: [32m'local'[39m,
+  reason: [32m'Local is newer (1970-01-01T00:00:00.100Z > 1970-01-01T00:00:00.050Z)'[39m
+}
+
+ [32m✓[39m src/__tests__/unit/lib/offline/conflict-resolver.test.ts [2m([22m[2m17 tests[22m[2m)[22m[32m 256[2mms[22m[39m
+ [32m✓[39m src/__tests__/unit/lib/offline/network-detector.test.ts [2m([22m[2m47 tests[22m[2m)[22m[32m 90[2mms[22m[39m
+ [32m✓[39m src/__tests__/unit/providers/AuthProvider.test.tsx [2m([22m[2m8 tests[22m[2m | [22m[33m7 skipped[39m[2m)[22m[32m 6[2mms[22m[39m
+ [32m✓[39m src/__tests__/unit/lib/pwa/background-sync.test.ts [2m([22m[2m5 tests[22m[2m | [22m[33m4 skipped[39m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m src/__tests__/unit/utils/retry.test.ts [2m([22m[2m6 tests[22m[2m | [22m[33m5 skipped[39m[2m)[22m[32m 8[2mms[22m[39m
+ [32m✓[39m src/__tests__/integration/auth-flow.test.tsx [2m([22m[2m7 tests[22m[2m | [22m[33m6 skipped[39m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m src/__tests__/integration/conflict-resolution.test.tsx [2m([22m[2m6 tests[22m[2m | [22m[33m5 skipped[39m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m src/__tests__/unit/api/kuis.api.test.ts [2m([22m[2m9 tests[22m[2m | [22m[33m8 skipped[39m[2m)[22m[32m 8[2mms[22m[39m
+ [32m✓[39m src/__tests__/integration/kuis-builder-autosave.test.tsx [2m([22m[2m6 tests[22m[2m | [22m[33m5 skipped[39m[2m)[22m[32m 12[2mms[22m[39m
+ [32m✓[39m src/__tests__/unit/api/offline-queue.api.test.ts [2m([22m[2m7 tests[22m[2m | [22m[33m6 skipped[39m[2m)[22m[32m 12[2mms[22m[39m
+ [32m✓[39m src/__tests__/unit/providers/ThemeProvider.test.tsx [2m([22m[2m8 tests[22m[2m | [22m[33m7 skipped[39m[2m)[22m[32m 11[2mms[22m[39m
+ [32m✓[39m src/__tests__/unit/hooks/useRole.test.ts [2m([22m[2m7 tests[22m[2m | [22m[33m6 skipped[39m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m src/__tests__/integration/role-access.test.tsx [2m([22m[2m6 tests[22m[2m | [22m[33m5 skipped[39m[2m)[22m[32m 5[2mms[22m[39m
+ [32m✓[39m src/__tests__/unit/lib/validations.test.ts [2m([22m[2m9 tests[22m[2m | [22m[33m8 skipped[39m[2m)[22m[32m 8[2mms[22m[39m
+ [32m✓[39m src/__tests__/unit/utils/helpers.test.ts [2m([22m[2m7 tests[22m[2m | [22m[33m6 skipped[39m[2m)[22m[32m 6[2mms[22m[39m
+ [32m✓[39m src/__tests__/unit/hooks/useAuth.test.ts [2m([22m[2m7 tests[22m[2m | [22m[33m6 skipped[39m[2m)[22m[32m 6[2mms[22m[39m
+ [32m✓[39m src/__tests__/unit/api/auth.api.test.ts [2m([22m[2m7 tests[22m[2m | [22m[33m6 skipped[39m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m src/__tests__/unit/utils/format.test.ts [2m([22m[2m7 tests[22m[2m | [22m[33m6 skipped[39m[2m)[22m[32m 5[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 41 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/integration/kuis-attempt-offline.test.tsx[2m > [22mKuis Attempt Offline Integration[2m > [22mshould save answers to IndexedDB when offline
+[31m[1mAssertionError[22m[39m: expected "spy" to be called with arguments: [ ObjectContaining{…} ][90m
+
+Received: 
+
+[1m  1st spy call:
+
+[22m[2m  [[22m
+[32m-   ObjectContaining {[90m
+[32m-     "action": "save",[90m
+[32m-     "data": ObjectContaining {[90m
+[32m-       "jawaban": "My offline answer",[90m
+[31m+   "kuis_jawaban",[90m
+[31m+   "create",[90m
+[31m+   {[90m
+[31m+     "_metadata": {[90m
+[31m+       "key": "quiz_attempt-1_soal-2",[90m
+[31m+       "timestamp": "2025-11-25T00:06:17.075Z",[90m
+[31m+     },[90m
+[31m+     "attempt_id": "attempt-1",[90m
+[31m+     "jawaban": "M",[90m
+[2m      "soal_id": "soal-2",[22m
+[32m-     },[90m
+[32m-     "type": "quiz_answer",[90m
+[2m    },[22m
+[2m  ][22m
+
+[1m  2nd spy call:
+
+[22m[2m  [[22m
+[32m-   ObjectContaining {[90m
+[32m-     "action": "save",[90m
+[32m-     "data": ObjectContaining {[90m
+[32m-       "jawaban": "My offline answer",[90m
+[31m+   "kuis_jawaban",[90m
+[31m+   "create",[90m
+[31m+   {[90m
+[31m+     "_metadata": {[90m
+[31m+       "key": "quiz_attempt-1_soal-2",[90m
+[31m+       "timestamp": "2025-11-25T00:06:17.105Z",[90m
+[31m+     },[90m
+[31m+     "attempt_id": "attempt-1",[90m
+[31m+     "jawaban": "My",[90m
+[2m      "soal_id": "soal-2",[22m
+[32m-     },[90m
+[32m-     "type": "quiz_answer",[90m
+[2m    },[22m
+[2m  ][22m
+
+[1m  3rd spy call:
+
+[22m[2m  [[22m
+[32m-   ObjectContaining {[90m
+[32m-     "action": "save",[90m
+[32m-     "data": ObjectContaining {[90m
+[32m-       "jawaban": "My offline answer",[90m
+[31m+   "kuis_jawaban",[90m
+[31m+   "create",[90m
+[31m+   {[90m
+[31m+     "_metadata": {[90m
+[31m+       "key": "quiz_attempt-1_soal-2",[90m
+[31m+       "timestamp": "2025-11-25T00:06:17.162Z",[90m
+[31m+     },[90m
+[31m+     "attempt_id": "attempt-1",[90m
+[31m+     "jawaban": "My ",[90m
+[2m      "soal_id": "soal-2",[22m
+[32m-     },[90m
+[32m-     "type": "quiz_answer",[90m
+[2m    },[22m
+[2m  ][22m
+
+[1m  4th spy call:
+
+[22m[2m  [[22m
+[32m-   ObjectContaining {[90m
+[32m-     "action": "save",[90m
+[32m-     "data": ObjectContaining {[90m
+[32m-       "jawaban": "My offline answer",[90m
+[31m+   "kuis_jawaban",[90m
+[31m+   "create",[90m
+[31m+   {[90m
+[31m+     "_metadata": {[90m
+[31m+       "key": "quiz_attempt-1_soal-2",[90m
+[31m+       "timestamp": "2025-11-25T00:06:17.207Z",[90m
+[31m+     },[90m
+[31m+     "attempt_id": "attempt-1",[90m
+[31m+     "jawaban": "My o",[90m
+[2m      "soal_id": "soal-2",[22m
+[32m-     },[90m
+[32m-     "type": "quiz_answer",[90m
+[2m    },[22m
+[2m  ][22m
+
+[1m  5th spy call:
+
+[22m[2m  [[22m
+[32m-   ObjectContaining {[90m
+[32m-     "action": "save",[90m
+[32m-     "data": ObjectContaining {[90m
+[32m-       "jawaban": "My offline answer",[90m
+[31m+   "kuis_jawaban",[90m
+[31m+   "create",[90m
+[31m+   {[90m
+[31m+     "_metadata": {[90m
+[31m+       "key": "quiz_attempt-1_soal-2",[90m
+[31m+       "timestamp": "2025-11-25T00:06:17.239Z",[90m
+[31m+     },[90m
+[31m+     "attempt_id": "attempt-1",[90m
+[31m+     "jawaban": "My of",[90m
+[2m      "soal_id": "soal-2",[22m
+[32m-     },[90m
+[32m-     "type": "quiz_answer",[90m
+[2m    },[22m
+[2m  ][22m
+
+[1m  6th spy call:
+
+[22m[2m  [[22m
+[32m-   ObjectContaining {[90m
+[32m-     "action": "save",[90m
+[32m-     "data": ObjectContaining {[90m
+[32m-       "jawaban": "My offline answer",[90m
+[31m+   "kuis_jawaban",[90m
+[31m+   "create",[90m
+[31m+   {[90m
+[31m+     "_metadata": {[90m
+[31m+       "key": "quiz_attempt-1_soal-2",[90m
+[31m+       "timestamp": "2025-11-25T00:06:17.268Z",[90m
+[31m+     },[90m
+[31m+     "attempt_id": "attempt-1",[90m
+[31m+     "jawaban": "My off",[90m
+[2m      "soal_id": "soal-2",[22m
+[32m-     },[90m
+[32m-     "type": "quiz_answer",[90m
+[2m    },[22m
+[2m  ][22m
+
+[1m  7th spy call:
+
+[22m[2m  [[22m
+[32m-   ObjectContaining {[90m
+[32m-     "action": "save",[90m
+[32m-     "data": ObjectContaining {[90m
+[32m-       "jawaban": "My offline answer",[90m
+[31m+   "kuis_jawaban",[90m
+[31m+   "create",[90m
+[31m+   {[90m
+[31m+     "_metadata": {[90m
+[31m+       "key": "quiz_attempt-1_soal-2",[90m
+[31m+       "timestamp": "2025-11-25T00:06:17.307Z",[90m
+[31m+     },[90m
+[31m+     "attempt_id": "attempt-1",[90m
+[31m+     "jawaban": "My offl",[90m
+[2m      "soal_id": "soal-2",[22m
+[32m-     },[90m
+[32m-     "type": "quiz_answer",[90m
+[2m    },[22m
+[2m  ][22m
+
+[1m  8th spy call:
+
+[22m[2m  [[22m
+[32m-   ObjectContaining {[90m
+[32m-     "action": "save",[90m
+[32m-     "data": ObjectContaining {[90m
+[32m-       "jawaban": "My offline answer",[90m
+[31m+   "kuis_jawaban",[90m
+[31m+   "create",[90m
+[31m+   {[90m
+[31m+     "_metadata": {[90m
+[31m+       "key": "quiz_attempt-1_soal-2",[90m
+[31m+       "timestamp": "2025-11-25T00:06:17.338Z",[90m
+[31m+     },[90m
+[31m+     "attempt_id": "attempt-1",[90m
+[31m+     "jawaban": "My offli",[90m
+[2m      "soal_id": "soal-2",[22m
+[32m-     },[90m
+[32m-     "type": "quiz_answer",[90m
+[2m    },[22m
+[2m  ][22m
+
+[1m  9th spy call:
+
+[22m[2m  [[22m
+[32m-   ObjectContaining {[90m
+[32m-     "action": "save",[90m
+[32m-     "data": ObjectContaining {[90m
+[32m-       "jawaban": "My offline answer",[90m
+[31m+   "kuis_jawaban",[90m
+[31m+   "create",[90m
+[31m+   {[90m
+[31m+     "_metadata": {[90m
+[31m+       "key": "quiz_attempt-1_soal-2",[90m
+[31m+       "timestamp": "2025-11-25T00:06:17.376Z",[90m
+[31m+     },[90m
+[31m+     "attempt_id": "attempt-1",[90m
+[31m+     "jawaban": "My offlin",[90m
+[2m      "soal_id": "soal-2",[22m
+[32m-     },[90m
+[32m-     "type": "quiz_answer",[90m
+[2m    },[22m
+[2m  ][22m
+
+[1m  10th spy call:
+
+[22m[2m  [[22m
+[32m-   ObjectContaining {[90m
+[32m-     "action": "save",[90m
+[32m-     "data": ObjectContaining {[90m
+[32m-       "jawaban": "My offline answer",[90m
+[31m+   "kuis_jawaban",[90m
+[31m+   "create",[90m
+[31m+   {[90m
+[31m+     "_metadata": {[90m
+[31m+       "key": "quiz_attempt-1_soal-2",[90m
+[31m+       "timestamp": "2025-11-25T00:06:17.414Z",[90m
+[31m+     },[90m
+[31m+     "attempt_id": "attempt-1",[90m
+[31m+     "jawaban": "My offline",[90m
+[2m      "soal_id": "soal-2",[22m
+[32m-     },[90m
+[32m-     "type": "quiz_answer",[90m
+[2m    },[22m
+[2m  ][22m
+
+[1m  11th spy call:
+
+[22m[2m  [[22m
+[32m-   ObjectContaining {[90m
+[32m-     "action": "save",[90m
+[32m-     "data": ObjectContaining {[90m
+[32m-       "jawaban": "My offline answer",[90m
+[31m+   "kuis_jawaban",[90m
+[31m+   "create",[90m
+[31m+   {[90m
+[31m+     "_metadata": {[90m
+[31m+       "key": "quiz_attempt-1_soal-2",[90m
+[31m+       "timestamp": "2025-11-25T00:06:17.444Z",[90m
+[31m+     },[90m
+[31m+     "attempt_id": "attempt-1",[90m
+[31m+     "jawaban": "My offline ",[90m
+[2m      "soal_id": "soal-2",[22m
+[32m-     },[90m
+[32m-     "type": "quiz_answer",[90m
+[2m    },[22m
+[2m  ][22m
+
+[1m  12th spy call:
+
+[22m[2m  [[22m
+[32m-   ObjectContaining {[90m
+[32m-     "action": "save",[90m
+[32m-     "data": ObjectContaining {[90m
+[32m-       "jawaban": "My offline answer",[90m
+[31m+   "kuis_jawaban",[90m
+[31m+   "create",[90m
+[31m+   {[90m
+[31m+     "_metadata": {[90m
+[31m+       "key": "quiz_attempt-1_soal-2",[90m
+[31m+       "timestamp": "2025-11-25T00:06:17.487Z",[90m
+[31m+     },[90m
+[31m+     "attempt_id": "attempt-1",[90m
+[31m+     "jawaban": "My offline a",[90m
+[2m      "soal_id": "soal-2",[22m
+[32m-     },[90m
+[32m-     "type": "quiz_answer",[90m
+[2m    },[22m
+[2m  ][22m
+
+[1m  13th spy call:
+
+[22m[2m  [[22m
+[32m-   ObjectContaining {[90m
+[32m-     "action": "save",[90m
+[32m-     "data": ObjectContaining {[90m
+[32m-       "jawaban": "My offline answer",[90m
+[31m+   "kuis_jawaban",[90m
+[31m+   "create",[90m
+[31m+   {[90m
+[31m+     "_metadata": {[90m
+[31m+       "key": "quiz_attempt-1_soal-2",[90m
+[31m+       "timestamp": "2025-11-25T00:06:17.528Z",[90m
+[31m+     },[90m
+[31m+     "attempt_id": "attempt-1",[90m
+[31m+     "jawaban": "My offline an",[90m
+[2m      "soal_id": "soal-2",[22m
+[32m-     },[90m
+[32m-     "type": "quiz_answer",[90m
+[2m    },[22m
+[2m  ][22m
+
+[1m  14th spy call:
+
+[22m[2m  [[22m
+[32m-   ObjectContaining {[90m
+[32m-     "action": "save",[90m
+[32m-     "data": ObjectContaining {[90m
+[32m-       "jawaban": "My offline answer",[90m
+[31m+   "kuis_jawaban",[90m
+[31m+   "create",[90m
+[31m+   {[90m
+[31m+     "_metadata": {[90m
+[31m+       "key": "quiz_attempt-1_soal-2",[90m
+[31m+       "timestamp": "2025-11-25T00:06:17.591Z",[90m
+[31m+     },[90m
+[31m+     "attempt_id": "attempt-1",[90m
+[31m+     "jawaban": "My offline ans",[90m
+[2m      "soal_id": "soal-2",[22m
+[32m-     },[90m
+[32m-     "type": "quiz_answer",[90m
+[2m    },[22m
+[2m  ][22m
+
+[1m  15th spy call:
+
+[22m[2m  [[22m
+[32m-   ObjectContaining {[90m
+[32m-     "action": "save",[90m
+[32m-     "data": ObjectContaining {[90m
+[32m-       "jawaban": "My offline answer",[90m
+[31m+   "kuis_jawaban",[90m
+[31m+   "create",[90m
+[31m+   {[90m
+[31m+     "_metadata": {[90m
+[31m+       "key": "quiz_attempt-1_soal-2",[90m
+[31m+       "timestamp": "2025-11-25T00:06:17.625Z",[90m
+[31m+     },[90m
+[31m+     "attempt_id": "attempt-1",[90m
+[31m+     "jawaban": "My offline answ",[90m
+[2m      "soal_id": "soal-2",[22m
+[32m-     },[90m
+[32m-     "type": "quiz_answer",[90m
+[2m    },[22m
+[2m  ][22m
+
+[1m  16th spy call:
+
+[22m[2m  [[22m
+[32m-   ObjectContaining {[90m
+[32m-     "action": "save",[90m
+[32m-     "data": ObjectContaining {[90m
+[32m-       "jawaban": "My offline answer",[90m
+[31m+   "kuis_jawaban",[90m
+[31m+   "create",[90m
+[31m+   {[90m
+[31m+     "_metadata": {[90m
+[31m+       "key": "quiz_attempt-1_soal-2",[90m
+[31m+       "timestamp": "2025-11-25T00:06:17.676Z",[90m
+[31m+     },[90m
+[31m+     "attempt_id": "attempt-1",[90m
+[31m+     "jawaban": "My offline answe",[90m
+[2m      "soal_id": "soal-2",[22m
+[32m-     },[90m
+[32m-     "type": "quiz_answer",[90m
+[2m    },[22m
+[2m  ][22m
+
+[1m  17th spy call:
+
+[22m[2m  [[22m
+[32m-   ObjectContaining {[90m
+[32m-     "action": "save",[90m
+[32m-     "data": ObjectContaining {[90m
+[31m+   "kuis_jawaban",[90m
+[31m+   "create",[90m
+[31m+   {[90m
+[31m+     "_metadata": {[90m
+[31m+       "key": "quiz_attempt-1_soal-2",[90m
+[31m+       "timestamp": "2025-11-25T00:06:17.722Z",[90m
+[31m+     },[90m
+[31m+     "attempt_id": "attempt-1",[90m
+[2m      "jawaban": "My offline answer",[22m
+[2m      "soal_id": "soal-2",[22m
+[32m-     },[90m
+[32m-     "type": "quiz_answer",[90m
+[2m    },[22m
+[2m  ][22m
+[39m[90m
+
+Number of calls: [1m17[22m
+[39m
+[36m [2m❯[22m src/__tests__/integration/kuis-attempt-offline.test.tsx:[2m405:28[22m[39m
+    [90m403| [39m
+    [90m404| [39m    [90m// Verify the data was queued with correct structure[39m
+    [90m405| [39m    [34mexpect[39m(mockAddToQueue)[33m.[39m[34mtoHaveBeenCalledWith[39m(
+    [90m   | [39m                           [31m^[39m
+    [90m406| [39m      expect[33m.[39m[34mobjectContaining[39m({
+    [90m407| [39m        type[33m:[39m [32m'quiz_answer'[39m[33m,[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/41]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/integration/kuis-attempt-offline.test.tsx[2m > [22mKuis Attempt Offline Integration[2m > [22mshould handle complete offline-online flow
+[31m[1mError[22m: Test timed out in 10000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".[39m
+[36m [2m❯[22m src/__tests__/integration/kuis-attempt-offline.test.tsx:[2m533:3[22m[39m
+    [90m531| [39m  // =================================================================…
+    [90m532| [39m
+    [90m533| [39m  [34mit[39m([32m'should handle complete offline-online flow'[39m[33m,[39m [35masync[39m () [33m=>[39m {
+    [90m   | [39m  [31m^[39m
+    [90m534| [39m    [35mconst[39m user [33m=[39m userEvent[33m.[39m[34msetup[39m()[33m;[39m
+    [90m535| [39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/41]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/unit/hooks/useAutoSave.test.ts[2m > [22museAutoSave[2m > [22mAuto-save[2m > [22mshould auto-save after debounce delay
+[31m[1mError[22m: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".[39m
+[36m [2m❯[22m src/__tests__/unit/hooks/useAutoSave.test.ts:[2m99:5[22m[39m
+    [90m 97| [39m
+    [90m 98| [39m  [34mdescribe[39m([32m'Auto-save'[39m[33m,[39m () [33m=>[39m {
+    [90m 99| [39m    [34mit[39m([32m'should auto-save after debounce delay'[39m[33m,[39m [35masync[39m () [33m=>[39m {
+    [90m   | [39m    [31m^[39m
+    [90m100| [39m      [35mconst[39m { result } [33m=[39m [34mrenderHook[39m(() [33m=>[39m
+    [90m101| [39m        [34museAutoSave[39m(mockData[33m,[39m {
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/41]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/unit/hooks/useAutoSave.test.ts[2m > [22museAutoSave[2m > [22mAuto-save[2m > [22mshould debounce multiple rapid changes
+[31m[1mError[22m: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".[39m
+[36m [2m❯[22m src/__tests__/unit/hooks/useAutoSave.test.ts:[2m125:5[22m[39m
+    [90m123| [39m    })[33m;[39m
+    [90m124| [39m
+    [90m125| [39m    [34mit[39m([32m'should debounce multiple rapid changes'[39m[33m,[39m [35masync[39m () [33m=>[39m {
+    [90m   | [39m    [31m^[39m
+    [90m126| [39m      [35mconst[39m { result } [33m=[39m [34mrenderHook[39m(() [33m=>[39m
+    [90m127| [39m        [34museAutoSave[39m(mockData[33m,[39m {
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/41]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/unit/hooks/useAutoSave.test.ts[2m > [22museAutoSave[2m > [22mStatus[2m > [22mshould update status during save
+[31m[1mError[22m: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".[39m
+[36m [2m❯[22m src/__tests__/unit/hooks/useAutoSave.test.ts:[2m264:5[22m[39m
+    [90m262| [39m
+    [90m263| [39m  [34mdescribe[39m([32m'Status'[39m[33m,[39m () [33m=>[39m {
+    [90m264| [39m    [34mit[39m([32m'should update status during save'[39m[33m,[39m [35masync[39m () [33m=>[39m {
+    [90m   | [39m    [31m^[39m
+    [90m265| [39m      mockOnSave[33m.[39m[34mmockImplementation[39m(
+    [90m266| [39m        () [33m=>[39m [35mnew[39m [33mPromise[39m(resolve [33m=>[39m [34msetTimeout[39m(resolve[33m,[39m [34m100[39m))
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/41]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/unit/hooks/useAutoSave.test.ts[2m > [22museAutoSave[2m > [22mStatus[2m > [22mshould set error status on save failure
+[31m[1mTypeError[22m: Cannot read properties of null (reading 'updateData')[39m
+[36m [2m❯[22m src/__tests__/unit/hooks/useAutoSave.test.ts:[2m307:24[22m[39m
+    [90m305| [39m
+    [90m306| [39m      [34mact[39m(() [33m=>[39m {
+    [90m307| [39m        result[33m.[39mcurrent[33m.[39m[34mupdateData[39m({ [33m...[39mmockData[33m,[39m judul[33m:[39m [32m'Updated'[39m })[33m;[39m
+    [90m   | [39m                       [31m^[39m
+    [90m308| [39m      })[33m;[39m
+    [90m309| [39m
+[90m [2m❯[22m node_modules/@testing-library/react/dist/act-compat.js:[2m48:24[22m[39m
+[90m [2m❯[22m process.env.NODE_ENV.exports.act node_modules/react/cjs/react.development.js:[2m814:22[22m[39m
+[90m [2m❯[22m Proxy.<anonymous> node_modules/@testing-library/react/dist/act-compat.js:[2m47:25[22m[39m
+[90m [2m❯[22m src/__tests__/unit/hooks/useAutoSave.test.ts:[2m306:7[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/41]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/unit/hooks/useAutoSave.test.ts[2m > [22museAutoSave[2m > [22mStatus[2m > [22mshould update lastSaved timestamp on successful save
+[31m[1mTypeError[22m: Cannot read properties of null (reading 'updateData')[39m
+[36m [2m❯[22m src/__tests__/unit/hooks/useAutoSave.test.ts:[2m328:24[22m[39m
+    [90m326| [39m
+    [90m327| [39m      [34mact[39m(() [33m=>[39m {
+    [90m328| [39m        result[33m.[39mcurrent[33m.[39m[34mupdateData[39m({ [33m...[39mmockData[33m,[39m judul[33m:[39m [32m'Updated'[39m })[33m;[39m
+    [90m   | [39m                       [31m^[39m
+    [90m329| [39m      })[33m;[39m
+    [90m330| [39m
+[90m [2m❯[22m node_modules/@testing-library/react/dist/act-compat.js:[2m48:24[22m[39m
+[90m [2m❯[22m process.env.NODE_ENV.exports.act node_modules/react/cjs/react.development.js:[2m814:22[22m[39m
+[90m [2m❯[22m Proxy.<anonymous> node_modules/@testing-library/react/dist/act-compat.js:[2m47:25[22m[39m
+[90m [2m❯[22m src/__tests__/unit/hooks/useAutoSave.test.ts:[2m327:7[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/41]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/unit/hooks/useAutoSave.test.ts[2m > [22museAutoSave[2m > [22mCallbacks[2m > [22mshould call onSuccess callback
+[31m[1mTypeError[22m: Cannot read properties of null (reading 'updateData')[39m
+[36m [2m❯[22m src/__tests__/unit/hooks/useAutoSave.test.ts:[2m358:24[22m[39m
+    [90m356| [39m
+    [90m357| [39m      [34mact[39m(() [33m=>[39m {
+    [90m358| [39m        result[33m.[39mcurrent[33m.[39m[34mupdateData[39m({ [33m...[39mmockData[33m,[39m judul[33m:[39m [32m'Updated'[39m })[33m;[39m
+    [90m   | [39m                       [31m^[39m
+    [90m359| [39m      })[33m;[39m
+    [90m360| [39m
+[90m [2m❯[22m node_modules/@testing-library/react/dist/act-compat.js:[2m48:24[22m[39m
+[90m [2m❯[22m process.env.NODE_ENV.exports.act node_modules/react/cjs/react.development.js:[2m814:22[22m[39m
+[90m [2m❯[22m Proxy.<anonymous> node_modules/@testing-library/react/dist/act-compat.js:[2m47:25[22m[39m
+[90m [2m❯[22m src/__tests__/unit/hooks/useAutoSave.test.ts:[2m357:7[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/41]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/unit/hooks/useAutoSave.test.ts[2m > [22museAutoSave[2m > [22mCallbacks[2m > [22mshould call onError callback
+[31m[1mTypeError[22m: Cannot read properties of null (reading 'updateData')[39m
+[36m [2m❯[22m src/__tests__/unit/hooks/useAutoSave.test.ts:[2m382:24[22m[39m
+    [90m380| [39m
+    [90m381| [39m      [34mact[39m(() [33m=>[39m {
+    [90m382| [39m        result[33m.[39mcurrent[33m.[39m[34mupdateData[39m({ [33m...[39mmockData[33m,[39m judul[33m:[39m [32m'Updated'[39m })[33m;[39m
+    [90m   | [39m                       [31m^[39m
+    [90m383| [39m      })[33m;[39m
+    [90m384| [39m
+[90m [2m❯[22m node_modules/@testing-library/react/dist/act-compat.js:[2m48:24[22m[39m
+[90m [2m❯[22m process.env.NODE_ENV.exports.act node_modules/react/cjs/react.development.js:[2m814:22[22m[39m
+[90m [2m❯[22m Proxy.<anonymous> node_modules/@testing-library/react/dist/act-compat.js:[2m47:25[22m[39m
+[90m [2m❯[22m src/__tests__/unit/hooks/useAutoSave.test.ts:[2m381:7[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/41]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/unit/hooks/useAutoSave.test.ts[2m > [22museAutoSave[2m > [22mOnline Only Mode[2m > [22mshould not save when offline and onlineOnly is true
+[31m[1mError[22m: Cannot find module '@/lib/hooks/useNetworkStatus'
+Require stack:
+- F:\tes 9\sistem-praktikum-pwa\src\__tests__\unit\hooks\useAutoSave.test.ts[39m
+[36m [2m❯[22m src/__tests__/unit/hooks/useAutoSave.test.ts:[2m404:36[22m[39m
+    [90m402| [39m  [34mdescribe[39m([32m'Online Only Mode'[39m[33m,[39m () [33m=>[39m {
+    [90m403| [39m    it('should not save when offline and onlineOnly is true', async ()…
+    [90m404| [39m      const { useNetworkStatus } = require('@/lib/hooks/useNetworkStat…
+    [90m   | [39m                                   [31m^[39m
+    [90m405| [39m      useNetworkStatus[33m.[39m[34mmockReturnValue[39m({
+    [90m406| [39m        isOnline[33m:[39m [35mfalse[39m[33m,[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/41]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/unit/hooks/useAutoSave.test.ts[2m > [22museAutoSave[2m > [22mOnline Only Mode[2m > [22mshould save when online even with onlineOnly true
+[31m[1mError[22m: Cannot find module '@/lib/hooks/useNetworkStatus'
+Require stack:
+- F:\tes 9\sistem-praktikum-pwa\src\__tests__\unit\hooks\useAutoSave.test.ts[39m
+[36m [2m❯[22m src/__tests__/unit/hooks/useAutoSave.test.ts:[2m434:36[22m[39m
+    [90m432| [39m
+    [90m433| [39m    it('should save when online even with onlineOnly true', async () =…
+    [90m434| [39m      const { useNetworkStatus } = require('@/lib/hooks/useNetworkStat…
+    [90m   | [39m                                   [31m^[39m
+    [90m435| [39m      useNetworkStatus[33m.[39m[34mmockReturnValue[39m({
+    [90m436| [39m        isOnline[33m:[39m [35mtrue[39m[33m,[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/41]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/unit/hooks/useAutoSave.test.ts[2m > [22museAutoSave[2m > [22mOnline Only Mode[2m > [22mshould auto-save when coming back online
+[31m[1mError[22m: Cannot find module '@/lib/hooks/useNetworkStatus'
+Require stack:
+- F:\tes 9\sistem-praktikum-pwa\src\__tests__\unit\hooks\useAutoSave.test.ts[39m
+[36m [2m❯[22m src/__tests__/unit/hooks/useAutoSave.test.ts:[2m462:36[22m[39m
+    [90m460| [39m
+    [90m461| [39m    [34mit[39m([32m'should auto-save when coming back online'[39m[33m,[39m [35masync[39m () [33m=>[39m {
+    [90m462| [39m      const { useNetworkStatus } = require('@/lib/hooks/useNetworkStat…
+    [90m   | [39m                                   [31m^[39m
+    [90m463| [39m
+    [90m464| [39m      [90m// Start offline[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/41]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/unit/hooks/useAutoSave.test.ts[2m > [22museAutoSave[2m > [22mreset[2m > [22mshould reset to saved state
+[31m[1mTypeError[22m: Cannot read properties of null (reading 'updateData')[39m
+[36m [2m❯[22m src/__tests__/unit/hooks/useAutoSave.test.ts:[2m511:24[22m[39m
+    [90m509| [39m      [90m// Make changes[39m
+    [90m510| [39m      [34mact[39m(() [33m=>[39m {
+    [90m511| [39m        result[33m.[39mcurrent[33m.[39m[34mupdateData[39m({ [33m...[39mmockData[33m,[39m judul[33m:[39m [32m'Updated'[39m })[33m;[39m
+    [90m   | [39m                       [31m^[39m
+    [90m512| [39m      })[33m;[39m
+    [90m513| [39m
+[90m [2m❯[22m node_modules/@testing-library/react/dist/act-compat.js:[2m48:24[22m[39m
+[90m [2m❯[22m process.env.NODE_ENV.exports.act node_modules/react/cjs/react.development.js:[2m814:22[22m[39m
+[90m [2m❯[22m Proxy.<anonymous> node_modules/@testing-library/react/dist/act-compat.js:[2m47:25[22m[39m
+[90m [2m❯[22m src/__tests__/unit/hooks/useAutoSave.test.ts:[2m510:7[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/41]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/unit/hooks/useAutoSave.test.ts[2m > [22museAutoSave[2m > [22mreset[2m > [22mshould cancel pending save on reset
+[31m[1mTypeError[22m: Cannot read properties of null (reading 'updateData')[39m
+[36m [2m❯[22m src/__tests__/unit/hooks/useAutoSave.test.ts:[2m535:24[22m[39m
+    [90m533| [39m
+    [90m534| [39m      [34mact[39m(() [33m=>[39m {
+    [90m535| [39m        result[33m.[39mcurrent[33m.[39m[34mupdateData[39m({ [33m...[39mmockData[33m,[39m judul[33m:[39m [32m'Updated'[39m })[33m;[39m
+    [90m   | [39m                       [31m^[39m
+    [90m536| [39m      })[33m;[39m
+    [90m537| [39m
+[90m [2m❯[22m node_modules/@testing-library/react/dist/act-compat.js:[2m48:24[22m[39m
+[90m [2m❯[22m process.env.NODE_ENV.exports.act node_modules/react/cjs/react.development.js:[2m814:22[22m[39m
+[90m [2m❯[22m Proxy.<anonymous> node_modules/@testing-library/react/dist/act-compat.js:[2m47:25[22m[39m
+[90m [2m❯[22m src/__tests__/unit/hooks/useAutoSave.test.ts:[2m534:7[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/41]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/unit/hooks/useAutoSave.test.ts[2m > [22museAutoSave[2m > [22mmarkAsSaved[2m > [22mshould mark current data as saved
+[31m[1mTypeError[22m: Cannot read properties of null (reading 'updateData')[39m
+[36m [2m❯[22m src/__tests__/unit/hooks/useAutoSave.test.ts:[2m560:24[22m[39m
+    [90m558| [39m
+    [90m559| [39m      [34mact[39m(() [33m=>[39m {
+    [90m560| [39m        result[33m.[39mcurrent[33m.[39m[34mupdateData[39m({ [33m...[39mmockData[33m,[39m judul[33m:[39m [32m'Updated'[39m })[33m;[39m
+    [90m   | [39m                       [31m^[39m
+    [90m561| [39m      })[33m;[39m
+    [90m562| [39m
+[90m [2m❯[22m node_modules/@testing-library/react/dist/act-compat.js:[2m48:24[22m[39m
+[90m [2m❯[22m process.env.NODE_ENV.exports.act node_modules/react/cjs/react.development.js:[2m814:22[22m[39m
+[90m [2m❯[22m Proxy.<anonymous> node_modules/@testing-library/react/dist/act-compat.js:[2m47:25[22m[39m
+[90m [2m❯[22m src/__tests__/unit/hooks/useAutoSave.test.ts:[2m559:7[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/41]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/unit/hooks/useAutoSave.test.ts[2m > [22museAutoSave[2m > [22mmarkAsSaved[2m > [22mshould cancel pending save
+[31m[1mTypeError[22m: Cannot read properties of null (reading 'updateData')[39m
+[36m [2m❯[22m src/__tests__/unit/hooks/useAutoSave.test.ts:[2m582:24[22m[39m
+    [90m580| [39m
+    [90m581| [39m      [34mact[39m(() [33m=>[39m {
+    [90m582| [39m        result[33m.[39mcurrent[33m.[39m[34mupdateData[39m({ [33m...[39mmockData[33m,[39m judul[33m:[39m [32m'Updated'[39m })[33m;[39m
+    [90m   | [39m                       [31m^[39m
+    [90m583| [39m      })[33m;[39m
+    [90m584| [39m
+[90m [2m❯[22m node_modules/@testing-library/react/dist/act-compat.js:[2m48:24[22m[39m
+[90m [2m❯[22m process.env.NODE_ENV.exports.act node_modules/react/cjs/react.development.js:[2m814:22[22m[39m
+[90m [2m❯[22m Proxy.<anonymous> node_modules/@testing-library/react/dist/act-compat.js:[2m47:25[22m[39m
+[90m [2m❯[22m src/__tests__/unit/hooks/useAutoSave.test.ts:[2m581:7[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/41]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/unit/hooks/useAutoSave.test.ts[2m > [22museAutoSave[2m > [22mCustom Equality Check[2m > [22mshould use custom isEqual function
+[31m[1mTypeError[22m: Cannot read properties of null (reading 'updateData')[39m
+[36m [2m❯[22m src/__tests__/unit/hooks/useAutoSave.test.ts:[2m613:24[22m[39m
+    [90m611| [39m
+    [90m612| [39m      [34mact[39m(() [33m=>[39m {
+    [90m613| [39m        result.current.updateData({ ...mockData, deskripsi: 'Different…
+    [90m   | [39m                       [31m^[39m
+    [90m614| [39m      })[33m;[39m
+    [90m615| [39m
+[90m [2m❯[22m node_modules/@testing-library/react/dist/act-compat.js:[2m48:24[22m[39m
+[90m [2m❯[22m process.env.NODE_ENV.exports.act node_modules/react/cjs/react.development.js:[2m814:22[22m[39m
+[90m [2m❯[22m Proxy.<anonymous> node_modules/@testing-library/react/dist/act-compat.js:[2m47:25[22m[39m
+[90m [2m❯[22m src/__tests__/unit/hooks/useAutoSave.test.ts:[2m612:7[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/41]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/unit/hooks/useAutoSave.test.ts[2m > [22museAutoSave[2m > [22mPrevent Concurrent Saves[2m > [22mshould not start new save while one is in progress
+[31m[1mTypeError[22m: Cannot read properties of null (reading 'updateData')[39m
+[36m [2m❯[22m src/__tests__/unit/hooks/useAutoSave.test.ts:[2m639:24[22m[39m
+    [90m637| [39m
+    [90m638| [39m      [34mact[39m(() [33m=>[39m {
+    [90m639| [39m        result[33m.[39mcurrent[33m.[39m[34mupdateData[39m({ [33m...[39mmockData[33m,[39m judul[33m:[39m [32m'Updated'[39m })[33m;[39m
+    [90m   | [39m                       [31m^[39m
+    [90m640| [39m      })[33m;[39m
+    [90m641| [39m
+[90m [2m❯[22m node_modules/@testing-library/react/dist/act-compat.js:[2m48:24[22m[39m
+[90m [2m❯[22m process.env.NODE_ENV.exports.act node_modules/react/cjs/react.development.js:[2m814:22[22m[39m
+[90m [2m❯[22m Proxy.<anonymous> node_modules/@testing-library/react/dist/act-compat.js:[2m47:25[22m[39m
+[90m [2m❯[22m src/__tests__/unit/hooks/useAutoSave.test.ts:[2m638:7[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/41]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/unit/hooks/useAutoSave.test.ts[2m > [22museAutoSave[2m > [22mbeforeunload Warning[2m > [22mshould add beforeunload listener when there are unsaved changes
+[31m[1mTypeError[22m: Cannot read properties of null (reading 'updateData')[39m
+[36m [2m❯[22m src/__tests__/unit/hooks/useAutoSave.test.ts:[2m674:24[22m[39m
+    [90m672| [39m
+    [90m673| [39m      [34mact[39m(() [33m=>[39m {
+    [90m674| [39m        result[33m.[39mcurrent[33m.[39m[34mupdateData[39m({ [33m...[39mmockData[33m,[39m judul[33m:[39m [32m'Updated'[39m })[33m;[39m
+    [90m   | [39m                       [31m^[39m
+    [90m675| [39m      })[33m;[39m
+    [90m676| [39m
+[90m [2m❯[22m node_modules/@testing-library/react/dist/act-compat.js:[2m48:24[22m[39m
+[90m [2m❯[22m process.env.NODE_ENV.exports.act node_modules/react/cjs/react.development.js:[2m814:22[22m[39m
+[90m [2m❯[22m Proxy.<anonymous> node_modules/@testing-library/react/dist/act-compat.js:[2m47:25[22m[39m
+[90m [2m❯[22m src/__tests__/unit/hooks/useAutoSave.test.ts:[2m673:7[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/41]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/unit/hooks/useAutoSave.test.ts[2m > [22museAutoSave[2m > [22mbeforeunload Warning[2m > [22mshould remove beforeunload listener when no unsaved changes
+[31m[1mTypeError[22m: Cannot read properties of null (reading 'updateData')[39m
+[36m [2m❯[22m src/__tests__/unit/hooks/useAutoSave.test.ts:[2m695:24[22m[39m
+    [90m693| [39m
+    [90m694| [39m      [34mact[39m(() [33m=>[39m {
+    [90m695| [39m        result[33m.[39mcurrent[33m.[39m[34mupdateData[39m({ [33m...[39mmockData[33m,[39m judul[33m:[39m [32m'Updated'[39m })[33m;[39m
+    [90m   | [39m                       [31m^[39m
+    [90m696| [39m      })[33m;[39m
+    [90m697| [39m
+[90m [2m❯[22m node_modules/@testing-library/react/dist/act-compat.js:[2m48:24[22m[39m
+[90m [2m❯[22m process.env.NODE_ENV.exports.act node_modules/react/cjs/react.development.js:[2m814:22[22m[39m
+[90m [2m❯[22m Proxy.<anonymous> node_modules/@testing-library/react/dist/act-compat.js:[2m47:25[22m[39m
+[90m [2m❯[22m src/__tests__/unit/hooks/useAutoSave.test.ts:[2m694:7[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/41]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/unit/hooks/useAutoSave.test.ts[2m > [22museAutoSave[2m > [22mCleanup[2m > [22mshould clear timeout on unmount
+[31m[1mTypeError[22m: Cannot read properties of null (reading 'updateData')[39m
+[36m [2m❯[22m src/__tests__/unit/hooks/useAutoSave.test.ts:[2m727:24[22m[39m
+    [90m725| [39m
+    [90m726| [39m      [34mact[39m(() [33m=>[39m {
+    [90m727| [39m        result[33m.[39mcurrent[33m.[39m[34mupdateData[39m({ [33m...[39mmockData[33m,[39m judul[33m:[39m [32m'Updated'[39m })[33m;[39m
+    [90m   | [39m                       [31m^[39m
+    [90m728| [39m      })[33m;[39m
+    [90m729| [39m
+[90m [2m❯[22m node_modules/@testing-library/react/dist/act-compat.js:[2m48:24[22m[39m
+[90m [2m❯[22m process.env.NODE_ENV.exports.act node_modules/react/cjs/react.development.js:[2m814:22[22m[39m
+[90m [2m❯[22m Proxy.<anonymous> node_modules/@testing-library/react/dist/act-compat.js:[2m47:25[22m[39m
+[90m [2m❯[22m src/__tests__/unit/hooks/useAutoSave.test.ts:[2m726:7[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/41]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/unit/hooks/useAutoSave.test.ts[2m > [22museAutoSave[2m > [22mCleanup[2m > [22mshould not update state after unmount
+[31m[1mTypeError[22m: Cannot read properties of null (reading 'updateData')[39m
+[36m [2m❯[22m src/__tests__/unit/hooks/useAutoSave.test.ts:[2m751:24[22m[39m
+    [90m749| [39m
+    [90m750| [39m      [34mact[39m(() [33m=>[39m {
+    [90m751| [39m        result[33m.[39mcurrent[33m.[39m[34mupdateData[39m({ [33m...[39mmockData[33m,[39m judul[33m:[39m [32m'Updated'[39m })[33m;[39m
+    [90m   | [39m                       [31m^[39m
+    [90m752| [39m      })[33m;[39m
+    [90m753| [39m
+[90m [2m❯[22m node_modules/@testing-library/react/dist/act-compat.js:[2m48:24[22m[39m
+[90m [2m❯[22m process.env.NODE_ENV.exports.act node_modules/react/cjs/react.development.js:[2m814:22[22m[39m
+[90m [2m❯[22m Proxy.<anonymous> node_modules/@testing-library/react/dist/act-compat.js:[2m47:25[22m[39m
+[90m [2m❯[22m src/__tests__/unit/hooks/useAutoSave.test.ts:[2m750:7[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/41]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/unit/hooks/useAutoSave.test.ts[2m > [22museAutoSave[2m > [22mIntegration[2m > [22mshould handle complete workflow
+[31m[1mTypeError[22m: Cannot read properties of null (reading 'updateData')[39m
+[36m [2m❯[22m src/__tests__/unit/hooks/useAutoSave.test.ts:[2m783:24[22m[39m
+    [90m781| [39m      [90m// Update data[39m
+    [90m782| [39m      [34mact[39m(() [33m=>[39m {
+    [90m783| [39m        result[33m.[39mcurrent[33m.[39m[34mupdateData[39m({ [33m...[39mmockData[33m,[39m judul[33m:[39m [32m'Updated 1'[39m })[33m;[39m
+    [90m   | [39m                       [31m^[39m
+    [90m784| [39m      })[33m;[39m
+    [90m785| [39m
+[90m [2m❯[22m node_modules/@testing-library/react/dist/act-compat.js:[2m48:24[22m[39m
+[90m [2m❯[22m process.env.NODE_ENV.exports.act node_modules/react/cjs/react.development.js:[2m814:22[22m[39m
+[90m [2m❯[22m Proxy.<anonymous> node_modules/@testing-library/react/dist/act-compat.js:[2m47:25[22m[39m
+[90m [2m❯[22m src/__tests__/unit/hooks/useAutoSave.test.ts:[2m782:7[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/41]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/unit/hooks/useAutoSave.test.ts[2m > [22museAutoSave[2m > [22mIntegration[2m > [22mshould maintain consistent state across re-renders
+[31m[1mTypeError[22m: Cannot read properties of null (reading 'data')[39m
+[36m [2m❯[22m src/__tests__/unit/hooks/useAutoSave.test.ts:[2m815:36[22m[39m
+    [90m813| [39m      const { result, rerender } = renderHook(() => useAutoSave(mockDa…
+    [90m814| [39m
+    [90m815| [39m      [35mconst[39m data1 [33m=[39m result[33m.[39mcurrent[33m.[39mdata[33m;[39m
+    [90m   | [39m                                   [31m^[39m
+    [90m816| [39m      [35mconst[39m status1 [33m=[39m result[33m.[39mcurrent[33m.[39mstatus[33m;[39m
+    [90m817| [39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/41]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/unit/hooks/useLocalData.test.ts[2m > [22museLocalData[2m > [22mInitialization[2m > [22mshould initialize with default state
+[31m[1mAssertionError[22m: expected true to be false // Object.is equality[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- false[39m
+[31m+ true[39m
+
+[36m [2m❯[22m src/__tests__/unit/hooks/useLocalData.test.ts:[2m79:38[22m[39m
+    [90m 77| [39m
+    [90m 78| [39m      [34mexpect[39m(result[33m.[39mcurrent[33m.[39mdata)[33m.[39m[34mtoEqual[39m([])[33m;[39m
+    [90m 79| [39m      [34mexpect[39m(result[33m.[39mcurrent[33m.[39mloading)[33m.[39m[34mtoBe[39m([35mfalse[39m)[33m;[39m
+    [90m   | [39m                                     [31m^[39m
+    [90m 80| [39m      [34mexpect[39m(result[33m.[39mcurrent[33m.[39merror)[33m.[39m[34mtoBeNull[39m()[33m;[39m
+    [90m 81| [39m      [34mexpect[39m(result[33m.[39mcurrent[33m.[39mloaded)[33m.[39m[34mtoBe[39m([35mfalse[39m)[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/41]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/unit/hooks/useLocalData.test.ts[2m > [22museLocalData[2m > [22mLoading[2m > [22mshould set loading state during load
+[31m[1mError[22m: Timers are not mocked. Try calling "vi.useFakeTimers()" first.[39m
+[36m [2m❯[22m src/__tests__/unit/hooks/useLocalData.test.ts:[2m146:18[22m[39m
+    [90m144| [39m
+    [90m145| [39m      [35mawait[39m [34mact[39m([35masync[39m () [33m=>[39m {
+    [90m146| [39m        [35mawait[39m vi[33m.[39m[34mrunAllTimersAsync[39m()[33m;[39m
+    [90m   | [39m                 [31m^[39m
+    [90m147| [39m      })[33m;[39m
+    [90m148| [39m
+[90m [2m❯[22m node_modules/@testing-library/react/dist/act-compat.js:[2m48:24[22m[39m
+[90m [2m❯[22m process.env.NODE_ENV.exports.act node_modules/react/cjs/react.development.js:[2m814:22[22m[39m
+[90m [2m❯[22m Proxy.<anonymous> node_modules/@testing-library/react/dist/act-compat.js:[2m47:25[22m[39m
+[90m [2m❯[22m src/__tests__/unit/hooks/useLocalData.test.ts:[2m145:13[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/41]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/unit/hooks/useLocalData.test.ts[2m > [22museLocalData[2m > [22mupdate[2m > [22mshould update item with optimistic update
+[31m[1mAssertionError[22m: expected "spy" to be called with arguments: [ 'kuis', 'kuis-1', …(1) ][90m
+
+Received: 
+
+[1m  1st spy call:
+
+[22m[2m  [[22m
+[2m    "kuis",[22m
+[32m-   "kuis-1",[90m
+[2m    {[22m
+[31m+     "dosen_id": "dosen-2",[90m
+[31m+     "id": "kuis-3",[90m
+[2m      "judul": "Updated",[22m
+[31m+     "kelas_id": "kelas-2",[90m
+[2m    },[22m
+[2m  ][22m
+[31m[90m
+
+Number of calls: [1m1[22m
+[31m[39m
+[36m [2m❯[22m src/__tests__/unit/hooks/useLocalData.test.ts:[2m342:39[22m[39m
+    [90m340| [39m
+    [90m341| [39m      expect(result.current.data.find((k: any) => k.id === 'kuis-1')?.…
+    [90m342| [39m      expect(indexedDBManager.update).toHaveBeenCalledWith('kuis', 'ku…
+    [90m   | [39m                                      [31m^[39m
+    [90m343| [39m    })[33m;[39m
+    [90m344| [39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[27/41]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/unit/hooks/useLocalData.test.ts[2m > [22museLocalData[2m > [22mQuery Methods[2m > [22mshould get item by id
+[31m[1mAssertionError[22m: expected { id: 'kuis-1', judul: 'Kuis 1', …(2) } to deeply equal { id: 'kuis-3', judul: 'Kuis 3', …(2) }[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[32m-   "dosen_id": "dosen-2",[39m
+[32m-   "id": "kuis-3",[39m
+[32m-   "judul": "Kuis 3",[39m
+[32m-   "kelas_id": "kelas-2",[39m
+[31m+   "dosen_id": "dosen-1",[39m
+[31m+   "id": "kuis-1",[39m
+[31m+   "judul": "Kuis 1",[39m
+[31m+   "kelas_id": "kelas-1",[39m
+[2m  }[22m
+
+[36m [2m❯[22m src/__tests__/unit/hooks/useLocalData.test.ts:[2m476:20[22m[39m
+    [90m474| [39m      [35mconst[39m item [33m=[39m result[33m.[39mcurrent[33m.[39m[34mgetById[39m([32m'kuis-1'[39m)[33m;[39m
+    [90m475| [39m
+    [90m476| [39m      [34mexpect[39m(item)[33m.[39m[34mtoEqual[39m(mockKuis[[34m0[39m])[33m;[39m
+    [90m   | [39m                   [31m^[39m
+    [90m477| [39m    })[33m;[39m
+    [90m478| [39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[28/41]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/unit/hooks/useLocalData.test.ts[2m > [22museLocalData[2m > [22mRefresh Interval[2m > [22mshould refresh at specified interval
+[31m[1mError[22m: Timers are not mocked. Try calling "vi.useFakeTimers()" first.[39m
+[36m [2m❯[22m src/__tests__/unit/hooks/useLocalData.test.ts:[2m543:18[22m[39m
+    [90m541| [39m      [90m// Advance timers by 5 seconds[39m
+    [90m542| [39m      [35mawait[39m [34mact[39m([35masync[39m () [33m=>[39m {
+    [90m543| [39m        [35mawait[39m vi[33m.[39m[34madvanceTimersByTimeAsync[39m([34m5000[39m)[33m;[39m
+    [90m   | [39m                 [31m^[39m
+    [90m544| [39m      })[33m;[39m
+    [90m545| [39m
+[90m [2m❯[22m node_modules/@testing-library/react/dist/act-compat.js:[2m48:24[22m[39m
+[90m [2m❯[22m process.env.NODE_ENV.exports.act node_modules/react/cjs/react.development.js:[2m814:22[22m[39m
+[90m [2m❯[22m Proxy.<anonymous> node_modules/@testing-library/react/dist/act-compat.js:[2m47:25[22m[39m
+[90m [2m❯[22m src/__tests__/unit/hooks/useLocalData.test.ts:[2m542:13[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[29/41]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/unit/hooks/useLocalData.test.ts[2m > [22museLocalData[2m > [22mRefresh Interval[2m > [22mshould not refresh when interval is 0
+[31m[1mError[22m: Timers are not mocked. Try calling "vi.useFakeTimers()" first.[39m
+[36m [2m❯[22m src/__tests__/unit/hooks/useLocalData.test.ts:[2m564:18[22m[39m
+    [90m562| [39m      [90m// Advance timers[39m
+    [90m563| [39m      [35mawait[39m [34mact[39m([35masync[39m () [33m=>[39m {
+    [90m564| [39m        [35mawait[39m vi[33m.[39m[34madvanceTimersByTimeAsync[39m([34m10000[39m)[33m;[39m
+    [90m   | [39m                 [31m^[39m
+    [90m565| [39m      })[33m;[39m
+    [90m566| [39m
+[90m [2m❯[22m node_modules/@testing-library/react/dist/act-compat.js:[2m48:24[22m[39m
+[90m [2m❯[22m process.env.NODE_ENV.exports.act node_modules/react/cjs/react.development.js:[2m814:22[22m[39m
+[90m [2m❯[22m Proxy.<anonymous> node_modules/@testing-library/react/dist/act-compat.js:[2m47:25[22m[39m
+[90m [2m❯[22m src/__tests__/unit/hooks/useLocalData.test.ts:[2m563:13[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[30/41]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/unit/hooks/useLocalData.test.ts[2m > [22museLocalData[2m > [22mRefresh Interval[2m > [22mshould clear interval on unmount
+[31m[1mError[22m: Timers are not mocked. Try calling "vi.useFakeTimers()" first.[39m
+[36m [2m❯[22m src/__tests__/unit/hooks/useLocalData.test.ts:[2m586:18[22m[39m
+    [90m584| [39m      [90m// Advance timers after unmount[39m
+    [90m585| [39m      [35mawait[39m [34mact[39m([35masync[39m () [33m=>[39m {
+    [90m586| [39m        [35mawait[39m vi[33m.[39m[34madvanceTimersByTimeAsync[39m([34m10000[39m)[33m;[39m
+    [90m   | [39m                 [31m^[39m
+    [90m587| [39m      })[33m;[39m
+    [90m588| [39m
+[90m [2m❯[22m node_modules/@testing-library/react/dist/act-compat.js:[2m48:24[22m[39m
+[90m [2m❯[22m process.env.NODE_ENV.exports.act node_modules/react/cjs/react.development.js:[2m814:22[22m[39m
+[90m [2m❯[22m Proxy.<anonymous> node_modules/@testing-library/react/dist/act-compat.js:[2m47:25[22m[39m
+[90m [2m❯[22m src/__tests__/unit/hooks/useLocalData.test.ts:[2m585:13[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[31/41]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/unit/hooks/useLocalData.test.ts[2m > [22museLocalData[2m > [22mCleanup[2m > [22mshould not update state after unmount
+[31m[1mError[22m: Timers are not mocked. Try calling "vi.useFakeTimers()" first.[39m
+[36m [2m❯[22m src/__tests__/unit/hooks/useLocalData.test.ts:[2m636:18[22m[39m
+    [90m634| [39m
+    [90m635| [39m      [35mawait[39m [34mact[39m([35masync[39m () [33m=>[39m {
+    [90m636| [39m        [35mawait[39m vi[33m.[39m[34mrunAllTimersAsync[39m()[33m;[39m
+    [90m   | [39m                 [31m^[39m
+    [90m637| [39m      })[33m;[39m
+    [90m638| [39m
+[90m [2m❯[22m node_modules/@testing-library/react/dist/act-compat.js:[2m48:24[22m[39m
+[90m [2m❯[22m process.env.NODE_ENV.exports.act node_modules/react/cjs/react.development.js:[2m814:22[22m[39m
+[90m [2m❯[22m Proxy.<anonymous> node_modules/@testing-library/react/dist/act-compat.js:[2m47:25[22m[39m
+[90m [2m❯[22m src/__tests__/unit/hooks/useLocalData.test.ts:[2m635:13[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[32/41]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/unit/hooks/useLocalData.test.ts[2m > [22museLocalData[2m > [22mIntegration[2m > [22mshould handle complete CRUD workflow
+[31m[1mAssertionError[22m: expected false to be true // Object.is equality[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- true[39m
+[31m+ false[39m
+
+[36m [2m❯[22m src/__tests__/unit/hooks/useLocalData.test.ts:[2m667:44[22m[39m
+    [90m665| [39m        [35mawait[39m result[33m.[39mcurrent[33m.[39m[34madd[39m(mockKuis[[34m0[39m])[33m;[39m
+    [90m666| [39m      })[33m;[39m
+    [90m667| [39m      [34mexpect[39m(result[33m.[39mcurrent[33m.[39m[34mhas[39m([32m'kuis-1'[39m))[33m.[39m[34mtoBe[39m([35mtrue[39m)[33m;[39m
+    [90m   | [39m                                           [31m^[39m
+    [90m668| [39m
+    [90m669| [39m      [90m// Update[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[33/41]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/unit/hooks/useOffline.test.ts[2m > [22museOffline[2m > [22mNetwork Status Integration[2m > [22mshould reflect offline network status
+[31m[1mError[22m: Cannot find module '@/lib/hooks/useNetworkStatus'
+Require stack:
+- F:\tes 9\sistem-praktikum-pwa\src\__tests__\unit\hooks\useOffline.test.ts[39m
+[36m [2m❯[22m src/__tests__/unit/hooks/useOffline.test.ts:[2m341:36[22m[39m
+    [90m339| [39m  [34mdescribe[39m([32m'Network Status Integration'[39m[33m,[39m () [33m=>[39m {
+    [90m340| [39m    [34mit[39m([32m'should reflect offline network status'[39m[33m,[39m () [33m=>[39m {
+    [90m341| [39m      const { useNetworkStatus } = require('@/lib/hooks/useNetworkStat…
+    [90m   | [39m                                   [31m^[39m
+    [90m342| [39m      useNetworkStatus[33m.[39m[34mmockReturnValue[39m({
+    [90m343| [39m        isOnline[33m:[39m [35mfalse[39m[33m,[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[34/41]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/unit/hooks/useOffline.test.ts[2m > [22museOffline[2m > [22mNetwork Status Integration[2m > [22mshould reflect unstable network status
+[31m[1mError[22m: Cannot find module '@/lib/hooks/useNetworkStatus'
+Require stack:
+- F:\tes 9\sistem-praktikum-pwa\src\__tests__\unit\hooks\useOffline.test.ts[39m
+[36m [2m❯[22m src/__tests__/unit/hooks/useOffline.test.ts:[2m358:36[22m[39m
+    [90m356| [39m
+    [90m357| [39m    [34mit[39m([32m'should reflect unstable network status'[39m[33m,[39m () [33m=>[39m {
+    [90m358| [39m      const { useNetworkStatus } = require('@/lib/hooks/useNetworkStat…
+    [90m   | [39m                                   [31m^[39m
+    [90m359| [39m      useNetworkStatus[33m.[39m[34mmockReturnValue[39m({
+    [90m360| [39m        isOnline[33m:[39m [35mfalse[39m[33m,[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[35/41]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/unit/providers/SyncProvider.test.tsx[2m > [22mSyncProvider[2m > [22mAuto-sync[2m > [22mshould handle auto-sync errors gracefully
+[31m[1mAssertionError[22m: expected "spy" to be called at least once
+
+Ignored nodes: comments, script, style
+[36m<html>[31m
+  [36m<head />[31m
+  [36m<body>[31m
+    [36m<div>[31m
+      [36m<div>[31m
+        [36m<div[31m
+          [33mdata-testid[31m=[32m"isReady"[31m
+        [36m>[31m
+          [0mtrue[0m
+        [36m</div>[31m
+        [36m<div[31m
+          [33mdata-testid[31m=[32m"isProcessing"[31m
+        [36m>[31m
+          [0mfalse[0m
+        [36m</div>[31m
+        [36m<div[31m
+          [33mdata-testid[31m=[32m"pending"[31m
+        [36m>[31m
+          [0m0[0m
+        [36m</div>[31m
+        [36m<div[31m
+          [33mdata-testid[31m=[32m"total"[31m
+        [36m>[31m
+          [0m10[0m
+        [36m</div>[31m
+      [36m</div>[31m
+    [36m</div>[31m
+  [36m</body>[31m
+[36m</html>[31m[39m
+[36m [2m❯[22m src/__tests__/unit/providers/SyncProvider.test.tsx:[2m250:34[22m[39m
+    [90m248| [39m
+    [90m249| [39m      [35mawait[39m [34mwaitFor[39m(() [33m=>[39m {
+    [90m250| [39m        [34mexpect[39m(mockProcessQueue)[33m.[39m[34mtoHaveBeenCalled[39m()[33m;[39m
+    [90m   | [39m                                 [31m^[39m
+    [90m251| [39m      })[33m;[39m
+    [90m252| [39m
+[90m [2m❯[22m runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:[2m47:12[22m[39m
+[90m [2m❯[22m checkCallback node_modules/@testing-library/dom/dist/wait-for.js:[2m124:77[22m[39m
+[90m [2m❯[22m Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:[2m118:16[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[36/41]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/unit/providers/SyncProvider.test.tsx[2m > [22mSyncProvider[2m > [22mAuto-sync[2m > [22mshould trigger auto-sync when coming back online
+[31m[1mAssertionError[22m: expected "spy" to be called at least once
+
+Ignored nodes: comments, script, style
+[36m<html>[31m
+  [36m<head />[31m
+  [36m<body>[31m
+    [36m<div>[31m
+      [36m<div>[31m
+        [36m<div[31m
+          [33mdata-testid[31m=[32m"isReady"[31m
+        [36m>[31m
+          [0mtrue[0m
+        [36m</div>[31m
+        [36m<div[31m
+          [33mdata-testid[31m=[32m"isProcessing"[31m
+        [36m>[31m
+          [0mfalse[0m
+        [36m</div>[31m
+        [36m<div[31m
+          [33mdata-testid[31m=[32m"pending"[31m
+        [36m>[31m
+          [0m0[0m
+        [36m</div>[31m
+        [36m<div[31m
+          [33mdata-testid[31m=[32m"total"[31m
+        [36m>[31m
+          [0m10[0m
+        [36m</div>[31m
+      [36m</div>[31m
+    [36m</div>[31m
+  [36m</body>[31m
+[36m</html>[31m[39m
+[36m [2m❯[22m src/__tests__/unit/providers/SyncProvider.test.tsx:[2m296:34[22m[39m
+    [90m294| [39m
+    [90m295| [39m      [35mawait[39m [34mwaitFor[39m(() [33m=>[39m {
+    [90m296| [39m        [34mexpect[39m(mockProcessQueue)[33m.[39m[34mtoHaveBeenCalled[39m()[33m;[39m
+    [90m   | [39m                                 [31m^[39m
+    [90m297| [39m      })[33m;[39m
+    [90m298| [39m    })[33m;[39m
+[90m [2m❯[22m runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:[2m47:12[22m[39m
+[90m [2m❯[22m checkCallback node_modules/@testing-library/dom/dist/wait-for.js:[2m124:77[22m[39m
+[90m [2m❯[22m Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:[2m118:16[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[37/41]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/unit/providers/SyncProvider.test.tsx[2m > [22mSyncProvider[2m > [22mContext[2m > [22mshould share context across multiple children
+[31m[1mError[22m: [2mexpect([22m[31melement[31m[2m).toHaveTextContent()[22m
+
+Expected element to have text content:
+[32m  5[31m
+Received:
+[31m  0[31m[39m
+[36m [2m❯[22m src/__tests__/unit/providers/SyncProvider.test.tsx:[2m362:20[22m[39m
+    [90m360| [39m      [34mexpect[39m(pendingElements)[33m.[39m[34mtoHaveLength[39m([34m3[39m)[33m;[39m
+    [90m361| [39m      pendingElements[33m.[39m[34mforEach[39m(el [33m=>[39m {
+    [90m362| [39m        [34mexpect[39m(el)[33m.[39m[34mtoHaveTextContent[39m([32m'5'[39m)[33m;[39m
+    [90m   | [39m                   [31m^[39m
+    [90m363| [39m      })[33m;[39m
+    [90m364| [39m    })[33m;[39m
+[90m [2m❯[22m src/__tests__/unit/providers/SyncProvider.test.tsx:[2m361:23[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[38/41]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/unit/providers/SyncProvider.test.tsx[2m > [22mSyncProvider[2m > [22mProps[2m > [22mshould respect autoSync prop
+[31m[1mAssertionError[22m: expected "spy" to be called at least once
+
+Ignored nodes: comments, script, style
+[36m<html>[31m
+  [36m<head />[31m
+  [36m<body>[31m
+    [36m<div>[31m
+      [36m<div>[31m
+        [36m<div[31m
+          [33mdata-testid[31m=[32m"isReady"[31m
+        [36m>[31m
+          [0mtrue[0m
+        [36m</div>[31m
+        [36m<div[31m
+          [33mdata-testid[31m=[32m"isProcessing"[31m
+        [36m>[31m
+          [0mfalse[0m
+        [36m</div>[31m
+        [36m<div[31m
+          [33mdata-testid[31m=[32m"pending"[31m
+        [36m>[31m
+          [0m0[0m
+        [36m</div>[31m
+        [36m<div[31m
+          [33mdata-testid[31m=[32m"total"[31m
+        [36m>[31m
+          [0m10[0m
+        [36m</div>[31m
+      [36m</div>[31m
+    [36m</div>[31m
+  [36m</body>[31m
+[36m</html>[31m[39m
+[36m [2m❯[22m src/__tests__/unit/providers/SyncProvider.test.tsx:[2m392:34[22m[39m
+    [90m390| [39m
+    [90m391| [39m      [35mawait[39m [34mwaitFor[39m(() [33m=>[39m {
+    [90m392| [39m        [34mexpect[39m(mockProcessQueue)[33m.[39m[34mtoHaveBeenCalled[39m()[33m;[39m
+    [90m   | [39m                                 [31m^[39m
+    [90m393| [39m      })[33m;[39m
+    [90m394| [39m    })[33m;[39m
+[90m [2m❯[22m runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:[2m47:12[22m[39m
+[90m [2m❯[22m checkCallback node_modules/@testing-library/dom/dist/wait-for.js:[2m124:77[22m[39m
+[90m [2m❯[22m Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:[2m118:16[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[39/41]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/unit/providers/SyncProvider.test.tsx[2m > [22mSyncProvider[2m > [22mProps[2m > [22mshould default autoSync to true
+[31m[1mAssertionError[22m: expected "spy" to be called at least once
+
+Ignored nodes: comments, script, style
+[36m<html>[31m
+  [36m<head />[31m
+  [36m<body>[31m
+    [36m<div>[31m
+      [36m<div>[31m
+        [36m<div[31m
+          [33mdata-testid[31m=[32m"isReady"[31m
+        [36m>[31m
+          [0mtrue[0m
+        [36m</div>[31m
+        [36m<div[31m
+          [33mdata-testid[31m=[32m"isProcessing"[31m
+        [36m>[31m
+          [0mfalse[0m
+        [36m</div>[31m
+        [36m<div[31m
+          [33mdata-testid[31m=[32m"pending"[31m
+        [36m>[31m
+          [0m0[0m
+        [36m</div>[31m
+        [36m<div[31m
+          [33mdata-testid[31m=[32m"total"[31m
+        [36m>[31m
+          [0m10[0m
+        [36m</div>[31m
+      [36m</div>[31m
+    [36m</div>[31m
+  [36m</body>[31m
+[36m</html>[31m[39m
+[36m [2m❯[22m src/__tests__/unit/providers/SyncProvider.test.tsx:[2m404:34[22m[39m
+    [90m402| [39m
+    [90m403| [39m      [35mawait[39m [34mwaitFor[39m(() [33m=>[39m {
+    [90m404| [39m        [34mexpect[39m(mockProcessQueue)[33m.[39m[34mtoHaveBeenCalled[39m()[33m;[39m
+    [90m   | [39m                                 [31m^[39m
+    [90m405| [39m      })[33m;[39m
+    [90m406| [39m    })[33m;[39m
+[90m [2m❯[22m runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:[2m47:12[22m[39m
+[90m [2m❯[22m checkCallback node_modules/@testing-library/dom/dist/wait-for.js:[2m124:77[22m[39m
+[90m [2m❯[22m Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:[2m118:16[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[40/41]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/unit/providers/SyncProvider.test.tsx[2m > [22mSyncProvider[2m > [22mIntegration[2m > [22mshould handle stats updates
+[31m[1mError[22m: [2mexpect([22m[31melement[31m[2m).toHaveTextContent()[22m
+
+Expected element to have text content:
+[32m  5[31m
+Received:
+[31m  0[31m[39m
+[36m [2m❯[22m src/__tests__/unit/providers/SyncProvider.test.tsx:[2m448:45[22m[39m
+    [90m446| [39m      )[33m;[39m
+    [90m447| [39m
+    [90m448| [39m      [34mexpect[39m(screen[33m.[39m[34mgetByTestId[39m([32m'pending'[39m))[33m.[39m[34mtoHaveTextContent[39m([32m'5'[39m)[33m;[39m
+    [90m   | [39m                                            [31m^[39m
+    [90m449| [39m
+    [90m450| [39m      [90m// Update stats[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[41/41]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m5 failed[39m[22m[2m | [22m[1m[32m27 passed[39m[22m[90m (32)[39m
+[2m      Tests [22m [1m[31m41 failed[39m[22m[2m | [22m[1m[32m422 passed[39m[22m[2m | [22m[90m96 todo[39m[90m (559)[39m
+[2m   Start at [22m 08:05:28
+[2m   Duration [22m 145.86s[2m (transform 17.97s, setup 37.56s, collect 55.07s, tests 52.11s, environment 212.47s, prepare 18.11s)[22m
+

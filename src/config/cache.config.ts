@@ -4,8 +4,8 @@
  * Defines caching strategies, rules, and settings for PWA
  *
  * Strategy Types:
- * - CacheFirst: Cache ’ Network ’ Fallback (best for static assets)
- * - NetworkFirst: Network ’ Cache ’ Fallback (best for API calls)
+ * - CacheFirst: Cache ï¿½ Network ï¿½ Fallback (best for static assets)
+ * - NetworkFirst: Network ï¿½ Cache ï¿½ Fallback (best for API calls)
  * - StaleWhileRevalidate: Cache (immediate) + Network (background) (best for frequent updates)
  * - NetworkOnly: Always fetch from network
  * - CacheOnly: Always use cache
@@ -296,7 +296,7 @@ export const cacheConfig: CacheConfig = {
   global: {
     defaultMaxAge: 24 * 60 * 60 * 1000, // 24 hours
     defaultMaxEntries: 50,
-    debug: process.env.NODE_ENV === 'development',
+    debug: import.meta.env.MODE === 'development',
   },
 };
 

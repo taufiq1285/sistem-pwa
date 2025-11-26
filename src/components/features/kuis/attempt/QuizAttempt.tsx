@@ -45,14 +45,19 @@ import {
   getUnansweredQuestions,
   type QuestionStatus,
 } from './QuizNavigation';
+import { ConnectionLostAlert } from './ConnectionLostAlert';
+import { OfflineAutoSave } from './OfflineAutoSave';
 
 // API & Types
 import {
-  getKuisById,
-  getSoalByKuis,
+  getKuisByIdOffline,
+  getSoalByKuisOffline,
   startAttempt,
-  submitAnswer,
+  submitAnswerOffline,
   submitQuiz,
+  getOfflineAnswers,
+  syncOfflineAnswers,
+  cacheAttemptOffline,
 } from '@/lib/api/kuis.api';
 import type { Kuis, Soal, AttemptKuis } from '@/types/kuis.types';
 import { TIPE_SOAL } from '@/types/kuis.types';
@@ -62,6 +67,9 @@ import { toast } from 'sonner';
 
 // Utils
 import { cn } from '@/lib/utils';
+
+// Hooks
+import { useNetworkStatus } from '@/lib/hooks/useNetworkStatus';
 
 // ============================================================================
 // TYPES
@@ -93,9 +101,10 @@ export function QuizAttempt({
   mahasiswaId,
   attemptId: existingAttemptId,
 }: QuizAttemptProps) {
-  
+
   const navigate = useNavigate();
-  
+  const { isOnline } = useNetworkStatus();
+
   // ============================================================================
   // STATE
   // ============================================================================
@@ -116,10 +125,6 @@ export function QuizAttempt({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSubmitDialog, setShowSubmitDialog] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
-  // Auto-save state
-  const [lastSaveTime, setLastSaveTime] = useState<Date | null>(null);
-  const [unsavedChanges, setUnsavedChanges] = useState(false);
   
   // Ref for remaining time
   const remainingTimeRef = useRef<number>(0);
@@ -153,33 +158,16 @@ export function QuizAttempt({
   }, [kuisId, mahasiswaId]);
   
   /**
-   * Auto-save effect
+   * Sync offline answers when coming back online
    */
   useEffect(() => {
-    if (!unsavedChanges || !attempt) return;
-    
-    const timeout = setTimeout(() => {
-      handleAutoSave();
-    }, 2000); // Auto-save after 2 seconds of inactivity
-    
-    return () => clearTimeout(timeout);
-  }, [answers, unsavedChanges, attempt]);
-  
-  /**
-   * Prevent accidental page close
-   */
-  useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (unsavedChanges) {
-        e.preventDefault();
-        e.returnValue = '';
-      }
-    };
-    
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [unsavedChanges]);
-  
+    if (isOnline && attempt) {
+      syncOfflineAnswers(attempt.id).catch((err) => {
+        console.error('Failed to sync offline answers:', err);
+      });
+    }
+  }, [isOnline, attempt]);
+
   // ============================================================================
   // HANDLERS - DATA LOADING
   // ============================================================================
@@ -190,27 +178,28 @@ export function QuizAttempt({
   const loadQuizAndStartAttempt = async () => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
-      // Load quiz
-      const quizData = await getKuisById(kuisId);
+      // Load quiz (offline-first)
+      const quizData = await getKuisByIdOffline(kuisId);
       setQuiz(quizData);
-      
-      // Load questions
-      const questionsData = await getSoalByKuis(kuisId);
-      
+
+      // Load questions (offline-first)
+      const questionsData = await getSoalByKuisOffline(kuisId);
+
       // Shuffle if needed (check for shuffle_soal or randomize_questions)
       const shouldShuffle = (quizData as any).shuffle_soal || (quizData as any).randomize_questions || false;
       const orderedQuestions = shouldShuffle
         ? shuffleArray([...questionsData])
         : questionsData.sort((a: Soal, b: Soal) => a.urutan - b.urutan);
-      
+
       setQuestions(orderedQuestions);
-      
+
       // Start or resume attempt
       if (existingAttemptId) {
-        // Resume existing attempt
-        // TODO: Load existing answers
+        // Resume existing attempt - load offline answers
+        const offlineAnswers = await getOfflineAnswers(existingAttemptId);
+        setAnswers(offlineAnswers);
         toast.info('Melanjutkan attempt sebelumnya');
       } else {
         // Start new attempt
@@ -219,6 +208,9 @@ export function QuizAttempt({
           mahasiswa_id: mahasiswaId,
         });
         setAttempt(attemptData);
+
+        // Cache attempt for offline use
+        await cacheAttemptOffline(attemptData);
       }
     } catch (err: any) {
       const errorMessage = err?.message || 'Gagal memuat kuis';
@@ -297,28 +289,24 @@ export function QuizAttempt({
       [currentQuestion.id]: value,
     }));
     
-    setUnsavedChanges(true);
   };
-  
   /**
-   * Auto-save answers
+   * Manual save answers (used before navigation/submit)
    */
   const handleAutoSave = async () => {
     if (!attempt || !currentQuestion || !currentAnswer) return;
-    
+
     setIsSaving(true);
-    
+
     try {
-      await submitAnswer({
+      await submitAnswerOffline({
         attempt_id: attempt.id,
         soal_id: currentQuestion.id,
         jawaban: currentAnswer,
       });
-      
-      setLastSaveTime(new Date());
-      setUnsavedChanges(false);
+
     } catch (err: any) {
-      console.error('Auto-save failed:', err);
+      console.error('Manual save failed:', err);
       // Don't show error to user, will retry
     } finally {
       setIsSaving(false);
@@ -471,22 +459,24 @@ export function QuizAttempt({
           compact
         />
       </div>
-      
-      {/* Auto-save indicator */}
-      {isSaving && (
-        <Alert>
-          <Loader2 className="h-4 w-4 animate-spin" />
-          <AlertDescription>Menyimpan jawaban...</AlertDescription>
-        </Alert>
-      )}
-      
-      {lastSaveTime && !isSaving && (
-        <Alert className="bg-green-50 border-green-200 text-green-900 dark:bg-green-950 dark:border-green-800 dark:text-green-100">
-          <AlertDescription>
-            Tersimpan otomatis pada {lastSaveTime.toLocaleTimeString('id-ID')}
-          </AlertDescription>
-        </Alert>
-      )}
+
+      {/* Connection Status Alert */}
+      <ConnectionLostAlert />
+
+      {/* Offline Auto-Save */}
+      <OfflineAutoSave
+        saveKey={`quiz_${attempt.id}_${currentQuestion?.id}`}
+        data={{
+          attempt_id: attempt.id,
+          soal_id: currentQuestion?.id,
+          jawaban: currentAnswer,
+        }}
+        onSave={async (data) => {
+          await submitAnswerOffline(data);
+        }}
+        delay={3000}
+        enabled={!!currentAnswer}
+      />
       
       {/* Main Content */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

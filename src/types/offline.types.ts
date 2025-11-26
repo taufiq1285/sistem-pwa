@@ -207,7 +207,11 @@ export type StoreName =
   | 'kelas'
   | 'users'
   | 'sync_queue'
-  | 'metadata';
+  | 'metadata'
+  | 'offline_quiz'
+  | 'offline_questions'
+  | 'offline_answers'
+  | 'offline_attempts';
 
 /**
  * Database metadata

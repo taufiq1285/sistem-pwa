@@ -18,17 +18,7 @@ export interface DosenStats {
 // COURSE & CLASS DATA
 // ============================================================================
 
-export interface MataKuliahWithStats {
-  id: string;
-  kode_mk: string;
-  nama_mk: string;
-  sks: number;
-  semester: number;
-  program_studi: string;
-  totalKelas: number;
-  totalMahasiswa: number;
-  is_active: boolean;
-}
+// MataKuliahWithStats is defined in mata-kuliah.types.ts - import from there if needed
 
 export interface KelasWithDetails {
   id: string;

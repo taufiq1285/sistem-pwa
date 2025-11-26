@@ -18,7 +18,22 @@
       "Bash(node apply-offline-fix.js:*)",
       "Bash(node:*)",
       "Bash(tee:*)",
-      "Bash(timeout 120 npm run build)"
+      "Bash(timeout 120 npm run build)",
+      "Bash(/dev/null)",
+      "Bash(npm run preview:*)",
+      "Bash(git log:*)",
+      "Bash(npm run lint:*)",
+      "Bash(npx eslint:*)",
+      "Bash(git checkout:*)",
+      "Bash(\"F:/tes 9/sistem-praktikum-pwa/src/lib/api/laboran.api.ts\")",
+      "Bash(find:*)",
+      "Bash(printf:*)",
+      "Bash(\"F:/tes 9/sistem-praktikum-pwa/src/pages/dosen/PeminjamanPage.tsx\")",
+      "Bash(timeout 60 npm test:*)",
+      "Bash(done)",
+      "Bash(echo:*)",
+      "Bash(npm run test:*)",
+      "Bash(xargs:*)"
     ],
     "deny": [],
     "ask": []

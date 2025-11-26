@@ -10,11 +10,11 @@
  * - [Component 2]
  */
 
-export const ComponentName = () => {
+export default function ComponentName() {
   // TODO: Add implementation
   return (
     <div>
       <p>TODO: Implement [ComponentName]</p>
     </div>
   );
-};
+}

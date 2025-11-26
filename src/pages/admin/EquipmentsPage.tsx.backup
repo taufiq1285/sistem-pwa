@@ -1,0 +1,177 @@
+/**
+ * Equipment/Inventaris Management Page for Admin
+ * Full CRUD for managing laboratory equipment inventory
+ */
+import { useState, useEffect } from 'react';
+import { Plus, Search, RefreshCw, Package, AlertCircle, Building2 } from 'lucide-react';
+import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+  getInventarisList,
+  type InventarisListItem,
+} from '@/lib/api/laboran.api';
+
+export default function EquipmentsPage() {
+  const [inventaris, setInventaris] = useState<InventarisListItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    loadInventaris();
+  }, []);
+
+  const loadInventaris = async () => {
+    try {
+      setLoading(true);
+      const result = await getInventarisList({ search: searchQuery || undefined });
+      setInventaris(result.data);
+    } catch (error) {
+      toast.error('Failed to load equipment data');
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredInventaris = inventaris.filter((item) =>
+    item.nama_barang.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    item.kode_barang.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const stats = {
+    total: inventaris.length,
+    available: inventaris.filter(i => i.kondisi === 'baik').length,
+    borrowed: inventaris.filter(i => i.kondisi === 'rusak_ringan').length,
+    maintenance: inventaris.filter(i => i.kondisi === 'rusak_berat').length,
+  };
+
+  return (
+    <div className="container mx-auto py-6 max-w-7xl space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Equipment Management</h1>
+          <p className="text-muted-foreground">Manage laboratory equipment and inventory</p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={loadInventaris}>
+            <RefreshCw className="h-4 w-4 mr-2" />Refresh
+          </Button>
+          <Button onClick={() => toast.info('Add equipment feature')}>
+            <Plus className="h-4 w-4 mr-2" />Add Equipment
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total</CardTitle>
+            <Package className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.total}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Available</CardTitle>
+            <Package className="h-4 w-4 text-green-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.available}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Borrowed</CardTitle>
+            <AlertCircle className="h-4 w-4 text-yellow-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.borrowed}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Maintenance</CardTitle>
+            <AlertCircle className="h-4 w-4 text-red-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.maintenance}</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="flex gap-4">
+        <div className="flex-1 relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input placeholder="Search equipment..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-9" />
+        </div>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Equipment Inventory</CardTitle>
+          <CardDescription>All laboratory equipment and supplies</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="text-center py-8">
+              <RefreshCw className="h-8 w-8 animate-spin mx-auto text-muted-foreground" />
+            </div>
+          ) : filteredInventaris.length === 0 ? (
+            <div className="text-center py-8">
+              <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+              <p>No equipment found</p>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Code</TableHead>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Laboratory</TableHead>
+                  <TableHead>Stock</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredInventaris.map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell className="font-mono">{item.kode_barang}</TableCell>
+                    <TableCell className="font-medium">{item.nama_barang}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1">
+                        <Building2 className="h-3 w-3" />
+                        {item.laboratorium?.nama_lab || '-'}
+                      </div>
+                    </TableCell>
+                    <TableCell>{item.jumlah}</TableCell>
+                    <TableCell>
+                      <Badge variant={
+                        item.kondisi === 'baik' ? 'default' :
+                        item.kondisi === 'rusak_ringan' ? 'secondary' :
+                        'destructive'
+                      }>
+                        {item.kondisi}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Button variant="outline" size="sm" onClick={() => toast.info('Edit equipment feature')}>
+                        Edit
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

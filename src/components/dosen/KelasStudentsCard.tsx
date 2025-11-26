@@ -41,7 +41,7 @@ export function KelasStudentsCard() {
       ]);
       setKelasList(kelasData);
       setStats(statsData);
-    } catch (error) {
+    } catch {
       toast.error('Gagal memuat data mahasiswa');
     } finally {
       setLoading(false);

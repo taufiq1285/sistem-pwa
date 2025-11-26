@@ -1,20 +1,27 @@
 /**
- * TODO: Implement [ComponentName]
- * 
- * Purpose: [Brief description]
- * Priority: [High/Medium/Low]
- * Props: [List expected props]
- * 
- * Related components:
- * - [Component 1]
- * - [Component 2]
+ * Notification Context
+ * Context for toast/notification management using Sonner
  */
 
-export const ComponentName = () => {
-  // TODO: Add implementation
-  return (
-    <div>
-      <p>TODO: Implement [ComponentName]</p>
-    </div>
-  );
-};
+import { createContext } from 'react';
+
+// ============================================================================
+// TYPES
+// ============================================================================
+
+export interface NotificationContextValue {
+  success: (message: string, title?: string, duration?: number) => void;
+  error: (message: string, title?: string, duration?: number) => void;
+  warning: (message: string, title?: string, duration?: number) => void;
+  info: (message: string, title?: string, duration?: number) => void;
+  dismiss: (id?: string | number) => void;
+  clear: () => void;
+}
+
+// ============================================================================
+// CONTEXT
+// ============================================================================
+
+export const NotificationContext = createContext<NotificationContextValue | undefined>(
+  undefined
+);

@@ -15,7 +15,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
-import type { Soal } from '@/types/kuis.types';
+import type { Soal, OpsiJawaban } from '@/types/kuis.types';
 import { TIPE_SOAL, TIPE_SOAL_LABELS } from '@/types/kuis.types';
 import { cn } from '@/lib/utils';
 
@@ -52,7 +52,7 @@ interface QuestionPreviewProps {
   /**
    * Student's answer (for review mode)
    */
-  studentAnswer?: any;
+  studentAnswer?: string | undefined;
 }
 
 // For builder preview (before question is saved)
@@ -60,10 +60,10 @@ export interface QuestionPreviewData {
   pertanyaan: string;
   tipe_soal: string;
   poin: number;
-  opsi_jawaban?: any[];
+  opsi_jawaban?: OpsiJawaban[];
   jawaban_benar?: string;
   penjelasan?: string;
-  rubrik_penilaian?: any;
+  rubrik_penilaian?: string;
   minWords?: number;
   maxWords?: number;
   characterLimit?: number;
@@ -197,9 +197,9 @@ function PreviewMultipleChoice({
   studentAnswer,
   compact,
 }: {
-  options: any[];
+  options: OpsiJawaban[];
   showAnswers?: boolean;
-  studentAnswer?: any;
+  studentAnswer?: string | undefined;
   compact?: boolean;
 }) {
   return (
@@ -209,7 +209,7 @@ function PreviewMultipleChoice({
       </Label>
       
       <RadioGroup value={studentAnswer} disabled>
-        {options.map((option: any, index: number) => {
+        {options.map((option: OpsiJawaban, index: number) => {
           const isCorrect = option.is_correct;
           const isStudentAnswer = studentAnswer === option.id;
           
@@ -259,7 +259,7 @@ function PreviewTrueFalse({
 }: {
   correctAnswer?: string;
   showAnswers?: boolean;
-  studentAnswer?: any;
+  studentAnswer?: string | undefined;
   compact?: boolean;
 }) {
   return (
@@ -324,7 +324,7 @@ function PreviewEssay({
   minWords?: number;
   maxWords?: number;
   characterLimit?: number;
-  rubric?: any;
+  rubric?: string;
   showRubric?: boolean;
   studentAnswer?: string;
   compact?: boolean;

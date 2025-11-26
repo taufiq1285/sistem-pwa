@@ -1,0 +1,66 @@
+
+> vite-project@0.0.0 build
+> tsc -b && vite build
+
+src/__tests__/integration/kuis-attempt-offline.test.tsx(22,1): error TS6133: 'indexedDBManager' is declared but its value is never read.
+src/__tests__/integration/kuis-attempt-offline.test.tsx(30,7): error TS2741: Property 'durasi_menit' is missing in type '{ id: string; kelas_id: string; dosen_id: string; judul: string; deskripsi: string; tanggal_mulai: string; tanggal_selesai: string; max_attempts: number; created_at: string; updated_at: string; }' but required in type 'Kuis'.
+src/__tests__/integration/network-reconnect.test.tsx(19,5): error TS6133: 'onlineListeners' is declared but its value is never read.
+src/__tests__/integration/network-reconnect.test.tsx(20,5): error TS6133: 'offlineListeners' is declared but its value is never read.
+src/__tests__/integration/network-reconnect.test.tsx(21,5): error TS6133: 'currentOnlineStatus' is declared but its value is never read.
+src/__tests__/integration/offline-sync-flow.test.tsx(15,1): error TS6133: 'waitFor' is declared but its value is never read.
+src/__tests__/integration/offline-sync-flow.test.tsx(16,1): error TS6192: All imports in import declaration are unused.
+src/__tests__/integration/offline-sync-flow.test.tsx(23,1): error TS6133: 'kuisApiModule' is declared but its value is never read.
+src/__tests__/integration/offline-sync-flow.test.tsx(29,5): error TS6133: 'mockOnlineStatus' is declared but its value is never read.
+src/__tests__/integration/offline-sync-flow.test.tsx(31,5): error TS6133: 'mockSyncedAnswers' is declared but its value is never read.
+src/__tests__/integration/offline-sync-flow.test.tsx(32,5): error TS6133: 'mockApiCallCount' is declared but its value is never read.
+src/__tests__/integration/offline-sync-flow.test.tsx(38,26): error TS6133: 'store' is declared but its value is never read.
+src/__tests__/integration/offline-sync-flow.test.tsx(42,27): error TS6133: 'store' is declared but its value is never read.
+src/__tests__/integration/offline-sync-flow.test.tsx(45,26): error TS6133: 'store' is declared but its value is never read.
+src/__tests__/integration/offline-sync-flow.test.tsx(50,26): error TS6133: 'store' is declared but its value is never read.
+src/__tests__/integration/offline-sync-flow.test.tsx(54,26): error TS6133: 'store' is declared but its value is never read.
+src/__tests__/integration/offline-sync-flow.test.tsx(151,66): error TS2554: Expected 2 arguments, but got 3.
+src/__tests__/integration/offline-sync-flow.test.tsx(156,14): error TS18046: 'updated' is of type 'unknown'.
+src/__tests__/integration/offline-sync-flow.test.tsx(237,14): error TS2571: Object is of type 'unknown'.
+src/__tests__/integration/offline-sync-flow.test.tsx(238,14): error TS2571: Object is of type 'unknown'.
+src/__tests__/integration/offline-sync-flow.test.tsx(239,14): error TS2571: Object is of type 'unknown'.
+src/__tests__/integration/offline-sync-flow.test.tsx(350,33): error TS2339: Property 'retryCount' does not exist on type '{}'.
+src/__tests__/integration/offline-sync-flow.test.tsx(360,73): error TS2554: Expected 2 arguments, but got 3.
+src/__tests__/integration/offline-sync-flow.test.tsx(392,66): error TS2554: Expected 2 arguments, but got 3.
+src/__tests__/integration/offline-sync-flow.test.tsx(398,14): error TS18046: 'final' is of type 'unknown'.
+src/__tests__/integration/offline-sync-flow.test.tsx(452,14): error TS18046: 'retrieved' is of type 'unknown'.
+src/__tests__/integration/offline-sync-flow.test.tsx(453,14): error TS18046: 'retrieved' is of type 'unknown'.
+src/__tests__/integration/offline-sync-flow.test.tsx(491,14): error TS18046: 'retrieved' is of type 'unknown'.
+src/__tests__/unit/hooks/useLocalData.test.ts(336,49): error TS2353: Object literal may only specify known properties, and 'judul' does not exist in type 'Partial<{ id: string; }>'.
+src/__tests__/unit/hooks/useLocalData.test.ts(339,71): error TS2339: Property 'judul' does not exist on type '{ id: string; }'.
+src/__tests__/unit/hooks/useLocalData.test.ts(357,51): error TS2353: Object literal may only specify known properties, and 'judul' does not exist in type 'Partial<{ id: string; }>'.
+src/__tests__/unit/hooks/useLocalData.test.ts(364,73): error TS2339: Property 'judul' does not exist on type '{ id: string; }'.
+src/__tests__/unit/hooks/useLocalData.test.ts(669,49): error TS2353: Object literal may only specify known properties, and 'judul' does not exist in type 'Partial<{ id: string; }>'.
+src/__tests__/unit/hooks/useLocalData.test.ts(671,48): error TS2339: Property 'judul' does not exist on type '{ id: string; }'.
+src/__tests__/unit/hooks/useOffline.test.ts(11,22): error TS6133: 'waitFor' is declared but its value is never read.
+src/__tests__/unit/hooks/useOffline.test.ts(14,1): error TS6133: 'NetworkChangeEvent' is declared but its value is never read.
+src/__tests__/unit/hooks/useOffline.test.ts(174,40): error TS2345: Argument of type '"custom"' is not assignable to parameter of type 'StoreName'.
+src/__tests__/unit/hooks/useOffline.test.ts(446,60): error TS6133: 'store' is declared but its value is never read.
+src/__tests__/unit/hooks/useSync.test.ts(14,30): error TS6196: 'SyncStatus' is declared but never used.
+src/__tests__/unit/hooks/useSync.test.ts(72,3): error TS2353: Object literal may only specify known properties, and 'created_at' does not exist in type 'SyncQueueItem'.
+src/__tests__/unit/hooks/useSync.test.ts(80,3): error TS2353: Object literal may only specify known properties, and 'processing' does not exist in type 'QueueStats'.
+src/__tests__/unit/hooks/useSync.test.ts(631,13): error TS6133: 'unsubscribeSpy' is declared but its value is never read.
+src/__tests__/unit/lib/offline/conflict-resolver.test.ts(4,3): error TS1484: 'ConflictData' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+src/__tests__/unit/lib/offline/sync-manager.test.ts(15,26): error TS6196: 'SyncResult' is declared but never used.
+src/__tests__/unit/lib/offline/sync-manager.test.ts(562,13): error TS6133: 'inProgress' is declared but its value is never read.
+src/__tests__/unit/providers/SyncProvider.test.tsx(165,51): error TS2345: Argument of type '{ isOnline: false; isOffline: true; status: "offline"; }' is not assignable to parameter of type 'UseNetworkStatusReturn'.
+  Type '{ isOnline: false; isOffline: true; status: "offline"; }' is missing the following properties from type 'UseNetworkStatusReturn': isUnstable, lastChanged, isReady
+src/__tests__/unit/providers/SyncProvider.test.tsx(191,9): error TS2741: Property 'syncing' is missing in type '{ total: number; pending: number; processing: number; completed: number; failed: number; }' but required in type 'QueueStats'.
+src/__tests__/unit/providers/SyncProvider.test.tsx(218,9): error TS2741: Property 'syncing' is missing in type '{ pending: number; total: number; processing: number; completed: number; failed: number; }' but required in type 'QueueStats'.
+src/__tests__/unit/providers/SyncProvider.test.tsx(264,51): error TS2345: Argument of type '{ isOnline: false; isOffline: true; status: "offline"; }' is not assignable to parameter of type 'UseNetworkStatusReturn'.
+  Type '{ isOnline: false; isOffline: true; status: "offline"; }' is missing the following properties from type 'UseNetworkStatusReturn': isUnstable, lastChanged, isReady
+src/__tests__/unit/providers/SyncProvider.test.tsx(283,51): error TS2345: Argument of type '{ isOnline: true; isOffline: false; status: "online"; }' is not assignable to parameter of type 'UseNetworkStatusReturn'.
+  Type '{ isOnline: true; isOffline: false; status: "online"; }' is missing the following properties from type 'UseNetworkStatusReturn': isUnstable, lastChanged, isReady
+src/__tests__/unit/providers/SyncProvider.test.tsx(456,9): error TS2741: Property 'syncing' is missing in type '{ pending: number; total: number; processing: number; completed: number; failed: number; }' but required in type 'QueueStats'.
+src/__tests__/unit/providers/SyncProvider.test.tsx(489,9): error TS2741: Property 'syncing' is missing in type '{ total: number; pending: number; processing: number; completed: number; failed: number; }' but required in type 'QueueStats'.
+src/pages/mahasiswa/OfflineSyncPage.tsx(80,9): error TS6133: 'getStatusBadge' is declared but its value is never read.
+src/pages/mahasiswa/PengumumanPage.tsx(83,25): error TS2345: Argument of type '{ attachment_url: string | null; created_at: string | null; id: string; is_active: boolean | null; is_pinned: boolean | null; judul: string; konten: string; penulis_id: string; prioritas: string | null; ... 6 more ...; view_count: number | null; }[]' is not assignable to parameter of type 'SetStateAction<Pengumuman[]>'.
+  Type '{ attachment_url: string | null; created_at: string | null; id: string; is_active: boolean | null; is_pinned: boolean | null; judul: string; konten: string; penulis_id: string; prioritas: string | null; ... 6 more ...; view_count: number | null; }[]' is not assignable to type 'Pengumuman[]'.
+    Type '{ attachment_url: string | null; created_at: string | null; id: string; is_active: boolean | null; is_pinned: boolean | null; judul: string; konten: string; penulis_id: string; prioritas: string | null; ... 6 more ...; view_count: number | null; }' is not assignable to type 'Pengumuman'.
+      Types of property 'prioritas' are incompatible.
+        Type 'string | null' is not assignable to type 'Priority'.
+          Type 'null' is not assignable to type 'Priority'.

@@ -1,0 +1,100 @@
+import { useState, useEffect } from 'react';
+import { Shield, Lock, RefreshCw } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
+import { getUserStats, type UserStats } from '@/lib/api/users.api';
+
+export default function RolesPage() {
+  const [stats, setStats] = useState<UserStats>({ total: 0, admin: 0, dosen: 0, mahasiswa: 0, laboran: 0, active: 0, inactive: 0 });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadStats();
+  }, []);
+
+  const loadStats = async () => {
+    try {
+      setLoading(true);
+      const data = await getUserStats();
+      setStats(data);
+    } catch (error) {
+      toast.error('Failed to load role statistics');
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const roles = [
+    { name: 'Admin', users: stats.admin, permissions: ['full_access', 'user_management', 'system_config'], variant: 'default' as const },
+    { name: 'Dosen', users: stats.dosen, permissions: ['manage_classes', 'manage_students', 'borrow_equipment'], variant: 'secondary' as const },
+    { name: 'Mahasiswa', users: stats.mahasiswa, permissions: ['view_classes', 'submit_assignments', 'view_grades'], variant: 'outline' as const },
+    { name: 'Laboran', users: stats.laboran, permissions: ['manage_equipment', 'manage_labs', 'approve_borrowing'], variant: 'destructive' as const },
+  ];
+
+  return (
+    <div className="container mx-auto py-6 max-w-7xl space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Roles & Permissions</h1>
+          <p className="text-muted-foreground">Manage user roles and access permissions</p>
+        </div>
+        <Button variant="outline" onClick={loadStats}>
+          <RefreshCw className="h-4 w-4 mr-2" />Refresh
+        </Button>
+      </div>
+      {loading ? (
+        <div className="text-center py-12">
+          <RefreshCw className="h-8 w-8 animate-spin mx-auto text-muted-foreground" />
+        </div>
+      ) : (
+        <>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {roles.map((role) => (
+              <Card key={role.name}>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <Shield className="h-8 w-8 text-muted-foreground" />
+                    <Badge variant={role.variant}>{role.name}</Badge>
+                  </div>
+                  <CardTitle className="mt-4">{role.users} Users</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium">Permissions:</p>
+                    <div className="flex flex-wrap gap-1">
+                      {role.permissions.map((perm) => (
+                        <Badge key={perm} variant="outline" className="text-xs">
+                          <Lock className="h-3 w-3 mr-1" />{perm}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Role Summary</CardTitle>
+              <CardDescription>Total users across all roles</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div>
+                    <p className="font-semibold">Total System Users</p>
+                    <p className="text-sm text-muted-foreground">{stats.active} active, {stats.inactive} inactive</p>
+                  </div>
+                  <div className="text-3xl font-bold">{stats.total}</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </>
+      )}
+    </div>
+  );
+}

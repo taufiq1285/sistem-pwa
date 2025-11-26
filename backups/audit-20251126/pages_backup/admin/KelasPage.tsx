@@ -1,0 +1,705 @@
+/**
+ * Admin Kelas Management Page
+ *
+ * Features:
+ * - View all Kelas
+ * - Create/Edit/Delete Kelas
+ * - Assign Mahasiswa to Kelas
+ * - Manage student enrollments (activate/deactivate)
+ */
+
+import { useState, useEffect } from 'react';
+import {
+  Plus,
+  Edit,
+  Trash2,
+  Users,
+  Loader2,
+  AlertCircle,
+  UserPlus,
+  UserMinus,
+  CheckCircle,
+  XCircle
+} from 'lucide-react';
+import { toast } from 'sonner';
+
+// UI Components
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+
+// API & Types
+import {
+  getKelas,
+  createKelas,
+  updateKelas,
+  deleteKelas,
+  getEnrolledStudents,
+  enrollStudent,
+  unenrollStudent,
+  toggleStudentStatus,
+  getAllMahasiswa,
+  createOrEnrollMahasiswa,
+  type KelasMahasiswa,
+} from '@/lib/api/kelas.api';
+import type { Kelas } from '@/types/kelas.types';
+
+export default function KelasPage() {
+  // State
+  const [kelasList, setKelasList] = useState<Kelas[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Form state
+  const [showFormDialog, setShowFormDialog] = useState(false);
+  const [editingKelas, setEditingKelas] = useState<Kelas | null>(null);
+  const [formData, setFormData] = useState({
+    nama_kelas: '',
+    semester_ajaran: 1,
+    tahun_ajaran: `${new Date().getFullYear()}/${new Date().getFullYear() + 1}`,
+  });
+
+  // Student management state
+  const [showStudentsDialog, setShowStudentsDialog] = useState(false);
+  const [selectedKelas, setSelectedKelas] = useState<Kelas | null>(null);
+  const [enrolledStudents, setEnrolledStudents] = useState<KelasMahasiswa[]>([]);
+  const [allMahasiswa, setAllMahasiswa] = useState<any[]>([]);
+  const [showAddStudentDialog, setShowAddStudentDialog] = useState(false);
+  const [selectedMahasiswaId, setSelectedMahasiswaId] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  // Manual student input state
+  const [inputMode, setInputMode] = useState<'select' | 'manual'>('manual');
+  const [manualStudentData, setManualStudentData] = useState({
+    full_name: '',
+    nim: '',
+    email: '',
+  });
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    setIsLoading(true);
+    try {
+      await loadKelas();
+    } catch (error) {
+      toast.error('Gagal memuat data');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const loadKelas = async () => {
+    try {
+      const data = await getKelas({ is_active: undefined }); // Load all kelas
+      setKelasList(data);
+    } catch (error: any) {
+      console.error('Error loading kelas:', error);
+      throw error;
+    }
+  };
+
+
+  const handleCreate = () => {
+    setEditingKelas(null);
+    setFormData({
+      nama_kelas: '',
+      semester_ajaran: 1,
+      tahun_ajaran: `${new Date().getFullYear()}/${new Date().getFullYear() + 1}`,
+    });
+    setShowFormDialog(true);
+  };
+
+  const handleEdit = (kelas: Kelas) => {
+    setEditingKelas(kelas);
+    setFormData({
+      nama_kelas: kelas.nama_kelas,
+      semester_ajaran: kelas.semester_ajaran,
+      tahun_ajaran: kelas.tahun_ajaran,
+    });
+    setShowFormDialog(true);
+  };
+
+  const handleSaveKelas = async () => {
+    if (!formData.nama_kelas) {
+      toast.error('Nama kelas wajib diisi');
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      if (editingKelas) {
+        await updateKelas(editingKelas.id, formData);
+        toast.success('Kelas berhasil diupdate');
+      } else {
+        await createKelas({ ...formData, is_active: true });
+        toast.success('Kelas berhasil dibuat');
+      }
+      setShowFormDialog(false);
+      await loadKelas();
+    } catch (error: any) {
+      toast.error(error.message || 'Gagal menyimpan kelas');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleDelete = async (kelas: Kelas) => {
+    if (!confirm(`Hapus kelas "${kelas.nama_kelas}"?`)) return;
+
+    try {
+      await deleteKelas(kelas.id);
+      toast.success('Kelas berhasil dihapus');
+      await loadKelas();
+    } catch (error: any) {
+      toast.error(error.message || 'Gagal menghapus kelas');
+    }
+  };
+
+  // Student Management Functions
+  const handleManageStudents = async (kelas: Kelas) => {
+    setSelectedKelas(kelas);
+    setIsProcessing(true);
+    try {
+      const [enrolled, all] = await Promise.all([
+        getEnrolledStudents(kelas.id),
+        getAllMahasiswa(),
+      ]);
+      setEnrolledStudents(enrolled);
+      setAllMahasiswa(all);
+      setShowStudentsDialog(true);
+    } catch (error: any) {
+      toast.error('Gagal memuat data mahasiswa');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleAddStudent = async () => {
+    if (!selectedKelas) return;
+
+    // Validate input based on mode
+    if (inputMode === 'manual') {
+      if (!manualStudentData.nim || !manualStudentData.full_name || !manualStudentData.email) {
+        toast.error('Lengkapi semua field mahasiswa');
+        return;
+      }
+    } else {
+      if (!selectedMahasiswaId) {
+        toast.error('Pilih mahasiswa');
+        return;
+      }
+    }
+
+    setIsProcessing(true);
+    try {
+      if (inputMode === 'manual') {
+        // Create or enroll mahasiswa using manual input
+        const result = await createOrEnrollMahasiswa(selectedKelas.id, manualStudentData);
+        if (result.success) {
+          toast.success(result.message);
+          const enrolled = await getEnrolledStudents(selectedKelas.id);
+          setEnrolledStudents(enrolled);
+          setShowAddStudentDialog(false);
+          setManualStudentData({ full_name: '', nim: '', email: '' });
+        } else {
+          toast.error(result.message);
+        }
+      } else {
+        // Enroll existing mahasiswa
+        await enrollStudent(selectedKelas.id, selectedMahasiswaId);
+        toast.success('Mahasiswa berhasil ditambahkan');
+        const enrolled = await getEnrolledStudents(selectedKelas.id);
+        setEnrolledStudents(enrolled);
+        setShowAddStudentDialog(false);
+        setSelectedMahasiswaId('');
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Gagal menambahkan mahasiswa');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleRemoveStudent = async (mahasiswaId: string) => {
+    if (!selectedKelas) return;
+    if (!confirm('Hapus mahasiswa dari kelas ini?')) return;
+
+    setIsProcessing(true);
+    try {
+      await unenrollStudent(selectedKelas.id, mahasiswaId);
+      toast.success('Mahasiswa berhasil dihapus');
+      const enrolled = await getEnrolledStudents(selectedKelas.id);
+      setEnrolledStudents(enrolled);
+    } catch (error: any) {
+      toast.error(error.message || 'Gagal menghapus mahasiswa');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleToggleStatus = async (mahasiswaId: string, currentStatus: boolean) => {
+    if (!selectedKelas) return;
+
+    setIsProcessing(true);
+    try {
+      await toggleStudentStatus(selectedKelas.id, mahasiswaId, !currentStatus);
+      toast.success('Status berhasil diubah');
+      const enrolled = await getEnrolledStudents(selectedKelas.id);
+      setEnrolledStudents(enrolled);
+    } catch (error: any) {
+      toast.error(error.message || 'Gagal mengubah status');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const getAvailableMahasiswa = () => {
+    const enrolledIds = enrolledStudents.map((e) => e.mahasiswa_id);
+    return allMahasiswa.filter((m) => !enrolledIds.includes(m.id));
+  };
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto py-6 max-w-7xl">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container mx-auto py-6 max-w-7xl space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Kelola Kelas</h1>
+          <p className="text-muted-foreground mt-1">
+            Buat kelas dan assign mahasiswa
+          </p>
+        </div>
+        <Button onClick={handleCreate}>
+          <Plus className="h-4 w-4 mr-2" />
+          Buat Kelas
+        </Button>
+      </div>
+
+      {/* Info Alert */}
+      <Alert>
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>
+          Setelah membuat kelas, gunakan tombol &quot;Kelola Mahasiswa&quot; untuk menambahkan
+          mahasiswa ke kelas tersebut.
+        </AlertDescription>
+      </Alert>
+
+      {/* Kelas Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Daftar Kelas</CardTitle>
+          <CardDescription>
+            Total {kelasList.length} kelas
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {kelasList.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              Belum ada kelas. Klik &quot;Buat Kelas&quot; untuk membuat kelas baru.
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nama Kelas</TableHead>
+                  <TableHead>Semester/Tahun</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Aksi</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {kelasList.map((kelas) => (
+                  <TableRow key={kelas.id}>
+                    <TableCell className="font-medium">
+                      {kelas.nama_kelas}
+                    </TableCell>
+                    <TableCell>
+                      Semester {kelas.semester_ajaran} • {kelas.tahun_ajaran}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={kelas.is_active ? 'default' : 'secondary'}>
+                        {kelas.is_active ? 'Aktif' : 'Tidak Aktif'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleManageStudents(kelas)}
+                      >
+                        <Users className="h-4 w-4 mr-1" />
+                        Kelola Mahasiswa
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleEdit(kelas)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDelete(kelas)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Create/Edit Kelas Dialog */}
+      <Dialog open={showFormDialog} onOpenChange={setShowFormDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {editingKelas ? 'Edit Kelas' : 'Buat Kelas Baru'}
+            </DialogTitle>
+            <DialogDescription>
+              Isi informasi kelas di bawah ini
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="nama_kelas">Nama Kelas *</Label>
+              <Input
+                id="nama_kelas"
+                placeholder="Contoh: Kelas A, Kelas Pagi, dll"
+                value={formData.nama_kelas}
+                onChange={(e) =>
+                  setFormData({ ...formData, nama_kelas: e.target.value })
+                }
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="semester_ajaran">Semester</Label>
+                <Select
+                  value={formData.semester_ajaran.toString()}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, semester_ajaran: parseInt(value) })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[1, 2, 3, 4, 5, 6, 7, 8].map((sem) => (
+                      <SelectItem key={sem} value={sem.toString()}>
+                        Semester {sem}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="tahun_ajaran">Tahun Ajaran</Label>
+                <Input
+                  id="tahun_ajaran"
+                  placeholder="2024/2025"
+                  value={formData.tahun_ajaran}
+                  onChange={(e) =>
+                    setFormData({ ...formData, tahun_ajaran: e.target.value })
+                  }
+                />
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowFormDialog(false)}
+              disabled={isProcessing}
+            >
+              Batal
+            </Button>
+            <Button onClick={handleSaveKelas} disabled={isProcessing}>
+              {isProcessing && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              {editingKelas ? 'Update' : 'Buat'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Manage Students Dialog */}
+      <Dialog open={showStudentsDialog} onOpenChange={setShowStudentsDialog}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              Kelola Mahasiswa - {selectedKelas?.nama_kelas}
+            </DialogTitle>
+            <DialogDescription>
+              Tambah atau hapus mahasiswa dari kelas ini
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="flex justify-between items-center">
+              <p className="text-sm text-muted-foreground">
+                Total {enrolledStudents.length} mahasiswa terdaftar
+              </p>
+              <Button
+                size="sm"
+                onClick={() => setShowAddStudentDialog(true)}
+              >
+                <UserPlus className="h-4 w-4 mr-2" />
+                Tambah Mahasiswa
+              </Button>
+            </div>
+
+            {enrolledStudents.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                Belum ada mahasiswa di kelas ini
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>NIM</TableHead>
+                    <TableHead>Nama</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Aksi</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {enrolledStudents.map((enrollment) => (
+                    <TableRow key={enrollment.id}>
+                      <TableCell>{enrollment.mahasiswa?.nim}</TableCell>
+                      <TableCell>
+                        {enrollment.mahasiswa?.users?.full_name}
+                      </TableCell>
+                      <TableCell>
+                        {enrollment.mahasiswa?.users?.email}
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() =>
+                            handleToggleStatus(
+                              enrollment.mahasiswa_id,
+                              enrollment.is_active ?? false
+                            )
+                          }
+                        >
+                          {enrollment.is_active ? (
+                            <CheckCircle className="h-4 w-4 text-green-600 mr-1" />
+                          ) : (
+                            <XCircle className="h-4 w-4 text-red-600 mr-1" />
+                          )}
+                          {enrollment.is_active ? 'Aktif' : 'Tidak Aktif'}
+                        </Button>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleRemoveStudent(enrollment.mahasiswa_id)}
+                        >
+                          <UserMinus className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Student Dialog */}
+      <Dialog open={showAddStudentDialog} onOpenChange={setShowAddStudentDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Tambah Mahasiswa</DialogTitle>
+            <DialogDescription>
+              Input data mahasiswa yang akan ditambahkan ke kelas
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            {/* Mode Selector */}
+            <div className="flex gap-2 p-1 bg-muted rounded-lg">
+              <Button
+                type="button"
+                variant={inputMode === 'manual' ? 'default' : 'ghost'}
+                size="sm"
+                className="flex-1"
+                onClick={() => setInputMode('manual')}
+              >
+                Input Manual
+              </Button>
+              <Button
+                type="button"
+                variant={inputMode === 'select' ? 'default' : 'ghost'}
+                size="sm"
+                className="flex-1"
+                onClick={() => setInputMode('select')}
+              >
+                Pilih dari List
+              </Button>
+            </div>
+
+            {/* Manual Input Mode */}
+            {inputMode === 'manual' && (
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  <Label htmlFor="nim">NIM *</Label>
+                  <Input
+                    id="nim"
+                    placeholder="Contoh: 12345678"
+                    value={manualStudentData.nim}
+                    onChange={(e) =>
+                      setManualStudentData({
+                        ...manualStudentData,
+                        nim: e.target.value
+                      })
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="full_name">Nama Lengkap *</Label>
+                  <Input
+                    id="full_name"
+                    placeholder="Contoh: Ahmad Suryadi"
+                    value={manualStudentData.full_name}
+                    onChange={(e) =>
+                      setManualStudentData({
+                        ...manualStudentData,
+                        full_name: e.target.value
+                      })
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email *</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="Contoh: ahmad@student.ac.id"
+                    value={manualStudentData.email}
+                    onChange={(e) =>
+                      setManualStudentData({
+                        ...manualStudentData,
+                        email: e.target.value
+                      })
+                    }
+                  />
+                </div>
+                <Alert>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription className="text-xs">
+                    Password default: <strong>NIM + 123</strong>. Mahasiswa bisa ubah setelah login.
+                  </AlertDescription>
+                </Alert>
+              </div>
+            )}
+
+            {/* Select Mode */}
+            {inputMode === 'select' && (
+              <div className="space-y-2">
+                <Label>Pilih Mahasiswa</Label>
+                <Select
+                  value={selectedMahasiswaId}
+                  onValueChange={setSelectedMahasiswaId}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Pilih mahasiswa yang sudah terdaftar" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {getAvailableMahasiswa().length === 0 ? (
+                      <div className="p-2 text-sm text-muted-foreground text-center">
+                        Semua mahasiswa sudah terdaftar
+                      </div>
+                    ) : (
+                      getAvailableMahasiswa().map((mhs) => (
+                        <SelectItem key={mhs.id} value={mhs.id}>
+                          {mhs.nim} - {mhs.users?.full_name}
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowAddStudentDialog(false);
+                setSelectedMahasiswaId('');
+                setManualStudentData({ full_name: '', nim: '', email: '' });
+                setInputMode('manual');
+              }}
+            >
+              Batal
+            </Button>
+            <Button
+              onClick={handleAddStudent}
+              disabled={isProcessing}
+            >
+              {isProcessing && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Tambah Mahasiswa
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}

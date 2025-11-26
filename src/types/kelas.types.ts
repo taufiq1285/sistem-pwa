@@ -65,4 +65,4 @@ export interface CreateKelasData {
   bobot_nilai?: BobotNilai | null;  // Optional: custom grade weights
 }
 
-export interface UpdateKelasData extends Partial<CreateKelasData> {}
+export type UpdateKelasData = Partial<CreateKelasData>;

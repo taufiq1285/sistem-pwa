@@ -27,7 +27,6 @@ export function ErrorTest() {
   };
 
   const triggerJSError = () => {
-    // @ts-ignore - Intentional error for testing
     const obj = null;
     console.log((obj as any).nonExistent.property);
   };

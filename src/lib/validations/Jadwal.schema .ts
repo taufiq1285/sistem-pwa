@@ -24,7 +24,7 @@ export const jadwalSchema = z.object({
     .min(1, 'Kelas harus diisi')
     .max(10, 'Kelas maksimal 10 karakter')
     .regex(
-      /^[A-Z0-9\s\-]+$/,
+      /^[A-Z0-9\s-]+$/,
       'Kelas hanya boleh huruf kapital, angka, spasi, dan tanda hubung'
     ),
   

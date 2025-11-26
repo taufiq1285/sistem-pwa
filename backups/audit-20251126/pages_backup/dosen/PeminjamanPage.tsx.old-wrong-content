@@ -1,0 +1,97 @@
+/**
+ * PeminjamanPage - Dosen
+ * View list of equipment borrowing requests status
+ */
+
+import { useState, useEffect } from 'react';
+import { Search, Users, GraduationCap, Filter, Download } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { getMyKelasWithStudents, type KelasWithStudents } from '@/lib/api/dosen.api';
+import { toast } from 'sonner';
+
+interface StudentListItem {
+  id: string;
+  nim: string;
+  nama: string;
+  email: string;
+  kelas_id: string;
+  kelas_nama: string;
+  enrolled_at: string;
+}
+
+export default function DosenPeminjamanPage() {
+  const [loading, setLoading] = useState(true);
+  const [kelasList, setKelasList] = useState<KelasWithStudents[]>([]);
+  const [students, setStudents] = useState<StudentListItem[]>([]);
+  const [filteredStudents, setFilteredStudents] = useState<StudentListItem[]>([]);
+  const [selectedKelas, setSelectedKelas] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => { loadData(); }, []);
+  useEffect(() => { filterStudents(); }, [students, selectedKelas, searchQuery]);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const data = await getMyKelasWithStudents();
+      setKelasList(data);
+      const allStudents: StudentListItem[] = [];
+      data.forEach((kelas) => {
+        kelas.students?.forEach((student) => {
+          allStudents.push({ id: student.id, nim: student.nim, nama: student.nama, email: student.email, kelas_id: kelas.id, kelas_nama: kelas.nama_kelas, enrolled_at: student.enrolled_at });
+        });
+      });
+      setStudents(allStudents);
+    } catch (error) {
+      console.error('Error loading students:', error);
+      toast.error('Gagal memuat data mahasiswa');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filterStudents = () => {
+    let filtered = students;
+    if (selectedKelas !== 'all') filtered = filtered.filter((s) => s.kelas_id === selectedKelas);
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter((s) => s.nama.toLowerCase().includes(query) || s.nim.toLowerCase().includes(query) || s.email.toLowerCase().includes(query));
+    }
+    setFilteredStudents(filtered);
+  };
+
+  const exportToCSV = () => {
+    const headers = ['NIM', 'Nama', 'Email', 'Kelas', 'Tanggal Daftar'];
+    const rows = filteredStudents.map((s) => [s.nim, s.nama, s.email, s.kelas_nama, new Date(s.enrolled_at).toLocaleDateString('id-ID')]);
+    const csv = [headers, ...rows].map((row) => row.join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'mahasiswa-' + new Date().toISOString().split('T')[0] + '.csv';
+    a.click();
+    toast.success('Data mahasiswa berhasil diekspor');
+  };
+
+  return (
+    <div className="container mx-auto py-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <div><h1 className="text-3xl font-bold">Daftar Mahasiswa</h1><p className="text-muted-foreground">Mahasiswa dari kelas yang Anda ajar</p></div>
+        <Button onClick={exportToCSV} disabled={filteredStudents.length === 0}><Download className="h-4 w-4 mr-2" />Export CSV</Button>
+      </div>
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card><CardHeader className="flex flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">Total Kelas</CardTitle><GraduationCap className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{kelasList.length}</div></CardContent></Card>
+        <Card><CardHeader className="flex flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">Total Mahasiswa</CardTitle><Users className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{students.length}</div></CardContent></Card>
+        <Card><CardHeader className="flex flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium">Ditampilkan</CardTitle><Filter className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{filteredStudents.length}</div></CardContent></Card>
+      </div>
+      <Card><CardHeader><CardTitle>Filter Mahasiswa</CardTitle><CardDescription>Cari dan filter mahasiswa berdasarkan kelas</CardDescription></CardHeader><CardContent><div className="flex gap-4"><div className="flex-1 relative"><Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input placeholder="Cari berdasarkan nama, NIM, atau email..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10" /></div><Select value={selectedKelas} onValueChange={setSelectedKelas}><SelectTrigger className="w-[250px]"><SelectValue placeholder="Semua Kelas" /></SelectTrigger><SelectContent><SelectItem value="all">Semua Kelas</SelectItem>{kelasList.map((kelas) => (<SelectItem key={kelas.id} value={kelas.id}>{kelas.nama_kelas} ({kelas.students?.length || 0} mhs)</SelectItem>))}</SelectContent></Select></div></CardContent></Card>
+      <Card><CardHeader><CardTitle>Daftar Mahasiswa</CardTitle><CardDescription>{filteredStudents.length} mahasiswa dari {kelasList.length} kelas</CardDescription></CardHeader><CardContent>{loading ? (<div className="text-center py-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div><p className="text-muted-foreground mt-2">Memuat data...</p></div>) : students.length === 0 ? (<Alert><Users className="h-4 w-4" /><AlertDescription>Belum ada mahasiswa terdaftar di kelas Anda</AlertDescription></Alert>) : filteredStudents.length === 0 ? (<Alert><Search className="h-4 w-4" /><AlertDescription>Tidak ada mahasiswa yang sesuai dengan filter</AlertDescription></Alert>) : (<div className="rounded-md border"><Table><TableHeader><TableRow><TableHead>NIM</TableHead><TableHead>Nama</TableHead><TableHead>Email</TableHead><TableHead>Kelas</TableHead><TableHead>Tanggal Daftar</TableHead><TableHead>Status</TableHead></TableRow></TableHeader><TableBody>{filteredStudents.map((student) => (<TableRow key={student.id}><TableCell className="font-mono">{student.nim}</TableCell><TableCell className="font-medium">{student.nama}</TableCell><TableCell className="text-muted-foreground">{student.email}</TableCell><TableCell><Badge variant="secondary">{student.kelas_nama}</Badge></TableCell><TableCell>{new Date(student.enrolled_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</TableCell><TableCell><Badge variant="default">Aktif</Badge></TableCell></TableRow>))}</TableBody></Table></div>)}</CardContent></Card>
+    </div>
+  );
+}

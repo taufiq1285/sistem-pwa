@@ -178,9 +178,9 @@ export function QuizCard({
       }
 
       onUpdate?.();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error('Gagal mengubah status kuis', {
-        description: error.message,
+        description: (error as Error).message,
       });
     } finally {
       setIsToggling(false);
@@ -204,9 +204,9 @@ export function QuizCard({
       
       // Navigate to edit the duplicated quiz
       navigate(`/dosen/kuis/${duplicated.id}/edit`);
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error('Gagal menduplikasi kuis', {
-        description: error.message,
+        description: (error as Error).message,
       });
     } finally {
       setIsDuplicating(false);
@@ -226,9 +226,9 @@ export function QuizCard({
       
       onDelete?.();
       setShowDeleteDialog(false);
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error('Gagal menghapus kuis', {
-        description: error.message,
+        description: (error as Error).message,
       });
     } finally {
       setIsDeleting(false);

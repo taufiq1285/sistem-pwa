@@ -273,6 +273,13 @@ export class IndexedDBManager {
     }
   }
 
+
+  /**
+   * Get item by ID (alias for read)
+   */
+  async getById<T>(storeName: StoreName, id: string): Promise<T | undefined> {
+    return this.read<T>(storeName, id);
+  }
   /**
    * Update (PUT) a single item
    */

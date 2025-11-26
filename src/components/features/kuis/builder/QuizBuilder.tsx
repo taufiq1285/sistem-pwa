@@ -118,7 +118,7 @@ export function QuizBuilder({ quiz, kelasId, dosenId, onSave, onCancel: _onCance
       const data = await getKelas({ dosen_id: dosenId, is_active: true });
       setKelasList(data);
       if (data.length === 1 && !isEditing) setValue('kelas_id', data[0].id);
-    } catch (error: any) {
+    } catch (_error: unknown) {  // ✅ FIXED: Unused variable
       toast.error('Gagal memuat kelas');
     } finally {
       setIsLoadingKelas(false);
@@ -129,7 +129,7 @@ export function QuizBuilder({ quiz, kelasId, dosenId, onSave, onCancel: _onCance
     try {
       const data = await getMataKuliah();
       setMataKuliahList(data);
-    } catch (error) {
+    } catch (_error: unknown) {  // ✅ FIXED: Unused variable
       console.error('Failed to load mata kuliah');
     }
   };
@@ -166,8 +166,8 @@ export function QuizBuilder({ quiz, kelasId, dosenId, onSave, onCancel: _onCance
         semester_ajaran: 1,
         tahun_ajaran: new Date().getFullYear() + '/' + (new Date().getFullYear() + 1),
       });
-    } catch (error: any) {
-      toast.error('Gagal membuat kelas', { description: error.message });
+    } catch (_error: unknown) {  // ✅ FIXED: Unused variable
+      toast.error('Gagal membuat kelas', { description: (_error as Error).message });
     } finally {
       setIsCreatingKelas(false);
     }
@@ -213,10 +213,10 @@ export function QuizBuilder({ quiz, kelasId, dosenId, onSave, onCancel: _onCance
 
         // Open question editor after successful save
         setEditorState({ isOpen: true, index: questions.length });
-      } catch (error: any) {
-        console.error('❌ Error auto-saving quiz:', error);
+      } catch (_error: unknown) {  // ✅ FIXED: Unused variable
+        console.error('❌ Error auto-saving quiz:', _error);
         toast.error('Gagal menyimpan kuis', {
-          description: error.message || error.toString()
+          description: (_error as Error).message || String(_error)
         });
       } finally {
       }
@@ -245,8 +245,8 @@ export function QuizBuilder({ quiz, kelasId, dosenId, onSave, onCancel: _onCance
         toast.success('Soal berhasil ditambahkan');
       }
       setEditorState({ isOpen: false });
-    } catch (error: any) {
-      toast.error('Gagal menyimpan soal', { description: error.message });
+    } catch (_error: unknown) {  // ✅ FIXED: Unused variable
+      toast.error('Gagal menyimpan soal', { description: (_error as Error).message });
     }
   };
   
@@ -256,7 +256,7 @@ export function QuizBuilder({ quiz, kelasId, dosenId, onSave, onCancel: _onCance
       await deleteSoal(questionId);
       setQuestions(prev => prev.filter(q => q.id !== questionId));
       toast.success('Soal berhasil dihapus');
-    } catch (error: any) {
+    } catch (_error: unknown) {  // ✅ FIXED: Unused variable
       toast.error('Gagal menghapus soal');
     }
   };

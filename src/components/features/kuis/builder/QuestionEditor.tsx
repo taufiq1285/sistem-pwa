@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { CreateSoalData, UpdateSoalData } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -57,7 +58,7 @@ interface QuestionEditorProps {
   /**
    * Callback when question is saved
    */
-  onSave: (questionData: any) => void;
+  onSave: (questionData: CreateSoalData | UpdateSoalData) => void;
   
   /**
    * Callback when editing is cancelled
@@ -104,7 +105,7 @@ export function QuestionEditor({
     question?.opsi_jawaban || generateDefaultOptions()
   );
   const [correctAnswerId, setCorrectAnswerId] = useState<string>(
-    question?.opsi_jawaban?.find((opt: any) => opt.is_correct)?.id || ''
+    question?.opsi_jawaban?.find((opt: OpsiJawaban) => opt.is_correct)?.id || ''
   );
   
   // True/False state
@@ -215,13 +216,13 @@ export function QuestionEditor({
     setIsSaving(true);
     
     // Prepare question data based on type
-    const questionData: any = {
+    const questionData: Partial<CreateSoalData> & { id?: string } = {
       kuis_id: kuisId,
       pertanyaan: pertanyaan.trim(),
-      tipe_soal: questionType,
+      tipe_soal: questionType as any,
       poin,
       urutan,
-      penjelasan: penjelasan.trim() || null,
+      penjelasan: (penjelasan.trim() || null) as any,
     };
     
     // Add type-specific data
@@ -241,7 +242,7 @@ export function QuestionEditor({
     }
     
     // Call parent callback
-    onSave(questionData);
+    onSave(questionData as any);
     
     setIsSaving(false);
   };
@@ -492,7 +493,7 @@ export function QuestionEditor({
 /**
  * Transform Soal data to editor format
  */
-export function transformSoalToEditor(soal: Soal): any {
+export function transformSoalToEditor(soal: Soal): Partial<Soal> {
   return {
     ...soal,
     opsi_jawaban: soal.opsi_jawaban || generateDefaultOptions(),
@@ -502,8 +503,8 @@ export function transformSoalToEditor(soal: Soal): any {
 /**
  * Transform editor data to API format
  */
-export function transformEditorToSoal(editorData: any): any {
-  const data: any = {
+export function transformEditorToSoal(editorData: Partial<CreateSoalData>): Partial<CreateSoalData> {
+  const data: Partial<CreateSoalData> = {
     kuis_id: editorData.kuis_id,
     pertanyaan: editorData.pertanyaan,
     tipe_soal: editorData.tipe_soal,

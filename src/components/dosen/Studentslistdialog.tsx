@@ -3,7 +3,7 @@
  * Dialog for dosen to view enrolled students in a class
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { 
   Users, 
   Mail, 
@@ -54,23 +54,23 @@ export function StudentsListDialog({
   const [loading, setLoading] = useState(false);
   const [students, setStudents] = useState<EnrolledStudent[]>([]);
 
-  useEffect(() => {
-    if (open && kelasId) {
-      fetchStudents();
-    }
-  }, [open, kelasId]);
-
-  const fetchStudents = async () => {
+  const fetchStudents = useCallback(async () => {
     try {
       setLoading(true);
       const data = await getKelasStudents(kelasId);
       setStudents(data);
-    } catch (error) {
+    } catch {
       toast.error('Gagal memuat daftar mahasiswa');
     } finally {
       setLoading(false);
     }
-  };
+  }, [kelasId]);
+
+  useEffect(() => {
+    if (open && kelasId) {
+      fetchStudents();
+    }
+  }, [open, kelasId, fetchStudents]);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);

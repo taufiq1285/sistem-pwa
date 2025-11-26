@@ -11,9 +11,14 @@
  * - Error handling
  */
 
+import { logger } from '@/lib/utils/logger';
+
 // ============================================================================
 // TYPES
 // ============================================================================
+
+// Flag to prevent multiple reloads
+let isReloading = false;
 
 /**
  * Service Worker registration configuration
@@ -82,7 +87,7 @@ export async function registerServiceWorker(config: SWConfig = {}): Promise<void
 
   // Check if service worker is supported
   if (!('serviceWorker' in navigator)) {
-    console.warn('[SW] Service Worker not supported in this browser');
+    logger.warn('[SW] Service Worker not supported in this browser');
     return;
   }
 
@@ -94,7 +99,7 @@ export async function registerServiceWorker(config: SWConfig = {}): Promise<void
   );
 
   if (!isLocalhost && window.location.protocol !== 'https:') {
-    console.warn('[SW] Service Worker requires HTTPS (except on localhost)');
+    logger.warn('[SW] Service Worker requires HTTPS (except on localhost)');
     return;
   }
 
@@ -106,12 +111,12 @@ export async function registerServiceWorker(config: SWConfig = {}): Promise<void
       });
     }
 
-    console.log('[SW] Registering service worker...');
+    logger.info('[SW] Registering service worker...');
 
     // Register service worker
     const registration = await navigator.serviceWorker.register(swPath, { scope });
 
-    console.log('[SW] Service worker registered successfully:', registration);
+    logger.info('[SW] Service worker registered successfully:', registration);
 
     // Setup update listeners
     setupUpdateListeners(registration, onUpdate);
@@ -131,13 +136,13 @@ export async function registerServiceWorker(config: SWConfig = {}): Promise<void
 
     // Handle initial installation
     if (registration.installing) {
-      console.log('[SW] Service worker installing...');
+      logger.info('[SW] Service worker installing...');
       trackInstalling(registration.installing);
     }
 
     // Handle waiting worker (update available)
     if (registration.waiting) {
-      console.log('[SW] New service worker waiting to activate');
+      logger.info('[SW] New service worker waiting to activate');
       if (onUpdate) {
         onUpdate(registration);
       }
@@ -145,10 +150,10 @@ export async function registerServiceWorker(config: SWConfig = {}): Promise<void
 
     // Handle active worker
     if (registration.active) {
-      console.log('[SW] Service worker active:', registration.active.state);
+      logger.info('[SW] Service worker active:', registration.active.state);
     }
   } catch (error) {
-    console.error('[SW] Registration failed:', error);
+    logger.error('[SW] Registration failed:', error);
     if (onError) {
       onError(error as Error);
     }
@@ -171,12 +176,12 @@ function setupUpdateListeners(
 
     if (!newWorker) return;
 
-    console.log('[SW] Update found, installing new version...');
+    logger.info('[SW] Update found, installing new version...');
 
     newWorker.addEventListener('statechange', () => {
       if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
         // New service worker available
-        console.log('[SW] New version installed, waiting to activate');
+        logger.info('[SW] New version installed, waiting to activate');
 
         if (onUpdate) {
           onUpdate(registration);
@@ -184,9 +189,9 @@ function setupUpdateListeners(
       }
 
       if (newWorker.state === 'activated') {
-        console.log('[SW] New version activated');
-        // Reload page to use new service worker
-        window.location.reload();
+        logger.info('[SW] New version activated');
+        // Don't auto-reload here - let the controllerchange event handle it
+        // This prevents update loops
       }
     });
   });
@@ -201,14 +206,14 @@ function setupUpdateCheck(
 ): void {
   // Check for updates immediately
   registration.update().catch((error) => {
-    console.error('[SW] Update check failed:', error);
+    logger.error('[SW] Update check failed:', error);
   });
 
   // Check for updates periodically
   setInterval(() => {
-    console.log('[SW] Checking for updates...');
+    logger.info('[SW] Checking for updates...');
     registration.update().catch((error) => {
-      console.error('[SW] Update check failed:', error);
+      logger.error('[SW] Update check failed:', error);
     });
   }, interval);
 }
@@ -218,18 +223,18 @@ function setupUpdateCheck(
  */
 function trackInstalling(worker: ServiceWorker): void {
   worker.addEventListener('statechange', () => {
-    console.log('[SW] Service worker state changed:', worker.state);
+    logger.info('[SW] Service worker state changed:', worker.state);
 
     if (worker.state === 'installed') {
-      console.log('[SW] Service worker installed');
+      logger.info('[SW] Service worker installed');
     }
 
     if (worker.state === 'activated') {
-      console.log('[SW] Service worker activated');
+      logger.info('[SW] Service worker activated');
     }
 
     if (worker.state === 'redundant') {
-      console.log('[SW] Service worker redundant');
+      logger.info('[SW] Service worker redundant');
     }
   });
 }
@@ -245,26 +250,26 @@ function setupMessageListeners(): void {
   navigator.serviceWorker.addEventListener('message', (event) => {
     const message: SWMessage = event.data;
 
-    console.log('[SW] Message received from service worker:', message);
+    logger.info('[SW] Message received from service worker:', message);
 
     switch (message.type) {
       case 'SYNC_STARTED':
-        console.log('[SW] Background sync started');
+        logger.info('[SW] Background sync started');
         dispatchSWEvent('sync-started', message);
         break;
 
       case 'SYNC_COMPLETED':
-        console.log('[SW] Background sync completed');
+        logger.info('[SW] Background sync completed');
         dispatchSWEvent('sync-completed', message);
         break;
 
       case 'SYNC_FAILED':
-        console.error('[SW] Background sync failed:', message.data);
+        logger.error('[SW] Background sync failed:', message.data);
         dispatchSWEvent('sync-failed', message);
         break;
 
       default:
-        console.log('[SW] Unknown message type:', message.type);
+        logger.info('[SW] Unknown message type:', message.type);
     }
   });
 }
@@ -274,7 +279,7 @@ function setupMessageListeners(): void {
  */
 export async function sendMessageToSW(message: SWMessage): Promise<void> {
   if (!navigator.serviceWorker.controller) {
-    console.warn('[SW] No active service worker controller');
+    logger.warn('[SW] No active service worker controller');
     return;
   }
 
@@ -283,7 +288,7 @@ export async function sendMessageToSW(message: SWMessage): Promise<void> {
     timestamp: Date.now(),
   });
 
-  console.log('[SW] Message sent to service worker:', message);
+  logger.info('[SW] Message sent to service worker:', message);
 }
 
 /**
@@ -307,26 +312,29 @@ export async function skipWaiting(): Promise<void> {
   const registration = await navigator.serviceWorker.getRegistration();
 
   if (!registration || !registration.waiting) {
-    console.warn('[SW] No waiting service worker to skip');
+    logger.warn('[SW] No waiting service worker to skip');
     return;
   }
 
-  console.log('[SW] Skipping waiting...');
+  logger.info('[SW] Skipping waiting...');
 
   await sendMessageToSW({ type: 'SKIP_WAITING' });
 
-  // Wait for controller change
+  // Wait for controller change (only reload once)
   navigator.serviceWorker.addEventListener('controllerchange', () => {
-    console.log('[SW] Controller changed, reloading page...');
-    window.location.reload();
-  });
+    if (!isReloading) {
+      isReloading = true;
+      logger.info('[SW] Controller changed, reloading page...');
+      window.location.reload();
+    }
+  }, { once: true }); // Only trigger once
 }
 
 /**
  * Clear all caches
  */
 export async function clearAllCaches(): Promise<void> {
-  console.log('[SW] Clearing all caches...');
+  logger.info('[SW] Clearing all caches...');
 
   await sendMessageToSW({ type: 'CLEAR_CACHE' });
 
@@ -334,7 +342,7 @@ export async function clearAllCaches(): Promise<void> {
   if ('caches' in window) {
     const cacheNames = await caches.keys();
     await Promise.all(cacheNames.map((name) => caches.delete(name)));
-    console.log(`[SW] Cleared ${cacheNames.length} caches`);
+    logger.info(`[SW] Cleared ${cacheNames.length} caches`);
   }
 }
 
@@ -371,19 +379,19 @@ export async function unregisterServiceWorker(): Promise<boolean> {
   const registration = await navigator.serviceWorker.getRegistration();
 
   if (!registration) {
-    console.warn('[SW] No service worker registration found');
+    logger.warn('[SW] No service worker registration found');
     return false;
   }
 
-  console.log('[SW] Unregistering service worker...');
+  logger.info('[SW] Unregistering service worker...');
 
   const success = await registration.unregister();
 
   if (success) {
-    console.log('[SW] Service worker unregistered successfully');
+    logger.info('[SW] Service worker unregistered successfully');
     await clearAllCaches();
   } else {
-    console.error('[SW] Failed to unregister service worker');
+    logger.error('[SW] Failed to unregister service worker');
   }
 
   return success;

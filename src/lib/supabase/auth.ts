@@ -4,7 +4,7 @@
  */
 
 import { supabase } from './client';
-import logger from '@/lib/utils/logger';
+import { logger } from '@/lib/utils/logger';
 import type {
   AuthUser,
   AuthSession,
@@ -47,11 +47,11 @@ export async function login(credentials: LoginCredentials): Promise<AuthResponse
         expires_at: data.session?.expires_at,
       },
     };
-  } catch (error: any) {
-    console.error('❌ login error:', error);
+  } catch (error: unknown) {
+    logger.error('login error:', error);
     return {
       success: false,
-      error: error.message || 'Login failed',
+      error: (error as Error).message || 'Login failed',
     };
   }
 }
@@ -61,7 +61,7 @@ export async function login(credentials: LoginCredentials): Promise<AuthResponse
  */
 export async function register(data: RegisterData): Promise<AuthResponse> {
   try {
-    console.log('🔵 register: START', { email: data.email, role: data.role });
+    logger.auth('register: START', { email: data.email, role: data.role });
 
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email: data.email,
@@ -90,7 +90,7 @@ export async function register(data: RegisterData): Promise<AuthResponse> {
       },
     });
 
-    console.log('🔵 register: Supabase response', { hasUser: !!authData.user, error: authError });
+    logger.auth('register: Supabase response', { hasUser: !!authData.user, error: authError });
 
     if (authError) {
       if (authError.message.includes('already registered')) {
@@ -101,25 +101,25 @@ export async function register(data: RegisterData): Promise<AuthResponse> {
 
     if (!authData.user) throw new Error('No user created');
 
-    console.log('🔵 register: Success', { userId: authData.user.id });
+    logger.auth('register: Success', { userId: authData.user.id });
 
     return {
       success: true,
       message: 'Registrasi berhasil! Silakan cek email Anda untuk verifikasi akun.',
     };
-  } catch (error: any) {
-    console.error('❌ Registration error:', error);
+  } catch (error: unknown) {
+    logger.error('Registration error:', error);
     
     let errorMessage = 'Registrasi gagal';
     
-    if (error.message.includes('already registered') || error.message.includes('sudah terdaftar')) {
-      errorMessage = error.message;
-    } else if (error.message.includes('Invalid email')) {
+    if ((error as Error).message.includes('already registered') || (error as Error).message.includes('sudah terdaftar')) {
+      errorMessage = (error as Error).message;
+    } else if ((error as Error).message.includes('Invalid email')) {
       errorMessage = 'Format email tidak valid';
-    } else if (error.message.includes('Password')) {
+    } else if ((error as Error).message.includes('Password')) {
       errorMessage = 'Password harus minimal 6 karakter';
-    } else if (error.message) {
-      errorMessage = error.message;
+    } else if ((error as Error).message) {
+      errorMessage = (error as Error).message;
     }
     
     return {
@@ -134,23 +134,23 @@ export async function register(data: RegisterData): Promise<AuthResponse> {
  */
 export async function logout(): Promise<AuthResponse> {
   try {
-    console.log('🔵 logout: START');
+    logger.auth('logout: START');
     
     const { error } = await supabase.auth.signOut();
-    console.log('🔵 logout: Supabase response', { error });
+    logger.auth('logout: Supabase response', { error });
     
     if (error) throw error;
 
-    console.log('🔵 logout: Success');
+    logger.auth('logout: Success');
     return {
       success: true,
       message: 'Logged out successfully',
     };
-  } catch (error: any) {
-    console.error('❌ Logout error:', error);
+  } catch (error: unknown) {
+    logger.error('Logout error:', error);
     return {
       success: false,
-      error: error.message || 'Logout failed',
+      error: (error as Error).message || 'Logout failed',
     };
   }
 }
@@ -186,8 +186,8 @@ export async function getSession(): Promise<AuthSession | null> {
       refresh_token: data.session.refresh_token,
       expires_at: data.session.expires_at,
     };
-  } catch (error) {
-    console.error('❌ getSession error:', error);
+  } catch (error: unknown) {
+    logger.error('getSession error:', error);
     return null;
   }
 }
@@ -197,23 +197,23 @@ export async function getSession(): Promise<AuthSession | null> {
  */
 export async function refreshSession(): Promise<AuthSession | null> {
   try {
-    console.log('🔵 refreshSession: START');
+    logger.auth('refreshSession: START');
     
     const { data, error } = await supabase.auth.refreshSession();
-    console.log('🔵 refreshSession: Supabase response', { 
+    logger.auth('refreshSession: Supabase response', { 
       hasSession: !!data.session, 
       error 
     });
     
     if (error) throw error;
     if (!data.session) {
-      console.log('🔵 refreshSession: No session after refresh');
+      logger.auth('refreshSession: No session after refresh');
       return null;
     }
 
-    console.log('🔵 refreshSession: Calling getUserProfile for', data.session.user.id);
+    logger.auth('refreshSession: Calling getUserProfile for', data.session.user.id);
     const user = await getUserProfile(data.session.user.id);
-    console.log('🔵 refreshSession: Success', { userId: user.id, role: user.role });
+    logger.auth('refreshSession: Success', { userId: user.id, role: user.role });
 
     return {
       user,
@@ -221,8 +221,8 @@ export async function refreshSession(): Promise<AuthSession | null> {
       refresh_token: data.session.refresh_token,
       expires_at: data.session.expires_at,
     };
-  } catch (error) {
-    console.error('❌ Refresh session error:', error);
+  } catch (error: unknown) {
+    logger.error('Refresh session error:', error);
     return null;
   }
 }
@@ -232,26 +232,26 @@ export async function refreshSession(): Promise<AuthSession | null> {
  */
 export async function resetPassword(email: string): Promise<AuthResponse> {
   try {
-    console.log('🔵 resetPassword: START', { email });
+    logger.auth('resetPassword: START', { email });
     
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`,
     });
 
-    console.log('🔵 resetPassword: Supabase response', { error });
+    logger.auth('resetPassword: Supabase response', { error });
 
     if (error) throw error;
 
-    console.log('🔵 resetPassword: Success');
+    logger.auth('resetPassword: Success');
     return {
       success: true,
       message: 'Password reset email sent',
     };
-  } catch (error: any) {
-    console.error('❌ Password reset error:', error);
+  } catch (error: unknown) {
+    logger.error('Password reset error:', error);
     return {
       success: false,
-      error: error.message || 'Password reset failed',
+      error: (error as Error).message || 'Password reset failed',
     };
   }
 }
@@ -261,26 +261,26 @@ export async function resetPassword(email: string): Promise<AuthResponse> {
  */
 export async function updatePassword(password: string): Promise<AuthResponse> {
   try {
-    console.log('🔵 updatePassword: START');
+    logger.auth('updatePassword: START');
     
     const { error } = await supabase.auth.updateUser({
       password,
     });
 
-    console.log('🔵 updatePassword: Supabase response', { error });
+    logger.auth('updatePassword: Supabase response', { error });
 
     if (error) throw error;
 
-    console.log('🔵 updatePassword: Success');
+    logger.auth('updatePassword: Success');
     return {
       success: true,
       message: 'Password updated successfully',
     };
-  } catch (error: any) {
-    console.error('❌ Password update error:', error);
+  } catch (error: unknown) {
+    logger.error('Password update error:', error);
     return {
       success: false,
-      error: error.message || 'Password update failed',
+      error: (error as Error).message || 'Password update failed',
     };
   }
 }
@@ -295,7 +295,7 @@ async function getUserProfile(userId: string): Promise<AuthUser> {
   try {
     // Increased timeout to 10 seconds with AbortController
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    const timeoutId = setTimeout(() => controller.abort(), 2000); // ✅ OPTIMIZED: 10s→2s
 
     const { data: user, error: userError } = await supabase
       .from('users')
@@ -392,11 +392,11 @@ async function getUserProfile(userId: string): Promise<AuthUser> {
     });
 
     return { ...user, ...roleData } as AuthUser;
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('getUserProfile: ERROR, using fallback', error);
 
     // Better error handling for abort errors
-    if (error.name === 'AbortError') {
+    if ((error as Error).name === 'AbortError') {
       logger.error('getUserProfile: Query timeout (10s)');
     }
 
@@ -429,7 +429,7 @@ async function getUserProfile(userId: string): Promise<AuthUser> {
         updated_at: authUser.updated_at || authUser.created_at,
       } as AuthUser;
     } catch (fallbackError) {
-      console.error('❌ getUserProfile: Fallback also failed', fallbackError);
+      logger.error('getUserProfile: Fallback also failed', fallbackError);
       throw fallbackError;
     }
   }
@@ -469,7 +469,7 @@ export function onAuthStateChange(
           refresh_token: session.refresh_token,
           expires_at: session.expires_at,
         });
-      } catch (error) {
+      } catch (error: unknown) {
         logger.error('onAuthStateChange: Error loading profile', error);
         callback(null);
       }
@@ -485,27 +485,27 @@ export function onAuthStateChange(
  */
 export async function getCurrentUser(): Promise<AuthUser | null> {
   try {
-    console.log('🔵 getCurrentUser: START');
+    logger.auth('getCurrentUser: START');
     
     const { data: { user }, error } = await supabase.auth.getUser();
     
-    console.log('🔵 getCurrentUser: Supabase response', { 
+    logger.auth('getCurrentUser: Supabase response', { 
       hasUser: !!user, 
       error 
     });
     
     if (!user) {
-      console.log('🔵 getCurrentUser: No user found');
+      logger.auth('getCurrentUser: No user found');
       return null;
     }
     
-    console.log('🔵 getCurrentUser: Calling getUserProfile for', user.id);
+    logger.auth('getCurrentUser: Calling getUserProfile for', user.id);
     const profile = await getUserProfile(user.id);
-    console.log('🔵 getCurrentUser: Success', { userId: profile.id, role: profile.role });
+    logger.auth('getCurrentUser: Success', { userId: profile.id, role: profile.role });
     
     return profile;
-  } catch (error) {
-    console.error('❌ Get current user error:', error);
+  } catch (error: unknown) {
+    logger.error('Get current user error:', error);
     return null;
   }
 }
@@ -515,16 +515,16 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
  */
 export async function isAuthenticated(): Promise<boolean> {
   try {
-    console.log('🔵 isAuthenticated: START');
+    logger.auth('isAuthenticated: START');
     
     const { data: { session }, error } = await supabase.auth.getSession();
     const authenticated = !!session;
     
-    console.log('🔵 isAuthenticated: Result', { authenticated, error });
+    logger.auth('isAuthenticated: Result', { authenticated, error });
     
     return authenticated;
-  } catch (error) {
-    console.error('❌ isAuthenticated error:', error);
+  } catch (error: unknown) {
+    logger.error('isAuthenticated error:', error);
     return false;
   }
 }

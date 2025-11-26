@@ -1,0 +1,5 @@
+
+> vite-project@0.0.0 build
+> tsc -b && vite build
+
+src/pages/mahasiswa/OfflineSyncPage.tsx(411,1): error TS1128: Declaration or statement expected.

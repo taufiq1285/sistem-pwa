@@ -48,6 +48,7 @@ export interface CreatePengumumanData {
   tanggal_mulai?: string;
   tanggal_selesai?: string;
   attachment_url?: string;
+  penulis_id?: string;
 }
 
 // Common utility types
@@ -64,12 +65,7 @@ export interface PaginationResult<T> {
   totalPages: number;
 }
 
-export interface ApiResponse<T> {
-  success: boolean;
-  data?: T;
-  error?: string;
-  message?: string;
-}
+// ApiResponse is defined in api.types.ts - import from there if needed
 
 export interface SelectOption {
   label: string;

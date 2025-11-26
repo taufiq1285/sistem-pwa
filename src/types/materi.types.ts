@@ -24,6 +24,7 @@ type MateriTable =
       };
 
 export interface Materi extends MateriTable {
+  // Relations
   dosen?: {
     full_name: string;
     gelar_depan?: string;
@@ -47,6 +48,9 @@ export interface CreateMateriData {
   file_size: number;
   minggu_ke?: number;
   is_downloadable?: boolean;
+  download_count?: number;
+  is_active?: boolean;
+  published_at?: string;
 }
 
 export interface UpdateMateriData extends Partial<CreateMateriData> {

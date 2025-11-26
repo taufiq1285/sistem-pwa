@@ -1,20 +1,9 @@
 /**
- * TODO: Implement [ComponentName]
- * 
- * Purpose: [Brief description]
- * Priority: [High/Medium/Low]
- * Props: [List expected props]
- * 
- * Related components:
- * - [Component 1]
- * - [Component 2]
+ * OfflineContext
+ *
+ * Context for offline functionality
+ * Re-exports from OfflineProvider for convenience
  */
 
-export const ComponentName = () => {
-  // TODO: Add implementation
-  return (
-    <div>
-      <p>TODO: Implement [ComponentName]</p>
-    </div>
-  );
-};
+export { useOfflineContext } from '@/providers/OfflineProvider';
+export type { UseOfflineReturn } from '@/lib/hooks/useOffline';

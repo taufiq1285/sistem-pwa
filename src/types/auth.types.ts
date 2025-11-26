@@ -43,7 +43,7 @@ export interface AuthUser extends UserTable {
   admin?: {
     id: string; // ✅ FIXED: admin table id
     level: string; // ✅ FIXED: Changed from nip to level
-    permissions: Record<string, any>; // ✅ FIXED: Added permissions
+    permissions: Record<string, boolean>; // ✅ FIXED: Added permissions (boolean flags)
   };
 }
 

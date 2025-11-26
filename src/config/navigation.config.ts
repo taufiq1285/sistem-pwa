@@ -19,8 +19,8 @@ import {
   ClipboardCheck,
   Building2,
   UserCog,
-  Boxes,
   BookOpen,
+  UserCheck,
   type LucideIcon
 } from 'lucide-react';
 import type { UserRole } from '@/types/auth.types';
@@ -112,10 +112,10 @@ const dosenNavigation: NavigationItem[] = [
     description: 'Peminjaman alat'
   },
   {
-    label: 'Mahasiswa',
-    href: '/dosen/mahasiswa',
-    icon: Users,
-    description: 'Daftar mahasiswa'
+    label: 'Kehadiran',
+    href: '/dosen/kehadiran',
+    icon: UserCheck,
+    description: 'Input kehadiran mahasiswa'
   },
   {
     label: 'Materi',
@@ -160,28 +160,34 @@ const adminNavigation: NavigationItem[] = [
     description: 'Kelola kelas'
   },
   {
-    label: 'Laboratorium',
-    href: '/admin/laboratorium',
+    label: 'Laboratories',
+    href: '/admin/laboratories',
     icon: Building2,
     description: 'Kelola laboratorium'
   },
   {
-    label: 'Jadwal Praktikum',
-    href: '/admin/jadwal',
-    icon: Calendar,
-    description: 'Kelola jadwal praktikum'
+    label: 'Equipments',
+    href: '/admin/equipments',
+    icon: Package,
+    description: 'Kelola peralatan'
   },
   {
-    label: 'Laporan',
-    href: '/admin/laporan',
+    label: 'Announcements',
+    href: '/admin/announcements',
+    icon: ClipboardList,
+    description: 'Kelola pengumuman'
+  },
+  {
+    label: 'Analytics',
+    href: '/admin/analytics',
     icon: BarChart3,
-    description: 'Laporan sistem'
+    description: 'Analitik sistem'
   },
   {
-    label: 'Pengaturan',
-    href: '/admin/pengaturan',
+    label: 'Sync Management',
+    href: '/admin/sync-management',
     icon: Settings,
-    description: 'Pengaturan sistem'
+    description: 'Kelola sinkronisasi'
   }
 ];
 
@@ -202,16 +208,10 @@ const laboranNavigation: NavigationItem[] = [
     description: 'Kelola inventaris'
   },
   {
-    label: 'Peminjaman',
-    href: '/laboran/peminjaman',
-    icon: Boxes,
-    description: 'Kelola peminjaman'
-  },
-  {
-    label: 'Jadwal Praktikum',
-    href: '/laboran/jadwal',
-    icon: Calendar,
-    description: 'Jadwal laboratorium'
+    label: 'Persetujuan',
+    href: '/laboran/persetujuan',
+    icon: ClipboardCheck,
+    description: 'Persetujuan peminjaman'
   },
   {
     label: 'Laboratorium',

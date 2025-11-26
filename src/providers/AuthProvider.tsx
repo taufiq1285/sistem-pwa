@@ -184,14 +184,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const performLogout = authApiWithLogout.logout || authApiWithLogout.signOut;
 
       if (performLogout) {
-        console.log('🔵 Calling auth API logout...');
-        const response = await performLogout();
-        
-        if (!response?.success) {
-          console.warn('⚠️ Logout API error:', response?.error);
-        } else {
-          console.log('✅ Auth API logout success');
-        }
+        console.log('🔵 Calling auth API logout (background)...');
+        performLogout().catch((error) => {
+          console.warn('⚠️ Logout API error (non-critical):', error);
+        });
       }
 
       console.log('🔵 Clearing state & storage...');
