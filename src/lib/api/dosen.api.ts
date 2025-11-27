@@ -905,8 +905,8 @@ export async function getStudentStats(): Promise<StudentStats> {
 export async function exportAllStudents() {
   try {
     const kelasWithStudents = await getMyKelasWithStudents();
-        
-    const allStudents = kelasWithStudents.flatMap(kelas => 
+
+    const allStudents = kelasWithStudents.flatMap(kelas =>
       kelas.students.map(student => ({
         kelas: kelas.nama_kelas,
         mata_kuliah: kelas.mata_kuliah_nama,
@@ -920,6 +920,211 @@ export async function exportAllStudents() {
   } catch (error) {
     console.error('Error exporting students:', error);
     return [];
+  }
+}
+
+// ============================================================================
+// BORROWING/PEMINJAMAN FUNCTIONS
+// ============================================================================
+
+/**
+ * Create a borrowing request (Pengajuan Peminjaman)
+ * Dosen can request to borrow equipment from lab inventory
+ */
+export async function createBorrowingRequest(data: {
+  inventaris_id: string;
+  jumlah_pinjam: number;
+  tanggal_pinjam: string;
+  tanggal_kembali_rencana: string;
+  keperluan: string;
+}): Promise<{ id: string }> {
+  try {
+    // Get current user
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User tidak terautentikasi');
+
+    // Get dosen profile
+    const { data: dosenData, error: dosenError } = await supabase
+      .from('dosen')
+      .select('id')
+      .eq('user_id', user.id)
+      .single();
+
+    if (dosenError || !dosenData) throw new Error('Data dosen tidak ditemukan');
+
+    // Create borrowing request
+    // peminjam_id = dosen_id (peminjaman hanya untuk dosen, bukan mahasiswa)
+    const { data: result, error } = await supabase
+      .from('peminjaman')
+      .insert({
+        inventaris_id: data.inventaris_id,
+        peminjam_id: dosenData.id, // Dosen as borrower
+        dosen_id: dosenData.id,
+        jumlah_pinjam: data.jumlah_pinjam,
+        keperluan: data.keperluan,
+        tanggal_pinjam: data.tanggal_pinjam,
+        tanggal_kembali_rencana: data.tanggal_kembali_rencana,
+        status: 'pending',
+        kondisi_pinjam: 'baik',
+      })
+      .select('id')
+      .single();
+
+    if (error) {
+      // Check error code and provide helpful message
+      const errorCode = (error as any)?.code;
+      const errorMessage = (error as any)?.message || '';
+
+      console.error('Supabase Error Details:', {
+        code: errorCode,
+        message: errorMessage,
+        fullError: error
+      });
+
+      if (errorCode === '42501') {
+        throw new Error(
+          'Tidak dapat membuat permintaan peminjaman: RLS policy tidak mengizinkan. ' +
+          'Hubungi administrator untuk mengkonfigurasi RLS policy.'
+        );
+      }
+
+      if (errorCode === '23505' || errorMessage.includes('duplicate')) {
+        throw new Error('Permintaan peminjaman untuk alat ini sudah ada. Silakan gunakan permintaan yang sudah ada.');
+      }
+
+      if (errorCode === '23502' || errorCode === '23503') {
+        throw new Error(
+          'Data tidak valid: Pastikan Anda memilih alat yang tersedia dan tanggal yang benar.'
+        );
+      }
+
+      throw error;
+    }
+    if (!result) throw new Error('Gagal membuat peminjaman');
+
+    return { id: result.id };
+  } catch (error) {
+    console.error('Error creating borrowing request:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get available equipment for borrowing
+ * Returns list of equipment with available stock
+ */
+export async function getAvailableEquipment() {
+  try {
+    const { data, error } = await supabase
+      .from('inventaris')
+      .select(`
+        id,
+        kode_barang,
+        nama_barang,
+        jumlah_tersedia,
+        kondisi,
+        laboratorium:laboratorium_id (
+          id,
+          nama_lab,
+          kode_lab
+        )
+      `)
+      .gt('jumlah_tersedia', 0)
+      // Removed strict is_available_for_borrowing filter to show all equipment with stock > 0
+      .order('nama_barang', { ascending: true });
+
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error fetching available equipment:', error);
+    throw error;
+  }
+}
+
+/**
+ * Return/kembalikan borrowed equipment
+ * Auto-increases inventory stock when marked as returned
+ */
+export async function returnBorrowingRequest(data: {
+  peminjaman_id: string;
+  kondisi_kembali: 'baik' | 'rusak_ringan' | 'rusak_berat' | 'maintenance';
+  keterangan_kembali?: string;
+}): Promise<{ id: string }> {
+  try {
+    // Get peminjaman details
+    const { data: peminjamanData, error: fetchError } = await supabase
+      .from('peminjaman')
+      .select('id, inventaris_id, jumlah_pinjam, status')
+      .eq('id', data.peminjaman_id)
+      .single();
+
+    if (fetchError || !peminjamanData) {
+      throw new Error('Peminjaman not found');
+    }
+
+    if (peminjamanData.status === 'returned') {
+      throw new Error('Peminjaman sudah dikembalikan sebelumnya');
+    }
+
+    // Update peminjaman status to returned
+    const { error: updateError } = await supabase
+      .from('peminjaman')
+      .update({
+        status: 'returned',
+        tanggal_kembali_aktual: new Date().toISOString().split('T')[0],
+        kondisi_kembali: data.kondisi_kembali,
+        keterangan_kembali: data.keterangan_kembali || null,
+      })
+      .eq('id', data.peminjaman_id);
+
+    if (updateError) throw updateError;
+
+    // Auto-increase inventory stock (return the equipment)
+    const { data: invData, error: invFetchError } = await supabase
+      .from('inventaris')
+      .select('jumlah_tersedia')
+      .eq('id', peminjamanData.inventaris_id)
+      .single();
+
+    if (invFetchError || !invData) throw invFetchError;
+
+    const newStock = invData.jumlah_tersedia + peminjamanData.jumlah_pinjam;
+    const { error: stockError } = await supabase
+      .from('inventaris')
+      .update({
+        jumlah_tersedia: newStock,
+      })
+      .eq('id', peminjamanData.inventaris_id);
+
+    if (stockError) throw stockError;
+
+    return { id: peminjamanData.id };
+  } catch (error) {
+    console.error('Error returning borrowing request:', error);
+    throw error;
+  }
+}
+
+/**
+ * Mark borrowing as in_use when dosen takes the equipment
+ */
+export async function markBorrowingAsTaken(peminjaman_id: string): Promise<{ id: string }> {
+  try {
+    // Update peminjaman status from 'approved' to 'in_use'
+    const { error } = await supabase
+      .from('peminjaman')
+      .update({
+        status: 'in_use',
+      })
+      .eq('id', peminjaman_id)
+      .eq('status', 'approved'); // Only allow if currently approved
+
+    if (error) throw error;
+
+    return { id: peminjaman_id };
+  } catch (error) {
+    console.error('Error marking borrowing as taken:', error);
+    throw error;
   }
 }
 
@@ -939,10 +1144,16 @@ export const dosenApi = {
   getActiveKuis,
   getMyBorrowing,
   getMyBorrowingRequests: getMyBorrowing,
-    
+
   // 🆕 NEW
   getKelasStudents,
   getMyKelasWithStudents,
   getStudentStats,
   exportAllStudents,
+
+  // Borrowing Request
+  createBorrowingRequest,
+  getAvailableEquipment,
+  markBorrowingAsTaken,
+  returnBorrowingRequest,
 };

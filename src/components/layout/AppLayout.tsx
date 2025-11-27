@@ -3,8 +3,8 @@
  * Main application layout with header, sidebar, and content area
  */
 
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/lib/hooks/useAuth';  // ✅ UNCOMMENT
 import { useRole } from '@/lib/hooks/useRole';   // ✅ UNCOMMENT
 import { Header } from './Header';
@@ -27,13 +27,19 @@ interface AppLayoutProps {
 
 export function AppLayout({ children, className }: AppLayoutProps) {
   const navigate = useNavigate();
-  
+  const location = useLocation();
+
   // ✅ USE REAL AUTH (Uncomment these lines)
   const { user, logout } = useAuth();
   const { role } = useRole();
-  
-  
+
+
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+
+  // ✅ Close mobile nav when route changes
+  useEffect(() => {
+    setMobileNavOpen(false);
+  }, [location.pathname]);
 
   // Handle logout
   const handleLogout = async () => {

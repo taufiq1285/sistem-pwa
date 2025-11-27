@@ -80,7 +80,8 @@ import {
   updateJadwal,
   deleteJadwal,
 } from '@/lib/api/jadwal.api';
-import { query } from '@/lib/api/base.api';
+import { query, insert } from '@/lib/api/base.api';
+import { supabase } from '@/lib/supabase/client';
 import type {
   Jadwal,
   CreateJadwalData,
@@ -265,6 +266,76 @@ export default function JadwalPage() {
   }, [currentDate, filterKelas, filterLab, filterHari]);
 
   // ============================================================================
+  // HELPER: Create or Get Mata Kuliah & Kelas
+  // ============================================================================
+
+  const getOrCreateMataKuliah = async (namaMk: string): Promise<string> => {
+    // Cek apakah sudah ada di list
+    const existing = mataKuliahList.find(
+      mk => mk.nama_mk.toLowerCase() === namaMk.toLowerCase()
+    );
+    
+    if (existing) {
+      return existing.id;
+    }
+
+    // Create new mata kuliah
+    try {
+      const newMk = await insert('mata_kuliah', {
+        kode_mk: namaMk.substring(0, 10).toUpperCase().replace(/\s/g, ''),
+        nama_mk: namaMk,
+        sks: 2,
+        semester: 1,
+        program_studi: 'Kebidanan',
+        is_active: true,
+      }) as MataKuliah;
+
+      // Refresh list
+      await fetchMataKuliah();
+
+      return newMk.id;
+    } catch (error) {
+      console.error('Failed to create mata kuliah:', error);
+      throw error;
+    }
+  };
+
+  const getOrCreateKelas = async (namaKelas: string, mataKuliahId: string): Promise<string> => {
+    // Cek apakah sudah ada di list
+    const existing = kelasList.find(
+      k => k.nama_kelas.toLowerCase() === namaKelas.toLowerCase() &&
+           k.mata_kuliah_id === mataKuliahId
+    );
+    
+    if (existing) {
+      return existing.id;
+    }
+
+    // Create new kelas
+    try {
+      const currentYear = new Date().getFullYear();
+      const newKelas = await insert('kelas', {
+        kode_kelas: namaKelas.substring(0, 10).toUpperCase().replace(/\s/g, ''),
+        nama_kelas: namaKelas,
+        mata_kuliah_id: mataKuliahId,
+        dosen_id: null,
+        tahun_ajaran: `${currentYear}/${currentYear + 1}`,
+        semester_ajaran: 1,
+        kuota: 40,
+        is_active: true,
+      }) as Kelas;
+
+      // Refresh list
+      await fetchKelas();
+      
+      return newKelas.id;
+    } catch (error) {
+      console.error('Failed to create kelas:', error);
+      throw error;
+    }
+  };
+
+  // ============================================================================
   // CREATE FORM
   // ============================================================================
 
@@ -299,22 +370,15 @@ export default function JadwalPage() {
     try {
       setIsCreating(true);
 
-      // Dosen HANYA bisa memilih kelas yang sudah ada
-      // Cari kelas dari list
-      const selectedKelas = kelasList.find(k => k.nama_kelas === data.kelas_nama);
+      // Get or create mata kuliah
+      const mataKuliahId = await getOrCreateMataKuliah(data.mata_kuliah_nama);
+      
+      // Get or create kelas
+      const kelasId = await getOrCreateKelas(data.kelas_nama, mataKuliahId);
 
-      if (!selectedKelas) {
-        toast.error('Kelas tidak ditemukan', {
-          description: 'Pilih kelas yang sudah ada. Jika tidak ada, hubungi Admin.',
-        });
-        return;
-      }
-
-      const kelasId = selectedKelas.id;
-
-      // ✅ Dosen memilih kelas yang sudah ada (dibuat Admin)
+      // ✅ PERBAIKAN DITERAPKAN: Ganti 'kelas' menjadi 'kelas_id'
       const createData: CreateJadwalData = {
-        kelas_id: kelasId, // ✅ Gunakan kelas yang dipilih
+        kelas_id: kelasId, // ✅ Diubah sesuai instruksi Anda
         laboratorium_id: data.laboratorium_id,
         tanggal_praktikum: format(data.tanggal_praktikum, 'yyyy-MM-dd'),
         jam_mulai: data.jam_mulai,
@@ -325,7 +389,7 @@ export default function JadwalPage() {
       };
 
       await createJadwal(createData);
-
+      
       toast.success('Jadwal berhasil ditambahkan');
       setIsCreateOpen(false);
       createForm.reset();
@@ -367,21 +431,15 @@ export default function JadwalPage() {
     try {
       setIsUpdating(true);
 
-      // Dosen HANYA bisa memilih kelas yang sudah ada
-      const selectedKelas = kelasList.find(k => k.nama_kelas === data.kelas_nama);
+      // Get or create mata kuliah
+      const mataKuliahId = await getOrCreateMataKuliah(data.mata_kuliah_nama);
+      
+      // Get or create kelas
+      const kelasId = await getOrCreateKelas(data.kelas_nama, mataKuliahId);
 
-      if (!selectedKelas) {
-        toast.error('Kelas tidak ditemukan', {
-          description: 'Pilih kelas yang sudah ada. Jika tidak ada, hubungi Admin.',
-        });
-        return;
-      }
-
-      const kelasId = selectedKelas.id;
-
-      // ✅ Dosen memilih kelas yang sudah ada (dibuat Admin)
+      // ✅ PERBAIKAN DITERAPKAN: Ganti 'kelas' menjadi 'kelas_id'
       const updateData: Partial<Omit<CreateJadwalData, 'hari'>> & { hari?: string } = {
-        kelas_id: kelasId, // ✅ Gunakan kelas yang dipilih
+        kelas_id: kelasId, // ✅ Diubah sesuai instruksi Anda
         laboratorium_id: data.laboratorium_id,
         hari: format(data.tanggal_praktikum, 'EEEE', { locale: id }).toLowerCase(),
         tanggal_praktikum: format(data.tanggal_praktikum, 'yyyy-MM-dd'),
@@ -532,7 +590,7 @@ export default function JadwalPage() {
         )}
       />
 
-      {/* Kelas Selection - HANYA BISA PILIH, TIDAK BOLEH BUAT BARU */}
+      {/* Kelas Combobox */}
       <FormField
         control={form.control}
         name="kelas_nama"
@@ -550,28 +608,21 @@ export default function JadwalPage() {
                       !field.value && 'text-muted-foreground'
                     )}
                   >
-                    {field.value || 'Pilih kelas...'}
+                    {field.value || 'Pilih atau ketik kelas...'}
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
                 </FormControl>
               </PopoverTrigger>
               <PopoverContent className="w-[400px] p-0">
                 <Command>
-                  <CommandInput
-                    placeholder="Cari kelas..."
+                  <CommandInput 
+                    placeholder="Cari atau ketik kelas baru..." 
                     value={field.value}
-                    onValueChange={(value) => {
-                      // ❌ JANGAN ALLOW custom input - hanya search
-                      // Cari yang match, jika tidak ada, jangan ubah
-                      const match = kelasList.find(k => k.nama_kelas.toLowerCase().includes(value.toLowerCase()));
-                      if (match || value === '') {
-                        field.onChange(value);
-                      }
-                    }}
+                    onValueChange={field.onChange}
                   />
                   <CommandList>
                     <CommandEmpty>
-                      Tidak ada kelas. Hubungi Admin untuk membuat kelas baru.
+                      Tidak ada hasil. Tekan Enter untuk menggunakan "{field.value}"
                     </CommandEmpty>
                     <CommandGroup>
                       {kelasList.map((kelas) => (
@@ -598,7 +649,7 @@ export default function JadwalPage() {
               </PopoverContent>
             </Popover>
             <FormDescription>
-              Pilih kelas yang sudah dibuat Admin. Jika tidak ada, hubungi Admin.
+              Pilih dari list atau ketik nama kelas (contoh: Kelas A, Kelas B)
             </FormDescription>
             <FormMessage />
           </FormItem>

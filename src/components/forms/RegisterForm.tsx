@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { registerSchema, type RegisterFormData } from '@/lib/validations/auth.schema';
+import { normalize } from '@/lib/utils/normalize';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -43,7 +44,27 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
     try {
       setError(null);
       setSuccess(null);
-      await registerUser(data);
+
+      // ✅ Normalize data before registration
+      const normalizedData: RegisterFormData = {
+        ...data,
+        full_name: normalize.fullName(data.full_name),
+        email: normalize.email(data.email),
+        phone: data.phone ? normalize.phone(data.phone) : undefined,
+        // Mahasiswa-specific fields
+        ...(data.role === 'mahasiswa' && {
+          nim: data.nim ? normalize.nim(data.nim) : undefined,
+          program_studi: data.program_studi
+            ? normalize.programStudi(data.program_studi)
+            : undefined,
+        }),
+        // Dosen-specific fields
+        ...(data.role === 'dosen' && {
+          nip: data.nip ? normalize.nim(data.nip) : undefined, // NIP uses same format as NIM
+        }),
+      };
+
+      await registerUser(normalizedData);
       setSuccess('Registration successful! Please check your email to verify your account.');
       setTimeout(() => onSuccess?.(), 2000);
     } catch (err: unknown) {

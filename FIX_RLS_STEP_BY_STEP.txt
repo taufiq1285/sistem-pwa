@@ -1,0 +1,282 @@
+================================================================================
+CARA FIX ERROR 403 SAAT DOSEN BUAT PERMINTAAN PEMINJAMAN
+Step-By-Step Visual Guide
+================================================================================
+
+ERROR YANG MUNCUL:
+-----------------
+POST https://rkyoifqbfcztnhevpnpx.supabase.co/rest/v1/peminjaman 403 (Forbidden)
+{code: '42501', message: 'new row violates row-level security policy for table "peminjaman"'}
+
+PENYEBAB:
+RLS (Row Level Security) policy di tabel peminjaman blocking dosen dari INSERT
+
+================================================================================
+STEP 1: BUKA SUPABASE DASHBOARD
+================================================================================
+
+1. Buka browser, ketik: https://app.supabase.com
+2. Login dengan email & password Anda
+3. Pilih project: "sistem-praktikum-pwa"
+4. Dashboard akan terbuka
+
+================================================================================
+STEP 2: BUKA SQL EDITOR
+================================================================================
+
+Di sidebar kiri, cari dan klik:
+  → SQL Editor
+
+Atau alternatif:
+  → Authentication → Policies
+
+Setelah diklik, akan terbuka halaman SQL Editor kosong.
+
+================================================================================
+STEP 3: COPY CODE INI
+================================================================================
+
+PILIH SALAH SATU dari 3 opsi di bawah (OPSI 1 recommended):
+
+────────────────────────────────────────────────────────────────────────────
+OPSI 1: RECOMMENDED ✅ (Lebih Aman - Pilih ini dulu!)
+────────────────────────────────────────────────────────────────────────────
+
+Copy seluruh blok code ini:
+
+---START COPY HERE---
+
+-- Hapus policy lama
+DROP POLICY IF EXISTS "Allow dosen to create borrowing requests" ON peminjaman;
+DROP POLICY IF EXISTS "Allow laboran to manage peminjaman" ON peminjaman;
+DROP POLICY IF EXISTS "Users can view peminjaman" ON peminjaman;
+
+-- Policy 1: Allow create requests
+CREATE POLICY "Allow authenticated users to create borrowing requests"
+ON peminjaman
+FOR INSERT
+WITH CHECK (auth.uid() IS NOT NULL);
+
+-- Policy 2: Allow view
+CREATE POLICY "Allow authenticated users to view peminjaman"
+ON peminjaman
+FOR SELECT
+USING (auth.uid() IS NOT NULL);
+
+-- Policy 3: Allow laboran update
+CREATE POLICY "Allow laboran to update peminjaman"
+ON peminjaman
+FOR UPDATE
+USING (
+  EXISTS (
+    SELECT 1 FROM laboran WHERE user_id = auth.uid()
+  )
+)
+WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM laboran WHERE user_id = auth.uid()
+  )
+);
+
+-- Enable RLS
+ALTER TABLE peminjaman ENABLE ROW LEVEL SECURITY;
+
+---END COPY HERE---
+
+────────────────────────────────────────────────────────────────────────────
+OPSI 2: SIMPLE ⚡ (Jika Opsi 1 Error)
+────────────────────────────────────────────────────────────────────────────
+
+Copy seluruh blok code ini:
+
+---START COPY HERE---
+
+-- Hapus semua policy lama
+DROP POLICY IF EXISTS "Allow dosen to create borrowing requests" ON peminjaman;
+DROP POLICY IF EXISTS "Allow laboran to manage peminjaman" ON peminjaman;
+DROP POLICY IF EXISTS "Users can view peminjaman" ON peminjaman;
+DROP POLICY IF EXISTS "Allow authenticated users to create borrowing requests" ON peminjaman;
+DROP POLICY IF EXISTS "Allow authenticated users to view peminjaman" ON peminjaman;
+DROP POLICY IF EXISTS "Allow laboran to update peminjaman" ON peminjaman;
+
+-- Policy tunggal
+CREATE POLICY "Allow all authenticated actions on peminjaman"
+ON peminjaman
+FOR ALL
+USING (auth.uid() IS NOT NULL)
+WITH CHECK (auth.uid() IS NOT NULL);
+
+-- Enable RLS
+ALTER TABLE peminjaman ENABLE ROW LEVEL SECURITY;
+
+---END COPY HERE---
+
+────────────────────────────────────────────────────────────────────────────
+OPSI 3: PALING SIMPLE 💨 (Jika Opsi 1 & 2 Error)
+────────────────────────────────────────────────────────────────────────────
+
+Copy ini saja:
+
+---START COPY HERE---
+
+DROP POLICY IF EXISTS "Allow dosen to create borrowing requests" ON peminjaman;
+DROP POLICY IF EXISTS "Allow laboran to manage peminjaman" ON peminjaman;
+DROP POLICY IF EXISTS "Users can view peminjaman" ON peminjaman;
+DROP POLICY IF EXISTS "Allow authenticated users to create borrowing requests" ON peminjaman;
+DROP POLICY IF EXISTS "Allow authenticated users to view peminjaman" ON peminjaman;
+DROP POLICY IF EXISTS "Allow laboran to update peminjaman" ON peminjaman;
+DROP POLICY IF EXISTS "Allow all authenticated actions on peminjaman" ON peminjaman;
+
+ALTER TABLE peminjaman DISABLE ROW LEVEL SECURITY;
+
+---END COPY HERE---
+
+================================================================================
+STEP 4: PASTE KE SQL EDITOR
+================================================================================
+
+1. Buka SQL Editor yang sudah dibuka di STEP 2
+2. Di area text kosong, PASTE code yang sudah di-COPY
+3. Pastikan SELURUH CODE TERLIHAT DI EDITOR
+
+Contoh:
+┌─────────────────────────────────────────────────┐
+│ -- Hapus policy lama                            │
+│ DROP POLICY IF EXISTS "Allow dosen...           │
+│                                                  │
+│ CREATE POLICY "Allow authenticated users...      │
+│ ...                                              │
+└─────────────────────────────────────────────────┘
+
+================================================================================
+STEP 5: RUN QUERY
+================================================================================
+
+Setelah paste, lihat di top-right ada tombol:
+  [ Run ] atau [ Execute ]
+
+KLIK TOMBOL RUN/EXECUTE
+
+Tunggu sampai:
+  ✅ "Success" muncul (atau query notification)
+  ✅ Tidak ada error message merah
+
+================================================================================
+STEP 6: VERIFIKASI (OPTIONAL)
+================================================================================
+
+Untuk memastikan RLS sudah enable dengan benar, bisa run query ini:
+
+---START COPY HERE---
+
+SELECT tablename, rowsecurity
+FROM pg_tables
+WHERE tablename = 'peminjaman';
+
+---END COPY HERE---
+
+Expected Result:
+  tablename  | rowsecurity
+  -----------+-------------
+  peminjaman | true
+
+Jika "true" = ✅ Berhasil!
+Jika "false" = ❌ Ada masalah
+
+================================================================================
+STEP 7: TEST DI APLIKASI
+================================================================================
+
+1. Tutup/minimize Supabase dashboard
+2. Buka aplikasi: http://localhost:5173 (atau URL aplikasi Anda)
+3. REFRESH BROWSER: Ctrl+F5 (Windows) atau Cmd+Shift+R (Mac)
+4. Log OUT lalu LOG IN lagi dengan akun DOSEN
+
+5. Navigasi ke: DOSEN → Peminjaman Alat
+6. Klik tombol: "Ajukan Peminjaman Alat"
+7. Isi form:
+   - Pilih Alat (dropdown)
+   - Jumlah
+   - Tanggal Pinjam
+   - Tanggal Kembali
+   - Keperluan (deskripsi)
+8. Klik tombol: "Ajukan"
+
+HASIL YANG DIHARAPKAN ✅:
+- Toast hijau muncul: "Pengajuan peminjaman berhasil dibuat!"
+- Request muncul di "Riwayat Peminjaman" tab
+- Status = "Menunggu"
+
+JIKA MASIH ERROR ❌:
+- Buka F12 (Developer Console)
+- Lihat tab "Console"
+- Copy error message
+- Hubungi admin dengan error tersebut
+
+================================================================================
+JIKA STUCK, COBA URUTAN INI:
+================================================================================
+
+1️⃣  Hard Refresh Browser:
+    Ctrl+F5 (Windows) atau Cmd+Shift+R (Mac)
+
+2️⃣  Clear Cache:
+    F12 → Application → Clear All → OK
+
+3️⃣  Logout & Login Ulang:
+    - Klik Profile / Logout
+    - Login kembali dengan dosen account
+
+4️⃣  Tunggu 1-2 Menit:
+    - Server cache mungkin perlu update
+    - Tunggu sebelum test lagi
+
+5️⃣  Cek Developer Console:
+    - F12 → Console tab
+    - Lihat error message
+    - Screenshot & hubungi admin
+
+================================================================================
+FILE TERKAIT:
+================================================================================
+
+Di folder project ada file:
+  • sql_rls_fix.sql - Semua SQL code dalam 1 file
+  • RLS_POLICY_FIX.md - Penjelasan detail masalah RLS
+  • SUPABASE_RLS_SETUP.md - Panduan setup lengkap
+
+================================================================================
+CATATAN PENTING:
+================================================================================
+
+⚠️  Jangan share:
+    - URL Supabase
+    - API Key
+    - Database password
+
+✅  Harus dicek:
+    - User sudah dibuat di tabel "dosen"
+    - User sudah dibuat di tabel "laboran" (untuk role approval)
+    - Browser cache sudah di-clear
+
+💡  Tips:
+    - Test dengan akun test dulu sebelum user real
+    - Backup database sebelum ubah RLS di production
+    - Simpan SQL code untuk referensi
+
+================================================================================
+SUKSES! 🎉
+================================================================================
+
+Setelah berhasil, dosen bisa:
+  ✅ Membuat permintaan peminjaman
+  ✅ Lihat riwayat permintaan
+  ✅ Ambil alat (mark as taken)
+  ✅ Kembalikan alat
+
+Laboran bisa:
+  ✅ Lihat permintaan menunggu
+  ✅ Approve (stock otomatis berkurang)
+  ✅ Reject
+
+================================================================================

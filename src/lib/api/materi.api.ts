@@ -326,14 +326,21 @@ export async function downloadMateri(id: string): Promise<void> {
 }
 
 /**
- * Increment download count
+ * Increment download count using Postgres function
+ * This bypasses RLS policy restrictions
  */
 export async function incrementDownloadCount(id: string): Promise<void> {
   try {
-    const materi = await getMateriById(id);
-    await updateMateri(id, {
-      download_count: (materi.download_count ?? 0) + 1,
+    // Import supabase client
+    const { supabase } = await import('@/lib/supabase/client');
+    
+    // Use Postgres function instead of direct UPDATE
+    // @ts-ignore - Custom RPC function not in generated types
+    const { error } = await supabase.rpc('increment_materi_download_count', {
+      materi_id: id
     });
+    
+    if (error) throw error;
   } catch (error) {
     const apiError = handleError(error);
     logError(apiError, `incrementDownloadCount:${id}`);

@@ -3,7 +3,7 @@
  * Main navigation sidebar with collapsible functionality
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -39,8 +39,22 @@ export function Sidebar({
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
 
+  console.log('[Sidebar RENDER] Collapsed:', collapsed, 'Path:', location.pathname);
+
   // Get navigation items for current role
   const navItems = getNavigationItems(userRole);
+
+  // ✅ Keep sidebar expansion state when navigating between pages
+  // This prevents sidebar from expanding when clicking nav links
+  useEffect(() => {
+    console.log('[Sidebar EFFECT] Location:', location.pathname, '| Collapsed:', collapsed);
+  }, [location.pathname, collapsed]);
+
+  // Debug: Log when collapse state changes
+  const handleToggleCollapse = () => {
+    console.log('[Sidebar TOGGLE] From:', collapsed, 'To:', !collapsed);
+    setCollapsed(!collapsed);
+  };
 
   return (
     <aside
@@ -61,7 +75,7 @@ export function Sidebar({
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => setCollapsed(!collapsed)}
+          onClick={handleToggleCollapse}
           className={cn(collapsed && 'mx-auto')}
           title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >

@@ -314,20 +314,40 @@ export async function getAllMahasiswa(): Promise<
 > {
   try {
     const { supabase } = await import('@/lib/supabase/client');
-    const { data, error } = await supabase
+
+    // Get mahasiswa data
+    const { data: mahasiswaData, error: mahasiswaError } = await supabase
       .from('mahasiswa')
       .select(`
         id,
         nim,
-        users:user_id (
-          full_name,
-          email
-        )
+        user_id
       `)
       .order('nim', { ascending: true });
 
-    if (error) throw error;
-    return data || [];
+    if (mahasiswaError) throw mahasiswaError;
+
+    if (!mahasiswaData || mahasiswaData.length === 0) {
+      return [];
+    }
+
+    // Get user data for these mahasiswa
+    const userIds = mahasiswaData.map(m => m.user_id).filter(Boolean);
+    const { data: usersData, error: usersError } = await supabase
+      .from('users')
+      .select('id, full_name, email')
+      .in('id', userIds);
+
+    if (usersError) throw usersError;
+
+    // Map users to mahasiswa
+    const usersMap = new Map(usersData?.map(u => [u.id, u]) || []);
+
+    return mahasiswaData.map(m => ({
+      id: m.id,
+      nim: m.nim,
+      users: usersMap.get(m.user_id) || { full_name: '-', email: '-' },
+    }));
   } catch (error: unknown) {
     console.error('Error fetching mahasiswa:', error);
     throw new Error(`Failed to fetch mahasiswa: ${(error as Error).message}`);

@@ -1692,6 +1692,7 @@ export type Database = {
       borrowing_status:
         | "pending"
         | "approved"
+        | "in_use"
         | "rejected"
         | "returned"
         | "overdue"
@@ -1845,6 +1846,7 @@ export const Constants = {
       borrowing_status: [
         "pending",
         "approved",
+        "in_use",
         "rejected",
         "returned",
         "overdue",

@@ -4,7 +4,6 @@
  */
 
 import { useState, useEffect } from 'react';
-import AppLayout from '@/components/layout/AppLayout';
 import {
   ClipboardCheck,
   Calendar,
@@ -139,193 +138,189 @@ export default function PresensiPage() {
 
   if (loading) {
     return (
-      <AppLayout>
-        <div className="py-6 space-y-6">
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-            <p className="text-gray-600 dark:text-gray-400 mt-4">Memuat data presensi...</p>
-          </div>
+      <div className="py-6 space-y-6">
+        <div className="text-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="text-gray-600 dark:text-gray-400 mt-4">Memuat data presensi...</p>
         </div>
-      </AppLayout>
+      </div>
     );
   }
 
   return (
-    <AppLayout>
-      <div className="py-6 space-y-6">
-        {/* Header */}
-        <div>
-          <div className="flex items-center gap-3 mb-2">
-            <ClipboardCheck className="h-8 w-8 text-primary" />
-            <h1 className="text-3xl font-bold">Presensi Praktikum</h1>
-          </div>
-          <p className="text-gray-600 dark:text-gray-400">
-            Rekap kehadiran praktikum Anda
-          </p>
+    <div className="py-6 space-y-6">
+      {/* Header */}
+      <div>
+        <div className="flex items-center gap-3 mb-2">
+          <ClipboardCheck className="h-8 w-8 text-primary" />
+          <h1 className="text-3xl font-bold">Presensi Praktikum</h1>
         </div>
+        <p className="text-gray-600 dark:text-gray-400">
+          Rekap kehadiran praktikum Anda
+        </p>
+      </div>
 
-        {/* Summary Stats */}
-        <div className="grid gap-4 md:grid-cols-5">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Total Pertemuan</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">{stats.total}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Hadir</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-5 w-5 text-green-600" />
-                <div className="text-3xl font-bold text-green-600">{stats.hadir}</div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Izin</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-2">
-                <Clock className="h-5 w-5 text-blue-600" />
-                <div className="text-3xl font-bold text-blue-600">{stats.izin}</div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Sakit</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-2">
-                <AlertCircle className="h-5 w-5 text-yellow-600" />
-                <div className="text-3xl font-bold text-yellow-600">{stats.sakit}</div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Alpha</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-2">
-                <XCircle className="h-5 w-5 text-red-600" />
-                <div className="text-3xl font-bold text-red-600">{stats.alpha}</div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Persentase Kehadiran */}
+      {/* Summary Stats */}
+      <div className="grid gap-4 md:grid-cols-5">
         <Card>
-          <CardHeader>
-            <CardTitle>Persentase Kehadiran</CardTitle>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Total Pertemuan</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center gap-4">
-              <div className="text-5xl font-bold text-primary">
-                {stats.persentase}%
-              </div>
-              <div className="flex-1">
-                <div className="w-full bg-gray-200 rounded-full h-4">
-                  <div
-                    className={`h-4 rounded-full transition-all ${
-                      stats.persentase >= 75
-                        ? 'bg-green-600'
-                        : stats.persentase >= 50
-                        ? 'bg-yellow-600'
-                        : 'bg-red-600'
-                    }`}
-                    style={{ width: `${stats.persentase}%` }}
-                  ></div>
-                </div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                  {stats.persentase >= 75
-                    ? 'Kehadiran Anda sangat baik!'
-                    : stats.persentase >= 50
-                    ? 'Tingkatkan kehadiran Anda'
-                    : 'Perhatian! Kehadiran di bawah standar'}
-                </p>
-              </div>
+            <div className="text-3xl font-bold">{stats.total}</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Hadir</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="h-5 w-5 text-green-600" />
+              <div className="text-3xl font-bold text-green-600">{stats.hadir}</div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Riwayat Presensi */}
         <Card>
-          <CardHeader>
-            <CardTitle>Riwayat Presensi</CardTitle>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Izin</CardTitle>
           </CardHeader>
           <CardContent>
-            {records.length === 0 ? (
-              <Alert>
-                <Calendar className="h-4 w-4 text-gray-700 dark:text-gray-300" />
-                <AlertDescription>
-                  Belum ada data presensi. Data akan muncul setelah dosen melakukan absensi.
-                </AlertDescription>
-              </Alert>
-            ) : (
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Tanggal</TableHead>
-                      <TableHead>Mata Kuliah</TableHead>
-                      <TableHead>Topik</TableHead>
-                      <TableHead>Lab</TableHead>
-                      <TableHead>Waktu</TableHead>
-                      <TableHead className="text-center">Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {records.map((record) => (
-                      <TableRow key={record.id}>
-                        <TableCell className="font-medium text-gray-900 dark:text-gray-100">
-                          {formatDate(record.jadwal?.tanggal_praktikum || '')}
-                        </TableCell>
-                        <TableCell>
-                          <div>
-                            <p className="font-medium">
-                              {record.jadwal?.kelas?.mata_kuliah?.nama_mk || 'Unknown'}
-                            </p>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">
-                              {record.jadwal?.kelas?.nama_kelas || '-'}
-                            </p>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          {record.jadwal?.topik || 'Praktikum'}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1 text-sm">
-                            <MapPin className="h-3 w-3" />
-                            {record.jadwal?.laboratorium?.nama_lab || '-'}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-sm">
-                          {formatTime(record.jadwal?.jam_mulai || '')} -{' '}
-                          {formatTime(record.jadwal?.jam_selesai || '')}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {getStatusBadge(record.status)}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
+            <div className="flex items-center gap-2">
+              <Clock className="h-5 w-5 text-blue-600" />
+              <div className="text-3xl font-bold text-blue-600">{stats.izin}</div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Sakit</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-yellow-600" />
+              <div className="text-3xl font-bold text-yellow-600">{stats.sakit}</div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Alpha</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-2">
+              <XCircle className="h-5 w-5 text-red-600" />
+              <div className="text-3xl font-bold text-red-600">{stats.alpha}</div>
+            </div>
           </CardContent>
         </Card>
       </div>
-    </AppLayout>
+
+      {/* Persentase Kehadiran */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Persentase Kehadiran</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-4">
+            <div className="text-5xl font-bold text-primary">
+              {stats.persentase}%
+            </div>
+            <div className="flex-1">
+              <div className="w-full bg-gray-200 rounded-full h-4">
+                <div
+                  className={`h-4 rounded-full transition-all ${
+                    stats.persentase >= 75
+                      ? 'bg-green-600'
+                      : stats.persentase >= 50
+                      ? 'bg-yellow-600'
+                      : 'bg-red-600'
+                  }`}
+                  style={{ width: `${stats.persentase}%` }}
+                ></div>
+              </div>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                {stats.persentase >= 75
+                  ? 'Kehadiran Anda sangat baik!'
+                  : stats.persentase >= 50
+                  ? 'Tingkatkan kehadiran Anda'
+                  : 'Perhatian! Kehadiran di bawah standar'}
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Riwayat Presensi */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Riwayat Presensi</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {records.length === 0 ? (
+            <Alert>
+              <Calendar className="h-4 w-4 text-gray-700 dark:text-gray-300" />
+              <AlertDescription>
+                Belum ada data presensi. Data akan muncul setelah dosen melakukan absensi.
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Tanggal</TableHead>
+                    <TableHead>Mata Kuliah</TableHead>
+                    <TableHead>Topik</TableHead>
+                    <TableHead>Lab</TableHead>
+                    <TableHead>Waktu</TableHead>
+                    <TableHead className="text-center">Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {records.map((record) => (
+                    <TableRow key={record.id}>
+                      <TableCell className="font-medium text-gray-900 dark:text-gray-100">
+                        {formatDate(record.jadwal?.tanggal_praktikum || '')}
+                      </TableCell>
+                      <TableCell>
+                        <div>
+                          <p className="font-medium">
+                            {record.jadwal?.kelas?.mata_kuliah?.nama_mk || 'Unknown'}
+                          </p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                            {record.jadwal?.kelas?.nama_kelas || '-'}
+                          </p>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {record.jadwal?.topik || 'Praktikum'}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1 text-sm">
+                          <MapPin className="h-3 w-3" />
+                          {record.jadwal?.laboratorium?.nama_lab || '-'}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {formatTime(record.jadwal?.jam_mulai || '')} -{' '}
+                        {formatTime(record.jadwal?.jam_selesai || '')}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {getStatusBadge(record.status)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 }

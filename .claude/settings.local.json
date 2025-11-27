@@ -33,7 +33,10 @@
       "Bash(done)",
       "Bash(echo:*)",
       "Bash(npm run test:*)",
-      "Bash(xargs:*)"
+      "Bash(xargs:*)",
+      "Bash(sqlite3:*)",
+      "Bash(ls:*)",
+      "Bash(BashOutput 7742c3)"
     ],
     "deny": [],
     "ask": []

@@ -70,7 +70,6 @@ export async function register(data: RegisterData): Promise<AuthResponse> {
         data: {
           full_name: data.full_name,
           role: data.role,
-          phone: data.phone || null,
           ...(data.role === 'mahasiswa' && {
             nim: data.nim,
             program_studi: data.program_studi,
@@ -100,6 +99,9 @@ export async function register(data: RegisterData): Promise<AuthResponse> {
     }
 
     if (!authData.user) throw new Error('No user created');
+
+    // Create user profile and role-specific records
+    await createUserProfile(authData.user.id, data);
 
     logger.auth('register: Success', { userId: authData.user.id });
 
@@ -282,6 +284,106 @@ export async function updatePassword(password: string): Promise<AuthResponse> {
       success: false,
       error: (error as Error).message || 'Password update failed',
     };
+  }
+}
+
+/**
+ * Create user profile and role-specific records
+ * Called after successful registration
+ */
+async function createUserProfile(userId: string, data: RegisterData): Promise<void> {
+  try {
+    logger.debug('createUserProfile: START', {
+      userId,
+      role: data.role,
+      hasMahasiswaData: !!(data.role === 'mahasiswa' && data.nim),
+      nim: data.nim
+    });
+
+    // 1. Create user record in users table
+    const { error: userError } = await supabase
+      .from('users')
+      .insert({
+        id: userId,
+        full_name: data.full_name,
+        email: data.email,
+        role: data.role,
+      });
+
+    if (userError) {
+      logger.error('createUserProfile: Users insert failed', userError);
+      throw userError;
+    }
+    logger.debug('createUserProfile: User record created', { userId });
+
+    // 2. Create role-specific records
+    if (data.role === 'mahasiswa' && data.nim) {
+      logger.debug('createUserProfile: Creating mahasiswa record', {
+        user_id: userId,
+        nim: data.nim,
+        angkatan: data.angkatan,
+        semester: data.semester
+      });
+
+      const mahasiswaPayload: any = {
+        user_id: userId,
+        nim: data.nim,
+        angkatan: data.angkatan || new Date().getFullYear(),
+        semester: data.semester || 1,
+      };
+
+      if (data.program_studi) {
+        mahasiswaPayload.program_studi = data.program_studi;
+      }
+
+      const { error: mahasiswaError } = await supabase
+        .from('mahasiswa')
+        .insert([mahasiswaPayload]);
+
+      if (mahasiswaError) {
+        logger.error('createUserProfile: Mahasiswa insert failed', mahasiswaError);
+        throw mahasiswaError;
+      }
+      logger.debug('createUserProfile: Mahasiswa record created', { userId });
+    } else if (data.role === 'mahasiswa') {
+      logger.warn('createUserProfile: Mahasiswa role but missing nim', {
+        role: data.role,
+        nim: data.nim
+      });
+    } else if (data.role === 'dosen' && data.nidn) {
+      const dosenPayload: any = {
+        user_id: userId,
+        nidn: data.nidn,
+      };
+
+      if (data.nip) dosenPayload.nip = data.nip;
+      if (data.gelar_depan) dosenPayload.gelar_depan = data.gelar_depan;
+      if (data.gelar_belakang) dosenPayload.gelar_belakang = data.gelar_belakang;
+
+      const { error: dosenError } = await supabase
+        .from('dosen')
+        .insert([dosenPayload]);
+
+      if (dosenError) throw dosenError;
+      logger.debug('createUserProfile: Dosen record created', { userId });
+    } else if (data.role === 'laboran' && data.nip) {
+      const { error: laboranError } = await supabase
+        .from('laboran')
+        .insert([{
+          user_id: userId,
+          nip: data.nip,
+        }]);
+
+      if (laboranError) throw laboranError;
+      logger.debug('createUserProfile: Laboran record created', { userId });
+    }
+
+    logger.debug('createUserProfile: Success', { userId, role: data.role });
+  } catch (error: unknown) {
+    logger.error('createUserProfile error:', error);
+    // Don't throw - user account already created via auth.signUp
+    // Just log the error
+    console.error('Failed to create role-specific profile:', error);
   }
 }
 

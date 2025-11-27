@@ -1,0 +1,229 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                                                                              ║
+║                   RINGKASAN RLS POLICY FIX - PEMINJAMAN                      ║
+║                                                                              ║
+║                    Error 403 - Row Level Security Blocking                   ║
+║                                                                              ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+
+📌 PROBLEM:
+──────────────────────────────────────────────────────────────────────────────
+Saat dosen membuat permintaan peminjaman alat, muncul error:
+
+  ❌ 403 Forbidden
+  ❌ code: 42501
+  ❌ message: "new row violates row-level security policy for table peminjaman"
+
+Penyebab: RLS policy di table peminjaman block dosen dari INSERT
+
+
+✅ SOLUSI:
+──────────────────────────────────────────────────────────────────────────────
+Update RLS policy dengan SQL code yang sudah disediakan
+
+
+📋 FILE-FILE PANDUAN YANG TERSEDIA:
+──────────────────────────────────────────────────────────────────────────────
+
+1. SQL_COPY_PASTE.txt              ⭐ TERCEPAT (2 menit)
+   └─ 3 opsi SQL code siap copy-paste
+   └─ Langsung kode, no explanation
+   └─ Pick one, paste, run, done!
+
+2. FIX_RLS_STEP_BY_STEP.txt        📋 STEP-BY-STEP (5-10 menit)
+   └─ Visual step-by-step di Supabase dashboard
+   └─ Klik ini, klik itu, copy ini, paste itu
+   └─ Ada troubleshooting jika stuck
+
+3. SUPABASE_RLS_SETUP.md           📚 PANDUAN LENGKAP (15 menit)
+   └─ Penjelasan error & solusi
+   └─ 3 opsi code dengan penjelasan
+   └─ Include testing checklist
+
+4. RLS_POLICY_FIX.md               📖 TEKNIS (20 menit)
+   └─ Deep dive tentang RLS & error
+   └─ Penjelasan tiap policy
+   └─ API changes explanation
+
+5. sql_rls_fix.sql                 💾 SQL FILE
+   └─ Semua code dalam 1 file .sql
+   └─ Bisa dibuka text editor
+
+
+🚀 QUICK START (TERCEPAT):
+──────────────────────────────────────────────────────────────────────────────
+
+Step 1: Buka file "SQL_COPY_PASTE.txt"
+
+Step 2: Copy OPSI 1 code ini:
+
+        -- Hapus policy lama
+        DROP POLICY IF EXISTS "Allow dosen to create borrowing requests" ON peminjaman;
+        DROP POLICY IF EXISTS "Allow laboran to manage peminjaman" ON peminjaman;
+        DROP POLICY IF EXISTS "Users can view peminjaman" ON peminjaman;
+
+        -- Policy 1: Allow create requests
+        CREATE POLICY "Allow authenticated users to create borrowing requests"
+        ON peminjaman
+        FOR INSERT
+        WITH CHECK (auth.uid() IS NOT NULL);
+
+        -- Policy 2: Allow view
+        CREATE POLICY "Allow authenticated users to view peminjaman"
+        ON peminjaman
+        FOR SELECT
+        USING (auth.uid() IS NOT NULL);
+
+        -- Policy 3: Allow laboran update
+        CREATE POLICY "Allow laboran to update peminjaman"
+        ON peminjaman
+        FOR UPDATE
+        USING (
+          EXISTS (
+            SELECT 1 FROM laboran WHERE user_id = auth.uid()
+          )
+        )
+        WITH CHECK (
+          EXISTS (
+            SELECT 1 FROM laboran WHERE user_id = auth.uid()
+          )
+        );
+
+        -- Enable RLS
+        ALTER TABLE peminjaman ENABLE ROW LEVEL SECURITY;
+
+Step 3: Login ke https://app.supabase.com
+
+Step 4: Pilih project "sistem-praktikum-pwa"
+
+Step 5: Klik SQL Editor di sidebar
+
+Step 6: Paste code di text editor
+
+Step 7: Klik tombol RUN
+
+Step 8: Tunggu sampai "Success"
+
+Step 9: ✅ DONE! Dosen sekarang bisa buat permintaan
+
+
+📊 OPSI MANA YANG DIPILIH?
+──────────────────────────────────────────────────────────────────────────────
+
+  OPSI 1 ✅  → Recommended (Paling aman)
+              → Jalankan ini dulu
+              → Jika error, lanjut ke OPSI 2
+
+  OPSI 2 ⚡  → Jika OPSI 1 error
+              → Lebih simple, less strict
+              → Coba ini selanjutnya
+
+  OPSI 3 💨  → Last resort (Disable semua RLS)
+              → Hanya jika 1 & 2 error
+              → JANGAN pakai di production!
+
+
+✅ SETELAH FIX:
+──────────────────────────────────────────────────────────────────────────────
+
+Dosen sekarang bisa:
+  ✅ Buat permintaan peminjaman alat
+  ✅ Lihat status permintaan (Menunggu/Disetujui/Ditolak)
+  ✅ Tandai alat sudah diambil (Status: Ambil)
+  ✅ Kembalikan alat dengan tracking kondisi
+  ✅ Lihat stok yang tersedia
+
+Laboran sekarang bisa:
+  ✅ Lihat permintaan menunggu approval
+  ✅ Approve (stok otomatis berkurang)
+  ✅ Reject dengan alasan
+  ✅ Lihat history peminjaman & pengembalian
+
+
+⚠️ SEBELUM RUN SQL:
+──────────────────────────────────────────────────────────────────────────────
+
+  ✅ Backup database (optional tapi recommended)
+  ✅ Login ke Supabase dashboard
+  ✅ Di project yang benar: "sistem-praktikum-pwa"
+  ✅ Copy code UTUH tanpa potongan
+  ✅ Paste di SQL Editor
+  ✅ RUN query
+
+
+⚠️ SETELAH RUN SQL:
+──────────────────────────────────────────────────────────────────────────────
+
+  ✅ Tunggu "Success" message
+  ✅ Refresh browser: Ctrl+F5 atau Cmd+Shift+R
+  ✅ Clear cache: F12 → Application → Clear All → OK
+  ✅ Logout & Login ulang
+  ✅ Test dengan akun dosen
+  ✅ Coba buat permintaan peminjaman
+  ✅ Lihat apakah muncul di "Riwayat Peminjaman"
+
+
+🆘 JIKA MASIH ERROR:
+──────────────────────────────────────────────────────────────────────────────
+
+1. Buka file: FIX_RLS_STEP_BY_STEP.txt
+2. Cari section: "JIKA STUCK, COBA URUTAN INI"
+3. Follow instruksi di sana
+4. Screenshot error
+5. Hubungi admin dengan screenshot
+
+
+🎯 TIMELINE:
+──────────────────────────────────────────────────────────────────────────────
+
+  ⏱️  ~2 menit    → Copy & paste code
+  ⏱️  ~1 menit    → Run query di Supabase
+  ⏱️  ~30 detik   → Tunggu success
+  ⏱️  ~2 menit    → Refresh & test
+  ────────────────────────────────
+     ~5-6 menit TOTAL
+
+
+💾 SEMUA FILE YANG DIBUAT:
+──────────────────────────────────────────────────────────────────────────────
+
+  Folder: F:/tes 9/sistem-praktikum-pwa/
+
+  ├── SQL_COPY_PASTE.txt         ← MULAI DARI SINI! ⭐
+  ├── FIX_RLS_STEP_BY_STEP.txt   ← Detail step-by-step
+  ├── SUPABASE_RLS_SETUP.md      ← Panduan lengkap
+  ├── RLS_POLICY_FIX.md          ← Penjelasan teknis
+  ├── sql_rls_fix.sql            ← SQL file (backup)
+  ├── README_RLS_FIX.md          ← Index semua file
+  └── RINGKASAN_RLS_FIX.txt      ← File ini
+
+
+✨ REKOMENDASI NEXT STEPS:
+──────────────────────────────────────────────────────────────────────────────
+
+  1️⃣  Baca: README_RLS_FIX.md (index semua file)
+
+  2️⃣  Pilih salah satu dari:
+      • SQL_COPY_PASTE.txt (paling cepat)
+      • FIX_RLS_STEP_BY_STEP.txt (step-by-step)
+      • SUPABASE_RLS_SETUP.md (lengkap)
+
+  3️⃣  Jalankan SQL code
+
+  4️⃣  Test di aplikasi
+
+  5️⃣  ✅ Done! Dosen bisa membuat permintaan
+
+
+═══════════════════════════════════════════════════════════════════════════════
+
+  Questions?    → Cek troubleshooting di FIX_RLS_STEP_BY_STEP.txt
+  Want details? → Baca RLS_POLICY_FIX.md
+  Need checklist? → Lihat SUPABASE_RLS_SETUP.md
+
+═══════════════════════════════════════════════════════════════════════════════
+
+                        HAPPY FIXING! 🎉
+
+═══════════════════════════════════════════════════════════════════════════════

@@ -22,6 +22,7 @@ import {
   XCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { normalize } from '@/lib/utils/normalize';
 
 // UI Components
 import {
@@ -98,6 +99,7 @@ export default function KelasPage() {
   const [showAddStudentDialog, setShowAddStudentDialog] = useState(false);
   const [selectedMahasiswaId, setSelectedMahasiswaId] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [mahasiswaSubscription, setMahasiswaSubscription] = useState<any>(null);
 
   // Manual student input state
   const [inputMode, setInputMode] = useState<'select' | 'manual'>('manual');
@@ -110,6 +112,15 @@ export default function KelasPage() {
   useEffect(() => {
     loadData();
   }, []);
+
+  // ✅ Cleanup subscription saat component unmount atau dialog ditutup
+  useEffect(() => {
+    return () => {
+      if (mahasiswaSubscription) {
+        mahasiswaSubscription.unsubscribe();
+      }
+    };
+  }, [mahasiswaSubscription]);
 
   const loadData = async () => {
     setIsLoading(true);
@@ -161,11 +172,17 @@ export default function KelasPage() {
 
     setIsProcessing(true);
     try {
+      // ✅ Normalize kelas nama before saving
+      const normalizedFormData = {
+        ...formData,
+        nama_kelas: normalize.kelasNama(formData.nama_kelas),
+      };
+
       if (editingKelas) {
-        await updateKelas(editingKelas.id, formData);
+        await updateKelas(editingKelas.id, normalizedFormData);
         toast.success('Kelas berhasil diupdate');
       } else {
-        await createKelas({ ...formData, is_active: true });
+        await createKelas({ ...normalizedFormData, is_active: true });
         toast.success('Kelas berhasil dibuat');
       }
       setShowFormDialog(false);
@@ -201,6 +218,33 @@ export default function KelasPage() {
       setEnrolledStudents(enrolled);
       setAllMahasiswa(all);
       setShowStudentsDialog(true);
+
+      // ✅ Setup realtime subscription untuk mahasiswa baru
+      const { supabase } = await import('@/lib/supabase/client');
+      const subscription = supabase
+        .channel(`mahasiswa-updates-${kelas.id}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'mahasiswa',
+          },
+          async () => {
+            // Reload mahasiswa list saat ada mahasiswa baru
+            try {
+              const updatedMahasiswa = await getAllMahasiswa();
+              setAllMahasiswa(updatedMahasiswa);
+              toast.success('Mahasiswa baru tersedia untuk dipilih');
+            } catch (error) {
+              console.error('Error reloading mahasiswa:', error);
+            }
+          }
+        )
+        .subscribe();
+
+      // Store subscription untuk cleanup nanti
+      setMahasiswaSubscription(subscription);
     } catch (error: any) {
       toast.error('Gagal memuat data mahasiswa');
     } finally {
@@ -227,8 +271,15 @@ export default function KelasPage() {
     setIsProcessing(true);
     try {
       if (inputMode === 'manual') {
+        // ✅ Normalize student data before saving
+        const normalizedStudentData = {
+          full_name: normalize.fullName(manualStudentData.full_name),
+          nim: normalize.nim(manualStudentData.nim),
+          email: normalize.email(manualStudentData.email),
+        };
+
         // Create or enroll mahasiswa using manual input
-        const result = await createOrEnrollMahasiswa(selectedKelas.id, manualStudentData);
+        const result = await createOrEnrollMahasiswa(selectedKelas.id, normalizedStudentData);
         if (result.success) {
           toast.success(result.message);
           const enrolled = await getEnrolledStudents(selectedKelas.id);
@@ -474,7 +525,17 @@ export default function KelasPage() {
       </Dialog>
 
       {/* Manage Students Dialog */}
-      <Dialog open={showStudentsDialog} onOpenChange={setShowStudentsDialog}>
+      <Dialog
+        open={showStudentsDialog}
+        onOpenChange={(open) => {
+          setShowStudentsDialog(open);
+          // ✅ Cleanup subscription saat dialog ditutup
+          if (!open && mahasiswaSubscription) {
+            mahasiswaSubscription.unsubscribe();
+            setMahasiswaSubscription(null);
+          }
+        }}
+      >
         <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>

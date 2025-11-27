@@ -344,7 +344,20 @@ export async function approvePeminjaman(peminjamanId: string): Promise<void> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('User not authenticated');
 
-    const { error } = await supabase
+    // Step 1: Get peminjaman details (inventaris_id, jumlah_pinjam)
+    const { data: peminjamanData, error: fetchError } = await supabase
+      .from('peminjaman')
+      .select('inventaris_id, jumlah_pinjam')
+      .eq('id', peminjamanId)
+      .eq('status', 'pending')
+      .single();
+
+    if (fetchError || !peminjamanData) {
+      throw new Error('Peminjaman not found or not in pending status');
+    }
+
+    // Step 2: Update peminjaman status to approved
+    const { error: updateError } = await supabase
       .from('peminjaman')
       .update({
         status: 'approved',
@@ -352,9 +365,28 @@ export async function approvePeminjaman(peminjamanId: string): Promise<void> {
         approved_at: new Date().toISOString(),
       })
       .eq('id', peminjamanId)
-      .eq('status', 'pending'); // Only update if still pending
+      .eq('status', 'pending');
 
-    if (error) throw error;
+    if (updateError) throw updateError;
+
+    // Step 3: Auto-decrease inventory stock
+    const { data: invData, error: invFetchError } = await supabase
+      .from('inventaris')
+      .select('jumlah_tersedia')
+      .eq('id', peminjamanData.inventaris_id)
+      .single();
+
+    if (invFetchError || !invData) {
+      throw new Error('Inventaris not found');
+    }
+
+    const newStock = Math.max(0, invData.jumlah_tersedia - peminjamanData.jumlah_pinjam);
+    const { error: stockError } = await supabase
+      .from('inventaris')
+      .update({ jumlah_tersedia: newStock })
+      .eq('id', peminjamanData.inventaris_id);
+
+    if (stockError) throw stockError;
   } catch (error) {
     console.error('Error approving peminjaman:', error);
     throw error;

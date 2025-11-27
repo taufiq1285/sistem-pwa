@@ -80,7 +80,7 @@ async function getMahasiswaId(): Promise<string | null> {
       .from('mahasiswa')
       .select('id')
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
 
     return data?.id || null;
   } catch (error: unknown) {

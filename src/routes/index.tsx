@@ -50,6 +50,9 @@ import DosenMateriPage from '@/pages/dosen/MateriPage';
 import DosenPenilaianPage from '@/pages/dosen/PenilaianPage';
 import DosenPeminjamanPage from '@/pages/dosen/PeminjamanPage';
 
+// Dosen Kehadiran Page - NEW! ✅
+import DosenKehadiranPage from '@/pages/dosen/KehadiranPage';
+
 // Mahasiswa Pages
 import { DashboardPage as MahasiswaDashboard } from '@/pages/mahasiswa/DashboardPage';
 import MahasiswaJadwalPage from '@/pages/mahasiswa/JadwalPage';
@@ -302,6 +305,10 @@ export function AppRouter() {
 
       {/* Dosen - Peminjaman */}
       <Route path="/dosen/peminjaman" element={<ProtectedRoute><RoleGuard allowedRoles={['dosen']}><AppLayout><DosenPeminjamanPage /></AppLayout></RoleGuard></ProtectedRoute>} />
+
+      {/* Dosen - Kehadiran */}
+      <Route path="/dosen/kehadiran" element={<ProtectedRoute><RoleGuard allowedRoles={['dosen']}><AppLayout><DosenKehadiranPage /></AppLayout></RoleGuard></ProtectedRoute>} />
+
 
       {/* TODO: Add more dosen routes as they are implemented
       <Route path="/dosen/peminjaman" element={...} />
