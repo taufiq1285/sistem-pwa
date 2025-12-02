@@ -13,17 +13,20 @@ createRoot(document.getElementById('root')!).render(
   </StrictMode>,
 )
 
-// Register service worker (PRODUCTION ONLY)
+// Register service worker (ENABLED IN BOTH DEV AND PRODUCTION)
 const isDevelopment = import.meta.env.DEV
+const enablePWAInDev = import.meta.env.VITE_PWA_DEV !== 'false'
 
 // Flag to prevent handling update multiple times
 let updateHandled = false
 
-if (!isDevelopment) {
-  // Production: Enable full SW functionality
+if (!isDevelopment || enablePWAInDev) {
+  // Enable full SW functionality
+  logger.info(isDevelopment ? '🔧 Development Mode: Service Worker ENABLED for PWA testing' : '🚀 Production Mode: Service Worker ENABLED')
+
   registerServiceWorker({
     onSuccess: (registration) => {
-      logger.info('Service Worker registered successfully')
+      logger.info('✅ Service Worker registered successfully')
       logger.info('Scope:', registration.scope)
 
       // Initialize sync manager after SW is ready
@@ -51,15 +54,14 @@ if (!isDevelopment) {
       }
     },
     onError: (error) => {
-      logger.error('Service Worker registration failed:', error)
+      logger.error('❌ Service Worker registration failed:', error)
     },
     enableAutoUpdate: false, // Disabled to prevent update loops
     checkUpdateInterval: 60 * 60 * 1000, // Check every hour
   })
 } else {
-  // Development: Disable SW to avoid update loops and HMR issues
-  logger.info('Development Mode: Service Worker disabled')
-  logger.info('To test PWA features, run: npm run build && npm run preview')
+  // Development: SW disabled
+  logger.info('🔧 Development Mode: Service Worker disabled (set VITE_PWA_DEV=true to enable)')
 
   // Unregister any existing service workers from previous sessions
   if ('serviceWorker' in navigator) {

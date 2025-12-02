@@ -8,11 +8,11 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
-import { useSync } from '@/lib/hooks/useSync';
-import { queueManager } from '@/lib/offline/queue-manager';
-import type { SyncQueueItem, SyncStatus } from '@/types/offline.types';
-import type { QueueStats, QueueEvent } from '@/lib/offline/queue-manager';
+import { renderHook, waitFor, act } from '@testing-library/react';
+import { useSync } from '../../../lib/hooks/useSync';
+import { queueManager } from '../../../lib/offline/queue-manager';
+import type { SyncQueueItem, SyncStatus } from '../../../types/offline.types';
+import type { QueueStats, QueueEvent } from '../../../lib/offline/queue-manager';
 
 // ============================================================================
 // MOCK SETUP
@@ -68,16 +68,15 @@ const mockQueueItem: SyncQueueItem = {
   entity: 'kuis',
   operation: 'create',
   data: { judul: 'Test Kuis' },
+  timestamp: Date.now(),
   status: 'pending',
-  created_at: Date.now(),
-  updated_at: Date.now(),
-  retry_count: 0,
+  retryCount: 0,
 };
 
 const mockStats: QueueStats = {
   total: 10,
   pending: 5,
-  processing: 2,
+  syncing: 0,
   completed: 2,
   failed: 1,
 };
@@ -179,7 +178,10 @@ describe('useSync', () => {
         expect(result.current.isReady).toBe(true);
       });
 
-      const id = await result.current.addToQueue('kuis', 'create', { judul: 'Test' });
+      let id;
+      await act(async () => {
+        id = await result.current.addToQueue('kuis', 'create', { judul: 'Test' });
+      });
 
       expect(queueManager.enqueue).toHaveBeenCalledWith('kuis', 'create', { judul: 'Test' });
       expect(id).toBe('queue-1');
@@ -195,7 +197,9 @@ describe('useSync', () => {
         expect(result.current.isReady).toBe(true);
       });
 
-      await result.current.addToQueue('kuis', 'create', { judul: 'Test' });
+      await act(async () => {
+        await result.current.addToQueue('kuis', 'create', { judul: 'Test' });
+      });
 
       expect(queueManager.getStats).toHaveBeenCalled();
     });
@@ -210,7 +214,9 @@ describe('useSync', () => {
         expect(result.current.isReady).toBe(true);
       });
 
-      await result.current.addToQueue('nilai', 'update', { nilai_akhir: 85 });
+      await act(async () => {
+        await result.current.addToQueue('nilai', 'update', { nilai_akhir: 85 });
+      });
 
       expect(queueManager.enqueue).toHaveBeenCalledWith('nilai', 'update', { nilai_akhir: 85 });
     });
@@ -225,7 +231,9 @@ describe('useSync', () => {
         expect(result.current.isReady).toBe(true);
       });
 
-      await result.current.addToQueue('kuis', 'delete', { id: 'kuis-1' });
+      await act(async () => {
+        await result.current.addToQueue('kuis', 'delete', { id: 'kuis-1' });
+      });
 
       expect(queueManager.enqueue).toHaveBeenCalledWith('kuis', 'delete', { id: 'kuis-1' });
     });
@@ -264,7 +272,9 @@ describe('useSync', () => {
         expect(result.current.isReady).toBe(true);
       });
 
-      await result.current.processQueue();
+      await act(async () => {
+        await result.current.processQueue();
+      });
 
       expect(queueManager.processQueue).toHaveBeenCalled();
     });

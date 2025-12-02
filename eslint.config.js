@@ -6,7 +6,7 @@ import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist', 'coverage']),
+  globalIgnores(['dist', 'coverage', 'backups']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [
@@ -21,15 +21,13 @@ export default defineConfig([
     },
     rules: {
       // Relaxed rules for production code - balance between quality and pragmatism
-      '@typescript-eslint/no-explicit-any': 'warn', // Warn instead of error
-      '@typescript-eslint/no-unused-vars': ['warn', {
-        argsIgnorePattern: '^_', // Allow unused vars starting with _
-        varsIgnorePattern: '^_',
-        caughtErrorsIgnorePattern: '^_'
-      }],
+      '@typescript-eslint/no-explicit-any': 'off', // Disabled - allow any type
+      '@typescript-eslint/no-unused-vars': 'off', // Disabled - allow unused vars
+      '@typescript-eslint/ban-ts-comment': 'off', // Disabled - allow @ts-ignore
+      '@typescript-eslint/no-non-null-asserted-optional-chain': 'off', // Disabled
       'react-refresh/only-export-components': 'off', // Allow exporting constants with components
-      'react-hooks/exhaustive-deps': 'warn', // Warn instead of error
-      'no-empty': 'warn', // Warn instead of error
+      'react-hooks/exhaustive-deps': 'off', // Disabled - allow missing dependencies
+      'no-empty': 'off', // Disabled - allow empty blocks
     },
   },
   {

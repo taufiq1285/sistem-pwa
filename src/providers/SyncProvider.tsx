@@ -28,7 +28,7 @@ export function SyncProvider({ children, autoSync = true }: SyncProviderProps) {
   return <SyncContext.Provider value={sync}>{children}</SyncContext.Provider>;
 }
 
-// eslint-disable-next-line react-refresh/only-export-components
+ 
 export function useSyncContext(): UseSyncReturn {
   const context = useContext(SyncContext);
 

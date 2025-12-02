@@ -11,6 +11,7 @@
  */
 
 import {
+
   query,
   queryWithFilters,
   getById,
@@ -28,6 +29,10 @@ import {
   type UploadOptions,
 } from '@/lib/supabase/storage';
 import { handleError, logError } from '@/lib/utils/errors';
+import {
+  requirePermission,
+  requirePermissionAndOwnership,
+} from '@/lib/middleware';
 
 // ============================================================================
 // TYPES
@@ -205,7 +210,7 @@ export async function getMateriByDosen(dosenId: string): Promise<Materi[]> {
 /**
  * Create materi with file upload
  */
-export async function createMateri(
+async function createMateriImpl(
   data: UploadMateriData,
   uploadOptions?: UploadOptions
 ): Promise<Materi> {
@@ -241,10 +246,14 @@ export async function createMateri(
   }
 }
 
+// 🔒 PROTECTED: Only dosen can create materi
+export const createMateri = requirePermission('manage:materi', createMateriImpl);
+
+
 /**
  * Update materi metadata (without file)
  */
-export async function updateMateri(
+async function updateMateriImpl(
   id: string,
   data: Partial<CreateMateriData>
 ): Promise<Materi> {
@@ -257,10 +266,19 @@ export async function updateMateri(
   }
 }
 
+// 🔒 PROTECTED: Only dosen can update their own materi
+export const updateMateri = requirePermissionAndOwnership(
+  'manage:materi',
+  { table: 'materi', ownerField: 'dosen_id' },
+  0,
+  updateMateriImpl
+);
+
+
 /**
  * Delete materi (including file from storage)
  */
-export async function deleteMateri(id: string): Promise<boolean> {
+async function deleteMateriImpl(id: string): Promise<boolean> {
   try {
     // Get materi to get file path
     const materi = await getMateriById(id);
@@ -290,6 +308,15 @@ export async function deleteMateri(id: string): Promise<boolean> {
     throw apiError;
   }
 }
+
+// 🔒 PROTECTED: Only dosen can delete their own materi
+export const deleteMateri = requirePermissionAndOwnership(
+  'manage:materi',
+  { table: 'materi', ownerField: 'dosen_id' },
+  0,
+  deleteMateriImpl
+);
+
 
 // ============================================================================
 // MATERI DOWNLOAD
@@ -335,7 +362,7 @@ export async function incrementDownloadCount(id: string): Promise<void> {
     const { supabase } = await import('@/lib/supabase/client');
     
     // Use Postgres function instead of direct UPDATE
-    // @ts-ignore - Custom RPC function not in generated types
+    // @ts-expect-error - Custom RPC function not in generated types
     const { error } = await supabase.rpc('increment_materi_download_count', {
       materi_id: id
     });
@@ -357,7 +384,7 @@ export async function incrementDownloadCount(id: string): Promise<void> {
  */
 export async function publishMateri(id: string): Promise<Materi> {
   try {
-    return await updateMateri(id, {
+    return await updateMateriImpl(id, {
       is_active: true,
       published_at: new Date().toISOString(),
     });
@@ -373,7 +400,7 @@ export async function publishMateri(id: string): Promise<Materi> {
  */
 export async function unpublishMateri(id: string): Promise<Materi> {
   try {
-    return await updateMateri(id, {
+    return await updateMateriImpl(id, {
       is_active: false,
     });
   } catch (error) {

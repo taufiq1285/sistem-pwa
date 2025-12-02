@@ -6,10 +6,10 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi, beforeAll } from 'vitest';
-import { QueueManager } from '@/lib/offline/queue-manager';
-import { indexedDBManager } from '@/lib/offline/indexeddb';
-import type { QueueEvent } from '@/lib/offline/queue-manager';
-import type { SyncQueueItem } from '@/types/offline.types';
+import { QueueManager } from '../../../../lib/offline/queue-manager';
+import { indexedDBManager } from '../../../../lib/offline/indexeddb';
+import type { QueueEvent } from '../../../../lib/offline/queue-manager';
+import type { SyncQueueItem } from '../../../../types/offline.types';
 import 'fake-indexeddb/auto';
 
 // ============================================================================

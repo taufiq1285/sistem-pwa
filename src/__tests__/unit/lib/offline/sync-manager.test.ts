@@ -11,15 +11,15 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { SyncManager } from '@/lib/offline/sync-manager';
-import type { SyncEvent, SyncResult } from '@/lib/offline/sync-manager';
+import { SyncManager } from '../../../../lib/offline/sync-manager';
+import type { SyncEvent, SyncResult } from '../../../../lib/offline/sync-manager';
 
 // ============================================================================
 // MOCKS
 // ============================================================================
 
 // Setup mocks
-vi.mock('@/lib/offline/queue-manager', () => ({
+vi.mock('../../../../lib/offline/queue-manager', () => ({
   queueManager: {
     isReady: vi.fn(() => true),
     initialize: vi.fn(() => Promise.resolve()),
@@ -44,7 +44,7 @@ vi.mock('@/lib/offline/queue-manager', () => ({
   },
 }));
 
-vi.mock('@/lib/offline/network-detector', () => ({
+vi.mock('../../../../lib/offline/network-detector', () => ({
   networkDetector: {
     isReady: vi.fn(() => true),
     initialize: vi.fn(),
@@ -89,8 +89,8 @@ describe('SyncManager', () => {
     vi.clearAllMocks();
 
     // Get mock references
-    const queueModule = await import('@/lib/offline/queue-manager');
-    const networkModule = await import('@/lib/offline/network-detector');
+    const queueModule = await import('../../../../lib/offline/queue-manager');
+    const networkModule = await import('../../../../lib/offline/network-detector');
     mockQueueManager = queueModule.queueManager;
     mockNetworkDetector = networkModule.networkDetector;
 

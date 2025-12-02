@@ -14,11 +14,13 @@ import {
   remove,
 } from './base.api';
 
-import type { 
-  Kelas, 
-  KelasFilters, 
-  CreateKelasData, 
-  UpdateKelasData 
+import { requirePermission } from '@/lib/middleware';
+
+import type {
+  Kelas,
+  KelasFilters,
+  CreateKelasData,
+  UpdateKelasData
 } from '@/types/kelas.types';
 
 /**
@@ -137,7 +139,7 @@ export async function getKelasById(id: string): Promise<Kelas> {
  * Note: insert() returns data with default select, 
  * then we fetch again with relations if needed
  */
-export async function createKelas(data: CreateKelasData): Promise<Kelas> {
+async function createKelasImpl(data: CreateKelasData): Promise<Kelas> {
   try {
     // Insert returns basic data
     const newKelas = await insert<Kelas>('kelas', data);
@@ -150,12 +152,16 @@ export async function createKelas(data: CreateKelasData): Promise<Kelas> {
   }
 }
 
+// 🔒 PROTECTED: Requires manage:kelas permission
+export const createKelas = requirePermission('manage:kelas', createKelasImpl);
+
+
 /**
  * Update kelas
  * Note: update() returns data with default select,
  * then we fetch again with relations if needed
  */
-export async function updateKelas(id: string, data: UpdateKelasData): Promise<Kelas> {
+async function updateKelasImpl(id: string, data: UpdateKelasData): Promise<Kelas> {
   try {
     // Update returns basic data
     await update<Kelas>('kelas', id, data);
@@ -168,10 +174,14 @@ export async function updateKelas(id: string, data: UpdateKelasData): Promise<Ke
   }
 }
 
+// 🔒 PROTECTED: Requires manage:kelas permission
+export const updateKelas = requirePermission('manage:kelas', updateKelasImpl);
+
+
 /**
  * Delete kelas
  */
-export async function deleteKelas(id: string): Promise<void> {
+async function deleteKelasImpl(id: string): Promise<void> {
   try {
     await remove('kelas', id);
   } catch (error: unknown) {
@@ -179,6 +189,10 @@ export async function deleteKelas(id: string): Promise<void> {
     throw new Error(`Failed to delete kelas: ${(error as Error).message}`);
   }
 }
+
+// 🔒 PROTECTED: Requires manage:kelas permission
+export const deleteKelas = requirePermission('manage:kelas', deleteKelasImpl);
+
 // ============================================================================
 // KELAS MAHASISWA (ENROLLMENT) OPERATIONS
 // ============================================================================
@@ -232,12 +246,53 @@ export async function getEnrolledStudents(kelasId: string): Promise<KelasMahasis
 /**
  * Enroll student to kelas
  */
-export async function enrollStudent(
+async function enrollStudentImpl(
   kelasId: string,
   mahasiswaId: string
 ): Promise<KelasMahasiswa> {
   try {
     const { supabase } = await import('@/lib/supabase/client');
+
+    // Step 1: Get kelas info (kuota, nama_kelas) (CRITICAL FIX)
+    const { data: kelasData, error: kelasError } = await supabase
+      .from('kelas')
+      .select('kuota, nama_kelas')
+      .eq('id', kelasId)
+      .single();
+
+    if (kelasError || !kelasData) {
+      throw new Error('Kelas tidak ditemukan');
+    }
+
+    // Step 2: Count current enrollment
+    const { count: currentEnrollment, error: countError } = await supabase
+      .from('kelas_mahasiswa')
+      .select('*', { count: 'exact', head: true })
+      .eq('kelas_id', kelasId)
+      .eq('is_active', true);
+
+    if (countError) throw countError;
+
+    // ✅ VALIDATE: Check if kelas is full
+    if (currentEnrollment !== null && kelasData.kuota !== null && currentEnrollment >= kelasData.kuota) {
+      throw new Error(
+        `Kelas ${kelasData.nama_kelas} sudah penuh! (${currentEnrollment}/${kelasData.kuota} mahasiswa)`
+      );
+    }
+
+    // Step 3: Check if already enrolled
+    const { data: existingEnrollment } = await supabase
+      .from('kelas_mahasiswa')
+      .select('id')
+      .eq('kelas_id', kelasId)
+      .eq('mahasiswa_id', mahasiswaId)
+      .maybeSingle();
+
+    if (existingEnrollment) {
+      throw new Error('Mahasiswa sudah terdaftar di kelas ini');
+    }
+
+    // Step 4: Enroll student (now safe, already validated)
     const { data, error } = await supabase
       .from('kelas_mahasiswa')
       .insert({
@@ -257,10 +312,15 @@ export async function enrollStudent(
   }
 }
 
+// 🔒 PROTECTED: Requires manage:kelas_mahasiswa permission
+export const enrollStudent = requirePermission('manage:kelas_mahasiswa', enrollStudentImpl);
+
+// 🔒 PROTECTED: Requires manage:kelas_mahasiswa permission
+
 /**
  * Remove student from kelas
  */
-export async function unenrollStudent(
+async function unenrollStudentImpl(
   kelasId: string,
   mahasiswaId: string
 ): Promise<void> {
@@ -279,10 +339,15 @@ export async function unenrollStudent(
   }
 }
 
+// 🔒 PROTECTED: Requires manage:kelas_mahasiswa permission
+export const unenrollStudent = requirePermission('manage:kelas_mahasiswa', unenrollStudentImpl);
+
+// 🔒 PROTECTED: Requires manage:kelas_mahasiswa permission
+
 /**
  * Toggle student active status in kelas
  */
-export async function toggleStudentStatus(
+async function toggleStudentStatusImpl(
   kelasId: string,
   mahasiswaId: string,
   isActive: boolean
@@ -301,6 +366,11 @@ export async function toggleStudentStatus(
     throw new Error(`Failed to toggle student status: ${(error as Error).message}`);
   }
 }
+
+// 🔒 PROTECTED: Requires manage:kelas_mahasiswa permission
+export const toggleStudentStatus = requirePermission('manage:kelas_mahasiswa', toggleStudentStatusImpl);
+
+// 🔒 PROTECTED: Requires manage:kelas_mahasiswa permission
 
 /**
  * Get all mahasiswa (for enrollment selection)
@@ -358,7 +428,7 @@ export async function getAllMahasiswa(): Promise<
  * Create or get mahasiswa by NIM and enroll to kelas
  * If mahasiswa doesn't exist, create new user account and mahasiswa record
  */
-export async function createOrEnrollMahasiswa(
+async function createOrEnrollMahasiswaImpl(
   kelasId: string,
   data: {
     nim: string;
@@ -382,6 +452,19 @@ export async function createOrEnrollMahasiswa(
       // Mahasiswa exists, use existing ID
       mahasiswaId = existingMahasiswa[0].id;
     } else {
+      // ✅ FIX ISSUE #7: Check email duplicate before signup
+      const { data: existingUser } = await supabase
+        .from('users')
+        .select('id, email')
+        .eq('email', data.email)
+        .maybeSingle();
+
+      if (existingUser) {
+        throw new Error(
+          `Email ${data.email} sudah terdaftar di sistem. Gunakan email lain atau hubungi admin.`
+        );
+      }
+
       // Create new user account
       const defaultPassword = `${data.nim}123`; // Default password: NIM + 123
 
@@ -396,7 +479,14 @@ export async function createOrEnrollMahasiswa(
         },
       });
 
-      if (signUpError) throw signUpError;
+      if (signUpError) {
+        // ✅ FIX ISSUE #7: Better error message for auth errors
+        if (signUpError.message.includes('already registered') || signUpError.message.includes('User already registered')) {
+          throw new Error(`Email ${data.email} sudah terdaftar. Gunakan email lain.`);
+        }
+        throw signUpError;
+      }
+
       if (!newUser.user) throw new Error('Failed to create user account');
 
       // Create user profile
@@ -427,7 +517,28 @@ export async function createOrEnrollMahasiswa(
         .select('id')
         .single();
 
-      if (mahasiswaError) throw mahasiswaError;
+      // ✅ FIX ISSUE #4: Better error handling for insert
+      if (mahasiswaError) {
+        // Check for specific error codes
+        const errorCode = (mahasiswaError as any)?.code;
+
+        if (errorCode === '23505') {
+          // Unique constraint violation
+          throw new Error(`NIM ${data.nim} sudah terdaftar di sistem`);
+        }
+
+        if (errorCode === '23503') {
+          // Foreign key violation
+          throw new Error('Data tidak valid. User account tidak ditemukan.');
+        }
+
+        throw mahasiswaError;
+      }
+
+      if (!newMahasiswa) {
+        throw new Error('Gagal membuat record mahasiswa. Tidak ada data yang dikembalikan.');
+      }
+
       mahasiswaId = newMahasiswa.id;
     }
 
@@ -462,3 +573,8 @@ export async function createOrEnrollMahasiswa(
     };
   }
 }
+
+// 🔒 PROTECTED: Requires manage:kelas_mahasiswa permission
+export const createOrEnrollMahasiswa = requirePermission('manage:kelas_mahasiswa', createOrEnrollMahasiswaImpl);
+
+// 🔒 PROTECTED: Requires manage:kelas_mahasiswa permission

@@ -9,8 +9,9 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, waitFor, cleanup } from '@testing-library/react';
-import { OfflineProvider, useOfflineContext } from '@/providers/OfflineProvider';
-import { indexedDBManager } from '@/lib/offline/indexeddb';
+import '@testing-library/jest-dom';
+import { OfflineProvider, useOfflineContext } from '../../../providers/OfflineProvider';
+import { indexedDBManager } from '../../../lib/offline/indexeddb';
 
 // ============================================================================
 // MOCK SETUP

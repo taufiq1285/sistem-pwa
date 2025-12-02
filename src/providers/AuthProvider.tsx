@@ -2,6 +2,7 @@
  * Auth Provider - OPTIMIZED with localStorage cache
  * Provides authentication state and methods to the app
  * ✅ FIXED: Removed infinite loop issue
+ * ✅ NEW: Added offline authentication support
  */
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -9,6 +10,15 @@ import { AuthContext } from '@/context/AuthContext';
 import logger from '@/lib/utils/logger';
 import type { AuthUser, AuthSession, LoginCredentials, RegisterData } from '@/types/auth.types';
 import * as authApi from '@/lib/supabase/auth';
+import {
+  offlineLogin,
+  storeOfflineCredentials,
+  storeOfflineSession,
+  storeUserData,
+  clearAllOfflineAuthData,
+  clearOfflineSession,
+  restoreOfflineSession,
+} from '@/lib/offline/offline-auth';
 
 interface AuthProviderProps {
   children: React.ReactNode;
@@ -106,9 +116,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
         if (mounted) {
           if (currentSession) {
+            // Store online session to offline storage
+            await storeOfflineSession(currentSession.user, currentSession);
+            await storeUserData(currentSession.user);
             updateAuthState(currentSession.user, currentSession);
           } else {
-            updateAuthState(null, null);
+            // Try to restore from offline session
+            const offlineSession = await restoreOfflineSession();
+            if (offlineSession) {
+              logger.auth('Restored session from offline storage');
+              updateAuthState(offlineSession.user, offlineSession.session);
+            } else {
+              updateAuthState(null, null);
+            }
           }
           setInitialized(true);
           setLoading(false);
@@ -116,6 +136,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
       } catch (error) {
         logger.error('Auth initialization error:', error);
         if (mounted) {
+          // Fallback to offline session on error
+          try {
+            const offlineSession = await restoreOfflineSession();
+            if (offlineSession) {
+              logger.auth('Fallback to offline session after error');
+              updateAuthState(offlineSession.user, offlineSession.session);
+            }
+          } catch (offlineError) {
+            logger.error('Failed to restore offline session:', offlineError);
+          }
           setInitialized(true);
           setLoading(false);
         }
@@ -126,6 +156,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     const { data: authListener } = authApi.onAuthStateChange((newSession: AuthSession | null) => {
       if (mounted) {
+        if (newSession) {
+          // Store new session to offline storage
+          storeOfflineSession(newSession.user, newSession).catch((error) => {
+            logger.error('Failed to store offline session:', error);
+          });
+          storeUserData(newSession.user).catch((error) => {
+            logger.error('Failed to store user data:', error);
+          });
+        }
         updateAuthState(newSession?.user || null, newSession);
         setLoading(false);
       }
@@ -140,13 +179,52 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const login = useCallback(async (credentials: LoginCredentials) => {
     setLoading(true);
     try {
-      const response = await authApi.login(credentials);
+      // Check if online or offline
+      const isOnline = navigator.onLine;
 
-      if (!response.success || !response.user || !response.session) {
-        throw new Error(response.error || 'Login failed');
+      if (isOnline) {
+        // Online login
+        logger.auth('Online login attempt...');
+        const response = await authApi.login(credentials);
+
+        // Check if login was successful
+        if (!response.success) {
+          throw new Error(response.error || 'Login gagal. Periksa email dan password Anda.');
+        }
+
+        // Check if we have user and session data
+        if (!response.user || !response.session) {
+          throw new Error('Login response missing user or session data');
+        }
+
+        // Store credentials and session for offline use
+        try {
+          await storeOfflineCredentials(credentials.email, credentials.password, response.user);
+          await storeOfflineSession(response.user, response.session);
+          await storeUserData(response.user);
+          logger.auth('Offline credentials stored successfully');
+        } catch (storageError) {
+          console.warn('Failed to store offline credentials:', storageError);
+          // Continue with login even if offline storage fails
+        }
+
+        updateAuthState(response.user, response.session);
+      } else {
+        // Offline login
+        logger.auth('Offline mode detected - attempting offline login...');
+        const offlineResponse = await offlineLogin(credentials.email, credentials.password);
+
+        if (!offlineResponse) {
+          throw new Error('Login offline gagal. Anda perlu login online minimal 1x sebelum bisa login offline.');
+        }
+
+        if (!offlineResponse.user || !offlineResponse.session) {
+          throw new Error('Data login offline tidak lengkap. Silakan login online terlebih dahulu.');
+        }
+
+        logger.auth('Offline login successful');
+        updateAuthState(offlineResponse.user, offlineResponse.session);
       }
-
-      updateAuthState(response.user, response.session);
     } catch (error) {
       console.error('Login error:', error);
       throw error;
@@ -193,6 +271,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
       console.log('🔵 Clearing state & storage...');
       updateAuthState(null, null);
       clearCachedAuth();
+
+      // Clear offline session only (keep credentials for offline login)
+      await clearOfflineSession();
+      console.log('ℹ️ Offline session cleared (credentials preserved for offline login)');
+
       localStorage.clear();
       sessionStorage.clear();
       
@@ -203,10 +286,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
       
     } catch (error) {
       console.error('❌ Logout error:', error);
-      
+
       // Force clear anyway
       updateAuthState(null, null);
       clearCachedAuth();
+      await clearOfflineSession().catch(console.error);
+      console.log('ℹ️ Offline session cleared (credentials preserved)');
       localStorage.clear();
       sessionStorage.clear();
       window.location.href = '/login';

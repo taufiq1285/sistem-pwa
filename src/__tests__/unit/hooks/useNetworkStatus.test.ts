@@ -9,15 +9,15 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
-import { useNetworkStatus } from '@/lib/hooks/useNetworkStatus';
-import { networkDetector } from '@/lib/offline/network-detector';
-import type { NetworkChangeEvent, NetworkStatus } from '@/lib/offline/network-detector';
+import { useNetworkStatus } from '../../../lib/hooks/useNetworkStatus';
+import { networkDetector } from '../../../lib/offline/network-detector';
+import type { NetworkChangeEvent, NetworkStatus } from '../../../lib/offline/network-detector';
 
 // ============================================================================
 // MOCK SETUP
 // ============================================================================
 
-vi.mock('@/lib/offline/network-detector', () => {
+vi.mock('../../../lib/offline/network-detector', () => {
   const listeners = new Set<(event: NetworkChangeEvent) => void>();
   let mockStatus: NetworkStatus = 'online';
   let mockReady = false;

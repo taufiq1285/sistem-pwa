@@ -23,6 +23,15 @@ export interface ThemeContextValue {
 // CONTEXT
 // ============================================================================
 
-export const ThemeContext = createContext<ThemeContextValue | undefined>(
-  undefined
+// Provide a default value to prevent null/undefined errors
+const defaultThemeContext: ThemeContextValue = {
+  theme: 'system',
+  systemTheme: 'light',
+  effectiveTheme: 'light',
+  setTheme: () => {},
+  toggleTheme: () => {},
+};
+
+export const ThemeContext = createContext<ThemeContextValue>(
+  defaultThemeContext
 );

@@ -6,6 +6,10 @@
 import { syncManager } from '@/lib/offline/sync-manager';
 import type { QueueStats } from '@/lib/offline/queue-manager';
 import type { SyncStats } from '@/lib/offline/sync-manager';
+import {
+  requirePermission,
+  requirePermissionAndOwnership,
+} from '@/lib/middleware';
 
 export interface SyncManagementStats {
   pendingSync: number;
@@ -56,7 +60,7 @@ export async function getSyncManagementStats(): Promise<SyncManagementStats> {
 /**
  * Force trigger sync process
  */
-export async function forceSyncNow(): Promise<void> {
+async function forceSyncNowImpl(): Promise<void> {
   try {
     await syncManager.processSync();
   } catch (error) {
@@ -64,4 +68,8 @@ export async function forceSyncNow(): Promise<void> {
     throw error;
   }
 }
+
+// 🔒 PROTECTED: Requires manage:sync permission
+export const forceSyncNow = requirePermission('manage:sync', forceSyncNowImpl);
+
 

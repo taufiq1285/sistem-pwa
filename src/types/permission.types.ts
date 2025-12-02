@@ -27,13 +27,17 @@ export type PermissionAction =
  */
 export type PermissionResource =
   | 'user'
+  | 'users'
+  | 'all_users'
   | 'mahasiswa'
   | 'dosen'
   | 'laboran'
   | 'admin'
   | 'mata_kuliah'
   | 'kelas'
+  | 'kelas_mahasiswa'
   | 'jadwal'
+  | 'kehadiran'
   | 'laboratorium'
   | 'kuis'
   | 'soal'
@@ -44,7 +48,10 @@ export type PermissionResource =
   | 'inventaris'
   | 'peminjaman'
   | 'pengumuman'
-  | 'notification';
+  | 'notification'
+  | 'sync'
+  | 'dashboard'
+  | 'analytics';
 
 /**
  * Permission string format: "action:resource"

@@ -4,7 +4,12 @@
  */
 
 import { supabase } from '@/lib/supabase/client';
+import { cacheAPI } from '@/lib/offline/api-cache';
 import type { Pengumuman, CreatePengumumanData } from '@/types/common.types';
+import {
+  requirePermission,
+  requirePermissionAndOwnership,
+} from '@/lib/middleware';
 
 export interface AnnouncementStats {
   total: number;
@@ -75,7 +80,7 @@ export async function getAnnouncementStats(): Promise<AnnouncementStats> {
 /**
  * Create new announcement
  */
-export async function createAnnouncement(data: CreatePengumumanData): Promise<void> {
+async function createAnnouncementImpl(data: CreatePengumumanData): Promise<void> {
   try {
     const { error } = await supabase
       .from('pengumuman')
@@ -88,10 +93,14 @@ export async function createAnnouncement(data: CreatePengumumanData): Promise<vo
   }
 }
 
+// 🔒 PROTECTED: Requires manage:pengumuman permission
+export const createAnnouncement = requirePermission('manage:pengumuman', createAnnouncementImpl);
+
+
 /**
  * Delete announcement
  */
-export async function deleteAnnouncement(id: string): Promise<void> {
+async function deleteAnnouncementImpl(id: string): Promise<void> {
   try {
     const { error } = await supabase
       .from('pengumuman')
@@ -104,3 +113,7 @@ export async function deleteAnnouncement(id: string): Promise<void> {
     throw error;
   }
 }
+
+// 🔒 PROTECTED: Requires manage:pengumuman permission
+export const deleteAnnouncement = requirePermission('manage:pengumuman', deleteAnnouncementImpl);
+

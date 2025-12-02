@@ -4,7 +4,9 @@
  */
 
 import { supabase } from '@/lib/supabase/client';
+import { cacheAPI } from '@/lib/offline/api-cache';
 
+import { requirePermission } from '@/lib/middleware';
 // ============================================================================
 // TYPES
 // ============================================================================
@@ -138,34 +140,63 @@ export interface MyBorrowingRequest {
 // HELPER FUNCTION
 // ============================================================================
 
+// Cache for dosen ID to reduce redundant calls
+let cachedDosenId: string | null = null;
+let cachedDosenIdTimestamp: number = 0;
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+const DOSEN_ID_STORAGE_KEY = 'cached_dosen_id';
+
 async function getDosenId(): Promise<string | null> {
   try {
+    // Return cached value if still valid (in-memory cache)
+    if (cachedDosenId && Date.now() - cachedDosenIdTimestamp < CACHE_DURATION) {
+      return cachedDosenId;
+    }
+
+    // Try to get from localStorage (persistent cache for offline)
+    const storedDosenId = localStorage.getItem(DOSEN_ID_STORAGE_KEY);
+    if (storedDosenId) {
+      cachedDosenId = storedDosenId;
+      cachedDosenIdTimestamp = Date.now();
+      return storedDosenId;
+    }
+
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      console.warn('⚠️ No authenticated user');
-      return null;
+      // No user - return stored dosen ID if available
+      return storedDosenId || cachedDosenId;
     }
 
-    const { data, error } = await supabase
-      .from('dosen')
-      .select('id')
-      .eq('user_id', user.id)
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from('dosen')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
 
-    if (error) {
-      console.error('Error fetching dosen profile:', error);
-      return null;
+      if (error) {
+        // Suppress error logging - might be offline
+        return storedDosenId || cachedDosenId; // Return cached if available
+      }
+
+      if (!data) {
+        return storedDosenId || cachedDosenId; // Return cached if available
+      }
+
+      // Cache the result (in-memory and localStorage)
+      cachedDosenId = data.id;
+      cachedDosenIdTimestamp = Date.now();
+      localStorage.setItem(DOSEN_ID_STORAGE_KEY, data.id);
+
+      return data.id;
+    } catch (fetchError) {
+      // Network error - return cached if available
+      return storedDosenId || cachedDosenId;
     }
-
-    if (!data) {
-      console.warn('⚠️ No dosen profile found for user:', user.id);
-      return null;
-    }
-
-    return data.id;
   } catch (error) {
-    console.error('Error in getDosenId:', error);
-    return null;
+    // Suppress error - return cached/stored if available
+    const storedDosenId = localStorage.getItem(DOSEN_ID_STORAGE_KEY);
+    return storedDosenId || cachedDosenId;
   }
 }
 
@@ -174,16 +205,19 @@ async function getDosenId(): Promise<string | null> {
 // ============================================================================
 
 export async function getDosenStats(): Promise<DosenStats> {
-  try {
-    const dosenId = await getDosenId();
-    if (!dosenId) {
-      return {
-        totalKelas: 0,
-        totalMahasiswa: 0,
-        activeKuis: 0,
-        pendingGrading: 0,
-      };
-    }
+  return cacheAPI(
+    'dosen_stats',
+    async () => {
+      try {
+        const dosenId = await getDosenId();
+        if (!dosenId) {
+          return {
+            totalKelas: 0,
+            totalMahasiswa: 0,
+            activeKuis: 0,
+            pendingGrading: 0,
+          };
+        }
 
     const { count: totalKelas } = await supabase
       .from('kelas')
@@ -232,21 +266,27 @@ export async function getDosenStats(): Promise<DosenStats> {
       pendingGrading = count || 0;
     }
 
-    return {
-      totalKelas: totalKelas || 0,
-      totalMahasiswa,
-      activeKuis: activeKuis || 0,
-      pendingGrading,
-    };
-  } catch (error) {
-    console.error('Error fetching dosen stats:', error);
-    return {
-      totalKelas: 0,
-      totalMahasiswa: 0,
-      activeKuis: 0,
-      pendingGrading: 0,
-    };
-  }
+        return {
+          totalKelas: totalKelas || 0,
+          totalMahasiswa,
+          activeKuis: activeKuis || 0,
+          pendingGrading,
+        };
+      } catch (error) {
+        console.error('Error fetching dosen stats:', error);
+        return {
+          totalKelas: 0,
+          totalMahasiswa: 0,
+          activeKuis: 0,
+          pendingGrading: 0,
+        };
+      }
+    },
+    {
+      ttl: 5 * 60 * 1000, // Cache for 5 minutes
+      staleWhileRevalidate: true, // Return stale data while fetching fresh
+    }
+  );
 }
 
 // ============================================================================
@@ -745,7 +785,7 @@ export async function getMyBorrowing(limitOrStatus?: number | BorrowingStatus | 
     const { data, error } = await query;
     if (error) throw error;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     return (data || []).map((item: any) => ({
       id: item.id,
       inventaris_nama: item.inventaris?.nama_barang || '-',
@@ -794,7 +834,7 @@ export async function getKelasStudents(kelasId: string): Promise<EnrolledStudent
       .order('enrolled_at', { ascending: false });
     if (error) throw error;
     if (!data) return [];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     return data.map((item: any) => ({
       id: item.id,
       mahasiswa_id: item.mahasiswa_id,
@@ -837,7 +877,7 @@ export async function getMyKelasWithStudents(): Promise<KelasWithStudents[]> {
     if (!kelasData) return [];
 
     const result = await Promise.all(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       kelasData.map(async (kelas: any) => {
         const { data: mkData } = await supabase
           .from('mata_kuliah')
@@ -931,7 +971,7 @@ export async function exportAllStudents() {
  * Create a borrowing request (Pengajuan Peminjaman)
  * Dosen can request to borrow equipment from lab inventory
  */
-export async function createBorrowingRequest(data: {
+async function createBorrowingRequestImpl(data: {
   inventaris_id: string;
   jumlah_pinjam: number;
   tanggal_pinjam: string;
@@ -939,6 +979,21 @@ export async function createBorrowingRequest(data: {
   keperluan: string;
 }): Promise<{ id: string }> {
   try {
+    // ✅ FIX ISSUE #6: Validate tanggal peminjaman
+    const today = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
+
+    if (data.tanggal_pinjam < today) {
+      throw new Error(
+        `Tanggal peminjaman tidak boleh di masa lalu. Tanggal yang dipilih: ${data.tanggal_pinjam}`
+      );
+    }
+
+    if (data.tanggal_kembali_rencana <= data.tanggal_pinjam) {
+      throw new Error(
+        `Tanggal pengembalian (${data.tanggal_kembali_rencana}) harus setelah tanggal peminjaman (${data.tanggal_pinjam})`
+      );
+    }
+
     // Get current user
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('User tidak terautentikasi');
@@ -970,6 +1025,7 @@ export async function createBorrowingRequest(data: {
       .select('id')
       .single();
 
+    // ✅ FIX ISSUE #4: Better error handling for insert
     if (error) {
       // Check error code and provide helpful message
       const errorCode = (error as any)?.code;
@@ -992,15 +1048,21 @@ export async function createBorrowingRequest(data: {
         throw new Error('Permintaan peminjaman untuk alat ini sudah ada. Silakan gunakan permintaan yang sudah ada.');
       }
 
-      if (errorCode === '23502' || errorCode === '23503') {
-        throw new Error(
-          'Data tidak valid: Pastikan Anda memilih alat yang tersedia dan tanggal yang benar.'
-        );
+      if (errorCode === '23502') {
+        throw new Error('Data tidak lengkap. Pastikan semua field terisi dengan benar.');
       }
 
-      throw error;
+      if (errorCode === '23503') {
+        throw new Error('Data tidak valid: Alat yang dipilih tidak ditemukan di inventaris.');
+      }
+
+      // Generic error untuk kode lain
+      throw new Error(`Gagal membuat peminjaman: ${errorMessage || 'Unknown error'}`);
     }
-    if (!result) throw new Error('Gagal membuat peminjaman');
+
+    if (!result) {
+      throw new Error('Gagal membuat peminjaman. Tidak ada data yang dikembalikan.');
+    }
 
     return { id: result.id };
   } catch (error) {
@@ -1008,6 +1070,9 @@ export async function createBorrowingRequest(data: {
     throw error;
   }
 }
+
+// 🔒 PROTECTED: Requires create:peminjaman permission
+export const createBorrowingRequest = requirePermission('create:peminjaman', createBorrowingRequestImpl);
 
 /**
  * Get available equipment for borrowing
@@ -1045,9 +1110,9 @@ export async function getAvailableEquipment() {
  * Return/kembalikan borrowed equipment
  * Auto-increases inventory stock when marked as returned
  */
-export async function returnBorrowingRequest(data: {
+async function returnBorrowingRequestImpl(data: {
   peminjaman_id: string;
-  kondisi_kembali: 'baik' | 'rusak_ringan' | 'rusak_berat' | 'maintenance';
+  kondisi_kembali: 'baik' | 'rusak_ringan' | 'rusak_berat' | 'maintenance' | 'hilang';
   keterangan_kembali?: string;
 }): Promise<{ id: string }> {
   try {
@@ -1072,7 +1137,7 @@ export async function returnBorrowingRequest(data: {
       .update({
         status: 'returned',
         tanggal_kembali_aktual: new Date().toISOString().split('T')[0],
-        kondisi_kembali: data.kondisi_kembali,
+        kondisi_kembali: data.kondisi_kembali as any,
         keterangan_kembali: data.keterangan_kembali || null,
       })
       .eq('id', data.peminjaman_id);
@@ -1105,10 +1170,13 @@ export async function returnBorrowingRequest(data: {
   }
 }
 
+// 🔒 PROTECTED: Requires update:peminjaman permission
+export const returnBorrowingRequest = requirePermission('update:peminjaman', returnBorrowingRequestImpl);
+
 /**
  * Mark borrowing as in_use when dosen takes the equipment
  */
-export async function markBorrowingAsTaken(peminjaman_id: string): Promise<{ id: string }> {
+async function markBorrowingAsTakenImpl(peminjaman_id: string): Promise<{ id: string }> {
   try {
     // Update peminjaman status from 'approved' to 'in_use'
     const { error } = await supabase
@@ -1127,6 +1195,194 @@ export async function markBorrowingAsTaken(peminjaman_id: string): Promise<{ id:
     throw error;
   }
 }
+
+// 🔒 PROTECTED: Requires update:peminjaman permission
+export const markBorrowingAsTaken = requirePermission('update:peminjaman', markBorrowingAsTakenImpl);
+
+/**
+ * Update borrowing request (Edit Peminjaman)
+ * Allows dosen to update borrowing details ONLY if status is still 'pending'
+ */
+async function updateBorrowingRequestImpl(
+  peminjaman_id: string,
+  data: {
+    inventaris_id?: string;
+    jumlah_pinjam?: number;
+    tanggal_pinjam?: string;
+    tanggal_kembali_rencana?: string;
+    keperluan?: string;
+  }
+): Promise<{ id: string }> {
+  try {
+    // Get current peminjaman to check status and ownership
+    const { data: currentPeminjaman, error: fetchError } = await supabase
+      .from('peminjaman')
+      .select('id, status, dosen_id, inventaris_id, jumlah_pinjam')
+      .eq('id', peminjaman_id)
+      .single();
+
+    if (fetchError || !currentPeminjaman) {
+      throw new Error('Peminjaman tidak ditemukan');
+    }
+
+    // Only allow update if status is 'pending'
+    if (currentPeminjaman.status !== 'pending') {
+      throw new Error('Peminjaman hanya dapat diubah jika statusnya masih menunggu (pending)');
+    }
+
+    // Verify ownership (dosen can only update their own borrowing)
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User tidak terautentikasi');
+
+    const { data: dosenData, error: dosenError } = await supabase
+      .from('dosen')
+      .select('id')
+      .eq('user_id', user.id)
+      .single();
+
+    if (dosenError || !dosenData) {
+      throw new Error('Data dosen tidak ditemukan');
+    }
+
+    if (currentPeminjaman.dosen_id !== dosenData.id) {
+      throw new Error('Anda hanya dapat mengubah peminjaman Anda sendiri');
+    }
+
+    // Validate dates if both provided
+    if (data.tanggal_pinjam && data.tanggal_kembali_rencana) {
+      const pinjamDate = new Date(data.tanggal_pinjam);
+      const kembaliDate = new Date(data.tanggal_kembali_rencana);
+      if (kembaliDate <= pinjamDate) {
+        throw new Error('Tanggal kembali harus setelah tanggal pinjam');
+      }
+    }
+
+    // If changing inventaris_id, check available stock
+    if (data.inventaris_id && data.inventaris_id !== currentPeminjaman.inventaris_id) {
+      const { data: newInvData, error: invError } = await supabase
+        .from('inventaris')
+        .select('jumlah_tersedia')
+        .eq('id', data.inventaris_id)
+        .single();
+
+      if (invError || !newInvData) {
+        throw new Error('Alat yang dipilih tidak ditemukan');
+      }
+
+      const requestedQty = data.jumlah_pinjam || currentPeminjaman.jumlah_pinjam;
+      if (newInvData.jumlah_tersedia < requestedQty) {
+        throw new Error(`Stok tidak cukup. Tersedia: ${newInvData.jumlah_tersedia}`);
+      }
+    }
+
+    // If only changing quantity, check current inventaris stock
+    if (data.jumlah_pinjam && !data.inventaris_id) {
+      const { data: invData, error: invError } = await supabase
+        .from('inventaris')
+        .select('jumlah_tersedia')
+        .eq('id', currentPeminjaman.inventaris_id)
+        .single();
+
+      if (invError || !invData) {
+        throw new Error('Alat tidak ditemukan');
+      }
+
+      if (invData.jumlah_tersedia < data.jumlah_pinjam) {
+        throw new Error(`Stok tidak cukup. Tersedia: ${invData.jumlah_tersedia}`);
+      }
+    }
+
+    // Build update data
+    const updateData: any = {
+      updated_at: new Date().toISOString(),
+    };
+
+    if (data.inventaris_id) updateData.inventaris_id = data.inventaris_id;
+    if (data.jumlah_pinjam) updateData.jumlah_pinjam = data.jumlah_pinjam;
+    if (data.tanggal_pinjam) updateData.tanggal_pinjam = data.tanggal_pinjam;
+    if (data.tanggal_kembali_rencana) updateData.tanggal_kembali_rencana = data.tanggal_kembali_rencana;
+    if (data.keperluan) updateData.keperluan = data.keperluan;
+
+    const { error: updateError } = await supabase
+      .from('peminjaman')
+      .update(updateData)
+      .eq('id', peminjaman_id);
+
+    if (updateError) {
+      console.error('Error updating peminjaman:', updateError);
+      throw updateError;
+    }
+
+    return { id: peminjaman_id };
+  } catch (error) {
+    console.error('Error updating borrowing request:', error);
+    throw error;
+  }
+}
+
+// 🔒 PROTECTED: Requires update:peminjaman permission
+export const updateBorrowingRequest = requirePermission('update:peminjaman', updateBorrowingRequestImpl);
+
+/**
+ * Cancel borrowing request (Batalkan Peminjaman)
+ * Allows dosen to cancel their borrowing request ONLY if status is still 'pending'
+ */
+async function cancelBorrowingRequestImpl(peminjaman_id: string): Promise<{ id: string }> {
+  try {
+    // Get current peminjaman to check status and ownership
+    const { data: currentPeminjaman, error: fetchError } = await supabase
+      .from('peminjaman')
+      .select('id, status, dosen_id')
+      .eq('id', peminjaman_id)
+      .single();
+
+    if (fetchError || !currentPeminjaman) {
+      throw new Error('Peminjaman tidak ditemukan');
+    }
+
+    // Only allow cancel if status is 'pending'
+    if (currentPeminjaman.status !== 'pending') {
+      throw new Error('Peminjaman hanya dapat dibatalkan jika statusnya masih menunggu (pending)');
+    }
+
+    // Verify ownership
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User tidak terautentikasi');
+
+    const { data: dosenData, error: dosenError } = await supabase
+      .from('dosen')
+      .select('id')
+      .eq('user_id', user.id)
+      .single();
+
+    if (dosenError || !dosenData) {
+      throw new Error('Data dosen tidak ditemukan');
+    }
+
+    if (currentPeminjaman.dosen_id !== dosenData.id) {
+      throw new Error('Anda hanya dapat membatalkan peminjaman Anda sendiri');
+    }
+
+    // Delete the peminjaman (hard delete)
+    const { error: deleteError } = await supabase
+      .from('peminjaman')
+      .delete()
+      .eq('id', peminjaman_id);
+
+    if (deleteError) {
+      console.error('Error deleting peminjaman:', deleteError);
+      throw deleteError;
+    }
+
+    return { id: peminjaman_id };
+  } catch (error) {
+    console.error('Error canceling borrowing request:', error);
+    throw error;
+  }
+}
+
+// 🔒 PROTECTED: Requires update:peminjaman permission
+export const cancelBorrowingRequest = requirePermission('update:peminjaman', cancelBorrowingRequestImpl);
 
 // ============================================================================
 // EXPORTS
@@ -1153,6 +1409,8 @@ export const dosenApi = {
 
   // Borrowing Request
   createBorrowingRequest,
+  updateBorrowingRequest,
+  cancelBorrowingRequest,
   getAvailableEquipment,
   markBorrowingAsTaken,
   returnBorrowingRequest,

@@ -4,8 +4,10 @@
  */
 
 import { supabase } from '@/lib/supabase/client';
-import type { 
-  EquipmentCondition 
+import { cacheAPI } from '@/lib/offline/api-cache';
+import { requirePermission } from '@/lib/middleware';
+import type {
+  EquipmentCondition
 } from '@/types/inventaris.types';
 
 // ============================================================================
@@ -72,12 +74,15 @@ export interface ApprovalAction {
  * Get dashboard statistics for laboran
  */
 export async function getLaboranStats(): Promise<LaboranStats> {
-  try {
-    // Get total laboratorium
-    const { count: totalLab } = await supabase
-      .from('laboratorium')
-      .select('*', { count: 'exact', head: true })
-      .eq('is_active', true);
+  return cacheAPI(
+    'laboran_stats',
+    async () => {
+      try {
+        // Get total laboratorium
+        const { count: totalLab } = await supabase
+          .from('laboratorium')
+          .select('*', { count: 'exact', head: true })
+          .eq('is_active', true);
 
     // Get total inventaris
     const { count: totalInventaris } = await supabase
@@ -96,16 +101,22 @@ export async function getLaboranStats(): Promise<LaboranStats> {
       .select('*', { count: 'exact', head: true })
       .lt('jumlah_tersedia', 5);
 
-    return {
-      totalLab: totalLab || 0,
-      totalInventaris: totalInventaris || 0,
-      pendingApprovals: pendingApprovals || 0,
-      lowStockAlerts: lowStockAlerts || 0,
-    };
-  } catch (error) {
-    console.error('Error fetching laboran stats:', error);
-    throw error;
-  }
+        return {
+          totalLab: totalLab || 0,
+          totalInventaris: totalInventaris || 0,
+          pendingApprovals: pendingApprovals || 0,
+          lowStockAlerts: lowStockAlerts || 0,
+        };
+      } catch (error) {
+        console.error('Error fetching laboran stats:', error);
+        throw error;
+      }
+    },
+    {
+      ttl: 5 * 60 * 1000, // Cache for 5 minutes
+      staleWhileRevalidate: true,
+    }
+  );
 }
 
 // ============================================================================
@@ -338,7 +349,7 @@ export async function getLabScheduleToday(limit: number = 10): Promise<LabSchedu
 /**
  * Approve peminjaman request
  */
-export async function approvePeminjaman(peminjamanId: string): Promise<void> {
+async function approvePeminjamanImpl(peminjamanId: string): Promise<void> {
   try {
     // Get current user
     const { data: { user } } = await supabase.auth.getUser();
@@ -356,7 +367,25 @@ export async function approvePeminjaman(peminjamanId: string): Promise<void> {
       throw new Error('Peminjaman not found or not in pending status');
     }
 
-    // Step 2: Update peminjaman status to approved
+    // Step 2: Check inventory stock BEFORE approving (CRITICAL FIX)
+    const { data: invData, error: invFetchError } = await supabase
+      .from('inventaris')
+      .select('jumlah_tersedia, nama_barang')
+      .eq('id', peminjamanData.inventaris_id)
+      .single();
+
+    if (invFetchError || !invData) {
+      throw new Error('Inventaris not found');
+    }
+
+    // ✅ VALIDATE: Check if stock is sufficient
+    if (invData.jumlah_tersedia < peminjamanData.jumlah_pinjam) {
+      throw new Error(
+        `Stok tidak cukup! ${invData.nama_barang} tersedia: ${invData.jumlah_tersedia}, diminta: ${peminjamanData.jumlah_pinjam}`
+      );
+    }
+
+    // Step 3: Update peminjaman status to approved (only if stock is sufficient)
     const { error: updateError } = await supabase
       .from('peminjaman')
       .update({
@@ -369,18 +398,8 @@ export async function approvePeminjaman(peminjamanId: string): Promise<void> {
 
     if (updateError) throw updateError;
 
-    // Step 3: Auto-decrease inventory stock
-    const { data: invData, error: invFetchError } = await supabase
-      .from('inventaris')
-      .select('jumlah_tersedia')
-      .eq('id', peminjamanData.inventaris_id)
-      .single();
-
-    if (invFetchError || !invData) {
-      throw new Error('Inventaris not found');
-    }
-
-    const newStock = Math.max(0, invData.jumlah_tersedia - peminjamanData.jumlah_pinjam);
+    // Step 4: Decrease inventory stock (now safe, already validated)
+    const newStock = invData.jumlah_tersedia - peminjamanData.jumlah_pinjam;
     const { error: stockError } = await supabase
       .from('inventaris')
       .update({ jumlah_tersedia: newStock })
@@ -393,10 +412,13 @@ export async function approvePeminjaman(peminjamanId: string): Promise<void> {
   }
 }
 
+// 🔒 PROTECTED: Requires manage:peminjaman permission
+export const approvePeminjaman = requirePermission('manage:peminjaman', approvePeminjamanImpl);
+
 /**
  * Reject peminjaman request
  */
-export async function rejectPeminjaman(
+async function rejectPeminjamanImpl(
   peminjamanId: string, 
   rejectionReason: string
 ): Promise<void> {
@@ -423,10 +445,13 @@ export async function rejectPeminjaman(
   }
 }
 
+// 🔒 PROTECTED: Requires manage:peminjaman permission
+export const rejectPeminjaman = requirePermission('manage:peminjaman', rejectPeminjamanImpl);
+
 /**
  * Process approval action (approve or reject)
  */
-export async function processApproval(action: ApprovalAction): Promise<void> {
+async function processApprovalImpl(action: ApprovalAction): Promise<void> {
   if (action.status === 'approved') {
     await approvePeminjaman(action.peminjaman_id);
   } else if (action.status === 'rejected') {
@@ -438,6 +463,9 @@ export async function processApproval(action: ApprovalAction): Promise<void> {
     throw new Error('Invalid approval action');
   }
 }
+
+// 🔒 PROTECTED: Requires manage:peminjaman permission
+export const processApproval = requirePermission('manage:peminjaman', processApprovalImpl);
 // ============================================================================
 // INVENTARIS CRUD
 // ============================================================================
@@ -601,7 +629,7 @@ export async function getInventarisById(id: string): Promise<InventarisListItem>
 /**
  * Create new inventaris
  */
-export async function createInventaris(data: CreateInventarisData): Promise<string> {
+async function createInventarisImpl(data: CreateInventarisData): Promise<string> {
   try {
     const { data: result, error } = await supabase
       .from('inventaris')
@@ -632,10 +660,13 @@ export async function createInventaris(data: CreateInventarisData): Promise<stri
   }
 }
 
+// 🔒 PROTECTED: Requires manage:inventaris permission
+export const createInventaris = requirePermission('manage:inventaris', createInventarisImpl);
+
 /**
  * Update inventaris
  */
-export async function updateInventaris(
+async function updateInventarisImpl(
   id: string,
   data: UpdateInventarisData
 ): Promise<void> {
@@ -669,10 +700,13 @@ export async function updateInventaris(
   }
 }
 
+// 🔒 PROTECTED: Requires manage:inventaris permission
+export const updateInventaris = requirePermission('manage:inventaris', updateInventarisImpl);
+
 /**
  * Delete inventaris
  */
-export async function deleteInventaris(id: string): Promise<void> {
+async function deleteInventarisImpl(id: string): Promise<void> {
   try {
     // Check if inventaris has active borrowings
     const { data: borrowings, error: borrowError } = await supabase
@@ -700,10 +734,13 @@ export async function deleteInventaris(id: string): Promise<void> {
   }
 }
 
+// 🔒 PROTECTED: Requires manage:inventaris permission
+export const deleteInventaris = requirePermission('manage:inventaris', deleteInventarisImpl);
+
 /**
  * Update stock quantity
  */
-export async function updateStock(
+async function updateStockImpl(
   id: string,
   adjustment: number,
   type: 'add' | 'subtract' | 'set'
@@ -752,6 +789,9 @@ export async function updateStock(
     throw error;
   }
 }
+
+// 🔒 PROTECTED: Requires manage:inventaris permission
+export const updateStock = requirePermission('manage:inventaris', updateStockImpl);
 
 /**
  * Get available categories
@@ -953,7 +993,7 @@ export interface UpdateLaboratoriumData {
   keterangan?: string;
 }
 
-export async function updateLaboratorium(id: string, data: UpdateLaboratoriumData): Promise<void> {
+async function updateLaboratoriumImpl(id: string, data: UpdateLaboratoriumData): Promise<void> {
   try {
     const { error } = await supabase
       .from('laboratorium')
@@ -966,6 +1006,9 @@ export async function updateLaboratorium(id: string, data: UpdateLaboratoriumDat
     throw error;
   }
 }
+
+// 🔒 PROTECTED: Requires manage:laboratorium permission
+export const updateLaboratorium = requirePermission('manage:laboratorium', updateLaboratoriumImpl);
 
 
 /**
@@ -980,7 +1023,7 @@ export interface CreateLaboratoriumData {
   is_active?: boolean;
 }
 
-export async function createLaboratorium(data: CreateLaboratoriumData): Promise<void> {
+async function createLaboratoriumImpl(data: CreateLaboratoriumData): Promise<void> {
   try {
     const { error } = await supabase
       .from('laboratorium')
@@ -993,12 +1036,15 @@ export async function createLaboratorium(data: CreateLaboratoriumData): Promise<
   }
 }
 
+// 🔒 PROTECTED: Requires manage:laboratorium permission
+export const createLaboratorium = requirePermission('manage:laboratorium', createLaboratoriumImpl);
+
 /**
  * Delete laboratorium (Admin only)
  * WARNING: This will permanently delete the laboratory
  * Checks for related data before deletion
  */
-export async function deleteLaboratorium(id: string): Promise<void> {
+async function deleteLaboratoriumImpl(id: string): Promise<void> {
   try {
     // Check if lab has any equipment
     const { data: equipment, error: equipError } = await supabase
@@ -1038,3 +1084,6 @@ export async function deleteLaboratorium(id: string): Promise<void> {
     throw error;
   }
 }
+
+// 🔒 PROTECTED: Requires manage:laboratorium permission
+export const deleteLaboratorium = requirePermission('manage:laboratorium', deleteLaboratoriumImpl);

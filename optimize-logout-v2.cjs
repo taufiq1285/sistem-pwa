@@ -99,7 +99,7 @@ if (content.includes('logout: START')) {
   // Try to just optimize the order
   content = content.replace(
     /const response = await performLogout\(\);/g,
-    '// ✅ Don\\'t wait - run in background\n        performLogout(); // No await'
+    "// ✅ Don't wait - run in background\n        performLogout(); // No await"
   );
 
   fs.writeFileSync(authProviderPath, content, 'utf8');

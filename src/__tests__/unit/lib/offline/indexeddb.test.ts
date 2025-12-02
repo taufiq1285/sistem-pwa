@@ -7,8 +7,8 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi, beforeAll } from 'vitest';
 import 'fake-indexeddb/auto';
-import { IndexedDBManager } from '@/lib/offline/indexeddb';
-import type { OfflineKuis, OfflineNilai, OfflineMateri } from '@/types/offline.types';
+import { IndexedDBManager } from '../../../../lib/offline/indexeddb';
+import type { OfflineKuis, OfflineNilai, OfflineMateri } from '../../../../types/offline.types';
 
 // ============================================================================
 // MOCK DATA

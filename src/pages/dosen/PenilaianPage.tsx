@@ -12,7 +12,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Save, Loader2, Search, Settings, Edit2 } from 'lucide-react';
+import { Save, Loader2, Search, Settings, Edit2, AlertTriangle, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -32,6 +32,16 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import {
   Table,
   TableBody,
@@ -100,6 +110,11 @@ export default function DosenPenilaianPage() {
     keterangan: '',
   });
 
+  // Confirmation Dialog State (untuk mencegah kesalahan input)
+  const [showSaveConfirmDialog, setShowSaveConfirmDialog] = useState(false);
+  const [showSwitchKelasWarning, setShowSwitchKelasWarning] = useState(false);
+  const [pendingKelasSwitch, setPendingKelasSwitch] = useState<string>('');
+
   // ============================================================================
   // EFFECTS
   // ============================================================================
@@ -108,14 +123,14 @@ export default function DosenPenilaianPage() {
     if (user?.dosen?.id) {
       loadKelas();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [user?.dosen?.id]);
 
   useEffect(() => {
     if (selectedKelas) {
       loadAllKelasData();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [selectedKelas]);
 
   // ============================================================================
@@ -288,17 +303,48 @@ export default function DosenPenilaianPage() {
   };
 
   // ============================================================================
+  // KELAS SWITCHING WITH WARNING
+  // ============================================================================
+
+  const handleKelasChange = (newKelasId: string) => {
+    // Check if there are unsaved changes
+    if (editedGrades.size > 0) {
+      setPendingKelasSwitch(newKelasId);
+      setShowSwitchKelasWarning(true);
+    } else {
+      setSelectedKelas(newKelasId);
+    }
+  };
+
+  const confirmKelasSwitch = () => {
+    setEditedGrades(new Map()); // Discard unsaved changes
+    setSelectedKelas(pendingKelasSwitch);
+    setShowSwitchKelasWarning(false);
+    setPendingKelasSwitch('');
+  };
+
+  const cancelKelasSwitch = () => {
+    setShowSwitchKelasWarning(false);
+    setPendingKelasSwitch('');
+  };
+
+  // ============================================================================
   // SAVE OPERATIONS
   // ============================================================================
 
-  const handleSaveAll = async () => {
+  const handleSaveAll = () => {
     if (editedGrades.size === 0) {
       toast.info('Tidak ada perubahan untuk disimpan');
       return;
     }
+    // Show confirmation dialog first
+    setShowSaveConfirmDialog(true);
+  };
 
+  const confirmSave = async () => {
     try {
       setSaving(true);
+      setShowSaveConfirmDialog(false);
 
       const batchData: BatchUpdateNilaiData = {
         kelas_id: selectedKelas,
@@ -437,6 +483,11 @@ export default function DosenPenilaianPage() {
   // HELPERS
   // ============================================================================
 
+  // Get current selected kelas info
+  const currentKelas = kelasList.find(k => k.id === selectedKelas);
+  const currentMataKuliah = currentKelas?.mata_kuliah?.nama_mk || 'Tidak diketahui';
+  const currentNamaKelas = currentKelas?.nama_kelas || '';
+
   const getDisplayValue = (mahasiswa: NilaiWithMahasiswa, field: keyof NilaiWithMahasiswa): number => {
     const edited = editedGrades.get(mahasiswa.mahasiswa_id);
     if (edited && field in edited) {
@@ -502,6 +553,21 @@ export default function DosenPenilaianPage() {
         </div>
       </div>
 
+      {/* Active Kelas Alert - PROMINENT */}
+      {selectedKelas && (
+        <Alert className="border-blue-500 bg-blue-50 dark:bg-blue-950">
+          <CheckCircle className="h-5 w-5 text-blue-600" />
+          <AlertDescription className="text-base font-semibold text-blue-900 dark:text-blue-100">
+            <div className="flex items-center gap-2">
+              <span>Sedang menginput nilai untuk:</span>
+              <span className="px-3 py-1 bg-blue-600 text-white rounded-md">
+                {currentMataKuliah} - {currentNamaKelas}
+              </span>
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Kelas Selection, Summary & Bobot Nilai */}
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
@@ -509,7 +575,7 @@ export default function DosenPenilaianPage() {
             <CardTitle>Pilih Kelas</CardTitle>
           </CardHeader>
           <CardContent>
-            <Select value={selectedKelas} onValueChange={setSelectedKelas}>
+            <Select value={selectedKelas} onValueChange={handleKelasChange}>
               <SelectTrigger>
                 <SelectValue placeholder="Pilih kelas" />
               </SelectTrigger>
@@ -813,7 +879,7 @@ export default function DosenPenilaianPage() {
 
       {/* Bobot Nilai Configuration Dialog */}
       <Dialog open={showBobotDialog} onOpenChange={setShowBobotDialog}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md max-h-[90vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>Atur Bobot Nilai</DialogTitle>
             <DialogDescription>
@@ -821,7 +887,7 @@ export default function DosenPenilaianPage() {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-4">
+          <div className="space-y-4 py-4 overflow-y-auto flex-1">
             {/* Kuis */}
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="kuis" className="text-right font-medium">
@@ -982,7 +1048,7 @@ export default function DosenPenilaianPage() {
 
       {/* Edit Mahasiswa Dialog */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent className="sm:max-w-2xl">
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>Edit Nilai Mahasiswa</DialogTitle>
             {editingMahasiswa && (
@@ -995,7 +1061,7 @@ export default function DosenPenilaianPage() {
             )}
           </DialogHeader>
 
-          <div className="space-y-6 py-4">
+          <div className="space-y-6 py-4 overflow-y-auto flex-1">
             {/* Grade Inputs - 2 columns */}
             <div className="grid grid-cols-2 gap-6">
               {/* Kuis */}
@@ -1182,6 +1248,78 @@ export default function DosenPenilaianPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Save Confirmation Dialog */}
+      <AlertDialog open={showSaveConfirmDialog} onOpenChange={setShowSaveConfirmDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <CheckCircle className="h-5 w-5 text-blue-600" />
+              Konfirmasi Penyimpanan Nilai
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3">
+              <p>Anda akan menyimpan nilai untuk:</p>
+              <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded-md border border-blue-200 dark:border-blue-800">
+                <p className="font-semibold text-blue-900 dark:text-blue-100">
+                  📚 {currentMataKuliah} - {currentNamaKelas}
+                </p>
+                <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
+                  Jumlah mahasiswa: {editedGrades.size} orang
+                </p>
+              </div>
+              <p className="text-sm text-gray-600">
+                Pastikan Anda sudah memilih <strong>mata kuliah yang benar</strong> sebelum menyimpan.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmSave}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              Ya, Simpan untuk {currentMataKuliah}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Switch Kelas Warning Dialog */}
+      <AlertDialog open={showSwitchKelasWarning} onOpenChange={setShowSwitchKelasWarning}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-orange-600">
+              <AlertTriangle className="h-5 w-5" />
+              Peringatan: Ada Perubahan Belum Disimpan!
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3">
+              <p>Anda memiliki <strong>{editedGrades.size} perubahan</strong> yang belum disimpan untuk:</p>
+              <div className="p-3 bg-orange-50 dark:bg-orange-950 rounded-md border border-orange-200 dark:border-orange-800">
+                <p className="font-semibold text-orange-900 dark:text-orange-100">
+                  📚 {currentMataKuliah} - {currentNamaKelas}
+                </p>
+              </div>
+              <p className="text-sm text-gray-600">
+                Jika Anda pindah kelas sekarang, semua perubahan akan <strong>hilang</strong>.
+              </p>
+              <p className="text-sm font-semibold text-orange-700">
+                Apakah Anda yakin ingin pindah kelas tanpa menyimpan?
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={cancelKelasSwitch}>
+              Batal, Tetap di Kelas Ini
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmKelasSwitch}
+              className="bg-orange-600 hover:bg-orange-700"
+            >
+              Ya, Pindah Kelas (Buang Perubahan)
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -8,8 +8,8 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi, beforeAll, afterAll } from 'vitest';
-import { NetworkDetector } from '@/lib/offline/network-detector';
-import type { NetworkChangeEvent } from '@/lib/offline/network-detector';
+import { NetworkDetector } from '../../../../lib/offline/network-detector';
+import type { NetworkChangeEvent } from '../../../../lib/offline/network-detector';
 
 // ============================================================================
 // MOCK SETUP

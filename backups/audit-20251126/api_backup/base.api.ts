@@ -35,7 +35,7 @@ interface BaseQueryOptions extends SupabaseQueryOptions {
 interface FilterOptions {
   column: string;
   // PERBAIKAN: Kita kembalikan ke 'any' karena filter bisa menerima tipe apa saja
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   value: any;
   operator?: 'eq' | 'neq' | 'gt' | 'gte' | 'lt' | 'lte' | 'like' | 'ilike' | 'in' | 'is';
 }
@@ -50,7 +50,7 @@ interface FilterOptions {
  * @param options - Query options
  * @returns Array of records
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 export async function query<T = any>(
   table: string,
   options: BaseQueryOptions = {}
@@ -63,7 +63,7 @@ export async function query<T = any>(
   try {
     let queryBuilder = supabase
       // PERBAIKAN: 'as any' diperlukan di sini untuk generic API
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       .from(table as any)
       .select(options.select || '*');
 
@@ -115,7 +115,7 @@ export async function query<T = any>(
  * @param options - Query options
  * @returns Array of records
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 export async function queryWithFilters<T = any>(
   table: string,
   filters: FilterOptions[],
@@ -129,7 +129,7 @@ export async function queryWithFilters<T = any>(
   try {
     let queryBuilder = supabase
       // PERBAIKAN: 'as any' diperlukan di sini untuk generic API
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       .from(table as any)
       .select(options.select || '*');
 
@@ -216,7 +216,7 @@ export async function queryWithFilters<T = any>(
  * @param options - Query options
  * @returns Single record
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 export async function getById<T = any>(
   table: string,
   id: string,
@@ -225,7 +225,7 @@ export async function getById<T = any>(
   try {
     const { data, error } = await supabase
       // PERBAIKAN: 'as any' diperlukan di sini untuk generic API
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       .from(table as any)
       .select(options.select || '*')
       .eq('id', id)
@@ -254,7 +254,7 @@ export async function getById<T = any>(
  * @param options - Query options
  * @returns Paginated response
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 export async function getPaginated<T = any>(
   table: string,
   params: QueryParams = {},
@@ -268,7 +268,7 @@ export async function getPaginated<T = any>(
     // Get total count
     const { count, error: countError } = await supabase
       // PERBAIKAN: 'as any' diperlukan di sini untuk generic API
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       .from(table as any)
       .select('*', { count: 'exact', head: true });
 
@@ -282,7 +282,7 @@ export async function getPaginated<T = any>(
     // Get data
     let queryBuilder = supabase
       // PERBAIKAN: 'as any' diperlukan di sini untuk generic API
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       .from(table as any)
       .select(options.select || '*')
       .range(offset, offset + pageSize - 1);
@@ -344,7 +344,7 @@ export async function getPaginated<T = any>(
  * @param data - Record data
  * @returns Inserted record
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 export async function insert<T = any>(
   table: string,
   data: Partial<T>
@@ -352,7 +352,7 @@ export async function insert<T = any>(
   try {
     const { data: result, error } = await supabase
       // PERBAIKAN: 'as any' diperlukan di sini untuk generic API
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       .from(table as any)
       .insert(data)
       .select()
@@ -380,7 +380,7 @@ export async function insert<T = any>(
  * @param data - Array of records
  * @returns Inserted records
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 export async function insertMany<T = any>(
   table: string,
   data: Partial<T>[]
@@ -388,7 +388,7 @@ export async function insertMany<T = any>(
   try {
     const { data: result, error } = await supabase
       // PERBAIKAN: 'as any' diperlukan di sini untuk generic API
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       .from(table as any)
       .insert(data)
       .select();
@@ -412,7 +412,7 @@ export async function insertMany<T = any>(
  * @param data - Update data
  * @returns Updated record
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 export async function update<T = any>(
   table: string,
   id: string,
@@ -421,7 +421,7 @@ export async function update<T = any>(
   try {
     const { data: result, error } = await supabase
       // PERBAIKAN: 'as any' diperlukan di sini untuk generic API
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       .from(table as any)
       .update(data)
       .eq('id', id)
@@ -451,7 +451,7 @@ export async function update<T = any>(
  * @param data - Update data
  * @returns Updated records
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 export async function updateMany<T = any>(
   table: string,
   filters: FilterOptions[],
@@ -461,7 +461,7 @@ export async function updateMany<T = any>(
     // PERBAIKAN 'prefer-const': 'const' diubah menjadi 'let'
     let queryBuilder = supabase
       // PERBAIKAN: 'as any' diperlukan di sini untuk generic API
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       .from(table as any)
       .update(data);
 
@@ -529,7 +529,7 @@ export async function remove(
   try {
     const { error } = await supabase
       // PERBAIKAN: 'as any' diperlukan di sini untuk generic API
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       .from(table as any)
       .delete()
       .eq('id', id);
@@ -560,7 +560,7 @@ export async function removeMany(
     // PERBAIKAN 'prefer-const': 'const' diubah menjadi 'let'
     let queryBuilder = supabase
       // PERBAIKAN: 'as any' diperlukan di sini untuk generic API
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       .from(table as any)
       .delete();
 
@@ -632,7 +632,7 @@ export async function exists(
   try {
     const { data, error } = await supabase
       // PERBAIKAN: 'as any' diperlukan di sini untuk generic API
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       .from(table as any)
       .select('id')
       .eq('id', id)
@@ -664,7 +664,7 @@ export async function count(
     // PERBAIKAN 'prefer-const': 'const' diubah menjadi 'let'
     let queryBuilder = supabase
       // PERBAIKAN: 'as any' diperlukan di sini untuk generic API
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       .from(table as any)
       .select('*', { count: 'exact', head: true });
 

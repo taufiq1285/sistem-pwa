@@ -4,7 +4,7 @@ import {
   ConflictData,
   resolveConflict,
   wouldConflict,
-} from '@/lib/offline/conflict-resolver';
+} from '../../../../lib/offline/conflict-resolver';
 
 describe('ConflictResolver', () => {
   let resolver: ConflictResolver;
@@ -324,4 +324,4 @@ describe('ConflictResolver', () => {
       expect(wouldConflict('a', 'b', 100, 100)).toBe(false);
     });
   });
-});
+});

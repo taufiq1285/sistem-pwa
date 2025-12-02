@@ -108,14 +108,14 @@ export default function DosenPenilaianPage() {
     if (user?.dosen?.id) {
       loadKelas();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [user?.dosen?.id]);
 
   useEffect(() => {
     if (selectedKelas) {
       loadAllKelasData();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [selectedKelas]);
 
   // ============================================================================

@@ -33,6 +33,12 @@ import type {
 import { supabase } from "@/lib/supabase/client";
 import { handleError, logError } from "@/lib/utils/errors";
 import { conflictResolver } from "@/lib/offline/conflict-resolver";
+import {
+  requirePermission,
+  requirePermissionAndOwnership,
+  getCurrentDosenId,
+  getCurrentMahasiswaId,
+} from "@/lib/middleware/permission.middleware";
 
 // ============================================================================
 // EXTENDED TYPES
@@ -167,7 +173,8 @@ export async function getKuisByKelas(kelasId: string): Promise<Kuis[]> {
   }
 }
 
-export async function createKuis(data: CreateKuisData): Promise<Kuis> {
+// Internal implementation (unwrapped)
+async function createKuisImpl(data: CreateKuisData): Promise<Kuis> {
   try {
     console.log("🔵 API createKuis called with data:", data);
     const result = await insert<Kuis>("kuis", data);
@@ -181,7 +188,11 @@ export async function createKuis(data: CreateKuisData): Promise<Kuis> {
   }
 }
 
-export async function updateKuis(
+// 🔒 PROTECTED: Only dosen can create kuis
+export const createKuis = requirePermission('manage:kuis', createKuisImpl);
+
+// Internal implementation (unwrapped)
+async function updateKuisImpl(
   id: string,
   data: Partial<CreateKuisData>,
 ): Promise<Kuis> {
@@ -194,7 +205,16 @@ export async function updateKuis(
   }
 }
 
-export async function deleteKuis(id: string): Promise<boolean> {
+// 🔒 PROTECTED: Only owner dosen can update kuis
+export const updateKuis = requirePermissionAndOwnership(
+  'manage:kuis',
+  { table: 'kuis', ownerField: 'dosen_id' },
+  0, // id is first argument
+  updateKuisImpl
+);
+
+// Internal implementation (unwrapped)
+async function deleteKuisImpl(id: string): Promise<boolean> {
   try {
     return await remove("kuis", id);
   } catch (error) {
@@ -203,6 +223,14 @@ export async function deleteKuis(id: string): Promise<boolean> {
     throw apiError;
   }
 }
+
+// 🔒 PROTECTED: Only owner dosen can delete kuis
+export const deleteKuis = requirePermissionAndOwnership(
+  'manage:kuis',
+  { table: 'kuis', ownerField: 'dosen_id' },
+  0, // id is first argument
+  deleteKuisImpl
+);
 
 export async function publishKuis(id: string): Promise<Kuis> {
   try {
@@ -228,8 +256,9 @@ export async function unpublishKuis(id: string): Promise<Kuis> {
 
 /**
  * Duplicate a quiz with all its questions
+ * Internal implementation (unwrapped)
  */
-export async function duplicateKuis(kuisId: string): Promise<Kuis> {
+async function duplicateKuisImpl(kuisId: string): Promise<Kuis> {
   try {
     const originalKuis = await getKuisById(kuisId);
 
@@ -298,6 +327,14 @@ export async function duplicateKuis(kuisId: string): Promise<Kuis> {
   }
 }
 
+// 🔒 PROTECTED: Only owner dosen can duplicate kuis
+export const duplicateKuis = requirePermissionAndOwnership(
+  'manage:kuis',
+  { table: 'kuis', ownerField: 'dosen_id' },
+  0, // kuisId is first argument
+  duplicateKuisImpl
+);
+
 // ============================================================================
 // SOAL (QUESTION) OPERATIONS
 // ============================================================================
@@ -337,7 +374,8 @@ export async function getSoalById(id: string): Promise<Soal> {
   }
 }
 
-export async function createSoal(data: CreateSoalData): Promise<Soal> {
+// Internal implementation (unwrapped)
+async function createSoalImpl(data: CreateSoalData): Promise<Soal> {
   try {
     const dbData: any = {
       kuis_id: data.kuis_id,
@@ -365,7 +403,11 @@ export async function createSoal(data: CreateSoalData): Promise<Soal> {
   }
 }
 
-export async function updateSoal(
+// 🔒 PROTECTED: Only dosen can create soal
+export const createSoal = requirePermission('manage:soal', createSoalImpl);
+
+// Internal implementation (unwrapped)
+async function updateSoalImpl(
   id: string,
   data: Partial<CreateSoalData>,
 ): Promise<Soal> {
@@ -390,7 +432,11 @@ export async function updateSoal(
   }
 }
 
-export async function deleteSoal(id: string): Promise<boolean> {
+// 🔒 PROTECTED: Only dosen can update soal
+export const updateSoal = requirePermission('manage:soal', updateSoalImpl);
+
+// Internal implementation (unwrapped)
+async function deleteSoalImpl(id: string): Promise<boolean> {
   try {
     return await remove("soal", id);
   } catch (error) {
@@ -400,13 +446,17 @@ export async function deleteSoal(id: string): Promise<boolean> {
   }
 }
 
-export async function reorderSoal(
+// 🔒 PROTECTED: Only dosen can delete soal
+export const deleteSoal = requirePermission('manage:soal', deleteSoalImpl);
+
+// Internal implementation (unwrapped)
+async function reorderSoalImpl(
   kuisId: string,
   soalIds: string[],
 ): Promise<boolean> {
   try {
     const updates = soalIds.map((id, index) =>
-      updateSoal(id, { urutan: index + 1 }),
+      updateSoalImpl(id, { urutan: index + 1 }),
     );
     await Promise.all(updates);
     return true;
@@ -416,6 +466,9 @@ export async function reorderSoal(
     throw apiError;
   }
 }
+
+// 🔒 PROTECTED: Only dosen can reorder soal
+export const reorderSoal = requirePermission('manage:soal', reorderSoalImpl);
 
 // ============================================================================
 // ATTEMPT OPERATIONS (MAHASISWA)
@@ -559,7 +612,8 @@ export async function getAttemptById(id: string): Promise<AttemptKuis> {
   }
 }
 
-export async function startAttempt(
+// Internal implementation (unwrapped)
+async function startAttemptImpl(
   data: StartAttemptData,
 ): Promise<AttemptKuis> {
   try {
@@ -586,7 +640,11 @@ export async function startAttempt(
   }
 }
 
-export async function submitQuiz(data: SubmitQuizData): Promise<AttemptKuis> {
+// 🔒 PROTECTED: Only mahasiswa can start attempt
+export const startAttempt = requirePermission('create:attempt_kuis', startAttemptImpl);
+
+// Internal implementation (unwrapped)
+async function submitQuizImpl(data: SubmitQuizData): Promise<AttemptKuis> {
   try {
     const updateData = {
       status: "submitted" as const,
@@ -605,6 +663,9 @@ export async function submitQuiz(data: SubmitQuizData): Promise<AttemptKuis> {
     throw apiError;
   }
 }
+
+// 🔒 PROTECTED: Only mahasiswa can submit quiz
+export const submitQuiz = requirePermission('update:attempt_kuis', submitQuizImpl);
 
 // ============================================================================
 // JAWABAN (ANSWER) OPERATIONS
@@ -637,7 +698,8 @@ export async function getJawabanByAttempt(
   }
 }
 
-export async function submitAnswer(data: SubmitAnswerData): Promise<Jawaban> {
+// Internal implementation (unwrapped)
+async function submitAnswerImpl(data: SubmitAnswerData): Promise<Jawaban> {
   try {
     const existing = await queryWithFilters<Jawaban>("jawaban", [
       {
@@ -671,7 +733,11 @@ export async function submitAnswer(data: SubmitAnswerData): Promise<Jawaban> {
   }
 }
 
-export async function gradeAnswer(
+// 🔒 PROTECTED: Only mahasiswa can submit answer
+export const submitAnswer = requirePermission('update:jawaban', submitAnswerImpl);
+
+// Internal implementation (unwrapped)
+async function gradeAnswerImpl(
   id: string,
   poinDiperoleh: number,
   isCorrect: boolean,
@@ -691,6 +757,9 @@ export async function gradeAnswer(
     throw apiError;
   }
 }
+
+// 🔒 PROTECTED: Only dosen can grade answer
+export const gradeAnswer = requirePermission('grade:attempt_kuis', gradeAnswerImpl);
 
 // ============================================================================
 // MAHASISWA DASHBOARD OPERATIONS

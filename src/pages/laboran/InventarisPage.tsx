@@ -86,7 +86,7 @@ export default function InventarisPage() {
   useEffect(() => {
     loadInventaris();
     loadCategories();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [searchQuery, selectedKategori]);
 
   const loadInventaris = async () => {

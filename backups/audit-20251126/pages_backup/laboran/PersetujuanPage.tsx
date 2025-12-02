@@ -96,7 +96,7 @@ export default function PersetujuanPage() {
 
   useEffect(() => {
     loadPendingRequests();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, []);
 
   const loadPendingRequests = async () => {

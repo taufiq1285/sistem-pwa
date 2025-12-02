@@ -145,7 +145,7 @@ export default function DosenKehadiranPage() {
       const { data: kelasData, error: kelasError } = await supabase
         .from('kelas')
         .select('id, nama_kelas, mata_kuliah_id')
-        .eq('dosen_id', user?.dosen?.id!);
+        .eq('dosen_id', user?.dosen?.id || '');
 
       if (kelasError) throw kelasError;
 
@@ -218,9 +218,9 @@ export default function DosenKehadiranPage() {
 
       if (!jadwalData) throw new Error('Jadwal not found');
 
-      // Get mahasiswa in this kelas - dengan nama dari users table
+      // Get mahasiswa in this kelas - dari kelas_mahasiswa (enrollment)
       const { data: mahasiswaData, error: mahasiswaError } = await supabase
-        .from('nilai')
+        .from('kelas_mahasiswa')
         .select('mahasiswa_id, mahasiswa(id, nim, user_id)')
         .eq("kelas_id", jadwalData.kelas_id!)
         .limit(100);

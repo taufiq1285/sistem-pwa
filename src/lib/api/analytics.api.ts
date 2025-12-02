@@ -4,6 +4,11 @@
  */
 
 import { supabase } from '@/lib/supabase/client';
+import { cacheAPI } from '@/lib/offline/api-cache';
+import {
+  requirePermission,
+  requirePermissionAndOwnership,
+} from '@/lib/middleware';
 
 export interface SystemMetrics {
   totalUsers: number;
@@ -17,7 +22,7 @@ export interface SystemMetrics {
 /**
  * Get comprehensive system metrics for analytics dashboard
  */
-export async function getSystemMetrics(): Promise<SystemMetrics> {
+async function getSystemMetricsImpl(): Promise<SystemMetrics> {
   try {
     const [usersResult, equipmentResult, borrowingsResult, classesResult, activeBorrowingsResult] = await Promise.all([
       supabase.from('users').select('id', { count: 'exact', head: true }),
@@ -58,4 +63,8 @@ export async function getSystemMetrics(): Promise<SystemMetrics> {
     };
   }
 }
+
+// 🔒 PROTECTED: Requires view:analytics permission
+export const getSystemMetrics = requirePermission('view:analytics', getSystemMetricsImpl);
+
 

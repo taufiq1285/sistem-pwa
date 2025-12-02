@@ -26,6 +26,8 @@ import type {
 import { handleError } from '@/lib/utils/errors';
 import { calculateNilaiAkhir, getNilaiHuruf } from '@/lib/validations/nilai.schema';
 import { supabase } from '@/lib/supabase/client';
+import { cacheAPI } from '@/lib/offline/api-cache';
+import { requirePermission } from '@/lib/middleware/permission.middleware';
 
 // ============================================================================
 // TYPES
@@ -230,7 +232,7 @@ export async function getNilaiById(id: string): Promise<Nilai> {
 /**
  * Get or create nilai for a mahasiswa in a kelas
  */
-export async function getOrCreateNilai(
+async function getOrCreateNilaiImpl(
   mahasiswaId: string,
   kelasId: string
 ): Promise<Nilai> {
@@ -261,17 +263,19 @@ export async function getOrCreateNilai(
       nilai_kehadiran: 0,
     };
 
-    return await createNilai(newNilai);
+    return await createNilaiImpl(newNilai);
   } catch (error) {
     console.error('getOrCreateNilai error:', error);
     throw handleError(error);
   }
 }
 
+export const getOrCreateNilai = requirePermission('manage:nilai', getOrCreateNilaiImpl);
+
 /**
  * Create new nilai
  */
-export async function createNilai(data: CreateNilaiData): Promise<Nilai> {
+async function createNilaiImpl(data: CreateNilaiData): Promise<Nilai> {
   try {
     // Calculate nilai_akhir and nilai_huruf
     const nilaiAkhir = calculateNilaiAkhir(
@@ -299,33 +303,39 @@ export async function createNilai(data: CreateNilaiData): Promise<Nilai> {
   }
 }
 
+// 🔒 PROTECTED: Only dosen can manage nilai
+export const createNilai = requirePermission('manage:nilai', createNilaiImpl);
+
 /**
  * Update nilai
  */
-export async function updateNilai(
+async function updateNilaiImpl(
   mahasiswaId: string,
   kelasId: string,
   data: Partial<UpdateNilaiData>
 ): Promise<Nilai> {
   try {
-    // Get current nilai to calculate new nilai_akhir
+    // ✅ FIX: Use .maybeSingle() instead of .single()
+    // maybeSingle() returns null if not found, doesn't error
     const { data: current, error: fetchError } = await supabase
       .from('nilai')
       .select('*')
       .eq('mahasiswa_id', mahasiswaId)
       .eq('kelas_id', kelasId)
-      .single();
+      .maybeSingle();
 
+    // If error other than not found, throw it
     if (fetchError) throw handleError(fetchError);
 
-    // Merge with new data
+    // ✅ FIX: Use optional chaining for null safety
+    // current?.nilai_kuis will be null if current is null
     const merged = {
-      nilai_kuis: data.nilai_kuis ?? current.nilai_kuis ?? 0,
-      nilai_tugas: data.nilai_tugas ?? current.nilai_tugas ?? 0,
-      nilai_uts: data.nilai_uts ?? current.nilai_uts ?? 0,
-      nilai_uas: data.nilai_uas ?? current.nilai_uas ?? 0,
-      nilai_praktikum: data.nilai_praktikum ?? current.nilai_praktikum ?? 0,
-      nilai_kehadiran: data.nilai_kehadiran ?? current.nilai_kehadiran ?? 0,
+      nilai_kuis: data.nilai_kuis ?? current?.nilai_kuis ?? 0,
+      nilai_tugas: data.nilai_tugas ?? current?.nilai_tugas ?? 0,
+      nilai_uts: data.nilai_uts ?? current?.nilai_uts ?? 0,
+      nilai_uas: data.nilai_uas ?? current?.nilai_uas ?? 0,
+      nilai_praktikum: data.nilai_praktikum ?? current?.nilai_praktikum ?? 0,
+      nilai_kehadiran: data.nilai_kehadiran ?? current?.nilai_kehadiran ?? 0,
     };
 
     // Calculate nilai_akhir and nilai_huruf
@@ -340,34 +350,41 @@ export async function updateNilai(
 
     const nilaiHuruf = getNilaiHuruf(nilaiAkhir);
 
-    const updateData = {
+    // ✅ FIX: Include mahasiswa_id and kelas_id in data for UPSERT
+    const upsertData = {
+      mahasiswa_id: mahasiswaId,
+      kelas_id: kelasId,
       ...data,
       nilai_akhir: nilaiAkhir,
       nilai_huruf: nilaiHuruf,
       updated_at: new Date().toISOString(),
     };
 
-    const { data: updated, error: updateError } = await supabase
+    // ✅ FIX: Use .upsert() instead of .update()
+    // UPSERT = UPDATE if exists, INSERT if not
+    const { data: upserted, error: upsertError } = await supabase
       .from('nilai')
-      .update(updateData)
-      .eq('mahasiswa_id', mahasiswaId)
-      .eq('kelas_id', kelasId)
+      .upsert(upsertData, {
+        onConflict: 'mahasiswa_id,kelas_id',
+      })
       .select()
       .single();
 
-    if (updateError) throw handleError(updateError);
+    if (upsertError) throw handleError(upsertError);
 
-    return updated as Nilai;
+    return upserted as Nilai;
   } catch (error) {
     console.error('updateNilai error:', error);
     throw handleError(error);
   }
 }
 
+export const updateNilai = requirePermission('manage:nilai', updateNilaiImpl);
+
 /**
  * Batch update nilai for multiple students
  */
-export async function batchUpdateNilai(
+async function batchUpdateNilaiImpl(
   batchData: BatchUpdateNilaiData
 ): Promise<Nilai[]> {
   try {
@@ -375,7 +392,7 @@ export async function batchUpdateNilai(
 
     for (const item of batchData.nilai_list) {
       try {
-        const updated = await updateNilai(
+        const updated = await updateNilaiImpl(
           item.mahasiswa_id,
           batchData.kelas_id,
           item
@@ -394,10 +411,12 @@ export async function batchUpdateNilai(
   }
 }
 
+export const batchUpdateNilai = requirePermission('manage:nilai', batchUpdateNilaiImpl);
+
 /**
  * Delete nilai
  */
-export async function deleteNilai(id: string): Promise<void> {
+async function deleteNilaiImpl(id: string): Promise<void> {
   try {
     await remove('nilai', id);
   } catch (error) {
@@ -405,6 +424,8 @@ export async function deleteNilai(id: string): Promise<void> {
     throw handleError(error);
   }
 }
+
+export const deleteNilai = requirePermission('manage:nilai', deleteNilaiImpl);
 
 // ============================================================================
 // STATISTICS & ANALYTICS

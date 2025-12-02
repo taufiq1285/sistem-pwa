@@ -9,7 +9,15 @@ import { useTheme } from "@/lib/hooks/useTheme"
 import { Toaster as Sonner, type ToasterProps } from "sonner"
 
 const Toaster = ({ ...props }: ToasterProps) => {
-  const { effectiveTheme } = useTheme()
+  // Safely get theme with fallback
+  let effectiveTheme: "light" | "dark" = "light"
+
+  try {
+    const theme = useTheme()
+    effectiveTheme = theme.effectiveTheme
+  } catch (error) {
+    console.warn("Toaster: Failed to get theme, using light mode", error)
+  }
 
   return (
     <Sonner

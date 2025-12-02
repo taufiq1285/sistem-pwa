@@ -4,6 +4,11 @@
  */
 
 import { supabase } from '@/lib/supabase/client';
+import { cacheAPI } from '@/lib/offline/api-cache';
+import {
+  requirePermission,
+  requirePermissionAndOwnership,
+} from '@/lib/middleware';
 
 // ============================================================================
 // TYPES
@@ -71,21 +76,56 @@ export interface JadwalMahasiswa {
 // HELPER
 // ============================================================================
 
+// Cache for mahasiswa ID
+let cachedMahasiswaId: string | null = null;
+let cachedMahasiswaIdTimestamp: number = 0;
+const MAHASISWA_CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+const MAHASISWA_ID_STORAGE_KEY = 'cached_mahasiswa_id';
+
 async function getMahasiswaId(): Promise<string | null> {
   try {
+    // Return cached value if still valid (in-memory)
+    if (cachedMahasiswaId && Date.now() - cachedMahasiswaIdTimestamp < MAHASISWA_CACHE_DURATION) {
+      return cachedMahasiswaId;
+    }
+
+    // Try to get from localStorage (persistent for offline)
+    const storedMahasiswaId = localStorage.getItem(MAHASISWA_ID_STORAGE_KEY);
+    if (storedMahasiswaId) {
+      cachedMahasiswaId = storedMahasiswaId;
+      cachedMahasiswaIdTimestamp = Date.now();
+      return storedMahasiswaId;
+    }
+
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return null;
+    if (!user) {
+      return storedMahasiswaId || cachedMahasiswaId;
+    }
 
-    const { data } = await supabase
-      .from('mahasiswa')
-      .select('id')
-      .eq('user_id', user.id)
-      .maybeSingle();
+    try {
+      const { data } = await supabase
+        .from('mahasiswa')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
 
-    return data?.id || null;
+      if (data?.id) {
+        // Cache result (in-memory and localStorage)
+        cachedMahasiswaId = data.id;
+        cachedMahasiswaIdTimestamp = Date.now();
+        localStorage.setItem(MAHASISWA_ID_STORAGE_KEY, data.id);
+        return data.id;
+      }
+
+      return storedMahasiswaId || cachedMahasiswaId;
+    } catch (fetchError) {
+      // Network error - return cached
+      return storedMahasiswaId || cachedMahasiswaId;
+    }
   } catch (error: unknown) {
-    console.error('Error getting mahasiswa ID:', error);
-    return null;
+    // Suppress error - return cached/stored if available
+    const storedMahasiswaId = localStorage.getItem(MAHASISWA_ID_STORAGE_KEY);
+    return storedMahasiswaId || cachedMahasiswaId;
   }
 }
 
@@ -94,16 +134,19 @@ async function getMahasiswaId(): Promise<string | null> {
 // ============================================================================
 
 export async function getMahasiswaStats(): Promise<MahasiswaStats> {
-  try {
-    const mahasiswaId = await getMahasiswaId();
-    if (!mahasiswaId) {
-      return {
-        totalMataKuliah: 0,
-        totalKuis: 0,
-        rataRataNilai: null,
-        jadwalHariIni: 0,
-      };
-    }
+  return cacheAPI(
+    'mahasiswa_stats',
+    async () => {
+      try {
+        const mahasiswaId = await getMahasiswaId();
+        if (!mahasiswaId) {
+          return {
+            totalMataKuliah: 0,
+            totalKuis: 0,
+            rataRataNilai: null,
+            jadwalHariIni: 0,
+          };
+        }
 
     const { data: kelasData } = await supabase
       .from('kelas_mahasiswa')
@@ -144,21 +187,27 @@ export async function getMahasiswaStats(): Promise<MahasiswaStats> {
       rataRataNilai = sum / nilaiData.length;
     }
 
-    return {
-      totalMataKuliah,
-      totalKuis,
-      rataRataNilai,
-      jadwalHariIni,
-    };
-  } catch (error: unknown) {
-    console.error('Error fetching mahasiswa stats:', error);
-    return {
-      totalMataKuliah: 0,
-      totalKuis: 0,
-      rataRataNilai: null,
-      jadwalHariIni: 0,
-    };
-  }
+        return {
+          totalMataKuliah,
+          totalKuis,
+          rataRataNilai,
+          jadwalHariIni,
+        };
+      } catch (error: unknown) {
+        console.error('Error fetching mahasiswa stats:', error);
+        return {
+          totalMataKuliah: 0,
+          totalKuis: 0,
+          rataRataNilai: null,
+          jadwalHariIni: 0,
+        };
+      }
+    },
+    {
+      ttl: 5 * 60 * 1000, // Cache for 5 minutes
+      staleWhileRevalidate: true,
+    }
+  );
 }
 
 // ============================================================================
@@ -272,7 +321,7 @@ export async function getAvailableKelas(): Promise<AvailableKelas[]> {
 // ENROLLMENT
 // ============================================================================
 
-export async function enrollToKelas(kelasId: string): Promise<{ success: boolean; message: string }> {
+async function enrollToKelasImpl(kelasId: string): Promise<{ success: boolean; message: string }> {
   try {
     const mahasiswaId = await getMahasiswaId();
     if (!mahasiswaId) {
@@ -330,7 +379,7 @@ export async function enrollToKelas(kelasId: string): Promise<{ success: boolean
   }
 }
 
-export async function unenrollFromKelas(kelasId: string): Promise<{ success: boolean; message: string }> {
+async function unenrollFromKelasImpl(kelasId: string): Promise<{ success: boolean; message: string }> {
   try {
     const mahasiswaId = await getMahasiswaId();
     if (!mahasiswaId) {
@@ -351,6 +400,10 @@ export async function unenrollFromKelas(kelasId: string): Promise<{ success: boo
     return { success: false, message: (error as Error).message || 'Gagal keluar dari kelas' };
   }
 }
+
+// Export enrollment functions
+export const enrollToKelas = enrollToKelasImpl;
+export const unenrollFromKelas = unenrollFromKelasImpl;
 
 // ============================================================================
 // MY CLASSES

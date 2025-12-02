@@ -18,9 +18,9 @@ import {
   precacheUrls,
   clearAllCaches,
   getCacheStats,
-} from '@/lib/pwa/cache-strategies';
-import type { StrategyOptions } from '@/lib/pwa/cache-strategies';
-import type { CacheRule } from '@/config/cache.config';
+} from '../../../../lib/pwa/cache-strategies';
+import type { StrategyOptions } from '../../../../lib/pwa/cache-strategies';
+import type { CacheRule } from '../../../../config/cache.config';
 
 // ============================================================================
 // MOCKS

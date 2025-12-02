@@ -745,7 +745,7 @@ export async function getMyBorrowing(limitOrStatus?: number | BorrowingStatus | 
     const { data, error } = await query;
     if (error) throw error;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     return (data || []).map((item: any) => ({
       id: item.id,
       inventaris_nama: item.inventaris?.nama_barang || '-',
@@ -794,7 +794,7 @@ export async function getKelasStudents(kelasId: string): Promise<EnrolledStudent
       .order('enrolled_at', { ascending: false });
     if (error) throw error;
     if (!data) return [];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     return data.map((item: any) => ({
       id: item.id,
       mahasiswa_id: item.mahasiswa_id,
@@ -837,7 +837,7 @@ export async function getMyKelasWithStudents(): Promise<KelasWithStudents[]> {
     if (!kelasData) return [];
 
     const result = await Promise.all(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       kelasData.map(async (kelas: any) => {
         const { data: mkData } = await supabase
           .from('mata_kuliah')

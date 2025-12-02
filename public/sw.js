@@ -161,12 +161,46 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Skip Vite HMR and development requests
+  // Handle Vite HMR and development requests
   if (url.pathname.includes('/@vite/') ||
       url.pathname.includes('/@fs/') ||
       url.pathname.includes('/@id/') ||
       url.pathname.includes('/@react-refresh') ||
-      url.search.includes('?token=')) {
+      url.pathname.startsWith('/@vite/') ||
+      url.pathname.startsWith('/@react-refresh') ||
+      url.search.includes('?import')) {
+
+    // Always return empty response to prevent console errors
+    // In development, Vite will handle these when online
+    event.respondWith(
+      fetch(request).catch(() => {
+        // If fetch fails (offline), return empty response
+        return new Response('', {
+          status: 200,
+          headers: { 'Content-Type': 'application/javascript' }
+        });
+      })
+    );
+    return;
+  }
+
+  // Handle main.tsx with timestamp (Vite dev entry point)
+  if (url.pathname.includes('/src/main.tsx') && url.search.includes('?t=')) {
+    event.respondWith(
+      fetch(request).catch(() => {
+        // If offline, return empty response to prevent error
+        return new Response('', {
+          status: 200,
+          headers: { 'Content-Type': 'application/javascript' }
+        });
+      })
+    );
+    return;
+  }
+
+  // Skip favicon.ico (browser auto-requests it but we use favicon.png)
+  if (url.pathname === '/favicon.ico') {
+    // Don't intercept - let it fail naturally
     return;
   }
 
@@ -198,23 +232,29 @@ async function cacheFirstStrategy(request, cacheName) {
     // Try cache first
     const cachedResponse = await caches.match(request);
     if (cachedResponse) {
-      console.log('[SW] Cache hit:', request.url);
       return cachedResponse;
     }
 
     // Cache miss - fetch from network
-    console.log('[SW] Cache miss, fetching from network:', request.url);
     const networkResponse = await fetch(request);
 
     // Cache successful responses
     if (networkResponse && networkResponse.status === 200) {
       const cache = await caches.open(cacheName);
       cache.put(request, networkResponse.clone());
-      console.log('[SW] Cached new resource:', request.url);
     }
 
     return networkResponse;
   } catch (error) {
+    // Check if it's an image request - return a placeholder instead of error
+    const url = new URL(request.url);
+    if (url.pathname.match(/\.(png|jpg|jpeg|gif|webp|svg|ico)$/i)) {
+      console.log('[SW] Image not available offline, returning placeholder:', url.pathname);
+      // Return a minimal transparent 1x1 PNG
+      const transparentPixel = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+      return fetch(transparentPixel);
+    }
+
     console.error('[SW] Cache First failed:', error);
     return handleOfflineFallback(request);
   }
@@ -234,22 +274,21 @@ async function networkFirstStrategy(request, cacheName) {
     if (networkResponse && networkResponse.status === 200) {
       const cache = await caches.open(cacheName);
       cache.put(request, networkResponse.clone());
-      console.log('[SW] Cached API response:', request.url);
+      // Suppress logging for API responses
     }
 
     return networkResponse;
   } catch (error) {
-    console.log('[SW] Network failed, trying cache:', request.url);
+    // Network failed - try cache (suppress logging)
 
     // Network failed - try cache
     const cachedResponse = await caches.match(request);
     if (cachedResponse) {
-      console.log('[SW] Serving from cache (offline):', request.url);
+      // Suppress logging - return silently
       return cachedResponse;
     }
 
-    // Both failed
-    console.error('[SW] Network First failed:', error);
+    // Both failed - suppress error logging
     return handleOfflineFallback(request);
   }
 }
@@ -270,23 +309,43 @@ async function staleWhileRevalidateStrategy(request, cacheName) {
         const responseToCache = networkResponse.clone();
         caches.open(cacheName).then((cache) => {
           cache.put(request, responseToCache);
-          console.log('[SW] Background cache update:', request.url);
+          // Suppress logging for development files and pages
+          const url = new URL(request.url);
+          if (!url.pathname.includes('/node_modules/') &&
+              !url.search.includes('?t=') &&
+              !url.pathname.includes('/dashboard') &&
+              !url.pathname.includes('/dosen/') &&
+              !url.pathname.includes('/mahasiswa/') &&
+              !url.pathname.includes('/laboran/') &&
+              !url.pathname.includes('/admin/') &&
+              url.pathname !== '/manifest.json' &&
+              url.pathname !== '/') {
+            console.log('[SW] Background cache update:', request.url);
+          }
         });
       }
       return networkResponse;
     })
     .catch((error) => {
-      // Silently fail background updates when offline
-      // Don't log error if we have cached response
-      if (!cachedResponse) {
-        console.warn('[SW] Network fetch failed:', request.url);
-      }
+      // Silently fail background updates when offline - don't log anything
       throw error;
     });
 
   // Return cached response immediately, or wait for network
   if (cachedResponse) {
-    console.log('[SW] Serving from cache (stale):', request.url);
+    // Suppress logging for common files and pages
+    const url = new URL(request.url);
+    if (!url.pathname.includes('/node_modules/') &&
+        !url.search.includes('?t=') &&
+        !url.pathname.includes('/dashboard') &&
+        !url.pathname.includes('/dosen/') &&
+        !url.pathname.includes('/mahasiswa/') &&
+        !url.pathname.includes('/laboran/') &&
+        !url.pathname.includes('/admin/') &&
+        url.pathname !== '/manifest.json' &&
+        url.pathname !== '/') {
+      console.log('[SW] Serving from cache (stale):', request.url);
+    }
     // Don't wait for background update, just return cached version
     return cachedResponse;
   }

@@ -4,6 +4,7 @@
  */
 
 import {
+
   query,
   queryWithFilters,
   getById,
@@ -21,6 +22,10 @@ import type {
 import { handleError, logError } from '@/lib/utils/errors';
 import { format, parse } from 'date-fns';
 import { id as localeId } from 'date-fns/locale';
+import {
+  requirePermission,
+  requirePermissionAndOwnership,
+} from '@/lib/middleware';
 
 // ============================================================================
 // QUERY OPERATIONS
@@ -305,15 +310,28 @@ export async function getCalendarEvents(
  * @param data - Jadwal data
  * @returns Created jadwal
  */
-export async function createJadwal(data: CreateJadwalData): Promise<Jadwal> {
+async function createJadwalImpl(data: CreateJadwalData): Promise<Jadwal> {
   try {
     // Auto-compute hari from tanggal_praktikum
-    const tanggalPraktikum = data.tanggal_praktikum instanceof Date 
-      ? data.tanggal_praktikum 
+    const tanggalPraktikum = data.tanggal_praktikum instanceof Date
+      ? data.tanggal_praktikum
       : new Date(data.tanggal_praktikum);
-    
+
+    // ✅ FIX ISSUE #6: Validate tanggal tidak boleh di masa lalu
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Reset to start of day
+
+    const praktikumDate = new Date(tanggalPraktikum);
+    praktikumDate.setHours(0, 0, 0, 0);
+
+    if (praktikumDate < today) {
+      throw new Error(
+        `Tanggal praktikum tidak boleh di masa lalu. Tanggal yang dipilih: ${format(tanggalPraktikum, 'dd MMM yyyy', { locale: localeId })}`
+      );
+    }
+
     const hari = format(tanggalPraktikum, 'EEEE', { locale: localeId }).toLowerCase() as "senin" | "selasa" | "rabu" | "kamis" | "jumat" | "sabtu" | "minggu";
-    
+
     // Check for conflicts on the same date
     const hasConflict = await checkJadwalConflictByDate(
       data.laboratorium_id,
@@ -347,6 +365,10 @@ export async function createJadwal(data: CreateJadwalData): Promise<Jadwal> {
   }
 }
 
+// 🔒 PROTECTED: Requires manage:jadwal permission
+export const createJadwal = requirePermission('manage:jadwal', createJadwalImpl);
+
+
 // ============================================================================
 // UPDATE OPERATIONS
 // ============================================================================
@@ -357,7 +379,7 @@ export async function createJadwal(data: CreateJadwalData): Promise<Jadwal> {
  * @param data - Update data
  * @returns Updated jadwal
  */
-export async function updateJadwal(
+async function updateJadwalImpl(
   id: string,
   data: Partial<CreateJadwalData>
 ): Promise<Jadwal> {
@@ -379,10 +401,23 @@ export async function updateJadwal(
     
     // Handle tanggal_praktikum with auto-computed hari
     if (data.tanggal_praktikum !== undefined) {
-      const tanggalPraktikum = data.tanggal_praktikum instanceof Date 
-        ? data.tanggal_praktikum 
+      const tanggalPraktikum = data.tanggal_praktikum instanceof Date
+        ? data.tanggal_praktikum
         : new Date(data.tanggal_praktikum);
-      
+
+      // ✅ FIX ISSUE #6: Validate tanggal tidak boleh di masa lalu (saat update tanggal)
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const praktikumDate = new Date(tanggalPraktikum);
+      praktikumDate.setHours(0, 0, 0, 0);
+
+      if (praktikumDate < today) {
+        throw new Error(
+          `Tanggal praktikum tidak boleh di masa lalu. Tanggal yang dipilih: ${format(tanggalPraktikum, 'dd MMM yyyy', { locale: localeId })}`
+        );
+      }
+
       updateData.tanggal_praktikum = format(tanggalPraktikum, 'yyyy-MM-dd');
       updateData.hari = format(tanggalPraktikum, 'EEEE', { locale: localeId }).toLowerCase() as "senin" | "selasa" | "rabu" | "kamis" | "jumat" | "sabtu" | "minggu";
     }
@@ -423,6 +458,15 @@ export async function updateJadwal(
   }
 }
 
+// 🔒 PROTECTED: Requires manage:jadwal permission + ownership check
+export const updateJadwal = requirePermissionAndOwnership(
+  'manage:jadwal',
+  { table: 'jadwal_praktikum', ownerField: 'dosen_id' },
+  0,
+  updateJadwalImpl
+);
+
+
 // ============================================================================
 // DELETE OPERATIONS
 // ============================================================================
@@ -432,7 +476,7 @@ export async function updateJadwal(
  * @param id - Jadwal ID
  * @returns Success status
  */
-export async function deleteJadwal(id: string): Promise<boolean> {
+async function deleteJadwalImpl(id: string): Promise<boolean> {
   try {
     // ✅ PERBAIKAN FINAL: Ganti 'jadwalpraktikum' menjadi 'jadwal_praktikum'
     return await remove('jadwal_praktikum', id);
@@ -442,6 +486,15 @@ export async function deleteJadwal(id: string): Promise<boolean> {
     throw apiError;
   }
 }
+
+// 🔒 PROTECTED: Requires manage:jadwal permission + ownership check
+export const deleteJadwal = requirePermissionAndOwnership(
+  'manage:jadwal',
+  { table: 'jadwal_praktikum', ownerField: 'dosen_id' },
+  0,
+  deleteJadwalImpl
+);
+
 
 // ============================================================================
 // VALIDATION HELPERS

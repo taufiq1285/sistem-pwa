@@ -19,7 +19,7 @@ type PeminjamanTable = Database['public']['Tables'] extends { peminjaman: { Row:
       [key: string]: unknown;
     };
 
-export type EquipmentCondition = 'baik' | 'rusak_ringan' | 'rusak_berat' | 'maintenance';
+export type EquipmentCondition = 'baik' | 'rusak_ringan' | 'rusak_berat' | 'maintenance' | 'hilang';
 export type BorrowingStatus = 'pending' | 'approved' | 'rejected' | 'returned' | 'overdue';
 
 export interface Inventaris extends InventarisTable {

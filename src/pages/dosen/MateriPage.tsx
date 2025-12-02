@@ -11,7 +11,7 @@
  * - View statistics
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Plus, Upload, Loader2, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -93,10 +93,6 @@ export default function DosenMateriPage() {
     }
   }, [user?.dosen?.id]);
 
-  useEffect(() => {
-    filterMateri();
-  }, [materiList, selectedKelas, selectedMinggu, searchQuery]);
-
   // ============================================================================
   // DATA LOADING
   // ============================================================================
@@ -126,7 +122,7 @@ export default function DosenMateriPage() {
   // FILTERING
   // ============================================================================
 
-  function filterMateri() {
+  const filterMateri = useCallback(() => {
     let filtered = [...materiList];
 
     // Filter by kelas
@@ -151,7 +147,11 @@ export default function DosenMateriPage() {
     }
 
     setFilteredMateri(filtered);
-  }
+  }, [materiList, selectedKelas, selectedMinggu, searchQuery]);
+
+  useEffect(() => {
+    filterMateri();
+  }, [filterMateri]);
 
   // ============================================================================
   // UPLOAD HANDLERS
@@ -440,6 +440,8 @@ function UploadDialog({
   uploadProgress,
 }: UploadDialogProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedKelasId, setSelectedKelasId] = useState<string>('');
+  const [selectedMingguKe, setSelectedMingguKe] = useState<string>('');
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -473,7 +475,7 @@ function UploadDialog({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label htmlFor="kelas_id">Kelas *</Label>
-            <Select name="kelas_id" required>
+            <Select value={selectedKelasId} onValueChange={setSelectedKelasId}>
               <SelectTrigger>
                 <SelectValue placeholder="Pilih kelas" />
               </SelectTrigger>
@@ -485,6 +487,7 @@ function UploadDialog({
                 ))}
               </SelectContent>
             </Select>
+            <input type="hidden" name="kelas_id" value={selectedKelasId} required />
           </div>
 
           <div>
@@ -509,7 +512,7 @@ function UploadDialog({
 
           <div>
             <Label htmlFor="minggu_ke">Minggu Ke</Label>
-            <Select name="minggu_ke">
+            <Select value={selectedMingguKe} onValueChange={setSelectedMingguKe}>
               <SelectTrigger>
                 <SelectValue placeholder="Pilih minggu (opsional)" />
               </SelectTrigger>
@@ -521,6 +524,7 @@ function UploadDialog({
                 ))}
               </SelectContent>
             </Select>
+            {selectedMingguKe && <input type="hidden" name="minggu_ke" value={selectedMingguKe} />}
           </div>
 
           <div>
@@ -599,6 +603,15 @@ interface EditDialogProps {
 }
 
 function EditDialog({ open, onClose, onUpdate, materi }: EditDialogProps) {
+  const [selectedMingguKe, setSelectedMingguKe] = useState<string>('');
+
+  // Reset when materi changes
+  useEffect(() => {
+    if (materi) {
+      setSelectedMingguKe(materi.minggu_ke?.toString() || '');
+    }
+  }, [materi]);
+
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -638,7 +651,7 @@ function EditDialog({ open, onClose, onUpdate, materi }: EditDialogProps) {
 
           <div>
             <Label htmlFor="edit_minggu_ke">Minggu Ke</Label>
-            <Select name="minggu_ke" defaultValue={materi.minggu_ke?.toString()}>
+            <Select value={selectedMingguKe} onValueChange={setSelectedMingguKe}>
               <SelectTrigger>
                 <SelectValue placeholder="Pilih minggu (opsional)" />
               </SelectTrigger>
@@ -650,6 +663,7 @@ function EditDialog({ open, onClose, onUpdate, materi }: EditDialogProps) {
                 ))}
               </SelectContent>
             </Select>
+            {selectedMingguKe && <input type="hidden" name="minggu_ke" value={selectedMingguKe} />}
           </div>
 
           <div className="flex gap-2">

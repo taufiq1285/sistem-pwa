@@ -9,16 +9,17 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
-import { useOffline } from '@/lib/hooks/useOffline';
-import { indexedDBManager } from '@/lib/offline/indexeddb';
-import type { NetworkChangeEvent } from '@/lib/offline/network-detector';
+import { useOffline } from '../../../lib/hooks/useOffline';
+import { indexedDBManager } from '../../../lib/offline/indexeddb';
+import type { NetworkChangeEvent } from '../../../lib/offline/network-detector';
+import { useNetworkStatus } from '../../../lib/hooks/useNetworkStatus';
 
 // ============================================================================
 // MOCK SETUP
 // ============================================================================
 
 // Mock useNetworkStatus
-vi.mock('@/lib/hooks/useNetworkStatus', () => ({
+vi.mock('../../../lib/hooks/useNetworkStatus', () => ({
   useNetworkStatus: vi.fn(() => ({
     isOnline: true,
     isOffline: false,
@@ -35,7 +36,7 @@ vi.mock('@/lib/hooks/useNetworkStatus', () => ({
 }));
 
 // Mock IndexedDB Manager
-vi.mock('@/lib/offline/indexeddb', () => ({
+vi.mock('../../../lib/offline/indexeddb', () => ({
   indexedDBManager: {
     create: vi.fn(),
     read: vi.fn(),
@@ -338,13 +339,14 @@ describe('useOffline', () => {
 
   describe('Network Status Integration', () => {
     it('should reflect offline network status', () => {
-      const { useNetworkStatus } = require('@/lib/hooks/useNetworkStatus');
-      useNetworkStatus.mockReturnValue({
+      vi.mocked(useNetworkStatus).mockReturnValue({
         isOnline: false,
         isOffline: true,
         isUnstable: false,
         status: 'offline',
         quality: undefined,
+        lastChanged: Date.now(),
+        isReady: true,
       });
 
       const { result } = renderHook(() => useOffline());
@@ -355,8 +357,7 @@ describe('useOffline', () => {
     });
 
     it('should reflect unstable network status', () => {
-      const { useNetworkStatus } = require('@/lib/hooks/useNetworkStatus');
-      useNetworkStatus.mockReturnValue({
+      vi.mocked(useNetworkStatus).mockReturnValue({
         isOnline: false,
         isOffline: false,
         isUnstable: true,
@@ -368,6 +369,8 @@ describe('useOffline', () => {
           saveData: true,
           rtt: 500,
         },
+        lastChanged: Date.now(),
+        isReady: true,
       });
 
       const { result } = renderHook(() => useOffline());

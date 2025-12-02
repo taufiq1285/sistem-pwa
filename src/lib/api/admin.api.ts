@@ -4,6 +4,11 @@
  */
 
 import { supabase } from '@/lib/supabase/client';
+import { cacheAPI } from '@/lib/offline/api-cache';
+import {
+  requirePermission,
+  requirePermissionAndOwnership,
+} from '@/lib/middleware';
 
 // ============================================================================
 // TYPES
@@ -55,7 +60,7 @@ export interface RecentAnnouncement {
 // DASHBOARD STATISTICS
 // ============================================================================
 
-export async function getDashboardStats(): Promise<DashboardStats> {
+async function getDashboardStatsImpl(): Promise<DashboardStats> {
   try {
     // Get total users by role
     const { data: users, error: usersError } = await supabase
@@ -113,11 +118,15 @@ export async function getDashboardStats(): Promise<DashboardStats> {
   }
 }
 
+// 🔒 PROTECTED: Requires view:dashboard permission
+export const getDashboardStats = requirePermission('view:dashboard', getDashboardStatsImpl);
+
+
 // ============================================================================
 // USER GROWTH (Last 6 months)
 // ============================================================================
 
-export async function getUserGrowth(): Promise<UserGrowthData[]> {
+async function getUserGrowthImpl(): Promise<UserGrowthData[]> {
   try {
     const { data, error } = await supabase
       .from('users')
@@ -161,11 +170,15 @@ export async function getUserGrowth(): Promise<UserGrowthData[]> {
   }
 }
 
+// 🔒 PROTECTED: Requires view:dashboard permission
+export const getUserGrowth = requirePermission('view:dashboard', getUserGrowthImpl);
+
+
 // ============================================================================
 // USER DISTRIBUTION BY ROLE
 // ============================================================================
 
-export async function getUserDistribution(): Promise<UserDistribution[]> {
+async function getUserDistributionImpl(): Promise<UserDistribution[]> {
   try {
     const { data, error } = await supabase
       .from('users')
@@ -191,11 +204,15 @@ export async function getUserDistribution(): Promise<UserDistribution[]> {
   }
 }
 
+// 🔒 PROTECTED: Requires view:dashboard permission
+export const getUserDistribution = requirePermission('view:dashboard', getUserDistributionImpl);
+
+
 // ============================================================================
 // LAB USAGE (Mock data for now - will be real when booking system ready)
 // ============================================================================
 
-export async function getLabUsage(): Promise<LabUsageData[]> {
+async function getLabUsageImpl(): Promise<LabUsageData[]> {
   try {
     // PERBAIKAN 3: Menghapus 'as any'
     const { data: labs, error } = await supabase
@@ -217,11 +234,15 @@ export async function getLabUsage(): Promise<LabUsageData[]> {
   }
 }
 
+// 🔒 PROTECTED: Requires view:dashboard permission
+export const getLabUsage = requirePermission('view:dashboard', getLabUsageImpl);
+
+
 // ============================================================================
 // RECENT USERS (Last 5)
 // ============================================================================
 
-export async function getRecentUsers(limit: number = 5): Promise<RecentUser[]> {
+async function getRecentUsersImpl(limit: number = 5): Promise<RecentUser[]> {
   try {
     const { data, error } = await supabase
       .from('users')
@@ -244,6 +265,10 @@ export async function getRecentUsers(limit: number = 5): Promise<RecentUser[]> {
   }
 }
 
+// 🔒 PROTECTED: Requires view:dashboard permission
+export const getRecentUsers = requirePermission('view:dashboard', getRecentUsersImpl);
+
+
 // ============================================================================
 // RECENT ANNOUNCEMENTS (Last 5)
 // ============================================================================
@@ -258,7 +283,7 @@ type PengumumanData = {
   } | null; // users bisa null jika join gagal
 };
 
-export async function getRecentAnnouncements(limit: number = 5): Promise<RecentAnnouncement[]> {
+async function getRecentAnnouncementsImpl(limit: number = 5): Promise<RecentAnnouncement[]> {
   try {
     // PERBAIKAN 5: Menghapus 'as any'
     const { data, error } = await supabase
@@ -287,3 +312,6 @@ export async function getRecentAnnouncements(limit: number = 5): Promise<RecentA
     throw error;
   }
 }
+
+// 🔒 PROTECTED: Requires view:dashboard permission
+export const getRecentAnnouncements = requirePermission('view:dashboard', getRecentAnnouncementsImpl);

@@ -4,7 +4,9 @@
  */
 
 import { supabase } from '@/lib/supabase/client';
+import { cacheAPI } from '@/lib/offline/api-cache';
 
+import { requirePermission } from '@/lib/middleware';
 export interface SystemUser {
   id: string;
   email: string;
@@ -31,7 +33,7 @@ export interface UserStats {
 /**
  * Get all users with their role information
  */
-export async function getAllUsers(): Promise<SystemUser[]> {
+async function getAllUsersImpl(): Promise<SystemUser[]> {
   try {
     // Step 1: Get all users
     const { data: users, error: usersError } = await supabase
@@ -78,12 +80,15 @@ export async function getAllUsers(): Promise<SystemUser[]> {
   }
 }
 
+// 🔒 PROTECTED: Admin only - view all users
+export const getAllUsers = requirePermission('view:all_users', getAllUsersImpl);
+
 /**
  * Get user statistics
  */
-export async function getUserStats(): Promise<UserStats> {
+async function getUserStatsImpl(): Promise<UserStats> {
   try {
-    const users = await getAllUsers();
+    const users = await getAllUsersImpl();
 
     return {
       total: users.length,
@@ -108,10 +113,12 @@ export async function getUserStats(): Promise<UserStats> {
   }
 }
 
+export const getUserStats = requirePermission('view:all_users', getUserStatsImpl);
+
 /**
  * Toggle user active status
  */
-export async function toggleUserStatus(userId: string, isActive: boolean): Promise<void> {
+async function toggleUserStatusImpl(userId: string, isActive: boolean): Promise<void> {
   try {
     const { error } = await supabase
       .from('users')
@@ -125,6 +132,8 @@ export async function toggleUserStatus(userId: string, isActive: boolean): Promi
   }
 }
 
+export const toggleUserStatus = requirePermission('manage:users', toggleUserStatusImpl);
+
 /**
  * Update user data
  */
@@ -135,7 +144,7 @@ export interface UpdateUserData {
   is_active?: boolean;
 }
 
-export async function updateUser(id: string, data: UpdateUserData): Promise<void> {
+async function updateUserImpl(id: string, data: UpdateUserData): Promise<void> {
   try {
     const { error } = await supabase
       .from('users')
@@ -148,6 +157,8 @@ export async function updateUser(id: string, data: UpdateUserData): Promise<void
     throw error;
   }
 }
+
+export const updateUser = requirePermission('manage:users', updateUserImpl);
 
 /**
  * Create new user
@@ -163,7 +174,7 @@ export interface CreateUserData {
   phone?: string;
 }
 
-export async function createUser(data: CreateUserData): Promise<void> {
+async function createUserImpl(data: CreateUserData): Promise<void> {
   try {
     // Step 1: Create user in auth and users table
     const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -235,11 +246,13 @@ export async function createUser(data: CreateUserData): Promise<void> {
   }
 }
 
+export const createUser = requirePermission('manage:users', createUserImpl);
+
 /**
  * Delete user (Admin only)
  * WARNING: This will permanently delete the user and all related data
  */
-export async function deleteUser(userId: string): Promise<void> {
+async function deleteUserImpl(userId: string): Promise<void> {
   try {
     // Step 1: Get user info to know which role-specific table to clean
     const { data: user, error: getUserError } = await supabase
@@ -287,3 +300,5 @@ export async function deleteUser(userId: string): Promise<void> {
     throw error;
   }
 }
+
+export const deleteUser = requirePermission('manage:users', deleteUserImpl);

@@ -4,8 +4,13 @@
  */
 
 import { supabase } from '@/lib/supabase/client';
+import { cacheAPI } from '@/lib/offline/api-cache';
 import { logger } from '@/lib/utils/logger';
 import { handleSupabaseError } from '@/lib/utils/errors';
+import {
+  requirePermission,
+  requirePermissionAndOwnership,
+} from '@/lib/middleware';
 
 // ============================================================================
 // TYPES
@@ -161,7 +166,7 @@ export async function getKehadiranByKelas(
 /**
  * Create single kehadiran record
  */
-export async function createKehadiran(data: CreateKehadiranData): Promise<string> {
+async function createKehadiranImpl(data: CreateKehadiranData): Promise<string> {
   try {
     const { data: result, error } = await supabase
       .from('kehadiran')
@@ -177,10 +182,14 @@ export async function createKehadiran(data: CreateKehadiranData): Promise<string
   }
 }
 
+// 🔒 PROTECTED: Requires manage:kehadiran permission
+export const createKehadiran = requirePermission('manage:kehadiran', createKehadiranImpl);
+
+
 /**
  * Bulk create/update kehadiran (for absen per pertemuan)
  */
-export async function saveKehadiranBulk(data: BulkKehadiranData): Promise<void> {
+async function saveKehadiranBulkImpl(data: BulkKehadiranData): Promise<void> {
   try {
     const records = data.kehadiran.map((item) => ({
       jadwal_id: data.jadwal_id,
@@ -220,10 +229,14 @@ export async function saveKehadiranBulk(data: BulkKehadiranData): Promise<void> 
   }
 }
 
+// 🔒 PROTECTED: Requires manage:kehadiran permission
+export const saveKehadiranBulk = requirePermission('manage:kehadiran', saveKehadiranBulkImpl);
+
+
 /**
  * Update kehadiran
  */
-export async function updateKehadiran(
+async function updateKehadiranImpl(
   id: string,
   data: Partial<CreateKehadiranData>
 ): Promise<void> {
@@ -240,10 +253,14 @@ export async function updateKehadiran(
   }
 }
 
+// 🔒 PROTECTED: Requires manage:kehadiran permission
+export const updateKehadiran = requirePermission('manage:kehadiran', updateKehadiranImpl);
+
+
 /**
  * Delete kehadiran
  */
-export async function deleteKehadiran(id: string): Promise<void> {
+async function deleteKehadiranImpl(id: string): Promise<void> {
   try {
     const { error } = await supabase.from('kehadiran').delete().eq('id', id);
     if (error) throw error;
@@ -252,6 +269,10 @@ export async function deleteKehadiran(id: string): Promise<void> {
     throw handleSupabaseError(error);
   }
 }
+
+// 🔒 PROTECTED: Requires manage:kehadiran permission
+export const deleteKehadiran = requirePermission('manage:kehadiran', deleteKehadiranImpl);
+
 
 /**
  * Get kehadiran stats for a mahasiswa in a kelas

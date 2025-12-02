@@ -68,12 +68,12 @@ export default function MahasiswaNilaiPage() {
     if (user?.mahasiswa?.id) {
       loadNilai();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [user?.mahasiswa?.id]);
 
   useEffect(() => {
     filterNilai();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [nilaiList, selectedSemester, selectedTahunAjaran]);
 
   // ============================================================================

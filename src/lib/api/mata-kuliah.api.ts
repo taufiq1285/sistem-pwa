@@ -4,6 +4,7 @@
  */
 
 import {
+
   query,
   queryWithFilters,
   getById,
@@ -26,6 +27,10 @@ import type {
 } from '@/types/mata-kuliah.types';
 import type { PaginatedResponse } from '@/types/api.types';
 import { handleError, logError } from '@/lib/utils/errors';
+import {
+  requirePermission,
+  requirePermissionAndOwnership,
+} from '@/lib/middleware';
 
 // ============================================================================
 // QUERY OPERATIONS
@@ -253,7 +258,7 @@ export async function getMataKuliahWithRelations(
  * @param data - Mata kuliah data
  * @returns Created mata kuliah
  */
-export async function createMataKuliah(
+async function createMataKuliahImpl(
   data: CreateMataKuliahData
 ): Promise<MataKuliah> {
   try {
@@ -274,6 +279,10 @@ export async function createMataKuliah(
   }
 }
 
+// 🔒 PROTECTED: Requires manage:mata_kuliah permission
+export const createMataKuliah = requirePermission('manage:mata_kuliah', createMataKuliahImpl);
+
+
 // ============================================================================
 // UPDATE OPERATIONS
 // ============================================================================
@@ -284,7 +293,7 @@ export async function createMataKuliah(
  * @param data - Update data
  * @returns Updated mata kuliah
  */
-export async function updateMataKuliah(
+async function updateMataKuliahImpl(
   id: string,
   data: UpdateMataKuliahData
 ): Promise<MataKuliah> {
@@ -309,6 +318,10 @@ export async function updateMataKuliah(
   }
 }
 
+// 🔒 PROTECTED: Requires manage:mata_kuliah permission
+export const updateMataKuliah = requirePermission('manage:mata_kuliah', updateMataKuliahImpl);
+
+
 // ============================================================================
 // DELETE OPERATIONS
 // ============================================================================
@@ -318,7 +331,7 @@ export async function updateMataKuliah(
  * @param id - Mata kuliah ID
  * @returns Success status
  */
-export async function deleteMataKuliah(id: string): Promise<boolean> {
+async function deleteMataKuliahImpl(id: string): Promise<boolean> {
   try {
     // Check if mata kuliah has kelas
     const kelasCount = await count('kelas', [
@@ -338,6 +351,10 @@ export async function deleteMataKuliah(id: string): Promise<boolean> {
     throw apiError;
   }
 }
+
+// 🔒 PROTECTED: Requires manage:mata_kuliah permission
+export const deleteMataKuliah = requirePermission('manage:mata_kuliah', deleteMataKuliahImpl);
+
 
 // ============================================================================
 // STATISTICS
