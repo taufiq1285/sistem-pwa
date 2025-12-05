@@ -8,6 +8,7 @@ import { Plus, Pencil, Trash2, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { DeleteConfirmDialog } from '@/components/common/DeleteConfirmDialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -34,6 +35,10 @@ export default function MataKuliahPage() {
     program_studi: 'D3 Kebidanan',
     deskripsi: '',
   });
+
+  // Delete confirmation state
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [deletingMK, setDeletingMK] = useState<MataKuliah | null>(null);
 
   // Load mata kuliah
   useEffect(() => {
@@ -105,12 +110,19 @@ export default function MataKuliahPage() {
     }
   };
 
-  const handleDelete = async (id: string, namaMK: string) => {
-    if (!confirm(`Yakin ingin menghapus mata kuliah "${namaMK}"?`)) return;
+  const handleDelete = (mk: MataKuliah) => {
+    setDeletingMK(mk);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!deletingMK) return;
 
     try {
-      await deleteMataKuliah(id);
+      await deleteMataKuliah(deletingMK.id);
       toast.success('Mata kuliah berhasil dihapus');
+      setIsDeleteDialogOpen(false);
+      setDeletingMK(null);
       await loadMataKuliah();
     } catch (error: any) {
       toast.error('Gagal menghapus', { description: error.message });
@@ -197,7 +209,7 @@ export default function MataKuliahPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleDelete(mk.id, mk.nama_mk)}
+                          onClick={() => handleDelete(mk)}
                           className="text-destructive"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -322,6 +334,25 @@ export default function MataKuliahPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      {deletingMK && (
+        <DeleteConfirmDialog
+          open={isDeleteDialogOpen}
+          onOpenChange={setIsDeleteDialogOpen}
+          onConfirm={confirmDelete}
+          title="Hapus Mata Kuliah - Konfirmasi"
+          itemName={deletingMK.nama_mk}
+          itemType="Mata Kuliah"
+          description={`${deletingMK.kode_mk} | ${deletingMK.sks} SKS | Semester ${deletingMK.semester}`}
+          consequences={[
+            'Data mata kuliah akan dihapus permanen',
+            'Kelas yang menggunakan mata kuliah ini akan terpengaruh',
+            'Jadwal praktikum terkait akan terpengaruh',
+            'Data nilai mahasiswa tidak akan terhapus',
+          ]}
+        />
+      )}
     </div>
   );
 }

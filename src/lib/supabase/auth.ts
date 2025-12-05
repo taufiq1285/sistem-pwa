@@ -3,55 +3,57 @@
  * Wrapper functions for Supabase authentication with role-specific data
  */
 
-import { supabase } from './client';
-import { logger } from '@/lib/utils/logger';
+import { supabase } from "./client";
+import { logger } from "@/lib/utils/logger";
 import type {
   AuthUser,
   AuthSession,
   LoginCredentials,
   RegisterData,
-  AuthResponse
-} from '@/types/auth.types';
+  AuthResponse,
+} from "@/types/auth.types";
 
 /**
  * Login with email and password
  */
-export async function login(credentials: LoginCredentials): Promise<AuthResponse> {
+export async function login(
+  credentials: LoginCredentials
+): Promise<AuthResponse> {
   try {
-    logger.auth('login: START', { email: credentials.email });
+    logger.auth("login: START", { email: credentials.email });
 
     const { data, error } = await supabase.auth.signInWithPassword({
       email: credentials.email,
       password: credentials.password,
     });
 
-    logger.debug('login: Supabase response', { hasUser: !!data.user, error });
+    logger.debug("login: Supabase response", { hasUser: !!data.user, error });
 
     if (error) throw error;
 
     if (!data.user) {
-      throw new Error('No user returned from login');
+      throw new Error("No user returned from login");
     }
 
-    logger.debug('login: Calling getUserProfile for', data.user.id);
+    logger.debug("login: Calling getUserProfile for", data.user.id);
     const user = await getUserProfile(data.user.id);
-    logger.auth('login: Success ✅', { userId: user.id, role: user.role });
+    logger.auth("login: Success ✅", { userId: user.id, role: user.role });
 
     return {
       success: true,
       user,
       session: {
         user,
-        access_token: data.session?.access_token || '',
-        refresh_token: data.session?.refresh_token || '',
+        access_token: data.session?.access_token || "",
+        refresh_token: data.session?.refresh_token || "",
         expires_at: data.session?.expires_at,
       },
     };
   } catch (error: unknown) {
-    logger.error('login error:', error);
+    logger.error("login error:", error);
     return {
       success: false,
-      error: (error as Error).message || 'Login failed',
+      error: (error as Error).message || "Login failed",
     };
   }
 }
@@ -61,7 +63,7 @@ export async function login(credentials: LoginCredentials): Promise<AuthResponse
  */
 export async function register(data: RegisterData): Promise<AuthResponse> {
   try {
-    logger.auth('register: START', { email: data.email, role: data.role });
+    logger.auth("register: START", { email: data.email, role: data.role });
 
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email: data.email,
@@ -70,60 +72,128 @@ export async function register(data: RegisterData): Promise<AuthResponse> {
         data: {
           full_name: data.full_name,
           role: data.role,
-          ...(data.role === 'mahasiswa' && {
+          ...(data.role === "mahasiswa" && {
             nim: data.nim,
             program_studi: data.program_studi,
             angkatan: data.angkatan,
             semester: data.semester,
           }),
-          ...(data.role === 'dosen' && {
+          ...(data.role === "dosen" && {
             nip: data.nip,
             nidn: data.nidn,
             gelar_depan: data.gelar_depan,
             gelar_belakang: data.gelar_belakang,
           }),
-          ...(data.role === 'laboran' && {
+          ...(data.role === "laboran" && {
             nip: data.nip,
           }),
         },
       },
     });
 
-    logger.auth('register: Supabase response', { hasUser: !!authData.user, error: authError });
+    logger.auth("register: Supabase response", {
+      hasUser: !!authData.user,
+      error: authError,
+    });
 
     if (authError) {
-      if (authError.message.includes('already registered')) {
-        throw new Error('Email sudah terdaftar. Silakan gunakan email lain atau login.');
+      if (authError.message.includes("already registered")) {
+        throw new Error(
+          "Email sudah terdaftar. Silakan gunakan email lain atau login."
+        );
       }
       throw authError;
     }
 
-    if (!authData.user) throw new Error('No user created');
+    if (!authData.user) throw new Error("No user created");
 
     // Create user profile and role-specific records
-    await createUserProfile(authData.user.id, data);
+    try {
+      await createUserProfile(authData.user.id, data);
+    } catch (profileError) {
+      // ❌ Profile creation failed
+      logger.error("register: Profile creation failed", profileError);
 
-    logger.auth('register: Success', { userId: authData.user.id });
+      // IMPORTANT: Save session token BEFORE signing out
+      const sessionToken = authData.session?.access_token;
+
+      // Call Edge Function to delete user from auth.users (BEFORE signOut!)
+      if (sessionToken) {
+        try {
+          logger.debug("register: Calling rollback-registration edge function");
+          const rollbackResponse = await fetch(
+            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/rollback-registration`,
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${sessionToken}`,
+                "Content-Type": "application/json",
+              },
+            }
+          );
+
+          const rollbackResult = await rollbackResponse.json();
+
+          if (rollbackResult.success) {
+            logger.debug("register: Successfully rolled back registration");
+          } else {
+            logger.error("register: Rollback failed", rollbackResult.error);
+          }
+        } catch (rollbackError) {
+          logger.error("register: Failed to call rollback edge function", rollbackError);
+          // Continue anyway - user can contact admin to cleanup
+        }
+      }
+
+      // Sign out the just-created user to prevent partial registration
+      // (This happens AFTER rollback, so no session remains)
+      try {
+        await supabase.auth.signOut();
+        logger.debug("register: Signed out incomplete registration");
+      } catch (signOutError) {
+        logger.error("register: Failed to sign out", signOutError);
+      }
+
+      // Provide helpful error message
+      const errorMsg = (profileError as Error).message;
+      if (
+        errorMsg.includes("duplicate") ||
+        errorMsg.includes("already exists")
+      ) {
+        throw new Error(
+          "Data sudah terdaftar (NIM/NIP duplicate). Silakan gunakan email dan NIM/NIP yang berbeda."
+        );
+      }
+      throw new Error(
+        `Gagal membuat profil: ${errorMsg}. Silakan coba lagi dengan data yang berbeda.`
+      );
+    }
+
+    logger.auth("register: Success", { userId: authData.user.id });
 
     return {
       success: true,
-      message: 'Registrasi berhasil! Silakan cek email Anda untuk verifikasi akun.',
+      message:
+        "Registrasi berhasil! Silakan cek email Anda untuk verifikasi akun.",
     };
   } catch (error: unknown) {
-    logger.error('Registration error:', error);
-    
-    let errorMessage = 'Registrasi gagal';
-    
-    if ((error as Error).message.includes('already registered') || (error as Error).message.includes('sudah terdaftar')) {
+    logger.error("Registration error:", error);
+
+    let errorMessage = "Registrasi gagal";
+
+    if (
+      (error as Error).message.includes("already registered") ||
+      (error as Error).message.includes("sudah terdaftar")
+    ) {
       errorMessage = (error as Error).message;
-    } else if ((error as Error).message.includes('Invalid email')) {
-      errorMessage = 'Format email tidak valid';
-    } else if ((error as Error).message.includes('Password')) {
-      errorMessage = 'Password harus minimal 6 karakter';
+    } else if ((error as Error).message.includes("Invalid email")) {
+      errorMessage = "Format email tidak valid";
+    } else if ((error as Error).message.includes("Password")) {
+      errorMessage = "Password harus minimal 6 karakter";
     } else if ((error as Error).message) {
       errorMessage = (error as Error).message;
     }
-    
+
     return {
       success: false,
       error: errorMessage,
@@ -136,23 +206,23 @@ export async function register(data: RegisterData): Promise<AuthResponse> {
  */
 export async function logout(): Promise<AuthResponse> {
   try {
-    logger.auth('logout: START');
-    
+    logger.auth("logout: START");
+
     const { error } = await supabase.auth.signOut();
-    logger.auth('logout: Supabase response', { error });
-    
+    logger.auth("logout: Supabase response", { error });
+
     if (error) throw error;
 
-    logger.auth('logout: Success');
+    logger.auth("logout: Success");
     return {
       success: true,
-      message: 'Logged out successfully',
+      message: "Logged out successfully",
     };
   } catch (error: unknown) {
-    logger.error('Logout error:', error);
+    logger.error("Logout error:", error);
     return {
       success: false,
-      error: (error as Error).message || 'Logout failed',
+      error: (error as Error).message || "Logout failed",
     };
   }
 }
@@ -161,26 +231,29 @@ export async function logout(): Promise<AuthResponse> {
  * Get current session
  */
 export async function getSession(): Promise<AuthSession | null> {
-  logger.debug('getSession: START');
+  logger.debug("getSession: START");
 
   try {
     const { data, error } = await supabase.auth.getSession();
-    logger.debug('getSession: Response', {
+    logger.debug("getSession: Response", {
       hasData: !!data,
       hasSession: !!data?.session,
-      error
+      error,
     });
 
     if (error) throw error;
     if (!data.session) {
-      logger.debug('getSession: No session found');
+      logger.debug("getSession: No session found");
       return null;
     }
 
     // Fetch full user profile from database
     const user = await getUserProfile(data.session.user.id);
 
-    logger.auth('getSession: User loaded ✅', { userId: user.id, role: user.role });
+    logger.auth("getSession: User loaded ✅", {
+      userId: user.id,
+      role: user.role,
+    });
 
     return {
       user,
@@ -189,7 +262,7 @@ export async function getSession(): Promise<AuthSession | null> {
       expires_at: data.session.expires_at,
     };
   } catch (error: unknown) {
-    logger.error('getSession error:', error);
+    logger.error("getSession error:", error);
     return null;
   }
 }
@@ -199,23 +272,29 @@ export async function getSession(): Promise<AuthSession | null> {
  */
 export async function refreshSession(): Promise<AuthSession | null> {
   try {
-    logger.auth('refreshSession: START');
-    
+    logger.auth("refreshSession: START");
+
     const { data, error } = await supabase.auth.refreshSession();
-    logger.auth('refreshSession: Supabase response', { 
-      hasSession: !!data.session, 
-      error 
+    logger.auth("refreshSession: Supabase response", {
+      hasSession: !!data.session,
+      error,
     });
-    
+
     if (error) throw error;
     if (!data.session) {
-      logger.auth('refreshSession: No session after refresh');
+      logger.auth("refreshSession: No session after refresh");
       return null;
     }
 
-    logger.auth('refreshSession: Calling getUserProfile for', data.session.user.id);
+    logger.auth(
+      "refreshSession: Calling getUserProfile for",
+      data.session.user.id
+    );
     const user = await getUserProfile(data.session.user.id);
-    logger.auth('refreshSession: Success', { userId: user.id, role: user.role });
+    logger.auth("refreshSession: Success", {
+      userId: user.id,
+      role: user.role,
+    });
 
     return {
       user,
@@ -224,7 +303,7 @@ export async function refreshSession(): Promise<AuthSession | null> {
       expires_at: data.session.expires_at,
     };
   } catch (error: unknown) {
-    logger.error('Refresh session error:', error);
+    logger.error("Refresh session error:", error);
     return null;
   }
 }
@@ -234,26 +313,26 @@ export async function refreshSession(): Promise<AuthSession | null> {
  */
 export async function resetPassword(email: string): Promise<AuthResponse> {
   try {
-    logger.auth('resetPassword: START', { email });
-    
+    logger.auth("resetPassword: START", { email });
+
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`,
     });
 
-    logger.auth('resetPassword: Supabase response', { error });
+    logger.auth("resetPassword: Supabase response", { error });
 
     if (error) throw error;
 
-    logger.auth('resetPassword: Success');
+    logger.auth("resetPassword: Success");
     return {
       success: true,
-      message: 'Password reset email sent',
+      message: "Password reset email sent",
     };
   } catch (error: unknown) {
-    logger.error('Password reset error:', error);
+    logger.error("Password reset error:", error);
     return {
       success: false,
-      error: (error as Error).message || 'Password reset failed',
+      error: (error as Error).message || "Password reset failed",
     };
   }
 }
@@ -263,26 +342,26 @@ export async function resetPassword(email: string): Promise<AuthResponse> {
  */
 export async function updatePassword(password: string): Promise<AuthResponse> {
   try {
-    logger.auth('updatePassword: START');
-    
+    logger.auth("updatePassword: START");
+
     const { error } = await supabase.auth.updateUser({
       password,
     });
 
-    logger.auth('updatePassword: Supabase response', { error });
+    logger.auth("updatePassword: Supabase response", { error });
 
     if (error) throw error;
 
-    logger.auth('updatePassword: Success');
+    logger.auth("updatePassword: Success");
     return {
       success: true,
-      message: 'Password updated successfully',
+      message: "Password updated successfully",
     };
   } catch (error: unknown) {
-    logger.error('Password update error:', error);
+    logger.error("Password update error:", error);
     return {
       success: false,
-      error: (error as Error).message || 'Password update failed',
+      error: (error as Error).message || "Password update failed",
     };
   }
 }
@@ -291,38 +370,39 @@ export async function updatePassword(password: string): Promise<AuthResponse> {
  * Create user profile and role-specific records
  * Called after successful registration
  */
-async function createUserProfile(userId: string, data: RegisterData): Promise<void> {
+async function createUserProfile(
+  userId: string,
+  data: RegisterData
+): Promise<void> {
   try {
-    logger.debug('createUserProfile: START', {
+    logger.debug("createUserProfile: START", {
       userId,
       role: data.role,
-      hasMahasiswaData: !!(data.role === 'mahasiswa' && data.nim),
-      nim: data.nim
+      hasMahasiswaData: !!(data.role === "mahasiswa" && data.nim),
+      nim: data.nim,
     });
 
     // 1. Create user record in users table
-    const { error: userError } = await supabase
-      .from('users')
-      .insert({
-        id: userId,
-        full_name: data.full_name,
-        email: data.email,
-        role: data.role,
-      });
+    const { error: userError } = await supabase.from("users").insert({
+      id: userId,
+      full_name: data.full_name,
+      email: data.email,
+      role: data.role,
+    });
 
     if (userError) {
-      logger.error('createUserProfile: Users insert failed', userError);
+      logger.error("createUserProfile: Users insert failed", userError);
       throw userError;
     }
-    logger.debug('createUserProfile: User record created', { userId });
+    logger.debug("createUserProfile: User record created", { userId });
 
     // 2. Create role-specific records
-    if (data.role === 'mahasiswa' && data.nim) {
-      logger.debug('createUserProfile: Creating mahasiswa record', {
+    if (data.role === "mahasiswa" && data.nim) {
+      logger.debug("createUserProfile: Creating mahasiswa record", {
         user_id: userId,
         nim: data.nim,
         angkatan: data.angkatan,
-        semester: data.semester
+        semester: data.semester,
       });
 
       const mahasiswaPayload: any = {
@@ -337,20 +417,23 @@ async function createUserProfile(userId: string, data: RegisterData): Promise<vo
       }
 
       const { error: mahasiswaError } = await supabase
-        .from('mahasiswa')
+        .from("mahasiswa")
         .insert([mahasiswaPayload]);
 
       if (mahasiswaError) {
-        logger.error('createUserProfile: Mahasiswa insert failed', mahasiswaError);
+        logger.error(
+          "createUserProfile: Mahasiswa insert failed",
+          mahasiswaError
+        );
         throw mahasiswaError;
       }
-      logger.debug('createUserProfile: Mahasiswa record created', { userId });
-    } else if (data.role === 'mahasiswa') {
-      logger.warn('createUserProfile: Mahasiswa role but missing nim', {
+      logger.debug("createUserProfile: Mahasiswa record created", { userId });
+    } else if (data.role === "mahasiswa") {
+      logger.warn("createUserProfile: Mahasiswa role but missing nim", {
         role: data.role,
-        nim: data.nim
+        nim: data.nim,
       });
-    } else if (data.role === 'dosen' && data.nidn) {
+    } else if (data.role === "dosen" && data.nidn) {
       const dosenPayload: any = {
         user_id: userId,
         nidn: data.nidn,
@@ -358,32 +441,32 @@ async function createUserProfile(userId: string, data: RegisterData): Promise<vo
 
       if (data.nip) dosenPayload.nip = data.nip;
       if (data.gelar_depan) dosenPayload.gelar_depan = data.gelar_depan;
-      if (data.gelar_belakang) dosenPayload.gelar_belakang = data.gelar_belakang;
+      if (data.gelar_belakang)
+        dosenPayload.gelar_belakang = data.gelar_belakang;
 
       const { error: dosenError } = await supabase
-        .from('dosen')
+        .from("dosen")
         .insert([dosenPayload]);
 
       if (dosenError) throw dosenError;
-      logger.debug('createUserProfile: Dosen record created', { userId });
-    } else if (data.role === 'laboran' && data.nip) {
-      const { error: laboranError } = await supabase
-        .from('laboran')
-        .insert([{
+      logger.debug("createUserProfile: Dosen record created", { userId });
+    } else if (data.role === "laboran" && data.nip) {
+      const { error: laboranError } = await supabase.from("laboran").insert([
+        {
           user_id: userId,
           nip: data.nip,
-        }]);
+        },
+      ]);
 
       if (laboranError) throw laboranError;
-      logger.debug('createUserProfile: Laboran record created', { userId });
+      logger.debug("createUserProfile: Laboran record created", { userId });
     }
 
-    logger.debug('createUserProfile: Success', { userId, role: data.role });
+    logger.debug("createUserProfile: Success", { userId, role: data.role });
   } catch (error: unknown) {
-    logger.error('createUserProfile error:', error);
-    // Don't throw - user account already created via auth.signUp
-    // Just log the error
-    console.error('Failed to create role-specific profile:', error);
+    logger.error("createUserProfile error:", error);
+    // ✅ FIXED: Throw error so register() can handle rollback
+    throw error;
   }
 }
 
@@ -392,7 +475,7 @@ async function createUserProfile(userId: string, data: RegisterData): Promise<vo
  * ✅ FIXED: Increased timeout to 10s and better error handling
  */
 async function getUserProfile(userId: string): Promise<AuthUser> {
-  logger.debug('getUserProfile: START', { userId });
+  logger.debug("getUserProfile: START", { userId });
 
   try {
     // Increased timeout to 10 seconds with AbortController
@@ -400,30 +483,34 @@ async function getUserProfile(userId: string): Promise<AuthUser> {
     const timeoutId = setTimeout(() => controller.abort(), 2000); // ✅ OPTIMIZED: 10s→2s
 
     const { data: user, error: userError } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', userId)
+      .from("users")
+      .select("*")
+      .eq("id", userId)
       .abortSignal(controller.signal)
       .single();
 
     clearTimeout(timeoutId);
 
-    logger.debug('getUserProfile: Query result', {
+    logger.debug("getUserProfile: Query result", {
       hasUser: !!user,
       role: user?.role,
     });
 
     if (userError) {
-      logger.warn('getUserProfile: Database error', userError);
+      logger.warn("getUserProfile: Database error", userError);
+      // If user not found in database (deleted), don't use fallback
+      if (userError.code === "PGRST116") {
+        throw new Error("User account has been deleted");
+      }
       throw userError;
     }
 
     if (!user) {
-      logger.warn('getUserProfile: User not found');
-      throw new Error('User not found');
+      logger.warn("getUserProfile: User not found in database");
+      throw new Error("User account has been deleted");
     }
 
-    logger.debug('getUserProfile: User found', {
+    logger.debug("getUserProfile: User found", {
       userId: user.id,
       role: user.role,
     });
@@ -431,97 +518,109 @@ async function getUserProfile(userId: string): Promise<AuthUser> {
     // Get role-specific data
     let roleData = null;
     try {
-      logger.debug('getUserProfile: Fetching role data:', user.role);
-      
+      logger.debug("getUserProfile: Fetching role data:", user.role);
+
       switch (user.role) {
-        case 'mahasiswa': {
+        case "mahasiswa": {
           const { data: mahasiswaData } = await supabase
-            .from('mahasiswa')
-            .select('id, nim, program_studi, angkatan, semester')
-            .eq('user_id', userId)
+            .from("mahasiswa")
+            .select("id, nim, program_studi, angkatan, semester")
+            .eq("user_id", userId)
             .maybeSingle();
 
-          logger.debug('Role data: mahasiswa', { hasData: !!mahasiswaData });
+          logger.debug("Role data: mahasiswa", { hasData: !!mahasiswaData });
           roleData = { mahasiswa: mahasiswaData };
           break;
         }
 
-        case 'dosen': {
+        case "dosen": {
           const { data: dosenData } = await supabase
-            .from('dosen')
-            .select('id, nip, nidn, gelar_depan, gelar_belakang, fakultas, program_studi')
-            .eq('user_id', userId)
+            .from("dosen")
+            .select(
+              "id, nip, nidn, gelar_depan, gelar_belakang, fakultas, program_studi"
+            )
+            .eq("user_id", userId)
             .maybeSingle();
 
-          logger.debug('Role data: dosen', { hasData: !!dosenData });
+          logger.debug("Role data: dosen", { hasData: !!dosenData });
           roleData = { dosen: dosenData };
           break;
         }
 
-        case 'laboran': {
+        case "laboran": {
           const { data: laboranData } = await supabase
-            .from('laboran')
-            .select('id, nip')
-            .eq('user_id', userId)
+            .from("laboran")
+            .select("id, nip")
+            .eq("user_id", userId)
             .maybeSingle();
 
-          logger.debug('Role data: laboran', { hasData: !!laboranData });
+          logger.debug("Role data: laboran", { hasData: !!laboranData });
           roleData = { laboran: laboranData };
           break;
         }
 
-        case 'admin': {
+        case "admin": {
           const { data: adminData } = await supabase
-            .from('admin')
-            .select('id, level, permissions')
-            .eq('user_id', userId)
+            .from("admin")
+            .select("id, level, permissions")
+            .eq("user_id", userId)
             .maybeSingle();
 
-          logger.debug('Role data: admin', { hasData: !!adminData });
+          logger.debug("Role data: admin", { hasData: !!adminData });
           roleData = { admin: adminData };
           break;
         }
       }
     } catch (roleError) {
-      logger.warn('getUserProfile: Failed to fetch role data', roleError);
+      logger.warn("getUserProfile: Failed to fetch role data", roleError);
       // Don't throw, just continue without role data
     }
 
-    logger.auth('getUserProfile: SUCCESS ✅', {
+    logger.auth("getUserProfile: SUCCESS ✅", {
       userId: user.id,
       role: user.role,
-      hasRoleData: !!roleData
+      hasRoleData: !!roleData,
     });
 
     return { ...user, ...roleData } as AuthUser;
   } catch (error: unknown) {
-    logger.error('getUserProfile: ERROR, using fallback', error);
+    logger.error("getUserProfile: ERROR", error);
+
+    // Don't use fallback if user was deleted
+    if ((error as Error).message?.includes("deleted")) {
+      logger.error("getUserProfile: User deleted, not using fallback");
+      throw error;
+    }
 
     // Better error handling for abort errors
-    if ((error as Error).name === 'AbortError') {
-      logger.error('getUserProfile: Query timeout (10s)');
+    if ((error as Error).name === "AbortError") {
+      logger.error("getUserProfile: Query timeout (10s)");
     }
 
     // FALLBACK: Get user from auth.getUser() metadata
+    // Only for network/timeout errors, NOT for deleted users
     try {
-      const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
+      const {
+        data: { user: authUser },
+        error: authError,
+      } = await supabase.auth.getUser();
 
       if (authError || !authUser) {
-        logger.error('getUserProfile: Fallback failed', authError);
-        throw new Error('Cannot get user data');
+        logger.error("getUserProfile: Fallback failed", authError);
+        throw new Error("Cannot get user data");
       }
 
-      logger.warn('getUserProfile: Using fallback', {
+      logger.warn("getUserProfile: Using fallback (network issue)", {
         userId: authUser.id,
         role: authUser.user_metadata?.role,
       });
-      
+
       // Return user from auth metadata (temporary fallback)
       return {
         id: authUser.id,
-        email: authUser.email || '',
-        full_name: authUser.user_metadata?.full_name || 'User',
-        role: authUser.user_metadata?.role || 'mahasiswa',
+        email: authUser.email || "",
+        full_name: authUser.user_metadata?.full_name || "User",
+        role: authUser.user_metadata?.role || "mahasiswa",
         phone: authUser.user_metadata?.phone || null,
         avatar_url: authUser.user_metadata?.avatar_url || null,
         is_active: true,
@@ -531,7 +630,7 @@ async function getUserProfile(userId: string): Promise<AuthUser> {
         updated_at: authUser.updated_at || authUser.created_at,
       } as AuthUser;
     } catch (fallbackError) {
-      logger.error('getUserProfile: Fallback also failed', fallbackError);
+      logger.error("getUserProfile: Fallback also failed", fallbackError);
       throw fallbackError;
     }
   }
@@ -544,12 +643,12 @@ async function getUserProfile(userId: string): Promise<AuthUser> {
 export function onAuthStateChange(
   callback: (session: AuthSession | null) => void
 ) {
-  logger.debug('onAuthStateChange: Setting up listener');
+  logger.debug("onAuthStateChange: Setting up listener");
 
   return supabase.auth.onAuthStateChange(async (event, session) => {
     // Only log important events (not INITIAL_SESSION)
-    if (event !== 'INITIAL_SESSION') {
-      logger.auth('onAuthStateChange:', {
+    if (event !== "INITIAL_SESSION") {
+      logger.auth("onAuthStateChange:", {
         event,
         hasSession: !!session,
       });
@@ -560,7 +659,7 @@ export function onAuthStateChange(
         // Fetch full profile from database
         const user = await getUserProfile(session.user.id);
 
-        logger.debug('onAuthStateChange: Profile loaded', {
+        logger.debug("onAuthStateChange: Profile loaded", {
           userId: user.id,
           role: user.role,
         });
@@ -572,11 +671,21 @@ export function onAuthStateChange(
           expires_at: session.expires_at,
         });
       } catch (error: unknown) {
-        logger.error('onAuthStateChange: Error loading profile', error);
+        const errorMsg = (error as Error).message || "";
+
+        // If user was deleted, just return null without signing out
+        // (Let the register() function handle signOut and rollback)
+        if (errorMsg.includes("deleted")) {
+          logger.debug("onAuthStateChange: User profile not found, skipping");
+          callback(null);
+          return;
+        }
+
+        logger.error("onAuthStateChange: Error loading profile", error);
         callback(null);
       }
     } else {
-      logger.debug('onAuthStateChange: No session');
+      logger.debug("onAuthStateChange: No session");
       callback(null);
     }
   });
@@ -587,27 +696,33 @@ export function onAuthStateChange(
  */
 export async function getCurrentUser(): Promise<AuthUser | null> {
   try {
-    logger.auth('getCurrentUser: START');
-    
-    const { data: { user }, error } = await supabase.auth.getUser();
-    
-    logger.auth('getCurrentUser: Supabase response', { 
-      hasUser: !!user, 
-      error 
+    logger.auth("getCurrentUser: START");
+
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
+
+    logger.auth("getCurrentUser: Supabase response", {
+      hasUser: !!user,
+      error,
     });
-    
+
     if (!user) {
-      logger.auth('getCurrentUser: No user found');
+      logger.auth("getCurrentUser: No user found");
       return null;
     }
-    
-    logger.auth('getCurrentUser: Calling getUserProfile for', user.id);
+
+    logger.auth("getCurrentUser: Calling getUserProfile for", user.id);
     const profile = await getUserProfile(user.id);
-    logger.auth('getCurrentUser: Success', { userId: profile.id, role: profile.role });
-    
+    logger.auth("getCurrentUser: Success", {
+      userId: profile.id,
+      role: profile.role,
+    });
+
     return profile;
   } catch (error: unknown) {
-    logger.error('Get current user error:', error);
+    logger.error("Get current user error:", error);
     return null;
   }
 }
@@ -617,16 +732,19 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
  */
 export async function isAuthenticated(): Promise<boolean> {
   try {
-    logger.auth('isAuthenticated: START');
-    
-    const { data: { session }, error } = await supabase.auth.getSession();
+    logger.auth("isAuthenticated: START");
+
+    const {
+      data: { session },
+      error,
+    } = await supabase.auth.getSession();
     const authenticated = !!session;
-    
-    logger.auth('isAuthenticated: Result', { authenticated, error });
-    
+
+    logger.auth("isAuthenticated: Result", { authenticated, error });
+
     return authenticated;
   } catch (error: unknown) {
-    logger.error('isAuthenticated error:', error);
+    logger.error("isAuthenticated error:", error);
     return false;
   }
 }

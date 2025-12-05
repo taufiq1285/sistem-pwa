@@ -15,7 +15,7 @@ import {
   normalizeDosenNama,
   normalizeMataKuliahNama,
   normalize,
-} from '@/lib/utils/normalize';
+} from '../../../lib/utils/normalize';
 
 describe('Data Normalization Utilities', () => {
   describe('normalizeFullName', () => {
@@ -321,7 +321,7 @@ describe('Data Normalization Utilities', () => {
     it('should handle very long inputs', () => {
       const longName = 'a '.repeat(100).trim();
       const result = normalizeFullName(longName);
-      expect(result.split(' ').every((word) => word === 'A')).toBe(true);
+      expect(result.split(' ').every((word: string) => word === 'A')).toBe(true);
     });
   });
 

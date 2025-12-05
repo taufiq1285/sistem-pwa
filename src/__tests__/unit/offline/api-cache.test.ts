@@ -30,19 +30,29 @@ vi.mock('../../../lib/offline/indexeddb', () => ({
   },
 }));
 
-// Mock console methods
-const mockConsoleLog = vi.spyOn(console, 'log').mockImplementation(() => {});
-const mockConsoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-const mockConsoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
-
 describe('API Cache', () => {
+  let mockConsoleLog: any;
+  let mockConsoleWarn: any;
+  let mockConsoleError: any;
+
   beforeEach(() => {
     vi.clearAllMocks();
     vi.useFakeTimers();
+
+    // Re-mock indexedDB manager methods
+    vi.mocked(indexedDBManager.initialize).mockResolvedValue(undefined);
+    vi.mocked(indexedDBManager.getMetadata).mockResolvedValue(null);
+    vi.mocked(indexedDBManager.setMetadata).mockResolvedValue(undefined);
+
+    // Mock console methods in beforeEach
+    mockConsoleLog = vi.spyOn(console, 'log').mockImplementation(() => {});
+    mockConsoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    mockConsoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
   });
 
   afterEach(() => {
     vi.useRealTimers();
+    vi.clearAllMocks();
   });
 
   describe('cacheAPI - Cache Hit', () => {

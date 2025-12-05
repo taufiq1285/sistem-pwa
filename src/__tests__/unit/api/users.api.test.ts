@@ -179,7 +179,7 @@ describe('Users API - Get All Users', () => {
 
       const result = await getAllUsers();
 
-      const mahasiswaUser = result.find((u) => u.id === 'user-3');
+      const mahasiswaUser = result.find((u: { id: string; nim?: string; phone?: string }) => u.id === 'user-3');
       expect(mahasiswaUser?.nim).toBe('BD2321001');
       expect(mahasiswaUser?.phone).toBe('081234567890');
     });
@@ -210,7 +210,7 @@ describe('Users API - Get All Users', () => {
 
       const result = await getAllUsers();
 
-      const dosenUser = result.find((u) => u.id === 'user-2');
+      const dosenUser = result.find((u: { id: string; nip?: string; nidn?: string }) => u.id === 'user-2');
       expect(dosenUser?.nip).toBe('198501012010121001');
       expect(dosenUser?.nidn).toBe('0001018501');
     });

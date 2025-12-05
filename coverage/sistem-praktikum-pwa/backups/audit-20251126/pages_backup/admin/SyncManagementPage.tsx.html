@@ -1,0 +1,238 @@
+
+<!doctype html>
+<html lang="en">
+
+<head>
+    <title>Code coverage report for sistem-praktikum-pwa/backups/audit-20251126/pages_backup/admin/SyncManagementPage.tsx</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../../../../../prettify.css" />
+    <link rel="stylesheet" href="../../../../../base.css" />
+    <link rel="shortcut icon" type="image/x-icon" href="../../../../../favicon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style type='text/css'>
+        .coverage-summary .sorter {
+            background-image: url(../../../../../sort-arrow-sprite.png);
+        }
+    </style>
+</head>
+    
+<body>
+<div class='wrapper'>
+    <div class='pad1'>
+        <h1><a href="../../../../../index.html">All files</a> / <a href="index.html">sistem-praktikum-pwa/backups/audit-20251126/pages_backup/admin</a> SyncManagementPage.tsx</h1>
+        <div class='clearfix'>
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Statements</span>
+                <span class='fraction'>0/51</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Branches</span>
+                <span class='fraction'>0/1</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Functions</span>
+                <span class='fraction'>0/1</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Lines</span>
+                <span class='fraction'>0/51</span>
+            </div>
+        
+            
+        </div>
+        <p class="quiet">
+            Press <em>n</em> or <em>j</em> to go to the next uncovered block, <em>b</em>, <em>p</em> or <em>k</em> for the previous block.
+        </p>
+        <template id="filterTemplate">
+            <div class="quiet">
+                Filter:
+                <input type="search" id="fileSearch">
+            </div>
+        </template>
+    </div>
+    <div class='status-line low'></div>
+    <pre><table class="coverage">
+<tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
+<a name='L2'></a><a href='#L2'>2</a>
+<a name='L3'></a><a href='#L3'>3</a>
+<a name='L4'></a><a href='#L4'>4</a>
+<a name='L5'></a><a href='#L5'>5</a>
+<a name='L6'></a><a href='#L6'>6</a>
+<a name='L7'></a><a href='#L7'>7</a>
+<a name='L8'></a><a href='#L8'>8</a>
+<a name='L9'></a><a href='#L9'>9</a>
+<a name='L10'></a><a href='#L10'>10</a>
+<a name='L11'></a><a href='#L11'>11</a>
+<a name='L12'></a><a href='#L12'>12</a>
+<a name='L13'></a><a href='#L13'>13</a>
+<a name='L14'></a><a href='#L14'>14</a>
+<a name='L15'></a><a href='#L15'>15</a>
+<a name='L16'></a><a href='#L16'>16</a>
+<a name='L17'></a><a href='#L17'>17</a>
+<a name='L18'></a><a href='#L18'>18</a>
+<a name='L19'></a><a href='#L19'>19</a>
+<a name='L20'></a><a href='#L20'>20</a>
+<a name='L21'></a><a href='#L21'>21</a>
+<a name='L22'></a><a href='#L22'>22</a>
+<a name='L23'></a><a href='#L23'>23</a>
+<a name='L24'></a><a href='#L24'>24</a>
+<a name='L25'></a><a href='#L25'>25</a>
+<a name='L26'></a><a href='#L26'>26</a>
+<a name='L27'></a><a href='#L27'>27</a>
+<a name='L28'></a><a href='#L28'>28</a>
+<a name='L29'></a><a href='#L29'>29</a>
+<a name='L30'></a><a href='#L30'>30</a>
+<a name='L31'></a><a href='#L31'>31</a>
+<a name='L32'></a><a href='#L32'>32</a>
+<a name='L33'></a><a href='#L33'>33</a>
+<a name='L34'></a><a href='#L34'>34</a>
+<a name='L35'></a><a href='#L35'>35</a>
+<a name='L36'></a><a href='#L36'>36</a>
+<a name='L37'></a><a href='#L37'>37</a>
+<a name='L38'></a><a href='#L38'>38</a>
+<a name='L39'></a><a href='#L39'>39</a>
+<a name='L40'></a><a href='#L40'>40</a>
+<a name='L41'></a><a href='#L41'>41</a>
+<a name='L42'></a><a href='#L42'>42</a>
+<a name='L43'></a><a href='#L43'>43</a>
+<a name='L44'></a><a href='#L44'>44</a>
+<a name='L45'></a><a href='#L45'>45</a>
+<a name='L46'></a><a href='#L46'>46</a>
+<a name='L47'></a><a href='#L47'>47</a>
+<a name='L48'></a><a href='#L48'>48</a>
+<a name='L49'></a><a href='#L49'>49</a>
+<a name='L50'></a><a href='#L50'>50</a>
+<a name='L51'></a><a href='#L51'>51</a>
+<a name='L52'></a><a href='#L52'>52</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js"><span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" ><span class="branch-0 cbranch-no" title="branch not covered" >import { useState, useEffect } from 'react';</span></span></span>
+<span class="cstat-no" title="statement not covered" >import { RefreshCw, Cloud, Database, CheckCircle, AlertCircle } from 'lucide-react';</span>
+<span class="cstat-no" title="statement not covered" >import { Button } from '@/components/ui/button';</span>
+<span class="cstat-no" title="statement not covered" >import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';</span>
+<span class="cstat-no" title="statement not covered" >import { Badge } from '@/components/ui/badge';</span>
+<span class="cstat-no" title="statement not covered" >import { toast } from 'sonner';</span>
+<span class="cstat-no" title="statement not covered" >import { getSyncManagementStats, forceSyncNow, type SyncManagementStats } from '@/lib/api/sync.api';</span>
+<span class="cstat-no" title="statement not covered" ></span>
+<span class="cstat-no" title="statement not covered" >export default function SyncManagementPage() {</span>
+<span class="cstat-no" title="statement not covered" >  const [syncStats, setSyncStats] = useState&lt;SyncManagementStats&gt;({</span>
+<span class="cstat-no" title="statement not covered" >    pendingSync: 0, synced: 0, failed: 0, conflicts: 0, lastSync: 'Never',</span>
+<span class="cstat-no" title="statement not covered" >    queueStats: { total: 0, pending: 0, syncing: 0, completed: 0, failed: 0 },</span>
+<span class="cstat-no" title="statement not covered" >    syncStats: { totalSynced: 0, totalFailed: 0, averageDuration: 0, syncHistory: [] },</span>
+<span class="cstat-no" title="statement not covered" >  });</span>
+<span class="cstat-no" title="statement not covered" >  const [loading, setLoading] = useState(true);</span>
+<span class="cstat-no" title="statement not covered" >  const [syncing, setSyncing] = useState(false);</span>
+<span class="cstat-no" title="statement not covered" ></span>
+<span class="cstat-no" title="statement not covered" >  useEffect(() =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >    loadSyncStats();</span>
+<span class="cstat-no" title="statement not covered" >    const interval = setInterval(loadSyncStats, 10000);</span>
+<span class="cstat-no" title="statement not covered" >    return () =&gt; clearInterval(interval);</span>
+<span class="cstat-no" title="statement not covered" >  }, []);</span>
+<span class="cstat-no" title="statement not covered" ></span>
+<span class="cstat-no" title="statement not covered" >  const loadSyncStats = async () =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >    try {</span>
+<span class="cstat-no" title="statement not covered" >      setLoading(true);</span>
+<span class="cstat-no" title="statement not covered" >      const data = await getSyncManagementStats();</span>
+<span class="cstat-no" title="statement not covered" >      setSyncStats(data);</span>
+<span class="cstat-no" title="statement not covered" >    } catch (error) {</span>
+<span class="cstat-no" title="statement not covered" >      console.error('Failed to load sync stats:', error);</span>
+<span class="cstat-no" title="statement not covered" >    } finally {</span>
+<span class="cstat-no" title="statement not covered" >      setLoading(false);</span>
+<span class="cstat-no" title="statement not covered" >    }</span>
+<span class="cstat-no" title="statement not covered" >  };</span>
+<span class="cstat-no" title="statement not covered" ></span>
+<span class="cstat-no" title="statement not covered" >  const handleForceSync = async () =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >    try {</span>
+<span class="cstat-no" title="statement not covered" >      setSyncing(true);</span>
+<span class="cstat-no" title="statement not covered" >      await forceSyncNow();</span>
+<span class="cstat-no" title="statement not covered" >      toast.success('Sync process initiated');</span>
+<span class="cstat-no" title="statement not covered" >      setTimeout(loadSyncStats, 2000);</span>
+<span class="cstat-no" title="statement not covered" >    } catch (error) {</span>
+<span class="cstat-no" title="statement not covered" >      toast.error('Failed to trigger sync');</span>
+<span class="cstat-no" title="statement not covered" >      console.error(error);</span>
+<span class="cstat-no" title="statement not covered" >    } finally {</span>
+<span class="cstat-no" title="statement not covered" >      setSyncing(false);</span>
+<span class="cstat-no" title="statement not covered" >    }</span>
+<span class="cstat-no" title="statement not covered" >  };</span>
+<span class="cstat-no" title="statement not covered" ></span>
+<span class="cstat-no" title="statement not covered" >  return (&lt;div className="container mx-auto py-6 max-w-7xl space-y-6"&gt;&lt;div className="flex items-center justify-between"&gt;&lt;div&gt;&lt;h1 className="text-3xl font-bold"&gt;Sync Management&lt;/h1&gt;&lt;p className="text-muted-foreground"&gt;Monitor offline synchronization&lt;/p&gt;&lt;/div&gt;&lt;div className="flex gap-2"&gt;&lt;Button variant="outline" onClick={loadSyncStats} disabled={loading}&gt;&lt;RefreshCw className={loading ? 'h-4 w-4 mr-2 animate-spin' : 'h-4 w-4 mr-2'} /&gt;Refresh&lt;/Button&gt;&lt;Button onClick={handleForceSync} disabled={syncing}&gt;&lt;RefreshCw className={syncing ? 'h-4 w-4 mr-2 animate-spin' : 'h-4 w-4 mr-2'} /&gt;Force Sync&lt;/Button&gt;&lt;/div&gt;&lt;/div&gt;&lt;div className="grid gap-4 md:grid-cols-4"&gt;&lt;Card&gt;&lt;CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"&gt;&lt;CardTitle className="text-sm font-medium"&gt;Pending&lt;/CardTitle&gt;&lt;Cloud className="h-4 w-4 text-yellow-600" /&gt;&lt;/CardHeader&gt;&lt;CardContent&gt;&lt;div className="text-2xl font-bold"&gt;{syncStats.pendingSync}&lt;/div&gt;&lt;p className="text-xs text-muted-foreground mt-1"&gt;{syncStats.queueStats.syncing} syncing&lt;/p&gt;&lt;/CardContent&gt;&lt;/Card&gt;&lt;Card&gt;&lt;CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"&gt;&lt;CardTitle className="text-sm font-medium"&gt;Synced&lt;/CardTitle&gt;&lt;CheckCircle className="h-4 w-4 text-green-600" /&gt;&lt;/CardHeader&gt;&lt;CardContent&gt;&lt;div className="text-2xl font-bold"&gt;{syncStats.synced}&lt;/div&gt;&lt;p className="text-xs text-muted-foreground mt-1"&gt;{syncStats.syncStats.totalSynced} total&lt;/p&gt;&lt;/CardContent&gt;&lt;/Card&gt;&lt;Card&gt;&lt;CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"&gt;&lt;CardTitle className="text-sm font-medium"&gt;Failed&lt;/CardTitle&gt;&lt;AlertCircle className="h-4 w-4 text-red-600" /&gt;&lt;/CardHeader&gt;&lt;CardContent&gt;&lt;div className="text-2xl font-bold"&gt;{syncStats.failed}&lt;/div&gt;&lt;p className="text-xs text-muted-foreground mt-1"&gt;Needs retry&lt;/p&gt;&lt;/CardContent&gt;&lt;/Card&gt;&lt;Card&gt;&lt;CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"&gt;&lt;CardTitle className="text-sm font-medium"&gt;Last Sync&lt;/CardTitle&gt;&lt;RefreshCw className="h-4 w-4 text-muted-foreground" /&gt;&lt;/CardHeader&gt;&lt;CardContent&gt;&lt;div className="text-sm font-bold"&gt;{syncStats.lastSync}&lt;/div&gt;&lt;Badge variant="outline" className="mt-2"&gt;Auto&lt;/Badge&gt;&lt;/CardContent&gt;&lt;/Card&gt;&lt;/div&gt;&lt;div className="grid gap-4 md:grid-cols-2"&gt;&lt;Card&gt;&lt;CardHeader&gt;&lt;CardTitle&gt;Queue Statistics&lt;/CardTitle&gt;&lt;CardDescription&gt;Offline sync queue status&lt;/CardDescription&gt;&lt;/CardHeader&gt;&lt;CardContent&gt;&lt;div className="space-y-4"&gt;&lt;div className="flex items-center justify-between"&gt;&lt;span className="text-sm font-medium"&gt;Total Items&lt;/span&gt;&lt;Badge variant="outline"&gt;{syncStats.queueStats.total}&lt;/Badge&gt;&lt;/div&gt;&lt;div className="flex items-center justify-between"&gt;&lt;span className="text-sm font-medium"&gt;Pending&lt;/span&gt;&lt;Badge variant="secondary"&gt;{syncStats.queueStats.pending}&lt;/Badge&gt;&lt;/div&gt;&lt;div className="flex items-center justify-between"&gt;&lt;span className="text-sm font-medium"&gt;Syncing&lt;/span&gt;&lt;Badge variant="default"&gt;{syncStats.queueStats.syncing}&lt;/Badge&gt;&lt;/div&gt;&lt;div className="flex items-center justify-between"&gt;&lt;span className="text-sm font-medium"&gt;Completed&lt;/span&gt;&lt;Badge variant="outline" className="bg-green-50"&gt;{syncStats.queueStats.completed}&lt;/Badge&gt;&lt;/div&gt;&lt;div className="flex items-center justify-between"&gt;&lt;span className="text-sm font-medium"&gt;Failed&lt;/span&gt;&lt;Badge variant="destructive"&gt;{syncStats.queueStats.failed}&lt;/Badge&gt;&lt;/div&gt;&lt;/div&gt;&lt;/CardContent&gt;&lt;/Card&gt;&lt;Card&gt;&lt;CardHeader&gt;&lt;CardTitle&gt;Sync Performance&lt;/CardTitle&gt;&lt;CardDescription&gt;Historical sync metrics&lt;/CardDescription&gt;&lt;/CardHeader&gt;&lt;CardContent&gt;&lt;div className="space-y-4"&gt;&lt;div className="flex items-center justify-between"&gt;&lt;span className="text-sm font-medium"&gt;Total Synced&lt;/span&gt;&lt;span className="text-2xl font-bold"&gt;{syncStats.syncStats.totalSynced}&lt;/span&gt;&lt;/div&gt;&lt;div className="flex items-center justify-between"&gt;&lt;span className="text-sm font-medium"&gt;Total Failed&lt;/span&gt;&lt;span className="text-2xl font-bold text-red-600"&gt;{syncStats.syncStats.totalFailed}&lt;/span&gt;&lt;/div&gt;&lt;div className="flex items-center justify-between"&gt;&lt;span className="text-sm font-medium"&gt;Avg Duration&lt;/span&gt;&lt;span className="text-lg font-bold"&gt;{Math.round(syncStats.syncStats.averageDuration)}ms&lt;/span&gt;&lt;/div&gt;&lt;div className="flex items-center justify-between"&gt;&lt;span className="text-sm font-medium"&gt;Sync History&lt;/span&gt;&lt;Badge variant="outline"&gt;{syncStats.syncStats.syncHistory.length} records&lt;/Badge&gt;&lt;/div&gt;&lt;/div&gt;&lt;/CardContent&gt;&lt;/Card&gt;&lt;/div&gt;&lt;Card&gt;&lt;CardHeader&gt;&lt;CardTitle&gt;Offline Synchronization&lt;/CardTitle&gt;&lt;CardDescription&gt;PWA offline data sync system&lt;/CardDescription&gt;&lt;/CardHeader&gt;&lt;CardContent&gt;&lt;div className="text-center py-8"&gt;&lt;Database className="h-12 w-12 mx-auto text-muted-foreground mb-4" /&gt;&lt;p className="text-muted-foreground"&gt;Background sync is active&lt;/p&gt;&lt;p className="text-sm text-muted-foreground mt-2"&gt;Monitoring {syncStats.queueStats.total} queue items, {syncStats.pendingSync} pending synchronization&lt;/p&gt;&lt;/div&gt;&lt;/CardContent&gt;&lt;/Card&gt;&lt;/div&gt;);</span>
+<span class="cstat-no" title="statement not covered" >}</span>
+&nbsp;</pre></td></tr></table></pre>
+
+                <div class='push'></div><!-- for sticky footer -->
+            </div><!-- /wrapper -->
+            <div class='footer quiet pad2 space-top1 center small'>
+                Code coverage generated by
+                <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
+                at 2025-12-04T06:45:02.500Z
+            </div>
+        <script src="../../../../../prettify.js"></script>
+        <script>
+            window.onload = function () {
+                prettyPrint();
+            };
+        </script>
+        <script src="../../../../../sorter.js"></script>
+        <script src="../../../../../block-navigation.js"></script>
+    </body>
+</html>
+    

@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { debounce, debounceImmediate } from '@/lib/utils/debounce';
+import { debounce, debounceImmediate } from '../../../lib/utils/debounce';
 
 describe('Debounce Utility', () => {
   beforeEach(() => {
@@ -59,20 +59,21 @@ describe('Debounce Utility', () => {
     });
 
     it('should preserve this context', () => {
+      let calledValue: number | undefined;
       const obj = {
         value: 42,
         method: function (this: { value: number }) {
+          calledValue = this.value;
           return this.value;
         },
       };
 
       const debouncedMethod = debounce(obj.method, 500);
-      const spy = vi.spyOn(obj, 'method');
 
       debouncedMethod.call(obj);
       vi.advanceTimersByTime(500);
 
-      expect(spy).toHaveBeenCalled();
+      expect(calledValue).toBe(42);
     });
 
     it('should work with different wait times', () => {
@@ -203,19 +204,20 @@ describe('Debounce Utility', () => {
     });
 
     it('should preserve this context', () => {
+      let calledValue: number | undefined;
       const obj = {
         value: 100,
         method: function (this: { value: number }) {
+          calledValue = this.value;
           return this.value;
         },
       };
 
       const debouncedMethod = debounceImmediate(obj.method, 500);
-      const spy = vi.spyOn(obj, 'method');
 
       debouncedMethod.call(obj);
 
-      expect(spy).toHaveBeenCalled();
+      expect(calledValue).toBe(100);
     });
 
     it('should clear timeout on subsequent calls', () => {

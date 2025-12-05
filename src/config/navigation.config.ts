@@ -21,6 +21,7 @@ import {
   UserCog,
   BookOpen,
   UserCheck,
+  Bell,
   type LucideIcon
 } from 'lucide-react';
 import type { UserRole } from '@/types/auth.types';
@@ -80,6 +81,12 @@ const mahasiswaNavigation: NavigationItem[] = [
     href: '/mahasiswa/materi',
     icon: FileText,
     description: 'Materi pembelajaran'
+  },
+  {
+    label: 'Notifikasi',
+    href: '/mahasiswa/notifikasi',
+    icon: Bell,
+    description: 'Lihat notifikasi'
   }
 ];
 
@@ -128,6 +135,12 @@ const dosenNavigation: NavigationItem[] = [
     href: '/dosen/penilaian',
     icon: Award,
     description: 'Input nilai mahasiswa'
+  },
+  {
+    label: 'Notifikasi',
+    href: '/dosen/notifikasi',
+    icon: Bell,
+    description: 'Lihat notifikasi'
   }
 ];
 
@@ -172,9 +185,9 @@ const adminNavigation: NavigationItem[] = [
     description: 'Kelola peralatan'
   },
   {
-    label: 'Announcements',
-    href: '/admin/announcements',
-    icon: ClipboardList,
+    label: 'Notifikasi',
+    href: '/admin/notifikasi',
+    icon: Bell,
     description: 'Kelola pengumuman'
   },
   {
@@ -224,6 +237,12 @@ const laboranNavigation: NavigationItem[] = [
     href: '/laboran/laporan',
     icon: BarChart3,
     description: 'Laporan inventaris'
+  },
+  {
+    label: 'Notifikasi',
+    href: '/laboran/notifikasi',
+    icon: Bell,
+    description: 'Lihat notifikasi'
   }
 ];
 

@@ -3,6 +3,7 @@ import { Megaphone, Plus, Bell, RefreshCw, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { DeleteConfirmDialog } from '@/components/common/DeleteConfirmDialog';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -41,6 +42,10 @@ export default function AnnouncementsPage() {
     penulis_id: user?.id || '',
   });
 
+  // Delete confirmation state
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [deletingAnnouncement, setDeletingAnnouncement] = useState<Pengumuman | null>(null);
+
   useEffect(() => {
     loadAnnouncements();
   }, []);
@@ -68,14 +73,22 @@ export default function AnnouncementsPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this announcement?')) return;
+  const handleDelete = (announcement: Pengumuman) => {
+    setDeletingAnnouncement(announcement);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!deletingAnnouncement) return;
+
     try {
-      await deleteAnnouncement(id);
-      toast.success('Announcement deleted');
+      await deleteAnnouncement(deletingAnnouncement.id);
+      toast.success('Pengumuman berhasil dihapus');
+      setIsDeleteDialogOpen(false);
+      setDeletingAnnouncement(null);
       await loadAnnouncements();
     } catch (error) {
-      toast.error('Failed to delete announcement');
+      toast.error('Gagal menghapus pengumuman');
       console.error(error);
     }
   };
@@ -220,7 +233,7 @@ export default function AnnouncementsPage() {
                       {announcement.prioritas || 'normal'}
                     </Badge>
                     <Badge variant="default">{announcement.tipe || 'info'}</Badge>
-                    <Button variant="ghost" size="sm" onClick={() => handleDelete(announcement.id)}>
+                    <Button variant="ghost" size="sm" onClick={() => handleDelete(announcement)}>
                       <Trash2 className="h-4 w-4 text-red-600" />
                     </Button>
                   </div>
@@ -352,6 +365,24 @@ export default function AnnouncementsPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      {deletingAnnouncement && (
+        <DeleteConfirmDialog
+          open={isDeleteDialogOpen}
+          onOpenChange={setIsDeleteDialogOpen}
+          onConfirm={confirmDelete}
+          title="Hapus Pengumuman - Konfirmasi"
+          itemName={deletingAnnouncement.judul}
+          itemType="Pengumuman"
+          description={`Tipe: ${deletingAnnouncement.tipe} | Prioritas: ${deletingAnnouncement.prioritas}`}
+          consequences={[
+            'Pengumuman akan dihapus permanen dari sistem',
+            'User tidak akan melihat pengumuman ini lagi',
+            'Tindakan ini tidak dapat dibatalkan',
+          ]}
+        />
+      )}
     </div>
   );
 }

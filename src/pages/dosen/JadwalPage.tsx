@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Plus, List, Calendar as CalendarIcon, Loader2, Check, ChevronsUpDown } from 'lucide-react';
+import { Plus, List, Calendar as CalendarIcon, Loader2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
@@ -28,14 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from '@/components/ui/command';
+// Removed: Command imports (now using simple Select)
 import {
   Dialog,
   DialogContent,
@@ -61,11 +54,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
@@ -160,9 +149,7 @@ export default function JadwalPage() {
   const [kelasList, setKelasList] = useState<Kelas[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Combobox open states
-  const [mataKuliahOpen, setMataKuliahOpen] = useState(false);
-  const [kelasOpen, setKelasOpen] = useState(false);
+  // Removed: Combobox states (now using simple Select)
 
   // View state
   const [currentView, setCurrentView] = useState<'calendar' | 'list'>('calendar');
@@ -232,25 +219,43 @@ export default function JadwalPage() {
 
   const fetchMataKuliah = async () => {
     try {
+      console.log('🔵 Fetching mata kuliah...');
       const data = await query('mata_kuliah', {
         select: 'id, kode_mk, nama_mk, sks, semester, program_studi, is_active',
         order: { column: 'nama_mk', ascending: true },
       });
-      setMataKuliahList(data.filter((mk: any) => mk.is_active) as MataKuliah[]);
+      console.log('📦 Raw mata kuliah data:', data);
+      const filtered = data.filter((mk: any) => mk.is_active) as MataKuliah[];
+      console.log('✅ Filtered mata kuliah (is_active=true):', filtered);
+      console.table(filtered); // ← Tampilkan dalam tabel
+      setMataKuliahList(filtered);
+      console.log('🔵 State mataKuliahList updated, count:', filtered.length);
     } catch (error) {
-      console.error('Failed to fetch mata kuliah:', error);
+      console.error('❌ Failed to fetch mata kuliah:', error);
+      toast.error('Gagal memuat mata kuliah', {
+        description: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   };
 
   const fetchKelas = async () => {
     try {
+      console.log('🔵 Fetching kelas...');
       const data = await query('kelas', {
         select: 'id, kode_kelas, nama_kelas, mata_kuliah_id, dosen_id, tahun_ajaran, semester_ajaran, kuota, is_active',
         order: { column: 'nama_kelas', ascending: true },
       });
-      setKelasList(data.filter((k: any) => k.is_active) as Kelas[]);
+      console.log('📦 Raw kelas data:', data);
+      const filtered = data.filter((k: any) => k.is_active) as Kelas[];
+      console.log('✅ Filtered kelas (is_active=true):', filtered);
+      console.table(filtered); // ← Tampilkan dalam tabel
+      setKelasList(filtered);
+      console.log('🔵 State kelasList updated, count:', filtered.length);
     } catch (error) {
-      console.error('Failed to fetch kelas:', error);
+      console.error('❌ Failed to fetch kelas:', error);
+      toast.error('Gagal memuat kelas', {
+        description: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   };
 
@@ -466,140 +471,53 @@ export default function JadwalPage() {
 
   const renderFormFields = (form: any) => (
     <>
-      {/* Mata Kuliah Combobox */}
+      {/* Mata Kuliah Select - SIMPLE VERSION */}
       <FormField
         control={form.control}
         name="mata_kuliah_nama"
         render={({ field }) => (
-          <FormItem className="flex flex-col">
-            <FormLabel>Mata Kuliah Praktikum *</FormLabel>
-            <Popover open={mataKuliahOpen} onOpenChange={setMataKuliahOpen}>
-              <PopoverTrigger asChild>
-                <FormControl>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    className={cn(
-                      'w-full justify-between',
-                      !field.value && 'text-muted-foreground'
-                    )}
-                  >
-                    {field.value || 'Pilih atau ketik mata kuliah praktikum...'}
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </FormControl>
-              </PopoverTrigger>
-              <PopoverContent className="w-[400px] p-0">
-                <Command>
-                  <CommandInput 
-                    placeholder="Cari atau ketik mata kuliah baru..." 
-                    value={field.value}
-                    onValueChange={field.onChange}
-                  />
-                  <CommandList>
-                    <CommandEmpty>
-                      Tidak ada hasil. Tekan Enter untuk menggunakan "{field.value}"
-                    </CommandEmpty>
-                    <CommandGroup>
-                      {mataKuliahList.map((mk) => (
-                        <CommandItem
-                          key={mk.id}
-                          value={mk.nama_mk}
-                          onSelect={(value) => {
-                            field.onChange(value);
-                            setMataKuliahOpen(false);
-                          }}
-                        >
-                          <Check
-                            className={cn(
-                              'mr-2 h-4 w-4',
-                              field.value === mk.nama_mk ? 'opacity-100' : 'opacity-0'
-                            )}
-                          />
-                          {mk.kode_mk} - {mk.nama_mk}
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
-            <FormDescription>
-              Pilih dari list atau ketik nama mata kuliah praktikum
-            </FormDescription>
+          <FormItem>
+            <FormLabel>Mata Kuliah *</FormLabel>
+            <Select onValueChange={field.onChange} value={field.value}>
+              <FormControl>
+                <SelectTrigger>
+                  <SelectValue placeholder="Pilih mata kuliah" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                {mataKuliahList.map((mk) => (
+                  <SelectItem key={mk.id} value={mk.nama_mk}>
+                    {mk.kode_mk} - {mk.nama_mk}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <FormMessage />
           </FormItem>
         )}
       />
 
-      {/* Kelas Selection - HANYA BISA PILIH, TIDAK BOLEH BUAT BARU */}
+      {/* Kelas Select - SIMPLE VERSION */}
       <FormField
         control={form.control}
         name="kelas_nama"
         render={({ field }) => (
-          <FormItem className="flex flex-col">
+          <FormItem>
             <FormLabel>Kelas *</FormLabel>
-            <Popover open={kelasOpen} onOpenChange={setKelasOpen}>
-              <PopoverTrigger asChild>
-                <FormControl>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    className={cn(
-                      'w-full justify-between',
-                      !field.value && 'text-muted-foreground'
-                    )}
-                  >
-                    {field.value || 'Pilih kelas...'}
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </FormControl>
-              </PopoverTrigger>
-              <PopoverContent className="w-[400px] p-0">
-                <Command>
-                  <CommandInput
-                    placeholder="Cari kelas..."
-                    value={field.value}
-                    onValueChange={(value) => {
-                      // ❌ JANGAN ALLOW custom input - hanya search
-                      // Cari yang match, jika tidak ada, jangan ubah
-                      const match = kelasList.find(k => k.nama_kelas.toLowerCase().includes(value.toLowerCase()));
-                      if (match || value === '') {
-                        field.onChange(value);
-                      }
-                    }}
-                  />
-                  <CommandList>
-                    <CommandEmpty>
-                      Tidak ada kelas. Hubungi Admin untuk membuat kelas baru.
-                    </CommandEmpty>
-                    <CommandGroup>
-                      {kelasList.map((kelas) => (
-                        <CommandItem
-                          key={kelas.id}
-                          value={kelas.nama_kelas}
-                          onSelect={(value) => {
-                            field.onChange(value);
-                            setKelasOpen(false);
-                          }}
-                        >
-                          <Check
-                            className={cn(
-                              'mr-2 h-4 w-4',
-                              field.value === kelas.nama_kelas ? 'opacity-100' : 'opacity-0'
-                            )}
-                          />
-                          {kelas.kode_kelas} - {kelas.nama_kelas} ({kelas.tahun_ajaran})
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
-            <FormDescription>
-              Pilih kelas yang sudah dibuat Admin. Jika tidak ada, hubungi Admin.
-            </FormDescription>
+            <Select onValueChange={field.onChange} value={field.value}>
+              <FormControl>
+                <SelectTrigger>
+                  <SelectValue placeholder="Pilih kelas" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                {kelasList.map((kelas) => (
+                  <SelectItem key={kelas.id} value={kelas.nama_kelas}>
+                    {kelas.kode_kelas} - {kelas.nama_kelas} ({kelas.tahun_ajaran})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <FormMessage />
           </FormItem>
         )}
@@ -631,42 +549,24 @@ export default function JadwalPage() {
         )}
       />
 
-      {/* Tanggal Praktikum Field */}
+      {/* Tanggal Praktikum Field - SIMPLE INPUT DATE */}
       <FormField
         control={form.control}
         name="tanggal_praktikum"
         render={({ field }) => (
-          <FormItem className="flex flex-col">
+          <FormItem>
             <FormLabel>Tanggal Praktikum *</FormLabel>
-            <Popover>
-              <PopoverTrigger asChild>
-                <FormControl>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      'w-full pl-3 text-left font-normal',
-                      !field.value && 'text-muted-foreground'
-                    )}
-                  >
-                    {field.value ? (
-                      format(field.value, 'PPP', { locale: id })
-                    ) : (
-                      <span>Pilih tanggal pelaksanaan praktikum</span>
-                    )}
-                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                  </Button>
-                </FormControl>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <CalendarPicker
-                  mode="single"
-                  selected={field.value}
-                  onSelect={field.onChange}
-                  disabled={(date) => date < new Date()}
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
+            <FormControl>
+              <Input
+                type="date"
+                value={field.value ? format(field.value, 'yyyy-MM-dd') : ''}
+                onChange={(e) => {
+                  const dateValue = e.target.value ? new Date(e.target.value) : new Date();
+                  field.onChange(dateValue);
+                }}
+                min={format(new Date(), 'yyyy-MM-dd')}
+              />
+            </FormControl>
             <FormMessage />
           </FormItem>
         )}

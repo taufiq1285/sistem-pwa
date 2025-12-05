@@ -146,6 +146,18 @@ let cachedDosenIdTimestamp: number = 0;
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 const DOSEN_ID_STORAGE_KEY = 'cached_dosen_id';
 
+// Test helper to reset cache (exported for testing)
+export function __resetDosenIdCache() {
+  cachedDosenId = null;
+  cachedDosenIdTimestamp = 0;
+}
+
+// Test helper to set cache (exported for testing)
+export function __setDosenIdCache(dosenId: string) {
+  cachedDosenId = dosenId;
+  cachedDosenIdTimestamp = Date.now();
+}
+
 async function getDosenId(): Promise<string | null> {
   try {
     // Return cached value if still valid (in-memory cache)

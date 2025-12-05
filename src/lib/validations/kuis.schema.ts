@@ -56,14 +56,13 @@ const baseKuisSchema = z.object({
     .min(MIN_QUIZ_DURATION, `Durasi minimal ${MIN_QUIZ_DURATION} menit`)
     .max(MAX_QUIZ_DURATION, `Durasi maksimal ${MAX_QUIZ_DURATION} menit`),
   
-  // ✅ UPDATED: Made optional - will use default values
   tanggal_mulai: z
     .string()
-    .optional(),
+    .min(1, 'Tanggal mulai harus diisi'),
 
   tanggal_selesai: z
     .string()
-    .optional(),
+    .min(1, 'Tanggal selesai harus diisi'),
   
   // FIXED: Make these consistent with form defaults
   passing_score: z
@@ -173,7 +172,22 @@ export const createKuisSchema = baseKuisSchema
     dosen_id: z
       .string()
       .uuid('Dosen ID tidak valid'),
-  });
+  })
+  .refine(
+    (data) => {
+      // Validate tanggal_selesai > tanggal_mulai
+      if (data.tanggal_mulai && data.tanggal_selesai) {
+        const mulai = new Date(data.tanggal_mulai);
+        const selesai = new Date(data.tanggal_selesai);
+        return selesai > mulai;
+      }
+      return true;
+    },
+    {
+      message: 'Tanggal selesai harus lebih besar dari tanggal mulai',
+      path: ['tanggal_selesai'],
+    }
+  );
 
 export type CreateKuisFormData = z.infer<typeof createKuisSchema>;
 

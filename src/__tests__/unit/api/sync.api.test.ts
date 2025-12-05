@@ -61,7 +61,12 @@ describe('Sync API', () => {
 
   describe('forceSyncNow', () => {
     it('should trigger sync process', async () => {
-      vi.mocked(syncManager.processSync).mockResolvedValue();
+      vi.mocked(syncManager.processSync).mockResolvedValue({
+        success: true,
+        processed: 5,
+        failed: 0,
+        errors: []
+      });
 
       await forceSyncNow();
 

@@ -15,8 +15,8 @@ import {
   submitAnswerSchema,
   submitQuizSchema,
   VALIDATION_CONSTANTS,
-} from '@/lib/validations/kuis.schema';
-import { TIPE_SOAL } from '@/types/kuis.types';
+} from '../../../lib/validations/kuis.schema';
+import { TIPE_SOAL } from '../../../types/kuis.types';
 
 describe('Kuis Validation Schemas', () => {
   describe('createKuisSchema', () => {
@@ -48,6 +48,8 @@ describe('Kuis Validation Schemas', () => {
         kelas_id: '123e4567-e89b-12d3-a456-426614174000',
         dosen_id: '123e4567-e89b-12d3-a456-426614174001',
         durasi_menit: 60,
+        tanggal_mulai: new Date().toISOString(),
+        tanggal_selesai: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
       };
 
       const result = createKuisSchema.safeParse(invalidData);
@@ -61,6 +63,8 @@ describe('Kuis Validation Schemas', () => {
         kelas_id: '123e4567-e89b-12d3-a456-426614174000',
         dosen_id: '123e4567-e89b-12d3-a456-426614174001',
         durasi_menit: 3,
+        tanggal_mulai: new Date().toISOString(),
+        tanggal_selesai: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
       };
 
       const result = createKuisSchema.safeParse(invalidData);
@@ -77,6 +81,8 @@ describe('Kuis Validation Schemas', () => {
         kelas_id: '123e4567-e89b-12d3-a456-426614174000',
         dosen_id: '123e4567-e89b-12d3-a456-426614174001',
         durasi_menit: 400,
+        tanggal_mulai: new Date().toISOString(),
+        tanggal_selesai: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
       };
 
       const result = createKuisSchema.safeParse(invalidData);
@@ -93,6 +99,8 @@ describe('Kuis Validation Schemas', () => {
         kelas_id: 'invalid-uuid',
         dosen_id: '123e4567-e89b-12d3-a456-426614174001',
         durasi_menit: 60,
+        tanggal_mulai: new Date().toISOString(),
+        tanggal_selesai: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
       };
 
       const result = createKuisSchema.safeParse(invalidData);
@@ -106,6 +114,8 @@ describe('Kuis Validation Schemas', () => {
         kelas_id: '123e4567-e89b-12d3-a456-426614174000',
         dosen_id: '123e4567-e89b-12d3-a456-426614174001',
         durasi_menit: 60,
+        tanggal_mulai: new Date().toISOString(),
+        tanggal_selesai: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
         passing_score: null,
         max_attempts: null,
         randomize_questions: null,

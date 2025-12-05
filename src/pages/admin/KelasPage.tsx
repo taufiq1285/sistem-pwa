@@ -35,6 +35,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { DeleteConfirmDialog } from '@/components/common/DeleteConfirmDialog';
 import {
   Select,
   SelectContent,
@@ -108,6 +109,10 @@ export default function KelasPage() {
     nim: '',
     email: '',
   });
+
+  // Delete confirmation state
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [deletingKelas, setDeletingKelas] = useState<Kelas | null>(null);
 
   useEffect(() => {
     loadData();
@@ -194,12 +199,19 @@ export default function KelasPage() {
     }
   };
 
-  const handleDelete = async (kelas: Kelas) => {
-    if (!confirm(`Hapus kelas "${kelas.nama_kelas}"?`)) return;
+  const handleDelete = (kelas: Kelas) => {
+    setDeletingKelas(kelas);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!deletingKelas) return;
 
     try {
-      await deleteKelas(kelas.id);
+      await deleteKelas(deletingKelas.id);
       toast.success('Kelas berhasil dihapus');
+      setIsDeleteDialogOpen(false);
+      setDeletingKelas(null);
       await loadKelas();
     } catch (error: any) {
       toast.error(error.message || 'Gagal menghapus kelas');
@@ -761,6 +773,25 @@ export default function KelasPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      {deletingKelas && (
+        <DeleteConfirmDialog
+          open={isDeleteDialogOpen}
+          onOpenChange={setIsDeleteDialogOpen}
+          onConfirm={confirmDelete}
+          title="Hapus Kelas - Konfirmasi"
+          itemName={deletingKelas.nama_kelas}
+          itemType="Kelas"
+          description={`${deletingKelas.tahun_ajaran} - Semester ${deletingKelas.semester_ajaran}`}
+          consequences={[
+            'Data kelas akan dihapus permanen',
+            'Mahasiswa yang terdaftar akan kehilangan akses ke kelas ini',
+            'Jadwal praktikum terkait akan terpengaruh',
+            'Data nilai dan presensi tidak akan terhapus',
+          ]}
+        />
+      )}
     </div>
   );
 }

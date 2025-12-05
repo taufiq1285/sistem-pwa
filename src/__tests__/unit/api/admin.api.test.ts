@@ -4,8 +4,8 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import * as adminAPI from '@/lib/api/admin.api';
-import { supabase } from '@/lib/supabase/client';
+import * as adminAPI from '../../../lib/api/admin.api';
+import { supabase } from '../../../lib/supabase/client';
 
 // Mock Supabase
 vi.mock('@/lib/supabase/client', () => ({
@@ -114,12 +114,26 @@ describe('Admin API', () => {
     });
 
     it('should handle empty data gracefully', async () => {
-      vi.mocked(supabase.from).mockImplementation(() => ({
-        select: vi.fn().mockReturnValue({
-          data: [],
-          error: null,
-        }),
-      } as any));
+      vi.mocked(supabase.from).mockImplementation((table: string) => {
+        if (table === 'peminjaman') {
+          // peminjaman needs .select().eq() chain
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                data: [],
+                error: null,
+              }),
+            }),
+          } as any;
+        }
+        // Other tables only need .select()
+        return {
+          select: vi.fn().mockReturnValue({
+            data: [],
+            error: null,
+          }),
+        } as any;
+      });
 
       const result = await adminAPI.getDashboardStats();
 
@@ -147,12 +161,26 @@ describe('Admin API', () => {
     });
 
     it('should handle null data from database', async () => {
-      vi.mocked(supabase.from).mockImplementation(() => ({
-        select: vi.fn().mockReturnValue({
-          data: null,
-          error: null,
-        }),
-      } as any));
+      vi.mocked(supabase.from).mockImplementation((table: string) => {
+        if (table === 'peminjaman') {
+          // peminjaman needs .select().eq() chain
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                data: null,
+                error: null,
+              }),
+            }),
+          } as any;
+        }
+        // Other tables only need .select()
+        return {
+          select: vi.fn().mockReturnValue({
+            data: null,
+            error: null,
+          }),
+        } as any;
+      });
 
       const result = await adminAPI.getDashboardStats();
 
@@ -198,7 +226,7 @@ describe('Admin API', () => {
       const result = await adminAPI.getUserGrowth();
 
       expect(result).toHaveLength(6);
-      result.forEach((item) => {
+      result.forEach((item: { users: any; }) => {
         expect(item.users).toBe(0);
       });
     });
@@ -258,7 +286,7 @@ describe('Admin API', () => {
 
       expect(result).toHaveLength(3);
 
-      const mahasiswaData = result.find((r) => r.role === 'Mahasiswa');
+      const mahasiswaData = result.find((r: { role: string; }) => r.role === 'Mahasiswa');
       expect(mahasiswaData).toBeDefined();
       expect(mahasiswaData?.count).toBe(3);
       expect(mahasiswaData?.percentage).toBe(60);
@@ -307,7 +335,7 @@ describe('Admin API', () => {
 
       const result = await adminAPI.getUserDistribution();
 
-      result.forEach((item) => {
+      result.forEach((item: { percentage: any; }) => {
         expect(item.percentage).toBe(50);
       });
     });

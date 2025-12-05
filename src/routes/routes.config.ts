@@ -21,6 +21,7 @@ export const ROUTES = {
     LABORATORIES: '/admin/laboratories',
     EQUIPMENTS: '/admin/equipments',
     ANNOUNCEMENTS: '/admin/announcements',
+    NOTIFIKASI: '/admin/notifikasi', // Alias untuk announcements
     ANALYTICS: '/admin/analytics',
     SYNC_MANAGEMENT: '/admin/sync-management',
     MATA_KULIAH: '/admin/mata-kuliah',
@@ -42,6 +43,7 @@ export const ROUTES = {
     KEHADIRAN: '/dosen/kehadiran',
     MATERI: '/dosen/materi',
     PENILAIAN: '/dosen/penilaian',
+    NOTIFIKASI: '/dosen/notifikasi',
   },
 
   // Mahasiswa routes
@@ -57,7 +59,7 @@ export const ROUTES = {
     MATERI: '/mahasiswa/materi',
     NILAI: '/mahasiswa/nilai',
     PRESENSI: '/mahasiswa/presensi',
-    PENGUMUMAN: '/mahasiswa/pengumuman',
+    NOTIFIKASI: '/mahasiswa/notifikasi',
     PROFILE: '/mahasiswa/profile',
     OFFLINE_SYNC: '/mahasiswa/offline-sync',
   },
@@ -71,6 +73,7 @@ export const ROUTES = {
     PERSETUJUAN: '/laboran/persetujuan',
     LABORATORIUM: '/laboran/laboratorium',
     LAPORAN: '/laboran/laporan',
+    NOTIFIKASI: '/laboran/notifikasi',
   },
 } as const;
 

@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { DeleteConfirmDialog } from '@/components/common/DeleteConfirmDialog';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -397,47 +398,23 @@ export default function LaboratoriesPage() {
       </Dialog>
 
       {/* Delete Confirmation Dialog */}
-      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Delete Laboratory</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete this laboratory? This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          {deletingLab && (
-            <div className="space-y-4">
-              <div className="p-4 border rounded-lg bg-red-50 dark:bg-red-950">
-                <div className="flex items-center gap-2 mb-2">
-                  <Building2 className="h-5 w-5 text-red-600" />
-                  <p className="text-lg font-bold">{deletingLab.nama_lab}</p>
-                </div>
-                <p className="text-sm text-muted-foreground font-mono">{deletingLab.kode_lab}</p>
-                {deletingLab.lokasi && (
-                  <div className="flex items-center gap-1 mt-2">
-                    <MapPin className="h-3 w-3" />
-                    <p className="text-sm">{deletingLab.lokasi}</p>
-                  </div>
-                )}
-                <div className="mt-2">
-                  <Badge variant={deletingLab.is_active ? 'default' : 'secondary'}>
-                    {deletingLab.is_active ? 'Active' : 'Inactive'}
-                  </Badge>
-                </div>
-              </div>
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
-                  Cancel
-                </Button>
-                <Button variant="destructive" onClick={confirmDelete}>
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Delete Laboratory
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      {deletingLab && (
+        <DeleteConfirmDialog
+          open={isDeleteDialogOpen}
+          onOpenChange={setIsDeleteDialogOpen}
+          onConfirm={confirmDelete}
+          title="Hapus Laboratorium - Konfirmasi"
+          itemName={deletingLab.nama_lab}
+          itemType="Laboratorium"
+          description={`Kode: ${deletingLab.kode_lab} | Lokasi: ${deletingLab.lokasi || 'Tidak ada'}`}
+          consequences={[
+            'Data laboratorium akan dihapus permanen',
+            'Jadwal praktikum yang menggunakan lab ini akan terpengaruh',
+            'Equipment/inventaris di lab ini tetap ada',
+            'Tindakan ini tidak dapat dibatalkan',
+          ]}
+        />
+      )}
     </div>
   );
 }

@@ -31,16 +31,25 @@ vi.mock('../../../lib/utils/errors', () => ({
 
 import { supabase } from '../../../lib/supabase/client';
 
-const mockQueryBuilder = () => ({
-  select: vi.fn().mockReturnThis(),
-  update: vi.fn().mockReturnThis(),
-  delete: vi.fn().mockReturnThis(),
-  eq: vi.fn().mockReturnThis(),
-  in: vi.fn().mockReturnThis(),
-  order: vi.fn().mockReturnThis(),
-  limit: vi.fn().mockReturnThis(),
-  range: vi.fn().mockReturnThis(),
-});
+// UPDATE: Helper ini diperbarui agar bisa menerima default response
+// dan memiliki method 'then' agar bisa di-await tanpa memutus chaining
+const mockQueryBuilder = (defaultResponse: any = { data: [], error: null }) => {
+  const builder: any = {
+    select: vi.fn().mockReturnThis(),
+    update: vi.fn().mockReturnThis(),
+    delete: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    in: vi.fn().mockReturnThis(),
+    order: vi.fn().mockReturnThis(),
+    limit: vi.fn().mockReturnThis(),
+    range: vi.fn().mockReturnThis(),
+    single: vi.fn().mockReturnThis(),
+    // Menjadikan object ini "Thenable" (seperti Promise)
+    // sehingga saat di-await, dia mengembalikan defaultResponse
+    then: (resolve: any) => resolve(defaultResponse),
+  };
+  return builder;
+};
 
 describe('Peminjaman Extensions API', () => {
   beforeEach(() => {
@@ -49,6 +58,8 @@ describe('Peminjaman Extensions API', () => {
 
   describe('getAllPeminjaman', () => {
     it('should fetch all peminjaman with details', async () => {
+      // Test ini tetap menggunakan override spesifik pada .order()
+      // yang mana valid karena biasanya itu method terakhir
       const builder = mockQueryBuilder();
       builder.order.mockResolvedValue({
         data: [
@@ -64,7 +75,7 @@ describe('Peminjaman Extensions API', () => {
         count: 1,
         error: null,
       });
-      vi.mocked(supabase.from).mockReturnValue(builder as any);
+      vi.mocked(supabase.from).mockReturnValue(builder);
 
       const result = await getAllPeminjaman();
 
@@ -73,9 +84,12 @@ describe('Peminjaman Extensions API', () => {
     });
 
     it('should apply status filter', async () => {
-      const builder = mockQueryBuilder();
+      const builder = mockQueryBuilder({ data: [], count: 0, error: null });
+      // Kita override order agar konsisten dengan test sebelumnya,
+      // meskipun default response sudah kita set di atas.
       builder.order.mockResolvedValue({ data: [], count: 0, error: null });
-      vi.mocked(supabase.from).mockReturnValue(builder as any);
+      
+      vi.mocked(supabase.from).mockReturnValue(builder);
 
       await getAllPeminjaman({ status: 'approved' });
 
@@ -85,19 +99,24 @@ describe('Peminjaman Extensions API', () => {
 
   describe('markAsReturned', () => {
     it('should mark peminjaman as returned', async () => {
-      const builder = mockQueryBuilder();
-      builder.eq.mockResolvedValue({ error: null });
-      vi.mocked(supabase.from).mockReturnValue(builder as any);
+      // PERBAIKAN: Jangan mockResolvedValue pada .eq()
+      // Cukup berikan return value yang diinginkan ke mockQueryBuilder
+      const builder = mockQueryBuilder({ error: null });
+      
+      vi.mocked(supabase.from).mockReturnValue(builder);
 
       await markAsReturned('pinjam-1', 'baik', 'Test');
 
       expect(builder.update).toHaveBeenCalled();
       expect(builder.eq).toHaveBeenCalledWith('status', 'approved');
+      // Memastikan ID juga dipanggil (asumsi implementasi menggunakan ID)
+      // expect(builder.eq).toHaveBeenCalledWith('id', 'pinjam-1'); 
     });
   });
 
   describe('getPendingRoomBookings', () => {
     it('should fetch pending room bookings', async () => {
+      // Helper untuk kasus ini tetap manual karena struktur return yang kompleks
       const jadwalBuilder = mockQueryBuilder();
       jadwalBuilder.limit.mockResolvedValue({
         data: [{ id: 'jadwal-1', kelas_id: 'kelas-1', laboratorium_id: 'lab-1' }],
@@ -135,12 +154,12 @@ describe('Peminjaman Extensions API', () => {
       });
 
       vi.mocked(supabase.from)
-        .mockReturnValueOnce(jadwalBuilder as any)
-        .mockReturnValueOnce(kelasBuilder as any)
-        .mockReturnValueOnce(labBuilder as any)
-        .mockReturnValueOnce(mkBuilder as any)
-        .mockReturnValueOnce(dosenBuilder as any)
-        .mockReturnValueOnce(userBuilder as any);
+        .mockReturnValueOnce(jadwalBuilder)
+        .mockReturnValueOnce(kelasBuilder)
+        .mockReturnValueOnce(labBuilder)
+        .mockReturnValueOnce(mkBuilder)
+        .mockReturnValueOnce(dosenBuilder)
+        .mockReturnValueOnce(userBuilder);
 
       const result = await getPendingRoomBookings();
 
@@ -150,25 +169,27 @@ describe('Peminjaman Extensions API', () => {
 
   describe('approveRoomBooking', () => {
     it('should approve room booking', async () => {
-      const builder = mockQueryBuilder();
-      builder.eq.mockResolvedValue({ error: null });
-      vi.mocked(supabase.from).mockReturnValue(builder as any);
+      // PERBAIKAN: Gunakan default response via constructor mock
+      const builder = mockQueryBuilder({ error: null });
+      vi.mocked(supabase.from).mockReturnValue(builder);
 
       await approveRoomBooking('jadwal-1');
 
       expect(builder.update).toHaveBeenCalledWith(expect.objectContaining({ is_active: true }));
+      expect(builder.eq).toHaveBeenCalledWith('id', 'jadwal-1');
     });
   });
 
   describe('rejectRoomBooking', () => {
     it('should reject and delete room booking', async () => {
-      const builder = mockQueryBuilder();
-      builder.eq.mockResolvedValue({ error: null });
-      vi.mocked(supabase.from).mockReturnValue(builder as any);
+      // PERBAIKAN: Gunakan default response via constructor mock
+      const builder = mockQueryBuilder({ error: null });
+      vi.mocked(supabase.from).mockReturnValue(builder);
 
       await rejectRoomBooking('jadwal-1', 'Not available');
 
       expect(builder.delete).toHaveBeenCalled();
+      expect(builder.eq).toHaveBeenCalledWith('id', 'jadwal-1');
     });
   });
 });

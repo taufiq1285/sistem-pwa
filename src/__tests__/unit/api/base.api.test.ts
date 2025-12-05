@@ -127,7 +127,7 @@ describe('Base API - Query Functions', () => {
       builder.single.mockResolvedValue({ data: mockData, error: null });
       (supabase.from as any).mockReturnValue(builder);
 
-      await query('test_table', { select: 'id,name', single: true });
+      await query('test_table', { select: 'id,name', single: true } as any);
 
       expect(builder.select).toHaveBeenCalledWith('id,name');
     });
@@ -139,7 +139,7 @@ describe('Base API - Query Functions', () => {
 
       await query('test_table', {
         order: { column: 'name', ascending: false },
-      });
+      } as any);
 
       expect(builder.order).toHaveBeenCalledWith('name', { ascending: false });
     });
@@ -149,7 +149,7 @@ describe('Base API - Query Functions', () => {
       builder._setResolveValue({ data: mockData, error: null });
       (supabase.from as any).mockReturnValue(builder);
 
-      await query('test_table', { limit: 5 });
+      await query('test_table', { limit: 5 } as any);
 
       expect(builder.limit).toHaveBeenCalledWith(5);
     });
@@ -159,7 +159,7 @@ describe('Base API - Query Functions', () => {
       builder._setResolveValue({ data: mockData, error: null });
       (supabase.from as any).mockReturnValue(builder);
 
-      await query('test_table', { offset: 10, limit: 5 });
+      await query('test_table', { offset: 10, limit: 5 } as any);
 
       expect(builder.range).toHaveBeenCalledWith(10, 14);
     });
@@ -363,7 +363,7 @@ describe('Base API - CRUD Operations', () => {
       builder.single.mockResolvedValue({ data: mockData[0], error: null });
       (supabase.from as any).mockReturnValue(builder);
 
-      const result = await insert('test_table', { name: 'New Item' });
+      const result = await insert<{ id: string; name: string }>('test_table', { name: 'New Item' });
 
       expect(builder.insert).toHaveBeenCalledWith({ name: 'New Item' });
       expect(builder.select).toHaveBeenCalled();
@@ -606,7 +606,7 @@ describe('Base API - Integration', () => {
     });
     (supabase.from as any).mockReturnValue(builder);
 
-    const inserted = await insert('test_table', { name: 'Test' });
+    const inserted = await insert<{ id: string; name: string }>('test_table', { name: 'Test' });
     expect(inserted.id).toBe('new-id');
 
     // Read

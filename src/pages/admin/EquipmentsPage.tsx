@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { DeleteConfirmDialog } from '@/components/common/DeleteConfirmDialog';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -588,30 +589,23 @@ export default function EquipmentsPage() {
       </Dialog>
 
       {/* Delete Confirmation Dialog */}
-      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete Equipment</DialogTitle>
-            <DialogDescription>Are you sure? This action cannot be undone.</DialogDescription>
-          </DialogHeader>
-          {deletingItem && (
-            <div className="space-y-4">
-              <div className="p-4 border rounded-lg bg-red-50 dark:bg-red-950/20">
-                <p className="text-sm font-medium">Equipment to be deleted:</p>
-                <p className="text-lg font-bold mt-1">{deletingItem.nama_barang}</p>
-                <p className="text-sm text-muted-foreground">Code: {deletingItem.kode_barang}</p>
-                <p className="text-sm text-muted-foreground">Stock: {deletingItem.jumlah_tersedia} / {deletingItem.jumlah}</p>
-              </div>
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>Cancel</Button>
-                <Button variant="destructive" onClick={confirmDelete}>
-                  <Trash2 className="h-4 w-4 mr-2" />Delete Equipment
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      {deletingItem && (
+        <DeleteConfirmDialog
+          open={isDeleteDialogOpen}
+          onOpenChange={setIsDeleteDialogOpen}
+          onConfirm={confirmDelete}
+          title="Hapus Equipment - Konfirmasi"
+          itemName={deletingItem.nama_barang}
+          itemType="Equipment/Inventaris"
+          description={`Kode: ${deletingItem.kode_barang} | Stok: ${deletingItem.jumlah_tersedia}/${deletingItem.jumlah}`}
+          consequences={[
+            'Data equipment akan dihapus permanen',
+            'Riwayat peminjaman equipment ini akan terpengaruh',
+            'Data peminjaman yang sudah ada tetap tersimpan',
+            'Tindakan ini tidak dapat dibatalkan',
+          ]}
+        />
+      )}
     </div>
   );
 }

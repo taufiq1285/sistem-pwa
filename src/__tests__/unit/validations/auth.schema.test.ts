@@ -9,7 +9,7 @@ import {
   registerSchema,
   passwordResetSchema,
   passwordUpdateSchema,
-} from '@/lib/validations/auth.schema';
+} from '../../../lib/validations/auth.schema';
 
 describe('Auth Validation Schemas', () => {
   describe('loginSchema', () => {

@@ -64,15 +64,19 @@ export default function UsersPage() {
 
   const loadUsers = async () => {
     try {
+      console.log('[loadUsers] START - fetching fresh data...');
       setLoading(true);
       const [usersData, statsData] = await Promise.all([getAllUsers(), getUserStats()]);
+      console.log('[loadUsers] Data fetched:', { userCount: usersData.length, stats: statsData });
       setUsers(usersData);
       setStats(statsData);
+      console.log('[loadUsers] State updated with', usersData.length, 'users');
     } catch (error) {
+      console.error('[loadUsers] Error:', error);
       toast.error('Gagal memuat data users');
-      console.error(error);
     } finally {
       setLoading(false);
+      console.log('[loadUsers] DONE');
     }
   };
 
@@ -150,14 +154,28 @@ export default function UsersPage() {
     if (!deletingUser) return;
 
     try {
+      console.log('[confirmDelete] Deleting user:', deletingUser.id, deletingUser.email);
       await deleteUser(deletingUser.id);
+      console.log('[confirmDelete] Delete successful!');
+
       toast.success(`User "${deletingUser.full_name}" deleted successfully`);
       setIsDeleteDialogOpen(false);
       setDeletingUser(null);
+
+      // Force reload from server
+      console.log('[confirmDelete] Reloading user list...');
       await loadUsers();
+      console.log('[confirmDelete] Reload complete!');
     } catch (error: any) {
-      toast.error('Failed to delete user: ' + (error.message || 'Unknown error'));
-      console.error(error);
+      console.error('[confirmDelete] Delete failed:', error);
+      console.error('[confirmDelete] Error details:', {
+        message: error?.message,
+        code: error?.code,
+        details: error?.details,
+        hint: error?.hint
+      });
+      const errorMsg = error?.message || error?.error?.message || 'Unknown error';
+      toast.error('Failed to delete user: ' + errorMsg);
     }
   };
 
@@ -526,30 +544,66 @@ export default function UsersPage() {
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Delete User</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete this user? This action cannot be undone.
+            <DialogTitle className="text-red-600 dark:text-red-400 flex items-center gap-2">
+              <XCircle className="h-5 w-5" />
+              Hapus User - Konfirmasi
+            </DialogTitle>
+            <DialogDescription className="text-base">
+              <strong>Perhatian!</strong> Tindakan ini tidak dapat dibatalkan.
             </DialogDescription>
           </DialogHeader>
           {deletingUser && (
             <div className="space-y-4">
-              <div className="p-4 border rounded-lg bg-red-50 dark:bg-red-950/20">
-                <p className="text-sm font-medium">User to be deleted:</p>
-                <p className="text-lg font-bold mt-1">{deletingUser.full_name}</p>
-                <p className="text-sm text-muted-foreground">{deletingUser.email}</p>
-                <p className="text-sm text-muted-foreground">
+              {/* User Info to Delete */}
+              <div className="p-4 border-2 border-red-500 rounded-lg bg-red-50 dark:bg-red-950/30">
+                <p className="text-sm font-semibold text-red-800 dark:text-red-300 mb-2">
+                  User yang akan dihapus:
+                </p>
+                <p className="text-lg font-bold text-gray-900 dark:text-white">
+                  {deletingUser.full_name}
+                </p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">{deletingUser.email}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                   Role: <Badge variant={ROLE_BADGE[deletingUser.role]}>{deletingUser.role}</Badge>
                 </p>
               </div>
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
-                  Cancel
+
+              {/* Warning Box */}
+              <div className="p-3 bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-400 rounded-md">
+                <p className="text-sm text-yellow-800 dark:text-yellow-300 font-medium">
+                  ⚠️ Data yang akan dihapus:
+                </p>
+                <ul className="text-sm text-yellow-700 dark:text-yellow-400 mt-2 ml-4 list-disc space-y-1">
+                  <li>Akun user dari sistem</li>
+                  <li>Data profil dan role</li>
+                  <li>Akses login user</li>
+                  <li>User tidak dapat login lagi</li>
+                </ul>
+              </div>
+
+              {/* Confirmation Question */}
+              <p className="text-center font-semibold text-gray-900 dark:text-white">
+                Apakah Anda yakin ingin menghapus user ini?
+              </p>
+
+              {/* Action Buttons */}
+              <div className="flex justify-end gap-2 pt-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsDeleteDialogOpen(false)}
+                  className="min-w-[100px]"
+                >
+                  Batal
                 </Button>
-                <Button variant="destructive" onClick={confirmDelete}>
+                <Button
+                  variant="destructive"
+                  onClick={confirmDelete}
+                  className="min-w-[100px] bg-red-600 hover:bg-red-700"
+                >
                   <Trash2 className="h-4 w-4 mr-2" />
-                  Delete User
+                  Ya, Hapus
                 </Button>
               </div>
             </div>

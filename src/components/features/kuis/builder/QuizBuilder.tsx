@@ -61,16 +61,37 @@ export function QuizBuilder({ quiz, kelasId, dosenId, onSave, onCancel: _onCance
     tahun_ajaran: new Date().getFullYear() + '/' + (new Date().getFullYear() + 1),
   });
   
-  // Helper function to get default dates
+  // Helper function to get default dates in datetime-local format
   const getDefaultDates = () => {
     const now = new Date();
-    const oneYearLater = new Date();
-    oneYearLater.setFullYear(now.getFullYear() + 1);
+    const oneWeekLater = new Date();
+    oneWeekLater.setDate(now.getDate() + 7); // Default: 1 minggu dari sekarang
+
+    // Format: YYYY-MM-DDTHH:mm (untuk datetime-local input)
+    const formatDateTimeLocal = (date: Date) => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      return `${year}-${month}-${day}T${hours}:${minutes}`;
+    };
 
     return {
-      tanggal_mulai: now.toISOString(),
-      tanggal_selesai: oneYearLater.toISOString(),
+      tanggal_mulai: formatDateTimeLocal(now),
+      tanggal_selesai: formatDateTimeLocal(oneWeekLater),
     };
+  };
+
+  // Helper to convert ISO date to datetime-local format
+  const formatDateTimeLocal = (isoString: string) => {
+    const date = new Date(isoString);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
   };
 
   const { register, formState: { errors }, setValue, watch } = useForm<CreateKuisFormData>({
@@ -81,8 +102,8 @@ export function QuizBuilder({ quiz, kelasId, dosenId, onSave, onCancel: _onCance
       judul: quiz.judul,
       deskripsi: quiz.deskripsi || '',
       durasi_menit: quiz.durasi_menit,
-      tanggal_mulai: quiz.tanggal_mulai,
-      tanggal_selesai: quiz.tanggal_selesai,
+      tanggal_mulai: formatDateTimeLocal(quiz.tanggal_mulai),
+      tanggal_selesai: formatDateTimeLocal(quiz.tanggal_selesai),
       passing_score: quiz.passing_score ?? null,
       max_attempts: quiz.max_attempts ?? null,
       randomize_questions: quiz.randomize_questions ?? false,
@@ -195,13 +216,14 @@ export function QuizBuilder({ quiz, kelasId, dosenId, onSave, onCancel: _onCance
 
       // Auto-save quiz
       try {
+        // Convert datetime-local format to ISO string for API
         const dataWithDates = {
           ...formData,
-          tanggal_mulai: formData.tanggal_mulai || new Date().toISOString(),
-          tanggal_selesai: formData.tanggal_selesai || (() => {
-            const oneYearLater = new Date();
-            oneYearLater.setFullYear(oneYearLater.getFullYear() + 1);
-            return oneYearLater.toISOString();
+          tanggal_mulai: formData.tanggal_mulai ? new Date(formData.tanggal_mulai).toISOString() : new Date().toISOString(),
+          tanggal_selesai: formData.tanggal_selesai ? new Date(formData.tanggal_selesai).toISOString() : (() => {
+            const oneWeekLater = new Date();
+            oneWeekLater.setDate(oneWeekLater.getDate() + 7);
+            return oneWeekLater.toISOString();
           })(),
         };
 
@@ -326,9 +348,32 @@ export function QuizBuilder({ quiz, kelasId, dosenId, onSave, onCancel: _onCance
                 <Label htmlFor="durasi_menit">Durasi (menit) *</Label>
                 <Input id="durasi_menit" type="number" {...register('durasi_menit', { valueAsNumber: true })} min={5} className={cn(errors.durasi_menit && "border-destructive")} />
               </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="tanggal_mulai">Tanggal Mulai *</Label>
+                <Input
+                  id="tanggal_mulai"
+                  type="datetime-local"
+                  {...register('tanggal_mulai')}
+                  className={cn(errors.tanggal_mulai && "border-destructive")}
+                />
+                {errors.tanggal_mulai && <p className="text-sm text-destructive">{errors.tanggal_mulai.message}</p>}
+                <p className="text-xs text-muted-foreground">Waktu mulai kuis bisa dikerjakan mahasiswa</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="tanggal_selesai">Tanggal Selesai *</Label>
+                <Input
+                  id="tanggal_selesai"
+                  type="datetime-local"
+                  {...register('tanggal_selesai')}
+                  className={cn(errors.tanggal_selesai && "border-destructive")}
+                />
+                {errors.tanggal_selesai && <p className="text-sm text-destructive">{errors.tanggal_selesai.message}</p>}
+                <p className="text-xs text-muted-foreground">Waktu batas akhir pengerjaan kuis</p>
+              </div>
             </div>
 
-            {/* ✅ REMOVED: Tanggal Mulai & Tanggal Selesai - Auto-set to now and +1 year */}
             {/* ✅ REMOVED: Simpan Kuis button - auto-save when adding questions */}
           </div>
         </CardContent>

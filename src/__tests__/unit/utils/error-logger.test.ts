@@ -3,6 +3,14 @@
  * Comprehensive tests for centralized error logging
  */
 
+declare global {
+  interface ImportMeta {
+    env: {
+      DEV: boolean;
+    };
+  }
+}
+
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { ErrorInfo } from 'react';
 import {
@@ -14,7 +22,7 @@ import {
   addBreadcrumb,
   type ErrorLog,
   type ErrorLoggerConfig,
-} from '@/lib/utils/error-logger';
+} from '../../../lib/utils/error-logger';
 
 describe('Error Logger', () => {
   // Mock localStorage
@@ -109,8 +117,7 @@ describe('Error Logger', () => {
       });
 
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('External error service'),
-        expect.anything()
+        expect.stringContaining('External error service')
       );
     });
 
@@ -479,11 +486,25 @@ describe('Error Logger', () => {
   });
 
   describe('Sample Rate', () => {
-    it('should log all errors with sampleRate 1.0', () => {
-      // Mock Math.random to always be below threshold
-      vi.spyOn(Math, 'random').mockReturnValue(0);
+    beforeEach(() => {
+      // Ensure error logger is cleared before each sample rate test
+      errorLogger.clearErrorLogs();
+      
+      // ✅ FIX: Clear all mocks including Math.random from main beforeEach
+      // This allows each test to set its own Math.random value without conflict
+      vi.clearAllMocks();
+    });
 
-      errorLogger.init({ sampleRate: 1.0 });
+    it('should log all errors with sampleRate 1.0', () => {
+      // ✅ FIX: Clear previous Math.random mock before applying new one
+      const randomSpy = vi.spyOn(Math, 'random');
+      randomSpy.mockReset();
+      randomSpy.mockReturnValue(0);
+
+      errorLogger.init({ 
+        enabled: true,
+        sampleRate: 1.0 
+      });
 
       for (let i = 0; i < 10; i++) {
         logError(`Error ${i}`);
@@ -495,9 +516,16 @@ describe('Error Logger', () => {
 
     it('should log no errors with sampleRate 0.0', () => {
       // Mock Math.random to always be above threshold
-      vi.spyOn(Math, 'random').mockReturnValue(0.99);
+      // With sampleRate 0.0, any value > 0 will not be logged
+      // ✅ FIX: Clear previous Math.random mock before applying new one
+      const randomSpy = vi.spyOn(Math, 'random');
+      randomSpy.mockReset();
+      randomSpy.mockReturnValue(0.99);
 
-      errorLogger.init({ sampleRate: 0.0 });
+      errorLogger.init({ 
+        enabled: true,
+        sampleRate: 0.0 
+      });
 
       for (let i = 0; i < 10; i++) {
         logError(`Error ${i}`);
@@ -508,14 +536,21 @@ describe('Error Logger', () => {
     });
 
     it('should sample errors at approximately 50% with sampleRate 0.5', () => {
+      // ✅ FIX: Clear previous Math.random mock before applying new one
+      const randomSpy = vi.spyOn(Math, 'random');
+      randomSpy.mockReset();
+      
       // Mock Math.random to alternate between 0.4 and 0.6
       let callCount = 0;
-      vi.spyOn(Math, 'random').mockImplementation(() => {
+      randomSpy.mockImplementation(() => {
         callCount++;
         return callCount % 2 === 0 ? 0.6 : 0.4;
       });
 
-      errorLogger.init({ sampleRate: 0.5 });
+      errorLogger.init({ 
+        enabled: true,
+        sampleRate: 0.5 
+      });
 
       for (let i = 0; i < 10; i++) {
         logError(`Error ${i}`);
@@ -602,6 +637,12 @@ describe('Error Logger', () => {
   });
 
   describe('External Service Integration', () => {
+    // ✅ FIX: Clear fetch mock before each test in this block
+    // This prevents DSN configuration from leaking between tests
+    beforeEach(() => {
+      vi.clearAllMocks();
+    });
+
     it('should send to custom endpoint when DSN provided', async () => {
       mockFetch.mockResolvedValue({
         ok: true,
@@ -664,8 +705,10 @@ describe('Error Logger', () => {
     });
 
     it('should not send to external service without DSN', async () => {
+      // ✅ FIX: Explicitly clear DSN to ensure no configuration leakage
       errorLogger.init({
         enabled: true,
+        dsn: undefined, // Explicitly set to undefined to clear any previous DSN
       });
 
       logError('Test error');

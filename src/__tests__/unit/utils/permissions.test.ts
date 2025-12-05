@@ -175,7 +175,7 @@ describe('Permissions - Context-based Checking', () => {
   describe('checkPermission', () => {
     it('should allow if user has permission and no resource', () => {
       const context: PermissionContext = {
-        user: { id: 'user-1', role: 'dosen', email: 'dosen@test.com' },
+        user: { id: 'user-1', role: 'dosen' },
       };
 
       const result = checkPermission(context, 'manage:kuis');
@@ -185,7 +185,7 @@ describe('Permissions - Context-based Checking', () => {
 
     it('should deny if user lacks permission', () => {
       const context: PermissionContext = {
-        user: { id: 'user-1', role: 'mahasiswa', email: 'mhs@test.com' },
+        user: { id: 'user-1', role: 'mahasiswa' },
       };
 
       const result = checkPermission(context, 'manage:kuis');
@@ -196,7 +196,7 @@ describe('Permissions - Context-based Checking', () => {
 
     it('should allow owner to update their own resource', () => {
       const context: PermissionContext = {
-        user: { id: 'user-1', role: 'dosen', email: 'dosen@test.com' },
+        user: { id: 'user-1', role: 'dosen' },
         resource: { type: 'peminjaman', ownerId: 'user-1' },
       };
 
@@ -207,7 +207,7 @@ describe('Permissions - Context-based Checking', () => {
 
     it('should deny non-owner to update resource', () => {
       const context: PermissionContext = {
-        user: { id: 'user-1', role: 'dosen', email: 'dosen@test.com' },
+        user: { id: 'user-1', role: 'dosen' },
         resource: { type: 'peminjaman', ownerId: 'user-2' },
       };
 
@@ -219,7 +219,7 @@ describe('Permissions - Context-based Checking', () => {
 
     it('should allow admin to manage any resource', () => {
       const context: PermissionContext = {
-        user: { id: 'admin-1', role: 'admin', email: 'admin@test.com' },
+        user: { id: 'admin-1', role: 'admin' },
         resource: { type: 'peminjaman', ownerId: 'user-2' },
       };
 
@@ -230,7 +230,7 @@ describe('Permissions - Context-based Checking', () => {
 
     it('should allow view operations without ownership check', () => {
       const context: PermissionContext = {
-        user: { id: 'user-1', role: 'mahasiswa', email: 'mhs@test.com' },
+        user: { id: 'user-1', role: 'mahasiswa' },
         resource: { type: 'kuis', ownerId: 'user-2' },
       };
 
@@ -241,7 +241,7 @@ describe('Permissions - Context-based Checking', () => {
 
     it('should allow create operations without ownership check', () => {
       const context: PermissionContext = {
-        user: { id: 'user-1', role: 'mahasiswa', email: 'mhs@test.com' },
+        user: { id: 'user-1', role: 'mahasiswa' },
         resource: { type: 'peminjaman', ownerId: 'user-2' },
       };
 

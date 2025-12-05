@@ -10,102 +10,83 @@ import {
   clearEverything,
   getCacheStats,
   debugStorage,
-} from '@/lib/utils/cache-manager';
+} from '../../../lib/utils/cache-manager';
 
 describe('Cache Manager', () => {
-  // Mock localStorage
-  const localStorageMock = (() => {
-    let store: Record<string, string> = {};
-    return {
-      getItem: (key: string) => store[key] || null,
-      setItem: (key: string, value: string) => {
-        store[key] = value;
-      },
-      removeItem: (key: string) => {
-        delete store[key];
-      },
-      clear: () => {
-        store = {};
-      },
-      get length() {
-        return Object.keys(store).length;
-      },
-      key: (index: number) => Object.keys(store)[index] || null,
-    };
-  })();
+  // Create a proper storage mock that mimics browser behavior
+  function createStorageMock() {
+    const store: Record<string, string> = {};
+    const storage: any = {};
 
-  // Mock sessionStorage
-  const sessionStorageMock = (() => {
-    let store: Record<string, string> = {};
-    return {
-      getItem: (key: string) => store[key] || null,
-      setItem: (key: string, value: string) => {
-        store[key] = value;
+    // Define methods as non-enumerable so Object.keys() only returns storage keys
+    // Also configurable so they can be spied on in tests
+    Object.defineProperties(storage, {
+      getItem: {
+        value: (key: string) => store[key] || null,
+        enumerable: false,
+        configurable: true,
+        writable: true,
       },
-      removeItem: (key: string) => {
-        delete store[key];
+      setItem: {
+        value: (key: string, value: string) => {
+          store[key] = value;
+          // Also set as enumerable property for Object.keys() to work
+          Object.defineProperty(storage, key, {
+            value,
+            enumerable: true,
+            configurable: true,
+            writable: true,
+          });
+        },
+        enumerable: false,
+        configurable: true,
+        writable: true,
       },
-      clear: () => {
-        store = {};
+      removeItem: {
+        value: (key: string) => {
+          delete store[key];
+          delete storage[key];
+        },
+        enumerable: false,
+        configurable: true,
+        writable: true,
       },
-      get length() {
-        return Object.keys(store).length;
+      clear: {
+        value: () => {
+          // Remove all enumerable properties
+          Object.keys(storage).forEach(key => delete storage[key]);
+          Object.keys(store).forEach(key => delete store[key]);
+        },
+        enumerable: false,
+        configurable: true,
+        writable: true,
       },
-      key: (index: number) => Object.keys(store)[index] || null,
-    };
-  })();
+      length: {
+        get: () => Object.keys(store).length,
+        enumerable: false,
+        configurable: true,
+      },
+      key: {
+        value: (index: number) => Object.keys(store)[index] || null,
+        enumerable: false,
+        configurable: true,
+        writable: true,
+      },
+    });
+
+    return storage;
+  }
 
   beforeEach(() => {
-    // Clear storage first - create fresh instances
-    const freshLocalStorage = (() => {
-      let store: Record<string, string> = {};
-      return {
-        getItem: (key: string) => store[key] || null,
-        setItem: (key: string, value: string) => {
-          store[key] = value;
-        },
-        removeItem: (key: string) => {
-          delete store[key];
-        },
-        clear: () => {
-          store = {};
-        },
-        get length() {
-          return Object.keys(store).length;
-        },
-        key: (index: number) => Object.keys(store)[index] || null,
-      };
-    })();
-
-    const freshSessionStorage = (() => {
-      let store: Record<string, string> = {};
-      return {
-        getItem: (key: string) => store[key] || null,
-        setItem: (key: string, value: string) => {
-          store[key] = value;
-        },
-        removeItem: (key: string) => {
-          delete store[key];
-        },
-        clear: () => {
-          store = {};
-        },
-        get length() {
-          return Object.keys(store).length;
-        },
-        key: (index: number) => Object.keys(store)[index] || null,
-      };
-    })();
-
     // Setup mocks with fresh instances
     Object.defineProperty(window, 'localStorage', {
-      value: freshLocalStorage,
+      value: createStorageMock(),
       writable: true,
       configurable: true,
     });
 
     Object.defineProperty(window, 'sessionStorage', {
-      value: freshSessionStorage,
+      value: createStorageMock(),
       writable: true,
       configurable: true,
     });

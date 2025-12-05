@@ -116,7 +116,7 @@ class ErrorLogger {
    */
   logPromiseRejection(reason: any, metadata?: Record<string, any>) {
     const errorLog: ErrorLog = {
-      message: reason?.message || String(reason) || 'Unhandled Promise Rejection',
+      message: reason?.message || (reason != null ? String(reason) : 'Unhandled Promise Rejection'),
       stack: reason?.stack,
       timestamp: new Date().toISOString(),
       userAgent: navigator.userAgent,
@@ -164,7 +164,7 @@ class ErrorLogger {
     }
 
     // Check sample rate
-    if (Math.random() > (this.config.sampleRate || 1.0)) {
+    if (Math.random() > (this.config.sampleRate ?? 1.0)) {
       return; // Skip this error based on sample rate
     }
 

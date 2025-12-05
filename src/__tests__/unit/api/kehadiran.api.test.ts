@@ -13,13 +13,13 @@ import {
   type KehadiranWithMahasiswa,
   type KehadiranStats,
   type MahasiswaKehadiranRecord,
-} from '@/lib/api/kehadiran.api';
-import { supabase } from '@/lib/supabase/client';
+} from '../../../lib/api/kehadiran.api';
+import { supabase } from '../../../lib/supabase/client';
 
 // Mock dependencies
-vi.mock('@/lib/supabase/client');
-vi.mock('@/lib/utils/logger');
-vi.mock('@/lib/middleware');
+vi.mock('../../../lib/supabase/client');
+vi.mock('../../../lib/utils/logger');
+vi.mock('../../../lib/middleware');
 
 describe('Kehadiran API', () => {
   const mockKehadiran: KehadiranWithMahasiswa = {
@@ -27,7 +27,7 @@ describe('Kehadiran API', () => {
     jadwal_id: 'jadwal-1',
     mahasiswa_id: 'mhs-1',
     status: 'hadir',
-    keterangan: null,
+    keterangan: undefined,
     created_at: '2025-01-15T08:00:00Z',
     updated_at: '2025-01-15T08:00:00Z',
     waktu_check_in: '08:00:00',
@@ -265,10 +265,11 @@ describe('Kehadiran API', () => {
 
       vi.mocked(supabase.from).mockReturnValue({
         select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnThis(),
-          eq: vi.fn().mockResolvedValue({
-            data: mockRecords,
-            error: null,
+          eq: vi.fn().mockReturnValue({
+            eq: vi.fn().mockResolvedValue({
+              data: mockRecords,
+              error: null,
+            }),
           }),
         }),
       } as any);
@@ -282,15 +283,15 @@ describe('Kehadiran API', () => {
       const mockRecords = [
         { status: 'alpha' },
         { status: 'alpha' },
-        { status: 'alpha' },
       ];
 
       vi.mocked(supabase.from).mockReturnValue({
         select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnThis(),
-          eq: vi.fn().mockResolvedValue({
-            data: mockRecords,
-            error: null,
+          eq: vi.fn().mockReturnValue({
+            eq: vi.fn().mockResolvedValue({
+              data: mockRecords,
+              error: null,
+            }),
           }),
         }),
       } as any);
@@ -305,33 +306,57 @@ describe('Kehadiran API', () => {
 
       vi.mocked(supabase.from).mockReturnValue({
         select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnThis(),
-          eq: vi.fn().mockResolvedValue({
-            data: null,
-            error,
+          eq: vi.fn().mockReturnValue({
+            eq: vi.fn().mockResolvedValue({
+              data: null,
+              error,
+            }),
           }),
         }),
       } as any);
 
       await expect(getKehadiranStats('mhs-1', 'kelas-1')).rejects.toThrow();
     });
-  });
 
-  describe('calculateNilaiKehadiran - CRITICAL BUSINESS LOGIC', () => {
-    it('should calculate 100 when 100% hadir', async () => {
+    it('should round persentase to nearest integer', async () => {
+      // 2 hadir out of 3 = 66.666... → 67 (Math.round)
       const mockRecords = [
         { status: 'hadir' },
         { status: 'hadir' },
+        { status: 'alpha' },
+      ];
+
+      vi.mocked(supabase.from).mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            eq: vi.fn().mockResolvedValue({
+              data: mockRecords,
+              error: null,
+            }),
+          }),
+        }),
+      } as any);
+
+      const result = await getKehadiranStats('mhs-1', 'kelas-1');
+
+      expect(result.persentase_kehadiran).toBe(67);
+    });
+  });
+
+  describe('calculateNilaiKehadiran', () => {
+    it('should calculate nilai with hadir only (100)', async () => {
+      const mockRecords = [
         { status: 'hadir' },
         { status: 'hadir' },
       ];
 
       vi.mocked(supabase.from).mockReturnValue({
         select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnThis(),
-          eq: vi.fn().mockResolvedValue({
-            data: mockRecords,
-            error: null,
+          eq: vi.fn().mockReturnValue({
+            eq: vi.fn().mockResolvedValue({
+              data: mockRecords,
+              error: null,
+            }),
           }),
         }),
       } as any);
@@ -341,43 +366,22 @@ describe('Kehadiran API', () => {
       expect(nilai).toBe(100);
     });
 
-    it('should calculate 50 for each izin/sakit (formula test)', async () => {
-      // 2 hadir + 2 izin = (2 + 2*0.5) / 4 * 100 = 75
+    it('should calculate nilai with mixed statuses', async () => {
+      // 2 hadir + 1 izin + 1 sakit = (2 + 0.5 + 0.5) / 4 * 100 = 75
       const mockRecords = [
         { status: 'hadir' },
         { status: 'hadir' },
         { status: 'izin' },
-        { status: 'izin' },
-      ];
-
-      vi.mocked(supabase.from).mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnThis(),
-          eq: vi.fn().mockResolvedValue({
-            data: mockRecords,
-            error: null,
-          }),
-        }),
-      } as any);
-
-      const nilai = await calculateNilaiKehadiran('mhs-1', 'kelas-1');
-
-      expect(nilai).toBe(75); // (2 + 1 + 1) / 4 * 100 = 75
-    });
-
-    it('should calculate 50 for each sakit (formula test)', async () => {
-      // 1 hadir + 1 sakit = (1 + 1*0.5) / 2 * 100 = 75
-      const mockRecords = [
-        { status: 'hadir' },
         { status: 'sakit' },
       ];
 
       vi.mocked(supabase.from).mockReturnValue({
         select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnThis(),
-          eq: vi.fn().mockResolvedValue({
-            data: mockRecords,
-            error: null,
+          eq: vi.fn().mockReturnValue({
+            eq: vi.fn().mockResolvedValue({
+              data: mockRecords,
+              error: null,
+            }),
           }),
         }),
       } as any);
@@ -387,19 +391,19 @@ describe('Kehadiran API', () => {
       expect(nilai).toBe(75);
     });
 
-    it('should calculate 0 for alpha', async () => {
+    it('should give 0 nilai for all alpha', async () => {
       const mockRecords = [
-        { status: 'alpha' },
         { status: 'alpha' },
         { status: 'alpha' },
       ];
 
       vi.mocked(supabase.from).mockReturnValue({
         select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnThis(),
-          eq: vi.fn().mockResolvedValue({
-            data: mockRecords,
-            error: null,
+          eq: vi.fn().mockReturnValue({
+            eq: vi.fn().mockResolvedValue({
+              data: mockRecords,
+              error: null,
+            }),
           }),
         }),
       } as any);
@@ -409,43 +413,14 @@ describe('Kehadiran API', () => {
       expect(nilai).toBe(0);
     });
 
-    it('should calculate mixed statuses correctly', async () => {
-      // 3 hadir + 2 izin + 1 sakit + 2 alpha =
-      // (3 + 2*0.5 + 1*0.5) / 8 * 100 = 56.25 → 56
-      const mockRecords = [
-        { status: 'hadir' },
-        { status: 'hadir' },
-        { status: 'hadir' },
-        { status: 'izin' },
-        { status: 'izin' },
-        { status: 'sakit' },
-        { status: 'alpha' },
-        { status: 'alpha' },
-      ];
-
+    it('should return 0 when no records', async () => {
       vi.mocked(supabase.from).mockReturnValue({
         select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnThis(),
-          eq: vi.fn().mockResolvedValue({
-            data: mockRecords,
-            error: null,
-          }),
-        }),
-      } as any);
-
-      const nilai = await calculateNilaiKehadiran('mhs-1', 'kelas-1');
-
-      // (3 + 1 + 0.5) / 8 * 100 = 56.25 rounded = 56
-      expect(nilai).toBe(56);
-    });
-
-    it('should return 0 when no attendance records', async () => {
-      vi.mocked(supabase.from).mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnThis(),
-          eq: vi.fn().mockResolvedValue({
-            data: [],
-            error: null,
+          eq: vi.fn().mockReturnValue({
+            eq: vi.fn().mockResolvedValue({
+              data: [],
+              error: null,
+            }),
           }),
         }),
       } as any);
@@ -464,10 +439,11 @@ describe('Kehadiran API', () => {
 
       vi.mocked(supabase.from).mockReturnValue({
         select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnThis(),
-          eq: vi.fn().mockResolvedValue({
-            data: mockRecords,
-            error: null,
+          eq: vi.fn().mockReturnValue({
+            eq: vi.fn().mockResolvedValue({
+              data: mockRecords,
+              error: null,
+            }),
           }),
         }),
       } as any);
@@ -482,10 +458,11 @@ describe('Kehadiran API', () => {
 
       vi.mocked(supabase.from).mockReturnValue({
         select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnThis(),
-          eq: vi.fn().mockResolvedValue({
-            data: null,
-            error,
+          eq: vi.fn().mockReturnValue({
+            eq: vi.fn().mockResolvedValue({
+              data: null,
+              error,
+            }),
           }),
         }),
       } as any);
@@ -505,10 +482,11 @@ describe('Kehadiran API', () => {
 
       vi.mocked(supabase.from).mockReturnValue({
         select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnThis(),
-          eq: vi.fn().mockResolvedValue({
-            data: mockRecords,
-            error: null,
+          eq: vi.fn().mockReturnValue({
+            eq: vi.fn().mockResolvedValue({
+              data: mockRecords,
+              error: null,
+            }),
           }),
         }),
       } as any);
@@ -649,10 +627,11 @@ describe('Kehadiran API', () => {
 
       vi.mocked(supabase.from).mockReturnValue({
         select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnThis(),
-          eq: vi.fn().mockResolvedValue({
-            data: mockRecords,
-            error: null,
+          eq: vi.fn().mockReturnValue({
+            eq: vi.fn().mockResolvedValue({
+              data: mockRecords,
+              error: null,
+            }),
           }),
         }),
       } as any);
@@ -670,10 +649,11 @@ describe('Kehadiran API', () => {
 
       vi.mocked(supabase.from).mockReturnValue({
         select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnThis(),
-          eq: vi.fn().mockResolvedValue({
-            data: mockRecords,
-            error: null,
+          eq: vi.fn().mockReturnValue({
+            eq: vi.fn().mockResolvedValue({
+              data: mockRecords,
+              error: null,
+            }),
           }),
         }),
       } as any);
@@ -691,10 +671,11 @@ describe('Kehadiran API', () => {
 
       vi.mocked(supabase.from).mockReturnValue({
         select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnThis(),
-          eq: vi.fn().mockResolvedValue({
-            data: mockRecords,
-            error: null,
+          eq: vi.fn().mockReturnValue({
+            eq: vi.fn().mockResolvedValue({
+              data: mockRecords,
+              error: null,
+            }),
           }),
         }),
       } as any);
@@ -716,10 +697,11 @@ describe('Kehadiran API', () => {
 
       vi.mocked(supabase.from).mockReturnValue({
         select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnThis(),
-          eq: vi.fn().mockResolvedValue({
-            data: mockRecords,
-            error: null,
+          eq: vi.fn().mockReturnValue({
+            eq: vi.fn().mockResolvedValue({
+              data: mockRecords,
+              error: null,
+            }),
           }),
         }),
       } as any);

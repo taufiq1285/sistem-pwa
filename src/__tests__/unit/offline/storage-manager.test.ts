@@ -9,7 +9,7 @@
  * - Storage usage information
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   initStorage,
   getItem,
@@ -79,9 +79,14 @@ Object.defineProperty(global, 'localStorage', {
 describe('Storage Manager', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    
+    // Reset internal store dari factory mock
     localStorageMock.clear();
+    
+    // Reset properti store manual untuk implementasi mock di bawah
+    (localStorageMock as any).store = {};
 
-    // Reset all mock implementations to defaults
+    // Reset implementasi mock ke default
     localStorageMock.setItem.mockImplementation((key: string, value: string) => {
       (localStorageMock as any).store = (localStorageMock as any).store || {};
       (localStorageMock as any).store[key] = value;
@@ -97,9 +102,15 @@ describe('Storage Manager', () => {
       delete store[key];
     });
 
-    // Clear all enumerable properties from localStorage mock
-    Object.keys(localStorage).forEach((key) => {
-      delete (localStorage as any)[key];
+    // --- PERBAIKAN DI SINI ---
+    // Membersihkan properti tambahan tanpa menghapus fungsi mock utama
+    const builtInMethods = ['getItem', 'setItem', 'removeItem', 'clear', 'key', 'length', '_getStore', '_setStore'];
+    
+    Object.keys(global.localStorage).forEach((key) => {
+      // Hanya hapus jika key BUKAN merupakan method bawaan mock
+      if (!builtInMethods.includes(key)) {
+        delete (global.localStorage as any)[key];
+      }
     });
   });
 
@@ -373,7 +384,7 @@ describe('Storage Manager', () => {
     });
   });
 
-  describe('getStorageInfo', () => {
+ describe('getStorageInfo', () => {
     it('should return storage usage information', async () => {
       // Mock localStorage with some data
       Object.defineProperty(localStorage, 'key1', {
@@ -395,7 +406,10 @@ describe('Storage Manager', () => {
         return data[key] || null;
       });
 
+      // PERBAIKAN: Menambahkan 'name' dan 'version' agar sesuai tipe data
       vi.mocked(indexedDBManager.getDatabaseInfo).mockResolvedValue({
+        name: 'test-db',
+        version: 1,
         stores: ['users', 'kuis', 'nilai'],
         totalSize: 150,
       });
@@ -416,11 +430,18 @@ describe('Storage Manager', () => {
 
     it('should handle empty localStorage', async () => {
       // Ensure localStorage is truly empty
+      // Loop safe ini tidak akan menghapus method mock
+      const builtInMethods = ['getItem', 'setItem', 'removeItem', 'clear', 'key', 'length', '_getStore', '_setStore'];
       Object.keys(localStorage).forEach((key) => {
-        delete (localStorage as any)[key];
+        if (!builtInMethods.includes(key)) {
+          delete (localStorage as any)[key];
+        }
       });
 
+      // PERBAIKAN: Menambahkan 'name' dan 'version'
       vi.mocked(indexedDBManager.getDatabaseInfo).mockResolvedValue({
+        name: 'test-db',
+        version: 1,
         stores: [],
         totalSize: 0,
       });
@@ -445,8 +466,11 @@ describe('Storage Manager', () => {
 
     it('should calculate localStorage size correctly', async () => {
       // Ensure localStorage is empty first
+      const builtInMethods = ['getItem', 'setItem', 'removeItem', 'clear', 'key', 'length', '_getStore', '_setStore'];
       Object.keys(localStorage).forEach((key) => {
-        delete (localStorage as any)[key];
+        if (!builtInMethods.includes(key)) {
+          delete (localStorage as any)[key];
+        }
       });
 
       // Create a simple localStorage mock with known data
@@ -464,7 +488,10 @@ describe('Storage Manager', () => {
 
       localStorageMock.getItem.mockImplementation((key) => testData[key] || null);
 
+      // PERBAIKAN: Menambahkan 'name' dan 'version'
       vi.mocked(indexedDBManager.getDatabaseInfo).mockResolvedValue({
+        name: 'test-db',
+        version: 1,
         stores: [],
         totalSize: 0,
       });

@@ -16,6 +16,7 @@ import { ROUTES } from '@/config/routes.config';
 // Auth Pages
 import { LoginPage } from '@/pages/auth/LoginPage';
 import { RegisterPage } from '@/pages/auth/RegisterPage';
+import { ForgotPasswordPage } from '@/pages/auth/ForgotPasswordPage';
 
 // Public Pages
 import { NotFoundPage } from '@/pages/public/NotFoundPage';
@@ -52,6 +53,7 @@ import DosenPeminjamanPage from '@/pages/dosen/PeminjamanPage';
 
 // Dosen Kehadiran Page - NEW! ✅
 import DosenKehadiranPage from '@/pages/dosen/KehadiranPage';
+import DosenPengumumanPage from '@/pages/dosen/PengumumanPage';
 
 // Mahasiswa Pages
 import { DashboardPage as MahasiswaDashboard } from '@/pages/mahasiswa/DashboardPage';
@@ -68,6 +70,7 @@ import MahasiswaMateriPage from '@/pages/mahasiswa/MateriPage';
 // Mahasiswa Nilai Page - NEW! ✅
 import MahasiswaNilaiPage from '@/pages/mahasiswa/NilaiPage';
 import MahasiswaPresensiPage from '@/pages/mahasiswa/PresensiPage';
+import MahasiswaPengumumanPage from '@/pages/mahasiswa/PengumumanPage';
 
 // Laboran Pages
 import { DashboardPage as LaboranDashboard } from '@/pages/laboran/DashboardPage';
@@ -75,6 +78,7 @@ import LaboranInventarisPage from '@/pages/laboran/InventarisPage';
 import LaboranPersetujuanPage from '@/pages/laboran/PersetujuanPage';
 import LaboranLaboratoriumPage from '@/pages/laboran/LaboratoriumPage';
 import LaboranLaporanPage from '@/pages/laboran/LaporanPage';
+import LaboranPengumumanPage from '@/pages/laboran/PengumumanPage';
 
 export function AppRouter() {
   return (
@@ -84,6 +88,7 @@ export function AppRouter() {
       {/* ================================================================== */}
       <Route path={ROUTES.LOGIN} element={<LoginPage />} />
       <Route path={ROUTES.REGISTER} element={<RegisterPage />} />
+      <Route path={ROUTES.FORGOT_PASSWORD} element={<ForgotPasswordPage />} />
       <Route path={ROUTES.UNAUTHORIZED} element={<UnauthorizedPage />} />
       <Route path={ROUTES.NOT_FOUND} element={<NotFoundPage />} />
 
@@ -146,6 +151,7 @@ export function AppRouter() {
       <Route path="/admin/laboratories" element={<ProtectedRoute><RoleGuard allowedRoles={['admin']}><AppLayout><AdminLaboratoriesPage /></AppLayout></RoleGuard></ProtectedRoute>} />
       <Route path="/admin/equipments" element={<ProtectedRoute><RoleGuard allowedRoles={['admin']}><AppLayout><AdminEquipmentsPage /></AppLayout></RoleGuard></ProtectedRoute>} />
       <Route path="/admin/announcements" element={<ProtectedRoute><RoleGuard allowedRoles={['admin']}><AppLayout><AdminAnnouncementsPage /></AppLayout></RoleGuard></ProtectedRoute>} />
+      <Route path="/admin/notifikasi" element={<ProtectedRoute><RoleGuard allowedRoles={['admin']}><AppLayout><AdminAnnouncementsPage /></AppLayout></RoleGuard></ProtectedRoute>} />
       <Route path="/admin/analytics" element={<ProtectedRoute><RoleGuard allowedRoles={['admin']}><AppLayout><AdminAnalyticsPage /></AppLayout></RoleGuard></ProtectedRoute>} />
       <Route path="/admin/sync-management" element={<ProtectedRoute><RoleGuard allowedRoles={['admin']}><AppLayout><AdminSyncManagementPage /></AppLayout></RoleGuard></ProtectedRoute>} />
 
@@ -309,11 +315,8 @@ export function AppRouter() {
       {/* Dosen - Kehadiran */}
       <Route path="/dosen/kehadiran" element={<ProtectedRoute><RoleGuard allowedRoles={['dosen']}><AppLayout><DosenKehadiranPage /></AppLayout></RoleGuard></ProtectedRoute>} />
 
-
-      {/* TODO: Add more dosen routes as they are implemented
-      <Route path="/dosen/peminjaman" element={...} />
-      <Route path="/dosen/mahasiswa" element={...} />
-      */}
+      {/* Dosen - Notifikasi */}
+      <Route path="/dosen/notifikasi" element={<ProtectedRoute><RoleGuard allowedRoles={['dosen']}><AppLayout><DosenPengumumanPage /></AppLayout></RoleGuard></ProtectedRoute>} />
 
       {/* ================================================================== */}
       {/* MAHASISWA ROUTES */}
@@ -444,8 +447,10 @@ export function AppRouter() {
       {/* Mahasiswa - Presensi */}
       <Route path="/mahasiswa/presensi" element={<ProtectedRoute><RoleGuard allowedRoles={['mahasiswa']}><AppLayout><MahasiswaPresensiPage /></AppLayout></RoleGuard></ProtectedRoute>} />
 
+      {/* Mahasiswa - Notifikasi */}
+      <Route path="/mahasiswa/notifikasi" element={<ProtectedRoute><RoleGuard allowedRoles={['mahasiswa']}><AppLayout><MahasiswaPengumumanPage /></AppLayout></RoleGuard></ProtectedRoute>} />
+
       {/* TODO: Add more mahasiswa routes as they are implemented
-      <Route path="/mahasiswa/pengumuman" element={...} />
       <Route path="/mahasiswa/profil" element={...} />
       <Route path="/mahasiswa/offline-sync" element={...} />
       */}
@@ -535,6 +540,9 @@ export function AppRouter() {
           </ProtectedRoute>
         }
       />
+
+      {/* Laboran - Notifikasi */}
+      <Route path="/laboran/notifikasi" element={<ProtectedRoute><RoleGuard allowedRoles={['laboran']}><AppLayout><LaboranPengumumanPage /></AppLayout></RoleGuard></ProtectedRoute>} />
 
       {/* ================================================================== */}
       {/* FALLBACK ROUTES */}

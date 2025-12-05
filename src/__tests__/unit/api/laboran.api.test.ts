@@ -3,12 +3,12 @@
  * Comprehensive tests for laboran-specific API functions
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import * as laboranAPI from '@/lib/api/laboran.api';
-import { supabase } from '@/lib/supabase/client';
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import * as laboranAPI from "../../../lib/api/laboran.api";
+import { supabase } from "../../../lib/supabase/client";
 
 // Mock Supabase
-vi.mock('@/lib/supabase/client', () => ({
+vi.mock("../../../lib/supabase/client", () => ({
   supabase: {
     from: vi.fn(),
     auth: {
@@ -18,16 +18,16 @@ vi.mock('@/lib/supabase/client', () => ({
 }));
 
 // Mock cache API
-vi.mock('@/lib/offline/api-cache', () => ({
+vi.mock("../../../lib/offline/api-cache", () => ({
   cacheAPI: vi.fn((key, fn) => fn()),
 }));
 
 // Mock middleware
-vi.mock('@/lib/middleware', () => ({
+vi.mock("../../../lib/middleware", () => ({
   requirePermission: vi.fn((permission, fn) => fn),
 }));
 
-describe('Laboran API', () => {
+describe("Laboran API", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -36,8 +36,8 @@ describe('Laboran API', () => {
     vi.restoreAllMocks();
   });
 
-  describe('getLaboranStats', () => {
-    it('should return laboran statistics successfully', async () => {
+  describe("getLaboranStats", () => {
+    it("should return laboran statistics successfully", async () => {
       vi.mocked(supabase.from).mockImplementation((table: string) => {
         const mockCounts = {
           laboratorium: 5,
@@ -48,13 +48,62 @@ describe('Laboran API', () => {
 
         return {
           select: vi.fn().mockReturnValue({
-            eq: vi.fn().mockReturnValue({
-              count: table === 'laboratorium' ? mockCounts.laboratorium :
-                     table === 'inventaris' ? mockCounts.inventaris :
-                     table === 'peminjaman' ? mockCounts.peminjaman : 0,
+            eq: vi.fn().mockResolvedValue({
+              count:
+                table === "laboratorium"
+                  ? mockCounts.laboratorium
+                  : table === "peminjaman"
+                    ? mockCounts.peminjaman
+                    : 0,
+              data: null,
+              error: null,
             }),
-            lt: vi.fn().mockReturnValue({
+            lt: vi.fn().mockResolvedValue({
               count: mockCounts.lowStock,
+              data: null,
+              error: null,
+            }),
+          }),
+        } as any;
+      });
+
+      // Need separate mock for inventaris since it doesn't have .eq() call
+      let callCount = 0;
+      vi.mocked(supabase.from).mockImplementation((table: string) => {
+        if (table === "inventaris") {
+          callCount++;
+          if (callCount === 1) {
+            // First call is for total inventaris (no .lt())
+            return {
+              select: vi.fn().mockResolvedValue({
+                count: 100,
+                data: null,
+                error: null,
+              }),
+            } as any;
+          } else {
+            // Second call is for low stock (.lt())
+            return {
+              select: vi.fn().mockReturnValue({
+                lt: vi.fn().mockResolvedValue({
+                  count: 3,
+                  data: null,
+                  error: null,
+                }),
+              }),
+            } as any;
+          }
+        }
+
+        // For laboratorium and peminjaman
+        const count =
+          table === "laboratorium" ? 5 : table === "peminjaman" ? 10 : 0;
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockResolvedValue({
+              count,
+              data: null,
+              error: null,
             }),
           }),
         } as any;
@@ -70,7 +119,7 @@ describe('Laboran API', () => {
       });
     });
 
-    it('should handle empty data', async () => {
+    it("should handle empty data", async () => {
       vi.mocked(supabase.from).mockReturnValue({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
@@ -92,51 +141,53 @@ describe('Laboran API', () => {
       });
     });
 
-    it('should handle database errors', async () => {
+    it("should handle database errors", async () => {
       vi.mocked(supabase.from).mockImplementation(() => {
-        throw new Error('Database error');
+        throw new Error("Database error");
       });
 
-      await expect(laboranAPI.getLaboranStats()).rejects.toThrow('Database error');
+      await expect(laboranAPI.getLaboranStats()).rejects.toThrow(
+        "Database error"
+      );
     });
   });
 
-  describe('getPendingApprovals', () => {
-    it('should return pending approval list', async () => {
+  describe("getPendingApprovals", () => {
+    it("should return pending approval list", async () => {
       const mockPeminjaman = [
         {
-          id: 'pem-1',
+          id: "pem-1",
           jumlah_pinjam: 2,
-          keperluan: 'Praktikum',
-          tanggal_pinjam: '2024-01-01',
-          tanggal_kembali_rencana: '2024-01-05',
-          created_at: '2024-01-01T08:00:00Z',
-          peminjam_id: 'mhs-1',
-          inventaris_id: 'inv-1',
+          keperluan: "Praktikum",
+          tanggal_pinjam: "2024-01-01",
+          tanggal_kembali_rencana: "2024-01-05",
+          created_at: "2024-01-01T08:00:00Z",
+          peminjam_id: "mhs-1",
+          inventaris_id: "inv-1",
         },
       ];
 
       const mockMahasiswa = [
         {
-          id: 'mhs-1',
-          nim: '12345',
-          user_id: 'user-1',
-          users: { full_name: 'John Doe' },
+          id: "mhs-1",
+          nim: "12345",
+          user_id: "user-1",
+          users: { full_name: "John Doe" },
         },
       ];
 
       const mockInventaris = [
         {
-          id: 'inv-1',
-          kode_barang: 'INV001',
-          nama_barang: 'Mikroskop',
-          laboratorium_id: 'lab-1',
-          laboratorium: { nama_lab: 'Lab Biologi' },
+          id: "inv-1",
+          kode_barang: "INV001",
+          nama_barang: "Mikroskop",
+          laboratorium_id: "lab-1",
+          laboratorium: { nama_lab: "Lab Biologi" },
         },
       ];
 
       vi.mocked(supabase.from).mockImplementation((table: string) => {
-        if (table === 'peminjaman') {
+        if (table === "peminjaman") {
           return {
             select: vi.fn().mockReturnValue({
               eq: vi.fn().mockReturnValue({
@@ -150,7 +201,7 @@ describe('Laboran API', () => {
             }),
           } as any;
         }
-        if (table === 'mahasiswa') {
+        if (table === "mahasiswa") {
           return {
             select: vi.fn().mockReturnValue({
               in: vi.fn().mockReturnValue({
@@ -160,7 +211,7 @@ describe('Laboran API', () => {
             }),
           } as any;
         }
-        if (table === 'inventaris') {
+        if (table === "inventaris") {
           return {
             select: vi.fn().mockReturnValue({
               in: vi.fn().mockReturnValue({
@@ -177,36 +228,36 @@ describe('Laboran API', () => {
 
       expect(result).toHaveLength(1);
       expect(result[0]).toEqual({
-        id: 'pem-1',
-        peminjam_nama: 'John Doe',
-        peminjam_nim: '12345',
-        inventaris_nama: 'Mikroskop',
-        inventaris_kode: 'INV001',
-        laboratorium_nama: 'Lab Biologi',
+        id: "pem-1",
+        peminjam_nama: "John Doe",
+        peminjam_nim: "12345",
+        inventaris_nama: "Mikroskop",
+        inventaris_kode: "INV001",
+        laboratorium_nama: "Lab Biologi",
         jumlah_pinjam: 2,
-        keperluan: 'Praktikum',
-        tanggal_pinjam: '2024-01-01',
-        tanggal_kembali_rencana: '2024-01-05',
-        created_at: '2024-01-01T08:00:00Z',
+        keperluan: "Praktikum",
+        tanggal_pinjam: "2024-01-01",
+        tanggal_kembali_rencana: "2024-01-05",
+        created_at: "2024-01-01T08:00:00Z",
       });
     });
 
-    it('should handle missing related data gracefully', async () => {
+    it("should handle missing related data gracefully", async () => {
       const mockPeminjaman = [
         {
-          id: 'pem-1',
+          id: "pem-1",
           jumlah_pinjam: 2,
-          keperluan: 'Praktikum',
-          tanggal_pinjam: '2024-01-01',
-          tanggal_kembali_rencana: '2024-01-05',
-          created_at: '2024-01-01T08:00:00Z',
-          peminjam_id: 'mhs-999',
-          inventaris_id: 'inv-999',
+          keperluan: "Praktikum",
+          tanggal_pinjam: "2024-01-01",
+          tanggal_kembali_rencana: "2024-01-05",
+          created_at: "2024-01-01T08:00:00Z",
+          peminjam_id: "mhs-999",
+          inventaris_id: "inv-999",
         },
       ];
 
       vi.mocked(supabase.from).mockImplementation((table: string) => {
-        if (table === 'peminjaman') {
+        if (table === "peminjaman") {
           return {
             select: vi.fn().mockReturnValue({
               eq: vi.fn().mockReturnValue({
@@ -232,11 +283,11 @@ describe('Laboran API', () => {
 
       const result = await laboranAPI.getPendingApprovals();
 
-      expect(result[0].peminjam_nama).toBe('Unknown');
-      expect(result[0].inventaris_nama).toBe('Unknown');
+      expect(result[0].peminjam_nama).toBe("Unknown");
+      expect(result[0].inventaris_nama).toBe("Unknown");
     });
 
-    it('should respect limit parameter', async () => {
+    it("should respect limit parameter", async () => {
       const limitMock = vi.fn().mockReturnValue({
         data: [],
         error: null,
@@ -258,20 +309,20 @@ describe('Laboran API', () => {
     });
   });
 
-  describe('getInventoryAlerts', () => {
-    it('should return low stock items', async () => {
+  describe("getInventoryAlerts", () => {
+    it("should return low stock items", async () => {
       const mockInventaris = [
         {
-          id: 'inv-1',
-          kode_barang: 'INV001',
-          nama_barang: 'Mikroskop',
-          kategori: 'Alat Lab',
+          id: "inv-1",
+          kode_barang: "INV001",
+          nama_barang: "Mikroskop",
+          kategori: "Alat Lab",
           jumlah: 10,
           jumlah_tersedia: 2,
-          kondisi: 'baik',
+          kondisi: "baik",
           laboratorium: {
-            kode_lab: 'LAB1',
-            nama_lab: 'Lab Biologi',
+            kode_lab: "LAB1",
+            nama_lab: "Lab Biologi",
           },
         },
       ];
@@ -298,16 +349,16 @@ describe('Laboran API', () => {
     it('should handle null category as "Umum"', async () => {
       const mockInventaris = [
         {
-          id: 'inv-1',
-          kode_barang: 'INV001',
-          nama_barang: 'Item',
+          id: "inv-1",
+          kode_barang: "INV001",
+          nama_barang: "Item",
           kategori: null,
           jumlah: 10,
           jumlah_tersedia: 2,
-          kondisi: 'baik',
+          kondisi: "baik",
           laboratorium: {
-            kode_lab: 'LAB1',
-            nama_lab: 'Lab 1',
+            kode_lab: "LAB1",
+            nama_lab: "Lab 1",
           },
         },
       ];
@@ -327,13 +378,13 @@ describe('Laboran API', () => {
 
       const result = await laboranAPI.getInventoryAlerts();
 
-      expect(result[0].kategori).toBe('Umum');
+      expect(result[0].kategori).toBe("Umum");
     });
   });
 
-  describe('approvePeminjaman', () => {
-    it('should approve peminjaman and decrease stock', async () => {
-      const mockUser = { id: 'user-123' };
+  describe("approvePeminjaman", () => {
+    it("should approve peminjaman and decrease stock", async () => {
+      const mockUser = { id: "user-123" };
 
       vi.mocked(supabase.auth.getUser).mockResolvedValue({
         data: { user: mockUser },
@@ -341,13 +392,13 @@ describe('Laboran API', () => {
       } as any);
 
       const mockPeminjaman = {
-        inventaris_id: 'inv-1',
+        inventaris_id: "inv-1",
         jumlah_pinjam: 2,
       };
 
       const mockInventaris = {
         jumlah_tersedia: 10,
-        nama_barang: 'Mikroskop',
+        nama_barang: "Mikroskop",
       };
 
       const updateMock = vi.fn().mockReturnValue({
@@ -359,7 +410,7 @@ describe('Laboran API', () => {
       });
 
       vi.mocked(supabase.from).mockImplementation((table: string) => {
-        if (table === 'peminjaman') {
+        if (table === "peminjaman") {
           return {
             select: vi.fn().mockReturnValue({
               eq: vi.fn().mockReturnValue({
@@ -374,7 +425,7 @@ describe('Laboran API', () => {
             update: updateMock,
           } as any;
         }
-        if (table === 'inventaris') {
+        if (table === "inventaris") {
           return {
             select: vi.fn().mockReturnValue({
               eq: vi.fn().mockReturnValue({
@@ -394,13 +445,13 @@ describe('Laboran API', () => {
         return {} as any;
       });
 
-      await laboranAPI.approvePeminjaman('pem-1');
+      await laboranAPI.approvePeminjaman("pem-1");
 
       expect(updateMock).toHaveBeenCalled();
     });
 
-    it('should fail when stock is insufficient', async () => {
-      const mockUser = { id: 'user-123' };
+    it("should fail when stock is insufficient", async () => {
+      const mockUser = { id: "user-123" };
 
       vi.mocked(supabase.auth.getUser).mockResolvedValue({
         data: { user: mockUser },
@@ -408,17 +459,17 @@ describe('Laboran API', () => {
       } as any);
 
       const mockPeminjaman = {
-        inventaris_id: 'inv-1',
+        inventaris_id: "inv-1",
         jumlah_pinjam: 10,
       };
 
       const mockInventaris = {
         jumlah_tersedia: 5,
-        nama_barang: 'Mikroskop',
+        nama_barang: "Mikroskop",
       };
 
       vi.mocked(supabase.from).mockImplementation((table: string) => {
-        if (table === 'peminjaman') {
+        if (table === "peminjaman") {
           return {
             select: vi.fn().mockReturnValue({
               eq: vi.fn().mockReturnValue({
@@ -432,7 +483,7 @@ describe('Laboran API', () => {
             }),
           } as any;
         }
-        if (table === 'inventaris') {
+        if (table === "inventaris") {
           return {
             select: vi.fn().mockReturnValue({
               eq: vi.fn().mockReturnValue({
@@ -447,20 +498,24 @@ describe('Laboran API', () => {
         return {} as any;
       });
 
-      await expect(laboranAPI.approvePeminjaman('pem-1')).rejects.toThrow('Stok tidak cukup');
+      await expect(laboranAPI.approvePeminjaman("pem-1")).rejects.toThrow(
+        "Stok tidak cukup"
+      );
     });
 
-    it('should fail when user not authenticated', async () => {
+    it("should fail when user not authenticated", async () => {
       vi.mocked(supabase.auth.getUser).mockResolvedValue({
         data: { user: null },
         error: null,
       } as any);
 
-      await expect(laboranAPI.approvePeminjaman('pem-1')).rejects.toThrow('User not authenticated');
+      await expect(laboranAPI.approvePeminjaman("pem-1")).rejects.toThrow(
+        "User not authenticated"
+      );
     });
 
-    it('should fail when peminjaman not found', async () => {
-      const mockUser = { id: 'user-123' };
+    it("should fail when peminjaman not found", async () => {
+      const mockUser = { id: "user-123" };
 
       vi.mocked(supabase.auth.getUser).mockResolvedValue({
         data: { user: mockUser },
@@ -473,20 +528,20 @@ describe('Laboran API', () => {
             eq: vi.fn().mockReturnValue({
               single: vi.fn().mockResolvedValue({
                 data: null,
-                error: new Error('Not found'),
+                error: new Error("Not found"),
               }),
             }),
           }),
         }),
       } as any);
 
-      await expect(laboranAPI.approvePeminjaman('pem-999')).rejects.toThrow();
+      await expect(laboranAPI.approvePeminjaman("pem-999")).rejects.toThrow();
     });
   });
 
-  describe('rejectPeminjaman', () => {
-    it('should reject peminjaman with reason', async () => {
-      const mockUser = { id: 'user-123' };
+  describe("rejectPeminjaman", () => {
+    it("should reject peminjaman with reason", async () => {
+      const mockUser = { id: "user-123" };
 
       vi.mocked(supabase.auth.getUser).mockResolvedValue({
         data: { user: mockUser },
@@ -505,46 +560,46 @@ describe('Laboran API', () => {
         update: updateMock,
       } as any);
 
-      await laboranAPI.rejectPeminjaman('pem-1', 'Barang tidak tersedia');
+      await laboranAPI.rejectPeminjaman("pem-1", "Barang tidak tersedia");
 
       expect(updateMock).toHaveBeenCalled();
     });
 
-    it('should fail when user not authenticated', async () => {
+    it("should fail when user not authenticated", async () => {
       vi.mocked(supabase.auth.getUser).mockResolvedValue({
         data: { user: null },
         error: null,
       } as any);
 
       await expect(
-        laboranAPI.rejectPeminjaman('pem-1', 'Reason')
-      ).rejects.toThrow('User not authenticated');
+        laboranAPI.rejectPeminjaman("pem-1", "Reason")
+      ).rejects.toThrow("User not authenticated");
     });
   });
 
-  describe('Inventaris CRUD', () => {
-    describe('getInventarisList', () => {
-      it('should return inventaris list with filters', async () => {
+  describe("Inventaris CRUD", () => {
+    describe("getInventarisList", () => {
+      it("should return inventaris list with filters", async () => {
         const mockData = [
           {
-            id: 'inv-1',
-            kode_barang: 'INV001',
-            nama_barang: 'Mikroskop',
-            kategori: 'Alat Lab',
-            merk: 'Olympus',
-            spesifikasi: 'High resolution',
+            id: "inv-1",
+            kode_barang: "INV001",
+            nama_barang: "Mikroskop",
+            kategori: "Alat Lab",
+            merk: "Olympus",
+            spesifikasi: "High resolution",
             jumlah: 10,
             jumlah_tersedia: 8,
-            kondisi: 'baik',
+            kondisi: "baik",
             harga_satuan: 5000000,
             tahun_pengadaan: 2023,
             keterangan: null,
-            created_at: '2024-01-01',
-            updated_at: '2024-01-01',
+            created_at: "2024-01-01",
+            updated_at: "2024-01-01",
             laboratorium: {
-              id: 'lab-1',
-              kode_lab: 'LAB1',
-              nama_lab: 'Lab Biologi',
+              id: "lab-1",
+              kode_lab: "LAB1",
+              nama_lab: "Lab Biologi",
             },
           },
         ];
@@ -565,7 +620,7 @@ describe('Laboran API', () => {
         expect(result.count).toBe(1);
       });
 
-      it('should apply search filter', async () => {
+      it("should apply search filter", async () => {
         const orMock = vi.fn().mockReturnValue({
           order: vi.fn().mockReturnValue({
             data: [],
@@ -580,50 +635,56 @@ describe('Laboran API', () => {
           }),
         } as any);
 
-        await laboranAPI.getInventarisList({ search: 'mikroskop' });
+        await laboranAPI.getInventarisList({ search: "mikroskop" });
 
         expect(orMock).toHaveBeenCalledWith(
-          expect.stringContaining('nama_barang.ilike')
+          expect.stringContaining("nama_barang.ilike")
         );
       });
 
-      it('should apply pagination', async () => {
+      it("should apply pagination", async () => {
         const rangeMock = vi.fn().mockReturnValue({
-          order: vi.fn().mockReturnValue({
+          order: vi.fn().mockResolvedValue({
             data: [],
             error: null,
             count: 0,
           }),
         });
 
+        const limitMock = vi.fn().mockReturnValue({
+          range: rangeMock,
+        });
+
         vi.mocked(supabase.from).mockReturnValue({
           select: vi.fn().mockReturnValue({
+            limit: limitMock,
             range: rangeMock,
           }),
         } as any);
 
         await laboranAPI.getInventarisList({ offset: 10, limit: 10 });
 
+        expect(limitMock).toHaveBeenCalledWith(10);
         expect(rangeMock).toHaveBeenCalledWith(10, 19);
       });
     });
 
-    describe('createInventaris', () => {
-      it('should create new inventaris', async () => {
+    describe("createInventaris", () => {
+      it("should create new inventaris", async () => {
         const mockData = {
-          kode_barang: 'INV001',
-          nama_barang: 'Mikroskop',
+          kode_barang: "INV001",
+          nama_barang: "Mikroskop",
           jumlah: 10,
           jumlah_tersedia: 10,
-          kategori: 'Alat Lab',
-          laboratorium_id: 'lab-1',
+          kategori: "Alat Lab",
+          laboratorium_id: "lab-1",
         };
 
         vi.mocked(supabase.from).mockReturnValue({
           insert: vi.fn().mockReturnValue({
             select: vi.fn().mockReturnValue({
               single: vi.fn().mockResolvedValue({
-                data: { id: 'inv-new' },
+                data: { id: "inv-new" },
                 error: null,
               }),
             }),
@@ -632,16 +693,16 @@ describe('Laboran API', () => {
 
         const result = await laboranAPI.createInventaris(mockData);
 
-        expect(result).toBe('inv-new');
+        expect(result).toBe("inv-new");
       });
 
-      it('should handle creation errors', async () => {
+      it("should handle creation errors", async () => {
         vi.mocked(supabase.from).mockReturnValue({
           insert: vi.fn().mockReturnValue({
             select: vi.fn().mockReturnValue({
               single: vi.fn().mockResolvedValue({
                 data: null,
-                error: new Error('Creation failed'),
+                error: new Error("Creation failed"),
               }),
             }),
           }),
@@ -649,8 +710,8 @@ describe('Laboran API', () => {
 
         await expect(
           laboranAPI.createInventaris({
-            kode_barang: 'INV001',
-            nama_barang: 'Item',
+            kode_barang: "INV001",
+            nama_barang: "Item",
             jumlah: 1,
             jumlah_tersedia: 1,
           })
@@ -658,8 +719,8 @@ describe('Laboran API', () => {
       });
     });
 
-    describe('updateInventaris', () => {
-      it('should update inventaris', async () => {
+    describe("updateInventaris", () => {
+      it("should update inventaris", async () => {
         vi.mocked(supabase.from).mockReturnValue({
           update: vi.fn().mockReturnValue({
             eq: vi.fn().mockReturnValue({
@@ -669,15 +730,15 @@ describe('Laboran API', () => {
         } as any);
 
         await expect(
-          laboranAPI.updateInventaris('inv-1', { nama_barang: 'New Name' })
+          laboranAPI.updateInventaris("inv-1", { nama_barang: "New Name" })
         ).resolves.not.toThrow();
       });
     });
 
-    describe('deleteInventaris', () => {
-      it('should delete inventaris when no active borrowings', async () => {
+    describe("deleteInventaris", () => {
+      it("should delete inventaris when no active borrowings", async () => {
         vi.mocked(supabase.from).mockImplementation((table: string) => {
-          if (table === 'peminjaman') {
+          if (table === "peminjaman") {
             return {
               select: vi.fn().mockReturnValue({
                 eq: vi.fn().mockReturnValue({
@@ -700,16 +761,18 @@ describe('Laboran API', () => {
           } as any;
         });
 
-        await expect(laboranAPI.deleteInventaris('inv-1')).resolves.not.toThrow();
+        await expect(
+          laboranAPI.deleteInventaris("inv-1")
+        ).resolves.not.toThrow();
       });
 
-      it('should fail when active borrowings exist', async () => {
+      it("should fail when active borrowings exist", async () => {
         vi.mocked(supabase.from).mockReturnValue({
           select: vi.fn().mockReturnValue({
             eq: vi.fn().mockReturnValue({
               in: vi.fn().mockReturnValue({
                 limit: vi.fn().mockReturnValue({
-                  data: [{ id: 'borrow-1' }],
+                  data: [{ id: "borrow-1" }],
                   error: null,
                 }),
               }),
@@ -717,28 +780,28 @@ describe('Laboran API', () => {
           }),
         } as any);
 
-        await expect(laboranAPI.deleteInventaris('inv-1')).rejects.toThrow(
-          'Cannot delete inventaris with active borrowings'
+        await expect(laboranAPI.deleteInventaris("inv-1")).rejects.toThrow(
+          "Cannot delete inventaris with active borrowings"
         );
       });
     });
   });
 
-  describe('Laboratorium Management', () => {
-    describe('getLaboratoriumList', () => {
-      it('should return laboratorium list', async () => {
+  describe("Laboratorium Management", () => {
+    describe("getLaboratoriumList", () => {
+      it("should return laboratorium list", async () => {
         const mockData = [
           {
-            id: 'lab-1',
-            kode_lab: 'LAB1',
-            nama_lab: 'Lab Biologi',
+            id: "lab-1",
+            kode_lab: "LAB1",
+            nama_lab: "Lab Biologi",
             kapasitas: 30,
-            lokasi: 'Gedung A',
-            fasilitas: ['AC', 'Proyektor'],
+            lokasi: "Gedung A",
+            fasilitas: ["AC", "Proyektor"],
             is_active: true,
             keterangan: null,
-            created_at: '2024-01-01',
-            updated_at: '2024-01-01',
+            created_at: "2024-01-01",
+            updated_at: "2024-01-01",
           },
         ];
 
@@ -756,28 +819,28 @@ describe('Laboran API', () => {
         expect(result).toHaveLength(1);
       });
 
-      it('should filter by is_active', async () => {
-        const eqMock = vi.fn().mockReturnValue({
-          order: vi.fn().mockReturnValue({
-            data: [],
-            error: null,
-          }),
+      it("should filter by is_active", async () => {
+        const eqMock = vi.fn().mockResolvedValue({
+          data: [],
+          error: null,
         });
 
         vi.mocked(supabase.from).mockReturnValue({
           select: vi.fn().mockReturnValue({
-            eq: eqMock,
+            order: vi.fn().mockReturnValue({
+              eq: eqMock,
+            }),
           }),
         } as any);
 
         await laboranAPI.getLaboratoriumList({ is_active: true });
 
-        expect(eqMock).toHaveBeenCalledWith('is_active', true);
+        expect(eqMock).toHaveBeenCalledWith("is_active", true);
       });
     });
 
-    describe('createLaboratorium', () => {
-      it('should create new laboratorium', async () => {
+    describe("createLaboratorium", () => {
+      it("should create new laboratorium", async () => {
         vi.mocked(supabase.from).mockReturnValue({
           insert: vi.fn().mockReturnValue({
             error: null,
@@ -786,17 +849,17 @@ describe('Laboran API', () => {
 
         await expect(
           laboranAPI.createLaboratorium({
-            kode_lab: 'LAB1',
-            nama_lab: 'Lab Baru',
+            kode_lab: "LAB1",
+            nama_lab: "Lab Baru",
           })
         ).resolves.not.toThrow();
       });
     });
 
-    describe('deleteLaboratorium', () => {
-      it('should delete laboratorium when no related data', async () => {
+    describe("deleteLaboratorium", () => {
+      it("should delete laboratorium when no related data", async () => {
         vi.mocked(supabase.from).mockImplementation((table: string) => {
-          if (table === 'inventaris' || table === 'jadwal_praktikum') {
+          if (table === "inventaris" || table === "jadwal_praktikum") {
             return {
               select: vi.fn().mockReturnValue({
                 eq: vi.fn().mockReturnValue({
@@ -817,23 +880,25 @@ describe('Laboran API', () => {
           } as any;
         });
 
-        await expect(laboranAPI.deleteLaboratorium('lab-1')).resolves.not.toThrow();
+        await expect(
+          laboranAPI.deleteLaboratorium("lab-1")
+        ).resolves.not.toThrow();
       });
 
-      it('should fail when equipment exists', async () => {
+      it("should fail when equipment exists", async () => {
         vi.mocked(supabase.from).mockReturnValue({
           select: vi.fn().mockReturnValue({
             eq: vi.fn().mockReturnValue({
               limit: vi.fn().mockReturnValue({
-                data: [{ id: 'equip-1' }],
+                data: [{ id: "equip-1" }],
                 error: null,
               }),
             }),
           }),
         } as any);
 
-        await expect(laboranAPI.deleteLaboratorium('lab-1')).rejects.toThrow(
-          'Cannot delete laboratory that has equipment assigned to it'
+        await expect(laboranAPI.deleteLaboratorium("lab-1")).rejects.toThrow(
+          "Cannot delete laboratory that has equipment assigned to it"
         );
       });
     });

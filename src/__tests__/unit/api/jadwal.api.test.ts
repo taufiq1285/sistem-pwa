@@ -16,14 +16,14 @@ import {
   getJadwalHariIni,
   getJadwalMingguIni,
   getJadwalBulanIni,
-} from '@/lib/api/jadwal.api';
-import * as baseApi from '@/lib/api/base.api';
-import type { Jadwal } from '@/types/jadwal.types';
+} from '../../../lib/api/jadwal.api';
+import * as baseApi from '../../../lib/api/base.api';
+import type { Jadwal } from '../../../types/jadwal.types';
 
 // Mock base API
-vi.mock('@/lib/api/base.api');
-vi.mock('@/lib/utils/errors');
-vi.mock('@/lib/middleware');
+vi.mock('../../../lib/api/base.api');
+vi.mock('../../../lib/utils/errors');
+vi.mock('../../../lib/middleware');
 
 describe('Jadwal API', () => {
   const mockJadwal: Jadwal = {
@@ -40,7 +40,6 @@ describe('Jadwal API', () => {
     is_active: true,
     created_at: '2025-01-01T00:00:00Z',
     updated_at: '2025-01-01T00:00:00Z',
-    dosen_id: null,
   };
 
   const mockJadwalWithLab: Jadwal = {
@@ -50,11 +49,6 @@ describe('Jadwal API', () => {
       nama_lab: 'Lab Kebidanan 1',
       kode_lab: 'KB-01',
       kapasitas: 30,
-      lokasi: 'Gedung A Lt. 2',
-      fasilitas: ['Meja praktikum', 'Phantom'],
-      is_active: true,
-      created_at: '2025-01-01T00:00:00Z',
-      updated_at: '2025-01-01T00:00:00Z',
     },
   };
 
