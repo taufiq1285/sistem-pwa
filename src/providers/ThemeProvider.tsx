@@ -3,33 +3,33 @@
  * Provides theme (dark/light mode) state and methods
  */
 
-import { useState, useEffect, useMemo } from 'react';
-import { ThemeContext, type Theme } from '@/context/ThemeContext';
+import { useState, useEffect, useMemo } from "react";
+import { ThemeContext, type Theme } from "@/context/ThemeContext";
 
 // ============================================================================
 // CONSTANTS
 // ============================================================================
 
-const THEME_STORAGE_KEY = 'theme-preference';
+const THEME_STORAGE_KEY = "theme-preference";
 
 // ============================================================================
 // HELPERS
 // ============================================================================
 
-function getSystemTheme(): 'light' | 'dark' {
-  if (typeof window === 'undefined') return 'light';
-  return window.matchMedia('(prefers-color-scheme: dark)').matches
-    ? 'dark'
-    : 'light';
+function getSystemTheme(): "light" | "dark" {
+  if (typeof window === "undefined") return "light";
+  return window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
 }
 
 function getStoredTheme(): Theme {
-  if (typeof window === 'undefined') return 'system';
+  if (typeof window === "undefined") return "system";
   const stored = localStorage.getItem(THEME_STORAGE_KEY);
-  if (stored === 'light' || stored === 'dark' || stored === 'system') {
+  if (stored === "light" || stored === "dark" || stored === "system") {
     return stored;
   }
-  return 'system';
+  return "system";
 }
 
 // ============================================================================
@@ -43,37 +43,37 @@ interface ThemeProviderProps {
 
 export function ThemeProvider({
   children,
-  defaultTheme = 'system',
+  defaultTheme = "system",
 }: ThemeProviderProps) {
   const [theme, setThemeState] = useState<Theme>(() => {
     return getStoredTheme() || defaultTheme;
   });
 
-  const [systemTheme, setSystemTheme] = useState<'light' | 'dark'>(
-    getSystemTheme()
+  const [systemTheme, setSystemTheme] = useState<"light" | "dark">(
+    getSystemTheme(),
   );
 
   // Listen to system theme changes
   useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+
     const handleChange = (e: MediaQueryListEvent) => {
-      setSystemTheme(e.matches ? 'dark' : 'light');
+      setSystemTheme(e.matches ? "dark" : "light");
     };
 
-    mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
+    mediaQuery.addEventListener("change", handleChange);
+    return () => mediaQuery.removeEventListener("change", handleChange);
   }, []);
 
   // Calculate effective theme
   const effectiveTheme = useMemo(() => {
-    return theme === 'system' ? systemTheme : theme;
+    return theme === "system" ? systemTheme : theme;
   }, [theme, systemTheme]);
 
   // Apply theme to document
   useEffect(() => {
     const root = window.document.documentElement;
-    root.classList.remove('light', 'dark');
+    root.classList.remove("light", "dark");
     root.classList.add(effectiveTheme);
   }, [effectiveTheme]);
 
@@ -85,10 +85,10 @@ export function ThemeProvider({
 
   // Toggle between light and dark
   const toggleTheme = () => {
-    if (theme === 'system') {
-      setTheme(systemTheme === 'dark' ? 'light' : 'dark');
+    if (theme === "system") {
+      setTheme(systemTheme === "dark" ? "light" : "dark");
     } else {
-      setTheme(theme === 'dark' ? 'light' : 'dark');
+      setTheme(theme === "dark" ? "light" : "dark");
     }
   };
 

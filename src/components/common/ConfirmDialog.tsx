@@ -3,8 +3,8 @@
  * Confirmation dialog for important actions
  */
 
-import { AlertTriangle, Info, AlertCircle } from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
+import { AlertTriangle, Info, AlertCircle } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -14,14 +14,14 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { cn } from '@/lib/utils';
+} from "@/components/ui/alert-dialog";
+import { cn } from "@/lib/utils";
 
 // ============================================================================
 // TYPES
 // ============================================================================
 
-type ConfirmDialogVariant = 'danger' | 'warning' | 'info';
+type ConfirmDialogVariant = "danger" | "warning" | "info";
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -43,21 +43,21 @@ interface ConfirmDialogProps {
 const variantConfig = {
   danger: {
     icon: AlertTriangle,
-    iconClass: 'text-destructive',
-    iconBgClass: 'bg-destructive/10',
-    confirmClass: 'bg-destructive hover:bg-destructive/90',
+    iconClass: "text-destructive",
+    iconBgClass: "bg-destructive/10",
+    confirmClass: "bg-destructive hover:bg-destructive/90",
   },
   warning: {
     icon: AlertCircle,
-    iconClass: 'text-orange-500',
-    iconBgClass: 'bg-orange-500/10',
-    confirmClass: 'bg-orange-500 hover:bg-orange-500/90',
+    iconClass: "text-orange-500",
+    iconBgClass: "bg-orange-500/10",
+    confirmClass: "bg-orange-500 hover:bg-orange-500/90",
   },
   info: {
     icon: Info,
-    iconClass: 'text-blue-500',
-    iconBgClass: 'bg-blue-500/10',
-    confirmClass: 'bg-primary hover:bg-primary/90',
+    iconClass: "text-blue-500",
+    iconBgClass: "bg-blue-500/10",
+    confirmClass: "bg-primary hover:bg-primary/90",
   },
 };
 
@@ -70,10 +70,10 @@ export function ConfirmDialog({
   onOpenChange,
   title,
   description,
-  confirmLabel = 'Konfirmasi',
-  cancelLabel = 'Batal',
+  confirmLabel = "Konfirmasi",
+  cancelLabel = "Batal",
   onConfirm,
-  variant = 'danger',
+  variant = "danger",
   icon,
   isLoading = false,
 }: ConfirmDialogProps) {
@@ -85,7 +85,7 @@ export function ConfirmDialog({
       await onConfirm();
       onOpenChange(false);
     } catch (error) {
-      console.error('Confirm action failed:', error);
+      console.error("Confirm action failed:", error);
       // Keep dialog open on error so user can retry
     }
   };
@@ -98,18 +98,16 @@ export function ConfirmDialog({
             {/* Icon */}
             <div
               className={cn(
-                'flex h-12 w-12 shrink-0 items-center justify-center rounded-full',
-                config.iconBgClass
+                "flex h-12 w-12 shrink-0 items-center justify-center rounded-full",
+                config.iconBgClass,
               )}
             >
-              <IconComponent className={cn('h-6 w-6', config.iconClass)} />
+              <IconComponent className={cn("h-6 w-6", config.iconClass)} />
             </div>
 
             {/* Content */}
             <div className="flex-1 space-y-2">
-              <AlertDialogTitle className="text-left">
-                {title}
-              </AlertDialogTitle>
+              <AlertDialogTitle className="text-left">{title}</AlertDialogTitle>
               <AlertDialogDescription className="text-left">
                 {description}
               </AlertDialogDescription>
@@ -129,7 +127,7 @@ export function ConfirmDialog({
             disabled={isLoading}
             className={cn(config.confirmClass)}
           >
-            {isLoading ? 'Memproses...' : confirmLabel}
+            {isLoading ? "Memproses..." : confirmLabel}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

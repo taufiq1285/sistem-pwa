@@ -11,16 +11,16 @@
  * - View IPK/GPA (future feature)
  */
 
-import { useState, useEffect } from 'react';
-import { Loader2, FileText, Download, TrendingUp, Award } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { useState, useEffect } from "react";
+import { Loader2, FileText, Download, TrendingUp, Award } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -28,20 +28,20 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useAuth } from '@/lib/hooks/useAuth';
-import { getNilaiByMahasiswa } from '@/lib/api/nilai.api';
-import type { Nilai } from '@/types/nilai.types';
-import { toast } from 'sonner';
-import { getGradeStatus } from '@/lib/validations/nilai.schema';
+} from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useAuth } from "@/lib/hooks/useAuth";
+import { getNilaiByMahasiswa } from "@/lib/api/nilai.api";
+import type { Nilai } from "@/types/nilai.types";
+import { toast } from "sonner";
+import { getGradeStatus } from "@/lib/validations/nilai.schema";
 
 // ============================================================================
 // COMPONENT
@@ -57,8 +57,8 @@ export default function MahasiswaNilaiPage() {
   const [loading, setLoading] = useState(true);
   const [nilaiList, setNilaiList] = useState<Nilai[]>([]);
   const [filteredNilai, setFilteredNilai] = useState<Nilai[]>([]);
-  const [selectedSemester, setSelectedSemester] = useState<string>('all');
-  const [selectedTahunAjaran, setSelectedTahunAjaran] = useState<string>('all');
+  const [selectedSemester, setSelectedSemester] = useState<string>("all");
+  const [selectedTahunAjaran, setSelectedTahunAjaran] = useState<string>("all");
 
   // ============================================================================
   // EFFECTS
@@ -68,12 +68,10 @@ export default function MahasiswaNilaiPage() {
     if (user?.mahasiswa?.id) {
       loadNilai();
     }
-     
   }, [user?.mahasiswa?.id]);
 
   useEffect(() => {
     filterNilai();
-     
   }, [nilaiList, selectedSemester, selectedTahunAjaran]);
 
   // ============================================================================
@@ -88,8 +86,8 @@ export default function MahasiswaNilaiPage() {
       const data = await getNilaiByMahasiswa(user.mahasiswa.id);
       setNilaiList(data);
     } catch (error) {
-      console.error('Error loading nilai:', error);
-      toast.error('Gagal memuat data nilai');
+      console.error("Error loading nilai:", error);
+      toast.error("Gagal memuat data nilai");
     } finally {
       setLoading(false);
     }
@@ -102,15 +100,15 @@ export default function MahasiswaNilaiPage() {
   const filterNilai = () => {
     let filtered = [...nilaiList];
 
-    if (selectedSemester !== 'all') {
-      filtered = filtered.filter(n =>
-        n.kelas?.semester_ajaran?.toString() === selectedSemester
+    if (selectedSemester !== "all") {
+      filtered = filtered.filter(
+        (n) => n.kelas?.semester_ajaran?.toString() === selectedSemester,
       );
     }
 
-    if (selectedTahunAjaran !== 'all') {
-      filtered = filtered.filter(n =>
-        n.kelas?.tahun_ajaran === selectedTahunAjaran
+    if (selectedTahunAjaran !== "all") {
+      filtered = filtered.filter(
+        (n) => n.kelas?.tahun_ajaran === selectedTahunAjaran,
       );
     }
 
@@ -124,8 +122,8 @@ export default function MahasiswaNilaiPage() {
   const getSemesterOptions = () => {
     const semesters = new Set(
       nilaiList
-        .map(n => n.kelas?.semester_ajaran)
-        .filter(s => s !== undefined)
+        .map((n) => n.kelas?.semester_ajaran)
+        .filter((s) => s !== undefined),
     );
     return Array.from(semesters).sort((a, b) => (b ?? 0) - (a ?? 0));
   };
@@ -133,8 +131,8 @@ export default function MahasiswaNilaiPage() {
   const getTahunAjaranOptions = () => {
     const years = new Set(
       nilaiList
-        .map(n => n.kelas?.tahun_ajaran)
-        .filter(y => y !== undefined)
+        .map((n) => n.kelas?.tahun_ajaran)
+        .filter((y) => y !== undefined),
     );
     return Array.from(years).sort().reverse();
   };
@@ -164,7 +162,7 @@ export default function MahasiswaNilaiPage() {
       E: 0,
     };
 
-    filteredNilai.forEach(n => {
+    filteredNilai.forEach((n) => {
       const huruf = n.nilai_huruf?.charAt(0);
       if (huruf && huruf in distribution) {
         distribution[huruf as keyof typeof distribution]++;
@@ -201,7 +199,9 @@ export default function MahasiswaNilaiPage() {
         <Button
           variant="outline"
           className="flex items-center gap-2"
-          onClick={() => toast.info('Fitur download transkrip akan segera tersedia')}
+          onClick={() =>
+            toast.info("Fitur download transkrip akan segera tersedia")
+          }
         >
           <Download className="w-4 h-4" />
           Download Transkrip
@@ -241,7 +241,7 @@ export default function MahasiswaNilaiPage() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">
-              Mata Kuliah
+              Kelas Praktikum
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -274,14 +274,17 @@ export default function MahasiswaNilaiPage() {
             <CardTitle>Filter Semester</CardTitle>
           </CardHeader>
           <CardContent>
-            <Select value={selectedSemester} onValueChange={setSelectedSemester}>
+            <Select
+              value={selectedSemester}
+              onValueChange={setSelectedSemester}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Semua Semester" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Semua Semester</SelectItem>
                 {getSemesterOptions().map((sem) => (
-                  <SelectItem key={sem} value={sem?.toString() || ''}>
+                  <SelectItem key={sem} value={sem?.toString() || ""}>
                     Semester {sem}
                   </SelectItem>
                 ))}
@@ -295,14 +298,17 @@ export default function MahasiswaNilaiPage() {
             <CardTitle>Filter Tahun Ajaran</CardTitle>
           </CardHeader>
           <CardContent>
-            <Select value={selectedTahunAjaran} onValueChange={setSelectedTahunAjaran}>
+            <Select
+              value={selectedTahunAjaran}
+              onValueChange={setSelectedTahunAjaran}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Semua Tahun" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Semua Tahun</SelectItem>
                 {getTahunAjaranOptions().map((year) => (
-                  <SelectItem key={year} value={year || ''}>
+                  <SelectItem key={year} value={year || ""}>
                     {year}
                   </SelectItem>
                 ))}
@@ -317,7 +323,7 @@ export default function MahasiswaNilaiPage() {
         <CardHeader>
           <CardTitle>Daftar Nilai</CardTitle>
           <CardDescription>
-            Nilai akademik untuk semua mata kuliah yang Anda ambil
+            Nilai untuk semua kelas praktikum yang Anda ikuti
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -325,8 +331,8 @@ export default function MahasiswaNilaiPage() {
             <Alert>
               <AlertDescription>
                 {nilaiList.length === 0
-                  ? 'Belum ada data nilai'
-                  : 'Tidak ada nilai yang sesuai dengan filter'}
+                  ? "Belum ada data nilai"
+                  : "Tidak ada nilai yang sesuai dengan filter"}
               </AlertDescription>
             </Alert>
           ) : (
@@ -370,43 +376,51 @@ export default function MahasiswaNilaiPage() {
                           {nilai.kelas?.semester_ajaran}
                         </TableCell>
                         <TableCell className="text-center">
-                          {nilai.nilai_kuis?.toFixed(1) || '0.0'}
+                          {nilai.nilai_kuis?.toFixed(1) || "0.0"}
                         </TableCell>
                         <TableCell className="text-center">
-                          {nilai.nilai_tugas?.toFixed(1) || '0.0'}
+                          {nilai.nilai_tugas?.toFixed(1) || "0.0"}
                         </TableCell>
                         <TableCell className="text-center">
-                          {nilai.nilai_uts?.toFixed(1) || '0.0'}
+                          {nilai.nilai_uts?.toFixed(1) || "0.0"}
                         </TableCell>
                         <TableCell className="text-center">
-                          {nilai.nilai_uas?.toFixed(1) || '0.0'}
+                          {nilai.nilai_uas?.toFixed(1) || "0.0"}
                         </TableCell>
                         <TableCell className="text-center">
-                          {nilai.nilai_praktikum?.toFixed(1) || '0.0'}
+                          {nilai.nilai_praktikum?.toFixed(1) || "0.0"}
                         </TableCell>
                         <TableCell className="text-center">
-                          {nilai.nilai_kehadiran?.toFixed(1) || '0.0'}
+                          {nilai.nilai_kehadiran?.toFixed(1) || "0.0"}
                         </TableCell>
                         <TableCell className="text-center font-bold">
-                          {nilai.nilai_akhir?.toFixed(2) || '0.00'}
+                          {nilai.nilai_akhir?.toFixed(2) || "0.00"}
                         </TableCell>
                         <TableCell className="text-center">
-                          <span className={`px-2 py-1 rounded font-bold ${
-                            nilai.nilai_huruf?.startsWith('A') ? 'bg-green-100 text-green-800' :
-                            nilai.nilai_huruf?.startsWith('B') ? 'bg-blue-100 text-blue-800' :
-                            nilai.nilai_huruf?.startsWith('C') ? 'bg-yellow-100 text-yellow-800' :
-                            nilai.nilai_huruf?.startsWith('D') ? 'bg-orange-100 text-orange-800' :
-                            'bg-red-100 text-red-800'
-                          }`}>
-                            {nilai.nilai_huruf || '-'}
+                          <span
+                            className={`px-2 py-1 rounded font-bold ${
+                              nilai.nilai_huruf?.startsWith("A")
+                                ? "bg-green-100 text-green-800"
+                                : nilai.nilai_huruf?.startsWith("B")
+                                  ? "bg-blue-100 text-blue-800"
+                                  : nilai.nilai_huruf?.startsWith("C")
+                                    ? "bg-yellow-100 text-yellow-800"
+                                    : nilai.nilai_huruf?.startsWith("D")
+                                      ? "bg-orange-100 text-orange-800"
+                                      : "bg-red-100 text-red-800"
+                            }`}
+                          >
+                            {nilai.nilai_huruf || "-"}
                           </span>
                         </TableCell>
                         <TableCell className="text-center">
-                          <span className={`px-2 py-1 rounded text-sm font-medium ${
-                            gradeStatus.color === 'green'
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-red-100 text-red-800'
-                          }`}>
+                          <span
+                            className={`px-2 py-1 rounded text-sm font-medium ${
+                              gradeStatus.color === "green"
+                                ? "bg-green-100 text-green-800"
+                                : "bg-red-100 text-red-800"
+                            }`}
+                          >
                             {gradeStatus.status}
                           </span>
                         </TableCell>
@@ -433,13 +447,19 @@ export default function MahasiswaNilaiPage() {
             <div className="grid grid-cols-5 gap-4">
               {Object.entries(gradeDistribution).map(([grade, count]) => (
                 <div key={grade} className="text-center">
-                  <div className={`text-2xl font-bold mb-1 ${
-                    grade === 'A' ? 'text-green-600' :
-                    grade === 'B' ? 'text-blue-600' :
-                    grade === 'C' ? 'text-yellow-600' :
-                    grade === 'D' ? 'text-orange-600' :
-                    'text-red-600'
-                  }`}>
+                  <div
+                    className={`text-2xl font-bold mb-1 ${
+                      grade === "A"
+                        ? "text-green-600"
+                        : grade === "B"
+                          ? "text-blue-600"
+                          : grade === "C"
+                            ? "text-yellow-600"
+                            : grade === "D"
+                              ? "text-orange-600"
+                              : "text-red-600"
+                    }`}
+                  >
                     {count}
                   </div>
                   <div className="text-sm text-gray-600">Grade {grade}</div>
@@ -449,38 +469,6 @@ export default function MahasiswaNilaiPage() {
           </CardContent>
         </Card>
       )}
-
-      {/* Legend */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Keterangan Bobot Nilai</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
-            <div>
-              <span className="font-semibold">Kuis:</span> 15%
-            </div>
-            <div>
-              <span className="font-semibold">Tugas:</span> 20%
-            </div>
-            <div>
-              <span className="font-semibold">UTS:</span> 25%
-            </div>
-            <div>
-              <span className="font-semibold">UAS:</span> 30%
-            </div>
-            <div>
-              <span className="font-semibold">Praktikum:</span> 5%
-            </div>
-            <div>
-              <span className="font-semibold">Kehadiran:</span> 5%
-            </div>
-          </div>
-          <div className="mt-4 text-sm text-gray-600">
-            Nilai Akhir = (Kuis × 15%) + (Tugas × 20%) + (UTS × 25%) + (UAS × 30%) + (Praktikum × 5%) + (Kehadiran × 5%)
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }

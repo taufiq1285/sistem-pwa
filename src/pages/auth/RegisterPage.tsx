@@ -3,9 +3,15 @@
  * Page for new user registration
  */
 
-import { useNavigate, Link } from 'react-router-dom';
-import { RegisterForm } from '@/components/forms/RegisterForm';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useNavigate, Link } from "react-router-dom";
+import { RegisterForm } from "@/components/forms/RegisterForm";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 export function RegisterPage() {
   const navigate = useNavigate();
@@ -13,7 +19,7 @@ export function RegisterPage() {
   const handleSuccess = () => {
     // Redirect to login after successful registration
     setTimeout(() => {
-      navigate('/login');
+      navigate("/login");
     }, 2000);
   };
 
@@ -30,7 +36,7 @@ export function RegisterPage() {
         </CardHeader>
         <CardContent>
           <RegisterForm onSuccess={handleSuccess} />
-          
+
           <div className="mt-4 text-center text-sm">
             <span className="text-gray-600">Already have an account? </span>
             <Link

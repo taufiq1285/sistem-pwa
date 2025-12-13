@@ -9,8 +9,14 @@
 
 export interface Jadwal {
   id: string;
-  kelas?: string | null;              // ❌ OLD: String field (deprecated)
-  kelas_id?: string | null;           // ✅ NEW: UUID reference to kelas table
+  kelas?:
+    | string
+    | null
+    | {
+        nama_kelas?: string | null;
+        mata_kuliah?: { nama_mk?: string | null } | null;
+      };
+  kelas_id?: string | null; // ✅ NEW: UUID reference to kelas table
   laboratorium_id: string;
   tanggal_praktikum: string;
   hari?: string | null;
@@ -21,6 +27,10 @@ export interface Jadwal {
   deskripsi?: string | null;
   catatan?: string | null;
   is_active?: boolean;
+  status?: "pending" | "approved" | "rejected" | "cancelled";
+  cancelled_by?: string | null;
+  cancelled_at?: string | null;
+  cancellation_reason?: string | null;
   created_at?: string;
   updated_at?: string;
   laboratorium?: {
@@ -43,8 +53,8 @@ export interface Jadwal {
 // ========================================
 
 export interface CreateJadwalData {
-  kelas?: string;                     // ❌ OLD: Keep for backward compatibility
-  kelas_id?: string;                  // ✅ NEW: Primary field to use
+  kelas?: string; // ❌ OLD: Keep for backward compatibility
+  kelas_id?: string; // ✅ NEW: Primary field to use
   laboratorium_id: string;
   tanggal_praktikum: string | Date;
   jam_mulai: string;
@@ -69,7 +79,7 @@ export interface CalendarEvent {
   title: string;
   start: string;
   end: string;
-  type: 'class' | 'quiz' | 'booking' | 'exam';
+  type: "class" | "quiz" | "booking" | "exam";
   color?: string;
   description?: string;
   location?: string;
@@ -108,7 +118,7 @@ export interface TodaySchedule {
   is_now: boolean;
   is_upcoming: boolean;
   is_past: boolean;
-  time_status: 'past' | 'ongoing' | 'upcoming';
+  time_status: "past" | "ongoing" | "upcoming";
 }
 
 export interface WeeklySchedule {
@@ -154,8 +164,8 @@ export interface JadwalPraktikum {
 // ========================================
 
 export interface JadwalFilters {
-  kelas?: string;                     // ❌ OLD: String filter
-  kelas_id?: string;                  // ✅ NEW: UUID filter
+  kelas?: string; // ❌ OLD: String filter
+  kelas_id?: string; // ✅ NEW: UUID filter
   laboratorium_id?: string;
   tanggal_praktikum?: string;
   tanggal_mulai?: string;
@@ -178,7 +188,7 @@ export interface Booking {
   jam_mulai: string;
   jam_selesai: string;
   keperluan: string;
-  status: 'pending' | 'approved' | 'rejected' | 'cancelled';
+  status: "pending" | "approved" | "rejected" | "cancelled";
   catatan?: string | null;
   approval_by?: string | null;
   approval_at?: string | null;
@@ -214,7 +224,7 @@ export interface BookingFilters {
   dosen_id?: string;
   tanggal_mulai?: string;
   tanggal_selesai?: string;
-  status?: 'pending' | 'approved' | 'rejected' | 'cancelled';
+  status?: "pending" | "approved" | "rejected" | "cancelled";
 }
 
 // ========================================
@@ -254,65 +264,65 @@ export interface LaboratoriumFilters {
 // ========================================
 
 export const HARI_OPTIONS = [
-  { value: 'senin', label: 'Senin' },
-  { value: 'selasa', label: 'Selasa' },
-  { value: 'rabu', label: 'Rabu' },
-  { value: 'kamis', label: 'Kamis' },
-  { value: 'jumat', label: 'Jumat' },
-  { value: 'sabtu', label: 'Sabtu' },
+  { value: "senin", label: "Senin" },
+  { value: "selasa", label: "Selasa" },
+  { value: "rabu", label: "Rabu" },
+  { value: "kamis", label: "Kamis" },
+  { value: "jumat", label: "Jumat" },
+  { value: "sabtu", label: "Sabtu" },
 ] as const;
 
 export const JAM_PRAKTIKUM = [
-  { value: '07:00', label: '07:00' },
-  { value: '08:00', label: '08:00' },
-  { value: '09:00', label: '09:00' },
-  { value: '10:00', label: '10:00' },
-  { value: '11:00', label: '11:00' },
-  { value: '12:00', label: '12:00' },
-  { value: '13:00', label: '13:00' },
-  { value: '14:00', label: '14:00' },
-  { value: '15:00', label: '15:00' },
-  { value: '16:00', label: '16:00' },
-  { value: '17:00', label: '17:00' },
+  { value: "07:00", label: "07:00" },
+  { value: "08:00", label: "08:00" },
+  { value: "09:00", label: "09:00" },
+  { value: "10:00", label: "10:00" },
+  { value: "11:00", label: "11:00" },
+  { value: "12:00", label: "12:00" },
+  { value: "13:00", label: "13:00" },
+  { value: "14:00", label: "14:00" },
+  { value: "15:00", label: "15:00" },
+  { value: "16:00", label: "16:00" },
+  { value: "17:00", label: "17:00" },
 ] as const;
 
 export const BOOKING_STATUS = {
-  PENDING: 'pending',
-  APPROVED: 'approved',
-  REJECTED: 'rejected',
-  CANCELLED: 'cancelled',
+  PENDING: "pending",
+  APPROVED: "approved",
+  REJECTED: "rejected",
+  CANCELLED: "cancelled",
 } as const;
 
 export const BOOKING_STATUS_LABELS = {
-  pending: 'Menunggu',
-  approved: 'Disetujui',
-  rejected: 'Ditolak',
-  cancelled: 'Dibatalkan',
+  pending: "Menunggu",
+  approved: "Disetujui",
+  rejected: "Ditolak",
+  cancelled: "Dibatalkan",
 } as const;
 
 export const BOOKING_STATUS_COLORS = {
-  pending: 'yellow',
-  approved: 'green',
-  rejected: 'red',
-  cancelled: 'gray',
+  pending: "yellow",
+  approved: "green",
+  rejected: "red",
+  cancelled: "gray",
 } as const;
 
 export const EVENT_TYPE_COLORS = {
-  class: '#3b82f6',
-  quiz: '#ef4444',
-  booking: '#10b981',
-  exam: '#f59e0b',
+  class: "#3b82f6",
+  quiz: "#ef4444",
+  booking: "#10b981",
+  exam: "#f59e0b",
 } as const;
 
 export const LABORATORIUM_LIST = [
-  'Lab Keterampilan Dasar Praktik Kebidanan',
-  'Lab ANC (Antenatal Care)',
-  'Lab PNC (Postnatal Care)',
-  'Lab INC (Intranatal Care)',
-  'Lab BBL (Bayi Baru Lahir)',
-  'Lab Pelayanan KB',
-  'Lab Konseling & Pendidikan Kesehatan',
-  'Lab Kebidanan Komunitas',
-  'Lab Bayi, Balita, Anak Prasekolah',
-  'Ruangan Depo Alat',
+  "Lab Keterampilan Dasar Praktik Kebidanan",
+  "Lab ANC (Antenatal Care)",
+  "Lab PNC (Postnatal Care)",
+  "Lab INC (Intranatal Care)",
+  "Lab BBL (Bayi Baru Lahir)",
+  "Lab Pelayanan KB",
+  "Lab Konseling & Pendidikan Kesehatan",
+  "Lab Kebidanan Komunitas",
+  "Lab Bayi, Balita, Anak Prasekolah",
+  "Ruangan Depo Alat",
 ] as const;

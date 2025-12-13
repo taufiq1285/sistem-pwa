@@ -3,13 +3,13 @@
  * Fetches offline sync and queue statistics
  */
 
-import { syncManager } from '@/lib/offline/sync-manager';
-import type { QueueStats } from '@/lib/offline/queue-manager';
-import type { SyncStats } from '@/lib/offline/sync-manager';
+import { syncManager } from "@/lib/offline/sync-manager";
+import type { QueueStats } from "@/lib/offline/queue-manager";
+import type { SyncStats } from "@/lib/offline/sync-manager";
 import {
   requirePermission,
   requirePermissionAndOwnership,
-} from '@/lib/middleware';
+} from "@/lib/middleware";
 
 export interface SyncManagementStats {
   pendingSync: number;
@@ -32,7 +32,7 @@ export async function getSyncManagementStats(): Promise<SyncManagementStats> {
     // Format last sync time
     const lastSync = syncStats.lastSync
       ? new Date(syncStats.lastSync).toLocaleString()
-      : 'Never';
+      : "Never";
 
     return {
       pendingSync: queueStats.pending,
@@ -44,15 +44,20 @@ export async function getSyncManagementStats(): Promise<SyncManagementStats> {
       syncStats,
     };
   } catch (error) {
-    console.error('Error fetching sync stats:', error);
+    console.error("Error fetching sync stats:", error);
     return {
       pendingSync: 0,
       synced: 0,
       failed: 0,
       conflicts: 0,
-      lastSync: 'Never',
+      lastSync: "Never",
       queueStats: { total: 0, pending: 0, syncing: 0, completed: 0, failed: 0 },
-      syncStats: { totalSynced: 0, totalFailed: 0, averageDuration: 0, syncHistory: [] },
+      syncStats: {
+        totalSynced: 0,
+        totalFailed: 0,
+        averageDuration: 0,
+        syncHistory: [],
+      },
     };
   }
 }
@@ -64,12 +69,10 @@ async function forceSyncNowImpl(): Promise<void> {
   try {
     await syncManager.processSync();
   } catch (error) {
-    console.error('Error forcing sync:', error);
+    console.error("Error forcing sync:", error);
     throw error;
   }
 }
 
 // 🔒 PROTECTED: Requires manage:sync permission
-export const forceSyncNow = requirePermission('manage:sync', forceSyncNowImpl);
-
-
+export const forceSyncNow = requirePermission("manage:sync", forceSyncNowImpl);

@@ -1,13 +1,13 @@
 /**
  * QuizAttempt Component
- * 
+ *
  * Purpose: Main orchestrator for quiz attempt (Mahasiswa)
  * Used by: KuisAttemptPage
  * Features: Load quiz, answer questions, auto-save, timer, navigation, submit
  */
 
-import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   ChevronLeft,
   ChevronRight,
@@ -15,16 +15,16 @@ import {
   Send,
   AlertCircle,
   Loader2,
-} from 'lucide-react';
+} from "lucide-react";
 
 // UI Components
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -34,19 +34,19 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+} from "@/components/ui/alert-dialog";
 
 // Custom Components
-import { QuizTimer, clearTimerData } from './QuizTimer';
+import { QuizTimer, clearTimerData } from "./QuizTimer";
 import {
   QuizNavigation,
   createQuestionStatusList,
   areAllQuestionsAnswered,
   getUnansweredQuestions,
   type QuestionStatus,
-} from './QuizNavigation';
-import { ConnectionLostAlert } from './ConnectionLostAlert';
-import { OfflineAutoSave } from './OfflineAutoSave';
+} from "./QuizNavigation";
+import { ConnectionLostAlert } from "./ConnectionLostAlert";
+import { OfflineAutoSave } from "./OfflineAutoSave";
 
 // API & Types
 import {
@@ -58,18 +58,20 @@ import {
   getOfflineAnswers,
   syncOfflineAnswers,
   cacheAttemptOffline,
-} from '@/lib/api/kuis.api';
-import type { Kuis, Soal, AttemptKuis } from '@/types/kuis.types';
-import { TIPE_SOAL } from '@/types/kuis.types';
+} from "@/lib/api/kuis.api";
+// ✅ SECURITY FIX: Import secure API untuk hide jawaban_benar
+import { getSoalForAttempt } from "@/lib/api/kuis-secure.api";
+import type { Kuis, Soal, AttemptKuis } from "@/types/kuis.types";
+import { TIPE_SOAL } from "@/types/kuis.types";
 
 // Toast
-import { toast } from 'sonner';
+import { toast } from "sonner";
 
 // Utils
-import { cn } from '@/lib/utils';
+import { cn } from "@/lib/utils";
 
 // Hooks
-import { useNetworkStatus } from '@/lib/hooks/useNetworkStatus';
+import { useNetworkStatus } from "@/lib/hooks/useNetworkStatus";
 
 // ============================================================================
 // TYPES
@@ -80,12 +82,12 @@ interface QuizAttemptProps {
    * Quiz ID
    */
   kuisId: string;
-  
+
   /**
    * Mahasiswa ID
    */
   mahasiswaId: string;
-  
+
   /**
    * Optional existing attempt ID (for resuming)
    */
@@ -101,69 +103,84 @@ export function QuizAttempt({
   mahasiswaId,
   attemptId: existingAttemptId,
 }: QuizAttemptProps) {
-
   const navigate = useNavigate();
   const { isOnline } = useNetworkStatus();
+
+  // ✅ Prevent duplicate calls in React StrictMode
+  const isInitializingRef = useRef(false);
 
   // ============================================================================
   // STATE
   // ============================================================================
-  
+
   // Quiz data
   const [quiz, setQuiz] = useState<Kuis | null>(null);
   const [questions, setQuestions] = useState<Soal[]>([]);
   const [attempt, setAttempt] = useState<AttemptKuis | null>(null);
-  
+
   // Current state
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [flaggedQuestions, setFlaggedQuestions] = useState<Set<string>>(new Set());
-  
+  const [flaggedQuestions, setFlaggedQuestions] = useState<Set<string>>(
+    new Set(),
+  );
+
   // UI state
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSubmitDialog, setShowSubmitDialog] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Ref for remaining time
   const remainingTimeRef = useRef<number>(0);
-  
+
   // ============================================================================
   // COMPUTED VALUES
   // ============================================================================
-  
+
   const currentQuestion = questions[currentQuestionIndex];
-  const currentAnswer = currentQuestion ? answers[currentQuestion.id] || '' : '';
+  const currentAnswer = currentQuestion
+    ? answers[currentQuestion.id] || ""
+    : "";
   const totalQuestions = questions.length;
   const isFirstQuestion = currentQuestionIndex === 0;
   const isLastQuestion = currentQuestionIndex === totalQuestions - 1;
   const totalPoints = questions.reduce((sum, q) => sum + (q.poin || 0), 0);
-  
+
   // Question status for navigation
   const questionStatus: QuestionStatus[] = createQuestionStatusList(
     questions,
-    answers
+    answers,
   );
-  
+
   // ============================================================================
   // EFFECTS
   // ============================================================================
-  
+
   /**
    * Load quiz and start/resume attempt
    */
   useEffect(() => {
-    loadQuizAndStartAttempt();
+    // ✅ Prevent duplicate calls (React StrictMode protection)
+    if (isInitializingRef.current) {
+      console.log("⚠️ Already initializing, skipping duplicate call");
+      return;
+    }
+
+    isInitializingRef.current = true;
+    loadQuizAndStartAttempt().finally(() => {
+      isInitializingRef.current = false;
+    });
   }, [kuisId, mahasiswaId]);
-  
+
   /**
    * Sync offline answers when coming back online
    */
   useEffect(() => {
     if (isOnline && attempt) {
       syncOfflineAnswers(attempt.id).catch((err) => {
-        console.error('Failed to sync offline answers:', err);
+        console.error("Failed to sync offline answers:", err);
       });
     }
   }, [isOnline, attempt]);
@@ -171,7 +188,7 @@ export function QuizAttempt({
   // ============================================================================
   // HANDLERS - DATA LOADING
   // ============================================================================
-  
+
   /**
    * Load quiz data and start/resume attempt
    */
@@ -184,11 +201,24 @@ export function QuizAttempt({
       const quizData = await getKuisByIdOffline(kuisId);
       setQuiz(quizData);
 
-      // Load questions (offline-first)
-      const questionsData = await getSoalByKuisOffline(kuisId);
+      // ✅ SECURITY FIX: Load questions WITHOUT jawaban_benar
+      // Use secure API to prevent cheating
+      let questionsData: Soal[];
+      try {
+        // Try secure API first (online)
+        questionsData = await getSoalForAttempt(kuisId);
+        console.log("✅ Loaded soal securely (jawaban_benar hidden)");
+      } catch (err) {
+        // Fallback to offline cache if online fetch fails
+        console.warn("⚠️ Secure API failed, using offline cache:", err);
+        questionsData = await getSoalByKuisOffline(kuisId);
+      }
 
       // Shuffle if needed (check for shuffle_soal or randomize_questions)
-      const shouldShuffle = (quizData as any).shuffle_soal || (quizData as any).randomize_questions || false;
+      const shouldShuffle =
+        (quizData as any).shuffle_soal ||
+        (quizData as any).randomize_questions ||
+        false;
       const orderedQuestions = shouldShuffle
         ? shuffleArray([...questionsData])
         : questionsData.sort((a: Soal, b: Soal) => a.urutan - b.urutan);
@@ -196,37 +226,58 @@ export function QuizAttempt({
       setQuestions(orderedQuestions);
 
       // Start or resume attempt
+      let attemptData: AttemptKuis;
+
       if (existingAttemptId) {
-        // Resume existing attempt - load offline answers
+        // Resume existing attempt
+        console.log("🔵 Resuming attempt:", existingAttemptId);
+
+        // Get attempt data (assuming we have it or can fetch it)
+        // For now, create a minimal attempt object
+        attemptData = {
+          id: existingAttemptId,
+          kuis_id: kuisId,
+          mahasiswa_id: mahasiswaId,
+          attempt_number: 1,
+          status: "in_progress",
+          started_at: new Date().toISOString(),
+        } as AttemptKuis;
+
+        // Load offline answers
         const offlineAnswers = await getOfflineAnswers(existingAttemptId);
         setAnswers(offlineAnswers);
-        toast.info('Melanjutkan attempt sebelumnya');
+        toast.info("Melanjutkan kuis sebelumnya");
       } else {
         // Start new attempt
-        const attemptData = await startAttempt({
+        console.log("🔵 Starting new attempt for kuis:", kuisId);
+        attemptData = await startAttempt({
           kuis_id: kuisId,
           mahasiswa_id: mahasiswaId,
         });
-        setAttempt(attemptData);
 
         // Cache attempt for offline use
         await cacheAttemptOffline(attemptData);
+        toast.success("Kuis dimulai!");
       }
+
+      // ✅ Set attempt state (important!)
+      setAttempt(attemptData);
+      console.log("✅ Attempt loaded:", attemptData.id);
     } catch (err: any) {
-      const errorMessage = err?.message || 'Gagal memuat kuis';
+      const errorMessage = err?.message || "Gagal memuat kuis";
       setError(errorMessage);
-      toast.error('Gagal memuat kuis', {
+      toast.error("Gagal memuat kuis", {
         description: errorMessage,
       });
     } finally {
       setIsLoading(false);
     }
   };
-  
+
   // ============================================================================
   // HANDLERS - NAVIGATION
   // ============================================================================
-  
+
   /**
    * Navigate to specific question
    */
@@ -235,10 +286,10 @@ export function QuizAttempt({
     if (currentAnswer && !isSaving) {
       handleAutoSave();
     }
-    
+
     setCurrentQuestionIndex(questionNumber - 1);
   };
-  
+
   /**
    * Go to previous question
    */
@@ -247,7 +298,7 @@ export function QuizAttempt({
       handleGoToQuestion(currentQuestionIndex);
     }
   };
-  
+
   /**
    * Go to next question
    */
@@ -256,13 +307,13 @@ export function QuizAttempt({
       handleGoToQuestion(currentQuestionIndex + 2);
     }
   };
-  
+
   /**
    * Toggle flag on current question
    */
   const handleToggleFlag = () => {
     if (!currentQuestion) return;
-    
+
     setFlaggedQuestions((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(currentQuestion.id)) {
@@ -273,22 +324,21 @@ export function QuizAttempt({
       return newSet;
     });
   };
-  
+
   // ============================================================================
   // HANDLERS - ANSWERS
   // ============================================================================
-  
+
   /**
    * Handle answer change
    */
   const handleAnswerChange = (value: string) => {
     if (!currentQuestion) return;
-    
+
     setAnswers((prev) => ({
       ...prev,
       [currentQuestion.id]: value,
     }));
-    
   };
   /**
    * Manual save answers (used before navigation/submit)
@@ -304,90 +354,89 @@ export function QuizAttempt({
         soal_id: currentQuestion.id,
         jawaban: currentAnswer,
       });
-
     } catch (err: any) {
-      console.error('Manual save failed:', err);
+      console.error("Manual save failed:", err);
       // Don't show error to user, will retry
     } finally {
       setIsSaving(false);
     }
   };
-  
+
   // ============================================================================
   // HANDLERS - SUBMISSION
   // ============================================================================
-  
+
   /**
    * Open submit confirmation dialog
    */
   const handleOpenSubmitDialog = () => {
     // Check if all questions are answered
     const unanswered = getUnansweredQuestions(questionStatus);
-    
+
     if (unanswered.length > 0) {
-      toast.warning('Ada soal yang belum dijawab', {
-        description: `Soal nomor: ${unanswered.join(', ')}`,
+      toast.warning("Ada soal yang belum dijawab", {
+        description: `Soal nomor: ${unanswered.join(", ")}`,
       });
     }
-    
+
     setShowSubmitDialog(true);
   };
-  
+
   /**
    * Get remaining time from localStorage or ref
    */
   const getRemainingTime = (): number => {
     if (!attempt) return 0;
-    
+
     try {
       const timerKey = `quiz_timer_${attempt.id}`;
       const timerData = localStorage.getItem(timerKey);
-      
+
       if (timerData) {
         const parsed = JSON.parse(timerData);
         return parsed.remainingSeconds || 0;
       }
     } catch (err) {
-      console.error('Failed to get remaining time from localStorage:', err);
+      console.error("Failed to get remaining time from localStorage:", err);
     }
-    
+
     // Fallback to ref
     return remainingTimeRef.current || 0;
   };
-  
+
   /**
    * Submit quiz
    */
   const handleSubmitQuiz = async () => {
     if (!attempt) return;
-    
+
     setIsSubmitting(true);
-    
+
     try {
       // Save current answer first
       if (currentAnswer && !isSaving) {
         await handleAutoSave();
       }
-      
+
       // Get remaining time
       const sisaWaktu = getRemainingTime();
-      
+
       // Submit attempt
       await submitQuiz({
         attempt_id: attempt.id,
         sisa_waktu: sisaWaktu,
       });
-      
+
       // Clear timer data
       clearTimerData(attempt.id);
-      
-      toast.success('Kuis berhasil disubmit');
-      
+
+      toast.success("Kuis berhasil disubmit");
+
       // Redirect to results
       navigate(`/mahasiswa/kuis/${kuisId}/result/${attempt.id}`);
     } catch (err: any) {
-      const errorMessage = err?.message || 'Terjadi kesalahan';
-      toast.error('Gagal submit kuis', {
+      const errorMessage = err?.message || "Terjadi kesalahan";
+      toast.error("Gagal submit kuis", {
         description: errorMessage,
       });
     } finally {
@@ -395,21 +444,21 @@ export function QuizAttempt({
       setShowSubmitDialog(false);
     }
   };
-  
+
   /**
    * Handle time up (auto-submit)
    */
   const handleTimeUp = () => {
-    toast.warning('Waktu habis! Kuis akan otomatis disubmit');
+    toast.warning("Waktu habis! Kuis akan otomatis disubmit");
     setTimeout(() => {
       handleSubmitQuiz();
     }, 2000);
   };
-  
+
   // ============================================================================
   // RENDER - LOADING
   // ============================================================================
-  
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -420,26 +469,24 @@ export function QuizAttempt({
       </div>
     );
   }
-  
+
   // ============================================================================
   // RENDER - ERROR
   // ============================================================================
-  
+
   if (error || !quiz || !attempt) {
     return (
       <Alert variant="destructive">
         <AlertCircle className="h-4 w-4" />
-        <AlertDescription>
-          {error || 'Gagal memuat kuis'}
-        </AlertDescription>
+        <AlertDescription>{error || "Gagal memuat kuis"}</AlertDescription>
       </Alert>
     );
   }
-  
+
   // ============================================================================
   // RENDER - MAIN
   // ============================================================================
-  
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -450,10 +497,12 @@ export function QuizAttempt({
             <p className="text-muted-foreground">{quiz.deskripsi}</p>
           )}
         </div>
-        
+
         {/* Timer (Compact) */}
         <QuizTimer
-          durationMinutes={(quiz as any).durasi || (quiz as any).durasi_menit || 60}
+          durationMinutes={
+            (quiz as any).durasi || (quiz as any).durasi_menit || 60
+          }
           attemptId={attempt.id}
           onTimeUp={handleTimeUp}
           compact
@@ -477,7 +526,7 @@ export function QuizAttempt({
         delay={3000}
         enabled={!!currentAnswer}
       />
-      
+
       {/* Main Content */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Question Area */}
@@ -502,20 +551,21 @@ export function QuizAttempt({
                     {currentQuestion?.pertanyaan}
                   </CardTitle>
                 </div>
-                
+
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={handleToggleFlag}
                   className={cn(
-                    flaggedQuestions.has(currentQuestion?.id || '') && "text-yellow-600"
+                    flaggedQuestions.has(currentQuestion?.id || "") &&
+                      "text-yellow-600",
                   )}
                 >
                   <Flag className="h-5 w-5" />
                 </Button>
               </div>
             </CardHeader>
-            
+
             <CardContent className="space-y-4">
               {/* Answer Input based on question type */}
               {currentQuestion?.tipe_soal === TIPE_SOAL.PILIHAN_GANDA && (
@@ -523,44 +573,31 @@ export function QuizAttempt({
                   value={currentAnswer}
                   onValueChange={handleAnswerChange}
                 >
-                  {currentQuestion.opsi_jawaban?.map((option: any, index: number) => (
-                    <div
-                      key={option.id || index}
-                      className="flex items-center space-x-3 p-4 rounded-lg border hover:bg-accent cursor-pointer"
-                    >
-                      <RadioGroupItem value={option.id} id={`option-${option.id}`} />
-                      <Label
-                        htmlFor={`option-${option.id}`}
-                        className="flex-1 cursor-pointer"
+                  {currentQuestion.opsi_jawaban?.map(
+                    (option: any, index: number) => (
+                      <div
+                        key={option.id || index}
+                        className="flex items-center space-x-3 p-4 rounded-lg border hover:bg-accent cursor-pointer"
                       >
-                        <span className="font-semibold mr-2">{option.label}.</span>
-                        {option.text}
-                      </Label>
-                    </div>
-                  ))}
+                        <RadioGroupItem
+                          value={option.id}
+                          id={`option-${option.id}`}
+                        />
+                        <Label
+                          htmlFor={`option-${option.id}`}
+                          className="flex-1 cursor-pointer"
+                        >
+                          <span className="font-semibold mr-2">
+                            {option.label}.
+                          </span>
+                          {option.text}
+                        </Label>
+                      </div>
+                    ),
+                  )}
                 </RadioGroup>
               )}
-              
-              {currentQuestion?.tipe_soal === TIPE_SOAL.BENAR_SALAH && (
-                <RadioGroup
-                  value={currentAnswer}
-                  onValueChange={handleAnswerChange}
-                >
-                  <div className="flex items-center space-x-3 p-4 rounded-lg border hover:bg-accent cursor-pointer">
-                    <RadioGroupItem value="true" id="answer-true" />
-                    <Label htmlFor="answer-true" className="flex-1 cursor-pointer font-semibold">
-                      Benar
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-3 p-4 rounded-lg border hover:bg-accent cursor-pointer">
-                    <RadioGroupItem value="false" id="answer-false" />
-                    <Label htmlFor="answer-false" className="flex-1 cursor-pointer font-semibold">
-                      Salah
-                    </Label>
-                  </div>
-                </RadioGroup>
-              )}
-              
+
               {currentQuestion?.tipe_soal === TIPE_SOAL.ESSAY && (
                 <Textarea
                   value={currentAnswer}
@@ -572,7 +609,7 @@ export function QuizAttempt({
               )}
             </CardContent>
           </Card>
-          
+
           {/* Navigation Buttons */}
           <div className="flex items-center justify-between">
             <Button
@@ -583,7 +620,7 @@ export function QuizAttempt({
               <ChevronLeft className="h-4 w-4 mr-2" />
               Sebelumnya
             </Button>
-            
+
             {isLastQuestion ? (
               <Button onClick={handleOpenSubmitDialog} className="gap-2">
                 <Send className="h-4 w-4" />
@@ -597,16 +634,18 @@ export function QuizAttempt({
             )}
           </div>
         </div>
-        
+
         {/* Sidebar */}
         <div className="space-y-6">
           {/* Timer (Full) */}
           <QuizTimer
-            durationMinutes={(quiz as any).durasi || (quiz as any).durasi_menit || 60}
+            durationMinutes={
+              (quiz as any).durasi || (quiz as any).durasi_menit || 60
+            }
             attemptId={attempt.id}
             onTimeUp={handleTimeUp}
           />
-          
+
           {/* Navigation */}
           <QuizNavigation
             questions={questionStatus}
@@ -614,7 +653,7 @@ export function QuizAttempt({
             onQuestionClick={handleGoToQuestion}
             totalPoints={totalPoints}
           />
-          
+
           {/* Submit Button (Sidebar) */}
           <Button
             onClick={handleOpenSubmitDialog}
@@ -626,7 +665,7 @@ export function QuizAttempt({
           </Button>
         </div>
       </div>
-      
+
       {/* Submit Confirmation Dialog */}
       <AlertDialog open={showSubmitDialog} onOpenChange={setShowSubmitDialog}>
         <AlertDialogContent>
@@ -635,25 +674,28 @@ export function QuizAttempt({
             <AlertDialogDescription>
               {areAllQuestionsAnswered(questionStatus) ? (
                 <>
-                  Anda telah menjawab semua soal. Yakin ingin submit kuis sekarang?
-                  <br /><br />
+                  Anda telah menjawab semua soal. Yakin ingin submit kuis
+                  sekarang?
+                  <br />
+                  <br />
                   Setelah submit, Anda tidak dapat mengubah jawaban.
                 </>
               ) : (
                 <>
                   <strong>Perhatian!</strong> Anda belum menjawab semua soal.
-                  <br /><br />
-                  Soal yang belum dijawab: {getUnansweredQuestions(questionStatus).join(', ')}
-                  <br /><br />
+                  <br />
+                  <br />
+                  Soal yang belum dijawab:{" "}
+                  {getUnansweredQuestions(questionStatus).join(", ")}
+                  <br />
+                  <br />
                   Yakin ingin submit sekarang?
                 </>
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isSubmitting}>
-              Batal
-            </AlertDialogCancel>
+            <AlertDialogCancel disabled={isSubmitting}>Batal</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleSubmitQuiz}
               disabled={isSubmitting}
@@ -664,7 +706,7 @@ export function QuizAttempt({
                   Submitting...
                 </>
               ) : (
-                'Ya, Submit'
+                "Ya, Submit"
               )}
             </AlertDialogAction>
           </AlertDialogFooter>

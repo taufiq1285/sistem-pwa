@@ -18,7 +18,7 @@
  * - Logging
  */
 
-import type { CacheRule } from '@/config/cache.config';
+import type { CacheRule } from "@/config/cache.config";
 
 // ============================================================================
 // TYPES
@@ -50,7 +50,7 @@ export interface StrategyOptions {
  */
 export type StrategyHandler = (
   request: Request,
-  options: StrategyOptions
+  options: StrategyOptions,
 ) => Promise<Response>;
 
 /**
@@ -82,7 +82,7 @@ export interface CacheMetadata {
  */
 export async function cacheFirst(
   request: Request,
-  options: StrategyOptions
+  options: StrategyOptions,
 ): Promise<Response> {
   const { cacheName, cacheMatchOptions, debug } = options;
 
@@ -108,7 +108,9 @@ export async function cacheFirst(
 
     // 2. Cache miss or expired - fetch from network
     if (debug) {
-      console.log(`[CacheFirst] Cache miss, fetching from network: ${request.url}`);
+      console.log(
+        `[CacheFirst] Cache miss, fetching from network: ${request.url}`,
+      );
     }
 
     const networkResponse = await fetch(request);
@@ -125,14 +127,14 @@ export async function cacheFirst(
 
     return networkResponse;
   } catch (error) {
-    console.error('[CacheFirst] Strategy failed:', error);
+    console.error("[CacheFirst] Strategy failed:", error);
 
     // Try to return stale cache as last resort
     const cache = await caches.open(cacheName);
     const staleResponse = await cache.match(request);
 
     if (staleResponse) {
-      console.warn('[CacheFirst] Returning stale cache:', request.url);
+      console.warn("[CacheFirst] Returning stale cache:", request.url);
       return staleResponse;
     }
 
@@ -160,9 +162,14 @@ export async function cacheFirst(
  */
 export async function networkFirst(
   request: Request,
-  options: StrategyOptions
+  options: StrategyOptions,
 ): Promise<Response> {
-  const { cacheName, networkTimeout = 3000, cacheMatchOptions, debug } = options;
+  const {
+    cacheName,
+    networkTimeout = 3000,
+    cacheMatchOptions,
+    debug,
+  } = options;
 
   try {
     // 1. Try network first with timeout
@@ -170,7 +177,9 @@ export async function networkFirst(
     const timeoutId = setTimeout(() => controller.abort(), networkTimeout);
 
     try {
-      const networkResponse = await fetch(request, { signal: controller.signal });
+      const networkResponse = await fetch(request, {
+        signal: controller.signal,
+      });
       clearTimeout(timeoutId);
 
       if (debug) {
@@ -196,19 +205,21 @@ export async function networkFirst(
   } catch (error) {
     // 2. Network failed - try cache
     if (debug) {
-      console.log(`[NetworkFirst] Network failed, trying cache: ${request.url}`);
+      console.log(
+        `[NetworkFirst] Network failed, trying cache: ${request.url}`,
+      );
     }
 
     const cache = await caches.open(cacheName);
     const cachedResponse = await cache.match(request, cacheMatchOptions);
 
     if (cachedResponse) {
-      console.warn('[NetworkFirst] Serving from cache (offline):', request.url);
+      console.warn("[NetworkFirst] Serving from cache (offline):", request.url);
       return cachedResponse;
     }
 
     // 3. Both failed
-    console.error('[NetworkFirst] Strategy failed:', error);
+    console.error("[NetworkFirst] Strategy failed:", error);
     throw error;
   }
 }
@@ -233,7 +244,7 @@ export async function networkFirst(
  */
 export async function staleWhileRevalidate(
   request: Request,
-  options: StrategyOptions
+  options: StrategyOptions,
 ): Promise<Response> {
   const { cacheName, cacheMatchOptions, debug } = options;
 
@@ -252,14 +263,16 @@ export async function staleWhileRevalidate(
           await cache.put(request, responseToCache);
 
           if (debug) {
-            console.log(`[StaleWhileRevalidate] Background cache update: ${request.url}`);
+            console.log(
+              `[StaleWhileRevalidate] Background cache update: ${request.url}`,
+            );
           }
         }
         return networkResponse;
       })
       .catch((error) => {
         if (debug) {
-          console.warn('[StaleWhileRevalidate] Network update failed:', error);
+          console.warn("[StaleWhileRevalidate] Network update failed:", error);
         }
         return null;
       });
@@ -268,7 +281,9 @@ export async function staleWhileRevalidate(
     const cachedResponse = await cachedResponsePromise;
     if (cachedResponse) {
       if (debug) {
-        console.log(`[StaleWhileRevalidate] Serving from cache: ${request.url}`);
+        console.log(
+          `[StaleWhileRevalidate] Serving from cache: ${request.url}`,
+        );
       }
 
       // Network update continues in background
@@ -281,7 +296,9 @@ export async function staleWhileRevalidate(
 
     // No cache - wait for network
     if (debug) {
-      console.log(`[StaleWhileRevalidate] No cache, waiting for network: ${request.url}`);
+      console.log(
+        `[StaleWhileRevalidate] No cache, waiting for network: ${request.url}`,
+      );
     }
 
     const networkResponse = await networkResponsePromise;
@@ -289,9 +306,9 @@ export async function staleWhileRevalidate(
       return networkResponse;
     }
 
-    throw new Error('Both cache and network failed');
+    throw new Error("Both cache and network failed");
   } catch (error) {
-    console.error('[StaleWhileRevalidate] Strategy failed:', error);
+    console.error("[StaleWhileRevalidate] Strategy failed:", error);
     throw error;
   }
 }
@@ -316,7 +333,7 @@ export async function staleWhileRevalidate(
  */
 export async function networkOnly(
   request: Request,
-  options: StrategyOptions
+  options: StrategyOptions,
 ): Promise<Response> {
   const { debug } = options;
 
@@ -328,7 +345,7 @@ export async function networkOnly(
     const response = await fetch(request);
     return response;
   } catch (error) {
-    console.error('[NetworkOnly] Network request failed:', error);
+    console.error("[NetworkOnly] Network request failed:", error);
     throw error;
   }
 }
@@ -352,7 +369,7 @@ export async function networkOnly(
  */
 export async function cacheOnly(
   request: Request,
-  options: StrategyOptions
+  options: StrategyOptions,
 ): Promise<Response> {
   const { cacheName, cacheMatchOptions, debug } = options;
 
@@ -369,7 +386,7 @@ export async function cacheOnly(
 
     throw new Error(`No cached response for: ${request.url}`);
   } catch (error) {
-    console.error('[CacheOnly] Strategy failed:', error);
+    console.error("[CacheOnly] Strategy failed:", error);
     throw error;
   }
 }
@@ -383,7 +400,7 @@ export async function cacheOnly(
  */
 async function isCacheValid(
   response: Response,
-  options: StrategyOptions
+  options: StrategyOptions,
 ): Promise<boolean> {
   const { maxAge } = options;
 
@@ -392,7 +409,7 @@ async function isCacheValid(
   }
 
   // Check Date header
-  const dateHeader = response.headers.get('date');
+  const dateHeader = response.headers.get("date");
   if (!dateHeader) {
     return true; // No date header, assume valid
   }
@@ -421,15 +438,15 @@ async function isCacheValid(
  */
 export function getStrategyHandler(strategyName: string): StrategyHandler {
   switch (strategyName) {
-    case 'CacheFirst':
+    case "CacheFirst":
       return cacheFirst;
-    case 'NetworkFirst':
+    case "NetworkFirst":
       return networkFirst;
-    case 'StaleWhileRevalidate':
+    case "StaleWhileRevalidate":
       return staleWhileRevalidate;
-    case 'NetworkOnly':
+    case "NetworkOnly":
       return networkOnly;
-    case 'CacheOnly':
+    case "CacheOnly":
       return cacheOnly;
     default:
       console.warn(`Unknown strategy: ${strategyName}, using NetworkFirst`);
@@ -442,7 +459,7 @@ export function getStrategyHandler(strategyName: string): StrategyHandler {
  */
 export async function applyCacheRule(
   request: Request,
-  rule: CacheRule
+  rule: CacheRule,
 ): Promise<Response> {
   const strategyHandler = getStrategyHandler(rule.strategy);
 
@@ -464,7 +481,10 @@ export async function applyCacheRule(
 /**
  * Cleanup cache based on max entries
  */
-export async function cleanupCache(cacheName: string, maxEntries: number): Promise<void> {
+export async function cleanupCache(
+  cacheName: string,
+  maxEntries: number,
+): Promise<void> {
   const cache = await caches.open(cacheName);
   const requests = await cache.keys();
 
@@ -478,7 +498,9 @@ export async function cleanupCache(cacheName: string, maxEntries: number): Promi
 
   await Promise.all(requestsToDelete.map((request) => cache.delete(request)));
 
-  console.log(`[Cache] Cleaned up ${entriesToDelete} entries from ${cacheName}`);
+  console.log(
+    `[Cache] Cleaned up ${entriesToDelete} entries from ${cacheName}`,
+  );
 }
 
 /**
@@ -486,7 +508,7 @@ export async function cleanupCache(cacheName: string, maxEntries: number): Promi
  */
 export async function cleanupExpiredCache(
   cacheName: string,
-  maxAge: number
+  maxAge: number,
 ): Promise<void> {
   const cache = await caches.open(cacheName);
   const requests = await cache.keys();
@@ -498,7 +520,7 @@ export async function cleanupExpiredCache(
     const response = await cache.match(request);
     if (!response) continue;
 
-    const dateHeader = response.headers.get('date');
+    const dateHeader = response.headers.get("date");
     if (!dateHeader) continue;
 
     const cachedTime = new Date(dateHeader).getTime();
@@ -512,14 +534,19 @@ export async function cleanupExpiredCache(
   await Promise.all(deletePromises);
 
   if (deletePromises.length > 0) {
-    console.log(`[Cache] Cleaned up ${deletePromises.length} expired entries from ${cacheName}`);
+    console.log(
+      `[Cache] Cleaned up ${deletePromises.length} expired entries from ${cacheName}`,
+    );
   }
 }
 
 /**
  * Precache URLs
  */
-export async function precacheUrls(urls: string[], cacheName: string): Promise<void> {
+export async function precacheUrls(
+  urls: string[],
+  cacheName: string,
+): Promise<void> {
   const cache = await caches.open(cacheName);
 
   console.log(`[Cache] Precaching ${urls.length} URLs...`);

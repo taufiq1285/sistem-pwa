@@ -3,12 +3,12 @@
  * Fetches system-wide statistics and metrics
  */
 
-import { supabase } from '@/lib/supabase/client';
-import { cacheAPI } from '@/lib/offline/api-cache';
+import { supabase } from "@/lib/supabase/client";
+import { cacheAPI } from "@/lib/offline/api-cache";
 import {
   requirePermission,
   requirePermissionAndOwnership,
-} from '@/lib/middleware';
+} from "@/lib/middleware";
 
 export interface SystemMetrics {
   totalUsers: number;
@@ -16,7 +16,7 @@ export interface SystemMetrics {
   totalBorrowings: number;
   activeClasses: number;
   activeBorrowings: number;
-  systemHealth: 'Good' | 'Warning' | 'Critical';
+  systemHealth: "Good" | "Warning" | "Critical";
 }
 
 /**
@@ -24,12 +24,24 @@ export interface SystemMetrics {
  */
 async function getSystemMetricsImpl(): Promise<SystemMetrics> {
   try {
-    const [usersResult, equipmentResult, borrowingsResult, classesResult, activeBorrowingsResult] = await Promise.all([
-      supabase.from('users').select('id', { count: 'exact', head: true }),
-      supabase.from('inventaris').select('id', { count: 'exact', head: true }),
-      supabase.from('peminjaman').select('id', { count: 'exact', head: true }),
-      supabase.from('kelas').select('id', { count: 'exact', head: true }).eq('is_active', true),
-      supabase.from('peminjaman').select('id', { count: 'exact', head: true }).in('status', ['pending', 'approved']),
+    const [
+      usersResult,
+      equipmentResult,
+      borrowingsResult,
+      classesResult,
+      activeBorrowingsResult,
+    ] = await Promise.all([
+      supabase.from("users").select("id", { count: "exact", head: true }),
+      supabase.from("inventaris").select("id", { count: "exact", head: true }),
+      supabase.from("peminjaman").select("id", { count: "exact", head: true }),
+      supabase
+        .from("kelas")
+        .select("id", { count: "exact", head: true })
+        .eq("is_active", true),
+      supabase
+        .from("peminjaman")
+        .select("id", { count: "exact", head: true })
+        .in("status", ["pending", "approved"]),
     ]);
 
     const totalUsers = usersResult.count || 0;
@@ -39,9 +51,9 @@ async function getSystemMetricsImpl(): Promise<SystemMetrics> {
     const activeBorrowings = activeBorrowingsResult.count || 0;
 
     // Determine system health based on metrics
-    let systemHealth: 'Good' | 'Warning' | 'Critical' = 'Good';
-    if (activeBorrowings > 50) systemHealth = 'Warning';
-    if (activeBorrowings > 100) systemHealth = 'Critical';
+    let systemHealth: "Good" | "Warning" | "Critical" = "Good";
+    if (activeBorrowings > 50) systemHealth = "Warning";
+    if (activeBorrowings > 100) systemHealth = "Critical";
 
     return {
       totalUsers,
@@ -52,19 +64,20 @@ async function getSystemMetricsImpl(): Promise<SystemMetrics> {
       systemHealth,
     };
   } catch (error) {
-    console.error('Error fetching system metrics:', error);
+    console.error("Error fetching system metrics:", error);
     return {
       totalUsers: 0,
       totalEquipment: 0,
       totalBorrowings: 0,
       activeClasses: 0,
       activeBorrowings: 0,
-      systemHealth: 'Good',
+      systemHealth: "Good",
     };
   }
 }
 
 // 🔒 PROTECTED: Requires view:analytics permission
-export const getSystemMetrics = requirePermission('view:analytics', getSystemMetricsImpl);
-
-
+export const getSystemMetrics = requirePermission(
+  "view:analytics",
+  getSystemMetricsImpl,
+);

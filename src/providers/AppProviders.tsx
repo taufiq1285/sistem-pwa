@@ -10,12 +10,12 @@
  * - Error boundaries
  */
 
-import React from 'react';
-import { BrowserRouter } from 'react-router-dom';
-import { ErrorBoundary } from '@/components/common/ErrorBoundary';
-import { OfflineProvider } from './OfflineProvider';
-import { SyncProvider } from './SyncProvider';
-import { AuthProvider } from './AuthProvider';
+import React from "react";
+import { BrowserRouter } from "react-router-dom";
+import { ErrorBoundary } from "@/components/common/ErrorBoundary";
+import { OfflineProvider } from "./OfflineProvider";
+import { SyncProvider } from "./SyncProvider";
+import { AuthProvider } from "./AuthProvider";
 
 // ============================================================================
 // TYPES
@@ -66,9 +66,7 @@ export function AppProviders({
     <ErrorBoundary fallback={errorFallback}>
       <OfflineProvider>
         <SyncProvider autoSync={autoSync}>
-          <AuthProvider>
-            {children}
-          </AuthProvider>
+          <AuthProvider>{children}</AuthProvider>
         </SyncProvider>
       </OfflineProvider>
     </ErrorBoundary>
@@ -86,10 +84,10 @@ export function AppProviders({
 // ============================================================================
 
 // Re-export provider hooks for convenience
-export { useOfflineContext } from './OfflineProvider';
-export { useSyncContext } from './SyncProvider';
-export { useAuth } from '@/lib/hooks/useAuth';
+export { useOfflineContext } from "./OfflineProvider";
+export { useSyncContext } from "./SyncProvider";
+export { useAuth } from "@/lib/hooks/useAuth";
 
 // Re-export types
-export type { UseOfflineReturn } from '@/lib/hooks/useOffline';
-export type { UseSyncReturn } from '@/lib/hooks/useSync';
+export type { UseOfflineReturn } from "@/lib/hooks/useOffline";
+export type { UseSyncReturn } from "@/lib/hooks/useSync";

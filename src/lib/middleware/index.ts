@@ -5,4 +5,5 @@
 export {
   requirePermission,
   requirePermissionAndOwnership,
-} from './permission.middleware';
+  clearUserRoleCache,
+} from "./permission.middleware";

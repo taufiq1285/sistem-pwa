@@ -15,7 +15,7 @@ import {
 // ============================================================================
 
 export interface MahasiswaStats {
-  totalMataKuliah: number;
+  totalKelasPraktikum: number; // Renamed from totalMataKuliah for clarity
   totalKuis: number;
   rataRataNilai: number | null;
   jadwalHariIni: number;
@@ -157,40 +157,51 @@ export async function getMahasiswaStats(): Promise<MahasiswaStats> {
         const mahasiswaId = await getMahasiswaId();
         if (!mahasiswaId) {
           return {
-            totalMataKuliah: 0,
+            totalKelasPraktikum: 0,
             totalKuis: 0,
             rataRataNilai: null,
             jadwalHariIni: 0,
           };
         }
 
+        // 1️⃣ GET ENROLLED CLASSES
         const { data: kelasData } = await supabase
           .from("kelas_mahasiswa")
           .select("kelas_id")
           .eq("mahasiswa_id", mahasiswaId)
           .eq("is_active", true);
 
-        const totalMataKuliah = kelasData?.length || 0;
+        const totalKelasPraktikum = kelasData?.length || 0;
+        const kelasIds = kelasData?.map((k: any) => k.kelas_id) || [];
 
+        // 2️⃣ GET TODAY'S SCHEDULE
         const today = new Date().toISOString().split("T")[0];
         const { data: jadwalData } = await supabase
           .from("jadwal_praktikum")
-          .select("id, kelas_id")
+          .select("id")
           .eq("tanggal_praktikum", today)
-          .in("kelas_id", kelasData?.map((k: any) => k.kelas_id) || []);
+          .in("kelas_id", kelasIds)
+          .eq("is_active", true);
 
         const jadwalHariIni = jadwalData?.length || 0;
 
+        // 3️⃣ GET QUIZZES (published + currently running or upcoming)
+        // Kuis dihitung jika:
+        // - Status: published
+        // - Kelas: enrolled kelas
+        // - Status berlangsung: tanggal_mulai <= NOW <= tanggal_selesai
+        const now = new Date().toISOString();
         const { data: kuisData } = await supabase
           .from("kuis")
           .select("id")
-          .in("kelas_id", kelasData?.map((k: any) => k.kelas_id) || [])
-          .lte("tanggal_mulai", new Date().toISOString())
-          .gte("tanggal_selesai", new Date().toISOString())
-          .eq("status", "published");
+          .in("kelas_id", kelasIds)
+          .eq("status", "published")
+          .lte("tanggal_mulai", now) // started
+          .gte("tanggal_selesai", now); // not ended yet
 
         const totalKuis = kuisData?.length || 0;
 
+        // 4️⃣ GET AVERAGE SCORE
         const { data: nilaiData } = await supabase
           .from("attempt_kuis")
           .select("total_score")
@@ -201,13 +212,13 @@ export async function getMahasiswaStats(): Promise<MahasiswaStats> {
         if (nilaiData && nilaiData.length > 0) {
           const sum = nilaiData.reduce(
             (acc: number, curr: any) => acc + (curr.total_score || 0),
-            0
+            0,
           );
           rataRataNilai = sum / nilaiData.length;
         }
 
         return {
-          totalMataKuliah,
+          totalKelasPraktikum,
           totalKuis,
           rataRataNilai,
           jadwalHariIni,
@@ -215,7 +226,7 @@ export async function getMahasiswaStats(): Promise<MahasiswaStats> {
       } catch (error: unknown) {
         console.error("Error fetching mahasiswa stats:", error);
         return {
-          totalMataKuliah: 0,
+          totalKelasPraktikum: 0,
           totalKuis: 0,
           rataRataNilai: null,
           jadwalHariIni: 0,
@@ -225,7 +236,7 @@ export async function getMahasiswaStats(): Promise<MahasiswaStats> {
     {
       ttl: 5 * 60 * 1000, // Cache for 5 minutes
       staleWhileRevalidate: true,
-    }
+    },
   );
 }
 
@@ -241,7 +252,7 @@ export async function getAvailableKelas(): Promise<AvailableKelas[]> {
     const { data: kelasData, error } = await supabase
       .from("kelas")
       .select(
-        "id, kode_kelas, nama_kelas, tahun_ajaran, semester_ajaran, kuota, mata_kuliah_id"
+        "id, kode_kelas, nama_kelas, tahun_ajaran, semester_ajaran, kuota, mata_kuliah_id",
       )
       .eq("is_active", true)
       .order("nama_kelas", { ascending: true });
@@ -256,16 +267,21 @@ export async function getAvailableKelas(): Promise<AvailableKelas[]> {
       .eq("is_active", true);
 
     const enrolledKelasIds = new Set(
-      enrolledData?.map((e: any) => e.kelas_id) || []
+      enrolledData?.map((e: any) => e.kelas_id) || [],
     );
 
     const result = await Promise.all(
       kelasData.map(async (kelas: any) => {
-        const { data: mkData } = await supabase
-          .from("mata_kuliah")
-          .select("id, kode_mk, nama_mk, sks, semester")
-          .eq("id", kelas.mata_kuliah_id)
-          .single();
+        // FIX: Check if mata_kuliah_id exists before querying
+        let mkData = null;
+        if (kelas.mata_kuliah_id) {
+          const { data } = await supabase
+            .from("mata_kuliah")
+            .select("id, kode_mk, nama_mk, sks, semester")
+            .eq("id", kelas.mata_kuliah_id)
+            .single();
+          mkData = data;
+        }
 
         const { count: jumlahMahasiswa } = await supabase
           .from("kelas_mahasiswa")
@@ -331,7 +347,7 @@ export async function getAvailableKelas(): Promise<AvailableKelas[]> {
           jadwal_count: jadwalCount || 0,
           next_jadwal: nextJadwal,
         };
-      })
+      }),
     );
 
     return result;
@@ -346,7 +362,7 @@ export async function getAvailableKelas(): Promise<AvailableKelas[]> {
 // ============================================================================
 
 async function enrollToKelasImpl(
-  kelasId: string
+  kelasId: string,
 ): Promise<{ success: boolean; message: string }> {
   try {
     const mahasiswaId = await getMahasiswaId();
@@ -407,7 +423,7 @@ async function enrollToKelasImpl(
 }
 
 async function unenrollFromKelasImpl(
-  kelasId: string
+  kelasId: string,
 ): Promise<{ success: boolean; message: string }> {
   try {
     const mahasiswaId = await getMahasiswaId();
@@ -461,18 +477,23 @@ export async function getMyKelas(): Promise<MyKelas[]> {
         const { data: kelasData } = await supabase
           .from("kelas")
           .select(
-            "id, kode_kelas, nama_kelas, tahun_ajaran, semester_ajaran, mata_kuliah_id"
+            "id, kode_kelas, nama_kelas, tahun_ajaran, semester_ajaran, mata_kuliah_id",
           )
           .eq("id", item.kelas_id)
           .single();
 
         if (!kelasData) return null;
 
-        const { data: mkData } = await supabase
-          .from("mata_kuliah")
-          .select("kode_mk, nama_mk, sks")
-          .eq("id", kelasData.mata_kuliah_id)
-          .single();
+        // FIX: Check if mata_kuliah_id exists before querying
+        let mkData = null;
+        if (kelasData.mata_kuliah_id) {
+          const { data } = await supabase
+            .from("mata_kuliah")
+            .select("kode_mk, nama_mk, sks")
+            .eq("id", kelasData.mata_kuliah_id)
+            .single();
+          mkData = data;
+        }
 
         return {
           id: kelasData.id,
@@ -485,7 +506,7 @@ export async function getMyKelas(): Promise<MyKelas[]> {
           semester_ajaran: kelasData.semester_ajaran,
           enrolled_at: item.enrolled_at,
         };
-      })
+      }),
     );
 
     return result.filter((item): item is MyKelas => item !== null);
@@ -522,7 +543,7 @@ export async function getMyJadwal(limit?: number): Promise<JadwalMahasiswa[]> {
     let query = supabase
       .from("jadwal_praktikum")
       .select(
-        "id, tanggal_praktikum, hari, jam_mulai, jam_selesai, topik, kelas_id, laboratorium_id"
+        "id, tanggal_praktikum, hari, jam_mulai, jam_selesai, topik, kelas_id, laboratorium_id",
       )
       .in("kelas_id", kelasIds)
       .gte("tanggal_praktikum", today)
@@ -575,7 +596,7 @@ export async function getMyJadwal(limit?: number): Promise<JadwalMahasiswa[]> {
           lab_nama: labData?.nama_lab || "-",
           lab_kode: labData?.kode_lab || "-",
         };
-      })
+      }),
     );
 
     return result;

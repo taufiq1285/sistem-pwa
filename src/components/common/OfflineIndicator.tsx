@@ -5,10 +5,10 @@
  * Usage: Place in header/navigation for quick status check
  */
 
-import { Wifi, WifiOff, AlertTriangle } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { useNetworkStatus } from '@/lib/hooks/useNetworkStatus';
-import { cn } from '@/lib/utils';
+import { Wifi, WifiOff, AlertTriangle } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { useNetworkStatus } from "@/lib/hooks/useNetworkStatus";
+import { cn } from "@/lib/utils";
 
 export interface OfflineIndicatorProps {
   /** Show text label alongside icon */
@@ -35,9 +35,9 @@ export function OfflineIndicator({
   const { isOnline, isOffline, isUnstable } = useNetworkStatus();
 
   const getBadgeVariant = () => {
-    if (isOffline) return 'destructive';
-    if (isUnstable) return 'warning';
-    return 'success';
+    if (isOffline) return "destructive";
+    if (isUnstable) return "warning";
+    return "success";
   };
 
   const getIcon = () => {
@@ -47,9 +47,9 @@ export function OfflineIndicator({
   };
 
   const getLabel = () => {
-    if (isOffline) return 'Offline';
-    if (isUnstable) return 'Unstable';
-    return 'Online';
+    if (isOffline) return "Offline";
+    if (isUnstable) return "Unstable";
+    return "Online";
   };
 
   const Icon = getIcon();
@@ -60,20 +60,20 @@ export function OfflineIndicator({
     return (
       <div
         className={cn(
-          'flex items-center justify-center w-8 h-8 rounded-full',
-          isOffline && 'bg-destructive/10',
-          isUnstable && 'bg-yellow-500/10',
-          isOnline && !isUnstable && 'bg-green-500/10',
-          className
+          "flex items-center justify-center w-8 h-8 rounded-full",
+          isOffline && "bg-destructive/10",
+          isUnstable && "bg-yellow-500/10",
+          isOnline && !isUnstable && "bg-green-500/10",
+          className,
         )}
         title={label}
       >
         <Icon
           className={cn(
-            'h-4 w-4',
-            isOffline && 'text-destructive',
-            isUnstable && 'text-yellow-600',
-            isOnline && !isUnstable && 'text-green-600'
+            "h-4 w-4",
+            isOffline && "text-destructive",
+            isUnstable && "text-yellow-600",
+            isOnline && !isUnstable && "text-green-600",
           )}
         />
       </div>
@@ -83,7 +83,7 @@ export function OfflineIndicator({
   return (
     <Badge
       variant={variant}
-      className={cn('flex items-center gap-1.5', className)}
+      className={cn("flex items-center gap-1.5", className)}
     >
       <Icon className="h-3.5 w-3.5" />
       {showLabel && <span className="text-xs font-medium">{label}</span>}
@@ -101,7 +101,7 @@ export function OfflineIndicatorPulse({
   const { isOffline } = useNetworkStatus();
 
   return (
-    <div className={cn('relative', className)}>
+    <div className={cn("relative", className)}>
       {isOffline && (
         <span className="absolute -top-1 -right-1 flex h-3 w-3">
           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />

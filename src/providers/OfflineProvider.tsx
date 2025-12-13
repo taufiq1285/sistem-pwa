@@ -6,10 +6,10 @@
  * - Provides offline helpers via context
  */
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { indexedDBManager } from '@/lib/offline/indexeddb';
-import { useOffline } from '@/lib/hooks/useOffline';
-import type { UseOfflineReturn } from '@/lib/hooks/useOffline';
+import React, { createContext, useContext, useEffect, useState } from "react";
+import { indexedDBManager } from "@/lib/offline/indexeddb";
+import { useOffline } from "@/lib/hooks/useOffline";
+import type { UseOfflineReturn } from "@/lib/hooks/useOffline";
 
 // ============================================================================
 // CONTEXT
@@ -38,10 +38,13 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
         await indexedDBManager.initialize();
         if (mounted) {
           setIsDbReady(true);
-          console.log('✅ OfflineProvider: IndexedDB initialized');
+          console.log("✅ OfflineProvider: IndexedDB initialized");
         }
       } catch (error) {
-        console.error('❌ OfflineProvider: Failed to initialize IndexedDB:', error);
+        console.error(
+          "❌ OfflineProvider: Failed to initialize IndexedDB:",
+          error,
+        );
       }
     };
 
@@ -52,9 +55,9 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
     };
   }, []);
 
-  // Don't render children until DB is ready
+  // Do not render children (or UI) until DB is ready
   if (!isDbReady) {
-    return null; // or a loading spinner
+    return null;
   }
 
   return (
@@ -75,7 +78,7 @@ export function useOfflineContext(): UseOfflineReturn {
   const context = useContext(OfflineContext);
 
   if (!context) {
-    throw new Error('useOfflineContext must be used within OfflineProvider');
+    throw new Error("useOfflineContext must be used within OfflineProvider");
   }
 
   return context;

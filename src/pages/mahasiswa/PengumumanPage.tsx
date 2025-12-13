@@ -3,16 +3,22 @@
  * View announcements and notifications relevant to students
  */
 
-import { useState, useEffect } from 'react';
-import { useAuth } from '@/lib/hooks/useAuth';
-import { getAllAnnouncements } from '@/lib/api/announcements.api';
-import type { Pengumuman } from '@/types/common.types';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Skeleton } from '@/components/ui/skeleton';
-import { AlertCircle, Bell, Calendar, FileText } from 'lucide-react';
-import { format } from 'date-fns';
+import { useState, useEffect } from "react";
+import { useAuth } from "@/lib/hooks/useAuth";
+import { getAllAnnouncements } from "@/lib/api/announcements.api";
+import type { Pengumuman } from "@/types/common.types";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Skeleton } from "@/components/ui/skeleton";
+import { AlertCircle, Bell, Calendar, FileText } from "lucide-react";
+import { format } from "date-fns";
 
 export default function PengumumanPage() {
   const { user } = useAuth();
@@ -33,17 +39,17 @@ export default function PengumumanPage() {
 
       // Filter announcements for mahasiswa role
       const now = new Date().toISOString();
-      const filtered = data.filter(announcement => {
+      const filtered = data.filter((announcement) => {
         // Check if announcement is for mahasiswa or all roles
         const targetRoles = announcement.target_role || [];
         const isForMahasiswa =
-          targetRoles.includes('mahasiswa') ||
-          targetRoles.length === 0;
+          targetRoles.includes("mahasiswa") || targetRoles.length === 0;
 
         // Check if announcement is currently active
         const isActive =
           (!announcement.tanggal_mulai || announcement.tanggal_mulai <= now) &&
-          (!announcement.tanggal_selesai || announcement.tanggal_selesai >= now);
+          (!announcement.tanggal_selesai ||
+            announcement.tanggal_selesai >= now);
 
         return isForMahasiswa && isActive;
       });
@@ -51,8 +57,8 @@ export default function PengumumanPage() {
       // Sort by priority and date
       filtered.sort((a, b) => {
         // High priority first
-        if (a.prioritas === 'high' && b.prioritas !== 'high') return -1;
-        if (a.prioritas !== 'high' && b.prioritas === 'high') return 1;
+        if (a.prioritas === "high" && b.prioritas !== "high") return -1;
+        if (a.prioritas !== "high" && b.prioritas === "high") return 1;
 
         // Then by created date (newest first)
         const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
@@ -62,8 +68,8 @@ export default function PengumumanPage() {
 
       setAnnouncements(filtered);
     } catch (err: any) {
-      console.error('Error loading announcements:', err);
-      setError(err.message || 'Failed to load announcements');
+      console.error("Error loading announcements:", err);
+      setError(err.message || "Failed to load announcements");
     } finally {
       setLoading(false);
     }
@@ -71,11 +77,11 @@ export default function PengumumanPage() {
 
   const getPriorityBadge = (priority: string) => {
     switch (priority) {
-      case 'high':
+      case "high":
         return <Badge variant="destructive">Penting</Badge>;
-      case 'medium':
+      case "medium":
         return <Badge variant="default">Menengah</Badge>;
-      case 'low':
+      case "low":
         return <Badge variant="secondary">Biasa</Badge>;
       default:
         return null;
@@ -84,11 +90,11 @@ export default function PengumumanPage() {
 
   const getTypeBadge = (type: string) => {
     switch (type) {
-      case 'info':
+      case "info":
         return <Badge variant="outline">Informasi</Badge>;
-      case 'warning':
+      case "warning":
         return <Badge className="bg-yellow-500">Peringatan</Badge>;
-      case 'event':
+      case "event":
         return <Badge className="bg-blue-500">Event</Badge>;
       default:
         return null;
@@ -100,7 +106,9 @@ export default function PengumumanPage() {
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold">Notifikasi</h1>
-          <p className="text-gray-600 mt-1">Informasi dan pemberitahuan penting</p>
+          <p className="text-gray-600 mt-1">
+            Informasi dan pemberitahuan penting
+          </p>
         </div>
 
         <div className="space-y-4">
@@ -125,7 +133,9 @@ export default function PengumumanPage() {
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold">Notifikasi</h1>
-          <p className="text-gray-600 mt-1">Informasi dan pemberitahuan penting</p>
+          <p className="text-gray-600 mt-1">
+            Informasi dan pemberitahuan penting
+          </p>
         </div>
 
         <Alert variant="destructive">
@@ -142,7 +152,9 @@ export default function PengumumanPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Notifikasi</h1>
-          <p className="text-gray-600 mt-1">Informasi dan pemberitahuan penting</p>
+          <p className="text-gray-600 mt-1">
+            Informasi dan pemberitahuan penting
+          </p>
         </div>
         <div className="flex items-center gap-2 text-gray-600">
           <Bell className="h-5 w-5" />
@@ -165,21 +177,31 @@ export default function PengumumanPage() {
           {announcements.map((announcement) => (
             <Card
               key={announcement.id}
-              className={announcement.prioritas === 'high' ? 'border-red-200 bg-red-50/50' : ''}
+              className={
+                announcement.prioritas === "high"
+                  ? "border-red-200 bg-red-50/50"
+                  : ""
+              }
             >
               <CardHeader>
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
-                      {announcement.prioritas && getPriorityBadge(announcement.prioritas)}
+                      {announcement.prioritas &&
+                        getPriorityBadge(announcement.prioritas)}
                       {announcement.tipe && getTypeBadge(announcement.tipe)}
                     </div>
-                    <CardTitle className="text-xl">{announcement.judul}</CardTitle>
+                    <CardTitle className="text-xl">
+                      {announcement.judul}
+                    </CardTitle>
                     <CardDescription className="flex items-center gap-4 mt-2">
                       {announcement.created_at && (
                         <span className="flex items-center gap-1">
                           <Calendar className="h-4 w-4" />
-                          {format(new Date(announcement.created_at), 'dd MMM yyyy, HH:mm')}
+                          {format(
+                            new Date(announcement.created_at),
+                            "dd MMM yyyy, HH:mm",
+                          )}
                         </span>
                       )}
                       {announcement.penulis && (
@@ -214,7 +236,11 @@ export default function PengumumanPage() {
 
                 {announcement.tanggal_selesai && (
                   <div className="mt-4 text-sm text-gray-500">
-                    Berlaku hingga: {format(new Date(announcement.tanggal_selesai), 'dd MMM yyyy')}
+                    Berlaku hingga:{" "}
+                    {format(
+                      new Date(announcement.tanggal_selesai),
+                      "dd MMM yyyy",
+                    )}
                   </div>
                 )}
               </CardContent>

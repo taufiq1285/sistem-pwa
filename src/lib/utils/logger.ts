@@ -35,8 +35,8 @@ export const logger = {
    * Log debug messages (only in development with verbose flag)
    */
   debug: (...args: any[]) => {
-    if (isDevelopment && localStorage.getItem('debug') === 'true') {
-      console.log('[DEBUG]', ...args);
+    if (isDevelopment && localStorage.getItem("debug") === "true") {
+      console.log("[DEBUG]", ...args);
     }
   },
 
@@ -44,8 +44,8 @@ export const logger = {
    * Log auth-related messages (controllable)
    */
   auth: (...args: any[]) => {
-    if (isDevelopment && localStorage.getItem('debug_auth') !== 'false') {
-      console.log('🔐', ...args);
+    if (isDevelopment && localStorage.getItem("debug_auth") !== "false") {
+      console.log("🔐", ...args);
     }
   },
 

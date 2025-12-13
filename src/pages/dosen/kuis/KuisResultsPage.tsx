@@ -1,10 +1,10 @@
 /**
  * KuisResultsPage - FIXED VERSION
- * 
+ *
  * Purpose: Quiz results and analytics page for Dosen
  * Route: /dosen/kuis/:kuisId/results
  * Features: View statistics, student attempts, scores, question analysis
- * 
+ *
  * FIXES APPLIED:
  * 1. Changed getAttemptByKuis to getAttemptsByKuis
  * 2. Changed all attempt.nilai to attempt.total_poin
@@ -14,8 +14,8 @@
  * 6. Removed unused FileText import
  */
 
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
   Users,
@@ -29,12 +29,12 @@ import {
   AlertCircle,
   Loader2,
   Search,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Table,
   TableBody,
@@ -42,16 +42,16 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { Progress } from '@/components/ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+} from "@/components/ui/table";
+import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 // FIXED: Changed import
-import { getKuisById, getAttemptsByKuis } from '@/lib/api/kuis.api';
-import type { Kuis } from '@/types/kuis.types';
-import type { AttemptWithStudent } from '@/lib/api/kuis.api';
-import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
+import { getKuisById, getAttemptsByKuis } from "@/lib/api/kuis.api";
+import type { Kuis } from "@/types/kuis.types";
+import type { AttemptWithStudent } from "@/lib/api/kuis.api";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 // ============================================================================
 // TYPES
@@ -74,23 +74,25 @@ interface QuizStatistics {
 export default function KuisResultsPage() {
   const { kuisId } = useParams<{ kuisId: string }>();
   const navigate = useNavigate();
-  
+
   // State
   const [quiz, setQuiz] = useState<Kuis | null>(null);
   const [attempts, setAttempts] = useState<AttemptWithStudent[]>([]);
-  const [filteredAttempts, setFilteredAttempts] = useState<AttemptWithStudent[]>([]);
+  const [filteredAttempts, setFilteredAttempts] = useState<
+    AttemptWithStudent[]
+  >([]);
   const [statistics, setStatistics] = useState<QuizStatistics | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   // UI State
-  const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState('overview');
-  
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeTab, setActiveTab] = useState("overview");
+
   // ============================================================================
   // EFFECTS
   // ============================================================================
-  
+
   /**
    * Load quiz and attempts on mount
    */
@@ -98,49 +100,49 @@ export default function KuisResultsPage() {
     if (!kuisId) return;
     loadQuizData();
   }, [kuisId]);
-  
+
   /**
    * Apply search filter
    */
   useEffect(() => {
     applySearch();
   }, [attempts, searchQuery]);
-  
+
   // ============================================================================
   // HANDLERS - DATA LOADING
   // ============================================================================
-  
+
   /**
    * Load quiz and attempts data
    */
   const loadQuizData = async () => {
     if (!kuisId) return;
-    
+
     setIsLoading(true);
     setError(null);
-    
+
     try {
       // Load quiz
       const quizData = await getKuisById(kuisId);
       setQuiz(quizData);
-      
+
       // FIXED: Changed function name
       const attemptsData = await getAttemptsByKuis(kuisId);
       setAttempts(attemptsData);
-      
+
       // Calculate statistics
       const stats = calculateStatistics(attemptsData, quizData);
       setStatistics(stats);
     } catch (err: any) {
-      setError(err.message || 'Gagal memuat data hasil kuis');
-      toast.error('Gagal memuat data hasil kuis', {
+      setError(err.message || "Gagal memuat data hasil kuis");
+      toast.error("Gagal memuat data hasil kuis", {
         description: err.message,
       });
     } finally {
       setIsLoading(false);
     }
   };
-  
+
   /**
    * Apply search filter
    */
@@ -149,35 +151,43 @@ export default function KuisResultsPage() {
       setFilteredAttempts(attempts);
       return;
     }
-    
+
     const query = searchQuery.toLowerCase();
     const filtered = attempts.filter(
       (attempt) =>
         attempt.mahasiswa?.user?.full_name.toLowerCase().includes(query) ||
-        attempt.mahasiswa?.nim.toLowerCase().includes(query)
+        attempt.mahasiswa?.nim.toLowerCase().includes(query),
     );
-    
+
     setFilteredAttempts(filtered);
   };
-  
+
   // ============================================================================
   // HANDLERS - ACTIONS
   // ============================================================================
-  
+
   /**
    * View individual attempt
    */
   const handleViewAttempt = (attemptId: string) => {
     navigate(`/dosen/kuis/${kuisId}/attempt/${attemptId}`);
   };
-  
+
   /**
    * Export results to CSV
    */
   const handleExport = () => {
     try {
       const csvContent = [
-        ['NIM', 'Nama', 'Percobaan', 'Nilai', 'Status', 'Waktu Mulai', 'Waktu Selesai'].join(','),
+        [
+          "NIM",
+          "Nama",
+          "Percobaan",
+          "Nilai",
+          "Status",
+          "Waktu Mulai",
+          "Waktu Selesai",
+        ].join(","),
         ...filteredAttempts.map((attempt) =>
           [
             attempt.mahasiswa.nim,
@@ -189,36 +199,38 @@ export default function KuisResultsPage() {
             // FIXED: Changed waktu_mulai to started_at
             new Date(attempt.started_at).toLocaleString(),
             // FIXED: Changed waktu_selesai to submitted_at
-            attempt.submitted_at ? new Date(attempt.submitted_at).toLocaleString() : '-',
-          ].join(',')
+            attempt.submitted_at
+              ? new Date(attempt.submitted_at).toLocaleString()
+              : "-",
+          ].join(","),
         ),
-      ].join('\n');
+      ].join("\n");
 
-      const blob = new Blob([csvContent], { type: 'text/csv' });
+      const blob = new Blob([csvContent], { type: "text/csv" });
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = url;
-      a.download = `hasil-kuis-${quiz?.judul || 'quiz'}.csv`;
+      a.download = `hasil-kuis-${quiz?.judul || "quiz"}.csv`;
       a.click();
       window.URL.revokeObjectURL(url);
 
-      toast.success('Hasil kuis berhasil diexport');
+      toast.success("Hasil kuis berhasil diexport");
     } catch (error) {
-      toast.error('Gagal export hasil kuis');
+      toast.error("Gagal export hasil kuis");
     }
   };
-  
+
   /**
    * Navigate back
    */
   const handleBack = () => {
-    navigate('/dosen/kuis');
+    navigate("/dosen/kuis");
   };
-  
+
   // ============================================================================
   // RENDER - LOADING
   // ============================================================================
-  
+
   if (isLoading) {
     return (
       <div className="container mx-auto py-6 max-w-7xl">
@@ -231,71 +243,59 @@ export default function KuisResultsPage() {
       </div>
     );
   }
-  
+
   // ============================================================================
   // RENDER - ERROR
   // ============================================================================
-  
+
   if (error || !quiz || !statistics) {
     return (
       <div className="container mx-auto py-6 max-w-7xl">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleBack}
-          className="mb-4"
-        >
+        <Button variant="ghost" size="sm" onClick={handleBack} className="mb-4">
           <ArrowLeft className="h-4 w-4 mr-2" />
           Kembali
         </Button>
-        
+
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            {error || 'Gagal memuat data hasil kuis'}
+            {error || "Gagal memuat data hasil kuis"}
           </AlertDescription>
         </Alert>
-        
+
         <div className="mt-4">
           <Button onClick={loadQuizData}>Coba Lagi</Button>
         </div>
       </div>
     );
   }
-  
+
   // ============================================================================
   // RENDER - MAIN
   // ============================================================================
-  
+
   return (
     <div className="container mx-auto py-6 max-w-7xl">
       {/* Header */}
       <div className="mb-6">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleBack}
-          className="mb-4"
-        >
+        <Button variant="ghost" size="sm" onClick={handleBack} className="mb-4">
           <ArrowLeft className="h-4 w-4 mr-2" />
           Kembali ke Daftar Kuis
         </Button>
-        
+
         <div className="flex items-start justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold">{quiz.judul}</h1>
-            <p className="text-muted-foreground mt-1">
-              Hasil & Analisis Kuis
-            </p>
+            <p className="text-muted-foreground mt-1">Hasil & Analisis Kuis</p>
           </div>
-          
+
           <Button onClick={handleExport} variant="outline" className="gap-2">
             <Download className="h-4 w-4" />
             Export
           </Button>
         </div>
       </div>
-      
+
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {/* Total Attempts */}
@@ -313,7 +313,7 @@ export default function KuisResultsPage() {
             </p>
           </CardContent>
         </Card>
-        
+
         {/* Average Score */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -329,7 +329,7 @@ export default function KuisResultsPage() {
             <Progress value={statistics.averageScore} className="mt-2" />
           </CardContent>
         </Card>
-        
+
         {/* Highest Score */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -347,7 +347,7 @@ export default function KuisResultsPage() {
             </p>
           </CardContent>
         </Card>
-        
+
         {/* Pass Rate */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -364,7 +364,7 @@ export default function KuisResultsPage() {
           </CardContent>
         </Card>
       </div>
-      
+
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
@@ -374,7 +374,7 @@ export default function KuisResultsPage() {
           </TabsTrigger>
           <TabsTrigger value="analysis">Analisis Soal</TabsTrigger>
         </TabsList>
-        
+
         {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-4">
           <Card>
@@ -398,7 +398,8 @@ export default function KuisResultsPage() {
                 <div>
                   <Label className="text-sm font-medium">Durasi</Label>
                   <p className="text-2xl font-bold">
-                    {(quiz as any).durasi || (quiz as any).durasi_menit || 0} menit
+                    {(quiz as any).durasi || (quiz as any).durasi_menit || 0}{" "}
+                    menit
                   </p>
                 </div>
                 <div>
@@ -410,7 +411,7 @@ export default function KuisResultsPage() {
               </div>
             </CardContent>
           </Card>
-          
+
           {/* Score Distribution */}
           <Card>
             <CardHeader>
@@ -427,7 +428,11 @@ export default function KuisResultsPage() {
                       </span>
                     </div>
                     <Progress
-                      value={attempts.length > 0 ? (range.count / attempts.length) * 100 : 0}
+                      value={
+                        attempts.length > 0
+                          ? (range.count / attempts.length) * 100
+                          : 0
+                      }
                       className="h-2"
                     />
                   </div>
@@ -436,7 +441,7 @@ export default function KuisResultsPage() {
             </CardContent>
           </Card>
         </TabsContent>
-        
+
         {/* Attempts Tab */}
         <TabsContent value="attempts" className="space-y-4">
           <Card>
@@ -460,8 +465,8 @@ export default function KuisResultsPage() {
                   <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                   <p className="text-muted-foreground">
                     {searchQuery
-                      ? 'Tidak ada hasil yang sesuai'
-                      : 'Belum ada mahasiswa yang mengerjakan kuis ini'}
+                      ? "Tidak ada hasil yang sesuai"
+                      : "Belum ada mahasiswa yang mengerjakan kuis ini"}
                   </p>
                 </div>
               ) : (
@@ -478,8 +483,10 @@ export default function KuisResultsPage() {
                   <TableBody>
                     {filteredAttempts.map((attempt) => {
                       // FIXED: Changed nilai to total_poin
-                      const isPassed = (attempt.total_poin || 0) >= ((quiz as any).passing_grade || 60);
-                      
+                      const isPassed =
+                        (attempt.total_poin || 0) >=
+                        ((quiz as any).passing_grade || 60);
+
                       return (
                         <TableRow key={attempt.id}>
                           <TableCell>
@@ -487,27 +494,30 @@ export default function KuisResultsPage() {
                               <Avatar>
                                 <AvatarFallback>
                                   {attempt.mahasiswa?.user?.full_name
-                                    .split(' ')
+                                    .split(" ")
                                     .map((n) => n[0])
-                                    .join('')
-                                    .toUpperCase() || 'M'}
+                                    .join("")
+                                    .toUpperCase() || "M"}
                                 </AvatarFallback>
                               </Avatar>
                               <div>
                                 <p className="font-medium">
-                                  {attempt.mahasiswa?.user?.full_name || 'Unknown'}
+                                  {attempt.mahasiswa?.user?.full_name ||
+                                    "Unknown"}
                                 </p>
                                 <p className="text-sm text-muted-foreground">
-                                  {attempt.mahasiswa?.nim || '-'}
+                                  {attempt.mahasiswa?.nim || "-"}
                                 </p>
                               </div>
                             </div>
                           </TableCell>
-                          
+
                           <TableCell>
                             {/* FIXED: Changed status check from 'completed' to 'graded' */}
-                            {attempt.status === 'graded' ? (
-                              <Badge variant={isPassed ? 'default' : 'destructive'}>
+                            {attempt.status === "graded" ? (
+                              <Badge
+                                variant={isPassed ? "default" : "destructive"}
+                              >
                                 {isPassed ? (
                                   <>
                                     <CheckCircle2 className="h-3 w-3 mr-1" />
@@ -520,7 +530,7 @@ export default function KuisResultsPage() {
                                   </>
                                 )}
                               </Badge>
-                            ) : attempt.status === 'submitted' ? (
+                            ) : attempt.status === "submitted" ? (
                               <Badge variant="secondary">
                                 <Clock className="h-3 w-3 mr-1" />
                                 Menunggu Penilaian
@@ -532,30 +542,33 @@ export default function KuisResultsPage() {
                               </Badge>
                             )}
                           </TableCell>
-                          
+
                           <TableCell className="text-right">
-                            <span className={cn(
-                              "font-semibold",
-                              isPassed ? "text-green-600" : "text-red-600"
-                            )}>
+                            <span
+                              className={cn(
+                                "font-semibold",
+                                isPassed ? "text-green-600" : "text-red-600",
+                              )}
+                            >
                               {/* FIXED: Changed nilai to total_poin */}
                               {attempt.total_poin || 0}
                             </span>
                             <span className="text-muted-foreground">
-                              {' / '}{(quiz as any).total_poin || 100}
+                              {" / "}
+                              {(quiz as any).total_poin || 100}
                             </span>
                           </TableCell>
-                          
+
                           <TableCell className="text-right text-sm text-muted-foreground">
                             {/* FIXED: Changed property names */}
                             {attempt.submitted_at && attempt.started_at
                               ? calculateDuration(
                                   attempt.started_at,
-                                  attempt.submitted_at
+                                  attempt.submitted_at,
                                 )
-                              : '-'}
+                              : "-"}
                           </TableCell>
-                          
+
                           <TableCell className="text-center">
                             <Button
                               variant="ghost"
@@ -574,7 +587,7 @@ export default function KuisResultsPage() {
             </CardContent>
           </Card>
         </TabsContent>
-        
+
         {/* Analysis Tab */}
         <TabsContent value="analysis">
           <Card>
@@ -602,11 +615,11 @@ export default function KuisResultsPage() {
  */
 function calculateStatistics(
   attempts: AttemptWithStudent[],
-  quiz: Kuis
+  quiz: Kuis,
 ): QuizStatistics {
   // FIXED: Changed status check from 'completed' to 'graded'
-  const completedAttempts = attempts.filter((a) => a.status === 'graded');
-  
+  const completedAttempts = attempts.filter((a) => a.status === "graded");
+
   if (completedAttempts.length === 0) {
     return {
       totalAttempts: attempts.length,
@@ -618,20 +631,20 @@ function calculateStatistics(
       averageTime: 0,
     };
   }
-  
+
   // FIXED: Changed nilai to total_poin
   const scores = completedAttempts.map((a) => a.total_poin || 0);
   const averageScore = scores.reduce((a, b) => a + b, 0) / scores.length;
   const highestScore = Math.max(...scores);
   const lowestScore = Math.min(...scores);
-  
+
   const passingGrade = (quiz as any).passing_grade || 60;
   const passedCount = completedAttempts.filter(
     // FIXED: Changed nilai to total_poin
-    (a) => (a.total_poin || 0) >= passingGrade
+    (a) => (a.total_poin || 0) >= passingGrade,
   ).length;
   const passRate = (passedCount / completedAttempts.length) * 100;
-  
+
   // Calculate average time
   // FIXED: Changed property names
   const durations = completedAttempts
@@ -641,12 +654,12 @@ function calculateStatistics(
       const end = new Date(a.submitted_at!).getTime();
       return (end - start) / 1000 / 60; // in minutes
     });
-  
+
   const averageTime =
     durations.length > 0
       ? durations.reduce((a, b) => a + b, 0) / durations.length
       : 0;
-  
+
   return {
     totalAttempts: attempts.length,
     completedAttempts: completedAttempts.length,
@@ -663,23 +676,23 @@ function calculateStatistics(
  */
 function getScoreDistribution(attempts: AttemptWithStudent[]) {
   // FIXED: Changed status check from 'completed' to 'graded'
-  const completed = attempts.filter((a) => a.status === 'graded');
-  
+  const completed = attempts.filter((a) => a.status === "graded");
+
   const ranges = [
-    { label: '91-100', min: 91, max: 100, count: 0 },
-    { label: '81-90', min: 81, max: 90, count: 0 },
-    { label: '71-80', min: 71, max: 80, count: 0 },
-    { label: '61-70', min: 61, max: 70, count: 0 },
-    { label: '0-60', min: 0, max: 60, count: 0 },
+    { label: "91-100", min: 91, max: 100, count: 0 },
+    { label: "81-90", min: 81, max: 90, count: 0 },
+    { label: "71-80", min: 71, max: 80, count: 0 },
+    { label: "61-70", min: 61, max: 70, count: 0 },
+    { label: "0-60", min: 0, max: 60, count: 0 },
   ];
-  
+
   completed.forEach((attempt) => {
     // FIXED: Changed nilai to total_poin
     const score = attempt.total_poin || 0;
     const range = ranges.find((r) => score >= r.min && score <= r.max);
     if (range) range.count++;
   });
-  
+
   return ranges;
 }
 
@@ -691,11 +704,11 @@ function calculateDuration(start: string, end: string): string {
   const endTime = new Date(end).getTime();
   const durationMs = endTime - startTime;
   const minutes = Math.floor(durationMs / 1000 / 60);
-  
+
   if (minutes < 60) {
     return `${minutes} menit`;
   }
-  
+
   const hours = Math.floor(minutes / 60);
   const remainingMinutes = minutes % 60;
   return `${hours}j ${remainingMinutes}m`;
@@ -704,6 +717,12 @@ function calculateDuration(start: string, end: string): string {
 /**
  * Label component helper
  */
-function Label({ className, children }: { className?: string; children: React.ReactNode }) {
+function Label({
+  className,
+  children,
+}: {
+  className?: string;
+  children: React.ReactNode;
+}) {
   return <div className={className}>{children}</div>;
 }

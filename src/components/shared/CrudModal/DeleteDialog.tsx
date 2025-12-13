@@ -3,7 +3,7 @@
  * Confirmation dialog for delete operations
  */
 
-import { useState } from 'react';
+import { useState } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -13,10 +13,10 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { AlertTriangle, Trash2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import type { DeleteDialogProps } from './CrudModal.types';
+} from "@/components/ui/alert-dialog";
+import { AlertTriangle, Trash2 } from "lucide-react";
+import { cn } from "@/lib/utils";
+import type { DeleteDialogProps } from "./CrudModal.types";
 
 // ============================================================================
 // COMPONENT
@@ -25,14 +25,14 @@ import type { DeleteDialogProps } from './CrudModal.types';
 export function DeleteDialog({
   open,
   onOpenChange,
-  title = 'Are you sure?',
+  title = "Are you sure?",
   description,
-  itemName = 'item',
+  itemName = "item",
   onConfirm,
-  confirmLabel = 'Delete',
-  cancelLabel = 'Cancel',
+  confirmLabel = "Delete",
+  cancelLabel = "Cancel",
   isLoading = false,
-  variant = 'danger',
+  variant = "danger",
   children,
   className,
 }: DeleteDialogProps) {
@@ -50,11 +50,11 @@ export function DeleteDialog({
     try {
       setIsDeleting(true);
       await onConfirm();
-      
+
       // Close dialog on success
       onOpenChange(false);
     } catch (error) {
-      console.error('Delete failed:', error);
+      console.error("Delete failed:", error);
       // Keep dialog open on error
     } finally {
       setIsDeleting(false);
@@ -74,7 +74,8 @@ export function DeleteDialog({
   const loading = isLoading || isDeleting;
 
   // Default description if not provided
-  const defaultDescription = description || 
+  const defaultDescription =
+    description ||
     `This action cannot be undone. This will permanently delete the ${itemName}.`;
 
   return (
@@ -85,18 +86,18 @@ export function DeleteDialog({
             {/* Icon based on variant */}
             <div
               className={cn(
-                'flex h-10 w-10 items-center justify-center rounded-full',
-                variant === 'danger' && 'bg-destructive/10 text-destructive',
-                variant === 'warning' && 'bg-yellow-500/10 text-yellow-500'
+                "flex h-10 w-10 items-center justify-center rounded-full",
+                variant === "danger" && "bg-destructive/10 text-destructive",
+                variant === "warning" && "bg-yellow-500/10 text-yellow-500",
               )}
             >
-              {variant === 'danger' ? (
+              {variant === "danger" ? (
                 <Trash2 className="h-5 w-5" />
               ) : (
                 <AlertTriangle className="h-5 w-5" />
               )}
             </div>
-            
+
             {/* Title */}
             <AlertDialogTitle>{title}</AlertDialogTitle>
           </div>
@@ -108,29 +109,22 @@ export function DeleteDialog({
         </AlertDialogHeader>
 
         {/* Custom Content */}
-        {children && (
-          <div className="py-4">
-            {children}
-          </div>
-        )}
+        {children && <div className="py-4">{children}</div>}
 
         {/* Footer Actions */}
         <AlertDialogFooter>
-          <AlertDialogCancel
-            onClick={handleCancel}
-            disabled={loading}
-          >
+          <AlertDialogCancel onClick={handleCancel} disabled={loading}>
             {cancelLabel}
           </AlertDialogCancel>
           <AlertDialogAction
             onClick={handleConfirm}
             disabled={loading}
             className={cn(
-              variant === 'danger' && 'bg-destructive hover:bg-destructive/90',
-              variant === 'warning' && 'bg-yellow-500 hover:bg-yellow-500/90'
+              variant === "danger" && "bg-destructive hover:bg-destructive/90",
+              variant === "warning" && "bg-yellow-500 hover:bg-yellow-500/90",
             )}
           >
-            {loading ? 'Deleting...' : confirmLabel}
+            {loading ? "Deleting..." : confirmLabel}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

@@ -2,14 +2,14 @@
  * Service Worker Mock
  */
 
-import { vi } from 'vitest';
+import { vi } from "vitest";
 
 export const createServiceWorkerMock = () => ({
   register: vi.fn().mockResolvedValue({
     installing: null,
     waiting: null,
     active: {
-      state: 'activated',
+      state: "activated",
     },
     update: vi.fn(),
     unregister: vi.fn(),
@@ -18,7 +18,7 @@ export const createServiceWorkerMock = () => ({
     installing: null,
     waiting: null,
     active: {
-      state: 'activated',
+      state: "activated",
     },
     update: vi.fn(),
     unregister: vi.fn(),

@@ -9,23 +9,23 @@
  * - Multi-role access patterns
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
   requirePermission,
   requireOwnership,
   requirePermissionAndOwnership,
-} from '@/lib/middleware/permission.middleware';
+} from "@/lib/middleware/permission.middleware";
 import {
   PermissionError,
   OwnershipError,
-} from '@/lib/errors/permission.errors';
-import { supabase } from '@/lib/supabase/client';
+} from "@/lib/errors/permission.errors";
+import { supabase } from "@/lib/supabase/client";
 
 // ============================================================================
 // MOCKS
 // ============================================================================
 
-vi.mock('@/lib/supabase/client', () => ({
+vi.mock("@/lib/supabase/client", () => ({
   supabase: {
     auth: {
       getUser: vi.fn(),
@@ -34,11 +34,11 @@ vi.mock('@/lib/supabase/client', () => ({
   },
 }));
 
-vi.mock('@/lib/utils/permissions', () => ({
+vi.mock("@/lib/utils/permissions", () => ({
   hasPermission: vi.fn(),
 }));
 
-import { hasPermission as mockedHasPermission } from '@/lib/utils/permissions';
+import { hasPermission as mockedHasPermission } from "@/lib/utils/permissions";
 
 // ============================================================================
 // MOCK API FUNCTIONS (Simulating real API)
@@ -61,7 +61,7 @@ async function insertKuis(data: any) {
 
 async function updateKuis(id: string, data: any) {
   if (!mockDatabase.kuis[id]) {
-    throw new Error('Kuis not found');
+    throw new Error("Kuis not found");
   }
   mockDatabase.kuis[id] = { ...mockDatabase.kuis[id], ...data };
   return mockDatabase.kuis[id];
@@ -69,7 +69,7 @@ async function updateKuis(id: string, data: any) {
 
 async function deleteKuis(id: string) {
   if (!mockDatabase.kuis[id]) {
-    throw new Error('Kuis not found');
+    throw new Error("Kuis not found");
   }
   delete mockDatabase.kuis[id];
 }
@@ -82,7 +82,7 @@ async function insertNilai(data: any) {
 
 async function updateNilai(id: string, data: any) {
   if (!mockDatabase.nilai[id]) {
-    throw new Error('Nilai not found');
+    throw new Error("Nilai not found");
   }
   mockDatabase.nilai[id] = { ...mockDatabase.nilai[id], ...data };
   return mockDatabase.nilai[id];
@@ -90,15 +90,15 @@ async function updateNilai(id: string, data: any) {
 
 async function createPeminjaman(data: any) {
   const id = `peminjaman-${Date.now()}`;
-  mockDatabase.peminjaman[id] = { ...data, id, status: 'pending' };
+  mockDatabase.peminjaman[id] = { ...data, id, status: "pending" };
   return mockDatabase.peminjaman[id];
 }
 
 async function approvePeminjaman(id: string) {
   if (!mockDatabase.peminjaman[id]) {
-    throw new Error('Peminjaman not found');
+    throw new Error("Peminjaman not found");
   }
-  mockDatabase.peminjaman[id].status = 'approved';
+  mockDatabase.peminjaman[id].status = "approved";
   return mockDatabase.peminjaman[id];
 }
 
@@ -107,38 +107,38 @@ async function approvePeminjaman(id: string) {
 // ============================================================================
 
 // Dosen: Create kuis (requires create:kuis permission)
-const createKuis = requirePermission('manage:kuis', insertKuis);
+const createKuis = requirePermission("manage:kuis", insertKuis);
 
 // Dosen: Update own kuis (requires permission + ownership)
 const updateKuisByOwner = requirePermissionAndOwnership(
-  'manage:kuis',
-  { table: 'kuis', ownerField: 'dosen_id' },
+  "manage:kuis",
+  { table: "kuis", ownerField: "dosen_id" },
   0,
-  updateKuis
+  updateKuis,
 );
 
 // Dosen: Delete own kuis
 const deleteKuisByOwner = requirePermissionAndOwnership(
-  'manage:kuis',
-  { table: 'kuis', ownerField: 'dosen_id' },
+  "manage:kuis",
+  { table: "kuis", ownerField: "dosen_id" },
   0,
-  deleteKuis
+  deleteKuis,
 );
 
 // Dosen: Create/update nilai for their students
-const createNilai = requirePermission('manage:nilai', insertNilai);
-const updateNilaiByDosen = requirePermission('manage:nilai', updateNilai);
+const createNilai = requirePermission("manage:nilai", insertNilai);
+const updateNilaiByDosen = requirePermission("manage:nilai", updateNilai);
 
 // Mahasiswa: Create peminjaman
 const createPeminjamanByMahasiswa = requirePermission(
-  'create:peminjaman',
-  createPeminjaman
+  "create:peminjaman",
+  createPeminjaman,
 );
 
 // Laboran: Approve peminjaman
 const approvePeminjamanByLaboran = requirePermission(
-  'approve:peminjaman',
-  approvePeminjaman
+  "approve:peminjaman",
+  approvePeminjaman,
 );
 
 // ============================================================================
@@ -157,7 +157,7 @@ function setupMockUser(userId: string, role: string, roleSpecificId?: string) {
   });
 
   (supabase.from as any).mockImplementation((table: string) => {
-    if (table === 'users') {
+    if (table === "users") {
       return {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
@@ -167,47 +167,47 @@ function setupMockUser(userId: string, role: string, roleSpecificId?: string) {
         }),
       };
     }
-    if (table === 'dosen' && role === 'dosen') {
+    if (table === "dosen" && role === "dosen") {
       return {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
         single: vi.fn().mockResolvedValue({
-          data: { id: roleSpecificId || 'dosen-123' },
+          data: { id: roleSpecificId || "dosen-123" },
           error: null,
         }),
       };
     }
-    if (table === 'mahasiswa' && role === 'mahasiswa') {
+    if (table === "mahasiswa" && role === "mahasiswa") {
       return {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
         single: vi.fn().mockResolvedValue({
-          data: { id: roleSpecificId || 'mhs-123' },
+          data: { id: roleSpecificId || "mhs-123" },
           error: null,
         }),
       };
     }
-    if (table === 'laboran' && role === 'laboran') {
+    if (table === "laboran" && role === "laboran") {
       return {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
         single: vi.fn().mockResolvedValue({
-          data: { id: roleSpecificId || 'laboran-123' },
+          data: { id: roleSpecificId || "laboran-123" },
           error: null,
         }),
       };
     }
     // Resource ownership checks
-    if (table === 'kuis') {
+    if (table === "kuis") {
       return {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
         single: vi.fn().mockImplementation(() => {
-          const kuisId = 'kuis-123'; // Default test kuis
+          const kuisId = "kuis-123"; // Default test kuis
           const kuis = mockDatabase.kuis[kuisId];
           return Promise.resolve({
             data: kuis,
-            error: kuis ? null : new Error('Not found'),
+            error: kuis ? null : new Error("Not found"),
           });
         }),
       };
@@ -224,7 +224,7 @@ function setupPermissions(role: string, permissions: string[]) {
   (mockedHasPermission as any).mockImplementation(
     (userRole: string, permission: string) => {
       return userRole === role && permissions.includes(permission);
-    }
+    },
   );
 }
 
@@ -232,7 +232,7 @@ function setupPermissions(role: string, permissions: string[]) {
 // INTEGRATION TEST SUITES
 // ============================================================================
 
-describe('RBAC Middleware Integration Tests', () => {
+describe("RBAC Middleware Integration Tests", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Reset mock database
@@ -245,80 +245,84 @@ describe('RBAC Middleware Integration Tests', () => {
   // Scenario 1: Dosen Creating and Managing Kuis
   // ==========================================================================
 
-  describe('Scenario: Dosen manages kuis', () => {
-    const dosenId = 'dosen-123';
-    const userId = 'user-dosen-123';
+  describe("Scenario: Dosen manages kuis", () => {
+    const dosenId = "dosen-123";
+    const userId = "user-dosen-123";
 
     beforeEach(() => {
-      setupMockUser(userId, 'dosen', dosenId);
-      setupPermissions('dosen', ['manage:kuis', 'manage:nilai', 'view:mahasiswa']);
+      setupMockUser(userId, "dosen", dosenId);
+      setupPermissions("dosen", [
+        "manage:kuis",
+        "manage:nilai",
+        "view:mahasiswa",
+      ]);
     });
 
-    it('should allow dosen to create kuis', async () => {
+    it("should allow dosen to create kuis", async () => {
       const kuisData = {
-        judul: 'Kuis Algoritma',
-        deskripsi: 'Kuis tentang sorting algorithms',
+        judul: "Kuis Algoritma",
+        deskripsi: "Kuis tentang sorting algorithms",
         dosen_id: dosenId,
       };
 
       const result = await createKuis(kuisData);
 
       expect(result).toBeDefined();
-      expect(result.judul).toBe('Kuis Algoritma');
+      expect(result.judul).toBe("Kuis Algoritma");
       expect(result.dosen_id).toBe(dosenId);
     });
 
-    it('should allow dosen to update their own kuis', async () => {
+    it("should allow dosen to update their own kuis", async () => {
       // First create a kuis
       const kuis = await insertKuis({
-        judul: 'Original Kuis',
+        judul: "Original Kuis",
         dosen_id: dosenId,
       });
 
       // Store in mock database for ownership check
-      mockDatabase.kuis['kuis-123'] = kuis;
+      mockDatabase.kuis["kuis-123"] = kuis;
 
-      const updated = await updateKuisByOwner('kuis-123', {
-        judul: 'Updated Kuis',
+      const updated = await updateKuisByOwner("kuis-123", {
+        judul: "Updated Kuis",
       });
 
-      expect(updated.judul).toBe('Updated Kuis');
+      expect(updated.judul).toBe("Updated Kuis");
     });
 
-    it('should allow dosen to delete their own kuis', async () => {
+    it("should allow dosen to delete their own kuis", async () => {
       // Create a kuis
       const kuis = await insertKuis({
-        judul: 'To Delete',
+        judul: "To Delete",
         dosen_id: dosenId,
       });
 
-      mockDatabase.kuis['kuis-123'] = kuis;
+      mockDatabase.kuis["kuis-123"] = kuis;
 
-      await deleteKuisByOwner('kuis-123');
+      await deleteKuisByOwner("kuis-123");
 
-      expect(mockDatabase.kuis['kuis-123']).toBeUndefined();
+      expect(mockDatabase.kuis["kuis-123"]).toBeUndefined();
     });
 
-    it('should prevent dosen from updating kuis owned by another dosen', async () => {
+    it("should prevent dosen from updating kuis owned by another dosen", async () => {
       // Create kuis owned by different dosen
       const otherDosenKuis = await insertKuis({
-        judul: 'Other Dosen Kuis',
-        dosen_id: 'dosen-456', // Different dosen
+        judul: "Other Dosen Kuis",
+        dosen_id: "dosen-456", // Different dosen
       });
 
-      mockDatabase.kuis['kuis-123'] = otherDosenKuis;
+      mockDatabase.kuis["kuis-123"] = otherDosenKuis;
 
       await expect(
-        updateKuisByOwner('kuis-123', { judul: 'Hacked' })
+        updateKuisByOwner("kuis-123", { judul: "Hacked" }),
       ).rejects.toThrow(OwnershipError);
     });
 
-    it('should allow dosen to create nilai for students', async () => {
+    it("should allow dosen to create nilai for students", async () => {
       const nilaiData = {
-        mahasiswa_id: 'mhs-123',
-        kuis_id: 'kuis-123',
+        mahasiswa_id: "mhs-123",
+        kuis_id: "kuis-123",
         nilai: 85,
-        feedback: 'Good work',
+        feedback: "Good work",
       };
 
       const result = await createNilai(nilaiData);
@@ -332,55 +336,55 @@ describe('RBAC Middleware Integration Tests', () => {
   // Scenario 2: Mahasiswa Creating Peminjaman
   // ==========================================================================
 
-  describe('Scenario: Mahasiswa creates peminjaman', () => {
-    const mahasiswaId = 'mhs-123';
-    const userId = 'user-mhs-123';
+  describe("Scenario: Mahasiswa creates peminjaman", () => {
+    const mahasiswaId = "mhs-123";
+    const userId = "user-mhs-123";
 
     beforeEach(() => {
-      setupMockUser(userId, 'mahasiswa', mahasiswaId);
-      setupPermissions('mahasiswa', [
-        'create:peminjaman',
-        'view:peminjaman',
-        'view:kuis',
-        'create:attempt_kuis',
+      setupMockUser(userId, "mahasiswa", mahasiswaId);
+      setupPermissions("mahasiswa", [
+        "create:peminjaman",
+        "view:peminjaman",
+        "view:kuis",
+        "create:attempt_kuis",
       ]);
     });
 
-    it('should allow mahasiswa to create peminjaman', async () => {
+    it("should allow mahasiswa to create peminjaman", async () => {
       const peminjamanData = {
         mahasiswa_id: mahasiswaId,
-        item: 'Oscilloscope',
-        tanggal_pinjam: '2025-02-01',
-        tanggal_kembali: '2025-02-05',
+        item: "Oscilloscope",
+        tanggal_pinjam: "2025-02-01",
+        tanggal_kembali: "2025-02-05",
       };
 
       const result = await createPeminjamanByMahasiswa(peminjamanData);
 
       expect(result).toBeDefined();
-      expect(result.status).toBe('pending');
+      expect(result.status).toBe("pending");
       expect(result.mahasiswa_id).toBe(mahasiswaId);
     });
 
-    it('should prevent mahasiswa from creating kuis', async () => {
+    it("should prevent mahasiswa from creating kuis", async () => {
       const kuisData = {
-        judul: 'Hacked Kuis',
-        dosen_id: 'fake-dosen-id',
+        judul: "Hacked Kuis",
+        dosen_id: "fake-dosen-id",
       };
 
       await expect(createKuis(kuisData)).rejects.toThrow(PermissionError);
     });
 
-    it('should prevent mahasiswa from approving peminjaman', async () => {
+    it("should prevent mahasiswa from approving peminjaman", async () => {
       const peminjaman = await createPeminjaman({
         mahasiswa_id: mahasiswaId,
-        item: 'Test item',
+        item: "Test item",
       });
 
       mockDatabase.peminjaman[peminjaman.id] = peminjaman;
 
-      await expect(
-        approvePeminjamanByLaboran(peminjaman.id)
-      ).rejects.toThrow(PermissionError);
+      await expect(approvePeminjamanByLaboran(peminjaman.id)).rejects.toThrow(
+        PermissionError,
+      );
     });
   });
 
@@ -388,42 +392,42 @@ describe('RBAC Middleware Integration Tests', () => {
   // Scenario 3: Laboran Approving Peminjaman
   // ==========================================================================
 
-  describe('Scenario: Laboran approves peminjaman', () => {
-    const laboranId = 'laboran-123';
-    const userId = 'user-laboran-123';
+  describe("Scenario: Laboran approves peminjaman", () => {
+    const laboranId = "laboran-123";
+    const userId = "user-laboran-123";
 
     beforeEach(() => {
-      setupMockUser(userId, 'laboran', laboranId);
-      setupPermissions('laboran', [
-        'approve:peminjaman',
-        'view:peminjaman',
-        'manage:inventaris',
-        'manage:laboratorium',
+      setupMockUser(userId, "laboran", laboranId);
+      setupPermissions("laboran", [
+        "approve:peminjaman",
+        "view:peminjaman",
+        "manage:inventaris",
+        "manage:laboratorium",
       ]);
     });
 
-    it('should allow laboran to approve peminjaman', async () => {
+    it("should allow laboran to approve peminjaman", async () => {
       const peminjaman = await createPeminjaman({
-        mahasiswa_id: 'mhs-123',
-        item: 'Multimeter',
+        mahasiswa_id: "mhs-123",
+        item: "Multimeter",
       });
 
       mockDatabase.peminjaman[peminjaman.id] = peminjaman;
 
       const approved = await approvePeminjamanByLaboran(peminjaman.id);
 
-      expect(approved.status).toBe('approved');
+      expect(approved.status).toBe("approved");
     });
 
-    it('should prevent laboran from creating kuis', async () => {
-      await expect(
-        createKuis({ judul: 'Unauthorized Kuis' })
-      ).rejects.toThrow(PermissionError);
+    it("should prevent laboran from creating kuis", async () => {
+      await expect(createKuis({ judul: "Unauthorized Kuis" })).rejects.toThrow(
+        PermissionError,
+      );
     });
 
-    it('should prevent laboran from managing nilai', async () => {
+    it("should prevent laboran from managing nilai", async () => {
       await expect(
-        createNilai({ mahasiswa_id: 'mhs-123', nilai: 100 })
+        createNilai({ mahasiswa_id: "mhs-123", nilai: 100 }),
       ).rejects.toThrow(PermissionError);
     });
   });
@@ -432,64 +436,64 @@ describe('RBAC Middleware Integration Tests', () => {
   // Scenario 4: Admin Has Universal Access
   // ==========================================================================
 
-  describe('Scenario: Admin has universal access', () => {
-    const adminId = 'admin-123';
-    const userId = 'user-admin-123';
+  describe("Scenario: Admin has universal access", () => {
+    const adminId = "admin-123";
+    const userId = "user-admin-123";
 
     beforeEach(() => {
-      setupMockUser(userId, 'admin');
+      setupMockUser(userId, "admin");
       // Admin has ALL permissions
-      setupPermissions('admin', [
-        'manage:kuis',
-        'manage:nilai',
-        'approve:peminjaman',
-        'manage:user',
-        'manage:inventaris',
+      setupPermissions("admin", [
+        "manage:kuis",
+        "manage:nilai",
+        "approve:peminjaman",
+        "manage:user",
+        "manage:inventaris",
       ]);
     });
 
-    it('should allow admin to create kuis (even without dosen_id)', async () => {
+    it("should allow admin to create kuis (even without dosen_id)", async () => {
       const kuis = await createKuis({
-        judul: 'Admin Created Kuis',
-        dosen_id: 'any-dosen-id',
+        judul: "Admin Created Kuis",
+        dosen_id: "any-dosen-id",
       });
 
       expect(kuis).toBeDefined();
     });
 
-    it('should allow admin to update any kuis (ownership bypass)', async () => {
+    it("should allow admin to update any kuis (ownership bypass)", async () => {
       // Create kuis owned by dosen
       const kuis = await insertKuis({
-        judul: 'Dosen Kuis',
-        dosen_id: 'dosen-456',
+        judul: "Dosen Kuis",
+        dosen_id: "dosen-456",
       });
 
-      mockDatabase.kuis['kuis-123'] = kuis;
+      mockDatabase.kuis["kuis-123"] = kuis;
 
       // Admin should be able to update despite not being owner
-      const updated = await updateKuisByOwner('kuis-123', {
-        judul: 'Admin Updated',
+      const updated = await updateKuisByOwner("kuis-123", {
+        judul: "Admin Updated",
       });
 
-      expect(updated.judul).toBe('Admin Updated');
+      expect(updated.judul).toBe("Admin Updated");
     });
 
-    it('should allow admin to approve peminjaman', async () => {
+    it("should allow admin to approve peminjaman", async () => {
       const peminjaman = await createPeminjaman({
-        mahasiswa_id: 'mhs-123',
-        item: 'Equipment',
+        mahasiswa_id: "mhs-123",
+        item: "Equipment",
       });
 
       mockDatabase.peminjaman[peminjaman.id] = peminjaman;
 
       const approved = await approvePeminjamanByLaboran(peminjaman.id);
 
-      expect(approved.status).toBe('approved');
+      expect(approved.status).toBe("approved");
     });
 
-    it('should allow admin to create nilai', async () => {
+    it("should allow admin to create nilai", async () => {
       const nilai = await createNilai({
-        mahasiswa_id: 'mhs-123',
+        mahasiswa_id: "mhs-123",
         nilai: 95,
       });
 
@@ -501,39 +505,39 @@ describe('RBAC Middleware Integration Tests', () => {
   // Scenario 5: Cross-Role Permission Violations
   // ==========================================================================
 
-  describe('Scenario: Cross-role permission violations', () => {
-    it('should prevent mahasiswa from accessing dosen functions', async () => {
-      setupMockUser('user-mhs-123', 'mahasiswa', 'mhs-123');
-      setupPermissions('mahasiswa', ['view:kuis', 'create:attempt_kuis']);
+  describe("Scenario: Cross-role permission violations", () => {
+    it("should prevent mahasiswa from accessing dosen functions", async () => {
+      setupMockUser("user-mhs-123", "mahasiswa", "mhs-123");
+      setupPermissions("mahasiswa", ["view:kuis", "create:attempt_kuis"]);
+
+      await expect(createKuis({ judul: "Unauthorized" })).rejects.toThrow(
+        PermissionError,
+      );
+    });
+
+    it("should prevent laboran from accessing dosen functions", async () => {
+      setupMockUser("user-laboran-123", "laboran", "laboran-123");
+      setupPermissions("laboran", ["manage:inventaris", "approve:peminjaman"]);
 
       await expect(
-        createKuis({ judul: 'Unauthorized' })
+        createNilai({ mahasiswa_id: "mhs-123", nilai: 100 }),
       ).rejects.toThrow(PermissionError);
     });
 
-    it('should prevent laboran from accessing dosen functions', async () => {
-      setupMockUser('user-laboran-123', 'laboran', 'laboran-123');
-      setupPermissions('laboran', ['manage:inventaris', 'approve:peminjaman']);
-
-      await expect(
-        createNilai({ mahasiswa_id: 'mhs-123', nilai: 100 })
-      ).rejects.toThrow(PermissionError);
-    });
-
-    it('should prevent dosen from accessing laboran functions', async () => {
-      setupMockUser('user-dosen-123', 'dosen', 'dosen-123');
-      setupPermissions('dosen', ['manage:kuis', 'manage:nilai']);
+    it("should prevent dosen from accessing laboran functions", async () => {
+      setupMockUser("user-dosen-123", "dosen", "dosen-123");
+      setupPermissions("dosen", ["manage:kuis", "manage:nilai"]);
 
       const peminjaman = await createPeminjaman({
-        mahasiswa_id: 'mhs-123',
-        item: 'Test',
+        mahasiswa_id: "mhs-123",
+        item: "Test",
       });
 
       mockDatabase.peminjaman[peminjaman.id] = peminjaman;
 
-      await expect(
-        approvePeminjamanByLaboran(peminjaman.id)
-      ).rejects.toThrow(PermissionError);
+      await expect(approvePeminjamanByLaboran(peminjaman.id)).rejects.toThrow(
+        PermissionError,
+      );
     });
   });
 
@@ -541,41 +545,45 @@ describe('RBAC Middleware Integration Tests', () => {
   // Scenario 6: Error Messages and Logging
   // ==========================================================================
 
-  describe('Scenario: Error handling and messages', () => {
-    it('should provide clear error message for permission denial', async () => {
-      setupMockUser('user-mhs-123', 'mahasiswa', 'mhs-123');
-      setupPermissions('mahasiswa', ['view:kuis']);
+  describe("Scenario: Error handling and messages", () => {
+    it("should provide clear error message for permission denial", async () => {
+      setupMockUser("user-mhs-123", "mahasiswa", "mhs-123");
+      setupPermissions("mahasiswa", ["view:kuis"]);
 
       try {
-        await createKuis({ judul: 'Test' });
-        expect.fail('Should have thrown PermissionError');
+        await createKuis({ judul: "Test" });
+        expect.fail("Should have thrown PermissionError");
       } catch (error) {
         expect(error).toBeInstanceOf(PermissionError);
-        expect((error as PermissionError).permission).toBe('manage:kuis');
-        expect((error as PermissionError).userRole).toBe('mahasiswa');
-        expect((error as PermissionError).message).toContain('Missing permission');
+        expect((error as PermissionError).permission).toBe("manage:kuis");
+        expect((error as PermissionError).userRole).toBe("mahasiswa");
+        expect((error as PermissionError).message).toContain(
+          "Missing permission",
+        );
       }
     });
 
-    it('should provide clear error message for ownership denial', async () => {
-      setupMockUser('user-dosen-123', 'dosen', 'dosen-123');
-      setupPermissions('dosen', ['manage:kuis']);
+    it("should provide clear error message for ownership denial", async () => {
+      setupMockUser("user-dosen-123", "dosen", "dosen-123");
+      setupPermissions("dosen", ["manage:kuis"]);
 
       // Create kuis owned by different dosen
       const kuis = await insertKuis({
-        judul: 'Other Kuis',
-        dosen_id: 'dosen-456',
+        judul: "Other Kuis",
+        dosen_id: "dosen-456",
       });
 
-      mockDatabase.kuis['kuis-123'] = kuis;
+      mockDatabase.kuis["kuis-123"] = kuis;
 
       try {
-        await updateKuisByOwner('kuis-123', { judul: 'Hacked' });
-        expect.fail('Should have thrown OwnershipError');
+        await updateKuisByOwner("kuis-123", { judul: "Hacked" });
+        expect.fail("Should have thrown OwnershipError");
       } catch (error) {
         expect(error).toBeInstanceOf(OwnershipError);
-        expect((error as OwnershipError).resourceType).toBe('kuis');
-        expect((error as OwnershipError).message).toContain('your own resources');
+        expect((error as OwnershipError).resourceType).toBe("kuis");
+        expect((error as OwnershipError).message).toContain(
+          "your own resources",
+        );
       }
     });
   });

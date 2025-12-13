@@ -1,34 +1,42 @@
-import { useState } from 'react';
-import type { CreateSoalData, UpdateSoalData } from '@/types';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { useState } from "react";
+import type { CreateSoalData, UpdateSoalData } from "@/types";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Save, X, AlertCircle } from 'lucide-react';
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Save, X, AlertCircle, Database } from "lucide-react";
 
 // Question type components
-import { MultipleChoice, validateMultipleChoice, generateDefaultOptions } from '../question-types/MultipleChoice';
-import { TrueFalse, validateTrueFalse } from '../question-types/TrueFalse';
-import { Essay, validateEssay, getDefaultEssaySettings, type EssaySettings } from '../question-types/Essay';
-import { ShortAnswer, validateShortAnswer, getDefaultShortAnswerSettings, type ShortAnswerSettings } from '../question-types/ShortAnswer';
+import {
+  MultipleChoice,
+  validateMultipleChoice,
+  generateDefaultOptions,
+} from "../question-types/MultipleChoice";
+import {
+  Essay,
+  validateEssay,
+  getDefaultEssaySettings,
+  type EssaySettings,
+} from "../question-types/Essay";
 
 // Types
-import type { Soal, OpsiJawaban } from '@/types/kuis.types';
-import { TIPE_SOAL, TIPE_SOAL_LABELS } from '@/types/kuis.types';
+import type { Soal, OpsiJawaban } from "@/types/kuis.types";
+import { TIPE_SOAL, TIPE_SOAL_LABELS } from "@/types/kuis.types";
 
 // Utils
-import { cn } from '@/lib/utils';
+import { cn } from "@/lib/utils";
 
 // ============================================================================
 // TYPES
@@ -39,32 +47,32 @@ interface QuestionEditorProps {
    * Kuis ID (required for creating questions)
    */
   kuisId: string;
-  
+
   /**
    * Existing question data (for editing)
    */
   question?: Soal;
-  
+
   /**
    * Question number/order
    */
   urutan: number;
-  
+
   /**
    * Points for this question
    */
   defaultPoin?: number;
-  
+
   /**
    * Callback when question is saved
    */
   onSave: (questionData: CreateSoalData | UpdateSoalData) => void;
-  
+
   /**
    * Callback when editing is cancelled
    */
   onCancel: () => void;
-  
+
   /**
    * Show preview mode
    */
@@ -83,58 +91,49 @@ export function QuestionEditor({
   onSave,
   onCancel,
 }: QuestionEditorProps) {
-  
   // ============================================================================
   // STATE
   // ============================================================================
-  
+
   const isEditing = !!question;
-  
+
   // Question type state
   const [questionType, setQuestionType] = useState<string>(
-    question?.tipe_soal || TIPE_SOAL.PILIHAN_GANDA
+    question?.tipe_soal || TIPE_SOAL.PILIHAN_GANDA,
   );
-  
+
   // Basic question data
-  const [pertanyaan, setPertanyaan] = useState(question?.pertanyaan || '');
+  const [pertanyaan, setPertanyaan] = useState(question?.pertanyaan || "");
   const [poin, setPoin] = useState(question?.poin || defaultPoin);
-  const [penjelasan, setPenjelasan] = useState(question?.penjelasan || '');
-  
+  const [penjelasan, setPenjelasan] = useState(question?.penjelasan || "");
+
   // Multiple choice state
   const [options, setOptions] = useState<OpsiJawaban[]>(
-    question?.opsi_jawaban || generateDefaultOptions()
+    question?.opsi_jawaban || generateDefaultOptions(),
   );
   const [correctAnswerId, setCorrectAnswerId] = useState<string>(
-    question?.opsi_jawaban?.find((opt: OpsiJawaban) => opt.is_correct)?.id || ''
-  );
-  
-  // True/False state
-  const [trueFalseAnswer, setTrueFalseAnswer] = useState<'true' | 'false' | undefined>(
-    question?.jawaban_benar as 'true' | 'false' | undefined
+    question?.opsi_jawaban?.find((opt: OpsiJawaban) => opt.is_correct)?.id ||
+      "",
   );
 
   // Essay state
   const [essaySettings, setEssaySettings] = useState<EssaySettings>(
     question?.tipe_soal === TIPE_SOAL.ESSAY && question?.jawaban_benar
       ? JSON.parse(question.jawaban_benar as string)
-      : getDefaultEssaySettings()
+      : getDefaultEssaySettings(),
   );
 
-  // Short Answer state
-  const [shortAnswerSettings, setShortAnswerSettings] = useState<ShortAnswerSettings>(
-    question?.tipe_soal === TIPE_SOAL.JAWABAN_SINGKAT && question?.jawaban_benar
-      ? JSON.parse(question.jawaban_benar as string)
-      : getDefaultShortAnswerSettings()
-  );
+  // Bank Soal state - Default true (auto-save), only show for new questions
+  const [saveToBank, setSaveToBank] = useState(true);
 
   // UI state
   const [showErrors, setShowErrors] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  
+
   // ============================================================================
   // HANDLERS
   // ============================================================================
-  
+
   /**
    * Handle question type change
    */
@@ -145,108 +144,91 @@ export function QuestionEditor({
     // Reset type-specific data
     if (newType === TIPE_SOAL.PILIHAN_GANDA) {
       setOptions(generateDefaultOptions());
-      setCorrectAnswerId('');
-    } else if (newType === TIPE_SOAL.BENAR_SALAH) {
-      setTrueFalseAnswer(undefined);
+      setCorrectAnswerId("");
     } else if (newType === TIPE_SOAL.ESSAY) {
       setEssaySettings(getDefaultEssaySettings());
-    } else if (newType === TIPE_SOAL.JAWABAN_SINGKAT) {
-      setShortAnswerSettings(getDefaultShortAnswerSettings());
     }
   };
-  
+
   /**
    * Validate question data
    */
   const validateQuestion = (): { isValid: boolean; errors: string[] } => {
     const errors: string[] = [];
-    
+
     // Basic validation
     if (!pertanyaan.trim()) {
-      errors.push('Pertanyaan harus diisi');
+      errors.push("Pertanyaan harus diisi");
     }
     if (pertanyaan.trim().length < 10) {
-      errors.push('Pertanyaan minimal 10 karakter');
+      errors.push("Pertanyaan minimal 10 karakter");
     }
     if (poin < 1) {
-      errors.push('Poin minimal 1');
+      errors.push("Poin minimal 1");
     }
-    
+
     // Type-specific validation
     if (questionType === TIPE_SOAL.PILIHAN_GANDA) {
       const mcValidation = validateMultipleChoice(options);
       if (!mcValidation.isValid) {
         errors.push(...mcValidation.errors);
       }
-    } else if (questionType === TIPE_SOAL.BENAR_SALAH) {
-      const tfValidation = validateTrueFalse(trueFalseAnswer);
-      if (!tfValidation.isValid) {
-        errors.push(...tfValidation.errors);
-      }
     } else if (questionType === TIPE_SOAL.ESSAY) {
       const essayValidation = validateEssay(essaySettings);
       if (!essayValidation.isValid) {
         errors.push(...essayValidation.errors);
       }
-    } else if (questionType === TIPE_SOAL.JAWABAN_SINGKAT) {
-      const shortAnswerValidation = validateShortAnswer(shortAnswerSettings);
-      if (!shortAnswerValidation.isValid) {
-        errors.push(...shortAnswerValidation.errors);
-      }
     }
-    
+
     return {
       isValid: errors.length === 0,
       errors,
     };
   };
-  
+
   /**
    * Handle save question
    */
   const handleSave = () => {
     setShowErrors(true);
-    
+
     const validation = validateQuestion();
-    
+
     if (!validation.isValid) {
       return;
     }
-    
+
     setIsSaving(true);
-    
+
     // Prepare question data based on type
-    const questionData: Partial<CreateSoalData> & { id?: string } = {
+    const questionData: Partial<CreateSoalData> & { id?: string; saveToBank?: boolean } = {
       kuis_id: kuisId,
       pertanyaan: pertanyaan.trim(),
       tipe_soal: questionType as any,
       poin,
       urutan,
       penjelasan: (penjelasan.trim() || null) as any,
+      saveToBank: !isEditing && saveToBank, // Only save to bank for new questions
     };
-    
+
     // Add type-specific data
     if (questionType === TIPE_SOAL.PILIHAN_GANDA) {
       questionData.opsi_jawaban = options;
-    } else if (questionType === TIPE_SOAL.BENAR_SALAH) {
-      questionData.jawaban_benar = trueFalseAnswer;
     } else if (questionType === TIPE_SOAL.ESSAY) {
       questionData.jawaban_benar = JSON.stringify(essaySettings);
-    } else if (questionType === TIPE_SOAL.JAWABAN_SINGKAT) {
-      questionData.jawaban_benar = JSON.stringify(shortAnswerSettings);
     }
-    
+
     // Add ID if editing
     if (isEditing && question?.id) {
       questionData.id = question.id;
     }
-    
+
     // Call parent callback
     onSave(questionData as any);
-    
+
     setIsSaving(false);
   };
-  
+
   /**
    * Handle cancel
    */
@@ -254,13 +236,13 @@ export function QuestionEditor({
     setShowErrors(false);
     onCancel();
   };
-  
+
   // ============================================================================
   // RENDER
   // ============================================================================
-  
+
   const validation = validateQuestion();
-  
+
   return (
     <Card className="w-full">
       <CardHeader>
@@ -270,10 +252,10 @@ export function QuestionEditor({
               Soal #{urutan}
             </Badge>
             <CardTitle className="text-xl">
-              {isEditing ? 'Edit Soal' : 'Tambah Soal Baru'}
+              {isEditing ? "Edit Soal" : "Buat Soal Baru"}
             </CardTitle>
           </div>
-          
+
           <div className="flex items-center gap-2">
             <Button
               type="button"
@@ -284,7 +266,7 @@ export function QuestionEditor({
               <X className="h-4 w-4 mr-2" />
               Batal
             </Button>
-            
+
             <Button
               type="button"
               onClick={handleSave}
@@ -292,12 +274,12 @@ export function QuestionEditor({
               size="sm"
             >
               <Save className="h-4 w-4 mr-2" />
-              {isSaving ? 'Menyimpan...' : 'Simpan Soal'}
+              {isSaving ? "Menyimpan..." : "Simpan Soal"}
             </Button>
           </div>
         </div>
       </CardHeader>
-      
+
       <CardContent className="space-y-6">
         {/* Question Type & Points */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -319,14 +301,8 @@ export function QuestionEditor({
                 <SelectItem value={TIPE_SOAL.PILIHAN_GANDA}>
                   {TIPE_SOAL_LABELS.pilihan_ganda}
                 </SelectItem>
-                <SelectItem value={TIPE_SOAL.BENAR_SALAH}>
-                  {TIPE_SOAL_LABELS.benar_salah}
-                </SelectItem>
                 <SelectItem value={TIPE_SOAL.ESSAY}>
                   {TIPE_SOAL_LABELS.essay}
-                </SelectItem>
-                <SelectItem value={TIPE_SOAL.JAWABAN_SINGKAT}>
-                  {TIPE_SOAL_LABELS.jawaban_singkat}
                 </SelectItem>
               </SelectContent>
             </Select>
@@ -336,7 +312,7 @@ export function QuestionEditor({
               </p>
             )}
           </div>
-          
+
           {/* Points */}
           <div className="space-y-2">
             <Label htmlFor="poin">
@@ -350,15 +326,13 @@ export function QuestionEditor({
               max={100}
               value={poin}
               onChange={(e) => setPoin(Number(e.target.value))}
-              className={cn(
-                showErrors && poin < 1 && "border-destructive"
-              )}
+              className={cn(showErrors && poin < 1 && "border-destructive")}
             />
           </div>
         </div>
-        
+
         <Separator />
-        
+
         {/* Question Text */}
         <div className="space-y-2">
           <Label htmlFor="pertanyaan">
@@ -372,7 +346,9 @@ export function QuestionEditor({
             value={pertanyaan}
             onChange={(e) => setPertanyaan(e.target.value)}
             className={cn(
-              showErrors && (!pertanyaan.trim() || pertanyaan.trim().length < 10) && "border-destructive"
+              showErrors &&
+                (!pertanyaan.trim() || pertanyaan.trim().length < 10) &&
+                "border-destructive",
             )}
           />
           <div className="flex justify-between text-xs text-muted-foreground">
@@ -380,9 +356,9 @@ export function QuestionEditor({
             <span>{pertanyaan.length} karakter</span>
           </div>
         </div>
-        
+
         <Separator />
-        
+
         {/* Question Type Specific Fields */}
         <div>
           {questionType === TIPE_SOAL.PILIHAN_GANDA && (
@@ -391,14 +367,6 @@ export function QuestionEditor({
               onChange={setOptions}
               correctAnswerId={correctAnswerId}
               onCorrectAnswerChange={setCorrectAnswerId}
-              showErrors={showErrors}
-            />
-          )}
-
-          {questionType === TIPE_SOAL.BENAR_SALAH && (
-            <TrueFalse
-              correctAnswer={trueFalseAnswer}
-              onChange={setTrueFalseAnswer}
               showErrors={showErrors}
             />
           )}
@@ -413,26 +381,15 @@ export function QuestionEditor({
               showErrors={showErrors}
             />
           )}
-
-          {questionType === TIPE_SOAL.JAWABAN_SINGKAT && (
-            <ShortAnswer
-              expectedAnswer={shortAnswerSettings.expectedAnswer}
-              acceptedAnswers={shortAnswerSettings.acceptedAnswers}
-              keywords={shortAnswerSettings.keywords}
-              caseSensitive={shortAnswerSettings.caseSensitive}
-              maxLength={shortAnswerSettings.maxLength}
-              onChange={setShortAnswerSettings}
-              showErrors={showErrors}
-            />
-          )}
         </div>
-        
+
         <Separator />
-        
+
         {/* Explanation (Optional) */}
         <div className="space-y-2">
           <Label htmlFor="penjelasan">
-            Penjelasan / Pembahasan <span className="text-muted-foreground">(Opsional)</span>
+            Penjelasan / Pembahasan{" "}
+            <span className="text-muted-foreground">(Opsional)</span>
           </Label>
           <Textarea
             id="penjelasan"
@@ -445,13 +402,40 @@ export function QuestionEditor({
             Penjelasan akan ditampilkan setelah mahasiswa menyelesaikan kuis
           </p>
         </div>
-        
+
+        {/* Save to Bank Soal - Only for new questions */}
+        {!isEditing && kuisId !== "bank" && (
+          <div className="flex items-start gap-3 p-4 rounded-lg border bg-muted/50">
+            <Checkbox
+              id="saveToBank"
+              checked={saveToBank}
+              onCheckedChange={(checked) => setSaveToBank(checked as boolean)}
+              className="mt-0.5"
+            />
+            <div className="flex-1 space-y-1">
+              <Label
+                htmlFor="saveToBank"
+                className="text-sm font-medium cursor-pointer flex items-center gap-2"
+              >
+                <Database className="h-4 w-4" />
+                Simpan ke Bank Soal
+              </Label>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Soal akan disimpan ke Bank Soal agar dapat digunakan kembali untuk kuis lain di masa depan.
+                Sangat disarankan untuk soal-soal fundamental yang sering dipakai.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Validation Errors */}
         {showErrors && !validation.isValid && (
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              <div className="font-semibold mb-2">Harap perbaiki kesalahan berikut:</div>
+              <div className="font-semibold mb-2">
+                Harap perbaiki kesalahan berikut:
+              </div>
               <ul className="list-disc list-inside space-y-1">
                 {validation.errors.map((error, index) => (
                   <li key={index}>{error}</li>
@@ -460,7 +444,7 @@ export function QuestionEditor({
             </AlertDescription>
           </Alert>
         )}
-        
+
         {/* Action Buttons (Mobile) */}
         <div className="flex md:hidden gap-2 pt-4">
           <Button
@@ -471,14 +455,14 @@ export function QuestionEditor({
           >
             Batal
           </Button>
-          
+
           <Button
             type="button"
             onClick={handleSave}
             disabled={isSaving}
             className="flex-1"
           >
-            {isSaving ? 'Menyimpan...' : 'Simpan Soal'}
+            {isSaving ? "Menyimpan..." : "Simpan Soal"}
           </Button>
         </div>
       </CardContent>
@@ -503,7 +487,9 @@ export function transformSoalToEditor(soal: Soal): Partial<Soal> {
 /**
  * Transform editor data to API format
  */
-export function transformEditorToSoal(editorData: Partial<CreateSoalData>): Partial<CreateSoalData> {
+export function transformEditorToSoal(
+  editorData: Partial<CreateSoalData>,
+): Partial<CreateSoalData> {
   const data: Partial<CreateSoalData> = {
     kuis_id: editorData.kuis_id,
     pertanyaan: editorData.pertanyaan,
@@ -512,12 +498,12 @@ export function transformEditorToSoal(editorData: Partial<CreateSoalData>): Part
     urutan: editorData.urutan,
     penjelasan: editorData.penjelasan,
   };
-  
+
   if (editorData.tipe_soal === TIPE_SOAL.PILIHAN_GANDA) {
     data.opsi_jawaban = editorData.opsi_jawaban;
-  } else if (editorData.tipe_soal === TIPE_SOAL.BENAR_SALAH) {
+  } else if (editorData.tipe_soal === TIPE_SOAL.ESSAY) {
     data.jawaban_benar = editorData.jawaban_benar;
   }
-  
+
   return data;
 }

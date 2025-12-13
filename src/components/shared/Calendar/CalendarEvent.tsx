@@ -3,13 +3,13 @@
  * Display individual calendar event with details
  */
 
-import { Clock, MapPin, Tag } from 'lucide-react';
-import { format, parseISO } from 'date-fns';
-import { id as localeId } from 'date-fns/locale';
-import { Badge } from '@/components/ui/badge';
-import { Card } from '@/components/ui/card';
-import { cn } from '@/lib/utils';
-import type { CalendarEvent } from '@/types/jadwal.types';
+import { Clock, MapPin, Tag } from "lucide-react";
+import { format, parseISO } from "date-fns";
+import { id as localeId } from "date-fns/locale";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
+import type { CalendarEvent } from "@/types/jadwal.types";
 
 // ============================================================================
 // TYPES
@@ -18,7 +18,7 @@ import type { CalendarEvent } from '@/types/jadwal.types';
 interface CalendarEventProps {
   event: CalendarEvent;
   onClick?: (event: CalendarEvent) => void;
-  variant?: 'compact' | 'detailed';
+  variant?: "compact" | "detailed";
   showDate?: boolean;
   className?: string;
 }
@@ -30,7 +30,7 @@ interface CalendarEventProps {
 export function CalendarEvent({
   event,
   onClick,
-  variant = 'compact',
+  variant = "compact",
   showDate = false,
   className,
 }: CalendarEventProps) {
@@ -47,17 +47,17 @@ export function CalendarEvent({
 
   const getEventTypeBadge = () => {
     const typeLabels = {
-      class: 'Kelas',
-      quiz: 'Kuis',
-      booking: 'Booking',
-      exam: 'Ujian',
+      class: "Kelas",
+      quiz: "Kuis",
+      booking: "Booking",
+      exam: "Ujian",
     };
 
     const typeColors = {
-      class: 'default',
-      quiz: 'destructive',
-      booking: 'secondary',
-      exam: 'outline',
+      class: "default",
+      quiz: "destructive",
+      booking: "secondary",
+      exam: "outline",
     } as const;
 
     return (
@@ -71,17 +71,17 @@ export function CalendarEvent({
   // RENDER - COMPACT VARIANT
   // ============================================================================
 
-  if (variant === 'compact') {
+  if (variant === "compact") {
     return (
       <div
         onClick={handleClick}
         className={cn(
-          'flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer',
-          'hover:bg-accent transition-colors',
-          className
+          "flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer",
+          "hover:bg-accent transition-colors",
+          className,
         )}
         style={{
-          borderLeft: `4px solid ${event.color || '#3b82f6'}`,
+          borderLeft: `4px solid ${event.color || "#3b82f6"}`,
         }}
       >
         <div className="flex-1 min-w-0">
@@ -93,7 +93,7 @@ export function CalendarEvent({
             <div className="flex items-center gap-1">
               <Clock className="h-3 w-3" />
               <span>
-                {format(startDate, 'HH:mm')} - {format(endDate, 'HH:mm')}
+                {format(startDate, "HH:mm")} - {format(endDate, "HH:mm")}
               </span>
             </div>
             {event.location && (
@@ -116,11 +116,11 @@ export function CalendarEvent({
     <Card
       onClick={handleClick}
       className={cn(
-        'p-4 cursor-pointer hover:shadow-md transition-shadow',
-        className
+        "p-4 cursor-pointer hover:shadow-md transition-shadow",
+        className,
       )}
       style={{
-        borderLeft: `4px solid ${event.color || '#3b82f6'}`,
+        borderLeft: `4px solid ${event.color || "#3b82f6"}`,
       }}
     >
       <div className="space-y-3">
@@ -136,7 +136,9 @@ export function CalendarEvent({
         {showDate && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Tag className="h-4 w-4" />
-            <span>{format(startDate, 'EEEE, d MMMM yyyy', { locale: localeId })}</span>
+            <span>
+              {format(startDate, "EEEE, d MMMM yyyy", { locale: localeId })}
+            </span>
           </div>
         )}
 
@@ -144,7 +146,7 @@ export function CalendarEvent({
         <div className="flex items-center gap-2 text-sm">
           <Clock className="h-4 w-4 text-muted-foreground" />
           <span className="font-medium">
-            {format(startDate, 'HH:mm')} - {format(endDate, 'HH:mm')}
+            {format(startDate, "HH:mm")} - {format(endDate, "HH:mm")}
           </span>
         </div>
 

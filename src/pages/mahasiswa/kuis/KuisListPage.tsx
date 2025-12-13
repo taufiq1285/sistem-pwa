@@ -182,7 +182,8 @@ export default function KuisListPage() {
     const canStart = quiz.status === "ongoing" && quiz.can_attempt;
     const isCompleted = quiz.status === "completed";
     const hasBestScore = typeof quiz.best_score === "number";
-    const isPassed = hasBestScore && quiz.best_score! >= ((quiz as any).passing_grade || 0);
+    const isPassed =
+      hasBestScore && quiz.best_score! >= ((quiz as any).passing_grade || 0);
 
     return (
       <Card className="hover:shadow-md transition-shadow">

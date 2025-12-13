@@ -18,15 +18,15 @@ export interface BobotNilai {
 export interface Kelas {
   id: string;
   nama_kelas: string;
-  kode_kelas: string | null;  // Changed: nullable for simple class lists
-  mata_kuliah_id: string | null;  // Changed: nullable to support standalone classes
-  dosen_id: string | null;  // Changed: nullable to support standalone classes
+  kode_kelas: string | null; // Changed: nullable for simple class lists
+  mata_kuliah_id: string | null; // Changed: nullable to support standalone classes
+  dosen_id: string | null; // Changed: nullable to support standalone classes
   ruangan: string | null;
   kuota: number | null;
   is_active: boolean | null;
   semester_ajaran: number;
   tahun_ajaran: string;
-  bobot_nilai?: BobotNilai | null;  // Custom grade weights
+  bobot_nilai?: BobotNilai | null; // Custom grade weights
   created_at: string | null;
   updated_at: string | null;
 
@@ -54,15 +54,15 @@ export interface KelasFilters {
 
 export interface CreateKelasData {
   nama_kelas: string;
-  kode_kelas?: string | null;  // Optional: for simple class lists
-  mata_kuliah_id?: string | null;  // Optional: nullable to support standalone classes
-  dosen_id?: string | null;  // Optional: nullable to support standalone classes
+  kode_kelas?: string | null; // Optional: for simple class lists
+  mata_kuliah_id?: string | null; // Optional: nullable to support standalone classes
+  dosen_id?: string | null; // Optional: nullable to support standalone classes
   ruangan?: string | null;
   kuota?: number | null;
   is_active?: boolean | null;
   semester_ajaran: number;
   tahun_ajaran: string;
-  bobot_nilai?: BobotNilai | null;  // Optional: custom grade weights
+  bobot_nilai?: BobotNilai | null; // Optional: custom grade weights
 }
 
 export type UpdateKelasData = Partial<CreateKelasData>;

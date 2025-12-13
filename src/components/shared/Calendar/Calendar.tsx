@@ -3,8 +3,8 @@
  * Custom calendar with month view and event display
  */
 
-import { useState } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
   startOfMonth,
   endOfMonth,
@@ -17,12 +17,12 @@ import {
   isSameDay,
   isToday,
   parseISO,
-} from 'date-fns';
-import { id as localeId } from 'date-fns/locale';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { cn } from '@/lib/utils';
-import type { CalendarEvent } from '@/types/jadwal.types';
+} from "date-fns";
+import { id as localeId } from "date-fns/locale";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
+import type { CalendarEvent } from "@/types/jadwal.types";
 
 // ============================================================================
 // TYPES
@@ -68,15 +68,15 @@ export function Calendar({
   const days: CalendarDay[] = [];
   let day = calendarStart;
 
-  console.log('🔍 Calendar: Building days', {
-    calendarStart: format(calendarStart, 'yyyy-MM-dd'),
-    calendarEnd: format(calendarEnd, 'yyyy-MM-dd'),
+  console.log("🔍 Calendar: Building days", {
+    calendarStart: format(calendarStart, "yyyy-MM-dd"),
+    calendarEnd: format(calendarEnd, "yyyy-MM-dd"),
     totalEvents: events.length,
-    eventDates: events.map(e => ({
+    eventDates: events.map((e) => ({
       id: e.id,
       title: e.title,
       start: e.start,
-      startDate: format(parseISO(e.start), 'yyyy-MM-dd'),
+      startDate: format(parseISO(e.start), "yyyy-MM-dd"),
     })),
   });
 
@@ -84,16 +84,16 @@ export function Calendar({
     const dayEvents = events.filter((event) => {
       const eventDate = parseISO(event.start);
       const isSame = isSameDay(eventDate, day);
-      
+
       if (events.length > 0 && isSame) {
-        console.log('✅ Event matched for day:', {
-          day: format(day, 'yyyy-MM-dd'),
+        console.log("✅ Event matched for day:", {
+          day: format(day, "yyyy-MM-dd"),
           eventStart: event.start,
-          eventDate: format(eventDate, 'yyyy-MM-dd HH:mm:ss'),
+          eventDate: format(eventDate, "yyyy-MM-dd HH:mm:ss"),
           eventTitle: event.title,
         });
       }
-      
+
       return isSame;
     });
 
@@ -143,11 +143,11 @@ export function Calendar({
   // ============================================================================
 
   return (
-    <Card className={cn('w-full', className)}>
+    <Card className={cn("w-full", className)}>
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle>
-            {format(currentDate, 'MMMM yyyy', { locale: localeId })}
+            {format(currentDate, "MMMM yyyy", { locale: localeId })}
           </CardTitle>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={handleToday}>
@@ -167,7 +167,7 @@ export function Calendar({
         <div className="space-y-2">
           {/* Day Headers */}
           <div className="grid grid-cols-7 gap-2">
-            {['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'].map((day) => (
+            {["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"].map((day) => (
               <div
                 key={day}
                 className="text-center text-sm font-medium text-muted-foreground py-2"
@@ -186,20 +186,21 @@ export function Calendar({
                     key={day.date.toISOString()}
                     onClick={() => handleDateClick(day.date)}
                     className={cn(
-                      'min-h-[80px] p-2 rounded-lg border transition-colors cursor-pointer',
-                      'hover:bg-accent hover:border-accent-foreground/20',
-                      !day.isCurrentMonth && 'bg-muted/30 text-muted-foreground',
-                      day.isToday && 'border-primary border-2 bg-primary/5'
+                      "min-h-[80px] p-2 rounded-lg border transition-colors cursor-pointer",
+                      "hover:bg-accent hover:border-accent-foreground/20",
+                      !day.isCurrentMonth &&
+                        "bg-muted/30 text-muted-foreground",
+                      day.isToday && "border-primary border-2 bg-primary/5",
                     )}
                   >
                     {/* Date Number */}
                     <div
                       className={cn(
-                        'text-sm font-medium mb-1',
-                        day.isToday && 'text-primary font-bold'
+                        "text-sm font-medium mb-1",
+                        day.isToday && "text-primary font-bold",
                       )}
                     >
-                      {format(day.date, 'd')}
+                      {format(day.date, "d")}
                     </div>
 
                     {/* Events */}
@@ -209,16 +210,16 @@ export function Calendar({
                           key={event.id}
                           onClick={(e) => handleEventClick(event, e)}
                           className={cn(
-                            'text-xs px-1.5 py-0.5 rounded truncate cursor-pointer',
-                            'hover:opacity-80 transition-opacity'
+                            "text-xs px-1.5 py-0.5 rounded truncate cursor-pointer",
+                            "hover:opacity-80 transition-opacity",
                           )}
                           style={{
-                            backgroundColor: event.color || '#3b82f6',
-                            color: 'white',
+                            backgroundColor: event.color || "#3b82f6",
+                            color: "white",
                           }}
                           title={event.title}
                         >
-                          {format(parseISO(event.start), 'HH:mm')} {event.title}
+                          {format(parseISO(event.start), "HH:mm")} {event.title}
                         </div>
                       ))}
 

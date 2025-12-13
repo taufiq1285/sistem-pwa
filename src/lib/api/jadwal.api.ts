@@ -4,7 +4,6 @@
  */
 
 import {
-
   query,
   queryWithFilters,
   getById,
@@ -12,20 +11,22 @@ import {
   update,
   remove,
   withApiResponse,
-} from './base.api';
+} from "./base.api";
 import type {
   Jadwal,
   CreateJadwalData,
   JadwalFilters,
   CalendarEvent,
-} from '@/types/jadwal.types';
-import { handleError, logError } from '@/lib/utils/errors';
-import { format, parse } from 'date-fns';
-import { id as localeId } from 'date-fns/locale';
+} from "@/types/jadwal.types";
+import { handleError, logError } from "@/lib/utils/errors";
+import { format, parse } from "date-fns";
+import { id as localeId } from "date-fns/locale";
 import {
   requirePermission,
   requirePermissionAndOwnership,
-} from '@/lib/middleware';
+} from "@/lib/middleware";
+import { supabase } from "@/lib/supabase/client";
+import { logger } from "@/lib/utils/logger";
 
 // ============================================================================
 // QUERY OPERATIONS
@@ -43,32 +44,32 @@ export async function getJadwal(filters?: JadwalFilters): Promise<Jadwal[]> {
     // Apply filters
     if (filters?.kelas) {
       filterConditions.push({
-        column: 'kelas',
-        operator: 'eq' as const,
+        column: "kelas",
+        operator: "eq" as const,
         value: filters.kelas,
       });
     }
 
     if (filters?.laboratorium_id) {
       filterConditions.push({
-        column: 'laboratorium_id',
-        operator: 'eq' as const,
+        column: "laboratorium_id",
+        operator: "eq" as const,
         value: filters.laboratorium_id,
       });
     }
 
     if (filters?.hari) {
       filterConditions.push({
-        column: 'hari',
-        operator: 'eq' as const,
+        column: "hari",
+        operator: "eq" as const,
         value: filters.hari,
       });
     }
 
     if (filters?.is_active !== undefined) {
       filterConditions.push({
-        column: 'is_active',
-        operator: 'eq' as const,
+        column: "is_active",
+        operator: "eq" as const,
         value: filters.is_active,
       });
     }
@@ -83,20 +84,25 @@ export async function getJadwal(filters?: JadwalFilters): Promise<Jadwal[]> {
         )
       `,
       order: {
-        column: 'tanggal_praktikum',
+        column: "tanggal_praktikum",
         ascending: true,
       },
     };
 
     // ✅ PERBAIKAN FINAL: Ganti 'jadwalpraktikum' menjadi 'jadwal_praktikum'
-    const data = filterConditions.length > 0
-      ? await queryWithFilters<Jadwal>('jadwal_praktikum', filterConditions, options)
-      : await query<Jadwal>('jadwal_praktikum', options);
+    const data =
+      filterConditions.length > 0
+        ? await queryWithFilters<Jadwal>(
+            "jadwal_praktikum",
+            filterConditions,
+            options,
+          )
+        : await query<Jadwal>("jadwal_praktikum", options);
 
     return data;
   } catch (error) {
     const apiError = handleError(error);
-    logError(apiError, 'getJadwal');
+    logError(apiError, "getJadwal");
     throw apiError;
   }
 }
@@ -109,7 +115,7 @@ export async function getJadwal(filters?: JadwalFilters): Promise<Jadwal[]> {
 export async function getJadwalById(id: string): Promise<Jadwal> {
   try {
     // ✅ PERBAIKAN FINAL: Ganti 'jadwalpraktikum' menjadi 'jadwal_praktikum'
-    return await getById<Jadwal>('jadwal_praktikum', id, {
+    return await getById<Jadwal>("jadwal_praktikum", id, {
       select: `
         *,
         laboratorium:laboratorium_id (*)
@@ -146,9 +152,9 @@ export async function getJadwalByLab(labId: string): Promise<Jadwal[]> {
 function parseTimeString(timeStr: string, referenceDate: Date): Date {
   // Remove seconds if present (08:00:00 → 08:00)
   const timeWithoutSeconds = timeStr.substring(0, 5);
-  
+
   // Parse with HH:mm format
-  return parse(timeWithoutSeconds, 'HH:mm', referenceDate);
+  return parse(timeWithoutSeconds, "HH:mm", referenceDate);
 }
 
 /**
@@ -159,51 +165,67 @@ function parseTimeString(timeStr: string, referenceDate: Date): Date {
  */
 export async function getCalendarEvents(
   startDate: Date,
-  endDate: Date
+  endDate: Date,
 ): Promise<CalendarEvent[]> {
   try {
     // 🔍 DEBUG: Log parameter yang masuk
-    console.log('🔍 getCalendarEvents called:', {
-      startDate: format(startDate, 'yyyy-MM-dd HH:mm:ss'),
-      endDate: format(endDate, 'yyyy-MM-dd HH:mm:ss'),
+    console.log("🔍 getCalendarEvents called:", {
+      startDate: format(startDate, "yyyy-MM-dd HH:mm:ss"),
+      endDate: format(endDate, "yyyy-MM-dd HH:mm:ss"),
       startDateISO: startDate.toISOString(),
       endDateISO: endDate.toISOString(),
-      startDateFormatted: format(startDate, 'yyyy-MM-dd'),
-      endDateFormatted: format(endDate, 'yyyy-MM-dd'),
+      startDateFormatted: format(startDate, "yyyy-MM-dd"),
+      endDateFormatted: format(endDate, "yyyy-MM-dd"),
     });
 
     // ✅ PERBAIKAN FINAL: Ganti 'jadwalpraktikum' menjadi 'jadwal_praktikum'
-    const jadwalList = await queryWithFilters<Jadwal>('jadwal_praktikum', [
+    // ✅ HYBRID APPROVAL: Only show approved jadwal in calendar
+    const jadwalList = await queryWithFilters<Jadwal>(
+      "jadwal_praktikum",
+      [
+        {
+          column: "tanggal_praktikum",
+          operator: "gte" as const,
+          value: format(startDate, "yyyy-MM-dd"),
+        },
+        {
+          column: "tanggal_praktikum",
+          operator: "lte" as const,
+          value: format(endDate, "yyyy-MM-dd"),
+        },
+        {
+          column: "is_active",
+          operator: "eq" as const,
+          value: true,
+        },
+        {
+          column: "status",
+          operator: "eq" as const,
+          value: "approved",
+        },
+      ],
       {
-        column: 'tanggal_praktikum',
-        operator: 'gte' as const,
-        value: format(startDate, 'yyyy-MM-dd'),
-      },
-      {
-        column: 'tanggal_praktikum',
-        operator: 'lte' as const,
-        value: format(endDate, 'yyyy-MM-dd'),
-      },
-      {
-        column: 'is_active',
-        operator: 'eq' as const,
-        value: true,
-      },
-    ], {
-      select: `
+        select: `
         *,
+        kelas:kelas_id (
+          nama_kelas,
+          mata_kuliah (
+            nama_mk
+          )
+        ),
         laboratorium:laboratorium_id (
           nama_lab,
           kode_lab,
           kapasitas
         )
       `,
-    });
+      },
+    );
 
     // 🔍 DEBUG: Log hasil query
-    console.log('🔍 Query result:', {
+    console.log("🔍 Query result:", {
       count: jadwalList.length,
-      dates: jadwalList.map(j => ({
+      dates: jadwalList.map((j) => ({
         id: j.id,
         tanggal: j.tanggal_praktikum,
         kelas: j.kelas,
@@ -218,17 +240,17 @@ export async function getCalendarEvents(
       try {
         // Skip if tanggal_praktikum is null
         if (!j.tanggal_praktikum) {
-          console.warn('⚠️ Skipping jadwal with null tanggal_praktikum:', j.id);
+          console.warn("⚠️ Skipping jadwal with null tanggal_praktikum:", j.id);
           return;
         }
-        
+
         // ✅ FIX: Parse tanggal dengan benar (timezone-safe)
         // Gunakan format YYYY-MM-DD langsung tanpa timezone conversion
-        const [year, month, day] = j.tanggal_praktikum.split('-').map(Number);
+        const [year, month, day] = j.tanggal_praktikum.split("-").map(Number);
         const date = new Date(year, month - 1, day); // Local date tanpa timezone issue
-        
+
         // 🔍 DEBUG: Log setiap jadwal yang diproses
-        console.log('🔍 Processing jadwal:', {
+        console.log("🔍 Processing jadwal:", {
           id: j.id,
           kelas: j.kelas,
           tanggal_praktikum: j.tanggal_praktikum,
@@ -237,37 +259,57 @@ export async function getCalendarEvents(
           jam_mulai: j.jam_mulai,
           jam_selesai: j.jam_selesai,
         });
-        
+
         // Parse time strings and combine with the actual date
         const jamMulaiDate = parseTimeString(j.jam_mulai, date);
         const jamSelesaiDate = parseTimeString(j.jam_selesai, date);
 
         // 🔍 DEBUG: Log hasil parsing time
-        console.log('🔍 Parsed times:', {
+        console.log("🔍 Parsed times:", {
           id: j.id,
           jamMulaiDate: jamMulaiDate.toISOString(),
           jamSelesaiDate: jamSelesaiDate.toISOString(),
-          isValid: !isNaN(jamMulaiDate.getTime()) && !isNaN(jamSelesaiDate.getTime()),
+          isValid:
+            !isNaN(jamMulaiDate.getTime()) && !isNaN(jamSelesaiDate.getTime()),
         });
 
         // Validate parsed dates
         if (isNaN(jamMulaiDate.getTime()) || isNaN(jamSelesaiDate.getTime())) {
-          console.warn('⚠️ Invalid time after parsing:', j.id, j.jam_mulai, j.jam_selesai);
+          console.warn(
+            "⚠️ Invalid time after parsing:",
+            j.id,
+            j.jam_mulai,
+            j.jam_selesai,
+          );
           return;
         }
 
+        // FIX: Get kelas and mata_kuliah from relations (handle string | object)
+        const kelasRelation =
+          typeof j.kelas === "object" && j.kelas !== null ? j.kelas : undefined;
+        const kelasNama = kelasRelation?.nama_kelas || "Kelas";
+        const mataKuliahNama = kelasRelation?.mata_kuliah?.nama_mk || "";
+        const labNama = j.laboratorium?.nama_lab || "Lab";
+
+        // Build title with mata kuliah if available
+        const title = mataKuliahNama
+          ? `${mataKuliahNama} - ${kelasNama} - ${labNama}`
+          : `${kelasNama} - ${labNama}`;
+
         const event = {
           id: j.id,
-          title: `Kelas ${j.kelas} - ${j.laboratorium?.nama_lab || 'Lab'}`,
+          title,
           start: jamMulaiDate.toISOString(),
           end: jamSelesaiDate.toISOString(),
-          type: 'class' as const,
-          color: '#3b82f6',
+          type: "class" as const,
+          color: "#3b82f6",
           location: j.laboratorium?.nama_lab,
           description: j.topik ?? undefined,
           metadata: {
             jadwal_id: j.id,
-            kelas: j.kelas ?? undefined,
+            kelas_id: j.kelas_id ?? undefined,
+            kelas_nama: kelasNama,
+            mata_kuliah_nama: mataKuliahNama || undefined,
             laboratorium_id: j.laboratorium_id,
             topik: j.topik ?? undefined,
           },
@@ -276,27 +318,29 @@ export async function getCalendarEvents(
         events.push(event);
 
         // 🔍 DEBUG: Log event yang dibuat
-        console.log('✅ Event created:', {
+        console.log("✅ Event created:", {
           id: event.id,
           title: event.title,
           start: event.start,
           end: event.end,
         });
       } catch (parseError) {
-        console.warn('❌ Error parsing jadwal event:', j.id, parseError);
+        console.warn("❌ Error parsing jadwal event:", j.id, parseError);
       }
     });
 
-    console.log(`✅ Generated ${events.length} calendar events from ${jadwalList.length} jadwal`);
-    
+    console.log(
+      `✅ Generated ${events.length} calendar events from ${jadwalList.length} jadwal`,
+    );
+
     // 🔍 DEBUG: Log final events
-    console.log('🔍 Final events:', events);
-    
+    console.log("🔍 Final events:", events);
+
     return events;
   } catch (error) {
-    console.error('❌ getCalendarEvents error:', error);
+    console.error("❌ getCalendarEvents error:", error);
     const apiError = handleError(error);
-    logError(apiError, 'getCalendarEvents');
+    logError(apiError, "getCalendarEvents");
     throw apiError;
   }
 }
@@ -313,9 +357,10 @@ export async function getCalendarEvents(
 async function createJadwalImpl(data: CreateJadwalData): Promise<Jadwal> {
   try {
     // Auto-compute hari from tanggal_praktikum
-    const tanggalPraktikum = data.tanggal_praktikum instanceof Date
-      ? data.tanggal_praktikum
-      : new Date(data.tanggal_praktikum);
+    const tanggalPraktikum =
+      data.tanggal_praktikum instanceof Date
+        ? data.tanggal_praktikum
+        : new Date(data.tanggal_praktikum);
 
     // ✅ FIX ISSUE #6: Validate tanggal tidak boleh di masa lalu
     const today = new Date();
@@ -326,48 +371,60 @@ async function createJadwalImpl(data: CreateJadwalData): Promise<Jadwal> {
 
     if (praktikumDate < today) {
       throw new Error(
-        `Tanggal praktikum tidak boleh di masa lalu. Tanggal yang dipilih: ${format(tanggalPraktikum, 'dd MMM yyyy', { locale: localeId })}`
+        `Tanggal praktikum tidak boleh di masa lalu. Tanggal yang dipilih: ${format(tanggalPraktikum, "dd MMM yyyy", { locale: localeId })}`,
       );
     }
 
-    const hari = format(tanggalPraktikum, 'EEEE', { locale: localeId }).toLowerCase() as "senin" | "selasa" | "rabu" | "kamis" | "jumat" | "sabtu" | "minggu";
+    const hari = format(tanggalPraktikum, "EEEE", {
+      locale: localeId,
+    }).toLowerCase() as
+      | "senin"
+      | "selasa"
+      | "rabu"
+      | "kamis"
+      | "jumat"
+      | "sabtu"
+      | "minggu";
 
     // Check for conflicts on the same date
     const hasConflict = await checkJadwalConflictByDate(
       data.laboratorium_id,
       tanggalPraktikum,
       data.jam_mulai,
-      data.jam_selesai
+      data.jam_selesai,
     );
 
     if (hasConflict) {
       throw new Error(
-        `Jadwal bentrok! Lab sudah terpakai pada ${format(tanggalPraktikum, 'dd MMM yyyy', { locale: localeId })} jam ${data.jam_mulai}-${data.jam_selesai}`
+        `Jadwal bentrok! Lab sudah terpakai pada ${format(tanggalPraktikum, "dd MMM yyyy", { locale: localeId })} jam ${data.jam_mulai}-${data.jam_selesai}`,
       );
     }
 
     // ✅ PERBAIKAN FINAL: Ganti 'jadwalpraktikum' menjadi 'jadwal_praktikum'
-    return await insert<Jadwal>('jadwal_praktikum', {
+    // ✅ HYBRID APPROVAL: Auto-approve if no conflict (conflict already checked above)
+    return await insert<Jadwal>("jadwal_praktikum", {
       kelas_id: data.kelas_id,
       laboratorium_id: data.laboratorium_id,
-      tanggal_praktikum: format(tanggalPraktikum, 'yyyy-MM-dd'),
+      tanggal_praktikum: format(tanggalPraktikum, "yyyy-MM-dd"),
       hari,
       jam_mulai: data.jam_mulai,
       jam_selesai: data.jam_selesai,
       topik: data.topik,
       catatan: data.catatan,
-      is_active: data.is_active ?? true,
+      is_active: true, // HYBRID: Auto-approved (laboran can cancel later if needed)
     });
   } catch (error) {
     const apiError = handleError(error);
-    logError(apiError, 'createJadwal');
+    logError(apiError, "createJadwal");
     throw apiError;
   }
 }
 
 // 🔒 PROTECTED: Requires manage:jadwal permission
-export const createJadwal = requirePermission('manage:jadwal', createJadwalImpl);
-
+export const createJadwal = requirePermission(
+  "manage:jadwal",
+  createJadwalImpl,
+);
 
 // ============================================================================
 // UPDATE OPERATIONS
@@ -381,29 +438,32 @@ export const createJadwal = requirePermission('manage:jadwal', createJadwalImpl)
  */
 async function updateJadwalImpl(
   id: string,
-  data: Partial<CreateJadwalData>
+  data: Partial<CreateJadwalData>,
 ): Promise<Jadwal> {
   try {
     // Get existing jadwal
     const existing = await getJadwalById(id);
-    
+
     // Build update object
     const updateData: Partial<Jadwal> = {};
-    
+
     // Copy basic fields
     if (data.kelas_id !== undefined) updateData.kelas_id = data.kelas_id;
-    if (data.laboratorium_id !== undefined) updateData.laboratorium_id = data.laboratorium_id;
+    if (data.laboratorium_id !== undefined)
+      updateData.laboratorium_id = data.laboratorium_id;
     if (data.jam_mulai !== undefined) updateData.jam_mulai = data.jam_mulai;
-    if (data.jam_selesai !== undefined) updateData.jam_selesai = data.jam_selesai;
+    if (data.jam_selesai !== undefined)
+      updateData.jam_selesai = data.jam_selesai;
     if (data.topik !== undefined) updateData.topik = data.topik;
     if (data.catatan !== undefined) updateData.catatan = data.catatan;
     if (data.is_active !== undefined) updateData.is_active = data.is_active;
-    
+
     // Handle tanggal_praktikum with auto-computed hari
     if (data.tanggal_praktikum !== undefined) {
-      const tanggalPraktikum = data.tanggal_praktikum instanceof Date
-        ? data.tanggal_praktikum
-        : new Date(data.tanggal_praktikum);
+      const tanggalPraktikum =
+        data.tanggal_praktikum instanceof Date
+          ? data.tanggal_praktikum
+          : new Date(data.tanggal_praktikum);
 
       // ✅ FIX ISSUE #6: Validate tanggal tidak boleh di masa lalu (saat update tanggal)
       const today = new Date();
@@ -414,43 +474,59 @@ async function updateJadwalImpl(
 
       if (praktikumDate < today) {
         throw new Error(
-          `Tanggal praktikum tidak boleh di masa lalu. Tanggal yang dipilih: ${format(tanggalPraktikum, 'dd MMM yyyy', { locale: localeId })}`
+          `Tanggal praktikum tidak boleh di masa lalu. Tanggal yang dipilih: ${format(tanggalPraktikum, "dd MMM yyyy", { locale: localeId })}`,
         );
       }
 
-      updateData.tanggal_praktikum = format(tanggalPraktikum, 'yyyy-MM-dd');
-      updateData.hari = format(tanggalPraktikum, 'EEEE', { locale: localeId }).toLowerCase() as "senin" | "selasa" | "rabu" | "kamis" | "jumat" | "sabtu" | "minggu";
+      updateData.tanggal_praktikum = format(tanggalPraktikum, "yyyy-MM-dd");
+      updateData.hari = format(tanggalPraktikum, "EEEE", {
+        locale: localeId,
+      }).toLowerCase() as
+        | "senin"
+        | "selasa"
+        | "rabu"
+        | "kamis"
+        | "jumat"
+        | "sabtu"
+        | "minggu";
     }
-    
+
     // Determine final values for conflict check
     const labId = data.laboratorium_id || existing.laboratorium_id;
-    const tanggalPraktikum = data.tanggal_praktikum 
-      ? (data.tanggal_praktikum instanceof Date 
-          ? data.tanggal_praktikum 
-          : new Date(data.tanggal_praktikum))
-      : (existing.tanggal_praktikum ? new Date(existing.tanggal_praktikum) : new Date());
+    const tanggalPraktikum = data.tanggal_praktikum
+      ? data.tanggal_praktikum instanceof Date
+        ? data.tanggal_praktikum
+        : new Date(data.tanggal_praktikum)
+      : existing.tanggal_praktikum
+        ? new Date(existing.tanggal_praktikum)
+        : new Date();
     const jamMulai = data.jam_mulai || existing.jam_mulai;
     const jamSelesai = data.jam_selesai || existing.jam_selesai;
 
     // If date/time/lab changed, check for conflicts
-    if (data.laboratorium_id || data.tanggal_praktikum || data.jam_mulai || data.jam_selesai) {
+    if (
+      data.laboratorium_id ||
+      data.tanggal_praktikum ||
+      data.jam_mulai ||
+      data.jam_selesai
+    ) {
       const hasConflict = await checkJadwalConflictByDate(
         labId,
         tanggalPraktikum,
         jamMulai,
         jamSelesai,
-        id
+        id,
       );
 
       if (hasConflict) {
         throw new Error(
-          `Jadwal bentrok! Lab sudah terpakai pada waktu tersebut`
+          `Jadwal bentrok! Lab sudah terpakai pada waktu tersebut`,
         );
       }
     }
 
     // ✅ PERBAIKAN FINAL: Ganti 'jadwalpraktikum' menjadi 'jadwal_praktikum'
-    return await update<Jadwal>('jadwal_praktikum', id, updateData);
+    return await update<Jadwal>("jadwal_praktikum", id, updateData);
   } catch (error) {
     const apiError = handleError(error);
     logError(apiError, `updateJadwal:${id}`);
@@ -460,12 +536,11 @@ async function updateJadwalImpl(
 
 // 🔒 PROTECTED: Requires manage:jadwal permission + ownership check
 export const updateJadwal = requirePermissionAndOwnership(
-  'manage:jadwal',
-  { table: 'jadwal_praktikum', ownerField: 'dosen_id' },
+  "manage:jadwal",
+  { table: "jadwal_praktikum", ownerField: "dosen_id" },
   0,
-  updateJadwalImpl
+  updateJadwalImpl,
 );
-
 
 // ============================================================================
 // DELETE OPERATIONS
@@ -479,7 +554,7 @@ export const updateJadwal = requirePermissionAndOwnership(
 async function deleteJadwalImpl(id: string): Promise<boolean> {
   try {
     // ✅ PERBAIKAN FINAL: Ganti 'jadwalpraktikum' menjadi 'jadwal_praktikum'
-    return await remove('jadwal_praktikum', id);
+    return await remove("jadwal_praktikum", id);
   } catch (error) {
     const apiError = handleError(error);
     logError(apiError, `deleteJadwal:${id}`);
@@ -489,12 +564,188 @@ async function deleteJadwalImpl(id: string): Promise<boolean> {
 
 // 🔒 PROTECTED: Requires manage:jadwal permission + ownership check
 export const deleteJadwal = requirePermissionAndOwnership(
-  'manage:jadwal',
-  { table: 'jadwal_praktikum', ownerField: 'dosen_id' },
+  "manage:jadwal",
+  { table: "jadwal_praktikum", ownerField: "dosen_id" },
   0,
-  deleteJadwalImpl
+  deleteJadwalImpl,
 );
 
+// ============================================================================
+// HYBRID APPROVAL WORKFLOW - CANCEL/REACTIVATE OPERATIONS
+// ============================================================================
+
+/**
+ * Cancel jadwal praktikum (Laboran only)
+ * @param jadwalId - Jadwal ID to cancel
+ * @param reason - Reason for cancellation
+ * @returns Success status
+ */
+async function cancelJadwalImpl(
+  jadwalId: string,
+  reason: string,
+): Promise<void> {
+  try {
+    // Call database function to cancel jadwal
+    const { error } = await (supabase as any).rpc("cancel_jadwal_praktikum", {
+      jadwal_id: jadwalId,
+      reason: reason,
+    });
+
+    if (error) {
+      console.error("Error cancelling jadwal:", error);
+      throw new Error(
+        error.message ||
+          "Gagal membatalkan jadwal. Hanya laboran yang dapat membatalkan jadwal.",
+      );
+    }
+
+    logger.info(`Jadwal ${jadwalId} cancelled successfully`, {
+      jadwalId,
+      reason,
+    });
+  } catch (error) {
+    const apiError = handleError(error);
+    logError(apiError, `cancelJadwal:${jadwalId}`);
+    throw apiError;
+  }
+}
+
+// 🔒 PROTECTED: Requires manage:laboratorium permission (laboran only)
+export const cancelJadwal = requirePermission(
+  "manage:laboratorium",
+  cancelJadwalImpl,
+);
+
+/**
+ * Reactivate cancelled jadwal praktikum (Laboran only)
+ * @param jadwalId - Jadwal ID to reactivate
+ * @returns Success status
+ */
+async function reactivateJadwalImpl(jadwalId: string): Promise<void> {
+  try {
+    // Call database function to reactivate jadwal
+    const { error } = await (supabase as any).rpc(
+      "reactivate_jadwal_praktikum",
+      {
+        jadwal_id: jadwalId,
+      },
+    );
+
+    if (error) {
+      console.error("Error reactivating jadwal:", error);
+      throw new Error(
+        error.message ||
+          "Gagal mengaktifkan kembali jadwal. Hanya laboran yang dapat mengaktifkan kembali jadwal.",
+      );
+    }
+
+    logger.info(`Jadwal ${jadwalId} reactivated successfully`, { jadwalId });
+  } catch (error) {
+    const apiError = handleError(error);
+    logError(apiError, `reactivateJadwal:${jadwalId}`);
+    throw apiError;
+  }
+}
+
+// 🔒 PROTECTED: Requires manage:laboratorium permission (laboran only)
+export const reactivateJadwal = requirePermission(
+  "manage:laboratorium",
+  reactivateJadwalImpl,
+);
+
+/**
+ * Get all jadwal including cancelled (For laboran management page)
+ * @param filters - Optional filters
+ * @returns List of all jadwal with cancellation details
+ */
+async function getAllJadwalForLaboranImpl(filters?: {
+  status?: "approved" | "cancelled" | "all";
+  laboratorium_id?: string;
+  start_date?: Date;
+  end_date?: Date;
+}): Promise<Jadwal[]> {
+  try {
+    const queryFilters: Array<{
+      column: string;
+      operator: "eq" | "gte" | "lte";
+      value: unknown;
+    }> = [];
+
+    // Filter by status
+    if (filters?.status && filters.status !== "all") {
+      queryFilters.push({
+        column: "status",
+        operator: "eq" as const,
+        value: filters.status,
+      });
+    }
+
+    // Filter by laboratorium
+    if (filters?.laboratorium_id) {
+      queryFilters.push({
+        column: "laboratorium_id",
+        operator: "eq" as const,
+        value: filters.laboratorium_id,
+      });
+    }
+
+    // Filter by date range
+    if (filters?.start_date) {
+      queryFilters.push({
+        column: "tanggal_praktikum",
+        operator: "gte" as const,
+        value: format(filters.start_date, "yyyy-MM-dd"),
+      });
+    }
+
+    if (filters?.end_date) {
+      queryFilters.push({
+        column: "tanggal_praktikum",
+        operator: "lte" as const,
+        value: format(filters.end_date, "yyyy-MM-dd"),
+      });
+    }
+
+    const jadwalList = await queryWithFilters<Jadwal>(
+      "jadwal_praktikum",
+      queryFilters,
+      {
+        select: `
+          *,
+          kelas:kelas_id (
+            nama_kelas,
+            kode_kelas,
+            mata_kuliah (
+              nama_mk,
+              kode_mk
+            )
+          ),
+          laboratorium:laboratorium_id (
+            nama_lab,
+            kode_lab
+          ),
+          cancelled_by_user:cancelled_by (
+            full_name,
+            email
+          )
+        `,
+        order: { column: "tanggal_praktikum", ascending: false },
+      },
+    );
+
+    return jadwalList;
+  } catch (error) {
+    const apiError = handleError(error);
+    logError(apiError, "getAllJadwalForLaboran");
+    throw apiError;
+  }
+}
+
+// 🔒 PROTECTED: Requires manage:laboratorium permission (laboran only)
+export const getAllJadwalForLaboran = requirePermission(
+  "manage:laboratorium",
+  getAllJadwalForLaboranImpl,
+);
 
 // ============================================================================
 // VALIDATION HELPERS
@@ -514,32 +765,43 @@ export async function checkJadwalConflictByDate(
   tanggalPraktikum: Date,
   jamMulai: string,
   jamSelesai: string,
-  excludeId?: string
+  excludeId?: string,
 ): Promise<boolean> {
   try {
-    const dateStr = format(tanggalPraktikum, 'yyyy-MM-dd');
-    
+    const dateStr = format(tanggalPraktikum, "yyyy-MM-dd");
+
     // ✅ PERBAIKAN FINAL: Ganti 'jadwalpraktikum' menjadi 'jadwal_praktikum'
-    const existingJadwal = await queryWithFilters<Jadwal>('jadwal_praktikum', [
+    // ✅ HYBRID APPROVAL: Exclude cancelled jadwal from conflict check
+    const existingJadwal = await queryWithFilters<Jadwal>("jadwal_praktikum", [
       {
-        column: 'laboratorium_id',
-        operator: 'eq' as const,
+        column: "laboratorium_id",
+        operator: "eq" as const,
         value: labId,
       },
       {
-        column: 'tanggal_praktikum',
-        operator: 'eq' as const,
+        column: "tanggal_praktikum",
+        operator: "eq" as const,
         value: dateStr,
       },
       {
-        column: 'is_active',
-        operator: 'eq' as const,
+        column: "is_active",
+        operator: "eq" as const,
         value: true,
+      },
+      {
+        column: "status",
+        operator: "eq" as const,
+        value: "approved",
       },
     ]);
 
     // Check time overlap
-    const timeOverlaps = (start1: string, end1: string, start2: string, end2: string): boolean => {
+    const timeOverlaps = (
+      start1: string,
+      end1: string,
+      start2: string,
+      end2: string,
+    ): boolean => {
       return start1 < end2 && start2 < end1;
     };
 
@@ -554,7 +816,7 @@ export async function checkJadwalConflictByDate(
     return hasConflict;
   } catch (error) {
     const apiError = handleError(error);
-    logError(apiError, 'checkJadwalConflictByDate');
+    logError(apiError, "checkJadwalConflictByDate");
     return false;
   }
 }
@@ -568,7 +830,7 @@ export async function checkJadwalConflict(
   hari: string,
   jamMulai: string,
   jamSelesai: string,
-  excludeId?: string
+  excludeId?: string,
 ): Promise<boolean> {
   try {
     const existingJadwal = await getJadwal({
@@ -577,7 +839,12 @@ export async function checkJadwalConflict(
       is_active: true,
     });
 
-    const timeOverlaps = (start1: string, end1: string, start2: string, end2: string): boolean => {
+    const timeOverlaps = (
+      start1: string,
+      end1: string,
+      start2: string,
+      end2: string,
+    ): boolean => {
       return start1 < end2 && start2 < end1;
     };
 
@@ -592,7 +859,7 @@ export async function checkJadwalConflict(
     return hasConflict;
   } catch (error) {
     const apiError = handleError(error);
-    logError(apiError, 'checkJadwalConflict');
+    logError(apiError, "checkJadwalConflict");
     return false;
   }
 }
@@ -610,40 +877,40 @@ export async function checkJadwalConflict(
 export async function getJadwalPraktikumMahasiswa(
   userId: string,
   startDate?: Date,
-  endDate?: Date
+  endDate?: Date,
 ): Promise<Jadwal[]> {
   try {
     // TODO: Implement user-specific filtering when needed
     // Currently returns all active jadwal in date range
     void userId; // Acknowledge unused parameter
-    
+
     // Build query filters
     const filters: any[] = [
       {
-        column: 'is_active',
-        operator: 'eq' as const,
+        column: "is_active",
+        operator: "eq" as const,
         value: true,
       },
     ];
 
     if (startDate) {
       filters.push({
-        column: 'tanggal_praktikum',
-        operator: 'gte' as const,
-        value: format(startDate, 'yyyy-MM-dd'),
+        column: "tanggal_praktikum",
+        operator: "gte" as const,
+        value: format(startDate, "yyyy-MM-dd"),
       });
     }
 
     if (endDate) {
       filters.push({
-        column: 'tanggal_praktikum',
-        operator: 'lte' as const,
-        value: format(endDate, 'yyyy-MM-dd'),
+        column: "tanggal_praktikum",
+        operator: "lte" as const,
+        value: format(endDate, "yyyy-MM-dd"),
       });
     }
 
     // ✅ PERBAIKAN FINAL: Ganti 'jadwalpraktikum' menjadi 'jadwal_praktikum'
-    const data = await queryWithFilters<Jadwal>('jadwal_praktikum', filters, {
+    const data = await queryWithFilters<Jadwal>("jadwal_praktikum", filters, {
       select: `
         *,
         laboratorium:laboratorium_id (
@@ -653,7 +920,7 @@ export async function getJadwalPraktikumMahasiswa(
         )
       `,
       order: {
-        column: 'tanggal_praktikum',
+        column: "tanggal_praktikum",
         ascending: true,
       },
     });
@@ -661,7 +928,7 @@ export async function getJadwalPraktikumMahasiswa(
     return data;
   } catch (error) {
     const apiError = handleError(error);
-    logError(apiError, 'getJadwalPraktikumMahasiswa');
+    logError(apiError, "getJadwalPraktikumMahasiswa");
     throw apiError;
   }
 }
@@ -711,33 +978,53 @@ export const jadwalApi = {
   getAll: (filters?: JadwalFilters) =>
     withApiResponse(() => getJadwal(filters)),
 
-  getById: (id: string) =>
-    withApiResponse(() => getJadwalById(id)),
+  getById: (id: string) => withApiResponse(() => getJadwalById(id)),
 
-  getByLab: (labId: string) =>
-    withApiResponse(() => getJadwalByLab(labId)),
+  getByLab: (labId: string) => withApiResponse(() => getJadwalByLab(labId)),
 
   getCalendarEvents: (startDate: Date, endDate: Date) =>
     withApiResponse(() => getCalendarEvents(startDate, endDate)),
 
-  create: (data: CreateJadwalData) =>
-    withApiResponse(() => createJadwal(data)),
+  create: (data: CreateJadwalData) => withApiResponse(() => createJadwal(data)),
 
   update: (id: string, data: Partial<CreateJadwalData>) =>
     withApiResponse(() => updateJadwal(id, data)),
 
-  delete: (id: string) =>
-    withApiResponse(() => deleteJadwal(id)),
+  delete: (id: string) => withApiResponse(() => deleteJadwal(id)),
 
-  checkConflictByDate: (labId: string, tanggalPraktikum: Date, jamMulai: string, jamSelesai: string, excludeId?: string) =>
-    withApiResponse(() => checkJadwalConflictByDate(labId, tanggalPraktikum, jamMulai, jamSelesai, excludeId)),
+  checkConflictByDate: (
+    labId: string,
+    tanggalPraktikum: Date,
+    jamMulai: string,
+    jamSelesai: string,
+    excludeId?: string,
+  ) =>
+    withApiResponse(() =>
+      checkJadwalConflictByDate(
+        labId,
+        tanggalPraktikum,
+        jamMulai,
+        jamSelesai,
+        excludeId,
+      ),
+    ),
 
-  checkConflict: (labId: string, hari: string, jamMulai: string, jamSelesai: string, excludeId?: string) =>
-    withApiResponse(() => checkJadwalConflict(labId, hari, jamMulai, jamSelesai, excludeId)),
+  checkConflict: (
+    labId: string,
+    hari: string,
+    jamMulai: string,
+    jamSelesai: string,
+    excludeId?: string,
+  ) =>
+    withApiResponse(() =>
+      checkJadwalConflict(labId, hari, jamMulai, jamSelesai, excludeId),
+    ),
 
   // ✅ TAMBAHKAN INI - Mahasiswa functions
   getMahasiswaJadwal: (userId: string, startDate?: Date, endDate?: Date) =>
-    withApiResponse(() => getJadwalPraktikumMahasiswa(userId, startDate, endDate)),
+    withApiResponse(() =>
+      getJadwalPraktikumMahasiswa(userId, startDate, endDate),
+    ),
 
   getJadwalHariIni: (userId: string) =>
     withApiResponse(() => getJadwalHariIni(userId)),

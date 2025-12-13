@@ -6,12 +6,18 @@
  * Features: Select Pilihan Ganda, Essay, or Campuran
  */
 
-import { CheckCircle2, FileText, Layers } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
-import { TIPE_KUIS, TIPE_KUIS_LABELS } from '@/types/kuis.types';
-import type { TipeKuis } from '@/types/kuis.types';
+import { CheckCircle2, FileText, Layers } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+import { TIPE_KUIS, TIPE_KUIS_LABELS } from "@/types/kuis.types";
+import type { TipeKuis } from "@/types/kuis.types";
 
 // ============================================================================
 // TYPES
@@ -31,7 +37,6 @@ interface QuizTypeSelectorProps {
   /**
    * Callback when cancel
    */
-
 }
 
 interface QuizTypeOption {
@@ -51,26 +56,27 @@ const QUIZ_TYPE_OPTIONS: QuizTypeOption[] = [
   {
     type: TIPE_KUIS.PILIHAN_GANDA,
     label: TIPE_KUIS_LABELS.pilihan_ganda,
-    description: 'Kuis dengan soal pilihan ganda dan benar/salah. Penilaian otomatis.',
+    description:
+      "Kuis dengan soal pilihan ganda dan benar/salah. Penilaian otomatis.",
     icon: CheckCircle2,
-    questionTypes: ['Pilihan Ganda (A, B, C, D...)', 'Benar/Salah'],
-    color: 'blue',
+    questionTypes: ["Pilihan Ganda (A, B, C, D...)", "Benar/Salah"],
+    color: "blue",
   },
   {
     type: TIPE_KUIS.ESSAY,
     label: TIPE_KUIS_LABELS.essay,
-    description: 'Kuis dengan soal essay. Dosen menilai secara manual.',
+    description: "Kuis dengan soal essay. Dosen menilai secara manual.",
     icon: FileText,
-    questionTypes: ['Essay (jawaban panjang)'],
-    color: 'purple',
+    questionTypes: ["Essay (jawaban panjang)"],
+    color: "purple",
   },
   {
     type: TIPE_KUIS.CAMPURAN,
     label: TIPE_KUIS_LABELS.campuran,
-    description: 'Kuis dengan berbagai tipe soal (pilihan ganda, essay, dll).',
+    description: "Kuis dengan berbagai tipe soal (pilihan ganda, essay, dll).",
     icon: Layers,
-    questionTypes: ['Pilihan Ganda', 'Benar/Salah', 'Essay', 'Jawaban Singkat'],
-    color: 'green',
+    questionTypes: ["Pilihan Ganda", "Benar/Salah", "Essay", "Jawaban Singkat"],
+    color: "green",
   },
 ];
 
@@ -81,9 +87,7 @@ const QUIZ_TYPE_OPTIONS: QuizTypeOption[] = [
 export function QuizTypeSelector({
   onSelect,
   selectedType,
-
 }: QuizTypeSelectorProps) {
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -105,7 +109,7 @@ export function QuizTypeSelector({
               key={option.type}
               className={cn(
                 "cursor-pointer transition-all hover:shadow-lg",
-                isSelected && "ring-2 ring-primary"
+                isSelected && "ring-2 ring-primary",
               )}
               onClick={() => onSelect(option.type)}
             >
@@ -114,17 +118,22 @@ export function QuizTypeSelector({
                   <div
                     className={cn(
                       "p-3 rounded-lg",
-                      option.color === 'blue' && "bg-blue-100 dark:bg-blue-900",
-                      option.color === 'purple' && "bg-purple-100 dark:bg-purple-900",
-                      option.color === 'green' && "bg-green-100 dark:bg-green-900"
+                      option.color === "blue" && "bg-blue-100 dark:bg-blue-900",
+                      option.color === "purple" &&
+                        "bg-purple-100 dark:bg-purple-900",
+                      option.color === "green" &&
+                        "bg-green-100 dark:bg-green-900",
                     )}
                   >
                     <Icon
                       className={cn(
                         "h-6 w-6",
-                        option.color === 'blue' && "text-blue-600 dark:text-blue-400",
-                        option.color === 'purple' && "text-purple-600 dark:text-purple-400",
-                        option.color === 'green' && "text-green-600 dark:text-green-400"
+                        option.color === "blue" &&
+                          "text-blue-600 dark:text-blue-400",
+                        option.color === "purple" &&
+                          "text-purple-600 dark:text-purple-400",
+                        option.color === "green" &&
+                          "text-green-600 dark:text-green-400",
                       )}
                     />
                   </div>
@@ -146,7 +155,10 @@ export function QuizTypeSelector({
                   <p className="text-sm font-medium">Tipe Soal:</p>
                   <ul className="space-y-1">
                     {option.questionTypes.map((type, index) => (
-                      <li key={index} className="text-sm text-muted-foreground flex items-center gap-2">
+                      <li
+                        key={index}
+                        className="text-sm text-muted-foreground flex items-center gap-2"
+                      >
                         <span className="h-1.5 w-1.5 rounded-full bg-primary" />
                         {type}
                       </li>
@@ -184,18 +196,18 @@ export function getAllowedQuestionTypes(quizType: TipeKuis): string[] {
  */
 export function isQuestionTypeAllowed(
   quizType: TipeKuis,
-  questionType: string
+  questionType: string,
 ): boolean {
   if (quizType === TIPE_KUIS.CAMPURAN) {
     return true; // All types allowed
   }
 
   if (quizType === TIPE_KUIS.PILIHAN_GANDA) {
-    return questionType === 'pilihan_ganda' || questionType === 'benar_salah';
+    return questionType === "pilihan_ganda" || questionType === "benar_salah";
   }
 
   if (quizType === TIPE_KUIS.ESSAY) {
-    return questionType === 'essay';
+    return questionType === "essay";
   }
 
   return false;

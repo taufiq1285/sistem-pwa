@@ -3,10 +3,10 @@
  * Modal with form for creating new data
  */
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { CrudModal } from './CrudModal';
-import type { CreateModalProps } from './CrudModal.types';
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { CrudModal } from "./CrudModal";
+import type { CreateModalProps } from "./CrudModal.types";
 
 // ============================================================================
 // COMPONENT
@@ -15,14 +15,14 @@ import type { CreateModalProps } from './CrudModal.types';
 export function CreateModal<TFormData = Record<string, unknown>>({
   open,
   onOpenChange,
-  title = 'Create New',
+  title = "Create New",
   description,
-  size = 'md',
+  size = "md",
   onSubmit,
   defaultValues,
   children,
-  submitLabel = 'Create',
-  cancelLabel = 'Cancel',
+  submitLabel = "Create",
+  cancelLabel = "Cancel",
   isLoading = false,
   className,
 }: CreateModalProps<TFormData>) {
@@ -38,7 +38,7 @@ export function CreateModal<TFormData = Record<string, unknown>>({
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    
+
     // Get form data
     const formData = new FormData(e.currentTarget);
     const data = Object.fromEntries(formData.entries()) as unknown as TFormData;
@@ -46,14 +46,14 @@ export function CreateModal<TFormData = Record<string, unknown>>({
     try {
       setIsSubmitting(true);
       await onSubmit(data);
-      
+
       // Close modal on success
       onOpenChange(false);
-      
+
       // Reset form
       e.currentTarget.reset();
     } catch (error) {
-      console.error('Create failed:', error);
+      console.error("Create failed:", error);
       // Keep modal open on error
     } finally {
       setIsSubmitting(false);
@@ -90,18 +90,14 @@ export function CreateModal<TFormData = Record<string, unknown>>({
           >
             {cancelLabel}
           </Button>
-          <Button
-            type="submit"
-            form="create-form"
-            disabled={loading}
-          >
-            {loading ? 'Creating...' : submitLabel}
+          <Button type="submit" form="create-form" disabled={loading}>
+            {loading ? "Creating..." : submitLabel}
           </Button>
         </>
       }
     >
       <form id="create-form" onSubmit={handleSubmit} className="space-y-4">
-        {typeof children === 'function' ? children(defaultValues) : children}
+        {typeof children === "function" ? children(defaultValues) : children}
       </form>
     </CrudModal>
   );

@@ -4,9 +4,9 @@
  * Logs those errors, and displays a fallback UI
  */
 
-import { Component, type ReactNode } from 'react';
-import type { ErrorInfo } from 'react';
-import { ErrorFallback } from './ErrorFallback';
+import { Component, type ReactNode } from "react";
+import type { ErrorInfo } from "react";
+import { ErrorFallback } from "./ErrorFallback";
 
 // ============================================================================
 // TYPES
@@ -28,12 +28,15 @@ interface ErrorBoundaryState {
 // COMPONENT
 // ============================================================================
 
-export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+export class ErrorBoundary extends Component<
+  ErrorBoundaryProps,
+  ErrorBoundaryState
+> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = {
       hasError: false,
-      error: null
+      error: null,
     };
   }
 
@@ -41,13 +44,13 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     // Update state so the next render will show the fallback UI
     return {
       hasError: true,
-      error
+      error,
     };
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
     // Import error logger dynamically to avoid circular dependencies
-    import('@/lib/utils/error-logger').then(({ logReactError }) => {
+    import("@/lib/utils/error-logger").then(({ logReactError }) => {
       // Log error to error logging service
       logReactError(error, errorInfo, {
         resetKeys: this.props.resetKeys,
@@ -78,7 +81,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   resetErrorBoundary = (): void => {
     this.setState({
       hasError: false,
-      error: null
+      error: null,
     });
   };
 
@@ -94,10 +97,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
       // Render default fallback UI
       return (
-        <ErrorFallback
-          error={error}
-          resetError={this.resetErrorBoundary}
-        />
+        <ErrorFallback error={error} resetError={this.resetErrorBoundary} />
       );
     }
 

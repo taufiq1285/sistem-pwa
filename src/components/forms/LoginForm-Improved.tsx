@@ -11,16 +11,16 @@
  * 7. Better offline handling
  */
 
-import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useAuth } from '@/lib/hooks/useAuth';
-import { loginSchema, type LoginFormData } from '@/lib/validations/auth.schema';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useAuth } from "@/lib/hooks/useAuth";
+import { loginSchema, type LoginFormData } from "@/lib/validations/auth.schema";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import {
   WifiOff,
   Mail,
@@ -33,8 +33,8 @@ import {
   Users,
   FlaskConical,
   ShieldCheck,
-  Loader2
-} from 'lucide-react';
+  Loader2,
+} from "lucide-react";
 
 interface LoginFormProps {
   onSuccess?: () => void;
@@ -62,22 +62,24 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
     };
     const handleOffline = () => {
       setIsOnline(false);
-      setError('Tidak ada koneksi internet. Silakan periksa jaringan Anda.');
+      setError("Tidak ada koneksi internet. Silakan periksa jaringan Anda.");
     };
 
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
 
     return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
     };
   }, []);
 
   const onSubmit = async (data: LoginFormData) => {
     try {
       if (!isOnline) {
-        setError('Tidak dapat login saat offline. Silakan periksa koneksi internet Anda.');
+        setError(
+          "Tidak dapat login saat offline. Silakan periksa koneksi internet Anda.",
+        );
         return;
       }
 
@@ -85,7 +87,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
       await login(data);
       onSuccess?.();
     } catch (err: unknown) {
-      let errorMessage = 'Login gagal. Silakan coba lagi.';
+      let errorMessage = "Login gagal. Silakan coba lagi.";
       if (err instanceof Error) {
         errorMessage = err.message;
       }
@@ -101,19 +103,31 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
           Login untuk mengakses sistem sebagai:
         </p>
         <div className="flex flex-wrap gap-2 justify-center">
-          <Badge variant="outline" className="bg-blue-50 border-blue-200 text-blue-700">
+          <Badge
+            variant="outline"
+            className="bg-blue-50 border-blue-200 text-blue-700"
+          >
             <GraduationCap className="h-3 w-3 mr-1" />
             Mahasiswa
           </Badge>
-          <Badge variant="outline" className="bg-green-50 border-green-200 text-green-700">
+          <Badge
+            variant="outline"
+            className="bg-green-50 border-green-200 text-green-700"
+          >
             <Users className="h-3 w-3 mr-1" />
             Dosen
           </Badge>
-          <Badge variant="outline" className="bg-purple-50 border-purple-200 text-purple-700">
+          <Badge
+            variant="outline"
+            className="bg-purple-50 border-purple-200 text-purple-700"
+          >
             <FlaskConical className="h-3 w-3 mr-1" />
             Laboran
           </Badge>
-          <Badge variant="outline" className="bg-gray-50 border-gray-200 text-gray-700">
+          <Badge
+            variant="outline"
+            className="bg-gray-50 border-gray-200 text-gray-700"
+          >
             <ShieldCheck className="h-3 w-3 mr-1" />
             Admin
           </Badge>
@@ -123,11 +137,17 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {/* Offline Warning */}
         {!isOnline && (
-          <Alert variant="destructive" className="bg-orange-50 border-orange-200">
+          <Alert
+            variant="destructive"
+            className="bg-orange-50 border-orange-200"
+          >
             <WifiOff className="h-4 w-4 text-orange-600" />
-            <AlertTitle className="text-orange-800">Anda Sedang Offline</AlertTitle>
+            <AlertTitle className="text-orange-800">
+              Anda Sedang Offline
+            </AlertTitle>
             <AlertDescription className="text-orange-700">
-              Login memerlukan koneksi internet. Silakan periksa jaringan Anda dan coba lagi.
+              Login memerlukan koneksi internet. Silakan periksa jaringan Anda
+              dan coba lagi.
             </AlertDescription>
           </Alert>
         )}
@@ -152,7 +172,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
               id="email"
               type="email"
               placeholder="email@contoh.com"
-              {...register('email')}
+              {...register("email")}
               disabled={isSubmitting}
               className="pl-10"
             />
@@ -175,9 +195,9 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
           <div className="relative">
             <Input
               id="password"
-              type={showPassword ? 'text' : 'password'}
+              type={showPassword ? "text" : "password"}
               placeholder="Masukkan password Anda"
-              {...register('password')}
+              {...register("password")}
               disabled={isSubmitting}
               className="pl-10 pr-10"
             />
@@ -244,7 +264,8 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
             <div className="flex items-start gap-2 text-xs text-gray-600">
               <ShieldCheck className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
               <p>
-                Login Anda aman dan terenkripsi. Data login tidak akan tersimpan di perangkat ini.
+                Login Anda aman dan terenkripsi. Data login tidak akan tersimpan
+                di perangkat ini.
               </p>
             </div>
           </div>
@@ -257,7 +278,9 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
         <ul className="text-xs text-gray-600 space-y-1">
           <li className="flex items-start gap-2">
             <span className="text-blue-600">•</span>
-            <span>Gunakan email dan password yang Anda daftarkan saat registrasi</span>
+            <span>
+              Gunakan email dan password yang Anda daftarkan saat registrasi
+            </span>
           </li>
           <li className="flex items-start gap-2">
             <span className="text-blue-600">•</span>
@@ -265,7 +288,9 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
           </li>
           <li className="flex items-start gap-2">
             <span className="text-blue-600">•</span>
-            <span>Role Anda akan otomatis terdeteksi setelah login berhasil</span>
+            <span>
+              Role Anda akan otomatis terdeteksi setelah login berhasil
+            </span>
           </li>
         </ul>
       </div>

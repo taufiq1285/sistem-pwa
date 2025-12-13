@@ -39,7 +39,7 @@ export interface CleanupResult {
  * @returns List of orphaned users
  */
 export async function findOrphanedUsers(
-  supabaseAdmin: ReturnType<typeof createClient<Database>>
+  supabaseAdmin: ReturnType<typeof createClient<Database>>,
 ): Promise<OrphanedUser[]> {
   try {
     // Get all auth users
@@ -127,7 +127,7 @@ export async function findOrphanedUsers(
  */
 export async function deleteUser(
   supabaseAdmin: ReturnType<typeof createClient<Database>>,
-  userId: string
+  userId: string,
 ): Promise<CleanupResult> {
   const result: CleanupResult = {
     success: false,
@@ -198,7 +198,7 @@ export async function deleteUser(
  */
 export async function deleteUserByEmail(
   supabaseAdmin: ReturnType<typeof createClient<Database>>,
-  email: string
+  email: string,
 ): Promise<CleanupResult> {
   try {
     // Find user by email
@@ -238,7 +238,7 @@ export async function deleteUserByEmail(
  * @returns Array of cleanup results
  */
 export async function bulkCleanupOrphanedUsers(
-  supabaseAdmin: ReturnType<typeof createClient<Database>>
+  supabaseAdmin: ReturnType<typeof createClient<Database>>,
 ): Promise<{
   total: number;
   success: number;

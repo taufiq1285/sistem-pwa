@@ -79,7 +79,7 @@ export interface PendingGrading {
 export interface KuisWithStats {
   id: string;
   judul: string;
-  status: 'draft' | 'published' | 'closed';
+  status: "draft" | "published" | "closed";
   tanggal_mulai: string;
   tanggal_selesai: string;
   total_attempts: number;

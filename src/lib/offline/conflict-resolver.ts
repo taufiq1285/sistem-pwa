@@ -4,7 +4,11 @@
  * Strategy: Last-Write-Wins (LWW)
  */
 
-export type ConflictStrategy = 'last-write-wins' | 'local-wins' | 'remote-wins' | 'manual';
+export type ConflictStrategy =
+  | "last-write-wins"
+  | "local-wins"
+  | "remote-wins"
+  | "manual";
 
 export interface ConflictData<T = any> {
   local: T;
@@ -17,7 +21,7 @@ export interface ConflictData<T = any> {
 
 export interface ConflictResolution<T = any> {
   data: T;
-  winner: 'local' | 'remote' | 'merged';
+  winner: "local" | "remote" | "merged";
   strategy: ConflictStrategy;
   resolvedAt: string;
   hadConflict: boolean;
@@ -28,7 +32,7 @@ export interface ConflictLog {
   id: string;
   dataType: string;
   dataId: string;
-  winner: 'local' | 'remote' | 'merged';
+  winner: "local" | "remote" | "merged";
   strategy: ConflictStrategy;
   localTimestamp: string | number;
   remoteTimestamp: string | number;
@@ -47,35 +51,36 @@ export class ConflictResolver {
   }
 
   resolve<T>(conflict: ConflictData<T>): ConflictResolution<T> {
-    const { local, remote, localTimestamp, remoteTimestamp, dataType, id } = conflict;
+    const { local, remote, localTimestamp, remoteTimestamp, dataType, id } =
+      conflict;
 
     const localTime = this.parseTimestamp(localTimestamp);
     const remoteTime = this.parseTimestamp(remoteTimestamp);
 
-    let winner: 'local' | 'remote' | 'merged';
+    let winner: "local" | "remote" | "merged";
     let data: T;
     let reason: string;
     let hadConflict: boolean;
 
     if (this.isEqual(local, remote)) {
-      winner = 'local';
+      winner = "local";
       data = local;
-      reason = 'Data is identical, no conflict';
+      reason = "Data is identical, no conflict";
       hadConflict = false;
     } else if (localTime > remoteTime) {
-      winner = 'local';
+      winner = "local";
       data = local;
       reason = `Local is newer (${new Date(localTime).toISOString()} > ${new Date(remoteTime).toISOString()})`;
       hadConflict = true;
     } else if (remoteTime > localTime) {
-      winner = 'remote';
+      winner = "remote";
       data = remote;
       reason = `Remote is newer (${new Date(remoteTime).toISOString()} > ${new Date(localTime).toISOString()})`;
       hadConflict = true;
     } else {
-      winner = 'remote';
+      winner = "remote";
       data = remote;
-      reason = 'Timestamps equal, preferring remote (server)';
+      reason = "Timestamps equal, preferring remote (server)";
       hadConflict = true;
     }
 
@@ -84,18 +89,18 @@ export class ConflictResolver {
         dataType,
         dataId: id,
         winner,
-        strategy: 'last-write-wins',
+        strategy: "last-write-wins",
         localTimestamp,
         remoteTimestamp,
         reason,
-        rejectedData: winner === 'local' ? remote : local,
+        rejectedData: winner === "local" ? remote : local,
       });
     }
 
     return {
       data,
       winner,
-      strategy: 'last-write-wins',
+      strategy: "last-write-wins",
       resolvedAt: new Date().toISOString(),
       hadConflict,
       reason,
@@ -110,22 +115,22 @@ export class ConflictResolver {
       this.logConflict({
         dataType,
         dataId: id,
-        winner: 'local',
-        strategy: 'local-wins',
+        winner: "local",
+        strategy: "local-wins",
         localTimestamp: conflict.localTimestamp,
         remoteTimestamp: conflict.remoteTimestamp,
-        reason: 'Local-wins strategy',
+        reason: "Local-wins strategy",
         rejectedData: remote,
       });
     }
 
     return {
       data: local,
-      winner: 'local',
-      strategy: 'local-wins',
+      winner: "local",
+      strategy: "local-wins",
       resolvedAt: new Date().toISOString(),
       hadConflict,
-      reason: 'Local-wins strategy',
+      reason: "Local-wins strategy",
     };
   }
 
@@ -137,22 +142,22 @@ export class ConflictResolver {
       this.logConflict({
         dataType,
         dataId: id,
-        winner: 'remote',
-        strategy: 'remote-wins',
+        winner: "remote",
+        strategy: "remote-wins",
         localTimestamp: conflict.localTimestamp,
         remoteTimestamp: conflict.remoteTimestamp,
-        reason: 'Remote-wins strategy',
+        reason: "Remote-wins strategy",
         rejectedData: local,
       });
     }
 
     return {
       data: remote,
-      winner: 'remote',
-      strategy: 'remote-wins',
+      winner: "remote",
+      strategy: "remote-wins",
       resolvedAt: new Date().toISOString(),
       hadConflict,
-      reason: 'Remote-wins strategy',
+      reason: "Remote-wins strategy",
     };
   }
 
@@ -161,11 +166,11 @@ export class ConflictResolver {
   }
 
   getLogsByType(dataType: string): ConflictLog[] {
-    return this.conflictLogs.filter(log => log.dataType === dataType);
+    return this.conflictLogs.filter((log) => log.dataType === dataType);
   }
 
   getLogsById(dataId: string): ConflictLog[] {
-    return this.conflictLogs.filter(log => log.dataId === dataId);
+    return this.conflictLogs.filter((log) => log.dataId === dataId);
   }
 
   clearLogs(): void {
@@ -181,17 +186,18 @@ export class ConflictResolver {
       byStrategy: {} as Record<string, number>,
     };
 
-    this.conflictLogs.forEach(log => {
+    this.conflictLogs.forEach((log) => {
       stats.byType[log.dataType] = (stats.byType[log.dataType] || 0) + 1;
       stats.byWinner[log.winner] = (stats.byWinner[log.winner] || 0) + 1;
-      stats.byStrategy[log.strategy] = (stats.byStrategy[log.strategy] || 0) + 1;
+      stats.byStrategy[log.strategy] =
+        (stats.byStrategy[log.strategy] || 0) + 1;
     });
 
     return stats;
   }
 
   private parseTimestamp(timestamp: string | number): number {
-    if (typeof timestamp === 'number') {
+    if (typeof timestamp === "number") {
       return timestamp;
     }
 
@@ -211,7 +217,7 @@ export class ConflictResolver {
     }
   }
 
-  private logConflict(logData: Omit<ConflictLog, 'id' | 'resolvedAt'>): void {
+  private logConflict(logData: Omit<ConflictLog, "id" | "resolvedAt">): void {
     const log: ConflictLog = {
       ...logData,
       id: `conflict_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -226,7 +232,7 @@ export class ConflictResolver {
 
     this.saveLogs();
 
-    console.log('[ConflictResolver]', {
+    console.log("[ConflictResolver]", {
       dataType: log.dataType,
       dataId: log.dataId,
       winner: log.winner,
@@ -236,20 +242,20 @@ export class ConflictResolver {
 
   private saveLogs(): void {
     try {
-      localStorage.setItem('conflict_logs', JSON.stringify(this.conflictLogs));
+      localStorage.setItem("conflict_logs", JSON.stringify(this.conflictLogs));
     } catch (error) {
-      console.warn('Failed to save conflict logs:', error);
+      console.warn("Failed to save conflict logs:", error);
     }
   }
 
   private loadLogs(): void {
     try {
-      const stored = localStorage.getItem('conflict_logs');
+      const stored = localStorage.getItem("conflict_logs");
       if (stored) {
         this.conflictLogs = JSON.parse(stored);
       }
     } catch (error) {
-      console.warn('Failed to load conflict logs:', error);
+      console.warn("Failed to load conflict logs:", error);
       this.conflictLogs = [];
     }
   }
@@ -257,7 +263,9 @@ export class ConflictResolver {
 
 export const conflictResolver = new ConflictResolver();
 
-export function resolveConflict<T>(conflict: ConflictData<T>): ConflictResolution<T> {
+export function resolveConflict<T>(
+  conflict: ConflictData<T>,
+): ConflictResolution<T> {
   return conflictResolver.resolve(conflict);
 }
 
@@ -265,16 +273,18 @@ export function wouldConflict<T>(
   local: T,
   remote: T,
   localTimestamp: string | number,
-  remoteTimestamp: string | number
+  remoteTimestamp: string | number,
 ): boolean {
   const isDifferent = JSON.stringify(local) !== JSON.stringify(remote);
 
-  const localTime = typeof localTimestamp === 'number'
-    ? localTimestamp
-    : Date.parse(localTimestamp);
-  const remoteTime = typeof remoteTimestamp === 'number'
-    ? remoteTimestamp
-    : Date.parse(remoteTimestamp);
+  const localTime =
+    typeof localTimestamp === "number"
+      ? localTimestamp
+      : Date.parse(localTimestamp);
+  const remoteTime =
+    typeof remoteTimestamp === "number"
+      ? remoteTimestamp
+      : Date.parse(remoteTimestamp);
 
   return isDifferent && localTime !== remoteTime;
-}
+}

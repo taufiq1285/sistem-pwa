@@ -4,7 +4,6 @@
  */
 
 import {
-
   query,
   queryWithFilters,
   getById,
@@ -14,7 +13,7 @@ import {
   remove,
   count,
   withApiResponse,
-} from './base.api';
+} from "./base.api";
 import type {
   MataKuliah,
   MataKuliahWithStats,
@@ -24,13 +23,13 @@ import type {
   MataKuliahQueryParams,
   MataKuliahStats,
   MataKuliahFilters,
-} from '@/types/mata-kuliah.types';
-import type { PaginatedResponse } from '@/types/api.types';
-import { handleError, logError } from '@/lib/utils/errors';
+} from "@/types/mata-kuliah.types";
+import type { PaginatedResponse } from "@/types/api.types";
+import { handleError, logError } from "@/lib/utils/errors";
 import {
   requirePermission,
   requirePermissionAndOwnership,
-} from '@/lib/middleware';
+} from "@/lib/middleware";
 
 // ============================================================================
 // QUERY OPERATIONS
@@ -42,7 +41,7 @@ import {
  * @returns Array of mata kuliah
  */
 export async function getMataKuliah(
-  filters?: MataKuliahFilters
+  filters?: MataKuliahFilters,
 ): Promise<MataKuliah[]> {
   try {
     const filterConditions = [];
@@ -50,24 +49,24 @@ export async function getMataKuliah(
     // Apply filters
     if (filters?.program_studi) {
       filterConditions.push({
-        column: 'program_studi',
-        operator: 'eq' as const,
+        column: "program_studi",
+        operator: "eq" as const,
         value: filters.program_studi,
       });
     }
 
     if (filters?.semester) {
       filterConditions.push({
-        column: 'semester',
-        operator: 'eq' as const,
+        column: "semester",
+        operator: "eq" as const,
         value: filters.semester,
       });
     }
 
     if (filters?.sks) {
       filterConditions.push({
-        column: 'sks',
-        operator: 'eq' as const,
+        column: "sks",
+        operator: "eq" as const,
         value: filters.sks,
       });
     }
@@ -75,27 +74,32 @@ export async function getMataKuliah(
     // Search filter
     if (filters?.search) {
       filterConditions.push({
-        column: 'nama_mk',
-        operator: 'ilike' as const,
+        column: "nama_mk",
+        operator: "ilike" as const,
         value: `%${filters.search}%`,
       });
     }
 
     const options = {
       order: {
-        column: filters?.sortBy || 'kode_mk',
-        ascending: filters?.sortOrder === 'asc',
+        column: filters?.sortBy || "kode_mk",
+        ascending: filters?.sortOrder === "asc",
       },
     };
 
-    const data = filterConditions.length > 0
-      ? await queryWithFilters<MataKuliah>('mata_kuliah', filterConditions, options)
-      : await query<MataKuliah>('mata_kuliah', options);
+    const data =
+      filterConditions.length > 0
+        ? await queryWithFilters<MataKuliah>(
+            "mata_kuliah",
+            filterConditions,
+            options,
+          )
+        : await query<MataKuliah>("mata_kuliah", options);
 
     return data;
   } catch (error) {
     const apiError = handleError(error);
-    logError(apiError, 'getMataKuliah');
+    logError(apiError, "getMataKuliah");
     throw apiError;
   }
 }
@@ -106,18 +110,18 @@ export async function getMataKuliah(
  * @returns Paginated response
  */
 export async function getMataKuliahPaginated(
-  params: MataKuliahQueryParams = {}
+  params: MataKuliahQueryParams = {},
 ): Promise<PaginatedResponse<MataKuliah>> {
   try {
-    return await getPaginated<MataKuliah>('mata_kuliah', params, {
+    return await getPaginated<MataKuliah>("mata_kuliah", params, {
       order: {
-        column: params.sortBy || 'kode_mk',
-        ascending: params.sortOrder === 'asc',
+        column: params.sortBy || "kode_mk",
+        ascending: params.sortOrder === "asc",
       },
     });
   } catch (error) {
     const apiError = handleError(error);
-    logError(apiError, 'getMataKuliahPaginated');
+    logError(apiError, "getMataKuliahPaginated");
     throw apiError;
   }
 }
@@ -129,7 +133,7 @@ export async function getMataKuliahPaginated(
  */
 export async function getMataKuliahById(id: string): Promise<MataKuliah> {
   try {
-    return await getById<MataKuliah>('mata_kuliah', id);
+    return await getById<MataKuliah>("mata_kuliah", id);
   } catch (error) {
     const apiError = handleError(error);
     logError(apiError, `getMataKuliahById:${id}`);
@@ -143,33 +147,33 @@ export async function getMataKuliahById(id: string): Promise<MataKuliah> {
  * @returns Mata kuliah with stats
  */
 export async function getMataKuliahWithStats(
-  id: string
+  id: string,
 ): Promise<MataKuliahWithStats> {
   try {
     // Get base mata kuliah data
-    const mataKuliah = await getById<MataKuliah>('mata_kuliah', id);
+    const mataKuliah = await getById<MataKuliah>("mata_kuliah", id);
 
     // Get kelas count
-    const kelasCount = await count('kelas', [
-      { column: 'mata_kuliah_id', operator: 'eq', value: id },
+    const kelasCount = await count("kelas", [
+      { column: "mata_kuliah_id", operator: "eq", value: id },
     ]);
 
     // Get total mahasiswa (through kelas_mahasiswa)
-    const kelasList = await queryWithFilters('kelas', [
-      { column: 'mata_kuliah_id', operator: 'eq', value: id },
+    const kelasList = await queryWithFilters("kelas", [
+      { column: "mata_kuliah_id", operator: "eq", value: id },
     ]);
 
     let totalMahasiswa = 0;
     for (const kelas of kelasList) {
-      const mahasiswaCount = await count('kelas_mahasiswa', [
-        { column: 'kelas_id', operator: 'eq', value: kelas.id },
+      const mahasiswaCount = await count("kelas_mahasiswa", [
+        { column: "kelas_id", operator: "eq", value: kelas.id },
       ]);
       totalMahasiswa += mahasiswaCount;
     }
 
     // Get dosen count (unique dosen teaching this mata kuliah)
-    const dosenList = await queryWithFilters('kelas', [
-      { column: 'mata_kuliah_id', operator: 'eq', value: id },
+    const dosenList = await queryWithFilters("kelas", [
+      { column: "mata_kuliah_id", operator: "eq", value: id },
     ]);
     const uniqueDosenIds = new Set(dosenList.map((k: any) => k.dosen_id));
 
@@ -192,27 +196,25 @@ export async function getMataKuliahWithStats(
  * @returns Mata kuliah with relations
  */
 export async function getMataKuliahWithRelations(
-  id: string
+  id: string,
 ): Promise<MataKuliahWithRelations> {
   try {
-    const mataKuliah = await getById<MataKuliah>('mata_kuliah', id);
+    const mataKuliah = await getById<MataKuliah>("mata_kuliah", id);
 
     // Get kelas with mahasiswa count
-    const kelasList = await query('kelas', {
-      select: 'id, kode_kelas, nama_kelas, dosen_id',
-      order: { column: 'kode_kelas', ascending: true },
+    const kelasList = await query("kelas", {
+      select: "id, kode_kelas, nama_kelas, dosen_id",
+      order: { column: "kode_kelas", ascending: true },
     });
 
     // Filter kelas for this mata kuliah
-    const filteredKelas = kelasList.filter(
-      (k: any) => k.mata_kuliah_id === id
-    );
+    const filteredKelas = kelasList.filter((k: any) => k.mata_kuliah_id === id);
 
     // Get mahasiswa count for each kelas
     const kelasWithCount = await Promise.all(
       filteredKelas.map(async (kelas: any) => {
-        const mahasiswaCount = await count('kelas_mahasiswa', [
-          { column: 'kelas_id', operator: 'eq', value: kelas.id },
+        const mahasiswaCount = await count("kelas_mahasiswa", [
+          { column: "kelas_id", operator: "eq", value: kelas.id },
         ]);
         return {
           id: kelas.id,
@@ -220,16 +222,17 @@ export async function getMataKuliahWithRelations(
           nama_kelas: kelas.nama_kelas,
           jumlah_mahasiswa: mahasiswaCount,
         };
-      })
+      }),
     );
 
     // Get unique dosen
     const dosenIds = [...new Set(filteredKelas.map((k: any) => k.dosen_id))];
-    const dosenList = dosenIds.length > 0
-      ? await queryWithFilters('dosen', [
-          { column: 'id', operator: 'in', value: dosenIds },
-        ])
-      : [];
+    const dosenList =
+      dosenIds.length > 0
+        ? await queryWithFilters("dosen", [
+            { column: "id", operator: "in", value: dosenIds },
+          ])
+        : [];
 
     const dosenData = dosenList.map((d: any) => ({
       id: d.id,
@@ -259,29 +262,31 @@ export async function getMataKuliahWithRelations(
  * @returns Created mata kuliah
  */
 async function createMataKuliahImpl(
-  data: CreateMataKuliahData
+  data: CreateMataKuliahData,
 ): Promise<MataKuliah> {
   try {
     // Check if kode_mk already exists
-    const existing = await queryWithFilters('mata_kuliah', [
-      { column: 'kode_mk', operator: 'eq', value: data.kode_mk },
+    const existing = await queryWithFilters("mata_kuliah", [
+      { column: "kode_mk", operator: "eq", value: data.kode_mk },
     ]);
 
     if (existing.length > 0) {
       throw new Error(`Mata kuliah dengan kode ${data.kode_mk} sudah ada`);
     }
 
-    return await insert<MataKuliah>('mata_kuliah', data);
+    return await insert<MataKuliah>("mata_kuliah", data);
   } catch (error) {
     const apiError = handleError(error);
-    logError(apiError, 'createMataKuliah');
+    logError(apiError, "createMataKuliah");
     throw apiError;
   }
 }
 
 // 🔒 PROTECTED: Requires manage:mata_kuliah permission
-export const createMataKuliah = requirePermission('manage:mata_kuliah', createMataKuliahImpl);
-
+export const createMataKuliah = requirePermission(
+  "manage:mata_kuliah",
+  createMataKuliahImpl,
+);
 
 // ============================================================================
 // UPDATE OPERATIONS
@@ -295,13 +300,13 @@ export const createMataKuliah = requirePermission('manage:mata_kuliah', createMa
  */
 async function updateMataKuliahImpl(
   id: string,
-  data: UpdateMataKuliahData
+  data: UpdateMataKuliahData,
 ): Promise<MataKuliah> {
   try {
     // If kode_mk is being updated, check uniqueness
     if (data.kode_mk) {
-      const existing = await queryWithFilters('mata_kuliah', [
-        { column: 'kode_mk', operator: 'eq', value: data.kode_mk },
+      const existing = await queryWithFilters("mata_kuliah", [
+        { column: "kode_mk", operator: "eq", value: data.kode_mk },
       ]);
 
       // Check if kode_mk exists for different record
@@ -310,7 +315,7 @@ async function updateMataKuliahImpl(
       }
     }
 
-    return await update<MataKuliah>('mata_kuliah', id, data);
+    return await update<MataKuliah>("mata_kuliah", id, data);
   } catch (error) {
     const apiError = handleError(error);
     logError(apiError, `updateMataKuliah:${id}`);
@@ -319,8 +324,10 @@ async function updateMataKuliahImpl(
 }
 
 // 🔒 PROTECTED: Requires manage:mata_kuliah permission
-export const updateMataKuliah = requirePermission('manage:mata_kuliah', updateMataKuliahImpl);
-
+export const updateMataKuliah = requirePermission(
+  "manage:mata_kuliah",
+  updateMataKuliahImpl,
+);
 
 // ============================================================================
 // DELETE OPERATIONS
@@ -329,22 +336,81 @@ export const updateMataKuliah = requirePermission('manage:mata_kuliah', updateMa
 /**
  * Delete mata kuliah
  * @param id - Mata kuliah ID
+ * @param options - Delete options
+ *   - detach: Set mata_kuliah_id to NULL in related kelas (default: true)
+ *   - cascade: Delete all related kelas (destructive)
  * @returns Success status
  */
-async function deleteMataKuliahImpl(id: string): Promise<boolean> {
+async function deleteMataKuliahImpl(
+  id: string,
+  options: { detach?: boolean; cascade?: boolean } = { detach: true },
+): Promise<boolean> {
   try {
     // Check if mata kuliah has kelas
-    const kelasCount = await count('kelas', [
-      { column: 'mata_kuliah_id', operator: 'eq', value: id },
+    const kelasCount = await count("kelas", [
+      { column: "mata_kuliah_id", operator: "eq", value: id },
     ]);
 
     if (kelasCount > 0) {
-      throw new Error(
-        'Cannot delete mata kuliah that has active kelas. Please delete all kelas first.'
-      );
+      // Default: DETACH (set mata_kuliah_id to NULL)
+      if (options.detach !== false) {
+        logError(
+          {
+            message: `Detaching ${kelasCount} kelas from mata kuliah ${id}`,
+          } as any,
+          "deleteMataKuliah:detach",
+        );
+
+        // Get all related kelas
+        const kelasList = await queryWithFilters("kelas", [
+          { column: "mata_kuliah_id", operator: "eq", value: id },
+        ]);
+
+        // Set mata_kuliah_id to NULL for each kelas
+        // This allows kelas to exist independently
+        for (const kelas of kelasList) {
+          await update("kelas", kelas.id, {
+            mata_kuliah_id: null,
+          });
+        }
+
+        logError(
+          {
+            message: `Successfully detached ${kelasCount} kelas. Kelas will continue to exist without mata kuliah reference.`,
+          } as any,
+          "deleteMataKuliah:detach",
+        );
+      } else if (options.cascade) {
+        // CASCADE DELETE: Delete all related kelas (destructive!)
+        logError(
+          {
+            message: `CASCADE DELETE: Deleting ${kelasCount} kelas for mata kuliah ${id}`,
+          } as any,
+          "deleteMataKuliah:cascade",
+        );
+
+        const kelasList = await queryWithFilters("kelas", [
+          { column: "mata_kuliah_id", operator: "eq", value: id },
+        ]);
+
+        for (const kelas of kelasList) {
+          await remove("kelas", kelas.id);
+        }
+
+        logError(
+          { message: `Cascade deleted ${kelasCount} kelas` } as any,
+          "deleteMataKuliah:cascade",
+        );
+      } else {
+        // Neither detach nor cascade - prevent deletion
+        throw new Error(
+          `Cannot delete mata kuliah. Found ${kelasCount} active kelas. Please choose to either detach kelas or cascade delete.`,
+        );
+      }
     }
 
-    return await remove('mata_kuliah', id);
+    // Now safe to delete mata kuliah
+    return await remove("mata_kuliah", id);
   } catch (error) {
     const apiError = handleError(error);
     logError(apiError, `deleteMataKuliah:${id}`);
@@ -353,8 +419,10 @@ async function deleteMataKuliahImpl(id: string): Promise<boolean> {
 }
 
 // 🔒 PROTECTED: Requires manage:mata_kuliah permission
-export const deleteMataKuliah = requirePermission('manage:mata_kuliah', deleteMataKuliahImpl);
-
+export const deleteMataKuliah = requirePermission(
+  "manage:mata_kuliah",
+  deleteMataKuliahImpl,
+);
 
 // ============================================================================
 // STATISTICS
@@ -367,7 +435,7 @@ export const deleteMataKuliah = requirePermission('manage:mata_kuliah', deleteMa
 export async function getMataKuliahStats(): Promise<MataKuliahStats> {
   try {
     // Get all mata kuliah
-    const allMataKuliah = await query<MataKuliah>('mata_kuliah');
+    const allMataKuliah = await query<MataKuliah>("mata_kuliah");
 
     // Calculate stats
     const total = allMataKuliah.length;
@@ -392,13 +460,13 @@ export async function getMataKuliahStats(): Promise<MataKuliahStats> {
     // Calculate average mahasiswa per mata kuliah
     let totalMahasiswa = 0;
     for (const mk of allMataKuliah) {
-      const kelasList = await queryWithFilters('kelas', [
-        { column: 'mata_kuliah_id', operator: 'eq', value: mk.id },
+      const kelasList = await queryWithFilters("kelas", [
+        { column: "mata_kuliah_id", operator: "eq", value: mk.id },
       ]);
 
       for (const kelas of kelasList) {
-        const mahasiswaCount = await count('kelas_mahasiswa', [
-          { column: 'kelas_id', operator: 'eq', value: kelas.id },
+        const mahasiswaCount = await count("kelas_mahasiswa", [
+          { column: "kelas_id", operator: "eq", value: kelas.id },
         ]);
         totalMahasiswa += mahasiswaCount;
       }
@@ -415,7 +483,7 @@ export async function getMataKuliahStats(): Promise<MataKuliahStats> {
     };
   } catch (error) {
     const apiError = handleError(error);
-    logError(apiError, 'getMataKuliahStats');
+    logError(apiError, "getMataKuliahStats");
     throw apiError;
   }
 }
@@ -432,11 +500,11 @@ export async function getMataKuliahStats(): Promise<MataKuliahStats> {
  */
 export async function checkKodeMKExists(
   kode_mk: string,
-  excludeId?: string
+  excludeId?: string,
 ): Promise<boolean> {
   try {
-    const existing = await queryWithFilters('mata_kuliah', [
-      { column: 'kode_mk', operator: 'eq', value: kode_mk },
+    const existing = await queryWithFilters("mata_kuliah", [
+      { column: "kode_mk", operator: "eq", value: kode_mk },
     ]);
 
     if (existing.length === 0) {
@@ -451,7 +519,7 @@ export async function checkKodeMKExists(
     return true;
   } catch (error) {
     const apiError = handleError(error);
-    logError(apiError, 'checkKodeMKExists');
+    logError(apiError, "checkKodeMKExists");
     return false;
   }
 }
@@ -470,8 +538,7 @@ export const mataKuliahApi = {
   getPaginated: (params?: MataKuliahQueryParams) =>
     withApiResponse(() => getMataKuliahPaginated(params)),
 
-  getById: (id: string) =>
-    withApiResponse(() => getMataKuliahById(id)),
+  getById: (id: string) => withApiResponse(() => getMataKuliahById(id)),
 
   getWithStats: (id: string) =>
     withApiResponse(() => getMataKuliahWithStats(id)),
@@ -485,11 +552,11 @@ export const mataKuliahApi = {
   update: (id: string, data: UpdateMataKuliahData) =>
     withApiResponse(() => updateMataKuliah(id, data)),
 
-  delete: (id: string) =>
-    withApiResponse(() => deleteMataKuliah(id)),
+  // ✅ FIXED: Correct parameter type for delete
+  delete: (id: string, options?: { detach?: boolean; cascade?: boolean }) =>
+    withApiResponse(() => deleteMataKuliah(id, options)),
 
-  getStats: () =>
-    withApiResponse(() => getMataKuliahStats()),
+  getStats: () => withApiResponse(() => getMataKuliahStats()),
 
   checkKodeExists: (kode_mk: string, excludeId?: string) =>
     withApiResponse(() => checkKodeMKExists(kode_mk, excludeId)),

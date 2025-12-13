@@ -3,25 +3,25 @@
  * Dialog for dosen to view enrolled students in a class
  */
 
-import { useState, useEffect, useCallback } from 'react';
-import { 
-  Users, 
-  Mail, 
+import { useState, useEffect, useCallback } from "react";
+import {
+  Users,
+  Mail,
   Calendar,
   Download,
   Loader2,
-  UserCheck
-} from 'lucide-react';
+  UserCheck,
+} from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Table,
   TableBody,
@@ -29,12 +29,9 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { 
-  getKelasStudents,
-  type EnrolledStudent 
-} from '@/lib/api/dosen.api';
-import { toast } from 'sonner';
+} from "@/components/ui/table";
+import { getKelasStudents, type EnrolledStudent } from "@/lib/api/dosen.api";
+import { toast } from "sonner";
 
 interface StudentsListDialogProps {
   open: boolean;
@@ -44,12 +41,12 @@ interface StudentsListDialogProps {
   mataKuliahName: string;
 }
 
-export function StudentsListDialog({ 
-  open, 
+export function StudentsListDialog({
+  open,
   onOpenChange,
   kelasId,
   kelasName,
-  mataKuliahName
+  mataKuliahName,
 }: StudentsListDialogProps) {
   const [loading, setLoading] = useState(false);
   const [students, setStudents] = useState<EnrolledStudent[]>([]);
@@ -60,7 +57,7 @@ export function StudentsListDialog({
       const data = await getKelasStudents(kelasId);
       setStudents(data);
     } catch {
-      toast.error('Gagal memuat daftar mahasiswa');
+      toast.error("Gagal memuat daftar mahasiswa");
     } finally {
       setLoading(false);
     }
@@ -74,16 +71,16 @@ export function StudentsListDialog({
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return new Intl.DateTimeFormat('id-ID', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
+    return new Intl.DateTimeFormat("id-ID", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
     }).format(date);
   };
 
   const handleExport = () => {
     // Create CSV
-    const headers = ['No', 'NIM', 'Nama', 'Email', 'Tanggal Daftar'];
+    const headers = ["No", "NIM", "Nama", "Email", "Tanggal Daftar"];
     const rows = students.map((student, index) => [
       index + 1,
       student.nim,
@@ -92,23 +89,22 @@ export function StudentsListDialog({
       formatDate(student.enrolled_at),
     ]);
 
-    const csv = [
-      headers.join(','),
-      ...rows.map(row => row.join(','))
-    ].join('\n');
+    const csv = [headers.join(","), ...rows.map((row) => row.join(","))].join(
+      "\n",
+    );
 
     // Download
-    const blob = new Blob([csv], { type: 'text/csv' });
+    const blob = new Blob([csv], { type: "text/csv" });
     const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
-    a.download = `mahasiswa_${kelasName}_${new Date().toISOString().split('T')[0]}.csv`;
+    a.download = `mahasiswa_${kelasName}_${new Date().toISOString().split("T")[0]}.csv`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     window.URL.revokeObjectURL(url);
 
-    toast.success('Data berhasil diexport');
+    toast.success("Data berhasil diexport");
   };
 
   return (
@@ -131,11 +127,7 @@ export function StudentsListDialog({
                 {students.length} Mahasiswa
               </Badge>
               {students.length > 0 && (
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={handleExport}
-                >
+                <Button variant="outline" size="sm" onClick={handleExport}>
                   <Download className="h-4 w-4 mr-2" />
                   Export CSV
                 </Button>

@@ -10,23 +10,23 @@
  * - Search materi
  */
 
-import { useState, useEffect } from 'react';
-import { Loader2, Search, BookOpen } from 'lucide-react';
-import { Input } from '@/components/ui/input';
+import { useState, useEffect } from "react";
+import { Loader2, Search, BookOpen } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { MateriList } from '@/components/features/materi/MateriCard';
-import { MateriViewer } from '@/components/features/materi/MateriViewer';
-import { useAuth } from '@/lib/hooks/useAuth';
-import { getMateri, downloadMateri } from '@/lib/api/materi.api';
-import type { Materi } from '@/types/materi.types';
-import { toast } from 'sonner';
-import { supabase } from '@/lib/supabase/client';
+} from "@/components/ui/select";
+import { MateriList } from "@/components/features/materi/MateriCard";
+import { MateriViewer } from "@/components/features/materi/MateriViewer";
+import { useAuth } from "@/lib/hooks/useAuth";
+import { getMateri, downloadMateri } from "@/lib/api/materi.api";
+import type { Materi } from "@/types/materi.types";
+import { toast } from "sonner";
+import { supabase } from "@/lib/supabase/client";
 
 // ============================================================================
 // COMPONENT
@@ -45,9 +45,9 @@ export default function MahasiswaMateriPage() {
   const [enrolledKelasIds, setEnrolledKelasIds] = useState<string[]>([]);
 
   // Filters
-  const [selectedKelas, setSelectedKelas] = useState<string>('all');
-  const [selectedMinggu, setSelectedMinggu] = useState<string>('all');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedKelas, setSelectedKelas] = useState<string>("all");
+  const [selectedMinggu, setSelectedMinggu] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Viewer
   const [viewingMateri, setViewingMateri] = useState<Materi | null>(null);
@@ -79,10 +79,10 @@ export default function MahasiswaMateriPage() {
 
       // Get enrolled kelas IDs
       const { data: enrollments } = await supabase
-        .from('kelas_mahasiswa')
-        .select('kelas_id')
-        .eq('mahasiswa_id', user.mahasiswa.id)
-        .eq('is_active', true);
+        .from("kelas_mahasiswa")
+        .select("kelas_id")
+        .eq("mahasiswa_id", user.mahasiswa.id)
+        .eq("is_active", true);
 
       const kelasIds = enrollments?.map((e) => e.kelas_id) || [];
       setEnrolledKelasIds(kelasIds);
@@ -92,13 +92,13 @@ export default function MahasiswaMateriPage() {
 
       // Filter materi by enrolled kelas
       const enrolledMateri = allMateri.filter((m) =>
-        kelasIds.includes(m.kelas_id)
+        kelasIds.includes(m.kelas_id),
       );
 
       setMateriList(enrolledMateri);
     } catch (error) {
-      console.error('Error loading materi:', error);
-      toast.error('Gagal memuat materi');
+      console.error("Error loading materi:", error);
+      toast.error("Gagal memuat materi");
     } finally {
       setLoading(false);
     }
@@ -112,12 +112,12 @@ export default function MahasiswaMateriPage() {
     let filtered = [...materiList];
 
     // Filter by kelas
-    if (selectedKelas !== 'all') {
+    if (selectedKelas !== "all") {
       filtered = filtered.filter((m) => m.kelas_id === selectedKelas);
     }
 
     // Filter by minggu
-    if (selectedMinggu !== 'all') {
+    if (selectedMinggu !== "all") {
       const minggu = parseInt(selectedMinggu);
       filtered = filtered.filter((m) => m.minggu_ke === minggu);
     }
@@ -128,7 +128,7 @@ export default function MahasiswaMateriPage() {
       filtered = filtered.filter(
         (m) =>
           m.judul.toLowerCase().includes(query) ||
-          m.deskripsi?.toLowerCase().includes(query)
+          m.deskripsi?.toLowerCase().includes(query),
       );
     }
 
@@ -147,10 +147,10 @@ export default function MahasiswaMateriPage() {
   async function handleDownload(materi: Materi) {
     try {
       await downloadMateri(materi.id);
-      toast.success('Download dimulai');
+      toast.success("Download dimulai");
     } catch (error: any) {
-      console.error('Error downloading materi:', error);
-      toast.error(error.message || 'Gagal mendownload materi');
+      console.error("Error downloading materi:", error);
+      toast.error(error.message || "Gagal mendownload materi");
     }
   }
 
@@ -164,10 +164,10 @@ export default function MahasiswaMateriPage() {
         m.kelas_id,
         {
           id: m.kelas_id,
-          nama: m.kelas?.nama_kelas || 'Unknown',
+          nama: m.kelas?.nama_kelas || "Unknown",
         },
-      ])
-    ).values()
+      ]),
+    ).values(),
   );
 
   // ============================================================================
@@ -259,8 +259,8 @@ export default function MahasiswaMateriPage() {
                 materiList.filter((m) => {
                   const now = new Date();
                   const weeksSinceStart = Math.ceil(
-                    (now.getTime() - new Date('2024-01-01').getTime()) /
-                      (7 * 24 * 60 * 60 * 1000)
+                    (now.getTime() - new Date("2024-01-01").getTime()) /
+                      (7 * 24 * 60 * 60 * 1000),
                   );
                   return m.minggu_ke === weeksSinceStart;
                 }).length
@@ -279,8 +279,8 @@ export default function MahasiswaMateriPage() {
         onDownload={handleDownload}
         emptyMessage={
           enrolledKelasIds.length === 0
-            ? 'Anda belum terdaftar di kelas manapun'
-            : 'Belum ada materi tersedia'
+            ? "Anda belum terdaftar di kelas manapun"
+            : "Belum ada materi tersedia"
         }
       />
 

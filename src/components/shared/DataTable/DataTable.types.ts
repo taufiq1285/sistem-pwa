@@ -3,14 +3,14 @@
  * Type definitions for generic DataTable component
  */
 
-import type { 
-  ColumnDef, 
+import type {
+  ColumnDef,
   ColumnFiltersState,
   SortingState,
   VisibilityState,
   PaginationState,
-  RowSelectionState
-} from '@tanstack/react-table';
+  RowSelectionState,
+} from "@tanstack/react-table";
 
 // ============================================================================
 // CORE TYPES
@@ -23,32 +23,32 @@ export interface DataTableProps<TData, TValue = unknown> {
   // Required
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
-  
+
   // Optional - Pagination
   pageSize?: number;
   pageSizeOptions?: number[];
   showPagination?: boolean;
-  
+
   // Optional - Filtering
   searchable?: boolean;
   searchPlaceholder?: string;
   filterableColumns?: FilterableColumn<TData>[];
-  
+
   // Optional - Selection
   enableRowSelection?: boolean;
   onRowSelectionChange?: (selectedRows: TData[]) => void;
-  
+
   // Optional - Visibility
   enableColumnVisibility?: boolean;
   hiddenColumns?: string[];
-  
+
   // Optional - Toolbar
   showToolbar?: boolean;
   toolbarActions?: React.ReactNode;
-  
+
   // Optional - Styling
   className?: string;
-  
+
   // Optional - Loading & Empty States
   isLoading?: boolean;
   emptyMessage?: string;
@@ -135,12 +135,12 @@ export interface DataTableToolbarProps<TData> {
   searchValue: string;
   onSearchChange: (value: string) => void;
   searchPlaceholder?: string;
-  
+
   // Filters
   filterableColumns?: FilterableColumn<TData>[];
   columnFilters: ColumnFiltersState;
   onColumnFiltersChange: (filters: ColumnFiltersState) => void;
-  
+
   // Column Visibility
   enableColumnVisibility?: boolean;
   columnVisibility: VisibilityState;
@@ -150,10 +150,10 @@ export interface DataTableToolbarProps<TData> {
     label: string;
     canHide: boolean;
   }>;
-  
+
   // Custom Actions
   toolbarActions?: React.ReactNode;
-  
+
   // Reset
   onReset?: () => void;
 }
@@ -168,7 +168,7 @@ export interface DataTableToolbarProps<TData> {
 export interface DataTableColumnHeaderProps {
   column: {
     id: string;
-    getIsSorted: () => false | 'asc' | 'desc';
+    getIsSorted: () => false | "asc" | "desc";
     toggleSorting: (desc?: boolean) => void;
     getCanSort: () => boolean;
     getCanHide: () => boolean;
@@ -190,7 +190,7 @@ export interface ColumnMeta {
   className?: string;
   headerClassName?: string;
   cellClassName?: string;
-  filterVariant?: 'text' | 'select' | 'range' | 'date';
+  filterVariant?: "text" | "select" | "range" | "date";
   enableSorting?: boolean;
   enableHiding?: boolean;
 }
@@ -202,7 +202,7 @@ export interface RowAction<TData> {
   label: string;
   icon?: React.ComponentType<{ className?: string }>;
   onClick: (row: TData) => void;
-  variant?: 'default' | 'destructive' | 'outline' | 'ghost';
+  variant?: "default" | "destructive" | "outline" | "ghost";
   disabled?: (row: TData) => boolean;
   show?: (row: TData) => boolean;
 }
@@ -214,7 +214,7 @@ export interface BulkAction<TData> {
   label: string;
   icon?: React.ComponentType<{ className?: string }>;
   onClick: (rows: TData[]) => void;
-  variant?: 'default' | 'destructive' | 'outline';
+  variant?: "default" | "destructive" | "outline";
   disabled?: (rows: TData[]) => boolean;
 }
 
@@ -227,7 +227,7 @@ export interface BulkAction<TData> {
  */
 export interface ExportConfig {
   filename?: string;
-  formats?: ('csv' | 'excel' | 'json')[];
+  formats?: ("csv" | "excel" | "json")[];
   includeHeaders?: boolean;
   selectedOnly?: boolean;
 }
@@ -243,4 +243,4 @@ export type {
   VisibilityState,
   PaginationState,
   RowSelectionState,
-} from '@tanstack/react-table';
+} from "@tanstack/react-table";

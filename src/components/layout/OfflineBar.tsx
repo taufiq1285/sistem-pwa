@@ -5,13 +5,13 @@
  * Usage: Top of page or layout to notify users of offline mode
  */
 
-import { useState, useEffect } from 'react';
-import { WifiOff, X, RefreshCw } from 'lucide-react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
-import { useNetworkStatus } from '@/lib/hooks/useNetworkStatus';
-import { useSyncContext } from '@/providers/SyncProvider';
-import { cn } from '@/lib/utils';
+import { useState, useEffect } from "react";
+import { WifiOff, X, RefreshCw } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { useNetworkStatus } from "@/lib/hooks/useNetworkStatus";
+import { useSyncContext } from "@/providers/SyncProvider";
+import { cn } from "@/lib/utils";
 
 export interface OfflineBarProps {
   /** Custom className */
@@ -61,7 +61,7 @@ export function OfflineBar({
     try {
       await processQueue();
     } catch (error) {
-      console.error('Manual sync failed:', error);
+      console.error("Manual sync failed:", error);
     }
   };
 
@@ -77,16 +77,17 @@ export function OfflineBar({
     return (
       <Alert
         variant="destructive"
-        className={cn('border-l-4 border-l-red-600 rounded-none', className)}
+        className={cn("border-l-4 border-l-red-600 rounded-none", className)}
       >
         <WifiOff className="h-4 w-4" />
         <AlertDescription className="flex items-center justify-between">
           <div className="flex-1">
-            <span className="font-semibold">You are offline.</span>{' '}
+            <span className="font-semibold">You are offline.</span>{" "}
             {showSyncStatus && hasPending && (
               <span>
-                You have {stats.pending} unsaved change{stats.pending !== 1 ? 's' : ''}.{' '}
-                They will be synced when you reconnect.
+                You have {stats.pending} unsaved change
+                {stats.pending !== 1 ? "s" : ""}. They will be synced when you
+                reconnect.
               </span>
             )}
             {showSyncStatus && !hasPending && (
@@ -114,8 +115,8 @@ export function OfflineBar({
       <Alert
         variant="default"
         className={cn(
-          'border-l-4 border-l-green-600 rounded-none bg-green-50 dark:bg-green-950',
-          className
+          "border-l-4 border-l-green-600 rounded-none bg-green-50 dark:bg-green-950",
+          className,
         )}
       >
         <RefreshCw className="h-4 w-4 text-green-600" />
@@ -123,9 +124,10 @@ export function OfflineBar({
           <div className="flex-1">
             <span className="font-semibold text-green-900 dark:text-green-100">
               You are back online!
-            </span>{' '}
+            </span>{" "}
             <span className="text-green-800 dark:text-green-200">
-              You have {stats.pending} pending change{stats.pending !== 1 ? 's' : ''} to sync.
+              You have {stats.pending} pending change
+              {stats.pending !== 1 ? "s" : ""} to sync.
             </span>
           </div>
           <div className="flex items-center gap-2 ml-4">

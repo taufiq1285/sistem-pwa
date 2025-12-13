@@ -34,7 +34,7 @@ vi.mock("../../../lib/supabase/storage", () => ({
 vi.mock("../../../lib/middleware", () => ({
   requirePermission: vi.fn((permission, fn) => fn),
   requirePermissionAndOwnership: vi.fn(
-    (permission, config, paramIndex, fn) => fn
+    (permission, config, paramIndex, fn) => fn,
   ),
 }));
 

@@ -11,29 +11,29 @@
  * - View statistics
  */
 
-import { useState, useEffect, useCallback } from 'react';
-import { Plus, Upload, Loader2, Search } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { useState, useEffect, useCallback } from "react";
+import { Plus, Upload, Loader2, Search } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
-} from '@/components/ui/dialog';
-import { MateriList } from '@/components/features/materi/MateriCard';
-import { MateriViewer } from '@/components/features/materi/MateriViewer';
-import { useAuth } from '@/lib/hooks/useAuth';
+} from "@/components/ui/dialog";
+import { MateriList } from "@/components/features/materi/MateriCard";
+import { MateriViewer } from "@/components/features/materi/MateriViewer";
+import { useAuth } from "@/lib/hooks/useAuth";
 import {
   getMateriByDosen,
   createMateri,
@@ -42,12 +42,12 @@ import {
   downloadMateri,
   publishMateri,
   type UploadMateriData,
-} from '@/lib/api/materi.api';
-import { getKelas } from '@/lib/api/kelas.api';
-import type { Materi } from '@/types/materi.types';
-import type { Kelas } from '@/types/kelas.types';
-import { toast } from 'sonner';
-import { MAX_FILE_SIZE, formatFileSize } from '@/lib/supabase/storage';
+} from "@/lib/api/materi.api";
+import { getKelas } from "@/lib/api/kelas.api";
+import type { Materi } from "@/types/materi.types";
+import type { Kelas } from "@/types/kelas.types";
+import { toast } from "sonner";
+import { MAX_FILE_SIZE, formatFileSize } from "@/lib/supabase/storage";
 
 // ============================================================================
 // COMPONENT
@@ -66,9 +66,9 @@ export default function DosenMateriPage() {
   const [filteredMateri, setFilteredMateri] = useState<Materi[]>([]);
 
   // Filters
-  const [selectedKelas, setSelectedKelas] = useState<string>('all');
-  const [selectedMinggu, setSelectedMinggu] = useState<string>('all');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedKelas, setSelectedKelas] = useState<string>("all");
+  const [selectedMinggu, setSelectedMinggu] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Upload Dialog
   const [showUploadDialog, setShowUploadDialog] = useState(false);
@@ -105,14 +105,14 @@ export default function DosenMateriPage() {
 
       const [materiData, kelasData] = await Promise.all([
         getMateriByDosen(user.dosen.id),
-        getKelas({ dosen_id: user.dosen.id }),
+        getKelas({ is_active: true }),
       ]);
 
       setMateriList(materiData);
       setKelasList(kelasData);
     } catch (error) {
-      console.error('Error loading data:', error);
-      toast.error('Gagal memuat data');
+      console.error("Error loading data:", error);
+      toast.error("Gagal memuat data");
     } finally {
       setLoading(false);
     }
@@ -126,12 +126,12 @@ export default function DosenMateriPage() {
     let filtered = [...materiList];
 
     // Filter by kelas
-    if (selectedKelas !== 'all') {
+    if (selectedKelas !== "all") {
       filtered = filtered.filter((m) => m.kelas_id === selectedKelas);
     }
 
     // Filter by minggu
-    if (selectedMinggu !== 'all') {
+    if (selectedMinggu !== "all") {
       const minggu = parseInt(selectedMinggu);
       filtered = filtered.filter((m) => m.minggu_ke === minggu);
     }
@@ -142,7 +142,7 @@ export default function DosenMateriPage() {
       filtered = filtered.filter(
         (m) =>
           m.judul.toLowerCase().includes(query) ||
-          m.deskripsi?.toLowerCase().includes(query)
+          m.deskripsi?.toLowerCase().includes(query),
       );
     }
 
@@ -164,15 +164,15 @@ export default function DosenMateriPage() {
       setUploading(true);
       setUploadProgress(0);
 
-      const file = formData.get('file') as File;
-      const kelasId = formData.get('kelas_id') as string;
-      const judul = formData.get('judul') as string;
-      const deskripsi = formData.get('deskripsi') as string;
-      const mingguKe = formData.get('minggu_ke') as string;
+      const file = formData.get("file") as File;
+      const kelasId = formData.get("kelas_id") as string;
+      const judul = formData.get("judul") as string;
+      const deskripsi = formData.get("deskripsi") as string;
+      const mingguKe = formData.get("minggu_ke") as string;
 
       // Validate
       if (!file || !kelasId || !judul) {
-        toast.error('Semua field harus diisi');
+        toast.error("Semua field harus diisi");
         return;
       }
 
@@ -194,12 +194,12 @@ export default function DosenMateriPage() {
       await publishMateri(newMateri.id);
       setMateriList((prev) => [newMateri, ...prev]);
 
-      toast.success('Materi berhasil diupload');
+      toast.success("Materi berhasil diupload");
       setShowUploadDialog(false);
       loadData(); // Reload to get updated data
     } catch (error: any) {
-      console.error('Error uploading materi:', error);
-      toast.error(error.message || 'Gagal mengupload materi');
+      console.error("Error uploading materi:", error);
+      toast.error(error.message || "Gagal mengupload materi");
     } finally {
       setUploading(false);
       setUploadProgress(0);
@@ -219,9 +219,9 @@ export default function DosenMateriPage() {
     if (!editingMateri) return;
 
     try {
-      const judul = formData.get('judul') as string;
-      const deskripsi = formData.get('deskripsi') as string;
-      const mingguKe = formData.get('minggu_ke') as string;
+      const judul = formData.get("judul") as string;
+      const deskripsi = formData.get("deskripsi") as string;
+      const mingguKe = formData.get("minggu_ke") as string;
 
       await updateMateri(editingMateri.id, {
         judul,
@@ -229,13 +229,13 @@ export default function DosenMateriPage() {
         minggu_ke: mingguKe ? parseInt(mingguKe) : undefined,
       });
 
-      toast.success('Materi berhasil diupdate');
+      toast.success("Materi berhasil diupdate");
       setShowEditDialog(false);
       setEditingMateri(null);
       loadData();
     } catch (error: any) {
-      console.error('Error updating materi:', error);
-      toast.error(error.message || 'Gagal mengupdate materi');
+      console.error("Error updating materi:", error);
+      toast.error(error.message || "Gagal mengupdate materi");
     }
   }
 
@@ -245,10 +245,10 @@ export default function DosenMateriPage() {
     try {
       await deleteMateri(materi.id);
       setMateriList((prev) => prev.filter((m) => m.id !== materi.id));
-      toast.success('Materi berhasil dihapus');
+      toast.success("Materi berhasil dihapus");
     } catch (error: any) {
-      console.error('Error deleting materi:', error);
-      toast.error(error.message || 'Gagal menghapus materi');
+      console.error("Error deleting materi:", error);
+      toast.error(error.message || "Gagal menghapus materi");
     }
   }
 
@@ -264,10 +264,10 @@ export default function DosenMateriPage() {
   async function handleDownload(materi: Materi) {
     try {
       await downloadMateri(materi.id);
-      toast.success('Download dimulai');
+      toast.success("Download dimulai");
     } catch (error: any) {
-      console.error('Error downloading materi:', error);
-      toast.error(error.message || 'Gagal mendownload materi');
+      console.error("Error downloading materi:", error);
+      toast.error(error.message || "Gagal mendownload materi");
     }
   }
 
@@ -366,7 +366,10 @@ export default function DosenMateriPage() {
         <div className="bg-card border rounded-lg p-4">
           <p className="text-sm text-muted-foreground">Total Downloads</p>
           <p className="text-2xl font-bold">
-            {materiList.reduce((sum, m) => sum + ((m as any).download_count || 0), 0)}
+            {materiList.reduce(
+              (sum, m) => sum + ((m as any).download_count || 0),
+              0,
+            )}
           </p>
         </div>
       </div>
@@ -440,8 +443,8 @@ function UploadDialog({
   uploadProgress,
 }: UploadDialogProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [selectedKelasId, setSelectedKelasId] = useState<string>('');
-  const [selectedMingguKe, setSelectedMingguKe] = useState<string>('');
+  const [selectedKelasId, setSelectedKelasId] = useState<string>("");
+  const [selectedMingguKe, setSelectedMingguKe] = useState<string>("");
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -454,8 +457,10 @@ function UploadDialog({
     if (file) {
       // Validate file size
       if (file.size > MAX_FILE_SIZE) {
-        toast.error(`Ukuran file terlalu besar. Maksimal ${formatFileSize(MAX_FILE_SIZE)}`);
-        e.target.value = '';
+        toast.error(
+          `Ukuran file terlalu besar. Maksimal ${formatFileSize(MAX_FILE_SIZE)}`,
+        );
+        e.target.value = "";
         return;
       }
       setSelectedFile(file);
@@ -487,7 +492,12 @@ function UploadDialog({
                 ))}
               </SelectContent>
             </Select>
-            <input type="hidden" name="kelas_id" value={selectedKelasId} required />
+            <input
+              type="hidden"
+              name="kelas_id"
+              value={selectedKelasId}
+              required
+            />
           </div>
 
           <div>
@@ -512,7 +522,10 @@ function UploadDialog({
 
           <div>
             <Label htmlFor="minggu_ke">Minggu Ke</Label>
-            <Select value={selectedMingguKe} onValueChange={setSelectedMingguKe}>
+            <Select
+              value={selectedMingguKe}
+              onValueChange={setSelectedMingguKe}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Pilih minggu (opsional)" />
               </SelectTrigger>
@@ -524,7 +537,9 @@ function UploadDialog({
                 ))}
               </SelectContent>
             </Select>
-            {selectedMingguKe && <input type="hidden" name="minggu_ke" value={selectedMingguKe} />}
+            {selectedMingguKe && (
+              <input type="hidden" name="minggu_ke" value={selectedMingguKe} />
+            )}
           </div>
 
           <div>
@@ -543,7 +558,8 @@ function UploadDialog({
               </p>
             )}
             <p className="text-xs text-muted-foreground mt-1">
-              Max {formatFileSize(MAX_FILE_SIZE)}. Format: PDF, Word, Excel, PowerPoint, Images, Videos, Archives
+              Max {formatFileSize(MAX_FILE_SIZE)}. Format: PDF, Word, Excel,
+              PowerPoint, Images, Videos, Archives
             </p>
           </div>
 
@@ -603,12 +619,12 @@ interface EditDialogProps {
 }
 
 function EditDialog({ open, onClose, onUpdate, materi }: EditDialogProps) {
-  const [selectedMingguKe, setSelectedMingguKe] = useState<string>('');
+  const [selectedMingguKe, setSelectedMingguKe] = useState<string>("");
 
   // Reset when materi changes
   useEffect(() => {
     if (materi) {
-      setSelectedMingguKe(materi.minggu_ke?.toString() || '');
+      setSelectedMingguKe(materi.minggu_ke?.toString() || "");
     }
   }, [materi]);
 
@@ -644,14 +660,17 @@ function EditDialog({ open, onClose, onUpdate, materi }: EditDialogProps) {
             <Textarea
               id="edit_deskripsi"
               name="deskripsi"
-              defaultValue={materi.deskripsi || ''}
+              defaultValue={materi.deskripsi || ""}
               rows={3}
             />
           </div>
 
           <div>
             <Label htmlFor="edit_minggu_ke">Minggu Ke</Label>
-            <Select value={selectedMingguKe} onValueChange={setSelectedMingguKe}>
+            <Select
+              value={selectedMingguKe}
+              onValueChange={setSelectedMingguKe}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Pilih minggu (opsional)" />
               </SelectTrigger>
@@ -663,7 +682,9 @@ function EditDialog({ open, onClose, onUpdate, materi }: EditDialogProps) {
                 ))}
               </SelectContent>
             </Select>
-            {selectedMingguKe && <input type="hidden" name="minggu_ke" value={selectedMingguKe} />}
+            {selectedMingguKe && (
+              <input type="hidden" name="minggu_ke" value={selectedMingguKe} />
+            )}
           </div>
 
           <div className="flex gap-2">

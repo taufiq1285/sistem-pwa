@@ -1,32 +1,62 @@
 /**
- * QuizBuilder - WITH AUTO-CREATE MATA KULIAH (TEXT INPUT)
+ * QuizBuilder - IMPROVED FLOW WITH CLEAR STEPS
+ *
+ * Flow:
+ * Step 1: Fill quiz info → Save Quiz Info (explicit button)
+ * Step 2: Add questions (Buat Baru / Dari Bank)
+ * Step 3: Publish quiz (Draft → Published)
  */
 
-import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Plus, Trash2, AlertCircle, Target, FileText } from 'lucide-react';
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Plus, Trash2, AlertCircle, Target, FileText, Save, CheckCircle, BookOpen } from "lucide-react";
 
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { toast } from 'sonner';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { toast } from "sonner";
 
-import { QuestionEditor } from './QuestionEditor';
-import { createKuisSchema, type CreateKuisFormData } from '@/lib/validations/kuis.schema';
-import { createKuis, createSoal, updateSoal, deleteSoal } from '@/lib/api/kuis.api';
-import { getKelas, createKelas } from '@/lib/api/kelas.api';
-import { getMataKuliah } from '@/lib/api/mata-kuliah.api';
-import type { Kuis, Soal } from '@/types/kuis.types';
-import type { Kelas } from '@/types/kelas.types';
-import type { MataKuliah } from '@/types/mata-kuliah.types';
-import { cn } from '@/lib/utils';
+import { QuestionEditor } from "./QuestionEditor";
+import { AddFromBankDialog } from "../AddFromBankDialog";
+import {
+  createKuisSchema,
+  type CreateKuisFormData,
+} from "@/lib/validations/kuis.schema";
+import {
+  createKuis,
+  updateKuis,
+  createSoal,
+  updateSoal,
+  deleteSoal,
+  getKuisById,
+} from "@/lib/api/kuis.api";
+import { getKelas, createKelas } from "@/lib/api/kelas.api";
+import { getMataKuliah } from "@/lib/api/mata-kuliah.api";
+import { saveSoalToBank } from "@/lib/api/bank-soal.api";
+import type { Kuis, Soal } from "@/types/kuis.types";
+import type { Kelas } from "@/types/kelas.types";
+import type { MataKuliah } from "@/types/mata-kuliah.types";
+import { cn } from "@/lib/utils";
 
 interface QuizBuilderProps {
   quiz?: Kuis;
@@ -42,130 +72,128 @@ interface EditorState {
   index?: number;
 }
 
-export function QuizBuilder({ quiz, kelasId, dosenId, onSave, onCancel: _onCancel }: QuizBuilderProps) {
+export function QuizBuilder({
+  quiz,
+  kelasId,
+  dosenId,
+  onSave,
+  onCancel: _onCancel,
+}: QuizBuilderProps) {
   const isEditing = !!quiz;
   const [currentQuiz, setCurrentQuiz] = useState<Kuis | null>(quiz || null);
   const [questions, setQuestions] = useState<Soal[]>(quiz?.soal || []);
-  const [editorState, setEditorState] = useState<EditorState>({ isOpen: false });
-  
+  const [editorState, setEditorState] = useState<EditorState>({
+    isOpen: false,
+  });
+  const [showBankDialog, setShowBankDialog] = useState(false);
+  const [isSavingQuiz, setIsSavingQuiz] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
+
   const [kelasList, setKelasList] = useState<Kelas[]>([]);
   const [isLoadingKelas, setIsLoadingKelas] = useState(false);
   const [mataKuliahList, setMataKuliahList] = useState<MataKuliah[]>([]);
-  
+
   const [showCreateKelasDialog, setShowCreateKelasDialog] = useState(false);
   const [isCreatingKelas, setIsCreatingKelas] = useState(false);
   const [newKelasData, setNewKelasData] = useState({
-    nama_kelas: '',
-    mata_kuliah_id: '', // DROPDOWN, bukan text input
+    nama_kelas: "",
+    mata_kuliah_id: "", // DROPDOWN, bukan text input
     semester_ajaran: 1,
-    tahun_ajaran: new Date().getFullYear() + '/' + (new Date().getFullYear() + 1),
+    tahun_ajaran:
+      new Date().getFullYear() + "/" + (new Date().getFullYear() + 1),
   });
-  
-  // Helper function to get default dates in datetime-local format
-  const getDefaultDates = () => {
-    const now = new Date();
-    const oneWeekLater = new Date();
-    oneWeekLater.setDate(now.getDate() + 7); // Default: 1 minggu dari sekarang
 
-    // Format: YYYY-MM-DDTHH:mm (untuk datetime-local input)
-    const formatDateTimeLocal = (date: Date) => {
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      const hours = String(date.getHours()).padStart(2, '0');
-      const minutes = String(date.getMinutes()).padStart(2, '0');
-      return `${year}-${month}-${day}T${hours}:${minutes}`;
-    };
-
-    return {
-      tanggal_mulai: formatDateTimeLocal(now),
-      tanggal_selesai: formatDateTimeLocal(oneWeekLater),
-    };
-  };
-
-  // Helper to convert ISO date to datetime-local format
+  // Helper to convert ISO date to datetime-local format (kept for editing if needed later)
   const formatDateTimeLocal = (isoString: string) => {
     const date = new Date(isoString);
     const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
     return `${year}-${month}-${day}T${hours}:${minutes}`;
   };
 
-  const { register, formState: { errors }, setValue, watch } = useForm<CreateKuisFormData>({
+  const {
+    register,
+    formState: { errors },
+    setValue,
+    watch,
+  } = useForm<CreateKuisFormData>({
     resolver: zodResolver(createKuisSchema),
-    defaultValues: quiz ? {
-      kelas_id: quiz.kelas_id,
-      dosen_id: quiz.dosen_id,
-      judul: quiz.judul,
-      deskripsi: quiz.deskripsi || '',
-      durasi_menit: quiz.durasi_menit,
-      tanggal_mulai: formatDateTimeLocal(quiz.tanggal_mulai),
-      tanggal_selesai: formatDateTimeLocal(quiz.tanggal_selesai),
-      passing_score: quiz.passing_score ?? null,
-      max_attempts: quiz.max_attempts ?? null,
-      randomize_questions: quiz.randomize_questions ?? false,
-      randomize_options: quiz.randomize_options ?? false,
-      show_results_immediately: quiz.show_results_immediately ?? true,
-      status: quiz.status ?? 'draft',
-    } : {
-      kelas_id: kelasId || '',
-      dosen_id: dosenId,
-      judul: '',
-      deskripsi: '',
-      durasi_menit: 60,
-      ...getDefaultDates(), // ✅ Auto-set default dates
-      passing_score: 70,
-      max_attempts: 1,
-      randomize_questions: false,
-      randomize_options: false,
-      show_results_immediately: true,
-      status: 'draft',
-    },
+    defaultValues: quiz
+      ? {
+          kelas_id: quiz.kelas_id,
+          dosen_id: quiz.dosen_id,
+          judul: quiz.judul,
+          deskripsi: quiz.deskripsi || "",
+          durasi_menit: quiz.durasi_menit,
+          passing_score: quiz.passing_score ?? null,
+          max_attempts: quiz.max_attempts ?? null,
+          randomize_questions: quiz.randomize_questions ?? false,
+          randomize_options: quiz.randomize_options ?? false,
+          show_results_immediately: quiz.show_results_immediately ?? true,
+          status: quiz.status ?? "draft",
+        }
+      : {
+          kelas_id: kelasId || "",
+          dosen_id: dosenId,
+          judul: "",
+          deskripsi: "",
+          durasi_menit: 60,
+          passing_score: 70,
+          max_attempts: 1,
+          randomize_questions: false,
+          randomize_options: false,
+          show_results_immediately: true,
+          status: "draft",
+        },
   });
-  
+
   const formData = watch();
-  
+
   useEffect(() => {
     loadKelas();
     loadMataKuliah();
   }, [dosenId]);
-  
+
   const loadKelas = async () => {
     setIsLoadingKelas(true);
     try {
-      const data = await getKelas({ dosen_id: dosenId, is_active: true });
+      const data = await getKelas({ is_active: true });
       setKelasList(data);
-      if (data.length === 1 && !isEditing) setValue('kelas_id', data[0].id);
-    } catch (_error: unknown) {  // ✅ FIXED: Unused variable
-      toast.error('Gagal memuat kelas');
+      if (data.length === 1 && !isEditing) setValue("kelas_id", data[0].id);
+    } catch (_error: unknown) {
+      // ✅ FIXED: Unused variable
+      toast.error("Gagal memuat kelas");
     } finally {
       setIsLoadingKelas(false);
     }
   };
-  
+
   const loadMataKuliah = async () => {
     try {
       const data = await getMataKuliah();
       setMataKuliahList(data);
-    } catch (_error: unknown) {  // ✅ FIXED: Unused variable
-      console.error('Failed to load mata kuliah');
+    } catch (_error: unknown) {
+      // ✅ FIXED: Unused variable
+      console.error("Failed to load mata kuliah");
     }
   };
-  
+
   const handleQuickCreateKelas = async () => {
     if (!newKelasData.nama_kelas.trim() || !newKelasData.mata_kuliah_id) {
-      toast.error('Pilih mata kuliah dan isi nama kelas');
+      toast.error("Pilih mata kuliah dan isi nama kelas");
       return;
     }
 
     setIsCreatingKelas(true);
-    
+
     try {
-      const kodeKelas = newKelasData.nama_kelas.toUpperCase().replace(/\s+/g, '-');
-      
+      const kodeKelas = newKelasData.nama_kelas
+        .toUpperCase()
+        .replace(/\s+/g, "-");
+
       const kelas = await createKelas({
         nama_kelas: newKelasData.nama_kelas,
         kode_kelas: kodeKelas,
@@ -176,113 +204,199 @@ export function QuizBuilder({ quiz, kelasId, dosenId, onSave, onCancel: _onCance
         is_active: true,
       });
 
-      toast.success('Kelas berhasil dibuat!');
+      toast.success("Kelas berhasil dibuat!");
       await loadKelas();
-      setValue('kelas_id', kelas.id);
+      setValue("kelas_id", kelas.id);
       setShowCreateKelasDialog(false);
-      
+
       setNewKelasData({
-        nama_kelas: '',
-        mata_kuliah_id: '',
+        nama_kelas: "",
+        mata_kuliah_id: "",
         semester_ajaran: 1,
-        tahun_ajaran: new Date().getFullYear() + '/' + (new Date().getFullYear() + 1),
+        tahun_ajaran:
+          new Date().getFullYear() + "/" + (new Date().getFullYear() + 1),
       });
-    } catch (_error: unknown) {  // ✅ FIXED: Unused variable
-      toast.error('Gagal membuat kelas', { description: (_error as Error).message });
+    } catch (_error: unknown) {
+      // ✅ FIXED: Unused variable
+      toast.error("Gagal membuat kelas", {
+        description: (_error as Error).message,
+      });
     } finally {
       setIsCreatingKelas(false);
     }
   };
-  
-  
-  const handleAddQuestion = async () => {
-    // ✅ Auto-save quiz if not saved yet
-    if (!currentQuiz) {
-      const formData = watch();
 
-      // Check required fields manually
-      if (!formData.judul || !formData.judul.trim()) {
-        toast.error('Judul kuis harus diisi');
-        return;
-      }
-      if (!formData.kelas_id) {
-        toast.error('Pilih kelas terlebih dahulu');
-        return;
-      }
-      if (!formData.durasi_menit || formData.durasi_menit < 5) {
-        toast.error('Durasi minimal 5 menit');
-        return;
-      }
+  // ✅ NEW: Explicit save quiz info button handler
+  const handleSaveQuizInfo = async () => {
+    const formData = watch();
 
-      // Auto-save quiz
-      try {
-        // Convert datetime-local format to ISO string for API
-        const dataWithDates = {
-          ...formData,
-          tanggal_mulai: formData.tanggal_mulai ? new Date(formData.tanggal_mulai).toISOString() : new Date().toISOString(),
-          tanggal_selesai: formData.tanggal_selesai ? new Date(formData.tanggal_selesai).toISOString() : (() => {
-            const oneWeekLater = new Date();
-            oneWeekLater.setDate(oneWeekLater.getDate() + 7);
-            return oneWeekLater.toISOString();
-          })(),
-        };
-
-        console.log('🔵 Auto-saving quiz before adding question...');
-        const savedQuiz = await createKuis(dataWithDates);
-        console.log('✅ Quiz auto-saved:', savedQuiz);
-        setCurrentQuiz(savedQuiz);
-        toast.success('Kuis disimpan! Silakan tambah soal.');
-
-        // Open question editor after successful save
-        setEditorState({ isOpen: true, index: questions.length });
-      } catch (_error: unknown) {  // ✅ FIXED: Unused variable
-        console.error('❌ Error auto-saving quiz:', _error);
-        toast.error('Gagal menyimpan kuis', {
-          description: (_error as Error).message || String(_error)
-        });
-      } finally {
-      }
+    // Validate required fields
+    if (!formData.judul || !formData.judul.trim()) {
+      toast.error("Judul kuis harus diisi");
+      return;
+    }
+    if (!formData.kelas_id) {
+      toast.error("Pilih kelas terlebih dahulu");
+      return;
+    }
+    if (!formData.durasi_menit || formData.durasi_menit < 5) {
+      toast.error("Durasi minimal 5 menit");
       return;
     }
 
-    // Quiz already saved, just open editor
+    setIsSavingQuiz(true);
+    try {
+      const dataToSave = {
+        ...formData,
+        status: "draft", // Always start as draft
+      };
+
+      if (currentQuiz) {
+        // Update existing quiz
+        const updated = await updateKuis(currentQuiz.id, dataToSave);
+        setCurrentQuiz(updated);
+        toast.success("Informasi kuis berhasil diperbarui");
+      } else {
+        // Create new quiz
+        const savedQuiz = await createKuis(dataToSave);
+        setCurrentQuiz(savedQuiz);
+        toast.success("Kuis berhasil disimpan! Sekarang tambahkan soal.");
+      }
+    } catch (error) {
+      console.error("Error saving quiz:", error);
+      toast.error("Gagal menyimpan kuis", {
+        description: (error as Error).message,
+      });
+    } finally {
+      setIsSavingQuiz(false);
+    }
+  };
+
+  // ✅ IMPROVED: No auto-save, require quiz to be saved first
+  const handleAddQuestion = () => {
+    if (!currentQuiz) {
+      toast.error("Simpan informasi kuis terlebih dahulu");
+      return;
+    }
     setEditorState({ isOpen: true, index: questions.length });
   };
-  
+
+  // ✅ NEW: Publish quiz handler
+  const handlePublishQuiz = async () => {
+    console.log("🔵 handlePublishQuiz called");
+    console.log("🔵 currentQuiz:", currentQuiz);
+    console.log("🔵 questions.length:", questions.length);
+
+    if (!currentQuiz) {
+      console.log("❌ No currentQuiz");
+      toast.error("Kuis belum disimpan");
+      return;
+    }
+
+    if (questions.length === 0) {
+      console.log("❌ No questions");
+      toast.error("Tambahkan minimal 1 soal sebelum publish");
+      return;
+    }
+
+    const confirmed = confirm("Yakin ingin publish kuis ini? Mahasiswa akan bisa mengerjakan kuis ini.");
+    console.log("🔵 User confirmed:", confirmed);
+
+    if (!confirmed) {
+      console.log("❌ User cancelled");
+      return;
+    }
+
+    setIsPublishing(true);
+    try {
+      console.log("🔵 Calling updateKuis with status: published");
+      const updated = await updateKuis(currentQuiz.id, { status: "published" });
+      console.log("✅ Updated quiz:", updated);
+      setCurrentQuiz(updated);
+      toast.success("Kuis berhasil dipublish! Mahasiswa sekarang bisa mengerjakan kuis ini.");
+    } catch (error) {
+      console.error("❌ Error publishing quiz:", error);
+      toast.error("Gagal publish kuis", {
+        description: (error as Error).message,
+      });
+    } finally {
+      setIsPublishing(false);
+    }
+  };
+
+  // ✅ NEW: Reload questions after adding from bank
+  const reloadQuestions = async () => {
+    if (!currentQuiz) return;
+    try {
+      const updated = await getKuisById(currentQuiz.id);
+      setQuestions(updated.soal || []);
+    } catch (error) {
+      console.error("Error reloading questions:", error);
+    }
+  };
+
   const handleEditQuestion = (question: Soal, index: number) => {
     setEditorState({ isOpen: true, question, index });
   };
-  
+
   const handleSaveQuestion = async (questionData: any) => {
     if (!currentQuiz) return;
     try {
       let savedQuestion: Soal;
+      const shouldSaveToBank = questionData.saveToBank === true;
+
       if (editorState.question) {
+        // Update existing question
         savedQuestion = await updateSoal(editorState.question.id, questionData);
-        setQuestions(prev => prev.map(q => q.id === savedQuestion.id ? savedQuestion : q));
-        toast.success('Soal berhasil diperbarui');
+        setQuestions((prev) =>
+          prev.map((q) => (q.id === savedQuestion.id ? savedQuestion : q)),
+        );
+        toast.success("Soal berhasil diperbarui");
       } else {
-        savedQuestion = await createSoal({ ...questionData, kuis_id: currentQuiz.id });
-        setQuestions(prev => [...prev, savedQuestion]);
-        toast.success('Soal berhasil ditambahkan');
+        // Create new question
+        savedQuestion = await createSoal({
+          ...questionData,
+          kuis_id: currentQuiz.id,
+        });
+        setQuestions((prev) => [...prev, savedQuestion]);
+
+        // Auto-save to Bank Soal if checkbox was checked
+        if (shouldSaveToBank) {
+          try {
+            await saveSoalToBank(savedQuestion, dosenId);
+            toast.success("Soal berhasil dibuat dan disimpan ke Bank Soal");
+          } catch (bankError) {
+            console.error("Error saving to bank:", bankError);
+            toast.success("Soal berhasil dibuat");
+            toast.warning("Gagal menyimpan ke Bank Soal", {
+              description: "Soal sudah ada di kuis, tapi tidak masuk ke bank",
+            });
+          }
+        } else {
+          toast.success("Soal berhasil dibuat");
+        }
       }
       setEditorState({ isOpen: false });
-    } catch (_error: unknown) {  // ✅ FIXED: Unused variable
-      toast.error('Gagal menyimpan soal', { description: (_error as Error).message });
+    } catch (_error: unknown) {
+      // ✅ FIXED: Unused variable
+      toast.error("Gagal menyimpan soal", {
+        description: (_error as Error).message,
+      });
     }
   };
-  
+
   const handleDeleteQuestion = async (questionId: string) => {
-    if (!confirm('Yakin ingin menghapus soal ini?')) return;
+    if (!confirm("Yakin ingin menghapus soal ini?")) return;
     try {
       await deleteSoal(questionId);
-      setQuestions(prev => prev.filter(q => q.id !== questionId));
-      toast.success('Soal berhasil dihapus');
-    } catch (_error: unknown) {  // ✅ FIXED: Unused variable
-      toast.error('Gagal menghapus soal');
+      setQuestions((prev) => prev.filter((q) => q.id !== questionId));
+      toast.success("Soal berhasil dihapus");
+    } catch (_error: unknown) {
+      // ✅ FIXED: Unused variable
+      toast.error("Gagal menghapus soal");
     }
   };
-  
+
   if (editorState.isOpen) {
     return (
       <QuestionEditor
@@ -295,38 +409,97 @@ export function QuizBuilder({ quiz, kelasId, dosenId, onSave, onCancel: _onCance
       />
     );
   }
-  
+
   const totalPoints = questions.reduce((sum, q) => sum + (q.poin || 0), 0);
-  const canAddQuestions = true; // ✅ Always enabled - auto-save on first add
-  
+  const quizStatus = currentQuiz?.status || "draft";
+
   return (
     <div className="space-y-6">
+      {/* ✅ NEW: Step Indicator */}
+      <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+        <div className="flex items-center gap-4">
+          {/* Step 1 */}
+          <div className={cn("flex items-center gap-2", currentQuiz ? "text-green-600" : "text-primary")}>
+            {currentQuiz ? <CheckCircle className="h-5 w-5" /> : <div className="h-5 w-5 rounded-full border-2 border-current flex items-center justify-center text-xs font-bold">1</div>}
+            <span className="font-medium">Informasi Kuis</span>
+          </div>
+
+          <div className={cn("h-px w-8 bg-border", currentQuiz && "bg-green-600")} />
+
+          {/* Step 2 */}
+          <div className={cn("flex items-center gap-2", questions.length > 0 ? "text-green-600" : currentQuiz ? "text-primary" : "text-muted-foreground")}>
+            {questions.length > 0 ? <CheckCircle className="h-5 w-5" /> : <div className="h-5 w-5 rounded-full border-2 border-current flex items-center justify-center text-xs font-bold">2</div>}
+            <span className="font-medium">Tambah Soal</span>
+          </div>
+
+          <div className={cn("h-px w-8 bg-border", questions.length > 0 && "bg-green-600")} />
+
+          {/* Step 3 */}
+          <div className={cn("flex items-center gap-2", quizStatus === "published" ? "text-green-600" : questions.length > 0 ? "text-primary" : "text-muted-foreground")}>
+            {quizStatus === "published" ? <CheckCircle className="h-5 w-5" /> : <div className="h-5 w-5 rounded-full border-2 border-current flex items-center justify-center text-xs font-bold">3</div>}
+            <span className="font-medium">Publish</span>
+          </div>
+        </div>
+
+        {/* Status Badge */}
+        <div>
+          {quizStatus === "draft" ? (
+            <Badge variant="outline" className="text-yellow-600 border-yellow-600">
+              🟡 Draft
+            </Badge>
+          ) : quizStatus === "published" ? (
+            <Badge variant="outline" className="text-green-600 border-green-600">
+              🟢 Published
+            </Badge>
+          ) : (
+            <Badge variant="outline">
+              {quizStatus}
+            </Badge>
+          )}
+        </div>
+      </div>
+
       <Card>
         <CardHeader>
-          <CardTitle>Informasi Kuis</CardTitle>
+          <CardTitle>Step 1: Informasi Kuis</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2 space-y-2">
                 <Label htmlFor="judul">Judul Kuis *</Label>
-                <Input id="judul" {...register('judul')} placeholder="Contoh: Kuis Anatomi" className={cn(errors.judul && "border-destructive")} />
-                {errors.judul && <p className="text-sm text-destructive">{errors.judul.message}</p>}
+                <Input
+                  id="judul"
+                  {...register("judul")}
+                  placeholder="Contoh: Kuis Anatomi"
+                  className={cn(errors.judul && "border-destructive")}
+                />
+                {errors.judul && (
+                  <p className="text-sm text-destructive">
+                    {errors.judul.message}
+                  </p>
+                )}
               </div>
-              
+
               <div className="md:col-span-2 space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="kelas_id">Kelas *</Label>
-                  {!isEditing && (
-                    <Button type="button" variant="outline" size="sm" onClick={() => setShowCreateKelasDialog(true)} className="text-xs">
-                      <Plus className="h-3 w-3 mr-1" />
-                      Buat Kelas Baru
-                    </Button>
-                  )}
-                </div>
-                <Select value={formData.kelas_id || ''} onValueChange={(value) => setValue('kelas_id', value)} disabled={isLoadingKelas || isEditing}>
-                  <SelectTrigger className={cn(errors.kelas_id && "border-destructive")}>
-                    <SelectValue placeholder={isLoadingKelas ? "Memuat..." : kelasList.length === 0 ? "Klik 'Buat Kelas Baru'" : "Pilih kelas..."} />
+                <Label htmlFor="kelas_id">Kelas *</Label>
+                <Select
+                  value={formData.kelas_id || ""}
+                  onValueChange={(value) => setValue("kelas_id", value)}
+                  disabled={isLoadingKelas || isEditing}
+                >
+                  <SelectTrigger
+                    className={cn(errors.kelas_id && "border-destructive")}
+                  >
+                    <SelectValue
+                      placeholder={
+                        isLoadingKelas
+                          ? "Memuat..."
+                          : kelasList.length === 0
+                            ? "Tidak ada kelas aktif - Hubungi admin"
+                            : "Pilih kelas..."
+                      }
+                    />
                   </SelectTrigger>
                   <SelectContent>
                     {kelasList.map((kelas) => (
@@ -336,67 +509,128 @@ export function QuizBuilder({ quiz, kelasId, dosenId, onSave, onCancel: _onCance
                     ))}
                   </SelectContent>
                 </Select>
-                {errors.kelas_id && <p className="text-sm text-destructive">{errors.kelas_id.message}</p>}
+                {errors.kelas_id && (
+                  <p className="text-sm text-destructive">
+                    {errors.kelas_id.message}
+                  </p>
+                )}
               </div>
-              
+
               <div className="md:col-span-2 space-y-2">
                 <Label htmlFor="deskripsi">Deskripsi</Label>
-                <Textarea id="deskripsi" {...register('deskripsi')} placeholder="Deskripsi..." rows={3} />
+                <Textarea
+                  id="deskripsi"
+                  {...register("deskripsi")}
+                  placeholder="Deskripsi..."
+                  rows={3}
+                />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="durasi_menit">Durasi (menit) *</Label>
-                <Input id="durasi_menit" type="number" {...register('durasi_menit', { valueAsNumber: true })} min={5} className={cn(errors.durasi_menit && "border-destructive")} />
+                <Input
+                  id="durasi_menit"
+                  type="number"
+                  {...register("durasi_menit", { valueAsNumber: true })}
+                  min={5}
+                  className={cn(errors.durasi_menit && "border-destructive")}
+                />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="tanggal_mulai">Tanggal Mulai *</Label>
-                <Input
-                  id="tanggal_mulai"
-                  type="datetime-local"
-                  {...register('tanggal_mulai')}
-                  className={cn(errors.tanggal_mulai && "border-destructive")}
-                />
-                {errors.tanggal_mulai && <p className="text-sm text-destructive">{errors.tanggal_mulai.message}</p>}
-                <p className="text-xs text-muted-foreground">Waktu mulai kuis bisa dikerjakan mahasiswa</p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="tanggal_selesai">Tanggal Selesai *</Label>
-                <Input
-                  id="tanggal_selesai"
-                  type="datetime-local"
-                  {...register('tanggal_selesai')}
-                  className={cn(errors.tanggal_selesai && "border-destructive")}
-                />
-                {errors.tanggal_selesai && <p className="text-sm text-destructive">{errors.tanggal_selesai.message}</p>}
-                <p className="text-xs text-muted-foreground">Waktu batas akhir pengerjaan kuis</p>
+              {/* ✅ NEW: Info alert */}
+              <div className="md:col-span-2">
+                {!currentQuiz ? (
+                  <Alert>
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      Simpan informasi kuis terlebih dahulu sebelum menambah soal.
+                    </AlertDescription>
+                  </Alert>
+                ) : (
+                  <Alert className="bg-green-50 border-green-200">
+                    <CheckCircle className="h-4 w-4 text-green-600" />
+                    <AlertDescription className="text-green-900">
+                      Informasi kuis sudah tersimpan. Sekarang tambahkan soal untuk kuis ini.
+                    </AlertDescription>
+                  </Alert>
+                )}
               </div>
             </div>
 
-            {/* ✅ REMOVED: Simpan Kuis button - auto-save when adding questions */}
+            {/* ✅ NEW: Explicit Save Button */}
+            <div className="flex justify-end pt-4 border-t">
+              <Button
+                onClick={handleSaveQuizInfo}
+                disabled={isSavingQuiz}
+                size="lg"
+              >
+                <Save className="h-4 w-4 mr-2" />
+                {isSavingQuiz ? "Menyimpan..." : currentQuiz ? "Perbarui Informasi Kuis" : "Simpan Informasi Kuis"}
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
-      
+
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Daftar Soal</CardTitle>
-              <p className="text-sm text-muted-foreground">{questions.length} soal · {totalPoints} poin</p>
+              <CardTitle>Step 2: Daftar Soal</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                {questions.length} soal · {totalPoints} poin total
+              </p>
             </div>
-            <Button onClick={handleAddQuestion} disabled={!canAddQuestions} size="sm">
-              <Plus className="h-4 w-4 mr-2" />
-              Tambah Soal
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setShowBankDialog(true)}
+                disabled={!currentQuiz}
+                size="sm"
+                title={!currentQuiz ? "Simpan informasi kuis terlebih dahulu" : "Ambil soal dari Bank Soal"}
+              >
+                <BookOpen className="h-4 w-4 mr-2" />
+                Ambil dari Bank
+              </Button>
+              <Button
+                onClick={handleAddQuestion}
+                disabled={!currentQuiz}
+                size="sm"
+                title={!currentQuiz ? "Simpan informasi kuis terlebih dahulu" : "Buat soal baru"}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Buat Soal Baru
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
           {questions.length === 0 && (
             <div className="text-center py-12">
               <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <Button onClick={handleAddQuestion}><Plus className="h-4 w-4 mr-2" />Tambah Soal</Button>
+              {!currentQuiz ? (
+                <div>
+                  <p className="text-muted-foreground mb-4">
+                    Simpan informasi kuis terlebih dahulu untuk menambah soal
+                  </p>
+                </div>
+              ) : (
+                <div>
+                  <p className="text-muted-foreground mb-4">
+                    Belum ada soal. Pilih salah satu:
+                  </p>
+                  <div className="flex gap-3 justify-center">
+                    <Button variant="outline" onClick={() => setShowBankDialog(true)}>
+                      <BookOpen className="h-4 w-4 mr-2" />
+                      Ambil dari Bank Soal
+                    </Button>
+                    <Button onClick={handleAddQuestion}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Buat Soal Baru
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
           {questions.length > 0 && (
@@ -409,13 +643,31 @@ export function QuizBuilder({ quiz, kelasId, dosenId, onSave, onCancel: _onCance
                       <div className="flex-1">
                         <p className="font-medium">{q.pertanyaan}</p>
                         <div className="flex gap-4 mt-2 text-sm text-muted-foreground">
-                          <span><Target className="h-3 w-3 inline mr-1" />{q.poin} poin</span>
-                          <Badge variant="secondary" className="text-xs">{q.tipe_soal}</Badge>
+                          <span>
+                            <Target className="h-3 w-3 inline mr-1" />
+                            {q.poin} poin
+                          </span>
+                          <Badge variant="secondary" className="text-xs">
+                            {q.tipe_soal}
+                          </Badge>
                         </div>
                       </div>
                       <div className="flex gap-2">
-                        <Button variant="ghost" size="sm" onClick={() => handleEditQuestion(q, i)}>Edit</Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleDeleteQuestion(q.id)} className="text-destructive"><Trash2 className="h-4 w-4" /></Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEditQuestion(q, i)}
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteQuestion(q.id)}
+                          className="text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
                     </div>
                   </CardContent>
@@ -426,125 +678,83 @@ export function QuizBuilder({ quiz, kelasId, dosenId, onSave, onCancel: _onCance
         </CardContent>
       </Card>
 
-      {/* ✅ Finish Button - Only show after adding questions */}
+      {/* ✅ NEW: Step 3 - Publish Section */}
       {currentQuiz && questions.length > 0 && (
-        <div className="flex justify-end gap-2 mt-6">
-          <Button
-            onClick={() => {
-              if (onSave) onSave(currentQuiz);
-            }}
-          >
-            Simpan & Kembali ke Daftar Kuis
-          </Button>
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Step 3: Publish Kuis</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  {quizStatus === "draft" ? (
+                    <>
+                      Kuis masih dalam status <strong>Draft</strong>. Mahasiswa belum bisa melihat dan mengerjakan kuis ini.
+                      Klik tombol <strong>Publish</strong> untuk mengaktifkan kuis.
+                    </>
+                  ) : (
+                    <>
+                      Kuis sudah <strong>Published</strong>. Mahasiswa sekarang bisa melihat dan mengerjakan kuis ini.
+                    </>
+                  )}
+                </AlertDescription>
+              </Alert>
+
+              <div className="flex justify-between items-center pt-4 border-t">
+                <div>
+                  <p className="text-sm text-muted-foreground">
+                    {questions.length} soal · {totalPoints} poin total
+                  </p>
+                  {/* DEBUG INFO */}
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Status: {quizStatus} | Has Quiz: {currentQuiz ? "✅" : "❌"} | Has Questions: {questions.length > 0 ? "✅" : "❌"}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  {quizStatus === "draft" ? (
+                    <Button
+                      onClick={handlePublishQuiz}
+                      disabled={isPublishing}
+                      size="lg"
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      {isPublishing ? "Publishing..." : "Publish Kuis"}
+                    </Button>
+                  ) : (
+                    <div className="text-sm text-green-600 font-medium">
+                      ✅ Kuis sudah published
+                    </div>
+                  )}
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      if (onSave) onSave(currentQuiz);
+                    }}
+                    size="lg"
+                  >
+                    Kembali ke Daftar Kuis
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       )}
 
-      <Dialog open={showCreateKelasDialog} onOpenChange={setShowCreateKelasDialog}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>Buat Kelas Baru</DialogTitle>
-            <DialogDescription>
-              Pilih mata kuliah dan isi detail kelas untuk quiz.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-4 py-4">
-            {/* Mata Kuliah Dropdown */}
-            <div className="space-y-2">
-              <Label>Mata Kuliah *</Label>
-              <Select 
-                value={newKelasData.mata_kuliah_id} 
-                onValueChange={(v) => setNewKelasData(p => ({ ...p, mata_kuliah_id: v }))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Pilih mata kuliah..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {mataKuliahList.length === 0 ? (
-                    <div className="p-4 text-center text-sm text-muted-foreground">
-                      Belum ada mata kuliah
-                    </div>
-                  ) : (
-                    mataKuliahList.map((mk) => (
-                      <SelectItem key={mk.id} value={mk.id}>
-                        {mk.kode_mk} - {mk.nama_mk}
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
-              
-              {/* Empty State - Link to Create MK */}
-              {mataKuliahList.length === 0 && (
-                <Alert>
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription className="text-xs">
-                    <p className="mb-1 font-medium">Belum ada mata kuliah di sistem.</p>
-                    <p className="text-muted-foreground">
-                      Silakan hubungi Admin untuk menambahkan mata kuliah terlebih dahulu.
-                    </p>
-                  </AlertDescription>
-                </Alert>
-              )}
-            </div>
-            
-            <div className="space-y-2">
-              <Label>Nama Kelas *</Label>
-              <Input 
-                placeholder="Contoh: Kelas A" 
-                value={newKelasData.nama_kelas} 
-                onChange={(e) => setNewKelasData(p => ({ ...p, nama_kelas: e.target.value }))} 
-              />
-              <p className="text-xs text-muted-foreground">
-                Kode kelas akan dibuat otomatis (contoh: KELAS-A)
-              </p>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Semester *</Label>
-                <Select 
-                  value={String(newKelasData.semester_ajaran)} 
-                  onValueChange={(v) => setNewKelasData(p => ({ ...p, semester_ajaran: parseInt(v) }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1">Semester 1</SelectItem>
-                    <SelectItem value="2">Semester 2</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="space-y-2">
-                <Label>Tahun Ajaran</Label>
-                <Input 
-                  placeholder="2025/2026" 
-                  value={newKelasData.tahun_ajaran} 
-                  onChange={(e) => setNewKelasData(p => ({ ...p, tahun_ajaran: e.target.value }))} 
-                />
-              </div>
-            </div>
-          </div>
-          
-          <DialogFooter>
-            <Button 
-              variant="outline" 
-              onClick={() => setShowCreateKelasDialog(false)} 
-              disabled={isCreatingKelas}
-            >
-              Batal
-            </Button>
-            <Button 
-              onClick={handleQuickCreateKelas} 
-              disabled={isCreatingKelas || !newKelasData.nama_kelas || !newKelasData.mata_kuliah_id}
-            >
-              {isCreatingKelas ? 'Membuat...' : 'Buat Kelas'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Add From Bank Dialog */}
+      {currentQuiz && (
+        <AddFromBankDialog
+          open={showBankDialog}
+          onOpenChange={setShowBankDialog}
+          kuisId={currentQuiz.id}
+          dosenId={dosenId}
+          nextUrutan={questions.length + 1}
+          onSuccess={reloadQuestions}
+        />
+      )}
     </div>
   );
 }

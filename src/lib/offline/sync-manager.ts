@@ -12,8 +12,8 @@
  * - Service Worker integration
  */
 
-import { queueManager } from './queue-manager';
-import { networkDetector } from './network-detector';
+import { queueManager } from "./queue-manager";
+import { networkDetector } from "./network-detector";
 
 // ============================================================================
 // TYPES
@@ -46,7 +46,7 @@ export interface SyncResult {
 /**
  * Sync status
  */
-export type SyncStatus = 'idle' | 'syncing' | 'completed' | 'error' | 'paused';
+export type SyncStatus = "idle" | "syncing" | "completed" | "error" | "paused";
 
 /**
  * Sync progress event
@@ -83,7 +83,13 @@ export interface SyncStats {
 /**
  * Sync event types
  */
-export type SyncEventType = 'start' | 'progress' | 'complete' | 'error' | 'pause' | 'resume';
+export type SyncEventType =
+  | "start"
+  | "progress"
+  | "complete"
+  | "error"
+  | "pause"
+  | "resume";
 
 /**
  * Sync event
@@ -116,7 +122,7 @@ export class SyncManager {
   private swMessageHandler: ((event: MessageEvent) => void) | null = null;
 
   // Status tracking
-  private currentStatus: SyncStatus = 'idle';
+  private currentStatus: SyncStatus = "idle";
   private isSyncing = false;
   private isPaused = false;
 
@@ -135,7 +141,7 @@ export class SyncManager {
     this.config = {
       autoRegisterSync: config.autoRegisterSync ?? true,
       autoProcessOnline: config.autoProcessOnline ?? true,
-      syncTag: config.syncTag || 'background-sync',
+      syncTag: config.syncTag || "background-sync",
       batchSize: config.batchSize ?? 10,
       maxConcurrency: config.maxConcurrency ?? 3,
       enableProgressEvents: config.enableProgressEvents ?? true,
@@ -145,45 +151,51 @@ export class SyncManager {
   async initialize(): Promise<void> {
     if (this.isInitialized) return;
     try {
-      if (!('serviceWorker' in navigator)) return;
+      if (!("serviceWorker" in navigator)) return;
       this.swRegistration = await navigator.serviceWorker.ready;
       if (this.config.autoProcessOnline) {
         networkDetector.on(this.handleNetworkChange);
       }
-      if (this.config.autoRegisterSync && 'sync' in this.swRegistration) {
+      if (this.config.autoRegisterSync && "sync" in this.swRegistration) {
         await this.registerBackgroundSync();
       }
       // Listen to messages from Service Worker
       this.swMessageHandler = this.handleSWMessage.bind(this);
-      navigator.serviceWorker.addEventListener('message', this.swMessageHandler);
+      navigator.serviceWorker.addEventListener(
+        "message",
+        this.swMessageHandler,
+      );
       this.isInitialized = true;
-      console.log('SyncManager initialized');
+      console.log("SyncManager initialized");
     } catch (error) {
-      console.error('SyncManager init failed:', error);
+      console.error("SyncManager init failed:", error);
     }
   }
 
   private handleSWMessage = async (event: MessageEvent) => {
     const { data } = event;
-    if (data && data.type === 'PROCESS_SYNC_QUEUE') {
-      console.log('Received PROCESS_SYNC_QUEUE from SW');
+    if (data && data.type === "PROCESS_SYNC_QUEUE") {
+      console.log("Received PROCESS_SYNC_QUEUE from SW");
       await this.processSync();
     }
   };
 
-  private handleNetworkChange = async (event: { status: string; isOnline: boolean }) => {
-    if (event.isOnline && event.status === 'online') {
+  private handleNetworkChange = async (event: {
+    status: string;
+    isOnline: boolean;
+  }) => {
+    if (event.isOnline && event.status === "online") {
       await this.processSync();
     }
   };
 
   async registerBackgroundSync(): Promise<void> {
     try {
-      if (this.swRegistration && 'sync' in this.swRegistration) {
+      if (this.swRegistration && "sync" in this.swRegistration) {
         await (this.swRegistration as any).sync.register(this.config.syncTag);
       }
     } catch (error) {
-      console.error('Failed to register background sync:', error);
+      console.error("Failed to register background sync:", error);
     }
   }
 
@@ -193,19 +205,19 @@ export class SyncManager {
   async processSync(): Promise<SyncResult> {
     // Prevent concurrent syncs
     if (this.isSyncing) {
-      console.warn('[SyncManager] Sync already in progress');
+      console.warn("[SyncManager] Sync already in progress");
       return { success: false, processed: 0, failed: 0, errors: [] };
     }
 
     // Check if paused
     if (this.isPaused) {
-      console.warn('[SyncManager] Sync is paused');
+      console.warn("[SyncManager] Sync is paused");
       return { success: false, processed: 0, failed: 0, errors: [] };
     }
 
     const startTime = Date.now();
     this.isSyncing = true;
-    this.currentStatus = 'syncing';
+    this.currentStatus = "syncing";
 
     try {
       // Ensure queue manager is ready
@@ -219,9 +231,9 @@ export class SyncManager {
 
       // Emit start event
       this.emitEvent({
-        type: 'start',
+        type: "start",
         progress: {
-          status: 'syncing',
+          status: "syncing",
           processed: 0,
           total: totalItems,
           failed: 0,
@@ -241,11 +253,11 @@ export class SyncManager {
           timestamp: Date.now(),
         };
 
-        this.currentStatus = 'completed';
+        this.currentStatus = "completed";
         this.isSyncing = false;
 
         this.emitEvent({
-          type: 'complete',
+          type: "complete",
           result: emptyResult,
           timestamp: Date.now(),
         });
@@ -273,12 +285,12 @@ export class SyncManager {
       this.updateStats(syncResult);
 
       // Update status
-      this.currentStatus = result.failed === 0 ? 'completed' : 'error';
+      this.currentStatus = result.failed === 0 ? "completed" : "error";
 
       // Notify Service Worker
       if (this.swRegistration) {
         this.sendMessageToSW({
-          type: result.failed === 0 ? 'SYNC_COMPLETED' : 'SYNC_FAILED',
+          type: result.failed === 0 ? "SYNC_COMPLETED" : "SYNC_FAILED",
           processed: result.processed,
           failed: result.failed,
           timestamp: Date.now(),
@@ -287,7 +299,7 @@ export class SyncManager {
 
       // Emit complete event
       this.emitEvent({
-        type: 'complete',
+        type: "complete",
         result: syncResult,
         timestamp: Date.now(),
       });
@@ -301,25 +313,26 @@ export class SyncManager {
         failed: 0,
         errors: [
           {
-            id: 'sync-error',
-            error: error instanceof Error ? error.message : 'Unknown sync error',
+            id: "sync-error",
+            error:
+              error instanceof Error ? error.message : "Unknown sync error",
           },
         ],
         duration,
         timestamp: Date.now(),
       };
 
-      this.currentStatus = 'error';
+      this.currentStatus = "error";
 
       // Emit error event
       this.emitEvent({
-        type: 'error',
-        error: error instanceof Error ? error : new Error('Unknown sync error'),
+        type: "error",
+        error: error instanceof Error ? error : new Error("Unknown sync error"),
         result: errorResult,
         timestamp: Date.now(),
       });
 
-      console.error('[SyncManager] Sync failed:', error);
+      console.error("[SyncManager] Sync failed:", error);
       return errorResult;
     } finally {
       this.isSyncing = false;
@@ -381,19 +394,19 @@ export class SyncManager {
    */
   pause(): void {
     if (!this.isSyncing) {
-      console.warn('[SyncManager] Cannot pause - no sync in progress');
+      console.warn("[SyncManager] Cannot pause - no sync in progress");
       return;
     }
 
     this.isPaused = true;
-    this.currentStatus = 'paused';
+    this.currentStatus = "paused";
 
     this.emitEvent({
-      type: 'pause',
+      type: "pause",
       timestamp: Date.now(),
     });
 
-    console.log('[SyncManager] Sync paused');
+    console.log("[SyncManager] Sync paused");
   }
 
   /**
@@ -401,19 +414,19 @@ export class SyncManager {
    */
   resume(): void {
     if (!this.isPaused) {
-      console.warn('[SyncManager] Sync is not paused');
+      console.warn("[SyncManager] Sync is not paused");
       return;
     }
 
     this.isPaused = false;
-    this.currentStatus = 'syncing';
+    this.currentStatus = "syncing";
 
     this.emitEvent({
-      type: 'resume',
+      type: "resume",
       timestamp: Date.now(),
     });
 
-    console.log('[SyncManager] Sync resumed');
+    console.log("[SyncManager] Sync resumed");
   }
 
   /**
@@ -421,7 +434,7 @@ export class SyncManager {
    */
   clearHistory(): void {
     this.stats.syncHistory = [];
-    console.log('[SyncManager] Sync history cleared');
+    console.log("[SyncManager] Sync history cleared");
   }
 
   /**
@@ -434,7 +447,7 @@ export class SyncManager {
       averageDuration: 0,
       syncHistory: [],
     };
-    console.log('[SyncManager] Statistics reset');
+    console.log("[SyncManager] Statistics reset");
   }
 
   // ============================================================================
@@ -477,7 +490,7 @@ export class SyncManager {
       try {
         listener(event);
       } catch (error) {
-        console.error('[SyncManager] Event listener error:', error);
+        console.error("[SyncManager] Event listener error:", error);
       }
     });
   }
@@ -511,7 +524,7 @@ export class SyncManager {
     // Calculate average duration
     const totalDuration = this.stats.syncHistory.reduce(
       (sum, entry) => sum + entry.duration,
-      0
+      0,
     );
     this.stats.averageDuration = totalDuration / this.stats.syncHistory.length;
   }
@@ -531,7 +544,10 @@ export class SyncManager {
 
     // Remove SW message listener
     if (this.swMessageHandler) {
-      navigator.serviceWorker.removeEventListener('message', this.swMessageHandler);
+      navigator.serviceWorker.removeEventListener(
+        "message",
+        this.swMessageHandler,
+      );
       this.swMessageHandler = null;
     }
 
@@ -542,9 +558,9 @@ export class SyncManager {
     this.isInitialized = false;
     this.isSyncing = false;
     this.isPaused = false;
-    this.currentStatus = 'idle';
+    this.currentStatus = "idle";
 
-    console.log('[SyncManager] Destroyed');
+    console.log("[SyncManager] Destroyed");
   }
 
   /**

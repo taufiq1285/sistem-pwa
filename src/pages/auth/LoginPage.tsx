@@ -3,11 +3,17 @@
  * Page for user authentication
  */
 
-import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '@/lib/hooks/useAuth';
-import { LoginForm } from '@/components/forms/LoginForm';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useEffect } from 'react';
+import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "@/lib/hooks/useAuth";
+import { LoginForm } from "@/components/forms/LoginForm";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { useEffect } from "react";
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -18,20 +24,20 @@ export function LoginPage() {
     if (isAuthenticated && user) {
       // Redirect based on role
       switch (user.role) {
-        case 'admin':
-          navigate('/admin');
+        case "admin":
+          navigate("/admin");
           break;
-        case 'dosen':
-          navigate('/dosen');
+        case "dosen":
+          navigate("/dosen");
           break;
-        case 'mahasiswa':
-          navigate('/mahasiswa');
+        case "mahasiswa":
+          navigate("/mahasiswa");
           break;
-        case 'laboran':
-          navigate('/laboran');
+        case "laboran":
+          navigate("/laboran");
           break;
         default:
-          navigate('/');
+          navigate("/");
       }
     }
   }, [isAuthenticated, user, navigate]);
@@ -53,7 +59,7 @@ export function LoginPage() {
         </CardHeader>
         <CardContent>
           <LoginForm onSuccess={handleSuccess} />
-          
+
           <div className="mt-4 text-center text-sm">
             <span className="text-gray-600">Don't have an account? </span>
             <Link

@@ -10,20 +10,20 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { cn } from '@/lib/utils';
-import type { CrudModalProps, ModalSize } from './CrudModal.types';
+} from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
+import type { CrudModalProps, ModalSize } from "./CrudModal.types";
 
 // ============================================================================
 // CONSTANTS
 // ============================================================================
 
 const MODAL_SIZE_CLASSES: Record<ModalSize, string> = {
-  sm: 'sm:max-w-sm',
-  md: 'sm:max-w-md',
-  lg: 'sm:max-w-lg',
-  xl: 'sm:max-w-xl',
-  full: 'sm:max-w-[95vw]',
+  sm: "sm:max-w-sm",
+  md: "sm:max-w-md",
+  lg: "sm:max-w-lg",
+  xl: "sm:max-w-xl",
+  full: "sm:max-w-[95vw]",
 };
 
 // ============================================================================
@@ -35,7 +35,7 @@ export function CrudModal({
   onOpenChange,
   title,
   description,
-  size = 'md',
+  size = "md",
   children,
   showFooter = true,
   footerContent,
@@ -61,9 +61,7 @@ export function CrudModal({
         {/* Header */}
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
-          {description && (
-            <DialogDescription>{description}</DialogDescription>
-          )}
+          {description && <DialogDescription>{description}</DialogDescription>}
         </DialogHeader>
 
         {/* Content */}

@@ -8,17 +8,17 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { cn } from '@/lib/utils';
-import type { Table } from '@tanstack/react-table';
+} from "@/components/ui/select";
+import { cn } from "@/lib/utils";
+import type { Table } from "@tanstack/react-table";
 
 // ============================================================================
 // TYPES
@@ -50,8 +50,8 @@ export function DataTablePagination<TData>({
   return (
     <div
       className={cn(
-        'flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between px-2',
-        className
+        "flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between px-2",
+        className,
       )}
     >
       {/* Left Section - Row Info */}

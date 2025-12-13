@@ -5,5 +5,5 @@
  * Re-exports from SyncProvider for convenience
  */
 
-export { useSyncContext } from '@/providers/SyncProvider';
-export type { UseSyncReturn } from '@/lib/hooks/useSync';
+export { useSyncContext } from "@/providers/SyncProvider";
+export type { UseSyncReturn } from "@/lib/hooks/useSync";

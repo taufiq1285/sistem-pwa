@@ -17,7 +17,7 @@
 // CONFIGURATION
 // ============================================================================
 
-const CACHE_VERSION = 'v1.0.0';
+const CACHE_VERSION = 'v1.0.2'; // Fixed: Comprehensive Vite module skipping
 const CACHE_PREFIX = 'praktikum-pwa';
 
 // Cache names
@@ -146,63 +146,68 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
+  // ========================================================================
+  // SKIP ALL DEVELOPMENT & SPECIAL REQUESTS (NO CACHING)
+  // ========================================================================
+
   // Skip non-GET requests
   if (request.method !== 'GET') {
     return;
   }
 
-  // Skip Chrome extensions
-  if (url.protocol === 'chrome-extension:') {
+  // Skip Chrome extensions and special protocols
+  if (url.protocol === 'chrome-extension:' ||
+      url.protocol === 'moz-extension:' ||
+      url.protocol === 'ws:' ||
+      url.protocol === 'wss:') {
     return;
   }
 
-  // Skip WebSocket connections (for Vite HMR)
-  if (url.protocol === 'ws:' || url.protocol === 'wss:') {
+  // ⚠️ CRITICAL: Skip ALL Vite development modules
+  // These should NEVER be cached or intercepted
+  const isViteDevModule = (
+    url.pathname.startsWith('/@') ||                    // All Vite virtual modules
+    url.pathname.includes('/@vite') ||                  // Vite client
+    url.pathname.includes('/@fs') ||                    // File system
+    url.pathname.includes('/@id') ||                    // Module IDs
+    url.pathname.includes('/@react-refresh') ||         // React refresh
+    url.pathname.includes('/node_modules/.vite') ||     // Vite deps
+    url.pathname.includes('/node_modules/') ||          // Node modules
+    url.search.includes('?import') ||                   // ES imports
+    url.search.includes('?direct') ||                   // Direct imports
+    url.search.includes('?worker') ||                   // Web workers
+    url.search.includes('?raw') ||                      // Raw imports
+    url.search.includes('?url')                         // URL imports
+  );
+
+  if (isViteDevModule) {
+    // DO NOT intercept - let browser handle natively
     return;
   }
 
-  // Handle Vite HMR and development requests
-  if (url.pathname.includes('/@vite/') ||
-      url.pathname.includes('/@fs/') ||
-      url.pathname.includes('/@id/') ||
-      url.pathname.includes('/@react-refresh') ||
-      url.pathname.startsWith('/@vite/') ||
-      url.pathname.startsWith('/@react-refresh') ||
-      url.search.includes('?import')) {
+  // Skip development source files with timestamp
+  const isDevSourceFile = (
+    url.search.includes('?t=') ||                       // Timestamped files
+    url.search.includes('?v=')                          // Versioned files
+  );
 
-    // Always return empty response to prevent console errors
-    // In development, Vite will handle these when online
-    event.respondWith(
-      fetch(request).catch(() => {
-        // If fetch fails (offline), return empty response
-        return new Response('', {
-          status: 200,
-          headers: { 'Content-Type': 'application/javascript' }
-        });
-      })
-    );
+  if (isDevSourceFile && url.pathname.includes('/src/')) {
     return;
   }
 
-  // Handle main.tsx with timestamp (Vite dev entry point)
-  if (url.pathname.includes('/src/main.tsx') && url.search.includes('?t=')) {
-    event.respondWith(
-      fetch(request).catch(() => {
-        // If offline, return empty response to prevent error
-        return new Response('', {
-          status: 200,
-          headers: { 'Content-Type': 'application/javascript' }
-        });
-      })
-    );
-    return;
-  }
-
-  // Skip favicon.ico (browser auto-requests it but we use favicon.png)
+  // Skip favicon.ico (we use favicon.png)
   if (url.pathname === '/favicon.ico') {
-    // Don't intercept - let it fail naturally
     return;
   }
+
+  // Skip localhost API calls in development
+  if (url.hostname === 'localhost' && url.port !== '' && url.port !== '5173') {
+    return;
+  }
+
+  // ========================================================================
+  // ROUTE TO CACHING STRATEGIES (PRODUCTION ASSETS ONLY)
+  // ========================================================================
 
   // Route to appropriate caching strategy
   if (isApiRequest(url)) {
@@ -261,92 +266,107 @@ async function cacheFirstStrategy(request, cacheName) {
 }
 
 /**
- * Network First Strategy
- * - Try network first, then cache
+ * Network First Strategy with Timeout
+ * - Try network first (with 5s timeout), then cache
  * - Good for: API calls, dynamic data
+ * - Prevents hanging on slow connections
  */
 async function networkFirstStrategy(request, cacheName) {
+  // Create abort controller for timeout
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
   try {
-    // Try network first
-    const networkResponse = await fetch(request);
+    // Try network first with timeout
+    const networkResponse = await fetch(request, {
+      signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
 
     // Cache successful responses
     if (networkResponse && networkResponse.status === 200) {
       const cache = await caches.open(cacheName);
       cache.put(request, networkResponse.clone());
-      // Suppress logging for API responses
     }
 
     return networkResponse;
   } catch (error) {
-    // Network failed - try cache (suppress logging)
+    clearTimeout(timeoutId);
 
-    // Network failed - try cache
+    // Check if it's a timeout/abort error
+    const isTimeout = error.name === 'AbortError';
+    if (isTimeout) {
+      console.log('[SW] Network timeout, falling back to cache:', request.url);
+    }
+
+    // Network failed or timeout - try cache
     const cachedResponse = await caches.match(request);
     if (cachedResponse) {
-      // Suppress logging - return silently
+      console.log('[SW] Serving from cache (network ' + (isTimeout ? 'timeout' : 'failed') + ')');
       return cachedResponse;
     }
 
-    // Both failed - suppress error logging
+    // Both failed
+    console.warn('[SW] No cache available for:', request.url);
     return handleOfflineFallback(request);
   }
 }
 
 /**
- * Stale While Revalidate Strategy
+ * Stale While Revalidate Strategy with Timeout
  * - Return cached response immediately, update cache in background
  * - Good for: pages, CSS, JS that change occasionally
+ * - Has timeout to prevent hanging on slow connections
  */
 async function staleWhileRevalidateStrategy(request, cacheName) {
   const cachedResponse = await caches.match(request);
+  const url = new URL(request.url);
 
-  // Fetch and update cache in background (silently fail if offline)
-  const fetchPromise = fetch(request)
+  // Fetch and update cache in background with timeout
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+  const fetchPromise = fetch(request, {
+    signal: controller.signal
+  })
     .then((networkResponse) => {
+      clearTimeout(timeoutId);
+
       if (networkResponse && networkResponse.status === 200) {
         // Clone BEFORE using the response to avoid "body already used" error
         const responseToCache = networkResponse.clone();
         caches.open(cacheName).then((cache) => {
           cache.put(request, responseToCache);
-          // Suppress logging for development files and pages
-          const url = new URL(request.url);
-          if (!url.pathname.includes('/node_modules/') &&
-              !url.search.includes('?t=') &&
-              !url.pathname.includes('/dashboard') &&
-              !url.pathname.includes('/dosen/') &&
-              !url.pathname.includes('/mahasiswa/') &&
-              !url.pathname.includes('/laboran/') &&
-              !url.pathname.includes('/admin/') &&
-              url.pathname !== '/manifest.json' &&
-              url.pathname !== '/') {
-            console.log('[SW] Background cache update:', request.url);
-          }
         });
       }
       return networkResponse;
     })
     .catch((error) => {
-      // Silently fail background updates when offline - don't log anything
+      clearTimeout(timeoutId);
+
+      // Silently fail for:
+      // 1. Vite HMR/dev files
+      // 2. Module imports
+      // 3. Timeout errors when we have cache
+      const isDevFile = url.pathname.startsWith('/@') ||
+                       url.pathname.includes('/node_modules/') ||
+                       url.search.includes('?t=') ||
+                       url.search.includes('?import');
+
+      const isTimeout = error.name === 'AbortError';
+
+      // Only log real errors for non-dev files
+      if (!isDevFile && !isTimeout && !cachedResponse) {
+        console.warn('[SW] Background fetch failed:', request.url, error.message);
+      }
+
       throw error;
     });
 
   // Return cached response immediately, or wait for network
   if (cachedResponse) {
-    // Suppress logging for common files and pages
-    const url = new URL(request.url);
-    if (!url.pathname.includes('/node_modules/') &&
-        !url.search.includes('?t=') &&
-        !url.pathname.includes('/dashboard') &&
-        !url.pathname.includes('/dosen/') &&
-        !url.pathname.includes('/mahasiswa/') &&
-        !url.pathname.includes('/laboran/') &&
-        !url.pathname.includes('/admin/') &&
-        url.pathname !== '/manifest.json' &&
-        url.pathname !== '/') {
-      console.log('[SW] Serving from cache (stale):', request.url);
-    }
-    // Don't wait for background update, just return cached version
+    // Return cached version immediately, update happens in background
     return cachedResponse;
   }
 
@@ -354,7 +374,15 @@ async function staleWhileRevalidateStrategy(request, cacheName) {
   try {
     return await fetchPromise;
   } catch (error) {
-    console.error('[SW] Stale While Revalidate failed (no cache):', request.url);
+    // Only show error for important files (not dev/HMR files)
+    const isDevFile = url.pathname.startsWith('/@') ||
+                     url.pathname.includes('/node_modules/') ||
+                     url.search.includes('?t=');
+
+    if (!isDevFile) {
+      console.warn('[SW] Stale While Revalidate failed (no cache):', request.url);
+    }
+
     return handleOfflineFallback(request);
   }
 }

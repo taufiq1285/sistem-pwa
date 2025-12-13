@@ -3,13 +3,13 @@
  * Comprehensive tests for notification/toast functionality
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
-import { useNotification } from '@/lib/hooks/useNotification';
-import { toast } from 'sonner';
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { renderHook, act } from "@testing-library/react";
+import { useNotification } from "@/lib/hooks/useNotification";
+import { toast } from "sonner";
 
 // Mock Sonner toast
-vi.mock('sonner', () => ({
+vi.mock("sonner", () => ({
   toast: {
     success: vi.fn(),
     error: vi.fn(),
@@ -19,187 +19,187 @@ vi.mock('sonner', () => ({
   },
 }));
 
-describe('useNotification', () => {
+describe("useNotification", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  describe('success', () => {
-    it('should call toast.success with message only', () => {
+  describe("success", () => {
+    it("should call toast.success with message only", () => {
       const { result } = renderHook(() => useNotification());
 
       act(() => {
-        result.current.success('Operation successful');
+        result.current.success("Operation successful");
       });
 
-      expect(toast.success).toHaveBeenCalledWith('Operation successful', {
+      expect(toast.success).toHaveBeenCalledWith("Operation successful", {
         description: undefined,
         duration: 5000,
       });
     });
 
-    it('should call toast.success with title and message', () => {
+    it("should call toast.success with title and message", () => {
       const { result } = renderHook(() => useNotification());
 
       act(() => {
-        result.current.success('User saved successfully', 'Success');
+        result.current.success("User saved successfully", "Success");
       });
 
-      expect(toast.success).toHaveBeenCalledWith('Success', {
-        description: 'User saved successfully',
+      expect(toast.success).toHaveBeenCalledWith("Success", {
+        description: "User saved successfully",
         duration: 5000,
       });
     });
 
-    it('should accept custom duration', () => {
+    it("should accept custom duration", () => {
       const { result } = renderHook(() => useNotification());
 
       act(() => {
-        result.current.success('Quick message', undefined, 2000);
+        result.current.success("Quick message", undefined, 2000);
       });
 
-      expect(toast.success).toHaveBeenCalledWith('Quick message', {
+      expect(toast.success).toHaveBeenCalledWith("Quick message", {
         description: undefined,
         duration: 2000,
       });
     });
   });
 
-  describe('error', () => {
-    it('should call toast.error with message only', () => {
+  describe("error", () => {
+    it("should call toast.error with message only", () => {
       const { result } = renderHook(() => useNotification());
 
       act(() => {
-        result.current.error('Operation failed');
+        result.current.error("Operation failed");
       });
 
-      expect(toast.error).toHaveBeenCalledWith('Operation failed', {
+      expect(toast.error).toHaveBeenCalledWith("Operation failed", {
         description: undefined,
         duration: 5000,
       });
     });
 
-    it('should call toast.error with title and message', () => {
+    it("should call toast.error with title and message", () => {
       const { result } = renderHook(() => useNotification());
 
       act(() => {
-        result.current.error('Failed to save user', 'Error');
+        result.current.error("Failed to save user", "Error");
       });
 
-      expect(toast.error).toHaveBeenCalledWith('Error', {
-        description: 'Failed to save user',
+      expect(toast.error).toHaveBeenCalledWith("Error", {
+        description: "Failed to save user",
         duration: 5000,
       });
     });
 
-    it('should accept custom duration', () => {
+    it("should accept custom duration", () => {
       const { result } = renderHook(() => useNotification());
 
       act(() => {
-        result.current.error('Critical error', 'Error', 10000);
+        result.current.error("Critical error", "Error", 10000);
       });
 
-      expect(toast.error).toHaveBeenCalledWith('Error', {
-        description: 'Critical error',
+      expect(toast.error).toHaveBeenCalledWith("Error", {
+        description: "Critical error",
         duration: 10000,
       });
     });
   });
 
-  describe('warning', () => {
-    it('should call toast.warning with message only', () => {
+  describe("warning", () => {
+    it("should call toast.warning with message only", () => {
       const { result } = renderHook(() => useNotification());
 
       act(() => {
-        result.current.warning('Please be careful');
+        result.current.warning("Please be careful");
       });
 
-      expect(toast.warning).toHaveBeenCalledWith('Please be careful', {
+      expect(toast.warning).toHaveBeenCalledWith("Please be careful", {
         description: undefined,
         duration: 5000,
       });
     });
 
-    it('should call toast.warning with title and message', () => {
+    it("should call toast.warning with title and message", () => {
       const { result } = renderHook(() => useNotification());
 
       act(() => {
-        result.current.warning('This action cannot be undone', 'Warning');
+        result.current.warning("This action cannot be undone", "Warning");
       });
 
-      expect(toast.warning).toHaveBeenCalledWith('Warning', {
-        description: 'This action cannot be undone',
+      expect(toast.warning).toHaveBeenCalledWith("Warning", {
+        description: "This action cannot be undone",
         duration: 5000,
       });
     });
 
-    it('should accept custom duration', () => {
+    it("should accept custom duration", () => {
       const { result } = renderHook(() => useNotification());
 
       act(() => {
-        result.current.warning('Important warning', undefined, 7000);
+        result.current.warning("Important warning", undefined, 7000);
       });
 
-      expect(toast.warning).toHaveBeenCalledWith('Important warning', {
+      expect(toast.warning).toHaveBeenCalledWith("Important warning", {
         description: undefined,
         duration: 7000,
       });
     });
   });
 
-  describe('info', () => {
-    it('should call toast.info with message only', () => {
+  describe("info", () => {
+    it("should call toast.info with message only", () => {
       const { result } = renderHook(() => useNotification());
 
       act(() => {
-        result.current.info('Here is some information');
+        result.current.info("Here is some information");
       });
 
-      expect(toast.info).toHaveBeenCalledWith('Here is some information', {
+      expect(toast.info).toHaveBeenCalledWith("Here is some information", {
         description: undefined,
         duration: 5000,
       });
     });
 
-    it('should call toast.info with title and message', () => {
+    it("should call toast.info with title and message", () => {
       const { result } = renderHook(() => useNotification());
 
       act(() => {
-        result.current.info('New features available', 'Info');
+        result.current.info("New features available", "Info");
       });
 
-      expect(toast.info).toHaveBeenCalledWith('Info', {
-        description: 'New features available',
+      expect(toast.info).toHaveBeenCalledWith("Info", {
+        description: "New features available",
         duration: 5000,
       });
     });
 
-    it('should accept custom duration', () => {
+    it("should accept custom duration", () => {
       const { result } = renderHook(() => useNotification());
 
       act(() => {
-        result.current.info('Quick tip', undefined, 3000);
+        result.current.info("Quick tip", undefined, 3000);
       });
 
-      expect(toast.info).toHaveBeenCalledWith('Quick tip', {
+      expect(toast.info).toHaveBeenCalledWith("Quick tip", {
         description: undefined,
         duration: 3000,
       });
     });
   });
 
-  describe('dismiss', () => {
-    it('should dismiss specific toast by id', () => {
+  describe("dismiss", () => {
+    it("should dismiss specific toast by id", () => {
       const { result } = renderHook(() => useNotification());
 
       act(() => {
-        result.current.dismiss('toast-123');
+        result.current.dismiss("toast-123");
       });
 
-      expect(toast.dismiss).toHaveBeenCalledWith('toast-123');
+      expect(toast.dismiss).toHaveBeenCalledWith("toast-123");
     });
 
-    it('should dismiss specific toast by numeric id', () => {
+    it("should dismiss specific toast by numeric id", () => {
       const { result } = renderHook(() => useNotification());
 
       act(() => {
@@ -209,7 +209,7 @@ describe('useNotification', () => {
       expect(toast.dismiss).toHaveBeenCalledWith(123);
     });
 
-    it('should dismiss all toasts when no id provided', () => {
+    it("should dismiss all toasts when no id provided", () => {
       const { result } = renderHook(() => useNotification());
 
       act(() => {
@@ -220,8 +220,8 @@ describe('useNotification', () => {
     });
   });
 
-  describe('clear', () => {
-    it('should clear all toasts', () => {
+  describe("clear", () => {
+    it("should clear all toasts", () => {
       const { result } = renderHook(() => useNotification());
 
       act(() => {
@@ -232,8 +232,8 @@ describe('useNotification', () => {
     });
   });
 
-  describe('memoization', () => {
-    it('should return same methods reference on re-render', () => {
+  describe("memoization", () => {
+    it("should return same methods reference on re-render", () => {
       const { result, rerender } = renderHook(() => useNotification());
 
       const firstResult = result.current;
@@ -251,23 +251,23 @@ describe('useNotification', () => {
     });
   });
 
-  describe('edge cases', () => {
-    it('should handle empty string message', () => {
+  describe("edge cases", () => {
+    it("should handle empty string message", () => {
       const { result } = renderHook(() => useNotification());
 
       act(() => {
-        result.current.success('');
+        result.current.success("");
       });
 
-      expect(toast.success).toHaveBeenCalledWith('', {
+      expect(toast.success).toHaveBeenCalledWith("", {
         description: undefined,
         duration: 5000,
       });
     });
 
-    it('should handle very long messages', () => {
+    it("should handle very long messages", () => {
       const { result } = renderHook(() => useNotification());
-      const longMessage = 'a'.repeat(1000);
+      const longMessage = "a".repeat(1000);
 
       act(() => {
         result.current.error(longMessage);
@@ -279,7 +279,7 @@ describe('useNotification', () => {
       });
     });
 
-    it('should handle special characters in message', () => {
+    it("should handle special characters in message", () => {
       const { result } = renderHook(() => useNotification());
       const specialMessage = '<script>alert("xss")</script>';
 
@@ -293,80 +293,87 @@ describe('useNotification', () => {
       });
     });
 
-    it('should handle zero duration', () => {
+    it("should handle zero duration", () => {
       const { result } = renderHook(() => useNotification());
 
       act(() => {
-        result.current.info('Message', undefined, 0);
+        result.current.info("Message", undefined, 0);
       });
 
-      expect(toast.info).toHaveBeenCalledWith('Message', {
+      expect(toast.info).toHaveBeenCalledWith("Message", {
         description: undefined,
         duration: 0,
       });
     });
 
-    it('should handle negative duration', () => {
+    it("should handle negative duration", () => {
       const { result } = renderHook(() => useNotification());
 
       act(() => {
-        result.current.success('Message', undefined, -1000);
+        result.current.success("Message", undefined, -1000);
       });
 
-      expect(toast.success).toHaveBeenCalledWith('Message', {
+      expect(toast.success).toHaveBeenCalledWith("Message", {
         description: undefined,
         duration: -1000,
       });
     });
   });
 
-  describe('real-world scenarios', () => {
-    it('should handle form submission success', () => {
+  describe("real-world scenarios", () => {
+    it("should handle form submission success", () => {
       const { result } = renderHook(() => useNotification());
 
       act(() => {
-        result.current.success('Form submitted successfully', 'Success', 3000);
+        result.current.success("Form submitted successfully", "Success", 3000);
       });
 
-      expect(toast.success).toHaveBeenCalledWith('Success', {
-        description: 'Form submitted successfully',
+      expect(toast.success).toHaveBeenCalledWith("Success", {
+        description: "Form submitted successfully",
         duration: 3000,
       });
     });
 
-    it('should handle API error', () => {
+    it("should handle API error", () => {
       const { result } = renderHook(() => useNotification());
 
       act(() => {
-        result.current.error('Failed to connect to server', 'Connection Error', 5000);
+        result.current.error(
+          "Failed to connect to server",
+          "Connection Error",
+          5000,
+        );
       });
 
-      expect(toast.error).toHaveBeenCalledWith('Connection Error', {
-        description: 'Failed to connect to server',
+      expect(toast.error).toHaveBeenCalledWith("Connection Error", {
+        description: "Failed to connect to server",
         duration: 5000,
       });
     });
 
-    it('should handle validation warning', () => {
+    it("should handle validation warning", () => {
       const { result } = renderHook(() => useNotification());
 
       act(() => {
-        result.current.warning('Please fill all required fields', 'Validation Warning');
+        result.current.warning(
+          "Please fill all required fields",
+          "Validation Warning",
+        );
       });
 
-      expect(toast.warning).toHaveBeenCalledWith('Validation Warning', {
-        description: 'Please fill all required fields',
+      expect(toast.warning).toHaveBeenCalledWith("Validation Warning", {
+        description: "Please fill all required fields",
         duration: 5000,
       });
     });
 
-    it('should handle multiple sequential notifications', () => {
+    it("should handle multiple sequential notifications", () => {
       const { result } = renderHook(() => useNotification());
 
       act(() => {
-        result.current.info('Loading data...');
-        result.current.success('Data loaded');
-        result.current.warning('Some items failed to load');
+        result.current.info("Loading data...");
+        result.current.success("Data loaded");
+        result.current.warning("Some items failed to load");
       });
 
       expect(toast.info).toHaveBeenCalledTimes(1);
@@ -374,17 +381,17 @@ describe('useNotification', () => {
       expect(toast.warning).toHaveBeenCalledTimes(1);
     });
 
-    it('should dismiss specific notification after showing new one', () => {
+    it("should dismiss specific notification after showing new one", () => {
       const { result } = renderHook(() => useNotification());
 
       act(() => {
-        result.current.info('Loading...');
-        result.current.dismiss('loading-toast');
-        result.current.success('Done!');
+        result.current.info("Loading...");
+        result.current.dismiss("loading-toast");
+        result.current.success("Done!");
       });
 
       expect(toast.info).toHaveBeenCalled();
-      expect(toast.dismiss).toHaveBeenCalledWith('loading-toast');
+      expect(toast.dismiss).toHaveBeenCalledWith("loading-toast");
       expect(toast.success).toHaveBeenCalled();
     });
   });

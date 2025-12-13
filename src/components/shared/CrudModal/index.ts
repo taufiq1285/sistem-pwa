@@ -7,10 +7,10 @@
 // COMPONENTS
 // ============================================================================
 
-export { CrudModal } from './CrudModal';
-export { CreateModal } from './CreateModal';
-export { EditModal } from './EditModal';
-export { DeleteDialog } from './DeleteDialog';
+export { CrudModal } from "./CrudModal";
+export { CreateModal } from "./CreateModal";
+export { EditModal } from "./EditModal";
+export { DeleteDialog } from "./DeleteDialog";
 
 // ============================================================================
 // TYPES
@@ -33,16 +33,16 @@ export type {
   ModalAnimation,
   CrudResult,
   CrudHandlers,
-} from './CrudModal.types';
+} from "./CrudModal.types";
 
 // ============================================================================
 // CONSTANTS
 // ============================================================================
 
-export { MODAL_SIZE_CLASSES } from './CrudModal.types';
+export { MODAL_SIZE_CLASSES } from "./CrudModal.types";
 
 // ============================================================================
 // DEFAULT EXPORT
 // ============================================================================
 
-export { CrudModal as default } from './CrudModal';
+export { CrudModal as default } from "./CrudModal";

@@ -7,13 +7,13 @@
  * - Auto-initializes network detector
  */
 
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback, useMemo } from "react";
 import {
   networkDetector,
   type NetworkStatus,
   type NetworkQuality,
   type NetworkChangeEvent,
-} from '../offline/network-detector';
+} from "../offline/network-detector";
 
 // ============================================================================
 // TYPES
@@ -64,7 +64,7 @@ export function useNetworkStatus(): UseNetworkStatusReturn {
   // ============================================================================
 
   const [status, setStatus] = useState<NetworkStatus>(() =>
-    networkDetector.getStatus()
+    networkDetector.getStatus(),
   );
   const [quality, setQuality] = useState<NetworkQuality | undefined>();
   const [lastChanged, setLastChanged] = useState<number>(Date.now());
@@ -112,9 +112,9 @@ export function useNetworkStatus(): UseNetworkStatusReturn {
   // DERIVED STATE
   // ============================================================================
 
-  const isOnline = useMemo(() => status === 'online', [status]);
-  const isOffline = useMemo(() => status === 'offline', [status]);
-  const isUnstable = useMemo(() => status === 'unstable', [status]);
+  const isOnline = useMemo(() => status === "online", [status]);
+  const isOffline = useMemo(() => status === "offline", [status]);
+  const isUnstable = useMemo(() => status === "unstable", [status]);
 
   // ============================================================================
   // RETURN

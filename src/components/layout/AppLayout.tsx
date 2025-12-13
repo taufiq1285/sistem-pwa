@@ -1,16 +1,19 @@
 /**
  * AppLayout Component
  * Main application layout with header, sidebar, and content area
+ * ✅ Includes Session Timeout & Multi-Tab Sync for shared device protection
  */
 
-import { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '@/lib/hooks/useAuth';  // ✅ UNCOMMENT
-import { useRole } from '@/lib/hooks/useRole';   // ✅ UNCOMMENT
-import { Header } from './Header';
-import { Sidebar } from './Sidebar';
-import { MobileNav } from './MobileNav';
-import { cn } from '@/lib/utils';
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from "@/lib/hooks/useAuth"; // ✅ UNCOMMENT
+import { useRole } from "@/lib/hooks/useRole"; // ✅ UNCOMMENT
+import { useSessionTimeout } from "@/lib/hooks/useSessionTimeout"; // ✅ NEW
+import { useMultiTabSync } from "@/lib/hooks/useMultiTabSync"; // ✅ NEW
+import { Header } from "./Header";
+import { Sidebar } from "./Sidebar";
+import { MobileNav } from "./MobileNav";
+import { cn } from "@/lib/utils";
 
 // ============================================================================
 // TYPES
@@ -33,6 +36,15 @@ export function AppLayout({ children, className }: AppLayoutProps) {
   const { user, logout } = useAuth();
   const { role } = useRole();
 
+  // ✅ NEW: Session timeout (auto logout after 15 min inactivity)
+  useSessionTimeout({
+    timeoutMinutes: 15,
+    warningMinutes: 2,
+    enableWarningDialog: true,
+  });
+
+  // ✅ NEW: Multi-tab sync (auto logout if different user logs in another tab)
+  useMultiTabSync();
 
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
@@ -44,10 +56,10 @@ export function AppLayout({ children, className }: AppLayoutProps) {
   // Handle logout
   const handleLogout = async () => {
     try {
-      await logout();  // ✅ USE REAL LOGOUT (remove comment)
-      navigate('/login');
+      await logout(); // ✅ USE REAL LOGOUT (remove comment)
+      navigate("/login");
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error("Logout error:", error);
     }
   };
 
@@ -65,12 +77,15 @@ export function AppLayout({ children, className }: AppLayoutProps) {
     }
   };
 
-  // Handle notification click
+  // Handle notification click (only for admin, others use dropdown)
   const handleNotificationClick = () => {
-    if (role) {
-      navigate(`/${role}/notifikasi`);
+    if (role && role === "admin") {
+      navigate(`/${role}/pengumuman`);
     }
   };
+
+  // Show notification dropdown for dosen, mahasiswa, laboran (not admin)
+  const showNotificationDropdown = role !== "admin";
 
   // If no user, don't render layout
   if (!user || !role) {
@@ -106,7 +121,8 @@ export function AppLayout({ children, className }: AppLayoutProps) {
           userName={user.full_name}
           userEmail={user.email}
           userRole={role}
-          notificationCount={0} // TODO: Get from notifications API
+          notificationCount={0}
+          showNotificationDropdown={showNotificationDropdown}
           onMenuClick={() => setMobileNavOpen(true)}
           onNotificationClick={handleNotificationClick}
           onProfileClick={handleProfileClick}
@@ -115,7 +131,7 @@ export function AppLayout({ children, className }: AppLayoutProps) {
         />
 
         {/* Page Content */}
-        <main className={cn('flex-1 overflow-auto bg-gray-50', className)}>
+        <main className={cn("flex-1 overflow-auto bg-gray-50", className)}>
           {children}
         </main>
       </div>

@@ -7,12 +7,12 @@
  * Format date to Indonesian format
  */
 export function formatDate(date?: Date | string | null): string {
-  if (!date) return '';
+  if (!date) return "";
 
-  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  const dateObj = typeof date === "string" ? new Date(date) : date;
 
-  const day = dateObj.getDate().toString().padStart(2, '0');
-  const month = dateObj.toLocaleString('id-ID', { month: 'short' });
+  const day = dateObj.getDate().toString().padStart(2, "0");
+  const month = dateObj.toLocaleString("id-ID", { month: "short" });
   const year = dateObj.getFullYear();
 
   return `${day} ${month} ${year}`;
@@ -22,12 +22,12 @@ export function formatDate(date?: Date | string | null): string {
  * Format time to HH:MM format
  */
 export function formatTime(date?: Date | string | null): string {
-  if (!date) return '';
+  if (!date) return "";
 
-  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  const dateObj = typeof date === "string" ? new Date(date) : date;
 
-  const hours = dateObj.getHours().toString().padStart(2, '0');
-  const minutes = dateObj.getMinutes().toString().padStart(2, '0');
+  const hours = dateObj.getHours().toString().padStart(2, "0");
+  const minutes = dateObj.getMinutes().toString().padStart(2, "0");
 
   return `${hours}:${minutes}`;
 }
@@ -36,18 +36,21 @@ export function formatTime(date?: Date | string | null): string {
  * Format date and time
  */
 export function formatDateTime(date?: Date | string | null): string {
-  if (!date) return '';
+  if (!date) return "";
   return `${formatDate(date)} ${formatTime(date)}`;
 }
 
 /**
  * Format currency to IDR
  */
-export function formatCurrency(amount?: number | null, currency = 'IDR'): string {
-  if (amount === null || amount === undefined) return 'Rp 0';
+export function formatCurrency(
+  amount?: number | null,
+  currency = "IDR",
+): string {
+  if (amount === null || amount === undefined) return "Rp 0";
 
-  return new Intl.NumberFormat('id-ID', {
-    style: 'currency',
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
     currency: currency,
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
@@ -58,15 +61,15 @@ export function formatCurrency(amount?: number | null, currency = 'IDR'): string
  * Format number with thousand separators
  */
 export function formatNumber(num?: number | null): string {
-  if (num === null || num === undefined) return '0';
-  return new Intl.NumberFormat('id-ID').format(num);
+  if (num === null || num === undefined) return "0";
+  return new Intl.NumberFormat("id-ID").format(num);
 }
 
 /**
  * Format percentage
  */
 export function formatPercentage(value?: number | null): string {
-  if (value === null || value === undefined) return '0%';
+  if (value === null || value === undefined) return "0%";
   return `${Math.round(value * 100) / 100}%`;
 }
 
@@ -74,20 +77,20 @@ export function formatPercentage(value?: number | null): string {
  * Format file size in bytes to human readable
  */
 export function formatFileSize(bytes?: number | null): string {
-  if (bytes === null || bytes === undefined || bytes === 0) return '0 Bytes';
+  if (bytes === null || bytes === undefined || bytes === 0) return "0 Bytes";
 
   const k = 1024;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const sizes = ["Bytes", "KB", "MB", "GB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
 
-  return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+  return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
 }
 
 /**
  * Format duration in seconds to human readable
  */
 export function formatDuration(seconds?: number | null): string {
-  if (seconds === null || seconds === undefined) return '0 detik';
+  if (seconds === null || seconds === undefined) return "0 detik";
 
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
@@ -105,16 +108,16 @@ export function formatDuration(seconds?: number | null): string {
  * Format relative time (e.g., "2 hours ago")
  */
 export function formatRelativeTime(date?: Date | string | null): string {
-  if (!date) return '';
+  if (!date) return "";
 
-  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  const dateObj = typeof date === "string" ? new Date(date) : date;
   const now = new Date();
   const diffMs = now.getTime() - dateObj.getTime();
   const diffMins = Math.floor(diffMs / 60000);
   const diffHours = Math.floor(diffMs / 3600000);
   const diffDays = Math.floor(diffMs / 86400000);
 
-  if (diffMins < 1) return 'Baru saja';
+  if (diffMins < 1) return "Baru saja";
   if (diffMins < 60) return `${diffMins} menit yang lalu`;
   if (diffHours < 24) return `${diffHours} jam yang lalu`;
   if (diffDays < 7) return `${diffDays} hari yang lalu`;
@@ -126,15 +129,15 @@ export function formatRelativeTime(date?: Date | string | null): string {
  * Format phone number to Indonesian format
  */
 export function formatPhoneNumber(phone?: string | null): string {
-  if (!phone) return '';
+  if (!phone) return "";
 
   // Remove all non-numeric characters
-  const cleaned = phone.replace(/\D/g, '');
+  const cleaned = phone.replace(/\D/g, "");
 
   // Format based on length
   if (cleaned.length === 11 || cleaned.length === 12) {
     // Format: 0812-3456-7890
-    return cleaned.replace(/(\d{4})(\d{4})(\d+)/, '$1-$2-$3');
+    return cleaned.replace(/(\d{4})(\d{4})(\d+)/, "$1-$2-$3");
   }
 
   return phone;

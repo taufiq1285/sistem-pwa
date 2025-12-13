@@ -11,14 +11,14 @@
  * Thrown when user lacks required permission
  */
 export class PermissionError extends Error {
-  public readonly code: string = 'PERMISSION_DENIED';
+  public readonly code: string = "PERMISSION_DENIED";
   public readonly statusCode: number = 403;
   public readonly permission?: string;
   public readonly userRole?: string;
 
   constructor(message: string, permission?: string, userRole?: string) {
     super(message);
-    this.name = 'PermissionError';
+    this.name = "PermissionError";
     this.permission = permission;
     this.userRole = userRole;
 
@@ -32,7 +32,7 @@ export class PermissionError extends Error {
    * Get user-friendly error message
    */
   toUserMessage(): string {
-    return 'Anda tidak memiliki izin untuk melakukan aksi ini';
+    return "Anda tidak memiliki izin untuk melakukan aksi ini";
   }
 
   /**
@@ -48,14 +48,14 @@ export class PermissionError extends Error {
  * Thrown when user tries to access/modify resource they don't own
  */
 export class OwnershipError extends Error {
-  public readonly code: string = 'OWNERSHIP_REQUIRED';
+  public readonly code: string = "OWNERSHIP_REQUIRED";
   public readonly statusCode: number = 403;
   public readonly resourceType?: string;
   public readonly resourceId?: string;
 
   constructor(message: string, resourceType?: string, resourceId?: string) {
     super(message);
-    this.name = 'OwnershipError';
+    this.name = "OwnershipError";
     this.resourceType = resourceType;
     this.resourceId = resourceId;
 
@@ -65,7 +65,7 @@ export class OwnershipError extends Error {
   }
 
   toUserMessage(): string {
-    return 'Anda hanya dapat mengakses resource milik Anda sendiri';
+    return "Anda hanya dapat mengakses resource milik Anda sendiri";
   }
 
   toLogMessage(): string {
@@ -78,12 +78,12 @@ export class OwnershipError extends Error {
  * Thrown when user is not authenticated
  */
 export class AuthenticationError extends Error {
-  public readonly code: string = 'AUTHENTICATION_REQUIRED';
+  public readonly code: string = "AUTHENTICATION_REQUIRED";
   public readonly statusCode: number = 401;
 
-  constructor(message: string = 'Authentication required') {
+  constructor(message: string = "Authentication required") {
     super(message);
-    this.name = 'AuthenticationError';
+    this.name = "AuthenticationError";
 
     if ((Error as any).captureStackTrace) {
       (Error as any).captureStackTrace(this, AuthenticationError);
@@ -91,7 +91,7 @@ export class AuthenticationError extends Error {
   }
 
   toUserMessage(): string {
-    return 'Silakan login terlebih dahulu';
+    return "Silakan login terlebih dahulu";
   }
 }
 
@@ -100,13 +100,13 @@ export class AuthenticationError extends Error {
  * Thrown when user role cannot be determined
  */
 export class RoleNotFoundError extends Error {
-  public readonly code: string = 'ROLE_NOT_FOUND';
+  public readonly code: string = "ROLE_NOT_FOUND";
   public readonly statusCode: number = 500;
   public readonly userId?: string;
 
   constructor(message: string, userId?: string) {
     super(message);
-    this.name = 'RoleNotFoundError';
+    this.name = "RoleNotFoundError";
     this.userId = userId;
 
     if ((Error as any).captureStackTrace) {
@@ -115,7 +115,7 @@ export class RoleNotFoundError extends Error {
   }
 
   toUserMessage(): string {
-    return 'Terjadi kesalahan sistem. Silakan hubungi administrator';
+    return "Terjadi kesalahan sistem. Silakan hubungi administrator";
   }
 }
 
@@ -130,7 +130,9 @@ export function isOwnershipError(error: unknown): error is OwnershipError {
   return error instanceof OwnershipError;
 }
 
-export function isAuthenticationError(error: unknown): error is AuthenticationError {
+export function isAuthenticationError(
+  error: unknown,
+): error is AuthenticationError {
   return error instanceof AuthenticationError;
 }
 
@@ -165,5 +167,5 @@ export function getRBACErrorMessage(error: unknown): string {
   if (error instanceof Error) {
     return error.message;
   }
-  return 'Terjadi kesalahan yang tidak diketahui';
+  return "Terjadi kesalahan yang tidak diketahui";
 }

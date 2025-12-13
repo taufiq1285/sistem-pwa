@@ -3,16 +3,19 @@
  * Form for updating user password
  */
 
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useAuth } from '@/lib/hooks/useAuth';
-import { passwordUpdateSchema, type PasswordUpdateFormData } from '@/lib/validations/auth.schema';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Lock, CheckCircle2, AlertCircle } from 'lucide-react';
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useAuth } from "@/lib/hooks/useAuth";
+import {
+  passwordUpdateSchema,
+  type PasswordUpdateFormData,
+} from "@/lib/validations/auth.schema";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Lock, CheckCircle2, AlertCircle } from "lucide-react";
 
 interface PasswordFormProps {
   onSuccess?: () => void;
@@ -40,14 +43,14 @@ export function PasswordForm({ onSuccess, onCancel }: PasswordFormProps) {
 
       await updatePassword(data.password);
 
-      setSuccess('Password updated successfully!');
+      setSuccess("Password updated successfully!");
       reset();
 
       setTimeout(() => {
         onSuccess?.();
       }, 1500);
     } catch (err: unknown) {
-      let errorMessage = 'Failed to update password. Please try again.';
+      let errorMessage = "Failed to update password. Please try again.";
       if (err instanceof Error) {
         errorMessage = err.message;
       }
@@ -84,7 +87,7 @@ export function PasswordForm({ onSuccess, onCancel }: PasswordFormProps) {
           id="password"
           type="password"
           placeholder="Enter new password (min. 6 characters)"
-          {...register('password')}
+          {...register("password")}
           disabled={isSubmitting}
           autoComplete="new-password"
         />
@@ -102,28 +105,26 @@ export function PasswordForm({ onSuccess, onCancel }: PasswordFormProps) {
           id="confirmPassword"
           type="password"
           placeholder="Re-enter new password"
-          {...register('confirmPassword')}
+          {...register("confirmPassword")}
           disabled={isSubmitting}
           autoComplete="new-password"
         />
         {errors.confirmPassword && (
-          <p className="text-sm text-red-500">{errors.confirmPassword.message}</p>
+          <p className="text-sm text-red-500">
+            {errors.confirmPassword.message}
+          </p>
         )}
       </div>
 
       <div className="flex gap-2 pt-2">
-        <Button
-          type="submit"
-          className="flex-1"
-          disabled={isSubmitting}
-        >
+        <Button type="submit" className="flex-1" disabled={isSubmitting}>
           {isSubmitting ? (
             <>
               <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
               Updating...
             </>
           ) : (
-            'Update Password'
+            "Update Password"
           )}
         </Button>
 

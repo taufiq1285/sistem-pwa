@@ -15,8 +15,7 @@
  * - Color-coded badges and utilization percentages
  */
 
-import { useState, useEffect } from 'react';
-import AppLayout from '@/components/layout/AppLayout';
+import { useState, useEffect } from "react";
 import {
   BarChart3,
   Package,
@@ -32,11 +31,17 @@ import {
   Award,
   AlertTriangle,
   PackageOpen,
-} from 'lucide-react';
-import { toast } from 'sonner';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+} from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -44,14 +49,9 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '@/components/ui/tabs';
-import { Separator } from '@/components/ui/separator';
+} from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Separator } from "@/components/ui/separator";
 import {
   getBorrowingStats,
   getEquipmentStats,
@@ -65,16 +65,22 @@ import {
   type TopBorrowedItem,
   type LabUtilization,
   type RecentActivity,
-} from '@/lib/api/reports.api';
+} from "@/lib/api/reports.api";
 
 export default function LaporanPage() {
   // State for statistics
-  const [borrowingStats, setBorrowingStats] = useState<BorrowingStats | null>(null);
-  const [equipmentStats, setEquipmentStats] = useState<EquipmentStats | null>(null);
+  const [borrowingStats, setBorrowingStats] = useState<BorrowingStats | null>(
+    null,
+  );
+  const [equipmentStats, setEquipmentStats] = useState<EquipmentStats | null>(
+    null,
+  );
   const [labStats, setLabStats] = useState<LabUsageStats | null>(null);
   const [topBorrowed, setTopBorrowed] = useState<TopBorrowedItem[]>([]);
   const [labUtilization, setLabUtilization] = useState<LabUtilization[]>([]);
-  const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([]);
+  const [recentActivities, setRecentActivities] = useState<RecentActivity[]>(
+    [],
+  );
 
   // Loading states
   const [loadingOverview, setLoadingOverview] = useState(true);
@@ -84,11 +90,10 @@ export default function LaporanPage() {
   const [loadingActivities, setLoadingActivities] = useState(true);
 
   // Active tab
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState("overview");
 
   useEffect(() => {
     loadAllData();
-     
   }, []);
 
   /**
@@ -119,8 +124,8 @@ export default function LaporanPage() {
       setEquipmentStats(equipment);
       setLabStats(labs);
     } catch (error) {
-      console.error('Failed to load overview data:', error);
-      toast.error('Gagal memuat data overview');
+      console.error("Failed to load overview data:", error);
+      toast.error("Gagal memuat data overview");
     } finally {
       setLoadingOverview(false);
     }
@@ -135,8 +140,8 @@ export default function LaporanPage() {
       const data = await getTopBorrowedItems(10);
       setTopBorrowed(data);
     } catch (error) {
-      console.error('Failed to load borrowing data:', error);
-      toast.error('Gagal memuat data peminjaman');
+      console.error("Failed to load borrowing data:", error);
+      toast.error("Gagal memuat data peminjaman");
     } finally {
       setLoadingBorrowing(false);
     }
@@ -151,8 +156,8 @@ export default function LaporanPage() {
       const data = await getEquipmentStats();
       setEquipmentStats(data);
     } catch (error) {
-      console.error('Failed to load equipment data:', error);
-      toast.error('Gagal memuat data inventaris');
+      console.error("Failed to load equipment data:", error);
+      toast.error("Gagal memuat data inventaris");
     } finally {
       setLoadingEquipment(false);
     }
@@ -167,8 +172,8 @@ export default function LaporanPage() {
       const data = await getLabUtilization();
       setLabUtilization(data);
     } catch (error) {
-      console.error('Failed to load labs data:', error);
-      toast.error('Gagal memuat data laboratorium');
+      console.error("Failed to load labs data:", error);
+      toast.error("Gagal memuat data laboratorium");
     } finally {
       setLoadingLabs(false);
     }
@@ -183,8 +188,8 @@ export default function LaporanPage() {
       const data = await getRecentActivities(15);
       setRecentActivities(data);
     } catch (error) {
-      console.error('Failed to load activities data:', error);
-      toast.error('Gagal memuat data aktivitas');
+      console.error("Failed to load activities data:", error);
+      toast.error("Gagal memuat data aktivitas");
     } finally {
       setLoadingActivities(false);
     }
@@ -194,9 +199,9 @@ export default function LaporanPage() {
    * Refresh all data
    */
   const handleRefresh = async () => {
-    toast.info('Memuat ulang data...');
+    toast.info("Memuat ulang data...");
     await loadAllData();
-    toast.success('Data berhasil dimuat ulang');
+    toast.success("Data berhasil dimuat ulang");
   };
 
   /**
@@ -205,15 +210,15 @@ export default function LaporanPage() {
   const exportToCSV = (
     data: unknown[],
     filename: string,
-    columns: { key: string; header: string }[]
+    columns: { key: string; header: string }[],
   ) => {
     if (data.length === 0) {
-      toast.error('Tidak ada data untuk diekspor');
+      toast.error("Tidak ada data untuk diekspor");
       return;
     }
 
     // Create CSV headers
-    const headers = columns.map((col) => col.header).join(',');
+    const headers = columns.map((col) => col.header).join(",");
 
     // Create CSV rows
     const rows = data.map((row) => {
@@ -221,90 +226,87 @@ export default function LaporanPage() {
         .map((col) => {
           const value = (row as Record<string, unknown>)[col.key];
           // Escape commas and quotes
-          if (typeof value === 'string' && (value.includes(',') || value.includes('"'))) {
+          if (
+            typeof value === "string" &&
+            (value.includes(",") || value.includes('"'))
+          ) {
             return `"${value.replace(/"/g, '""')}"`;
           }
           return value;
         })
-        .join(',');
+        .join(",");
     });
 
     // Combine headers and rows
-    const csv = [headers, ...rows].join('\n');
+    const csv = [headers, ...rows].join("\n");
 
     // Create download link
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
 
-    const date = new Date().toISOString().split('T')[0];
-    link.setAttribute('href', url);
-    link.setAttribute('download', `${filename}-${date}.csv`);
-    link.style.visibility = 'hidden';
+    const date = new Date().toISOString().split("T")[0];
+    link.setAttribute("href", url);
+    link.setAttribute("download", `${filename}-${date}.csv`);
+    link.style.visibility = "hidden";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
 
-    toast.success('File CSV berhasil diunduh');
+    toast.success("File CSV berhasil diunduh");
   };
 
   /**
    * Export top borrowed items
    */
   const exportTopBorrowed = () => {
-    exportToCSV(
-      topBorrowed,
-      'top-borrowed-equipment',
-      [
-        { key: 'inventaris_id', header: 'inventaris_id' },
-        { key: 'kode_barang', header: 'kode_barang' },
-        { key: 'nama_barang', header: 'nama_barang' },
-        { key: 'kategori', header: 'kategori' },
-        { key: 'total_borrowed', header: 'total_borrowed' },
-        { key: 'times_borrowed', header: 'times_borrowed' },
-      ]
-    );
+    exportToCSV(topBorrowed, "top-borrowed-equipment", [
+      { key: "inventaris_id", header: "inventaris_id" },
+      { key: "kode_barang", header: "kode_barang" },
+      { key: "nama_barang", header: "nama_barang" },
+      { key: "kategori", header: "kategori" },
+      { key: "total_borrowed", header: "total_borrowed" },
+      { key: "times_borrowed", header: "times_borrowed" },
+    ]);
   };
 
   /**
    * Export lab utilization
    */
   const exportLabUtilization = () => {
-    exportToCSV(
-      labUtilization,
-      'lab-utilization',
-      [
-        { key: 'laboratorium_id', header: 'laboratorium_id' },
-        { key: 'kode_lab', header: 'kode_lab' },
-        { key: 'nama_lab', header: 'nama_lab' },
-        { key: 'total_schedules', header: 'total_schedules' },
-        { key: 'total_hours', header: 'total_hours' },
-        { key: 'utilization_percentage', header: 'utilization_percentage' },
-      ]
-    );
+    exportToCSV(labUtilization, "lab-utilization", [
+      { key: "laboratorium_id", header: "laboratorium_id" },
+      { key: "kode_lab", header: "kode_lab" },
+      { key: "nama_lab", header: "nama_lab" },
+      { key: "total_schedules", header: "total_schedules" },
+      { key: "total_hours", header: "total_hours" },
+      { key: "utilization_percentage", header: "utilization_percentage" },
+    ]);
   };
 
   /**
    * Get utilization badge variant based on percentage
    */
-  const getUtilizationVariant = (percentage: number): 'destructive' | 'default' | 'outline' => {
-    if (percentage > 75) return 'destructive'; // Red: overutilized
-    if (percentage >= 50) return 'default'; // Blue: well-utilized
-    return 'outline'; // Gray: underutilized
+  const getUtilizationVariant = (
+    percentage: number,
+  ): "destructive" | "default" | "outline" => {
+    if (percentage > 75) return "destructive"; // Red: overutilized
+    if (percentage >= 50) return "default"; // Blue: well-utilized
+    return "outline"; // Gray: underutilized
   };
 
   /**
    * Get activity icon based on type
    */
-  const getActivityIcon = (type: RecentActivity['type']) => {
+  const getActivityIcon = (type: RecentActivity["type"]) => {
     switch (type) {
-      case 'borrowing':
+      case "borrowing":
         return <Package className="h-4 w-4" />;
-      case 'return':
+      case "return":
         return <RotateCcw className="h-4 w-4" />;
-      case 'approval':
+      case "approval":
         return <CheckCircle className="h-4 w-4" />;
-      case 'rejection':
+      case "rejection":
         return <XCircle className="h-4 w-4" />;
       default:
         return <Activity className="h-4 w-4" />;
@@ -339,28 +341,24 @@ export default function LaporanPage() {
         </Badge>
       );
     }
-    return (
-      <Badge variant="outline">
-        #{index + 1}
-      </Badge>
-    );
+    return <Badge variant="outline">#{index + 1}</Badge>;
   };
 
   /**
    * Format timestamp to Indonesian locale
    */
   const formatTimestamp = (timestamp: string) => {
-    return new Date(timestamp).toLocaleString('id-ID', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
+    return new Date(timestamp).toLocaleString("id-ID", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
   return (
-    <AppLayout>
+    <div className="p-8">
       <div className="space-y-6">
         {/* Header with Refresh Button */}
         <div className="flex items-center justify-between">
@@ -377,7 +375,11 @@ export default function LaporanPage() {
         </div>
 
         {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <Tabs
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="space-y-6"
+        >
           <TabsList>
             <TabsTrigger value="overview">
               <BarChart3 className="h-4 w-4" />
@@ -411,7 +413,9 @@ export default function LaporanPage() {
               <>
                 {/* Borrowing Statistics Cards */}
                 <div>
-                  <h2 className="text-xl font-semibold mb-4">Statistik Peminjaman</h2>
+                  <h2 className="text-xl font-semibold mb-4">
+                    Statistik Peminjaman
+                  </h2>
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                     <Card>
                       <CardHeader>
@@ -421,7 +425,9 @@ export default function LaporanPage() {
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <p className="text-sm text-muted-foreground">Semua waktu</p>
+                        <p className="text-sm text-muted-foreground">
+                          Semua waktu
+                        </p>
                       </CardContent>
                     </Card>
 
@@ -470,7 +476,9 @@ export default function LaporanPage() {
 
                 {/* Equipment Status Card */}
                 <div>
-                  <h2 className="text-xl font-semibold mb-4">Status Inventaris</h2>
+                  <h2 className="text-xl font-semibold mb-4">
+                    Status Inventaris
+                  </h2>
                   <Card>
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
@@ -484,12 +492,18 @@ export default function LaporanPage() {
                     <CardContent>
                       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                         <div className="space-y-2">
-                          <p className="text-sm font-medium text-muted-foreground">Total Item</p>
-                          <p className="text-2xl font-bold">{equipmentStats?.total_items || 0}</p>
+                          <p className="text-sm font-medium text-muted-foreground">
+                            Total Item
+                          </p>
+                          <p className="text-2xl font-bold">
+                            {equipmentStats?.total_items || 0}
+                          </p>
                         </div>
 
                         <div className="space-y-2">
-                          <p className="text-sm font-medium text-muted-foreground">Tersedia</p>
+                          <p className="text-sm font-medium text-muted-foreground">
+                            Tersedia
+                          </p>
                           <p className="text-2xl font-bold text-green-600">
                             {equipmentStats?.available || 0}
                           </p>
@@ -512,7 +526,9 @@ export default function LaporanPage() {
                           <p className="text-2xl font-bold text-red-600">
                             {equipmentStats?.low_stock || 0}
                           </p>
-                          <p className="text-xs text-muted-foreground">{"< 5 item"}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {"< 5 item"}
+                          </p>
                         </div>
 
                         <div className="space-y-2">
@@ -523,11 +539,15 @@ export default function LaporanPage() {
                           <p className="text-2xl font-bold text-red-600">
                             {equipmentStats?.out_of_stock || 0}
                           </p>
-                          <p className="text-xs text-muted-foreground">Stok 0</p>
+                          <p className="text-xs text-muted-foreground">
+                            Stok 0
+                          </p>
                         </div>
 
                         <div className="space-y-2">
-                          <p className="text-sm font-medium text-muted-foreground">Kategori</p>
+                          <p className="text-sm font-medium text-muted-foreground">
+                            Kategori
+                          </p>
                           <p className="text-2xl font-bold">
                             {equipmentStats?.total_categories || 0}
                           </p>
@@ -541,7 +561,9 @@ export default function LaporanPage() {
 
                 {/* Laboratory Usage Card */}
                 <div>
-                  <h2 className="text-xl font-semibold mb-4">Penggunaan Laboratorium</h2>
+                  <h2 className="text-xl font-semibold mb-4">
+                    Penggunaan Laboratorium
+                  </h2>
                   <Card>
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
@@ -558,7 +580,9 @@ export default function LaporanPage() {
                           <p className="text-sm font-medium text-muted-foreground">
                             Total Laboratorium
                           </p>
-                          <p className="text-2xl font-bold">{labStats?.total_labs || 0}</p>
+                          <p className="text-2xl font-bold">
+                            {labStats?.total_labs || 0}
+                          </p>
                         </div>
 
                         <div className="space-y-2">
@@ -592,8 +616,12 @@ export default function LaporanPage() {
                           <p className="text-sm font-medium text-muted-foreground">
                             Total Kapasitas
                           </p>
-                          <p className="text-2xl font-bold">{labStats?.total_capacity || 0}</p>
-                          <p className="text-xs text-muted-foreground">Mahasiswa</p>
+                          <p className="text-2xl font-bold">
+                            {labStats?.total_capacity || 0}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Mahasiswa
+                          </p>
                         </div>
                       </div>
                     </CardContent>
@@ -607,7 +635,9 @@ export default function LaporanPage() {
           <TabsContent value="borrowing" className="space-y-6">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-xl font-semibold">Peralatan Paling Sering Dipinjam</h2>
+                <h2 className="text-xl font-semibold">
+                  Peralatan Paling Sering Dipinjam
+                </h2>
                 <p className="text-sm text-muted-foreground mt-1">
                   Top 10 peralatan berdasarkan frekuensi peminjaman
                 </p>
@@ -630,7 +660,9 @@ export default function LaporanPage() {
               <Card>
                 <CardContent className="flex flex-col items-center justify-center py-12">
                   <TrendingUp className="h-12 w-12 text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground">Belum ada data peminjaman</p>
+                  <p className="text-muted-foreground">
+                    Belum ada data peminjaman
+                  </p>
                 </CardContent>
               </Card>
             ) : (
@@ -643,7 +675,9 @@ export default function LaporanPage() {
                       <TableHead>Nama Barang</TableHead>
                       <TableHead>Kategori</TableHead>
                       <TableHead className="text-right">Frekuensi</TableHead>
-                      <TableHead className="text-right">Total Dipinjam</TableHead>
+                      <TableHead className="text-right">
+                        Total Dipinjam
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -653,7 +687,9 @@ export default function LaporanPage() {
                         <TableCell className="font-mono text-sm">
                           {item.kode_barang}
                         </TableCell>
-                        <TableCell className="font-medium">{item.nama_barang}</TableCell>
+                        <TableCell className="font-medium">
+                          {item.nama_barang}
+                        </TableCell>
                         <TableCell>
                           <Badge variant="outline">{item.kategori}</Badge>
                         </TableCell>
@@ -674,7 +710,9 @@ export default function LaporanPage() {
           {/* Tab 3: Equipment */}
           <TabsContent value="equipment" className="space-y-6">
             <div>
-              <h2 className="text-xl font-semibold mb-4">Overview Inventaris</h2>
+              <h2 className="text-xl font-semibold mb-4">
+                Overview Inventaris
+              </h2>
               <p className="text-sm text-muted-foreground mb-4">
                 Ringkasan kondisi dan status inventaris peralatan
               </p>
@@ -697,7 +735,7 @@ export default function LaporanPage() {
                     <p className="text-sm text-muted-foreground">
                       <span className="font-semibold text-green-600">
                         {equipmentStats?.available || 0}
-                      </span>{' '}
+                      </span>{" "}
                       tersedia
                     </p>
                   </CardContent>
@@ -726,7 +764,9 @@ export default function LaporanPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-sm text-muted-foreground">Jenis peralatan</p>
+                    <p className="text-sm text-muted-foreground">
+                      Jenis peralatan
+                    </p>
                   </CardContent>
                 </Card>
               </div>
@@ -737,7 +777,9 @@ export default function LaporanPage() {
           <TabsContent value="labs" className="space-y-6">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-xl font-semibold">Utilisasi Laboratorium</h2>
+                <h2 className="text-xl font-semibold">
+                  Utilisasi Laboratorium
+                </h2>
                 <p className="text-sm text-muted-foreground mt-1">
                   Analisis penggunaan dan jadwal per laboratorium
                 </p>
@@ -760,7 +802,9 @@ export default function LaporanPage() {
               <Card>
                 <CardContent className="flex flex-col items-center justify-center py-12">
                   <Building2 className="h-12 w-12 text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground">Belum ada data laboratorium</p>
+                  <p className="text-muted-foreground">
+                    Belum ada data laboratorium
+                  </p>
                 </CardContent>
               </Card>
             ) : (
@@ -778,12 +822,24 @@ export default function LaporanPage() {
                   <TableBody>
                     {labUtilization.map((lab) => (
                       <TableRow key={lab.laboratorium_id}>
-                        <TableCell className="font-mono text-sm">{lab.kode_lab}</TableCell>
-                        <TableCell className="font-medium">{lab.nama_lab}</TableCell>
-                        <TableCell className="text-right">{lab.total_schedules}</TableCell>
-                        <TableCell className="text-right">{lab.total_hours} jam</TableCell>
+                        <TableCell className="font-mono text-sm">
+                          {lab.kode_lab}
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          {lab.nama_lab}
+                        </TableCell>
                         <TableCell className="text-right">
-                          <Badge variant={getUtilizationVariant(lab.utilization_percentage)}>
+                          {lab.total_schedules}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {lab.total_hours} jam
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Badge
+                            variant={getUtilizationVariant(
+                              lab.utilization_percentage,
+                            )}
+                          >
                             {lab.utilization_percentage.toFixed(1)}%
                           </Badge>
                         </TableCell>
@@ -841,19 +897,21 @@ export default function LaporanPage() {
                     >
                       <div
                         className={`p-2 rounded-full ${
-                          activity.type === 'borrowing'
-                            ? 'bg-blue-100 text-blue-600'
-                            : activity.type === 'return'
-                            ? 'bg-green-100 text-green-600'
-                            : activity.type === 'approval'
-                            ? 'bg-emerald-100 text-emerald-600'
-                            : 'bg-red-100 text-red-600'
+                          activity.type === "borrowing"
+                            ? "bg-blue-100 text-blue-600"
+                            : activity.type === "return"
+                              ? "bg-green-100 text-green-600"
+                              : activity.type === "approval"
+                                ? "bg-emerald-100 text-emerald-600"
+                                : "bg-red-100 text-red-600"
                         }`}
                       >
                         {getActivityIcon(activity.type)}
                       </div>
                       <div className="flex-1 space-y-1">
-                        <p className="text-sm font-medium">{activity.description}</p>
+                        <p className="text-sm font-medium">
+                          {activity.description}
+                        </p>
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
                           <span>{activity.user_name}</span>
                           <span>•</span>
@@ -862,22 +920,22 @@ export default function LaporanPage() {
                       </div>
                       <Badge
                         variant={
-                          activity.type === 'borrowing'
-                            ? 'default'
-                            : activity.type === 'return'
-                            ? 'outline'
-                            : activity.type === 'approval'
-                            ? 'default'
-                            : 'destructive'
+                          activity.type === "borrowing"
+                            ? "default"
+                            : activity.type === "return"
+                              ? "outline"
+                              : activity.type === "approval"
+                                ? "default"
+                                : "destructive"
                         }
                       >
-                        {activity.type === 'borrowing'
-                          ? 'Pinjam'
-                          : activity.type === 'return'
-                          ? 'Kembali'
-                          : activity.type === 'approval'
-                          ? 'Disetujui'
-                          : 'Ditolak'}
+                        {activity.type === "borrowing"
+                          ? "Pinjam"
+                          : activity.type === "return"
+                            ? "Kembali"
+                            : activity.type === "approval"
+                              ? "Disetujui"
+                              : "Ditolak"}
                       </Badge>
                     </div>
                   ))}
@@ -887,6 +945,6 @@ export default function LaporanPage() {
           </TabsContent>
         </Tabs>
       </div>
-    </AppLayout>
+    </div>
   );
 }

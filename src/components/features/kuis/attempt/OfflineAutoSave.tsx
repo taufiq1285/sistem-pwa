@@ -11,12 +11,18 @@
  * - Optimistic updates with rollback on error
  */
 
-import { useEffect, useRef } from 'react';
-import { CheckCircle2, Cloud, CloudOff, Loader2, AlertCircle } from 'lucide-react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useAutoSave } from '@/lib/hooks/useAutoSave';
-import { useNetworkStatus } from '@/lib/hooks/useNetworkStatus';
-import { useSyncContext } from '@/providers/SyncProvider';
+import { useEffect, useRef } from "react";
+import {
+  CheckCircle2,
+  Cloud,
+  CloudOff,
+  Loader2,
+  AlertCircle,
+} from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useAutoSave } from "@/lib/hooks/useAutoSave";
+import { useNetworkStatus } from "@/lib/hooks/useNetworkStatus";
+import { useSyncContext } from "@/providers/SyncProvider";
 
 // ============================================================================
 // TYPES
@@ -91,12 +97,7 @@ export function OfflineAutoSave({
   const { addToQueue } = useSyncContext();
 
   // Use useAutoSave hook for auto-saving logic
-  const {
-    save,
-    status,
-    error,
-    lastSaved,
-  } = useAutoSave(data, {
+  const { save, status, error, lastSaved } = useAutoSave(data, {
     onSave: async (saveData) => {
       if (isOnline) {
         // Online: Save directly to API
@@ -104,15 +105,15 @@ export function OfflineAutoSave({
       } else {
         // Offline: Add to sync queue
         await addToQueue(
-          'kuis_jawaban',  // entity
-          'create',         // operation
+          "kuis_jawaban", // entity
+          "create", // operation
           {
             ...saveData,
             _metadata: {
               key: saveKey,
               timestamp: new Date().toISOString(),
             },
-          }
+          },
         );
       }
     },
@@ -147,7 +148,7 @@ export function OfflineAutoSave({
   // RENDER - SAVING
   // ============================================================================
 
-  if (status === 'saving') {
+  if (status === "saving") {
     return (
       <Alert className={className}>
         <Loader2 className="h-4 w-4 animate-spin" />
@@ -172,13 +173,11 @@ export function OfflineAutoSave({
   // RENDER - ERROR
   // ============================================================================
 
-  if (status === 'error' && error) {
+  if (status === "error" && error) {
     return (
       <Alert variant="destructive" className={className}>
         <AlertCircle className="h-4 w-4" />
-        <AlertDescription>
-          Gagal menyimpan: {error.message}
-        </AlertDescription>
+        <AlertDescription>Gagal menyimpan: {error.message}</AlertDescription>
       </Alert>
     );
   }
@@ -187,7 +186,7 @@ export function OfflineAutoSave({
   // RENDER - SAVED
   // ============================================================================
 
-  if (status === 'saved' && lastSaved) {
+  if (status === "saved" && lastSaved) {
     const timeAgo = getTimeAgo(new Date(lastSaved));
 
     return (
@@ -226,7 +225,7 @@ export function OfflineAutoSave({
 function getTimeAgo(date: Date): string {
   const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
 
-  if (seconds < 10) return 'baru saja';
+  if (seconds < 10) return "baru saja";
   if (seconds < 60) return `${seconds} detik yang lalu`;
 
   const minutes = Math.floor(seconds / 60);

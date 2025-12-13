@@ -3,7 +3,7 @@
  * Simple layout for authentication pages (login, register, etc.)
  */
 
-import { cn } from '@/lib/utils';
+import { cn } from "@/lib/utils";
 
 // ============================================================================
 // TYPES
@@ -20,7 +20,12 @@ interface AuthLayoutProps {
 
 export function AuthLayout({ children, className }: AuthLayoutProps) {
   return (
-    <div className={cn('min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900', className)}>
+    <div
+      className={cn(
+        "min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900",
+        className,
+      )}
+    >
       {/* Header/Branding */}
       <div className="absolute top-0 left-0 right-0 p-6">
         <div className="flex items-center justify-center">
@@ -37,9 +42,7 @@ export function AuthLayout({ children, className }: AuthLayoutProps) {
 
       {/* Content */}
       <div className="flex min-h-screen items-center justify-center px-4 py-12 sm:px-6 lg:px-8">
-        <div className="w-full max-w-md">
-          {children}
-        </div>
+        <div className="w-full max-w-md">{children}</div>
       </div>
 
       {/* Footer */}

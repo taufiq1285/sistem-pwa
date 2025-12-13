@@ -6,29 +6,34 @@
  * Dependencies: zod
  */
 
-import { z } from 'zod';
+import { z } from "zod";
 
 /**
  * Sync Operation Schema
  */
-export const SyncOperationSchema = z.enum(['create', 'update', 'delete']);
+export const SyncOperationSchema = z.enum(["create", "update", "delete"]);
 
 /**
  * Sync Status Schema
  */
-export const SyncStatusSchema = z.enum(['pending', 'syncing', 'completed', 'failed']);
+export const SyncStatusSchema = z.enum([
+  "pending",
+  "syncing",
+  "completed",
+  "failed",
+]);
 
 /**
  * Sync Entity Schema
  */
 export const SyncEntitySchema = z.enum([
-  'kuis',
-  'kuis_soal',
-  'kuis_jawaban',
-  'nilai',
-  'materi',
-  'kelas',
-  'user',
+  "kuis",
+  "kuis_soal",
+  "kuis_jawaban",
+  "nilai",
+  "materi",
+  "kelas",
+  "user",
 ]);
 
 /**
@@ -76,7 +81,7 @@ export const OfflineKuisSchema = z.object({
   deskripsi: z.string().nullable(),
   kelas_id: z.string(),
   dosen_id: z.string(),
-  tipe_kuis: z.enum(['kuis', 'uts', 'uas']),
+  tipe_kuis: z.enum(["kuis", "uts", "uas"]),
   waktu_mulai: z.string(),
   waktu_selesai: z.string(),
   durasi_menit: z.number().nullable(),
@@ -96,7 +101,7 @@ export const OfflineKuisSoalSchema = z.object({
   id: z.string(),
   kuis_id: z.string(),
   nomor_soal: z.number(),
-  tipe_soal: z.enum(['pilihan_ganda', 'esai', 'isian_singkat']),
+  tipe_soal: z.enum(["pilihan_ganda", "esai", "isian_singkat"]),
   pertanyaan: z.string(),
   poin: z.number(),
   pilihan_jawaban: z.record(z.string(), z.unknown()).nullable(),

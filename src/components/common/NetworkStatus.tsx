@@ -5,11 +5,11 @@
  * Usage: Status bar or settings page
  */
 
-import { Wifi, WifiOff, Activity } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { useNetworkStatus } from '@/lib/hooks/useNetworkStatus';
-import { cn } from '@/lib/utils';
+import { Wifi, WifiOff, Activity } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { useNetworkStatus } from "@/lib/hooks/useNetworkStatus";
+import { cn } from "@/lib/utils";
 
 export interface NetworkStatusProps {
   /** Show quality metrics */
@@ -17,7 +17,7 @@ export interface NetworkStatusProps {
   /** Custom className */
   className?: string;
   /** Variant */
-  variant?: 'inline' | 'card';
+  variant?: "inline" | "card";
 }
 
 /**
@@ -31,35 +31,37 @@ export interface NetworkStatusProps {
 export function NetworkStatus({
   showQuality = true,
   className,
-  variant = 'inline',
+  variant = "inline",
 }: NetworkStatusProps) {
   const { status, isOnline, isOffline, quality } = useNetworkStatus();
 
   const getStatusColor = () => {
-    if (isOffline) return 'text-red-600';
-    if (quality?.downlink && quality.downlink < 1) return 'text-yellow-600';
-    return 'text-green-600';
+    if (isOffline) return "text-red-600";
+    if (quality?.downlink && quality.downlink < 1) return "text-yellow-600";
+    return "text-green-600";
   };
 
   const getStatusBadge = () => {
-    if (isOffline) return 'destructive';
-    if (quality?.downlink && quality.downlink < 1) return 'warning';
-    return 'success';
+    if (isOffline) return "destructive";
+    if (quality?.downlink && quality.downlink < 1) return "warning";
+    return "success";
   };
 
   const content = (
     <div className="flex items-center gap-4">
       <div className="flex items-center gap-2">
         {isOnline ? (
-          <Wifi className={cn('h-5 w-5', getStatusColor())} />
+          <Wifi className={cn("h-5 w-5", getStatusColor())} />
         ) : (
           <WifiOff className="h-5 w-5 text-red-600" />
         )}
         <div>
           <div className="text-sm font-medium">
-            {isOnline ? 'Connected' : 'Disconnected'}
+            {isOnline ? "Connected" : "Disconnected"}
           </div>
-          <div className="text-xs text-muted-foreground capitalize">{status}</div>
+          <div className="text-xs text-muted-foreground capitalize">
+            {status}
+          </div>
         </div>
       </div>
 
@@ -70,10 +72,12 @@ export function NetworkStatus({
             <Activity className="h-4 w-4 text-muted-foreground" />
             <div>
               <div className="text-xs font-medium">
-                {quality.downlink ? `${quality.downlink.toFixed(1)} Mbps` : 'N/A'}
+                {quality.downlink
+                  ? `${quality.downlink.toFixed(1)} Mbps`
+                  : "N/A"}
               </div>
               <div className="text-xs text-muted-foreground">
-                {quality.effectiveType || 'Unknown'}
+                {quality.effectiveType || "Unknown"}
               </div>
             </div>
           </div>
@@ -81,12 +85,12 @@ export function NetworkStatus({
       )}
 
       <Badge variant={getStatusBadge()} className="ml-auto">
-        {isOnline ? 'Online' : 'Offline'}
+        {isOnline ? "Online" : "Offline"}
       </Badge>
     </div>
   );
 
-  if (variant === 'card') {
+  if (variant === "card") {
     return (
       <Card className={className}>
         <CardContent className="pt-6">{content}</CardContent>
@@ -94,5 +98,5 @@ export function NetworkStatus({
     );
   }
 
-  return <div className={cn('flex items-center', className)}>{content}</div>;
+  return <div className={cn("flex items-center", className)}>{content}</div>;
 }

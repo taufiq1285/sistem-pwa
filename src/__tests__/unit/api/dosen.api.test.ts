@@ -124,7 +124,7 @@ const mockQueryBuilder = () => {
     limit: vi.fn().mockReturnThis(),
     single: vi.fn(),
     then: vi.fn((onFulfilled) =>
-      Promise.resolve(resolveValue).then(onFulfilled)
+      Promise.resolve(resolveValue).then(onFulfilled),
     ),
     _setResolveValue: (value: any) => {
       resolveValue = value;
@@ -165,7 +165,7 @@ describe("Dosen API - Dashboard Stats", () => {
           return this;
         }), // Chainable
         then: vi.fn((onFulfilled) =>
-          Promise.resolve({ count: 5, error: null }).then(onFulfilled)
+          Promise.resolve({ count: 5, error: null }).then(onFulfilled),
         ),
       };
 
@@ -188,7 +188,7 @@ describe("Dosen API - Dashboard Stats", () => {
           return this;
         }), // Chainable
         then: vi.fn((onFulfilled) =>
-          Promise.resolve({ count: 8, error: null }).then(onFulfilled)
+          Promise.resolve({ count: 8, error: null }).then(onFulfilled),
         ),
       };
 
@@ -241,7 +241,7 @@ describe("Dosen API - Dashboard Stats", () => {
 
     it("should handle errors gracefully", async () => {
       vi.mocked(supabase.auth.getUser).mockRejectedValue(
-        new Error("Auth error")
+        new Error("Auth error"),
       );
 
       const result = await getDosenStats();
@@ -283,7 +283,7 @@ describe("Dosen API - Dashboard Stats", () => {
 
       expect(localStorageMock.setItem).toHaveBeenCalledWith(
         "cached_dosen_id",
-        "dosen-1"
+        "dosen-1",
       );
     });
   });
@@ -302,36 +302,35 @@ describe("Dosen API - Kelas Management", () => {
 
   describe("getMyKelas", () => {
     it("should return kelas with stats for dosen", async () => {
-      const jadwalBuilder = mockQueryBuilder();
-      jadwalBuilder._setResolveValue({
+      // Mock supabase.from("kelas").select(...).eq(...).eq(...)
+      const kelasBuilder = mockQueryBuilder();
+      kelasBuilder._setResolveValue({
         data: [
           {
-            kelas_id: "kelas-1",
-            kelas: {
-              id: "kelas-1",
-              kode_kelas: "IF-101",
-              nama_kelas: "Kelas A",
-              tahun_ajaran: "2024/2025",
-              semester_ajaran: 1,
-              dosen_id: "dosen-1",
-              mata_kuliah: {
-                kode_mk: "IF101",
-                nama_mk: "Pemrograman Web",
-              },
+            id: "kelas-1",
+            kode_kelas: "IF-101",
+            nama_kelas: "Kelas A",
+            tahun_ajaran: "2024/2025",
+            semester_ajaran: 1,
+            dosen_id: "dosen-1",
+            mata_kuliah: {
+              kode_mk: "IF101",
+              nama_mk: "Pemrograman Web",
             },
           },
         ],
         error: null,
       });
 
+      // Mock supabase.from("kelas_mahasiswa").select(...).eq(...)
       const mahasiswaCountBuilder = {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockResolvedValue({ count: 30, error: null }),
       };
 
       (supabase.from as any)
-        .mockReturnValueOnce(jadwalBuilder)
-        .mockReturnValueOnce(mahasiswaCountBuilder);
+        .mockReturnValueOnce(kelasBuilder) // First call: kelas query
+        .mockReturnValueOnce(mahasiswaCountBuilder); // Second call: kelas_mahasiswa count
 
       const result = await getMyKelas();
 
@@ -349,23 +348,46 @@ describe("Dosen API - Kelas Management", () => {
     });
 
     it("should apply limit when provided", async () => {
-      const jadwalBuilder = mockQueryBuilder();
-      jadwalBuilder._setResolveValue({
+      // Mock kelas query with 3 items
+      const kelasBuilder = mockQueryBuilder();
+      kelasBuilder._setResolveValue({
         data: [
-          { kelas_id: "kelas-1", kelas: { ...mockKelas, id: "kelas-1" } },
-          { kelas_id: "kelas-2", kelas: { ...mockKelas, id: "kelas-2" } },
-          { kelas_id: "kelas-3", kelas: { ...mockKelas, id: "kelas-3" } },
+          {
+            id: "kelas-1",
+            kode_kelas: "IF-101",
+            nama_kelas: "Kelas A",
+            tahun_ajaran: "2024/2025",
+            semester_ajaran: 1,
+            mata_kuliah: { kode_mk: "IF101", nama_mk: "Web" },
+          },
+          {
+            id: "kelas-2",
+            kode_kelas: "IF-102",
+            nama_kelas: "Kelas B",
+            tahun_ajaran: "2024/2025",
+            semester_ajaran: 1,
+            mata_kuliah: { kode_mk: "IF102", nama_mk: "Web2" },
+          },
+          {
+            id: "kelas-3",
+            kode_kelas: "IF-103",
+            nama_kelas: "Kelas C",
+            tahun_ajaran: "2024/2025",
+            semester_ajaran: 1,
+            mata_kuliah: { kode_mk: "IF103", nama_mk: "Web3" },
+          },
         ],
         error: null,
       });
 
+      // Mock all mahasiswa count calls (will be called 3x but limit should apply after)
       const countBuilder = {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockResolvedValue({ count: 10, error: null }),
       };
 
       (supabase.from as any)
-        .mockReturnValueOnce(jadwalBuilder)
+        .mockReturnValueOnce(kelasBuilder)
         .mockReturnValue(countBuilder);
 
       const result = await getMyKelas(2);
@@ -386,28 +408,51 @@ describe("Dosen API - Kelas Management", () => {
     });
 
     it("should handle duplicate kelas correctly", async () => {
-      const jadwalBuilder = mockQueryBuilder();
-      jadwalBuilder._setResolveValue({
+      // Mock kelas query with duplicates
+      const kelasBuilder = mockQueryBuilder();
+      kelasBuilder._setResolveValue({
         data: [
-          { kelas_id: "kelas-1", kelas: { ...mockKelas, id: "kelas-1" } },
-          { kelas_id: "kelas-1", kelas: { ...mockKelas, id: "kelas-1" } }, // Duplicate
-          { kelas_id: "kelas-2", kelas: { ...mockKelas, id: "kelas-2" } },
+          {
+            id: "kelas-1",
+            kode_kelas: "IF-101",
+            nama_kelas: "Kelas A",
+            tahun_ajaran: "2024/2025",
+            semester_ajaran: 1,
+            mata_kuliah: { kode_mk: "IF101", nama_mk: "Web" },
+          },
+          {
+            id: "kelas-1",
+            kode_kelas: "IF-101",
+            nama_kelas: "Kelas A",
+            tahun_ajaran: "2024/2025",
+            semester_ajaran: 1,
+            mata_kuliah: { kode_mk: "IF101", nama_mk: "Web" },
+          }, // Duplicate
+          {
+            id: "kelas-2",
+            kode_kelas: "IF-102",
+            nama_kelas: "Kelas B",
+            tahun_ajaran: "2024/2025",
+            semester_ajaran: 1,
+            mata_kuliah: { kode_mk: "IF102", nama_mk: "Web2" },
+          },
         ],
         error: null,
       });
 
+      // Mock all mahasiswa count calls
       const countBuilder = {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockResolvedValue({ count: 10, error: null }),
       };
 
       (supabase.from as any)
-        .mockReturnValueOnce(jadwalBuilder)
+        .mockReturnValueOnce(kelasBuilder)
         .mockReturnValue(countBuilder);
 
       const result = await getMyKelas();
 
-      // Should only return 2 unique kelas
+      // Should only return 2 unique kelas (duplicates removed)
       expect(result).toHaveLength(2);
     });
   });
@@ -868,7 +913,7 @@ describe("Dosen API - Grading Operations", () => {
           return this;
         }),
         then: vi.fn((onFulfilled) =>
-          Promise.resolve({ count: 1, error: null }).then(onFulfilled)
+          Promise.resolve({ count: 1, error: null }).then(onFulfilled),
         ),
       };
 

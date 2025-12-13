@@ -3,11 +3,16 @@
  * Displays user-friendly error message with recovery options
  */
 
-import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { cn } from '@/lib/utils';
+import { AlertTriangle, RefreshCw, Home } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+} from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { cn } from "@/lib/utils";
 
 // ============================================================================
 // TYPES
@@ -28,13 +33,13 @@ export function ErrorFallback({
   error,
   resetError,
   showDetails = import.meta.env.DEV,
-  className
+  className,
 }: ErrorFallbackProps) {
-  const errorMessage = error?.message || 'Terjadi kesalahan yang tidak terduga';
+  const errorMessage = error?.message || "Terjadi kesalahan yang tidak terduga";
   const errorStack = error?.stack;
 
   const handleGoHome = () => {
-    window.location.href = '/';
+    window.location.href = "/";
   };
 
   const handleReload = () => {
@@ -42,10 +47,12 @@ export function ErrorFallback({
   };
 
   return (
-    <div className={cn(
-      'flex min-h-[400px] w-full items-center justify-center p-4',
-      className
-    )}>
+    <div
+      className={cn(
+        "flex min-h-[400px] w-full items-center justify-center p-4",
+        className,
+      )}
+    >
       <Card className="w-full max-w-lg">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10">
@@ -61,9 +68,7 @@ export function ErrorFallback({
           {/* Error Message */}
           <Alert variant="destructive">
             <AlertTriangle className="h-4 w-4" />
-            <AlertDescription className="ml-2">
-              {errorMessage}
-            </AlertDescription>
+            <AlertDescription className="ml-2">{errorMessage}</AlertDescription>
           </Alert>
 
           {/* Error Details (Development Only) */}
@@ -101,7 +106,7 @@ export function ErrorFallback({
               Coba Lagi
             </Button>
           )}
-          
+
           <Button
             onClick={handleReload}
             variant="outline"
@@ -110,7 +115,7 @@ export function ErrorFallback({
             <RefreshCw className="mr-2 h-4 w-4" />
             Refresh Halaman
           </Button>
-          
+
           <Button
             onClick={handleGoHome}
             variant="outline"

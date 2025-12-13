@@ -1,39 +1,47 @@
 /**
  * KuisListPage
- * 
+ *
  * Purpose: Main quiz list page for Dosen
  * Route: /dosen/kuis
  * Features: View all quizzes, filter, search, create new quiz
  */
 
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Filter, Grid3x3, List, Loader2, AlertCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card } from '@/components/ui/card';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  Plus,
+  Search,
+  Filter,
+  Grid3x3,
+  List,
+  Loader2,
+  AlertCircle,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { QuizCard } from '@/components/features/kuis/QuizCard';
-import { useAuth } from '@/lib/hooks/useAuth';
-import { getKuis } from '@/lib/api/kuis.api';
-import type { Kuis, KuisFilters } from '@/types/kuis.types';
-import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
+} from "@/components/ui/select";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { QuizCard } from "@/components/features/kuis/QuizCard";
+import { useAuth } from "@/lib/hooks/useAuth";
+import { getKuis } from "@/lib/api/kuis.api";
+import type { Kuis, KuisFilters } from "@/types/kuis.types";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 // ============================================================================
 // TYPES
 // ============================================================================
 
-type ViewMode = 'grid' | 'list';
-type StatusFilter = 'all' | 'draft' | 'active' | 'scheduled' | 'ended';
+type ViewMode = "grid" | "list";
+type StatusFilter = "all" | "draft" | "active" | "ended";
 
 // ============================================================================
 // COMPONENT
@@ -42,133 +50,133 @@ type StatusFilter = 'all' | 'draft' | 'active' | 'scheduled' | 'ended';
 export default function KuisListPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  
+
   // State
   const [quizzes, setQuizzes] = useState<Kuis[]>([]);
   const [filteredQuizzes, setFilteredQuizzes] = useState<Kuis[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   // UI State
-  const [viewMode, setViewMode] = useState<ViewMode>('grid');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
-  const [kelasFilter, setKelasFilter] = useState<string>('all');
-  
+  const [viewMode, setViewMode] = useState<ViewMode>("grid");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [kelasFilter, setKelasFilter] = useState<string>("all");
+
   // ============================================================================
   // EFFECTS
   // ============================================================================
-  
+
   /**
    * Load quizzes on mount
    */
   useEffect(() => {
     loadQuizzes();
   }, [user]);
-  
+
   /**
    * Apply filters when data or filters change
    */
   useEffect(() => {
     applyFilters();
   }, [quizzes, searchQuery, statusFilter, kelasFilter]);
-  
+
   // ============================================================================
   // HANDLERS - DATA LOADING
   // ============================================================================
-  
+
   /**
    * Load all quizzes
    */
   const loadQuizzes = async () => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const filters: KuisFilters = {};
-      
+
       // Filter by dosen if user is dosen
       if (user?.dosen?.id) {
         filters.dosen_id = user.dosen.id;
       }
-      
+
       const data = await getKuis(filters);
       setQuizzes(data);
     } catch (err: any) {
-      setError(err.message || 'Gagal memuat daftar kuis');
-      toast.error('Gagal memuat daftar kuis', {
+      setError(err.message || "Gagal memuat daftar kuis");
+      toast.error("Gagal memuat daftar kuis", {
         description: err.message,
       });
     } finally {
       setIsLoading(false);
     }
   };
-  
+
   /**
    * Apply filters to quiz list
    */
   const applyFilters = () => {
     let filtered = [...quizzes];
-    
+
     // Search filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(
         (quiz) =>
           quiz.judul.toLowerCase().includes(query) ||
-          quiz.deskripsi?.toLowerCase().includes(query)
+          quiz.deskripsi?.toLowerCase().includes(query),
       );
     }
-    
+
     // Status filter
-    if (statusFilter !== 'all') {
+    if (statusFilter !== "all") {
       filtered = filtered.filter((quiz) => {
         const status = getQuizStatusFromDates(quiz);
         return status === statusFilter;
       });
     }
-    
+
     // Kelas filter
-    if (kelasFilter !== 'all') {
+    if (kelasFilter !== "all") {
       filtered = filtered.filter((quiz) => quiz.kelas_id === kelasFilter);
     }
-    
+
     setFilteredQuizzes(filtered);
   };
-  
+
   // ============================================================================
   // HANDLERS - NAVIGATION
   // ============================================================================
-  
+
   /**
    * Navigate to create new quiz
    */
   const handleCreateQuiz = () => {
-    navigate('/dosen/kuis/create');
+    navigate("/dosen/kuis/create");
   };
-  
+
   // ============================================================================
   // COMPUTED VALUES
   // ============================================================================
-  
+
   // Get unique kelas for filter
   const kelasOptions = Array.from(
-    new Set(quizzes.map((q) => q.kelas_id))
+    new Set(quizzes.map((q) => q.kelas_id)),
   ).filter(Boolean);
-  
+
   // Count by status
   const statusCounts = {
     all: quizzes.length,
-    draft: quizzes.filter((q) => getQuizStatusFromDates(q) === 'draft').length,
-    active: quizzes.filter((q) => getQuizStatusFromDates(q) === 'active').length,
-    scheduled: quizzes.filter((q) => getQuizStatusFromDates(q) === 'scheduled').length,
-    ended: quizzes.filter((q) => getQuizStatusFromDates(q) === 'ended').length,
+    draft: quizzes.filter((q) => getQuizStatusFromDates(q) === "draft").length,
+    active: quizzes.filter((q) => getQuizStatusFromDates(q) === "active")
+      .length,
+    ended: quizzes.filter((q) => getQuizStatusFromDates(q) === "ended").length,
   };
-  
+
   // ============================================================================
   // RENDER - LOADING
   // ============================================================================
-  
+
   if (isLoading) {
     return (
       <div className="container mx-auto py-6 max-w-7xl">
@@ -181,11 +189,11 @@ export default function KuisListPage() {
       </div>
     );
   }
-  
+
   // ============================================================================
   // RENDER - ERROR
   // ============================================================================
-  
+
   if (error) {
     return (
       <div className="container mx-auto py-6 max-w-7xl">
@@ -199,11 +207,11 @@ export default function KuisListPage() {
       </div>
     );
   }
-  
+
   // ============================================================================
   // RENDER - MAIN
   // ============================================================================
-  
+
   return (
     <div className="container mx-auto py-6 max-w-7xl">
       {/* Header */}
@@ -214,13 +222,13 @@ export default function KuisListPage() {
             Kelola kuis praktikum Anda
           </p>
         </div>
-        
+
         <Button onClick={handleCreateQuiz} size="lg" className="gap-2">
           <Plus className="h-5 w-5" />
           Buat Kuis Baru
         </Button>
       </div>
-      
+
       {/* Filters & Controls */}
       <Card className="p-4 mb-6">
         <div className="flex flex-col lg:flex-row gap-4">
@@ -234,32 +242,30 @@ export default function KuisListPage() {
               className="pl-10"
             />
           </div>
-          
+
           {/* Status Filter */}
-          <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)}>
+          <Select
+            value={statusFilter}
+            onValueChange={(v) => setStatusFilter(v as StatusFilter)}
+          >
             <SelectTrigger className="w-full lg:w-[180px]">
               <Filter className="h-4 w-4 mr-2" />
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">
-                Semua ({statusCounts.all})
-              </SelectItem>
+              <SelectItem value="all">Semua ({statusCounts.all})</SelectItem>
               <SelectItem value="draft">
                 Draft ({statusCounts.draft})
-              </SelectItem>
-              <SelectItem value="scheduled">
-                Terjadwal ({statusCounts.scheduled})
               </SelectItem>
               <SelectItem value="active">
                 Aktif ({statusCounts.active})
               </SelectItem>
               <SelectItem value="ended">
-                Selesai ({statusCounts.ended})
+                Diarsipkan ({statusCounts.ended})
               </SelectItem>
             </SelectContent>
           </Select>
-          
+
           {/* Kelas Filter */}
           {kelasOptions.length > 0 && (
             <Select value={kelasFilter} onValueChange={setKelasFilter}>
@@ -276,9 +282,12 @@ export default function KuisListPage() {
               </SelectContent>
             </Select>
           )}
-          
+
           {/* View Mode Toggle */}
-          <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as ViewMode)}>
+          <Tabs
+            value={viewMode}
+            onValueChange={(v) => setViewMode(v as ViewMode)}
+          >
             <TabsList>
               <TabsTrigger value="grid" className="gap-2">
                 <Grid3x3 className="h-4 w-4" />
@@ -292,7 +301,7 @@ export default function KuisListPage() {
           </Tabs>
         </div>
       </Card>
-      
+
       {/* Quiz List/Grid */}
       {filteredQuizzes.length === 0 ? (
         <Card className="p-12">
@@ -303,25 +312,27 @@ export default function KuisListPage() {
             <div>
               <h3 className="text-lg font-semibold">Tidak ada kuis</h3>
               <p className="text-muted-foreground">
-                {searchQuery || statusFilter !== 'all' || kelasFilter !== 'all'
-                  ? 'Tidak ada kuis yang sesuai dengan filter'
-                  : 'Belum ada kuis yang dibuat'}
+                {searchQuery || statusFilter !== "all" || kelasFilter !== "all"
+                  ? "Tidak ada kuis yang sesuai dengan filter"
+                  : "Belum ada kuis yang dibuat"}
               </p>
             </div>
-            {!searchQuery && statusFilter === 'all' && kelasFilter === 'all' && (
-              <Button onClick={handleCreateQuiz} className="gap-2">
-                <Plus className="h-4 w-4" />
-                Buat Kuis Pertama
-              </Button>
-            )}
+            {!searchQuery &&
+              statusFilter === "all" &&
+              kelasFilter === "all" && (
+                <Button onClick={handleCreateQuiz} className="gap-2">
+                  <Plus className="h-4 w-4" />
+                  Buat Kuis Pertama
+                </Button>
+              )}
           </div>
         </Card>
       ) : (
         <div
           className={cn(
-            viewMode === 'grid'
-              ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'
-              : 'space-y-4'
+            viewMode === "grid"
+              ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+              : "space-y-4",
           )}
         >
           {filteredQuizzes.map((quiz) => (
@@ -330,12 +341,12 @@ export default function KuisListPage() {
               quiz={quiz}
               onUpdate={loadQuizzes}
               onDelete={loadQuizzes}
-              compact={viewMode === 'list'}
+              compact={viewMode === "list"}
             />
           ))}
         </div>
       )}
-      
+
       {/* Results Count */}
       {filteredQuizzes.length > 0 && (
         <div className="mt-6 text-center text-sm text-muted-foreground">
@@ -351,26 +362,22 @@ export default function KuisListPage() {
 // ============================================================================
 
 /**
- * Get quiz status from dates
+ * Get quiz status (simplified - no date validation)
+ * Status based only on publish state:
+ * - draft: Belum dipublish
+ * - active: Sudah dipublish (mahasiswa bisa akses)
  */
 function getQuizStatusFromDates(quiz: Kuis): StatusFilter {
-  const isActive = (quiz as any).is_active ?? (quiz as any).status === 'active';
-  
-  if (!isActive) {
+  const status = quiz.status || 'draft';
+
+  // Map database status to filter status
+  if (status === 'published') {
+    return 'active'; // Published quiz is active
+  } else if (status === 'draft') {
     return 'draft';
+  } else if (status === 'archived') {
+    return 'ended';
   }
-  
-  const now = new Date();
-  const startDate = new Date(quiz.tanggal_mulai);
-  const endDate = new Date(quiz.tanggal_selesai);
-  
-  if (now < startDate) {
-    return 'scheduled';
-  }
-  
-  if (now >= startDate && now <= endDate) {
-    return 'active';
-  }
-  
-  return 'ended';
+
+  return 'draft'; // Default
 }

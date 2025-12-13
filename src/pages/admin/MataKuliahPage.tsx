@@ -3,42 +3,69 @@
  * Manage mata kuliah (courses) for the system
  */
 
-import { useState, useEffect } from 'react';
-import { Plus, Pencil, Trash2, Search } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { DeleteConfirmDialog } from '@/components/common/DeleteConfirmDialog';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
-import { toast } from 'sonner';
-import { getMataKuliah, createMataKuliah, updateMataKuliah, deleteMataKuliah } from '@/lib/api/mata-kuliah.api';
-import type { MataKuliah, CreateMataKuliahData } from '@/types/mata-kuliah.types';
+import { useState, useEffect, useMemo } from "react";
+import { Plus, Pencil, Trash2 } from "lucide-react";
+import type { ColumnDef } from "@tanstack/react-table";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { DeleteConfirmDialog } from "@/components/common/DeleteConfirmDialog";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
+import { DataTable } from "@/components/shared/DataTable";
+import { DataTableColumnHeader } from "@/components/shared/DataTable/DataTableColumnHeader";
+import {
+  getMataKuliah,
+  createMataKuliah,
+  updateMataKuliah,
+  deleteMataKuliah,
+} from "@/lib/api/mata-kuliah.api";
+import type {
+  MataKuliah,
+  CreateMataKuliahData,
+} from "@/types/mata-kuliah.types";
 
 export default function MataKuliahPage() {
   const [mataKuliahList, setMataKuliahList] = useState<MataKuliah[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
 
   const [showDialog, setShowDialog] = useState(false);
   const [editingMK, setEditingMK] = useState<MataKuliah | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
   const [formData, setFormData] = useState<CreateMataKuliahData>({
-    kode_mk: '',
-    nama_mk: '',
+    kode_mk: "",
+    nama_mk: "",
     sks: 3,
     semester: 1,
-    program_studi: 'D3 Kebidanan',
-    deskripsi: '',
+    program_studi: "D3 Kebidanan",
+    deskripsi: "",
   });
 
   // Delete confirmation state
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [deletingMK, setDeletingMK] = useState<MataKuliah | null>(null);
+  const [cascadeInfo, setCascadeInfo] = useState<{ kelasCount: number } | null>(
+    null,
+  );
+  const [showCascadeDialog, setShowCascadeDialog] = useState(false);
 
   // Load mata kuliah
   useEffect(() => {
@@ -51,7 +78,7 @@ export default function MataKuliahPage() {
       const data = await getMataKuliah();
       setMataKuliahList(data);
     } catch (error: any) {
-      toast.error('Gagal memuat mata kuliah', { description: error.message });
+      toast.error("Gagal memuat mata kuliah", { description: error.message });
     } finally {
       setIsLoading(false);
     }
@@ -60,12 +87,12 @@ export default function MataKuliahPage() {
   const handleAdd = () => {
     setEditingMK(null);
     setFormData({
-      kode_mk: '',
-      nama_mk: '',
+      kode_mk: "",
+      nama_mk: "",
       sks: 3,
       semester: 1,
-      program_studi: 'D3 Kebidanan',
-      deskripsi: '',
+      program_studi: "D3 Kebidanan",
+      deskripsi: "",
     });
     setShowDialog(true);
   };
@@ -78,14 +105,14 @@ export default function MataKuliahPage() {
       sks: mk.sks,
       semester: mk.semester,
       program_studi: mk.program_studi,
-      deskripsi: mk.deskripsi || '',
+      deskripsi: mk.deskripsi || "",
     });
     setShowDialog(true);
   };
 
   const handleSave = async () => {
     if (!formData.kode_mk.trim() || !formData.nama_mk.trim()) {
-      toast.error('Kode MK dan Nama MK harus diisi');
+      toast.error("Kode MK dan Nama MK harus diisi");
       return;
     }
 
@@ -93,17 +120,17 @@ export default function MataKuliahPage() {
     try {
       if (editingMK) {
         await updateMataKuliah(editingMK.id, formData);
-        toast.success('Mata kuliah berhasil diperbarui');
+        toast.success("Mata kuliah berhasil diperbarui");
       } else {
         await createMataKuliah(formData);
-        toast.success('Mata kuliah berhasil ditambahkan');
+        toast.success("Mata kuliah berhasil ditambahkan");
       }
 
       await loadMataKuliah();
       setShowDialog(false);
     } catch (error: any) {
-      toast.error(editingMK ? 'Gagal memperbarui' : 'Gagal menambahkan', {
-        description: error.message
+      toast.error(editingMK ? "Gagal memperbarui" : "Gagal menambahkan", {
+        description: error.message,
       });
     } finally {
       setIsSaving(false);
@@ -115,24 +142,129 @@ export default function MataKuliahPage() {
     setIsDeleteDialogOpen(true);
   };
 
-  const confirmDelete = async () => {
+  const confirmDelete = async (cascade: boolean = false) => {
     if (!deletingMK) return;
 
     try {
-      await deleteMataKuliah(deletingMK.id);
-      toast.success('Mata kuliah berhasil dihapus');
+      await deleteMataKuliah(deletingMK.id, { cascade });
+      toast.success(
+        cascade
+          ? "Mata kuliah dan semua kelas terkait berhasil dihapus"
+          : "Mata kuliah berhasil dihapus",
+      );
       setIsDeleteDialogOpen(false);
+      setShowCascadeDialog(false);
       setDeletingMK(null);
+      setCascadeInfo(null);
       await loadMataKuliah();
     } catch (error: any) {
-      toast.error('Gagal menghapus', { description: error.message });
+      // Check if error is about active kelas
+      if (
+        error.message?.includes("Found") &&
+        error.message?.includes("active kelas")
+      ) {
+        // Extract kelas count from error message
+        const match = error.message.match(/Found (\d+) active kelas/);
+        const kelasCount = match ? parseInt(match[1], 10) : 0;
+
+        // Show cascade confirmation dialog
+        setCascadeInfo({ kelasCount });
+        setShowCascadeDialog(true);
+        setIsDeleteDialogOpen(false);
+      } else {
+        toast.error("Gagal menghapus", { description: error.message });
+      }
     }
   };
 
-  // Filter mata kuliah
-  const filteredMK = mataKuliahList.filter(mk =>
-    mk.nama_mk.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    mk.kode_mk.toLowerCase().includes(searchQuery.toLowerCase())
+  const confirmCascadeDelete = async () => {
+    // Call confirmDelete with cascade=true
+    await confirmDelete(true);
+  };
+
+  // ============================================================================
+  // TABLE COLUMNS
+  // ============================================================================
+
+  const columns = useMemo<ColumnDef<MataKuliah>[]>(
+    () => [
+      {
+        accessorKey: "kode_mk",
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title="Kode MK" />
+        ),
+        cell: ({ row }) => (
+          <Badge variant="outline" className="font-mono">
+            {row.getValue("kode_mk")}
+          </Badge>
+        ),
+      },
+      {
+        accessorKey: "nama_mk",
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title="Nama Mata Kuliah" />
+        ),
+        cell: ({ row }) => (
+          <div className="max-w-[300px]">
+            <div className="font-semibold">{row.getValue("nama_mk")}</div>
+            {row.original.deskripsi && (
+              <div className="text-sm text-muted-foreground truncate">
+                {row.original.deskripsi}
+              </div>
+            )}
+          </div>
+        ),
+      },
+      {
+        accessorKey: "program_studi",
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title="Program Studi" />
+        ),
+        cell: ({ row }) => (
+          <div className="text-sm">{row.getValue("program_studi")}</div>
+        ),
+      },
+      {
+        accessorKey: "semester",
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title="Semester" />
+        ),
+        cell: ({ row }) => (
+          <Badge variant="secondary">Semester {row.getValue("semester")}</Badge>
+        ),
+      },
+      {
+        accessorKey: "sks",
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title="SKS" />
+        ),
+        cell: ({ row }) => <Badge>{row.getValue("sks")} SKS</Badge>,
+      },
+      {
+        id: "actions",
+        header: "Aksi",
+        cell: ({ row }) => (
+          <div className="flex gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleEdit(row.original)}
+            >
+              <Pencil className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleDelete(row.original)}
+              className="text-destructive"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+        ),
+      },
+    ],
+    [],
   );
 
   return (
@@ -141,7 +273,9 @@ export default function MataKuliahPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Mata Kuliah</h1>
-          <p className="text-muted-foreground">Kelola mata kuliah untuk sistem</p>
+          <p className="text-muted-foreground">
+            Kelola mata kuliah untuk sistem
+          </p>
         </div>
         <Button onClick={handleAdd}>
           <Plus className="h-4 w-4 mr-2" />
@@ -149,78 +283,20 @@ export default function MataKuliahPage() {
         </Button>
       </div>
 
-      {/* Search */}
+      {/* Data Table */}
       <Card>
         <CardContent className="pt-6">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Cari mata kuliah..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* List */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Daftar Mata Kuliah ({filteredMK.length})</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="text-center py-8 text-muted-foreground">Loading...</div>
-          ) : filteredMK.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              {searchQuery ? 'Tidak ada hasil' : 'Belum ada mata kuliah'}
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {filteredMK.map((mk) => (
-                <Card key={mk.id}>
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <Badge variant="outline">{mk.kode_mk}</Badge>
-                          <Badge variant="secondary">Semester {mk.semester}</Badge>
-                          <Badge>{mk.sks} SKS</Badge>
-                        </div>
-                        <h3 className="font-semibold text-lg">{mk.nama_mk}</h3>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {mk.program_studi}
-                        </p>
-                        {mk.deskripsi && (
-                          <p className="text-sm text-muted-foreground mt-2">
-                            {mk.deskripsi}
-                          </p>
-                        )}
-                      </div>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEdit(mk)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(mk)}
-                          className="text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
+          <DataTable
+            columns={columns}
+            data={mataKuliahList}
+            isLoading={isLoading}
+            searchable
+            searchPlaceholder="Cari mata kuliah..."
+            pageSize={20}
+            pageSizeOptions={[10, 20, 30, 50]}
+            showPagination
+            emptyMessage="Belum ada mata kuliah"
+          />
         </CardContent>
       </Card>
 
@@ -229,11 +305,9 @@ export default function MataKuliahPage() {
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>
-              {editingMK ? 'Edit Mata Kuliah' : 'Tambah Mata Kuliah'}
+              {editingMK ? "Edit Mata Kuliah" : "Tambah Mata Kuliah"}
             </DialogTitle>
-            <DialogDescription>
-              Isi informasi mata kuliah
-            </DialogDescription>
+            <DialogDescription>Isi informasi mata kuliah</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
@@ -243,7 +317,12 @@ export default function MataKuliahPage() {
                 <Input
                   placeholder="MK001"
                   value={formData.kode_mk}
-                  onChange={(e) => setFormData(p => ({ ...p, kode_mk: e.target.value.toUpperCase() }))}
+                  onChange={(e) =>
+                    setFormData((p) => ({
+                      ...p,
+                      kode_mk: e.target.value.toUpperCase(),
+                    }))
+                  }
                 />
                 <p className="text-xs text-muted-foreground">
                   Format: 2-5 huruf + 3 angka (contoh: BID001, KOMBI001)
@@ -254,7 +333,12 @@ export default function MataKuliahPage() {
                 <Label>Program Studi *</Label>
                 <Input
                   value={formData.program_studi}
-                  onChange={(e) => setFormData(p => ({ ...p, program_studi: e.target.value }))}
+                  onChange={(e) =>
+                    setFormData((p) => ({
+                      ...p,
+                      program_studi: e.target.value,
+                    }))
+                  }
                   placeholder="D3 Kebidanan"
                 />
               </div>
@@ -265,7 +349,9 @@ export default function MataKuliahPage() {
               <Input
                 placeholder="Contoh: Komunikasi Bisnis Digital"
                 value={formData.nama_mk}
-                onChange={(e) => setFormData(p => ({ ...p, nama_mk: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((p) => ({ ...p, nama_mk: e.target.value }))
+                }
               />
             </div>
 
@@ -274,7 +360,9 @@ export default function MataKuliahPage() {
                 <Label>SKS *</Label>
                 <Select
                   value={String(formData.sks)}
-                  onValueChange={(v) => setFormData(p => ({ ...p, sks: parseInt(v) }))}
+                  onValueChange={(v) =>
+                    setFormData((p) => ({ ...p, sks: parseInt(v) }))
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -293,7 +381,9 @@ export default function MataKuliahPage() {
                 <Label>Semester *</Label>
                 <Select
                   value={String(formData.semester)}
-                  onValueChange={(v) => setFormData(p => ({ ...p, semester: parseInt(v) }))}
+                  onValueChange={(v) =>
+                    setFormData((p) => ({ ...p, semester: parseInt(v) }))
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -314,7 +404,9 @@ export default function MataKuliahPage() {
               <Textarea
                 placeholder="Deskripsi mata kuliah (opsional)"
                 value={formData.deskripsi}
-                onChange={(e) => setFormData(p => ({ ...p, deskripsi: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((p) => ({ ...p, deskripsi: e.target.value }))
+                }
                 rows={3}
               />
             </div>
@@ -329,7 +421,7 @@ export default function MataKuliahPage() {
               Batal
             </Button>
             <Button onClick={handleSave} disabled={isSaving}>
-              {isSaving ? 'Menyimpan...' : editingMK ? 'Simpan' : 'Tambah'}
+              {isSaving ? "Menyimpan..." : editingMK ? "Simpan" : "Tambah"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -346,10 +438,10 @@ export default function MataKuliahPage() {
           itemType="Mata Kuliah"
           description={`${deletingMK.kode_mk} | ${deletingMK.sks} SKS | Semester ${deletingMK.semester}`}
           consequences={[
-            'Data mata kuliah akan dihapus permanen',
-            'Kelas yang menggunakan mata kuliah ini akan terpengaruh',
-            'Jadwal praktikum terkait akan terpengaruh',
-            'Data nilai mahasiswa tidak akan terhapus',
+            "Data mata kuliah akan dihapus permanen",
+            "Kelas yang menggunakan mata kuliah ini akan terpengaruh",
+            "Jadwal praktikum terkait akan terpengaruh",
+            "Data nilai mahasiswa tidak akan terhapus",
           ]}
         />
       )}

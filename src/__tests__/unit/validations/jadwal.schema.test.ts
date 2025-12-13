@@ -9,7 +9,7 @@
  * - Time overlap detection
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from "vitest";
 import {
   jadwalSchema,
   createJadwalSchema,
@@ -21,19 +21,19 @@ import {
   calculateDuration,
   parseCreateJadwalForm,
   safeParseCreateJadwal,
-} from '../../../lib/validations/Jadwal.schema ';
+} from "../../../lib/validations/Jadwal.schema ";
 
-describe('Jadwal Schema Validation', () => {
-  describe('jadwalSchema - Valid Cases', () => {
-    it('should accept valid jadwal data', () => {
+describe("Jadwal Schema Validation", () => {
+  describe("jadwalSchema - Valid Cases", () => {
+    it("should accept valid jadwal data", () => {
       const validData = {
-        kelas: 'A',
-        laboratorium_id: '123e4567-e89b-12d3-a456-426614174000',
-        tanggal_praktikum: new Date('2025-12-31'),
-        jam_mulai: '08:00',
-        jam_selesai: '10:00',
-        topik: 'Praktikum ANC: Pemeriksaan Leopold I-IV',
-        catatan: 'Bawa alat peraga',
+        kelas: "A",
+        laboratorium_id: "123e4567-e89b-12d3-a456-426614174000",
+        tanggal_praktikum: new Date("2025-12-31"),
+        jam_mulai: "08:00",
+        jam_selesai: "10:00",
+        topik: "Praktikum ANC: Pemeriksaan Leopold I-IV",
+        catatan: "Bawa alat peraga",
         is_active: true,
       };
 
@@ -41,54 +41,54 @@ describe('Jadwal Schema Validation', () => {
       expect(result.success).toBe(true);
     });
 
-    it('should accept kelas with uppercase letters and numbers', () => {
+    it("should accept kelas with uppercase letters and numbers", () => {
       const data = {
-        kelas: 'A-1',
-        laboratorium_id: '123e4567-e89b-12d3-a456-426614174000',
-        tanggal_praktikum: new Date('2025-12-31'),
-        jam_mulai: '08:00',
-        jam_selesai: '10:00',
+        kelas: "A-1",
+        laboratorium_id: "123e4567-e89b-12d3-a456-426614174000",
+        tanggal_praktikum: new Date("2025-12-31"),
+        jam_mulai: "08:00",
+        jam_selesai: "10:00",
       };
 
       const result = jadwalSchema.safeParse(data);
       expect(result.success).toBe(true);
     });
 
-    it('should accept minimum duration of 30 minutes', () => {
+    it("should accept minimum duration of 30 minutes", () => {
       const data = {
-        kelas: 'A',
-        laboratorium_id: '123e4567-e89b-12d3-a456-426614174000',
-        tanggal_praktikum: new Date('2025-12-31'),
-        jam_mulai: '08:00',
-        jam_selesai: '08:30',
+        kelas: "A",
+        laboratorium_id: "123e4567-e89b-12d3-a456-426614174000",
+        tanggal_praktikum: new Date("2025-12-31"),
+        jam_mulai: "08:00",
+        jam_selesai: "08:30",
       };
 
       const result = jadwalSchema.safeParse(data);
       expect(result.success).toBe(true);
     });
 
-    it('should accept topik with minimum 10 characters', () => {
+    it("should accept topik with minimum 10 characters", () => {
       const data = {
-        kelas: 'A',
-        laboratorium_id: '123e4567-e89b-12d3-a456-426614174000',
-        tanggal_praktikum: new Date('2025-12-31'),
-        jam_mulai: '08:00',
-        jam_selesai: '10:00',
-        topik: '1234567890', // Exactly 10 chars
+        kelas: "A",
+        laboratorium_id: "123e4567-e89b-12d3-a456-426614174000",
+        tanggal_praktikum: new Date("2025-12-31"),
+        jam_mulai: "08:00",
+        jam_selesai: "10:00",
+        topik: "1234567890", // Exactly 10 chars
       };
 
       const result = jadwalSchema.safeParse(data);
       expect(result.success).toBe(true);
     });
 
-    it('should accept empty topik', () => {
+    it("should accept empty topik", () => {
       const data = {
-        kelas: 'A',
-        laboratorium_id: '123e4567-e89b-12d3-a456-426614174000',
-        tanggal_praktikum: new Date('2025-12-31'),
-        jam_mulai: '08:00',
-        jam_selesai: '10:00',
-        topik: '',
+        kelas: "A",
+        laboratorium_id: "123e4567-e89b-12d3-a456-426614174000",
+        tanggal_praktikum: new Date("2025-12-31"),
+        jam_mulai: "08:00",
+        jam_selesai: "10:00",
+        topik: "",
       };
 
       const result = jadwalSchema.safeParse(data);
@@ -96,153 +96,153 @@ describe('Jadwal Schema Validation', () => {
     });
   });
 
-  describe('jadwalSchema - Invalid Cases', () => {
-    it('should reject kelas with lowercase letters', () => {
+  describe("jadwalSchema - Invalid Cases", () => {
+    it("should reject kelas with lowercase letters", () => {
       const data = {
-        kelas: 'a',
-        laboratorium_id: '123e4567-e89b-12d3-a456-426614174000',
-        tanggal_praktikum: new Date('2025-12-31'),
-        jam_mulai: '08:00',
-        jam_selesai: '10:00',
+        kelas: "a",
+        laboratorium_id: "123e4567-e89b-12d3-a456-426614174000",
+        tanggal_praktikum: new Date("2025-12-31"),
+        jam_mulai: "08:00",
+        jam_selesai: "10:00",
       };
 
       const result = jadwalSchema.safeParse(data);
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues[0].message).toContain('huruf kapital');
+        expect(result.error.issues[0].message).toContain("huruf kapital");
       }
     });
 
-    it('should reject kelas longer than 10 characters', () => {
+    it("should reject kelas longer than 10 characters", () => {
       const data = {
-        kelas: 'ABCDEFGHIJK',
-        laboratorium_id: '123e4567-e89b-12d3-a456-426614174000',
-        tanggal_praktikum: new Date('2025-12-31'),
-        jam_mulai: '08:00',
-        jam_selesai: '10:00',
+        kelas: "ABCDEFGHIJK",
+        laboratorium_id: "123e4567-e89b-12d3-a456-426614174000",
+        tanggal_praktikum: new Date("2025-12-31"),
+        jam_mulai: "08:00",
+        jam_selesai: "10:00",
       };
 
       const result = jadwalSchema.safeParse(data);
       expect(result.success).toBe(false);
     });
 
-    it('should reject invalid UUID for laboratorium_id', () => {
+    it("should reject invalid UUID for laboratorium_id", () => {
       const data = {
-        kelas: 'A',
-        laboratorium_id: 'invalid-uuid',
-        tanggal_praktikum: new Date('2025-12-31'),
-        jam_mulai: '08:00',
-        jam_selesai: '10:00',
+        kelas: "A",
+        laboratorium_id: "invalid-uuid",
+        tanggal_praktikum: new Date("2025-12-31"),
+        jam_mulai: "08:00",
+        jam_selesai: "10:00",
       };
 
       const result = jadwalSchema.safeParse(data);
       expect(result.success).toBe(false);
     });
 
-    it('should reject past dates', () => {
-      const pastDate = new Date('2020-01-01');
+    it("should reject past dates", () => {
+      const pastDate = new Date("2020-01-01");
       const data = {
-        kelas: 'A',
-        laboratorium_id: '123e4567-e89b-12d3-a456-426614174000',
+        kelas: "A",
+        laboratorium_id: "123e4567-e89b-12d3-a456-426614174000",
         tanggal_praktikum: pastDate,
-        jam_mulai: '08:00',
-        jam_selesai: '10:00',
+        jam_mulai: "08:00",
+        jam_selesai: "10:00",
       };
 
       const result = jadwalSchema.safeParse(data);
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues[0].message).toContain('masa lalu');
+        expect(result.error.issues[0].message).toContain("masa lalu");
       }
     });
 
-    it('should reject invalid time format', () => {
+    it("should reject invalid time format", () => {
       const data = {
-        kelas: 'A',
-        laboratorium_id: '123e4567-e89b-12d3-a456-426614174000',
-        tanggal_praktikum: new Date('2025-12-31'),
-        jam_mulai: '25:00', // Invalid hour
-        jam_selesai: '10:00',
+        kelas: "A",
+        laboratorium_id: "123e4567-e89b-12d3-a456-426614174000",
+        tanggal_praktikum: new Date("2025-12-31"),
+        jam_mulai: "25:00", // Invalid hour
+        jam_selesai: "10:00",
       };
 
       const result = jadwalSchema.safeParse(data);
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues[0].message).toContain('HH:MM');
+        expect(result.error.issues[0].message).toContain("HH:MM");
       }
     });
 
-    it('should reject when jam_selesai <= jam_mulai', () => {
+    it("should reject when jam_selesai <= jam_mulai", () => {
       const data = {
-        kelas: 'A',
-        laboratorium_id: '123e4567-e89b-12d3-a456-426614174000',
-        tanggal_praktikum: new Date('2025-12-31'),
-        jam_mulai: '10:00',
-        jam_selesai: '08:00',
+        kelas: "A",
+        laboratorium_id: "123e4567-e89b-12d3-a456-426614174000",
+        tanggal_praktikum: new Date("2025-12-31"),
+        jam_mulai: "10:00",
+        jam_selesai: "08:00",
       };
 
       const result = jadwalSchema.safeParse(data);
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues[0].message).toContain('lebih besar');
+        expect(result.error.issues[0].message).toContain("lebih besar");
       }
     });
 
-    it('should reject duration less than 30 minutes', () => {
+    it("should reject duration less than 30 minutes", () => {
       const data = {
-        kelas: 'A',
-        laboratorium_id: '123e4567-e89b-12d3-a456-426614174000',
-        tanggal_praktikum: new Date('2025-12-31'),
-        jam_mulai: '08:00',
-        jam_selesai: '08:29', // Only 29 minutes
+        kelas: "A",
+        laboratorium_id: "123e4567-e89b-12d3-a456-426614174000",
+        tanggal_praktikum: new Date("2025-12-31"),
+        jam_mulai: "08:00",
+        jam_selesai: "08:29", // Only 29 minutes
       };
 
       const result = jadwalSchema.safeParse(data);
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues[0].message).toContain('minimal 30 menit');
+        expect(result.error.issues[0].message).toContain("minimal 30 menit");
       }
     });
 
-    it('should reject topik less than 10 characters when provided', () => {
+    it("should reject topik less than 10 characters when provided", () => {
       const data = {
-        kelas: 'A',
-        laboratorium_id: '123e4567-e89b-12d3-a456-426614174000',
-        tanggal_praktikum: new Date('2025-12-31'),
-        jam_mulai: '08:00',
-        jam_selesai: '10:00',
-        topik: 'Short', // Only 5 chars
+        kelas: "A",
+        laboratorium_id: "123e4567-e89b-12d3-a456-426614174000",
+        tanggal_praktikum: new Date("2025-12-31"),
+        jam_mulai: "08:00",
+        jam_selesai: "10:00",
+        topik: "Short", // Only 5 chars
       };
 
       const result = jadwalSchema.safeParse(data);
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues[0].message).toContain('minimal 10 karakter');
+        expect(result.error.issues[0].message).toContain("minimal 10 karakter");
       }
     });
 
-    it('should reject topik longer than 200 characters', () => {
+    it("should reject topik longer than 200 characters", () => {
       const data = {
-        kelas: 'A',
-        laboratorium_id: '123e4567-e89b-12d3-a456-426614174000',
-        tanggal_praktikum: new Date('2025-12-31'),
-        jam_mulai: '08:00',
-        jam_selesai: '10:00',
-        topik: 'A'.repeat(201),
+        kelas: "A",
+        laboratorium_id: "123e4567-e89b-12d3-a456-426614174000",
+        tanggal_praktikum: new Date("2025-12-31"),
+        jam_mulai: "08:00",
+        jam_selesai: "10:00",
+        topik: "A".repeat(201),
       };
 
       const result = jadwalSchema.safeParse(data);
       expect(result.success).toBe(false);
     });
 
-    it('should reject catatan longer than 500 characters', () => {
+    it("should reject catatan longer than 500 characters", () => {
       const data = {
-        kelas: 'A',
-        laboratorium_id: '123e4567-e89b-12d3-a456-426614174000',
-        tanggal_praktikum: new Date('2025-12-31'),
-        jam_mulai: '08:00',
-        jam_selesai: '10:00',
-        catatan: 'A'.repeat(501),
+        kelas: "A",
+        laboratorium_id: "123e4567-e89b-12d3-a456-426614174000",
+        tanggal_praktikum: new Date("2025-12-31"),
+        jam_mulai: "08:00",
+        jam_selesai: "10:00",
+        catatan: "A".repeat(501),
       };
 
       const result = jadwalSchema.safeParse(data);
@@ -250,49 +250,49 @@ describe('Jadwal Schema Validation', () => {
     });
   });
 
-  describe('updateJadwalSchema', () => {
-    it('should accept partial updates', () => {
+  describe("updateJadwalSchema", () => {
+    it("should accept partial updates", () => {
       const data = {
-        kelas: 'B',
+        kelas: "B",
       };
 
       const result = updateJadwalSchema.safeParse(data);
       expect(result.success).toBe(true);
     });
 
-    it('should accept empty update', () => {
+    it("should accept empty update", () => {
       const result = updateJadwalSchema.safeParse({});
       expect(result.success).toBe(true);
     });
   });
 
-  describe('jadwalFilterSchema', () => {
-    it('should accept valid filters', () => {
+  describe("jadwalFilterSchema", () => {
+    it("should accept valid filters", () => {
       const data = {
-        kelas: 'A',
-        laboratorium_id: '123e4567-e89b-12d3-a456-426614174000',
-        hari: 'senin',
+        kelas: "A",
+        laboratorium_id: "123e4567-e89b-12d3-a456-426614174000",
+        hari: "senin",
         is_active: true,
-        sortBy: 'tanggal_praktikum',
-        sortOrder: 'desc',
+        sortBy: "tanggal_praktikum",
+        sortOrder: "desc",
       };
 
       const result = jadwalFilterSchema.safeParse(data);
       expect(result.success).toBe(true);
     });
 
-    it('should use default sortBy and sortOrder', () => {
+    it("should use default sortBy and sortOrder", () => {
       const result = jadwalFilterSchema.safeParse({});
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.data.sortBy).toBe('tanggal_praktikum');
-        expect(result.data.sortOrder).toBe('asc');
+        expect(result.data.sortBy).toBe("tanggal_praktikum");
+        expect(result.data.sortOrder).toBe("asc");
       }
     });
 
-    it('should reject invalid hari enum', () => {
+    it("should reject invalid hari enum", () => {
       const data = {
-        hari: 'invalid-day',
+        hari: "invalid-day",
       };
 
       const result = jadwalFilterSchema.safeParse(data);
@@ -300,26 +300,26 @@ describe('Jadwal Schema Validation', () => {
     });
   });
 
-  describe('jadwalConflictCheckSchema', () => {
-    it('should accept valid conflict check data', () => {
+  describe("jadwalConflictCheckSchema", () => {
+    it("should accept valid conflict check data", () => {
       const data = {
-        laboratorium_id: '123e4567-e89b-12d3-a456-426614174000',
-        tanggal_praktikum: new Date('2025-12-31'),
-        jam_mulai: '08:00',
-        jam_selesai: '10:00',
+        laboratorium_id: "123e4567-e89b-12d3-a456-426614174000",
+        tanggal_praktikum: new Date("2025-12-31"),
+        jam_mulai: "08:00",
+        jam_selesai: "10:00",
       };
 
       const result = jadwalConflictCheckSchema.safeParse(data);
       expect(result.success).toBe(true);
     });
 
-    it('should accept exclude_id for update operations', () => {
+    it("should accept exclude_id for update operations", () => {
       const data = {
-        laboratorium_id: '123e4567-e89b-12d3-a456-426614174000',
-        tanggal_praktikum: new Date('2025-12-31'),
-        jam_mulai: '08:00',
-        jam_selesai: '10:00',
-        exclude_id: '123e4567-e89b-12d3-a456-426614174001',
+        laboratorium_id: "123e4567-e89b-12d3-a456-426614174000",
+        tanggal_praktikum: new Date("2025-12-31"),
+        jam_mulai: "08:00",
+        jam_selesai: "10:00",
+        exclude_id: "123e4567-e89b-12d3-a456-426614174001",
       };
 
       const result = jadwalConflictCheckSchema.safeParse(data);
@@ -327,93 +327,93 @@ describe('Jadwal Schema Validation', () => {
     });
   });
 
-  describe('Time Utilities', () => {
-    describe('timeToMinutes', () => {
-      it('should convert time to minutes correctly', () => {
-        expect(timeToMinutes('00:00')).toBe(0);
-        expect(timeToMinutes('01:00')).toBe(60);
-        expect(timeToMinutes('08:30')).toBe(510);
-        expect(timeToMinutes('23:59')).toBe(1439);
+  describe("Time Utilities", () => {
+    describe("timeToMinutes", () => {
+      it("should convert time to minutes correctly", () => {
+        expect(timeToMinutes("00:00")).toBe(0);
+        expect(timeToMinutes("01:00")).toBe(60);
+        expect(timeToMinutes("08:30")).toBe(510);
+        expect(timeToMinutes("23:59")).toBe(1439);
       });
     });
 
-    describe('calculateDuration', () => {
-      it('should calculate duration correctly', () => {
-        expect(calculateDuration('08:00', '10:00')).toBe(120);
-        expect(calculateDuration('08:00', '08:30')).toBe(30);
-        expect(calculateDuration('09:15', '10:45')).toBe(90);
+    describe("calculateDuration", () => {
+      it("should calculate duration correctly", () => {
+        expect(calculateDuration("08:00", "10:00")).toBe(120);
+        expect(calculateDuration("08:00", "08:30")).toBe(30);
+        expect(calculateDuration("09:15", "10:45")).toBe(90);
       });
 
-      it('should return negative for invalid order', () => {
-        expect(calculateDuration('10:00', '08:00')).toBe(-120);
+      it("should return negative for invalid order", () => {
+        expect(calculateDuration("10:00", "08:00")).toBe(-120);
       });
     });
 
-    describe('isTimeOverlap', () => {
-      it('should detect overlap correctly', () => {
+    describe("isTimeOverlap", () => {
+      it("should detect overlap correctly", () => {
         // Complete overlap
-        expect(isTimeOverlap('08:00', '10:00', '08:00', '10:00')).toBe(true);
+        expect(isTimeOverlap("08:00", "10:00", "08:00", "10:00")).toBe(true);
 
         // Partial overlap (start in middle)
-        expect(isTimeOverlap('08:00', '10:00', '09:00', '11:00')).toBe(true);
+        expect(isTimeOverlap("08:00", "10:00", "09:00", "11:00")).toBe(true);
 
         // Partial overlap (end in middle)
-        expect(isTimeOverlap('09:00', '11:00', '08:00', '10:00')).toBe(true);
+        expect(isTimeOverlap("09:00", "11:00", "08:00", "10:00")).toBe(true);
 
         // One inside another
-        expect(isTimeOverlap('08:00', '12:00', '09:00', '10:00')).toBe(true);
+        expect(isTimeOverlap("08:00", "12:00", "09:00", "10:00")).toBe(true);
       });
 
-      it('should not detect overlap for non-overlapping times', () => {
+      it("should not detect overlap for non-overlapping times", () => {
         // Back to back
-        expect(isTimeOverlap('08:00', '10:00', '10:00', '12:00')).toBe(false);
+        expect(isTimeOverlap("08:00", "10:00", "10:00", "12:00")).toBe(false);
 
         // Separated
-        expect(isTimeOverlap('08:00', '10:00', '11:00', '13:00')).toBe(false);
+        expect(isTimeOverlap("08:00", "10:00", "11:00", "13:00")).toBe(false);
       });
     });
   });
 
-  describe('Helper Functions', () => {
-    describe('parseCreateJadwalForm', () => {
-      it('should parse valid data', () => {
+  describe("Helper Functions", () => {
+    describe("parseCreateJadwalForm", () => {
+      it("should parse valid data", () => {
         const data = {
-          kelas: 'A',
-          laboratorium_id: '123e4567-e89b-12d3-a456-426614174000',
-          tanggal_praktikum: new Date('2025-12-31'),
-          jam_mulai: '08:00',
-          jam_selesai: '10:00',
+          kelas: "A",
+          laboratorium_id: "123e4567-e89b-12d3-a456-426614174000",
+          tanggal_praktikum: new Date("2025-12-31"),
+          jam_mulai: "08:00",
+          jam_selesai: "10:00",
         };
 
         expect(() => parseCreateJadwalForm(data)).not.toThrow();
       });
 
-      it('should throw on invalid data', () => {
+      it("should throw on invalid data", () => {
         const data = {
-          kelas: 'invalid-lowercase',
+          kelas: "invalid-lowercase",
         };
 
         expect(() => parseCreateJadwalForm(data)).toThrow();
       });
     });
 
-    describe('safeParseCreateJadwal', () => {
-      it('should return success for valid data', () => {
+    describe("safeParseCreateJadwal", () => {
+      it("should return success for valid data", () => {
         const data = {
-          kelas: 'A',
-          laboratorium_id: '123e4567-e89b-12d3-a456-426614174000',
-          tanggal_praktikum: new Date('2025-12-31'),
-          jam_mulai: '08:00',
-          jam_selesai: '10:00',
+          kelas: "A",
+          laboratorium_id: "123e4567-e89b-12d3-a456-426614174000",
+          tanggal_praktikum: new Date("2025-12-31"),
+          jam_mulai: "08:00",
+          jam_selesai: "10:00",
         };
 
         const result = safeParseCreateJadwal(data);
         expect(result.success).toBe(true);
       });
 
-      it('should return error for invalid data', () => {
+      it("should return error for invalid data", () => {
         const data = {
-          kelas: 'invalid',
+          kelas: "invalid",
         };
 
         const result = safeParseCreateJadwal(data);

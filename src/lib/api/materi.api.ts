@@ -11,7 +11,6 @@
  */
 
 import {
-
   query,
   queryWithFilters,
   getById,
@@ -19,20 +18,20 @@ import {
   update,
   remove,
   withApiResponse,
-} from './base.api';
-import type { Materi, CreateMateriData } from '@/types/materi.types';
+} from "./base.api";
+import type { Materi, CreateMateriData } from "@/types/materi.types";
 import {
   uploadMateriFile,
   deleteFile,
   downloadFileAsBlob,
   STORAGE_BUCKETS,
   type UploadOptions,
-} from '@/lib/supabase/storage';
-import { handleError, logError } from '@/lib/utils/errors';
+} from "@/lib/supabase/storage";
+import { handleError, logError } from "@/lib/utils/errors";
 import {
   requirePermission,
   requirePermissionAndOwnership,
-} from '@/lib/middleware';
+} from "@/lib/middleware";
 
 // ============================================================================
 // TYPES
@@ -69,32 +68,32 @@ export async function getMateri(filters?: MateriFilters): Promise<Materi[]> {
 
     if (filters?.kelas_id) {
       filterConditions.push({
-        column: 'kelas_id',
-        operator: 'eq' as const,
+        column: "kelas_id",
+        operator: "eq" as const,
         value: filters.kelas_id,
       });
     }
 
     if (filters?.dosen_id) {
       filterConditions.push({
-        column: 'dosen_id',
-        operator: 'eq' as const,
+        column: "dosen_id",
+        operator: "eq" as const,
         value: filters.dosen_id,
       });
     }
 
     if (filters?.minggu_ke !== undefined) {
       filterConditions.push({
-        column: 'minggu_ke',
-        operator: 'eq' as const,
+        column: "minggu_ke",
+        operator: "eq" as const,
         value: filters.minggu_ke,
       });
     }
 
     if (filters?.is_active !== undefined) {
       filterConditions.push({
-        column: 'is_active',
-        operator: 'eq' as const,
+        column: "is_active",
+        operator: "eq" as const,
         value: filters.is_active,
       });
     }
@@ -120,15 +119,15 @@ export async function getMateri(filters?: MateriFilters): Promise<Materi[]> {
         )
       `,
       order: {
-        column: 'created_at',
+        column: "created_at",
         ascending: false,
       },
     };
 
     const data =
       filterConditions.length > 0
-        ? await queryWithFilters<Materi>('materi', filterConditions, options)
-        : await query<Materi>('materi', options);
+        ? await queryWithFilters<Materi>("materi", filterConditions, options)
+        : await query<Materi>("materi", options);
 
     // Client-side search filter
     if (filters?.search) {
@@ -136,14 +135,14 @@ export async function getMateri(filters?: MateriFilters): Promise<Materi[]> {
       return data.filter(
         (m) =>
           m.judul.toLowerCase().includes(searchLower) ||
-          m.deskripsi?.toLowerCase().includes(searchLower)
+          m.deskripsi?.toLowerCase().includes(searchLower),
       );
     }
 
     return data;
   } catch (error) {
     const apiError = handleError(error);
-    logError(apiError, 'getMateri');
+    logError(apiError, "getMateri");
     throw apiError;
   }
 }
@@ -153,7 +152,7 @@ export async function getMateri(filters?: MateriFilters): Promise<Materi[]> {
  */
 export async function getMateriById(id: string): Promise<Materi> {
   try {
-    return await getById<Materi>('materi', id, {
+    return await getById<Materi>("materi", id, {
       select: `
         *,
         kelas:kelas_id (
@@ -212,7 +211,7 @@ export async function getMateriByDosen(dosenId: string): Promise<Materi[]> {
  */
 async function createMateriImpl(
   data: UploadMateriData,
-  uploadOptions?: UploadOptions
+  uploadOptions?: UploadOptions,
 ): Promise<Materi> {
   try {
     // Upload file to storage
@@ -220,7 +219,7 @@ async function createMateriImpl(
       data.kelas_id,
       data.dosen_id,
       data.file,
-      uploadOptions
+      uploadOptions,
     );
 
     // Create materi record
@@ -236,29 +235,31 @@ async function createMateriImpl(
       is_downloadable: data.is_downloadable ?? true,
     };
 
-    const materi = await insert<Materi>('materi', materiData);
+    const materi = await insert<Materi>("materi", materiData);
 
     return materi;
   } catch (error) {
     const apiError = handleError(error);
-    logError(apiError, 'createMateri');
+    logError(apiError, "createMateri");
     throw apiError;
   }
 }
 
 // 🔒 PROTECTED: Only dosen can create materi
-export const createMateri = requirePermission('manage:materi', createMateriImpl);
-
+export const createMateri = requirePermission(
+  "manage:materi",
+  createMateriImpl,
+);
 
 /**
  * Update materi metadata (without file)
  */
 async function updateMateriImpl(
   id: string,
-  data: Partial<CreateMateriData>
+  data: Partial<CreateMateriData>,
 ): Promise<Materi> {
   try {
-    return await update<Materi>('materi', id, data);
+    return await update<Materi>("materi", id, data);
   } catch (error) {
     const apiError = handleError(error);
     logError(apiError, `updateMateri:${id}`);
@@ -268,12 +269,11 @@ async function updateMateriImpl(
 
 // 🔒 PROTECTED: Only dosen can update their own materi
 export const updateMateri = requirePermissionAndOwnership(
-  'manage:materi',
-  { table: 'materi', ownerField: 'dosen_id' },
+  "manage:materi",
+  { table: "materi", ownerField: "dosen_id" },
   0,
-  updateMateriImpl
+  updateMateriImpl,
 );
-
 
 /**
  * Delete materi (including file from storage)
@@ -284,24 +284,24 @@ async function deleteMateriImpl(id: string): Promise<boolean> {
     const materi = await getMateriById(id);
 
     // Extract file path from URL
-    const urlParts = materi.file_url.split('/');
+    const urlParts = materi.file_url.split("/");
     const bucketIndex = urlParts.findIndex((part) =>
-      part.includes(STORAGE_BUCKETS.MATERI)
+      part.includes(STORAGE_BUCKETS.MATERI),
     );
-    const filePath = urlParts.slice(bucketIndex + 1).join('/');
+    const filePath = urlParts.slice(bucketIndex + 1).join("/");
 
     // Delete file from storage
     if (filePath) {
       try {
         await deleteFile(STORAGE_BUCKETS.MATERI, filePath);
       } catch (err) {
-        console.warn('Failed to delete file from storage:', err);
+        console.warn("Failed to delete file from storage:", err);
         // Continue even if storage deletion fails
       }
     }
 
     // Delete materi record
-    return await remove('materi', id);
+    return await remove("materi", id);
   } catch (error) {
     const apiError = handleError(error);
     logError(apiError, `deleteMateri:${id}`);
@@ -311,12 +311,11 @@ async function deleteMateriImpl(id: string): Promise<boolean> {
 
 // 🔒 PROTECTED: Only dosen can delete their own materi
 export const deleteMateri = requirePermissionAndOwnership(
-  'manage:materi',
-  { table: 'materi', ownerField: 'dosen_id' },
+  "manage:materi",
+  { table: "materi", ownerField: "dosen_id" },
   0,
-  deleteMateriImpl
+  deleteMateriImpl,
 );
-
 
 // ============================================================================
 // MATERI DOWNLOAD
@@ -330,14 +329,14 @@ export async function downloadMateri(id: string): Promise<void> {
     const materi = await getMateriById(id);
 
     // Extract file path from URL
-    const urlParts = materi.file_url.split('/');
+    const urlParts = materi.file_url.split("/");
     const bucketIndex = urlParts.findIndex((part) =>
-      part.includes(STORAGE_BUCKETS.MATERI)
+      part.includes(STORAGE_BUCKETS.MATERI),
     );
-    const filePath = urlParts.slice(bucketIndex + 1).join('/');
+    const filePath = urlParts.slice(bucketIndex + 1).join("/");
 
     if (!filePath) {
-      throw new Error('File path tidak valid');
+      throw new Error("File path tidak valid");
     }
 
     // Download file
@@ -359,14 +358,14 @@ export async function downloadMateri(id: string): Promise<void> {
 export async function incrementDownloadCount(id: string): Promise<void> {
   try {
     // Import supabase client
-    const { supabase } = await import('@/lib/supabase/client');
-    
+    const { supabase } = await import("@/lib/supabase/client");
+
     // Use Postgres function instead of direct UPDATE
     // @ts-expect-error - Custom RPC function not in generated types
-    const { error } = await supabase.rpc('increment_materi_download_count', {
-      materi_id: id
+    const { error } = await supabase.rpc("increment_materi_download_count", {
+      materi_id: id,
     });
-    
+
     if (error) throw error;
   } catch (error) {
     const apiError = handleError(error);
@@ -417,9 +416,7 @@ export async function unpublishMateri(id: string): Promise<Materi> {
 /**
  * Get materi statistics by kelas
  */
-export async function getMateriStatsByKelas(
-  kelasId: string
-): Promise<{
+export async function getMateriStatsByKelas(kelasId: string): Promise<{
   total: number;
   published: number;
   draft: number;
@@ -429,12 +426,11 @@ export async function getMateriStatsByKelas(
     const materiList = await getMateriByKelas(kelasId);
 
     const total = materiList.length;
-    const published = materiList.filter((m) => m.is_active === true)
-      .length;
+    const published = materiList.filter((m) => m.is_active === true).length;
     const draft = total - published;
     const total_downloads = materiList.reduce(
       (sum, m) => sum + (m.download_count || 0),
-      0
+      0,
     );
 
     return {
@@ -455,7 +451,8 @@ export async function getMateriStatsByKelas(
 // ============================================================================
 
 export const materiApi = {
-  getAll: (filters?: MateriFilters) => withApiResponse(() => getMateri(filters)),
+  getAll: (filters?: MateriFilters) =>
+    withApiResponse(() => getMateri(filters)),
   getById: (id: string) => withApiResponse(() => getMateriById(id)),
   getByKelas: (kelasId: string) =>
     withApiResponse(() => getMateriByKelas(kelasId)),

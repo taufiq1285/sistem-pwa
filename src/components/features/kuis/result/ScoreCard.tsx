@@ -10,13 +10,19 @@
  * - Visual feedback (colors, icons)
  */
 
-import { CheckCircle2, XCircle, Circle, Trophy, TrendingUp } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { cn } from '@/lib/utils';
-import type { QuizScore } from '@/lib/utils/quiz-scoring';
-import { getGradeColor } from '@/lib/utils/quiz-scoring';
+import {
+  CheckCircle2,
+  XCircle,
+  Circle,
+  Trophy,
+  TrendingUp,
+} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { cn } from "@/lib/utils";
+import type { QuizScore } from "@/lib/utils/quiz-scoring";
+import { getGradeColor } from "@/lib/utils/quiz-scoring";
 
 // ============================================================================
 // TYPES
@@ -59,14 +65,14 @@ export function ScoreCard({
   const isPoor = score.percentage < 60;
 
   return (
-    <Card className={cn('overflow-hidden', className)}>
+    <Card className={cn("overflow-hidden", className)}>
       {/* Header */}
       <CardHeader
         className={cn(
-          'pb-4',
+          "pb-4",
           score.passed
-            ? 'bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950 dark:to-emerald-950'
-            : 'bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-950 dark:to-orange-950'
+            ? "bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950 dark:to-emerald-950"
+            : "bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-950 dark:to-orange-950",
         )}
       >
         <div className="flex items-start justify-between gap-4">
@@ -79,10 +85,10 @@ export function ScoreCard({
 
           {/* Pass/Fail Badge */}
           <Badge
-            variant={score.passed ? 'default' : 'destructive'}
+            variant={score.passed ? "default" : "destructive"}
             className="text-sm px-3 py-1"
           >
-            {score.passed ? '✓ Lulus' : '✗ Tidak Lulus'}
+            {score.passed ? "✓ Lulus" : "✗ Tidak Lulus"}
           </Badge>
         </div>
       </CardHeader>
@@ -94,8 +100,8 @@ export function ScoreCard({
           <div className="flex justify-center">
             <div
               className={cn(
-                'inline-flex items-center justify-center w-20 h-20 rounded-full border-4 text-3xl font-bold',
-                getGradeColor(score.grade)
+                "inline-flex items-center justify-center w-20 h-20 rounded-full border-4 text-3xl font-bold",
+                getGradeColor(score.grade),
               )}
             >
               {score.grade}

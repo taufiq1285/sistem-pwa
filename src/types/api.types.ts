@@ -7,7 +7,7 @@
 // HTTP METHODS
 // ============================================================================
 
-export type ApiMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+export type ApiMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
 // ============================================================================
 // API RESPONSE TYPES
@@ -65,25 +65,25 @@ export interface ApiError {
  * Error codes as const object (can be used as both type and value)
  */
 export const ApiErrorCode = {
-  BAD_REQUEST: 'BAD_REQUEST',
-  UNAUTHORIZED: 'UNAUTHORIZED',
-  FORBIDDEN: 'FORBIDDEN',
-  NOT_FOUND: 'NOT_FOUND',
-  VALIDATION_ERROR: 'VALIDATION_ERROR',
-  CONFLICT: 'CONFLICT',
-  INTERNAL_ERROR: 'INTERNAL_ERROR',
-  SERVICE_UNAVAILABLE: 'SERVICE_UNAVAILABLE',
-  NETWORK_ERROR: 'NETWORK_ERROR',
-  TIMEOUT: 'TIMEOUT',
-  OFFLINE: 'OFFLINE',
-  SYNC_ERROR: 'SYNC_ERROR',
-  UNKNOWN: 'UNKNOWN',
+  BAD_REQUEST: "BAD_REQUEST",
+  UNAUTHORIZED: "UNAUTHORIZED",
+  FORBIDDEN: "FORBIDDEN",
+  NOT_FOUND: "NOT_FOUND",
+  VALIDATION_ERROR: "VALIDATION_ERROR",
+  CONFLICT: "CONFLICT",
+  INTERNAL_ERROR: "INTERNAL_ERROR",
+  SERVICE_UNAVAILABLE: "SERVICE_UNAVAILABLE",
+  NETWORK_ERROR: "NETWORK_ERROR",
+  TIMEOUT: "TIMEOUT",
+  OFFLINE: "OFFLINE",
+  SYNC_ERROR: "SYNC_ERROR",
+  UNKNOWN: "UNKNOWN",
 } as const;
 
 /**
  * Error codes type (extracted from const object)
  */
-export type ApiErrorCodeType = typeof ApiErrorCode[keyof typeof ApiErrorCode];
+export type ApiErrorCodeType = (typeof ApiErrorCode)[keyof typeof ApiErrorCode];
 
 // ============================================================================
 // REQUEST CONFIG
@@ -109,7 +109,7 @@ export interface ApiRequestConfig {
 export interface RetryConfig {
   maxAttempts: number;
   delayMs: number;
-  backoff?: 'linear' | 'exponential';
+  backoff?: "linear" | "exponential";
   retryOn?: number[]; // HTTP status codes to retry
 }
 
@@ -135,7 +135,7 @@ export interface QueryParams {
   limit?: number;
   offset?: number;
   sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
+  sortOrder?: "asc" | "desc";
   search?: string;
   filters?: Record<string, unknown>;
 }
@@ -143,18 +143,18 @@ export interface QueryParams {
 /**
  * Filter operator
  */
-export type FilterOperator = 
-  | 'eq'      // equals
-  | 'neq'     // not equals
-  | 'gt'      // greater than
-  | 'gte'     // greater than or equal
-  | 'lt'      // less than
-  | 'lte'     // less than or equal
-  | 'like'    // contains
-  | 'ilike'   // case-insensitive contains
-  | 'in'      // in array
-  | 'is'      // is null/not null
-  | 'not';    // not
+export type FilterOperator =
+  | "eq" // equals
+  | "neq" // not equals
+  | "gt" // greater than
+  | "gte" // greater than or equal
+  | "lt" // less than
+  | "lte" // less than or equal
+  | "like" // contains
+  | "ilike" // case-insensitive contains
+  | "in" // in array
+  | "is" // is null/not null
+  | "not"; // not
 
 /**
  * Filter condition
@@ -198,7 +198,7 @@ export interface DeletePayload {
 export interface BulkOperationPayload<T = Record<string, unknown>> {
   ids: string[];
   data?: Partial<T>;
-  operation: 'create' | 'update' | 'delete';
+  operation: "create" | "update" | "delete";
 }
 
 // ============================================================================
@@ -274,7 +274,7 @@ export interface CacheConfig {
 export interface RealtimeConfig {
   enabled: boolean;
   table: string;
-  event: 'INSERT' | 'UPDATE' | 'DELETE' | '*';
+  event: "INSERT" | "UPDATE" | "DELETE" | "*";
   filter?: string;
   callback: (payload: Record<string, unknown>) => void;
 }

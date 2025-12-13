@@ -7,10 +7,10 @@
 // COMPONENTS
 // ============================================================================
 
-export { DataTable } from './DataTable';
-export { DataTablePagination } from './DataTablePagination';
-export { DataTableToolbar } from './DataTableToolbar';
-export { DataTableColumnHeader } from './DataTableColumnHeader';
+export { DataTable } from "./DataTable";
+export { DataTablePagination } from "./DataTablePagination";
+export { DataTableToolbar } from "./DataTableToolbar";
+export { DataTableColumnHeader } from "./DataTableColumnHeader";
 
 // ============================================================================
 // TYPES
@@ -35,10 +35,10 @@ export type {
   VisibilityState,
   PaginationState,
   RowSelectionState,
-} from './DataTable.types';
+} from "./DataTable.types";
 
 // ============================================================================
 // DEFAULT EXPORT
 // ============================================================================
 
-export { DataTable as default } from './DataTable';
+export { DataTable as default } from "./DataTable";

@@ -2,7 +2,7 @@
  * Offline Configuration
  */
 
-import type { StoreName } from '@/types/offline.types';
+import type { StoreName } from "@/types/offline.types";
 
 export const OFFLINE_CONFIG = {
   enabled: true,
@@ -30,18 +30,18 @@ export const SYNC_CONFIG = {
     batchDelayMs: 5000,
   },
   priority: {
-    high: ['kuis_jawaban', 'offline_answers'],
-    medium: ['kuis', 'materi'],
-    low: ['metadata'],
+    high: ["kuis_jawaban", "offline_answers"],
+    medium: ["kuis", "materi"],
+    low: ["metadata"],
   },
   conflictResolution: {
-    strategy: 'last-write-wins' as const,
+    strategy: "last-write-wins" as const,
     promptUser: false,
   },
 } as const;
 
 export const INDEXEDDB_CONFIG = {
-  dbName: 'sistem_praktikum_pwa',
+  dbName: "sistem_praktikum_pwa",
   version: 1,
   quota: {
     target: 100 * 1024 * 1024,
@@ -57,31 +57,31 @@ export const INDEXEDDB_CONFIG = {
 } as const;
 
 export const CACHE_CONFIG = {
-  name: 'sistem-praktikum-cache-v1',
+  name: "sistem-praktikum-cache-v1",
   strategies: {
     static: {
-      strategy: 'cache-first' as const,
+      strategy: "cache-first" as const,
       maxAge: 30 * 24 * 60 * 60 * 1000,
       maxEntries: 100,
     },
     api: {
-      strategy: 'network-first' as const,
+      strategy: "network-first" as const,
       maxAge: 5 * 60 * 1000,
       maxEntries: 50,
       timeout: 5000,
     },
     images: {
-      strategy: 'cache-first' as const,
+      strategy: "cache-first" as const,
       maxAge: 7 * 24 * 60 * 60 * 1000,
       maxEntries: 60,
     },
   },
-  precache: ['/', '/index.html', '/manifest.json', '/logo.svg', '/offline'],
+  precache: ["/", "/index.html", "/manifest.json", "/logo.svg", "/offline"],
 } as const;
 
 export const NETWORK_CONFIG = {
   checkQuality: true,
-  pingUrl: '/api/ping',
+  pingUrl: "/api/ping",
   pingInterval: 30000,
   quality: {
     good: 100,
@@ -99,9 +99,9 @@ export const NETWORK_CONFIG = {
 export const BACKGROUND_SYNC_CONFIG = {
   enabled: true,
   tags: {
-    quizAnswers: 'sync-quiz-answers',
-    offlineData: 'sync-offline-data',
-    periodic: 'sync-periodic',
+    quizAnswers: "sync-quiz-answers",
+    offlineData: "sync-offline-data",
+    periodic: "sync-periodic",
   },
   retry: {
     enabled: true,
@@ -114,22 +114,26 @@ export const PERSISTENCE_CONFIG = {
   persist: {
     kuis: {
       enabled: true,
-      stores: ['kuis', 'kuis_soal'] as StoreName[],
+      stores: ["kuis", "kuis_soal"] as StoreName[],
       expiryDays: 7,
     },
     attempts: {
       enabled: true,
-      stores: ['kuis_jawaban', 'offline_answers', 'offline_attempts'] as StoreName[],
+      stores: [
+        "kuis_jawaban",
+        "offline_answers",
+        "offline_attempts",
+      ] as StoreName[],
       expiryDays: 30,
     },
     materi: {
       enabled: true,
-      stores: ['materi'] as StoreName[],
+      stores: ["materi"] as StoreName[],
       expiryDays: 30,
     },
     userData: {
       enabled: true,
-      stores: ['users', 'kelas'] as StoreName[],
+      stores: ["users", "kelas"] as StoreName[],
       expiryDays: 7,
     },
   },

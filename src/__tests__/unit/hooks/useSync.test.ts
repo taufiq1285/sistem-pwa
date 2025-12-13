@@ -7,18 +7,21 @@
  * @vitest-environment jsdom
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { renderHook, waitFor, act } from '@testing-library/react';
-import { useSync } from '../../../lib/hooks/useSync';
-import { queueManager } from '../../../lib/offline/queue-manager';
-import type { SyncQueueItem, SyncStatus } from '../../../types/offline.types';
-import type { QueueStats, QueueEvent } from '../../../lib/offline/queue-manager';
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { renderHook, waitFor, act } from "@testing-library/react";
+import { useSync } from "../../../lib/hooks/useSync";
+import { queueManager } from "../../../lib/offline/queue-manager";
+import type { SyncQueueItem, SyncStatus } from "../../../types/offline.types";
+import type {
+  QueueStats,
+  QueueEvent,
+} from "../../../lib/offline/queue-manager";
 
 // ============================================================================
 // MOCK SETUP
 // ============================================================================
 
-vi.mock('@/lib/offline/queue-manager', () => {
+vi.mock("@/lib/offline/queue-manager", () => {
   const listeners = new Set<(event: QueueEvent) => void>();
   let mockReady = false;
   let mockProcessing = false;
@@ -42,7 +45,7 @@ vi.mock('@/lib/offline/queue-manager', () => {
       }),
       // Helper to trigger events for tests
       _triggerEvent: (event: QueueEvent) => {
-        listeners.forEach(listener => listener(event));
+        listeners.forEach((listener) => listener(event));
       },
       _setReady: (ready: boolean) => {
         mockReady = ready;
@@ -64,12 +67,12 @@ vi.mock('@/lib/offline/queue-manager', () => {
 // ============================================================================
 
 const mockQueueItem: SyncQueueItem = {
-  id: 'queue-1',
-  entity: 'kuis',
-  operation: 'create',
-  data: { judul: 'Test Kuis' },
+  id: "queue-1",
+  entity: "kuis",
+  operation: "create",
+  data: { judul: "Test Kuis" },
   timestamp: Date.now(),
-  status: 'pending',
+  status: "pending",
   retryCount: 0,
 };
 
@@ -85,7 +88,7 @@ const mockStats: QueueStats = {
 // TEST SUITE
 // ============================================================================
 
-describe('useSync', () => {
+describe("useSync", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     (queueManager as any)._reset();
@@ -100,8 +103,8 @@ describe('useSync', () => {
   // INITIALIZATION TESTS
   // ============================================================================
 
-  describe('Initialization', () => {
-    it('should initialize with default state', () => {
+  describe("Initialization", () => {
+    it("should initialize with default state", () => {
       const { result } = renderHook(() => useSync());
 
       expect(result.current.stats).toBeNull();
@@ -109,7 +112,7 @@ describe('useSync', () => {
       expect(result.current.isReady).toBe(false);
     });
 
-    it('should initialize queue manager if not ready', async () => {
+    it("should initialize queue manager if not ready", async () => {
       renderHook(() => useSync());
 
       await waitFor(() => {
@@ -118,7 +121,7 @@ describe('useSync', () => {
       });
     });
 
-    it('should not re-initialize if already ready', async () => {
+    it("should not re-initialize if already ready", async () => {
       (queueManager.isReady as any).mockReturnValue(true);
 
       renderHook(() => useSync());
@@ -128,7 +131,7 @@ describe('useSync', () => {
       });
     });
 
-    it('should subscribe to queue events', async () => {
+    it("should subscribe to queue events", async () => {
       renderHook(() => useSync());
 
       await waitFor(() => {
@@ -136,7 +139,7 @@ describe('useSync', () => {
       });
     });
 
-    it('should load initial stats', async () => {
+    it("should load initial stats", async () => {
       const { result } = renderHook(() => useSync());
 
       await waitFor(() => {
@@ -144,7 +147,7 @@ describe('useSync', () => {
       });
     });
 
-    it('should mark as ready after initialization', async () => {
+    it("should mark as ready after initialization", async () => {
       (queueManager as any)._setReady(true);
       const { result } = renderHook(() => useSync());
 
@@ -153,7 +156,7 @@ describe('useSync', () => {
       });
     });
 
-    it('should get initial processing state', async () => {
+    it("should get initial processing state", async () => {
       (queueManager as any)._setProcessing(true);
       const { result } = renderHook(() => useSync());
 
@@ -167,8 +170,8 @@ describe('useSync', () => {
   // ADD TO QUEUE TESTS
   // ============================================================================
 
-  describe('addToQueue', () => {
-    it('should add item to queue', async () => {
+  describe("addToQueue", () => {
+    it("should add item to queue", async () => {
       (queueManager.enqueue as any).mockResolvedValue(mockQueueItem);
       (queueManager as any)._setReady(true);
 
@@ -180,14 +183,18 @@ describe('useSync', () => {
 
       let id;
       await act(async () => {
-        id = await result.current.addToQueue('kuis', 'create', { judul: 'Test' });
+        id = await result.current.addToQueue("kuis", "create", {
+          judul: "Test",
+        });
       });
 
-      expect(queueManager.enqueue).toHaveBeenCalledWith('kuis', 'create', { judul: 'Test' });
-      expect(id).toBe('queue-1');
+      expect(queueManager.enqueue).toHaveBeenCalledWith("kuis", "create", {
+        judul: "Test",
+      });
+      expect(id).toBe("queue-1");
     });
 
-    it('should refresh stats after adding', async () => {
+    it("should refresh stats after adding", async () => {
       (queueManager.enqueue as any).mockResolvedValue(mockQueueItem);
       (queueManager as any)._setReady(true);
 
@@ -198,14 +205,17 @@ describe('useSync', () => {
       });
 
       await act(async () => {
-        await result.current.addToQueue('kuis', 'create', { judul: 'Test' });
+        await result.current.addToQueue("kuis", "create", { judul: "Test" });
       });
 
       expect(queueManager.getStats).toHaveBeenCalled();
     });
 
-    it('should handle different entity types', async () => {
-      (queueManager.enqueue as any).mockResolvedValue({ ...mockQueueItem, entity: 'nilai' });
+    it("should handle different entity types", async () => {
+      (queueManager.enqueue as any).mockResolvedValue({
+        ...mockQueueItem,
+        entity: "nilai",
+      });
       (queueManager as any)._setReady(true);
 
       const { result } = renderHook(() => useSync());
@@ -215,13 +225,15 @@ describe('useSync', () => {
       });
 
       await act(async () => {
-        await result.current.addToQueue('nilai', 'update', { nilai_akhir: 85 });
+        await result.current.addToQueue("nilai", "update", { nilai_akhir: 85 });
       });
 
-      expect(queueManager.enqueue).toHaveBeenCalledWith('nilai', 'update', { nilai_akhir: 85 });
+      expect(queueManager.enqueue).toHaveBeenCalledWith("nilai", "update", {
+        nilai_akhir: 85,
+      });
     });
 
-    it('should handle different operations', async () => {
+    it("should handle different operations", async () => {
       (queueManager.enqueue as any).mockResolvedValue(mockQueueItem);
       (queueManager as any)._setReady(true);
 
@@ -232,15 +244,21 @@ describe('useSync', () => {
       });
 
       await act(async () => {
-        await result.current.addToQueue('kuis', 'delete', { id: 'kuis-1' });
+        await result.current.addToQueue("kuis", "delete", { id: "kuis-1" });
       });
 
-      expect(queueManager.enqueue).toHaveBeenCalledWith('kuis', 'delete', { id: 'kuis-1' });
+      expect(queueManager.enqueue).toHaveBeenCalledWith("kuis", "delete", {
+        id: "kuis-1",
+      });
     });
 
-    it('should throw error on enqueue failure', async () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-      (queueManager.enqueue as any).mockRejectedValue(new Error('Enqueue failed'));
+    it("should throw error on enqueue failure", async () => {
+      const consoleErrorSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+      (queueManager.enqueue as any).mockRejectedValue(
+        new Error("Enqueue failed"),
+      );
       (queueManager as any)._setReady(true);
 
       const { result } = renderHook(() => useSync());
@@ -250,8 +268,8 @@ describe('useSync', () => {
       });
 
       await expect(
-        result.current.addToQueue('kuis', 'create', { judul: 'Test' })
-      ).rejects.toThrow('Enqueue failed');
+        result.current.addToQueue("kuis", "create", { judul: "Test" }),
+      ).rejects.toThrow("Enqueue failed");
 
       consoleErrorSpy.mockRestore();
     });
@@ -261,8 +279,8 @@ describe('useSync', () => {
   // PROCESS QUEUE TESTS
   // ============================================================================
 
-  describe('processQueue', () => {
-    it('should process the queue', async () => {
+  describe("processQueue", () => {
+    it("should process the queue", async () => {
       (queueManager.processQueue as any).mockResolvedValue(undefined);
       (queueManager as any)._setReady(true);
 
@@ -279,9 +297,9 @@ describe('useSync', () => {
       expect(queueManager.processQueue).toHaveBeenCalled();
     });
 
-    it('should set processing state during queue processing', async () => {
+    it("should set processing state during queue processing", async () => {
       (queueManager.processQueue as any).mockImplementation(async () => {
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise((resolve) => setTimeout(resolve, 100));
       });
       (queueManager as any)._setReady(true);
 
@@ -304,7 +322,7 @@ describe('useSync', () => {
       });
     });
 
-    it('should refresh stats after processing', async () => {
+    it("should refresh stats after processing", async () => {
       (queueManager.processQueue as any).mockResolvedValue(undefined);
       (queueManager as any)._setReady(true);
 
@@ -319,9 +337,13 @@ describe('useSync', () => {
       expect(queueManager.getStats).toHaveBeenCalled();
     });
 
-    it('should reset processing state on error', async () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-      (queueManager.processQueue as any).mockRejectedValue(new Error('Process failed'));
+    it("should reset processing state on error", async () => {
+      const consoleErrorSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+      (queueManager.processQueue as any).mockRejectedValue(
+        new Error("Process failed"),
+      );
       (queueManager as any)._setReady(true);
 
       const { result } = renderHook(() => useSync());
@@ -330,7 +352,9 @@ describe('useSync', () => {
         expect(result.current.isReady).toBe(true);
       });
 
-      await expect(result.current.processQueue()).rejects.toThrow('Process failed');
+      await expect(result.current.processQueue()).rejects.toThrow(
+        "Process failed",
+      );
 
       await waitFor(() => {
         expect(result.current.isProcessing).toBe(false);
@@ -344,8 +368,8 @@ describe('useSync', () => {
   // RETRY FAILED TESTS
   // ============================================================================
 
-  describe('retryFailed', () => {
-    it('should retry failed items', async () => {
+  describe("retryFailed", () => {
+    it("should retry failed items", async () => {
       (queueManager.retryFailed as any).mockResolvedValue(3);
       (queueManager as any)._setReady(true);
 
@@ -361,7 +385,7 @@ describe('useSync', () => {
       expect(count).toBe(3);
     });
 
-    it('should refresh stats after retrying', async () => {
+    it("should refresh stats after retrying", async () => {
       (queueManager.retryFailed as any).mockResolvedValue(2);
       (queueManager as any)._setReady(true);
 
@@ -376,9 +400,13 @@ describe('useSync', () => {
       expect(queueManager.getStats).toHaveBeenCalled();
     });
 
-    it('should return 0 on retry failure', async () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-      (queueManager.retryFailed as any).mockRejectedValue(new Error('Retry failed'));
+    it("should return 0 on retry failure", async () => {
+      const consoleErrorSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+      (queueManager.retryFailed as any).mockRejectedValue(
+        new Error("Retry failed"),
+      );
       (queueManager as any)._setReady(true);
 
       const { result } = renderHook(() => useSync());
@@ -399,8 +427,8 @@ describe('useSync', () => {
   // CLEAR COMPLETED TESTS
   // ============================================================================
 
-  describe('clearCompleted', () => {
-    it('should clear completed items', async () => {
+  describe("clearCompleted", () => {
+    it("should clear completed items", async () => {
       (queueManager.clearCompleted as any).mockResolvedValue(5);
       (queueManager as any)._setReady(true);
 
@@ -416,7 +444,7 @@ describe('useSync', () => {
       expect(count).toBe(5);
     });
 
-    it('should refresh stats after clearing', async () => {
+    it("should refresh stats after clearing", async () => {
       (queueManager.clearCompleted as any).mockResolvedValue(3);
       (queueManager as any)._setReady(true);
 
@@ -431,9 +459,13 @@ describe('useSync', () => {
       expect(queueManager.getStats).toHaveBeenCalled();
     });
 
-    it('should return 0 on clear failure', async () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-      (queueManager.clearCompleted as any).mockRejectedValue(new Error('Clear failed'));
+    it("should return 0 on clear failure", async () => {
+      const consoleErrorSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+      (queueManager.clearCompleted as any).mockRejectedValue(
+        new Error("Clear failed"),
+      );
       (queueManager as any)._setReady(true);
 
       const { result } = renderHook(() => useSync());
@@ -454,9 +486,9 @@ describe('useSync', () => {
   // GET ALL ITEMS TESTS
   // ============================================================================
 
-  describe('getAllItems', () => {
-    it('should get all items without filter', async () => {
-      const mockItems = [mockQueueItem, { ...mockQueueItem, id: 'queue-2' }];
+  describe("getAllItems", () => {
+    it("should get all items without filter", async () => {
+      const mockItems = [mockQueueItem, { ...mockQueueItem, id: "queue-2" }];
       (queueManager.getAllItems as any).mockResolvedValue(mockItems);
       (queueManager as any)._setReady(true);
 
@@ -472,7 +504,7 @@ describe('useSync', () => {
       expect(items).toEqual(mockItems);
     });
 
-    it('should get items with status filter', async () => {
+    it("should get items with status filter", async () => {
       const mockItems = [mockQueueItem];
       (queueManager.getAllItems as any).mockResolvedValue(mockItems);
       (queueManager as any)._setReady(true);
@@ -483,15 +515,19 @@ describe('useSync', () => {
         expect(result.current.isReady).toBe(true);
       });
 
-      const items = await result.current.getAllItems('pending');
+      const items = await result.current.getAllItems("pending");
 
-      expect(queueManager.getAllItems).toHaveBeenCalledWith('pending');
+      expect(queueManager.getAllItems).toHaveBeenCalledWith("pending");
       expect(items).toEqual(mockItems);
     });
 
-    it('should return empty array on error', async () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-      (queueManager.getAllItems as any).mockRejectedValue(new Error('GetAll failed'));
+    it("should return empty array on error", async () => {
+      const consoleErrorSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+      (queueManager.getAllItems as any).mockRejectedValue(
+        new Error("GetAll failed"),
+      );
       (queueManager as any)._setReady(true);
 
       const { result } = renderHook(() => useSync());
@@ -512,8 +548,8 @@ describe('useSync', () => {
   // QUEUE EVENT TESTS
   // ============================================================================
 
-  describe('Queue Events', () => {
-    it('should update processing state on processing event', async () => {
+  describe("Queue Events", () => {
+    it("should update processing state on processing event", async () => {
       (queueManager as any)._setReady(true);
       const { result } = renderHook(() => useSync());
 
@@ -522,7 +558,7 @@ describe('useSync', () => {
       });
 
       (queueManager as any)._triggerEvent({
-        type: 'processing',
+        type: "processing",
         item: mockQueueItem,
       });
 
@@ -531,7 +567,7 @@ describe('useSync', () => {
       });
     });
 
-    it('should update processing state on completed event', async () => {
+    it("should update processing state on completed event", async () => {
       (queueManager as any)._setReady(true);
       (queueManager as any)._setProcessing(true);
       const { result } = renderHook(() => useSync());
@@ -541,7 +577,7 @@ describe('useSync', () => {
       });
 
       (queueManager as any)._triggerEvent({
-        type: 'completed',
+        type: "completed",
         item: mockQueueItem,
       });
 
@@ -550,7 +586,7 @@ describe('useSync', () => {
       });
     });
 
-    it('should update processing state on failed event', async () => {
+    it("should update processing state on failed event", async () => {
       (queueManager as any)._setReady(true);
       (queueManager as any)._setProcessing(true);
       const { result } = renderHook(() => useSync());
@@ -560,9 +596,9 @@ describe('useSync', () => {
       });
 
       (queueManager as any)._triggerEvent({
-        type: 'failed',
+        type: "failed",
         item: mockQueueItem,
-        error: new Error('Sync failed'),
+        error: new Error("Sync failed"),
       });
 
       await waitFor(() => {
@@ -570,7 +606,7 @@ describe('useSync', () => {
       });
     });
 
-    it('should refresh stats on queue events', async () => {
+    it("should refresh stats on queue events", async () => {
       (queueManager as any)._setReady(true);
       const { result } = renderHook(() => useSync());
 
@@ -581,12 +617,14 @@ describe('useSync', () => {
       const initialCallCount = (queueManager.getStats as any).mock.calls.length;
 
       (queueManager as any)._triggerEvent({
-        type: 'completed',
+        type: "completed",
         item: mockQueueItem,
       });
 
       await waitFor(() => {
-        expect((queueManager.getStats as any).mock.calls.length).toBeGreaterThan(initialCallCount);
+        expect(
+          (queueManager.getStats as any).mock.calls.length,
+        ).toBeGreaterThan(initialCallCount);
       });
     });
   });
@@ -595,8 +633,8 @@ describe('useSync', () => {
   // STATS TESTS
   // ============================================================================
 
-  describe('Stats', () => {
-    it('should expose queue statistics', async () => {
+  describe("Stats", () => {
+    it("should expose queue statistics", async () => {
       (queueManager as any)._setReady(true);
       const { result } = renderHook(() => useSync());
 
@@ -605,7 +643,7 @@ describe('useSync', () => {
       });
     });
 
-    it('should refresh stats manually', async () => {
+    it("should refresh stats manually", async () => {
       (queueManager as any)._setReady(true);
       const { result } = renderHook(() => useSync());
 
@@ -628,8 +666,8 @@ describe('useSync', () => {
   // CLEANUP TESTS
   // ============================================================================
 
-  describe('Cleanup', () => {
-    it('should unsubscribe from queue events on unmount', async () => {
+  describe("Cleanup", () => {
+    it("should unsubscribe from queue events on unmount", async () => {
       (queueManager as any)._setReady(true);
       const { unmount } = renderHook(() => useSync());
 
@@ -653,8 +691,8 @@ describe('useSync', () => {
   // INTEGRATION TESTS
   // ============================================================================
 
-  describe('Integration', () => {
-    it('should handle complete sync workflow', async () => {
+  describe("Integration", () => {
+    it("should handle complete sync workflow", async () => {
       (queueManager.enqueue as any).mockResolvedValue(mockQueueItem);
       (queueManager.processQueue as any).mockResolvedValue(undefined);
       (queueManager.clearCompleted as any).mockResolvedValue(1);
@@ -667,7 +705,7 @@ describe('useSync', () => {
       });
 
       // Add to queue
-      await result.current.addToQueue('kuis', 'create', { judul: 'Test' });
+      await result.current.addToQueue("kuis", "create", { judul: "Test" });
       expect(queueManager.enqueue).toHaveBeenCalled();
 
       // Process queue
@@ -679,7 +717,7 @@ describe('useSync', () => {
       expect(queueManager.clearCompleted).toHaveBeenCalled();
     });
 
-    it('should maintain consistent state across re-renders', async () => {
+    it("should maintain consistent state across re-renders", async () => {
       (queueManager as any)._setReady(true);
       const { result, rerender } = renderHook(() => useSync());
 

@@ -1,23 +1,28 @@
 /**
  * QuestionPreview Component
- * 
+ *
  * Purpose: Universal preview for all question types
  * Used by: QuizBuilder, QuestionEditor (Dosen)
  * Features: Display-only view of questions as students will see them
  */
 
-import { Eye, FileText, Type, CheckCircle, Circle, AlertCircle } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Input } from '@/components/ui/input';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Separator } from '@/components/ui/separator';
-import type { Soal, OpsiJawaban } from '@/types/kuis.types';
-import { TIPE_SOAL, TIPE_SOAL_LABELS } from '@/types/kuis.types';
-import { cn } from '@/lib/utils';
+import {
+  Eye,
+  FileText,
+  CheckCircle,
+  Circle,
+  AlertCircle,
+} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Separator } from "@/components/ui/separator";
+import type { Soal, OpsiJawaban } from "@/types/kuis.types";
+import { TIPE_SOAL, TIPE_SOAL_LABELS } from "@/types/kuis.types";
+import { cn } from "@/lib/utils";
 
 // ============================================================================
 // TYPES
@@ -28,27 +33,27 @@ interface QuestionPreviewProps {
    * Question data to preview
    */
   question: Soal | QuestionPreviewData;
-  
+
   /**
    * Question number
    */
   questionNumber?: number;
-  
+
   /**
    * Show correct answers (for review mode)
    */
   showAnswers?: boolean;
-  
+
   /**
    * Show explanation/rubric
    */
   showExplanation?: boolean;
-  
+
   /**
    * Compact mode (smaller, less detail)
    */
   compact?: boolean;
-  
+
   /**
    * Student's answer (for review mode)
    */
@@ -86,7 +91,6 @@ export function QuestionPreview({
   compact = false,
   studentAnswer,
 }: QuestionPreviewProps) {
-  
   if (!question) {
     return (
       <Alert variant="destructive">
@@ -95,9 +99,11 @@ export function QuestionPreview({
       </Alert>
     );
   }
-  
-  const tipeLabel = TIPE_SOAL_LABELS[question.tipe_soal as keyof typeof TIPE_SOAL_LABELS] || question.tipe_soal;
-  
+
+  const tipeLabel =
+    TIPE_SOAL_LABELS[question.tipe_soal as keyof typeof TIPE_SOAL_LABELS] ||
+    question.tipe_soal;
+
   return (
     <Card className={cn(compact && "border-dashed")}>
       <CardHeader className={cn(compact && "pb-3")}>
@@ -120,11 +126,11 @@ export function QuestionPreview({
               {question.pertanyaan}
             </CardTitle>
           </div>
-          
+
           <Eye className="h-5 w-5 text-muted-foreground flex-shrink-0" />
         </div>
       </CardHeader>
-      
+
       <CardContent className="space-y-4">
         {/* Question Type Specific Preview */}
         {question.tipe_soal === TIPE_SOAL.PILIHAN_GANDA && (
@@ -135,16 +141,7 @@ export function QuestionPreview({
             compact={compact}
           />
         )}
-        
-        {question.tipe_soal === TIPE_SOAL.BENAR_SALAH && (
-          <PreviewTrueFalse
-            correctAnswer={question.jawaban_benar ?? undefined}
-            showAnswers={showAnswers}
-            studentAnswer={studentAnswer}
-            compact={compact}
-          />
-        )}
-        
+
         {question.tipe_soal === TIPE_SOAL.ESSAY && (
           <PreviewEssay
             minWords={(question as any).minWords}
@@ -156,17 +153,7 @@ export function QuestionPreview({
             compact={compact}
           />
         )}
-        
-        {question.tipe_soal === TIPE_SOAL.JAWABAN_SINGKAT && (
-          <PreviewShortAnswer
-            expectedAnswer={(question as any).expectedAnswer || question.jawaban_benar}
-            maxLength={(question as any).maxLength}
-            showAnswers={showAnswers}
-            studentAnswer={studentAnswer}
-            compact={compact}
-          />
-        )}
-        
+
         {/* Explanation / Pembahasan */}
         {showExplanation && question.penjelasan && (
           <>
@@ -207,20 +194,25 @@ function PreviewMultipleChoice({
       <Label className={cn("text-sm font-medium", compact && "text-xs")}>
         Pilih satu jawaban yang benar:
       </Label>
-      
+
       <RadioGroup value={studentAnswer} disabled>
         {options.map((option: OpsiJawaban, index: number) => {
           const isCorrect = option.is_correct;
           const isStudentAnswer = studentAnswer === option.id;
-          
+
           return (
             <div
               key={option.id || index}
               className={cn(
                 "flex items-start gap-3 p-3 rounded-lg border transition-colors",
-                showAnswers && isCorrect && "border-green-500 bg-green-50 dark:bg-green-950",
-                showAnswers && isStudentAnswer && !isCorrect && "border-red-500 bg-red-50 dark:bg-red-950",
-                compact && "p-2"
+                showAnswers &&
+                  isCorrect &&
+                  "border-green-500 bg-green-50 dark:bg-green-950",
+                showAnswers &&
+                  isStudentAnswer &&
+                  !isCorrect &&
+                  "border-red-500 bg-red-50 dark:bg-red-950",
+                compact && "p-2",
               )}
             >
               <RadioGroupItem
@@ -228,7 +220,7 @@ function PreviewMultipleChoice({
                 id={`preview-option-${option.id}`}
                 disabled
               />
-              
+
               <Label
                 htmlFor={`preview-option-${option.id}`}
                 className={cn("flex-1 cursor-default", compact && "text-sm")}
@@ -236,74 +228,13 @@ function PreviewMultipleChoice({
                 <span className="font-semibold mr-2">{option.label}.</span>
                 {option.text}
               </Label>
-              
+
               {showAnswers && isCorrect && (
                 <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
               )}
             </div>
           );
         })}
-      </RadioGroup>
-    </div>
-  );
-}
-
-/**
- * True/False Preview
- */
-function PreviewTrueFalse({
-  correctAnswer,
-  showAnswers,
-  studentAnswer,
-  compact,
-}: {
-  correctAnswer?: string;
-  showAnswers?: boolean;
-  studentAnswer?: string | undefined;
-  compact?: boolean;
-}) {
-  return (
-    <div className="space-y-3">
-      <Label className={cn("text-sm font-medium", compact && "text-xs")}>
-        Pilih Benar atau Salah:
-      </Label>
-      
-      <RadioGroup value={studentAnswer} disabled>
-        {/* True Option */}
-        <div
-          className={cn(
-            "flex items-center gap-3 p-4 rounded-lg border",
-            showAnswers && correctAnswer === 'true' && "border-green-500 bg-green-50 dark:bg-green-950",
-            showAnswers && studentAnswer === 'true' && correctAnswer !== 'true' && "border-red-500 bg-red-50 dark:bg-red-950",
-            compact && "p-3"
-          )}
-        >
-          <RadioGroupItem value="true" id="preview-true" disabled />
-          <Label htmlFor="preview-true" className={cn("flex-1 cursor-default font-semibold", compact && "text-sm")}>
-            Benar
-          </Label>
-          {showAnswers && correctAnswer === 'true' && (
-            <CheckCircle className="h-5 w-5 text-green-600" />
-          )}
-        </div>
-        
-        {/* False Option */}
-        <div
-          className={cn(
-            "flex items-center gap-3 p-4 rounded-lg border",
-            showAnswers && correctAnswer === 'false' && "border-green-500 bg-green-50 dark:bg-green-950",
-            showAnswers && studentAnswer === 'false' && correctAnswer !== 'false' && "border-red-500 bg-red-50 dark:bg-red-950",
-            compact && "p-3"
-          )}
-        >
-          <RadioGroupItem value="false" id="preview-false" disabled />
-          <Label htmlFor="preview-false" className={cn("flex-1 cursor-default font-semibold", compact && "text-sm")}>
-            Salah
-          </Label>
-          {showAnswers && correctAnswer === 'false' && (
-            <CheckCircle className="h-5 w-5 text-green-600" />
-          )}
-        </div>
       </RadioGroup>
     </div>
   );
@@ -337,83 +268,32 @@ function PreviewEssay({
         </Label>
         <FileText className="h-4 w-4 text-muted-foreground" />
       </div>
-      
+
       {/* Requirements */}
       {(minWords || maxWords || characterLimit) && (
         <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
           {minWords && <Badge variant="outline">Min: {minWords} kata</Badge>}
           {maxWords && <Badge variant="outline">Max: {maxWords} kata</Badge>}
-          {characterLimit && <Badge variant="outline">Max: {characterLimit} karakter</Badge>}
+          {characterLimit && (
+            <Badge variant="outline">Max: {characterLimit} karakter</Badge>
+          )}
         </div>
       )}
-      
+
       {/* Essay Input Area */}
       <Textarea
-        value={studentAnswer || ''}
+        value={studentAnswer || ""}
         placeholder="Tulis jawaban essay Anda di sini..."
         rows={compact ? 4 : 8}
         disabled
         className="resize-none"
       />
-      
+
       {/* Rubric */}
       {showRubric && rubric && (
         <div className="p-3 bg-muted rounded-lg space-y-2">
           <Label className="text-xs font-semibold">Rubrik Penilaian:</Label>
           <pre className="text-xs whitespace-pre-wrap font-mono">{rubric}</pre>
-        </div>
-      )}
-    </div>
-  );
-}
-
-/**
- * Short Answer Preview
- */
-function PreviewShortAnswer({
-  expectedAnswer,
-  maxLength,
-  showAnswers,
-  studentAnswer,
-  compact,
-}: {
-  expectedAnswer?: string;
-  maxLength?: number;
-  showAnswers?: boolean;
-  studentAnswer?: string;
-  compact?: boolean;
-}) {
-  return (
-    <div className="space-y-3">
-      <div className="flex items-start justify-between gap-2">
-        <Label className={cn("text-sm font-medium", compact && "text-xs")}>
-          Tulis jawaban singkat:
-        </Label>
-        <Type className="h-4 w-4 text-muted-foreground" />
-      </div>
-      
-      {maxLength && (
-        <p className="text-xs text-muted-foreground">
-          Maksimal {maxLength} karakter
-        </p>
-      )}
-      
-      {/* Short Answer Input */}
-      <Input
-        value={studentAnswer || ''}
-        placeholder="Tulis jawaban Anda..."
-        maxLength={maxLength}
-        disabled
-      />
-      
-      {/* Show Expected Answer */}
-      {showAnswers && expectedAnswer && (
-        <div className="p-3 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg">
-          <div className="flex items-center gap-2">
-            <CheckCircle className="h-4 w-4 text-green-600" />
-            <span className="text-sm font-medium">Jawaban yang benar:</span>
-          </div>
-          <p className="text-sm mt-1">{expectedAnswer}</p>
         </div>
       )}
     </div>
@@ -431,12 +311,8 @@ export function getQuestionTypeIcon(tipesoal: string) {
   switch (tipesoal) {
     case TIPE_SOAL.PILIHAN_GANDA:
       return Circle;
-    case TIPE_SOAL.BENAR_SALAH:
-      return CheckCircle;
     case TIPE_SOAL.ESSAY:
       return FileText;
-    case TIPE_SOAL.JAWABAN_SINGKAT:
-      return Type;
     default:
       return Circle;
   }
@@ -448,14 +324,10 @@ export function getQuestionTypeIcon(tipesoal: string) {
 export function getQuestionTypeColor(tipeSoal: string): string {
   switch (tipeSoal) {
     case TIPE_SOAL.PILIHAN_GANDA:
-      return 'text-blue-600';
-    case TIPE_SOAL.BENAR_SALAH:
-      return 'text-green-600';
+      return "text-blue-600";
     case TIPE_SOAL.ESSAY:
-      return 'text-purple-600';
-    case TIPE_SOAL.JAWABAN_SINGKAT:
-      return 'text-orange-600';
+      return "text-purple-600";
     default:
-      return 'text-gray-600';
+      return "text-gray-600";
   }
 }

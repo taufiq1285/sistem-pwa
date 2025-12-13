@@ -5,8 +5,8 @@
  * Provides consistent API for showing toast notifications
  */
 
-import { useCallback, useMemo } from 'react';
-import { toast } from 'sonner';
+import { useCallback, useMemo } from "react";
+import { toast } from "sonner";
 
 // ============================================================================
 // CONSTANTS
@@ -26,7 +26,7 @@ export function useNotification() {
         duration,
       });
     },
-    []
+    [],
   );
 
   const error = useCallback(
@@ -36,7 +36,7 @@ export function useNotification() {
         duration,
       });
     },
-    []
+    [],
   );
 
   const warning = useCallback(
@@ -46,7 +46,7 @@ export function useNotification() {
         duration,
       });
     },
-    []
+    [],
   );
 
   const info = useCallback(
@@ -56,7 +56,7 @@ export function useNotification() {
         duration,
       });
     },
-    []
+    [],
   );
 
   const dismiss = useCallback((id?: string | number) => {
@@ -80,6 +80,6 @@ export function useNotification() {
       dismiss,
       clear,
     }),
-    [success, error, warning, info, dismiss, clear]
+    [success, error, warning, info, dismiss, clear],
   );
 }

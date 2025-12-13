@@ -8,11 +8,10 @@
  * - Clear completed button
  */
 
-
-import { RefreshCw, Check, X, Clock, Loader2 } from 'lucide-react';
-import { useSync } from '@/lib/hooks/useSync';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { RefreshCw, Check, X, Clock, Loader2 } from "lucide-react";
+import { useSync } from "@/lib/hooks/useSync";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 // ============================================================================
 // TYPES
@@ -57,11 +56,11 @@ export function SyncStatus({
         onClick={() => processQueue()}
         disabled={isProcessing || !hasPending}
         className={cn(
-          'relative inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors',
+          "relative inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors",
           hasPending
-            ? 'bg-blue-500 text-white hover:bg-blue-600'
-            : 'bg-gray-200 text-gray-600',
-          className
+            ? "bg-blue-500 text-white hover:bg-blue-600"
+            : "bg-gray-200 text-gray-600",
+          className,
         )}
         aria-label="Sync status"
       >
@@ -83,8 +82,8 @@ export function SyncStatus({
   return (
     <div
       className={cn(
-        'rounded-lg border border-gray-200 bg-white p-4 shadow-sm',
-        className
+        "rounded-lg border border-gray-200 bg-white p-4 shadow-sm",
+        className,
       )}
     >
       {/* Header */}

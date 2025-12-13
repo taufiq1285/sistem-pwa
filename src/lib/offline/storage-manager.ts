@@ -9,9 +9,9 @@
  * delegating to IndexedDB for structured data and localStorage for simple key-value pairs.
  */
 
-import { indexedDBManager } from './indexeddb';
-import type { StoreName } from '@/types/offline.types';
-import { logger } from '@/lib/utils/logger';
+import { indexedDBManager } from "./indexeddb";
+import type { StoreName } from "@/types/offline.types";
+import { logger } from "@/lib/utils/logger";
 
 /**
  * Initialize storage systems
@@ -23,13 +23,13 @@ export async function initStorage(): Promise<void> {
     await indexedDBManager.initialize();
 
     // Verify localStorage is available
-    if (typeof localStorage === 'undefined') {
-      logger.warn('localStorage is not available');
+    if (typeof localStorage === "undefined") {
+      logger.warn("localStorage is not available");
     }
 
-    logger.info('Storage systems initialized successfully');
+    logger.info("Storage systems initialized successfully");
   } catch (error) {
-    logger.error('Failed to initialize storage:', error);
+    logger.error("Failed to initialize storage:", error);
     throw error;
   }
 }
@@ -44,7 +44,7 @@ export async function initStorage(): Promise<void> {
  */
 export async function getItem<T>(
   key: string | StoreName,
-  id?: string
+  id?: string,
 ): Promise<T | undefined> {
   try {
     // If ID is provided, fetch from IndexedDB
@@ -78,7 +78,8 @@ export async function getItem<T>(
  */
 export async function setItem<T>(key: string, value: T): Promise<void> {
   try {
-    const serialized = typeof value === 'string' ? value : JSON.stringify(value);
+    const serialized =
+      typeof value === "string" ? value : JSON.stringify(value);
     localStorage.setItem(key, serialized);
   } catch (error) {
     logger.error(`Failed to set item ${key}:`, error);
@@ -115,9 +116,9 @@ export async function clear(): Promise<void> {
     // Clear IndexedDB
     await indexedDBManager.clearAll();
 
-    logger.info('All storage cleared');
+    logger.info("All storage cleared");
   } catch (error) {
-    logger.error('Failed to clear storage:', error);
+    logger.error("Failed to clear storage:", error);
     throw error;
   }
 }
@@ -128,8 +129,8 @@ export async function clear(): Promise<void> {
  */
 export function isStorageAvailable(): boolean {
   try {
-    const testKey = '__storage_test__';
-    localStorage.setItem(testKey, 'test');
+    const testKey = "__storage_test__";
+    localStorage.setItem(testKey, "test");
     localStorage.removeItem(testKey);
     return indexedDBManager.isReady();
   } catch {
@@ -150,7 +151,8 @@ export async function getStorageInfo(): Promise<{
     let localStorageUsed = 0;
     for (const key in localStorage) {
       if (Object.prototype.hasOwnProperty.call(localStorage, key)) {
-        localStorageUsed += key.length + (localStorage.getItem(key)?.length || 0);
+        localStorageUsed +=
+          key.length + (localStorage.getItem(key)?.length || 0);
       }
     }
 
@@ -168,7 +170,7 @@ export async function getStorageInfo(): Promise<{
       },
     };
   } catch (error) {
-    logger.error('Failed to get storage info:', error);
+    logger.error("Failed to get storage info:", error);
     throw error;
   }
 }

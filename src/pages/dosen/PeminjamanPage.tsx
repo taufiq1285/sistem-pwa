@@ -1,23 +1,41 @@
-import { useState, useEffect } from 'react';
-import { Package, Clock, CheckCircle, XCircle, RotateCcw, Search, Plus, Download, Edit, Trash2 } from 'lucide-react';
-import { toast } from 'sonner';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Textarea } from '@/components/ui/textarea';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useState, useEffect } from "react";
+import {
+  Package,
+  Clock,
+  CheckCircle,
+  XCircle,
+  RotateCcw,
+  Search,
+  Plus,
+  Download,
+  Edit,
+  Trash2,
+} from "lucide-react";
+import { toast } from "sonner";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -25,7 +43,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -35,7 +53,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+} from "@/components/ui/alert-dialog";
 import {
   Form,
   FormControl,
@@ -43,8 +61,18 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { getMyBorrowing, type MyBorrowingRequest, type BorrowingStatus, createBorrowingRequest, updateBorrowingRequest, cancelBorrowingRequest, getAvailableEquipment, returnBorrowingRequest, markBorrowingAsTaken } from '@/lib/api/dosen.api';
+} from "@/components/ui/form";
+import {
+  getMyBorrowing,
+  type MyBorrowingRequest,
+  type BorrowingStatus,
+  createBorrowingRequest,
+  updateBorrowingRequest,
+  cancelBorrowingRequest,
+  getAvailableEquipment,
+  returnBorrowingRequest,
+  markBorrowingAsTaken,
+} from "@/lib/api/dosen.api";
 
 // ============================================================================
 // TYPES & VALIDATION
@@ -64,19 +92,34 @@ interface AvailableEquipment {
 }
 
 const borrowingFormSchema = z.object({
-  inventaris_id: z.string().min(1, 'Pilih alat terlebih dahulu'),
-  jumlah_pinjam: z.number().min(1, 'Jumlah minimal 1').int('Jumlah harus angka bulat'),
-  tanggal_pinjam: z.string().min(1, 'Tanggal pinjam harus diisi'),
-  tanggal_kembali_rencana: z.string().min(1, 'Tanggal kembali harus diisi'),
-  keperluan: z.string().min(10, 'Keperluan minimal 10 karakter').max(500, 'Keperluan maksimal 500 karakter'),
+  inventaris_id: z.string().min(1, "Pilih alat terlebih dahulu"),
+  jumlah_pinjam: z
+    .number()
+    .min(1, "Jumlah minimal 1")
+    .int("Jumlah harus angka bulat"),
+  tanggal_pinjam: z.string().min(1, "Tanggal pinjam harus diisi"),
+  tanggal_kembali_rencana: z.string().min(1, "Tanggal kembali harus diisi"),
+  keperluan: z
+    .string()
+    .min(10, "Keperluan minimal 10 karakter")
+    .max(500, "Keperluan maksimal 500 karakter"),
 });
 
 type BorrowingFormData = z.infer<typeof borrowingFormSchema>;
 
 const returnFormSchema = z.object({
-  peminjaman_id: z.string().min(1, 'Pilih peminjaman yang akan dikembalikan'),
-  kondisi_kembali: z.enum(['baik', 'rusak_ringan', 'rusak_berat', 'maintenance', 'hilang']),
-  keterangan_kembali: z.string().max(500, 'Keterangan maksimal 500 karakter').optional(),
+  peminjaman_id: z.string().min(1, "Pilih peminjaman yang akan dikembalikan"),
+  kondisi_kembali: z.enum([
+    "baik",
+    "rusak_ringan",
+    "rusak_berat",
+    "maintenance",
+    "hilang",
+  ]),
+  keterangan_kembali: z
+    .string()
+    .max(500, "Keterangan maksimal 500 karakter")
+    .optional(),
 });
 
 type ReturnFormData = z.infer<typeof returnFormSchema>;
@@ -85,18 +128,25 @@ type ReturnFormData = z.infer<typeof returnFormSchema>;
 // CONSTANTS
 // ============================================================================
 
-const STATUS_CONFIG: Record<string, { label: string; variant: 'secondary' | 'default' | 'destructive' | 'outline'; icon: any }> = {
-  pending: { label: 'Menunggu', variant: 'secondary', icon: Clock },
-  menunggu: { label: 'Menunggu', variant: 'secondary', icon: Clock },
-  approved: { label: 'Disetujui', variant: 'default', icon: CheckCircle },
-  disetujui: { label: 'Disetujui', variant: 'default', icon: CheckCircle },
-  in_use: { label: 'Sedang Dipinjam', variant: 'default', icon: Download },
-  dipinjam: { label: 'Dipinjam', variant: 'default', icon: Package },
-  returned: { label: 'Dikembalikan', variant: 'outline', icon: RotateCcw },
-  dikembalikan: { label: 'Dikembalikan', variant: 'outline', icon: RotateCcw },
-  rejected: { label: 'Ditolak', variant: 'destructive', icon: XCircle },
-  ditolak: { label: 'Ditolak', variant: 'destructive', icon: XCircle },
-  overdue: { label: 'Terlambat', variant: 'destructive', icon: Clock },
+const STATUS_CONFIG: Record<
+  string,
+  {
+    label: string;
+    variant: "secondary" | "default" | "destructive" | "outline";
+    icon: any;
+  }
+> = {
+  pending: { label: "Menunggu", variant: "secondary", icon: Clock },
+  menunggu: { label: "Menunggu", variant: "secondary", icon: Clock },
+  approved: { label: "Disetujui", variant: "default", icon: CheckCircle },
+  disetujui: { label: "Disetujui", variant: "default", icon: CheckCircle },
+  in_use: { label: "Sedang Dipinjam", variant: "default", icon: Download },
+  dipinjam: { label: "Dipinjam", variant: "default", icon: Package },
+  returned: { label: "Dikembalikan", variant: "outline", icon: RotateCcw },
+  dikembalikan: { label: "Dikembalikan", variant: "outline", icon: RotateCcw },
+  rejected: { label: "Ditolak", variant: "destructive", icon: XCircle },
+  ditolak: { label: "Ditolak", variant: "destructive", icon: XCircle },
+  overdue: { label: "Terlambat", variant: "destructive", icon: Clock },
 };
 
 // ============================================================================
@@ -107,16 +157,17 @@ export default function PeminjamanPage() {
   // Riwayat Peminjaman State
   const [borrowings, setBorrowings] = useState<MyBorrowingRequest[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
 
   // Ajukan Peminjaman State
   const [equipment, setEquipment] = useState<AvailableEquipment[]>([]);
   const [loadingEquipment, setLoadingEquipment] = useState(true);
-  const [equipmentSearch, setEquipmentSearch] = useState('');
+  const [equipmentSearch, setEquipmentSearch] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [selectedEquipment, setSelectedEquipment] = useState<AvailableEquipment | null>(null);
+  const [selectedEquipment, setSelectedEquipment] =
+    useState<AvailableEquipment | null>(null);
 
   // Return Form State
   const [returnDialogOpen, setReturnDialogOpen] = useState(false);
@@ -130,42 +181,49 @@ export default function PeminjamanPage() {
   // Edit Peminjaman State
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [selectedEditEquipment, setSelectedEditEquipment] = useState<AvailableEquipment | null>(null);
+  const [selectedEditEquipment, setSelectedEditEquipment] =
+    useState<AvailableEquipment | null>(null);
 
   // Cancel Peminjaman State
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [cancelingId, setCancelingId] = useState<string | null>(null);
-  const [cancelingData, setCancelingData] = useState<MyBorrowingRequest | null>(null);
+  const [cancelingData, setCancelingData] = useState<MyBorrowingRequest | null>(
+    null,
+  );
   const [cancelingLoading, setCancelingLoading] = useState(false);
 
   const form = useForm<BorrowingFormData>({
     resolver: zodResolver(borrowingFormSchema),
     defaultValues: {
-      inventaris_id: '',
+      inventaris_id: "",
       jumlah_pinjam: 1,
-      tanggal_pinjam: new Date().toISOString().split('T')[0],
-      tanggal_kembali_rencana: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      keperluan: '',
+      tanggal_pinjam: new Date().toISOString().split("T")[0],
+      tanggal_kembali_rencana: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+        .toISOString()
+        .split("T")[0],
+      keperluan: "",
     },
   });
 
   const returnForm = useForm<ReturnFormData>({
     resolver: zodResolver(returnFormSchema),
     defaultValues: {
-      peminjaman_id: '',
-      kondisi_kembali: 'baik',
-      keterangan_kembali: '',
+      peminjaman_id: "",
+      kondisi_kembali: "baik",
+      keterangan_kembali: "",
     },
   });
 
   const editForm = useForm<BorrowingFormData>({
     resolver: zodResolver(borrowingFormSchema),
     defaultValues: {
-      inventaris_id: '',
+      inventaris_id: "",
       jumlah_pinjam: 1,
-      tanggal_pinjam: new Date().toISOString().split('T')[0],
-      tanggal_kembali_rencana: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      keperluan: '',
+      tanggal_pinjam: new Date().toISOString().split("T")[0],
+      tanggal_kembali_rencana: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+        .toISOString()
+        .split("T")[0],
+      keperluan: "",
     },
   });
 
@@ -181,7 +239,7 @@ export default function PeminjamanPage() {
       const data = await getMyBorrowing();
       setBorrowings(data);
     } catch (error) {
-      toast.error('Gagal memuat data peminjaman');
+      toast.error("Gagal memuat data peminjaman");
       console.error(error);
     } finally {
       setLoadingHistory(false);
@@ -194,7 +252,7 @@ export default function PeminjamanPage() {
       const data = await getAvailableEquipment();
       setEquipment(data as AvailableEquipment[]);
     } catch (error) {
-      toast.error('Gagal memuat daftar alat');
+      toast.error("Gagal memuat daftar alat");
       console.error(error);
     } finally {
       setLoadingEquipment(false);
@@ -206,28 +264,31 @@ export default function PeminjamanPage() {
     const match =
       b.inventaris_nama.toLowerCase().includes(searchQuery.toLowerCase()) ||
       b.inventaris_kode.toLowerCase().includes(searchQuery.toLowerCase());
-    const status = statusFilter === 'all' || b.status === statusFilter;
+    const status = statusFilter === "all" || b.status === statusFilter;
     return match && status;
   });
 
-  const filteredEquipment = equipment.filter((item) =>
-    item.nama_barang.toLowerCase().includes(equipmentSearch.toLowerCase()) ||
-    item.kode_barang.toLowerCase().includes(equipmentSearch.toLowerCase())
+  const filteredEquipment = equipment.filter(
+    (item) =>
+      item.nama_barang.toLowerCase().includes(equipmentSearch.toLowerCase()) ||
+      item.kode_barang.toLowerCase().includes(equipmentSearch.toLowerCase()),
   );
 
   // Stats
   const stats = {
     total: borrowings.length,
-    menunggu: borrowings.filter((b) => b.status === 'menunggu').length,
-    disetujui: borrowings.filter((b) => b.status === 'disetujui' || b.status === 'dipinjam').length,
-    dikembalikan: borrowings.filter((b) => b.status === 'dikembalikan').length,
-    ditolak: borrowings.filter((b) => b.status === 'ditolak').length,
+    menunggu: borrowings.filter((b) => b.status === "menunggu").length,
+    disetujui: borrowings.filter(
+      (b) => b.status === "disetujui" || b.status === "dipinjam",
+    ).length,
+    dikembalikan: borrowings.filter((b) => b.status === "dikembalikan").length,
+    ditolak: borrowings.filter((b) => b.status === "ditolak").length,
   };
 
   const onEquipmentChange = (equipmentId: string) => {
     const selected = equipment.find((e) => e.id === equipmentId);
     setSelectedEquipment(selected || null);
-    form.setValue('inventaris_id', equipmentId);
+    form.setValue("inventaris_id", equipmentId);
   };
 
   const onSubmit = async (data: BorrowingFormData) => {
@@ -239,13 +300,18 @@ export default function PeminjamanPage() {
       const kembaliDate = new Date(data.tanggal_kembali_rencana);
 
       if (kembaliDate <= pinjamDate) {
-        toast.error('Tanggal kembali harus setelah tanggal pinjam');
+        toast.error("Tanggal kembali harus setelah tanggal pinjam");
         return;
       }
 
       // Check stock
-      if (selectedEquipment && data.jumlah_pinjam > selectedEquipment.jumlah_tersedia) {
-        toast.error(`Stok tidak cukup. Tersedia: ${selectedEquipment.jumlah_tersedia}`);
+      if (
+        selectedEquipment &&
+        data.jumlah_pinjam > selectedEquipment.jumlah_tersedia
+      ) {
+        toast.error(
+          `Stok tidak cukup. Tersedia: ${selectedEquipment.jumlah_tersedia}`,
+        );
         return;
       }
 
@@ -258,7 +324,7 @@ export default function PeminjamanPage() {
         keperluan: data.keperluan,
       });
 
-      toast.success('Pengajuan peminjaman berhasil dibuat!');
+      toast.success("Pengajuan peminjaman berhasil dibuat!");
       setDialogOpen(false);
       form.reset();
       setSelectedEquipment(null);
@@ -268,23 +334,25 @@ export default function PeminjamanPage() {
       await loadEquipment();
     } catch (error) {
       console.error(error);
-      toast.error('Gagal membuat pengajuan peminjaman');
+      toast.error("Gagal membuat pengajuan peminjaman");
     } finally {
       setSubmitting(false);
     }
   };
 
-    const handleMarkAsTaken = async (borrowingId: string) => {
+  const handleMarkAsTaken = async (borrowingId: string) => {
     try {
       setTakenLoading(true);
       setSelectedTakenId(borrowingId);
       await markBorrowingAsTaken(borrowingId);
-      toast.success('Alat sudah diambil dan status berubah menjadi sedang dipinjam');
+      toast.success(
+        "Alat sudah diambil dan status berubah menjadi sedang dipinjam",
+      );
       setTakenDialogOpen(false);
       await loadBorrowings();
     } catch (error) {
       console.error(error);
-      toast.error('Gagal menandai alat sebagai diambil');
+      toast.error("Gagal menandai alat sebagai diambil");
     } finally {
       setTakenLoading(false);
       setSelectedTakenId(null);
@@ -300,7 +368,7 @@ export default function PeminjamanPage() {
         keterangan_kembali: data.keterangan_kembali,
       });
 
-      toast.success('Alat berhasil dikembalikan dan stok otomatis bertambah!');
+      toast.success("Alat berhasil dikembalikan dan stok otomatis bertambah!");
       setReturnDialogOpen(false);
       returnForm.reset();
 
@@ -308,7 +376,7 @@ export default function PeminjamanPage() {
       await loadBorrowings();
     } catch (error) {
       console.error(error);
-      toast.error('Gagal mengembalikan alat');
+      toast.error("Gagal mengembalikan alat");
     } finally {
       setReturningLoading(false);
     }
@@ -318,17 +386,19 @@ export default function PeminjamanPage() {
    * Handle Edit - buka dialog edit
    */
   const handleEdit = (borrowing: MyBorrowingRequest) => {
-    const selectedEquip = equipment.find(e => e.nama_barang === borrowing.inventaris_nama);
+    const selectedEquip = equipment.find(
+      (e) => e.nama_barang === borrowing.inventaris_nama,
+    );
 
     setEditingId(borrowing.id);
     setSelectedEditEquipment(selectedEquip || null);
 
     editForm.reset({
-      inventaris_id: selectedEquip?.id || '',
+      inventaris_id: selectedEquip?.id || "",
       jumlah_pinjam: borrowing.jumlah_pinjam,
       tanggal_pinjam: borrowing.tanggal_pinjam,
       tanggal_kembali_rencana: borrowing.tanggal_kembali_rencana,
-      keperluan: borrowing.keperluan || '',
+      keperluan: borrowing.keperluan || "",
     });
 
     setEditDialogOpen(true);
@@ -340,7 +410,7 @@ export default function PeminjamanPage() {
   const onEditEquipmentChange = (equipmentId: string) => {
     const selected = equipment.find((e) => e.id === equipmentId);
     setSelectedEditEquipment(selected || null);
-    editForm.setValue('inventaris_id', equipmentId);
+    editForm.setValue("inventaris_id", equipmentId);
   };
 
   /**
@@ -357,13 +427,18 @@ export default function PeminjamanPage() {
       const kembaliDate = new Date(data.tanggal_kembali_rencana);
 
       if (kembaliDate <= pinjamDate) {
-        toast.error('Tanggal kembali harus setelah tanggal pinjam');
+        toast.error("Tanggal kembali harus setelah tanggal pinjam");
         return;
       }
 
       // Check stock
-      if (selectedEditEquipment && data.jumlah_pinjam > selectedEditEquipment.jumlah_tersedia) {
-        toast.error(`Stok tidak cukup. Tersedia: ${selectedEditEquipment.jumlah_tersedia}`);
+      if (
+        selectedEditEquipment &&
+        data.jumlah_pinjam > selectedEditEquipment.jumlah_tersedia
+      ) {
+        toast.error(
+          `Stok tidak cukup. Tersedia: ${selectedEditEquipment.jumlah_tersedia}`,
+        );
         return;
       }
 
@@ -376,7 +451,7 @@ export default function PeminjamanPage() {
         keperluan: data.keperluan,
       });
 
-      toast.success('Peminjaman berhasil diperbarui!');
+      toast.success("Peminjaman berhasil diperbarui!");
       setEditDialogOpen(false);
       setEditingId(null);
       setSelectedEditEquipment(null);
@@ -387,7 +462,7 @@ export default function PeminjamanPage() {
       await loadEquipment();
     } catch (error: any) {
       console.error(error);
-      toast.error(error.message || 'Gagal memperbarui peminjaman');
+      toast.error(error.message || "Gagal memperbarui peminjaman");
     } finally {
       setSubmitting(false);
     }
@@ -412,7 +487,7 @@ export default function PeminjamanPage() {
       setCancelingLoading(true);
       await cancelBorrowingRequest(cancelingId);
 
-      toast.success('Peminjaman berhasil dibatalkan');
+      toast.success("Peminjaman berhasil dibatalkan");
       setCancelDialogOpen(false);
       setCancelingId(null);
       setCancelingData(null);
@@ -421,7 +496,7 @@ export default function PeminjamanPage() {
       await loadBorrowings();
     } catch (error: any) {
       console.error(error);
-      toast.error(error.message || 'Gagal membatalkan peminjaman');
+      toast.error(error.message || "Gagal membatalkan peminjaman");
     } finally {
       setCancelingLoading(false);
     }
@@ -432,7 +507,9 @@ export default function PeminjamanPage() {
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold">Peminjaman Alat</h1>
-        <p className="text-muted-foreground">Kelola peminjaman peralatan laboratorium</p>
+        <p className="text-muted-foreground">
+          Kelola peminjaman peralatan laboratorium
+        </p>
       </div>
 
       {/* Stats Cards */}
@@ -549,15 +626,22 @@ export default function PeminjamanPage() {
                   </TableHeader>
                   <TableBody>
                     {filteredBorrowings.map((b) => {
-                      const cfg = STATUS_CONFIG[b.status as BorrowingStatus] || STATUS_CONFIG.menunggu;
+                      const cfg =
+                        STATUS_CONFIG[b.status as BorrowingStatus] ||
+                        STATUS_CONFIG.menunggu;
                       const Icon = cfg.icon;
-                      const isPending = b.status === 'menunggu' || b.status === 'pending';
-                      const isApproved = b.status === 'disetujui' || b.status === 'approved';
-                      const isInUse = b.status === 'dipinjam' || b.status === 'in_use';
+                      const isPending =
+                        b.status === "menunggu" || b.status === "pending";
+                      const isApproved =
+                        b.status === "disetujui" || b.status === "approved";
+                      const isInUse =
+                        b.status === "dipinjam" || b.status === "in_use";
 
                       return (
                         <TableRow key={b.id}>
-                          <TableCell className="font-mono">{b.inventaris_kode}</TableCell>
+                          <TableCell className="font-mono">
+                            {b.inventaris_kode}
+                          </TableCell>
                           <TableCell>{b.inventaris_nama}</TableCell>
                           <TableCell>{b.laboratorium_nama}</TableCell>
                           <TableCell>{b.jumlah_pinjam}</TableCell>
@@ -609,7 +693,7 @@ export default function PeminjamanPage() {
                                 size="sm"
                                 variant="outline"
                                 onClick={() => {
-                                  returnForm.setValue('peminjaman_id', b.id);
+                                  returnForm.setValue("peminjaman_id", b.id);
                                   setReturnDialogOpen(true);
                                 }}
                                 className="h-8 gap-1"
@@ -669,7 +753,9 @@ export default function PeminjamanPage() {
                 <div className="text-center py-8">
                   <Package className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
                   <p className="text-muted-foreground">
-                    {equipmentSearch ? 'Alat tidak ditemukan' : 'Tidak ada alat tersedia'}
+                    {equipmentSearch
+                      ? "Alat tidak ditemukan"
+                      : "Tidak ada alat tersedia"}
                   </p>
                 </div>
               ) : (
@@ -680,25 +766,32 @@ export default function PeminjamanPage() {
                       className="p-3 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
                       onClick={() => {
                         setSelectedEquipment(item);
-                        form.setValue('inventaris_id', item.id);
+                        form.setValue("inventaris_id", item.id);
                         setDialogOpen(true);
                       }}
                     >
-                      <div className="font-medium text-sm">{item.nama_barang}</div>
+                      <div className="font-medium text-sm">
+                        {item.nama_barang}
+                      </div>
                       <div className="text-xs text-muted-foreground mt-1">
                         Kode: {item.kode_barang}
                       </div>
                       <div className="text-xs text-muted-foreground">
-                        Lab: {item.laboratorium?.nama_lab || 'N/A'}
+                        Lab: {item.laboratorium?.nama_lab || "N/A"}
                       </div>
                       <div className="flex justify-between items-end mt-2">
                         <div className="text-xs">
                           <span className="text-green-600 font-semibold">
                             {item.jumlah_tersedia}
                           </span>
-                          <span className="text-muted-foreground"> tersedia</span>
+                          <span className="text-muted-foreground">
+                            {" "}
+                            tersedia
+                          </span>
                         </div>
-                        <div className="text-xs text-muted-foreground">{item.kondisi}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {item.kondisi}
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -728,7 +821,10 @@ export default function PeminjamanPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Pilih Alat</FormLabel>
-                    <Select value={field.value} onValueChange={onEquipmentChange}>
+                    <Select
+                      value={field.value}
+                      onValueChange={onEquipmentChange}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Pilih alat yang ingin dipinjam" />
@@ -761,7 +857,9 @@ export default function PeminjamanPage() {
                         max={selectedEquipment?.jumlah_tersedia || 1}
                         placeholder="1"
                         {...field}
-                        onChange={(e) => field.onChange(parseInt(e.target.value))}
+                        onChange={(e) =>
+                          field.onChange(parseInt(e.target.value))
+                        }
                       />
                     </FormControl>
                     {selectedEquipment && (
@@ -820,7 +918,7 @@ export default function PeminjamanPage() {
                       />
                     </FormControl>
                     <p className="text-xs text-muted-foreground">
-                      {(field.value || '').length}/500 karakter
+                      {(field.value || "").length}/500 karakter
                     </p>
                     <FormMessage />
                   </FormItem>
@@ -856,7 +954,6 @@ export default function PeminjamanPage() {
         </DialogContent>
       </Dialog>
 
-
       {/* Return Dialog */}
       <Dialog open={returnDialogOpen} onOpenChange={setReturnDialogOpen}>
         <DialogContent className="sm:max-w-[500px]">
@@ -868,7 +965,10 @@ export default function PeminjamanPage() {
           </DialogHeader>
 
           <Form {...returnForm}>
-            <form onSubmit={returnForm.handleSubmit(onReturnSubmit)} className="space-y-4">
+            <form
+              onSubmit={returnForm.handleSubmit(onReturnSubmit)}
+              className="space-y-4"
+            >
               {/* Kondisi Kembali */}
               <FormField
                 control={returnForm.control}
@@ -883,10 +983,18 @@ export default function PeminjamanPage() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="baik">Baik - Tidak ada kerusakan</SelectItem>
-                        <SelectItem value="rusak_ringan">Rusak Ringan - Masih bisa dipakai</SelectItem>
-                        <SelectItem value="rusak_berat">Rusak Berat - Tidak bisa dipakai</SelectItem>
-                        <SelectItem value="hilang">Hilang - Alat tidak ditemukan</SelectItem>
+                        <SelectItem value="baik">
+                          Baik - Tidak ada kerusakan
+                        </SelectItem>
+                        <SelectItem value="rusak_ringan">
+                          Rusak Ringan - Masih bisa dipakai
+                        </SelectItem>
+                        <SelectItem value="rusak_berat">
+                          Rusak Berat - Tidak bisa dipakai
+                        </SelectItem>
+                        <SelectItem value="hilang">
+                          Hilang - Alat tidak ditemukan
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -910,7 +1018,7 @@ export default function PeminjamanPage() {
                       />
                     </FormControl>
                     <p className="text-xs text-muted-foreground">
-                      {(field.value || '').length}/500 karakter
+                      {(field.value || "").length}/500 karakter
                     </p>
                     <FormMessage />
                   </FormItem>
@@ -927,7 +1035,11 @@ export default function PeminjamanPage() {
                 >
                   Batal
                 </Button>
-                <Button type="submit" disabled={returningLoading} className="gap-2">
+                <Button
+                  type="submit"
+                  disabled={returningLoading}
+                  className="gap-2"
+                >
                   {returningLoading ? (
                     <>
                       <span className="animate-spin">⌛</span>
@@ -946,7 +1058,6 @@ export default function PeminjamanPage() {
         </DialogContent>
       </Dialog>
 
-
       {/* Mark as Taken Dialog */}
       <Dialog open={takenDialogOpen} onOpenChange={setTakenDialogOpen}>
         <DialogContent className="sm:max-w-[400px]">
@@ -960,7 +1071,8 @@ export default function PeminjamanPage() {
           <div className="space-y-4">
             <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
               <p className="text-sm text-blue-800">
-                Dengan mengklik "Ambil", status peminjaman akan berubah dari "Disetujui" menjadi "Sedang Dipinjam".
+                Dengan mengklik "Ambil", status peminjaman akan berubah dari
+                "Disetujui" menjadi "Sedang Dipinjam".
               </p>
             </div>
           </div>
@@ -974,7 +1086,7 @@ export default function PeminjamanPage() {
               Batal
             </Button>
             <Button
-              onClick={() => handleMarkAsTaken(selectedTakenId || '')}
+              onClick={() => handleMarkAsTaken(selectedTakenId || "")}
               disabled={takenLoading}
               className="gap-2"
             >
@@ -1000,19 +1112,26 @@ export default function PeminjamanPage() {
           <DialogHeader>
             <DialogTitle>Edit Peminjaman Alat</DialogTitle>
             <DialogDescription>
-              Ubah detail peminjaman. Hanya bisa diubah jika statusnya masih menunggu.
+              Ubah detail peminjaman. Hanya bisa diubah jika statusnya masih
+              menunggu.
             </DialogDescription>
           </DialogHeader>
 
           <Form {...editForm}>
-            <form onSubmit={editForm.handleSubmit(onEditSubmit)} className="space-y-4">
+            <form
+              onSubmit={editForm.handleSubmit(onEditSubmit)}
+              className="space-y-4"
+            >
               <FormField
                 control={editForm.control}
                 name="inventaris_id"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Pilih Alat</FormLabel>
-                    <Select value={field.value} onValueChange={onEditEquipmentChange}>
+                    <Select
+                      value={field.value}
+                      onValueChange={onEditEquipmentChange}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Pilih alat" />
@@ -1043,7 +1162,9 @@ export default function PeminjamanPage() {
                         min="1"
                         max={selectedEditEquipment?.jumlah_tersedia || 1}
                         {...field}
-                        onChange={(e) => field.onChange(parseInt(e.target.value))}
+                        onChange={(e) =>
+                          field.onChange(parseInt(e.target.value))
+                        }
                       />
                     </FormControl>
                     {selectedEditEquipment && (
@@ -1099,7 +1220,7 @@ export default function PeminjamanPage() {
                       />
                     </FormControl>
                     <p className="text-xs text-muted-foreground">
-                      {(field.value || '').length}/500 karakter
+                      {(field.value || "").length}/500 karakter
                     </p>
                     <FormMessage />
                   </FormItem>
@@ -1139,23 +1260,28 @@ export default function PeminjamanPage() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Batalkan Peminjaman?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Anda akan membatalkan peminjaman alat berikut:
-              <div className="mt-3 p-3 bg-muted rounded-lg space-y-1">
-                <p className="font-semibold">{cancelingData?.inventaris_nama}</p>
-                <p className="text-sm text-muted-foreground">
-                  Kode: {cancelingData?.inventaris_kode}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Jumlah: {cancelingData?.jumlah_pinjam}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Tanggal: {cancelingData?.tanggal_pinjam} s/d {cancelingData?.tanggal_kembali_rencana}
+            <AlertDialogDescription asChild>
+              <div>
+                <p>Anda akan membatalkan peminjaman alat berikut:</p>
+                <div className="mt-3 p-3 bg-muted rounded-lg space-y-1">
+                  <p className="font-semibold">
+                    {cancelingData?.inventaris_nama}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Kode: {cancelingData?.inventaris_kode}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Jumlah: {cancelingData?.jumlah_pinjam}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Tanggal: {cancelingData?.tanggal_pinjam} s/d{" "}
+                    {cancelingData?.tanggal_kembali_rencana}
+                  </p>
+                </div>
+                <p className="mt-3 text-destructive font-semibold">
+                  Tindakan ini tidak dapat dibatalkan!
                 </p>
               </div>
-              <p className="mt-3 text-destructive font-semibold">
-                Tindakan ini tidak dapat dibatalkan!
-              </p>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -1173,7 +1299,7 @@ export default function PeminjamanPage() {
                   Membatalkan...
                 </>
               ) : (
-                'Ya, Batalkan Peminjaman'
+                "Ya, Batalkan Peminjaman"
               )}
             </AlertDialogAction>
           </AlertDialogFooter>

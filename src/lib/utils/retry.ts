@@ -6,7 +6,7 @@
  * Dependencies: logger
  */
 
-import { logger } from './logger';
+import { logger } from "./logger";
 
 export interface RetryOptions {
   /** Maximum number of retry attempts @default 3 */
@@ -29,13 +29,9 @@ export class RetryError extends Error {
   public readonly lastError: unknown;
   public readonly attempts: number;
 
-  constructor(
-    message: string,
-    lastError: unknown,
-    attempts: number
-  ) {
+  constructor(message: string, lastError: unknown, attempts: number) {
     super(message);
-    this.name = 'RetryError';
+    this.name = "RetryError";
     this.lastError = lastError;
     this.attempts = attempts;
   }
@@ -46,7 +42,7 @@ export class RetryError extends Error {
  */
 export async function retry<T>(
   fn: () => Promise<T>,
-  options: RetryOptions = {}
+  options: RetryOptions = {},
 ): Promise<T> {
   const {
     maxAttempts = 3,
@@ -79,7 +75,7 @@ export async function retry<T>(
 
       logger.warn(
         `Retry attempt ${attempt}/${maxAttempts} after ${currentDelay}ms`,
-        error instanceof Error ? error.message : String(error)
+        error instanceof Error ? error.message : String(error),
       );
 
       onRetry?.(error, attempt, currentDelay);
@@ -95,7 +91,7 @@ export async function retry<T>(
   throw new RetryError(
     `Failed after ${maxAttempts} attempts`,
     lastError,
-    maxAttempts
+    maxAttempts,
   );
 }
 
@@ -105,7 +101,7 @@ export async function retry<T>(
 export async function retryWithPredicate<T>(
   fn: () => Promise<T>,
   predicate: (error: unknown) => boolean,
-  options: Omit<RetryOptions, 'shouldRetry'> = {}
+  options: Omit<RetryOptions, "shouldRetry"> = {},
 ): Promise<T> {
   return retry(fn, {
     ...options,
@@ -118,15 +114,15 @@ export async function retryWithPredicate<T>(
  */
 export async function retryOnNetworkError<T>(
   fn: () => Promise<T>,
-  options: Omit<RetryOptions, 'shouldRetry'> = {}
+  options: Omit<RetryOptions, "shouldRetry"> = {},
 ): Promise<T> {
   return retry(fn, {
     ...options,
     shouldRetry: (error) => {
-      if (error instanceof TypeError && error.message.includes('fetch')) {
+      if (error instanceof TypeError && error.message.includes("fetch")) {
         return true;
       }
-      if (error && typeof error === 'object' && 'status' in error) {
+      if (error && typeof error === "object" && "status" in error) {
         const status = (error as { status: number }).status;
         return status >= 500 || status === 408 || status === 429;
       }
@@ -144,7 +140,7 @@ function sleep(ms: number): Promise<void> {
  */
 export function createRetryWrapper<TArgs extends unknown[], TReturn>(
   fn: (...args: TArgs) => Promise<TReturn>,
-  options: RetryOptions = {}
+  options: RetryOptions = {},
 ): (...args: TArgs) => Promise<TReturn> {
   return (...args: TArgs) => retry(() => fn(...args), options);
 }

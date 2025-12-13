@@ -3,17 +3,20 @@
  * Form for updating user profile information
  */
 
-import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useAuth } from '@/lib/hooks/useAuth';
-import { profileUpdateSchema, type ProfileUpdateFormData } from '@/lib/validations/user.schema';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { User, Phone, CheckCircle2, AlertCircle } from 'lucide-react';
-import { supabase } from '@/lib/supabase/client';
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useAuth } from "@/lib/hooks/useAuth";
+import {
+  profileUpdateSchema,
+  type ProfileUpdateFormData,
+} from "@/lib/validations/user.schema";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { User, Phone, CheckCircle2, AlertCircle } from "lucide-react";
+import { supabase } from "@/lib/supabase/client";
 
 interface ProfileFormProps {
   onSuccess?: () => void;
@@ -33,16 +36,16 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
   } = useForm<ProfileUpdateFormData>({
     resolver: zodResolver(profileUpdateSchema),
     defaultValues: {
-      full_name: user?.full_name || '',
-      phone: user?.phone || '',
+      full_name: user?.full_name || "",
+      phone: user?.phone || "",
     },
   });
 
   // Update form when user data changes
   useEffect(() => {
     if (user) {
-      setValue('full_name', user.full_name || '');
-      setValue('phone', user.phone || '');
+      setValue("full_name", user.full_name || "");
+      setValue("phone", user.phone || "");
     }
   }, [user, setValue]);
 
@@ -52,28 +55,28 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
       setSuccess(null);
 
       if (!user?.id) {
-        throw new Error('User not found');
+        throw new Error("User not found");
       }
 
       // Update user profile in database
       const { error: updateError } = await supabase
-        .from('users')
+        .from("users")
         .update({
           full_name: data.full_name,
           phone: data.phone || null,
           updated_at: new Date().toISOString(),
         })
-        .eq('id', user.id);
+        .eq("id", user.id);
 
       if (updateError) throw updateError;
 
-      setSuccess('Profile updated successfully!');
+      setSuccess("Profile updated successfully!");
 
       setTimeout(() => {
         onSuccess?.();
       }, 1500);
     } catch (err: unknown) {
-      let errorMessage = 'Failed to update profile. Please try again.';
+      let errorMessage = "Failed to update profile. Please try again.";
       if (err instanceof Error) {
         errorMessage = err.message;
       }
@@ -107,12 +110,13 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
         <Input
           id="email"
           type="email"
-          value={user?.email || ''}
+          value={user?.email || ""}
           disabled
           className="bg-gray-50"
         />
         <p className="text-xs text-gray-500">
-          Email cannot be changed. Contact administrator if you need to update it.
+          Email cannot be changed. Contact administrator if you need to update
+          it.
         </p>
       </div>
 
@@ -126,7 +130,7 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
           id="full_name"
           type="text"
           placeholder="Enter your full name"
-          {...register('full_name')}
+          {...register("full_name")}
           disabled={isSubmitting}
         />
         {errors.full_name && (
@@ -144,7 +148,7 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
           id="phone"
           type="tel"
           placeholder="+62 xxx xxx xxxx"
-          {...register('phone')}
+          {...register("phone")}
           disabled={isSubmitting}
         />
         {errors.phone && (
@@ -158,7 +162,7 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
         <Input
           id="role"
           type="text"
-          value={user?.role || ''}
+          value={user?.role || ""}
           disabled
           className="bg-gray-50 capitalize"
         />
@@ -168,18 +172,14 @@ export function ProfileForm({ onSuccess, onCancel }: ProfileFormProps) {
       </div>
 
       <div className="flex gap-2 pt-2">
-        <Button
-          type="submit"
-          className="flex-1"
-          disabled={isSubmitting}
-        >
+        <Button type="submit" className="flex-1" disabled={isSubmitting}>
           {isSubmitting ? (
             <>
               <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
               Updating...
             </>
           ) : (
-            'Update Profile'
+            "Update Profile"
           )}
         </Button>
 

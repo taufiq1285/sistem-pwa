@@ -1,14 +1,49 @@
-import { useState, useEffect } from 'react';
-import { Users, UserPlus, Search, RefreshCw, Shield, CheckCircle, XCircle, Edit, Trash2 } from 'lucide-react';
-import { toast } from 'sonner';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
+import { useState, useEffect } from "react";
+import {
+  Users,
+  UserPlus,
+  Search,
+  RefreshCw,
+  Shield,
+  CheckCircle,
+  XCircle,
+  Edit,
+  Trash2,
+} from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import {
   getAllUsers,
   getUserStats,
@@ -19,24 +54,30 @@ import {
   type SystemUser,
   type UserStats,
   type UpdateUserData,
-  type CreateUserData
-} from '@/lib/api/users.api';
+  type CreateUserData,
+} from "@/lib/api/users.api";
 
 const ROLE_BADGE = {
-  admin: 'default' as const,
-  dosen: 'secondary' as const,
-  mahasiswa: 'outline' as const,
-  laboran: 'destructive' as const
+  admin: "default" as const,
+  dosen: "secondary" as const,
+  mahasiswa: "outline" as const,
+  laboran: "destructive" as const,
 };
 
 export default function UsersPage() {
   const [users, setUsers] = useState<SystemUser[]>([]);
   const [stats, setStats] = useState<UserStats>({
-    total: 0, admin: 0, dosen: 0, mahasiswa: 0, laboran: 0, active: 0, inactive: 0
+    total: 0,
+    admin: 0,
+    dosen: 0,
+    mahasiswa: 0,
+    laboran: 0,
+    active: 0,
+    inactive: 0,
   });
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [roleFilter, setRoleFilter] = useState('all');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [roleFilter, setRoleFilter] = useState("all");
 
   // Edit dialog
   const [editingUser, setEditingUser] = useState<SystemUser | null>(null);
@@ -50,43 +91,51 @@ export default function UsersPage() {
   // Add dialog
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [addFormData, setAddFormData] = useState<CreateUserData>({
-    email: '',
-    password: '',
-    full_name: '',
-    role: 'mahasiswa',
-    nim: '',
-    nip: '',
-    nidn: '',
-    phone: '',
+    email: "",
+    password: "",
+    full_name: "",
+    role: "mahasiswa",
+    nim: "",
+    nip: "",
+    nidn: "",
+    phone: "",
   });
 
-  useEffect(() => { loadUsers(); }, []);
+  useEffect(() => {
+    loadUsers();
+  }, []);
 
   const loadUsers = async () => {
     try {
-      console.log('[loadUsers] START - fetching fresh data...');
+      console.log("[loadUsers] START - fetching fresh data...");
       setLoading(true);
-      const [usersData, statsData] = await Promise.all([getAllUsers(), getUserStats()]);
-      console.log('[loadUsers] Data fetched:', { userCount: usersData.length, stats: statsData });
+      const [usersData, statsData] = await Promise.all([
+        getAllUsers(),
+        getUserStats(),
+      ]);
+      console.log("[loadUsers] Data fetched:", {
+        userCount: usersData.length,
+        stats: statsData,
+      });
       setUsers(usersData);
       setStats(statsData);
-      console.log('[loadUsers] State updated with', usersData.length, 'users');
+      console.log("[loadUsers] State updated with", usersData.length, "users");
     } catch (error) {
-      console.error('[loadUsers] Error:', error);
-      toast.error('Gagal memuat data users');
+      console.error("[loadUsers] Error:", error);
+      toast.error("Gagal memuat data users");
     } finally {
       setLoading(false);
-      console.log('[loadUsers] DONE');
+      console.log("[loadUsers] DONE");
     }
   };
 
   const handleToggle = async (userId: string, currentStatus: boolean) => {
     try {
       await toggleUserStatus(userId, !currentStatus);
-      toast.success('Status updated');
+      toast.success("Status updated");
       await loadUsers();
     } catch (error) {
-      toast.error('Gagal mengubah status');
+      toast.error("Gagal mengubah status");
     }
   };
 
@@ -96,7 +145,7 @@ export default function UsersPage() {
       email: user.email,
       full_name: user.full_name,
       role: user.role,
-      is_active: user.is_active
+      is_active: user.is_active,
     });
     setIsEditDialogOpen(true);
   };
@@ -105,42 +154,48 @@ export default function UsersPage() {
     if (!editingUser) return;
     try {
       await updateUser(editingUser.id, editFormData);
-      toast.success('User updated successfully');
+      toast.success("User updated successfully");
       setIsEditDialogOpen(false);
       await loadUsers();
     } catch (error) {
-      toast.error('Failed to update user');
+      toast.error("Failed to update user");
       console.error(error);
     }
   };
 
   const handleAdd = () => {
     setAddFormData({
-      email: '',
-      password: '',
-      full_name: '',
-      role: 'mahasiswa',
-      nim: '',
-      nip: '',
-      nidn: '',
-      phone: '',
+      email: "",
+      password: "",
+      full_name: "",
+      role: "mahasiswa",
+      nim: "",
+      nip: "",
+      nidn: "",
+      phone: "",
     });
     setIsAddDialogOpen(true);
   };
 
   const handleCreate = async () => {
     try {
-      if (!addFormData.email || !addFormData.password || !addFormData.full_name) {
-        toast.error('Please fill in all required fields');
+      if (
+        !addFormData.email ||
+        !addFormData.password ||
+        !addFormData.full_name
+      ) {
+        toast.error("Please fill in all required fields");
         return;
       }
 
       await createUser(addFormData);
-      toast.success('User created successfully');
+      toast.success("User created successfully");
       setIsAddDialogOpen(false);
       await loadUsers();
     } catch (error: any) {
-      toast.error('Failed to create user: ' + (error.message || 'Unknown error'));
+      toast.error(
+        "Failed to create user: " + (error.message || "Unknown error"),
+      );
       console.error(error);
     }
   };
@@ -154,37 +209,43 @@ export default function UsersPage() {
     if (!deletingUser) return;
 
     try {
-      console.log('[confirmDelete] Deleting user:', deletingUser.id, deletingUser.email);
+      console.log(
+        "[confirmDelete] Deleting user:",
+        deletingUser.id,
+        deletingUser.email,
+      );
       await deleteUser(deletingUser.id);
-      console.log('[confirmDelete] Delete successful!');
+      console.log("[confirmDelete] Delete successful!");
 
       toast.success(`User "${deletingUser.full_name}" deleted successfully`);
       setIsDeleteDialogOpen(false);
       setDeletingUser(null);
 
       // Force reload from server
-      console.log('[confirmDelete] Reloading user list...');
+      console.log("[confirmDelete] Reloading user list...");
       await loadUsers();
-      console.log('[confirmDelete] Reload complete!');
+      console.log("[confirmDelete] Reload complete!");
     } catch (error: any) {
-      console.error('[confirmDelete] Delete failed:', error);
-      console.error('[confirmDelete] Error details:', {
+      console.error("[confirmDelete] Delete failed:", error);
+      console.error("[confirmDelete] Error details:", {
         message: error?.message,
         code: error?.code,
         details: error?.details,
-        hint: error?.hint
+        hint: error?.hint,
       });
-      const errorMsg = error?.message || error?.error?.message || 'Unknown error';
-      toast.error('Failed to delete user: ' + errorMsg);
+      const errorMsg =
+        error?.message || error?.error?.message || "Unknown error";
+      toast.error("Failed to delete user: " + errorMsg);
     }
   };
 
-  const filteredUsers = users.filter(u => {
-    const match = u.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                  u.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                  (u.nim && u.nim.includes(searchQuery)) ||
-                  (u.nip && u.nip.includes(searchQuery));
-    const role = roleFilter === 'all' || u.role === roleFilter;
+  const filteredUsers = users.filter((u) => {
+    const match =
+      u.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      u.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (u.nim && u.nim.includes(searchQuery)) ||
+      (u.nip && u.nip.includes(searchQuery));
+    const role = roleFilter === "all" || u.role === roleFilter;
     return match && role;
   });
 
@@ -198,10 +259,12 @@ export default function UsersPage() {
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={loadUsers}>
-            <RefreshCw className="h-4 w-4 mr-2" />Refresh
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
           </Button>
           <Button onClick={handleAdd}>
-            <UserPlus className="h-4 w-4 mr-2" />Add User
+            <UserPlus className="h-4 w-4 mr-2" />
+            Add User
           </Button>
         </div>
       </div>
@@ -215,7 +278,9 @@ export default function UsersPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.total}</div>
-            <p className="text-xs text-muted-foreground">{stats.active} active</p>
+            <p className="text-xs text-muted-foreground">
+              {stats.active} active
+            </p>
           </CardContent>
         </Card>
 
@@ -267,7 +332,7 @@ export default function UsersPage() {
           <Input
             placeholder="Search..."
             value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
+            onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-9"
           />
         </div>
@@ -314,7 +379,7 @@ export default function UsersPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredUsers.map(u => (
+                {filteredUsers.map((u) => (
                   <TableRow key={u.id}>
                     <TableCell className="font-medium">{u.full_name}</TableCell>
                     <TableCell>{u.email}</TableCell>
@@ -322,7 +387,7 @@ export default function UsersPage() {
                       <Badge variant={ROLE_BADGE[u.role]}>{u.role}</Badge>
                     </TableCell>
                     <TableCell className="font-mono text-sm">
-                      {u.nim || u.nip || u.nidn || '-'}
+                      {u.nim || u.nip || u.nidn || "-"}
                     </TableCell>
                     <TableCell>
                       <Button
@@ -382,8 +447,13 @@ export default function UsersPage() {
               <Label htmlFor="full_name">Full Name</Label>
               <Input
                 id="full_name"
-                value={editFormData.full_name || ''}
-                onChange={(e) => setEditFormData({...editFormData, full_name: e.target.value})}
+                value={editFormData.full_name || ""}
+                onChange={(e) =>
+                  setEditFormData({
+                    ...editFormData,
+                    full_name: e.target.value,
+                  })
+                }
               />
             </div>
             <div>
@@ -391,15 +461,19 @@ export default function UsersPage() {
               <Input
                 id="email"
                 type="email"
-                value={editFormData.email || ''}
-                onChange={(e) => setEditFormData({...editFormData, email: e.target.value})}
+                value={editFormData.email || ""}
+                onChange={(e) =>
+                  setEditFormData({ ...editFormData, email: e.target.value })
+                }
               />
             </div>
             <div>
               <Label htmlFor="role">Role</Label>
               <Select
                 value={editFormData.role}
-                onValueChange={(value: any) => setEditFormData({...editFormData, role: value})}
+                onValueChange={(value: any) =>
+                  setEditFormData({ ...editFormData, role: value })
+                }
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -417,12 +491,20 @@ export default function UsersPage() {
                 type="checkbox"
                 id="is_active_edit"
                 checked={editFormData.is_active ?? true}
-                onChange={(e) => setEditFormData({...editFormData, is_active: e.target.checked})}
+                onChange={(e) =>
+                  setEditFormData({
+                    ...editFormData,
+                    is_active: e.target.checked,
+                  })
+                }
               />
               <Label htmlFor="is_active_edit">Active</Label>
             </div>
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+              <Button
+                variant="outline"
+                onClick={() => setIsEditDialogOpen(false)}
+              >
                 Cancel
               </Button>
               <Button onClick={handleUpdate}>Save Changes</Button>
@@ -444,7 +526,9 @@ export default function UsersPage() {
               <Input
                 id="new_full_name"
                 value={addFormData.full_name}
-                onChange={(e) => setAddFormData({...addFormData, full_name: e.target.value})}
+                onChange={(e) =>
+                  setAddFormData({ ...addFormData, full_name: e.target.value })
+                }
                 placeholder="John Doe"
               />
             </div>
@@ -454,7 +538,9 @@ export default function UsersPage() {
                 id="new_email"
                 type="email"
                 value={addFormData.email}
-                onChange={(e) => setAddFormData({...addFormData, email: e.target.value})}
+                onChange={(e) =>
+                  setAddFormData({ ...addFormData, email: e.target.value })
+                }
                 placeholder="user@example.com"
               />
             </div>
@@ -464,7 +550,9 @@ export default function UsersPage() {
                 id="new_password"
                 type="password"
                 value={addFormData.password}
-                onChange={(e) => setAddFormData({...addFormData, password: e.target.value})}
+                onChange={(e) =>
+                  setAddFormData({ ...addFormData, password: e.target.value })
+                }
                 placeholder="Minimum 6 characters"
               />
             </div>
@@ -472,7 +560,9 @@ export default function UsersPage() {
               <Label htmlFor="new_role">Role *</Label>
               <Select
                 value={addFormData.role}
-                onValueChange={(value: any) => setAddFormData({...addFormData, role: value})}
+                onValueChange={(value: any) =>
+                  setAddFormData({ ...addFormData, role: value })
+                }
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -487,26 +577,30 @@ export default function UsersPage() {
             </div>
 
             {/* Role-specific fields */}
-            {addFormData.role === 'mahasiswa' && (
+            {addFormData.role === "mahasiswa" && (
               <div>
                 <Label htmlFor="new_nim">NIM</Label>
                 <Input
                   id="new_nim"
                   value={addFormData.nim}
-                  onChange={(e) => setAddFormData({...addFormData, nim: e.target.value})}
+                  onChange={(e) =>
+                    setAddFormData({ ...addFormData, nim: e.target.value })
+                  }
                   placeholder="1234567890"
                 />
               </div>
             )}
 
-            {addFormData.role === 'dosen' && (
+            {addFormData.role === "dosen" && (
               <>
                 <div>
                   <Label htmlFor="new_nip">NIP</Label>
                   <Input
                     id="new_nip"
                     value={addFormData.nip}
-                    onChange={(e) => setAddFormData({...addFormData, nip: e.target.value})}
+                    onChange={(e) =>
+                      setAddFormData({ ...addFormData, nip: e.target.value })
+                    }
                     placeholder="198001012020121001"
                   />
                 </div>
@@ -515,7 +609,9 @@ export default function UsersPage() {
                   <Input
                     id="new_nidn"
                     value={addFormData.nidn}
-                    onChange={(e) => setAddFormData({...addFormData, nidn: e.target.value})}
+                    onChange={(e) =>
+                      setAddFormData({ ...addFormData, nidn: e.target.value })
+                    }
                     placeholder="0101018001"
                   />
                 </div>
@@ -527,13 +623,18 @@ export default function UsersPage() {
               <Input
                 id="new_phone"
                 value={addFormData.phone}
-                onChange={(e) => setAddFormData({...addFormData, phone: e.target.value})}
+                onChange={(e) =>
+                  setAddFormData({ ...addFormData, phone: e.target.value })
+                }
                 placeholder="08123456789"
               />
             </div>
 
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+              <Button
+                variant="outline"
+                onClick={() => setIsAddDialogOpen(false)}
+              >
                 Cancel
               </Button>
               <Button onClick={handleCreate}>Create User</Button>
@@ -564,9 +665,14 @@ export default function UsersPage() {
                 <p className="text-lg font-bold text-gray-900 dark:text-white">
                   {deletingUser.full_name}
                 </p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">{deletingUser.email}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {deletingUser.email}
+                </p>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                  Role: <Badge variant={ROLE_BADGE[deletingUser.role]}>{deletingUser.role}</Badge>
+                  Role:{" "}
+                  <Badge variant={ROLE_BADGE[deletingUser.role]}>
+                    {deletingUser.role}
+                  </Badge>
                 </p>
               </div>
 

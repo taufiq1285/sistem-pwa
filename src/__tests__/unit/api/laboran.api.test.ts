@@ -147,7 +147,7 @@ describe("Laboran API", () => {
       });
 
       await expect(laboranAPI.getLaboranStats()).rejects.toThrow(
-        "Database error"
+        "Database error",
       );
     });
   });
@@ -499,7 +499,7 @@ describe("Laboran API", () => {
       });
 
       await expect(laboranAPI.approvePeminjaman("pem-1")).rejects.toThrow(
-        "Stok tidak cukup"
+        "Stok tidak cukup",
       );
     });
 
@@ -510,7 +510,7 @@ describe("Laboran API", () => {
       } as any);
 
       await expect(laboranAPI.approvePeminjaman("pem-1")).rejects.toThrow(
-        "User not authenticated"
+        "User not authenticated",
       );
     });
 
@@ -572,7 +572,7 @@ describe("Laboran API", () => {
       } as any);
 
       await expect(
-        laboranAPI.rejectPeminjaman("pem-1", "Reason")
+        laboranAPI.rejectPeminjaman("pem-1", "Reason"),
       ).rejects.toThrow("User not authenticated");
     });
   });
@@ -638,7 +638,7 @@ describe("Laboran API", () => {
         await laboranAPI.getInventarisList({ search: "mikroskop" });
 
         expect(orMock).toHaveBeenCalledWith(
-          expect.stringContaining("nama_barang.ilike")
+          expect.stringContaining("nama_barang.ilike"),
         );
       });
 
@@ -714,7 +714,7 @@ describe("Laboran API", () => {
             nama_barang: "Item",
             jumlah: 1,
             jumlah_tersedia: 1,
-          })
+          }),
         ).rejects.toThrow();
       });
     });
@@ -730,7 +730,7 @@ describe("Laboran API", () => {
         } as any);
 
         await expect(
-          laboranAPI.updateInventaris("inv-1", { nama_barang: "New Name" })
+          laboranAPI.updateInventaris("inv-1", { nama_barang: "New Name" }),
         ).resolves.not.toThrow();
       });
     });
@@ -762,7 +762,7 @@ describe("Laboran API", () => {
         });
 
         await expect(
-          laboranAPI.deleteInventaris("inv-1")
+          laboranAPI.deleteInventaris("inv-1"),
         ).resolves.not.toThrow();
       });
 
@@ -781,7 +781,7 @@ describe("Laboran API", () => {
         } as any);
 
         await expect(laboranAPI.deleteInventaris("inv-1")).rejects.toThrow(
-          "Cannot delete inventaris with active borrowings"
+          "Cannot delete inventaris with active borrowings",
         );
       });
     });
@@ -851,7 +851,7 @@ describe("Laboran API", () => {
           laboranAPI.createLaboratorium({
             kode_lab: "LAB1",
             nama_lab: "Lab Baru",
-          })
+          }),
         ).resolves.not.toThrow();
       });
     });
@@ -881,7 +881,7 @@ describe("Laboran API", () => {
         });
 
         await expect(
-          laboranAPI.deleteLaboratorium("lab-1")
+          laboranAPI.deleteLaboratorium("lab-1"),
         ).resolves.not.toThrow();
       });
 
@@ -898,7 +898,7 @@ describe("Laboran API", () => {
         } as any);
 
         await expect(laboranAPI.deleteLaboratorium("lab-1")).rejects.toThrow(
-          "Cannot delete laboratory that has equipment assigned to it"
+          "Cannot delete laboratory that has equipment assigned to it",
         );
       });
     });

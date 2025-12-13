@@ -10,16 +10,19 @@
  * - Pause/resume functionality
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { SyncManager } from '../../../../lib/offline/sync-manager';
-import type { SyncEvent, SyncResult } from '../../../../lib/offline/sync-manager';
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { SyncManager } from "../../../../lib/offline/sync-manager";
+import type {
+  SyncEvent,
+  SyncResult,
+} from "../../../../lib/offline/sync-manager";
 
 // ============================================================================
 // MOCKS
 // ============================================================================
 
 // Setup mocks
-vi.mock('../../../../lib/offline/queue-manager', () => ({
+vi.mock("../../../../lib/offline/queue-manager", () => ({
   queueManager: {
     isReady: vi.fn(() => true),
     initialize: vi.fn(() => Promise.resolve()),
@@ -30,21 +33,21 @@ vi.mock('../../../../lib/offline/queue-manager', () => ({
         syncing: 0,
         completed: 3,
         failed: 2,
-      })
+      }),
     ),
     processQueue: vi.fn(() =>
       Promise.resolve({
         processed: 5,
         succeeded: 4,
         failed: 1,
-        errors: [{ id: 'item-1', error: 'Network error' }],
-      })
+        errors: [{ id: "item-1", error: "Network error" }],
+      }),
     ),
     retryFailed: vi.fn(() => Promise.resolve(2)),
   },
 }));
 
-vi.mock('../../../../lib/offline/network-detector', () => ({
+vi.mock("../../../../lib/offline/network-detector", () => ({
   networkDetector: {
     isReady: vi.fn(() => true),
     initialize: vi.fn(),
@@ -64,7 +67,7 @@ const mockServiceWorkerRegistration = {
 };
 
 // Mock navigator
-Object.defineProperty(global, 'navigator', {
+Object.defineProperty(global, "navigator", {
   value: {
     serviceWorker: {
       ready: Promise.resolve(mockServiceWorkerRegistration),
@@ -79,7 +82,7 @@ Object.defineProperty(global, 'navigator', {
 // TESTS
 // ============================================================================
 
-describe('SyncManager', () => {
+describe("SyncManager", () => {
   let syncManager: SyncManager;
   let mockQueueManager: any;
   let mockNetworkDetector: any;
@@ -89,8 +92,9 @@ describe('SyncManager', () => {
     vi.clearAllMocks();
 
     // Get mock references
-    const queueModule = await import('../../../../lib/offline/queue-manager');
-    const networkModule = await import('../../../../lib/offline/network-detector');
+    const queueModule = await import("../../../../lib/offline/queue-manager");
+    const networkModule =
+      await import("../../../../lib/offline/network-detector");
     mockQueueManager = queueModule.queueManager;
     mockNetworkDetector = networkModule.networkDetector;
 
@@ -112,34 +116,34 @@ describe('SyncManager', () => {
   // INITIALIZATION
   // ==========================================================================
 
-  describe('Initialization', () => {
-    it('should initialize successfully', async () => {
+  describe("Initialization", () => {
+    it("should initialize successfully", async () => {
       await syncManager.initialize();
 
       expect(syncManager.isReady()).toBe(true);
       expect(mockNetworkDetector.on).toHaveBeenCalled();
     });
 
-    it('should not initialize twice', async () => {
+    it("should not initialize twice", async () => {
       await syncManager.initialize();
       await syncManager.initialize();
 
       expect(mockNetworkDetector.on).toHaveBeenCalledTimes(1);
     });
 
-    it('should handle initialization errors gracefully', async () => {
+    it("should handle initialization errors gracefully", async () => {
       mockNetworkDetector.on.mockImplementationOnce(() => {
-        throw new Error('Network detector error');
+        throw new Error("Network detector error");
       });
 
       await expect(syncManager.initialize()).resolves.not.toThrow();
     });
 
-    it('should register background sync when supported', async () => {
+    it("should register background sync when supported", async () => {
       await syncManager.initialize();
 
       expect(mockServiceWorkerRegistration.sync.register).toHaveBeenCalledWith(
-        'background-sync'
+        "background-sync",
       );
     });
   });
@@ -148,12 +152,12 @@ describe('SyncManager', () => {
   // SYNC PROCESSING
   // ==========================================================================
 
-  describe('Sync Processing', () => {
+  describe("Sync Processing", () => {
     beforeEach(async () => {
       await syncManager.initialize();
     });
 
-    it('should process sync successfully', async () => {
+    it("should process sync successfully", async () => {
       const result = await syncManager.processSync();
 
       expect(result.success).toBe(false); // Has 1 failed item
@@ -164,7 +168,7 @@ describe('SyncManager', () => {
       expect(result.timestamp).toBeGreaterThan(0);
     });
 
-    it('should handle empty queue', async () => {
+    it("should handle empty queue", async () => {
       mockQueueManager.getStats.mockResolvedValueOnce({
         total: 0,
         pending: 0,
@@ -180,7 +184,7 @@ describe('SyncManager', () => {
       expect(result.failed).toBe(0);
     });
 
-    it('should prevent concurrent syncs', async () => {
+    it("should prevent concurrent syncs", async () => {
       // Start first sync
       const promise1 = syncManager.processSync();
 
@@ -194,7 +198,7 @@ describe('SyncManager', () => {
       await promise1;
     });
 
-    it('should initialize queue manager if not ready', async () => {
+    it("should initialize queue manager if not ready", async () => {
       mockQueueManager.isReady.mockReturnValueOnce(false);
 
       await syncManager.processSync();
@@ -202,7 +206,7 @@ describe('SyncManager', () => {
       expect(mockQueueManager.initialize).toHaveBeenCalled();
     });
 
-    it('should update statistics after sync', async () => {
+    it("should update statistics after sync", async () => {
       await syncManager.processSync();
 
       const stats = syncManager.getSyncStats();
@@ -213,28 +217,30 @@ describe('SyncManager', () => {
       expect(stats.syncHistory).toHaveLength(1);
     });
 
-    it('should send message to service worker on completion', async () => {
+    it("should send message to service worker on completion", async () => {
       await syncManager.processSync();
 
-      expect(mockServiceWorkerRegistration.active.postMessage).toHaveBeenCalledWith(
+      expect(
+        mockServiceWorkerRegistration.active.postMessage,
+      ).toHaveBeenCalledWith(
         expect.objectContaining({
-          type: 'SYNC_FAILED', // Because we have 1 failed item
+          type: "SYNC_FAILED", // Because we have 1 failed item
           processed: 5,
           failed: 1,
-        })
+        }),
       );
     });
 
-    it('should handle sync errors gracefully', async () => {
+    it("should handle sync errors gracefully", async () => {
       mockQueueManager.processQueue.mockRejectedValueOnce(
-        new Error('Queue processing failed')
+        new Error("Queue processing failed"),
       );
 
       const result = await syncManager.processSync();
 
       expect(result.success).toBe(false);
       expect(result.errors).toHaveLength(1);
-      expect(result.errors[0].error).toContain('Queue processing failed');
+      expect(result.errors[0].error).toContain("Queue processing failed");
     });
   });
 
@@ -242,37 +248,37 @@ describe('SyncManager', () => {
   // EVENT SYSTEM
   // ==========================================================================
 
-  describe('Event System', () => {
+  describe("Event System", () => {
     beforeEach(async () => {
       await syncManager.initialize();
     });
 
-    it('should emit start event when sync begins', async () => {
+    it("should emit start event when sync begins", async () => {
       const events: SyncEvent[] = [];
       syncManager.on((event) => events.push(event));
 
       await syncManager.processSync();
 
-      const startEvent = events.find((e) => e.type === 'start');
+      const startEvent = events.find((e) => e.type === "start");
       expect(startEvent).toBeDefined();
-      expect(startEvent?.progress?.status).toBe('syncing');
+      expect(startEvent?.progress?.status).toBe("syncing");
       expect(startEvent?.progress?.total).toBe(5);
     });
 
-    it('should emit complete event when sync finishes', async () => {
+    it("should emit complete event when sync finishes", async () => {
       const events: SyncEvent[] = [];
       syncManager.on((event) => events.push(event));
 
       await syncManager.processSync();
 
-      const completeEvent = events.find((e) => e.type === 'complete');
+      const completeEvent = events.find((e) => e.type === "complete");
       expect(completeEvent).toBeDefined();
       expect(completeEvent?.result).toBeDefined();
     });
 
-    it('should emit error event on sync failure', async () => {
+    it("should emit error event on sync failure", async () => {
       mockQueueManager.processQueue.mockRejectedValueOnce(
-        new Error('Sync failed')
+        new Error("Sync failed"),
       );
 
       const events: SyncEvent[] = [];
@@ -280,18 +286,18 @@ describe('SyncManager', () => {
 
       await syncManager.processSync();
 
-      const errorEvent = events.find((e) => e.type === 'error');
+      const errorEvent = events.find((e) => e.type === "error");
       expect(errorEvent).toBeDefined();
       expect(errorEvent?.error).toBeDefined();
     });
 
-    it('should allow adding and removing listeners', () => {
+    it("should allow adding and removing listeners", () => {
       const listener = vi.fn();
       const unsubscribe = syncManager.on(listener);
 
       // Trigger internal event
-      syncManager['emitEvent']({
-        type: 'start',
+      syncManager["emitEvent"]({
+        type: "start",
         timestamp: Date.now(),
       });
 
@@ -300,25 +306,25 @@ describe('SyncManager', () => {
       // Unsubscribe
       unsubscribe();
 
-      syncManager['emitEvent']({
-        type: 'start',
+      syncManager["emitEvent"]({
+        type: "start",
         timestamp: Date.now(),
       });
 
       expect(listener).toHaveBeenCalledTimes(1); // Still 1, not called again
     });
 
-    it('should handle listener errors gracefully', () => {
+    it("should handle listener errors gracefully", () => {
       const badListener = () => {
-        throw new Error('Listener error');
+        throw new Error("Listener error");
       };
       const goodListener = vi.fn();
 
       syncManager.on(badListener);
       syncManager.on(goodListener);
 
-      syncManager['emitEvent']({
-        type: 'start',
+      syncManager["emitEvent"]({
+        type: "start",
         timestamp: Date.now(),
       });
 
@@ -326,7 +332,7 @@ describe('SyncManager', () => {
       expect(goodListener).toHaveBeenCalled();
     });
 
-    it('should remove all listeners', () => {
+    it("should remove all listeners", () => {
       const listener1 = vi.fn();
       const listener2 = vi.fn();
 
@@ -335,8 +341,8 @@ describe('SyncManager', () => {
 
       syncManager.removeAllListeners();
 
-      syncManager['emitEvent']({
-        type: 'start',
+      syncManager["emitEvent"]({
+        type: "start",
         timestamp: Date.now(),
       });
 
@@ -349,56 +355,56 @@ describe('SyncManager', () => {
   // PAUSE/RESUME
   // ==========================================================================
 
-  describe('Pause/Resume', () => {
+  describe("Pause/Resume", () => {
     beforeEach(async () => {
       await syncManager.initialize();
     });
 
-    it('should pause sync when requested', () => {
+    it("should pause sync when requested", () => {
       // Start sync in background (don't await)
       syncManager.processSync();
 
       // Pause immediately
       syncManager.pause();
 
-      expect(syncManager.getStatus()).toBe('paused');
+      expect(syncManager.getStatus()).toBe("paused");
     });
 
-    it('should not allow pause when not syncing', () => {
-      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    it("should not allow pause when not syncing", () => {
+      const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
       syncManager.pause();
 
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Cannot pause')
+        expect.stringContaining("Cannot pause"),
       );
 
       consoleSpy.mockRestore();
     });
 
-    it('should resume paused sync', () => {
+    it("should resume paused sync", () => {
       syncManager.processSync();
       syncManager.pause();
 
-      expect(syncManager.getStatus()).toBe('paused');
+      expect(syncManager.getStatus()).toBe("paused");
 
       syncManager.resume();
 
-      expect(syncManager.getStatus()).toBe('syncing');
+      expect(syncManager.getStatus()).toBe("syncing");
     });
 
-    it('should emit pause event', () => {
+    it("should emit pause event", () => {
       const events: SyncEvent[] = [];
       syncManager.on((event) => events.push(event));
 
       syncManager.processSync();
       syncManager.pause();
 
-      const pauseEvent = events.find((e) => e.type === 'pause');
+      const pauseEvent = events.find((e) => e.type === "pause");
       expect(pauseEvent).toBeDefined();
     });
 
-    it('should emit resume event', () => {
+    it("should emit resume event", () => {
       const events: SyncEvent[] = [];
       syncManager.on((event) => events.push(event));
 
@@ -406,11 +412,11 @@ describe('SyncManager', () => {
       syncManager.pause();
       syncManager.resume();
 
-      const resumeEvent = events.find((e) => e.type === 'resume');
+      const resumeEvent = events.find((e) => e.type === "resume");
       expect(resumeEvent).toBeDefined();
     });
 
-    it('should prevent sync when paused', async () => {
+    it("should prevent sync when paused", async () => {
       syncManager.processSync();
       syncManager.pause();
 
@@ -425,12 +431,12 @@ describe('SyncManager', () => {
   // RETRY FUNCTIONALITY
   // ==========================================================================
 
-  describe('Retry Failed Items', () => {
+  describe("Retry Failed Items", () => {
     beforeEach(async () => {
       await syncManager.initialize();
     });
 
-    it('should retry failed items', async () => {
+    it("should retry failed items", async () => {
       const count = await syncManager.retryFailed();
 
       expect(count).toBe(2);
@@ -438,7 +444,7 @@ describe('SyncManager', () => {
       expect(mockQueueManager.processQueue).toHaveBeenCalled();
     });
 
-    it('should not process if no failed items', async () => {
+    it("should not process if no failed items", async () => {
       mockQueueManager.retryFailed.mockResolvedValueOnce(0);
 
       const count = await syncManager.retryFailed();
@@ -452,12 +458,12 @@ describe('SyncManager', () => {
   // STATISTICS
   // ==========================================================================
 
-  describe('Statistics', () => {
+  describe("Statistics", () => {
     beforeEach(async () => {
       await syncManager.initialize();
     });
 
-    it('should track sync statistics', async () => {
+    it("should track sync statistics", async () => {
       await syncManager.processSync();
 
       const stats = syncManager.getSyncStats();
@@ -469,7 +475,7 @@ describe('SyncManager', () => {
       expect(stats.syncHistory).toHaveLength(1);
     });
 
-    it('should accumulate statistics across multiple syncs', async () => {
+    it("should accumulate statistics across multiple syncs", async () => {
       await syncManager.processSync();
       await syncManager.processSync();
 
@@ -480,7 +486,7 @@ describe('SyncManager', () => {
       expect(stats.syncHistory).toHaveLength(2);
     });
 
-    it('should limit history to 100 entries', async () => {
+    it("should limit history to 100 entries", async () => {
       // Simulate 150 syncs
       for (let i = 0; i < 150; i++) {
         await syncManager.processSync();
@@ -490,7 +496,7 @@ describe('SyncManager', () => {
       expect(stats.syncHistory).toHaveLength(100);
     });
 
-    it('should calculate average duration correctly', async () => {
+    it("should calculate average duration correctly", async () => {
       await syncManager.processSync();
       await syncManager.processSync();
 
@@ -498,14 +504,14 @@ describe('SyncManager', () => {
 
       const totalDuration = stats.syncHistory.reduce(
         (sum, entry) => sum + entry.duration,
-        0
+        0,
       );
       const expectedAverage = totalDuration / stats.syncHistory.length;
 
       expect(stats.averageDuration).toBe(expectedAverage);
     });
 
-    it('should clear history', async () => {
+    it("should clear history", async () => {
       await syncManager.processSync();
 
       syncManager.clearHistory();
@@ -516,7 +522,7 @@ describe('SyncManager', () => {
       expect(stats.totalSynced).toBe(5);
     });
 
-    it('should reset all statistics', async () => {
+    it("should reset all statistics", async () => {
       await syncManager.processSync();
 
       syncManager.resetStats();
@@ -533,27 +539,27 @@ describe('SyncManager', () => {
   // STATUS TRACKING
   // ==========================================================================
 
-  describe('Status Tracking', () => {
+  describe("Status Tracking", () => {
     beforeEach(async () => {
       await syncManager.initialize();
     });
 
-    it('should track sync status correctly', async () => {
-      expect(syncManager.getStatus()).toBe('idle');
+    it("should track sync status correctly", async () => {
+      expect(syncManager.getStatus()).toBe("idle");
 
       const syncPromise = syncManager.processSync();
 
       // May be syncing or already completed depending on timing
       const statusDuring = syncManager.getStatus();
-      expect(['syncing', 'completed', 'error']).toContain(statusDuring);
+      expect(["syncing", "completed", "error"]).toContain(statusDuring);
 
       await syncPromise;
 
       const statusAfter = syncManager.getStatus();
-      expect(['completed', 'error']).toContain(statusAfter);
+      expect(["completed", "error"]).toContain(statusAfter);
     });
 
-    it('should report sync in progress', async () => {
+    it("should report sync in progress", async () => {
       expect(syncManager.isSyncInProgress()).toBe(false);
 
       const syncPromise = syncManager.processSync();
@@ -571,8 +577,8 @@ describe('SyncManager', () => {
   // LIFECYCLE
   // ==========================================================================
 
-  describe('Lifecycle', () => {
-    it('should destroy properly', async () => {
+  describe("Lifecycle", () => {
+    it("should destroy properly", async () => {
       await syncManager.initialize();
 
       expect(syncManager.isReady()).toBe(true);
@@ -583,7 +589,7 @@ describe('SyncManager', () => {
       expect(mockNetworkDetector.off).toHaveBeenCalled();
     });
 
-    it('should remove event listeners on destroy', async () => {
+    it("should remove event listeners on destroy", async () => {
       await syncManager.initialize();
 
       const listener = vi.fn();
@@ -592,8 +598,8 @@ describe('SyncManager', () => {
       syncManager.destroy();
 
       // Try to emit event (using private method for testing)
-      syncManager['emitEvent']({
-        type: 'start',
+      syncManager["emitEvent"]({
+        type: "start",
         timestamp: Date.now(),
       });
 
@@ -605,12 +611,12 @@ describe('SyncManager', () => {
   // QUEUE STATS
   // ==========================================================================
 
-  describe('Queue Statistics', () => {
+  describe("Queue Statistics", () => {
     beforeEach(async () => {
       await syncManager.initialize();
     });
 
-    it('should get queue statistics', async () => {
+    it("should get queue statistics", async () => {
       const stats = await syncManager.getQueueStats();
 
       expect(stats).toBeDefined();
@@ -624,17 +630,17 @@ describe('SyncManager', () => {
   // CONFIGURATION
   // ==========================================================================
 
-  describe('Configuration', () => {
-    it('should use default configuration', () => {
+  describe("Configuration", () => {
+    it("should use default configuration", () => {
       const manager = new SyncManager();
       expect(manager).toBeDefined();
     });
 
-    it('should accept custom configuration', () => {
+    it("should accept custom configuration", () => {
       const manager = new SyncManager({
         autoRegisterSync: false,
         autoProcessOnline: false,
-        syncTag: 'custom-sync',
+        syncTag: "custom-sync",
         batchSize: 20,
         maxConcurrency: 5,
         enableProgressEvents: false,

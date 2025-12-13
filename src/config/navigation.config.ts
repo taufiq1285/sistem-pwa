@@ -1,7 +1,7 @@
 /**
  * Navigation Configuration
  * Defines navigation items for each role with icons and descriptions
- * 
+ *
  * UPDATED: Added "Mata Kuliah" menu for Admin
  * REASON: Admin needs to manage courses before Dosen can create classes
  */
@@ -22,9 +22,9 @@ import {
   BookOpen,
   UserCheck,
   Bell,
-  type LucideIcon
-} from 'lucide-react';
-import type { UserRole } from '@/types/auth.types';
+  type LucideIcon,
+} from "lucide-react";
+import type { UserRole } from "@/types/auth.types";
 
 // ============================================================================
 // TYPES
@@ -47,47 +47,47 @@ export interface NavigationItem {
  */
 const mahasiswaNavigation: NavigationItem[] = [
   {
-    label: 'Dashboard',
-    href: '/mahasiswa/dashboard',
+    label: "Dashboard",
+    href: "/mahasiswa/dashboard",
     icon: Home,
-    description: 'Ringkasan aktivitas akademik'
+    description: "Ringkasan aktivitas akademik",
   },
   {
-    label: 'Jadwal Praktikum',
-    href: '/mahasiswa/jadwal',
+    label: "Jadwal Praktikum",
+    href: "/mahasiswa/jadwal",
     icon: Calendar,
-    description: 'Jadwal praktikum kebidanan'
+    description: "Jadwal praktikum kebidanan",
   },
   {
-    label: 'Kuis',
-    href: '/mahasiswa/kuis',
+    label: "Kuis",
+    href: "/mahasiswa/kuis",
     icon: ClipboardList,
-    description: 'Kuis dan ujian'
+    description: "Kuis dan ujian",
   },
   {
-    label: 'Nilai',
-    href: '/mahasiswa/nilai',
+    label: "Nilai",
+    href: "/mahasiswa/nilai",
     icon: Award,
-    description: 'Hasil penilaian'
+    description: "Hasil penilaian",
   },
   {
-    label: 'Presensi',
-    href: '/mahasiswa/presensi',
+    label: "Presensi",
+    href: "/mahasiswa/presensi",
     icon: ClipboardCheck,
-    description: 'Kehadiran praktikum'
+    description: "Kehadiran praktikum",
   },
   {
-    label: 'Materi',
-    href: '/mahasiswa/materi',
+    label: "Materi",
+    href: "/mahasiswa/materi",
     icon: FileText,
-    description: 'Materi pembelajaran'
+    description: "Materi pembelajaran",
   },
   {
-    label: 'Notifikasi',
-    href: '/mahasiswa/notifikasi',
+    label: "Notifikasi",
+    href: "/mahasiswa/notifikasi",
     icon: Bell,
-    description: 'Lihat notifikasi'
-  }
+    description: "Lihat notifikasi",
+  },
 ];
 
 /**
@@ -95,53 +95,59 @@ const mahasiswaNavigation: NavigationItem[] = [
  */
 const dosenNavigation: NavigationItem[] = [
   {
-    label: 'Dashboard',
-    href: '/dosen/dashboard',
+    label: "Dashboard",
+    href: "/dosen/dashboard",
     icon: Home,
-    description: 'Ringkasan aktivitas mengajar'
+    description: "Ringkasan aktivitas mengajar",
   },
   {
-    label: 'Jadwal Praktikum',
-    href: '/dosen/jadwal',
+    label: "Jadwal Praktikum",
+    href: "/dosen/jadwal",
     icon: Calendar,
-    description: 'Kelola jadwal praktikum'
+    description: "Kelola jadwal praktikum",
   },
   {
-    label: 'Kuis',
-    href: '/dosen/kuis',
+    label: "Kuis",
+    href: "/dosen/kuis",
     icon: ClipboardList,
-    description: 'Kelola kuis'
+    description: "Kelola kuis",
   },
   {
-    label: 'Peminjaman',
-    href: '/dosen/peminjaman',
+    label: "Bank Soal",
+    href: "/dosen/bank-soal",
+    icon: BookOpen,
+    description: "Bank soal yang dapat digunakan kembali",
+  },
+  {
+    label: "Peminjaman",
+    href: "/dosen/peminjaman",
     icon: Package,
-    description: 'Peminjaman alat'
+    description: "Peminjaman alat",
   },
   {
-    label: 'Kehadiran',
-    href: '/dosen/kehadiran',
+    label: "Kehadiran",
+    href: "/dosen/kehadiran",
     icon: UserCheck,
-    description: 'Input kehadiran mahasiswa'
+    description: "Input kehadiran mahasiswa",
   },
   {
-    label: 'Materi',
-    href: '/dosen/materi',
+    label: "Materi",
+    href: "/dosen/materi",
     icon: FileText,
-    description: 'Upload materi'
+    description: "Upload materi",
   },
   {
-    label: 'Penilaian',
-    href: '/dosen/penilaian',
+    label: "Penilaian",
+    href: "/dosen/penilaian",
     icon: Award,
-    description: 'Input nilai mahasiswa'
+    description: "Input nilai mahasiswa",
   },
   {
-    label: 'Notifikasi',
-    href: '/dosen/notifikasi',
+    label: "Notifikasi",
+    href: "/dosen/notifikasi",
     icon: Bell,
-    description: 'Lihat notifikasi'
-  }
+    description: "Lihat notifikasi",
+  },
 ];
 
 /**
@@ -149,59 +155,59 @@ const dosenNavigation: NavigationItem[] = [
  */
 const adminNavigation: NavigationItem[] = [
   {
-    label: 'Dashboard',
-    href: '/admin/dashboard',
+    label: "Dashboard",
+    href: "/admin/dashboard",
     icon: Home,
-    description: 'Ringkasan sistem'
+    description: "Ringkasan sistem",
   },
   {
-    label: 'User Management',
-    href: '/admin/users',
+    label: "User Management",
+    href: "/admin/users",
     icon: UserCog,
-    description: 'Kelola pengguna'
+    description: "Kelola pengguna",
   },
   {
-    label: 'Mata Kuliah',
-    href: '/admin/mata-kuliah',
+    label: "Mata Kuliah",
+    href: "/admin/mata-kuliah",
     icon: BookOpen,
-    description: 'Kelola mata kuliah'
+    description: "Kelola mata kuliah",
   },
   {
-    label: 'Kelas',
-    href: '/admin/kelas',
+    label: "Kelas",
+    href: "/admin/kelas",
     icon: Users,
-    description: 'Kelola kelas'
+    description: "Kelola kelas",
   },
   {
-    label: 'Laboratories',
-    href: '/admin/laboratories',
+    label: "Laboratories",
+    href: "/admin/laboratories",
     icon: Building2,
-    description: 'Kelola laboratorium'
+    description: "Kelola laboratorium",
   },
   {
-    label: 'Equipments',
-    href: '/admin/equipments',
+    label: "Equipments",
+    href: "/admin/equipments",
     icon: Package,
-    description: 'Kelola peralatan'
+    description: "Kelola peralatan",
   },
   {
-    label: 'Notifikasi',
-    href: '/admin/notifikasi',
+    label: "Notifikasi",
+    href: "/admin/notifikasi",
     icon: Bell,
-    description: 'Kelola pengumuman'
+    description: "Kelola pengumuman",
   },
   {
-    label: 'Analytics',
-    href: '/admin/analytics',
+    label: "Analytics",
+    href: "/admin/analytics",
     icon: BarChart3,
-    description: 'Analitik sistem'
+    description: "Analitik sistem",
   },
   {
-    label: 'Sync Management',
-    href: '/admin/sync-management',
+    label: "Sync Management",
+    href: "/admin/sync-management",
     icon: Settings,
-    description: 'Kelola sinkronisasi'
-  }
+    description: "Kelola sinkronisasi",
+  },
 ];
 
 /**
@@ -209,41 +215,47 @@ const adminNavigation: NavigationItem[] = [
  */
 const laboranNavigation: NavigationItem[] = [
   {
-    label: 'Dashboard',
-    href: '/laboran/dashboard',
+    label: "Dashboard",
+    href: "/laboran/dashboard",
     icon: Home,
-    description: 'Ringkasan aktivitas laboratorium'
+    description: "Ringkasan aktivitas laboratorium",
   },
   {
-    label: 'Inventaris',
-    href: '/laboran/inventaris',
+    label: "Inventaris",
+    href: "/laboran/inventaris",
     icon: Package,
-    description: 'Kelola inventaris'
+    description: "Kelola inventaris",
   },
   {
-    label: 'Persetujuan',
-    href: '/laboran/persetujuan',
+    label: "Persetujuan",
+    href: "/laboran/persetujuan",
     icon: ClipboardCheck,
-    description: 'Persetujuan peminjaman'
+    description: "Persetujuan peminjaman",
   },
   {
-    label: 'Laboratorium',
-    href: '/laboran/laboratorium',
+    label: "Laboratorium",
+    href: "/laboran/laboratorium",
     icon: Building2,
-    description: 'Kelola laboratorium'
+    description: "Kelola laboratorium",
   },
   {
-    label: 'Laporan',
-    href: '/laboran/laporan',
+    label: "Kelola Jadwal",
+    href: "/laboran/jadwal",
+    icon: Calendar,
+    description: "Monitor & kelola jadwal praktikum",
+  },
+  {
+    label: "Laporan",
+    href: "/laboran/laporan",
     icon: BarChart3,
-    description: 'Laporan inventaris'
+    description: "Laporan inventaris",
   },
   {
-    label: 'Notifikasi',
-    href: '/laboran/notifikasi',
+    label: "Notifikasi",
+    href: "/laboran/notifikasi",
     icon: Bell,
-    description: 'Lihat notifikasi'
-  }
+    description: "Lihat notifikasi",
+  },
 ];
 
 // ============================================================================
@@ -254,7 +266,7 @@ const navigationMap: Record<UserRole, NavigationItem[]> = {
   mahasiswa: mahasiswaNavigation,
   dosen: dosenNavigation,
   admin: adminNavigation,
-  laboran: laboranNavigation
+  laboran: laboranNavigation,
 };
 
 // ============================================================================
@@ -280,7 +292,7 @@ export function isRouteActive(currentPath: string, itemPath: string): boolean {
 
   // Check if current path starts with item path (for nested routes)
   // But avoid false positives (e.g., /mahasiswa/mata-kuliah matching /mahasiswa/materi)
-  if (itemPath !== '/' && currentPath.startsWith(itemPath + '/')) {
+  if (itemPath !== "/" && currentPath.startsWith(itemPath + "/")) {
     return true;
   }
 
@@ -292,10 +304,10 @@ export function isRouteActive(currentPath: string, itemPath: string): boolean {
  */
 export function getCurrentNavigationItem(
   role: UserRole,
-  currentPath: string
+  currentPath: string,
 ): NavigationItem | undefined {
   const items = getNavigationItems(role);
-  return items.find(item => isRouteActive(currentPath, item.href));
+  return items.find((item) => isRouteActive(currentPath, item.href));
 }
 
 /**
@@ -303,22 +315,22 @@ export function getCurrentNavigationItem(
  */
 export function getBreadcrumbs(
   role: UserRole,
-  currentPath: string
+  currentPath: string,
 ): { label: string; href: string }[] {
-  const segments = currentPath.split('/').filter(Boolean);
+  const segments = currentPath.split("/").filter(Boolean);
   const breadcrumbs: { label: string; href: string }[] = [];
-  
-  let currentHref = '';
+
+  let currentHref = "";
   for (const segment of segments) {
     currentHref += `/${segment}`;
     const item = getCurrentNavigationItem(role, currentHref);
     if (item) {
       breadcrumbs.push({
         label: item.label,
-        href: item.href
+        href: item.href,
       });
     }
   }
-  
+
   return breadcrumbs;
 }

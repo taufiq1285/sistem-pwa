@@ -74,7 +74,7 @@ describe("useLocalData", () => {
   describe("Initialization", () => {
     it("should initialize with default state", () => {
       const { result } = renderHook(() =>
-        useLocalData("kuis" as StoreName, { autoLoad: false })
+        useLocalData("kuis" as StoreName, { autoLoad: false }),
       );
 
       expect(result.current.data).toEqual([]);
@@ -101,7 +101,7 @@ describe("useLocalData", () => {
       (indexedDBManager.getAll as any).mockResolvedValue(mockKuis);
 
       const { result } = renderHook(() =>
-        useLocalData("kuis" as StoreName, { autoLoad: false })
+        useLocalData("kuis" as StoreName, { autoLoad: false }),
       );
 
       // Wait a bit to ensure no load happens
@@ -115,7 +115,7 @@ describe("useLocalData", () => {
 
     it("should expose all required methods", () => {
       const { result } = renderHook(() =>
-        useLocalData("kuis" as StoreName, { autoLoad: false })
+        useLocalData("kuis" as StoreName, { autoLoad: false }),
       );
 
       expect(result.current.load).toBeDefined();
@@ -141,7 +141,7 @@ describe("useLocalData", () => {
         () =>
           new Promise((resolve) => {
             resolveGetAll = resolve;
-          })
+          }),
       );
 
       const { result } = renderHook(() => useLocalData("kuis" as StoreName));
@@ -166,7 +166,7 @@ describe("useLocalData", () => {
       (indexedDBManager.getAll as any).mockResolvedValue(mockKuis);
 
       const { result } = renderHook(() =>
-        useLocalData("kuis" as StoreName, { autoLoad: false })
+        useLocalData("kuis" as StoreName, { autoLoad: false }),
       );
 
       expect(result.current.loaded).toBe(false);
@@ -204,7 +204,7 @@ describe("useLocalData", () => {
       const { result } = renderHook(() =>
         useLocalData("kuis" as StoreName, {
           filter: (item: any) => item.kelas_id === "kelas-1",
-        })
+        }),
       );
 
       await waitFor(() => {
@@ -213,7 +213,7 @@ describe("useLocalData", () => {
 
       expect(result.current.data).toHaveLength(2);
       expect(
-        result.current.data.every((k: any) => k.kelas_id === "kelas-1")
+        result.current.data.every((k: any) => k.kelas_id === "kelas-1"),
       ).toBe(true);
     });
 
@@ -223,7 +223,7 @@ describe("useLocalData", () => {
       const { result } = renderHook(() =>
         useLocalData("kuis" as StoreName, {
           sort: (a: any, b: any) => b.judul.localeCompare(a.judul),
-        })
+        }),
       );
 
       await waitFor(() => {
@@ -240,7 +240,7 @@ describe("useLocalData", () => {
       const { result } = renderHook(() =>
         useLocalData("kuis" as StoreName, {
           transform: (item: any) => ({ ...item, transformed: true }),
-        })
+        }),
       );
 
       await waitFor(() => {
@@ -248,7 +248,7 @@ describe("useLocalData", () => {
       });
 
       expect(
-        result.current.data.every((k: any) => k.transformed === true)
+        result.current.data.every((k: any) => k.transformed === true),
       ).toBe(true);
     });
   });
@@ -263,7 +263,7 @@ describe("useLocalData", () => {
       (indexedDBManager.create as any).mockResolvedValue(mockKuis[0]);
 
       const { result } = renderHook(() =>
-        useLocalData("kuis" as StoreName, { optimistic: true })
+        useLocalData("kuis" as StoreName, { optimistic: true }),
       );
 
       await waitFor(() => {
@@ -283,7 +283,7 @@ describe("useLocalData", () => {
       (indexedDBManager.create as any).mockResolvedValue(mockKuis[0]);
 
       const { result } = renderHook(() =>
-        useLocalData("kuis" as StoreName, { optimistic: false })
+        useLocalData("kuis" as StoreName, { optimistic: false }),
       );
 
       await waitFor(() => {
@@ -307,11 +307,11 @@ describe("useLocalData", () => {
         .mockImplementation(() => {});
       (indexedDBManager.getAll as any).mockResolvedValue([]);
       (indexedDBManager.create as any).mockRejectedValue(
-        new Error("Create failed")
+        new Error("Create failed"),
       );
 
       const { result } = renderHook(() =>
-        useLocalData("kuis" as StoreName, { optimistic: true })
+        useLocalData("kuis" as StoreName, { optimistic: true }),
       );
 
       await waitFor(() => {
@@ -351,7 +351,7 @@ describe("useLocalData", () => {
       });
 
       const { result } = renderHook(() =>
-        useLocalData("kuis" as StoreName, { optimistic: true })
+        useLocalData("kuis" as StoreName, { optimistic: true }),
       );
 
       await waitFor(() => {
@@ -363,7 +363,7 @@ describe("useLocalData", () => {
       });
 
       expect(
-        result.current.data.find((k: any) => k.id === "kuis-1")?.judul
+        result.current.data.find((k: any) => k.id === "kuis-1")?.judul,
       ).toBe("Updated");
       expect(indexedDBManager.update).toHaveBeenCalledWith("kuis", {
         ...mockKuis[0],
@@ -376,11 +376,11 @@ describe("useLocalData", () => {
         .spyOn(console, "error")
         .mockImplementation(() => {});
       (indexedDBManager.update as any).mockRejectedValue(
-        new Error("Update failed")
+        new Error("Update failed"),
       );
 
       const { result } = renderHook(() =>
-        useLocalData("kuis" as StoreName, { optimistic: true })
+        useLocalData("kuis" as StoreName, { optimistic: true }),
       );
 
       await waitFor(() => {
@@ -397,7 +397,7 @@ describe("useLocalData", () => {
 
       await waitFor(() => {
         expect(
-          result.current.data.find((k: any) => k.id === "kuis-1")?.judul
+          result.current.data.find((k: any) => k.id === "kuis-1")?.judul,
         ).toBe("Kuis 1");
       });
 
@@ -418,7 +418,7 @@ describe("useLocalData", () => {
       (indexedDBManager.delete as any).mockResolvedValue(undefined);
 
       const { result } = renderHook(() =>
-        useLocalData("kuis" as StoreName, { optimistic: true })
+        useLocalData("kuis" as StoreName, { optimistic: true }),
       );
 
       await waitFor(() => {
@@ -430,7 +430,7 @@ describe("useLocalData", () => {
       });
 
       expect(
-        result.current.data.find((k: any) => k.id === "kuis-1")
+        result.current.data.find((k: any) => k.id === "kuis-1"),
       ).toBeUndefined();
       expect(indexedDBManager.delete).toHaveBeenCalledWith("kuis", "kuis-1");
     });
@@ -440,11 +440,11 @@ describe("useLocalData", () => {
         .spyOn(console, "error")
         .mockImplementation(() => {});
       (indexedDBManager.delete as any).mockRejectedValue(
-        new Error("Delete failed")
+        new Error("Delete failed"),
       );
 
       const { result } = renderHook(() =>
-        useLocalData("kuis" as StoreName, { optimistic: true })
+        useLocalData("kuis" as StoreName, { optimistic: true }),
       );
 
       await waitFor(() => {
@@ -461,7 +461,7 @@ describe("useLocalData", () => {
 
       await waitFor(() => {
         expect(
-          result.current.data.find((k: any) => k.id === "kuis-1")
+          result.current.data.find((k: any) => k.id === "kuis-1"),
         ).toBeDefined();
       });
 
@@ -482,7 +482,7 @@ describe("useLocalData", () => {
       (indexedDBManager.clear as any).mockResolvedValue(undefined);
 
       const { result } = renderHook(() =>
-        useLocalData("kuis" as StoreName, { optimistic: true })
+        useLocalData("kuis" as StoreName, { optimistic: true }),
       );
 
       await waitFor(() => {
@@ -591,7 +591,7 @@ describe("useLocalData", () => {
       (indexedDBManager.getAll as any).mockResolvedValue(mockKuis);
 
       renderHook(() =>
-        useLocalData("kuis" as StoreName, { refreshInterval: 5000 })
+        useLocalData("kuis" as StoreName, { refreshInterval: 5000 }),
       );
 
       // Wait for initial load
@@ -605,9 +605,12 @@ describe("useLocalData", () => {
       });
 
       // Wait for refresh to complete
-      await waitFor(() => {
-        expect(indexedDBManager.getAll).toHaveBeenCalledTimes(2);
-      }, { timeout: 1000 });
+      await waitFor(
+        () => {
+          expect(indexedDBManager.getAll).toHaveBeenCalledTimes(2);
+        },
+        { timeout: 1000 },
+      );
     });
 
     /**
@@ -617,7 +620,7 @@ describe("useLocalData", () => {
       (indexedDBManager.getAll as any).mockResolvedValue(mockKuis);
 
       renderHook(() =>
-        useLocalData("kuis" as StoreName, { refreshInterval: 0 })
+        useLocalData("kuis" as StoreName, { refreshInterval: 0 }),
       );
 
       // Wait for initial load
@@ -641,7 +644,7 @@ describe("useLocalData", () => {
       (indexedDBManager.getAll as any).mockResolvedValue(mockKuis);
 
       const { unmount } = renderHook(() =>
-        useLocalData("kuis" as StoreName, { refreshInterval: 5000 })
+        useLocalData("kuis" as StoreName, { refreshInterval: 5000 }),
       );
 
       // Wait for initial load
@@ -708,11 +711,12 @@ describe("useLocalData", () => {
     it.skip("should not update state after unmount", async () => {
       vi.useFakeTimers();
       (indexedDBManager.getAll as any).mockImplementation(
-        () => new Promise((resolve) => setTimeout(() => resolve(mockKuis), 100))
+        () =>
+          new Promise((resolve) => setTimeout(() => resolve(mockKuis), 100)),
       );
 
       const { result, unmount } = renderHook(() =>
-        useLocalData("kuis" as StoreName)
+        useLocalData("kuis" as StoreName),
       );
 
       unmount();
@@ -758,7 +762,7 @@ describe("useLocalData", () => {
       (indexedDBManager.getAll as any).mockResolvedValue([]);
 
       const { result } = renderHook(() =>
-        useLocalData("kuis" as StoreName, { optimistic: false })
+        useLocalData("kuis" as StoreName, { optimistic: false }),
       );
 
       await waitFor(() => {
@@ -810,7 +814,7 @@ describe("useLocalData", () => {
       (indexedDBManager.getAll as any).mockResolvedValue(mockKuis);
 
       const { result, rerender } = renderHook(() =>
-        useLocalData("kuis" as StoreName)
+        useLocalData("kuis" as StoreName),
       );
 
       await waitFor(() => {

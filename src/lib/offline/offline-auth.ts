@@ -16,8 +16,8 @@
  * - Auto-expire after 30 days
  */
 
-import { indexedDBManager } from './indexeddb';
-import type { AuthUser, AuthSession } from '@/types/auth.types';
+import { indexedDBManager } from "./indexeddb";
+import type { AuthUser, AuthSession } from "@/types/auth.types";
 
 // ============================================================================
 // TYPES
@@ -57,9 +57,11 @@ const SESSION_EXPIRY = 24 * 60 * 60 * 1000; // 24 hours
 async function hashPassword(password: string, salt: string): Promise<string> {
   const encoder = new TextEncoder();
   const data = encoder.encode(password + salt);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
-  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  const hashHex = hashArray
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
   return hashHex;
 }
 
@@ -80,7 +82,7 @@ function generateSalt(email: string): string {
 export async function storeOfflineCredentials(
   email: string,
   password: string,
-  user: AuthUser
+  user: AuthUser,
 ): Promise<void> {
   try {
     await indexedDBManager.initialize();
@@ -97,11 +99,11 @@ export async function storeOfflineCredentials(
     };
 
     // Store in IndexedDB metadata (more secure than users table)
-    await indexedDBManager.setMetadata('offline_credentials', credentials);
+    await indexedDBManager.setMetadata("offline_credentials", credentials);
 
-    console.log('✅ Offline credentials stored successfully');
+    console.log("✅ Offline credentials stored successfully");
   } catch (error) {
-    console.error('❌ Failed to store offline credentials:', error);
+    console.error("❌ Failed to store offline credentials:", error);
     throw error;
   }
 }
@@ -111,28 +113,30 @@ export async function storeOfflineCredentials(
  */
 export async function verifyOfflineCredentials(
   email: string,
-  password: string
+  password: string,
 ): Promise<boolean> {
   try {
     await indexedDBManager.initialize();
 
-    const stored = await indexedDBManager.getMetadata('offline_credentials') as StoredCredentials | undefined;
+    const stored = (await indexedDBManager.getMetadata(
+      "offline_credentials",
+    )) as StoredCredentials | undefined;
 
     if (!stored) {
-      console.log('❌ No offline credentials found');
+      console.log("❌ No offline credentials found");
       return false;
     }
 
     // Check if credentials expired
     if (Date.now() > stored.expiresAt) {
-      console.log('❌ Offline credentials expired');
+      console.log("❌ Offline credentials expired");
       await clearOfflineCredentials();
       return false;
     }
 
     // Check if email matches
     if (stored.email.toLowerCase() !== email.toLowerCase()) {
-      console.log('❌ Email mismatch');
+      console.log("❌ Email mismatch");
       return false;
     }
 
@@ -143,14 +147,14 @@ export async function verifyOfflineCredentials(
     const isValid = inputHash === stored.passwordHash;
 
     if (isValid) {
-      console.log('✅ Offline credentials verified');
+      console.log("✅ Offline credentials verified");
     } else {
-      console.log('❌ Invalid password');
+      console.log("❌ Invalid password");
     }
 
     return isValid;
   } catch (error) {
-    console.error('❌ Failed to verify offline credentials:', error);
+    console.error("❌ Failed to verify offline credentials:", error);
     return false;
   }
 }
@@ -161,10 +165,10 @@ export async function verifyOfflineCredentials(
 export async function clearOfflineCredentials(): Promise<void> {
   try {
     await indexedDBManager.initialize();
-    await indexedDBManager.setMetadata('offline_credentials', null);
-    console.log('✅ Offline credentials cleared');
+    await indexedDBManager.setMetadata("offline_credentials", null);
+    console.log("✅ Offline credentials cleared");
   } catch (error) {
-    console.error('❌ Failed to clear offline credentials:', error);
+    console.error("❌ Failed to clear offline credentials:", error);
   }
 }
 
@@ -177,7 +181,7 @@ export async function clearOfflineCredentials(): Promise<void> {
  */
 export async function storeOfflineSession(
   user: AuthUser,
-  session: AuthSession
+  session: AuthSession,
 ): Promise<void> {
   try {
     await indexedDBManager.initialize();
@@ -190,10 +194,10 @@ export async function storeOfflineSession(
       expiresAt: Date.now() + SESSION_EXPIRY,
     };
 
-    await indexedDBManager.setMetadata('offline_session', storedSession);
-    console.log('✅ Offline session stored');
+    await indexedDBManager.setMetadata("offline_session", storedSession);
+    console.log("✅ Offline session stored");
   } catch (error) {
-    console.error('❌ Failed to store offline session:', error);
+    console.error("❌ Failed to store offline session:", error);
     throw error;
   }
 }
@@ -208,27 +212,29 @@ export async function restoreOfflineSession(): Promise<{
   try {
     await indexedDBManager.initialize();
 
-    const stored = await indexedDBManager.getMetadata('offline_session') as StoredSession | undefined;
+    const stored = (await indexedDBManager.getMetadata("offline_session")) as
+      | StoredSession
+      | undefined;
 
     if (!stored) {
-      console.log('ℹ️ No offline session found');
+      console.log("ℹ️ No offline session found");
       return null;
     }
 
     // Check if session expired
     if (Date.now() > stored.expiresAt) {
-      console.log('❌ Offline session expired');
+      console.log("❌ Offline session expired");
       await clearOfflineSession();
       return null;
     }
 
-    console.log('✅ Offline session restored');
+    console.log("✅ Offline session restored");
     return {
       user: stored.user,
       session: stored.session,
     };
   } catch (error) {
-    console.error('❌ Failed to restore offline session:', error);
+    console.error("❌ Failed to restore offline session:", error);
     return null;
   }
 }
@@ -239,10 +245,10 @@ export async function restoreOfflineSession(): Promise<{
 export async function clearOfflineSession(): Promise<void> {
   try {
     await indexedDBManager.initialize();
-    await indexedDBManager.setMetadata('offline_session', null);
-    console.log('✅ Offline session cleared');
+    await indexedDBManager.setMetadata("offline_session", null);
+    console.log("✅ Offline session cleared");
   } catch (error) {
-    console.error('❌ Failed to clear offline session:', error);
+    console.error("❌ Failed to clear offline session:", error);
   }
 }
 
@@ -253,18 +259,23 @@ export async function getStoredUserData(): Promise<AuthUser | null> {
   try {
     await indexedDBManager.initialize();
 
-    const credentials = await indexedDBManager.getMetadata('offline_credentials') as StoredCredentials | undefined;
+    const credentials = (await indexedDBManager.getMetadata(
+      "offline_credentials",
+    )) as StoredCredentials | undefined;
 
     if (!credentials) {
       return null;
     }
 
     // Get user from users store
-    const user = await indexedDBManager.getById<AuthUser>('users', credentials.id);
+    const user = await indexedDBManager.getById<AuthUser>(
+      "users",
+      credentials.id,
+    );
 
     return user || null;
   } catch (error) {
-    console.error('❌ Failed to get stored user data:', error);
+    console.error("❌ Failed to get stored user data:", error);
     return null;
   }
 }
@@ -277,17 +288,20 @@ export async function storeUserData(user: AuthUser): Promise<void> {
     await indexedDBManager.initialize();
 
     // Check if user exists
-    const existingUser = await indexedDBManager.getById<AuthUser>('users', user.id);
+    const existingUser = await indexedDBManager.getById<AuthUser>(
+      "users",
+      user.id,
+    );
 
     if (existingUser) {
-      await indexedDBManager.update('users', user);
+      await indexedDBManager.update("users", user);
     } else {
-      await indexedDBManager.create('users', user);
+      await indexedDBManager.create("users", user);
     }
 
-    console.log('✅ User data stored for offline access');
+    console.log("✅ User data stored for offline access");
   } catch (error) {
-    console.error('❌ Failed to store user data:', error);
+    console.error("❌ Failed to store user data:", error);
     throw error;
   }
 }
@@ -302,7 +316,7 @@ export async function storeUserData(user: AuthUser): Promise<void> {
  */
 export async function offlineLogin(
   email: string,
-  password: string
+  password: string,
 ): Promise<{ user: AuthUser; session: AuthSession } | null> {
   try {
     // Verify credentials
@@ -323,14 +337,14 @@ export async function offlineLogin(
     const userData = await getStoredUserData();
 
     if (!userData) {
-      console.error('❌ User data not found');
+      console.error("❌ User data not found");
       return null;
     }
 
     // Create minimal offline session
     const offlineSession: AuthSession = {
-      access_token: 'offline_session_token',
-      refresh_token: 'offline_refresh_token',
+      access_token: "offline_session_token",
+      refresh_token: "offline_refresh_token",
       expires_at: Math.floor((Date.now() + SESSION_EXPIRY) / 1000),
       user: userData,
     };
@@ -338,14 +352,14 @@ export async function offlineLogin(
     // Store the session
     await storeOfflineSession(userData, offlineSession);
 
-    console.log('✅ Offline login successful');
+    console.log("✅ Offline login successful");
 
     return {
       user: userData,
       session: offlineSession,
     };
   } catch (error) {
-    console.error('❌ Offline login failed:', error);
+    console.error("❌ Offline login failed:", error);
     return null;
   }
 }
@@ -357,7 +371,9 @@ export async function isOfflineLoginAvailable(): Promise<boolean> {
   try {
     await indexedDBManager.initialize();
 
-    const credentials = await indexedDBManager.getMetadata('offline_credentials') as StoredCredentials | undefined;
+    const credentials = (await indexedDBManager.getMetadata(
+      "offline_credentials",
+    )) as StoredCredentials | undefined;
 
     if (!credentials) {
       return false;
@@ -366,7 +382,7 @@ export async function isOfflineLoginAvailable(): Promise<boolean> {
     // Check if not expired
     return Date.now() < credentials.expiresAt;
   } catch (error) {
-    console.error('❌ Failed to check offline login availability:', error);
+    console.error("❌ Failed to check offline login availability:", error);
     return false;
   }
 }
@@ -376,12 +392,9 @@ export async function isOfflineLoginAvailable(): Promise<boolean> {
  */
 export async function clearAllOfflineAuthData(): Promise<void> {
   try {
-    await Promise.all([
-      clearOfflineCredentials(),
-      clearOfflineSession(),
-    ]);
-    console.log('✅ All offline auth data cleared');
+    await Promise.all([clearOfflineCredentials(), clearOfflineSession()]);
+    console.log("✅ All offline auth data cleared");
   } catch (error) {
-    console.error('❌ Failed to clear offline auth data:', error);
+    console.error("❌ Failed to clear offline auth data:", error);
   }
 }

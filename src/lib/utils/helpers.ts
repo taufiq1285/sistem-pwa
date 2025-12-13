@@ -29,7 +29,7 @@ export function generateId(): string {
  * @returns Deep cloned copy of the object
  */
 export function deepClone<T>(obj: T): T {
-  if (obj === null || typeof obj !== 'object') {
+  if (obj === null || typeof obj !== "object") {
     return obj;
   }
 
@@ -64,11 +64,11 @@ export function isEmpty(obj: unknown): boolean {
     return true;
   }
 
-  if (typeof obj === 'string' || Array.isArray(obj)) {
+  if (typeof obj === "string" || Array.isArray(obj)) {
     return obj.length === 0;
   }
 
-  if (typeof obj === 'object') {
+  if (typeof obj === "object") {
     return Object.keys(obj).length === 0;
   }
 
@@ -83,7 +83,7 @@ export function isEmpty(obj: unknown): boolean {
  */
 export function groupBy<T extends Record<string, unknown>>(
   arr: T[],
-  key: keyof T
+  key: keyof T,
 ): Record<string, T[]> {
   return arr.reduce(
     (groups, item) => {
@@ -94,7 +94,7 @@ export function groupBy<T extends Record<string, unknown>>(
       groups[groupKey].push(item);
       return groups;
     },
-    {} as Record<string, T[]>
+    {} as Record<string, T[]>,
   );
 }
 
@@ -142,7 +142,7 @@ export function chunk<T>(arr: T[], size: number): T[][] {
  */
 export function omit<T extends Record<string, unknown>, K extends keyof T>(
   obj: T,
-  keys: K[]
+  keys: K[],
 ): Omit<T, K> {
   const result = { ...obj };
   for (const key of keys) {
@@ -159,7 +159,7 @@ export function omit<T extends Record<string, unknown>, K extends keyof T>(
  */
 export function pick<T extends Record<string, unknown>, K extends keyof T>(
   obj: T,
-  keys: K[]
+  keys: K[],
 ): Pick<T, K> {
   const result = {} as Pick<T, K>;
   for (const key of keys) {
@@ -212,7 +212,7 @@ export function safeJsonParse<T>(json: string, fallback: T): T {
  */
 export function debounce<T extends (...args: unknown[]) => unknown>(
   func: T,
-  wait: number
+  wait: number,
 ): (...args: Parameters<T>) => void {
   let timeout: ReturnType<typeof setTimeout> | null = null;
 
@@ -238,7 +238,7 @@ export function debounce<T extends (...args: unknown[]) => unknown>(
  */
 export function throttle<T extends (...args: unknown[]) => unknown>(
   func: T,
-  limit: number
+  limit: number,
 ): (...args: Parameters<T>) => void {
   let inThrottle: boolean = false;
 

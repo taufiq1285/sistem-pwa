@@ -18,7 +18,11 @@
       "Bash(npm test:*)",
       "Bash(git checkout:*)",
       "Bash(curl:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(start http://localhost:5173/cleanup-dosen.html)",
+      "Bash(tree:*)",
+      "Bash(psql:*)",
+      "Bash(ls:*)"
     ],
     "deny": [],
     "ask": []

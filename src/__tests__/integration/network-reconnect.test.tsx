@@ -9,8 +9,8 @@
  * @vitest-environment jsdom
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { act } from '@testing-library/react';
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { act } from "@testing-library/react";
 
 // ============================================================================
 // TEST SETUP
@@ -21,7 +21,7 @@ let offlineListeners: Array<() => void> = [];
 let currentOnlineStatus = true;
 
 // Mock navigator.onLine
-Object.defineProperty(navigator, 'onLine', {
+Object.defineProperty(navigator, "onLine", {
   writable: true,
   value: true,
 });
@@ -38,9 +38,9 @@ const goOnline = async () => {
   currentOnlineStatus = true;
 
   await act(async () => {
-    const event = new Event('online');
+    const event = new Event("online");
     window.dispatchEvent(event);
-    await new Promise(resolve => setTimeout(resolve, 50));
+    await new Promise((resolve) => setTimeout(resolve, 50));
   });
 };
 
@@ -52,9 +52,9 @@ const goOffline = async () => {
   currentOnlineStatus = false;
 
   await act(async () => {
-    const event = new Event('offline');
+    const event = new Event("offline");
     window.dispatchEvent(event);
-    await new Promise(resolve => setTimeout(resolve, 50));
+    await new Promise((resolve) => setTimeout(resolve, 50));
   });
 };
 
@@ -62,7 +62,7 @@ const goOffline = async () => {
 // TEST SUITE
 // ============================================================================
 
-describe('Network Reconnection Integration', () => {
+describe("Network Reconnection Integration", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     (navigator as any).onLine = true;
@@ -80,7 +80,7 @@ describe('Network Reconnection Integration', () => {
   // SCENARIO 1: DETECT ONLINE STATE
   // ============================================================================
 
-  it('should detect online state from navigator', () => {
+  it("should detect online state from navigator", () => {
     (navigator as any).onLine = true;
 
     expect(navigator.onLine).toBe(true);
@@ -90,7 +90,7 @@ describe('Network Reconnection Integration', () => {
   // SCENARIO 2: DETECT OFFLINE STATE
   // ============================================================================
 
-  it('should detect offline state from navigator', () => {
+  it("should detect offline state from navigator", () => {
     (navigator as any).onLine = false;
 
     expect(navigator.onLine).toBe(false);
@@ -100,56 +100,56 @@ describe('Network Reconnection Integration', () => {
   // SCENARIO 3: ONLINE EVENT
   // ============================================================================
 
-  it('should trigger online event when connection is restored', async () => {
+  it("should trigger online event when connection is restored", async () => {
     let eventFired = false;
 
     const handleOnline = () => {
       eventFired = true;
     };
 
-    window.addEventListener('online', handleOnline);
+    window.addEventListener("online", handleOnline);
 
     await goOnline();
 
     expect(eventFired).toBe(true);
     expect(navigator.onLine).toBe(true);
 
-    window.removeEventListener('online', handleOnline);
+    window.removeEventListener("online", handleOnline);
   });
 
   // ============================================================================
   // SCENARIO 4: OFFLINE EVENT
   // ============================================================================
 
-  it('should trigger offline event when connection is lost', async () => {
+  it("should trigger offline event when connection is lost", async () => {
     let eventFired = false;
 
     const handleOffline = () => {
       eventFired = true;
     };
 
-    window.addEventListener('offline', handleOffline);
+    window.addEventListener("offline", handleOffline);
 
     await goOffline();
 
     expect(eventFired).toBe(true);
     expect(navigator.onLine).toBe(false);
 
-    window.removeEventListener('offline', handleOffline);
+    window.removeEventListener("offline", handleOffline);
   });
 
   // ============================================================================
   // SCENARIO 5: RECONNECTION FLOW
   // ============================================================================
 
-  it('should handle offline-to-online transition', async () => {
+  it("should handle offline-to-online transition", async () => {
     const events: string[] = [];
 
-    const handleOnline = () => events.push('online');
-    const handleOffline = () => events.push('offline');
+    const handleOnline = () => events.push("online");
+    const handleOffline = () => events.push("offline");
 
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
 
     // Start online
     await goOnline();
@@ -160,27 +160,27 @@ describe('Network Reconnection Integration', () => {
     // Come back online
     await goOnline();
 
-    expect(events).toContain('online');
-    expect(events).toContain('offline');
+    expect(events).toContain("online");
+    expect(events).toContain("offline");
     expect(navigator.onLine).toBe(true);
 
-    window.removeEventListener('online', handleOnline);
-    window.removeEventListener('offline', handleOffline);
+    window.removeEventListener("online", handleOnline);
+    window.removeEventListener("offline", handleOffline);
   });
 
   // ============================================================================
   // SCENARIO 6: MULTIPLE STATE CHANGES
   // ============================================================================
 
-  it('should handle multiple network state changes', async () => {
+  it("should handle multiple network state changes", async () => {
     const statusLog: boolean[] = [];
 
     const logStatus = () => {
       statusLog.push(navigator.onLine);
     };
 
-    window.addEventListener('online', logStatus);
-    window.addEventListener('offline', logStatus);
+    window.addEventListener("online", logStatus);
+    window.addEventListener("offline", logStatus);
 
     // Online -> Offline -> Online -> Offline
     await goOnline();
@@ -192,19 +192,19 @@ describe('Network Reconnection Integration', () => {
     expect(statusLog).toContain(true); // Was online at some point
     expect(statusLog).toContain(false); // Was offline at some point
 
-    window.removeEventListener('online', logStatus);
-    window.removeEventListener('offline', logStatus);
+    window.removeEventListener("online", logStatus);
+    window.removeEventListener("offline", logStatus);
   });
 
   // ============================================================================
   // SCENARIO 7: NETWORK STATUS STABILITY
   // ============================================================================
 
-  it('should maintain state between checks', async () => {
+  it("should maintain state between checks", async () => {
     await goOnline();
     const firstCheck = navigator.onLine;
 
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise((resolve) => setTimeout(resolve, 100));
 
     const secondCheck = navigator.onLine;
 
@@ -216,19 +216,19 @@ describe('Network Reconnection Integration', () => {
   // SCENARIO 8: LISTENER CLEANUP
   // ============================================================================
 
-  it('should allow removing event listeners', async () => {
+  it("should allow removing event listeners", async () => {
     let count = 0;
 
     const handler = () => {
       count++;
     };
 
-    window.addEventListener('online', handler);
+    window.addEventListener("online", handler);
     await goOnline();
 
     expect(count).toBe(1);
 
-    window.removeEventListener('online', handler);
+    window.removeEventListener("online", handler);
     await goOnline();
 
     // Count should still be 1 (handler was removed)

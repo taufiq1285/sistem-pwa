@@ -9,8 +9,13 @@
  * - Clear processed items
  */
 
-import { indexedDBManager } from './indexeddb';
-import type { SyncQueueItem, SyncOperation, SyncEntity, SyncStatus } from '@/types/offline.types';
+import { indexedDBManager } from "./indexeddb";
+import type {
+  SyncQueueItem,
+  SyncOperation,
+  SyncEntity,
+  SyncStatus,
+} from "@/types/offline.types";
 
 // ============================================================================
 // TYPES
@@ -24,7 +29,12 @@ export type QueueProcessor = (item: SyncQueueItem) => Promise<void>;
 /**
  * Queue event types
  */
-export type QueueEventType = 'added' | 'processing' | 'completed' | 'failed' | 'cleared';
+export type QueueEventType =
+  | "added"
+  | "processing"
+  | "completed"
+  | "failed"
+  | "cleared";
 
 /**
  * Queue event
@@ -105,7 +115,7 @@ export class QueueManager {
    */
   async initialize(): Promise<void> {
     if (this.isInitialized) {
-      console.warn('QueueManager already initialized');
+      console.warn("QueueManager already initialized");
       return;
     }
 
@@ -115,7 +125,7 @@ export class QueueManager {
     }
 
     this.isInitialized = true;
-    console.log('✅ QueueManager initialized');
+    console.log("✅ QueueManager initialized");
 
     // Auto-process if enabled
     if (this.config.autoProcess && this.processor) {
@@ -136,7 +146,7 @@ export class QueueManager {
   async enqueue(
     entity: SyncEntity,
     operation: SyncOperation,
-    data: Record<string, unknown>
+    data: Record<string, unknown>,
   ): Promise<SyncQueueItem> {
     await this.ensureInitialized();
 
@@ -146,16 +156,16 @@ export class QueueManager {
       operation,
       data,
       timestamp: Date.now(),
-      status: 'pending',
+      status: "pending",
       retryCount: 0,
     };
 
-    await indexedDBManager.create('sync_queue', item);
+    await indexedDBManager.create("sync_queue", item);
 
     console.log(`📥 Enqueued ${entity} ${operation}:`, item.id);
 
     this.emitEvent({
-      type: 'added',
+      type: "added",
       item,
       timestamp: Date.now(),
     });
@@ -164,7 +174,7 @@ export class QueueManager {
     if (this.config.autoProcess && this.processor && !this.isProcessing) {
       // Process in background (don't await)
       this.processQueue().catch((error) => {
-        console.error('Auto-process failed:', error);
+        console.error("Auto-process failed:", error);
       });
     }
 
@@ -180,10 +190,10 @@ export class QueueManager {
     const size = batchSize || this.config.batchSize;
 
     // Get all pending items, sorted by timestamp (FIFO)
-    const allItems = await indexedDBManager.getAll<SyncQueueItem>('sync_queue');
+    const allItems = await indexedDBManager.getAll<SyncQueueItem>("sync_queue");
 
     const pendingItems = allItems
-      .filter((item) => item.status === 'pending')
+      .filter((item) => item.status === "pending")
       .sort((a, b) => a.timestamp - b.timestamp)
       .slice(0, size);
 
@@ -197,11 +207,11 @@ export class QueueManager {
     await this.ensureInitialized();
 
     if (!this.processor) {
-      throw new Error('Queue processor not set. Call setProcessor() first.');
+      throw new Error("Queue processor not set. Call setProcessor() first.");
     }
 
     if (this.isProcessing) {
-      console.warn('Queue processing already in progress');
+      console.warn("Queue processing already in progress");
       return {
         processed: 0,
         succeeded: 0,
@@ -223,7 +233,7 @@ export class QueueManager {
       const batch = await this.getNextBatch();
 
       if (batch.length === 0) {
-        console.log('📭 Queue is empty');
+        console.log("📭 Queue is empty");
         return result;
       }
 
@@ -232,10 +242,10 @@ export class QueueManager {
       for (const item of batch) {
         try {
           // Mark as syncing
-          await this.updateItemStatus(item.id, 'syncing');
+          await this.updateItemStatus(item.id, "syncing");
 
           this.emitEvent({
-            type: 'processing',
+            type: "processing",
             item,
             timestamp: Date.now(),
           });
@@ -244,20 +254,24 @@ export class QueueManager {
           await this.processor(item);
 
           // Mark as completed
-          await this.updateItemStatus(item.id, 'completed');
+          await this.updateItemStatus(item.id, "completed");
 
           result.succeeded++;
 
           this.emitEvent({
-            type: 'completed',
+            type: "completed",
             item,
             timestamp: Date.now(),
           });
 
-          console.log(`✅ Processed ${item.entity} ${item.operation}:`, item.id);
+          console.log(
+            `✅ Processed ${item.entity} ${item.operation}:`,
+            item.id,
+          );
         } catch (error) {
           // Handle failure
-          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+          const errorMessage =
+            error instanceof Error ? error.message : "Unknown error";
 
           result.failed++;
           result.errors.push({ id: item.id, error: errorMessage });
@@ -266,19 +280,22 @@ export class QueueManager {
           await this.handleFailedItem(item, errorMessage);
 
           this.emitEvent({
-            type: 'failed',
+            type: "failed",
             item,
             timestamp: Date.now(),
           });
 
-          console.error(`❌ Failed to process ${item.entity} ${item.operation}:`, errorMessage);
+          console.error(
+            `❌ Failed to process ${item.entity} ${item.operation}:`,
+            errorMessage,
+          );
         }
 
         result.processed++;
       }
 
       console.log(
-        `✨ Queue processing complete: ${result.succeeded}/${result.processed} succeeded`
+        `✨ Queue processing complete: ${result.succeeded}/${result.processed} succeeded`,
       );
     } finally {
       this.isProcessing = false;
@@ -290,23 +307,28 @@ export class QueueManager {
   /**
    * Handle failed item with retry logic
    */
-  private async handleFailedItem(item: SyncQueueItem, errorMessage: string): Promise<void> {
+  private async handleFailedItem(
+    item: SyncQueueItem,
+    errorMessage: string,
+  ): Promise<void> {
     const updatedItem = {
       ...item,
       retryCount: item.retryCount + 1,
       error: errorMessage,
-      status: (item.retryCount + 1 >= this.config.maxRetries ? 'failed' : 'pending') as SyncStatus,
+      status: (item.retryCount + 1 >= this.config.maxRetries
+        ? "failed"
+        : "pending") as SyncStatus,
     };
 
-    await indexedDBManager.update('sync_queue', updatedItem);
+    await indexedDBManager.update("sync_queue", updatedItem);
 
-    if (updatedItem.status === 'failed') {
+    if (updatedItem.status === "failed") {
       console.warn(
-        `⚠️  Item ${item.id} failed after ${this.config.maxRetries} retries`
+        `⚠️  Item ${item.id} failed after ${this.config.maxRetries} retries`,
       );
     } else {
       console.log(
-        `🔄 Item ${item.id} will be retried (attempt ${updatedItem.retryCount + 1}/${this.config.maxRetries})`
+        `🔄 Item ${item.id} will be retried (attempt ${updatedItem.retryCount + 1}/${this.config.maxRetries})`,
       );
     }
   }
@@ -317,18 +339,18 @@ export class QueueManager {
   async retryFailed(): Promise<number> {
     await this.ensureInitialized();
 
-    const allItems = await indexedDBManager.getAll<SyncQueueItem>('sync_queue');
-    const failedItems = allItems.filter((item) => item.status === 'failed');
+    const allItems = await indexedDBManager.getAll<SyncQueueItem>("sync_queue");
+    const failedItems = allItems.filter((item) => item.status === "failed");
 
     for (const item of failedItems) {
       const updatedItem = {
         ...item,
-        status: 'pending' as SyncStatus,
+        status: "pending" as SyncStatus,
         retryCount: 0,
         error: undefined,
       };
 
-      await indexedDBManager.update('sync_queue', updatedItem);
+      await indexedDBManager.update("sync_queue", updatedItem);
     }
 
     console.log(`🔄 Reset ${failedItems.length} failed items to pending`);
@@ -336,7 +358,7 @@ export class QueueManager {
     // Auto-process if enabled
     if (this.config.autoProcess && this.processor && !this.isProcessing) {
       this.processQueue().catch((error) => {
-        console.error('Auto-process after retry failed:', error);
+        console.error("Auto-process after retry failed:", error);
       });
     }
 
@@ -349,16 +371,18 @@ export class QueueManager {
   async clearCompleted(): Promise<number> {
     await this.ensureInitialized();
 
-    const allItems = await indexedDBManager.getAll<SyncQueueItem>('sync_queue');
-    const completedItems = allItems.filter((item) => item.status === 'completed');
+    const allItems = await indexedDBManager.getAll<SyncQueueItem>("sync_queue");
+    const completedItems = allItems.filter(
+      (item) => item.status === "completed",
+    );
 
     const ids = completedItems.map((item) => item.id);
-    await indexedDBManager.batchDelete('sync_queue', ids);
+    await indexedDBManager.batchDelete("sync_queue", ids);
 
     console.log(`🗑️  Cleared ${ids.length} completed items`);
 
     this.emitEvent({
-      type: 'cleared',
+      type: "cleared",
       count: ids.length,
       timestamp: Date.now(),
     });
@@ -372,16 +396,16 @@ export class QueueManager {
   async clearFailed(): Promise<number> {
     await this.ensureInitialized();
 
-    const allItems = await indexedDBManager.getAll<SyncQueueItem>('sync_queue');
-    const failedItems = allItems.filter((item) => item.status === 'failed');
+    const allItems = await indexedDBManager.getAll<SyncQueueItem>("sync_queue");
+    const failedItems = allItems.filter((item) => item.status === "failed");
 
     const ids = failedItems.map((item) => item.id);
-    await indexedDBManager.batchDelete('sync_queue', ids);
+    await indexedDBManager.batchDelete("sync_queue", ids);
 
     console.log(`🗑️  Cleared ${ids.length} failed items`);
 
     this.emitEvent({
-      type: 'cleared',
+      type: "cleared",
       count: ids.length,
       timestamp: Date.now(),
     });
@@ -395,13 +419,13 @@ export class QueueManager {
   async clearAll(): Promise<number> {
     await this.ensureInitialized();
 
-    const count = await indexedDBManager.count('sync_queue');
-    await indexedDBManager.clear('sync_queue');
+    const count = await indexedDBManager.count("sync_queue");
+    await indexedDBManager.clear("sync_queue");
 
     console.log(`🗑️  Cleared all ${count} queue items`);
 
     this.emitEvent({
-      type: 'cleared',
+      type: "cleared",
       count,
       timestamp: Date.now(),
     });
@@ -415,14 +439,14 @@ export class QueueManager {
   async getStats(): Promise<QueueStats> {
     await this.ensureInitialized();
 
-    const allItems = await indexedDBManager.getAll<SyncQueueItem>('sync_queue');
+    const allItems = await indexedDBManager.getAll<SyncQueueItem>("sync_queue");
 
     const stats: QueueStats = {
       total: allItems.length,
-      pending: allItems.filter((item) => item.status === 'pending').length,
-      syncing: allItems.filter((item) => item.status === 'syncing').length,
-      completed: allItems.filter((item) => item.status === 'completed').length,
-      failed: allItems.filter((item) => item.status === 'failed').length,
+      pending: allItems.filter((item) => item.status === "pending").length,
+      syncing: allItems.filter((item) => item.status === "syncing").length,
+      completed: allItems.filter((item) => item.status === "completed").length,
+      failed: allItems.filter((item) => item.status === "failed").length,
     };
 
     // Get oldest and newest items
@@ -440,7 +464,7 @@ export class QueueManager {
    */
   async getItem(id: string): Promise<SyncQueueItem | undefined> {
     await this.ensureInitialized();
-    return await indexedDBManager.read<SyncQueueItem>('sync_queue', id);
+    return await indexedDBManager.read<SyncQueueItem>("sync_queue", id);
   }
 
   /**
@@ -449,7 +473,7 @@ export class QueueManager {
   async getAllItems(status?: SyncStatus): Promise<SyncQueueItem[]> {
     await this.ensureInitialized();
 
-    const allItems = await indexedDBManager.getAll<SyncQueueItem>('sync_queue');
+    const allItems = await indexedDBManager.getAll<SyncQueueItem>("sync_queue");
 
     if (status) {
       return allItems.filter((item) => item.status === status);
@@ -461,8 +485,11 @@ export class QueueManager {
   /**
    * Update item status
    */
-  private async updateItemStatus(id: string, status: SyncStatus): Promise<void> {
-    const item = await indexedDBManager.read<SyncQueueItem>('sync_queue', id);
+  private async updateItemStatus(
+    id: string,
+    status: SyncStatus,
+  ): Promise<void> {
+    const item = await indexedDBManager.read<SyncQueueItem>("sync_queue", id);
 
     if (!item) {
       throw new Error(`Queue item not found: ${id}`);
@@ -473,7 +500,7 @@ export class QueueManager {
       status,
     };
 
-    await indexedDBManager.update('sync_queue', updatedItem);
+    await indexedDBManager.update("sync_queue", updatedItem);
   }
 
   /**
@@ -535,7 +562,7 @@ export class QueueManager {
       try {
         listener(event);
       } catch (error) {
-        console.error('Error in queue listener:', error);
+        console.error("Error in queue listener:", error);
       }
     });
 

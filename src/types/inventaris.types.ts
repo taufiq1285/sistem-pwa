@@ -2,16 +2,20 @@
  * Inventaris & Peminjaman Types
  */
 
-import type { Database } from './database.types';
+import type { Database } from "./database.types";
 
-type InventarisTable = Database['public']['Tables'] extends { inventaris: { Row: infer R } } 
-  ? R 
+type InventarisTable = Database["public"]["Tables"] extends {
+  inventaris: { Row: infer R };
+}
+  ? R
   : {
       id: string;
       // Fallback shape if 'inventaris' table is not present in generated Database types
       [key: string]: unknown;
     };
-type PeminjamanTable = Database['public']['Tables'] extends { peminjaman: { Row: infer R } }
+type PeminjamanTable = Database["public"]["Tables"] extends {
+  peminjaman: { Row: infer R };
+}
   ? R
   : {
       id: string;
@@ -19,8 +23,18 @@ type PeminjamanTable = Database['public']['Tables'] extends { peminjaman: { Row:
       [key: string]: unknown;
     };
 
-export type EquipmentCondition = 'baik' | 'rusak_ringan' | 'rusak_berat' | 'maintenance' | 'hilang';
-export type BorrowingStatus = 'pending' | 'approved' | 'rejected' | 'returned' | 'overdue';
+export type EquipmentCondition =
+  | "baik"
+  | "rusak_ringan"
+  | "rusak_berat"
+  | "maintenance"
+  | "hilang";
+export type BorrowingStatus =
+  | "pending"
+  | "approved"
+  | "rejected"
+  | "returned"
+  | "overdue";
 
 export interface Inventaris extends InventarisTable {
   laboratorium?: {

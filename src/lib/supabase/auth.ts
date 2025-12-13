@@ -17,7 +17,7 @@ import type {
  * Login with email and password
  */
 export async function login(
-  credentials: LoginCredentials
+  credentials: LoginCredentials,
 ): Promise<AuthResponse> {
   try {
     logger.auth("login: START", { email: credentials.email });
@@ -99,7 +99,7 @@ export async function register(data: RegisterData): Promise<AuthResponse> {
     if (authError) {
       if (authError.message.includes("already registered")) {
         throw new Error(
-          "Email sudah terdaftar. Silakan gunakan email lain atau login."
+          "Email sudah terdaftar. Silakan gunakan email lain atau login.",
         );
       }
       throw authError;
@@ -129,7 +129,7 @@ export async function register(data: RegisterData): Promise<AuthResponse> {
                 Authorization: `Bearer ${sessionToken}`,
                 "Content-Type": "application/json",
               },
-            }
+            },
           );
 
           const rollbackResult = await rollbackResponse.json();
@@ -140,7 +140,10 @@ export async function register(data: RegisterData): Promise<AuthResponse> {
             logger.error("register: Rollback failed", rollbackResult.error);
           }
         } catch (rollbackError) {
-          logger.error("register: Failed to call rollback edge function", rollbackError);
+          logger.error(
+            "register: Failed to call rollback edge function",
+            rollbackError,
+          );
           // Continue anyway - user can contact admin to cleanup
         }
       }
@@ -161,11 +164,11 @@ export async function register(data: RegisterData): Promise<AuthResponse> {
         errorMsg.includes("already exists")
       ) {
         throw new Error(
-          "Data sudah terdaftar (NIM/NIP duplicate). Silakan gunakan email dan NIM/NIP yang berbeda."
+          "Data sudah terdaftar (NIM/NIP duplicate). Silakan gunakan email dan NIM/NIP yang berbeda.",
         );
       }
       throw new Error(
-        `Gagal membuat profil: ${errorMsg}. Silakan coba lagi dengan data yang berbeda.`
+        `Gagal membuat profil: ${errorMsg}. Silakan coba lagi dengan data yang berbeda.`,
       );
     }
 
@@ -212,6 +215,10 @@ export async function logout(): Promise<AuthResponse> {
     logger.auth("logout: Supabase response", { error });
 
     if (error) throw error;
+
+    // Clear user role cache
+    const { clearUserRoleCache } = await import("@/lib/middleware");
+    clearUserRoleCache();
 
     logger.auth("logout: Success");
     return {
@@ -288,7 +295,7 @@ export async function refreshSession(): Promise<AuthSession | null> {
 
     logger.auth(
       "refreshSession: Calling getUserProfile for",
-      data.session.user.id
+      data.session.user.id,
     );
     const user = await getUserProfile(data.session.user.id);
     logger.auth("refreshSession: Success", {
@@ -372,7 +379,7 @@ export async function updatePassword(password: string): Promise<AuthResponse> {
  */
 async function createUserProfile(
   userId: string,
-  data: RegisterData
+  data: RegisterData,
 ): Promise<void> {
   try {
     logger.debug("createUserProfile: START", {
@@ -423,7 +430,7 @@ async function createUserProfile(
       if (mahasiswaError) {
         logger.error(
           "createUserProfile: Mahasiswa insert failed",
-          mahasiswaError
+          mahasiswaError,
         );
         throw mahasiswaError;
       }
@@ -478,9 +485,9 @@ async function getUserProfile(userId: string): Promise<AuthUser> {
   logger.debug("getUserProfile: START", { userId });
 
   try {
-    // Increased timeout to 10 seconds with AbortController
+    // Timeout for database query (10 seconds for login operations)
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 2000); // ✅ OPTIMIZED: 10s→2s
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout for auth operations
 
     const { data: user, error: userError } = await supabase
       .from("users")
@@ -497,16 +504,19 @@ async function getUserProfile(userId: string): Promise<AuthUser> {
     });
 
     if (userError) {
-      logger.warn("getUserProfile: Database error", userError);
-      // If user not found in database (deleted), don't use fallback
+      // Suppress PGRST116 (0 rows) as debug instead of warning during registration
       if (userError.code === "PGRST116") {
+        logger.debug(
+          "getUserProfile: User profile not found (likely during creation)",
+        );
         throw new Error("User account has been deleted");
       }
+      logger.warn("getUserProfile: Database error", userError);
       throw userError;
     }
 
     if (!user) {
-      logger.warn("getUserProfile: User not found in database");
+      logger.debug("getUserProfile: User not found (likely during creation)");
       throw new Error("User account has been deleted");
     }
 
@@ -537,7 +547,7 @@ async function getUserProfile(userId: string): Promise<AuthUser> {
           const { data: dosenData } = await supabase
             .from("dosen")
             .select(
-              "id, nip, nidn, gelar_depan, gelar_belakang, fakultas, program_studi"
+              "id, nip, nidn, gelar_depan, gelar_belakang, fakultas, program_studi",
             )
             .eq("user_id", userId)
             .maybeSingle();
@@ -584,17 +594,17 @@ async function getUserProfile(userId: string): Promise<AuthUser> {
 
     return { ...user, ...roleData } as AuthUser;
   } catch (error: unknown) {
-    logger.error("getUserProfile: ERROR", error);
-
     // Don't use fallback if user was deleted
     if ((error as Error).message?.includes("deleted")) {
-      logger.error("getUserProfile: User deleted, not using fallback");
+      logger.debug("getUserProfile: User not ready yet (during registration)");
       throw error;
     }
 
+    logger.error("getUserProfile: ERROR", error);
+
     // Better error handling for abort errors
     if ((error as Error).name === "AbortError") {
-      logger.error("getUserProfile: Query timeout (10s)");
+      logger.error("getUserProfile: Query timeout - database took too long to respond");
     }
 
     // FALLBACK: Get user from auth.getUser() metadata
@@ -641,7 +651,7 @@ async function getUserProfile(userId: string): Promise<AuthUser> {
  * ✅ FIXED: Fetch full user profile instead of using metadata only
  */
 export function onAuthStateChange(
-  callback: (session: AuthSession | null) => void
+  callback: (session: AuthSession | null) => void,
 ) {
   logger.debug("onAuthStateChange: Setting up listener");
 
@@ -656,6 +666,12 @@ export function onAuthStateChange(
 
     if (session?.user) {
       try {
+        // For SIGNED_IN event (new registration), retry with delay to avoid race condition
+        if (event === "SIGNED_IN") {
+          // Wait a bit for profile creation to complete
+          await new Promise((resolve) => setTimeout(resolve, 500));
+        }
+
         // Fetch full profile from database
         const user = await getUserProfile(session.user.id);
 
@@ -673,10 +689,10 @@ export function onAuthStateChange(
       } catch (error: unknown) {
         const errorMsg = (error as Error).message || "";
 
-        // If user was deleted, just return null without signing out
-        // (Let the register() function handle signOut and rollback)
-        if (errorMsg.includes("deleted")) {
-          logger.debug("onAuthStateChange: User profile not found, skipping");
+        // If user was deleted or profile not ready yet, just return null silently
+        // (This is normal during registration - profile is being created)
+        if (errorMsg.includes("deleted") || errorMsg.includes("0 rows")) {
+          logger.debug("onAuthStateChange: Profile not ready yet, skipping");
           callback(null);
           return;
         }

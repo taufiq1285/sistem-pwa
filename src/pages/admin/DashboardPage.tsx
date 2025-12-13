@@ -3,11 +3,18 @@
  * Main dashboard for admin with statistics, charts, and recent activity
  */
 
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { useEffect, useState } from "react";
+import { useAuth } from "@/lib/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Users,
   GraduationCap,
@@ -21,7 +28,7 @@ import {
   Settings,
   BarChart3,
   LogOut,
-} from 'lucide-react';
+} from "lucide-react";
 import {
   LineChart,
   Line,
@@ -36,7 +43,7 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-} from 'recharts';
+} from "recharts";
 import {
   getDashboardStats,
   getUserGrowth,
@@ -50,14 +57,14 @@ import {
   type LabUsageData,
   type RecentUser,
   type RecentAnnouncement,
-} from '@/lib/api/admin.api';
-import { logout } from '@/lib/supabase/auth';
+} from "@/lib/api/admin.api";
+import { logout } from "@/lib/supabase/auth";
 
 // ============================================================================
 // CONSTANTS
 // ============================================================================
 
-const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"];
 
 // ============================================================================
 // COMPONENT
@@ -65,74 +72,89 @@ const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
 export function DashboardPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   // State
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [userGrowth, setUserGrowth] = useState<UserGrowthData[]>([]);
-  const [userDistribution, setUserDistribution] = useState<UserDistribution[]>([]);
+  const [userDistribution, setUserDistribution] = useState<UserDistribution[]>(
+    [],
+  );
   const [labUsage, setLabUsage] = useState<LabUsageData[]>([]);
   const [recentUsers, setRecentUsers] = useState<RecentUser[]>([]);
-  const [recentAnnouncements, setRecentAnnouncements] = useState<RecentAnnouncement[]>([]);
+  const [recentAnnouncements, setRecentAnnouncements] = useState<
+    RecentAnnouncement[]
+  >([]);
   const [error, setError] = useState<string | null>(null);
 
   // Fetch all data
   useEffect(() => {
-    async function fetchData() {
-      try {
-        setLoading(true);
-        setError(null);
+    if (user?.id) {
+      async function fetchData() {
+        try {
+          setLoading(true);
+          setError(null);
 
-        const [
-          statsData,
-          growthData,
-          distributionData,
-          usageData,
-          usersData,
-          announcementsData,
-        ] = await Promise.all([
-          getDashboardStats(),
-          getUserGrowth(),
-          getUserDistribution(),
-          getLabUsage(),
-          getRecentUsers(5),
-          getRecentAnnouncements(5),
-        ]);
+          const [
+            statsData,
+            growthData,
+            distributionData,
+            usageData,
+            usersData,
+            announcementsData,
+          ] = await Promise.all([
+            getDashboardStats(),
+            getUserGrowth(),
+            getUserDistribution(),
+            getLabUsage(),
+            getRecentUsers(5),
+            getRecentAnnouncements(5),
+          ]);
 
-        setStats(statsData);
-        setUserGrowth(growthData);
-        setUserDistribution(distributionData);
-        setLabUsage(usageData);
-        setRecentUsers(usersData);
-        setRecentAnnouncements(announcementsData);
-      } catch (err) {
-        console.error('Error fetching dashboard data:', err);
-        setError('Failed to load dashboard data');
-      } finally {
-        setLoading(false);
+          setStats(statsData);
+          setUserGrowth(growthData);
+          setUserDistribution(distributionData);
+          setLabUsage(usageData);
+          setRecentUsers(usersData);
+          setRecentAnnouncements(announcementsData);
+        } catch (err) {
+          console.error("Error fetching dashboard data:", err);
+          setError("Failed to load dashboard data");
+        } finally {
+          setLoading(false);
+        }
       }
-    }
 
-    fetchData();
-  }, []);
+      fetchData();
+    } else {
+      // Clear data if no user
+      setStats(null);
+      setUserGrowth([]);
+      setUserDistribution([]);
+      setLabUsage([]);
+      setRecentUsers([]);
+      setRecentAnnouncements([]);
+    }
+  }, [user?.id]);
 
   // Logout handler
   const handleLogout = async () => {
     try {
       await logout();
-      navigate('/login');
+      navigate("/login");
     } catch (error) {
-      console.error('Logout failed:', error);
+      console.error("Logout failed:", error);
     }
   };
 
   // Format date
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return new Intl.DateTimeFormat('id-ID', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
+    return new Intl.DateTimeFormat("id-ID", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
     }).format(date);
   };
 
@@ -142,7 +164,9 @@ export function DashboardPage() {
       <div className="flex h-full items-center justify-center">
         <div className="text-center">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto" />
-          <p className="mt-4 text-sm text-muted-foreground">Loading dashboard...</p>
+          <p className="mt-4 text-sm text-muted-foreground">
+            Loading dashboard...
+          </p>
         </div>
       </div>
     );
@@ -207,7 +231,8 @@ export function DashboardPage() {
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalMahasiswa}</div>
             <p className="text-xs text-muted-foreground">
-              {Math.round((stats.totalMahasiswa / stats.totalUsers) * 100)}% of users
+              {Math.round((stats.totalMahasiswa / stats.totalUsers) * 100)}% of
+              users
             </p>
           </CardContent>
         </Card>
@@ -220,7 +245,8 @@ export function DashboardPage() {
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalDosen}</div>
             <p className="text-xs text-muted-foreground">
-              {Math.round((stats.totalDosen / stats.totalUsers) * 100)}% of users
+              {Math.round((stats.totalDosen / stats.totalUsers) * 100)}% of
+              users
             </p>
           </CardContent>
         </Card>
@@ -270,7 +296,7 @@ export function DashboardPage() {
             <Button
               variant="outline"
               className="justify-start"
-              onClick={() => navigate('/admin/users?action=create')}
+              onClick={() => navigate("/admin/users?action=create")}
             >
               <Plus className="mr-2 h-4 w-4" />
               Add User
@@ -278,7 +304,7 @@ export function DashboardPage() {
             <Button
               variant="outline"
               className="justify-start"
-              onClick={() => navigate('/admin/announcements?action=create')}
+              onClick={() => navigate("/admin/announcements?action=create")}
             >
               <Megaphone className="mr-2 h-4 w-4" />
               New Announcement
@@ -286,7 +312,7 @@ export function DashboardPage() {
             <Button
               variant="outline"
               className="justify-start"
-              onClick={() => navigate('/admin/laboratories')}
+              onClick={() => navigate("/admin/laboratories")}
             >
               <FlaskConical className="mr-2 h-4 w-4" />
               Manage Labs
@@ -294,7 +320,7 @@ export function DashboardPage() {
             <Button
               variant="outline"
               className="justify-start"
-              onClick={() => navigate('/admin/equipments')}
+              onClick={() => navigate("/admin/equipments")}
             >
               <Wrench className="mr-2 h-4 w-4" />
               Manage Equipment
@@ -302,7 +328,7 @@ export function DashboardPage() {
             <Button
               variant="outline"
               className="justify-start"
-              onClick={() => navigate('/admin/system/analytics')}
+              onClick={() => navigate("/admin/system/analytics")}
             >
               <BarChart3 className="mr-2 h-4 w-4" />
               View Analytics
@@ -310,7 +336,7 @@ export function DashboardPage() {
             <Button
               variant="outline"
               className="justify-start"
-              onClick={() => navigate('/admin/roles')}
+              onClick={() => navigate("/admin/roles")}
             >
               <Settings className="mr-2 h-4 w-4" />
               Roles & Permissions
@@ -367,7 +393,10 @@ export function DashboardPage() {
                   dataKey="count"
                 >
                   {userDistribution.map((entry, index) => (
-                    <Cell key={`cell-${entry.role}-${index}`} fill={COLORS[index % COLORS.length]} />
+                    <Cell
+                      key={`cell-${entry.role}-${index}`}
+                      fill={COLORS[index % COLORS.length]}
+                    />
                   ))}
                 </Pie>
                 <Tooltip />
@@ -411,14 +440,19 @@ export function DashboardPage() {
                 <p className="text-sm text-muted-foreground">No recent users</p>
               ) : (
                 recentUsers.map((user) => (
-                  <div key={user.id} className="flex items-center justify-between">
+                  <div
+                    key={user.id}
+                    className="flex items-center justify-between"
+                  >
                     <div className="flex items-center space-x-3">
                       <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-medium">
                         {user.full_name.charAt(0).toUpperCase()}
                       </div>
                       <div>
                         <p className="text-sm font-medium">{user.full_name}</p>
-                        <p className="text-xs text-muted-foreground">{user.email}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {user.email}
+                        </p>
                       </div>
                     </div>
                     <div className="text-right">
@@ -445,7 +479,9 @@ export function DashboardPage() {
           <CardContent>
             <div className="space-y-4">
               {recentAnnouncements.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No recent announcements</p>
+                <p className="text-sm text-muted-foreground">
+                  No recent announcements
+                </p>
               ) : (
                 recentAnnouncements.map((announcement) => (
                   <div key={announcement.id} className="space-y-1">
@@ -453,7 +489,10 @@ export function DashboardPage() {
                       <p className="text-sm font-medium line-clamp-1">
                         {announcement.title}
                       </p>
-                      <Badge variant="outline" className="text-xs ml-2 flex-shrink-0">
+                      <Badge
+                        variant="outline"
+                        className="text-xs ml-2 flex-shrink-0"
+                      >
                         New
                       </Badge>
                     </div>
@@ -478,7 +517,11 @@ export function DashboardPage() {
               <div className="h-2 w-2 rounded-full bg-green-500" />
               <span className="text-sm font-medium">System Status: Online</span>
             </div>
-            <Button variant="outline" size="sm" onClick={() => window.location.reload()}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => window.location.reload()}
+            >
               <TrendingUp className="mr-2 h-4 w-4" />
               Refresh Data
             </Button>

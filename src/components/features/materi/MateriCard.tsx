@@ -11,7 +11,7 @@
  * - Download count
  */
 
-import { useState } from 'react';
+import { useState } from "react";
 import {
   FileText,
   Download,
@@ -27,21 +27,26 @@ import {
   Calendar,
   User,
   BookOpen,
-} from 'lucide-react';
-import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+} from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { cn } from '@/lib/utils';
-import type { Materi } from '@/types/materi.types';
-import { formatFileSize, getFileTypeCategory } from '@/lib/supabase/storage';
-import { format } from 'date-fns';
-import { id as localeId } from 'date-fns/locale';
+} from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
+import type { Materi } from "@/types/materi.types";
+import { formatFileSize, getFileTypeCategory } from "@/lib/supabase/storage";
+import { format } from "date-fns";
+import { id as localeId } from "date-fns/locale";
 
 // ============================================================================
 // TYPES
@@ -64,25 +69,25 @@ interface MateriCardProps {
 
 function getFileIcon(tipeFile: string): React.ReactNode {
   const category = getFileTypeCategory(tipeFile);
-  const iconClass = 'h-10 w-10';
+  const iconClass = "h-10 w-10";
 
   switch (category) {
-    case 'pdf':
-      return <FileText className={cn(iconClass, 'text-red-600')} />;
-    case 'document':
-      return <FileText className={cn(iconClass, 'text-blue-600')} />;
-    case 'spreadsheet':
-      return <FileCode className={cn(iconClass, 'text-green-600')} />;
-    case 'presentation':
-      return <FileCode className={cn(iconClass, 'text-orange-600')} />;
-    case 'image':
-      return <FileImage className={cn(iconClass, 'text-purple-600')} />;
-    case 'video':
-      return <FileVideo className={cn(iconClass, 'text-pink-600')} />;
-    case 'archive':
-      return <FileArchive className={cn(iconClass, 'text-yellow-600')} />;
+    case "pdf":
+      return <FileText className={cn(iconClass, "text-red-600")} />;
+    case "document":
+      return <FileText className={cn(iconClass, "text-blue-600")} />;
+    case "spreadsheet":
+      return <FileCode className={cn(iconClass, "text-green-600")} />;
+    case "presentation":
+      return <FileCode className={cn(iconClass, "text-orange-600")} />;
+    case "image":
+      return <FileImage className={cn(iconClass, "text-purple-600")} />;
+    case "video":
+      return <FileVideo className={cn(iconClass, "text-pink-600")} />;
+    case "archive":
+      return <FileArchive className={cn(iconClass, "text-yellow-600")} />;
     default:
-      return <File className={cn(iconClass, 'text-gray-600')} />;
+      return <File className={cn(iconClass, "text-gray-600")} />;
   }
 }
 
@@ -107,19 +112,19 @@ export function MateriCard({
   const downloadCount = materiAny.download_count ?? 0;
   const mingguKe = materi.minggu_ke;
 
-  const canView = ['pdf', 'image', 'video'].includes(
-    getFileTypeCategory(materi.tipe_file || '')
+  const canView = ["pdf", "image", "video"].includes(
+    getFileTypeCategory(materi.tipe_file || ""),
   );
 
   const createdDate = materi.created_at
-    ? format(new Date(materi.created_at), 'dd MMM yyyy', { locale: localeId })
-    : '-';
+    ? format(new Date(materi.created_at), "dd MMM yyyy", { locale: localeId })
+    : "-";
 
   const dosenName = materi.dosen
-    ? `${materi.dosen.gelar_depan || ''} ${materi.dosen.full_name} ${materi.dosen.gelar_belakang || ''}`.trim()
-    : 'Unknown';
+    ? `${materi.dosen.gelar_depan || ""} ${materi.dosen.full_name} ${materi.dosen.gelar_belakang || ""}`.trim()
+    : "Unknown";
 
-  const mataKuliahName = materi.kelas?.mata_kuliah?.nama_mk || '-';
+  const mataKuliahName = materi.kelas?.mata_kuliah?.nama_mk || "-";
 
   const handleDownload = async () => {
     if (!onDownload) return;
@@ -133,10 +138,17 @@ export function MateriCard({
   };
 
   return (
-    <Card className={cn('overflow-hidden hover:shadow-lg transition-shadow', className)}>
+    <Card
+      className={cn(
+        "overflow-hidden hover:shadow-lg transition-shadow",
+        className,
+      )}
+    >
       <CardHeader className="pb-4">
         <div className="flex items-start gap-4">
-          <div className="flex-shrink-0">{getFileIcon(materi.tipe_file || '')}</div>
+          <div className="flex-shrink-0">
+            {getFileIcon(materi.tipe_file || "")}
+          </div>
 
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2">
@@ -180,15 +192,15 @@ export function MateriCard({
             </div>
 
             <div className="flex flex-wrap gap-2 mt-3">
-              <Badge variant={isActive ? 'default' : 'secondary'}>
-                {isActive ? 'Published' : 'Draft'}
+              <Badge variant={isActive ? "default" : "secondary"}>
+                {isActive ? "Published" : "Draft"}
               </Badge>
 
-              {mingguKe && (
-                <Badge variant="outline">Minggu {mingguKe}</Badge>
-              )}
+              {mingguKe && <Badge variant="outline">Minggu {mingguKe}</Badge>}
 
-              <Badge variant="outline">{formatFileSize(materi.file_size || 0)}</Badge>
+              <Badge variant="outline">
+                {formatFileSize(materi.file_size || 0)}
+              </Badge>
             </div>
           </div>
         </div>
@@ -232,14 +244,14 @@ export function MateriCard({
 
             {onDownload && (
               <Button
-                variant={canView ? 'outline' : 'default'}
+                variant={canView ? "outline" : "default"}
                 size="sm"
                 onClick={handleDownload}
                 disabled={isDownloading}
                 className="flex-1"
               >
                 <Download className="h-4 w-4 mr-2" />
-                {isDownloading ? 'Downloading...' : 'Download'}
+                {isDownloading ? "Downloading..." : "Download"}
               </Button>
             )}
           </div>
@@ -273,12 +285,12 @@ export function MateriList({
   onView,
   onEdit,
   onDelete,
-  emptyMessage = 'Belum ada materi',
+  emptyMessage = "Belum ada materi",
   className,
 }: MateriListProps) {
   if (materiList.length === 0) {
     return (
-      <div className={cn('text-center py-12', className)}>
+      <div className={cn("text-center py-12", className)}>
         <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
         <p className="text-muted-foreground">{emptyMessage}</p>
       </div>
@@ -286,7 +298,7 @@ export function MateriList({
   }
 
   return (
-    <div className={cn('grid gap-4 md:grid-cols-2 lg:grid-cols-3', className)}>
+    <div className={cn("grid gap-4 md:grid-cols-2 lg:grid-cols-3", className)}>
       {materiList.map((materi) => (
         <MateriCard
           key={materi.id}

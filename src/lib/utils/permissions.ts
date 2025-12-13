@@ -3,14 +3,14 @@
  * Helper functions for role-based permission checking
  */
 
-import type { UserRole } from '@/types/auth.types';
+import type { UserRole } from "@/types/auth.types";
 import type {
   Permission,
   PermissionCheckResult,
   PermissionContext,
-} from '@/types/permission.types';
-import type { RoleComparison } from '@/types/role.types';
-import { ROLE_HIERARCHY, ROLE_METADATA } from '@/types/role.types';
+} from "@/types/permission.types";
+import type { RoleComparison } from "@/types/role.types";
+import { ROLE_HIERARCHY, ROLE_METADATA } from "@/types/role.types";
 
 // ============================================================================
 // PERMISSION CHECKING
@@ -22,7 +22,10 @@ import { ROLE_HIERARCHY, ROLE_METADATA } from '@/types/role.types';
  * @param permission - Permission to check
  * @returns Whether user has the permission
  */
-export function hasPermission(userRole: UserRole, permission: Permission): boolean {
+export function hasPermission(
+  userRole: UserRole,
+  permission: Permission,
+): boolean {
   const roleMetadata = ROLE_METADATA[userRole];
   return roleMetadata.permissions.includes(permission);
 }
@@ -33,7 +36,10 @@ export function hasPermission(userRole: UserRole, permission: Permission): boole
  * @param permissions - Array of permissions to check
  * @returns Whether user has at least one permission
  */
-export function hasAnyPermission(userRole: UserRole, permissions: Permission[]): boolean {
+export function hasAnyPermission(
+  userRole: UserRole,
+  permissions: Permission[],
+): boolean {
   return permissions.some((permission) => hasPermission(userRole, permission));
 }
 
@@ -43,7 +49,10 @@ export function hasAnyPermission(userRole: UserRole, permissions: Permission[]):
  * @param permissions - Array of permissions to check
  * @returns Whether user has all permissions
  */
-export function hasAllPermissions(userRole: UserRole, permissions: Permission[]): boolean {
+export function hasAllPermissions(
+  userRole: UserRole,
+  permissions: Permission[],
+): boolean {
   return permissions.every((permission) => hasPermission(userRole, permission));
 }
 
@@ -68,7 +77,7 @@ export function getRolePermissions(userRole: UserRole): Permission[] {
  */
 export function checkPermission(
   context: PermissionContext,
-  permission: Permission
+  permission: Permission,
 ): PermissionCheckResult {
   const { user, resource } = context;
 
@@ -76,22 +85,26 @@ export function checkPermission(
   if (!hasPermission(user.role, permission)) {
     return {
       allowed: false,
-      reason: 'User does not have required permission',
+      reason: "User does not have required permission",
     };
   }
 
   // If resource is provided, check ownership for certain operations
   if (resource && resource.ownerId) {
     const isOwner = user.id === resource.ownerId;
-    const [action] = permission.split(':');
+    const [action] = permission.split(":");
 
     // Operations that require ownership (unless admin)
-    const ownershipRequired = ['update', 'delete'];
-    
-    if (ownershipRequired.includes(action) && !isOwner && user.role !== 'admin') {
+    const ownershipRequired = ["update", "delete"];
+
+    if (
+      ownershipRequired.includes(action) &&
+      !isOwner &&
+      user.role !== "admin"
+    ) {
       return {
         allowed: false,
-        reason: 'User can only perform this action on their own resources',
+        reason: "User can only perform this action on their own resources",
       };
     }
   }
@@ -159,9 +172,12 @@ export function compareRoles(role1: UserRole, role2: UserRole): RoleComparison {
  * @param targetRole - Target role to manage
  * @returns Whether user can manage target role
  */
-export function canManageRole(userRole: UserRole, targetRole: UserRole): boolean {
+export function canManageRole(
+  userRole: UserRole,
+  targetRole: UserRole,
+): boolean {
   // Admin can manage all roles
-  if (userRole === 'admin') return true;
+  if (userRole === "admin") return true;
 
   // User can only manage roles lower than their own
   return isRoleHigher(userRole, targetRole);
@@ -258,7 +274,7 @@ export function canGrade(userRole: UserRole, resourceType: string): boolean {
  * @returns Action part of permission
  */
 export function getPermissionAction(permission: Permission): string {
-  return permission.split(':')[0];
+  return permission.split(":")[0];
 }
 
 /**
@@ -267,7 +283,7 @@ export function getPermissionAction(permission: Permission): string {
  * @returns Resource part of permission
  */
 export function getPermissionResource(permission: Permission): string {
-  return permission.split(':')[1];
+  return permission.split(":")[1];
 }
 
 /**
@@ -276,8 +292,8 @@ export function getPermissionResource(permission: Permission): string {
  * @returns Formatted permission string
  */
 export function formatPermission(permission: Permission): string {
-  const [action, resource] = permission.split(':');
+  const [action, resource] = permission.split(":");
   const actionLabel = action.charAt(0).toUpperCase() + action.slice(1);
-  const resourceLabel = resource.replace(/_/g, ' ');
+  const resourceLabel = resource.replace(/_/g, " ");
   return `${actionLabel} ${resourceLabel}`;
 }

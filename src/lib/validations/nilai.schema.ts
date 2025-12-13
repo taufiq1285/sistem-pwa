@@ -3,8 +3,8 @@
  * Zod schemas for grades system form validation
  */
 
-import { z } from 'zod';
-import type { BobotNilai } from '@/types/kelas.types';
+import { z } from "zod";
+import type { BobotNilai } from "@/types/kelas.types";
 
 // ============================================================================
 // CONSTANTS FOR VALIDATION
@@ -22,21 +22,20 @@ const MAX_GRADE = 100;
  */
 const gradeValueSchema = z
   .number()
-  .min(MIN_GRADE, 'Nilai tidak boleh kurang dari 0')
-  .max(MAX_GRADE, 'Nilai tidak boleh lebih dari 100')
-  .or(z.string().transform((val) => {
-    const num = parseFloat(val);
-    if (isNaN(num)) return 0;
-    return Math.max(MIN_GRADE, Math.min(MAX_GRADE, num));
-  }));
+  .min(MIN_GRADE, "Nilai tidak boleh kurang dari 0")
+  .max(MAX_GRADE, "Nilai tidak boleh lebih dari 100")
+  .or(
+    z.string().transform((val) => {
+      const num = parseFloat(val);
+      if (isNaN(num)) return 0;
+      return Math.max(MIN_GRADE, Math.min(MAX_GRADE, num));
+    }),
+  );
 
 /**
  * Optional grade value (can be null or undefined)
  */
-const optionalGradeSchema = gradeValueSchema
-  .optional()
-  .nullable()
-  .default(0);
+const optionalGradeSchema = gradeValueSchema.optional().nullable().default(0);
 
 // ============================================================================
 // MAIN SCHEMAS
@@ -46,13 +45,9 @@ const optionalGradeSchema = gradeValueSchema
  * Schema for creating or updating nilai
  */
 export const nilaiFormSchema = z.object({
-  mahasiswa_id: z
-    .string()
-    .uuid('Mahasiswa ID tidak valid'),
+  mahasiswa_id: z.string().uuid("Mahasiswa ID tidak valid"),
 
-  kelas_id: z
-    .string()
-    .uuid('Kelas ID tidak valid'),
+  kelas_id: z.string().uuid("Kelas ID tidak valid"),
 
   nilai_kuis: optionalGradeSchema,
   nilai_tugas: optionalGradeSchema,
@@ -63,7 +58,7 @@ export const nilaiFormSchema = z.object({
 
   keterangan: z
     .string()
-    .max(500, 'Keterangan maksimal 500 karakter')
+    .max(500, "Keterangan maksimal 500 karakter")
     .trim()
     .optional()
     .nullable(),
@@ -73,22 +68,22 @@ export const nilaiFormSchema = z.object({
  * Schema for batch update nilai (multiple students at once)
  */
 export const batchNilaiSchema = z.object({
-  kelas_id: z
-    .string()
-    .uuid('Kelas ID tidak valid'),
+  kelas_id: z.string().uuid("Kelas ID tidak valid"),
 
-  nilai_list: z.array(
-    z.object({
-      mahasiswa_id: z.string().uuid('Mahasiswa ID tidak valid'),
-      nilai_kuis: optionalGradeSchema,
-      nilai_tugas: optionalGradeSchema,
-      nilai_uts: optionalGradeSchema,
-      nilai_uas: optionalGradeSchema,
-      nilai_praktikum: optionalGradeSchema,
-      nilai_kehadiran: optionalGradeSchema,
-      keterangan: z.string().optional().nullable(),
-    })
-  ).min(1, 'Minimal harus ada satu mahasiswa'),
+  nilai_list: z
+    .array(
+      z.object({
+        mahasiswa_id: z.string().uuid("Mahasiswa ID tidak valid"),
+        nilai_kuis: optionalGradeSchema,
+        nilai_tugas: optionalGradeSchema,
+        nilai_uts: optionalGradeSchema,
+        nilai_uas: optionalGradeSchema,
+        nilai_praktikum: optionalGradeSchema,
+        nilai_kehadiran: optionalGradeSchema,
+        keterangan: z.string().optional().nullable(),
+      }),
+    )
+    .min(1, "Minimal harus ada satu mahasiswa"),
 });
 
 /**
@@ -105,22 +100,30 @@ export const nilaiFilterSchema = z.object({
  * Schema for bobot nilai (grade weights)
  * Must total to 100%
  */
-export const bobotNilaiSchema = z.object({
-  kuis: z.number().min(0).max(100, 'Bobot tidak boleh lebih dari 100%'),
-  tugas: z.number().min(0).max(100, 'Bobot tidak boleh lebih dari 100%'),
-  uts: z.number().min(0).max(100, 'Bobot tidak boleh lebih dari 100%'),
-  uas: z.number().min(0).max(100, 'Bobot tidak boleh lebih dari 100%'),
-  praktikum: z.number().min(0).max(100, 'Bobot tidak boleh lebih dari 100%'),
-  kehadiran: z.number().min(0).max(100, 'Bobot tidak boleh lebih dari 100%'),
-}).refine(
-  (data) => {
-    const total = data.kuis + data.tugas + data.uts + data.uas + data.praktikum + data.kehadiran;
-    return total === 100;
-  },
-  {
-    message: 'Total bobot nilai harus 100%',
-  }
-);
+export const bobotNilaiSchema = z
+  .object({
+    kuis: z.number().min(0).max(100, "Bobot tidak boleh lebih dari 100%"),
+    tugas: z.number().min(0).max(100, "Bobot tidak boleh lebih dari 100%"),
+    uts: z.number().min(0).max(100, "Bobot tidak boleh lebih dari 100%"),
+    uas: z.number().min(0).max(100, "Bobot tidak boleh lebih dari 100%"),
+    praktikum: z.number().min(0).max(100, "Bobot tidak boleh lebih dari 100%"),
+    kehadiran: z.number().min(0).max(100, "Bobot tidak boleh lebih dari 100%"),
+  })
+  .refine(
+    (data) => {
+      const total =
+        data.kuis +
+        data.tugas +
+        data.uts +
+        data.uas +
+        data.praktikum +
+        data.kehadiran;
+      return total === 100;
+    },
+    {
+      message: "Total bobot nilai harus 100%",
+    },
+  );
 
 // ============================================================================
 // TYPE EXPORTS
@@ -160,7 +163,7 @@ export function calculateNilaiAkhir(
   nilai_uas: number = 0,
   nilai_praktikum: number = 0,
   nilai_kehadiran: number = 0,
-  customWeights?: BobotNilai | null
+  customWeights?: BobotNilai | null,
 ): number {
   // Convert percentage weights to decimal (e.g., 15% -> 0.15)
   const weights = {
@@ -200,8 +203,17 @@ export function getDefaultBobotNilai(): BobotNilai {
 /**
  * Validate that bobot nilai totals to 100%
  */
-export function validateBobotNilai(bobot: BobotNilai): { valid: boolean; total: number } {
-  const total = bobot.kuis + bobot.tugas + bobot.uts + bobot.uas + bobot.praktikum + bobot.kehadiran;
+export function validateBobotNilai(bobot: BobotNilai): {
+  valid: boolean;
+  total: number;
+} {
+  const total =
+    bobot.kuis +
+    bobot.tugas +
+    bobot.uts +
+    bobot.uas +
+    bobot.praktikum +
+    bobot.kehadiran;
   return {
     valid: total === 100,
     total,
@@ -212,28 +224,31 @@ export function validateBobotNilai(bobot: BobotNilai): { valid: boolean; total: 
  * Convert numeric grade to letter grade
  */
 export function getNilaiHuruf(nilaiAkhir: number): string {
-  if (nilaiAkhir >= 85) return 'A';
-  if (nilaiAkhir >= 80) return 'A-';
-  if (nilaiAkhir >= 75) return 'B+';
-  if (nilaiAkhir >= 70) return 'B';
-  if (nilaiAkhir >= 65) return 'B-';
-  if (nilaiAkhir >= 60) return 'C+';
-  if (nilaiAkhir >= 55) return 'C';
-  if (nilaiAkhir >= 50) return 'C-';
-  if (nilaiAkhir >= 40) return 'D';
-  return 'E';
+  if (nilaiAkhir >= 85) return "A";
+  if (nilaiAkhir >= 80) return "A-";
+  if (nilaiAkhir >= 75) return "B+";
+  if (nilaiAkhir >= 70) return "B";
+  if (nilaiAkhir >= 65) return "B-";
+  if (nilaiAkhir >= 60) return "C+";
+  if (nilaiAkhir >= 55) return "C";
+  if (nilaiAkhir >= 50) return "C-";
+  if (nilaiAkhir >= 40) return "D";
+  return "E";
 }
 
 /**
  * Get grade status (Lulus/Tidak Lulus)
  */
-export function getGradeStatus(nilaiAkhir: number, passingGrade: number = 60): {
-  status: 'Lulus' | 'Tidak Lulus';
-  color: 'green' | 'red';
+export function getGradeStatus(
+  nilaiAkhir: number,
+  passingGrade: number = 60,
+): {
+  status: "Lulus" | "Tidak Lulus";
+  color: "green" | "red";
 } {
   const isPass = nilaiAkhir >= passingGrade;
   return {
-    status: isPass ? 'Lulus' : 'Tidak Lulus',
-    color: isPass ? 'green' : 'red',
+    status: isPass ? "Lulus" : "Tidak Lulus",
+    color: isPass ? "green" : "red",
   };
 }

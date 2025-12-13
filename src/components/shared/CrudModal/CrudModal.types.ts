@@ -3,7 +3,7 @@
  * Type definitions for CRUD modal components
  */
 
-import type { ReactNode } from 'react';
+import type { ReactNode } from "react";
 
 // ============================================================================
 // CORE TYPES
@@ -12,17 +12,17 @@ import type { ReactNode } from 'react';
 /**
  * Modal Size Options
  */
-export type ModalSize = 'sm' | 'md' | 'lg' | 'xl' | 'full';
+export type ModalSize = "sm" | "md" | "lg" | "xl" | "full";
 
 /**
  * Modal Mode
  */
-export type ModalMode = 'create' | 'edit' | 'view' | 'delete';
+export type ModalMode = "create" | "edit" | "view" | "delete";
 
 /**
  * Form Submit Status
  */
-export type SubmitStatus = 'idle' | 'submitting' | 'success' | 'error';
+export type SubmitStatus = "idle" | "submitting" | "success" | "error";
 
 // ============================================================================
 // BASE MODAL TYPES
@@ -35,22 +35,22 @@ export interface CrudModalProps {
   // Modal State
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  
+
   // Modal Config
   title: string;
   description?: string;
   size?: ModalSize;
-  
+
   // Content
   children: ReactNode;
-  
+
   // Footer Actions
   showFooter?: boolean;
   footerContent?: ReactNode;
-  
+
   // Styling
   className?: string;
-  
+
   // Behavior
   closeOnOutsideClick?: boolean;
   closeOnEscape?: boolean;
@@ -67,29 +67,29 @@ export interface CreateModalProps<TFormData = Record<string, unknown>> {
   // Modal State
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  
+
   // Form Config
   title?: string;
   description?: string;
   size?: ModalSize;
-  
+
   // Form Handling
   onSubmit: (data: TFormData) => Promise<void> | void;
   defaultValues?: Partial<TFormData>;
-  
+
   // Form Content
   children: ReactNode | ((form: unknown) => ReactNode);
-  
+
   // Submit Button
   submitLabel?: string;
   cancelLabel?: string;
-  
+
   // Loading State
   isLoading?: boolean;
-  
+
   // Validation
   validationSchema?: unknown; // Zod schema
-  
+
   // Styling
   className?: string;
 }
@@ -105,32 +105,32 @@ export interface EditModalProps<TFormData = Record<string, unknown>> {
   // Modal State
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  
+
   // Form Config
   title?: string;
   description?: string;
   size?: ModalSize;
-  
+
   // Data
   data: TFormData | null;
-  
+
   // Form Handling
   onSubmit: (data: TFormData) => Promise<void> | void;
-  
+
   // Form Content
   children: ReactNode | ((form: unknown, data: TFormData) => ReactNode);
-  
+
   // Submit Button
   submitLabel?: string;
   cancelLabel?: string;
-  
+
   // Loading State
   isLoading?: boolean;
   isFetching?: boolean;
-  
+
   // Validation
   validationSchema?: unknown; // Zod schema
-  
+
   // Styling
   className?: string;
 }
@@ -146,28 +146,28 @@ export interface DeleteDialogProps {
   // Dialog State
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  
+
   // Content
   title?: string;
   description?: string;
   itemName?: string; // e.g., "User", "Mata Kuliah"
-  
+
   // Action
   onConfirm: () => Promise<void> | void;
-  
+
   // Button Labels
   confirmLabel?: string;
   cancelLabel?: string;
-  
+
   // Loading State
   isLoading?: boolean;
-  
+
   // Variant
-  variant?: 'danger' | 'warning';
-  
+  variant?: "danger" | "warning";
+
   // Custom Content
   children?: ReactNode;
-  
+
   // Styling
   className?: string;
 }
@@ -183,24 +183,24 @@ export interface BulkDeleteDialogProps {
   // Dialog State
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  
+
   // Items to Delete
   selectedCount: number;
   itemName?: string; // e.g., "users", "mata kuliah"
-  
+
   // Action
   onConfirm: () => Promise<void> | void;
-  
+
   // Button Labels
   confirmLabel?: string;
   cancelLabel?: string;
-  
+
   // Loading State
   isLoading?: boolean;
-  
+
   // Custom Content
   children?: ReactNode;
-  
+
   // Styling
   className?: string;
 }
@@ -216,24 +216,24 @@ export interface ViewModalProps<TData = Record<string, unknown>> {
   // Modal State
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  
+
   // Config
   title?: string;
   description?: string;
   size?: ModalSize;
-  
+
   // Data
   data: TData | null;
-  
+
   // Content
   children: ReactNode | ((data: TData) => ReactNode);
-  
+
   // Footer Actions (optional)
   footerActions?: ReactNode;
-  
+
   // Loading State
   isLoading?: boolean;
-  
+
   // Styling
   className?: string;
 }
@@ -248,7 +248,15 @@ export interface ViewModalProps<TData = Record<string, unknown>> {
 export interface FormFieldConfig {
   name: string;
   label: string;
-  type?: 'text' | 'email' | 'password' | 'number' | 'textarea' | 'select' | 'checkbox' | 'date';
+  type?:
+    | "text"
+    | "email"
+    | "password"
+    | "number"
+    | "textarea"
+    | "select"
+    | "checkbox"
+    | "date";
   placeholder?: string;
   required?: boolean;
   disabled?: boolean;
@@ -271,7 +279,13 @@ export interface FormFieldConfig {
 export interface ModalAction {
   label: string;
   onClick: () => void;
-  variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
+  variant?:
+    | "default"
+    | "destructive"
+    | "outline"
+    | "secondary"
+    | "ghost"
+    | "link";
   disabled?: boolean;
   loading?: boolean;
   icon?: React.ComponentType<{ className?: string }>;
@@ -313,17 +327,17 @@ export interface ModalActions {
  * Size Class Mapping
  */
 export const MODAL_SIZE_CLASSES: Record<ModalSize, string> = {
-  sm: 'max-w-sm',
-  md: 'max-w-md',
-  lg: 'max-w-lg',
-  xl: 'max-w-xl',
-  full: 'max-w-full',
+  sm: "max-w-sm",
+  md: "max-w-md",
+  lg: "max-w-lg",
+  xl: "max-w-xl",
+  full: "max-w-full",
 };
 
 /**
  * Modal Animation Variants
  */
-export type ModalAnimation = 'fade' | 'slide' | 'zoom';
+export type ModalAnimation = "fade" | "slide" | "zoom";
 
 // ============================================================================
 // EXPORT HELPER TYPES

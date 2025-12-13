@@ -19,11 +19,11 @@
  * Cache strategy types
  */
 export type CacheStrategy =
-  | 'CacheFirst'
-  | 'NetworkFirst'
-  | 'StaleWhileRevalidate'
-  | 'NetworkOnly'
-  | 'CacheOnly';
+  | "CacheFirst"
+  | "NetworkFirst"
+  | "StaleWhileRevalidate"
+  | "NetworkOnly"
+  | "CacheOnly";
 
 /**
  * Cache rule configuration
@@ -90,8 +90,8 @@ export interface CacheConfig {
 // CACHE NAMES
 // ============================================================================
 
-export const CACHE_VERSION = 'v1.0.0';
-export const CACHE_PREFIX = 'praktikum-pwa';
+export const CACHE_VERSION = "v1.0.0";
+export const CACHE_PREFIX = "praktikum-pwa";
 
 /**
  * Cache names by type
@@ -123,10 +123,10 @@ export const CACHE_NAMES = {
  */
 export const PRECACHE_URLS = [
   // Core app shell
-  '/',
-  '/index.html',
-  '/offline.html',
-  '/manifest.json',
+  "/",
+  "/index.html",
+  "/offline.html",
+  "/manifest.json",
 
   // Add critical assets here
   // '/assets/logo.png',
@@ -147,21 +147,21 @@ export const CACHE_RULES: CacheRule[] = [
   // API CALLS - Network First
   // ========================================
   {
-    name: 'supabase-api',
+    name: "supabase-api",
     urlPattern: /https:\/\/.*\.supabase\.co\/rest\/v1\/.*/,
-    strategy: 'NetworkFirst',
+    strategy: "NetworkFirst",
     cacheName: CACHE_NAMES.api,
     maxAge: 5 * 60 * 1000, // 5 minutes
     maxEntries: 50,
     networkTimeout: 5000, // 5 seconds
     options: {
-      backgroundSyncTag: 'supabase-sync',
+      backgroundSyncTag: "supabase-sync",
     },
   },
   {
-    name: 'api-calls',
+    name: "api-calls",
     urlPattern: /\/api\/.*/,
-    strategy: 'NetworkFirst',
+    strategy: "NetworkFirst",
     cacheName: CACHE_NAMES.api,
     maxAge: 5 * 60 * 1000, // 5 minutes
     maxEntries: 50,
@@ -172,9 +172,9 @@ export const CACHE_RULES: CacheRule[] = [
   // IMAGES - Cache First
   // ========================================
   {
-    name: 'images',
+    name: "images",
     urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp|ico)$/i,
-    strategy: 'CacheFirst',
+    strategy: "CacheFirst",
     cacheName: CACHE_NAMES.images,
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     maxEntries: 60,
@@ -187,17 +187,17 @@ export const CACHE_RULES: CacheRule[] = [
   // FONTS - Cache First
   // ========================================
   {
-    name: 'fonts',
+    name: "fonts",
     urlPattern: /\.(?:woff|woff2|ttf|eot)$/i,
-    strategy: 'CacheFirst',
+    strategy: "CacheFirst",
     cacheName: CACHE_NAMES.fonts,
     maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
     maxEntries: 30,
   },
   {
-    name: 'google-fonts-webfonts',
+    name: "google-fonts-webfonts",
     urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/,
-    strategy: 'CacheFirst',
+    strategy: "CacheFirst",
     cacheName: CACHE_NAMES.fonts,
     maxAge: 365 * 24 * 60 * 60 * 1000, // 1 year
     maxEntries: 30,
@@ -206,9 +206,9 @@ export const CACHE_RULES: CacheRule[] = [
     },
   },
   {
-    name: 'google-fonts-stylesheets',
+    name: "google-fonts-stylesheets",
     urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/,
-    strategy: 'StaleWhileRevalidate',
+    strategy: "StaleWhileRevalidate",
     cacheName: CACHE_NAMES.fonts,
     maxAge: 365 * 24 * 60 * 60 * 1000, // 1 year
   },
@@ -217,9 +217,9 @@ export const CACHE_RULES: CacheRule[] = [
   // DOCUMENTS - Cache First
   // ========================================
   {
-    name: 'documents',
+    name: "documents",
     urlPattern: /\.(?:pdf|doc|docx|xls|xlsx|ppt|pptx)$/i,
-    strategy: 'CacheFirst',
+    strategy: "CacheFirst",
     cacheName: CACHE_NAMES.documents,
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     maxEntries: 20,
@@ -232,25 +232,25 @@ export const CACHE_RULES: CacheRule[] = [
   // STATIC ASSETS - Cache First
   // ========================================
   {
-    name: 'static-js',
+    name: "static-js",
     urlPattern: /\.js$/i,
-    strategy: 'CacheFirst',
+    strategy: "CacheFirst",
     cacheName: CACHE_NAMES.static,
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
     maxEntries: 50,
   },
   {
-    name: 'static-css',
+    name: "static-css",
     urlPattern: /\.css$/i,
-    strategy: 'CacheFirst',
+    strategy: "CacheFirst",
     cacheName: CACHE_NAMES.static,
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
     maxEntries: 30,
   },
   {
-    name: 'static-html',
+    name: "static-html",
     urlPattern: /\.html$/i,
-    strategy: 'NetworkFirst',
+    strategy: "NetworkFirst",
     cacheName: CACHE_NAMES.static,
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
     networkTimeout: 3000,
@@ -260,9 +260,9 @@ export const CACHE_RULES: CacheRule[] = [
   // ASSETS - Stale While Revalidate
   // ========================================
   {
-    name: 'assets',
+    name: "assets",
     urlPattern: /\/assets\/.*/,
-    strategy: 'StaleWhileRevalidate',
+    strategy: "StaleWhileRevalidate",
     cacheName: CACHE_NAMES.static,
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
     maxEntries: 100,
@@ -272,9 +272,9 @@ export const CACHE_RULES: CacheRule[] = [
   // DYNAMIC PAGES - Stale While Revalidate
   // ========================================
   {
-    name: 'pages',
+    name: "pages",
     urlPattern: /^https?:\/\/[^/]+\/(?!api\/).*/,
-    strategy: 'StaleWhileRevalidate',
+    strategy: "StaleWhileRevalidate",
     cacheName: CACHE_NAMES.dynamic,
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
     maxEntries: 50,
@@ -296,7 +296,7 @@ export const cacheConfig: CacheConfig = {
   global: {
     defaultMaxAge: 24 * 60 * 60 * 1000, // 24 hours
     defaultMaxEntries: 50,
-    debug: import.meta.env.MODE === 'development',
+    debug: import.meta.env.MODE === "development",
   },
 };
 
@@ -309,7 +309,7 @@ export const cacheConfig: CacheConfig = {
  */
 export function findCacheRule(url: string): CacheRule | undefined {
   return CACHE_RULES.find((rule) => {
-    if (typeof rule.urlPattern === 'string') {
+    if (typeof rule.urlPattern === "string") {
       return url.includes(rule.urlPattern);
     }
     return rule.urlPattern.test(url);

@@ -4,13 +4,24 @@
  * Full CRUD for managing laboratory equipment inventory
  */
 
-import { useState, useEffect } from 'react';
-import AppLayout from '@/components/layout/AppLayout';
-import { Plus, Search, Filter, Download, Package, AlertCircle, Edit, Trash2, TrendingUp, TrendingDown, XCircle } from 'lucide-react';
-import { toast } from 'sonner';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
+import { useState, useEffect } from "react";
+import {
+  Plus,
+  Search,
+  Filter,
+  Download,
+  Package,
+  AlertCircle,
+  Edit,
+  Trash2,
+  TrendingUp,
+  TrendingDown,
+  XCircle,
+} from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -18,14 +29,14 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -33,7 +44,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -43,9 +54,9 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+} from "@/components/ui/alert-dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   getInventarisList,
   createInventaris,
@@ -55,38 +66,53 @@ import {
   getInventarisCategories,
   type InventarisListItem,
   type CreateInventarisData,
-} from '@/lib/api/laboran.api';
-import type { EquipmentCondition } from '@/types/inventaris.types';
+} from "@/lib/api/laboran.api";
+import type { EquipmentCondition } from "@/types/inventaris.types";
 
-const KONDISI_OPTIONS: { value: EquipmentCondition; label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }[] = [
-  { value: 'baik', label: 'Baik', variant: 'default' },
-  { value: 'rusak_ringan', label: 'Rusak Ringan', variant: 'secondary' },
-  { value: 'rusak_berat', label: 'Rusak Berat', variant: 'destructive' },
-  { value: 'maintenance', label: 'Maintenance', variant: 'outline' },
+const KONDISI_OPTIONS: {
+  value: EquipmentCondition;
+  label: string;
+  variant: "default" | "secondary" | "destructive" | "outline";
+}[] = [
+  { value: "baik", label: "Baik", variant: "default" },
+  { value: "rusak_ringan", label: "Rusak Ringan", variant: "secondary" },
+  { value: "rusak_berat", label: "Rusak Berat", variant: "destructive" },
+  { value: "maintenance", label: "Maintenance", variant: "outline" },
 ];
 
-const DEFAULT_CATEGORIES = ['Alat Lab', 'Komputer', 'Elektronik', 'Kimia', 'Mekanik', 'Umum'];
+const DEFAULT_CATEGORIES = [
+  "Alat Lab",
+  "Komputer",
+  "Elektronik",
+  "Kimia",
+  "Mekanik",
+  "Umum",
+];
 
 export default function InventarisPage() {
   const [inventaris, setInventaris] = useState<InventarisListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedKategori, setSelectedKategori] = useState<string>('');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedKategori, setSelectedKategori] = useState<string>("");
   const [categories, setCategories] = useState<string[]>(DEFAULT_CATEGORIES);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isStockOpen, setIsStockOpen] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<InventarisListItem | null>(null);
+  const [selectedItem, setSelectedItem] = useState<InventarisListItem | null>(
+    null,
+  );
   const [formData, setFormData] = useState<Partial<CreateInventarisData>>({
-    kondisi: 'baik',
+    kondisi: "baik",
   });
-  const [stockAdjustment, setStockAdjustment] = useState({ amount: 0, type: 'add' as 'add' | 'subtract' | 'set' });
+  const [stockAdjustment, setStockAdjustment] = useState({
+    amount: 0,
+    type: "add" as "add" | "subtract" | "set",
+  });
 
   useEffect(() => {
     loadInventaris();
     loadCategories();
-     
   }, [searchQuery, selectedKategori]);
 
   const loadInventaris = async () => {
@@ -99,7 +125,7 @@ export default function InventarisPage() {
       setInventaris(result.data);
       setTotalCount(result.count);
     } catch (error) {
-      toast.error('Failed to load inventaris data');
+      toast.error("Failed to load inventaris data");
       console.error(error);
     } finally {
       setLoading(false);
@@ -111,13 +137,13 @@ export default function InventarisPage() {
       const cats = await getInventarisCategories();
       if (cats.length > 0) setCategories(cats);
     } catch (error) {
-      console.error('Failed to load categories:', error);
+      console.error("Failed to load categories:", error);
     }
   };
 
   const handleCreate = () => {
     setSelectedItem(null);
-    setFormData({ kondisi: 'baik', jumlah: 0, jumlah_tersedia: 0 });
+    setFormData({ kondisi: "baik", jumlah: 0, jumlah_tersedia: 0 });
     setIsFormOpen(true);
   };
 
@@ -126,15 +152,15 @@ export default function InventarisPage() {
     setFormData({
       kode_barang: item.kode_barang,
       nama_barang: item.nama_barang,
-      kategori: item.kategori || '',
-      merk: item.merk || '',
-      spesifikasi: item.spesifikasi || '',
+      kategori: item.kategori || "",
+      merk: item.merk || "",
+      spesifikasi: item.spesifikasi || "",
       jumlah: item.jumlah,
       jumlah_tersedia: item.jumlah_tersedia,
-      kondisi: item.kondisi || 'baik',
+      kondisi: item.kondisi || "baik",
       harga_satuan: item.harga_satuan || undefined,
       tahun_pengadaan: item.tahun_pengadaan || undefined,
-      keterangan: item.keterangan || '',
+      keterangan: item.keterangan || "",
     });
     setIsFormOpen(true);
   };
@@ -146,7 +172,7 @@ export default function InventarisPage() {
 
   const handleStockManagement = (item: InventarisListItem) => {
     setSelectedItem(item);
-    setStockAdjustment({ amount: 0, type: 'add' });
+    setStockAdjustment({ amount: 0, type: "add" });
     setIsStockOpen(true);
   };
 
@@ -154,20 +180,21 @@ export default function InventarisPage() {
     e.preventDefault();
     try {
       if (!formData.kode_barang || !formData.nama_barang) {
-        toast.error('Please fill in all required fields');
+        toast.error("Please fill in all required fields");
         return;
       }
       if (selectedItem) {
         await updateInventaris(selectedItem.id, formData);
-        toast.success('Inventaris updated successfully');
+        toast.success("Inventaris updated successfully");
       } else {
         await createInventaris(formData as CreateInventarisData);
-        toast.success('Inventaris created successfully');
+        toast.success("Inventaris created successfully");
       }
       setIsFormOpen(false);
       loadInventaris();
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to save inventaris';
+      const message =
+        error instanceof Error ? error.message : "Failed to save inventaris";
       toast.error(message);
     }
   };
@@ -176,11 +203,12 @@ export default function InventarisPage() {
     if (!selectedItem) return;
     try {
       await deleteInventaris(selectedItem.id);
-      toast.success('Inventaris deleted successfully');
+      toast.success("Inventaris deleted successfully");
       setIsDeleteOpen(false);
       loadInventaris();
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to delete inventaris';
+      const message =
+        error instanceof Error ? error.message : "Failed to delete inventaris";
       toast.error(message);
     }
   };
@@ -188,42 +216,70 @@ export default function InventarisPage() {
   const handleStockUpdate = async () => {
     if (!selectedItem) return;
     try {
-      await updateStock(selectedItem.id, stockAdjustment.amount, stockAdjustment.type);
-      toast.success('Stock updated successfully');
+      await updateStock(
+        selectedItem.id,
+        stockAdjustment.amount,
+        stockAdjustment.type,
+      );
+      toast.success("Stock updated successfully");
       setIsStockOpen(false);
       loadInventaris();
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to update stock';
+      const message =
+        error instanceof Error ? error.message : "Failed to update stock";
       toast.error(message);
     }
   };
 
   const exportToCSV = () => {
-    const headers = ['Kode', 'Nama', 'Kategori', 'Merk', 'Jumlah', 'Tersedia', 'Kondisi', 'Lab'];
-    const rows = inventaris.map(item => [
-      item.kode_barang, item.nama_barang, item.kategori || '-', item.merk || '-',
-      item.jumlah, item.jumlah_tersedia, item.kondisi || '-', item.laboratorium?.nama_lab || '-',
+    const headers = [
+      "Kode",
+      "Nama",
+      "Kategori",
+      "Merk",
+      "Jumlah",
+      "Tersedia",
+      "Kondisi",
+      "Lab",
+    ];
+    const rows = inventaris.map((item) => [
+      item.kode_barang,
+      item.nama_barang,
+      item.kategori || "-",
+      item.merk || "-",
+      item.jumlah,
+      item.jumlah_tersedia,
+      item.kondisi || "-",
+      item.laboratorium?.nama_lab || "-",
     ]);
-    const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
+    const csv = [headers, ...rows].map((row) => row.join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
-    a.download = `inventaris-${new Date().toISOString().split('T')[0]}.csv`;
+    a.download = `inventaris-${new Date().toISOString().split("T")[0]}.csv`;
     a.click();
   };
 
   return (
-    <AppLayout>
+    <div className="p-8">
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold">Inventaris Lab</h1>
-            <p className="text-muted-foreground">Manage laboratory equipment and inventory</p>
+            <p className="text-muted-foreground">
+              Manage laboratory equipment and inventory
+            </p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={exportToCSV}><Download className="h-4 w-4 mr-2" />Export CSV</Button>
-            <Button onClick={handleCreate}><Plus className="h-4 w-4 mr-2" />Add Item</Button>
+            <Button variant="outline" onClick={exportToCSV}>
+              <Download className="h-4 w-4 mr-2" />
+              Export CSV
+            </Button>
+            <Button onClick={handleCreate}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Item
+            </Button>
           </div>
         </div>
 
@@ -240,7 +296,9 @@ export default function InventarisPage() {
               <AlertCircle className="h-4 w-4 text-yellow-600" />
               <h3 className="text-sm font-medium">Low Stock</h3>
             </div>
-            <p className="text-2xl font-bold mt-2">{inventaris.filter(i => i.jumlah_tersedia < 5).length}</p>
+            <p className="text-2xl font-bold mt-2">
+              {inventaris.filter((i) => i.jumlah_tersedia < 5).length}
+            </p>
           </div>
           <div className="rounded-lg border bg-card p-6">
             <div className="flex items-center gap-2">
@@ -254,16 +312,35 @@ export default function InventarisPage() {
         <div className="flex gap-4">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Search by name or code..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-9" />
+            <Input
+              placeholder="Search by name or code..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9"
+            />
           </div>
-          <Select value={selectedKategori || undefined} onValueChange={(value) => setSelectedKategori(value)}>
-            <SelectTrigger className="w-[200px]"><SelectValue placeholder="All Categories" /></SelectTrigger>
+          <Select
+            value={selectedKategori || undefined}
+            onValueChange={(value) => setSelectedKategori(value)}
+          >
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="All Categories" />
+            </SelectTrigger>
             <SelectContent>
-              {categories.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
+              {categories.map((cat) => (
+                <SelectItem key={cat} value={cat}>
+                  {cat}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
           {selectedKategori && (
-            <Button variant="outline" size="icon" onClick={() => setSelectedKategori('')} title="Clear filter">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setSelectedKategori("")}
+              title="Clear filter"
+            >
               <XCircle className="h-4 w-4" />
             </Button>
           )}
@@ -273,44 +350,121 @@ export default function InventarisPage() {
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent">
-                <TableHead className="font-semibold text-foreground">Kode</TableHead>
-                <TableHead className="font-semibold text-foreground">Nama Barang</TableHead>
-                <TableHead className="font-semibold text-foreground">Kategori</TableHead>
-                <TableHead className="font-semibold text-foreground">Merk</TableHead>
-                <TableHead className="text-right font-semibold text-foreground">Jumlah</TableHead>
-                <TableHead className="text-right font-semibold text-foreground">Tersedia</TableHead>
-                <TableHead className="font-semibold text-foreground">Kondisi</TableHead>
-                <TableHead className="font-semibold text-foreground">Lab</TableHead>
-                <TableHead className="text-right font-semibold text-foreground">Actions</TableHead>
+                <TableHead className="font-semibold text-foreground">
+                  Kode
+                </TableHead>
+                <TableHead className="font-semibold text-foreground">
+                  Nama Barang
+                </TableHead>
+                <TableHead className="font-semibold text-foreground">
+                  Kategori
+                </TableHead>
+                <TableHead className="font-semibold text-foreground">
+                  Merk
+                </TableHead>
+                <TableHead className="text-right font-semibold text-foreground">
+                  Jumlah
+                </TableHead>
+                <TableHead className="text-right font-semibold text-foreground">
+                  Tersedia
+                </TableHead>
+                <TableHead className="font-semibold text-foreground">
+                  Kondisi
+                </TableHead>
+                <TableHead className="font-semibold text-foreground">
+                  Lab
+                </TableHead>
+                <TableHead className="text-right font-semibold text-foreground">
+                  Actions
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
-                <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-8">Loading...</TableCell></TableRow>
+                <TableRow>
+                  <TableCell
+                    colSpan={9}
+                    className="text-center text-muted-foreground py-8"
+                  >
+                    Loading...
+                  </TableCell>
+                </TableRow>
               ) : inventaris.length === 0 ? (
-                <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-8">No items found</TableCell></TableRow>
+                <TableRow>
+                  <TableCell
+                    colSpan={9}
+                    className="text-center text-muted-foreground py-8"
+                  >
+                    No items found
+                  </TableCell>
+                </TableRow>
               ) : (
                 inventaris.map((item) => (
                   <TableRow key={item.id}>
-                    <TableCell className="font-mono text-sm text-gray-900 dark:text-gray-100">{item.kode_barang}</TableCell>
-                    <TableCell className="font-medium text-gray-900 dark:text-gray-100">{item.nama_barang}</TableCell>
-                    <TableCell className="text-gray-600 dark:text-gray-400">{item.kategori || '-'}</TableCell>
-                    <TableCell className="text-gray-600 dark:text-gray-400">{item.merk || '-'}</TableCell>
-                    <TableCell className="text-right font-medium text-gray-900 dark:text-gray-100">{item.jumlah}</TableCell>
+                    <TableCell className="font-mono text-sm text-gray-900 dark:text-gray-100">
+                      {item.kode_barang}
+                    </TableCell>
+                    <TableCell className="font-medium text-gray-900 dark:text-gray-100">
+                      {item.nama_barang}
+                    </TableCell>
+                    <TableCell className="text-gray-600 dark:text-gray-400">
+                      {item.kategori || "-"}
+                    </TableCell>
+                    <TableCell className="text-gray-600 dark:text-gray-400">
+                      {item.merk || "-"}
+                    </TableCell>
+                    <TableCell className="text-right font-medium text-gray-900 dark:text-gray-100">
+                      {item.jumlah}
+                    </TableCell>
                     <TableCell className="text-right">
-                      <span className={item.jumlah_tersedia < 5 ? 'text-yellow-600 dark:text-yellow-400 font-semibold' : 'font-medium text-gray-900 dark:text-gray-100'}>{item.jumlah_tersedia}</span>
+                      <span
+                        className={
+                          item.jumlah_tersedia < 5
+                            ? "text-yellow-600 dark:text-yellow-400 font-semibold"
+                            : "font-medium text-gray-900 dark:text-gray-100"
+                        }
+                      >
+                        {item.jumlah_tersedia}
+                      </span>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={KONDISI_OPTIONS.find(k => k.value === item.kondisi)?.variant || 'default'}>
-                        {KONDISI_OPTIONS.find(k => k.value === item.kondisi)?.label || item.kondisi}
+                      <Badge
+                        variant={
+                          KONDISI_OPTIONS.find((k) => k.value === item.kondisi)
+                            ?.variant || "default"
+                        }
+                      >
+                        {KONDISI_OPTIONS.find((k) => k.value === item.kondisi)
+                          ?.label || item.kondisi}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-gray-600 dark:text-gray-400">{item.laboratorium?.nama_lab || 'Depot'}</TableCell>
+                    <TableCell className="text-gray-600 dark:text-gray-400">
+                      {item.laboratorium?.nama_lab || "Depot"}
+                    </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="icon" onClick={() => handleStockManagement(item)} title="Manage Stock"><Package className="h-4 w-4 text-gray-700 dark:text-gray-300" /></Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleEdit(item)}><Edit className="h-4 w-4 text-gray-700 dark:text-gray-300" /></Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleDelete(item)}><Trash2 className="h-4 w-4 text-gray-700 dark:text-gray-300" /></Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleStockManagement(item)}
+                          title="Manage Stock"
+                        >
+                          <Package className="h-4 w-4 text-gray-700 dark:text-gray-300" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEdit(item)}
+                        >
+                          <Edit className="h-4 w-4 text-gray-700 dark:text-gray-300" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDelete(item)}
+                        >
+                          <Trash2 className="h-4 w-4 text-gray-700 dark:text-gray-300" />
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -324,71 +478,192 @@ export default function InventarisPage() {
         <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>{selectedItem ? 'Edit Inventaris' : 'Add New Inventaris'}</DialogTitle>
-              <DialogDescription>{selectedItem ? 'Update inventory item details' : 'Add a new item to the inventory'}</DialogDescription>
+              <DialogTitle>
+                {selectedItem ? "Edit Inventaris" : "Add New Inventaris"}
+              </DialogTitle>
+              <DialogDescription>
+                {selectedItem
+                  ? "Update inventory item details"
+                  : "Add a new item to the inventory"}
+              </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="kode_barang">Kode Barang *</Label>
-                  <Input id="kode_barang" value={formData.kode_barang || ''} onChange={(e) => setFormData({ ...formData, kode_barang: e.target.value })} required />
+                  <Input
+                    id="kode_barang"
+                    value={formData.kode_barang || ""}
+                    onChange={(e) =>
+                      setFormData({ ...formData, kode_barang: e.target.value })
+                    }
+                    required
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="nama_barang">Nama Barang *</Label>
-                  <Input id="nama_barang" value={formData.nama_barang || ''} onChange={(e) => setFormData({ ...formData, nama_barang: e.target.value })} required />
+                  <Input
+                    id="nama_barang"
+                    value={formData.nama_barang || ""}
+                    onChange={(e) =>
+                      setFormData({ ...formData, nama_barang: e.target.value })
+                    }
+                    required
+                  />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="kategori">Kategori</Label>
-                  <Select value={formData.kategori || ''} onValueChange={(value) => setFormData({ ...formData, kategori: value })}>
-                    <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
-                    <SelectContent>{categories.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}</SelectContent>
+                  <Select
+                    value={formData.kategori || ""}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, kategori: value })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map((cat) => (
+                        <SelectItem key={cat} value={cat}>
+                          {cat}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="merk">Merk</Label>
-                  <Input id="merk" value={formData.merk || ''} onChange={(e) => setFormData({ ...formData, merk: e.target.value })} />
+                  <Input
+                    id="merk"
+                    value={formData.merk || ""}
+                    onChange={(e) =>
+                      setFormData({ ...formData, merk: e.target.value })
+                    }
+                  />
                 </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="spesifikasi">Spesifikasi</Label>
-                <Textarea id="spesifikasi" value={formData.spesifikasi || ''} onChange={(e) => setFormData({ ...formData, spesifikasi: e.target.value })} rows={3} />
+                <Textarea
+                  id="spesifikasi"
+                  value={formData.spesifikasi || ""}
+                  onChange={(e) =>
+                    setFormData({ ...formData, spesifikasi: e.target.value })
+                  }
+                  rows={3}
+                />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="jumlah">Jumlah Total *</Label>
-                  <Input id="jumlah" type="number" min="0" value={formData.jumlah || 0} onChange={(e) => setFormData({ ...formData, jumlah: parseInt(e.target.value) || 0 })} required />
+                  <Input
+                    id="jumlah"
+                    type="number"
+                    min="0"
+                    value={formData.jumlah || 0}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        jumlah: parseInt(e.target.value) || 0,
+                      })
+                    }
+                    required
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="jumlah_tersedia">Jumlah Tersedia *</Label>
-                  <Input id="jumlah_tersedia" type="number" min="0" value={formData.jumlah_tersedia || 0} onChange={(e) => setFormData({ ...formData, jumlah_tersedia: parseInt(e.target.value) || 0 })} required />
+                  <Input
+                    id="jumlah_tersedia"
+                    type="number"
+                    min="0"
+                    value={formData.jumlah_tersedia || 0}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        jumlah_tersedia: parseInt(e.target.value) || 0,
+                      })
+                    }
+                    required
+                  />
                 </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="kondisi">Kondisi</Label>
-                <Select value={formData.kondisi || 'baik'} onValueChange={(value: EquipmentCondition) => setFormData({ ...formData, kondisi: value })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>{KONDISI_OPTIONS.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}</SelectContent>
+                <Select
+                  value={formData.kondisi || "baik"}
+                  onValueChange={(value: EquipmentCondition) =>
+                    setFormData({ ...formData, kondisi: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {KONDISI_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
                 </Select>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="harga_satuan">Harga Satuan (Rp)</Label>
-                  <Input id="harga_satuan" type="number" min="0" value={formData.harga_satuan || ''} onChange={(e) => setFormData({ ...formData, harga_satuan: parseFloat(e.target.value) || undefined })} />
+                  <Input
+                    id="harga_satuan"
+                    type="number"
+                    min="0"
+                    value={formData.harga_satuan || ""}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        harga_satuan: parseFloat(e.target.value) || undefined,
+                      })
+                    }
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="tahun_pengadaan">Tahun Pengadaan</Label>
-                  <Input id="tahun_pengadaan" type="number" min="1900" max="2100" value={formData.tahun_pengadaan || ''} onChange={(e) => setFormData({ ...formData, tahun_pengadaan: parseInt(e.target.value) || undefined })} />
+                  <Input
+                    id="tahun_pengadaan"
+                    type="number"
+                    min="1900"
+                    max="2100"
+                    value={formData.tahun_pengadaan || ""}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        tahun_pengadaan: parseInt(e.target.value) || undefined,
+                      })
+                    }
+                  />
                 </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="keterangan">Keterangan</Label>
-                <Textarea id="keterangan" value={formData.keterangan || ''} onChange={(e) => setFormData({ ...formData, keterangan: e.target.value })} rows={3} />
+                <Textarea
+                  id="keterangan"
+                  value={formData.keterangan || ""}
+                  onChange={(e) =>
+                    setFormData({ ...formData, keterangan: e.target.value })
+                  }
+                  rows={3}
+                />
               </div>
               <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setIsFormOpen(false)}>Cancel</Button>
-                <Button type="submit">{selectedItem ? 'Update' : 'Create'}</Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsFormOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit">
+                  {selectedItem ? "Update" : "Create"}
+                </Button>
               </DialogFooter>
             </form>
           </DialogContent>
@@ -399,11 +674,16 @@ export default function InventarisPage() {
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-              <AlertDialogDescription>This will permanently delete "{selectedItem?.nama_barang}". This action cannot be undone.</AlertDialogDescription>
+              <AlertDialogDescription>
+                This will permanently delete "{selectedItem?.nama_barang}". This
+                action cannot be undone.
+              </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={handleConfirmDelete}>Delete</AlertDialogAction>
+              <AlertDialogAction onClick={handleConfirmDelete}>
+                Delete
+              </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
@@ -413,7 +693,9 @@ export default function InventarisPage() {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Manage Stock</DialogTitle>
-              <DialogDescription>Adjust stock for: {selectedItem?.nama_barang}</DialogDescription>
+              <DialogDescription>
+                Adjust stock for: {selectedItem?.nama_barang}
+              </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div className="rounded-lg border p-4 bg-muted/50">
@@ -424,33 +706,64 @@ export default function InventarisPage() {
                   </div>
                   <div>
                     <p className="text-muted-foreground">Available</p>
-                    <p className="text-2xl font-bold">{selectedItem?.jumlah_tersedia}</p>
+                    <p className="text-2xl font-bold">
+                      {selectedItem?.jumlah_tersedia}
+                    </p>
                   </div>
                 </div>
               </div>
               <div className="space-y-2">
                 <Label>Adjustment Type</Label>
-                <Select value={stockAdjustment.type} onValueChange={(value: 'add' | 'subtract' | 'set') => setStockAdjustment({ ...stockAdjustment, type: value })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                <Select
+                  value={stockAdjustment.type}
+                  onValueChange={(value: "add" | "subtract" | "set") =>
+                    setStockAdjustment({ ...stockAdjustment, type: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="add"><div className="flex items-center gap-2"><TrendingUp className="h-4 w-4" />Add Stock</div></SelectItem>
-                    <SelectItem value="subtract"><div className="flex items-center gap-2"><TrendingDown className="h-4 w-4" />Subtract Stock</div></SelectItem>
+                    <SelectItem value="add">
+                      <div className="flex items-center gap-2">
+                        <TrendingUp className="h-4 w-4" />
+                        Add Stock
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="subtract">
+                      <div className="flex items-center gap-2">
+                        <TrendingDown className="h-4 w-4" />
+                        Subtract Stock
+                      </div>
+                    </SelectItem>
                     <SelectItem value="set">Set Exact Amount</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
                 <Label>Amount</Label>
-                <Input type="number" min="0" value={stockAdjustment.amount} onChange={(e) => setStockAdjustment({ ...stockAdjustment, amount: parseInt(e.target.value) || 0 })} />
+                <Input
+                  type="number"
+                  min="0"
+                  value={stockAdjustment.amount}
+                  onChange={(e) =>
+                    setStockAdjustment({
+                      ...stockAdjustment,
+                      amount: parseInt(e.target.value) || 0,
+                    })
+                  }
+                />
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsStockOpen(false)}>Cancel</Button>
+              <Button variant="outline" onClick={() => setIsStockOpen(false)}>
+                Cancel
+              </Button>
               <Button onClick={handleStockUpdate}>Update Stock</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
-    </AppLayout>
+    </div>
   );
 }

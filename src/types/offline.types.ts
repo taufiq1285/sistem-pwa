@@ -11,24 +11,24 @@
 /**
  * Sync operation types
  */
-export type SyncOperation = 'create' | 'update' | 'delete';
+export type SyncOperation = "create" | "update" | "delete";
 
 /**
  * Sync status
  */
-export type SyncStatus = 'pending' | 'syncing' | 'completed' | 'failed';
+export type SyncStatus = "pending" | "syncing" | "completed" | "failed";
 
 /**
  * Entity types that can be synced
  */
 export type SyncEntity =
-  | 'kuis'
-  | 'kuis_soal'
-  | 'kuis_jawaban'
-  | 'nilai'
-  | 'materi'
-  | 'kelas'
-  | 'user';
+  | "kuis"
+  | "kuis_soal"
+  | "kuis_jawaban"
+  | "nilai"
+  | "materi"
+  | "kelas"
+  | "user";
 
 /**
  * Sync queue item
@@ -57,7 +57,7 @@ export interface OfflineKuis {
   deskripsi: string | null;
   kelas_id: string;
   dosen_id: string;
-  tipe_kuis: 'kuis' | 'uts' | 'uas';
+  tipe_kuis: "kuis" | "uts" | "uas";
   waktu_mulai: string;
   waktu_selesai: string;
   durasi_menit: number | null;
@@ -78,7 +78,7 @@ export interface OfflineKuisSoal {
   id: string;
   kuis_id: string;
   nomor_soal: number;
-  tipe_soal: 'pilihan_ganda' | 'esai' | 'isian_singkat';
+  tipe_soal: "pilihan_ganda" | "esai" | "isian_singkat";
   pertanyaan: string;
   poin: number;
   pilihan_jawaban: Record<string, unknown> | null;
@@ -185,7 +185,7 @@ export interface OfflineUser {
   id: string;
   email: string;
   full_name: string;
-  role: 'admin' | 'dosen' | 'mahasiswa';
+  role: "admin" | "dosen" | "mahasiswa";
   created_at: string;
   // Metadata
   _last_synced?: number;
@@ -199,19 +199,19 @@ export interface OfflineUser {
  * IndexedDB Store Names
  */
 export type StoreName =
-  | 'kuis'
-  | 'kuis_soal'
-  | 'kuis_jawaban'
-  | 'nilai'
-  | 'materi'
-  | 'kelas'
-  | 'users'
-  | 'sync_queue'
-  | 'metadata'
-  | 'offline_quiz'
-  | 'offline_questions'
-  | 'offline_answers'
-  | 'offline_attempts';
+  | "kuis"
+  | "kuis_soal"
+  | "kuis_jawaban"
+  | "nilai"
+  | "materi"
+  | "kelas"
+  | "users"
+  | "sync_queue"
+  | "metadata"
+  | "offline_quiz"
+  | "offline_questions"
+  | "offline_answers"
+  | "offline_attempts";
 
 /**
  * Database metadata
@@ -226,11 +226,11 @@ export interface DatabaseMetadata {
  * Common metadata keys
  */
 export type MetadataKey =
-  | 'last_full_sync'
-  | 'last_partial_sync'
-  | 'db_version'
-  | 'user_id'
-  | 'sync_enabled';
+  | "last_full_sync"
+  | "last_partial_sync"
+  | "db_version"
+  | "user_id"
+  | "sync_enabled";
 
 // ============================================================================
 // INDEXEDDB MANAGER TYPES
@@ -314,7 +314,11 @@ export interface SyncResult {
 /**
  * Conflict resolution strategy
  */
-export type ConflictStrategy = 'server-wins' | 'client-wins' | 'last-write-wins' | 'manual';
+export type ConflictStrategy =
+  | "server-wins"
+  | "client-wins"
+  | "last-write-wins"
+  | "manual";
 
 /**
  * Sync conflict

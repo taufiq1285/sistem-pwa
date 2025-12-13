@@ -2,41 +2,41 @@
  * Supabase Database Helpers
  */
 
-import { supabase } from './client';
-import type { PostgrestError } from '@supabase/supabase-js';
+import { supabase } from "./client";
+import type { PostgrestError } from "@supabase/supabase-js";
 
 /**
  * Valid table names in the database
  */
-export type TableName = 
-  | 'users'
-  | 'kelas'
-  | 'laboratorium'
-  | 'dosen'
-  | 'mata_kuliah'
-  | 'mahasiswa'
-  | 'admin'
-  | 'laboran'
-  | 'jadwal_praktikum'
-  | 'kelas_mahasiswa';
+export type TableName =
+  | "users"
+  | "kelas"
+  | "laboratorium"
+  | "dosen"
+  | "mata_kuliah"
+  | "mahasiswa"
+  | "admin"
+  | "laboran"
+  | "jadwal_praktikum"
+  | "kelas_mahasiswa";
 
 /**
  * Generic fetch function with error handling
  */
 export async function fetchData<T>(
-  query: Promise<{ data: T | null; error: PostgrestError | null }>
+  query: Promise<{ data: T | null; error: PostgrestError | null }>,
 ): Promise<T> {
   const { data, error } = await query;
-  
+
   if (error) {
-    console.error('Database error:', error);
+    console.error("Database error:", error);
     throw new Error(error.message);
   }
-  
+
   if (!data) {
-    throw new Error('No data returned');
+    throw new Error("No data returned");
   }
-  
+
   return data;
 }
 
@@ -45,10 +45,10 @@ export async function fetchData<T>(
  */
 export async function checkConnection(): Promise<boolean> {
   try {
-    const { error } = await supabase.from('users').select('count').limit(1);
+    const { error } = await supabase.from("users").select("count").limit(1);
     return !error;
   } catch (error) {
-    console.error('Connection check failed:', error);
+    console.error("Connection check failed:", error);
     return false;
   }
 }
@@ -59,8 +59,8 @@ export async function checkConnection(): Promise<boolean> {
 export async function getTableCount(tableName: TableName): Promise<number> {
   const { count, error } = await supabase
     .from(tableName)
-    .select('*', { count: 'exact', head: true });
-  
+    .select("*", { count: "exact", head: true });
+
   if (error) throw error;
   return count || 0;
 }

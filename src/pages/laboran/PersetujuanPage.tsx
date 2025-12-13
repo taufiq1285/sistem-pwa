@@ -13,13 +13,25 @@
  * - Validation and error handling
  */
 
-import { useState, useEffect } from 'react';
-import AppLayout from '@/components/layout/AppLayout';
-import { Clock, CheckCircle, XCircle, AlertTriangle, RefreshCw, Package } from 'lucide-react';
-import { toast } from 'sonner';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState, useEffect } from "react";
+import {
+  Clock,
+  CheckCircle,
+  XCircle,
+  AlertTriangle,
+  RefreshCw,
+  Package,
+} from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -27,7 +39,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
 import {
   Dialog,
   DialogContent,
@@ -35,31 +47,29 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-} from '@/components/ui/alert';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { formatDate } from '@/lib/utils/format';
+} from "@/components/ui/dialog";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { formatDate } from "@/lib/utils/format";
 import {
   getPendingApprovals,
   approvePeminjaman,
   rejectPeminjaman,
   type PendingApproval,
-} from '@/lib/api/laboran.api';
+} from "@/lib/api/laboran.api";
 import {
   getPendingRoomBookings,
   approveRoomBooking,
   rejectRoomBooking,
   type RoomBookingRequest,
-} from '@/lib/api/peminjaman-extensions';
+} from "@/lib/api/peminjaman-extensions";
 
 export default function PersetujuanPage() {
   // State for equipment borrowing
-  const [equipmentRequests, setEquipmentRequests] = useState<PendingApproval[]>([]);
+  const [equipmentRequests, setEquipmentRequests] = useState<PendingApproval[]>(
+    [],
+  );
   const [loadingEquipment, setLoadingEquipment] = useState(true);
 
   // State for room booking
@@ -69,34 +79,33 @@ export default function PersetujuanPage() {
   // Dialog states
   const [approveDialog, setApproveDialog] = useState<{
     open: boolean;
-    type: 'equipment' | 'room';
+    type: "equipment" | "room";
     id: string;
     name: string;
   }>({
     open: false,
-    type: 'equipment',
-    id: '',
-    name: '',
+    type: "equipment",
+    id: "",
+    name: "",
   });
 
   const [rejectDialog, setRejectDialog] = useState<{
     open: boolean;
-    type: 'equipment' | 'room';
+    type: "equipment" | "room";
     id: string;
     name: string;
   }>({
     open: false,
-    type: 'equipment',
-    id: '',
-    name: '',
+    type: "equipment",
+    id: "",
+    name: "",
   });
 
-  const [rejectionReason, setRejectionReason] = useState('');
+  const [rejectionReason, setRejectionReason] = useState("");
   const [processing, setProcessing] = useState(false);
 
   useEffect(() => {
     loadPendingRequests();
-     
   }, []);
 
   const loadPendingRequests = async () => {
@@ -109,8 +118,8 @@ export default function PersetujuanPage() {
       const data = await getPendingApprovals(50);
       setEquipmentRequests(data);
     } catch (error) {
-      toast.error('Gagal memuat permintaan peminjaman alat');
-      console.error('Error loading equipment requests:', error);
+      toast.error("Gagal memuat permintaan peminjaman alat");
+      console.error("Error loading equipment requests:", error);
     } finally {
       setLoadingEquipment(false);
     }
@@ -122,8 +131,8 @@ export default function PersetujuanPage() {
       const data = await getPendingRoomBookings(50);
       setRoomRequests(data);
     } catch (error) {
-      toast.error('Gagal memuat permintaan booking ruangan');
-      console.error('Error loading room requests:', error);
+      toast.error("Gagal memuat permintaan booking ruangan");
+      console.error("Error loading room requests:", error);
     } finally {
       setLoadingRoom(false);
     }
@@ -131,11 +140,15 @@ export default function PersetujuanPage() {
 
   const handleRefresh = () => {
     loadPendingRequests();
-    toast.success('Data diperbarui');
+    toast.success("Data diperbarui");
   };
 
   // Approve handlers
-  const openApproveDialog = (type: 'equipment' | 'room', id: string, name: string) => {
+  const openApproveDialog = (
+    type: "equipment" | "room",
+    id: string,
+    name: string,
+  ) => {
     setApproveDialog({ open: true, type, id, name });
   };
 
@@ -143,55 +156,59 @@ export default function PersetujuanPage() {
     try {
       setProcessing(true);
 
-      if (approveDialog.type === 'equipment') {
+      if (approveDialog.type === "equipment") {
         await approvePeminjaman(approveDialog.id);
-        toast.success('Peminjaman alat berhasil disetujui');
+        toast.success("Peminjaman alat berhasil disetujui");
         await loadEquipmentRequests();
       } else {
         await approveRoomBooking(approveDialog.id);
-        toast.success('Booking ruangan berhasil disetujui');
+        toast.success("Booking ruangan berhasil disetujui");
         await loadRoomRequests();
       }
 
-      setApproveDialog({ open: false, type: 'equipment', id: '', name: '' });
+      setApproveDialog({ open: false, type: "equipment", id: "", name: "" });
     } catch (error) {
-      toast.error('Gagal menyetujui permintaan');
-      console.error('Error approving request:', error);
+      toast.error("Gagal menyetujui permintaan");
+      console.error("Error approving request:", error);
     } finally {
       setProcessing(false);
     }
   };
 
   // Reject handlers
-  const openRejectDialog = (type: 'equipment' | 'room', id: string, name: string) => {
+  const openRejectDialog = (
+    type: "equipment" | "room",
+    id: string,
+    name: string,
+  ) => {
     setRejectDialog({ open: true, type, id, name });
-    setRejectionReason('');
+    setRejectionReason("");
   };
 
   const handleReject = async () => {
     if (!rejectionReason.trim()) {
-      toast.error('Alasan penolakan wajib diisi');
+      toast.error("Alasan penolakan wajib diisi");
       return;
     }
 
     try {
       setProcessing(true);
 
-      if (rejectDialog.type === 'equipment') {
+      if (rejectDialog.type === "equipment") {
         await rejectPeminjaman(rejectDialog.id, rejectionReason);
-        toast.success('Peminjaman alat berhasil ditolak');
+        toast.success("Peminjaman alat berhasil ditolak");
         await loadEquipmentRequests();
       } else {
         await rejectRoomBooking(rejectDialog.id, rejectionReason);
-        toast.success('Booking ruangan berhasil ditolak');
+        toast.success("Booking ruangan berhasil ditolak");
         await loadRoomRequests();
       }
 
-      setRejectDialog({ open: false, type: 'equipment', id: '', name: '' });
-      setRejectionReason('');
+      setRejectDialog({ open: false, type: "equipment", id: "", name: "" });
+      setRejectionReason("");
     } catch (error) {
-      toast.error('Gagal menolak permintaan');
-      console.error('Error rejecting request:', error);
+      toast.error("Gagal menolak permintaan");
+      console.error("Error rejecting request:", error);
     } finally {
       setProcessing(false);
     }
@@ -201,20 +218,25 @@ export default function PersetujuanPage() {
   const isLoading = loadingEquipment || loadingRoom;
 
   return (
-    <AppLayout>
+    <div className="p-8">
       <div className="space-y-6">
         {/* Page Header */}
         <div>
           <h1 className="text-3xl font-bold">Persetujuan</h1>
-          <p className="text-muted-foreground">Kelola persetujuan peminjaman alat dan booking ruangan</p>
+          <p className="text-muted-foreground">
+            Kelola persetujuan peminjaman alat dan booking ruangan
+          </p>
         </div>
         {/* Alert Banner */}
         {totalPending > 0 && (
           <Alert variant="default" className="border-yellow-500 bg-yellow-50">
             <AlertTriangle className="h-4 w-4 text-yellow-600" />
-            <AlertTitle className="text-yellow-800">Ada permintaan yang menunggu persetujuan</AlertTitle>
+            <AlertTitle className="text-yellow-800">
+              Ada permintaan yang menunggu persetujuan
+            </AlertTitle>
             <AlertDescription className="text-yellow-700">
-              Terdapat {totalPending} permintaan yang perlu ditinjau dan disetujui.
+              Terdapat {totalPending} permintaan yang perlu ditinjau dan
+              disetujui.
             </AlertDescription>
           </Alert>
         )}
@@ -229,7 +251,9 @@ export default function PersetujuanPage() {
               <Package className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{equipmentRequests.length}</div>
+              <div className="text-2xl font-bold">
+                {equipmentRequests.length}
+              </div>
               <p className="text-xs text-muted-foreground">
                 Permintaan peminjaman yang perlu disetujui
               </p>
@@ -260,7 +284,9 @@ export default function PersetujuanPage() {
             onClick={handleRefresh}
             disabled={isLoading}
           >
-            <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+            <RefreshCw
+              className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`}
+            />
             Refresh
           </Button>
         </div>
@@ -278,13 +304,17 @@ export default function PersetujuanPage() {
               <div className="flex items-center justify-center py-8">
                 <div className="text-center">
                   <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground mx-auto mb-2" />
-                  <p className="text-sm text-muted-foreground">Memuat data...</p>
+                  <p className="text-sm text-muted-foreground">
+                    Memuat data...
+                  </p>
                 </div>
               </div>
             ) : equipmentRequests.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-center">
                 <Clock className="h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-1">Tidak Ada Permintaan Pending</h3>
+                <h3 className="text-lg font-semibold mb-1">
+                  Tidak Ada Permintaan Pending
+                </h3>
                 <p className="text-sm text-muted-foreground">
                   Semua permintaan peminjaman alat sudah diproses
                 </p>
@@ -309,23 +339,40 @@ export default function PersetujuanPage() {
                       <TableRow key={request.id}>
                         <TableCell>
                           <div>
-                            <div className="font-medium">{request.peminjam_nama}</div>
-                            <div className="text-sm text-muted-foreground">{request.peminjam_nim}</div>
+                            <div className="font-medium">
+                              {request.peminjam_nama}
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              {request.peminjam_nim}
+                            </div>
                           </div>
                         </TableCell>
                         <TableCell>
                           <div>
-                            <div className="font-medium">{request.inventaris_nama}</div>
-                            <div className="text-sm text-muted-foreground">{request.inventaris_kode}</div>
+                            <div className="font-medium">
+                              {request.inventaris_nama}
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              {request.inventaris_kode}
+                            </div>
                           </div>
                         </TableCell>
                         <TableCell>{request.laboratorium_nama}</TableCell>
                         <TableCell>
-                          <Badge variant="secondary">{request.jumlah_pinjam}</Badge>
+                          <Badge variant="secondary">
+                            {request.jumlah_pinjam}
+                          </Badge>
                         </TableCell>
-                        <TableCell>{formatDate(request.tanggal_pinjam)}</TableCell>
-                        <TableCell>{formatDate(request.tanggal_kembali_rencana)}</TableCell>
-                        <TableCell className="max-w-xs truncate" title={request.keperluan}>
+                        <TableCell>
+                          {formatDate(request.tanggal_pinjam)}
+                        </TableCell>
+                        <TableCell>
+                          {formatDate(request.tanggal_kembali_rencana)}
+                        </TableCell>
+                        <TableCell
+                          className="max-w-xs truncate"
+                          title={request.keperluan}
+                        >
                           {request.keperluan}
                         </TableCell>
                         <TableCell className="text-right">
@@ -336,9 +383,9 @@ export default function PersetujuanPage() {
                               className="text-green-600 border-green-600 hover:bg-green-50"
                               onClick={() =>
                                 openApproveDialog(
-                                  'equipment',
+                                  "equipment",
                                   request.id,
-                                  request.inventaris_nama
+                                  request.inventaris_nama,
                                 )
                               }
                             >
@@ -351,9 +398,9 @@ export default function PersetujuanPage() {
                               className="text-red-600 border-red-600 hover:bg-red-50"
                               onClick={() =>
                                 openRejectDialog(
-                                  'equipment',
+                                  "equipment",
                                   request.id,
-                                  request.inventaris_nama
+                                  request.inventaris_nama,
                                 )
                               }
                             >
@@ -376,7 +423,8 @@ export default function PersetujuanPage() {
           <CardHeader>
             <CardTitle>Permintaan Booking Ruangan</CardTitle>
             <CardDescription>
-              Daftar permintaan booking ruangan laboratorium yang menunggu persetujuan
+              Daftar permintaan booking ruangan laboratorium yang menunggu
+              persetujuan
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -384,13 +432,17 @@ export default function PersetujuanPage() {
               <div className="flex items-center justify-center py-8">
                 <div className="text-center">
                   <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground mx-auto mb-2" />
-                  <p className="text-sm text-muted-foreground">Memuat data...</p>
+                  <p className="text-sm text-muted-foreground">
+                    Memuat data...
+                  </p>
                 </div>
               </div>
             ) : roomRequests.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-center">
                 <Clock className="h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-1">Tidak Ada Permintaan Pending</h3>
+                <h3 className="text-lg font-semibold mb-1">
+                  Tidak Ada Permintaan Pending
+                </h3>
                 <p className="text-sm text-muted-foreground">
                   Semua permintaan booking ruangan sudah diproses
                 </p>
@@ -415,32 +467,51 @@ export default function PersetujuanPage() {
                   <TableBody>
                     {roomRequests.map((request) => (
                       <TableRow key={request.id}>
-                        <TableCell className="font-medium">{request.kelas_nama}</TableCell>
+                        <TableCell className="font-medium">
+                          {request.kelas_nama}
+                        </TableCell>
                         <TableCell>{request.mata_kuliah_nama}</TableCell>
                         <TableCell>
                           <div>
-                            <div className="font-medium">{request.dosen_nama}</div>
-                            <div className="text-sm text-muted-foreground">{request.dosen_nip}</div>
+                            <div className="font-medium">
+                              {request.dosen_nama}
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              {request.dosen_nip}
+                            </div>
                           </div>
                         </TableCell>
                         <TableCell>
                           <div>
-                            <div className="font-medium">{request.laboratorium_nama}</div>
-                            <div className="text-sm text-muted-foreground">{request.laboratorium_kode}</div>
+                            <div className="font-medium">
+                              {request.laboratorium_nama}
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              {request.laboratorium_kode}
+                            </div>
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge variant="secondary">{request.laboratorium_kapasitas}</Badge>
+                          <Badge variant="secondary">
+                            {request.laboratorium_kapasitas}
+                          </Badge>
                         </TableCell>
-                        <TableCell className="capitalize">{request.hari}</TableCell>
+                        <TableCell className="capitalize">
+                          {request.hari}
+                        </TableCell>
                         <TableCell>
                           {request.jam_mulai} - {request.jam_selesai}
                         </TableCell>
                         <TableCell>
-                          {request.tanggal_praktikum ? formatDate(request.tanggal_praktikum) : '-'}
+                          {request.tanggal_praktikum
+                            ? formatDate(request.tanggal_praktikum)
+                            : "-"}
                         </TableCell>
-                        <TableCell className="max-w-xs truncate" title={request.topik || '-'}>
-                          {request.topik || '-'}
+                        <TableCell
+                          className="max-w-xs truncate"
+                          title={request.topik || "-"}
+                        >
+                          {request.topik || "-"}
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
@@ -450,9 +521,9 @@ export default function PersetujuanPage() {
                               className="text-green-600 border-green-600 hover:bg-green-50"
                               onClick={() =>
                                 openApproveDialog(
-                                  'room',
+                                  "room",
                                   request.id,
-                                  `${request.kelas_nama} - ${request.laboratorium_nama}`
+                                  `${request.kelas_nama} - ${request.laboratorium_nama}`,
                                 )
                               }
                             >
@@ -465,9 +536,9 @@ export default function PersetujuanPage() {
                               className="text-red-600 border-red-600 hover:bg-red-50"
                               onClick={() =>
                                 openRejectDialog(
-                                  'room',
+                                  "room",
                                   request.id,
-                                  `${request.kelas_nama} - ${request.laboratorium_nama}`
+                                  `${request.kelas_nama} - ${request.laboratorium_nama}`,
                                 )
                               }
                             >
@@ -487,11 +558,14 @@ export default function PersetujuanPage() {
       </div>
 
       {/* Approve Confirmation Dialog */}
-      <Dialog open={approveDialog.open} onOpenChange={(open) => {
-        if (!processing) {
-          setApproveDialog({ ...approveDialog, open });
-        }
-      }}>
+      <Dialog
+        open={approveDialog.open}
+        onOpenChange={(open) => {
+          if (!processing) {
+            setApproveDialog({ ...approveDialog, open });
+          }
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Konfirmasi Persetujuan</DialogTitle>
@@ -502,15 +576,20 @@ export default function PersetujuanPage() {
           <div className="py-4">
             <p className="text-sm">
               <span className="font-medium">
-                {approveDialog.type === 'equipment' ? 'Peminjaman Alat' : 'Booking Ruangan'}:
-              </span>{' '}
+                {approveDialog.type === "equipment"
+                  ? "Peminjaman Alat"
+                  : "Booking Ruangan"}
+                :
+              </span>{" "}
               {approveDialog.name}
             </p>
           </div>
           <DialogFooter>
             <Button
               variant="outline"
-              onClick={() => setApproveDialog({ ...approveDialog, open: false })}
+              onClick={() =>
+                setApproveDialog({ ...approveDialog, open: false })
+              }
               disabled={processing}
             >
               Batal
@@ -537,12 +616,15 @@ export default function PersetujuanPage() {
       </Dialog>
 
       {/* Reject Dialog */}
-      <Dialog open={rejectDialog.open} onOpenChange={(open) => {
-        if (!processing) {
-          setRejectDialog({ ...rejectDialog, open });
-          if (!open) setRejectionReason('');
-        }
-      }}>
+      <Dialog
+        open={rejectDialog.open}
+        onOpenChange={(open) => {
+          if (!processing) {
+            setRejectDialog({ ...rejectDialog, open });
+            if (!open) setRejectionReason("");
+          }
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Tolak Permintaan</DialogTitle>
@@ -554,8 +636,11 @@ export default function PersetujuanPage() {
             <div>
               <p className="text-sm mb-2">
                 <span className="font-medium">
-                  {rejectDialog.type === 'equipment' ? 'Peminjaman Alat' : 'Booking Ruangan'}:
-                </span>{' '}
+                  {rejectDialog.type === "equipment"
+                    ? "Peminjaman Alat"
+                    : "Booking Ruangan"}
+                  :
+                </span>{" "}
                 {rejectDialog.name}
               </p>
             </div>
@@ -584,7 +669,7 @@ export default function PersetujuanPage() {
               variant="outline"
               onClick={() => {
                 setRejectDialog({ ...rejectDialog, open: false });
-                setRejectionReason('');
+                setRejectionReason("");
               }}
               disabled={processing}
             >
@@ -610,6 +695,6 @@ export default function PersetujuanPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </AppLayout>
+    </div>
   );
 }

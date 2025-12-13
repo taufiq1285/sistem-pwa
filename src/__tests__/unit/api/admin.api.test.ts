@@ -3,12 +3,12 @@
  * Comprehensive tests for admin dashboard and analytics functions
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import * as adminAPI from '../../../lib/api/admin.api';
-import { supabase } from '../../../lib/supabase/client';
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import * as adminAPI from "../../../lib/api/admin.api";
+import { supabase } from "../../../lib/supabase/client";
 
 // Mock Supabase
-vi.mock('@/lib/supabase/client', () => ({
+vi.mock("@/lib/supabase/client", () => ({
   supabase: {
     from: vi.fn(),
     auth: {
@@ -18,17 +18,17 @@ vi.mock('@/lib/supabase/client', () => ({
 }));
 
 // Mock cache API
-vi.mock('@/lib/offline/api-cache', () => ({
+vi.mock("@/lib/offline/api-cache", () => ({
   cacheAPI: vi.fn((key, fn) => fn()),
 }));
 
 // Mock middleware
-vi.mock('@/lib/middleware', () => ({
+vi.mock("@/lib/middleware", () => ({
   requirePermission: vi.fn((permission, fn) => fn),
   requirePermissionAndOwnership: vi.fn((permission, fn) => fn),
 }));
 
-describe('Admin API', () => {
+describe("Admin API", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -37,32 +37,32 @@ describe('Admin API', () => {
     vi.restoreAllMocks();
   });
 
-  describe('getDashboardStats', () => {
-    it('should return dashboard statistics successfully', async () => {
+  describe("getDashboardStats", () => {
+    it("should return dashboard statistics successfully", async () => {
       const mockUsers = [
-        { role: 'mahasiswa', is_active: true },
-        { role: 'mahasiswa', is_active: false },
-        { role: 'dosen', is_active: true },
-        { role: 'laboran', is_active: true },
-        { role: 'admin', is_active: true },
+        { role: "mahasiswa", is_active: true },
+        { role: "mahasiswa", is_active: false },
+        { role: "dosen", is_active: true },
+        { role: "laboran", is_active: true },
+        { role: "admin", is_active: true },
       ];
 
       const mockLabs = [
-        { id: '1', is_active: true },
-        { id: '2', is_active: true },
-        { id: '3', is_active: false },
+        { id: "1", is_active: true },
+        { id: "2", is_active: true },
+        { id: "3", is_active: false },
       ];
 
       const mockEquipment = [
-        { id: '1', is_available_for_borrowing: true },
-        { id: '2', is_available_for_borrowing: true },
-        { id: '3', is_available_for_borrowing: false },
+        { id: "1", is_available_for_borrowing: true },
+        { id: "2", is_available_for_borrowing: true },
+        { id: "3", is_available_for_borrowing: false },
       ];
 
-      const mockPending = [{ id: '1' }, { id: '2' }];
+      const mockPending = [{ id: "1" }, { id: "2" }];
 
       vi.mocked(supabase.from).mockImplementation((table: string) => {
-        if (table === 'users') {
+        if (table === "users") {
           return {
             select: vi.fn().mockReturnValue({
               data: mockUsers,
@@ -70,7 +70,7 @@ describe('Admin API', () => {
             }),
           } as any;
         }
-        if (table === 'laboratorium') {
+        if (table === "laboratorium") {
           return {
             select: vi.fn().mockReturnValue({
               data: mockLabs,
@@ -78,7 +78,7 @@ describe('Admin API', () => {
             }),
           } as any;
         }
-        if (table === 'inventaris') {
+        if (table === "inventaris") {
           return {
             select: vi.fn().mockReturnValue({
               data: mockEquipment,
@@ -86,7 +86,7 @@ describe('Admin API', () => {
             }),
           } as any;
         }
-        if (table === 'peminjaman') {
+        if (table === "peminjaman") {
           return {
             select: vi.fn().mockReturnValue({
               eq: vi.fn().mockReturnValue({
@@ -113,9 +113,9 @@ describe('Admin API', () => {
       });
     });
 
-    it('should handle empty data gracefully', async () => {
+    it("should handle empty data gracefully", async () => {
       vi.mocked(supabase.from).mockImplementation((table: string) => {
-        if (table === 'peminjaman') {
+        if (table === "peminjaman") {
           // peminjaman needs .select().eq() chain
           return {
             select: vi.fn().mockReturnValue({
@@ -149,20 +149,25 @@ describe('Admin API', () => {
       });
     });
 
-    it('should handle database errors', async () => {
-      vi.mocked(supabase.from).mockImplementation(() => ({
-        select: vi.fn().mockReturnValue({
-          data: null,
-          error: new Error('Database error'),
-        }),
-      } as any));
+    it("should handle database errors", async () => {
+      vi.mocked(supabase.from).mockImplementation(
+        () =>
+          ({
+            select: vi.fn().mockReturnValue({
+              data: null,
+              error: new Error("Database error"),
+            }),
+          }) as any,
+      );
 
-      await expect(adminAPI.getDashboardStats()).rejects.toThrow('Database error');
+      await expect(adminAPI.getDashboardStats()).rejects.toThrow(
+        "Database error",
+      );
     });
 
-    it('should handle null data from database', async () => {
+    it("should handle null data from database", async () => {
       vi.mocked(supabase.from).mockImplementation((table: string) => {
-        if (table === 'peminjaman') {
+        if (table === "peminjaman") {
           // peminjaman needs .select().eq() chain
           return {
             select: vi.fn().mockReturnValue({
@@ -188,13 +193,31 @@ describe('Admin API', () => {
     });
   });
 
-  describe('getUserGrowth', () => {
-    it('should return user growth data for last 6 months', async () => {
+  describe("getUserGrowth", () => {
+    it("should return user growth data for last 6 months", async () => {
       const now = new Date();
       const mockUsers = [
-        { created_at: new Date(now.getFullYear(), now.getMonth(), 1).toISOString() },
-        { created_at: new Date(now.getFullYear(), now.getMonth(), 15).toISOString() },
-        { created_at: new Date(now.getFullYear(), now.getMonth() - 1, 10).toISOString() },
+        {
+          created_at: new Date(
+            now.getFullYear(),
+            now.getMonth(),
+            1,
+          ).toISOString(),
+        },
+        {
+          created_at: new Date(
+            now.getFullYear(),
+            now.getMonth(),
+            15,
+          ).toISOString(),
+        },
+        {
+          created_at: new Date(
+            now.getFullYear(),
+            now.getMonth() - 1,
+            10,
+          ).toISOString(),
+        },
       ];
 
       vi.mocked(supabase.from).mockReturnValue({
@@ -209,11 +232,11 @@ describe('Admin API', () => {
       const result = await adminAPI.getUserGrowth();
 
       expect(result).toHaveLength(6);
-      expect(result[0]).toHaveProperty('month');
-      expect(result[0]).toHaveProperty('users');
+      expect(result[0]).toHaveProperty("month");
+      expect(result[0]).toHaveProperty("users");
     });
 
-    it('should initialize all months with zero users', async () => {
+    it("should initialize all months with zero users", async () => {
       vi.mocked(supabase.from).mockReturnValue({
         select: vi.fn().mockReturnValue({
           order: vi.fn().mockReturnValue({
@@ -226,16 +249,13 @@ describe('Admin API', () => {
       const result = await adminAPI.getUserGrowth();
 
       expect(result).toHaveLength(6);
-      result.forEach((item: { users: any; }) => {
+      result.forEach((item: { users: any }) => {
         expect(item.users).toBe(0);
       });
     });
 
-    it('should handle users without created_at', async () => {
-      const mockUsers = [
-        { created_at: null },
-        { created_at: undefined },
-      ];
+    it("should handle users without created_at", async () => {
+      const mockUsers = [{ created_at: null }, { created_at: undefined }];
 
       vi.mocked(supabase.from).mockReturnValue({
         select: vi.fn().mockReturnValue({
@@ -251,28 +271,28 @@ describe('Admin API', () => {
       expect(result).toHaveLength(6);
     });
 
-    it('should handle database errors', async () => {
+    it("should handle database errors", async () => {
       vi.mocked(supabase.from).mockReturnValue({
         select: vi.fn().mockReturnValue({
           order: vi.fn().mockReturnValue({
             data: null,
-            error: new Error('Database error'),
+            error: new Error("Database error"),
           }),
         }),
       } as any);
 
-      await expect(adminAPI.getUserGrowth()).rejects.toThrow('Database error');
+      await expect(adminAPI.getUserGrowth()).rejects.toThrow("Database error");
     });
   });
 
-  describe('getUserDistribution', () => {
-    it('should return user distribution by role', async () => {
+  describe("getUserDistribution", () => {
+    it("should return user distribution by role", async () => {
       const mockUsers = [
-        { role: 'mahasiswa' },
-        { role: 'mahasiswa' },
-        { role: 'mahasiswa' },
-        { role: 'dosen' },
-        { role: 'laboran' },
+        { role: "mahasiswa" },
+        { role: "mahasiswa" },
+        { role: "mahasiswa" },
+        { role: "dosen" },
+        { role: "laboran" },
       ];
 
       vi.mocked(supabase.from).mockReturnValue({
@@ -286,14 +306,16 @@ describe('Admin API', () => {
 
       expect(result).toHaveLength(3);
 
-      const mahasiswaData = result.find((r: { role: string; }) => r.role === 'Mahasiswa');
+      const mahasiswaData = result.find(
+        (r: { role: string }) => r.role === "Mahasiswa",
+      );
       expect(mahasiswaData).toBeDefined();
       expect(mahasiswaData?.count).toBe(3);
       expect(mahasiswaData?.percentage).toBe(60);
     });
 
-    it('should capitalize role names', async () => {
-      const mockUsers = [{ role: 'mahasiswa' }];
+    it("should capitalize role names", async () => {
+      const mockUsers = [{ role: "mahasiswa" }];
 
       vi.mocked(supabase.from).mockReturnValue({
         select: vi.fn().mockReturnValue({
@@ -304,10 +326,10 @@ describe('Admin API', () => {
 
       const result = await adminAPI.getUserDistribution();
 
-      expect(result[0].role).toBe('Mahasiswa');
+      expect(result[0].role).toBe("Mahasiswa");
     });
 
-    it('should handle empty data', async () => {
+    it("should handle empty data", async () => {
       vi.mocked(supabase.from).mockReturnValue({
         select: vi.fn().mockReturnValue({
           data: [],
@@ -320,11 +342,8 @@ describe('Admin API', () => {
       expect(result).toEqual([]);
     });
 
-    it('should calculate percentage correctly', async () => {
-      const mockUsers = [
-        { role: 'mahasiswa' },
-        { role: 'dosen' },
-      ];
+    it("should calculate percentage correctly", async () => {
+      const mockUsers = [{ role: "mahasiswa" }, { role: "dosen" }];
 
       vi.mocked(supabase.from).mockReturnValue({
         select: vi.fn().mockReturnValue({
@@ -335,28 +354,30 @@ describe('Admin API', () => {
 
       const result = await adminAPI.getUserDistribution();
 
-      result.forEach((item: { percentage: any; }) => {
+      result.forEach((item: { percentage: any }) => {
         expect(item.percentage).toBe(50);
       });
     });
 
-    it('should handle database errors', async () => {
+    it("should handle database errors", async () => {
       vi.mocked(supabase.from).mockReturnValue({
         select: vi.fn().mockReturnValue({
           data: null,
-          error: new Error('Database error'),
+          error: new Error("Database error"),
         }),
       } as any);
 
-      await expect(adminAPI.getUserDistribution()).rejects.toThrow('Database error');
+      await expect(adminAPI.getUserDistribution()).rejects.toThrow(
+        "Database error",
+      );
     });
   });
 
-  describe('getLabUsage', () => {
-    it('should return lab usage data', async () => {
+  describe("getLabUsage", () => {
+    it("should return lab usage data", async () => {
       const mockLabs = [
-        { nama_lab: 'Lab 1', kode_lab: 'L1' },
-        { nama_lab: 'Lab 2', kode_lab: 'L2' },
+        { nama_lab: "Lab 1", kode_lab: "L1" },
+        { nama_lab: "Lab 2", kode_lab: "L2" },
       ];
 
       vi.mocked(supabase.from).mockReturnValue({
@@ -371,13 +392,13 @@ describe('Admin API', () => {
       const result = await adminAPI.getLabUsage();
 
       expect(result).toHaveLength(2);
-      expect(result[0]).toHaveProperty('lab');
-      expect(result[0]).toHaveProperty('usage');
+      expect(result[0]).toHaveProperty("lab");
+      expect(result[0]).toHaveProperty("usage");
       expect(result[0].usage).toBeGreaterThanOrEqual(10);
       expect(result[0].usage).toBeLessThanOrEqual(60);
     });
 
-    it('should limit to 5 labs', async () => {
+    it("should limit to 5 labs", async () => {
       const mockLabs = Array.from({ length: 10 }, (_, i) => ({
         nama_lab: `Lab ${i}`,
         kode_lab: `L${i}`,
@@ -399,7 +420,7 @@ describe('Admin API', () => {
       expect(limitMock).toHaveBeenCalledWith(5);
     });
 
-    it('should handle empty lab data', async () => {
+    it("should handle empty lab data", async () => {
       vi.mocked(supabase.from).mockReturnValue({
         select: vi.fn().mockReturnValue({
           limit: vi.fn().mockReturnValue({
@@ -414,36 +435,36 @@ describe('Admin API', () => {
       expect(result).toEqual([]);
     });
 
-    it('should handle database errors', async () => {
+    it("should handle database errors", async () => {
       vi.mocked(supabase.from).mockReturnValue({
         select: vi.fn().mockReturnValue({
           limit: vi.fn().mockReturnValue({
             data: null,
-            error: new Error('Database error'),
+            error: new Error("Database error"),
           }),
         }),
       } as any);
 
-      await expect(adminAPI.getLabUsage()).rejects.toThrow('Database error');
+      await expect(adminAPI.getLabUsage()).rejects.toThrow("Database error");
     });
   });
 
-  describe('getRecentUsers', () => {
-    it('should return recent users with default limit', async () => {
+  describe("getRecentUsers", () => {
+    it("should return recent users with default limit", async () => {
       const mockUsers = [
         {
-          id: '1',
-          full_name: 'User 1',
-          email: 'user1@example.com',
-          role: 'mahasiswa',
-          created_at: '2024-01-01',
+          id: "1",
+          full_name: "User 1",
+          email: "user1@example.com",
+          role: "mahasiswa",
+          created_at: "2024-01-01",
         },
         {
-          id: '2',
-          full_name: 'User 2',
-          email: 'user2@example.com',
-          role: 'dosen',
-          created_at: '2024-01-02',
+          id: "2",
+          full_name: "User 2",
+          email: "user2@example.com",
+          role: "dosen",
+          created_at: "2024-01-02",
         },
       ];
 
@@ -467,13 +488,13 @@ describe('Admin API', () => {
       expect(limitMock).toHaveBeenCalledWith(5);
     });
 
-    it('should accept custom limit parameter', async () => {
+    it("should accept custom limit parameter", async () => {
       const mockUsers = Array.from({ length: 10 }, (_, i) => ({
         id: `${i}`,
         full_name: `User ${i}`,
         email: `user${i}@example.com`,
-        role: 'mahasiswa',
-        created_at: '2024-01-01',
+        role: "mahasiswa",
+        created_at: "2024-01-01",
       }));
 
       const limitMock = vi.fn().mockReturnValue({
@@ -494,13 +515,13 @@ describe('Admin API', () => {
       expect(limitMock).toHaveBeenCalledWith(10);
     });
 
-    it('should handle users without created_at', async () => {
+    it("should handle users without created_at", async () => {
       const mockUsers = [
         {
-          id: '1',
-          full_name: 'User 1',
-          email: 'user1@example.com',
-          role: 'mahasiswa',
+          id: "1",
+          full_name: "User 1",
+          email: "user1@example.com",
+          role: "mahasiswa",
           created_at: null,
         },
       ];
@@ -518,10 +539,10 @@ describe('Admin API', () => {
 
       const result = await adminAPI.getRecentUsers();
 
-      expect(result[0].created_at).toBe('');
+      expect(result[0].created_at).toBe("");
     });
 
-    it('should handle empty data', async () => {
+    it("should handle empty data", async () => {
       vi.mocked(supabase.from).mockReturnValue({
         select: vi.fn().mockReturnValue({
           order: vi.fn().mockReturnValue({
@@ -538,38 +559,38 @@ describe('Admin API', () => {
       expect(result).toEqual([]);
     });
 
-    it('should handle database errors', async () => {
+    it("should handle database errors", async () => {
       vi.mocked(supabase.from).mockReturnValue({
         select: vi.fn().mockReturnValue({
           order: vi.fn().mockReturnValue({
             limit: vi.fn().mockReturnValue({
               data: null,
-              error: new Error('Database error'),
+              error: new Error("Database error"),
             }),
           }),
         }),
       } as any);
 
-      await expect(adminAPI.getRecentUsers()).rejects.toThrow('Database error');
+      await expect(adminAPI.getRecentUsers()).rejects.toThrow("Database error");
     });
   });
 
-  describe('getRecentAnnouncements', () => {
-    it('should return recent announcements with author names', async () => {
+  describe("getRecentAnnouncements", () => {
+    it("should return recent announcements with author names", async () => {
       const mockAnnouncements = [
         {
-          id: '1',
-          judul: 'Announcement 1',
-          created_at: '2024-01-01',
-          penulis_id: 'user1',
-          users: { full_name: 'Author 1' },
+          id: "1",
+          judul: "Announcement 1",
+          created_at: "2024-01-01",
+          penulis_id: "user1",
+          users: { full_name: "Author 1" },
         },
         {
-          id: '2',
-          judul: 'Announcement 2',
-          created_at: '2024-01-02',
-          penulis_id: 'user2',
-          users: { full_name: 'Author 2' },
+          id: "2",
+          judul: "Announcement 2",
+          created_at: "2024-01-02",
+          penulis_id: "user2",
+          users: { full_name: "Author 2" },
         },
       ];
 
@@ -590,21 +611,21 @@ describe('Admin API', () => {
 
       expect(result).toHaveLength(2);
       expect(result[0]).toEqual({
-        id: '1',
-        title: 'Announcement 1',
-        created_at: '2024-01-01',
-        author: 'Author 1',
+        id: "1",
+        title: "Announcement 1",
+        created_at: "2024-01-01",
+        author: "Author 1",
       });
       expect(limitMock).toHaveBeenCalledWith(5);
     });
 
-    it('should handle announcements with null users', async () => {
+    it("should handle announcements with null users", async () => {
       const mockAnnouncements = [
         {
-          id: '1',
-          judul: 'Announcement 1',
-          created_at: '2024-01-01',
-          penulis_id: 'user1',
+          id: "1",
+          judul: "Announcement 1",
+          created_at: "2024-01-01",
+          penulis_id: "user1",
           users: null,
         },
       ];
@@ -622,10 +643,10 @@ describe('Admin API', () => {
 
       const result = await adminAPI.getRecentAnnouncements();
 
-      expect(result[0].author).toBe('Unknown');
+      expect(result[0].author).toBe("Unknown");
     });
 
-    it('should accept custom limit parameter', async () => {
+    it("should accept custom limit parameter", async () => {
       const limitMock = vi.fn().mockReturnValue({
         data: [],
         error: null,
@@ -644,7 +665,7 @@ describe('Admin API', () => {
       expect(limitMock).toHaveBeenCalledWith(10);
     });
 
-    it('should handle empty data', async () => {
+    it("should handle empty data", async () => {
       vi.mocked(supabase.from).mockReturnValue({
         select: vi.fn().mockReturnValue({
           order: vi.fn().mockReturnValue({
@@ -661,19 +682,21 @@ describe('Admin API', () => {
       expect(result).toEqual([]);
     });
 
-    it('should handle database errors', async () => {
+    it("should handle database errors", async () => {
       vi.mocked(supabase.from).mockReturnValue({
         select: vi.fn().mockReturnValue({
           order: vi.fn().mockReturnValue({
             limit: vi.fn().mockReturnValue({
               data: null,
-              error: new Error('Database error'),
+              error: new Error("Database error"),
             }),
           }),
         }),
       } as any);
 
-      await expect(adminAPI.getRecentAnnouncements()).rejects.toThrow('Database error');
+      await expect(adminAPI.getRecentAnnouncements()).rejects.toThrow(
+        "Database error",
+      );
     });
   });
 });

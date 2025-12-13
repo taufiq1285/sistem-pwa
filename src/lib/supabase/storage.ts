@@ -11,7 +11,7 @@
  * - List files in folder
  */
 
-import { supabase } from './client';
+import { supabase } from "./client";
 
 // ============================================================================
 // TYPES
@@ -47,9 +47,9 @@ export interface FileMetadata {
 // ============================================================================
 
 export const STORAGE_BUCKETS = {
-  MATERI: 'materi',
-  AVATARS: 'avatars',
-  UPLOADS: 'uploads',
+  MATERI: "materi",
+  AVATARS: "avatars",
+  UPLOADS: "uploads",
 } as const;
 
 /**
@@ -57,26 +57,26 @@ export const STORAGE_BUCKETS = {
  */
 export const ALLOWED_MATERI_TYPES = [
   // Documents
-  'application/pdf',
-  'application/msword',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  'application/vnd.ms-excel',
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  'application/vnd.ms-powerpoint',
-  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-excel",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/vnd.ms-powerpoint",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
   // Text
-  'text/plain',
+  "text/plain",
   // Images
-  'image/jpeg',
-  'image/png',
-  'image/gif',
-  'image/webp',
+  "image/jpeg",
+  "image/png",
+  "image/gif",
+  "image/webp",
   // Video
-  'video/mp4',
-  'video/webm',
+  "video/mp4",
+  "video/webm",
   // Archives
-  'application/zip',
-  'application/x-rar-compressed',
+  "application/zip",
+  "application/x-rar-compressed",
 ];
 
 /**
@@ -95,9 +95,9 @@ export async function uploadFile(
   bucket: string,
   path: string,
   file: File,
-  options: UploadOptions = {}
+  options: UploadOptions = {},
 ): Promise<string> {
-  const { cacheControl = '3600', upsert = false, onProgress } = options;
+  const { cacheControl = "3600", upsert = false, onProgress } = options;
 
   // Upload file
   const { data, error } = await supabase.storage
@@ -129,19 +129,19 @@ export async function uploadMateriFile(
   kelasId: string,
   dosenId: string,
   file: File,
-  options?: UploadOptions
+  options?: UploadOptions,
 ): Promise<{ url: string; path: string }> {
   // Validate file type
   if (!ALLOWED_MATERI_TYPES.includes(file.type)) {
     throw new Error(
-      `Tipe file tidak diizinkan. File harus berupa dokumen, gambar, video, atau arsip.`
+      `Tipe file tidak diizinkan. File harus berupa dokumen, gambar, video, atau arsip.`,
     );
   }
 
   // Validate file size
   if (file.size > MAX_FILE_SIZE) {
     throw new Error(
-      `Ukuran file terlalu besar. Maksimal ${MAX_FILE_SIZE / 1024 / 1024}MB`
+      `Ukuran file terlalu besar. Maksimal ${MAX_FILE_SIZE / 1024 / 1024}MB`,
     );
   }
 
@@ -164,12 +164,12 @@ export async function uploadMateriFile(
  */
 export async function downloadFile(
   bucket: string,
-  path: string
+  path: string,
 ): Promise<Blob> {
   const { data, error } = await supabase.storage.from(bucket).download(path);
 
   if (error) throw error;
-  if (!data) throw new Error('File tidak ditemukan');
+  if (!data) throw new Error("File tidak ditemukan");
 
   return data;
 }
@@ -180,15 +180,15 @@ export async function downloadFile(
 export async function downloadFileAsBlob(
   bucket: string,
   path: string,
-  fileName?: string
+  fileName?: string,
 ): Promise<void> {
   const blob = await downloadFile(bucket, path);
 
   // Create download link
   const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
+  const link = document.createElement("a");
   link.href = url;
-  link.download = fileName || path.split('/').pop() || 'download';
+  link.download = fileName || path.split("/").pop() || "download";
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
@@ -214,7 +214,7 @@ export async function deleteFile(bucket: string, path: string): Promise<void> {
  */
 export async function deleteFiles(
   bucket: string,
-  paths: string[]
+  paths: string[],
 ): Promise<void> {
   const { error } = await supabase.storage.from(bucket).remove(paths);
   if (error) throw error;
@@ -237,18 +237,17 @@ export function getFileUrl(bucket: string, path: string): string {
  */
 export async function getFileMetadata(
   bucket: string,
-  path: string
+  path: string,
 ): Promise<FileMetadata> {
-  const { data, error } = await supabase.storage.from(bucket).list(
-    path.substring(0, path.lastIndexOf('/')),
-    {
+  const { data, error } = await supabase.storage
+    .from(bucket)
+    .list(path.substring(0, path.lastIndexOf("/")), {
       limit: 1,
-      search: path.split('/').pop(),
-    }
-  );
+      search: path.split("/").pop(),
+    });
 
   if (error) throw error;
-  if (!data || data.length === 0) throw new Error('File tidak ditemukan');
+  if (!data || data.length === 0) throw new Error("File tidak ditemukan");
 
   const file = data[0];
   const url = getFileUrl(bucket, path);
@@ -256,7 +255,7 @@ export async function getFileMetadata(
   return {
     name: file.name,
     size: file.metadata?.size || 0,
-    type: file.metadata?.mimetype || '',
+    type: file.metadata?.mimetype || "",
     lastModified: new Date(file.updated_at || file.created_at).getTime(),
     url,
   };
@@ -267,7 +266,7 @@ export async function getFileMetadata(
  */
 export async function listFiles(
   bucket: string,
-  folderPath: string = ''
+  folderPath: string = "",
 ): Promise<FileMetadata[]> {
   const { data, error } = await supabase.storage.from(bucket).list(folderPath);
 
@@ -277,7 +276,7 @@ export async function listFiles(
   return data.map((file) => ({
     name: file.name,
     size: file.metadata?.size || 0,
-    type: file.metadata?.mimetype || '',
+    type: file.metadata?.mimetype || "",
     lastModified: new Date(file.updated_at || file.created_at).getTime(),
     url: getFileUrl(bucket, `${folderPath}/${file.name}`),
   }));
@@ -293,12 +292,12 @@ export async function listFiles(
 export function generateUniqueFileName(originalName: string): string {
   const timestamp = Date.now();
   const random = Math.random().toString(36).substring(2, 8);
-  const extension = originalName.split('.').pop();
-  const nameWithoutExt = originalName.replace(`.${extension}`, '');
+  const extension = originalName.split(".").pop();
+  const nameWithoutExt = originalName.replace(`.${extension}`, "");
 
   // Clean file name (remove special characters)
   const cleanName = nameWithoutExt
-    .replace(/[^a-zA-Z0-9-_]/g, '_')
+    .replace(/[^a-zA-Z0-9-_]/g, "_")
     .substring(0, 50);
 
   return `${cleanName}_${timestamp}_${random}.${extension}`;
@@ -308,33 +307,36 @@ export function generateUniqueFileName(originalName: string): string {
  * Get file extension
  */
 export function getFileExtension(fileName: string): string {
-  return fileName.split('.').pop()?.toLowerCase() || '';
+  return fileName.split(".").pop()?.toLowerCase() || "";
 }
 
 /**
  * Get file type category
  */
 export function getFileTypeCategory(mimeType: string): string {
-  if (mimeType.startsWith('image/')) return 'image';
-  if (mimeType.startsWith('video/')) return 'video';
-  if (mimeType.startsWith('audio/')) return 'audio';
-  if (mimeType.includes('pdf')) return 'pdf';
-  if (mimeType.includes('word') || mimeType.includes('document')) return 'document';
-  if (mimeType.includes('excel') || mimeType.includes('spreadsheet')) return 'spreadsheet';
-  if (mimeType.includes('powerpoint') || mimeType.includes('presentation')) return 'presentation';
-  if (mimeType.includes('zip') || mimeType.includes('rar')) return 'archive';
-  if (mimeType.startsWith('text/')) return 'text';
-  return 'other';
+  if (mimeType.startsWith("image/")) return "image";
+  if (mimeType.startsWith("video/")) return "video";
+  if (mimeType.startsWith("audio/")) return "audio";
+  if (mimeType.includes("pdf")) return "pdf";
+  if (mimeType.includes("word") || mimeType.includes("document"))
+    return "document";
+  if (mimeType.includes("excel") || mimeType.includes("spreadsheet"))
+    return "spreadsheet";
+  if (mimeType.includes("powerpoint") || mimeType.includes("presentation"))
+    return "presentation";
+  if (mimeType.includes("zip") || mimeType.includes("rar")) return "archive";
+  if (mimeType.startsWith("text/")) return "text";
+  return "other";
 }
 
 /**
  * Format file size to human readable
  */
 export function formatFileSize(bytes: number): string {
-  if (bytes === 0) return '0 Bytes';
+  if (bytes === 0) return "0 Bytes";
 
   const k = 1024;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const sizes = ["Bytes", "KB", "MB", "GB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
 
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;

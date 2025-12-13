@@ -16,59 +16,55 @@
 
 // TIPE_KUIS removed from database, but kept for backward compatibility
 export const TIPE_KUIS = {
-  PILIHAN_GANDA: 'pilihan_ganda',
-  ESSAY: 'essay',
-  CAMPURAN: 'campuran',
+  PILIHAN_GANDA: "pilihan_ganda",
+  ESSAY: "essay",
+  CAMPURAN: "campuran",
 } as const;
 
-export type TipeKuis = typeof TIPE_KUIS[keyof typeof TIPE_KUIS];
+export type TipeKuis = (typeof TIPE_KUIS)[keyof typeof TIPE_KUIS];
 
 export const TIPE_KUIS_LABELS = {
-  pilihan_ganda: 'Pilihan Ganda',
-  essay: 'Essay',
-  campuran: 'Campuran',
+  pilihan_ganda: "Pilihan Ganda",
+  essay: "Essay",
+  campuran: "Campuran",
 } as const;
 
 export const TIPE_SOAL = {
-  PILIHAN_GANDA: 'pilihan_ganda',
-  BENAR_SALAH: 'benar_salah',
-  ESSAY: 'essay',
-  JAWABAN_SINGKAT: 'jawaban_singkat',
+  PILIHAN_GANDA: "pilihan_ganda",
+  ESSAY: "essay",
 } as const;
 
-export type TipeSoal = typeof TIPE_SOAL[keyof typeof TIPE_SOAL];
+export type TipeSoal = (typeof TIPE_SOAL)[keyof typeof TIPE_SOAL];
 
 export const TIPE_SOAL_LABELS = {
-  pilihan_ganda: 'Pilihan Ganda',
-  benar_salah: 'Benar/Salah',
-  essay: 'Essay',
-  jawaban_singkat: 'Jawaban Singkat',
+  pilihan_ganda: "Pilihan Ganda",
+  essay: "Essay",
 } as const;
 
 export const QUIZ_STATUS = {
-  DRAFT: 'draft',
-  PUBLISHED: 'published',
-  ARCHIVED: 'archived',
+  DRAFT: "draft",
+  PUBLISHED: "published",
+  ARCHIVED: "archived",
 } as const;
 
-export type QuizStatus = typeof QUIZ_STATUS[keyof typeof QUIZ_STATUS];
+export type QuizStatus = (typeof QUIZ_STATUS)[keyof typeof QUIZ_STATUS];
 
 export const QUIZ_STATUS_LABELS = {
-  draft: 'Draft',
-  published: 'Dipublikasikan',
-  archived: 'Diarsipkan',
+  draft: "Draft",
+  published: "Dipublikasikan",
+  archived: "Diarsipkan",
 } as const;
 
 export const ATTEMPT_STATUS = {
-  IN_PROGRESS: 'in_progress',
-  SUBMITTED: 'submitted',
-  GRADED: 'graded',
+  IN_PROGRESS: "in_progress",
+  SUBMITTED: "submitted",
+  GRADED: "graded",
 } as const;
 
 export const ATTEMPT_STATUS_LABELS = {
-  in_progress: 'Sedang Dikerjakan',
-  submitted: 'Sudah Dikumpulkan',
-  graded: 'Sudah Dinilai',
+  in_progress: "Sedang Dikerjakan",
+  submitted: "Sudah Dikumpulkan",
+  graded: "Sudah Dinilai",
 } as const;
 
 // ============================================================================
@@ -82,12 +78,12 @@ export interface Kuis {
   dosen_id: string;
   judul: string;
   deskripsi?: string | null;
-  
+
   // Timing & Duration - EXACT DATABASE FIELD NAMES
   durasi_menit: number; // ✅ NOT "durasi"
-  tanggal_mulai: string; // timestamp with time zone
-  tanggal_selesai: string; // timestamp with time zone
-  
+  tanggal_mulai?: string | null; // timestamp with time zone - auto-set if not provided
+  tanggal_selesai?: string | null; // timestamp with time zone - auto-set if not provided
+
   // Quiz Settings - EXACT DATABASE FIELD NAMES
   passing_score?: number | null; // ✅ NOT "passing_grade" (default: 70)
   max_attempts?: number | null; // ✅ (default: 1)
@@ -95,20 +91,20 @@ export interface Kuis {
   randomize_options?: boolean | null; // ✅ NOT "shuffle_jawaban" (default: false)
   show_results_immediately?: boolean | null; // ✅ NOT "show_hasil" (default: true)
   allow_review?: boolean | null; // (default: true)
-  
+
   // Status - EXACT DATABASE FIELD NAMES
   status?: QuizStatus | null; // ✅ enum: draft/published/archived (default: draft)
-  
+
   // Offline & Versioning
   is_offline_capable?: boolean | null; // (default: false)
   auto_save_interval?: number | null; // seconds (default: 30)
   version?: number | null; // (default: 1)
-  
+
   // Timestamps
   created_at?: string;
   updated_at?: string;
   published_at?: string | null;
-  
+
   // Relations (populated when using joins)
   kelas?: {
     nama_kelas: string;
@@ -149,7 +145,7 @@ export interface Soal {
   penjelasan?: string | null;
   created_at?: string;
   updated_at?: string;
-  
+
   // Relations
   kuis?: {
     judul: string;
@@ -169,11 +165,11 @@ export interface AttemptKuis {
   submitted_at?: string | null;
   sisa_waktu?: number | null;
   total_poin?: number | null;
-  status: 'in_progress' | 'submitted' | 'graded';
+  status: "in_progress" | "submitted" | "graded";
   is_synced?: boolean;
   created_at?: string;
   updated_at?: string;
-  
+
   // Relations
   kuis?: Kuis;
   mahasiswa?: {
@@ -196,14 +192,15 @@ export interface Jawaban {
   id: string;
   attempt_id: string;
   soal_id: string;
-  jawaban: string;
+  jawaban_mahasiswa: string;  // Database column name
+  jawaban?: string;  // Alias for backward compatibility
   poin_diperoleh?: number | null;
   is_correct?: boolean | null;
   feedback?: string | null;
-  is_synced?: boolean;
+  is_synced?: boolean;  // Client-side only
   created_at?: string;
   updated_at?: string;
-  
+
   // Relations
   soal?: Soal;
   attempt?: {
@@ -223,19 +220,19 @@ export interface UpcomingQuiz {
   kode_mk: string;
   nama_kelas: string;
   dosen_name: string;
-  
+
   // Quiz details - UPDATED FIELD NAMES
   durasi_menit: number; // ✅ NOT durasi
   tanggal_mulai: string;
   tanggal_selesai: string;
   passing_score?: number | null; // ✅ NOT passing_grade
   total_soal: number;
-  
+
   // Student progress
   attempts_used: number;
   max_attempts: number;
   can_attempt: boolean;
-  status: 'upcoming' | 'ongoing' | 'completed' | 'missed';
+  status: "upcoming" | "ongoing" | "completed" | "missed";
   best_score?: number;
   last_attempt_at?: string | null;
 }
@@ -256,7 +253,7 @@ export interface RecentQuizResult {
   total_poin?: number | null;
   max_poin: number;
   percentage: number;
-  status: 'graded' | 'pending';
+  status: "graded" | "pending";
   passed: boolean;
 }
 
@@ -272,15 +269,15 @@ export interface QuizAttemptSession {
   started_at: string;
   durasi_menit: number; // ✅ UPDATED
   sisa_waktu: number;
-  
+
   // Questions & Answers
   soal: SoalWithAnswer[];
-  
+
   // Sync status
   is_synced: boolean;
   last_saved_at: string;
   sync_errors?: string[];
-  
+
   // Metadata
   device_id?: string;
   offline_created?: boolean;
@@ -313,8 +310,8 @@ export interface CreateKuisData {
 
   // UPDATED FIELD NAMES TO MATCH DATABASE
   durasi_menit: number; // ✅ NOT durasi
-  tanggal_mulai: string; // ✅ Always set automatically (now)
-  tanggal_selesai: string; // ✅ Always set automatically (now + 1 year)
+  tanggal_mulai?: string | null; // ✅ Optional - auto-set by API if not provided
+  tanggal_selesai?: string | null; // ✅ Optional - auto-set by API if not provided
   passing_score?: number | null; // ✅ NOT passing_grade - NULLABLE to match DB
   max_attempts?: number | null; // ✅ NULLABLE to match form and DB
   randomize_questions?: boolean | null; // ✅ NOT shuffle_soal - NULLABLE
@@ -373,14 +370,14 @@ export interface KuisFilters {
   kelas_id?: string;
   dosen_id?: string;
   status?: QuizStatus; // ✅ UPDATED
-  status_waktu?: 'upcoming' | 'ongoing' | 'past';
+  status_waktu?: "upcoming" | "ongoing" | "past";
   search?: string;
 }
 
 export interface AttemptFilters {
   kuis_id?: string;
   mahasiswa_id?: string;
-  status?: 'in_progress' | 'submitted' | 'graded';
+  status?: "in_progress" | "submitted" | "graded";
   is_synced?: boolean;
 }
 

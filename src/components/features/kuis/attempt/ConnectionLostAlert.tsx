@@ -10,12 +10,18 @@
  * - Sync status indicator
  */
 
-import { useEffect, useState } from 'react';
-import { WifiOff, Wifi, AlertTriangle, CheckCircle2, Loader2 } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
-import { useNetworkStatus } from '@/lib/hooks/useNetworkStatus';
-import { useSyncContext } from '@/providers/SyncProvider';
+import { useEffect, useState } from "react";
+import {
+  WifiOff,
+  Wifi,
+  AlertTriangle,
+  CheckCircle2,
+  Loader2,
+} from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { useNetworkStatus } from "@/lib/hooks/useNetworkStatus";
+import { useSyncContext } from "@/providers/SyncProvider";
 
 // ============================================================================
 // TYPES
@@ -78,8 +84,8 @@ export function ConnectionLostAlert({
         <AlertTitle>Tidak Ada Koneksi Internet</AlertTitle>
         <AlertDescription className="space-y-2">
           <p>
-            Anda sedang bekerja dalam mode offline. Jawaban akan disimpan secara lokal
-            dan akan disinkronkan saat koneksi kembali tersedia.
+            Anda sedang bekerja dalam mode offline. Jawaban akan disimpan secara
+            lokal dan akan disinkronkan saat koneksi kembali tersedia.
           </p>
 
           {showSyncStatus && stats && stats.pending > 0 && (
@@ -117,15 +123,15 @@ export function ConnectionLostAlert({
 
   if (showReconnected) {
     return (
-      <Alert className={`${className} bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800`}>
+      <Alert
+        className={`${className} bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800`}
+      >
         <CheckCircle2 className="h-4 w-4 text-green-600" />
         <AlertTitle className="text-green-900 dark:text-green-100">
           Koneksi Kembali Tersedia
         </AlertTitle>
         <AlertDescription className="text-green-800 dark:text-green-200 space-y-2">
-          <p>
-            Koneksi internet telah dipulihkan.
-          </p>
+          <p>Koneksi internet telah dipulihkan.</p>
 
           {showSyncStatus && stats && stats.pending > 0 && (
             <div className="flex items-center gap-2 mt-2">

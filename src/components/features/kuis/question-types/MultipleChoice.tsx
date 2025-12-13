@@ -1,19 +1,19 @@
 /**
  * MultipleChoice Question Type Component
- * 
+ *
  * Purpose: Display and handle multiple choice questions in quiz builder
  * Used by: QuestionEditor, QuizBuilder (Dosen)
  * Features: Add/remove options, set correct answer, validation
  */
 
-import { Trash2, Plus, Check } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Card, CardContent } from '@/components/ui/card';
-import { cn } from '@/lib/utils';
-import type { OpsiJawaban } from '@/types/kuis.types';
+import { Trash2, Plus, Check } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
+import type { OpsiJawaban } from "@/types/kuis.types";
 
 // ============================================================================
 // TYPES
@@ -24,37 +24,37 @@ interface MultipleChoiceProps {
    * Current options (A, B, C, D, etc.)
    */
   options: OpsiJawaban[];
-  
+
   /**
    * Callback when options change
    */
   onChange: (options: OpsiJawaban[]) => void;
-  
+
   /**
    * ID of the correct answer option
    */
   correctAnswerId?: string;
-  
+
   /**
    * Callback when correct answer changes
    */
   onCorrectAnswerChange: (optionId: string) => void;
-  
+
   /**
    * Disabled state (for view mode)
    */
   disabled?: boolean;
-  
+
   /**
    * Show validation errors
    */
   showErrors?: boolean;
-  
+
   /**
    * Minimum number of options (default: 2)
    */
   minOptions?: number;
-  
+
   /**
    * Maximum number of options (default: 6)
    */
@@ -65,13 +65,13 @@ interface MultipleChoiceProps {
 // CONSTANTS
 // ============================================================================
 
-const OPTION_LABELS = ['A', 'B', 'C', 'D', 'E', 'F'];
+const OPTION_LABELS = ["A", "B", "C", "D", "E", "F"];
 
 const DEFAULT_OPTIONS: OpsiJawaban[] = [
-  { id: '1', label: 'A', text: '', is_correct: false },
-  { id: '2', label: 'B', text: '', is_correct: false },
-  { id: '3', label: 'C', text: '', is_correct: false },
-  { id: '4', label: 'D', text: '', is_correct: false },
+  { id: "1", label: "A", text: "", is_correct: false },
+  { id: "2", label: "B", text: "", is_correct: false },
+  { id: "3", label: "C", text: "", is_correct: false },
+  { id: "4", label: "D", text: "", is_correct: false },
 ];
 
 // ============================================================================
@@ -88,7 +88,6 @@ export function MultipleChoice({
   minOptions = 2,
   maxOptions = 6,
 }: MultipleChoiceProps) {
-  
   // Validation states
   const hasCorrectAnswer = options.some((opt) => opt.is_correct);
   const hasEmptyOptions = options.some((opt) => !opt.text.trim());
@@ -104,7 +103,7 @@ export function MultipleChoice({
     const newOption: OpsiJawaban = {
       id: Date.now().toString(),
       label: OPTION_LABELS[options.length] || `Option ${options.length + 1}`,
-      text: '',
+      text: "",
       is_correct: false,
     };
 
@@ -118,7 +117,7 @@ export function MultipleChoice({
     if (!canRemove) return;
 
     const updatedOptions = options.filter((opt) => opt.id !== optionId);
-    
+
     // Re-assign labels (A, B, C, D...)
     const relabeledOptions = updatedOptions.map((opt, index) => ({
       ...opt,
@@ -129,7 +128,7 @@ export function MultipleChoice({
 
     // Clear correct answer if deleted option was correct
     if (correctAnswerId === optionId) {
-      onCorrectAnswerChange('');
+      onCorrectAnswerChange("");
     }
   };
 
@@ -138,7 +137,7 @@ export function MultipleChoice({
    */
   const handleUpdateOption = (optionId: string, text: string) => {
     const updatedOptions = options.map((opt) =>
-      opt.id === optionId ? { ...opt, text } : opt
+      opt.id === optionId ? { ...opt, text } : opt,
     );
     onChange(updatedOptions);
   };
@@ -151,7 +150,7 @@ export function MultipleChoice({
       ...opt,
       is_correct: opt.id === optionId,
     }));
-    
+
     onChange(updatedOptions);
     onCorrectAnswerChange(optionId);
   };
@@ -164,7 +163,7 @@ export function MultipleChoice({
           Pilihan Jawaban
           <span className="text-destructive ml-1">*</span>
         </Label>
-        
+
         <Button
           type="button"
           variant="outline"
@@ -179,8 +178,8 @@ export function MultipleChoice({
 
       {/* Helper Text */}
       <p className="text-sm text-muted-foreground">
-        Minimal {minOptions} opsi, maksimal {maxOptions} opsi. 
-        Pilih satu jawaban yang benar dengan mengklik radio button.
+        Minimal {minOptions} opsi, maksimal {maxOptions} opsi. Pilih satu
+        jawaban yang benar dengan mengklik radio button.
       </p>
 
       {/* Options List */}
@@ -196,7 +195,7 @@ export function MultipleChoice({
               className={cn(
                 "transition-all",
                 option.is_correct && "ring-2 ring-primary",
-                showErrors && !option.text.trim() && "ring-2 ring-destructive"
+                showErrors && !option.text.trim() && "ring-2 ring-destructive",
               )}
             >
               <CardContent className="p-4">
@@ -209,7 +208,7 @@ export function MultipleChoice({
                       disabled={disabled}
                       className={cn(
                         "transition-all",
-                        option.is_correct && "border-primary"
+                        option.is_correct && "border-primary",
                       )}
                     />
                     <Label
@@ -224,12 +223,14 @@ export function MultipleChoice({
 
                   {/* Option Label */}
                   <div className="flex-shrink-0 pt-2">
-                    <div className={cn(
-                      "w-8 h-8 rounded-full flex items-center justify-center font-semibold",
-                      option.is_correct 
-                        ? "bg-primary text-primary-foreground" 
-                        : "bg-muted text-muted-foreground"
-                    )}>
+                    <div
+                      className={cn(
+                        "w-8 h-8 rounded-full flex items-center justify-center font-semibold",
+                        option.is_correct
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted text-muted-foreground",
+                      )}
+                    >
                       {option.label}
                     </div>
                   </div>
@@ -239,10 +240,14 @@ export function MultipleChoice({
                     <Input
                       placeholder={`Opsi ${option.label}`}
                       value={option.text}
-                      onChange={(e) => handleUpdateOption(option.id, e.target.value)}
+                      onChange={(e) =>
+                        handleUpdateOption(option.id, e.target.value)
+                      }
                       disabled={disabled}
                       className={cn(
-                        showErrors && !option.text.trim() && "border-destructive"
+                        showErrors &&
+                          !option.text.trim() &&
+                          "border-destructive",
                       )}
                     />
                     {showErrors && !option.text.trim() && (
@@ -280,7 +285,7 @@ export function MultipleChoice({
               ⚠️ Pilih satu jawaban yang benar dengan mengklik radio button
             </p>
           )}
-          
+
           {hasEmptyOptions && (
             <p className="text-sm text-destructive">
               ⚠️ Semua opsi harus diisi
@@ -297,10 +302,11 @@ export function MultipleChoice({
               ℹ️ Maksimal {maxOptions} opsi telah tercapai
             </p>
           )}
-          
+
           {hasCorrectAnswer && (
             <p className="text-sm text-green-600">
-              ✓ Jawaban benar: Opsi {options.find(opt => opt.is_correct)?.label}
+              ✓ Jawaban benar: Opsi{" "}
+              {options.find((opt) => opt.is_correct)?.label}
             </p>
           )}
         </div>
@@ -324,27 +330,27 @@ export function validateMultipleChoice(options: OpsiJawaban[]): {
 
   // Check minimum options
   if (options.length < 2) {
-    errors.push('Minimal 2 opsi jawaban diperlukan');
+    errors.push("Minimal 2 opsi jawaban diperlukan");
   }
 
   // Check maximum options
   if (options.length > 6) {
-    errors.push('Maksimal 6 opsi jawaban');
+    errors.push("Maksimal 6 opsi jawaban");
   }
 
   // Check empty options
   const hasEmptyOptions = options.some((opt) => !opt.text.trim());
   if (hasEmptyOptions) {
-    errors.push('Semua opsi harus diisi');
+    errors.push("Semua opsi harus diisi");
   }
 
   // Check correct answer
   const correctAnswers = options.filter((opt) => opt.is_correct);
   if (correctAnswers.length === 0) {
-    errors.push('Harus ada satu jawaban yang benar');
+    errors.push("Harus ada satu jawaban yang benar");
   }
   if (correctAnswers.length > 1) {
-    errors.push('Hanya boleh ada satu jawaban yang benar');
+    errors.push("Hanya boleh ada satu jawaban yang benar");
   }
 
   return {
@@ -360,7 +366,7 @@ export function generateDefaultOptions(count: number = 4): OpsiJawaban[] {
   return Array.from({ length: count }, (_, i) => ({
     id: (i + 1).toString(),
     label: OPTION_LABELS[i] || `Option ${i + 1}`,
-    text: '',
+    text: "",
     is_correct: false,
   }));
 }

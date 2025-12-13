@@ -3,19 +3,25 @@
  * Page for password reset request
  */
 
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { supabase } from '@/lib/supabase/client';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertCircle, CheckCircle2, ArrowLeft } from 'lucide-react';
-import { ROUTES } from '@/config/routes.config';
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { supabase } from "@/lib/supabase/client";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle, CheckCircle2, ArrowLeft } from "lucide-react";
+import { ROUTES } from "@/config/routes.config";
 
 export function ForgotPasswordPage() {
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -24,7 +30,7 @@ export function ForgotPasswordPage() {
     e.preventDefault();
 
     if (!email) {
-      setError('Please enter your email address');
+      setError("Please enter your email address");
       return;
     }
 
@@ -40,8 +46,8 @@ export function ForgotPasswordPage() {
 
       setSuccess(true);
     } catch (err: any) {
-      console.error('Password reset error:', err);
-      setError(err.message || 'Failed to send reset email. Please try again.');
+      console.error("Password reset error:", err);
+      setError(err.message || "Failed to send reset email. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -65,7 +71,8 @@ export function ForgotPasswordPage() {
           <CardContent className="space-y-4">
             <Alert>
               <AlertDescription>
-                Click the link in the email to reset your password. The link will expire in 1 hour.
+                Click the link in the email to reset your password. The link
+                will expire in 1 hour.
               </AlertDescription>
             </Alert>
 
@@ -79,7 +86,7 @@ export function ForgotPasswordPage() {
             </div>
 
             <div className="text-center text-sm text-gray-600">
-              Didn't receive the email? Check your spam folder or{' '}
+              Didn't receive the email? Check your spam folder or{" "}
               <button
                 onClick={() => setSuccess(false)}
                 className="text-blue-600 hover:text-blue-800 font-medium"
@@ -101,7 +108,8 @@ export function ForgotPasswordPage() {
             Forgot Password?
           </CardTitle>
           <CardDescription className="text-center">
-            Enter your email address and we'll send you a link to reset your password
+            Enter your email address and we'll send you a link to reset your
+            password
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -126,12 +134,8 @@ export function ForgotPasswordPage() {
               />
             </div>
 
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={loading}
-            >
-              {loading ? 'Sending...' : 'Send Reset Link'}
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? "Sending..." : "Send Reset Link"}
             </Button>
 
             <div className="text-center">

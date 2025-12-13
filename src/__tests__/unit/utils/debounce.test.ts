@@ -3,10 +3,10 @@
  * Comprehensive tests for standalone debounce functions
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { debounce, debounceImmediate } from '../../../lib/utils/debounce';
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { debounce, debounceImmediate } from "../../../lib/utils/debounce";
 
-describe('Debounce Utility', () => {
+describe("Debounce Utility", () => {
   beforeEach(() => {
     vi.useFakeTimers();
   });
@@ -16,49 +16,49 @@ describe('Debounce Utility', () => {
     vi.useRealTimers();
   });
 
-  describe('debounce', () => {
-    it('should delay function execution', () => {
+  describe("debounce", () => {
+    it("should delay function execution", () => {
       const mockFn = vi.fn();
       const debouncedFn = debounce(mockFn, 500);
 
-      debouncedFn('test');
+      debouncedFn("test");
 
       expect(mockFn).not.toHaveBeenCalled();
 
       vi.advanceTimersByTime(500);
 
-      expect(mockFn).toHaveBeenCalledWith('test');
+      expect(mockFn).toHaveBeenCalledWith("test");
       expect(mockFn).toHaveBeenCalledTimes(1);
     });
 
-    it('should reset timer on rapid calls', () => {
+    it("should reset timer on rapid calls", () => {
       const mockFn = vi.fn();
       const debouncedFn = debounce(mockFn, 500);
 
-      debouncedFn('call1');
+      debouncedFn("call1");
       vi.advanceTimersByTime(300);
 
-      debouncedFn('call2');
+      debouncedFn("call2");
       vi.advanceTimersByTime(300);
 
-      debouncedFn('call3');
+      debouncedFn("call3");
       vi.advanceTimersByTime(500);
 
       expect(mockFn).toHaveBeenCalledTimes(1);
-      expect(mockFn).toHaveBeenCalledWith('call3');
+      expect(mockFn).toHaveBeenCalledWith("call3");
     });
 
-    it('should handle multiple arguments', () => {
+    it("should handle multiple arguments", () => {
       const mockFn = vi.fn();
       const debouncedFn = debounce(mockFn, 500);
 
-      debouncedFn('arg1', 'arg2', 123, true);
+      debouncedFn("arg1", "arg2", 123, true);
       vi.advanceTimersByTime(500);
 
-      expect(mockFn).toHaveBeenCalledWith('arg1', 'arg2', 123, true);
+      expect(mockFn).toHaveBeenCalledWith("arg1", "arg2", 123, true);
     });
 
-    it('should preserve this context', () => {
+    it("should preserve this context", () => {
       let calledValue: number | undefined;
       const obj = {
         value: 42,
@@ -76,46 +76,46 @@ describe('Debounce Utility', () => {
       expect(calledValue).toBe(42);
     });
 
-    it('should work with different wait times', () => {
+    it("should work with different wait times", () => {
       const mockFn1 = vi.fn();
       const mockFn2 = vi.fn();
 
       const debouncedFn1 = debounce(mockFn1, 100);
       const debouncedFn2 = debounce(mockFn2, 1000);
 
-      debouncedFn1('fast');
-      debouncedFn2('slow');
+      debouncedFn1("fast");
+      debouncedFn2("slow");
 
       vi.advanceTimersByTime(100);
-      expect(mockFn1).toHaveBeenCalledWith('fast');
+      expect(mockFn1).toHaveBeenCalledWith("fast");
       expect(mockFn2).not.toHaveBeenCalled();
 
       vi.advanceTimersByTime(900);
-      expect(mockFn2).toHaveBeenCalledWith('slow');
+      expect(mockFn2).toHaveBeenCalledWith("slow");
     });
 
-    it('should clear previous timeout', () => {
-      const clearTimeoutSpy = vi.spyOn(global, 'clearTimeout');
+    it("should clear previous timeout", () => {
+      const clearTimeoutSpy = vi.spyOn(global, "clearTimeout");
       const mockFn = vi.fn();
       const debouncedFn = debounce(mockFn, 500);
 
-      debouncedFn('call1');
-      debouncedFn('call2');
+      debouncedFn("call1");
+      debouncedFn("call2");
 
       expect(clearTimeoutSpy).toHaveBeenCalled();
     });
 
-    it('should work with zero wait time', () => {
+    it("should work with zero wait time", () => {
       const mockFn = vi.fn();
       const debouncedFn = debounce(mockFn, 0);
 
-      debouncedFn('test');
+      debouncedFn("test");
       vi.advanceTimersByTime(0);
 
-      expect(mockFn).toHaveBeenCalledWith('test');
+      expect(mockFn).toHaveBeenCalledWith("test");
     });
 
-    it('should handle rapid successive calls correctly', () => {
+    it("should handle rapid successive calls correctly", () => {
       const mockFn = vi.fn();
       const debouncedFn = debounce(mockFn, 500);
 
@@ -130,12 +130,12 @@ describe('Debounce Utility', () => {
 
       // Should only call once with the last value
       expect(mockFn).toHaveBeenCalledTimes(1);
-      expect(mockFn).toHaveBeenCalledWith('call9');
+      expect(mockFn).toHaveBeenCalledWith("call9");
     });
 
-    it('should work with async functions', () => {
+    it("should work with async functions", () => {
       const mockAsyncFn = vi.fn(async () => {
-        return 'result';
+        return "result";
       });
 
       const debouncedFn = debounce(mockAsyncFn, 500);
@@ -147,63 +147,63 @@ describe('Debounce Utility', () => {
     });
   });
 
-  describe('debounceImmediate', () => {
-    it('should execute immediately on first call', () => {
+  describe("debounceImmediate", () => {
+    it("should execute immediately on first call", () => {
       const mockFn = vi.fn();
       const debouncedFn = debounceImmediate(mockFn, 500);
 
-      debouncedFn('first');
+      debouncedFn("first");
 
-      expect(mockFn).toHaveBeenCalledWith('first');
+      expect(mockFn).toHaveBeenCalledWith("first");
       expect(mockFn).toHaveBeenCalledTimes(1);
     });
 
-    it('should debounce subsequent calls', () => {
+    it("should debounce subsequent calls", () => {
       const mockFn = vi.fn();
       const debouncedFn = debounceImmediate(mockFn, 500);
 
       // First call - immediate
-      debouncedFn('call1');
+      debouncedFn("call1");
       expect(mockFn).toHaveBeenCalledTimes(1);
 
       // Second call within wait period - debounced
       vi.advanceTimersByTime(100);
-      debouncedFn('call2');
+      debouncedFn("call2");
       expect(mockFn).toHaveBeenCalledTimes(1);
 
       // Third call within wait period - still debounced
       vi.advanceTimersByTime(100);
-      debouncedFn('call3');
+      debouncedFn("call3");
       expect(mockFn).toHaveBeenCalledTimes(1);
     });
 
-    it('should reset to immediate after wait period', () => {
+    it("should reset to immediate after wait period", () => {
       const mockFn = vi.fn();
       const debouncedFn = debounceImmediate(mockFn, 500);
 
       // First call - immediate
-      debouncedFn('call1');
+      debouncedFn("call1");
       expect(mockFn).toHaveBeenCalledTimes(1);
 
       // Wait for debounce period to complete
       vi.advanceTimersByTime(500);
 
       // Next call should be immediate again
-      debouncedFn('call2');
+      debouncedFn("call2");
       expect(mockFn).toHaveBeenCalledTimes(2);
-      expect(mockFn).toHaveBeenCalledWith('call2');
+      expect(mockFn).toHaveBeenCalledWith("call2");
     });
 
-    it('should handle multiple arguments on immediate call', () => {
+    it("should handle multiple arguments on immediate call", () => {
       const mockFn = vi.fn();
       const debouncedFn = debounceImmediate(mockFn, 500);
 
-      debouncedFn('arg1', 'arg2', 123);
+      debouncedFn("arg1", "arg2", 123);
 
-      expect(mockFn).toHaveBeenCalledWith('arg1', 'arg2', 123);
+      expect(mockFn).toHaveBeenCalledWith("arg1", "arg2", 123);
     });
 
-    it('should preserve this context', () => {
+    it("should preserve this context", () => {
       let calledValue: number | undefined;
       const obj = {
         value: 100,
@@ -220,48 +220,48 @@ describe('Debounce Utility', () => {
       expect(calledValue).toBe(100);
     });
 
-    it('should clear timeout on subsequent calls', () => {
-      const clearTimeoutSpy = vi.spyOn(global, 'clearTimeout');
+    it("should clear timeout on subsequent calls", () => {
+      const clearTimeoutSpy = vi.spyOn(global, "clearTimeout");
       const mockFn = vi.fn();
       const debouncedFn = debounceImmediate(mockFn, 500);
 
-      debouncedFn('call1');
+      debouncedFn("call1");
       vi.advanceTimersByTime(100);
-      debouncedFn('call2');
+      debouncedFn("call2");
 
       expect(clearTimeoutSpy).toHaveBeenCalled();
     });
 
-    it('should handle zero wait time', () => {
+    it("should handle zero wait time", () => {
       const mockFn = vi.fn();
       const debouncedFn = debounceImmediate(mockFn, 0);
 
-      debouncedFn('call1');
-      expect(mockFn).toHaveBeenCalledWith('call1');
+      debouncedFn("call1");
+      expect(mockFn).toHaveBeenCalledWith("call1");
 
       vi.advanceTimersByTime(0);
 
-      debouncedFn('call2');
+      debouncedFn("call2");
       expect(mockFn).toHaveBeenCalledTimes(2);
-      expect(mockFn).toHaveBeenCalledWith('call2');
+      expect(mockFn).toHaveBeenCalledWith("call2");
     });
   });
 
-  describe('Real-world Scenarios', () => {
-    it('should handle search input debouncing', () => {
+  describe("Real-world Scenarios", () => {
+    it("should handle search input debouncing", () => {
       const searchFn = vi.fn();
       const debouncedSearch = debounce(searchFn, 300);
 
       // User typing "hello"
-      debouncedSearch('h');
+      debouncedSearch("h");
       vi.advanceTimersByTime(50);
-      debouncedSearch('he');
+      debouncedSearch("he");
       vi.advanceTimersByTime(50);
-      debouncedSearch('hel');
+      debouncedSearch("hel");
       vi.advanceTimersByTime(50);
-      debouncedSearch('hell');
+      debouncedSearch("hell");
       vi.advanceTimersByTime(50);
-      debouncedSearch('hello');
+      debouncedSearch("hello");
 
       // Before debounce completes
       expect(searchFn).not.toHaveBeenCalled();
@@ -269,10 +269,10 @@ describe('Debounce Utility', () => {
       // After debounce completes
       vi.advanceTimersByTime(300);
       expect(searchFn).toHaveBeenCalledTimes(1);
-      expect(searchFn).toHaveBeenCalledWith('hello');
+      expect(searchFn).toHaveBeenCalledWith("hello");
     });
 
-    it('should handle window resize debouncing', () => {
+    it("should handle window resize debouncing", () => {
       const resizeHandler = vi.fn();
       const debouncedResize = debounce(resizeHandler, 150);
 
@@ -289,30 +289,30 @@ describe('Debounce Utility', () => {
       expect(resizeHandler).toHaveBeenCalledWith({ width: 819, height: 600 });
     });
 
-    it('should handle button click debouncing with immediate', () => {
+    it("should handle button click debouncing with immediate", () => {
       const clickHandler = vi.fn();
       const debouncedClick = debounceImmediate(clickHandler, 1000);
 
       // First click - should execute immediately
-      debouncedClick('submit');
+      debouncedClick("submit");
       expect(clickHandler).toHaveBeenCalledTimes(1);
 
       // Rapid subsequent clicks - should be ignored
       vi.advanceTimersByTime(100);
-      debouncedClick('submit');
+      debouncedClick("submit");
       vi.advanceTimersByTime(100);
-      debouncedClick('submit');
+      debouncedClick("submit");
 
       expect(clickHandler).toHaveBeenCalledTimes(1);
 
       // After wait period, next click should execute
       vi.advanceTimersByTime(1000);
-      debouncedClick('submit');
+      debouncedClick("submit");
 
       expect(clickHandler).toHaveBeenCalledTimes(2);
     });
 
-    it('should handle scroll event debouncing', () => {
+    it("should handle scroll event debouncing", () => {
       const scrollHandler = vi.fn();
       const debouncedScroll = debounce(scrollHandler, 100);
 
@@ -330,20 +330,20 @@ describe('Debounce Utility', () => {
     });
   });
 
-  describe('Edge Cases', () => {
-    it('should handle function returning values', () => {
-      const mockFn = vi.fn(() => 'result');
+  describe("Edge Cases", () => {
+    it("should handle function returning values", () => {
+      const mockFn = vi.fn(() => "result");
       const debouncedFn = debounce(mockFn, 500);
 
       debouncedFn();
       vi.advanceTimersByTime(500);
 
-      expect(mockFn).toHaveReturnedWith('result');
+      expect(mockFn).toHaveReturnedWith("result");
     });
 
-    it('should handle function throwing errors', () => {
+    it("should handle function throwing errors", () => {
       const mockFn = vi.fn(() => {
-        throw new Error('Test error');
+        throw new Error("Test error");
       });
 
       const debouncedFn = debounce(mockFn, 500);
@@ -352,14 +352,14 @@ describe('Debounce Utility', () => {
 
       expect(() => {
         vi.advanceTimersByTime(500);
-      }).toThrow('Test error');
+      }).toThrow("Test error");
     });
 
-    it('should handle very long wait times', () => {
+    it("should handle very long wait times", () => {
       const mockFn = vi.fn();
       const debouncedFn = debounce(mockFn, 10000);
 
-      debouncedFn('test');
+      debouncedFn("test");
       vi.advanceTimersByTime(9999);
       expect(mockFn).not.toHaveBeenCalled();
 
@@ -367,7 +367,7 @@ describe('Debounce Utility', () => {
       expect(mockFn).toHaveBeenCalled();
     });
 
-    it('should handle null and undefined arguments', () => {
+    it("should handle null and undefined arguments", () => {
       const mockFn = vi.fn();
       const debouncedFn = debounce(mockFn, 500);
 

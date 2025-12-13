@@ -11,19 +11,27 @@
  * - View statistics
  */
 
-import { useState, useEffect } from 'react';
-import { Save, Loader2, Search, Settings, Edit2, AlertTriangle, CheckCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { useState, useEffect } from "react";
+import {
+  Save,
+  Loader2,
+  Search,
+  Settings,
+  Edit2,
+  AlertTriangle,
+  CheckCircle,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -31,7 +39,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -41,7 +49,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+} from "@/components/ui/alert-dialog";
 import {
   Table,
   TableBody,
@@ -49,28 +57,33 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useAuth } from '@/lib/hooks/useAuth';
+} from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useAuth } from "@/lib/hooks/useAuth";
 import {
   getMahasiswaForGrading,
   updateNilai,
   batchUpdateNilai,
   getNilaiSummary,
   type BatchUpdateNilaiData,
-} from '@/lib/api/nilai.api';
-import { getKelas, updateKelas } from '@/lib/api/kelas.api';
-import type { NilaiWithMahasiswa, NilaiSummary } from '@/types/nilai.types';
-import type { Kelas, BobotNilai } from '@/types/kelas.types';
-import { toast } from 'sonner';
-import { calculateNilaiAkhir, getNilaiHuruf, getDefaultBobotNilai, validateBobotNilai } from '@/lib/validations/nilai.schema';
+} from "@/lib/api/nilai.api";
+import { getKelas, updateKelas } from "@/lib/api/kelas.api";
+import type { NilaiWithMahasiswa, NilaiSummary } from "@/types/nilai.types";
+import type { Kelas, BobotNilai } from "@/types/kelas.types";
+import { toast } from "sonner";
+import {
+  calculateNilaiAkhir,
+  getNilaiHuruf,
+  getDefaultBobotNilai,
+  validateBobotNilai,
+} from "@/lib/validations/nilai.schema";
 
 // ============================================================================
 // COMPONENT
@@ -86,20 +99,27 @@ export default function DosenPenilaianPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [kelasList, setKelasList] = useState<Kelas[]>([]);
-  const [selectedKelas, setSelectedKelas] = useState<string>('');
+  const [selectedKelas, setSelectedKelas] = useState<string>("");
   const [mahasiswaList, setMahasiswaList] = useState<NilaiWithMahasiswa[]>([]);
   const [summary, setSummary] = useState<NilaiSummary | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [editedGrades, setEditedGrades] = useState<Map<string, Partial<NilaiWithMahasiswa>>>(new Map());
+  const [searchQuery, setSearchQuery] = useState("");
+  const [editedGrades, setEditedGrades] = useState<
+    Map<string, Partial<NilaiWithMahasiswa>>
+  >(new Map());
 
   // Bobot Nilai State
   const [showBobotDialog, setShowBobotDialog] = useState(false);
-  const [currentBobot, setCurrentBobot] = useState<BobotNilai>(getDefaultBobotNilai());
-  const [editingBobot, setEditingBobot] = useState<BobotNilai>(getDefaultBobotNilai());
+  const [currentBobot, setCurrentBobot] = useState<BobotNilai>(
+    getDefaultBobotNilai(),
+  );
+  const [editingBobot, setEditingBobot] = useState<BobotNilai>(
+    getDefaultBobotNilai(),
+  );
 
   // Edit Dialog State
   const [showEditDialog, setShowEditDialog] = useState(false);
-  const [editingMahasiswa, setEditingMahasiswa] = useState<NilaiWithMahasiswa | null>(null);
+  const [editingMahasiswa, setEditingMahasiswa] =
+    useState<NilaiWithMahasiswa | null>(null);
   const [editFormData, setEditFormData] = useState({
     nilai_kuis: 0,
     nilai_tugas: 0,
@@ -107,13 +127,13 @@ export default function DosenPenilaianPage() {
     nilai_uas: 0,
     nilai_praktikum: 0,
     nilai_kehadiran: 0,
-    keterangan: '',
+    keterangan: "",
   });
 
   // Confirmation Dialog State (untuk mencegah kesalahan input)
   const [showSaveConfirmDialog, setShowSaveConfirmDialog] = useState(false);
   const [showSwitchKelasWarning, setShowSwitchKelasWarning] = useState(false);
-  const [pendingKelasSwitch, setPendingKelasSwitch] = useState<string>('');
+  const [pendingKelasSwitch, setPendingKelasSwitch] = useState<string>("");
 
   // ============================================================================
   // EFFECTS
@@ -123,14 +143,12 @@ export default function DosenPenilaianPage() {
     if (user?.dosen?.id) {
       loadKelas();
     }
-     
   }, [user?.dosen?.id]);
 
   useEffect(() => {
     if (selectedKelas) {
       loadAllKelasData();
     }
-     
   }, [selectedKelas]);
 
   // ============================================================================
@@ -142,7 +160,7 @@ export default function DosenPenilaianPage() {
       setLoading(true);
       if (!user?.dosen?.id) return;
 
-      const data = await getKelas({ dosen_id: user.dosen.id });
+      const data = await getKelas({ is_active: true });
       setKelasList(data);
 
       // Auto-select first kelas if available
@@ -150,8 +168,8 @@ export default function DosenPenilaianPage() {
         setSelectedKelas(data[0].id);
       }
     } catch (error) {
-      console.error('Error loading kelas:', error);
-      toast.error('Gagal memuat data kelas');
+      console.error("Error loading kelas:", error);
+      toast.error("Gagal memuat data kelas");
     } finally {
       setLoading(false);
     }
@@ -178,8 +196,8 @@ export default function DosenPenilaianPage() {
       // Load bobot nilai (synchronous)
       loadBobotNilai();
     } catch (error) {
-      console.error('Error loading kelas data:', error);
-      toast.error('Gagal memuat data kelas');
+      console.error("Error loading kelas data:", error);
+      toast.error("Gagal memuat data kelas");
     } finally {
       setLoading(false);
     }
@@ -190,7 +208,7 @@ export default function DosenPenilaianPage() {
   // loadSummary removed (unused)
 
   const loadBobotNilai = () => {
-    const kelas = kelasList.find(k => k.id === selectedKelas);
+    const kelas = kelasList.find((k) => k.id === selectedKelas);
     if (kelas?.bobot_nilai) {
       setCurrentBobot(kelas.bobot_nilai);
       setEditingBobot(kelas.bobot_nilai);
@@ -214,7 +232,7 @@ export default function DosenPenilaianPage() {
     const numValue = parseInt(value) || 0;
     const clampedValue = Math.max(0, Math.min(100, numValue));
 
-    setEditingBobot(prev => ({
+    setEditingBobot((prev) => ({
       ...prev,
       [field]: clampedValue,
     }));
@@ -238,7 +256,7 @@ export default function DosenPenilaianPage() {
 
       setCurrentBobot(editingBobot);
       setShowBobotDialog(false);
-      toast.success('Bobot nilai berhasil diperbarui');
+      toast.success("Bobot nilai berhasil diperbarui");
 
       // Reload kelas to get updated data
       await loadKelas();
@@ -246,8 +264,8 @@ export default function DosenPenilaianPage() {
       // Recalculate all grades with new weights
       setEditedGrades(new Map());
     } catch (error) {
-      console.error('Error saving bobot:', error);
-      toast.error('Gagal menyimpan bobot nilai');
+      console.error("Error saving bobot:", error);
+      toast.error("Gagal menyimpan bobot nilai");
     } finally {
       setSaving(false);
     }
@@ -260,13 +278,13 @@ export default function DosenPenilaianPage() {
   const handleGradeChange = (
     mahasiswaId: string,
     field: string,
-    value: string
+    value: string,
   ) => {
     const numValue = parseFloat(value) || 0;
     const clampedValue = Math.max(0, Math.min(100, numValue));
 
     const currentData = editedGrades.get(mahasiswaId) || {};
-    const mahasiswa = mahasiswaList.find(m => m.mahasiswa_id === mahasiswaId);
+    const mahasiswa = mahasiswaList.find((m) => m.mahasiswa_id === mahasiswaId);
 
     if (!mahasiswa) return;
 
@@ -285,7 +303,7 @@ export default function DosenPenilaianPage() {
       merged.nilai_uas ?? 0,
       merged.nilai_praktikum ?? 0,
       merged.nilai_kehadiran ?? 0,
-      currentBobot
+      currentBobot,
     );
 
     const nilaiHuruf = getNilaiHuruf(nilaiAkhir);
@@ -320,12 +338,12 @@ export default function DosenPenilaianPage() {
     setEditedGrades(new Map()); // Discard unsaved changes
     setSelectedKelas(pendingKelasSwitch);
     setShowSwitchKelasWarning(false);
-    setPendingKelasSwitch('');
+    setPendingKelasSwitch("");
   };
 
   const cancelKelasSwitch = () => {
     setShowSwitchKelasWarning(false);
-    setPendingKelasSwitch('');
+    setPendingKelasSwitch("");
   };
 
   // ============================================================================
@@ -334,7 +352,7 @@ export default function DosenPenilaianPage() {
 
   const handleSaveAll = () => {
     if (editedGrades.size === 0) {
-      toast.info('Tidak ada perubahan untuk disimpan');
+      toast.info("Tidak ada perubahan untuk disimpan");
       return;
     }
     // Show confirmation dialog first
@@ -348,26 +366,28 @@ export default function DosenPenilaianPage() {
 
       const batchData: BatchUpdateNilaiData = {
         kelas_id: selectedKelas,
-        nilai_list: Array.from(editedGrades.entries()).map(([mahasiswaId, data]) => ({
-          mahasiswa_id: mahasiswaId,
-          nilai_kuis: data.nilai_kuis,
-          nilai_tugas: data.nilai_tugas,
-          nilai_uts: data.nilai_uts,
-          nilai_uas: data.nilai_uas,
-          nilai_praktikum: data.nilai_praktikum,
-          nilai_kehadiran: data.nilai_kehadiran,
-          keterangan: data.keterangan || undefined,
-        })),
+        nilai_list: Array.from(editedGrades.entries()).map(
+          ([mahasiswaId, data]) => ({
+            mahasiswa_id: mahasiswaId,
+            nilai_kuis: data.nilai_kuis,
+            nilai_tugas: data.nilai_tugas,
+            nilai_uts: data.nilai_uts,
+            nilai_uas: data.nilai_uas,
+            nilai_praktikum: data.nilai_praktikum,
+            nilai_kehadiran: data.nilai_kehadiran,
+            keterangan: data.keterangan || undefined,
+          }),
+        ),
       };
 
       await batchUpdateNilai(batchData);
 
-      toast.success('Nilai berhasil disimpan');
+      toast.success("Nilai berhasil disimpan");
       setEditedGrades(new Map());
       await loadAllKelasData();
     } catch (error) {
-      console.error('Error saving grades:', error);
-      toast.error('Gagal menyimpan nilai');
+      console.error("Error saving grades:", error);
+      toast.error("Gagal menyimpan nilai");
     } finally {
       setSaving(false);
     }
@@ -392,7 +412,7 @@ export default function DosenPenilaianPage() {
         keterangan: data.keterangan || undefined,
       });
 
-      toast.success('Nilai berhasil disimpan');
+      toast.success("Nilai berhasil disimpan");
 
       // Remove from edited grades
       const newEditedGrades = new Map(editedGrades);
@@ -401,8 +421,8 @@ export default function DosenPenilaianPage() {
 
       await loadAllKelasData();
     } catch (error) {
-      console.error('Error saving grade:', error);
-      toast.error('Gagal menyimpan nilai');
+      console.error("Error saving grade:", error);
+      toast.error("Gagal menyimpan nilai");
     } finally {
       setSaving(false);
     }
@@ -423,16 +443,18 @@ export default function DosenPenilaianPage() {
       nilai_tugas: editedData?.nilai_tugas ?? mahasiswa.nilai_tugas ?? 0,
       nilai_uts: editedData?.nilai_uts ?? mahasiswa.nilai_uts ?? 0,
       nilai_uas: editedData?.nilai_uas ?? mahasiswa.nilai_uas ?? 0,
-      nilai_praktikum: editedData?.nilai_praktikum ?? mahasiswa.nilai_praktikum ?? 0,
-      nilai_kehadiran: editedData?.nilai_kehadiran ?? mahasiswa.nilai_kehadiran ?? 0,
-      keterangan: editedData?.keterangan ?? mahasiswa.keterangan ?? '',
+      nilai_praktikum:
+        editedData?.nilai_praktikum ?? mahasiswa.nilai_praktikum ?? 0,
+      nilai_kehadiran:
+        editedData?.nilai_kehadiran ?? mahasiswa.nilai_kehadiran ?? 0,
+      keterangan: editedData?.keterangan ?? mahasiswa.keterangan ?? "",
     });
 
     setShowEditDialog(true);
   };
 
   const handleEditFormChange = (field: string, value: string | number) => {
-    setEditFormData(prev => ({
+    setEditFormData((prev) => ({
       ...prev,
       [field]: value,
     }));
@@ -456,7 +478,7 @@ export default function DosenPenilaianPage() {
         keterangan: editFormData.keterangan || undefined,
       });
 
-      toast.success('Nilai berhasil disimpan');
+      toast.success("Nilai berhasil disimpan");
 
       // Remove from edited grades if exists
       const newEditedGrades = new Map(editedGrades);
@@ -468,8 +490,8 @@ export default function DosenPenilaianPage() {
 
       await loadAllKelasData();
     } catch (error) {
-      console.error('Error saving grade:', error);
-      toast.error('Gagal menyimpan nilai');
+      console.error("Error saving grade:", error);
+      toast.error("Gagal menyimpan nilai");
     } finally {
       setSaving(false);
     }
@@ -484,19 +506,23 @@ export default function DosenPenilaianPage() {
   // ============================================================================
 
   // Get current selected kelas info
-  const currentKelas = kelasList.find(k => k.id === selectedKelas);
-  const currentMataKuliah = currentKelas?.mata_kuliah?.nama_mk || 'Tidak diketahui';
-  const currentNamaKelas = currentKelas?.nama_kelas || '';
+  const currentKelas = kelasList.find((k) => k.id === selectedKelas);
+  const currentMataKuliah =
+    currentKelas?.mata_kuliah?.nama_mk || "Tidak diketahui";
+  const currentNamaKelas = currentKelas?.nama_kelas || "";
 
-  const getDisplayValue = (mahasiswa: NilaiWithMahasiswa, field: keyof NilaiWithMahasiswa): number => {
+  const getDisplayValue = (
+    mahasiswa: NilaiWithMahasiswa,
+    field: keyof NilaiWithMahasiswa,
+  ): number => {
     const edited = editedGrades.get(mahasiswa.mahasiswa_id);
     if (edited && field in edited) {
       return edited[field] as number;
     }
-    return mahasiswa[field] as number ?? 0;
+    return (mahasiswa[field] as number) ?? 0;
   };
 
-  const filteredMahasiswa = mahasiswaList.filter(m => {
+  const filteredMahasiswa = mahasiswaList.filter((m) => {
     if (!searchQuery) return true;
     const query = searchQuery.toLowerCase();
     return (
@@ -599,15 +625,21 @@ export default function DosenPenilaianPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-gray-600">Total Mahasiswa</p>
-                  <p className="text-2xl font-bold">{summary.total_mahasiswa}</p>
+                  <p className="text-2xl font-bold">
+                    {summary.total_mahasiswa}
+                  </p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Sudah Dinilai</p>
-                  <p className="text-2xl font-bold text-green-600">{summary.sudah_dinilai}</p>
+                  <p className="text-2xl font-bold text-green-600">
+                    {summary.sudah_dinilai}
+                  </p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Belum Dinilai</p>
-                  <p className="text-2xl font-bold text-orange-600">{summary.belum_dinilai}</p>
+                  <p className="text-2xl font-bold text-orange-600">
+                    {summary.belum_dinilai}
+                  </p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Rata-rata</p>
@@ -645,11 +677,15 @@ export default function DosenPenilaianPage() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Praktikum:</span>
-                  <span className="font-semibold">{currentBobot.praktikum}%</span>
+                  <span className="font-semibold">
+                    {currentBobot.praktikum}%
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Kehadiran:</span>
-                  <span className="font-semibold">{currentBobot.kehadiran}%</span>
+                  <span className="font-semibold">
+                    {currentBobot.kehadiran}%
+                  </span>
                 </div>
               </div>
             </CardContent>
@@ -688,8 +724,8 @@ export default function DosenPenilaianPage() {
               <Alert>
                 <AlertDescription>
                   {searchQuery
-                    ? 'Tidak ada mahasiswa yang sesuai dengan pencarian'
-                    : 'Belum ada mahasiswa terdaftar di kelas ini'}
+                    ? "Tidak ada mahasiswa yang sesuai dengan pencarian"
+                    : "Belum ada mahasiswa terdaftar di kelas ini"}
                 </AlertDescription>
               </Alert>
             ) : (
@@ -714,20 +750,30 @@ export default function DosenPenilaianPage() {
                   <TableBody>
                     {filteredMahasiswa.map((mahasiswa, index) => {
                       const isEdited = editedGrades.has(mahasiswa.mahasiswa_id);
-                      const editedData = editedGrades.get(mahasiswa.mahasiswa_id);
+                      const editedData = editedGrades.get(
+                        mahasiswa.mahasiswa_id,
+                      );
 
-                      const nilaiAkhir = editedData?.nilai_akhir ?? mahasiswa.nilai_akhir ?? 0;
-                      const nilaiHuruf = editedData?.nilai_huruf ?? mahasiswa.nilai_huruf ?? '-';
+                      const nilaiAkhir =
+                        editedData?.nilai_akhir ?? mahasiswa.nilai_akhir ?? 0;
+                      const nilaiHuruf =
+                        editedData?.nilai_huruf ?? mahasiswa.nilai_huruf ?? "-";
 
                       return (
                         <TableRow
                           key={mahasiswa.mahasiswa_id}
-                          className={isEdited ? 'bg-yellow-50 cursor-pointer' : 'cursor-pointer'}
+                          className={
+                            isEdited
+                              ? "bg-yellow-50 cursor-pointer"
+                              : "cursor-pointer"
+                          }
                           onDoubleClick={() => handleRowDoubleClick(mahasiswa)}
                           title="Double-click untuk edit detail"
                         >
                           <TableCell>{index + 1}</TableCell>
-                          <TableCell className="font-mono">{mahasiswa.mahasiswa.nim}</TableCell>
+                          <TableCell className="font-mono">
+                            {mahasiswa.mahasiswa.nim}
+                          </TableCell>
                           <TableCell className="font-medium">
                             {mahasiswa.mahasiswa.user.full_name}
                           </TableCell>
@@ -737,9 +783,13 @@ export default function DosenPenilaianPage() {
                               min="0"
                               max="100"
                               step="0.01"
-                              value={getDisplayValue(mahasiswa, 'nilai_kuis')}
+                              value={getDisplayValue(mahasiswa, "nilai_kuis")}
                               onChange={(e) =>
-                                handleGradeChange(mahasiswa.mahasiswa_id, 'nilai_kuis', e.target.value)
+                                handleGradeChange(
+                                  mahasiswa.mahasiswa_id,
+                                  "nilai_kuis",
+                                  e.target.value,
+                                )
                               }
                               className="w-20 text-center"
                             />
@@ -750,9 +800,13 @@ export default function DosenPenilaianPage() {
                               min="0"
                               max="100"
                               step="0.01"
-                              value={getDisplayValue(mahasiswa, 'nilai_tugas')}
+                              value={getDisplayValue(mahasiswa, "nilai_tugas")}
                               onChange={(e) =>
-                                handleGradeChange(mahasiswa.mahasiswa_id, 'nilai_tugas', e.target.value)
+                                handleGradeChange(
+                                  mahasiswa.mahasiswa_id,
+                                  "nilai_tugas",
+                                  e.target.value,
+                                )
                               }
                               className="w-20 text-center"
                             />
@@ -763,9 +817,13 @@ export default function DosenPenilaianPage() {
                               min="0"
                               max="100"
                               step="0.01"
-                              value={getDisplayValue(mahasiswa, 'nilai_uts')}
+                              value={getDisplayValue(mahasiswa, "nilai_uts")}
                               onChange={(e) =>
-                                handleGradeChange(mahasiswa.mahasiswa_id, 'nilai_uts', e.target.value)
+                                handleGradeChange(
+                                  mahasiswa.mahasiswa_id,
+                                  "nilai_uts",
+                                  e.target.value,
+                                )
                               }
                               className="w-20 text-center"
                             />
@@ -776,9 +834,13 @@ export default function DosenPenilaianPage() {
                               min="0"
                               max="100"
                               step="0.01"
-                              value={getDisplayValue(mahasiswa, 'nilai_uas')}
+                              value={getDisplayValue(mahasiswa, "nilai_uas")}
                               onChange={(e) =>
-                                handleGradeChange(mahasiswa.mahasiswa_id, 'nilai_uas', e.target.value)
+                                handleGradeChange(
+                                  mahasiswa.mahasiswa_id,
+                                  "nilai_uas",
+                                  e.target.value,
+                                )
                               }
                               className="w-20 text-center"
                             />
@@ -789,9 +851,16 @@ export default function DosenPenilaianPage() {
                               min="0"
                               max="100"
                               step="0.01"
-                              value={getDisplayValue(mahasiswa, 'nilai_praktikum')}
+                              value={getDisplayValue(
+                                mahasiswa,
+                                "nilai_praktikum",
+                              )}
                               onChange={(e) =>
-                                handleGradeChange(mahasiswa.mahasiswa_id, 'nilai_praktikum', e.target.value)
+                                handleGradeChange(
+                                  mahasiswa.mahasiswa_id,
+                                  "nilai_praktikum",
+                                  e.target.value,
+                                )
                               }
                               className="w-20 text-center"
                             />
@@ -802,24 +871,39 @@ export default function DosenPenilaianPage() {
                               min="0"
                               max="100"
                               step="0.01"
-                              value={getDisplayValue(mahasiswa, 'nilai_kehadiran')}
+                              value={getDisplayValue(
+                                mahasiswa,
+                                "nilai_kehadiran",
+                              )}
                               onChange={(e) =>
-                                handleGradeChange(mahasiswa.mahasiswa_id, 'nilai_kehadiran', e.target.value)
+                                handleGradeChange(
+                                  mahasiswa.mahasiswa_id,
+                                  "nilai_kehadiran",
+                                  e.target.value,
+                                )
                               }
                               className="w-20 text-center"
                             />
                           </TableCell>
                           <TableCell className="text-center font-bold">
-                            {typeof nilaiAkhir === 'number' ? nilaiAkhir.toFixed(2) : '0.00'}
+                            {typeof nilaiAkhir === "number"
+                              ? nilaiAkhir.toFixed(2)
+                              : "0.00"}
                           </TableCell>
                           <TableCell className="text-center">
-                            <span className={`px-2 py-1 rounded font-bold ${
-                              nilaiHuruf.startsWith('A') ? 'bg-green-100 text-green-800' :
-                              nilaiHuruf.startsWith('B') ? 'bg-blue-100 text-blue-800' :
-                              nilaiHuruf.startsWith('C') ? 'bg-yellow-100 text-yellow-800' :
-                              nilaiHuruf.startsWith('D') ? 'bg-orange-100 text-orange-800' :
-                              'bg-red-100 text-red-800'
-                            }`}>
+                            <span
+                              className={`px-2 py-1 rounded font-bold ${
+                                nilaiHuruf.startsWith("A")
+                                  ? "bg-green-100 text-green-800"
+                                  : nilaiHuruf.startsWith("B")
+                                    ? "bg-blue-100 text-blue-800"
+                                    : nilaiHuruf.startsWith("C")
+                                      ? "bg-yellow-100 text-yellow-800"
+                                      : nilaiHuruf.startsWith("D")
+                                        ? "bg-orange-100 text-orange-800"
+                                        : "bg-red-100 text-red-800"
+                              }`}
+                            >
                               {nilaiHuruf}
                             </span>
                           </TableCell>
@@ -872,7 +956,8 @@ export default function DosenPenilaianPage() {
       {hasChanges && (
         <Alert>
           <AlertDescription>
-            Ada {editedGrades.size} perubahan yang belum disimpan. Klik "Simpan Semua" untuk menyimpan semua perubahan.
+            Ada {editedGrades.size} perubahan yang belum disimpan. Klik "Simpan
+            Semua" untuk menyimpan semua perubahan.
           </AlertDescription>
         </Alert>
       )}
@@ -900,7 +985,7 @@ export default function DosenPenilaianPage() {
                   min="0"
                   max="100"
                   value={editingBobot.kuis}
-                  onChange={(e) => handleBobotChange('kuis', e.target.value)}
+                  onChange={(e) => handleBobotChange("kuis", e.target.value)}
                   className="w-24"
                 />
                 <span className="text-sm text-gray-600">%</span>
@@ -919,7 +1004,7 @@ export default function DosenPenilaianPage() {
                   min="0"
                   max="100"
                   value={editingBobot.tugas}
-                  onChange={(e) => handleBobotChange('tugas', e.target.value)}
+                  onChange={(e) => handleBobotChange("tugas", e.target.value)}
                   className="w-24"
                 />
                 <span className="text-sm text-gray-600">%</span>
@@ -938,7 +1023,7 @@ export default function DosenPenilaianPage() {
                   min="0"
                   max="100"
                   value={editingBobot.uts}
-                  onChange={(e) => handleBobotChange('uts', e.target.value)}
+                  onChange={(e) => handleBobotChange("uts", e.target.value)}
                   className="w-24"
                 />
                 <span className="text-sm text-gray-600">%</span>
@@ -957,7 +1042,7 @@ export default function DosenPenilaianPage() {
                   min="0"
                   max="100"
                   value={editingBobot.uas}
-                  onChange={(e) => handleBobotChange('uas', e.target.value)}
+                  onChange={(e) => handleBobotChange("uas", e.target.value)}
                   className="w-24"
                 />
                 <span className="text-sm text-gray-600">%</span>
@@ -976,7 +1061,9 @@ export default function DosenPenilaianPage() {
                   min="0"
                   max="100"
                   value={editingBobot.praktikum}
-                  onChange={(e) => handleBobotChange('praktikum', e.target.value)}
+                  onChange={(e) =>
+                    handleBobotChange("praktikum", e.target.value)
+                  }
                   className="w-24"
                 />
                 <span className="text-sm text-gray-600">%</span>
@@ -995,7 +1082,9 @@ export default function DosenPenilaianPage() {
                   min="0"
                   max="100"
                   value={editingBobot.kehadiran}
-                  onChange={(e) => handleBobotChange('kehadiran', e.target.value)}
+                  onChange={(e) =>
+                    handleBobotChange("kehadiran", e.target.value)
+                  }
                   className="w-24"
                 />
                 <span className="text-sm text-gray-600">%</span>
@@ -1006,27 +1095,24 @@ export default function DosenPenilaianPage() {
             <div className="grid grid-cols-4 items-center gap-4 pt-4 border-t">
               <Label className="text-right font-bold">Total</Label>
               <div className="col-span-3">
-                <div className={`text-lg font-bold ${
-                  validateBobotNilai(editingBobot).valid
-                    ? 'text-green-600'
-                    : 'text-red-600'
-                }`}>
+                <div
+                  className={`text-lg font-bold ${
+                    validateBobotNilai(editingBobot).valid
+                      ? "text-green-600"
+                      : "text-red-600"
+                  }`}
+                >
                   {validateBobotNilai(editingBobot).total}%
                 </div>
                 {!validateBobotNilai(editingBobot).valid && (
-                  <p className="text-sm text-red-600 mt-1">
-                    Total harus 100%
-                  </p>
+                  <p className="text-sm text-red-600 mt-1">Total harus 100%</p>
                 )}
               </div>
             </div>
           </div>
 
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setShowBobotDialog(false)}
-            >
+            <Button variant="outline" onClick={() => setShowBobotDialog(false)}>
               Batal
             </Button>
             <Button
@@ -1039,7 +1125,7 @@ export default function DosenPenilaianPage() {
                   Menyimpan...
                 </>
               ) : (
-                'Simpan'
+                "Simpan"
               )}
             </Button>
           </DialogFooter>
@@ -1054,8 +1140,12 @@ export default function DosenPenilaianPage() {
             {editingMahasiswa && (
               <DialogDescription>
                 <div className="space-y-1 mt-2">
-                  <p className="font-mono text-sm">{editingMahasiswa.mahasiswa.nim}</p>
-                  <p className="font-medium">{editingMahasiswa.mahasiswa.user.full_name}</p>
+                  <p className="font-mono text-sm">
+                    {editingMahasiswa.mahasiswa.nim}
+                  </p>
+                  <p className="font-medium">
+                    {editingMahasiswa.mahasiswa.user.full_name}
+                  </p>
                 </div>
               </DialogDescription>
             )}
@@ -1076,7 +1166,12 @@ export default function DosenPenilaianPage() {
                   max="100"
                   step="0.01"
                   value={editFormData.nilai_kuis}
-                  onChange={(e) => handleEditFormChange('nilai_kuis', parseFloat(e.target.value) || 0)}
+                  onChange={(e) =>
+                    handleEditFormChange(
+                      "nilai_kuis",
+                      parseFloat(e.target.value) || 0,
+                    )
+                  }
                   className="w-full"
                 />
               </div>
@@ -1093,7 +1188,12 @@ export default function DosenPenilaianPage() {
                   max="100"
                   step="0.01"
                   value={editFormData.nilai_tugas}
-                  onChange={(e) => handleEditFormChange('nilai_tugas', parseFloat(e.target.value) || 0)}
+                  onChange={(e) =>
+                    handleEditFormChange(
+                      "nilai_tugas",
+                      parseFloat(e.target.value) || 0,
+                    )
+                  }
                   className="w-full"
                 />
               </div>
@@ -1110,7 +1210,12 @@ export default function DosenPenilaianPage() {
                   max="100"
                   step="0.01"
                   value={editFormData.nilai_uts}
-                  onChange={(e) => handleEditFormChange('nilai_uts', parseFloat(e.target.value) || 0)}
+                  onChange={(e) =>
+                    handleEditFormChange(
+                      "nilai_uts",
+                      parseFloat(e.target.value) || 0,
+                    )
+                  }
                   className="w-full"
                 />
               </div>
@@ -1127,7 +1232,12 @@ export default function DosenPenilaianPage() {
                   max="100"
                   step="0.01"
                   value={editFormData.nilai_uas}
-                  onChange={(e) => handleEditFormChange('nilai_uas', parseFloat(e.target.value) || 0)}
+                  onChange={(e) =>
+                    handleEditFormChange(
+                      "nilai_uas",
+                      parseFloat(e.target.value) || 0,
+                    )
+                  }
                   className="w-full"
                 />
               </div>
@@ -1144,7 +1254,12 @@ export default function DosenPenilaianPage() {
                   max="100"
                   step="0.01"
                   value={editFormData.nilai_praktikum}
-                  onChange={(e) => handleEditFormChange('nilai_praktikum', parseFloat(e.target.value) || 0)}
+                  onChange={(e) =>
+                    handleEditFormChange(
+                      "nilai_praktikum",
+                      parseFloat(e.target.value) || 0,
+                    )
+                  }
                   className="w-full"
                 />
               </div>
@@ -1161,7 +1276,12 @@ export default function DosenPenilaianPage() {
                   max="100"
                   step="0.01"
                   value={editFormData.nilai_kehadiran}
-                  onChange={(e) => handleEditFormChange('nilai_kehadiran', parseFloat(e.target.value) || 0)}
+                  onChange={(e) =>
+                    handleEditFormChange(
+                      "nilai_kehadiran",
+                      parseFloat(e.target.value) || 0,
+                    )
+                  }
                   className="w-full"
                 />
               </div>
@@ -1171,7 +1291,9 @@ export default function DosenPenilaianPage() {
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-blue-600 font-medium">Nilai Akhir</p>
+                  <p className="text-sm text-blue-600 font-medium">
+                    Nilai Akhir
+                  </p>
                   <p className="text-2xl font-bold text-blue-900">
                     {calculateNilaiAkhir(
                       editFormData.nilai_kuis,
@@ -1180,7 +1302,7 @@ export default function DosenPenilaianPage() {
                       editFormData.nilai_uas,
                       editFormData.nilai_praktikum,
                       editFormData.nilai_kehadiran,
-                      currentBobot
+                      currentBobot,
                     ).toFixed(2)}
                   </p>
                 </div>
@@ -1195,8 +1317,8 @@ export default function DosenPenilaianPage() {
                         editFormData.nilai_uas,
                         editFormData.nilai_praktikum,
                         editFormData.nilai_kehadiran,
-                        currentBobot
-                      )
+                        currentBobot,
+                      ),
                     )}
                   </p>
                 </div>
@@ -1211,7 +1333,9 @@ export default function DosenPenilaianPage() {
               <Textarea
                 id="edit-keterangan"
                 value={editFormData.keterangan}
-                onChange={(e) => handleEditFormChange('keterangan', e.target.value)}
+                onChange={(e) =>
+                  handleEditFormChange("keterangan", e.target.value)
+                }
                 placeholder="Tambahkan catatan atau keterangan..."
                 className="resize-none"
                 rows={3}
@@ -1229,10 +1353,7 @@ export default function DosenPenilaianPage() {
             >
               Batal
             </Button>
-            <Button
-              onClick={handleSaveEditDialog}
-              disabled={saving}
-            >
+            <Button onClick={handleSaveEditDialog} disabled={saving}>
               {saving ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -1250,26 +1371,32 @@ export default function DosenPenilaianPage() {
       </Dialog>
 
       {/* Save Confirmation Dialog */}
-      <AlertDialog open={showSaveConfirmDialog} onOpenChange={setShowSaveConfirmDialog}>
+      <AlertDialog
+        open={showSaveConfirmDialog}
+        onOpenChange={setShowSaveConfirmDialog}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <CheckCircle className="h-5 w-5 text-blue-600" />
               Konfirmasi Penyimpanan Nilai
             </AlertDialogTitle>
-            <AlertDialogDescription className="space-y-3">
-              <p>Anda akan menyimpan nilai untuk:</p>
-              <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded-md border border-blue-200 dark:border-blue-800">
-                <p className="font-semibold text-blue-900 dark:text-blue-100">
-                  📚 {currentMataKuliah} - {currentNamaKelas}
-                </p>
-                <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
-                  Jumlah mahasiswa: {editedGrades.size} orang
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <p>Anda akan menyimpan nilai untuk:</p>
+                <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded-md border border-blue-200 dark:border-blue-800">
+                  <p className="font-semibold text-blue-900 dark:text-blue-100">
+                    📚 {currentMataKuliah} - {currentNamaKelas}
+                  </p>
+                  <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
+                    Jumlah mahasiswa: {editedGrades.size} orang
+                  </p>
+                </div>
+                <p className="text-sm text-gray-600">
+                  Pastikan Anda sudah memilih{" "}
+                  <strong>mata kuliah yang benar</strong> sebelum menyimpan.
                 </p>
               </div>
-              <p className="text-sm text-gray-600">
-                Pastikan Anda sudah memilih <strong>mata kuliah yang benar</strong> sebelum menyimpan.
-              </p>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -1285,7 +1412,10 @@ export default function DosenPenilaianPage() {
       </AlertDialog>
 
       {/* Switch Kelas Warning Dialog */}
-      <AlertDialog open={showSwitchKelasWarning} onOpenChange={setShowSwitchKelasWarning}>
+      <AlertDialog
+        open={showSwitchKelasWarning}
+        onOpenChange={setShowSwitchKelasWarning}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2 text-orange-600">
@@ -1293,14 +1423,18 @@ export default function DosenPenilaianPage() {
               Peringatan: Ada Perubahan Belum Disimpan!
             </AlertDialogTitle>
             <AlertDialogDescription className="space-y-3">
-              <p>Anda memiliki <strong>{editedGrades.size} perubahan</strong> yang belum disimpan untuk:</p>
+              <p>
+                Anda memiliki <strong>{editedGrades.size} perubahan</strong>{" "}
+                yang belum disimpan untuk:
+              </p>
               <div className="p-3 bg-orange-50 dark:bg-orange-950 rounded-md border border-orange-200 dark:border-orange-800">
                 <p className="font-semibold text-orange-900 dark:text-orange-100">
                   📚 {currentMataKuliah} - {currentNamaKelas}
                 </p>
               </div>
               <p className="text-sm text-gray-600">
-                Jika Anda pindah kelas sekarang, semua perubahan akan <strong>hilang</strong>.
+                Jika Anda pindah kelas sekarang, semua perubahan akan{" "}
+                <strong>hilang</strong>.
               </p>
               <p className="text-sm font-semibold text-orange-700">
                 Apakah Anda yakin ingin pindah kelas tanpa menyimpan?

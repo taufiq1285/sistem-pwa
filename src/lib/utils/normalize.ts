@@ -10,16 +10,14 @@
  * normalizeFullName("SITI NURHALIZA") → "Siti Nurhaliza"
  */
 export const normalizeFullName = (name: string): string => {
-  if (!name) return '';
+  if (!name) return "";
 
   return name
     .trim()
     .split(/\s+/) // Split by any whitespace, remove empty strings
-    .filter(word => word.length > 0)
-    .map(word =>
-      word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-    )
-    .join(' ');
+    .filter((word) => word.length > 0)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
 };
 
 /**
@@ -29,12 +27,9 @@ export const normalizeFullName = (name: string): string => {
  * normalizeNIM("BD 2321 001") → "BD2321001"
  */
 export const normalizeNIM = (nim: string): string => {
-  if (!nim) return '';
+  if (!nim) return "";
 
-  return nim
-    .trim()
-    .toUpperCase()
-    .replace(/\s+/g, ''); // Remove all spaces
+  return nim.trim().toUpperCase().replace(/\s+/g, ""); // Remove all spaces
 };
 
 /**
@@ -44,7 +39,7 @@ export const normalizeNIM = (nim: string): string => {
  * normalizeEmail("  Siti@Mahasiswa.ac.id  ") → "siti@mahasiswa.ac.id"
  */
 export const normalizeEmail = (email: string): string => {
-  if (!email) return '';
+  if (!email) return "";
 
   return email.trim().toLowerCase();
 };
@@ -56,27 +51,27 @@ export const normalizeEmail = (email: string): string => {
  * normalizeKelasNama("kelas a (pin merah)") → "Kelas A (Pin Merah)"
  */
 export const normalizeKelasNama = (nama: string): string => {
-  if (!nama) return '';
+  if (!nama) return "";
 
   return nama
     .trim()
     .split(/\s+/)
-    .filter(word => word.length > 0)
-    .map(word => {
+    .filter((word) => word.length > 0)
+    .map((word) => {
       // Handle parentheses and special characters
-      if (word.startsWith('(') || word.startsWith('-')) {
+      if (word.startsWith("(") || word.startsWith("-")) {
         // Keep opening parens as is, capitalize next letter
         const rest = word.slice(1);
         return (
           word.charAt(0) +
           (rest.length > 0
             ? rest.charAt(0).toUpperCase() + rest.slice(1).toLowerCase()
-            : '')
+            : "")
         );
       }
       return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
     })
-    .join(' ');
+    .join(" ");
 };
 
 /**
@@ -86,9 +81,9 @@ export const normalizeKelasNama = (nama: string): string => {
  * normalizeKodeKelas("kelas-a") → "KELAS-A"
  */
 export const normalizeKodeKelas = (kode: string): string => {
-  if (!kode) return '';
+  if (!kode) return "";
 
-  return kode.trim().toUpperCase().replace(/\s+/g, '');
+  return kode.trim().toUpperCase().replace(/\s+/g, "");
 };
 
 /**
@@ -98,9 +93,12 @@ export const normalizeKodeKelas = (kode: string): string => {
  * normalizePhone("0812 3456 7890") → "08123456789"
  */
 export const normalizePhone = (phone: string): string => {
-  if (!phone) return '';
+  if (!phone) return "";
 
-  return phone.trim().replace(/\s+/g, '').replace(/[^\d+]/g, '');
+  return phone
+    .trim()
+    .replace(/\s+/g, "")
+    .replace(/[^\d+]/g, "");
 };
 
 /**
@@ -110,16 +108,14 @@ export const normalizePhone = (phone: string): string => {
  * normalizeProgramStudi("KEPERAWATAN") → "Keperawatan"
  */
 export const normalizeProgramStudi = (program: string): string => {
-  if (!program) return '';
+  if (!program) return "";
 
   return program
     .trim()
     .split(/\s+/)
-    .filter(word => word.length > 0)
-    .map(word =>
-      word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-    )
-    .join(' ');
+    .filter((word) => word.length > 0)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
 };
 
 /**
@@ -128,21 +124,21 @@ export const normalizeProgramStudi = (program: string): string => {
  * normalizeDosenNama("dr. budi santoso") → "Dr. Budi Santoso"
  */
 export const normalizeDosenNama = (nama: string): string => {
-  if (!nama) return '';
+  if (!nama) return "";
 
   return nama
     .trim()
     .split(/\s+/)
-    .filter(word => word.length > 0)
-    .map(word => {
+    .filter((word) => word.length > 0)
+    .map((word) => {
       // Handle titles like Dr., Prof., etc.
-      if (word.endsWith('.')) {
+      if (word.endsWith(".")) {
         const base = word.slice(0, -1); // Remove the dot
-        return base.charAt(0).toUpperCase() + base.slice(1).toLowerCase() + '.';
+        return base.charAt(0).toUpperCase() + base.slice(1).toLowerCase() + ".";
       }
       return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
     })
-    .join(' ');
+    .join(" ");
 };
 
 /**
@@ -151,16 +147,14 @@ export const normalizeDosenNama = (nama: string): string => {
  * normalizeMataKuliahNama("praktikum kebidanan") → "Praktikum Kebidanan"
  */
 export const normalizeMataKuliahNama = (nama: string): string => {
-  if (!nama) return '';
+  if (!nama) return "";
 
   return nama
     .trim()
     .split(/\s+/)
-    .filter(word => word.length > 0)
-    .map(word =>
-      word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-    )
-    .join(' ');
+    .filter((word) => word.length > 0)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
 };
 
 /**

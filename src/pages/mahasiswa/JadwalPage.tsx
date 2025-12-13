@@ -1,7 +1,7 @@
 /**
  * Jadwal Page - Mahasiswa (UPDATED)
  * Display schedule for enrolled classes - READ ONLY
- * 
+ *
  * CHANGES FROM ORIGINAL:
  * ❌ REMOVED: Self-enrollment button & dialog
  * ❌ REMOVED: "Daftar Kelas" functionality
@@ -9,33 +9,33 @@
  * ✅ UPDATED: Empty states (no enrollment CTA)
  */
 
-import { useState, useEffect } from 'react';
-import { toast } from 'sonner';
-import { 
+import { useState, useEffect } from "react";
+import { toast } from "sonner";
+import {
   Calendar,
   Clock,
   MapPin,
   Info, // ✅ NEW: Info icon for banner
   Loader2,
-} from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert'; // ✅ NEW: Alert component
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+} from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert"; // ✅ NEW: Alert component
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 // ❌ REMOVED: EnrollKelasDialog import
 import {
   getMyKelas,
   getMyJadwal,
   type MyKelas,
   type JadwalMahasiswa,
-} from '@/lib/api/mahasiswa.api';
+} from "@/lib/api/mahasiswa.api";
 
 export default function JadwalPage() {
   const [loading, setLoading] = useState(true);
   const [myKelas, setMyKelas] = useState<MyKelas[]>([]);
   const [allJadwal, setAllJadwal] = useState<JadwalMahasiswa[]>([]);
   // ❌ REMOVED: enrollDialogOpen state
-  const [selectedTab, setSelectedTab] = useState('upcoming');
+  const [selectedTab, setSelectedTab] = useState("upcoming");
 
   useEffect(() => {
     fetchData();
@@ -52,8 +52,8 @@ export default function JadwalPage() {
       setMyKelas(kelasData);
       setAllJadwal(jadwalData);
     } catch (error) {
-      console.error('Error fetching data:', error);
-      toast.error('Gagal memuat data jadwal');
+      console.error("Error fetching data:", error);
+      toast.error("Gagal memuat data jadwal");
     } finally {
       setLoading(false);
     }
@@ -61,11 +61,11 @@ export default function JadwalPage() {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return new Intl.DateTimeFormat('id-ID', {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
+    return new Intl.DateTimeFormat("id-ID", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
     }).format(date);
   };
 
@@ -74,23 +74,26 @@ export default function JadwalPage() {
   };
 
   // Group jadwal by date
-  const groupedJadwal = allJadwal.reduce((acc, jadwal) => {
-    const date = jadwal.tanggal_praktikum;
-    if (!acc[date]) {
-      acc[date] = [];
-    }
-    acc[date].push(jadwal);
-    return acc;
-  }, {} as Record<string, JadwalMahasiswa[]>);
+  const groupedJadwal = allJadwal.reduce(
+    (acc, jadwal) => {
+      const date = jadwal.tanggal_praktikum;
+      if (!acc[date]) {
+        acc[date] = [];
+      }
+      acc[date].push(jadwal);
+      return acc;
+    },
+    {} as Record<string, JadwalMahasiswa[]>,
+  );
 
   const sortedDates = Object.keys(groupedJadwal).sort();
 
   // Get today's jadwal
-  const today = new Date().toISOString().split('T')[0];
+  const today = new Date().toISOString().split("T")[0];
   const todayJadwal = groupedJadwal[today] || [];
 
   // Get upcoming jadwal (excluding today)
-  const upcomingDates = sortedDates.filter(date => date > today);
+  const upcomingDates = sortedDates.filter((date) => date > today);
 
   if (loading) {
     return (
@@ -122,8 +125,8 @@ export default function JadwalPage() {
         <Alert className="border-blue-200 bg-blue-50">
           <Info className="h-4 w-4 text-blue-600" />
           <AlertDescription className="text-blue-800">
-            Jadwal praktikum diatur oleh dosen pengampu kelas Anda. 
-            Jika ada pertanyaan terkait jadwal, silakan hubungi dosen yang bersangkutan.
+            Jadwal praktikum diatur oleh dosen pengampu kelas Anda. Jika ada
+            pertanyaan terkait jadwal, silakan hubungi dosen yang bersangkutan.
           </AlertDescription>
         </Alert>
 
@@ -137,8 +140,9 @@ export default function JadwalPage() {
                   Belum Ada Jadwal Praktikum
                 </h3>
                 <p className="text-gray-600 max-w-md mx-auto">
-                  Anda belum terdaftar di kelas praktikum manapun. 
-                  Hubungi dosen pengampu atau koordinator program studi untuk informasi pendaftaran kelas.
+                  Anda belum terdaftar di kelas praktikum manapun. Hubungi dosen
+                  pengampu atau koordinator program studi untuk informasi
+                  pendaftaran kelas.
                 </p>
                 {/* ❌ REMOVED: Daftar Kelas button */}
               </div>
@@ -156,9 +160,7 @@ export default function JadwalPage() {
               <TabsTrigger value="today">
                 Hari Ini ({todayJadwal.length})
               </TabsTrigger>
-              <TabsTrigger value="all">
-                Semua ({allJadwal.length})
-              </TabsTrigger>
+              <TabsTrigger value="all">Semua ({allJadwal.length})</TabsTrigger>
             </TabsList>
 
             {/* Today's Schedule */}
@@ -168,14 +170,19 @@ export default function JadwalPage() {
                   <CardContent className="p-6">
                     <div className="text-center py-6">
                       <Calendar className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                      <p className="text-gray-500">Tidak ada jadwal praktikum hari ini</p>
+                      <p className="text-gray-500">
+                        Tidak ada jadwal praktikum hari ini
+                      </p>
                     </div>
                   </CardContent>
                 </Card>
               ) : (
                 <div className="space-y-3">
                   {todayJadwal.map((jadwal) => (
-                    <Card key={jadwal.id} className="border-green-200 bg-green-50/30">
+                    <Card
+                      key={jadwal.id}
+                      className="border-green-200 bg-green-50/30"
+                    >
                       <CardContent className="p-4">
                         <div className="flex gap-4">
                           <div className="flex-shrink-0">
@@ -187,15 +194,22 @@ export default function JadwalPage() {
                             </div>
                           </div>
                           <div className="flex-1">
-                            <h3 className="font-semibold text-lg">{jadwal.mata_kuliah_nama}</h3>
-                            <p className="text-sm text-gray-600 mb-2">{jadwal.kelas_nama}</p>
+                            <h3 className="font-semibold text-lg">
+                              {jadwal.mata_kuliah_nama}
+                            </h3>
+                            <p className="text-sm text-gray-600 mb-2">
+                              {jadwal.kelas_nama}
+                            </p>
                             {jadwal.topik && (
-                              <p className="text-sm text-gray-700 mb-2">📝 {jadwal.topik}</p>
+                              <p className="text-sm text-gray-700 mb-2">
+                                📝 {jadwal.topik}
+                              </p>
                             )}
                             <div className="flex items-center gap-4 text-sm text-gray-600">
                               <div className="flex items-center gap-1">
                                 <Clock className="h-4 w-4" />
-                                {formatTime(jadwal.jam_mulai)} - {formatTime(jadwal.jam_selesai)}
+                                {formatTime(jadwal.jam_mulai)} -{" "}
+                                {formatTime(jadwal.jam_selesai)}
                               </div>
                               <div className="flex items-center gap-1">
                                 <MapPin className="h-4 w-4" />
@@ -218,7 +232,9 @@ export default function JadwalPage() {
                   <CardContent className="p-6">
                     <div className="text-center py-6">
                       <Calendar className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                      <p className="text-gray-500">Tidak ada jadwal praktikum mendatang</p>
+                      <p className="text-gray-500">
+                        Tidak ada jadwal praktikum mendatang
+                      </p>
                     </div>
                   </CardContent>
                 </Card>
@@ -243,15 +259,22 @@ export default function JadwalPage() {
                                 </div>
                               </div>
                               <div className="flex-1">
-                                <h3 className="font-semibold text-lg">{jadwal.mata_kuliah_nama}</h3>
-                                <p className="text-sm text-gray-600 mb-2">{jadwal.kelas_nama}</p>
+                                <h3 className="font-semibold text-lg">
+                                  {jadwal.mata_kuliah_nama}
+                                </h3>
+                                <p className="text-sm text-gray-600 mb-2">
+                                  {jadwal.kelas_nama}
+                                </p>
                                 {jadwal.topik && (
-                                  <p className="text-sm text-gray-700 mb-2">📝 {jadwal.topik}</p>
+                                  <p className="text-sm text-gray-700 mb-2">
+                                    📝 {jadwal.topik}
+                                  </p>
                                 )}
                                 <div className="flex items-center gap-4 text-sm text-gray-600">
                                   <div className="flex items-center gap-1">
                                     <Clock className="h-4 w-4" />
-                                    {formatTime(jadwal.jam_mulai)} - {formatTime(jadwal.jam_selesai)}
+                                    {formatTime(jadwal.jam_mulai)} -{" "}
+                                    {formatTime(jadwal.jam_selesai)}
                                   </div>
                                   <div className="flex items-center gap-1">
                                     <MapPin className="h-4 w-4" />
@@ -276,7 +299,9 @@ export default function JadwalPage() {
                   <CardContent className="p-6">
                     <div className="text-center py-6">
                       <Calendar className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                      <p className="text-gray-500">Belum ada jadwal praktikum</p>
+                      <p className="text-gray-500">
+                        Belum ada jadwal praktikum
+                      </p>
                     </div>
                   </CardContent>
                 </Card>
@@ -288,37 +313,63 @@ export default function JadwalPage() {
                       <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
                         <Calendar className="h-5 w-5" />
                         {formatDate(date)}
-                        {isToday && <Badge className="bg-green-100 text-green-700 border-green-200">Hari Ini</Badge>}
+                        {isToday && (
+                          <Badge className="bg-green-100 text-green-700 border-green-200">
+                            Hari Ini
+                          </Badge>
+                        )}
                       </h3>
                       <div className="space-y-3">
                         {groupedJadwal[date].map((jadwal) => (
-                          <Card key={jadwal.id} className={isToday ? 'border-green-200 bg-green-50/30' : ''}>
+                          <Card
+                            key={jadwal.id}
+                            className={
+                              isToday ? "border-green-200 bg-green-50/30" : ""
+                            }
+                          >
                             <CardContent className="p-4">
                               <div className="flex gap-4">
                                 <div className="flex-shrink-0">
-                                  <div className={`w-16 h-16 rounded-lg flex flex-col items-center justify-center ${
-                                    isToday ? 'bg-green-100' : 'bg-blue-100'
-                                  }`}>
-                                    <Clock className={`h-5 w-5 mb-1 ${
-                                      isToday ? 'text-green-600' : 'text-blue-600'
-                                    }`} />
-                                    <span className={`text-xs font-medium ${
-                                      isToday ? 'text-green-700' : 'text-blue-700'
-                                    }`}>
+                                  <div
+                                    className={`w-16 h-16 rounded-lg flex flex-col items-center justify-center ${
+                                      isToday ? "bg-green-100" : "bg-blue-100"
+                                    }`}
+                                  >
+                                    <Clock
+                                      className={`h-5 w-5 mb-1 ${
+                                        isToday
+                                          ? "text-green-600"
+                                          : "text-blue-600"
+                                      }`}
+                                    />
+                                    <span
+                                      className={`text-xs font-medium ${
+                                        isToday
+                                          ? "text-green-700"
+                                          : "text-blue-700"
+                                      }`}
+                                    >
                                       {formatTime(jadwal.jam_mulai)}
                                     </span>
                                   </div>
                                 </div>
                                 <div className="flex-1">
-                                  <h3 className="font-semibold text-lg">{jadwal.mata_kuliah_nama}</h3>
-                                  <p className="text-sm text-gray-600 mb-2">{jadwal.kelas_nama}</p>
+                                  <h3 className="font-semibold text-lg">
+                                    {jadwal.mata_kuliah_nama}
+                                  </h3>
+                                  <p className="text-sm text-gray-600 mb-2">
+                                    {jadwal.kelas_nama}
+                                  </p>
                                   {jadwal.topik && (
-                                    <p className="text-sm text-gray-700 mb-2">📝 {jadwal.topik}</p>
+                                    <p className="text-sm text-gray-700 mb-2">
+                                      📝 {jadwal.topik}
+                                    </p>
                                   )}
                                   <div className="flex items-center gap-4 text-sm text-gray-600">
                                     <div className="flex items-center gap-1">
                                       <Clock className="h-4 w-4" />
-                                      {formatTime(jadwal.jam_mulai)} - {formatTime(jadwal.jam_selesai)}
+                                      {formatTime(jadwal.jam_mulai)} -{" "}
+                                      {formatTime(jadwal.jam_selesai)}
                                     </div>
                                     <div className="flex items-center gap-1">
                                       <MapPin className="h-4 w-4" />

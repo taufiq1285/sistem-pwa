@@ -1,11 +1,9 @@
-
-
-import { CheckCircle2, Circle, Flag } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
-import { cn } from '@/lib/utils';
+import { CheckCircle2, Circle, Flag } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { cn } from "@/lib/utils";
 
 // ============================================================================
 // TYPES
@@ -16,17 +14,17 @@ export interface QuestionStatus {
    * Question number (1-based)
    */
   number: number;
-  
+
   /**
    * Question ID
    */
   id: string;
-  
+
   /**
    * Is this question answered?
    */
   isAnswered: boolean;
-  
+
   /**
    * Is this question flagged for review?
    */
@@ -38,22 +36,22 @@ interface QuizNavigationProps {
    * List of questions with their status
    */
   questions: QuestionStatus[];
-  
+
   /**
    * Current active question number (1-based)
    */
   currentQuestion: number;
-  
+
   /**
    * Callback when question is clicked
    */
   onQuestionClick: (questionNumber: number) => void;
-  
+
   /**
    * Compact mode (hide progress details)
    */
   compact?: boolean;
-  
+
   /**
    * Total points possible
    */
@@ -71,21 +69,20 @@ export function QuizNavigation({
   compact = false,
   totalPoints,
 }: QuizNavigationProps) {
-  
   // ============================================================================
   // COMPUTED VALUES
   // ============================================================================
-  
+
   const totalQuestions = questions.length;
-  const answeredCount = questions.filter(q => q.isAnswered).length;
+  const answeredCount = questions.filter((q) => q.isAnswered).length;
   const unansweredCount = totalQuestions - answeredCount;
-  const flaggedCount = questions.filter(q => q.isFlagged).length;
+  const flaggedCount = questions.filter((q) => q.isFlagged).length;
   const progressPercentage = (answeredCount / totalQuestions) * 100;
-  
+
   // ============================================================================
   // RENDER
   // ============================================================================
-  
+
   return (
     <Card className="w-full">
       <CardHeader className="pb-4">
@@ -96,19 +93,21 @@ export function QuizNavigation({
           </Badge>
         </div>
       </CardHeader>
-      
+
       <CardContent className="space-y-4">
         {/* Progress Bar */}
         {!compact && (
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Progress</span>
-              <span className="font-medium">{progressPercentage.toFixed(0)}%</span>
+              <span className="font-medium">
+                {progressPercentage.toFixed(0)}%
+              </span>
             </div>
             <Progress value={progressPercentage} className="h-2" />
           </div>
         )}
-        
+
         {/* Status Summary */}
         {!compact && (
           <div className="grid grid-cols-2 gap-3 py-3">
@@ -120,7 +119,7 @@ export function QuizNavigation({
                 <p className="text-sm font-semibold">{answeredCount}</p>
               </div>
             </div>
-            
+
             {/* Unanswered */}
             <div className="flex items-center gap-2">
               <Circle className="h-4 w-4 text-gray-400" />
@@ -129,7 +128,7 @@ export function QuizNavigation({
                 <p className="text-sm font-semibold">{unansweredCount}</p>
               </div>
             </div>
-            
+
             {/* Flagged (if any) */}
             {flaggedCount > 0 && (
               <div className="flex items-center gap-2 col-span-2">
@@ -142,7 +141,7 @@ export function QuizNavigation({
             )}
           </div>
         )}
-        
+
         {/* Question Grid */}
         <div>
           <p className="text-sm font-medium mb-3">Nomor Soal</p>
@@ -151,26 +150,28 @@ export function QuizNavigation({
               const isActive = question.number === currentQuestion;
               const isAnswered = question.isAnswered;
               const isFlagged = question.isFlagged;
-              
+
               return (
                 <Button
                   key={question.id}
-                  variant={isActive ? 'default' : 'outline'}
+                  variant={isActive ? "default" : "outline"}
                   size="sm"
                   onClick={() => onQuestionClick(question.number)}
                   className={cn(
                     "relative h-10 w-full",
-                    isAnswered && !isActive && "border-green-500 hover:border-green-600",
-                    isFlagged && "ring-2 ring-yellow-400"
+                    isAnswered &&
+                      !isActive &&
+                      "border-green-500 hover:border-green-600",
+                    isFlagged && "ring-2 ring-yellow-400",
                   )}
                 >
                   <span className="font-semibold">{question.number}</span>
-                  
+
                   {/* Answered Indicator */}
                   {isAnswered && !isActive && (
                     <CheckCircle2 className="absolute -top-1 -right-1 h-4 w-4 text-green-600 bg-white rounded-full" />
                   )}
-                  
+
                   {/* Flagged Indicator */}
                   {isFlagged && (
                     <Flag className="absolute -top-1 -left-1 h-3 w-3 text-yellow-600 bg-white rounded-full" />
@@ -180,11 +181,13 @@ export function QuizNavigation({
             })}
           </div>
         </div>
-        
+
         {/* Legend */}
         {!compact && (
           <div className="pt-3 border-t space-y-2">
-            <p className="text-xs font-medium text-muted-foreground">Keterangan:</p>
+            <p className="text-xs font-medium text-muted-foreground">
+              Keterangan:
+            </p>
             <div className="grid grid-cols-1 gap-2 text-xs">
               <div className="flex items-center gap-2">
                 <div className="w-6 h-6 rounded border-2 border-primary bg-primary" />
@@ -211,7 +214,7 @@ export function QuizNavigation({
             </div>
           </div>
         )}
-        
+
         {/* Total Points (if provided) */}
         {!compact && totalPoints && (
           <div className="pt-3 border-t">
@@ -237,7 +240,7 @@ export function QuizNavigation({
  */
 export function createQuestionStatusList(
   questions: Array<{ id: string }>,
-  answers: Record<string, any>
+  answers: Record<string, any>,
 ): QuestionStatus[] {
   return questions.map((question, index) => ({
     number: index + 1,
@@ -258,9 +261,9 @@ export function getNavigationSummary(questions: QuestionStatus[]): {
   percentage: number;
 } {
   const total = questions.length;
-  const answered = questions.filter(q => q.isAnswered).length;
-  const flagged = questions.filter(q => q.isFlagged).length;
-  
+  const answered = questions.filter((q) => q.isAnswered).length;
+  const flagged = questions.filter((q) => q.isFlagged).length;
+
   return {
     total,
     answered,
@@ -275,20 +278,20 @@ export function getNavigationSummary(questions: QuestionStatus[]): {
  */
 export function findNextUnanswered(
   questions: QuestionStatus[],
-  currentNumber: number
+  currentNumber: number,
 ): number | null {
   // Look forward first
   const forward = questions.find(
-    q => q.number > currentNumber && !q.isAnswered
+    (q) => q.number > currentNumber && !q.isAnswered,
   );
   if (forward) return forward.number;
-  
+
   // Look backward
   const backward = questions.find(
-    q => q.number < currentNumber && !q.isAnswered
+    (q) => q.number < currentNumber && !q.isAnswered,
   );
   if (backward) return backward.number;
-  
+
   return null;
 }
 
@@ -296,14 +299,12 @@ export function findNextUnanswered(
  * Check if all questions are answered
  */
 export function areAllQuestionsAnswered(questions: QuestionStatus[]): boolean {
-  return questions.every(q => q.isAnswered);
+  return questions.every((q) => q.isAnswered);
 }
 
 /**
  * Get unanswered question numbers
  */
 export function getUnansweredQuestions(questions: QuestionStatus[]): number[] {
-  return questions
-    .filter(q => !q.isAnswered)
-    .map(q => q.number);
+  return questions.filter((q) => !q.isAnswered).map((q) => q.number);
 }

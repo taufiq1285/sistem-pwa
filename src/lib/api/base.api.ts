@@ -3,20 +3,20 @@
  * Core API utilities for all API modules - CRUD operations with error handling
  */
 
-import { supabase } from '@/lib/supabase/client';
+import { supabase } from "@/lib/supabase/client";
 import type {
   ApiResponse,
   PaginatedResponse,
   PaginationMeta,
   QueryParams,
   SupabaseQueryOptions,
-} from '@/types/api.types';
+} from "@/types/api.types";
 import {
   handleError,
   logError,
   BaseApiError,
   NotFoundError,
-} from '@/lib/utils/errors';
+} from "@/lib/utils/errors";
 
 // =NPM==========================================================================
 // TYPE DEFINITIONS
@@ -35,9 +35,19 @@ interface BaseQueryOptions extends SupabaseQueryOptions {
 interface FilterOptions {
   column: string;
   // PERBAIKAN: Kita kembalikan ke 'any' karena filter bisa menerima tipe apa saja
-   
+
   value: any;
-  operator?: 'eq' | 'neq' | 'gt' | 'gte' | 'lt' | 'lte' | 'like' | 'ilike' | 'in' | 'is';
+  operator?:
+    | "eq"
+    | "neq"
+    | "gt"
+    | "gte"
+    | "lt"
+    | "lte"
+    | "like"
+    | "ilike"
+    | "in"
+    | "is";
 }
 
 // ============================================================================
@@ -50,29 +60,28 @@ interface FilterOptions {
  * @param options - Query options
  * @returns Array of records
  */
- 
+
 export async function query<T = any>(
   table: string,
-  options: BaseQueryOptions = {}
+  options: BaseQueryOptions = {},
 ): Promise<T[]> {
   // Check if offline - return empty array instead of throwing error
-  if (typeof navigator !== 'undefined' && !navigator.onLine) {
+  if (typeof navigator !== "undefined" && !navigator.onLine) {
     return [] as T[];
   }
 
   try {
     let queryBuilder = supabase
       // PERBAIKAN: 'as any' diperlukan di sini untuk generic API
-       
+
       .from(table as any)
-      .select(options.select || '*');
+      .select(options.select || "*");
 
     // Apply ordering
     if (options.order) {
-      queryBuilder = queryBuilder.order(
-        options.order.column,
-        { ascending: options.order.ascending ?? true }
-      );
+      queryBuilder = queryBuilder.order(options.order.column, {
+        ascending: options.order.ascending ?? true,
+      });
     }
 
     // Apply limit
@@ -84,7 +93,7 @@ export async function query<T = any>(
     if (options.offset) {
       queryBuilder = queryBuilder.range(
         options.offset,
-        options.offset + (options.limit || 10) - 1
+        options.offset + (options.limit || 10) - 1,
       );
     }
 
@@ -96,7 +105,10 @@ export async function query<T = any>(
       throw handleError(error);
     }
 
-    if (options.throwOnEmpty && (!data || (Array.isArray(data) && data.length === 0))) {
+    if (
+      options.throwOnEmpty &&
+      (!data || (Array.isArray(data) && data.length === 0))
+    ) {
       throw new NotFoundError(`No records found in ${table}`);
     }
 
@@ -115,56 +127,56 @@ export async function query<T = any>(
  * @param options - Query options
  * @returns Array of records
  */
- 
+
 export async function queryWithFilters<T = any>(
   table: string,
   filters: FilterOptions[],
-  options: BaseQueryOptions = {}
+  options: BaseQueryOptions = {},
 ): Promise<T[]> {
   // Check if offline - return empty array instead of throwing error
-  if (typeof navigator !== 'undefined' && !navigator.onLine) {
+  if (typeof navigator !== "undefined" && !navigator.onLine) {
     return [] as T[];
   }
 
   try {
     let queryBuilder = supabase
       // PERBAIKAN: 'as any' diperlukan di sini untuk generic API
-       
+
       .from(table as any)
-      .select(options.select || '*');
+      .select(options.select || "*");
 
     // Apply filters
     filters.forEach((filter) => {
-      const operator = filter.operator || 'eq';
+      const operator = filter.operator || "eq";
       switch (operator) {
-        case 'eq':
+        case "eq":
           queryBuilder = queryBuilder.eq(filter.column, filter.value);
           break;
-        case 'neq':
+        case "neq":
           queryBuilder = queryBuilder.neq(filter.column, filter.value);
           break;
-        case 'gt':
+        case "gt":
           queryBuilder = queryBuilder.gt(filter.column, filter.value);
           break;
-        case 'gte':
+        case "gte":
           queryBuilder = queryBuilder.gte(filter.column, filter.value);
           break;
-        case 'lt':
+        case "lt":
           queryBuilder = queryBuilder.lt(filter.column, filter.value);
           break;
-        case 'lte':
+        case "lte":
           queryBuilder = queryBuilder.lte(filter.column, filter.value);
           break;
-        case 'like':
+        case "like":
           queryBuilder = queryBuilder.like(filter.column, filter.value);
           break;
-        case 'ilike':
+        case "ilike":
           queryBuilder = queryBuilder.ilike(filter.column, filter.value);
           break;
-        case 'in':
+        case "in":
           queryBuilder = queryBuilder.in(filter.column, filter.value);
           break;
-        case 'is':
+        case "is":
           queryBuilder = queryBuilder.is(filter.column, filter.value);
           break;
       }
@@ -172,10 +184,9 @@ export async function queryWithFilters<T = any>(
 
     // Apply ordering
     if (options.order) {
-      queryBuilder = queryBuilder.order(
-        options.order.column,
-        { ascending: options.order.ascending ?? true }
-      );
+      queryBuilder = queryBuilder.order(options.order.column, {
+        ascending: options.order.ascending ?? true,
+      });
     }
 
     // Apply limit
@@ -187,7 +198,7 @@ export async function queryWithFilters<T = any>(
     if (options.offset) {
       queryBuilder = queryBuilder.range(
         options.offset,
-        options.offset + (options.limit || 10) - 1
+        options.offset + (options.limit || 10) - 1,
       );
     }
 
@@ -216,19 +227,19 @@ export async function queryWithFilters<T = any>(
  * @param options - Query options
  * @returns Single record
  */
- 
+
 export async function getById<T = any>(
   table: string,
   id: string,
-  options: BaseQueryOptions = {}
+  options: BaseQueryOptions = {},
 ): Promise<T> {
   try {
     const { data, error } = await supabase
       // PERBAIKAN: 'as any' diperlukan di sini untuk generic API
-       
+
       .from(table as any)
-      .select(options.select || '*')
-      .eq('id', id)
+      .select(options.select || "*")
+      .eq("id", id)
       .single();
 
     if (error) {
@@ -254,11 +265,11 @@ export async function getById<T = any>(
  * @param options - Query options
  * @returns Paginated response
  */
- 
+
 export async function getPaginated<T = any>(
   table: string,
   params: QueryParams = {},
-  options: BaseQueryOptions = {}
+  options: BaseQueryOptions = {},
 ): Promise<PaginatedResponse<T>> {
   try {
     const page = params.page || 1;
@@ -268,9 +279,9 @@ export async function getPaginated<T = any>(
     // Get total count
     const { count, error: countError } = await supabase
       // PERBAIKAN: 'as any' diperlukan di sini untuk generic API
-       
+
       .from(table as any)
-      .select('*', { count: 'exact', head: true });
+      .select("*", { count: "exact", head: true });
 
     if (countError) {
       throw handleError(countError);
@@ -282,28 +293,26 @@ export async function getPaginated<T = any>(
     // Get data
     let queryBuilder = supabase
       // PERBAIKAN: 'as any' diperlukan di sini untuk generic API
-       
+
       .from(table as any)
-      .select(options.select || '*')
+      .select(options.select || "*")
       .range(offset, offset + pageSize - 1);
 
     // Apply ordering
     if (params.sortBy) {
-      queryBuilder = queryBuilder.order(
-        params.sortBy,
-        { ascending: params.sortOrder === 'asc' }
-      );
+      queryBuilder = queryBuilder.order(params.sortBy, {
+        ascending: params.sortOrder === "asc",
+      });
     } else if (options.order) {
-      queryBuilder = queryBuilder.order(
-        options.order.column,
-        { ascending: options.order.ascending ?? true }
-      );
+      queryBuilder = queryBuilder.order(options.order.column, {
+        ascending: options.order.ascending ?? true,
+      });
     }
 
     // Apply search
     if (params.search && options.select) {
       // Extract first text column for search
-      const searchColumn = options.select.split(',')[0].trim();
+      const searchColumn = options.select.split(",")[0].trim();
       queryBuilder = queryBuilder.ilike(searchColumn, `%${params.search}%`);
     }
 
@@ -344,15 +353,15 @@ export async function getPaginated<T = any>(
  * @param data - Record data
  * @returns Inserted record
  */
- 
+
 export async function insert<T = any>(
   table: string,
-  data: Partial<T>
+  data: Partial<T>,
 ): Promise<T> {
   try {
     const { data: result, error } = await supabase
       // PERBAIKAN: 'as any' diperlukan di sini untuk generic API
-       
+
       .from(table as any)
       .insert(data)
       .select()
@@ -363,7 +372,7 @@ export async function insert<T = any>(
     }
 
     if (!result) {
-      throw new BaseApiError('Insert failed - no data returned');
+      throw new BaseApiError("Insert failed - no data returned");
     }
 
     return result as T;
@@ -380,15 +389,15 @@ export async function insert<T = any>(
  * @param data - Array of records
  * @returns Inserted records
  */
- 
+
 export async function insertMany<T = any>(
   table: string,
-  data: Partial<T>[]
+  data: Partial<T>[],
 ): Promise<T[]> {
   try {
     const { data: result, error } = await supabase
       // PERBAIKAN: 'as any' diperlukan di sini untuk generic API
-       
+
       .from(table as any)
       .insert(data)
       .select();
@@ -412,19 +421,19 @@ export async function insertMany<T = any>(
  * @param data - Update data
  * @returns Updated record
  */
- 
+
 export async function update<T = any>(
   table: string,
   id: string,
-  data: Partial<T>
+  data: Partial<T>,
 ): Promise<T> {
   try {
     const { data: result, error } = await supabase
       // PERBAIKAN: 'as any' diperlukan di sini untuk generic API
-       
+
       .from(table as any)
       .update(data)
-      .eq('id', id)
+      .eq("id", id)
       .select()
       .single();
 
@@ -451,52 +460,52 @@ export async function update<T = any>(
  * @param data - Update data
  * @returns Updated records
  */
- 
+
 export async function updateMany<T = any>(
   table: string,
   filters: FilterOptions[],
-  data: Partial<T>
+  data: Partial<T>,
 ): Promise<T[]> {
   try {
     // PERBAIKAN 'prefer-const': 'const' diubah menjadi 'let'
     let queryBuilder = supabase
       // PERBAIKAN: 'as any' diperlukan di sini untuk generic API
-       
+
       .from(table as any)
       .update(data);
 
     // PERBAIKAN 'prefer-const': Menggunakan logic 'switch' yang aman
     filters.forEach((filter) => {
-      const operator = filter.operator || 'eq';
+      const operator = filter.operator || "eq";
       switch (operator) {
-        case 'eq':
+        case "eq":
           queryBuilder = queryBuilder.eq(filter.column, filter.value);
           break;
-        case 'neq':
+        case "neq":
           queryBuilder = queryBuilder.neq(filter.column, filter.value);
           break;
-        case 'gt':
+        case "gt":
           queryBuilder = queryBuilder.gt(filter.column, filter.value);
           break;
-        case 'gte':
+        case "gte":
           queryBuilder = queryBuilder.gte(filter.column, filter.value);
           break;
-        case 'lt':
+        case "lt":
           queryBuilder = queryBuilder.lt(filter.column, filter.value);
           break;
-        case 'lte':
+        case "lte":
           queryBuilder = queryBuilder.lte(filter.column, filter.value);
           break;
-        case 'like':
+        case "like":
           queryBuilder = queryBuilder.like(filter.column, filter.value);
           break;
-        case 'ilike':
+        case "ilike":
           queryBuilder = queryBuilder.ilike(filter.column, filter.value);
           break;
-        case 'in':
+        case "in":
           queryBuilder = queryBuilder.in(filter.column, filter.value);
           break;
-        case 'is':
+        case "is":
           queryBuilder = queryBuilder.is(filter.column, filter.value);
           break;
       }
@@ -522,17 +531,14 @@ export async function updateMany<T = any>(
  * @param id - Record ID
  * @returns Success status
  */
-export async function remove(
-  table: string,
-  id: string
-): Promise<boolean> {
+export async function remove(table: string, id: string): Promise<boolean> {
   try {
     const { error } = await supabase
       // PERBAIKAN: 'as any' diperlukan di sini untuk generic API
-       
+
       .from(table as any)
       .delete()
-      .eq('id', id);
+      .eq("id", id);
 
     if (error) {
       throw handleError(error);
@@ -554,48 +560,48 @@ export async function remove(
  */
 export async function removeMany(
   table: string,
-  filters: FilterOptions[]
+  filters: FilterOptions[],
 ): Promise<boolean> {
   try {
     // PERBAIKAN 'prefer-const': 'const' diubah menjadi 'let'
     let queryBuilder = supabase
       // PERBAIKAN: 'as any' diperlukan di sini untuk generic API
-       
+
       .from(table as any)
       .delete();
 
     // PERBAIKAN 'prefer-const': Menggunakan logic 'switch' yang aman
     filters.forEach((filter) => {
-      const operator = filter.operator || 'eq';
+      const operator = filter.operator || "eq";
       switch (operator) {
-        case 'eq':
+        case "eq":
           queryBuilder = queryBuilder.eq(filter.column, filter.value);
           break;
-        case 'neq':
+        case "neq":
           queryBuilder = queryBuilder.neq(filter.column, filter.value);
           break;
-        case 'gt':
+        case "gt":
           queryBuilder = queryBuilder.gt(filter.column, filter.value);
           break;
-        case 'gte':
+        case "gte":
           queryBuilder = queryBuilder.gte(filter.column, filter.value);
           break;
-        case 'lt':
+        case "lt":
           queryBuilder = queryBuilder.lt(filter.column, filter.value);
           break;
-        case 'lte':
+        case "lte":
           queryBuilder = queryBuilder.lte(filter.column, filter.value);
           break;
-        case 'like':
+        case "like":
           queryBuilder = queryBuilder.like(filter.column, filter.value);
           break;
-        case 'ilike':
+        case "ilike":
           queryBuilder = queryBuilder.ilike(filter.column, filter.value);
           break;
-        case 'in':
+        case "in":
           queryBuilder = queryBuilder.in(filter.column, filter.value);
           break;
-        case 'is':
+        case "is":
           queryBuilder = queryBuilder.is(filter.column, filter.value);
           break;
       }
@@ -625,20 +631,17 @@ export async function removeMany(
  * @param id - Record ID
  * @returns Boolean indicating existence
  */
-export async function exists(
-  table: string,
-  id: string
-): Promise<boolean> {
+export async function exists(table: string, id: string): Promise<boolean> {
   try {
     const { data, error } = await supabase
       // PERBAIKAN: 'as any' diperlukan di sini untuk generic API
-       
+
       .from(table as any)
-      .select('id')
-      .eq('id', id)
+      .select("id")
+      .eq("id", id)
       .single();
 
-    if (error && error.code !== 'PGRST116') {
+    if (error && error.code !== "PGRST116") {
       throw handleError(error);
     }
 
@@ -658,50 +661,50 @@ export async function exists(
  */
 export async function count(
   table: string,
-  filters?: FilterOptions[]
+  filters?: FilterOptions[],
 ): Promise<number> {
   try {
     // PERBAIKAN 'prefer-const': 'const' diubah menjadi 'let'
     let queryBuilder = supabase
       // PERBAIKAN: 'as any' diperlukan di sini untuk generic API
-       
+
       .from(table as any)
-      .select('*', { count: 'exact', head: true });
+      .select("*", { count: "exact", head: true });
 
     // Apply filters
     if (filters && filters.length > 0) {
       // PERBAIKAN 'prefer-const': Menggunakan logic 'switch' yang aman
       filters.forEach((filter) => {
-        const operator = filter.operator || 'eq';
+        const operator = filter.operator || "eq";
         switch (operator) {
-          case 'eq':
+          case "eq":
             queryBuilder = queryBuilder.eq(filter.column, filter.value);
             break;
-          case 'neq':
+          case "neq":
             queryBuilder = queryBuilder.neq(filter.column, filter.value);
             break;
-          case 'gt':
+          case "gt":
             queryBuilder = queryBuilder.gt(filter.column, filter.value);
             break;
-          case 'gte':
+          case "gte":
             queryBuilder = queryBuilder.gte(filter.column, filter.value);
             break;
-          case 'lt':
+          case "lt":
             queryBuilder = queryBuilder.lt(filter.column, filter.value);
             break;
-          case 'lte':
+          case "lte":
             queryBuilder = queryBuilder.lte(filter.column, filter.value);
             break;
-          case 'like':
+          case "like":
             queryBuilder = queryBuilder.like(filter.column, filter.value);
             break;
-          case 'ilike':
+          case "ilike":
             queryBuilder = queryBuilder.ilike(filter.column, filter.value);
             break;
-          case 'in':
+          case "in":
             queryBuilder = queryBuilder.in(filter.column, filter.value);
             break;
-          case 'is':
+          case "is":
             queryBuilder = queryBuilder.is(filter.column, filter.value);
             break;
         }
@@ -732,7 +735,7 @@ export async function count(
  * @returns Standard API response
  */
 export async function withApiResponse<T>(
-  fn: () => Promise<T>
+  fn: () => Promise<T>,
 ): Promise<ApiResponse<T>> {
   try {
     const data = await fn();

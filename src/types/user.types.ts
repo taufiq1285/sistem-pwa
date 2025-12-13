@@ -6,10 +6,15 @@
  */
 
 // Import types for use in this file
-import type { UserRole, AuthUser, RegisterData } from './auth.types';
+import type { UserRole, AuthUser, RegisterData } from "./auth.types";
 
 // Re-export types from auth.types for backward compatibility
-export type { UserRole, AuthUser, RegisterData, RegisterableRole } from './auth.types';
+export type {
+  UserRole,
+  AuthUser,
+  RegisterData,
+  RegisterableRole,
+} from "./auth.types";
 
 // ============================================================================
 // ADDITIONAL USER TYPES

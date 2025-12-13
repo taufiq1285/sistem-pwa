@@ -3,9 +3,9 @@
  * Displays when there's no data to show
  */
 
-import type { LucideIcon } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
+import type { LucideIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 // ============================================================================
 // TYPES
@@ -31,29 +31,30 @@ export function EmptyState({
   title,
   description,
   action,
-  className
+  className,
 }: EmptyStateProps) {
   return (
-    <div className={cn('flex flex-col items-center justify-center py-12 text-center', className)}>
+    <div
+      className={cn(
+        "flex flex-col items-center justify-center py-12 text-center",
+        className,
+      )}
+    >
       {Icon && (
         <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-muted">
           <Icon className="h-10 w-10 text-muted-foreground" />
         </div>
       )}
-      
+
       <h3 className="mb-2 text-lg font-semibold">{title}</h3>
-      
+
       {description && (
         <p className="mb-6 text-sm text-muted-foreground max-w-md">
           {description}
         </p>
       )}
-      
-      {action && (
-        <Button onClick={action.onClick}>
-          {action.label}
-        </Button>
-      )}
+
+      {action && <Button onClick={action.onClick}>{action.label}</Button>}
     </div>
   );
 }

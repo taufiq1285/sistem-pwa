@@ -6,29 +6,31 @@
  * - Health status determination
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getSystemMetrics } from '../../../lib/api/analytics.api';
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { getSystemMetrics } from "../../../lib/api/analytics.api";
 
 // ============================================================================
 // MOCKS
 // ============================================================================
 
-vi.mock('../../../lib/supabase/client', () => ({
+vi.mock("../../../lib/supabase/client", () => ({
   supabase: {
     from: vi.fn(),
   },
 }));
 
-vi.mock('../../../lib/offline/api-cache', () => ({
+vi.mock("../../../lib/offline/api-cache", () => ({
   cacheAPI: vi.fn((key, fn) => fn()),
 }));
 
-vi.mock('../../../lib/middleware', () => ({
+vi.mock("../../../lib/middleware", () => ({
   requirePermission: vi.fn((permission, fn) => fn),
-  requirePermissionAndOwnership: vi.fn((permission, config, paramIndex, fn) => fn),
+  requirePermissionAndOwnership: vi.fn(
+    (permission, config, paramIndex, fn) => fn,
+  ),
 }));
 
-import { supabase } from '../../../lib/supabase/client';
+import { supabase } from "../../../lib/supabase/client";
 
 // ============================================================================
 // HELPER FUNCTIONS
@@ -47,13 +49,13 @@ const mockQueryBuilder = () => {
 // SYSTEM METRICS TESTS
 // ============================================================================
 
-describe('Analytics API - System Metrics', () => {
+describe("Analytics API - System Metrics", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  describe('getSystemMetrics', () => {
-    it('should fetch all system metrics successfully', async () => {
+  describe("getSystemMetrics", () => {
+    it("should fetch all system metrics successfully", async () => {
       // Mock all parallel queries
       const usersBuilder = mockQueryBuilder();
       usersBuilder.select.mockResolvedValue({ count: 150, error: null });
@@ -85,11 +87,11 @@ describe('Analytics API - System Metrics', () => {
         totalBorrowings: 200,
         activeClasses: 25,
         activeBorrowings: 30,
-        systemHealth: 'Good',
+        systemHealth: "Good",
       });
     });
 
-    it('should determine Good health when borrowings < 50', async () => {
+    it("should determine Good health when borrowings < 50", async () => {
       const usersBuilder = mockQueryBuilder();
       usersBuilder.select.mockResolvedValue({ count: 100, error: null });
 
@@ -114,10 +116,10 @@ describe('Analytics API - System Metrics', () => {
 
       const result = await getSystemMetrics();
 
-      expect(result.systemHealth).toBe('Good');
+      expect(result.systemHealth).toBe("Good");
     });
 
-    it('should determine Warning health when borrowings 51-100', async () => {
+    it("should determine Warning health when borrowings 51-100", async () => {
       const usersBuilder = mockQueryBuilder();
       usersBuilder.select.mockResolvedValue({ count: 100, error: null });
 
@@ -142,10 +144,10 @@ describe('Analytics API - System Metrics', () => {
 
       const result = await getSystemMetrics();
 
-      expect(result.systemHealth).toBe('Warning');
+      expect(result.systemHealth).toBe("Warning");
     });
 
-    it('should determine Critical health when borrowings > 100', async () => {
+    it("should determine Critical health when borrowings > 100", async () => {
       const usersBuilder = mockQueryBuilder();
       usersBuilder.select.mockResolvedValue({ count: 100, error: null });
 
@@ -170,10 +172,10 @@ describe('Analytics API - System Metrics', () => {
 
       const result = await getSystemMetrics();
 
-      expect(result.systemHealth).toBe('Critical');
+      expect(result.systemHealth).toBe("Critical");
     });
 
-    it('should handle null counts as 0', async () => {
+    it("should handle null counts as 0", async () => {
       const usersBuilder = mockQueryBuilder();
       usersBuilder.select.mockResolvedValue({ count: null, error: null });
 
@@ -187,7 +189,10 @@ describe('Analytics API - System Metrics', () => {
       classesBuilder.eq.mockResolvedValue({ count: null, error: null });
 
       const activeBorrowingsBuilder = mockQueryBuilder();
-      activeBorrowingsBuilder.in.mockResolvedValue({ count: null, error: null });
+      activeBorrowingsBuilder.in.mockResolvedValue({
+        count: null,
+        error: null,
+      });
 
       vi.mocked(supabase.from)
         .mockReturnValueOnce(usersBuilder)
@@ -204,15 +209,15 @@ describe('Analytics API - System Metrics', () => {
         totalBorrowings: 0,
         activeClasses: 0,
         activeBorrowings: 0,
-        systemHealth: 'Good',
+        systemHealth: "Good",
       });
     });
 
-    it('should return zero metrics on error', async () => {
+    it("should return zero metrics on error", async () => {
       const usersBuilder = mockQueryBuilder();
       usersBuilder.select.mockResolvedValue({
         count: null,
-        error: new Error('Database error'),
+        error: new Error("Database error"),
       });
 
       vi.mocked(supabase.from).mockReturnValue(usersBuilder);
@@ -225,11 +230,11 @@ describe('Analytics API - System Metrics', () => {
         totalBorrowings: 0,
         activeClasses: 0,
         activeBorrowings: 0,
-        systemHealth: 'Good',
+        systemHealth: "Good",
       });
     });
 
-    it('should filter active classes correctly', async () => {
+    it("should filter active classes correctly", async () => {
       const usersBuilder = mockQueryBuilder();
       usersBuilder.select.mockResolvedValue({ count: 100, error: null });
 
@@ -255,10 +260,10 @@ describe('Analytics API - System Metrics', () => {
       await getSystemMetrics();
 
       // Verify filter for active classes
-      expect(classesBuilder.eq).toHaveBeenCalledWith('is_active', true);
+      expect(classesBuilder.eq).toHaveBeenCalledWith("is_active", true);
     });
 
-    it('should filter pending and approved borrowings', async () => {
+    it("should filter pending and approved borrowings", async () => {
       const usersBuilder = mockQueryBuilder();
       usersBuilder.select.mockResolvedValue({ count: 100, error: null });
 
@@ -284,9 +289,9 @@ describe('Analytics API - System Metrics', () => {
       await getSystemMetrics();
 
       // Verify filter for active borrowings
-      expect(activeBorrowingsBuilder.in).toHaveBeenCalledWith('status', [
-        'pending',
-        'approved',
+      expect(activeBorrowingsBuilder.in).toHaveBeenCalledWith("status", [
+        "pending",
+        "approved",
       ]);
     });
   });

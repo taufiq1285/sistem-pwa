@@ -7,12 +7,12 @@
  * PageHeader Component
  * Reusable page header with title, description, breadcrumbs, and actions
  */
-import type { ReactNode } from 'react';
-import { ArrowLeft } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { cn } from '@/lib/utils';
+import type { ReactNode } from "react";
+import { ArrowLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 
 // ============================================================================
 // TYPES
@@ -57,7 +57,7 @@ export function PageHeader({
   };
 
   return (
-    <div className={cn('space-y-4', className)}>
+    <div className={cn("space-y-4", className)}>
       {/* Breadcrumbs */}
       {breadcrumbs && breadcrumbs.length > 0 && (
         <nav className="flex items-center space-x-2 text-sm text-muted-foreground">
@@ -112,9 +112,7 @@ export function PageHeader({
 
         {/* Actions */}
         {action && (
-          <div className="shrink-0 flex items-center gap-2">
-            {action}
-          </div>
+          <div className="shrink-0 flex items-center gap-2">{action}</div>
         )}
       </div>
 

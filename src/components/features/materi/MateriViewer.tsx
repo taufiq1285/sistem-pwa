@@ -10,17 +10,17 @@
  * - Fullscreen support
  */
 
-import { Download, ExternalLink } from 'lucide-react';
+import { Download, ExternalLink } from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import type { Materi } from '@/types/materi.types';
-import { getFileTypeCategory, formatFileSize } from '@/lib/supabase/storage';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import type { Materi } from "@/types/materi.types";
+import { getFileTypeCategory, formatFileSize } from "@/lib/supabase/storage";
 
 // ============================================================================
 // TYPES
@@ -60,8 +60,8 @@ export function MateriViewer({
 }: MateriViewerProps) {
   if (!materi) return null;
 
-  const fileType = getFileTypeCategory(materi.tipe_file || '');
-  const canView = ['pdf', 'image', 'video'].includes(fileType);
+  const fileType = getFileTypeCategory(materi.tipe_file || "");
+  const canView = ["pdf", "image", "video"].includes(fileType);
 
   if (!canView) {
     return (
@@ -70,7 +70,8 @@ export function MateriViewer({
           <DialogHeader>
             <DialogTitle>{materi.judul}</DialogTitle>
             <DialogDescription>
-              File ini tidak dapat ditampilkan. Silakan download untuk melihatnya.
+              File ini tidak dapat ditampilkan. Silakan download untuk
+              melihatnya.
             </DialogDescription>
           </DialogHeader>
           <div className="flex gap-2">
@@ -103,7 +104,8 @@ export function MateriViewer({
                 </DialogDescription>
               )}
               <div className="text-sm text-muted-foreground mt-2">
-                {formatFileSize(materi.file_size || 0)} • {fileType.toUpperCase()}
+                {formatFileSize(materi.file_size || 0)} •{" "}
+                {fileType.toUpperCase()}
               </div>
             </div>
 
@@ -115,7 +117,7 @@ export function MateriViewer({
                 </Button>
               )}
               <Button
-                onClick={() => window.open(materi.file_url, '_blank')}
+                onClick={() => window.open(materi.file_url, "_blank")}
                 size="sm"
                 variant="outline"
               >
@@ -146,11 +148,11 @@ interface ViewerContentProps {
 
 function ViewerContent({ materi, fileType }: ViewerContentProps) {
   switch (fileType) {
-    case 'pdf':
+    case "pdf":
       return <PDFViewer url={materi.file_url} />;
-    case 'image':
+    case "image":
       return <ImageViewer url={materi.file_url} title={materi.judul} />;
-    case 'video':
+    case "video":
       return <VideoViewer url={materi.file_url} />;
     default:
       return (
@@ -170,11 +172,7 @@ function ViewerContent({ materi, fileType }: ViewerContentProps) {
 function PDFViewer({ url }: { url: string }) {
   return (
     <div className="w-full h-full">
-      <iframe
-        src={url}
-        className="w-full h-full border-0"
-        title="PDF Viewer"
-      />
+      <iframe src={url} className="w-full h-full border-0" title="PDF Viewer" />
     </div>
   );
 }

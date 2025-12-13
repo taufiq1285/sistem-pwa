@@ -11,16 +11,16 @@
  * 7. Better offline handling - supports offline login
  */
 
-import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useAuth } from '@/lib/hooks/useAuth';
-import { loginSchema, type LoginFormData } from '@/lib/validations/auth.schema';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useAuth } from "@/lib/hooks/useAuth";
+import { loginSchema, type LoginFormData } from "@/lib/validations/auth.schema";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import {
   WifiOff,
   Mail,
@@ -33,8 +33,8 @@ import {
   Users,
   FlaskConical,
   ShieldCheck,
-  Loader2
-} from 'lucide-react';
+  Loader2,
+} from "lucide-react";
 
 interface LoginFormProps {
   onSuccess?: () => void;
@@ -65,35 +65,35 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
       setError(null);
     };
 
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
 
     return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
     };
   }, []);
 
   const onSubmit = async (data: LoginFormData) => {
     try {
-      console.log('🔵 Login attempt:', {
+      console.log("🔵 Login attempt:", {
         email: data.email,
         isOnline,
-        navigatorOnline: navigator.onLine
+        navigatorOnline: navigator.onLine,
       });
 
       if (!isOnline) {
-        setError('Mode Offline - Mencoba login dengan kredensial tersimpan...');
+        setError("Mode Offline - Mencoba login dengan kredensial tersimpan...");
       } else {
         setError(null);
       }
 
       await login(data);
-      console.log('✅ Login successful');
+      console.log("✅ Login successful");
       onSuccess?.();
     } catch (err: unknown) {
-      console.error('❌ Login failed:', err);
-      let errorMessage = 'Login gagal. Silakan coba lagi.';
+      console.error("❌ Login failed:", err);
+      let errorMessage = "Login gagal. Silakan coba lagi.";
       if (err instanceof Error) {
         errorMessage = err.message;
       }
@@ -109,19 +109,31 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
           Login untuk mengakses sistem sebagai:
         </p>
         <div className="flex flex-wrap gap-2 justify-center">
-          <Badge variant="outline" className="bg-blue-50 border-blue-200 text-blue-700">
+          <Badge
+            variant="outline"
+            className="bg-blue-50 border-blue-200 text-blue-700"
+          >
             <GraduationCap className="h-3 w-3 mr-1" />
             Mahasiswa
           </Badge>
-          <Badge variant="outline" className="bg-green-50 border-green-200 text-green-700">
+          <Badge
+            variant="outline"
+            className="bg-green-50 border-green-200 text-green-700"
+          >
             <Users className="h-3 w-3 mr-1" />
             Dosen
           </Badge>
-          <Badge variant="outline" className="bg-purple-50 border-purple-200 text-purple-700">
+          <Badge
+            variant="outline"
+            className="bg-purple-50 border-purple-200 text-purple-700"
+          >
             <FlaskConical className="h-3 w-3 mr-1" />
             Laboran
           </Badge>
-          <Badge variant="outline" className="bg-gray-50 border-gray-200 text-gray-700">
+          <Badge
+            variant="outline"
+            className="bg-gray-50 border-gray-200 text-gray-700"
+          >
             <ShieldCheck className="h-3 w-3 mr-1" />
             Admin
           </Badge>
@@ -135,11 +147,11 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
             <WifiOff className="h-4 w-4 text-blue-600" />
             <AlertTitle className="text-blue-800">Mode Offline</AlertTitle>
             <AlertDescription className="text-blue-700">
-              Anda sedang offline. Sistem akan menggunakan kredensial tersimpan untuk login.
+              Anda sedang offline. Sistem akan menggunakan kredensial tersimpan
+              untuk login.
             </AlertDescription>
           </Alert>
         )}
-
         {/* Error Alert */}
         {error && isOnline && (
           <Alert variant="destructive">
@@ -148,7 +160,6 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
-
         {/* Email Field */}
         <div className="space-y-2">
           <Label htmlFor="email" className="flex items-center gap-2">
@@ -160,7 +171,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
               id="email"
               type="email"
               placeholder="email@contoh.com"
-              {...register('email')}
+              {...register("email")}
               disabled={isSubmitting}
               className="pl-10"
             />
@@ -173,7 +184,6 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
             </p>
           )}
         </div>
-
         {/* Password Field */}
         <div className="space-y-2">
           <Label htmlFor="password" className="flex items-center gap-2">
@@ -183,9 +193,9 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
           <div className="relative">
             <Input
               id="password"
-              type={showPassword ? 'text' : 'password'}
+              type={showPassword ? "text" : "password"}
               placeholder="Masukkan password Anda"
-              {...register('password')}
+              {...register("password")}
               disabled={isSubmitting}
               className="pl-10 pr-10"
             />
@@ -210,7 +220,6 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
             </p>
           )}
         </div>
-
         {/* Submit Button */}
         <Button
           type="submit"
@@ -221,7 +230,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
           {isSubmitting ? (
             <>
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              {!isOnline ? 'Login Offline...' : 'Masuk...'}
+              {!isOnline ? "Login Offline..." : "Masuk..."}
             </>
           ) : !isOnline ? (
             <>
@@ -235,16 +244,15 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
             </>
           )}
         </Button>
-
         {/* Helper Text */}
         {!isOnline && (
           <Alert className="bg-blue-50 border-blue-200">
             <AlertDescription className="text-sm text-blue-800">
-              💡 <strong>Login Offline:</strong> Masukkan email dan password yang sama dengan saat login online terakhir kali.
+              💡 <strong>Login Offline:</strong> Masukkan email dan password
+              yang sama dengan saat login online terakhir kali.
             </AlertDescription>
           </Alert>
         )}
-
         {/* Security Info */}
         {!isSubmitting && (
           <div className="pt-2 border-t">
@@ -253,17 +261,22 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
               <p>
                 {isOnline ? (
                   <>
-                    Login Anda aman dan terenkripsi. Kredensial akan disimpan (ter-hash) di perangkat untuk offline login. Data otomatis terhapus setelah 30 hari atau saat logout.
+                    Login Anda aman dan terenkripsi. Kredensial akan disimpan
+                    (ter-hash) di perangkat untuk offline login. Data otomatis
+                    terhapus setelah 30 hari atau saat logout.
                   </>
                 ) : (
                   <>
-                    Mode Offline: Login menggunakan kredensial tersimpan yang telah di-enkripsi. Password asli tidak pernah disimpan di perangkat.
+                    Mode Offline: Login menggunakan kredensial tersimpan yang
+                    telah di-enkripsi. Password asli tidak pernah disimpan di
+                    perangkat.
                   </>
                 )}
               </p>
             </div>
           </div>
-        )}      </form>
+        )}{" "}
+      </form>
 
       {/* Quick Guide */}
       <div className="space-y-2 pt-4 border-t">
@@ -271,15 +284,22 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
         <ul className="text-xs text-gray-600 space-y-1">
           <li className="flex items-start gap-2">
             <span className="text-blue-600">•</span>
-            <span>Gunakan email dan password yang Anda daftarkan saat registrasi</span>
+            <span>
+              Gunakan email dan password yang Anda daftarkan saat registrasi
+            </span>
           </li>
           <li className="flex items-start gap-2">
             <span className="text-blue-600">•</span>
-            <span>Login dapat dilakukan saat online maupun offline (setelah login pertama kali)</span>
+            <span>
+              Login dapat dilakukan saat online maupun offline (setelah login
+              pertama kali)
+            </span>
           </li>
           <li className="flex items-start gap-2">
             <span className="text-blue-600">•</span>
-            <span>Role Anda akan otomatis terdeteksi setelah login berhasil</span>
+            <span>
+              Role Anda akan otomatis terdeteksi setelah login berhasil
+            </span>
           </li>
         </ul>
       </div>

@@ -12,7 +12,7 @@
  * - Migration support
  */
 
-import { openDB, type IDBPDatabase } from 'idb';
+import { openDB, type IDBPDatabase } from "idb";
 import type {
   IndexedDBConfig,
   StoreName,
@@ -21,14 +21,14 @@ import type {
   IndexedDBError as IDBError,
   DatabaseMetadata,
   MetadataKey,
-} from '@/types/offline.types';
+} from "@/types/offline.types";
 
 // ============================================================================
 // DATABASE CONFIGURATION
 // ============================================================================
 
-const DB_NAME = 'sistem_praktikum_pwa';
-const DB_VERSION = 1;
+const DB_NAME = "sistem_praktikum_pwa";
+const DB_VERSION = 2; // ✅ Incremented for new object stores
 
 /**
  * Database schema configuration
@@ -39,85 +39,125 @@ const DB_CONFIG: IndexedDBConfig = {
   stores: [
     // Kuis Store
     {
-      name: 'kuis',
-      keyPath: 'id',
+      name: "kuis",
+      keyPath: "id",
       indexes: [
-        { name: 'kelas_id', keyPath: 'kelas_id' },
-        { name: 'dosen_id', keyPath: 'dosen_id' },
-        { name: 'created_at', keyPath: 'created_at' },
-        { name: 'is_published', keyPath: 'is_published' },
+        { name: "kelas_id", keyPath: "kelas_id" },
+        { name: "dosen_id", keyPath: "dosen_id" },
+        { name: "created_at", keyPath: "created_at" },
+        { name: "is_published", keyPath: "is_published" },
       ],
     },
     // Kuis Soal Store
     {
-      name: 'kuis_soal',
-      keyPath: 'id',
+      name: "kuis_soal",
+      keyPath: "id",
       indexes: [
-        { name: 'kuis_id', keyPath: 'kuis_id' },
-        { name: 'nomor_soal', keyPath: 'nomor_soal' },
+        { name: "kuis_id", keyPath: "kuis_id" },
+        { name: "nomor_soal", keyPath: "nomor_soal" },
       ],
     },
     // Kuis Jawaban Store
     {
-      name: 'kuis_jawaban',
-      keyPath: 'id',
+      name: "kuis_jawaban",
+      keyPath: "id",
       indexes: [
-        { name: 'kuis_id', keyPath: 'kuis_id' },
-        { name: 'soal_id', keyPath: 'soal_id' },
-        { name: 'mahasiswa_id', keyPath: 'mahasiswa_id' },
+        { name: "kuis_id", keyPath: "kuis_id" },
+        { name: "soal_id", keyPath: "soal_id" },
+        { name: "mahasiswa_id", keyPath: "mahasiswa_id" },
       ],
     },
     // Nilai Store
     {
-      name: 'nilai',
-      keyPath: 'id',
+      name: "nilai",
+      keyPath: "id",
       indexes: [
-        { name: 'mahasiswa_id', keyPath: 'mahasiswa_id' },
-        { name: 'kelas_id', keyPath: 'kelas_id' },
+        { name: "mahasiswa_id", keyPath: "mahasiswa_id" },
+        { name: "kelas_id", keyPath: "kelas_id" },
       ],
     },
     // Materi Store
     {
-      name: 'materi',
-      keyPath: 'id',
+      name: "materi",
+      keyPath: "id",
       indexes: [
-        { name: 'kelas_id', keyPath: 'kelas_id' },
-        { name: 'dosen_id', keyPath: 'dosen_id' },
-        { name: 'is_published', keyPath: 'is_published' },
+        { name: "kelas_id", keyPath: "kelas_id" },
+        { name: "dosen_id", keyPath: "dosen_id" },
+        { name: "is_published", keyPath: "is_published" },
       ],
     },
     // Kelas Store
     {
-      name: 'kelas',
-      keyPath: 'id',
+      name: "kelas",
+      keyPath: "id",
       indexes: [
-        { name: 'dosen_id', keyPath: 'dosen_id' },
-        { name: 'is_active', keyPath: 'is_active' },
+        { name: "dosen_id", keyPath: "dosen_id" },
+        { name: "is_active", keyPath: "is_active" },
       ],
     },
     // Users Store
     {
-      name: 'users',
-      keyPath: 'id',
+      name: "users",
+      keyPath: "id",
       indexes: [
-        { name: 'email', keyPath: 'email', options: { unique: true } },
-        { name: 'role', keyPath: 'role' },
+        { name: "email", keyPath: "email", options: { unique: true } },
+        { name: "role", keyPath: "role" },
       ],
     },
     // Sync Queue Store
     {
-      name: 'sync_queue',
-      keyPath: 'id',
+      name: "sync_queue",
+      keyPath: "id",
       indexes: [
-        { name: 'entity', keyPath: 'entity' },
-        { name: 'status', keyPath: 'status' },
-        { name: 'timestamp', keyPath: 'timestamp' },
+        { name: "entity", keyPath: "entity" },
+        { name: "status", keyPath: "status" },
+        { name: "timestamp", keyPath: "timestamp" },
       ],
     },
     // Metadata Store
     {
-      name: 'metadata',
-      keyPath: 'key',
+      name: "metadata",
+      keyPath: "key",
+    },
+    // ✅ OFFLINE STORES for Quiz
+    // Offline Quiz Cache
+    {
+      name: "offline_quiz",
+      keyPath: "id",
+      indexes: [
+        { name: "cachedAt", keyPath: "cachedAt" },
+      ],
+    },
+    // Offline Questions Cache
+    {
+      name: "offline_questions",
+      keyPath: "id",
+      indexes: [
+        { name: "kuis_id", keyPath: "kuis_id" },
+        { name: "cachedAt", keyPath: "cachedAt" },
+      ],
+    },
+    // Offline Answers (pending sync)
+    {
+      name: "offline_answers",
+      keyPath: "id",
+      indexes: [
+        { name: "kuis_id", keyPath: "kuis_id" },
+        { name: "mahasiswa_id", keyPath: "mahasiswa_id" },
+        { name: "attempt_id", keyPath: "attempt_id" },
+        { name: "synced", keyPath: "synced" },
+      ],
+    },
+    // Offline Attempts Cache
+    {
+      name: "offline_attempts",
+      keyPath: "id",
+      indexes: [
+        { name: "kuis_id", keyPath: "kuis_id" },
+        { name: "mahasiswa_id", keyPath: "mahasiswa_id" },
+        { name: "synced", keyPath: "synced" },
+        { name: "cachedAt", keyPath: "cachedAt" },
+      ],
     },
   ],
 };
@@ -150,7 +190,9 @@ export class IndexedDBManager {
 
       this.db = await openDB(DB_CONFIG.dbName, DB_CONFIG.version, {
         upgrade(db, oldVersion, newVersion) {
-          console.log(`🔄 Upgrading IndexedDB from v${oldVersion} to v${newVersion}`);
+          console.log(
+            `🔄 Upgrading IndexedDB from v${oldVersion} to v${newVersion}`,
+          );
 
           // Create object stores
           for (const storeConfig of DB_CONFIG.stores) {
@@ -173,27 +215,27 @@ export class IndexedDBManager {
           }
         },
         blocked() {
-          console.warn('⚠️ IndexedDB upgrade blocked by another connection');
+          console.warn("⚠️ IndexedDB upgrade blocked by another connection");
         },
         blocking() {
-          console.warn('⚠️ This connection is blocking a database upgrade');
+          console.warn("⚠️ This connection is blocking a database upgrade");
         },
         terminated() {
-          console.error('❌ IndexedDB connection terminated unexpectedly');
+          console.error("❌ IndexedDB connection terminated unexpectedly");
         },
       });
 
       this.isInitialized = true;
-      console.log('✅ IndexedDB initialized successfully');
+      console.log("✅ IndexedDB initialized successfully");
 
       // Set initialization metadata
-      await this.setMetadata('db_version', DB_VERSION);
+      await this.setMetadata("db_version", DB_VERSION);
     } catch (error) {
-      console.error('❌ IndexedDB initialization failed:', error);
+      console.error("❌ IndexedDB initialization failed:", error);
       throw this.createError(
-        'Failed to initialize IndexedDB',
-        'INIT_FAILED',
-        error as Error
+        "Failed to initialize IndexedDB",
+        "INIT_FAILED",
+        error as Error,
       );
     }
   }
@@ -206,7 +248,7 @@ export class IndexedDBManager {
       this.db.close();
       this.db = null;
       this.isInitialized = false;
-      console.log('🔒 IndexedDB connection closed');
+      console.log("🔒 IndexedDB connection closed");
     }
   }
 
@@ -228,13 +270,13 @@ export class IndexedDBManager {
    */
   async create<T extends { id: string }>(
     storeName: StoreName,
-    item: T
+    item: T,
   ): Promise<T> {
     try {
       await this.ensureInitialized();
-      if (!this.db) throw new Error('Database not initialized');
+      if (!this.db) throw new Error("Database not initialized");
 
-      const tx = this.db.transaction(storeName, 'readwrite');
+      const tx = this.db.transaction(storeName, "readwrite");
       const store = tx.objectStore(storeName);
 
       await store.add(item);
@@ -245,8 +287,8 @@ export class IndexedDBManager {
       console.error(`Create failed in ${storeName}:`, error);
       throw this.createError(
         `Failed to create item in ${storeName}`,
-        'CREATE_FAILED',
-        error as Error
+        "CREATE_FAILED",
+        error as Error,
       );
     }
   }
@@ -257,22 +299,21 @@ export class IndexedDBManager {
   async read<T>(storeName: StoreName, id: string): Promise<T | undefined> {
     try {
       await this.ensureInitialized();
-      if (!this.db) throw new Error('Database not initialized');
+      if (!this.db) throw new Error("Database not initialized");
 
-      const tx = this.db.transaction(storeName, 'readonly');
+      const tx = this.db.transaction(storeName, "readonly");
       const store = tx.objectStore(storeName);
 
-      return await store.get(id) as T | undefined;
+      return (await store.get(id)) as T | undefined;
     } catch (error) {
       console.error(`Read failed in ${storeName}:`, error);
       throw this.createError(
         `Failed to read item from ${storeName}`,
-        'READ_FAILED',
-        error as Error
+        "READ_FAILED",
+        error as Error,
       );
     }
   }
-
 
   /**
    * Get item by ID (alias for read)
@@ -285,13 +326,13 @@ export class IndexedDBManager {
    */
   async update<T extends { id: string }>(
     storeName: StoreName,
-    item: T
+    item: T,
   ): Promise<T> {
     try {
       await this.ensureInitialized();
-      if (!this.db) throw new Error('Database not initialized');
+      if (!this.db) throw new Error("Database not initialized");
 
-      const tx = this.db.transaction(storeName, 'readwrite');
+      const tx = this.db.transaction(storeName, "readwrite");
       const store = tx.objectStore(storeName);
 
       await store.put(item);
@@ -302,8 +343,8 @@ export class IndexedDBManager {
       console.error(`Update failed in ${storeName}:`, error);
       throw this.createError(
         `Failed to update item in ${storeName}`,
-        'UPDATE_FAILED',
-        error as Error
+        "UPDATE_FAILED",
+        error as Error,
       );
     }
   }
@@ -314,9 +355,9 @@ export class IndexedDBManager {
   async delete(storeName: StoreName, id: string): Promise<void> {
     try {
       await this.ensureInitialized();
-      if (!this.db) throw new Error('Database not initialized');
+      if (!this.db) throw new Error("Database not initialized");
 
-      const tx = this.db.transaction(storeName, 'readwrite');
+      const tx = this.db.transaction(storeName, "readwrite");
       const store = tx.objectStore(storeName);
 
       await store.delete(id);
@@ -325,8 +366,8 @@ export class IndexedDBManager {
       console.error(`Delete failed in ${storeName}:`, error);
       throw this.createError(
         `Failed to delete item from ${storeName}`,
-        'DELETE_FAILED',
-        error as Error
+        "DELETE_FAILED",
+        error as Error,
       );
     }
   }
@@ -337,9 +378,9 @@ export class IndexedDBManager {
   async getAll<T>(storeName: StoreName, options?: QueryOptions): Promise<T[]> {
     try {
       await this.ensureInitialized();
-      if (!this.db) throw new Error('Database not initialized');
+      if (!this.db) throw new Error("Database not initialized");
 
-      const tx = this.db.transaction(storeName, 'readonly');
+      const tx = this.db.transaction(storeName, "readonly");
       const store = tx.objectStore(storeName);
 
       let items: T[];
@@ -351,9 +392,9 @@ export class IndexedDBManager {
 
       if (options?.index) {
         const index = store.index(options.index);
-        items = await index.getAll(options.range, effectiveLimit) as T[];
+        items = (await index.getAll(options.range, effectiveLimit)) as T[];
       } else {
-        items = await store.getAll(options?.range, effectiveLimit) as T[];
+        items = (await store.getAll(options?.range, effectiveLimit)) as T[];
       }
 
       // Apply offset and limit manually if needed
@@ -368,8 +409,8 @@ export class IndexedDBManager {
       console.error(`GetAll failed in ${storeName}:`, error);
       throw this.createError(
         `Failed to get all items from ${storeName}`,
-        'GETALL_FAILED',
-        error as Error
+        "GETALL_FAILED",
+        error as Error,
       );
     }
   }
@@ -380,23 +421,23 @@ export class IndexedDBManager {
   async getByIndex<T>(
     storeName: StoreName,
     indexName: string,
-    value: string | number
+    value: string | number,
   ): Promise<T[]> {
     try {
       await this.ensureInitialized();
-      if (!this.db) throw new Error('Database not initialized');
+      if (!this.db) throw new Error("Database not initialized");
 
-      const tx = this.db.transaction(storeName, 'readonly');
+      const tx = this.db.transaction(storeName, "readonly");
       const store = tx.objectStore(storeName);
       const index = store.index(indexName);
 
-      return await index.getAll(value) as T[];
+      return (await index.getAll(value)) as T[];
     } catch (error) {
       console.error(`GetByIndex failed in ${storeName}:`, error);
       throw this.createError(
         `Failed to get items by index from ${storeName}`,
-        'GET_BY_INDEX_FAILED',
-        error as Error
+        "GET_BY_INDEX_FAILED",
+        error as Error,
       );
     }
   }
@@ -407,9 +448,9 @@ export class IndexedDBManager {
   async count(storeName: StoreName): Promise<number> {
     try {
       await this.ensureInitialized();
-      if (!this.db) throw new Error('Database not initialized');
+      if (!this.db) throw new Error("Database not initialized");
 
-      const tx = this.db.transaction(storeName, 'readonly');
+      const tx = this.db.transaction(storeName, "readonly");
       const store = tx.objectStore(storeName);
 
       return await store.count();
@@ -417,8 +458,8 @@ export class IndexedDBManager {
       console.error(`Count failed in ${storeName}:`, error);
       throw this.createError(
         `Failed to count items in ${storeName}`,
-        'COUNT_FAILED',
-        error as Error
+        "COUNT_FAILED",
+        error as Error,
       );
     }
   }
@@ -429,9 +470,9 @@ export class IndexedDBManager {
   async clear(storeName: StoreName): Promise<void> {
     try {
       await this.ensureInitialized();
-      if (!this.db) throw new Error('Database not initialized');
+      if (!this.db) throw new Error("Database not initialized");
 
-      const tx = this.db.transaction(storeName, 'readwrite');
+      const tx = this.db.transaction(storeName, "readwrite");
       const store = tx.objectStore(storeName);
 
       await store.clear();
@@ -442,8 +483,8 @@ export class IndexedDBManager {
       console.error(`Clear failed in ${storeName}:`, error);
       throw this.createError(
         `Failed to clear ${storeName}`,
-        'CLEAR_FAILED',
-        error as Error
+        "CLEAR_FAILED",
+        error as Error,
       );
     }
   }
@@ -458,19 +499,19 @@ export class IndexedDBManager {
    */
   async batchCreate<T extends { id: string }>(
     storeName: StoreName,
-    items: T[]
+    items: T[],
   ): Promise<BatchOperationResult<T>> {
     const failed: Array<{ item: T; error: Error }> = [];
     const succeeded: T[] = [];
 
     try {
       await this.ensureInitialized();
-      if (!this.db) throw new Error('Database not initialized');
+      if (!this.db) throw new Error("Database not initialized");
 
       // Use individual transactions for each item to handle partial failures
       for (const item of items) {
         try {
-          const tx = this.db.transaction(storeName, 'readwrite');
+          const tx = this.db.transaction(storeName, "readwrite");
           const store = tx.objectStore(storeName);
           await store.add(item);
           await tx.done;
@@ -490,8 +531,8 @@ export class IndexedDBManager {
       console.error(`Batch create failed in ${storeName}:`, error);
       throw this.createError(
         `Failed to batch create items in ${storeName}`,
-        'BATCH_CREATE_FAILED',
-        error as Error
+        "BATCH_CREATE_FAILED",
+        error as Error,
       );
     }
   }
@@ -502,19 +543,19 @@ export class IndexedDBManager {
    */
   async batchUpdate<T extends { id: string }>(
     storeName: StoreName,
-    items: T[]
+    items: T[],
   ): Promise<BatchOperationResult<T>> {
     const failed: Array<{ item: T; error: Error }> = [];
     const succeeded: T[] = [];
 
     try {
       await this.ensureInitialized();
-      if (!this.db) throw new Error('Database not initialized');
+      if (!this.db) throw new Error("Database not initialized");
 
       // Use individual transactions for each item to handle partial failures
       for (const item of items) {
         try {
-          const tx = this.db.transaction(storeName, 'readwrite');
+          const tx = this.db.transaction(storeName, "readwrite");
           const store = tx.objectStore(storeName);
           await store.put(item);
           await tx.done;
@@ -534,8 +575,8 @@ export class IndexedDBManager {
       console.error(`Batch update failed in ${storeName}:`, error);
       throw this.createError(
         `Failed to batch update items in ${storeName}`,
-        'BATCH_UPDATE_FAILED',
-        error as Error
+        "BATCH_UPDATE_FAILED",
+        error as Error,
       );
     }
   }
@@ -546,19 +587,19 @@ export class IndexedDBManager {
    */
   async batchDelete(
     storeName: StoreName,
-    ids: string[]
+    ids: string[],
   ): Promise<BatchOperationResult<string>> {
     const failed: Array<{ item: string; error: Error }> = [];
     const succeeded: string[] = [];
 
     try {
       await this.ensureInitialized();
-      if (!this.db) throw new Error('Database not initialized');
+      if (!this.db) throw new Error("Database not initialized");
 
       // Use individual transactions for each item to handle partial failures
       for (const id of ids) {
         try {
-          const tx = this.db.transaction(storeName, 'readwrite');
+          const tx = this.db.transaction(storeName, "readwrite");
           const store = tx.objectStore(storeName);
           await store.delete(id);
           await tx.done;
@@ -578,8 +619,8 @@ export class IndexedDBManager {
       console.error(`Batch delete failed in ${storeName}:`, error);
       throw this.createError(
         `Failed to batch delete items from ${storeName}`,
-        'BATCH_DELETE_FAILED',
-        error as Error
+        "BATCH_DELETE_FAILED",
+        error as Error,
       );
     }
   }
@@ -598,14 +639,14 @@ export class IndexedDBManager {
       updated_at: Date.now(),
     };
 
-    await this.update('metadata', metadata as never);
+    await this.update("metadata", metadata as never);
   }
 
   /**
    * Get metadata value
    */
   async getMetadata(key: MetadataKey | string): Promise<unknown> {
-    const metadata = await this.read<DatabaseMetadata>('metadata', key);
+    const metadata = await this.read<DatabaseMetadata>("metadata", key);
     return metadata?.value;
   }
 
@@ -630,7 +671,7 @@ export class IndexedDBManager {
     totalSize: number;
   }> {
     await this.ensureInitialized();
-    if (!this.db) throw new Error('Database not initialized');
+    if (!this.db) throw new Error("Database not initialized");
 
     const stores = Array.from(this.db.objectStoreNames);
     let totalSize = 0;
@@ -653,7 +694,7 @@ export class IndexedDBManager {
    */
   async clearAll(): Promise<void> {
     await this.ensureInitialized();
-    if (!this.db) throw new Error('Database not initialized');
+    if (!this.db) throw new Error("Database not initialized");
 
     const stores = Array.from(this.db.objectStoreNames);
 
@@ -661,7 +702,7 @@ export class IndexedDBManager {
       await this.clear(storeName as StoreName);
     }
 
-    console.log('🗑️ Cleared all data from IndexedDB');
+    console.log("🗑️ Cleared all data from IndexedDB");
   }
 
   // ============================================================================
@@ -674,10 +715,10 @@ export class IndexedDBManager {
   private createError(
     message: string,
     code: string,
-    originalError?: Error
+    originalError?: Error,
   ): IDBError {
     const error: IDBError = {
-      name: 'IndexedDBError',
+      name: "IndexedDBError",
       message,
       code,
       originalError,
@@ -702,7 +743,7 @@ export async function initializeIndexedDB(): Promise<void> {
   try {
     await indexedDBManager.initialize();
   } catch (error) {
-    console.error('Failed to initialize IndexedDB:', error);
+    console.error("Failed to initialize IndexedDB:", error);
     throw error;
   }
 }

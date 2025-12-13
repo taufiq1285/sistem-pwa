@@ -9,7 +9,7 @@
  * const debouncedSearchTerm = useDebounce(searchTerm, 500);
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 
 /**
  * Debounce a value - updates only after the specified delay has elapsed

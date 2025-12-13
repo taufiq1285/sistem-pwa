@@ -156,7 +156,7 @@ describe("Kelas API - CRUD Operations", () => {
         expect.arrayContaining([
           expect.objectContaining({ column: "is_active", value: true }),
         ]),
-        expect.objectContaining({ select: expect.any(String) })
+        expect.objectContaining({ select: expect.any(String) }),
       );
       expect(result).toEqual([mockKelas]);
     });
@@ -171,7 +171,7 @@ describe("Kelas API - CRUD Operations", () => {
         expect.arrayContaining([
           expect.objectContaining({ column: "dosen_id", value: "dosen-1" }),
         ]),
-        expect.any(Object)
+        expect.any(Object),
       );
     });
 
@@ -185,7 +185,7 @@ describe("Kelas API - CRUD Operations", () => {
         expect.arrayContaining([
           expect.objectContaining({ column: "mata_kuliah_id", value: "mk-1" }),
         ]),
-        expect.any(Object)
+        expect.any(Object),
       );
     });
 
@@ -203,7 +203,7 @@ describe("Kelas API - CRUD Operations", () => {
             value: "2024/2025",
           }),
         ]),
-        expect.any(Object)
+        expect.any(Object),
       );
     });
 
@@ -217,7 +217,7 @@ describe("Kelas API - CRUD Operations", () => {
         expect.arrayContaining([
           expect.objectContaining({ column: "is_active", value: false }),
         ]),
-        expect.any(Object)
+        expect.any(Object),
       );
     });
 
@@ -231,7 +231,7 @@ describe("Kelas API - CRUD Operations", () => {
         expect.arrayContaining([
           expect.objectContaining({ column: "is_active", value: true }),
         ]),
-        expect.any(Object)
+        expect.any(Object),
       );
     });
 
@@ -251,7 +251,7 @@ describe("Kelas API - CRUD Operations", () => {
       expect(getById).toHaveBeenCalledWith(
         "kelas",
         "kelas-1",
-        expect.objectContaining({ select: expect.any(String) })
+        expect.objectContaining({ select: expect.any(String) }),
       );
       expect(result).toEqual(mockKelas);
     });
@@ -260,7 +260,7 @@ describe("Kelas API - CRUD Operations", () => {
       vi.mocked(getById).mockRejectedValue(new Error("Not found"));
 
       await expect(getKelasById("nonexistent")).rejects.toThrow(
-        "Failed to fetch kelas"
+        "Failed to fetch kelas",
       );
     });
   });
@@ -292,7 +292,7 @@ describe("Kelas API - CRUD Operations", () => {
       vi.mocked(insert).mockRejectedValue(new Error("Insert failed"));
 
       await expect(createKelas({} as any)).rejects.toThrow(
-        "Failed to create kelas"
+        "Failed to create kelas",
       );
     });
   });
@@ -309,7 +309,7 @@ describe("Kelas API - CRUD Operations", () => {
       expect(getById).toHaveBeenCalledWith(
         "kelas",
         "kelas-1",
-        expect.any(Object)
+        expect.any(Object),
       );
       expect(result).toEqual(mockKelas);
     });
@@ -436,7 +436,7 @@ describe("Kelas API - Student Enrollment", () => {
         .mockReturnValueOnce(countBuilder as any);
 
       await expect(enrollStudent("kelas-1", "mhs-1")).rejects.toThrow(
-        "sudah penuh"
+        "sudah penuh",
       );
     });
 
@@ -467,7 +467,7 @@ describe("Kelas API - Student Enrollment", () => {
         .mockReturnValueOnce(existingBuilder);
 
       await expect(enrollStudent("kelas-1", "mhs-1")).rejects.toThrow(
-        "sudah terdaftar"
+        "sudah terdaftar",
       );
     });
 
@@ -478,7 +478,7 @@ describe("Kelas API - Student Enrollment", () => {
       vi.mocked(supabase.from).mockReturnValueOnce(kelasBuilder);
 
       await expect(enrollStudent("nonexistent", "mhs-1")).rejects.toThrow(
-        "tidak ditemukan"
+        "tidak ditemukan",
       );
     });
 

@@ -10,16 +10,16 @@
 // ============================================================================
 
 export const APP_CONFIG = {
-  name: 'Sistem Praktikum PWA',
-  version: '1.0.0',
-  description: 'Progressive Web App untuk Manajemen Praktikum Laboratorium',
-  author: 'Your Team Name',
+  name: "Sistem Praktikum PWA",
+  version: "1.0.0",
+  description: "Progressive Web App untuk Manajemen Praktikum Laboratorium",
+  author: "Your Team Name",
 
   // App URLs
   urls: {
-    base: typeof window !== 'undefined' ? window.location.origin : '',
-    api: import.meta.env.VITE_SUPABASE_URL || '',
-    cdn: '/assets',
+    base: typeof window !== "undefined" ? window.location.origin : "",
+    api: import.meta.env.VITE_SUPABASE_URL || "",
+    cdn: "/assets",
   },
 } as const;
 
@@ -64,7 +64,7 @@ export const FEATURES = {
 
   // Debug & Development
   debug: import.meta.env.DEV,
-  logging: import.meta.env.DEV ? 'verbose' : 'error',
+  logging: import.meta.env.DEV ? "verbose" : "error",
   performanceMonitoring: true,
 } as const;
 
@@ -74,13 +74,13 @@ export const FEATURES = {
 
 export const API_CONFIG = {
   supabase: {
-    url: import.meta.env.VITE_SUPABASE_URL || '',
-    anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY || '',
+    url: import.meta.env.VITE_SUPABASE_URL || "",
+    anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY || "",
 
     // Realtime settings
     realtime: {
       enabled: true,
-      channels: ['quiz_updates', 'materi_updates', 'notification_updates'],
+      channels: ["quiz_updates", "materi_updates", "notification_updates"],
     },
 
     // Auth settings
@@ -110,29 +110,29 @@ export const API_CONFIG = {
 export const STORAGE_CONFIG = {
   // LocalStorage keys
   localStorage: {
-    theme: 'app-theme',
-    language: 'app-language',
-    userPreferences: 'app-user-preferences',
-    authToken: 'app-auth-token',
-    lastSync: 'app-last-sync',
+    theme: "app-theme",
+    language: "app-language",
+    userPreferences: "app-user-preferences",
+    authToken: "app-auth-token",
+    lastSync: "app-last-sync",
   },
 
   // SessionStorage keys
   sessionStorage: {
-    tempData: 'app-temp-data',
-    formDraft: 'app-form-draft',
+    tempData: "app-temp-data",
+    formDraft: "app-form-draft",
   },
 
   // IndexedDB
   indexedDB: {
-    name: 'sistem_praktikum_pwa',
+    name: "sistem_praktikum_pwa",
     version: 1,
     quota: 100 * 1024 * 1024, // 100MB
   },
 
   // Cache Storage
   cacheStorage: {
-    name: 'sistem-praktikum-cache-v1',
+    name: "sistem-praktikum-cache-v1",
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   },
 } as const;

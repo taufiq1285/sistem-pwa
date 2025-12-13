@@ -3,10 +3,10 @@
  * Custom hook for role-based access control and permission checking
  */
 
-import { useMemo } from 'react';
-import { useAuth } from './useAuth';
-import type { UserRole } from '@/types/auth.types';
-import type { Permission } from '@/types/permission.types';
+import { useMemo } from "react";
+import { useAuth } from "./useAuth";
+import type { UserRole } from "@/types/auth.types";
+import type { Permission } from "@/types/permission.types";
 import {
   hasPermission,
   hasAnyPermission,
@@ -23,8 +23,8 @@ import {
   isRoleLower,
   isRoleEqual,
   canManageRole,
-} from '@/lib/utils/permissions';
-import { ROLE_METADATA } from '@/types/role.types';
+} from "@/lib/utils/permissions";
+import { ROLE_METADATA } from "@/types/role.types";
 
 /**
  * Hook return type
@@ -32,25 +32,25 @@ import { ROLE_METADATA } from '@/types/role.types';
 export interface UseRoleReturn {
   // Current user role
   role: UserRole | null;
-  
+
   // Role metadata
   roleLabel: string | null;
   roleDescription: string | null;
   roleColor: string | null;
   roleIcon: string | null;
   dashboardPath: string | null;
-  
+
   // Role booleans
   isAdmin: boolean;
   isDosen: boolean;
   isMahasiswa: boolean;
   isLaboran: boolean;
-  
+
   // Permission checking
   hasPermission: (permission: Permission) => boolean;
   hasAnyPermission: (permissions: Permission[]) => boolean;
   hasAllPermissions: (permissions: Permission[]) => boolean;
-  
+
   // Resource-specific permissions
   can: (action: string, resource: string) => boolean;
   canView: (resource: string) => boolean;
@@ -60,37 +60,37 @@ export interface UseRoleReturn {
   canManage: (resource: string) => boolean;
   canApprove: (resource: string) => boolean;
   canGrade: (resource: string) => boolean;
-  
+
   // Role comparison
   isRoleHigher: (targetRole: UserRole) => boolean;
   isRoleLower: (targetRole: UserRole) => boolean;
   isRoleEqual: (targetRole: UserRole) => boolean;
   canManageRole: (targetRole: UserRole) => boolean;
-  
+
   // Get all permissions
   permissions: Permission[];
 }
 
 /**
  * Custom hook for role and permission checking
- * 
+ *
  * @example
  * ```tsx
  * function MyComponent() {
  *   const { isAdmin, isDosen, can, hasPermission } = useRole();
- *   
+ *
  *   if (isAdmin) {
  *     return <AdminPanel />;
  *   }
- *   
+ *
  *   if (can('create', 'kuis')) {
  *     return <CreateQuizButton />;
  *   }
- *   
+ *
  *   if (hasPermission('view:nilai')) {
  *     return <GradesList />;
  *   }
- *   
+ *
  *   return <AccessDenied />;
  * }
  * ```
@@ -106,10 +106,10 @@ export function useRole(): UseRoleReturn {
   }, [role]);
 
   // Role booleans
-  const isAdmin = role === 'admin';
-  const isDosen = role === 'dosen';
-  const isMahasiswa = role === 'mahasiswa';
-  const isLaboran = role === 'laboran';
+  const isAdmin = role === "admin";
+  const isDosen = role === "dosen";
+  const isMahasiswa = role === "mahasiswa";
+  const isLaboran = role === "laboran";
 
   // Permission checking functions
   const checkPermission = useMemo(() => {

@@ -4,7 +4,7 @@
  */
 
 // PERBAIKAN: Impor useEffect
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 import {
   flexRender,
   getCoreRowModel,
@@ -12,8 +12,8 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
-} from '@tanstack/react-table';
-import { cn } from '@/lib/utils';
+} from "@tanstack/react-table";
+import { cn } from "@/lib/utils";
 import {
   Table,
   TableBody,
@@ -21,11 +21,11 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { LoadingSpinner } from '@/components/common/LoadingSpinner';
-import { DataTablePagination } from './DataTablePagination';
-import { DataTableToolbar } from './DataTableToolbar';
-import type { DataTableProps, DataTableState } from './DataTable.types';
+} from "@/components/ui/table";
+import { LoadingSpinner } from "@/components/common/LoadingSpinner";
+import { DataTablePagination } from "./DataTablePagination";
+import { DataTableToolbar } from "./DataTableToolbar";
+import type { DataTableProps, DataTableState } from "./DataTable.types";
 
 // ============================================================================
 // COMPONENT
@@ -38,7 +38,7 @@ export function DataTable<TData, TValue = unknown>({
   pageSizeOptions = [10, 20, 30, 50, 100],
   showPagination = true,
   searchable = false,
-  searchPlaceholder = 'Search...',
+  searchPlaceholder = "Search...",
   enableRowSelection = false,
   onRowSelectionChange,
   enableColumnVisibility = false,
@@ -47,27 +47,31 @@ export function DataTable<TData, TValue = unknown>({
   toolbarActions,
   className,
   isLoading = false,
-  emptyMessage = 'No data available',
+  emptyMessage = "No data available",
 }: DataTableProps<TData, TValue>) {
   // ============================================================================
   // STATE
   // ============================================================================
 
-  const [sorting, setSorting] = useState<DataTableState['sorting']>([]);
-  const [columnFilters, setColumnFilters] = useState<DataTableState['columnFilters']>([]);
-  const [globalFilter, setGlobalFilter] = useState('');
-  const [rowSelection, setRowSelection] = useState<DataTableState['rowSelection']>({});
-  
+  const [sorting, setSorting] = useState<DataTableState["sorting"]>([]);
+  const [columnFilters, setColumnFilters] = useState<
+    DataTableState["columnFilters"]
+  >([]);
+  const [globalFilter, setGlobalFilter] = useState("");
+  const [rowSelection, setRowSelection] = useState<
+    DataTableState["rowSelection"]
+  >({});
+
   // Initialize column visibility with hidden columns
-  const [columnVisibility, setColumnVisibility] = useState<DataTableState['columnVisibility']>(
-    () => {
-      const visibility: DataTableState['columnVisibility'] = {};
-      hiddenColumns.forEach((columnId) => {
-        visibility[columnId] = false;
-      });
-      return visibility;
-    }
-  );
+  const [columnVisibility, setColumnVisibility] = useState<
+    DataTableState["columnVisibility"]
+  >(() => {
+    const visibility: DataTableState["columnVisibility"] = {};
+    hiddenColumns.forEach((columnId) => {
+      visibility[columnId] = false;
+    });
+    return visibility;
+  });
 
   // ============================================================================
   // TABLE INSTANCE
@@ -108,7 +112,9 @@ export function DataTable<TData, TValue = unknown>({
   // PERBAIKAN: Menggunakan useEffect untuk side-effect dan memperbaiki dependensi
   useEffect(() => {
     if (onRowSelectionChange && enableRowSelection) {
-      const selectedRows = table.getSelectedRowModel().rows.map((row) => row.original);
+      const selectedRows = table
+        .getSelectedRowModel()
+        .rows.map((row) => row.original);
       onRowSelectionChange(selectedRows);
     }
   }, [onRowSelectionChange, enableRowSelection, table]); // 'rowSelection' dihapus krn sdh ter-cover 'table'
@@ -148,7 +154,7 @@ export function DataTable<TData, TValue = unknown>({
     return table.getRowModel().rows.map((row) => (
       <TableRow
         key={row.id}
-        data-state={row.getIsSelected() && 'selected'}
+        data-state={row.getIsSelected() && "selected"}
         className="hover:bg-muted/50"
       >
         {row.getVisibleCells().map((cell) => (
@@ -165,7 +171,7 @@ export function DataTable<TData, TValue = unknown>({
   // ============================================================================
 
   return (
-    <div className={cn('space-y-4', className)}>
+    <div className={cn("space-y-4", className)}>
       {/* Toolbar */}
       {showToolbar && (
         <DataTableToolbar
@@ -189,7 +195,7 @@ export function DataTable<TData, TValue = unknown>({
                       ? null
                       : flexRender(
                           header.column.columnDef.header,
-                          header.getContext()
+                          header.getContext(),
                         )}
                   </TableHead>
                 ))}

@@ -5,10 +5,10 @@
  * for offline-first development
  */
 
-import { useCallback, useMemo } from 'react';
-import { useNetworkStatus } from './useNetworkStatus';
-import { indexedDBManager } from '../offline/indexeddb';
-import type { StoreName } from '@/types/offline.types';
+import { useCallback, useMemo } from "react";
+import { useNetworkStatus } from "./useNetworkStatus";
+import { indexedDBManager } from "../offline/indexeddb";
+import type { StoreName } from "@/types/offline.types";
 
 // ============================================================================
 // TYPES
@@ -22,11 +22,11 @@ export interface UseOfflineReturn {
   /** Whether the network is unstable */
   isUnstable: boolean;
   /** Network status */
-  status: 'online' | 'offline' | 'unstable';
+  status: "online" | "offline" | "unstable";
   /** Save data for offline use */
   saveOffline: <T extends { id: string }>(
     storeName: StoreName,
-    data: T
+    data: T,
   ) => Promise<void>;
   /** Get offline data */
   getOffline: <T>(storeName: StoreName, id: string) => Promise<T | undefined>;
@@ -90,14 +90,14 @@ export function useOffline(): UseOfflineReturn {
         throw error;
       }
     },
-    []
+    [],
   );
 
   /**
    * Get offline data by ID
    */
   const getOffline = useCallback(
-    async <T,>(storeName: StoreName, id: string): Promise<T | undefined> => {
+    async <T>(storeName: StoreName, id: string): Promise<T | undefined> => {
       try {
         return await indexedDBManager.read<T>(storeName, id);
       } catch (error) {
@@ -105,21 +105,27 @@ export function useOffline(): UseOfflineReturn {
         return undefined;
       }
     },
-    []
+    [],
   );
 
   /**
    * Get all offline data from a store
    */
-  const getAllOffline = useCallback(async <T,>(storeName: StoreName): Promise<T[]> => {
-    try {
-      const result = await indexedDBManager.getAll<T>(storeName);
-      return result as unknown as T[];
-    } catch (error) {
-      console.error(`Failed to get all offline data from ${storeName}:`, error);
-      return [];
-    }
-  }, []);
+  const getAllOffline = useCallback(
+    async <T>(storeName: StoreName): Promise<T[]> => {
+      try {
+        const result = await indexedDBManager.getAll<T>(storeName);
+        return result as unknown as T[];
+      } catch (error) {
+        console.error(
+          `Failed to get all offline data from ${storeName}:`,
+          error,
+        );
+        return [];
+      }
+    },
+    [],
+  );
 
   /**
    * Delete offline data by ID
@@ -129,11 +135,14 @@ export function useOffline(): UseOfflineReturn {
       try {
         await indexedDBManager.delete(storeName, id);
       } catch (error) {
-        console.error(`Failed to delete offline data from ${storeName}:`, error);
+        console.error(
+          `Failed to delete offline data from ${storeName}:`,
+          error,
+        );
         throw error;
       }
     },
-    []
+    [],
   );
 
   // ============================================================================
@@ -162,6 +171,6 @@ export function useOffline(): UseOfflineReturn {
       getOffline,
       getAllOffline,
       deleteOffline,
-    ]
+    ],
   );
 }

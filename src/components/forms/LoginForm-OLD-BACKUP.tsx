@@ -3,16 +3,16 @@
  * Form for user authentication
  */
 
-import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useAuth } from '@/lib/hooks/useAuth';
-import { loginSchema, type LoginFormData } from '@/lib/validations/auth.schema';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { WifiOff } from 'lucide-react';
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useAuth } from "@/lib/hooks/useAuth";
+import { loginSchema, type LoginFormData } from "@/lib/validations/auth.schema";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { WifiOff } from "lucide-react";
 
 interface LoginFormProps {
   onSuccess?: () => void;
@@ -39,23 +39,27 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
     };
     const handleOffline = () => {
       setIsOnline(false);
-      setError('No internet connection. Please check your network and try again.');
+      setError(
+        "No internet connection. Please check your network and try again.",
+      );
     };
 
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
 
     return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
     };
   }, []);
 
- const onSubmit = async (data: LoginFormData) => {
+  const onSubmit = async (data: LoginFormData) => {
     try {
       // Check if online before attempting login
       if (!isOnline) {
-        setError('Cannot login while offline. Please check your internet connection.');
+        setError(
+          "Cannot login while offline. Please check your internet connection.",
+        );
         return;
       }
 
@@ -64,7 +68,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
       onSuccess?.();
     } catch (err: unknown) {
       // Tambahkan type guard
-      let errorMessage = 'Login failed. Please try again.';
+      let errorMessage = "Login failed. Please try again.";
       if (err instanceof Error) {
         errorMessage = err.message;
       }
@@ -80,8 +84,8 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
         <Alert variant="destructive" className="bg-orange-50 border-orange-200">
           <WifiOff className="h-4 w-4 text-orange-600" />
           <AlertDescription className="text-orange-800">
-            <strong>You are offline.</strong> Login requires an internet connection.
-            {' '}Please check your network and try again.
+            <strong>You are offline.</strong> Login requires an internet
+            connection. Please check your network and try again.
           </AlertDescription>
         </Alert>
       )}
@@ -99,7 +103,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
           id="email"
           type="email"
           placeholder="your.email@example.com"
-          {...register('email')}
+          {...register("email")}
           disabled={isSubmitting}
         />
         {errors.email && (
@@ -113,7 +117,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
           id="password"
           type="password"
           placeholder="Enter your password"
-          {...register('password')}
+          {...register("password")}
           disabled={isSubmitting}
         />
         {errors.password && (
@@ -126,13 +130,18 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
         className="w-full"
         disabled={isSubmitting || !isOnline}
       >
-        {!isOnline ? 'Offline - Cannot Sign In' : isSubmitting ? 'Signing in...' : 'Sign In'}
+        {!isOnline
+          ? "Offline - Cannot Sign In"
+          : isSubmitting
+            ? "Signing in..."
+            : "Sign In"}
       </Button>
 
       {/* Offline Helper Text */}
       {!isOnline && (
         <p className="text-sm text-center text-gray-600 mt-2">
-          💡 If you've logged in before, your session may still be active when you go back online.
+          💡 If you've logged in before, your session may still be active when
+          you go back online.
         </p>
       )}
     </form>

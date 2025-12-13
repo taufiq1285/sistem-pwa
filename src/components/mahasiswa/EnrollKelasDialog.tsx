@@ -3,35 +3,35 @@
  * Dialog for students to view and enroll in available classes
  */
 
-import { useState, useEffect } from 'react';
-import { toast } from 'sonner';
-import { 
-  Users, 
-  Calendar, 
-  Clock, 
-  MapPin, 
+import { useState, useEffect } from "react";
+import { toast } from "sonner";
+import {
+  Users,
+  Calendar,
+  Clock,
+  MapPin,
   Check,
   X,
   Loader2,
   BookOpen,
-  GraduationCap
-} from 'lucide-react';
+  GraduationCap,
+} from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { 
-  getAvailableKelas, 
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  getAvailableKelas,
   enrollToKelas,
-  type AvailableKelas 
-} from '@/lib/api/mahasiswa.api';
+  type AvailableKelas,
+} from "@/lib/api/mahasiswa.api";
 
 interface EnrollKelasDialogProps {
   open: boolean;
@@ -39,10 +39,10 @@ interface EnrollKelasDialogProps {
   onEnrollSuccess?: () => void;
 }
 
-export function EnrollKelasDialog({ 
-  open, 
+export function EnrollKelasDialog({
+  open,
   onOpenChange,
-  onEnrollSuccess 
+  onEnrollSuccess,
 }: EnrollKelasDialogProps) {
   const [loading, setLoading] = useState(false);
   const [enrolling, setEnrolling] = useState<string | null>(null);
@@ -60,7 +60,7 @@ export function EnrollKelasDialog({
       const data = await getAvailableKelas();
       setAvailableKelas(data);
     } catch (error) {
-      toast.error('Gagal memuat kelas tersedia');
+      toast.error("Gagal memuat kelas tersedia");
     } finally {
       setLoading(false);
     }
@@ -70,7 +70,7 @@ export function EnrollKelasDialog({
     try {
       setEnrolling(kelasId);
       const result = await enrollToKelas(kelasId);
-      
+
       if (result.success) {
         toast.success(result.message);
         await fetchAvailableKelas(); // Refresh list
@@ -79,7 +79,7 @@ export function EnrollKelasDialog({
         toast.error(result.message);
       }
     } catch (error) {
-      toast.error('Gagal mendaftar ke kelas');
+      toast.error("Gagal mendaftar ke kelas");
     } finally {
       setEnrolling(null);
     }
@@ -87,10 +87,10 @@ export function EnrollKelasDialog({
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return new Intl.DateTimeFormat('id-ID', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
+    return new Intl.DateTimeFormat("id-ID", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
     }).format(date);
   };
 
@@ -107,7 +107,8 @@ export function EnrollKelasDialog({
             Daftar Kelas
           </DialogTitle>
           <DialogDescription>
-            Pilih kelas yang ingin Anda ikuti. Anda dapat melihat jadwal praktikum setelah mendaftar.
+            Pilih kelas yang ingin Anda ikuti. Anda dapat melihat jadwal
+            praktikum setelah mendaftar.
           </DialogDescription>
         </DialogHeader>
 
@@ -124,14 +125,14 @@ export function EnrollKelasDialog({
           ) : (
             <div className="space-y-3">
               {availableKelas.map((kelas) => (
-                <Card 
+                <Card
                   key={kelas.id}
                   className={`${
-                    kelas.is_enrolled 
-                      ? 'border-green-200 bg-green-50/50' 
-                      : kelas.is_full 
-                      ? 'border-gray-200 bg-gray-50/50 opacity-60' 
-                      : 'border-gray-200 hover:border-blue-300 hover:shadow-sm transition-all'
+                    kelas.is_enrolled
+                      ? "border-green-200 bg-green-50/50"
+                      : kelas.is_full
+                        ? "border-gray-200 bg-gray-50/50 opacity-60"
+                        : "border-gray-200 hover:border-blue-300 hover:shadow-sm transition-all"
                   }`}
                 >
                   <CardContent className="p-4">
@@ -148,7 +149,10 @@ export function EnrollKelasDialog({
                               {kelas.mata_kuliah.kode_mk}
                             </Badge>
                             {kelas.is_enrolled && (
-                              <Badge variant="default" className="text-xs bg-green-600">
+                              <Badge
+                                variant="default"
+                                className="text-xs bg-green-600"
+                              >
                                 <Check className="h-3 w-3 mr-1" />
                                 Terdaftar
                               </Badge>
@@ -161,7 +165,9 @@ export function EnrollKelasDialog({
                             )}
                           </div>
                           <div className="flex items-center gap-3 text-sm text-gray-600">
-                            <span className="font-medium">{kelas.nama_kelas}</span>
+                            <span className="font-medium">
+                              {kelas.nama_kelas}
+                            </span>
                             <span>•</span>
                             <span>{kelas.mata_kuliah.sks} SKS</span>
                             <span>•</span>
@@ -192,11 +198,14 @@ export function EnrollKelasDialog({
                             <div className="flex items-center gap-3 text-sm text-blue-700">
                               <div className="flex items-center gap-1">
                                 <Calendar className="h-3.5 w-3.5" />
-                                {formatDate(kelas.next_jadwal.tanggal_praktikum)}
+                                {formatDate(
+                                  kelas.next_jadwal.tanggal_praktikum,
+                                )}
                               </div>
                               <div className="flex items-center gap-1">
                                 <Clock className="h-3.5 w-3.5" />
-                                {formatTime(kelas.next_jadwal.jam_mulai)} - {formatTime(kelas.next_jadwal.jam_selesai)}
+                                {formatTime(kelas.next_jadwal.jam_mulai)} -{" "}
+                                {formatTime(kelas.next_jadwal.jam_selesai)}
                               </div>
                               <div className="flex items-center gap-1">
                                 <MapPin className="h-3.5 w-3.5" />
@@ -220,7 +229,7 @@ export function EnrollKelasDialog({
                             Penuh
                           </Button>
                         ) : (
-                          <Button 
+                          <Button
                             onClick={() => handleEnroll(kelas.id)}
                             disabled={enrolling === kelas.id}
                             className="w-28"
@@ -231,7 +240,7 @@ export function EnrollKelasDialog({
                                 Daftar...
                               </>
                             ) : (
-                              'Daftar'
+                              "Daftar"
                             )}
                           </Button>
                         )}

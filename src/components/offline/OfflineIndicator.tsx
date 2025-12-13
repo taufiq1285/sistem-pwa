@@ -1,16 +1,15 @@
-
-import { Wifi, WifiOff, AlertTriangle } from 'lucide-react';
-import { useNetworkStatus } from '@/lib/hooks/useNetworkStatus';
-import { cn } from '@/lib/utils';
+import { Wifi, WifiOff, AlertTriangle } from "lucide-react";
+import { useNetworkStatus } from "@/lib/hooks/useNetworkStatus";
+import { cn } from "@/lib/utils";
 
 export interface OfflineIndicatorProps {
-  position?: 'top' | 'bottom';
+  position?: "top" | "bottom";
   hideWhenOnline?: boolean;
   className?: string;
 }
 
 export function OfflineIndicator({
-  position = 'top',
+  position = "top",
   hideWhenOnline = true,
   className,
 }: OfflineIndicatorProps) {
@@ -23,23 +22,23 @@ export function OfflineIndicator({
   const statusConfig = {
     online: {
       icon: Wifi,
-      bg: 'bg-green-500',
-      text: 'Online',
+      bg: "bg-green-500",
+      text: "Online",
       description: quality
         ? `${quality.effectiveType.toUpperCase()} • ${Math.round(quality.latency)}ms`
-        : 'Connected',
+        : "Connected",
     },
     offline: {
       icon: WifiOff,
-      bg: 'bg-red-500',
-      text: 'Offline',
-      description: 'No internet connection',
+      bg: "bg-red-500",
+      text: "Offline",
+      description: "No internet connection",
     },
     unstable: {
       icon: AlertTriangle,
-      bg: 'bg-yellow-500',
-      text: 'Unstable',
-      description: 'Poor connection',
+      bg: "bg-yellow-500",
+      text: "Unstable",
+      description: "Poor connection",
     },
   };
 
@@ -49,10 +48,10 @@ export function OfflineIndicator({
   return (
     <div
       className={cn(
-        'fixed left-0 right-0 z-50 flex items-center justify-center px-4 py-2 text-white shadow-lg',
+        "fixed left-0 right-0 z-50 flex items-center justify-center px-4 py-2 text-white shadow-lg",
         config.bg,
-        position === 'top' ? 'top-0' : 'bottom-0',
-        className
+        position === "top" ? "top-0" : "bottom-0",
+        className,
       )}
     >
       <div className="flex items-center gap-2">

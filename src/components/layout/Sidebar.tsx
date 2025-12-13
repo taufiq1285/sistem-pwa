@@ -3,15 +3,15 @@
  * Main navigation sidebar with collapsible functionality
  */
 
-import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge';
-import { ChevronLeft, Menu, LogOut } from 'lucide-react';
-import type { UserRole } from '@/types/auth.types';
-import { getNavigationItems, isRouteActive } from '@/config/navigation.config';
+import { useState, useEffect } from "react";
+import { Link, useLocation } from "react-router-dom";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
+import { ChevronLeft, Menu, LogOut } from "lucide-react";
+import type { UserRole } from "@/types/auth.types";
+import { getNavigationItems, isRouteActive } from "@/config/navigation.config";
 
 // ============================================================================
 // TYPES
@@ -31,15 +31,13 @@ interface SidebarProps {
 
 export function Sidebar({
   userRole,
-  userName = 'User',
-  userEmail = 'user@example.com',
+  userName = "User",
+  userEmail = "user@example.com",
   onLogout,
   className,
 }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
-
-  console.log('[Sidebar RENDER] Collapsed:', collapsed, 'Path:', location.pathname);
 
   // Get navigation items for current role
   const navItems = getNavigationItems(userRole);
@@ -47,21 +45,19 @@ export function Sidebar({
   // ✅ Keep sidebar expansion state when navigating between pages
   // This prevents sidebar from expanding when clicking nav links
   useEffect(() => {
-    console.log('[Sidebar EFFECT] Location:', location.pathname, '| Collapsed:', collapsed);
+    // Effect runs on location change to maintain state
   }, [location.pathname, collapsed]);
 
-  // Debug: Log when collapse state changes
   const handleToggleCollapse = () => {
-    console.log('[Sidebar TOGGLE] From:', collapsed, 'To:', !collapsed);
     setCollapsed(!collapsed);
   };
 
   return (
     <aside
       className={cn(
-        'relative h-screen bg-background border-r transition-all duration-300',
-        collapsed ? 'w-16' : 'w-64',
-        className
+        "relative h-screen bg-background border-r transition-all duration-300",
+        collapsed ? "w-16" : "w-64",
+        className,
       )}
     >
       {/* Header */}
@@ -76,8 +72,8 @@ export function Sidebar({
           variant="ghost"
           size="icon"
           onClick={handleToggleCollapse}
-          className={cn(collapsed && 'mx-auto')}
-          title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          className={cn(collapsed && "mx-auto")}
+          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           {collapsed ? (
             <Menu className="h-4 w-4" />
@@ -99,10 +95,10 @@ export function Sidebar({
                 key={item.href}
                 to={item.href}
                 className={cn(
-                  'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-                  'hover:bg-accent hover:text-accent-foreground',
-                  active && 'bg-accent text-accent-foreground',
-                  collapsed && 'justify-center'
+                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                  "hover:bg-accent hover:text-accent-foreground",
+                  active && "bg-accent text-accent-foreground",
+                  collapsed && "justify-center",
                 )}
                 title={collapsed ? item.label : item.description}
               >
@@ -127,8 +123,8 @@ export function Sidebar({
       <div className="absolute bottom-0 left-0 right-0 border-t bg-background">
         <div
           className={cn(
-            'flex items-center gap-3 p-4',
-            collapsed && 'justify-center'
+            "flex items-center gap-3 p-4",
+            collapsed && "justify-center",
           )}
         >
           {collapsed ? (

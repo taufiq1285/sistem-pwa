@@ -3,29 +3,29 @@
  * Tests the conditional logic for context availability
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { renderHook } from '@testing-library/react';
-import { ReactNode } from 'react';
-import { useTheme } from '@/lib/hooks/useTheme';
-import { ThemeContext, ThemeContextValue } from '@/context/ThemeContext';
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { renderHook } from "@testing-library/react";
+import { ReactNode } from "react";
+import { useTheme } from "@/lib/hooks/useTheme";
+import { ThemeContext, ThemeContextValue } from "@/context/ThemeContext";
 
-describe('useTheme', () => {
+describe("useTheme", () => {
   let consoleWarnSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
-    consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
   });
 
   afterEach(() => {
     consoleWarnSpy.mockRestore();
   });
 
-  describe('context availability logic', () => {
-    it('should return context value when context is available', () => {
+  describe("context availability logic", () => {
+    it("should return context value when context is available", () => {
       const mockContextValue: ThemeContextValue = {
-        theme: 'dark',
-        systemTheme: 'dark',
-        effectiveTheme: 'dark',
+        theme: "dark",
+        systemTheme: "dark",
+        effectiveTheme: "dark",
         setTheme: vi.fn(),
         toggleTheme: vi.fn(),
       };
@@ -44,7 +44,7 @@ describe('useTheme', () => {
       expect(consoleWarnSpy).not.toHaveBeenCalled();
     });
 
-    it('should return default fallback when context is null', () => {
+    it("should return default fallback when context is null", () => {
       const wrapper = ({ children }: { children: ReactNode }) => (
         <ThemeContext.Provider value={null as any}>
           {children}
@@ -55,20 +55,20 @@ describe('useTheme', () => {
 
       // Should return hardcoded defaults
       expect(result.current).toEqual({
-        theme: 'system',
-        systemTheme: 'light',
-        effectiveTheme: 'light',
+        theme: "system",
+        systemTheme: "light",
+        effectiveTheme: "light",
         setTheme: expect.any(Function),
         toggleTheme: expect.any(Function),
       });
 
       // Should log warning when context is null
       expect(consoleWarnSpy).toHaveBeenCalledWith(
-        'useTheme: ThemeContext not available, using default'
+        "useTheme: ThemeContext not available, using default",
       );
     });
 
-    it('should return default fallback when context is undefined', () => {
+    it("should return default fallback when context is undefined", () => {
       const wrapper = ({ children }: { children: ReactNode }) => (
         <ThemeContext.Provider value={undefined as any}>
           {children}
@@ -79,22 +79,22 @@ describe('useTheme', () => {
 
       // Should return hardcoded defaults
       expect(result.current).toEqual({
-        theme: 'system',
-        systemTheme: 'light',
-        effectiveTheme: 'light',
+        theme: "system",
+        systemTheme: "light",
+        effectiveTheme: "light",
         setTheme: expect.any(Function),
         toggleTheme: expect.any(Function),
       });
 
       // Should log warning
       expect(consoleWarnSpy).toHaveBeenCalledWith(
-        'useTheme: ThemeContext not available, using default'
+        "useTheme: ThemeContext not available, using default",
       );
     });
   });
 
-  describe('fallback behavior', () => {
-    it('should return no-op functions that do not throw errors', () => {
+  describe("fallback behavior", () => {
+    it("should return no-op functions that do not throw errors", () => {
       const wrapper = ({ children }: { children: ReactNode }) => (
         <ThemeContext.Provider value={null as any}>
           {children}
@@ -104,11 +104,11 @@ describe('useTheme', () => {
       const { result } = renderHook(() => useTheme(), { wrapper });
 
       // Should not throw when calling fallback functions
-      expect(() => result.current.setTheme('dark')).not.toThrow();
+      expect(() => result.current.setTheme("dark")).not.toThrow();
       expect(() => result.current.toggleTheme()).not.toThrow();
     });
 
-    it('should return exactly the same default object structure', () => {
+    it("should return exactly the same default object structure", () => {
       const wrapper = ({ children }: { children: ReactNode }) => (
         <ThemeContext.Provider value={null as any}>
           {children}
@@ -118,11 +118,11 @@ describe('useTheme', () => {
       const { result } = renderHook(() => useTheme(), { wrapper });
 
       // Verify exact structure matches the code
-      expect(result.current.theme).toBe('system');
-      expect(result.current.systemTheme).toBe('light');
-      expect(result.current.effectiveTheme).toBe('light');
-      expect(typeof result.current.setTheme).toBe('function');
-      expect(typeof result.current.toggleTheme).toBe('function');
+      expect(result.current.theme).toBe("system");
+      expect(result.current.systemTheme).toBe("light");
+      expect(result.current.effectiveTheme).toBe("light");
+      expect(typeof result.current.setTheme).toBe("function");
+      expect(typeof result.current.toggleTheme).toBe("function");
     });
   });
 });

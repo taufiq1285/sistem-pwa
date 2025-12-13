@@ -6,7 +6,7 @@
  * const data = await cacheAPI('key', () => fetchFromAPI(), { ttl: 5 * 60 * 1000 });
  */
 
-import { indexedDBManager } from './indexeddb';
+import { indexedDBManager } from "./indexeddb";
 
 // ============================================================================
 // TYPES
@@ -30,7 +30,7 @@ interface CacheOptions {
 // ============================================================================
 
 const DEFAULT_TTL = 5 * 60 * 1000; // 5 minutes
-const CACHE_STORE = 'api_cache';
+const CACHE_STORE = "api_cache";
 
 // ============================================================================
 // CACHE FUNCTIONS
@@ -42,7 +42,7 @@ const CACHE_STORE = 'api_cache';
 export async function cacheAPI<T>(
   key: string,
   fetcher: () => Promise<T>,
-  options: CacheOptions = {}
+  options: CacheOptions = {},
 ): Promise<T> {
   const {
     ttl = DEFAULT_TTL,
@@ -107,7 +107,9 @@ export async function cacheAPI<T>(
  */
 async function getCachedData<T>(key: string): Promise<CacheEntry<T> | null> {
   try {
-    const cached = await indexedDBManager.getMetadata(`cache_${key}`) as CacheEntry<T> | undefined;
+    const cached = (await indexedDBManager.getMetadata(`cache_${key}`)) as
+      | CacheEntry<T>
+      | undefined;
     return cached || null;
   } catch (error) {
     console.error(`[API Cache] Failed to get cache for ${key}:`, error);
@@ -118,7 +120,11 @@ async function getCachedData<T>(key: string): Promise<CacheEntry<T> | null> {
 /**
  * Set cached data to IndexedDB
  */
-async function setCachedData<T>(key: string, data: T, ttl: number): Promise<void> {
+async function setCachedData<T>(
+  key: string,
+  data: T,
+  ttl: number,
+): Promise<void> {
   try {
     const entry: CacheEntry<T> = {
       key,
@@ -140,7 +146,7 @@ async function setCachedData<T>(key: string, data: T, ttl: number): Promise<void
 async function fetchAndCache<T>(
   key: string,
   fetcher: () => Promise<T>,
-  ttl: number
+  ttl: number,
 ): Promise<void> {
   try {
     const data = await fetcher();
@@ -174,7 +180,10 @@ export async function invalidateCachePattern(pattern: string): Promise<void> {
     console.log(`[API Cache] Invalidating pattern: ${pattern}`);
     // TODO: Implement pattern-based invalidation
   } catch (error) {
-    console.error(`[API Cache] Failed to invalidate pattern ${pattern}:`, error);
+    console.error(
+      `[API Cache] Failed to invalidate pattern ${pattern}:`,
+      error,
+    );
   }
 }
 
@@ -184,11 +193,40 @@ export async function invalidateCachePattern(pattern: string): Promise<void> {
 export async function clearAllCache(): Promise<void> {
   try {
     await indexedDBManager.initialize();
-    // This would require getting all metadata keys and clearing them
-    console.log('[API Cache] Clearing all cache...');
-    // TODO: Implement clear all
+    console.log("[API Cache] Clearing all cache...");
+
+    // Get all metadata keys and clear those starting with 'cache_'
+    const db = (indexedDBManager as any).db as IDBDatabase | null;
+    if (!db) {
+      console.warn("[API Cache] IndexedDB not available");
+      return;
+    }
+
+    const transaction = db.transaction(["metadata"], "readwrite");
+    const store = transaction.objectStore("metadata");
+    const allKeys = await new Promise<IDBValidKey[]>((resolve, reject) => {
+      const request = store.getAllKeys();
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => resolve(request.result);
+    });
+
+    // Clear all cache entries (keys starting with 'cache_')
+    for (const key of allKeys) {
+      if (typeof key === "string" && key.startsWith("cache_")) {
+        await new Promise<void>((resolve, reject) => {
+          const deleteRequest = store.delete(key);
+          deleteRequest.onerror = () => reject(deleteRequest.error);
+          deleteRequest.onsuccess = () => {
+            console.log(`[API Cache] Cleared: ${key}`);
+            resolve();
+          };
+        });
+      }
+    }
+
+    console.log("[API Cache] All cache entries cleared");
   } catch (error) {
-    console.error('[API Cache] Failed to clear all cache:', error);
+    console.error("[API Cache] Failed to clear all cache:", error);
   }
 }
 
@@ -207,7 +245,7 @@ export async function optimisticUpdate<T>(
   key: string,
   data: T,
   updater: () => Promise<T>,
-  options: { ttl?: number } = {}
+  options: { ttl?: number } = {},
 ): Promise<T> {
   const { ttl = DEFAULT_TTL } = options;
 
@@ -224,7 +262,10 @@ export async function optimisticUpdate<T>(
         await setCachedData(key, serverData, ttl);
         return serverData;
       } catch (error) {
-        console.error(`[API Cache] Optimistic update failed for ${key}, keeping local:`, error);
+        console.error(
+          `[API Cache] Optimistic update failed for ${key}, keeping local:`,
+          error,
+        );
         // Keep local update, will sync later
         return data;
       }

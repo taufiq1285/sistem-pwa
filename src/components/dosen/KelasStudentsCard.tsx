@@ -3,19 +3,25 @@
  * Displays classes with student enrollment info on dosen dashboard
  */
 
-import { useState, useEffect } from 'react';
-import { Users, Eye, BookOpen, Loader2, TrendingUp } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { StudentsListDialog } from '@/components/dosen/Studentslistdialog';
+import { useState, useEffect } from "react";
+import { Users, Eye, BookOpen, Loader2, TrendingUp } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { StudentsListDialog } from "@/components/dosen/Studentslistdialog";
 import {
   getMyKelasWithStudents,
   getStudentStats,
   type KelasWithStudents,
-  type StudentStats
-} from '@/lib/api/dosen.api';
-import { toast } from 'sonner';
+  type StudentStats,
+} from "@/lib/api/dosen.api";
+import { toast } from "sonner";
 
 export function KelasStudentsCard() {
   const [loading, setLoading] = useState(true);
@@ -25,7 +31,9 @@ export function KelasStudentsCard() {
     totalKelas: 0,
     averagePerKelas: 0,
   });
-  const [selectedKelas, setSelectedKelas] = useState<KelasWithStudents | null>(null);
+  const [selectedKelas, setSelectedKelas] = useState<KelasWithStudents | null>(
+    null,
+  );
   const [dialogOpen, setDialogOpen] = useState(false);
 
   useEffect(() => {
@@ -42,7 +50,7 @@ export function KelasStudentsCard() {
       setKelasList(kelasData);
       setStats(statsData);
     } catch {
-      toast.error('Gagal memuat data mahasiswa');
+      toast.error("Gagal memuat data mahasiswa");
     } finally {
       setLoading(false);
     }
@@ -133,7 +141,10 @@ export function KelasStudentsCard() {
                       <div className="flex items-center gap-1">
                         <TrendingUp className="h-3.5 w-3.5" />
                         <span>
-                          {Math.round((kelas.jumlah_mahasiswa / kelas.kuota) * 100)}% terisi
+                          {Math.round(
+                            (kelas.jumlah_mahasiswa / kelas.kuota) * 100,
+                          )}
+                          % terisi
                         </span>
                       </div>
                     </div>

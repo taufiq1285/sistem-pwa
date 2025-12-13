@@ -3,14 +3,14 @@
  * Mobile navigation drawer with slide-in animation
  */
 
-import { Link, useLocation } from 'react-router-dom';
-import { X, LogOut } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { cn } from '@/lib/utils';
-import type { UserRole } from '@/types/auth.types';
-import { getNavigationItems, isRouteActive } from '@/config/navigation.config';
+import { Link, useLocation } from "react-router-dom";
+import { X, LogOut } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
+import type { UserRole } from "@/types/auth.types";
+import { getNavigationItems, isRouteActive } from "@/config/navigation.config";
 
 // ============================================================================
 // TYPES
@@ -34,8 +34,8 @@ export function MobileNav({
   isOpen,
   onClose,
   userRole,
-  userName = 'User',
-  userEmail = 'user@example.com',
+  userName = "User",
+  userEmail = "user@example.com",
   onLogout,
   className,
 }: MobileNavProps) {
@@ -69,9 +69,9 @@ export function MobileNav({
       {/* Drawer */}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 w-72 bg-background transform transition-transform duration-300 ease-in-out md:hidden',
-          isOpen ? 'translate-x-0' : '-translate-x-full',
-          className
+          "fixed inset-y-0 left-0 z-50 w-72 bg-background transform transition-transform duration-300 ease-in-out md:hidden",
+          isOpen ? "translate-x-0" : "-translate-x-full",
+          className,
         )}
       >
         <div className="flex h-full flex-col">
@@ -119,17 +119,15 @@ export function MobileNav({
                     to={item.href}
                     onClick={handleLinkClick}
                     className={cn(
-                      'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
-                      'hover:bg-accent hover:text-accent-foreground',
-                      active && 'bg-accent text-accent-foreground'
+                      "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                      "hover:bg-accent hover:text-accent-foreground",
+                      active && "bg-accent text-accent-foreground",
                     )}
                   >
                     <Icon className="h-5 w-5 flex-shrink-0" />
                     <span className="flex-1">{item.label}</span>
                     {item.badge !== undefined && (
-                      <Badge variant="secondary">
-                        {item.badge}
-                      </Badge>
+                      <Badge variant="secondary">{item.badge}</Badge>
                     )}
                   </Link>
                 );

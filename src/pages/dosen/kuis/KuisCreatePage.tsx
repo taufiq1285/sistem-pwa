@@ -6,19 +6,19 @@
  * Features: Directly show quiz builder - simplified UX
  */
 
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { QuizBuilder } from '@/components/features/kuis/builder/QuizBuilder';
-import { useAuth } from '@/lib/hooks/useAuth';
-import { supabase } from '@/lib/supabase/client';
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { QuizBuilder } from "@/components/features/kuis/builder/QuizBuilder";
+import { useAuth } from "@/lib/hooks/useAuth";
+import { supabase } from "@/lib/supabase/client";
 
 export default function KuisCreatePage() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const [dosenId, setDosenId] = useState<string>('');
+  const [dosenId, setDosenId] = useState<string>("");
   const [isLoadingDosenId, setIsLoadingDosenId] = useState(false);
 
   // Fetch dosen_id if not available in user object
@@ -30,25 +30,25 @@ export default function KuisCreatePage() {
       }
 
       // Fallback: Fetch from database
-      if (user?.id && user?.role === 'dosen') {
+      if (user?.id && user?.role === "dosen") {
         setIsLoadingDosenId(true);
         try {
           const { data, error } = await supabase
-            .from('dosen')
-            .select('id')
-            .eq('user_id', user.id)
+            .from("dosen")
+            .select("id")
+            .eq("user_id", user.id)
             .single();
 
           if (error) throw error;
 
           if (data) {
-            console.log('✅ Fetched dosen_id from database:', data.id);
+            console.log("✅ Fetched dosen_id from database:", data.id);
             setDosenId(data.id);
           } else {
-            console.error('❌ No dosen record found for user_id:', user.id);
+            console.error("❌ No dosen record found for user_id:", user.id);
           }
         } catch (error) {
-          console.error('❌ Error fetching dosen_id:', error);
+          console.error("❌ Error fetching dosen_id:", error);
         } finally {
           setIsLoadingDosenId(false);
         }
@@ -59,9 +59,9 @@ export default function KuisCreatePage() {
   }, [user]);
 
   // Redirect if not dosen
-  if (user && user.role !== 'dosen') {
-    console.error('❌ Not a dosen:', { role: user.role });
-    navigate('/');
+  if (user && user.role !== "dosen") {
+    console.error("❌ Not a dosen:", { role: user.role });
+    navigate("/");
     return null;
   }
 
@@ -86,11 +86,11 @@ export default function KuisCreatePage() {
   }
 
   const handleSave = () => {
-    navigate('/dosen/kuis');
+    navigate("/dosen/kuis");
   };
 
   const handleCancel = () => {
-    navigate('/dosen/kuis');
+    navigate("/dosen/kuis");
   };
 
   return (
@@ -100,7 +100,7 @@ export default function KuisCreatePage() {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => navigate('/dosen/kuis')}
+          onClick={() => navigate("/dosen/kuis")}
           className="mb-4"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />

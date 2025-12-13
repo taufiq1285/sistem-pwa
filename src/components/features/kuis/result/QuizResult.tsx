@@ -9,17 +9,17 @@
  * - Actions (back to list, retake)
  */
 
-import { useState } from 'react';
-import { ArrowLeft, RotateCcw, Eye, EyeOff } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ScoreCard } from './ScoreCard';
-import { AnswerReviewList } from './AnswerReview';
-import type { Kuis, Soal, Jawaban, AttemptKuis } from '@/types/kuis.types';
-import { calculateQuizScore } from '@/lib/utils/quiz-scoring';
-import { format } from 'date-fns';
-import { id as localeId } from 'date-fns/locale';
+import { useState } from "react";
+import { ArrowLeft, RotateCcw, Eye, EyeOff } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScoreCard } from "./ScoreCard";
+import { AnswerReviewList } from "./AnswerReview";
+import type { Kuis, Soal, Jawaban, AttemptKuis } from "@/types/kuis.types";
+import { calculateQuizScore } from "@/lib/utils/quiz-scoring";
+import { format } from "date-fns";
+import { id as localeId } from "date-fns/locale";
 
 // ============================================================================
 // TYPES
@@ -81,30 +81,31 @@ export function QuizResult({
   const score = calculateQuizScore(
     questions,
     answers,
-    quiz.passing_score ?? 70
+    quiz.passing_score ?? 70,
   );
 
   // Format dates
   const startedAt = attempt.started_at
-    ? format(new Date(attempt.started_at), 'dd MMM yyyy, HH:mm', {
+    ? format(new Date(attempt.started_at), "dd MMM yyyy, HH:mm", {
         locale: localeId,
       })
-    : '-';
+    : "-";
   const submittedAt = attempt.submitted_at
-    ? format(new Date(attempt.submitted_at), 'dd MMM yyyy, HH:mm', {
+    ? format(new Date(attempt.submitted_at), "dd MMM yyyy, HH:mm", {
         locale: localeId,
       })
-    : '-';
+    : "-";
 
   // Calculate duration
-  const duration = attempt.started_at && attempt.submitted_at
-    ? Math.floor(
-        (new Date(attempt.submitted_at).getTime() -
-          new Date(attempt.started_at).getTime()) /
-          1000 /
-          60
-      )
-    : 0;
+  const duration =
+    attempt.started_at && attempt.submitted_at
+      ? Math.floor(
+          (new Date(attempt.submitted_at).getTime() -
+            new Date(attempt.started_at).getTime()) /
+            1000 /
+            60,
+        )
+      : 0;
 
   return (
     <div className="space-y-6">

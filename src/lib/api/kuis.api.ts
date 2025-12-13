@@ -177,7 +177,21 @@ export async function getKuisByKelas(kelasId: string): Promise<Kuis[]> {
 async function createKuisImpl(data: CreateKuisData): Promise<Kuis> {
   try {
     console.log("🔵 API createKuis called with data:", data);
-    const result = await insert<Kuis>("kuis", data);
+
+    // ✅ AUTO-SET DATES: If not provided, set sensible defaults
+    const dataWithDefaults = {
+      ...data,
+      tanggal_mulai: data.tanggal_mulai || new Date().toISOString(),
+      tanggal_selesai:
+        data.tanggal_selesai ||
+        (() => {
+          const oneMonthLater = new Date();
+          oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
+          return oneMonthLater.toISOString();
+        })(),
+    };
+
+    const result = await insert<Kuis>("kuis", dataWithDefaults);
     console.log("✅ API createKuis success:", result);
     return result;
   } catch (error) {
@@ -189,7 +203,7 @@ async function createKuisImpl(data: CreateKuisData): Promise<Kuis> {
 }
 
 // 🔒 PROTECTED: Only dosen can create kuis
-export const createKuis = requirePermission('manage:kuis', createKuisImpl);
+export const createKuis = requirePermission("manage:kuis", createKuisImpl);
 
 // Internal implementation (unwrapped)
 async function updateKuisImpl(
@@ -207,10 +221,10 @@ async function updateKuisImpl(
 
 // 🔒 PROTECTED: Only owner dosen can update kuis
 export const updateKuis = requirePermissionAndOwnership(
-  'manage:kuis',
-  { table: 'kuis', ownerField: 'dosen_id' },
+  "manage:kuis",
+  { table: "kuis", ownerField: "dosen_id" },
   0, // id is first argument
-  updateKuisImpl
+  updateKuisImpl,
 );
 
 // Internal implementation (unwrapped)
@@ -226,10 +240,10 @@ async function deleteKuisImpl(id: string): Promise<boolean> {
 
 // 🔒 PROTECTED: Only owner dosen can delete kuis
 export const deleteKuis = requirePermissionAndOwnership(
-  'manage:kuis',
-  { table: 'kuis', ownerField: 'dosen_id' },
+  "manage:kuis",
+  { table: "kuis", ownerField: "dosen_id" },
   0, // id is first argument
-  deleteKuisImpl
+  deleteKuisImpl,
 );
 
 export async function publishKuis(id: string): Promise<Kuis> {
@@ -329,10 +343,10 @@ async function duplicateKuisImpl(kuisId: string): Promise<Kuis> {
 
 // 🔒 PROTECTED: Only owner dosen can duplicate kuis
 export const duplicateKuis = requirePermissionAndOwnership(
-  'manage:kuis',
-  { table: 'kuis', ownerField: 'dosen_id' },
+  "manage:kuis",
+  { table: "kuis", ownerField: "dosen_id" },
   0, // kuisId is first argument
-  duplicateKuisImpl
+  duplicateKuisImpl,
 );
 
 // ============================================================================
@@ -404,7 +418,7 @@ async function createSoalImpl(data: CreateSoalData): Promise<Soal> {
 }
 
 // 🔒 PROTECTED: Only dosen can create soal
-export const createSoal = requirePermission('manage:soal', createSoalImpl);
+export const createSoal = requirePermission("manage:soal", createSoalImpl);
 
 // Internal implementation (unwrapped)
 async function updateSoalImpl(
@@ -433,7 +447,7 @@ async function updateSoalImpl(
 }
 
 // 🔒 PROTECTED: Only dosen can update soal
-export const updateSoal = requirePermission('manage:soal', updateSoalImpl);
+export const updateSoal = requirePermission("manage:soal", updateSoalImpl);
 
 // Internal implementation (unwrapped)
 async function deleteSoalImpl(id: string): Promise<boolean> {
@@ -447,7 +461,7 @@ async function deleteSoalImpl(id: string): Promise<boolean> {
 }
 
 // 🔒 PROTECTED: Only dosen can delete soal
-export const deleteSoal = requirePermission('manage:soal', deleteSoalImpl);
+export const deleteSoal = requirePermission("manage:soal", deleteSoalImpl);
 
 // Internal implementation (unwrapped)
 async function reorderSoalImpl(
@@ -468,7 +482,7 @@ async function reorderSoalImpl(
 }
 
 // 🔒 PROTECTED: Only dosen can reorder soal
-export const reorderSoal = requirePermission('manage:soal', reorderSoalImpl);
+export const reorderSoal = requirePermission("manage:soal", reorderSoalImpl);
 
 // ============================================================================
 // ATTEMPT OPERATIONS (MAHASISWA)
@@ -504,13 +518,8 @@ export async function getAttempts(
       });
     }
 
-    if (filters?.is_synced !== undefined) {
-      filterConditions.push({
-        column: "is_synced",
-        operator: "eq" as const,
-        value: filters.is_synced,
-      });
-    }
+    // Note: is_synced filter removed - column doesn't exist in database schema
+    // This field is only used for client-side state tracking
 
     const options = {
       select: `
@@ -613,15 +622,33 @@ export async function getAttemptById(id: string): Promise<AttemptKuis> {
 }
 
 // Internal implementation (unwrapped)
-async function startAttemptImpl(
-  data: StartAttemptData,
-): Promise<AttemptKuis> {
+async function startAttemptImpl(data: StartAttemptData): Promise<AttemptKuis> {
   try {
+    // Get all existing attempts for this quiz and mahasiswa
     const existingAttempts = await getAttempts({
       kuis_id: data.kuis_id,
       mahasiswa_id: data.mahasiswa_id,
     });
 
+    // ✅ Check if there's an ongoing attempt (in_progress)
+    const ongoingAttempt = existingAttempts.find(
+      (attempt) => attempt.status === "in_progress"
+    );
+
+    if (ongoingAttempt) {
+      console.log("✅ Resuming existing attempt:", ongoingAttempt.id);
+      return ongoingAttempt; // Resume existing attempt
+    }
+
+    // ✅ Check max_attempts (if set)
+    const quiz = await getKuisById(data.kuis_id);
+    if (quiz.max_attempts && existingAttempts.length >= quiz.max_attempts) {
+      throw new Error(
+        `Anda sudah mencapai batas maksimal ${quiz.max_attempts} kali percobaan`
+      );
+    }
+
+    // ✅ Create new attempt
     const attemptNumber = existingAttempts.length + 1;
 
     const attemptData = {
@@ -632,7 +659,34 @@ async function startAttemptImpl(
       started_at: new Date().toISOString(),
     };
 
-    return await insert<AttemptKuis>("attempt_kuis", attemptData);
+    console.log("✅ Creating new attempt #", attemptNumber);
+
+    try {
+      return await insert<AttemptKuis>("attempt_kuis", attemptData);
+    } catch (insertError: any) {
+      // Handle duplicate attempt (race condition)
+      if (insertError?.code === "CONFLICT" || insertError?.code === "23505") {
+        console.log("⚠️ Attempt already exists, fetching existing attempt...");
+
+        // Retry getting attempts (might be cache issue)
+        const retryAttempts = await getAttempts({
+          kuis_id: data.kuis_id,
+          mahasiswa_id: data.mahasiswa_id,
+        });
+
+        const existingAttempt = retryAttempts.find(
+          (attempt) => attempt.status === "in_progress"
+        );
+
+        if (existingAttempt) {
+          console.log("✅ Found existing attempt:", existingAttempt.id);
+          return existingAttempt;
+        }
+      }
+
+      // If not a conflict error or can't find existing attempt, rethrow
+      throw insertError;
+    }
   } catch (error) {
     const apiError = handleError(error);
     logError(apiError, "startAttempt");
@@ -641,22 +695,20 @@ async function startAttemptImpl(
 }
 
 // 🔒 PROTECTED: Only mahasiswa can start attempt
-export const startAttempt = requirePermission('create:attempt_kuis', startAttemptImpl);
+export const startAttempt = requirePermission(
+  "create:attempt_kuis",
+  startAttemptImpl,
+);
 
 // Internal implementation (unwrapped)
+// ✅ FASE 3 Week 4: Updated to use versioned API with optimistic locking
 async function submitQuizImpl(data: SubmitQuizData): Promise<AttemptKuis> {
   try {
-    const updateData = {
-      status: "submitted" as const,
-      submitted_at: new Date().toISOString(),
-      sisa_waktu: data.sisa_waktu,
-    };
+    // Import versioned wrapper dynamically to avoid circular dependency
+    const { submitQuizSafe } = await import("./kuis-versioned-simple.api");
 
-    return await update<AttemptKuis>(
-      "attempt_kuis",
-      data.attempt_id,
-      updateData,
-    );
+    // Use versioned wrapper - handles conflict auto-resolve
+    return await submitQuizSafe(data);
   } catch (error) {
     const apiError = handleError(error);
     logError(apiError, "submitQuiz");
@@ -665,7 +717,10 @@ async function submitQuizImpl(data: SubmitQuizData): Promise<AttemptKuis> {
 }
 
 // 🔒 PROTECTED: Only mahasiswa can submit quiz
-export const submitQuiz = requirePermission('update:attempt_kuis', submitQuizImpl);
+export const submitQuiz = requirePermission(
+  "update:attempt_kuis",
+  submitQuizImpl,
+);
 
 // ============================================================================
 // JAWABAN (ANSWER) OPERATIONS
@@ -699,33 +754,14 @@ export async function getJawabanByAttempt(
 }
 
 // Internal implementation (unwrapped)
+// ✅ FASE 3 Week 4: Updated to use versioned API with optimistic locking
 async function submitAnswerImpl(data: SubmitAnswerData): Promise<Jawaban> {
   try {
-    const existing = await queryWithFilters<Jawaban>("jawaban", [
-      {
-        column: "attempt_id",
-        operator: "eq" as const,
-        value: data.attempt_id,
-      },
-      {
-        column: "soal_id",
-        operator: "eq" as const,
-        value: data.soal_id,
-      },
-    ]);
+    // Import versioned wrapper dynamically to avoid circular dependency
+    const { submitAnswerSafe } = await import("./kuis-versioned-simple.api");
 
-    const jawabanData = {
-      attempt_id: data.attempt_id,
-      soal_id: data.soal_id,
-      jawaban: data.jawaban,
-      is_synced: true,
-    };
-
-    if (existing.length > 0) {
-      return await update<Jawaban>("jawaban", existing[0].id, jawabanData);
-    } else {
-      return await insert<Jawaban>("jawaban", jawabanData);
-    }
+    // Use versioned wrapper - handles conflict auto-resolve
+    return await submitAnswerSafe(data);
   } catch (error) {
     const apiError = handleError(error);
     logError(apiError, "submitAnswer");
@@ -734,9 +770,13 @@ async function submitAnswerImpl(data: SubmitAnswerData): Promise<Jawaban> {
 }
 
 // 🔒 PROTECTED: Only mahasiswa can submit answer
-export const submitAnswer = requirePermission('update:jawaban', submitAnswerImpl);
+export const submitAnswer = requirePermission(
+  "update:jawaban",
+  submitAnswerImpl,
+);
 
 // Internal implementation (unwrapped)
+// ✅ FASE 3 Week 4: Updated to use versioned API with conflict logging (manual resolution)
 async function gradeAnswerImpl(
   id: string,
   poinDiperoleh: number,
@@ -744,13 +784,16 @@ async function gradeAnswerImpl(
   feedback?: string,
 ): Promise<Jawaban> {
   try {
-    const updateData = {
-      poin_diperoleh: poinDiperoleh,
-      is_correct: isCorrect,
-      feedback: feedback,
-    };
+    // Import simplified wrapper dynamically to avoid circular dependency
+    const { gradeAnswerWithVersion } = await import("./kuis-versioned-simple.api");
 
-    return await update<Jawaban>("jawaban", id, updateData);
+    // Use simplified wrapper - direct database operation
+    return await gradeAnswerWithVersion(
+      id,
+      poinDiperoleh,
+      isCorrect,
+      feedback,
+    );
   } catch (error) {
     const apiError = handleError(error);
     logError(apiError, `gradeAnswer:${id}`);
@@ -759,7 +802,10 @@ async function gradeAnswerImpl(
 }
 
 // 🔒 PROTECTED: Only dosen can grade answer
-export const gradeAnswer = requirePermission('grade:attempt_kuis', gradeAnswerImpl);
+export const gradeAnswer = requirePermission(
+  "grade:attempt_kuis",
+  gradeAnswerImpl,
+);
 
 // ============================================================================
 // MAHASISWA DASHBOARD OPERATIONS
@@ -897,7 +943,6 @@ export async function getUpcomingQuizzes(
   }
 }
 
-
 export async function getQuizStats(mahasiswaId: string): Promise<QuizStats> {
   try {
     const attempts = await getAttempts({
@@ -985,15 +1030,18 @@ export async function canAttemptQuiz(
     }
 
     const now = new Date();
-    const startDate = new Date(quiz.tanggal_mulai);
-    const endDate = new Date(quiz.tanggal_selesai);
+    // ✅ If dates not set, allow attempt
+    if (quiz.tanggal_mulai && quiz.tanggal_selesai) {
+      const startDate = new Date(quiz.tanggal_mulai);
+      const endDate = new Date(quiz.tanggal_selesai);
 
-    if (now < startDate) {
-      return { canAttempt: false, reason: "Kuis belum dimulai" };
-    }
+      if (now < startDate) {
+        return { canAttempt: false, reason: "Kuis belum dimulai" };
+      }
 
-    if (now > endDate) {
-      return { canAttempt: false, reason: "Kuis sudah berakhir" };
+      if (now > endDate) {
+        return { canAttempt: false, reason: "Kuis sudah berakhir" };
+      }
     }
 
     const attempts = await getAttempts({
@@ -1029,16 +1077,16 @@ export async function canAttemptQuiz(
 // OFFLINE SUPPORT
 // ============================================================================
 
-import { indexedDBManager } from '@/lib/offline/indexeddb';
+import { indexedDBManager } from "@/lib/offline/indexeddb";
 
 /**
  * Store names for offline caching
  */
 const OFFLINE_STORES = {
-  QUIZ: 'offline_quiz',
-  QUESTIONS: 'offline_questions',
-  ANSWERS: 'offline_answers',
-  ATTEMPTS: 'offline_attempts',
+  QUIZ: "offline_quiz",
+  QUESTIONS: "offline_questions",
+  ANSWERS: "offline_answers",
+  ATTEMPTS: "offline_attempts",
 } as const;
 
 /**
@@ -1046,30 +1094,59 @@ const OFFLINE_STORES = {
  */
 export async function cacheQuizOffline(quiz: Kuis): Promise<void> {
   try {
-    await indexedDBManager.create(OFFLINE_STORES.QUIZ, {
-      id: quiz.id,
-      data: quiz,
-      cachedAt: new Date().toISOString(),
-    });
+    // Check if already cached
+    const existing = await indexedDBManager.getById(OFFLINE_STORES.QUIZ, quiz.id);
+
+    if (existing) {
+      // Update existing cache
+      await indexedDBManager.update(OFFLINE_STORES.QUIZ, quiz.id, {
+        id: quiz.id,
+        data: quiz,
+        cachedAt: new Date().toISOString(),
+      });
+    } else {
+      // Create new cache
+      await indexedDBManager.create(OFFLINE_STORES.QUIZ, {
+        id: quiz.id,
+        data: quiz,
+        cachedAt: new Date().toISOString(),
+      });
+    }
   } catch (error) {
-    console.error('Failed to cache quiz offline:', error);
-    throw error;
+    console.error("Failed to cache quiz offline:", error);
+    // Don't throw - caching is not critical
   }
 }
 
 /**
  * Cache questions to IndexedDB for offline access
  */
-export async function cacheQuestionsOffline(kuisId: string, questions: Soal[]): Promise<void> {
+export async function cacheQuestionsOffline(
+  kuisId: string,
+  questions: Soal[],
+): Promise<void> {
   try {
-    await indexedDBManager.create(OFFLINE_STORES.QUESTIONS, {
-      id: kuisId,
-      data: questions,
-      cachedAt: new Date().toISOString(),
-    });
+    // Check if already cached
+    const existing = await indexedDBManager.getById(OFFLINE_STORES.QUESTIONS, kuisId);
+
+    if (existing) {
+      // Update existing cache
+      await indexedDBManager.update(OFFLINE_STORES.QUESTIONS, kuisId, {
+        id: kuisId,
+        data: questions,
+        cachedAt: new Date().toISOString(),
+      });
+    } else {
+      // Create new cache
+      await indexedDBManager.create(OFFLINE_STORES.QUESTIONS, {
+        id: kuisId,
+        data: questions,
+        cachedAt: new Date().toISOString(),
+      });
+    }
   } catch (error) {
-    console.error('Failed to cache questions offline:', error);
-    throw error;
+    console.error("Failed to cache questions offline:", error);
+    // Don't throw - caching is not critical
   }
 }
 
@@ -1081,7 +1158,7 @@ export async function getCachedQuiz(kuisId: string): Promise<Kuis | null> {
     const cached = await indexedDBManager.getById(OFFLINE_STORES.QUIZ, kuisId);
     return (cached as any)?.data || null;
   } catch (error) {
-    console.error('Failed to get cached quiz:', error);
+    console.error("Failed to get cached quiz:", error);
     return null;
   }
 }
@@ -1089,12 +1166,17 @@ export async function getCachedQuiz(kuisId: string): Promise<Kuis | null> {
 /**
  * Get cached questions from IndexedDB
  */
-export async function getCachedQuestions(kuisId: string): Promise<Soal[] | null> {
+export async function getCachedQuestions(
+  kuisId: string,
+): Promise<Soal[] | null> {
   try {
-    const cached = await indexedDBManager.getById(OFFLINE_STORES.QUESTIONS, kuisId);
+    const cached = await indexedDBManager.getById(
+      OFFLINE_STORES.QUESTIONS,
+      kuisId,
+    );
     return (cached as any)?.data || null;
   } catch (error) {
-    console.error('Failed to get cached questions:', error);
+    console.error("Failed to get cached questions:", error);
     return null;
   }
 }
@@ -1105,7 +1187,7 @@ export async function getCachedQuestions(kuisId: string): Promise<Soal[] | null>
 export async function saveAnswerOffline(
   attemptId: string,
   soalId: string,
-  jawaban: string
+  jawaban: string,
 ): Promise<void> {
   try {
     const answerId = `${attemptId}_${soalId}`;
@@ -1118,7 +1200,7 @@ export async function saveAnswerOffline(
       synced: false,
     });
   } catch (error) {
-    console.error('Failed to save answer offline:', error);
+    console.error("Failed to save answer offline:", error);
     throw error;
   }
 }
@@ -1126,11 +1208,13 @@ export async function saveAnswerOffline(
 /**
  * Get offline answers for an attempt
  */
-export async function getOfflineAnswers(attemptId: string): Promise<Record<string, string>> {
+export async function getOfflineAnswers(
+  attemptId: string,
+): Promise<Record<string, string>> {
   try {
     const allAnswers = await indexedDBManager.getAll(OFFLINE_STORES.ANSWERS);
     const attemptAnswers = allAnswers.filter(
-      (answer: any) => answer.attempt_id === attemptId
+      (answer: any) => answer.attempt_id === attemptId,
     );
 
     const answersMap: Record<string, string> = {};
@@ -1140,7 +1224,7 @@ export async function getOfflineAnswers(attemptId: string): Promise<Record<strin
 
     return answersMap;
   } catch (error) {
-    console.error('Failed to get offline answers:', error);
+    console.error("Failed to get offline answers:", error);
     return {};
   }
 }
@@ -1150,26 +1234,44 @@ export async function getOfflineAnswers(attemptId: string): Promise<Record<strin
  */
 export async function cacheAttemptOffline(attempt: AttemptKuis): Promise<void> {
   try {
-    await indexedDBManager.create(OFFLINE_STORES.ATTEMPTS, {
-      id: attempt.id,
-      data: attempt,
-      cachedAt: new Date().toISOString(),
-    });
+    // Check if already cached
+    const existing = await indexedDBManager.getById(OFFLINE_STORES.ATTEMPTS, attempt.id);
+
+    if (existing) {
+      // Update existing cache
+      await indexedDBManager.update(OFFLINE_STORES.ATTEMPTS, attempt.id, {
+        id: attempt.id,
+        data: attempt,
+        cachedAt: new Date().toISOString(),
+      });
+    } else {
+      // Create new cache
+      await indexedDBManager.create(OFFLINE_STORES.ATTEMPTS, {
+        id: attempt.id,
+        data: attempt,
+        cachedAt: new Date().toISOString(),
+      });
+    }
   } catch (error) {
-    console.error('Failed to cache attempt offline:', error);
-    throw error;
+    console.error("Failed to cache attempt offline:", error);
+    // Don't throw - caching is not critical
   }
 }
 
 /**
  * Get cached attempt from IndexedDB
  */
-export async function getCachedAttempt(attemptId: string): Promise<AttemptKuis | null> {
+export async function getCachedAttempt(
+  attemptId: string,
+): Promise<AttemptKuis | null> {
   try {
-    const cached = await indexedDBManager.getById(OFFLINE_STORES.ATTEMPTS, attemptId);
+    const cached = await indexedDBManager.getById(
+      OFFLINE_STORES.ATTEMPTS,
+      attemptId,
+    );
     return (cached as any)?.data || null;
   } catch (error) {
-    console.error('Failed to get cached attempt:', error);
+    console.error("Failed to get cached attempt:", error);
     return null;
   }
 }
@@ -1190,7 +1292,7 @@ export async function getKuisByIdOffline(id: string): Promise<Kuis> {
     // If API fails, try cache
     const cachedQuiz = await getCachedQuiz(id);
     if (cachedQuiz) {
-      console.log('Using cached quiz (offline)');
+      console.log("Using cached quiz (offline)");
       return cachedQuiz;
     }
 
@@ -1215,7 +1317,7 @@ export async function getSoalByKuisOffline(kuisId: string): Promise<Soal[]> {
     // If API fails, try cache
     const cachedQuestions = await getCachedQuestions(kuisId);
     if (cachedQuestions) {
-      console.log('Using cached questions (offline)');
+      console.log("Using cached questions (offline)");
       return cachedQuestions;
     }
 
@@ -1226,15 +1328,20 @@ export async function getSoalByKuisOffline(kuisId: string): Promise<Soal[]> {
 
 /**
  * Offline-first submitAnswer - saves offline if no connection
+ * ✅ FASE 3 Week 4: Uses versioned API for online saves
  */
-export async function submitAnswerOffline(data: SubmitAnswerData): Promise<Jawaban | null> {
+export async function submitAnswerOffline(
+  data: SubmitAnswerData,
+): Promise<Jawaban | null> {
   try {
-    // Try online save first
+    // Try online save first (now with version check)
     return await submitAnswer(data);
   } catch (error) {
     // Save offline instead
     await saveAnswerOffline(data.attempt_id, data.soal_id, data.jawaban);
-    console.log('Answer saved offline, will sync when online');
+    console.log(
+      "Answer saved offline, will sync when online with version check",
+    );
 
     // Return a mock Jawaban object for offline saves
     return {
@@ -1251,6 +1358,7 @@ export async function submitAnswerOffline(data: SubmitAnswerData): Promise<Jawab
 
 /**
  * Sync offline answers to server
+ * ✅ FASE 3 Week 4: Updated to use versioned API with optimistic locking
  */
 export async function syncOfflineAnswers(attemptId: string): Promise<void> {
   try {
@@ -1258,76 +1366,54 @@ export async function syncOfflineAnswers(attemptId: string): Promise<void> {
     const answerIds = Object.keys(offlineAnswers);
 
     if (answerIds.length === 0) {
-      console.log('No offline answers to sync');
+      console.log("No offline answers to sync");
       return;
     }
 
-    console.log(`Syncing ${answerIds.length} offline answers with conflict resolution...`);
+    console.log(
+      `Syncing ${answerIds.length} offline answers with optimistic locking...`,
+    );
 
-    // Sync each answer with conflict resolution
+    // Import versioned wrapper
+    const { submitAnswerWithVersion } = await import("./kuis-versioned-simple.api");
+
+    // Sync each answer with version check
     for (const soalId of answerIds) {
       try {
         const answerId = `${attemptId}_${soalId}`;
-        const localAnswerData = await indexedDBManager.getById(OFFLINE_STORES.ANSWERS, answerId);
+        const localAnswerData = await indexedDBManager.getById(
+          OFFLINE_STORES.ANSWERS,
+          answerId,
+        );
 
         if (!localAnswerData) {
           console.warn(`Local answer ${answerId} not found`);
           continue;
         }
 
-        // Check if remote answer exists
-        const existingAnswers = await queryWithFilters<Jawaban>("jawaban", [
-          { column: "attempt_id", operator: "eq" as const, value: attemptId },
-          { column: "soal_id", operator: "eq" as const, value: soalId },
-        ]);
+        // Use simplified wrapper - direct database operation
+        const result = await submitAnswerWithVersion({
+          attempt_id: attemptId,
+          soal_id: soalId,
+          jawaban: offlineAnswers[soalId],
+        });
 
-        if (existingAnswers.length > 0) {
-          // Conflict detected - use conflict resolver
-          const remoteAnswer = existingAnswers[0] as any;
-          const localTimestamp = (localAnswerData as any).savedAt || Date.now();
-          const remoteTimestamp = remoteAnswer.updated_at
-            ? new Date((remoteAnswer as any).updated_at).getTime()
-            : new Date((remoteAnswer as any).created_at).getTime();
-
-          const resolution = (conflictResolver.resolve as any)({
-            local: { jawaban: offlineAnswers[soalId], savedAt: localTimestamp },
-            remote: { jawaban: remoteAnswer.jawaban, savedAt: remoteTimestamp },
-            localTimestamp,
-            remoteTimestamp,
-            dataType: 'quiz_answer',
-            id: answerId,
-          });
-
-          console.log(`[Conflict] ${soalId}: ${resolution.winner} - ${resolution.reason}`);
-
-          // Only update if local wins
-          if (resolution.winner === 'local') {
-            await submitAnswer({
-              attempt_id: attemptId,
-              soal_id: soalId,
-              jawaban: offlineAnswers[soalId],
-            });
-          }
+        if (result.success) {
+          console.log(`[Synced] ${soalId}: Success`);
+          // Delete from offline storage after successful sync
+          await indexedDBManager.delete(OFFLINE_STORES.ANSWERS, answerId);
         } else {
-          // No conflict - submit new answer
-          await submitAnswer({
-            attempt_id: attemptId,
-            soal_id: soalId,
-            jawaban: offlineAnswers[soalId],
-          });
+          console.warn(`[Failed] ${soalId}: ${result.error}`);
         }
-
-        // Delete from offline storage
-        await indexedDBManager.delete(OFFLINE_STORES.ANSWERS, answerId);
       } catch (error) {
         console.error(`Failed to sync answer ${soalId}:`, error);
         // Continue with other answers
       }
     }
 
-    console.log('Offline answers synced successfully');
+    console.log("Offline answers synced successfully");
   } catch (error) {
-    console.error('Failed to sync offline answers:', error);
+    console.error("Failed to sync offline answers:", error);
     throw error;
   }
 }

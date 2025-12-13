@@ -8,7 +8,7 @@
  * - Manage student enrollments (activate/deactivate)
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from "react";
 import {
   Plus,
   Edit,
@@ -19,10 +19,10 @@ import {
   UserPlus,
   UserMinus,
   CheckCircle,
-  XCircle
-} from 'lucide-react';
-import { toast } from 'sonner';
-import { normalize } from '@/lib/utils/normalize';
+  XCircle,
+} from "lucide-react";
+import { toast } from "sonner";
+import { normalize } from "@/lib/utils/normalize";
 
 // UI Components
 import {
@@ -31,18 +31,18 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { DeleteConfirmDialog } from '@/components/common/DeleteConfirmDialog';
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { DeleteConfirmDialog } from "@/components/common/DeleteConfirmDialog";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -50,7 +50,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   Table,
   TableBody,
@@ -58,9 +58,9 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 // API & Types
 import {
@@ -73,12 +73,14 @@ import {
   unenrollStudent,
   toggleStudentStatus,
   getAllMahasiswa,
-  createOrEnrollMahasiswa,
   type KelasMahasiswa,
-} from '@/lib/api/kelas.api';
-import type { Kelas } from '@/types/kelas.types';
+} from "@/lib/api/kelas.api";
+import type { Kelas } from "@/types/kelas.types";
 
 export default function KelasPage() {
+  // Ref untuk prevent double load di strict mode
+  const hasLoadedRef = useRef(false);
+
   // State
   const [kelasList, setKelasList] = useState<Kelas[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -87,7 +89,7 @@ export default function KelasPage() {
   const [showFormDialog, setShowFormDialog] = useState(false);
   const [editingKelas, setEditingKelas] = useState<Kelas | null>(null);
   const [formData, setFormData] = useState({
-    nama_kelas: '',
+    nama_kelas: "",
     semester_ajaran: 1,
     tahun_ajaran: `${new Date().getFullYear()}/${new Date().getFullYear() + 1}`,
   });
@@ -95,26 +97,24 @@ export default function KelasPage() {
   // Student management state
   const [showStudentsDialog, setShowStudentsDialog] = useState(false);
   const [selectedKelas, setSelectedKelas] = useState<Kelas | null>(null);
-  const [enrolledStudents, setEnrolledStudents] = useState<KelasMahasiswa[]>([]);
+  const [enrolledStudents, setEnrolledStudents] = useState<KelasMahasiswa[]>(
+    [],
+  );
   const [allMahasiswa, setAllMahasiswa] = useState<any[]>([]);
   const [showAddStudentDialog, setShowAddStudentDialog] = useState(false);
-  const [selectedMahasiswaId, setSelectedMahasiswaId] = useState('');
+  const [selectedMahasiswaId, setSelectedMahasiswaId] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [mahasiswaSubscription, setMahasiswaSubscription] = useState<any>(null);
-
-  // Manual student input state
-  const [inputMode, setInputMode] = useState<'select' | 'manual'>('manual');
-  const [manualStudentData, setManualStudentData] = useState({
-    full_name: '',
-    nim: '',
-    email: '',
-  });
 
   // Delete confirmation state
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [deletingKelas, setDeletingKelas] = useState<Kelas | null>(null);
 
   useEffect(() => {
+    // Prevent double load in React Strict Mode
+    if (hasLoadedRef.current) return;
+    hasLoadedRef.current = true;
+
     loadData();
   }, []);
 
@@ -132,7 +132,7 @@ export default function KelasPage() {
     try {
       await loadKelas();
     } catch (error) {
-      toast.error('Gagal memuat data');
+      toast.error("Gagal memuat data");
     } finally {
       setIsLoading(false);
     }
@@ -140,19 +140,21 @@ export default function KelasPage() {
 
   const loadKelas = async () => {
     try {
+      const startTime = performance.now();
       const data = await getKelas({ is_active: undefined }); // Load all kelas
+      const endTime = performance.now();
+      console.log(`⏱️ Load kelas took: ${(endTime - startTime).toFixed(2)}ms`);
       setKelasList(data);
     } catch (error: any) {
-      console.error('Error loading kelas:', error);
+      console.error("Error loading kelas:", error);
       throw error;
     }
   };
 
-
   const handleCreate = () => {
     setEditingKelas(null);
     setFormData({
-      nama_kelas: '',
+      nama_kelas: "",
       semester_ajaran: 1,
       tahun_ajaran: `${new Date().getFullYear()}/${new Date().getFullYear() + 1}`,
     });
@@ -171,7 +173,7 @@ export default function KelasPage() {
 
   const handleSaveKelas = async () => {
     if (!formData.nama_kelas) {
-      toast.error('Nama kelas wajib diisi');
+      toast.error("Nama kelas wajib diisi");
       return;
     }
 
@@ -184,16 +186,26 @@ export default function KelasPage() {
       };
 
       if (editingKelas) {
+        const startTime = performance.now();
         await updateKelas(editingKelas.id, normalizedFormData);
-        toast.success('Kelas berhasil diupdate');
+        const endTime = performance.now();
+        console.log(
+          `⏱️ Update kelas took: ${(endTime - startTime).toFixed(2)}ms`,
+        );
+        toast.success("Kelas berhasil diupdate");
       } else {
+        const startTime = performance.now();
         await createKelas({ ...normalizedFormData, is_active: true });
-        toast.success('Kelas berhasil dibuat');
+        const endTime = performance.now();
+        console.log(
+          `⏱️ Create kelas took: ${(endTime - startTime).toFixed(2)}ms`,
+        );
+        toast.success("Kelas berhasil dibuat");
       }
       setShowFormDialog(false);
       await loadKelas();
     } catch (error: any) {
-      toast.error(error.message || 'Gagal menyimpan kelas');
+      toast.error(error.message || "Gagal menyimpan kelas");
     } finally {
       setIsProcessing(false);
     }
@@ -209,12 +221,12 @@ export default function KelasPage() {
 
     try {
       await deleteKelas(deletingKelas.id);
-      toast.success('Kelas berhasil dihapus');
+      toast.success("Kelas berhasil dihapus");
       setIsDeleteDialogOpen(false);
       setDeletingKelas(null);
       await loadKelas();
     } catch (error: any) {
-      toast.error(error.message || 'Gagal menghapus kelas');
+      toast.error(error.message || "Gagal menghapus kelas");
     }
   };
 
@@ -232,33 +244,33 @@ export default function KelasPage() {
       setShowStudentsDialog(true);
 
       // ✅ Setup realtime subscription untuk mahasiswa baru
-      const { supabase } = await import('@/lib/supabase/client');
+      const { supabase } = await import("@/lib/supabase/client");
       const subscription = supabase
         .channel(`mahasiswa-updates-${kelas.id}`)
         .on(
-          'postgres_changes',
+          "postgres_changes",
           {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'mahasiswa',
+            event: "INSERT",
+            schema: "public",
+            table: "mahasiswa",
           },
           async () => {
             // Reload mahasiswa list saat ada mahasiswa baru
             try {
               const updatedMahasiswa = await getAllMahasiswa();
               setAllMahasiswa(updatedMahasiswa);
-              toast.success('Mahasiswa baru tersedia untuk dipilih');
+              toast.success("Mahasiswa baru tersedia untuk dipilih");
             } catch (error) {
-              console.error('Error reloading mahasiswa:', error);
+              console.error("Error reloading mahasiswa:", error);
             }
-          }
+          },
         )
         .subscribe();
 
       // Store subscription untuk cleanup nanti
       setMahasiswaSubscription(subscription);
     } catch (error: any) {
-      toast.error('Gagal memuat data mahasiswa');
+      toast.error("Gagal memuat data mahasiswa");
     } finally {
       setIsProcessing(false);
     }
@@ -267,51 +279,23 @@ export default function KelasPage() {
   const handleAddStudent = async () => {
     if (!selectedKelas) return;
 
-    // Validate input based on mode
-    if (inputMode === 'manual') {
-      if (!manualStudentData.nim || !manualStudentData.full_name || !manualStudentData.email) {
-        toast.error('Lengkapi semua field mahasiswa');
-        return;
-      }
-    } else {
-      if (!selectedMahasiswaId) {
-        toast.error('Pilih mahasiswa');
-        return;
-      }
+    // Validate mahasiswa dipilih
+    if (!selectedMahasiswaId) {
+      toast.error("Pilih mahasiswa");
+      return;
     }
 
     setIsProcessing(true);
     try {
-      if (inputMode === 'manual') {
-        // ✅ Normalize student data before saving
-        const normalizedStudentData = {
-          full_name: normalize.fullName(manualStudentData.full_name),
-          nim: normalize.nim(manualStudentData.nim),
-          email: normalize.email(manualStudentData.email),
-        };
-
-        // Create or enroll mahasiswa using manual input
-        const result = await createOrEnrollMahasiswa(selectedKelas.id, normalizedStudentData);
-        if (result.success) {
-          toast.success(result.message);
-          const enrolled = await getEnrolledStudents(selectedKelas.id);
-          setEnrolledStudents(enrolled);
-          setShowAddStudentDialog(false);
-          setManualStudentData({ full_name: '', nim: '', email: '' });
-        } else {
-          toast.error(result.message);
-        }
-      } else {
-        // Enroll existing mahasiswa
-        await enrollStudent(selectedKelas.id, selectedMahasiswaId);
-        toast.success('Mahasiswa berhasil ditambahkan');
-        const enrolled = await getEnrolledStudents(selectedKelas.id);
-        setEnrolledStudents(enrolled);
-        setShowAddStudentDialog(false);
-        setSelectedMahasiswaId('');
-      }
+      // Enroll existing mahasiswa
+      await enrollStudent(selectedKelas.id, selectedMahasiswaId);
+      toast.success("Mahasiswa berhasil ditambahkan");
+      const enrolled = await getEnrolledStudents(selectedKelas.id);
+      setEnrolledStudents(enrolled);
+      setShowAddStudentDialog(false);
+      setSelectedMahasiswaId("");
     } catch (error: any) {
-      toast.error(error.message || 'Gagal menambahkan mahasiswa');
+      toast.error(error.message || "Gagal menambahkan mahasiswa");
     } finally {
       setIsProcessing(false);
     }
@@ -319,32 +303,35 @@ export default function KelasPage() {
 
   const handleRemoveStudent = async (mahasiswaId: string) => {
     if (!selectedKelas) return;
-    if (!confirm('Hapus mahasiswa dari kelas ini?')) return;
+    if (!confirm("Hapus mahasiswa dari kelas ini?")) return;
 
     setIsProcessing(true);
     try {
       await unenrollStudent(selectedKelas.id, mahasiswaId);
-      toast.success('Mahasiswa berhasil dihapus');
+      toast.success("Mahasiswa berhasil dihapus");
       const enrolled = await getEnrolledStudents(selectedKelas.id);
       setEnrolledStudents(enrolled);
     } catch (error: any) {
-      toast.error(error.message || 'Gagal menghapus mahasiswa');
+      toast.error(error.message || "Gagal menghapus mahasiswa");
     } finally {
       setIsProcessing(false);
     }
   };
 
-  const handleToggleStatus = async (mahasiswaId: string, currentStatus: boolean) => {
+  const handleToggleStatus = async (
+    mahasiswaId: string,
+    currentStatus: boolean,
+  ) => {
     if (!selectedKelas) return;
 
     setIsProcessing(true);
     try {
       await toggleStudentStatus(selectedKelas.id, mahasiswaId, !currentStatus);
-      toast.success('Status berhasil diubah');
+      toast.success("Status berhasil diubah");
       const enrolled = await getEnrolledStudents(selectedKelas.id);
       setEnrolledStudents(enrolled);
     } catch (error: any) {
-      toast.error(error.message || 'Gagal mengubah status');
+      toast.error(error.message || "Gagal mengubah status");
     } finally {
       setIsProcessing(false);
     }
@@ -385,8 +372,8 @@ export default function KelasPage() {
       <Alert>
         <AlertCircle className="h-4 w-4" />
         <AlertDescription>
-          Setelah membuat kelas, gunakan tombol &quot;Kelola Mahasiswa&quot; untuk menambahkan
-          mahasiswa ke kelas tersebut.
+          Setelah membuat kelas, gunakan tombol &quot;Kelola Mahasiswa&quot;
+          untuk menambahkan mahasiswa ke kelas tersebut.
         </AlertDescription>
       </Alert>
 
@@ -394,14 +381,13 @@ export default function KelasPage() {
       <Card>
         <CardHeader>
           <CardTitle>Daftar Kelas</CardTitle>
-          <CardDescription>
-            Total {kelasList.length} kelas
-          </CardDescription>
+          <CardDescription>Total {kelasList.length} kelas</CardDescription>
         </CardHeader>
         <CardContent>
           {kelasList.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
-              Belum ada kelas. Klik &quot;Buat Kelas&quot; untuk membuat kelas baru.
+              Belum ada kelas. Klik &quot;Buat Kelas&quot; untuk membuat kelas
+              baru.
             </div>
           ) : (
             <Table>
@@ -423,8 +409,10 @@ export default function KelasPage() {
                       Semester {kelas.semester_ajaran} • {kelas.tahun_ajaran}
                     </TableCell>
                     <TableCell>
-                      <Badge variant={kelas.is_active ? 'default' : 'secondary'}>
-                        {kelas.is_active ? 'Aktif' : 'Tidak Aktif'}
+                      <Badge
+                        variant={kelas.is_active ? "default" : "secondary"}
+                      >
+                        {kelas.is_active ? "Aktif" : "Tidak Aktif"}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right space-x-2">
@@ -464,7 +452,7 @@ export default function KelasPage() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>
-              {editingKelas ? 'Edit Kelas' : 'Buat Kelas Baru'}
+              {editingKelas ? "Edit Kelas" : "Buat Kelas Baru"}
             </DialogTitle>
             <DialogDescription>
               Isi informasi kelas di bawah ini
@@ -490,7 +478,10 @@ export default function KelasPage() {
                 <Select
                   value={formData.semester_ajaran.toString()}
                   onValueChange={(value) =>
-                    setFormData({ ...formData, semester_ajaran: parseInt(value) })
+                    setFormData({
+                      ...formData,
+                      semester_ajaran: parseInt(value),
+                    })
                   }
                 >
                   <SelectTrigger>
@@ -529,8 +520,10 @@ export default function KelasPage() {
               Batal
             </Button>
             <Button onClick={handleSaveKelas} disabled={isProcessing}>
-              {isProcessing && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              {editingKelas ? 'Update' : 'Buat'}
+              {isProcessing && (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              )}
+              {editingKelas ? "Update" : "Buat"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -563,10 +556,7 @@ export default function KelasPage() {
               <p className="text-sm text-muted-foreground">
                 Total {enrolledStudents.length} mahasiswa terdaftar
               </p>
-              <Button
-                size="sm"
-                onClick={() => setShowAddStudentDialog(true)}
-              >
+              <Button size="sm" onClick={() => setShowAddStudentDialog(true)}>
                 <UserPlus className="h-4 w-4 mr-2" />
                 Tambah Mahasiswa
               </Button>
@@ -582,6 +572,7 @@ export default function KelasPage() {
                   <TableRow>
                     <TableHead>NIM</TableHead>
                     <TableHead>Nama</TableHead>
+                    <TableHead>Angkatan</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Aksi</TableHead>
@@ -594,6 +585,7 @@ export default function KelasPage() {
                       <TableCell>
                         {enrollment.mahasiswa?.users?.full_name}
                       </TableCell>
+                      <TableCell>{enrollment.mahasiswa?.angkatan}</TableCell>
                       <TableCell>
                         {enrollment.mahasiswa?.users?.email}
                       </TableCell>
@@ -604,7 +596,7 @@ export default function KelasPage() {
                           onClick={() =>
                             handleToggleStatus(
                               enrollment.mahasiswa_id,
-                              enrollment.is_active ?? false
+                              enrollment.is_active ?? false,
                             )
                           }
                         >
@@ -613,14 +605,16 @@ export default function KelasPage() {
                           ) : (
                             <XCircle className="h-4 w-4 text-red-600 mr-1" />
                           )}
-                          {enrollment.is_active ? 'Aktif' : 'Tidak Aktif'}
+                          {enrollment.is_active ? "Aktif" : "Tidak Aktif"}
                         </Button>
                       </TableCell>
                       <TableCell className="text-right">
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleRemoveStudent(enrollment.mahasiswa_id)}
+                          onClick={() =>
+                            handleRemoveStudent(enrollment.mahasiswa_id)
+                          }
                         >
                           <UserMinus className="h-4 w-4" />
                         </Button>
@@ -635,120 +629,44 @@ export default function KelasPage() {
       </Dialog>
 
       {/* Add Student Dialog */}
-      <Dialog open={showAddStudentDialog} onOpenChange={setShowAddStudentDialog}>
+      <Dialog
+        open={showAddStudentDialog}
+        onOpenChange={setShowAddStudentDialog}
+      >
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Tambah Mahasiswa</DialogTitle>
             <DialogDescription>
-              Input data mahasiswa yang akan ditambahkan ke kelas
+              Pilih mahasiswa dari list yang sudah terdaftar
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
-            {/* Mode Selector */}
-            <div className="flex gap-2 p-1 bg-muted rounded-lg">
-              <Button
-                type="button"
-                variant={inputMode === 'manual' ? 'default' : 'ghost'}
-                size="sm"
-                className="flex-1"
-                onClick={() => setInputMode('manual')}
+            <div className="space-y-2">
+              <Label>Pilih Mahasiswa</Label>
+              <Select
+                value={selectedMahasiswaId}
+                onValueChange={setSelectedMahasiswaId}
               >
-                Input Manual
-              </Button>
-              <Button
-                type="button"
-                variant={inputMode === 'select' ? 'default' : 'ghost'}
-                size="sm"
-                className="flex-1"
-                onClick={() => setInputMode('select')}
-              >
-                Pilih dari List
-              </Button>
+                <SelectTrigger>
+                  <SelectValue placeholder="Pilih mahasiswa yang sudah terdaftar" />
+                </SelectTrigger>
+                <SelectContent>
+                  {getAvailableMahasiswa().length === 0 ? (
+                    <div className="p-2 text-sm text-muted-foreground text-center">
+                      Semua mahasiswa sudah terdaftar
+                    </div>
+                  ) : (
+                    getAvailableMahasiswa().map((mhs) => (
+                      <SelectItem key={mhs.id} value={mhs.id}>
+                        {mhs.nim} - {mhs.users?.full_name} (Angkatan{" "}
+                        {mhs.angkatan})
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
             </div>
-
-            {/* Manual Input Mode */}
-            {inputMode === 'manual' && (
-              <div className="space-y-3">
-                <div className="space-y-2">
-                  <Label htmlFor="nim">NIM *</Label>
-                  <Input
-                    id="nim"
-                    placeholder="Contoh: 12345678"
-                    value={manualStudentData.nim}
-                    onChange={(e) =>
-                      setManualStudentData({
-                        ...manualStudentData,
-                        nim: e.target.value
-                      })
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="full_name">Nama Lengkap *</Label>
-                  <Input
-                    id="full_name"
-                    placeholder="Contoh: Ahmad Suryadi"
-                    value={manualStudentData.full_name}
-                    onChange={(e) =>
-                      setManualStudentData({
-                        ...manualStudentData,
-                        full_name: e.target.value
-                      })
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email *</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="Contoh: ahmad@student.ac.id"
-                    value={manualStudentData.email}
-                    onChange={(e) =>
-                      setManualStudentData({
-                        ...manualStudentData,
-                        email: e.target.value
-                      })
-                    }
-                  />
-                </div>
-                <Alert>
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription className="text-xs">
-                    Password default: <strong>NIM + 123</strong>. Mahasiswa bisa ubah setelah login.
-                  </AlertDescription>
-                </Alert>
-              </div>
-            )}
-
-            {/* Select Mode */}
-            {inputMode === 'select' && (
-              <div className="space-y-2">
-                <Label>Pilih Mahasiswa</Label>
-                <Select
-                  value={selectedMahasiswaId}
-                  onValueChange={setSelectedMahasiswaId}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Pilih mahasiswa yang sudah terdaftar" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {getAvailableMahasiswa().length === 0 ? (
-                      <div className="p-2 text-sm text-muted-foreground text-center">
-                        Semua mahasiswa sudah terdaftar
-                      </div>
-                    ) : (
-                      getAvailableMahasiswa().map((mhs) => (
-                        <SelectItem key={mhs.id} value={mhs.id}>
-                          {mhs.nim} - {mhs.users?.full_name}
-                        </SelectItem>
-                      ))
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
           </div>
 
           <DialogFooter>
@@ -756,18 +674,15 @@ export default function KelasPage() {
               variant="outline"
               onClick={() => {
                 setShowAddStudentDialog(false);
-                setSelectedMahasiswaId('');
-                setManualStudentData({ full_name: '', nim: '', email: '' });
-                setInputMode('manual');
+                setSelectedMahasiswaId("");
               }}
             >
               Batal
             </Button>
-            <Button
-              onClick={handleAddStudent}
-              disabled={isProcessing}
-            >
-              {isProcessing && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+            <Button onClick={handleAddStudent} disabled={isProcessing}>
+              {isProcessing && (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              )}
               Tambah Mahasiswa
             </Button>
           </DialogFooter>
@@ -785,10 +700,10 @@ export default function KelasPage() {
           itemType="Kelas"
           description={`${deletingKelas.tahun_ajaran} - Semester ${deletingKelas.semester_ajaran}`}
           consequences={[
-            'Data kelas akan dihapus permanen',
-            'Mahasiswa yang terdaftar akan kehilangan akses ke kelas ini',
-            'Jadwal praktikum terkait akan terpengaruh',
-            'Data nilai dan presensi tidak akan terhapus',
+            "Data kelas akan dihapus permanen",
+            "Mahasiswa yang terdaftar akan kehilangan akses ke kelas ini",
+            "Jadwal praktikum terkait akan terpengaruh",
+            "Data nilai dan presensi tidak akan terhapus",
           ]}
         />
       )}

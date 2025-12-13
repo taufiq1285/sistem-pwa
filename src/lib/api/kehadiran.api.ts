@@ -3,20 +3,20 @@
  * Handle student attendance/absen management
  */
 
-import { supabase } from '@/lib/supabase/client';
-import { cacheAPI } from '@/lib/offline/api-cache';
-import { logger } from '@/lib/utils/logger';
-import { handleSupabaseError } from '@/lib/utils/errors';
+import { supabase } from "@/lib/supabase/client";
+import { cacheAPI } from "@/lib/offline/api-cache";
+import { logger } from "@/lib/utils/logger";
+import { handleSupabaseError } from "@/lib/utils/errors";
 import {
   requirePermission,
   requirePermissionAndOwnership,
-} from '@/lib/middleware';
+} from "@/lib/middleware";
 
 // ============================================================================
 // TYPES
 // ============================================================================
 
-export type KehadiranStatus = 'hadir' | 'izin' | 'sakit' | 'alpha';
+export type KehadiranStatus = "hadir" | "izin" | "sakit" | "alpha";
 
 export interface Kehadiran {
   id: string;
@@ -77,12 +77,13 @@ export interface KehadiranStats {
  */
 export async function getKehadiranByJadwal(
   jadwalId: string,
-  _tanggal?: string
+  _tanggal?: string,
 ): Promise<KehadiranWithMahasiswa[]> {
   try {
     const { data, error } = await supabase
-      .from('kehadiran')
-      .select(`
+      .from("kehadiran")
+      .select(
+        `
         id,
         jadwal_id,
         mahasiswa_id,
@@ -99,14 +100,15 @@ export async function getKehadiranByJadwal(
             full_name
           )
         )
-      `)
-      .eq('jadwal_id', jadwalId)
-      .order('mahasiswa(nim)', { ascending: true });
+      `,
+      )
+      .eq("jadwal_id", jadwalId)
+      .order("mahasiswa(nim)", { ascending: true });
 
     if (error) throw error;
     return (data || []) as unknown as KehadiranWithMahasiswa[];
   } catch (error) {
-    logger.error('Failed to fetch kehadiran by jadwal', { jadwalId, error });
+    logger.error("Failed to fetch kehadiran by jadwal", { jadwalId, error });
     throw handleSupabaseError(error);
   }
 }
@@ -117,12 +119,13 @@ export async function getKehadiranByJadwal(
 export async function getKehadiranByKelas(
   kelasId: string,
   startDate?: string,
-  endDate?: string
+  endDate?: string,
 ): Promise<KehadiranWithMahasiswa[]> {
   try {
     let query = supabase
-      .from('kehadiran')
-      .select(`
+      .from("kehadiran")
+      .select(
+        `
         id,
         jadwal_id,
         mahasiswa_id,
@@ -143,22 +146,25 @@ export async function getKehadiranByKelas(
           kelas_id,
           tanggal_praktikum
         )
-      `)
-      .eq('jadwal.kelas_id', kelasId);
+      `,
+      )
+      .eq("jadwal.kelas_id", kelasId);
 
     if (startDate) {
-      query = query.gte('jadwal.tanggal_praktikum', startDate);
+      query = query.gte("jadwal.tanggal_praktikum", startDate);
     }
     if (endDate) {
-      query = query.lte('jadwal.tanggal_praktikum', endDate);
+      query = query.lte("jadwal.tanggal_praktikum", endDate);
     }
 
-    const { data, error } = await query.order('created_at', { ascending: false });
+    const { data, error } = await query.order("created_at", {
+      ascending: false,
+    });
 
     if (error) throw error;
     return (data || []) as unknown as KehadiranWithMahasiswa[];
   } catch (error) {
-    logger.error('Failed to fetch kehadiran by kelas', { kelasId, error });
+    logger.error("Failed to fetch kehadiran by kelas", { kelasId, error });
     throw handleSupabaseError(error);
   }
 }
@@ -169,22 +175,24 @@ export async function getKehadiranByKelas(
 async function createKehadiranImpl(data: CreateKehadiranData): Promise<string> {
   try {
     const { data: result, error } = await supabase
-      .from('kehadiran')
+      .from("kehadiran")
       .insert(data)
-      .select('id')
+      .select("id")
       .single();
 
     if (error) throw error;
     return result.id;
   } catch (error) {
-    logger.error('Failed to create kehadiran', { data, error });
+    logger.error("Failed to create kehadiran", { data, error });
     throw handleSupabaseError(error);
   }
 }
 
 // 🔒 PROTECTED: Requires manage:kehadiran permission
-export const createKehadiran = requirePermission('manage:kehadiran', createKehadiranImpl);
-
+export const createKehadiran = requirePermission(
+  "manage:kehadiran",
+  createKehadiranImpl,
+);
 
 /**
  * Bulk create/update kehadiran (for absen per pertemuan)
@@ -200,102 +208,113 @@ async function saveKehadiranBulkImpl(data: BulkKehadiranData): Promise<void> {
 
     // Check if records exist for this jadwal (one jadwal = one attendance session)
     const { data: existing } = await supabase
-      .from('kehadiran')
-      .select('id, mahasiswa_id')
-      .eq('jadwal_id', data.jadwal_id);
+      .from("kehadiran")
+      .select("id, mahasiswa_id")
+      .eq("jadwal_id", data.jadwal_id);
 
     if (existing && existing.length > 0) {
       // Update existing records
       const updates = records.map(async (record) => {
-        const existingRecord = existing.find((e) => e.mahasiswa_id === record.mahasiswa_id);
+        const existingRecord = existing.find(
+          (e) => e.mahasiswa_id === record.mahasiswa_id,
+        );
         if (existingRecord) {
           return supabase
-            .from('kehadiran')
+            .from("kehadiran")
             .update(record)
-            .eq('id', existingRecord.id);
+            .eq("id", existingRecord.id);
         } else {
-          return supabase.from('kehadiran').insert(record);
+          return supabase.from("kehadiran").insert(record);
         }
       });
       await Promise.all(updates);
     } else {
       // Insert new records
-      const { error } = await supabase.from('kehadiran').insert(records);
+      const { error } = await supabase.from("kehadiran").insert(records);
       if (error) throw error;
     }
   } catch (error) {
-    logger.error('Failed to save bulk kehadiran', { jadwal_id: data.jadwal_id, error });
+    logger.error("Failed to save bulk kehadiran", {
+      jadwal_id: data.jadwal_id,
+      error,
+    });
     throw handleSupabaseError(error);
   }
 }
 
 // 🔒 PROTECTED: Requires manage:kehadiran permission
-export const saveKehadiranBulk = requirePermission('manage:kehadiran', saveKehadiranBulkImpl);
-
+export const saveKehadiranBulk = requirePermission(
+  "manage:kehadiran",
+  saveKehadiranBulkImpl,
+);
 
 /**
  * Update kehadiran
  */
 async function updateKehadiranImpl(
   id: string,
-  data: Partial<CreateKehadiranData>
+  data: Partial<CreateKehadiranData>,
 ): Promise<void> {
   try {
     const { error } = await supabase
-      .from('kehadiran')
+      .from("kehadiran")
       .update({ ...data, updated_at: new Date().toISOString() })
-      .eq('id', id);
+      .eq("id", id);
 
     if (error) throw error;
   } catch (error) {
-    logger.error('Failed to update kehadiran', { id, error });
+    logger.error("Failed to update kehadiran", { id, error });
     throw handleSupabaseError(error);
   }
 }
 
 // 🔒 PROTECTED: Requires manage:kehadiran permission
-export const updateKehadiran = requirePermission('manage:kehadiran', updateKehadiranImpl);
-
+export const updateKehadiran = requirePermission(
+  "manage:kehadiran",
+  updateKehadiranImpl,
+);
 
 /**
  * Delete kehadiran
  */
 async function deleteKehadiranImpl(id: string): Promise<void> {
   try {
-    const { error } = await supabase.from('kehadiran').delete().eq('id', id);
+    const { error } = await supabase.from("kehadiran").delete().eq("id", id);
     if (error) throw error;
   } catch (error) {
-    logger.error('Failed to delete kehadiran', { id, error });
+    logger.error("Failed to delete kehadiran", { id, error });
     throw handleSupabaseError(error);
   }
 }
 
 // 🔒 PROTECTED: Requires manage:kehadiran permission
-export const deleteKehadiran = requirePermission('manage:kehadiran', deleteKehadiranImpl);
-
+export const deleteKehadiran = requirePermission(
+  "manage:kehadiran",
+  deleteKehadiranImpl,
+);
 
 /**
  * Get kehadiran stats for a mahasiswa in a kelas
  */
 export async function getKehadiranStats(
   mahasiswaId: string,
-  kelasId: string
+  kelasId: string,
 ): Promise<KehadiranStats> {
   try {
     const { data, error } = await supabase
-      .from('kehadiran')
-      .select('status, jadwal!inner(kelas_id)')
-      .eq('mahasiswa_id', mahasiswaId)
-      .eq('jadwal.kelas_id', kelasId);
+      .from("kehadiran")
+      .select("status, jadwal!inner(kelas_id)")
+      .eq("mahasiswa_id", mahasiswaId)
+      .eq("jadwal.kelas_id", kelasId);
 
     if (error) throw error;
 
     const records = data || [];
     const total = records.length;
-    const hadir = records.filter((r) => r.status === 'hadir').length;
-    const izin = records.filter((r) => r.status === 'izin').length;
-    const sakit = records.filter((r) => r.status === 'sakit').length;
-    const alpha = records.filter((r) => r.status === 'alpha').length;
+    const hadir = records.filter((r) => r.status === "hadir").length;
+    const izin = records.filter((r) => r.status === "izin").length;
+    const sakit = records.filter((r) => r.status === "sakit").length;
+    const alpha = records.filter((r) => r.status === "alpha").length;
 
     return {
       total_pertemuan: total,
@@ -306,7 +325,11 @@ export async function getKehadiranStats(
       persentase_kehadiran: total > 0 ? Math.round((hadir / total) * 100) : 0,
     };
   } catch (error) {
-    logger.error('Failed to fetch kehadiran stats', { mahasiswaId, kelasId, error });
+    logger.error("Failed to fetch kehadiran stats", {
+      mahasiswaId,
+      kelasId,
+      error,
+    });
     throw handleSupabaseError(error);
   }
 }
@@ -316,20 +339,25 @@ export async function getKehadiranStats(
  */
 export async function calculateNilaiKehadiran(
   mahasiswaId: string,
-  kelasId: string
+  kelasId: string,
 ): Promise<number> {
   try {
     const stats = await getKehadiranStats(mahasiswaId, kelasId);
 
     // Formula: (Hadir + (Izin * 0.5) + (Sakit * 0.5)) / Total Pertemuan * 100
-    const totalHadir = stats.hadir + (stats.izin * 0.5) + (stats.sakit * 0.5);
-    const nilai = stats.total_pertemuan > 0
-      ? Math.round((totalHadir / stats.total_pertemuan) * 100)
-      : 0;
+    const totalHadir = stats.hadir + stats.izin * 0.5 + stats.sakit * 0.5;
+    const nilai =
+      stats.total_pertemuan > 0
+        ? Math.round((totalHadir / stats.total_pertemuan) * 100)
+        : 0;
 
     return Math.min(nilai, 100); // Cap at 100
   } catch (error) {
-    logger.error('Failed to calculate nilai kehadiran', { mahasiswaId, kelasId, error });
+    logger.error("Failed to calculate nilai kehadiran", {
+      mahasiswaId,
+      kelasId,
+      error,
+    });
     return 0; // Return 0 on error for grade calculation
   }
 }
@@ -361,12 +389,13 @@ export interface MahasiswaKehadiranRecord {
 }
 
 export async function getMahasiswaKehadiran(
-  mahasiswaId: string
+  mahasiswaId: string,
 ): Promise<MahasiswaKehadiranRecord[]> {
   try {
     const { data, error } = await supabase
-      .from('kehadiran')
-      .select(`
+      .from("kehadiran")
+      .select(
+        `
         id,
         status,
         keterangan,
@@ -387,15 +416,16 @@ export async function getMahasiswaKehadiran(
             nama_lab
           )
         )
-      `)
-      .eq('mahasiswa_id', mahasiswaId)
-      .order('jadwal(tanggal_praktikum)', { ascending: false })
+      `,
+      )
+      .eq("mahasiswa_id", mahasiswaId)
+      .order("jadwal(tanggal_praktikum)", { ascending: false })
       .limit(100);
 
     if (error) throw error;
     return (data || []) as unknown as MahasiswaKehadiranRecord[];
   } catch (error) {
-    logger.error('Failed to fetch mahasiswa kehadiran', { mahasiswaId, error });
+    logger.error("Failed to fetch mahasiswa kehadiran", { mahasiswaId, error });
     throw handleSupabaseError(error);
   }
 }

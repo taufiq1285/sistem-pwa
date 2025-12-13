@@ -4,19 +4,19 @@ import {
   Loader2Icon,
   OctagonXIcon,
   TriangleAlertIcon,
-} from "lucide-react"
-import { useTheme } from "@/lib/hooks/useTheme"
-import { Toaster as Sonner, type ToasterProps } from "sonner"
+} from "lucide-react";
+import { useTheme } from "@/lib/hooks/useTheme";
+import { Toaster as Sonner, type ToasterProps } from "sonner";
 
 const Toaster = ({ ...props }: ToasterProps) => {
   // Safely get theme with fallback
-  let effectiveTheme: "light" | "dark" = "light"
+  let effectiveTheme: "light" | "dark" = "light";
 
   try {
-    const theme = useTheme()
-    effectiveTheme = theme.effectiveTheme
+    const theme = useTheme();
+    effectiveTheme = theme.effectiveTheme;
   } catch (error) {
-    console.warn("Toaster: Failed to get theme, using light mode", error)
+    console.warn("Toaster: Failed to get theme, using light mode", error);
   }
 
   return (
@@ -40,7 +40,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
       }
       {...props}
     />
-  )
-}
+  );
+};
 
-export { Toaster }
+export { Toaster };

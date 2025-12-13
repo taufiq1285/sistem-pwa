@@ -3,31 +3,37 @@
  * Dosen bisa pilih dari list ATAU ketik manual mata kuliah & kelas
  */
 
-import { useState, useEffect } from 'react';
-import { Plus, List, Calendar as CalendarIcon, Loader2 } from 'lucide-react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { toast } from 'sonner';
-import { z } from 'zod';
-import { startOfMonth, endOfMonth, startOfWeek, endOfWeek, format } from 'date-fns';
-import { id } from 'date-fns/locale';
+import { useState, useEffect } from "react";
+import { Plus, List, Calendar as CalendarIcon, Loader2 } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { toast } from "sonner";
+import { z } from "zod";
+import {
+  startOfMonth,
+  endOfMonth,
+  startOfWeek,
+  endOfWeek,
+  format,
+} from "date-fns";
+import { id } from "date-fns/locale";
 
 // Components
-import { PageHeader } from '@/components/common/PageHeader';
-import { LoadingSpinner } from '@/components/common/LoadingSpinner';
-import { EmptyState } from '@/components/common/EmptyState';
-import { ConfirmDialog } from '@/components/common/ConfirmDialog';
-import { Calendar } from '@/components/shared/Calendar/Calendar';
-import { EventDialog } from '@/components/shared/Calendar/EventDialog';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { PageHeader } from "@/components/common/PageHeader";
+import { LoadingSpinner } from "@/components/common/LoadingSpinner";
+import { EmptyState } from "@/components/common/EmptyState";
+import { ConfirmDialog } from "@/components/common/ConfirmDialog";
+import { Calendar } from "@/components/shared/Calendar/Calendar";
+import { EventDialog } from "@/components/shared/Calendar/EventDialog";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 // Removed: Command imports (now using simple Select)
 import {
   Dialog,
@@ -36,7 +42,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
@@ -45,7 +51,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
+} from "@/components/ui/form";
 import {
   Table,
   TableBody,
@@ -53,13 +59,17 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent } from '@/components/ui/card';
-import { Calendar as CalendarPicker } from '@/components/ui/calendar';
-import { cn } from '@/lib/utils';
+} from "@/components/ui/table";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent } from "@/components/ui/card";
+import { Calendar as CalendarPicker } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
 
 // API & Types
 import {
@@ -68,14 +78,14 @@ import {
   createJadwal,
   updateJadwal,
   deleteJadwal,
-} from '@/lib/api/jadwal.api';
-import { query } from '@/lib/api/base.api';
+} from "@/lib/api/jadwal.api";
+import { query } from "@/lib/api/base.api";
 import type {
   Jadwal,
   CreateJadwalData,
   CalendarEvent,
-} from '@/types/jadwal.types';
-import { HARI_OPTIONS, JAM_PRAKTIKUM } from '@/types/jadwal.types';
+} from "@/types/jadwal.types";
+import { HARI_OPTIONS, JAM_PRAKTIKUM } from "@/types/jadwal.types";
 
 // ============================================================================
 // TYPES
@@ -113,26 +123,28 @@ interface Laboratorium {
 // VALIDATION SCHEMA
 // ============================================================================
 
-const jadwalSchema = z.object({
-  mata_kuliah_nama: z.string().min(1, 'Mata kuliah harus diisi'),
-  kelas_nama: z.string().min(1, 'Kelas harus diisi'),
-  laboratorium_id: z.string().min(1, 'Laboratorium harus dipilih'),
-  tanggal_praktikum: z.date({ message: 'Tanggal praktikum harus dipilih' }),
-  jam_mulai: z.string().min(1, 'Jam mulai harus dipilih'),
-  jam_selesai: z.string().min(1, 'Jam selesai harus dipilih'),
-  topik: z
-    .string()
-    .optional()
-    .refine(
-      (val) => !val || val.length >= 10,
-      'Topik harus minimal 10 karakter'
-    ),
-  catatan: z.string().optional(),
-  is_active: z.boolean().optional(),
-}).refine((data) => data.jam_mulai < data.jam_selesai, {
-  message: 'Jam selesai harus lebih besar dari jam mulai',
-  path: ['jam_selesai'],
-});
+const jadwalSchema = z
+  .object({
+    mata_kuliah_nama: z.string().min(1, "Mata kuliah harus diisi"),
+    kelas_nama: z.string().min(1, "Kelas harus diisi"),
+    laboratorium_id: z.string().min(1, "Laboratorium harus dipilih"),
+    tanggal_praktikum: z.date({ message: "Tanggal praktikum harus dipilih" }),
+    jam_mulai: z.string().min(1, "Jam mulai harus dipilih"),
+    jam_selesai: z.string().min(1, "Jam selesai harus dipilih"),
+    topik: z
+      .string()
+      .optional()
+      .refine(
+        (val) => !val || val.length >= 10,
+        "Topik harus minimal 10 karakter",
+      ),
+    catatan: z.string().optional(),
+    is_active: z.boolean().optional(),
+  })
+  .refine((data) => data.jam_mulai < data.jam_selesai, {
+    message: "Jam selesai harus lebih besar dari jam mulai",
+    path: ["jam_selesai"],
+  });
 
 type JadwalFormData = z.infer<typeof jadwalSchema>;
 
@@ -152,13 +164,15 @@ export default function JadwalPage() {
   // Removed: Combobox states (now using simple Select)
 
   // View state
-  const [currentView, setCurrentView] = useState<'calendar' | 'list'>('calendar');
+  const [currentView, setCurrentView] = useState<"calendar" | "list">(
+    "calendar",
+  );
   const [currentDate] = useState(new Date());
 
   // Filter state
-  const [filterKelas, setFilterKelas] = useState<string>('');
-  const [filterLab, setFilterLab] = useState<string>('');
-  const [filterHari, setFilterHari] = useState<string>('');
+  const [filterKelas, setFilterKelas] = useState<string>("");
+  const [filterLab, setFilterLab] = useState<string>("");
+  const [filterHari, setFilterHari] = useState<string>("");
 
   // Modal states
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -166,7 +180,9 @@ export default function JadwalPage() {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isEventDialogOpen, setIsEventDialogOpen] = useState(false);
   const [selectedJadwal, setSelectedJadwal] = useState<Jadwal | null>(null);
-  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(
+    null,
+  );
 
   // Loading states
   const [isCreating, setIsCreating] = useState(false);
@@ -197,7 +213,7 @@ export default function JadwalPage() {
       const events = await getCalendarEvents(calendarStart, calendarEnd);
       setCalendarEvents(events);
     } catch (error: any) {
-      toast.error('Gagal memuat data jadwal', {
+      toast.error("Gagal memuat data jadwal", {
         description: error.message,
       });
     } finally {
@@ -207,54 +223,55 @@ export default function JadwalPage() {
 
   const fetchLaboratorium = async () => {
     try {
-      const data = await query('laboratorium', {
-        select: 'id, nama_lab, kode_lab',
-        order: { column: 'nama_lab', ascending: true },
+      const data = await query("laboratorium", {
+        select: "id, nama_lab, kode_lab",
+        order: { column: "nama_lab", ascending: true },
       });
       setLaboratoriumList(data as Laboratorium[]);
     } catch (error) {
-      console.error('Failed to fetch laboratorium:', error);
+      console.error("Failed to fetch laboratorium:", error);
     }
   };
 
   const fetchMataKuliah = async () => {
     try {
-      console.log('🔵 Fetching mata kuliah...');
-      const data = await query('mata_kuliah', {
-        select: 'id, kode_mk, nama_mk, sks, semester, program_studi, is_active',
-        order: { column: 'nama_mk', ascending: true },
+      console.log("🔵 Fetching mata kuliah...");
+      const data = await query("mata_kuliah", {
+        select: "id, kode_mk, nama_mk, sks, semester, program_studi, is_active",
+        order: { column: "nama_mk", ascending: true },
       });
-      console.log('📦 Raw mata kuliah data:', data);
+      console.log("📦 Raw mata kuliah data:", data);
       const filtered = data.filter((mk: any) => mk.is_active) as MataKuliah[];
-      console.log('✅ Filtered mata kuliah (is_active=true):', filtered);
+      console.log("✅ Filtered mata kuliah (is_active=true):", filtered);
       console.table(filtered); // ← Tampilkan dalam tabel
       setMataKuliahList(filtered);
-      console.log('🔵 State mataKuliahList updated, count:', filtered.length);
+      console.log("🔵 State mataKuliahList updated, count:", filtered.length);
     } catch (error) {
-      console.error('❌ Failed to fetch mata kuliah:', error);
-      toast.error('Gagal memuat mata kuliah', {
-        description: error instanceof Error ? error.message : 'Unknown error'
+      console.error("❌ Failed to fetch mata kuliah:", error);
+      toast.error("Gagal memuat mata kuliah", {
+        description: error instanceof Error ? error.message : "Unknown error",
       });
     }
   };
 
   const fetchKelas = async () => {
     try {
-      console.log('🔵 Fetching kelas...');
-      const data = await query('kelas', {
-        select: 'id, kode_kelas, nama_kelas, mata_kuliah_id, dosen_id, tahun_ajaran, semester_ajaran, kuota, is_active',
-        order: { column: 'nama_kelas', ascending: true },
+      console.log("🔵 Fetching kelas...");
+      const data = await query("kelas", {
+        select:
+          "id, kode_kelas, nama_kelas, mata_kuliah_id, dosen_id, tahun_ajaran, semester_ajaran, kuota, is_active",
+        order: { column: "nama_kelas", ascending: true },
       });
-      console.log('📦 Raw kelas data:', data);
+      console.log("📦 Raw kelas data:", data);
       const filtered = data.filter((k: any) => k.is_active) as Kelas[];
-      console.log('✅ Filtered kelas (is_active=true):', filtered);
+      console.log("✅ Filtered kelas (is_active=true):", filtered);
       console.table(filtered); // ← Tampilkan dalam tabel
       setKelasList(filtered);
-      console.log('🔵 State kelasList updated, count:', filtered.length);
+      console.log("🔵 State kelasList updated, count:", filtered.length);
     } catch (error) {
-      console.error('❌ Failed to fetch kelas:', error);
-      toast.error('Gagal memuat kelas', {
-        description: error instanceof Error ? error.message : 'Unknown error'
+      console.error("❌ Failed to fetch kelas:", error);
+      toast.error("Gagal memuat kelas", {
+        description: error instanceof Error ? error.message : "Unknown error",
       });
     }
   };
@@ -276,14 +293,14 @@ export default function JadwalPage() {
   const createForm = useForm<JadwalFormData>({
     resolver: zodResolver(jadwalSchema),
     defaultValues: {
-      mata_kuliah_nama: '',
-      kelas_nama: '',
-      laboratorium_id: '',
+      mata_kuliah_nama: "",
+      kelas_nama: "",
+      laboratorium_id: "",
       tanggal_praktikum: new Date(),
-      jam_mulai: '08:00',
-      jam_selesai: '10:00',
-      topik: '',
-      catatan: '',
+      jam_mulai: "08:00",
+      jam_selesai: "10:00",
+      topik: "",
+      catatan: "",
       is_active: true,
     },
   });
@@ -306,11 +323,14 @@ export default function JadwalPage() {
 
       // Dosen HANYA bisa memilih kelas yang sudah ada
       // Cari kelas dari list
-      const selectedKelas = kelasList.find(k => k.nama_kelas === data.kelas_nama);
+      const selectedKelas = kelasList.find(
+        (k) => k.nama_kelas === data.kelas_nama,
+      );
 
       if (!selectedKelas) {
-        toast.error('Kelas tidak ditemukan', {
-          description: 'Pilih kelas yang sudah ada. Jika tidak ada, hubungi Admin.',
+        toast.error("Kelas tidak ditemukan", {
+          description:
+            "Pilih kelas yang sudah ada. Jika tidak ada, hubungi Admin.",
         });
         return;
       }
@@ -321,7 +341,7 @@ export default function JadwalPage() {
       const createData: CreateJadwalData = {
         kelas_id: kelasId, // ✅ Gunakan kelas yang dipilih
         laboratorium_id: data.laboratorium_id,
-        tanggal_praktikum: format(data.tanggal_praktikum, 'yyyy-MM-dd'),
+        tanggal_praktikum: format(data.tanggal_praktikum, "yyyy-MM-dd"),
         jam_mulai: data.jam_mulai,
         jam_selesai: data.jam_selesai,
         topik: data.topik || undefined,
@@ -331,12 +351,12 @@ export default function JadwalPage() {
 
       await createJadwal(createData);
 
-      toast.success('Jadwal berhasil ditambahkan');
+      toast.success("Jadwal berhasil ditambahkan");
       setIsCreateOpen(false);
       createForm.reset();
       fetchJadwal();
     } catch (error: any) {
-      toast.error('Gagal menambahkan jadwal', {
+      toast.error("Gagal menambahkan jadwal", {
         description: error.message,
       });
     } finally {
@@ -346,23 +366,27 @@ export default function JadwalPage() {
 
   const handleEdit = (jadwal: Jadwal) => {
     setSelectedJadwal(jadwal);
-    
+
     // ✅ PERBAIKAN DITERAPKAN: Ganti 'jadwal.kelas' menjadi 'jadwal.kelas_id'
-    const kelas = kelasList.find(k => k.id === jadwal.kelas_id); // ✅ Diubah sesuai instruksi Anda
-    const mataKuliah = mataKuliahList.find(mk => mk.id === kelas?.mata_kuliah_id);
-    
+    const kelas = kelasList.find((k) => k.id === jadwal.kelas_id); // ✅ Diubah sesuai instruksi Anda
+    const mataKuliah = mataKuliahList.find(
+      (mk) => mk.id === kelas?.mata_kuliah_id,
+    );
+
     editForm.reset({
-      mata_kuliah_nama: mataKuliah?.nama_mk || '',
-      kelas_nama: kelas?.nama_kelas || '',
-      laboratorium_id: jadwal.laboratorium_id || '',
-      tanggal_praktikum: jadwal.tanggal_praktikum ? new Date(jadwal.tanggal_praktikum) : new Date(),
-      jam_mulai: jadwal.jam_mulai || '08:00',
-      jam_selesai: jadwal.jam_selesai || '10:00',
-      topik: jadwal.topik || '',
-      catatan: jadwal.catatan || '',
+      mata_kuliah_nama: mataKuliah?.nama_mk || "",
+      kelas_nama: kelas?.nama_kelas || "",
+      laboratorium_id: jadwal.laboratorium_id || "",
+      tanggal_praktikum: jadwal.tanggal_praktikum
+        ? new Date(jadwal.tanggal_praktikum)
+        : new Date(),
+      jam_mulai: jadwal.jam_mulai || "08:00",
+      jam_selesai: jadwal.jam_selesai || "10:00",
+      topik: jadwal.topik || "",
+      catatan: jadwal.catatan || "",
       is_active: jadwal.is_active ?? true,
     });
-    
+
     setIsEditOpen(true);
   };
 
@@ -373,11 +397,14 @@ export default function JadwalPage() {
       setIsUpdating(true);
 
       // Dosen HANYA bisa memilih kelas yang sudah ada
-      const selectedKelas = kelasList.find(k => k.nama_kelas === data.kelas_nama);
+      const selectedKelas = kelasList.find(
+        (k) => k.nama_kelas === data.kelas_nama,
+      );
 
       if (!selectedKelas) {
-        toast.error('Kelas tidak ditemukan', {
-          description: 'Pilih kelas yang sudah ada. Jika tidak ada, hubungi Admin.',
+        toast.error("Kelas tidak ditemukan", {
+          description:
+            "Pilih kelas yang sudah ada. Jika tidak ada, hubungi Admin.",
         });
         return;
       }
@@ -385,11 +412,15 @@ export default function JadwalPage() {
       const kelasId = selectedKelas.id;
 
       // ✅ Dosen memilih kelas yang sudah ada (dibuat Admin)
-      const updateData: Partial<Omit<CreateJadwalData, 'hari'>> & { hari?: string } = {
+      const updateData: Partial<Omit<CreateJadwalData, "hari">> & {
+        hari?: string;
+      } = {
         kelas_id: kelasId, // ✅ Gunakan kelas yang dipilih
         laboratorium_id: data.laboratorium_id,
-        hari: format(data.tanggal_praktikum, 'EEEE', { locale: id }).toLowerCase(),
-        tanggal_praktikum: format(data.tanggal_praktikum, 'yyyy-MM-dd'),
+        hari: format(data.tanggal_praktikum, "EEEE", {
+          locale: id,
+        }).toLowerCase(),
+        tanggal_praktikum: format(data.tanggal_praktikum, "yyyy-MM-dd"),
         jam_mulai: data.jam_mulai,
         jam_selesai: data.jam_selesai,
         topik: data.topik || undefined,
@@ -398,14 +429,14 @@ export default function JadwalPage() {
       };
 
       await updateJadwal(selectedJadwal.id, updateData);
-      
-      toast.success('Jadwal berhasil diperbarui');
+
+      toast.success("Jadwal berhasil diperbarui");
       setIsEditOpen(false);
       editForm.reset();
       setSelectedJadwal(null);
       fetchJadwal();
     } catch (error: any) {
-      toast.error('Gagal memperbarui jadwal', {
+      toast.error("Gagal memperbarui jadwal", {
         description: error.message,
       });
     } finally {
@@ -424,13 +455,13 @@ export default function JadwalPage() {
     try {
       setIsDeleting(true);
       await deleteJadwal(selectedJadwal.id);
-      
-      toast.success('Jadwal berhasil dihapus');
+
+      toast.success("Jadwal berhasil dihapus");
       setIsDeleteOpen(false);
       setSelectedJadwal(null);
       fetchJadwal();
     } catch (error: any) {
-      toast.error('Gagal menghapus jadwal', {
+      toast.error("Gagal menghapus jadwal", {
         description: error.message,
       });
     } finally {
@@ -460,9 +491,9 @@ export default function JadwalPage() {
   };
 
   const handleClearFilters = () => {
-    setFilterKelas('');
-    setFilterLab('');
-    setFilterHari('');
+    setFilterKelas("");
+    setFilterLab("");
+    setFilterHari("");
   };
 
   // ============================================================================
@@ -513,7 +544,8 @@ export default function JadwalPage() {
               <SelectContent>
                 {kelasList.map((kelas) => (
                   <SelectItem key={kelas.id} value={kelas.nama_kelas}>
-                    {kelas.kode_kelas} - {kelas.nama_kelas} ({kelas.tahun_ajaran})
+                    {kelas.kode_kelas} - {kelas.nama_kelas} (
+                    {kelas.tahun_ajaran})
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -559,12 +591,14 @@ export default function JadwalPage() {
             <FormControl>
               <Input
                 type="date"
-                value={field.value ? format(field.value, 'yyyy-MM-dd') : ''}
+                value={field.value ? format(field.value, "yyyy-MM-dd") : ""}
                 onChange={(e) => {
-                  const dateValue = e.target.value ? new Date(e.target.value) : new Date();
+                  const dateValue = e.target.value
+                    ? new Date(e.target.value)
+                    : new Date();
                   field.onChange(dateValue);
                 }}
-                min={format(new Date(), 'yyyy-MM-dd')}
+                min={format(new Date(), "yyyy-MM-dd")}
               />
             </FormControl>
             <FormMessage />
@@ -633,10 +667,7 @@ export default function JadwalPage() {
           <FormItem>
             <FormLabel>Topik (Optional)</FormLabel>
             <FormControl>
-              <Input
-                placeholder="Topik praktikum..."
-                {...field}
-              />
+              <Input placeholder="Topik praktikum..." {...field} />
             </FormControl>
             <FormDescription>
               Minimal 10 karakter untuk menjelaskan materi praktikum
@@ -749,7 +780,7 @@ export default function JadwalPage() {
               title="Tidak ada jadwal"
               description="Belum ada jadwal praktikum untuk bulan ini. Tambahkan jadwal baru untuk memulai."
               action={{
-                label: 'Tambah Jadwal',
+                label: "Tambah Jadwal",
                 onClick: () => setIsCreateOpen(true),
               }}
             />
@@ -771,7 +802,7 @@ export default function JadwalPage() {
                   title="Tidak ada jadwal"
                   description="Belum ada jadwal praktikum. Tambahkan jadwal baru untuk memulai."
                   action={{
-                    label: 'Tambah Jadwal',
+                    label: "Tambah Jadwal",
                     onClick: () => setIsCreateOpen(true),
                   }}
                 />
@@ -790,30 +821,38 @@ export default function JadwalPage() {
                   <TableBody>
                     {jadwalList.map((jadwal) => {
                       // ✅ PERBAIKAN DITERAPKAN: Ganti 'jadwal.kelas' menjadi 'jadwal.kelas_id'
-                      const kelas = kelasList.find(k => k.id === jadwal.kelas_id); // ✅ Diubah sesuai instruksi Anda
+                      const kelas = kelasList.find(
+                        (k) => k.id === jadwal.kelas_id,
+                      ); // ✅ Diubah sesuai instruksi Anda
                       return (
                         <TableRow key={jadwal.id}>
                           <TableCell className="font-medium">
-                            {jadwal.tanggal_praktikum 
-                              ? format(new Date(jadwal.tanggal_praktikum), 'PPP', { locale: id })
-                              : '-'}
+                            {jadwal.tanggal_praktikum
+                              ? format(
+                                  new Date(jadwal.tanggal_praktikum),
+                                  "PPP",
+                                  { locale: id },
+                                )
+                              : "-"}
                           </TableCell>
                           <TableCell>
                             {jadwal.jam_mulai} - {jadwal.jam_selesai}
                           </TableCell>
                           <TableCell>
                             <div className="font-medium">
-                              {kelas?.nama_kelas || '-'}
+                              {kelas?.nama_kelas || "-"}
                             </div>
                           </TableCell>
                           <TableCell>
-                            {jadwal.laboratorium?.nama_lab || '-'}
+                            {jadwal.laboratorium?.nama_lab || "-"}
                           </TableCell>
                           <TableCell>
                             {jadwal.topik ? (
                               <span className="text-sm">{jadwal.topik}</span>
                             ) : (
-                              <span className="text-sm text-muted-foreground">-</span>
+                              <span className="text-sm text-muted-foreground">
+                                -
+                              </span>
                             )}
                           </TableCell>
                           <TableCell className="text-right">
@@ -856,7 +895,10 @@ export default function JadwalPage() {
           </DialogHeader>
 
           <Form {...createForm}>
-            <form onSubmit={createForm.handleSubmit(handleCreate)} className="space-y-4">
+            <form
+              onSubmit={createForm.handleSubmit(handleCreate)}
+              className="space-y-4"
+            >
               {renderFormFields(createForm)}
 
               <DialogFooter>
@@ -869,7 +911,9 @@ export default function JadwalPage() {
                   Batal
                 </Button>
                 <Button type="submit" disabled={isCreating}>
-                  {isCreating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {isCreating && (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  )}
                   Simpan
                 </Button>
               </DialogFooter>
@@ -889,7 +933,10 @@ export default function JadwalPage() {
           </DialogHeader>
 
           <Form {...editForm}>
-            <form onSubmit={editForm.handleSubmit(handleUpdate)} className="space-y-4">
+            <form
+              onSubmit={editForm.handleSubmit(handleUpdate)}
+              className="space-y-4"
+            >
               {renderFormFields(editForm)}
 
               <DialogFooter>
@@ -902,7 +949,9 @@ export default function JadwalPage() {
                   Batal
                 </Button>
                 <Button type="submit" disabled={isUpdating}>
-                  {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {isUpdating && (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  )}
                   Perbarui
                 </Button>
               </DialogFooter>

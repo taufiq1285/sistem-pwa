@@ -3,7 +3,7 @@
  * Types for role-based permissions and access control
  */
 
-import type { UserRole } from './auth.types';
+import type { UserRole } from "./auth.types";
 
 // ============================================================================
 // PERMISSION ACTIONS
@@ -13,45 +13,45 @@ import type { UserRole } from './auth.types';
  * Permission actions that can be performed
  */
 export type PermissionAction =
-  | 'create'
-  | 'read'
-  | 'update'
-  | 'delete'
-  | 'manage'
-  | 'view'
-  | 'approve'
-  | 'grade';
+  | "create"
+  | "read"
+  | "update"
+  | "delete"
+  | "manage"
+  | "view"
+  | "approve"
+  | "grade";
 
 /**
  * Resource types that permissions apply to
  */
 export type PermissionResource =
-  | 'user'
-  | 'users'
-  | 'all_users'
-  | 'mahasiswa'
-  | 'dosen'
-  | 'laboran'
-  | 'admin'
-  | 'mata_kuliah'
-  | 'kelas'
-  | 'kelas_mahasiswa'
-  | 'jadwal'
-  | 'kehadiran'
-  | 'laboratorium'
-  | 'kuis'
-  | 'soal'
-  | 'attempt_kuis'
-  | 'jawaban'
-  | 'nilai'
-  | 'materi'
-  | 'inventaris'
-  | 'peminjaman'
-  | 'pengumuman'
-  | 'notification'
-  | 'sync'
-  | 'dashboard'
-  | 'analytics';
+  | "user"
+  | "users"
+  | "all_users"
+  | "mahasiswa"
+  | "dosen"
+  | "laboran"
+  | "admin"
+  | "mata_kuliah"
+  | "kelas"
+  | "kelas_mahasiswa"
+  | "jadwal"
+  | "kehadiran"
+  | "laboratorium"
+  | "kuis"
+  | "soal"
+  | "attempt_kuis"
+  | "jawaban"
+  | "nilai"
+  | "materi"
+  | "inventaris"
+  | "peminjaman"
+  | "pengumuman"
+  | "notification"
+  | "sync"
+  | "dashboard"
+  | "analytics";
 
 /**
  * Permission string format: "action:resource"

@@ -8,15 +8,15 @@
  * - View queue statistics
  */
 
-import { useEffect, useState, useCallback, useMemo } from 'react';
-import { queueManager } from '../offline/queue-manager';
+import { useEffect, useState, useCallback, useMemo } from "react";
+import { queueManager } from "../offline/queue-manager";
 import type {
   SyncQueueItem,
   SyncOperation,
   SyncEntity,
   SyncStatus,
-} from '@/types/offline.types';
-import type { QueueStats, QueueEvent } from '../offline/queue-manager';
+} from "@/types/offline.types";
+import type { QueueStats, QueueEvent } from "../offline/queue-manager";
 
 // ============================================================================
 // TYPES
@@ -27,7 +27,7 @@ export interface UseSyncReturn {
   addToQueue: (
     entity: SyncEntity,
     operation: SyncOperation,
-    data: Record<string, unknown>
+    data: Record<string, unknown>,
   ) => Promise<string>;
   /** Process the sync queue */
   processQueue: () => Promise<void>;
@@ -98,7 +98,7 @@ export function useSync(): UseSyncReturn {
       const newStats = await queueManager.getStats();
       setStats(newStats);
     } catch (error) {
-      console.error('Failed to refresh queue stats:', error);
+      console.error("Failed to refresh queue stats:", error);
     }
   }, []);
 
@@ -108,16 +108,16 @@ export function useSync(): UseSyncReturn {
   const handleQueueEvent = useCallback(
     (event: QueueEvent) => {
       // Update processing state
-      if (event.type === 'processing') {
+      if (event.type === "processing") {
         setIsProcessing(true);
-      } else if (event.type === 'completed' || event.type === 'failed') {
+      } else if (event.type === "completed" || event.type === "failed") {
         setIsProcessing(false);
       }
 
       // Refresh stats after any queue change
       refreshStats();
     },
-    [refreshStats]
+    [refreshStats],
   );
 
   /**
@@ -127,18 +127,18 @@ export function useSync(): UseSyncReturn {
     async (
       entity: SyncEntity,
       operation: SyncOperation,
-      data: Record<string, unknown>
+      data: Record<string, unknown>,
     ): Promise<string> => {
       try {
         const item = await queueManager.enqueue(entity, operation, data);
         await refreshStats();
         return item.id;
       } catch (error) {
-        console.error('Failed to add item to queue:', error);
+        console.error("Failed to add item to queue:", error);
         throw error;
       }
     },
-    [refreshStats]
+    [refreshStats],
   );
 
   /**
@@ -150,7 +150,7 @@ export function useSync(): UseSyncReturn {
       await queueManager.processQueue();
       await refreshStats();
     } catch (error) {
-      console.error('Failed to process queue:', error);
+      console.error("Failed to process queue:", error);
       throw error;
     } finally {
       setIsProcessing(false);
@@ -166,7 +166,7 @@ export function useSync(): UseSyncReturn {
       await refreshStats();
       return count;
     } catch (error) {
-      console.error('Failed to retry failed items:', error);
+      console.error("Failed to retry failed items:", error);
       return 0;
     }
   }, [refreshStats]);
@@ -180,7 +180,7 @@ export function useSync(): UseSyncReturn {
       await refreshStats();
       return count;
     } catch (error) {
-      console.error('Failed to clear completed items:', error);
+      console.error("Failed to clear completed items:", error);
       return 0;
     }
   }, [refreshStats]);
@@ -193,11 +193,11 @@ export function useSync(): UseSyncReturn {
       try {
         return await queueManager.getAllItems(status);
       } catch (error) {
-        console.error('Failed to get queue items:', error);
+        console.error("Failed to get queue items:", error);
         return [];
       }
     },
-    []
+    [],
   );
 
   // ============================================================================
@@ -229,7 +229,7 @@ export function useSync(): UseSyncReturn {
 
         return unsubscribe;
       } catch (error) {
-        console.error('Failed to initialize useSync:', error);
+        console.error("Failed to initialize useSync:", error);
         return () => {};
       }
     };
@@ -276,6 +276,6 @@ export function useSync(): UseSyncReturn {
       isReady,
       refreshStats,
       getAllItems,
-    ]
+    ],
   );
 }

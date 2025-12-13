@@ -1,11 +1,30 @@
-import { useState, useEffect } from 'react';
-import { Shield, Lock, RefreshCw, Eye, Users as UsersIcon, FileText } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { toast } from 'sonner';
-import { getUserStats, type UserStats } from '@/lib/api/users.api';
+import { useState, useEffect } from "react";
+import {
+  Shield,
+  Lock,
+  RefreshCw,
+  Eye,
+  Users as UsersIcon,
+  FileText,
+} from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { toast } from "sonner";
+import { getUserStats, type UserStats } from "@/lib/api/users.api";
 
 // Role permissions definition
 interface RolePermission {
@@ -19,121 +38,121 @@ interface Role {
   description: string;
   users: number;
   permissions: RolePermission[];
-  variant: 'default' | 'secondary' | 'outline' | 'destructive';
+  variant: "default" | "secondary" | "outline" | "destructive";
   color: string;
 }
 
 const ROLE_PERMISSIONS: Record<string, RolePermission[]> = {
   admin: [
     {
-      category: 'User Management',
+      category: "User Management",
       permissions: [
-        'Create, edit, delete users',
-        'Manage user roles',
-        'Activate/deactivate accounts',
-        'View all user data',
+        "Create, edit, delete users",
+        "Manage user roles",
+        "Activate/deactivate accounts",
+        "View all user data",
       ],
     },
     {
-      category: 'System Management',
+      category: "System Management",
       permissions: [
-        'Manage laboratories',
-        'Manage equipment/inventory',
-        'System configuration',
-        'View analytics & reports',
+        "Manage laboratories",
+        "Manage equipment/inventory",
+        "System configuration",
+        "View analytics & reports",
       ],
     },
     {
-      category: 'Content Management',
+      category: "Content Management",
       permissions: [
-        'Create/manage announcements',
-        'Manage mata kuliah',
-        'Manage kelas',
-        'Full access to all features',
+        "Create/manage announcements",
+        "Manage mata kuliah",
+        "Manage kelas",
+        "Full access to all features",
       ],
     },
   ],
   dosen: [
     {
-      category: 'Teaching',
+      category: "Teaching",
       permissions: [
-        'Manage own classes',
-        'View student list',
-        'Create/manage kuis',
-        'Grade student work',
+        "Manage own classes",
+        "View student list",
+        "Create/manage kuis",
+        "Grade student work",
       ],
     },
     {
-      category: 'Content',
+      category: "Content",
       permissions: [
-        'Upload/manage materi',
-        'Create assignments',
-        'View class schedules',
-        'Manage kehadiran',
+        "Upload/manage materi",
+        "Create assignments",
+        "View class schedules",
+        "Manage kehadiran",
       ],
     },
     {
-      category: 'Equipment',
+      category: "Equipment",
       permissions: [
-        'Borrow laboratory equipment',
-        'View equipment availability',
-        'Submit borrowing requests',
+        "Borrow laboratory equipment",
+        "View equipment availability",
+        "Submit borrowing requests",
       ],
     },
   ],
   mahasiswa: [
     {
-      category: 'Learning',
+      category: "Learning",
       permissions: [
-        'View enrolled classes',
-        'Access learning materials',
-        'Take quizzes',
-        'Submit assignments',
+        "View enrolled classes",
+        "Access learning materials",
+        "Take quizzes",
+        "Submit assignments",
       ],
     },
     {
-      category: 'Academic',
+      category: "Academic",
       permissions: [
-        'View grades & results',
-        'View class schedules',
-        'Mark attendance (presensi)',
-        'View announcements',
+        "View grades & results",
+        "View class schedules",
+        "Mark attendance (presensi)",
+        "View announcements",
       ],
     },
     {
-      category: 'Profile',
+      category: "Profile",
       permissions: [
-        'Update personal profile',
-        'View academic progress',
-        'Access offline sync',
+        "Update personal profile",
+        "View academic progress",
+        "Access offline sync",
       ],
     },
   ],
   laboran: [
     {
-      category: 'Laboratory Management',
+      category: "Laboratory Management",
       permissions: [
-        'Manage laboratory facilities',
-        'Manage inventory',
-        'Update equipment status',
-        'View lab schedules',
+        "Manage laboratory facilities",
+        "Manage inventory",
+        "Update equipment status",
+        "View lab schedules",
       ],
     },
     {
-      category: 'Borrowing',
+      category: "Borrowing",
       permissions: [
-        'Approve/reject borrowing requests',
-        'Track borrowed equipment',
-        'Manage equipment returns',
-        'Generate borrowing reports',
+        "Approve/reject borrowing requests",
+        "Track borrowed equipment",
+        "Manage equipment returns",
+        "Generate borrowing reports",
       ],
     },
     {
-      category: 'Reports',
+      category: "Reports",
       permissions: [
-        'Generate lab usage reports',
-        'View equipment statistics',
-        'Export data',
+        "Generate lab usage reports",
+        "View equipment statistics",
+        "Export data",
       ],
     },
   ],
@@ -163,7 +182,7 @@ export default function RolesPage() {
       const data = await getUserStats();
       setStats(data);
     } catch (error) {
-      toast.error('Failed to load role statistics');
+      toast.error("Failed to load role statistics");
       console.error(error);
     } finally {
       setLoading(false);
@@ -172,40 +191,41 @@ export default function RolesPage() {
 
   const roles: Role[] = [
     {
-      name: 'Administrator',
-      key: 'admin',
-      description: 'Full system access with all administrative privileges',
+      name: "Administrator",
+      key: "admin",
+      description: "Full system access with all administrative privileges",
       users: stats.admin,
       permissions: ROLE_PERMISSIONS.admin,
-      variant: 'default',
-      color: 'bg-blue-500',
+      variant: "default",
+      color: "bg-blue-500",
     },
     {
-      name: 'Dosen',
-      key: 'dosen',
-      description: 'Teaching staff with class and student management capabilities',
+      name: "Dosen",
+      key: "dosen",
+      description:
+        "Teaching staff with class and student management capabilities",
       users: stats.dosen,
       permissions: ROLE_PERMISSIONS.dosen,
-      variant: 'secondary',
-      color: 'bg-purple-500',
+      variant: "secondary",
+      color: "bg-purple-500",
     },
     {
-      name: 'Mahasiswa',
-      key: 'mahasiswa',
-      description: 'Students with access to learning materials and courses',
+      name: "Mahasiswa",
+      key: "mahasiswa",
+      description: "Students with access to learning materials and courses",
       users: stats.mahasiswa,
       permissions: ROLE_PERMISSIONS.mahasiswa,
-      variant: 'outline',
-      color: 'bg-green-500',
+      variant: "outline",
+      color: "bg-green-500",
     },
     {
-      name: 'Laboran',
-      key: 'laboran',
-      description: 'Laboratory staff managing facilities and equipment',
+      name: "Laboran",
+      key: "laboran",
+      description: "Laboratory staff managing facilities and equipment",
       users: stats.laboran,
       permissions: ROLE_PERMISSIONS.laboran,
-      variant: 'destructive',
-      color: 'bg-orange-500',
+      variant: "destructive",
+      color: "bg-orange-500",
     },
   ];
 
@@ -215,7 +235,10 @@ export default function RolesPage() {
   };
 
   const getTotalPermissions = (role: Role) => {
-    return role.permissions.reduce((sum, cat) => sum + cat.permissions.length, 0);
+    return role.permissions.reduce(
+      (sum, cat) => sum + cat.permissions.length,
+      0,
+    );
   };
 
   return (
@@ -243,11 +266,18 @@ export default function RolesPage() {
           {/* Role Cards */}
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             {roles.map((role) => (
-              <Card key={role.key} className="hover:shadow-lg transition-shadow">
+              <Card
+                key={role.key}
+                className="hover:shadow-lg transition-shadow"
+              >
                 <CardHeader>
                   <div className="flex items-center justify-between">
-                    <div className={`p-2 rounded-lg ${role.color} bg-opacity-10`}>
-                      <Shield className={`h-6 w-6 ${role.color.replace('bg-', 'text-')}`} />
+                    <div
+                      className={`p-2 rounded-lg ${role.color} bg-opacity-10`}
+                    >
+                      <Shield
+                        className={`h-6 w-6 ${role.color.replace("bg-", "text-")}`}
+                      />
                     </div>
                     <Badge variant={role.variant}>{role.name}</Badge>
                   </div>
@@ -256,7 +286,9 @@ export default function RolesPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    <p className="text-sm text-muted-foreground">{role.description}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {role.description}
+                    </p>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-1 text-xs text-muted-foreground">
                         <Lock className="h-3 w-3" />
@@ -294,8 +326,12 @@ export default function RolesPage() {
                 </div>
                 <div className="flex items-center justify-between p-4 border rounded-lg">
                   <div>
-                    <p className="text-sm text-muted-foreground">Active Users</p>
-                    <p className="text-2xl font-bold text-green-600">{stats.active}</p>
+                    <p className="text-sm text-muted-foreground">
+                      Active Users
+                    </p>
+                    <p className="text-2xl font-bold text-green-600">
+                      {stats.active}
+                    </p>
                   </div>
                   <Badge variant="outline" className="bg-green-50">
                     Active
@@ -303,8 +339,12 @@ export default function RolesPage() {
                 </div>
                 <div className="flex items-center justify-between p-4 border rounded-lg">
                   <div>
-                    <p className="text-sm text-muted-foreground">Inactive Users</p>
-                    <p className="text-2xl font-bold text-gray-600">{stats.inactive}</p>
+                    <p className="text-sm text-muted-foreground">
+                      Inactive Users
+                    </p>
+                    <p className="text-2xl font-bold text-gray-600">
+                      {stats.inactive}
+                    </p>
                   </div>
                   <Badge variant="secondary">Inactive</Badge>
                 </div>
@@ -318,11 +358,14 @@ export default function RolesPage() {
               <div className="flex items-start gap-3">
                 <FileText className="h-5 w-5 text-blue-600 mt-0.5" />
                 <div className="space-y-1">
-                  <p className="font-medium text-blue-900">About Roles & Permissions</p>
+                  <p className="font-medium text-blue-900">
+                    About Roles & Permissions
+                  </p>
                   <p className="text-sm text-blue-700">
-                    Permissions are defined in the application code and enforced through route guards
-                    and API access controls. Each role has specific capabilities designed for their
-                    responsibilities in the system. Click "View" on any role card to see detailed
+                    Permissions are defined in the application code and enforced
+                    through route guards and API access controls. Each role has
+                    specific capabilities designed for their responsibilities in
+                    the system. Click "View" on any role card to see detailed
                     permissions.
                   </p>
                 </div>
@@ -352,8 +395,12 @@ export default function RolesPage() {
                   <p className="text-2xl font-bold">{selectedRole.users}</p>
                 </div>
                 <div className="p-3 border rounded-lg">
-                  <p className="text-sm text-muted-foreground">Total Permissions</p>
-                  <p className="text-2xl font-bold">{getTotalPermissions(selectedRole)}</p>
+                  <p className="text-sm text-muted-foreground">
+                    Total Permissions
+                  </p>
+                  <p className="text-2xl font-bold">
+                    {getTotalPermissions(selectedRole)}
+                  </p>
                 </div>
               </div>
 
@@ -382,7 +429,10 @@ export default function RolesPage() {
               </div>
 
               <div className="flex justify-end gap-2 pt-4 border-t">
-                <Button variant="outline" onClick={() => setIsDetailDialogOpen(false)}>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsDetailDialogOpen(false)}
+                >
                   Close
                 </Button>
               </div>

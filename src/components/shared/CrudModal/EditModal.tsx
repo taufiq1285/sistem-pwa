@@ -3,11 +3,11 @@
  * Modal with form for editing existing data
  */
 
-import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { LoadingSpinner } from '@/components/common/LoadingSpinner';
-import { CrudModal } from './CrudModal';
-import type { EditModalProps } from './CrudModal.types';
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { LoadingSpinner } from "@/components/common/LoadingSpinner";
+import { CrudModal } from "./CrudModal";
+import type { EditModalProps } from "./CrudModal.types";
 
 // ============================================================================
 // COMPONENT
@@ -16,14 +16,14 @@ import type { EditModalProps } from './CrudModal.types';
 export function EditModal<TFormData = Record<string, unknown>>({
   open,
   onOpenChange,
-  title = 'Edit',
+  title = "Edit",
   description,
-  size = 'md',
+  size = "md",
   data,
   onSubmit,
   children,
-  submitLabel = 'Save Changes',
-  cancelLabel = 'Cancel',
+  submitLabel = "Save Changes",
+  cancelLabel = "Cancel",
   isLoading = false,
   isFetching = false,
   className,
@@ -51,21 +51,23 @@ export function EditModal<TFormData = Record<string, unknown>>({
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    
+
     if (!data) return;
 
     // Get form data
     const formData = new FormData(e.currentTarget);
-    const updatedData = Object.fromEntries(formData.entries()) as unknown as TFormData;
+    const updatedData = Object.fromEntries(
+      formData.entries(),
+    ) as unknown as TFormData;
 
     try {
       setIsSubmitting(true);
       await onSubmit(updatedData);
-      
+
       // Close modal on success
       onOpenChange(false);
     } catch (error) {
-      console.error('Update failed:', error);
+      console.error("Update failed:", error);
       // Keep modal open on error
     } finally {
       setIsSubmitting(false);
@@ -104,12 +106,8 @@ export function EditModal<TFormData = Record<string, unknown>>({
             >
               {cancelLabel}
             </Button>
-            <Button
-              type="submit"
-              form="edit-form"
-              disabled={loading}
-            >
-              {loading ? 'Saving...' : submitLabel}
+            <Button type="submit" form="edit-form" disabled={loading}>
+              {loading ? "Saving..." : submitLabel}
             </Button>
           </>
         )
@@ -132,7 +130,7 @@ export function EditModal<TFormData = Record<string, unknown>>({
       {/* Form Content */}
       {showContent && (
         <form id="edit-form" onSubmit={handleSubmit} className="space-y-4">
-          {typeof children === 'function' ? children(data, data) : children}
+          {typeof children === "function" ? children(data, data) : children}
         </form>
       )}
     </CrudModal>

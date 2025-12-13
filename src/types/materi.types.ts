@@ -2,26 +2,27 @@
  * Materi (Learning Materials) Types
  */
 
-import type { Database } from './database.types';
+import type { Database } from "./database.types";
 
-type MateriTable =
-  Database['public']['Tables'] extends { materi: { Row: infer R } }
-    ? R
-    : {
-        // Fallback shape (update to match actual 'materi' table once added to Database types)
-        id: string;
-        kelas_id: string;
-        dosen_id: string;
-        judul: string;
-        deskripsi?: string | null;
-        tipe_file: string;
-        file_url: string;
-        file_size: number;
-        minggu_ke?: number | null;
-        is_downloadable?: boolean | null;
-        created_at?: string;
-        updated_at?: string;
-      };
+type MateriTable = Database["public"]["Tables"] extends {
+  materi: { Row: infer R };
+}
+  ? R
+  : {
+      // Fallback shape (update to match actual 'materi' table once added to Database types)
+      id: string;
+      kelas_id: string;
+      dosen_id: string;
+      judul: string;
+      deskripsi?: string | null;
+      tipe_file: string;
+      file_url: string;
+      file_size: number;
+      minggu_ke?: number | null;
+      is_downloadable?: boolean | null;
+      created_at?: string;
+      updated_at?: string;
+    };
 
 export interface Materi extends MateriTable {
   // Relations

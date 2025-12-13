@@ -4,15 +4,15 @@
  * Displays warning and requires confirmation before delete
  */
 
-import { XCircle, Trash2 } from 'lucide-react';
+import { XCircle, Trash2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 interface DeleteConfirmDialogProps {
   open: boolean;
@@ -39,11 +39,12 @@ export function DeleteConfirmDialog({
 }: DeleteConfirmDialogProps) {
   const defaultConsequences = [
     `Data ${itemType} akan dihapus permanent`,
-    'Tindakan ini tidak dapat dibatalkan',
-    'Data yang terkait mungkin terpengaruh',
+    "Tindakan ini tidak dapat dibatalkan",
+    "Data yang terkait mungkin terpengaruh",
   ];
 
-  const displayConsequences = consequences.length > 0 ? consequences : defaultConsequences;
+  const displayConsequences =
+    consequences.length > 0 ? consequences : defaultConsequences;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -68,7 +69,9 @@ export function DeleteConfirmDialog({
               {itemName}
             </p>
             {description && (
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{description}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                {description}
+              </p>
             )}
           </div>
 
@@ -106,7 +109,7 @@ export function DeleteConfirmDialog({
               className="min-w-[100px] bg-red-600 hover:bg-red-700"
             >
               <Trash2 className="h-4 w-4 mr-2" />
-              {isLoading ? 'Menghapus...' : 'Ya, Hapus'}
+              {isLoading ? "Menghapus..." : "Ya, Hapus"}
             </Button>
           </div>
         </div>

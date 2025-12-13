@@ -3,7 +3,7 @@
  * Context for toast/notification management using Sonner
  */
 
-import { createContext } from 'react';
+import { createContext } from "react";
 
 // ============================================================================
 // TYPES
@@ -22,6 +22,6 @@ export interface NotificationContextValue {
 // CONTEXT
 // ============================================================================
 
-export const NotificationContext = createContext<NotificationContextValue | undefined>(
-  undefined
-);
+export const NotificationContext = createContext<
+  NotificationContextValue | undefined
+>(undefined);

@@ -3,13 +3,13 @@
  * Full CRUD for managing system announcements
  */
 
-import { supabase } from '@/lib/supabase/client';
-import { cacheAPI } from '@/lib/offline/api-cache';
-import type { Pengumuman, CreatePengumumanData } from '@/types/common.types';
+import { supabase } from "@/lib/supabase/client";
+import { cacheAPI } from "@/lib/offline/api-cache";
+import type { Pengumuman, CreatePengumumanData } from "@/types/common.types";
 import {
   requirePermission,
   requirePermissionAndOwnership,
-} from '@/lib/middleware';
+} from "@/lib/middleware";
 
 export interface AnnouncementStats {
   total: number;
@@ -24,8 +24,9 @@ export interface AnnouncementStats {
 export async function getAllAnnouncements(): Promise<Pengumuman[]> {
   try {
     const { data, error } = await supabase
-      .from('pengumuman')
-      .select(`
+      .from("pengumuman")
+      .select(
+        `
         id,
         judul,
         konten,
@@ -39,17 +40,20 @@ export async function getAllAnnouncements(): Promise<Pengumuman[]> {
         attachment_url,
         penulis_id,
         users!pengumuman_penulis_id_fkey(full_name, role)
-      `)
-      .order('created_at', { ascending: false });
+      `,
+      )
+      .order("created_at", { ascending: false });
 
     if (error) throw error;
 
     return (data || []).map((item: any) => ({
       ...item,
-      penulis: item.users ? { full_name: item.users.full_name, role: item.users.role } : undefined,
+      penulis: item.users
+        ? { full_name: item.users.full_name, role: item.users.role }
+        : undefined,
     }));
   } catch (error) {
-    console.error('Error fetching announcements:', error);
+    console.error("Error fetching announcements:", error);
     throw error;
   }
 }
@@ -64,15 +68,17 @@ export async function getAnnouncementStats(): Promise<AnnouncementStats> {
 
     return {
       total: announcements.length,
-      active: announcements.filter(a => {
-        const isActive = (!a.tanggal_selesai || a.tanggal_selesai > now);
+      active: announcements.filter((a) => {
+        const isActive = !a.tanggal_selesai || a.tanggal_selesai > now;
         return isActive;
       }).length,
-      highPriority: announcements.filter(a => a.prioritas === 'high').length,
-      scheduled: announcements.filter(a => a.tanggal_mulai && a.tanggal_mulai > now).length,
+      highPriority: announcements.filter((a) => a.prioritas === "high").length,
+      scheduled: announcements.filter(
+        (a) => a.tanggal_mulai && a.tanggal_mulai > now,
+      ).length,
     };
   } catch (error) {
-    console.error('Error fetching announcement stats:', error);
+    console.error("Error fetching announcement stats:", error);
     return { total: 0, active: 0, highPriority: 0, scheduled: 0 };
   }
 }
@@ -80,40 +86,41 @@ export async function getAnnouncementStats(): Promise<AnnouncementStats> {
 /**
  * Create new announcement
  */
-async function createAnnouncementImpl(data: CreatePengumumanData): Promise<void> {
+async function createAnnouncementImpl(
+  data: CreatePengumumanData,
+): Promise<void> {
   try {
-    const { error } = await supabase
-      .from('pengumuman')
-      .insert(data as any);
+    const { error } = await supabase.from("pengumuman").insert(data as any);
 
     if (error) throw error;
   } catch (error) {
-    console.error('Error creating announcement:', error);
+    console.error("Error creating announcement:", error);
     throw error;
   }
 }
 
 // 🔒 PROTECTED: Requires manage:pengumuman permission
-export const createAnnouncement = requirePermission('manage:pengumuman', createAnnouncementImpl);
-
+export const createAnnouncement = requirePermission(
+  "manage:pengumuman",
+  createAnnouncementImpl,
+);
 
 /**
  * Delete announcement
  */
 async function deleteAnnouncementImpl(id: string): Promise<void> {
   try {
-    const { error } = await supabase
-      .from('pengumuman')
-      .delete()
-      .eq('id', id);
+    const { error } = await supabase.from("pengumuman").delete().eq("id", id);
 
     if (error) throw error;
   } catch (error) {
-    console.error('Error deleting announcement:', error);
+    console.error("Error deleting announcement:", error);
     throw error;
   }
 }
 
 // 🔒 PROTECTED: Requires manage:pengumuman permission
-export const deleteAnnouncement = requirePermission('manage:pengumuman', deleteAnnouncementImpl);
-
+export const deleteAnnouncement = requirePermission(
+  "manage:pengumuman",
+  deleteAnnouncementImpl,
+);

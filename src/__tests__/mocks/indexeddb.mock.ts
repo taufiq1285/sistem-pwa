@@ -2,7 +2,7 @@
  * IndexedDB Mock
  */
 
-import { vi } from 'vitest';
+import { vi } from "vitest";
 
 export const createIndexedDBMock = () => {
   const store = new Map();

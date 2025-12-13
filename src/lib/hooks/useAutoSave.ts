@@ -10,14 +10,14 @@
  * - Optimistic updates
  */
 
-import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
-import { useNetworkStatus } from './useNetworkStatus';
+import { useEffect, useState, useCallback, useRef, useMemo } from "react";
+import { useNetworkStatus } from "./useNetworkStatus";
 
 // ============================================================================
 // TYPES
 // ============================================================================
 
-export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error' | 'conflict';
+export type SaveStatus = "idle" | "saving" | "saved" | "error" | "conflict";
 
 export interface UseAutoSaveOptions<T> {
   /** Debounce delay in milliseconds */
@@ -117,7 +117,7 @@ function defaultIsEqual<T>(a: T, b: T): boolean {
  */
 export function useAutoSave<T>(
   initialData: T,
-  options: UseAutoSaveOptions<T> = {}
+  options: UseAutoSaveOptions<T> = {},
 ): UseAutoSaveReturn<T> {
   const {
     delay = 1000,
@@ -138,7 +138,7 @@ export function useAutoSave<T>(
   // ============================================================================
 
   const [data, setData] = useState<T>(initialData);
-  const [status, setStatus] = useState<SaveStatus>('idle');
+  const [status, setStatus] = useState<SaveStatus>("idle");
   const [lastSaved, setLastSaved] = useState<number | null>(null);
   const [error, setError] = useState<Error | null>(null);
 
@@ -152,7 +152,7 @@ export function useAutoSave<T>(
   // DERIVED STATE
   // ============================================================================
 
-  const isSaving = useMemo(() => status === 'saving', [status]);
+  const isSaving = useMemo(() => status === "saving", [status]);
 
   const hasUnsavedChanges = useMemo(() => {
     return !isEqual(data, savedDataRef.current);
@@ -169,18 +169,18 @@ export function useAutoSave<T>(
     async (dataToSave: T) => {
       // Check if online (if required)
       if (onlineOnly && !isOnline) {
-        console.log('[AutoSave] Skipping save - offline and onlineOnly=true');
+        console.log("[AutoSave] Skipping save - offline and onlineOnly=true");
         return;
       }
 
       // Prevent concurrent saves
       if (savingRef.current) {
-        console.log('[AutoSave] Save already in progress');
+        console.log("[AutoSave] Save already in progress");
         return;
       }
 
       if (!onSave) {
-        console.warn('[AutoSave] No onSave function provided');
+        console.warn("[AutoSave] No onSave function provided");
         return;
       }
 
@@ -188,7 +188,7 @@ export function useAutoSave<T>(
 
       try {
         savingRef.current = true;
-        setStatus('saving');
+        setStatus("saving");
         setError(null);
 
         // Perform save
@@ -200,29 +200,29 @@ export function useAutoSave<T>(
         savedDataRef.current = dataToSave;
 
         // Update status
-        setStatus('saved');
+        setStatus("saved");
         setLastSaved(Date.now());
 
         // Call success callback
         onSuccess?.(dataToSave);
 
-        console.log('[AutoSave] Save successful');
+        console.log("[AutoSave] Save successful");
       } catch (err) {
         if (!mountedRef.current) return;
 
-        const saveError = err instanceof Error ? err : new Error('Save failed');
+        const saveError = err instanceof Error ? err : new Error("Save failed");
         setError(saveError);
-        setStatus('error');
+        setStatus("error");
 
         // Call error callback
         onError?.(saveError, dataToSave);
 
-        console.error('[AutoSave] Save failed:', saveError);
+        console.error("[AutoSave] Save failed:", saveError);
       } finally {
         savingRef.current = false;
       }
     },
-    [onSave, onSuccess, onError, onlineOnly, isOnline]
+    [onSave, onSuccess, onError, onlineOnly, isOnline],
   );
 
   /**
@@ -243,7 +243,7 @@ export function useAutoSave<T>(
    */
   const reset = useCallback(() => {
     setData(savedDataRef.current);
-    setStatus('idle');
+    setStatus("idle");
     setError(null);
 
     // Clear pending save
@@ -258,7 +258,7 @@ export function useAutoSave<T>(
    */
   const markAsSaved = useCallback(() => {
     savedDataRef.current = data;
-    setStatus('saved');
+    setStatus("saved");
     setLastSaved(Date.now());
 
     // Clear pending save
@@ -273,7 +273,7 @@ export function useAutoSave<T>(
    */
   const updateData = useCallback((newData: T | ((prev: T) => T)) => {
     setData(newData);
-    setStatus('idle');
+    setStatus("idle");
   }, []);
 
   // ============================================================================
@@ -311,7 +311,7 @@ export function useAutoSave<T>(
   useEffect(() => {
     // If we come back online and have unsaved changes, save them
     if (onlineOnly && isOnline && hasUnsavedChanges && enabled) {
-      console.log('[AutoSave] Back online, triggering save');
+      console.log("[AutoSave] Back online, triggering save");
       performSave(data);
     }
   }, [isOnline, onlineOnly, hasUnsavedChanges, enabled, data, performSave]);
@@ -337,17 +337,17 @@ export function useAutoSave<T>(
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (hasUnsavedChanges) {
         e.preventDefault();
-        e.returnValue = '';
-        return '';
+        e.returnValue = "";
+        return "";
       }
     };
 
     if (hasUnsavedChanges) {
-      window.addEventListener('beforeunload', handleBeforeUnload);
+      window.addEventListener("beforeunload", handleBeforeUnload);
     }
 
     return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
     };
   }, [hasUnsavedChanges]);
 
@@ -379,6 +379,6 @@ export function useAutoSave<T>(
       markAsSaved,
       updateData,
       data,
-    ]
+    ],
   );
 }

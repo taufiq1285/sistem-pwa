@@ -113,7 +113,7 @@ describe("SyncProvider", () => {
       render(
         <SyncProvider>
           <TestConsumer />
-        </SyncProvider>
+        </SyncProvider>,
       );
 
       expect(screen.getByTestId("isReady")).toBeInTheDocument();
@@ -123,7 +123,7 @@ describe("SyncProvider", () => {
       render(
         <SyncProvider>
           <TestConsumer />
-        </SyncProvider>
+        </SyncProvider>,
       );
 
       expect(screen.getByTestId("isReady")).toHaveTextContent("true");
@@ -134,7 +134,7 @@ describe("SyncProvider", () => {
       render(
         <SyncProvider>
           <TestConsumer />
-        </SyncProvider>
+        </SyncProvider>,
       );
 
       expect(screen.getByTestId("pending")).toHaveTextContent("5");
@@ -155,7 +155,7 @@ describe("SyncProvider", () => {
       render(
         <SyncProvider autoSync={true}>
           <TestConsumer />
-        </SyncProvider>
+        </SyncProvider>,
       );
 
       await waitFor(() => {
@@ -163,7 +163,7 @@ describe("SyncProvider", () => {
       });
 
       expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining("Auto-syncing 5 pending items")
+        expect.stringContaining("Auto-syncing 5 pending items"),
       );
 
       consoleLogSpy.mockRestore();
@@ -173,7 +173,7 @@ describe("SyncProvider", () => {
       render(
         <SyncProvider autoSync={false}>
           <TestConsumer />
-        </SyncProvider>
+        </SyncProvider>,
       );
 
       await act(async () => {
@@ -197,7 +197,7 @@ describe("SyncProvider", () => {
       render(
         <SyncProvider autoSync={true}>
           <TestConsumer />
-        </SyncProvider>
+        </SyncProvider>,
       );
 
       await act(async () => {
@@ -224,7 +224,7 @@ describe("SyncProvider", () => {
       render(
         <SyncProvider autoSync={true}>
           <TestConsumer />
-        </SyncProvider>
+        </SyncProvider>,
       );
 
       await act(async () => {
@@ -251,7 +251,7 @@ describe("SyncProvider", () => {
       render(
         <SyncProvider autoSync={true}>
           <TestConsumer />
-        </SyncProvider>
+        </SyncProvider>,
       );
 
       await act(async () => {
@@ -293,7 +293,7 @@ describe("SyncProvider", () => {
         render(
           <SyncProvider autoSync={true}>
             <TestConsumer />
-          </SyncProvider>
+          </SyncProvider>,
         );
       });
 
@@ -301,14 +301,14 @@ describe("SyncProvider", () => {
         () => {
           expect(mockProcessQueue).toHaveBeenCalled();
         },
-        { timeout: 3000 }
+        { timeout: 3000 },
       );
 
       await waitFor(
         () => {
           expect(consoleErrorSpy).toHaveBeenCalled();
         },
-        { timeout: 3000 }
+        { timeout: 3000 },
       );
 
       consoleErrorSpy.mockRestore();
@@ -328,7 +328,7 @@ describe("SyncProvider", () => {
         const result = render(
           <SyncProvider autoSync={true}>
             <TestConsumer />
-          </SyncProvider>
+          </SyncProvider>,
         );
         rerender = result.rerender;
       });
@@ -348,7 +348,7 @@ describe("SyncProvider", () => {
         rerender(
           <SyncProvider autoSync={true}>
             <TestConsumer />
-          </SyncProvider>
+          </SyncProvider>,
         );
       });
 
@@ -356,7 +356,7 @@ describe("SyncProvider", () => {
         () => {
           expect(mockProcessQueue).toHaveBeenCalled();
         },
-        { timeout: 2000 }
+        { timeout: 2000 },
       );
     });
   });
@@ -403,7 +403,7 @@ describe("SyncProvider", () => {
       render(
         <SyncProvider>
           <MethodChecker />
-        </SyncProvider>
+        </SyncProvider>,
       );
 
       expect(screen.getByTestId("hasAdd")).toHaveTextContent("true");
@@ -420,7 +420,7 @@ describe("SyncProvider", () => {
             <TestConsumer />
             <TestConsumer />
             <TestConsumer />
-          </SyncProvider>
+          </SyncProvider>,
         );
       });
 
@@ -446,7 +446,7 @@ describe("SyncProvider", () => {
         const result = render(
           <SyncProvider autoSync={false}>
             <TestConsumer />
-          </SyncProvider>
+          </SyncProvider>,
         );
         rerender = result.rerender;
       });
@@ -461,7 +461,7 @@ describe("SyncProvider", () => {
         rerender(
           <SyncProvider autoSync={true}>
             <TestConsumer />
-          </SyncProvider>
+          </SyncProvider>,
         );
       });
 
@@ -469,7 +469,7 @@ describe("SyncProvider", () => {
         () => {
           expect(mockProcessQueue).toHaveBeenCalled();
         },
-        { timeout: 2000 }
+        { timeout: 2000 },
       );
     });
 
@@ -479,7 +479,7 @@ describe("SyncProvider", () => {
         render(
           <SyncProvider>
             <TestConsumer />
-          </SyncProvider>
+          </SyncProvider>,
         );
       });
 
@@ -487,7 +487,7 @@ describe("SyncProvider", () => {
         () => {
           expect(mockProcessQueue).toHaveBeenCalled();
         },
-        { timeout: 2000 }
+        { timeout: 2000 },
       );
     });
   });
@@ -512,7 +512,7 @@ describe("SyncProvider", () => {
       render(
         <SyncProvider>
           <NestedComponent />
-        </SyncProvider>
+        </SyncProvider>,
       );
 
       const readyElements = screen.getAllByTestId("isReady");
@@ -529,7 +529,7 @@ describe("SyncProvider", () => {
         const result = render(
           <SyncProvider>
             <TestConsumer />
-          </SyncProvider>
+          </SyncProvider>,
         );
         rerender = result.rerender;
       });
@@ -545,7 +545,7 @@ describe("SyncProvider", () => {
         rerender(
           <SyncProvider>
             <TestConsumer />
-          </SyncProvider>
+          </SyncProvider>,
         );
       });
 
@@ -563,7 +563,7 @@ describe("SyncProvider", () => {
       const { rerender } = render(
         <SyncProvider>
           <TestConsumer />
-        </SyncProvider>
+        </SyncProvider>,
       );
 
       expect(screen.getByTestId("isProcessing")).toHaveTextContent("false");
@@ -584,7 +584,7 @@ describe("SyncProvider", () => {
       rerender(
         <SyncProvider>
           <TestConsumer />
-        </SyncProvider>
+        </SyncProvider>,
       );
 
       expect(screen.getByTestId("isProcessing")).toHaveTextContent("true");
@@ -600,7 +600,7 @@ describe("SyncProvider", () => {
       const { unmount } = render(
         <SyncProvider>
           <TestConsumer />
-        </SyncProvider>
+        </SyncProvider>,
       );
 
       unmount();
@@ -613,7 +613,7 @@ describe("SyncProvider", () => {
       const { unmount } = render(
         <SyncProvider autoSync={true}>
           <TestConsumer />
-        </SyncProvider>
+        </SyncProvider>,
       );
 
       const callCountBeforeUnmount = mockProcessQueue.mock.calls.length;

@@ -3,8 +3,8 @@
  * Top navigation bar with user menu and notifications
  */
 
-import { Bell, Menu, User, LogOut, Settings } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Bell, Menu, User, LogOut, Settings } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,11 +12,13 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
-import type { UserRole } from '@/types/auth.types';
-import { ROLE_LABELS } from '@/types/role.types';
+} from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+import type { UserRole } from "@/types/auth.types";
+import { ROLE_LABELS } from "@/types/role.types";
+import { NotificationDropdown } from "@/components/common";
+import { ConflictNotificationBadge } from "./ConflictNotificationBadge";
 
 // ============================================================================
 // TYPES
@@ -27,6 +29,7 @@ interface HeaderProps {
   userEmail?: string;
   userRole?: UserRole;
   notificationCount?: number;
+  showNotificationDropdown?: boolean; // If true, show dropdown instead of button
   onMenuClick?: () => void;
   onNotificationClick?: () => void;
   onProfileClick?: () => void;
@@ -40,10 +43,11 @@ interface HeaderProps {
 // ============================================================================
 
 export function Header({
-  userName = 'User',
-  userEmail = 'user@example.com',
+  userName = "User",
+  userEmail = "user@example.com",
   userRole,
   notificationCount = 0,
+  showNotificationDropdown = false,
   onMenuClick,
   onNotificationClick,
   onProfileClick,
@@ -54,8 +58,8 @@ export function Header({
   return (
     <header
       className={cn(
-        'sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60',
-        className
+        "sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
+        className,
       )}
     >
       <div className="flex h-16 items-center justify-between px-4 md:px-6">
@@ -81,26 +85,33 @@ export function Header({
 
         {/* Right: Actions */}
         <div className="flex items-center gap-2">
-          {/* Notifications */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="relative"
-            onClick={onNotificationClick}
-            title="Notifications"
-          >
-            <>
-              <Bell className="h-5 w-5" />
-              {notificationCount > 0 && (
-                <Badge
-                  variant="destructive"
-                  className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs"
-                >
-                  {notificationCount > 9 ? '9+' : notificationCount}
-                </Badge>
-              )}
-            </>
-          </Button>
+          {/* Notifications - Dropdown for dosen/mahasiswa/laboran, Button for admin */}
+          {showNotificationDropdown ? (
+            <NotificationDropdown />
+          ) : (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="relative"
+              onClick={onNotificationClick}
+              title="Notifications"
+            >
+              <>
+                <Bell className="h-5 w-5" />
+                {notificationCount > 0 && (
+                  <Badge
+                    variant="destructive"
+                    className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs"
+                  >
+                    {notificationCount > 9 ? "9+" : notificationCount}
+                  </Badge>
+                )}
+              </>
+            </Button>
+          )}
+
+          {/* Conflict Notification Badge - FASE 3 Week 4 */}
+          <ConflictNotificationBadge autoRefreshInterval={30000} />
 
           {/* User Menu */}
           <DropdownMenu>

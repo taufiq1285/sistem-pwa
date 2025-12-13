@@ -88,8 +88,8 @@ export interface MataKuliahFilters {
   program_studi?: string;
   semester?: number;
   sks?: number;
-  sortBy?: 'kode_mk' | 'nama_mk' | 'semester' | 'sks' | 'created_at';
-  sortOrder?: 'asc' | 'desc';
+  sortBy?: "kode_mk" | "nama_mk" | "semester" | "sks" | "created_at";
+  sortOrder?: "asc" | "desc";
 }
 
 /**
@@ -169,7 +169,7 @@ export interface EnrolledCourse {
   jam_mulai?: string;
   jam_selesai?: string;
   ruangan: string;
-  status: 'active' | 'completed' | 'dropped';
+  status: "active" | "completed" | "dropped";
   enrolled_at: string;
 }
 
@@ -191,13 +191,13 @@ export interface CourseStats {
  * Program studi options
  */
 export const PROGRAM_STUDI_OPTIONS = [
-  'D3 Kebidanan',
-  'D4 Kebidanan',
-  'S1 Kebidanan',
-  'Profesi Bidan',
+  "D3 Kebidanan",
+  "D4 Kebidanan",
+  "S1 Kebidanan",
+  "Profesi Bidan",
 ] as const;
 
-export type ProgramStudi = typeof PROGRAM_STUDI_OPTIONS[number];
+export type ProgramStudi = (typeof PROGRAM_STUDI_OPTIONS)[number];
 
 /**
  * Semester options (1-14)
@@ -209,7 +209,7 @@ export const SEMESTER_OPTIONS = Array.from({ length: 14 }, (_, i) => i + 1);
  */
 export const SKS_OPTIONS = [1, 2, 3, 4, 5, 6] as const;
 
-export type SKS = typeof SKS_OPTIONS[number];
+export type SKS = (typeof SKS_OPTIONS)[number];
 
 // ============================================================================
 // VALIDATION HELPERS

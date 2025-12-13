@@ -3,24 +3,26 @@
  * Sortable column header with visual sort indicators
  */
 
-import { ArrowDown, ArrowUp, ChevronsUpDown, EyeOff } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { ArrowDown, ArrowUp, ChevronsUpDown, EyeOff } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { cn } from '@/lib/utils';
-import type { Column } from '@tanstack/react-table';
+} from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
+import type { Column } from "@tanstack/react-table";
 
 // ============================================================================
 // TYPES
 // ============================================================================
 
-interface DataTableColumnHeaderProps<TData, TValue>
-  extends React.HTMLAttributes<HTMLDivElement> {
+interface DataTableColumnHeaderProps<
+  TData,
+  TValue,
+> extends React.HTMLAttributes<HTMLDivElement> {
   column: Column<TData, TValue>;
   title: string;
 }
@@ -44,7 +46,7 @@ export function DataTableColumnHeader<TData, TValue>({
   }
 
   return (
-    <div className={cn('flex items-center space-x-2', className)}>
+    <div className={cn("flex items-center space-x-2", className)}>
       {/* Dropdown menu for sort options */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -56,9 +58,9 @@ export function DataTableColumnHeader<TData, TValue>({
             <span>{title}</span>
             {isSortable && (
               <>
-                {isSorted === 'desc' ? (
+                {isSorted === "desc" ? (
                   <ArrowDown className="ml-2 h-4 w-4" />
-                ) : isSorted === 'asc' ? (
+                ) : isSorted === "asc" ? (
                   <ArrowUp className="ml-2 h-4 w-4" />
                 ) : (
                   <ChevronsUpDown className="ml-2 h-4 w-4" />

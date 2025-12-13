@@ -3,20 +3,28 @@
  * Modal dialog for displaying event details with actions
  */
 
-import { Clock, MapPin, User, Calendar, FileText, Edit, Trash2 } from 'lucide-react';
-import { format, parseISO } from 'date-fns';
-import { id as localeId } from 'date-fns/locale';
+import {
+  Clock,
+  MapPin,
+  User,
+  Calendar,
+  FileText,
+  Edit,
+  Trash2,
+} from "lucide-react";
+import { format, parseISO } from "date-fns";
+import { id as localeId } from "date-fns/locale";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import type { CalendarEvent } from '@/types/jadwal.types';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import type { CalendarEvent } from "@/types/jadwal.types";
 
 // ============================================================================
 // TYPES
@@ -55,23 +63,23 @@ export function EventDialog({
   const getEventTypeConfig = () => {
     const configs = {
       class: {
-        label: 'Kelas Praktikum',
-        color: 'default' as const,
+        label: "Kelas Praktikum",
+        color: "default" as const,
         icon: Calendar,
       },
       quiz: {
-        label: 'Kuis',
-        color: 'destructive' as const,
+        label: "Kuis",
+        color: "destructive" as const,
         icon: FileText,
       },
       booking: {
-        label: 'Booking Lab',
-        color: 'secondary' as const,
+        label: "Booking Lab",
+        color: "secondary" as const,
         icon: Calendar,
       },
       exam: {
-        label: 'Ujian',
-        color: 'outline' as const,
+        label: "Ujian",
+        color: "outline" as const,
         icon: FileText,
       },
     };
@@ -124,7 +132,7 @@ export function EventDialog({
               <div>
                 <p className="font-medium">Tanggal</p>
                 <p className="text-sm text-muted-foreground">
-                  {format(startDate, 'EEEE, d MMMM yyyy', { locale: localeId })}
+                  {format(startDate, "EEEE, d MMMM yyyy", { locale: localeId })}
                 </p>
               </div>
             </div>
@@ -135,7 +143,7 @@ export function EventDialog({
               <div>
                 <p className="font-medium">Waktu</p>
                 <p className="text-sm text-muted-foreground">
-                  {format(startDate, 'HH:mm')} - {format(endDate, 'HH:mm')} WIB
+                  {format(startDate, "HH:mm")} - {format(endDate, "HH:mm")} WIB
                 </p>
               </div>
             </div>
@@ -150,7 +158,9 @@ export function EventDialog({
                 <MapPin className="h-5 w-5 text-muted-foreground mt-0.5" />
                 <div>
                   <p className="font-medium">Lokasi</p>
-                  <p className="text-sm text-muted-foreground">{event.location}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {event.location}
+                  </p>
                 </div>
               </div>
               <Separator />
@@ -182,14 +192,18 @@ export function EventDialog({
                   <div className="flex items-center gap-2">
                     <User className="h-4 w-4 text-muted-foreground" />
                     <span className="text-muted-foreground">Kelas ID:</span>
-                    <span className="font-mono text-xs">{event.metadata.kelas_id.slice(0, 8)}...</span>
+                    <span className="font-mono text-xs">
+                      {event.metadata.kelas_id.slice(0, 8)}...
+                    </span>
                   </div>
                 )}
                 {event.metadata.laboratorium_id && (
                   <div className="flex items-center gap-2">
                     <MapPin className="h-4 w-4 text-muted-foreground" />
                     <span className="text-muted-foreground">Lab ID:</span>
-                    <span className="font-mono text-xs">{event.metadata.laboratorium_id.slice(0, 8)}...</span>
+                    <span className="font-mono text-xs">
+                      {event.metadata.laboratorium_id.slice(0, 8)}...
+                    </span>
                   </div>
                 )}
               </div>
@@ -200,7 +214,7 @@ export function EventDialog({
           <div className="flex items-center gap-2 pt-2">
             <div
               className="h-4 w-4 rounded-full border"
-              style={{ backgroundColor: event.color || '#3b82f6' }}
+              style={{ backgroundColor: event.color || "#3b82f6" }}
             />
             <span className="text-sm text-muted-foreground">Event Color</span>
           </div>

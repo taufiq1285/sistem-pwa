@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cleanup Dosen Data</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    button {
+      background: #dc2626;
+      color: white;
+      border: none;
+      padding: 15px 30px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: bold;
+      margin: 20px 0;
+    }
+    button:hover {
+      background: #b91c1c;
+    }
+    button:disabled {
+      background: #9ca3af;
+      cursor: not-allowed;
+    }
+    .warning {
+      background: #fef3c7;
+      border-left: 4px solid #f59e0b;
+      padding: 15px;
+      margin: 20px 0;
+    }
+    .success {
+      background: #d1fae5;
+      border-left: 4px solid #10b981;
+      padding: 15px;
+      margin: 20px 0;
+    }
+    .error {
+      background: #fee2e2;
+      border-left: 4px solid #ef4444;
+      padding: 15px;
+      margin: 20px 0;
+    }
+    #log {
+      background: #1f2937;
+      color: #10b981;
+      padding: 20px;
+      border-radius: 5px;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      max-height: 400px;
+      overflow-y: auto;
+      margin: 20px 0;
+      display: none;
+    }
+    .log-line {
+      margin: 5px 0;
+    }
+    h1 {
+      color: #1f2937;
+      margin-bottom: 10px;
+    }
+    .subtitle {
+      color: #6b7280;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🧹 Cleanup Dosen Data</h1>
+    <p class="subtitle">Menghapus semua data yang dibuat dosen (tetap mempertahankan akun)</p>
+
+    <div class="warning">
+      <strong>⚠️ PERINGATAN:</strong><br>
+      Script ini akan menghapus SEMUA data yang pernah diinput oleh dosen:
+      <ul>
+        <li>Kehadiran mahasiswa</li>
+        <li>Nilai mahasiswa</li>
+        <li>Kuis dan soal kuis</li>
+        <li>Materi pembelajaran</li>
+        <li>Peminjaman inventaris</li>
+        <li>Jadwal praktikum</li>
+      </ul>
+      <strong>Yang TETAP ADA: Akun dosen, akun mahasiswa, data master</strong>
+    </div>
+
+    <button id="cleanupBtn" onclick="startCleanup()">
+      🗑️ JALANKAN CLEANUP
+    </button>
+
+    <div id="log"></div>
+    <div id="result"></div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://rkyoifqbfcztnhevpnpx.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJreW9pZnFiZmN6dG5oZXZwbnB4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3NDQyNDMsImV4cCI6MjA3NjMyMDI0M30.-P894i9DGQdkSl-_4gu9rJL9vu0SPnRMDy4yK5grw-E';
+
+    const { createClient } = supabase;
+    const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    function log(message, type = 'info') {
+      const logDiv = document.getElementById('log');
+      logDiv.style.display = 'block';
+      const line = document.createElement('div');
+      line.className = 'log-line';
+      line.textContent = `${new Date().toLocaleTimeString()} - ${message}`;
+      logDiv.appendChild(line);
+      logDiv.scrollTop = logDiv.scrollHeight;
+    }
+
+    async function startCleanup() {
+      const btn = document.getElementById('cleanupBtn');
+      const resultDiv = document.getElementById('result');
+
+      if (!confirm('Apakah Anda yakin ingin menghapus SEMUA data dosen?\n\nData yang dihapus tidak dapat dikembalikan!')) {
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = '⏳ Sedang menjalankan cleanup...';
+      resultDiv.innerHTML = '';
+      document.getElementById('log').innerHTML = '';
+
+      try {
+        log('🚀 Memulai cleanup...');
+
+        // Delete operations in correct order
+        const operations = [
+          { name: 'kehadiran', query: async () => {
+            const { data: jadwals } = await sb.from('jadwal_praktikum').select('id').not('dosen_id', 'is', null);
+            const ids = jadwals?.map(j => j.id) || [];
+            if (ids.length > 0) {
+              return await sb.from('kehadiran').delete().in('jadwal_praktikum_id', ids);
+            }
+            return { count: 0 };
+          }},
+          { name: 'nilai', query: async () => {
+            const { data: jadwals } = await sb.from('jadwal_praktikum').select('id').not('dosen_id', 'is', null);
+            const ids = jadwals?.map(j => j.id) || [];
+            if (ids.length > 0) {
+              return await sb.from('nilai').delete().in('jadwal_praktikum_id', ids);
+            }
+            return { count: 0 };
+          }},
+          { name: 'jawaban_kuis', query: async () => {
+            const { data: kuis } = await sb.from('kuis').select('id').not('dosen_id', 'is', null);
+            const ids = kuis?.map(k => k.id) || [];
+            if (ids.length > 0) {
+              return await sb.from('jawaban_kuis').delete().in('kuis_id', ids);
+            }
+            return { count: 0 };
+          }},
+          { name: 'hasil_kuis', query: async () => {
+            const { data: kuis } = await sb.from('kuis').select('id').not('dosen_id', 'is', null);
+            const ids = kuis?.map(k => k.id) || [];
+            if (ids.length > 0) {
+              return await sb.from('hasil_kuis').delete().in('kuis_id', ids);
+            }
+            return { count: 0 };
+          }},
+          { name: 'soal_kuis', query: async () => {
+            const { data: kuis } = await sb.from('kuis').select('id').not('dosen_id', 'is', null);
+            const ids = kuis?.map(k => k.id) || [];
+            if (ids.length > 0) {
+              return await sb.from('soal_kuis').delete().in('kuis_id', ids);
+            }
+            return { count: 0 };
+          }},
+          { name: 'kuis', query: async () => await sb.from('kuis').delete().not('dosen_id', 'is', null) },
+          { name: 'materi', query: async () => {
+            const { data: jadwals } = await sb.from('jadwal_praktikum').select('id').not('dosen_id', 'is', null);
+            const ids = jadwals?.map(j => j.id) || [];
+            if (ids.length > 0) {
+              return await sb.from('materi').delete().in('jadwal_praktikum_id', ids);
+            }
+            return { count: 0 };
+          }},
+          { name: 'detail_peminjaman', query: async () => {
+            const { data: peminjaman } = await sb.from('peminjaman').select('id').not('dosen_id', 'is', null);
+            const ids = peminjaman?.map(p => p.id) || [];
+            if (ids.length > 0) {
+              return await sb.from('detail_peminjaman').delete().in('peminjaman_id', ids);
+            }
+            return { count: 0 };
+          }},
+          { name: 'peminjaman', query: async () => await sb.from('peminjaman').delete().not('dosen_id', 'is', null) },
+          { name: 'jadwal_praktikum_mahasiswa', query: async () => {
+            const { data: jadwals } = await sb.from('jadwal_praktikum').select('id').not('dosen_id', 'is', null);
+            const ids = jadwals?.map(j => j.id) || [];
+            if (ids.length > 0) {
+              return await sb.from('jadwal_praktikum_mahasiswa').delete().in('jadwal_praktikum_id', ids);
+            }
+            return { count: 0 };
+          }},
+          { name: 'jadwal_praktikum', query: async () => await sb.from('jadwal_praktikum').delete().not('dosen_id', 'is', null) }
+        ];
+
+        let totalDeleted = 0;
+        for (const op of operations) {
+          log(`Menghapus ${op.name}...`);
+          try {
+            const result = await op.query();
+            const count = result.count || 0;
+            totalDeleted += count;
+            log(`✓ ${op.name}: ${count} rows deleted`);
+          } catch (err) {
+            log(`✗ ${op.name}: ${err.message}`, 'error');
+          }
+        }
+
+        // Verify
+        log('Verifying results...');
+        const { count: dosenCount } = await sb.from('dosen').select('*', { count: 'exact', head: true });
+        const { count: jadwalCount } = await sb.from('jadwal_praktikum').select('*', { count: 'exact', head: true });
+
+        resultDiv.innerHTML = `
+          <div class="success">
+            <strong>✅ Cleanup Selesai!</strong><br>
+            Total rows dihapus: ${totalDeleted}<br>
+            Akun dosen yang tersisa: ${dosenCount || 0}<br>
+            Jadwal praktikum tersisa: ${jadwalCount || 0}
+          </div>
+        `;
+
+        log('✅ Cleanup completed successfully!');
+
+      } catch (error) {
+        log(`❌ Error: ${error.message}`, 'error');
+        resultDiv.innerHTML = `
+          <div class="error">
+            <strong>❌ Error:</strong><br>
+            ${error.message}<br><br>
+            Silakan gunakan SQL Script manual di Supabase Dashboard.
+          </div>
+        `;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '🗑️ JALANKAN CLEANUP';
+      }
+    }
+  </script>
+</body>
+</html>

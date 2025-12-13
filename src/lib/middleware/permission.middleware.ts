@@ -19,16 +19,16 @@
  * - Backward compatible with existing error handling
  */
 
-import { supabase } from '@/lib/supabase/client';
-import { hasPermission } from '@/lib/utils/permissions';
-import type { UserRole } from '@/types/auth.types';
-import type { Permission } from '@/types/permission.types';
+import { supabase } from "@/lib/supabase/client";
+import { hasPermission } from "@/lib/utils/permissions";
+import type { UserRole } from "@/types/auth.types";
+import type { Permission } from "@/types/permission.types";
 import {
   PermissionError,
   OwnershipError,
   AuthenticationError,
   RoleNotFoundError,
-} from '@/lib/errors/permission.errors';
+} from "@/lib/errors/permission.errors";
 
 // ============================================================================
 // TYPE DEFINITIONS
@@ -58,6 +58,20 @@ export interface OwnershipOptions {
 // ============================================================================
 
 /**
+ * In-memory cache untuk user role (berlaku selama session)
+ * Cache ini akan di-clear saat user logout atau refresh page
+ */
+const userRoleCache = new Map<string, { role: UserRole; timestamp: number }>();
+const CACHE_TTL = 5 * 60 * 1000; // 5 menit
+
+/**
+ * Clear user role cache (dipanggil saat logout)
+ */
+export function clearUserRoleCache(): void {
+  userRoleCache.clear();
+}
+
+/**
  * Get current authenticated user
  * @throws {AuthenticationError} If user not authenticated
  */
@@ -68,18 +82,18 @@ export async function getCurrentUser(): Promise<CurrentUser> {
   } = await supabase.auth.getUser();
 
   if (authError || !user) {
-    throw new AuthenticationError('User not authenticated');
+    throw new AuthenticationError("User not authenticated");
   }
 
   return {
     id: user.id,
-    role: 'mahasiswa', // Default, will be overridden below
+    role: "mahasiswa", // Default, will be overridden below
     email: user.email,
   };
 }
 
 /**
- * Get current user with role from database
+ * Get current user with role from database (with caching)
  * @throws {AuthenticationError} If user not authenticated
  * @throws {RoleNotFoundError} If user role not found
  */
@@ -91,19 +105,39 @@ export async function getCurrentUserWithRole(): Promise<CurrentUser> {
   } = await supabase.auth.getUser();
 
   if (authError || !user) {
-    throw new AuthenticationError('User not authenticated');
+    throw new AuthenticationError("User not authenticated");
+  }
+
+  // Check if running in test environment using Vite's import.meta.env
+  // This is safe for both browser and Node.js environments
+  const isTestEnv = import.meta.env.MODE === "test";
+
+  // Check cache first (skip in tests to avoid stale cross-test state)
+  const cached = userRoleCache.get(user.id);
+  if (!isTestEnv && cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return {
+      id: user.id,
+      role: cached.role,
+      email: user.email,
+    };
   }
 
   // Get user role from database
   const { data: userData, error: userError } = await supabase
-    .from('users')
-    .select('role')
-    .eq('id', user.id)
+    .from("users")
+    .select("role")
+    .eq("id", user.id)
     .single();
 
   if (userError || !userData) {
     throw new RoleNotFoundError(`Role not found for user ${user.id}`, user.id);
   }
+
+  // Update cache
+  userRoleCache.set(user.id, {
+    role: userData.role as UserRole,
+    timestamp: Date.now(),
+  });
 
   return {
     id: user.id,
@@ -121,9 +155,9 @@ export async function getCurrentDosenId(): Promise<string | null> {
     const user = await getCurrentUser();
 
     const { data, error } = await supabase
-      .from('dosen')
-      .select('id')
-      .eq('user_id', user.id)
+      .from("dosen")
+      .select("id")
+      .eq("user_id", user.id)
       .single();
 
     if (error || !data) {
@@ -145,9 +179,9 @@ export async function getCurrentMahasiswaId(): Promise<string | null> {
     const user = await getCurrentUser();
 
     const { data, error } = await supabase
-      .from('mahasiswa')
-      .select('id')
-      .eq('user_id', user.id)
+      .from("mahasiswa")
+      .select("id")
+      .eq("user_id", user.id)
       .single();
 
     if (error || !data) {
@@ -169,9 +203,9 @@ export async function getCurrentLaboranId(): Promise<string | null> {
     const user = await getCurrentUser();
 
     const { data, error } = await supabase
-      .from('laboran')
-      .select('id')
-      .eq('user_id', user.id)
+      .from("laboran")
+      .select("id")
+      .eq("user_id", user.id)
       .single();
 
     if (error || !data) {
@@ -196,24 +230,18 @@ export async function checkPermission(permission: Permission): Promise<void> {
   const user = await getCurrentUserWithRole();
 
   // Admin bypass - admin can do everything
-  if (user.role === 'admin') {
-    console.log(`✅ Admin bypass: ${user.email} (${permission})`);
+  if (user.role === "admin") {
     return;
   }
 
   // Check if user has permission
   if (!hasPermission(user.role, permission)) {
-    console.warn(
-      `❌ Permission denied: ${user.role} tried ${permission} (user: ${user.email})`
-    );
     throw new PermissionError(
       `Missing permission: ${permission}`,
       permission,
-      user.role
+      user.role,
     );
   }
-
-  console.log(`✅ Permission granted: ${user.role} → ${permission}`);
 }
 
 /**
@@ -235,7 +263,7 @@ export async function checkPermission(permission: Permission): Promise<void> {
  */
 export function requirePermission<T extends any[], R>(
   permission: Permission,
-  fn: (...args: T) => Promise<R>
+  fn: (...args: T) => Promise<R>,
 ): (...args: T) => Promise<R> {
   return async (...args: T): Promise<R> => {
     // Check permission first
@@ -251,25 +279,25 @@ export function requirePermission<T extends any[], R>(
  * @throws {PermissionError} If user has none of the permissions
  */
 export async function checkAnyPermission(
-  permissions: Permission[]
+  permissions: Permission[],
 ): Promise<void> {
   const user = await getCurrentUserWithRole();
 
   // Admin bypass
-  if (user.role === 'admin') {
+  if (user.role === "admin") {
     return;
   }
 
   // Check if user has any of the permissions
   const hasAny = permissions.some((permission) =>
-    hasPermission(user.role, permission)
+    hasPermission(user.role, permission),
   );
 
   if (!hasAny) {
     throw new PermissionError(
-      `Missing one of permissions: ${permissions.join(', ')}`,
+      `Missing one of permissions: ${permissions.join(", ")}`,
       permissions[0],
-      user.role
+      user.role,
     );
   }
 }
@@ -279,12 +307,12 @@ export async function checkAnyPermission(
  * @throws {PermissionError} If user lacks any permission
  */
 export async function checkAllPermissions(
-  permissions: Permission[]
+  permissions: Permission[],
 ): Promise<void> {
   const user = await getCurrentUserWithRole();
 
   // Admin bypass
-  if (user.role === 'admin') {
+  if (user.role === "admin") {
     return;
   }
 
@@ -294,7 +322,7 @@ export async function checkAllPermissions(
       throw new PermissionError(
         `Missing permission: ${permission}`,
         permission,
-        user.role
+        user.role,
       );
     }
   }
@@ -322,19 +350,19 @@ export async function checkAllPermissions(
  * ```
  */
 export async function requireOwnership(
-  options: OwnershipOptions
+  options: OwnershipOptions,
 ): Promise<void> {
   const {
     table,
     resourceId,
-    ownerField = 'user_id',
+    ownerField = "user_id",
     allowAdmin = true,
   } = options;
 
   const user = await getCurrentUserWithRole();
 
   // Admin bypass (if allowed)
-  if (allowAdmin && user.role === 'admin') {
+  if (allowAdmin && user.role === "admin") {
     console.log(`✅ Admin bypass: ownership check for ${table}/${resourceId}`);
     return;
   }
@@ -343,7 +371,7 @@ export async function requireOwnership(
   const { data, error } = await supabase
     .from(table as any)
     .select(ownerField)
-    .eq('id', resourceId)
+    .eq("id", resourceId)
     .single();
 
   if (error || !data) {
@@ -353,60 +381,62 @@ export async function requireOwnership(
   const ownerId = (data as any)[ownerField];
 
   // Handle different ownership patterns
-  if (ownerField === 'user_id') {
+  if (ownerField === "user_id") {
     // Direct user ownership
     if (ownerId !== user.id) {
       console.warn(
-        `❌ Ownership denied: ${user.id} tried to access ${table}/${resourceId} owned by ${ownerId}`
+        `❌ Ownership denied: ${user.id} tried to access ${table}/${resourceId} owned by ${ownerId}`,
       );
       throw new OwnershipError(
-        'You can only access your own resources',
+        "You can only access your own resources",
         table,
-        resourceId
+        resourceId,
       );
     }
-  } else if (ownerField === 'dosen_id') {
+  } else if (ownerField === "dosen_id") {
     // Dosen ownership
     const currentDosenId = await getCurrentDosenId();
     if (!currentDosenId || ownerId !== currentDosenId) {
       throw new OwnershipError(
-        'You can only access your own resources',
+        "You can only access your own resources",
         table,
-        resourceId
+        resourceId,
       );
     }
-  } else if (ownerField === 'mahasiswa_id') {
+  } else if (ownerField === "mahasiswa_id") {
     // Mahasiswa ownership
     const currentMahasiswaId = await getCurrentMahasiswaId();
     if (!currentMahasiswaId || ownerId !== currentMahasiswaId) {
       throw new OwnershipError(
-        'You can only access your own resources',
+        "You can only access your own resources",
         table,
-        resourceId
+        resourceId,
       );
     }
-  } else if (ownerField === 'laboran_id') {
+  } else if (ownerField === "laboran_id") {
     // Laboran ownership
     const currentLaboranId = await getCurrentLaboranId();
     if (!currentLaboranId || ownerId !== currentLaboranId) {
       throw new OwnershipError(
-        'You can only access your own resources',
+        "You can only access your own resources",
         table,
-        resourceId
+        resourceId,
       );
     }
   } else {
     // Generic ownership check (fallback)
     if (ownerId !== user.id) {
       throw new OwnershipError(
-        'You can only access your own resources',
+        "You can only access your own resources",
         table,
-        resourceId
+        resourceId,
       );
     }
   }
 
-  console.log(`✅ Ownership verified: ${user.role} owns ${table}/${resourceId}`);
+  console.log(
+    `✅ Ownership verified: ${user.role} owns ${table}/${resourceId}`,
+  );
 }
 
 /**
@@ -427,9 +457,9 @@ export async function requireOwnership(
  */
 export function requirePermissionAndOwnership<T extends any[], R>(
   permission: Permission,
-  ownershipConfig: Omit<OwnershipOptions, 'resourceId'>,
+  ownershipConfig: Omit<OwnershipOptions, "resourceId">,
   resourceIdIndex: number,
-  fn: (...args: T) => Promise<R>
+  fn: (...args: T) => Promise<R>,
 ): (...args: T) => Promise<R> {
   return async (...args: T): Promise<R> => {
     // Check permission first
@@ -459,7 +489,7 @@ export function requirePermissionAndOwnership<T extends any[], R>(
 export async function isCurrentUserAdmin(): Promise<boolean> {
   try {
     const user = await getCurrentUserWithRole();
-    return user.role === 'admin';
+    return user.role === "admin";
   } catch {
     return false;
   }

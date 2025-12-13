@@ -6,7 +6,7 @@
  */
 
 // Import types for use in this file
-import type { SyncResult } from './offline.types';
+import type { SyncResult } from "./offline.types";
 
 // Re-export non-conflicting types from offline.types
 export type {
@@ -14,7 +14,7 @@ export type {
   SyncStatus,
   SyncEntity,
   SyncQueueItem,
-} from './offline.types';
+} from "./offline.types";
 
 // Note: SyncConfig, SyncResult, SyncConflict are available from offline.types via index.ts
 
@@ -48,12 +48,12 @@ export interface SyncState {
  * Sync event types
  */
 export type SyncEvent =
-  | 'sync_started'
-  | 'sync_completed'
-  | 'sync_failed'
-  | 'sync_item_success'
-  | 'sync_item_failed'
-  | 'sync_conflict_detected';
+  | "sync_started"
+  | "sync_completed"
+  | "sync_failed"
+  | "sync_item_success"
+  | "sync_item_failed"
+  | "sync_conflict_detected";
 
 /**
  * Sync event data

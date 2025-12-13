@@ -1,50 +1,72 @@
-import { useState, useEffect } from 'react';
-import { Megaphone, Plus, Bell, RefreshCw, Trash2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { DeleteConfirmDialog } from '@/components/common/DeleteConfirmDialog';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { toast } from 'sonner';
+import { useState, useEffect } from "react";
+import { Megaphone, Plus, Bell, RefreshCw, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { DeleteConfirmDialog } from "@/components/common/DeleteConfirmDialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { toast } from "sonner";
 import {
   getAllAnnouncements,
   getAnnouncementStats,
   deleteAnnouncement,
   createAnnouncement,
-  type AnnouncementStats
-} from '@/lib/api/announcements.api';
-import type { Pengumuman, CreatePengumumanData } from '@/types/common.types';
-import { formatDate } from '@/lib/utils/format';
-import { useAuth } from '@/lib/hooks/useAuth';
+  type AnnouncementStats,
+} from "@/lib/api/announcements.api";
+import type { Pengumuman, CreatePengumumanData } from "@/types/common.types";
+import { formatDate } from "@/lib/utils/format";
+import { useAuth } from "@/lib/hooks/useAuth";
 
 export default function AnnouncementsPage() {
   const { user } = useAuth();
   const [announcements, setAnnouncements] = useState<Pengumuman[]>([]);
   const [stats, setStats] = useState<AnnouncementStats>({
-    total: 0, active: 0, highPriority: 0, scheduled: 0
+    total: 0,
+    active: 0,
+    highPriority: 0,
+    scheduled: 0,
   });
   const [loading, setLoading] = useState(true);
 
   // Add dialog
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [addFormData, setAddFormData] = useState<CreatePengumumanData>({
-    judul: '',
-    konten: '',
-    tipe: 'info',
-    prioritas: 'normal',
+    judul: "",
+    konten: "",
+    tipe: "info",
+    prioritas: "normal",
     target_role: [],
-    tanggal_mulai: '',
-    tanggal_selesai: '',
-    penulis_id: user?.id || '',
+    tanggal_mulai: "",
+    tanggal_selesai: "",
+    penulis_id: user?.id || "",
   });
 
   // Delete confirmation state
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [deletingAnnouncement, setDeletingAnnouncement] = useState<Pengumuman | null>(null);
+  const [deletingAnnouncement, setDeletingAnnouncement] =
+    useState<Pengumuman | null>(null);
 
   useEffect(() => {
     loadAnnouncements();
@@ -52,7 +74,7 @@ export default function AnnouncementsPage() {
 
   useEffect(() => {
     if (user?.id) {
-      setAddFormData(prev => ({ ...prev, penulis_id: user.id }));
+      setAddFormData((prev) => ({ ...prev, penulis_id: user.id }));
     }
   }, [user]);
 
@@ -66,7 +88,7 @@ export default function AnnouncementsPage() {
       setAnnouncements(announcementsData);
       setStats(statsData);
     } catch (error) {
-      toast.error('Failed to load announcements');
+      toast.error("Failed to load announcements");
       console.error(error);
     } finally {
       setLoading(false);
@@ -83,26 +105,26 @@ export default function AnnouncementsPage() {
 
     try {
       await deleteAnnouncement(deletingAnnouncement.id);
-      toast.success('Pengumuman berhasil dihapus');
+      toast.success("Pengumuman berhasil dihapus");
       setIsDeleteDialogOpen(false);
       setDeletingAnnouncement(null);
       await loadAnnouncements();
     } catch (error) {
-      toast.error('Gagal menghapus pengumuman');
+      toast.error("Gagal menghapus pengumuman");
       console.error(error);
     }
   };
 
   const handleAdd = () => {
     setAddFormData({
-      judul: '',
-      konten: '',
-      tipe: 'info',
-      prioritas: 'normal',
+      judul: "",
+      konten: "",
+      tipe: "info",
+      prioritas: "normal",
       target_role: [],
-      tanggal_mulai: '',
-      tanggal_selesai: '',
-      penulis_id: user?.id || '',
+      tanggal_mulai: "",
+      tanggal_selesai: "",
+      penulis_id: user?.id || "",
     });
     setIsAddDialogOpen(true);
   };
@@ -110,12 +132,12 @@ export default function AnnouncementsPage() {
   const handleCreate = async () => {
     try {
       if (!addFormData.judul || !addFormData.konten) {
-        toast.error('Please fill in all required fields');
+        toast.error("Please fill in all required fields");
         return;
       }
 
       if (!user?.id) {
-        toast.error('User not authenticated');
+        toast.error("User not authenticated");
         return;
       }
 
@@ -123,19 +145,21 @@ export default function AnnouncementsPage() {
         ...addFormData,
         penulis_id: user.id,
       });
-      toast.success('Announcement created successfully');
+      toast.success("Announcement created successfully");
       setIsAddDialogOpen(false);
       await loadAnnouncements();
     } catch (error: any) {
-      toast.error('Failed to create announcement: ' + (error.message || 'Unknown error'));
+      toast.error(
+        "Failed to create announcement: " + (error.message || "Unknown error"),
+      );
       console.error(error);
     }
   };
 
   const getPriorityVariant = (priority?: string | null) => {
-    if (priority === 'high') return 'destructive';
-    if (priority === 'normal') return 'secondary';
-    return 'outline';
+    if (priority === "high") return "destructive";
+    if (priority === "normal") return "secondary";
+    return "outline";
   };
 
   return (
@@ -144,14 +168,18 @@ export default function AnnouncementsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Announcements</h1>
-          <p className="text-muted-foreground">Manage system-wide announcements</p>
+          <p className="text-muted-foreground">
+            Manage system-wide announcements
+          </p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={loadAnnouncements}>
-            <RefreshCw className="h-4 w-4 mr-2" />Refresh
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
           </Button>
           <Button onClick={handleAdd}>
-            <Plus className="h-4 w-4 mr-2" />Create
+            <Plus className="h-4 w-4 mr-2" />
+            Create
           </Button>
         </div>
       </div>
@@ -218,22 +246,34 @@ export default function AnnouncementsPage() {
           ) : (
             <div className="space-y-4">
               {announcements.map((announcement) => (
-                <div key={announcement.id} className="flex items-center justify-between p-4 border rounded-lg">
+                <div
+                  key={announcement.id}
+                  className="flex items-center justify-between p-4 border rounded-lg"
+                >
                   <div className="flex items-center gap-4">
                     <Megaphone className="h-8 w-8 text-muted-foreground" />
                     <div>
                       <h3 className="font-semibold">{announcement.judul}</h3>
                       <p className="text-sm text-muted-foreground">
-                        {announcement.created_at ? formatDate(announcement.created_at) : 'Unknown date'} • {announcement.penulis?.full_name || 'Unknown author'}
+                        {announcement.created_at
+                          ? formatDate(announcement.created_at)
+                          : "Unknown date"}{" "}
+                        • {announcement.penulis?.full_name || "Unknown author"}
                       </p>
                     </div>
                   </div>
                   <div className="flex gap-2">
                     <Badge variant={getPriorityVariant(announcement.prioritas)}>
-                      {announcement.prioritas || 'normal'}
+                      {announcement.prioritas || "normal"}
                     </Badge>
-                    <Badge variant="default">{announcement.tipe || 'info'}</Badge>
-                    <Button variant="ghost" size="sm" onClick={() => handleDelete(announcement)}>
+                    <Badge variant="default">
+                      {announcement.tipe || "info"}
+                    </Badge>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDelete(announcement)}
+                    >
                       <Trash2 className="h-4 w-4 text-red-600" />
                     </Button>
                   </div>
@@ -249,7 +289,9 @@ export default function AnnouncementsPage() {
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Create New Announcement</DialogTitle>
-            <DialogDescription>Create a new system announcement</DialogDescription>
+            <DialogDescription>
+              Create a new system announcement
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
@@ -257,7 +299,9 @@ export default function AnnouncementsPage() {
               <Input
                 id="new_judul"
                 value={addFormData.judul}
-                onChange={(e) => setAddFormData({...addFormData, judul: e.target.value})}
+                onChange={(e) =>
+                  setAddFormData({ ...addFormData, judul: e.target.value })
+                }
                 placeholder="Important announcement"
               />
             </div>
@@ -267,7 +311,9 @@ export default function AnnouncementsPage() {
               <Textarea
                 id="new_konten"
                 value={addFormData.konten}
-                onChange={(e) => setAddFormData({...addFormData, konten: e.target.value})}
+                onChange={(e) =>
+                  setAddFormData({ ...addFormData, konten: e.target.value })
+                }
                 placeholder="Announcement details..."
                 rows={5}
               />
@@ -278,7 +324,9 @@ export default function AnnouncementsPage() {
                 <Label htmlFor="new_tipe">Type</Label>
                 <Select
                   value={addFormData.tipe}
-                  onValueChange={(value: any) => setAddFormData({...addFormData, tipe: value})}
+                  onValueChange={(value: any) =>
+                    setAddFormData({ ...addFormData, tipe: value })
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -296,7 +344,9 @@ export default function AnnouncementsPage() {
                 <Label htmlFor="new_prioritas">Priority</Label>
                 <Select
                   value={addFormData.prioritas}
-                  onValueChange={(value: any) => setAddFormData({...addFormData, prioritas: value})}
+                  onValueChange={(value: any) =>
+                    setAddFormData({ ...addFormData, prioritas: value })
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -317,7 +367,12 @@ export default function AnnouncementsPage() {
                   id="new_tanggal_mulai"
                   type="datetime-local"
                   value={addFormData.tanggal_mulai}
-                  onChange={(e) => setAddFormData({...addFormData, tanggal_mulai: e.target.value})}
+                  onChange={(e) =>
+                    setAddFormData({
+                      ...addFormData,
+                      tanggal_mulai: e.target.value,
+                    })
+                  }
                 />
               </div>
 
@@ -327,7 +382,12 @@ export default function AnnouncementsPage() {
                   id="new_tanggal_selesai"
                   type="datetime-local"
                   value={addFormData.tanggal_selesai}
-                  onChange={(e) => setAddFormData({...addFormData, tanggal_selesai: e.target.value})}
+                  onChange={(e) =>
+                    setAddFormData({
+                      ...addFormData,
+                      tanggal_selesai: e.target.value,
+                    })
+                  }
                 />
               </div>
             </div>
@@ -335,7 +395,7 @@ export default function AnnouncementsPage() {
             <div>
               <Label>Target Roles (leave empty for all)</Label>
               <div className="grid grid-cols-2 gap-2 mt-2">
-                {['admin', 'dosen', 'mahasiswa', 'laboran'].map((role) => (
+                {["admin", "dosen", "mahasiswa", "laboran"].map((role) => (
                   <div key={role} className="flex items-center gap-2">
                     <input
                       type="checkbox"
@@ -344,20 +404,31 @@ export default function AnnouncementsPage() {
                       onChange={(e) => {
                         const currentRoles = addFormData.target_role || [];
                         if (e.target.checked) {
-                          setAddFormData({...addFormData, target_role: [...currentRoles, role]});
+                          setAddFormData({
+                            ...addFormData,
+                            target_role: [...currentRoles, role],
+                          });
                         } else {
-                          setAddFormData({...addFormData, target_role: currentRoles.filter(r => r !== role)});
+                          setAddFormData({
+                            ...addFormData,
+                            target_role: currentRoles.filter((r) => r !== role),
+                          });
                         }
                       }}
                     />
-                    <Label htmlFor={`role_${role}`} className="capitalize">{role}</Label>
+                    <Label htmlFor={`role_${role}`} className="capitalize">
+                      {role}
+                    </Label>
                   </div>
                 ))}
               </div>
             </div>
 
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+              <Button
+                variant="outline"
+                onClick={() => setIsAddDialogOpen(false)}
+              >
                 Cancel
               </Button>
               <Button onClick={handleCreate}>Create Announcement</Button>
@@ -377,9 +448,9 @@ export default function AnnouncementsPage() {
           itemType="Pengumuman"
           description={`Tipe: ${deletingAnnouncement.tipe} | Prioritas: ${deletingAnnouncement.prioritas}`}
           consequences={[
-            'Pengumuman akan dihapus permanen dari sistem',
-            'User tidak akan melihat pengumuman ini lagi',
-            'Tindakan ini tidak dapat dibatalkan',
+            "Pengumuman akan dihapus permanen dari sistem",
+            "User tidak akan melihat pengumuman ini lagi",
+            "Tindakan ini tidak dapat dibatalkan",
           ]}
         />
       )}

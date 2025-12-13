@@ -3,19 +3,52 @@
  * Full CRUD for managing laboratory equipment inventory
  * FIXED VERSION - No invalid fields
  */
-import { useState, useEffect } from 'react';
-import { Plus, Search, RefreshCw, Package, AlertCircle, Edit2, Trash2 } from 'lucide-react';
-import { toast } from 'sonner';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { DeleteConfirmDialog } from '@/components/common/DeleteConfirmDialog';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
+import { useState, useEffect } from "react";
+import {
+  Plus,
+  Search,
+  RefreshCw,
+  Package,
+  AlertCircle,
+  Edit2,
+  Trash2,
+} from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { DeleteConfirmDialog } from "@/components/common/DeleteConfirmDialog";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import {
   getInventarisList,
   createInventaris,
@@ -23,46 +56,50 @@ import {
   deleteInventaris,
   type InventarisListItem,
   type CreateInventarisData,
-} from '@/lib/api/laboran.api';
+} from "@/lib/api/laboran.api";
 
 export default function EquipmentsPage() {
   const [inventaris, setInventaris] = useState<InventarisListItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Edit dialog
-  const [editingItem, setEditingItem] = useState<InventarisListItem | null>(null);
+  const [editingItem, setEditingItem] = useState<InventarisListItem | null>(
+    null,
+  );
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editFormData, setEditFormData] = useState<CreateInventarisData>({
-    kode_barang: '',
-    nama_barang: '',
-    kategori: '',
-    merk: '',
-    spesifikasi: '',
+    kode_barang: "",
+    nama_barang: "",
+    kategori: "",
+    merk: "",
+    spesifikasi: "",
     jumlah: 1,
     jumlah_tersedia: 1,
-    kondisi: 'baik',
+    kondisi: "baik",
     tahun_pengadaan: new Date().getFullYear(),
-    keterangan: '',
+    keterangan: "",
   });
 
   // Delete confirmation
-  const [deletingItem, setDeletingItem] = useState<InventarisListItem | null>(null);
+  const [deletingItem, setDeletingItem] = useState<InventarisListItem | null>(
+    null,
+  );
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   // Add dialog
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [addFormData, setAddFormData] = useState<CreateInventarisData>({
-    kode_barang: '',
-    nama_barang: '',
-    kategori: '',
-    merk: '',
-    spesifikasi: '',
+    kode_barang: "",
+    nama_barang: "",
+    kategori: "",
+    merk: "",
+    spesifikasi: "",
     jumlah: 1,
     jumlah_tersedia: 1,
-    kondisi: 'baik',
+    kondisi: "baik",
     tahun_pengadaan: new Date().getFullYear(),
-    keterangan: '',
+    keterangan: "",
   });
 
   useEffect(() => {
@@ -72,40 +109,45 @@ export default function EquipmentsPage() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const inventarisResult = await getInventarisList({ search: searchQuery || undefined });
+      const inventarisResult = await getInventarisList({
+        search: searchQuery || undefined,
+      });
       setInventaris(inventarisResult.data);
     } catch (error) {
-      toast.error('Failed to load equipment data');
+      toast.error("Failed to load equipment data");
       console.error(error);
     } finally {
       setLoading(false);
     }
   };
 
-  const filteredInventaris = inventaris.filter((item) =>
-    item.nama_barang.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.kode_barang.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredInventaris = inventaris.filter(
+    (item) =>
+      item.nama_barang.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.kode_barang.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   const stats = {
     total: inventaris.length,
-    available: inventaris.filter(i => i.kondisi === 'baik').length,
-    damaged: inventaris.filter(i => i.kondisi === 'rusak_ringan' || i.kondisi === 'rusak_berat').length,
-    borrowed: inventaris.filter(i => (i.jumlah - i.jumlah_tersedia) > 0).length,
+    available: inventaris.filter((i) => i.kondisi === "baik").length,
+    damaged: inventaris.filter(
+      (i) => i.kondisi === "rusak_ringan" || i.kondisi === "rusak_berat",
+    ).length,
+    borrowed: inventaris.filter((i) => i.jumlah - i.jumlah_tersedia > 0).length,
   };
 
   const handleAdd = () => {
     setAddFormData({
-      kode_barang: '',
-      nama_barang: '',
-      kategori: '',
-      merk: '',
-      spesifikasi: '',
+      kode_barang: "",
+      nama_barang: "",
+      kategori: "",
+      merk: "",
+      spesifikasi: "",
       jumlah: 1,
       jumlah_tersedia: 1,
-      kondisi: 'baik',
+      kondisi: "baik",
       tahun_pengadaan: new Date().getFullYear(),
-      keterangan: '',
+      keterangan: "",
     });
     setIsAddDialogOpen(true);
   };
@@ -113,13 +155,13 @@ export default function EquipmentsPage() {
   const handleCreate = async () => {
     try {
       if (!addFormData.kode_barang || !addFormData.nama_barang) {
-        toast.error('Please fill in all required fields (Code, Name)');
+        toast.error("Please fill in all required fields (Code, Name)");
         return;
       }
 
       // Validate jumlah_tersedia
       if (addFormData.jumlah_tersedia > addFormData.jumlah) {
-        toast.error('Available quantity cannot be greater than total quantity');
+        toast.error("Available quantity cannot be greater than total quantity");
         return;
       }
 
@@ -128,11 +170,13 @@ export default function EquipmentsPage() {
         ...addFormData,
         laboratorium_id: null,
       });
-      toast.success('Equipment created successfully');
+      toast.success("Equipment created successfully");
       setIsAddDialogOpen(false);
       await loadData();
     } catch (error: any) {
-      toast.error('Failed to create equipment: ' + (error.message || 'Unknown error'));
+      toast.error(
+        "Failed to create equipment: " + (error.message || "Unknown error"),
+      );
       console.error(error);
     }
   };
@@ -142,14 +186,14 @@ export default function EquipmentsPage() {
     setEditFormData({
       kode_barang: item.kode_barang,
       nama_barang: item.nama_barang,
-      kategori: item.kategori || '',
-      merk: item.merk || '',
-      spesifikasi: item.spesifikasi || '',
+      kategori: item.kategori || "",
+      merk: item.merk || "",
+      spesifikasi: item.spesifikasi || "",
       jumlah: item.jumlah,
       jumlah_tersedia: item.jumlah_tersedia,
-      kondisi: item.kondisi || 'baik',
+      kondisi: item.kondisi || "baik",
       tahun_pengadaan: item.tahun_pengadaan || new Date().getFullYear(),
-      keterangan: item.keterangan || '',
+      keterangan: item.keterangan || "",
     });
     setIsEditDialogOpen(true);
   };
@@ -159,12 +203,12 @@ export default function EquipmentsPage() {
 
     try {
       if (!editFormData.kode_barang || !editFormData.nama_barang) {
-        toast.error('Please fill in all required fields (Code, Name)');
+        toast.error("Please fill in all required fields (Code, Name)");
         return;
       }
 
       if (editFormData.jumlah_tersedia > editFormData.jumlah) {
-        toast.error('Available quantity cannot be greater than total quantity');
+        toast.error("Available quantity cannot be greater than total quantity");
         return;
       }
 
@@ -172,12 +216,14 @@ export default function EquipmentsPage() {
         ...editFormData,
         laboratorium_id: null,
       });
-      toast.success('Equipment updated successfully');
+      toast.success("Equipment updated successfully");
       setIsEditDialogOpen(false);
       setEditingItem(null);
       await loadData();
     } catch (error: any) {
-      toast.error('Failed to update equipment: ' + (error.message || 'Unknown error'));
+      toast.error(
+        "Failed to update equipment: " + (error.message || "Unknown error"),
+      );
       console.error(error);
     }
   };
@@ -192,12 +238,16 @@ export default function EquipmentsPage() {
 
     try {
       await deleteInventaris(deletingItem.id);
-      toast.success(`Equipment "${deletingItem.nama_barang}" deleted successfully`);
+      toast.success(
+        `Equipment "${deletingItem.nama_barang}" deleted successfully`,
+      );
       setIsDeleteDialogOpen(false);
       setDeletingItem(null);
       await loadData();
     } catch (error: any) {
-      toast.error('Failed to delete equipment: ' + (error.message || 'Unknown error'));
+      toast.error(
+        "Failed to delete equipment: " + (error.message || "Unknown error"),
+      );
       console.error(error);
     }
   };
@@ -208,14 +258,18 @@ export default function EquipmentsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Equipment Management</h1>
-          <p className="text-muted-foreground">Manage laboratory equipment and inventory</p>
+          <p className="text-muted-foreground">
+            Manage laboratory equipment and inventory
+          </p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={loadData}>
-            <RefreshCw className="h-4 w-4 mr-2" />Refresh
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
           </Button>
           <Button onClick={handleAdd}>
-            <Plus className="h-4 w-4 mr-2" />Add Equipment
+            <Plus className="h-4 w-4 mr-2" />
+            Add Equipment
           </Button>
         </div>
       </div>
@@ -234,7 +288,9 @@ export default function EquipmentsPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Good Condition</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Good Condition
+            </CardTitle>
             <Package className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
@@ -280,7 +336,9 @@ export default function EquipmentsPage() {
       <Card>
         <CardHeader>
           <CardTitle>Equipment Inventory</CardTitle>
-          <CardDescription>All laboratory equipment and supplies</CardDescription>
+          <CardDescription>
+            All laboratory equipment and supplies
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -307,31 +365,54 @@ export default function EquipmentsPage() {
               <TableBody>
                 {filteredInventaris.map((item) => (
                   <TableRow key={item.id}>
-                    <TableCell className="font-mono">{item.kode_barang}</TableCell>
-                    <TableCell className="font-medium">{item.nama_barang}</TableCell>
-                    <TableCell>{item.kategori || '-'}</TableCell>
+                    <TableCell className="font-mono">
+                      {item.kode_barang}
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      {item.nama_barang}
+                    </TableCell>
+                    <TableCell>{item.kategori || "-"}</TableCell>
                     <TableCell>
-                      <span className={item.jumlah_tersedia < item.jumlah ? 'text-orange-600' : ''}>
+                      <span
+                        className={
+                          item.jumlah_tersedia < item.jumlah
+                            ? "text-orange-600"
+                            : ""
+                        }
+                      >
                         {item.jumlah_tersedia}
                       </span>
-                      {' / '}
+                      {" / "}
                       {item.jumlah}
                     </TableCell>
                     <TableCell>
-                      <Badge variant={
-                        item.kondisi === 'baik' ? 'default' :
-                        item.kondisi === 'rusak_ringan' ? 'secondary' :
-                        'destructive'
-                      }>
+                      <Badge
+                        variant={
+                          item.kondisi === "baik"
+                            ? "default"
+                            : item.kondisi === "rusak_ringan"
+                              ? "secondary"
+                              : "destructive"
+                        }
+                      >
                         {item.kondisi}
                       </Badge>
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-2">
-                        <Button variant="outline" size="sm" onClick={() => handleEdit(item)}>
-                          <Edit2 className="h-4 w-4 mr-1" />Edit
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEdit(item)}
+                        >
+                          <Edit2 className="h-4 w-4 mr-1" />
+                          Edit
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleDelete(item)}>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDelete(item)}
+                        >
                           <Trash2 className="h-4 w-4 text-red-600" />
                         </Button>
                       </div>
@@ -349,20 +430,31 @@ export default function EquipmentsPage() {
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Add New Equipment</DialogTitle>
-            <DialogDescription>Create a new equipment/inventory item</DialogDescription>
+            <DialogDescription>
+              Create a new equipment/inventory item
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             {/* Required Fields Section */}
             <div className="border-b pb-4">
-              <h3 className="font-semibold mb-3 text-sm text-muted-foreground">REQUIRED FIELDS</h3>
-              <p className="text-xs text-muted-foreground mb-4">All equipment is stored in central depot</p>
+              <h3 className="font-semibold mb-3 text-sm text-muted-foreground">
+                REQUIRED FIELDS
+              </h3>
+              <p className="text-xs text-muted-foreground mb-4">
+                All equipment is stored in central depot
+              </p>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="new_kode_barang">Equipment Code *</Label>
                   <Input
                     id="new_kode_barang"
                     value={addFormData.kode_barang}
-                    onChange={(e) => setAddFormData({...addFormData, kode_barang: e.target.value})}
+                    onChange={(e) =>
+                      setAddFormData({
+                        ...addFormData,
+                        kode_barang: e.target.value,
+                      })
+                    }
                     placeholder="EQP-001"
                   />
                 </div>
@@ -371,7 +463,12 @@ export default function EquipmentsPage() {
                   <Input
                     id="new_nama_barang"
                     value={addFormData.nama_barang}
-                    onChange={(e) => setAddFormData({...addFormData, nama_barang: e.target.value})}
+                    onChange={(e) =>
+                      setAddFormData({
+                        ...addFormData,
+                        nama_barang: e.target.value,
+                      })
+                    }
                     placeholder="Digital Microscope"
                   />
                 </div>
@@ -387,13 +484,15 @@ export default function EquipmentsPage() {
                     value={addFormData.jumlah}
                     onChange={(e) => {
                       const val = parseInt(e.target.value) || 1;
-                      setAddFormData({...addFormData, jumlah: val});
+                      setAddFormData({ ...addFormData, jumlah: val });
                     }}
                     placeholder="10"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="new_jumlah_tersedia">Available Quantity *</Label>
+                  <Label htmlFor="new_jumlah_tersedia">
+                    Available Quantity *
+                  </Label>
                   <Input
                     id="new_jumlah_tersedia"
                     type="number"
@@ -401,25 +500,34 @@ export default function EquipmentsPage() {
                     value={addFormData.jumlah_tersedia}
                     onChange={(e) => {
                       const val = parseInt(e.target.value) || 0;
-                      setAddFormData({...addFormData, jumlah_tersedia: val});
+                      setAddFormData({ ...addFormData, jumlah_tersedia: val });
                     }}
                     placeholder="10"
                   />
-                  <p className="text-xs text-muted-foreground mt-1">Must be ≤ Total Quantity</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Must be ≤ Total Quantity
+                  </p>
                 </div>
               </div>
             </div>
 
             {/* Optional Fields Section */}
             <div className="border-b pb-4">
-              <h3 className="font-semibold mb-3 text-sm text-muted-foreground">OPTIONAL FIELDS</h3>
+              <h3 className="font-semibold mb-3 text-sm text-muted-foreground">
+                OPTIONAL FIELDS
+              </h3>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="new_kategori">Category</Label>
                   <Input
                     id="new_kategori"
-                    value={addFormData.kategori || ''}
-                    onChange={(e) => setAddFormData({...addFormData, kategori: e.target.value || null})}
+                    value={addFormData.kategori || ""}
+                    onChange={(e) =>
+                      setAddFormData({
+                        ...addFormData,
+                        kategori: e.target.value || null,
+                      })
+                    }
                     placeholder="Lab Equipment"
                   />
                 </div>
@@ -427,8 +535,13 @@ export default function EquipmentsPage() {
                   <Label htmlFor="new_merk">Brand</Label>
                   <Input
                     id="new_merk"
-                    value={addFormData.merk || ''}
-                    onChange={(e) => setAddFormData({...addFormData, merk: e.target.value || null})}
+                    value={addFormData.merk || ""}
+                    onChange={(e) =>
+                      setAddFormData({
+                        ...addFormData,
+                        merk: e.target.value || null,
+                      })
+                    }
                     placeholder="Olympus"
                   />
                 </div>
@@ -438,8 +551,13 @@ export default function EquipmentsPage() {
                 <Label htmlFor="new_spesifikasi">Specifications</Label>
                 <Textarea
                   id="new_spesifikasi"
-                  value={addFormData.spesifikasi || ''}
-                  onChange={(e) => setAddFormData({...addFormData, spesifikasi: e.target.value || null})}
+                  value={addFormData.spesifikasi || ""}
+                  onChange={(e) =>
+                    setAddFormData({
+                      ...addFormData,
+                      spesifikasi: e.target.value || null,
+                    })
+                  }
                   placeholder="1000x magnification, LED illumination"
                   rows={2}
                 />
@@ -450,7 +568,9 @@ export default function EquipmentsPage() {
                   <Label htmlFor="new_kondisi">Condition</Label>
                   <Select
                     value={addFormData.kondisi}
-                    onValueChange={(value: any) => setAddFormData({...addFormData, kondisi: value})}
+                    onValueChange={(value: any) =>
+                      setAddFormData({ ...addFormData, kondisi: value })
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -467,8 +587,13 @@ export default function EquipmentsPage() {
                   <Input
                     id="new_tahun_pengadaan"
                     type="number"
-                    value={addFormData.tahun_pengadaan || ''}
-                    onChange={(e) => setAddFormData({...addFormData, tahun_pengadaan: parseInt(e.target.value) || null})}
+                    value={addFormData.tahun_pengadaan || ""}
+                    onChange={(e) =>
+                      setAddFormData({
+                        ...addFormData,
+                        tahun_pengadaan: parseInt(e.target.value) || null,
+                      })
+                    }
                     placeholder={new Date().getFullYear().toString()}
                   />
                 </div>
@@ -478,8 +603,13 @@ export default function EquipmentsPage() {
                 <Label htmlFor="new_keterangan">Notes/Description</Label>
                 <Textarea
                   id="new_keterangan"
-                  value={addFormData.keterangan || ''}
-                  onChange={(e) => setAddFormData({...addFormData, keterangan: e.target.value})}
+                  value={addFormData.keterangan || ""}
+                  onChange={(e) =>
+                    setAddFormData({
+                      ...addFormData,
+                      keterangan: e.target.value,
+                    })
+                  }
                   placeholder="Additional notes about this equipment..."
                   rows={2}
                 />
@@ -487,7 +617,10 @@ export default function EquipmentsPage() {
             </div>
 
             <div className="flex justify-end gap-2 pt-4">
-              <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+              <Button
+                variant="outline"
+                onClick={() => setIsAddDialogOpen(false)}
+              >
                 Cancel
               </Button>
               <Button onClick={handleCreate}>Create Equipment</Button>
@@ -501,7 +634,9 @@ export default function EquipmentsPage() {
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Equipment</DialogTitle>
-            <DialogDescription>Update equipment/inventory item</DialogDescription>
+            <DialogDescription>
+              Update equipment/inventory item
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
@@ -509,14 +644,24 @@ export default function EquipmentsPage() {
                 <Label>Equipment Code *</Label>
                 <Input
                   value={editFormData.kode_barang}
-                  onChange={(e) => setEditFormData({...editFormData, kode_barang: e.target.value})}
+                  onChange={(e) =>
+                    setEditFormData({
+                      ...editFormData,
+                      kode_barang: e.target.value,
+                    })
+                  }
                 />
               </div>
               <div>
                 <Label>Equipment Name *</Label>
                 <Input
                   value={editFormData.nama_barang}
-                  onChange={(e) => setEditFormData({...editFormData, nama_barang: e.target.value})}
+                  onChange={(e) =>
+                    setEditFormData({
+                      ...editFormData,
+                      nama_barang: e.target.value,
+                    })
+                  }
                 />
               </div>
               <div>
@@ -524,7 +669,12 @@ export default function EquipmentsPage() {
                 <Input
                   type="number"
                   value={editFormData.jumlah}
-                  onChange={(e) => setEditFormData({...editFormData, jumlah: parseInt(e.target.value) || 1})}
+                  onChange={(e) =>
+                    setEditFormData({
+                      ...editFormData,
+                      jumlah: parseInt(e.target.value) || 1,
+                    })
+                  }
                 />
               </div>
               <div>
@@ -532,30 +682,49 @@ export default function EquipmentsPage() {
                 <Input
                   type="number"
                   value={editFormData.jumlah_tersedia}
-                  onChange={(e) => setEditFormData({...editFormData, jumlah_tersedia: parseInt(e.target.value) || 0})}
+                  onChange={(e) =>
+                    setEditFormData({
+                      ...editFormData,
+                      jumlah_tersedia: parseInt(e.target.value) || 0,
+                    })
+                  }
                 />
               </div>
               <div>
                 <Label>Category</Label>
                 <Input
-                  value={editFormData.kategori || ''}
-                  onChange={(e) => setEditFormData({...editFormData, kategori: e.target.value || null})}
+                  value={editFormData.kategori || ""}
+                  onChange={(e) =>
+                    setEditFormData({
+                      ...editFormData,
+                      kategori: e.target.value || null,
+                    })
+                  }
                 />
               </div>
               <div>
                 <Label>Brand</Label>
                 <Input
-                  value={editFormData.merk || ''}
-                  onChange={(e) => setEditFormData({...editFormData, merk: e.target.value || null})}
+                  value={editFormData.merk || ""}
+                  onChange={(e) =>
+                    setEditFormData({
+                      ...editFormData,
+                      merk: e.target.value || null,
+                    })
+                  }
                 />
               </div>
               <div>
                 <Label>Condition</Label>
                 <Select
                   value={editFormData.kondisi}
-                  onValueChange={(value: any) => setEditFormData({...editFormData, kondisi: value})}
+                  onValueChange={(value: any) =>
+                    setEditFormData({ ...editFormData, kondisi: value })
+                  }
                 >
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="baik">Good</SelectItem>
                     <SelectItem value="rusak_ringan">Minor Damage</SelectItem>
@@ -567,21 +736,36 @@ export default function EquipmentsPage() {
                 <Label>Year</Label>
                 <Input
                   type="number"
-                  value={editFormData.tahun_pengadaan || ''}
-                  onChange={(e) => setEditFormData({...editFormData, tahun_pengadaan: parseInt(e.target.value) || null})}
+                  value={editFormData.tahun_pengadaan || ""}
+                  onChange={(e) =>
+                    setEditFormData({
+                      ...editFormData,
+                      tahun_pengadaan: parseInt(e.target.value) || null,
+                    })
+                  }
                 />
               </div>
             </div>
             <div>
               <Label>Notes</Label>
               <Textarea
-                value={editFormData.keterangan || ''}
-                onChange={(e) => setEditFormData({...editFormData, keterangan: e.target.value || null})}
+                value={editFormData.keterangan || ""}
+                onChange={(e) =>
+                  setEditFormData({
+                    ...editFormData,
+                    keterangan: e.target.value || null,
+                  })
+                }
                 rows={2}
               />
             </div>
             <div className="flex justify-end gap-2 pt-4">
-              <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancel</Button>
+              <Button
+                variant="outline"
+                onClick={() => setIsEditDialogOpen(false)}
+              >
+                Cancel
+              </Button>
               <Button onClick={handleUpdate}>Update Equipment</Button>
             </div>
           </div>
@@ -599,10 +783,10 @@ export default function EquipmentsPage() {
           itemType="Equipment/Inventaris"
           description={`Kode: ${deletingItem.kode_barang} | Stok: ${deletingItem.jumlah_tersedia}/${deletingItem.jumlah}`}
           consequences={[
-            'Data equipment akan dihapus permanen',
-            'Riwayat peminjaman equipment ini akan terpengaruh',
-            'Data peminjaman yang sudah ada tetap tersimpan',
-            'Tindakan ini tidak dapat dibatalkan',
+            "Data equipment akan dihapus permanen",
+            "Riwayat peminjaman equipment ini akan terpengaruh",
+            "Data peminjaman yang sudah ada tetap tersimpan",
+            "Tindakan ini tidak dapat dibatalkan",
           ]}
         />
       )}

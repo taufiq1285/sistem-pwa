@@ -3,9 +3,9 @@
  * Toolbar with search, filters, column visibility, and custom actions
  */
 
-import { X, Search, Settings2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { X, Search, Settings2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -13,9 +13,9 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { cn } from '@/lib/utils';
-import type { Table } from '@tanstack/react-table';
+} from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
+import type { Table } from "@tanstack/react-table";
 
 // ============================================================================
 // TYPES
@@ -37,12 +37,13 @@ interface DataTableToolbarProps<TData> {
 export function DataTableToolbar<TData>({
   table,
   searchable = false,
-  searchPlaceholder = 'Search...',
+  searchPlaceholder = "Search...",
   enableColumnVisibility = false,
   toolbarActions,
   className,
 }: DataTableToolbarProps<TData>) {
-  const isFiltered = table.getState().columnFilters.length > 0 || table.getState().globalFilter;
+  const isFiltered =
+    table.getState().columnFilters.length > 0 || table.getState().globalFilter;
 
   // Get all columns that can be hidden
   const hidableColumns = table
@@ -50,18 +51,18 @@ export function DataTableToolbar<TData>({
     .filter((column) => column.getCanHide())
     .map((column) => ({
       id: column.id,
-      label: column.columnDef.header as string || column.id,
+      label: (column.columnDef.header as string) || column.id,
       isVisible: column.getIsVisible(),
     }));
 
   // Reset all filters
   const handleReset = () => {
     table.resetColumnFilters();
-    table.setGlobalFilter('');
+    table.setGlobalFilter("");
   };
 
   return (
-    <div className={cn('flex items-center justify-between gap-4', className)}>
+    <div className={cn("flex items-center justify-between gap-4", className)}>
       {/* Left Section - Search & Filters */}
       <div className="flex flex-1 items-center gap-2">
         {/* Global Search */}
@@ -70,7 +71,7 @@ export function DataTableToolbar<TData>({
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder={searchPlaceholder}
-              value={(table.getState().globalFilter as string) ?? ''}
+              value={(table.getState().globalFilter as string) ?? ""}
               onChange={(event) => table.setGlobalFilter(event.target.value)}
               className="pl-9"
             />
@@ -99,11 +100,7 @@ export function DataTableToolbar<TData>({
         {enableColumnVisibility && hidableColumns.length > 0 && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-9"
-              >
+              <Button variant="outline" size="sm" className="h-9">
                 <Settings2 className="mr-2 h-4 w-4" />
                 View
               </Button>

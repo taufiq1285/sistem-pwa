@@ -3,10 +3,10 @@
  * Orchestrator for Sidebar (desktop) and MobileNav (mobile)
  */
 
-import { useState } from 'react';
-import { Sidebar } from './Sidebar';
-import { MobileNav } from './MobileNav';
-import type { UserRole } from '@/types/auth.types';
+import { useState } from "react";
+import { Sidebar } from "./Sidebar";
+import { MobileNav } from "./MobileNav";
+import type { UserRole } from "@/types/auth.types";
 
 // ============================================================================
 // TYPES

@@ -7,9 +7,18 @@
  * @vitest-environment jsdom
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi, beforeAll, afterAll } from 'vitest';
-import { NetworkDetector } from '../../../../lib/offline/network-detector';
-import type { NetworkChangeEvent } from '../../../../lib/offline/network-detector';
+import {
+  describe,
+  it,
+  expect,
+  beforeEach,
+  afterEach,
+  vi,
+  beforeAll,
+  afterAll,
+} from "vitest";
+import { NetworkDetector } from "../../../../lib/offline/network-detector";
+import type { NetworkChangeEvent } from "../../../../lib/offline/network-detector";
 
 // ============================================================================
 // MOCK SETUP
@@ -28,7 +37,7 @@ global.performance = { now: mockPerformanceNow } as any;
 
 // Helper to mock navigator.onLine
 function mockNavigatorOnline(isOnline: boolean) {
-  Object.defineProperty(global.navigator, 'onLine', {
+  Object.defineProperty(global.navigator, "onLine", {
     writable: true,
     configurable: true,
     value: isOnline,
@@ -37,7 +46,7 @@ function mockNavigatorOnline(isOnline: boolean) {
 
 // Helper to mock navigator.connection
 function mockNavigatorConnection(connection: any) {
-  Object.defineProperty(global.navigator, 'connection', {
+  Object.defineProperty(global.navigator, "connection", {
     writable: true,
     configurable: true,
     value: connection,
@@ -48,14 +57,14 @@ function mockNavigatorConnection(connection: any) {
 // TESTS
 // ============================================================================
 
-describe('NetworkDetector', () => {
+describe("NetworkDetector", () => {
   let detector: NetworkDetector;
 
   beforeAll(() => {
     // Suppress console logs during tests
-    vi.spyOn(console, 'log').mockImplementation(() => {});
-    vi.spyOn(console, 'warn').mockImplementation(() => {});
-    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.spyOn(console, "log").mockImplementation(() => {});
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    vi.spyOn(console, "error").mockImplementation(() => {});
   });
 
   beforeEach(() => {
@@ -89,16 +98,16 @@ describe('NetworkDetector', () => {
   // INITIALIZATION TESTS
   // ============================================================================
 
-  describe('Initialization', () => {
-    it('should create detector with default config', () => {
+  describe("Initialization", () => {
+    it("should create detector with default config", () => {
       detector = new NetworkDetector();
       expect(detector).toBeDefined();
       expect(detector.isReady()).toBe(false);
     });
 
-    it('should create detector with custom config', () => {
+    it("should create detector with custom config", () => {
       detector = new NetworkDetector({
-        pingUrl: '/custom-ping',
+        pingUrl: "/custom-ping",
         pingInterval: 10000,
         pingTimeout: 3000,
         enableQualityCheck: false,
@@ -108,31 +117,33 @@ describe('NetworkDetector', () => {
       expect(detector).toBeDefined();
     });
 
-    it('should initialize successfully', () => {
+    it("should initialize successfully", () => {
       detector = new NetworkDetector({ enablePeriodicCheck: false });
       detector.initialize();
 
       expect(detector.isReady()).toBe(true);
-      expect(detector.getStatus()).toBe('online');
+      expect(detector.getStatus()).toBe("online");
     });
 
-    it('should not re-initialize if already initialized', () => {
+    it("should not re-initialize if already initialized", () => {
       detector = new NetworkDetector({ enablePeriodicCheck: false });
       detector.initialize();
       detector.initialize(); // Second call
 
       expect(detector.isReady()).toBe(true);
-      expect(console.warn).toHaveBeenCalledWith('NetworkDetector already initialized');
+      expect(console.warn).toHaveBeenCalledWith(
+        "NetworkDetector already initialized",
+      );
     });
 
-    it('should set initial status based on navigator.onLine', () => {
+    it("should set initial status based on navigator.onLine", () => {
       mockNavigatorOnline(false);
       detector = new NetworkDetector({ enablePeriodicCheck: false });
 
-      expect(detector.getStatus()).toBe('offline');
+      expect(detector.getStatus()).toBe("offline");
     });
 
-    it('should start periodic check when enabled', () => {
+    it("should start periodic check when enabled", () => {
       detector = new NetworkDetector({
         enablePeriodicCheck: true,
         pingInterval: 1000,
@@ -149,8 +160,8 @@ describe('NetworkDetector', () => {
   // CLEANUP TESTS
   // ============================================================================
 
-  describe('Cleanup', () => {
-    it('should destroy detector and cleanup resources', () => {
+  describe("Cleanup", () => {
+    it("should destroy detector and cleanup resources", () => {
       detector = new NetworkDetector({ enablePeriodicCheck: true });
       detector.initialize();
 
@@ -163,7 +174,7 @@ describe('NetworkDetector', () => {
       expect(detector.getListenerCount()).toBe(0);
     });
 
-    it('should handle destroy on uninitialized detector', () => {
+    it("should handle destroy on uninitialized detector", () => {
       detector = new NetworkDetector();
       detector.destroy(); // Should not throw
 
@@ -175,24 +186,24 @@ describe('NetworkDetector', () => {
   // STATUS GETTER TESTS
   // ============================================================================
 
-  describe('Status Getters', () => {
+  describe("Status Getters", () => {
     beforeEach(() => {
       mockNavigatorOnline(true);
       detector = new NetworkDetector({ enablePeriodicCheck: false });
       detector.initialize();
     });
 
-    it('should return current status', () => {
-      expect(detector.getStatus()).toBe('online');
+    it("should return current status", () => {
+      expect(detector.getStatus()).toBe("online");
     });
 
-    it('should check if online', () => {
+    it("should check if online", () => {
       expect(detector.isOnline()).toBe(true);
       expect(detector.isOffline()).toBe(false);
       expect(detector.isUnstable()).toBe(false);
     });
 
-    it('should check if offline', () => {
+    it("should check if offline", () => {
       mockNavigatorOnline(false);
       detector = new NetworkDetector({ enablePeriodicCheck: false });
 
@@ -206,27 +217,27 @@ describe('NetworkDetector', () => {
   // PING TESTS
   // ============================================================================
 
-  describe('Ping', () => {
+  describe("Ping", () => {
     beforeEach(() => {
       detector = new NetworkDetector({ enablePeriodicCheck: false });
     });
 
-    it('should return true when ping succeeds', async () => {
+    it("should return true when ping succeeds", async () => {
       mockFetch.mockResolvedValue({ ok: true });
 
       const result = await detector.ping();
 
       expect(result).toBe(true);
       expect(mockFetch).toHaveBeenCalledWith(
-        '/api/ping',
+        "/api/ping",
         expect.objectContaining({
-          method: 'HEAD',
-          cache: 'no-cache',
-        })
+          method: "HEAD",
+          cache: "no-cache",
+        }),
       );
     });
 
-    it('should return false when ping fails', async () => {
+    it("should return false when ping fails", async () => {
       mockFetch.mockResolvedValue({ ok: false });
 
       const result = await detector.ping();
@@ -234,18 +245,18 @@ describe('NetworkDetector', () => {
       expect(result).toBe(false);
     });
 
-    it('should return false when network error occurs', async () => {
-      mockFetch.mockRejectedValue(new Error('Network error'));
+    it("should return false when network error occurs", async () => {
+      mockFetch.mockRejectedValue(new Error("Network error"));
 
       const result = await detector.ping();
 
       expect(result).toBe(false);
     });
 
-    it('should handle aborted request (timeout scenario)', async () => {
+    it("should handle aborted request (timeout scenario)", async () => {
       // Mock fetch that throws abort error
-      const abortError = new Error('The operation was aborted');
-      abortError.name = 'AbortError';
+      const abortError = new Error("The operation was aborted");
+      abortError.name = "AbortError";
       mockFetch.mockRejectedValue(abortError);
 
       const result = await detector.ping();
@@ -253,9 +264,9 @@ describe('NetworkDetector', () => {
       expect(result).toBe(false);
     });
 
-    it('should use custom ping URL', async () => {
+    it("should use custom ping URL", async () => {
       detector = new NetworkDetector({
-        pingUrl: '/custom-health-check',
+        pingUrl: "/custom-health-check",
         enablePeriodicCheck: false,
       });
 
@@ -264,8 +275,8 @@ describe('NetworkDetector', () => {
       await detector.ping();
 
       expect(mockFetch).toHaveBeenCalledWith(
-        '/custom-health-check',
-        expect.any(Object)
+        "/custom-health-check",
+        expect.any(Object),
       );
     });
   });
@@ -274,12 +285,12 @@ describe('NetworkDetector', () => {
   // LATENCY MEASUREMENT TESTS
   // ============================================================================
 
-  describe('Latency Measurement', () => {
+  describe("Latency Measurement", () => {
     beforeEach(() => {
       detector = new NetworkDetector({ enablePeriodicCheck: false });
     });
 
-    it('should measure latency successfully', async () => {
+    it("should measure latency successfully", async () => {
       mockPerformanceNow.mockReturnValueOnce(0).mockReturnValueOnce(150);
       mockFetch.mockResolvedValue({ ok: true });
 
@@ -288,21 +299,21 @@ describe('NetworkDetector', () => {
       expect(latency).toBe(150);
     });
 
-    it('should return timeout value when ping fails', async () => {
-      mockFetch.mockRejectedValue(new Error('Network error'));
+    it("should return timeout value when ping fails", async () => {
+      mockFetch.mockRejectedValue(new Error("Network error"));
 
       const latency = await detector.measureLatency();
 
       expect(latency).toBe(5000); // Default timeout
     });
 
-    it('should use custom timeout', async () => {
+    it("should use custom timeout", async () => {
       detector = new NetworkDetector({
         pingTimeout: 3000,
         enablePeriodicCheck: false,
       });
 
-      mockFetch.mockRejectedValue(new Error('Network error'));
+      mockFetch.mockRejectedValue(new Error("Network error"));
 
       const latency = await detector.measureLatency();
 
@@ -314,12 +325,12 @@ describe('NetworkDetector', () => {
   // NETWORK QUALITY TESTS
   // ============================================================================
 
-  describe('Network Quality', () => {
+  describe("Network Quality", () => {
     beforeEach(() => {
       detector = new NetworkDetector({ enablePeriodicCheck: false });
     });
 
-    it('should return undefined when connection API not available', () => {
+    it("should return undefined when connection API not available", () => {
       mockNavigatorConnection(undefined);
 
       const quality = detector.checkQuality();
@@ -327,11 +338,11 @@ describe('NetworkDetector', () => {
       expect(quality).toBeUndefined();
     });
 
-    it('should return quality metrics when connection API available', () => {
+    it("should return quality metrics when connection API available", () => {
       mockNavigatorConnection({
         rtt: 100,
         downlink: 10,
-        effectiveType: '4g',
+        effectiveType: "4g",
         saveData: false,
       });
 
@@ -340,13 +351,13 @@ describe('NetworkDetector', () => {
       expect(quality).toEqual({
         latency: 100,
         downlink: 10,
-        effectiveType: '4g',
+        effectiveType: "4g",
         saveData: false,
         rtt: 100,
       });
     });
 
-    it('should handle missing effectiveType', () => {
+    it("should handle missing effectiveType", () => {
       mockNavigatorConnection({
         rtt: 50,
         downlink: 5,
@@ -356,11 +367,11 @@ describe('NetworkDetector', () => {
 
       const quality = detector.checkQuality();
 
-      expect(quality?.effectiveType).toBe('unknown');
+      expect(quality?.effectiveType).toBe("unknown");
     });
 
-    it('should map all connection types correctly', () => {
-      const types = ['slow-2g', '2g', '3g', '4g', 'unknown-type'];
+    it("should map all connection types correctly", () => {
+      const types = ["slow-2g", "2g", "3g", "4g", "unknown-type"];
 
       types.forEach((type) => {
         mockNavigatorConnection({
@@ -372,18 +383,18 @@ describe('NetworkDetector', () => {
 
         const quality = detector.checkQuality();
 
-        if (type === 'unknown-type') {
-          expect(quality?.effectiveType).toBe('unknown');
+        if (type === "unknown-type") {
+          expect(quality?.effectiveType).toBe("unknown");
         } else {
           expect(quality?.effectiveType).toBe(type);
         }
       });
     });
 
-    it('should handle errors when checking quality', () => {
+    it("should handle errors when checking quality", () => {
       mockNavigatorConnection({
         get rtt() {
-          throw new Error('Access denied');
+          throw new Error("Access denied");
         },
       });
 
@@ -398,7 +409,7 @@ describe('NetworkDetector', () => {
   // EVENT EMITTER TESTS
   // ============================================================================
 
-  describe('Event Emitter', () => {
+  describe("Event Emitter", () => {
     beforeEach(() => {
       detector = new NetworkDetector({
         enablePeriodicCheck: false,
@@ -407,14 +418,14 @@ describe('NetworkDetector', () => {
       detector.initialize();
     });
 
-    it('should add listener with on()', () => {
+    it("should add listener with on()", () => {
       const listener = vi.fn();
       detector.on(listener);
 
       expect(detector.getListenerCount()).toBe(1);
     });
 
-    it('should remove listener with off()', () => {
+    it("should remove listener with off()", () => {
       const listener = vi.fn();
       detector.on(listener);
       detector.off(listener);
@@ -422,7 +433,7 @@ describe('NetworkDetector', () => {
       expect(detector.getListenerCount()).toBe(0);
     });
 
-    it('should remove listener with unsubscribe function', () => {
+    it("should remove listener with unsubscribe function", () => {
       const listener = vi.fn();
       const unsubscribe = detector.on(listener);
 
@@ -433,33 +444,33 @@ describe('NetworkDetector', () => {
       expect(detector.getListenerCount()).toBe(0);
     });
 
-    it('should call listener on status change', () => {
+    it("should call listener on status change", () => {
       const listener = vi.fn();
       detector.on(listener);
 
       // Simulate offline event
-      window.dispatchEvent(new Event('offline'));
+      window.dispatchEvent(new Event("offline"));
 
       expect(listener).toHaveBeenCalled();
       const event: NetworkChangeEvent = listener.mock.calls[0][0];
-      expect(event.status).toBe('offline');
+      expect(event.status).toBe("offline");
       expect(event.isOnline).toBe(false);
     });
 
-    it('should call once() listener only once', () => {
+    it("should call once() listener only once", () => {
       const listener = vi.fn();
       detector.once(listener);
 
       // Trigger multiple events
-      window.dispatchEvent(new Event('offline'));
-      window.dispatchEvent(new Event('online'));
+      window.dispatchEvent(new Event("offline"));
+      window.dispatchEvent(new Event("online"));
 
       // Should be called only once
       expect(listener).toHaveBeenCalledTimes(1);
       expect(detector.getListenerCount()).toBe(0);
     });
 
-    it('should call multiple listeners', () => {
+    it("should call multiple listeners", () => {
       const listener1 = vi.fn();
       const listener2 = vi.fn();
       const listener3 = vi.fn();
@@ -468,23 +479,23 @@ describe('NetworkDetector', () => {
       detector.on(listener2);
       detector.on(listener3);
 
-      window.dispatchEvent(new Event('offline'));
+      window.dispatchEvent(new Event("offline"));
 
       expect(listener1).toHaveBeenCalled();
       expect(listener2).toHaveBeenCalled();
       expect(listener3).toHaveBeenCalled();
     });
 
-    it('should handle errors in listeners gracefully', () => {
+    it("should handle errors in listeners gracefully", () => {
       const errorListener = vi.fn(() => {
-        throw new Error('Listener error');
+        throw new Error("Listener error");
       });
       const normalListener = vi.fn();
 
       detector.on(errorListener);
       detector.on(normalListener);
 
-      window.dispatchEvent(new Event('offline'));
+      window.dispatchEvent(new Event("offline"));
 
       // Both should be called despite error
       expect(errorListener).toHaveBeenCalled();
@@ -492,7 +503,7 @@ describe('NetworkDetector', () => {
       expect(console.error).toHaveBeenCalled();
     });
 
-    it('should call config onStatusChange callback', () => {
+    it("should call config onStatusChange callback", () => {
       const callback = vi.fn();
       detector = new NetworkDetector({
         enablePeriodicCheck: false,
@@ -500,16 +511,16 @@ describe('NetworkDetector', () => {
       });
       detector.initialize();
 
-      window.dispatchEvent(new Event('offline'));
+      window.dispatchEvent(new Event("offline"));
 
       expect(callback).toHaveBeenCalled();
     });
 
-    it('should include timestamp in event', () => {
+    it("should include timestamp in event", () => {
       const listener = vi.fn();
       detector.on(listener);
 
-      window.dispatchEvent(new Event('offline'));
+      window.dispatchEvent(new Event("offline"));
 
       const event: NetworkChangeEvent = listener.mock.calls[0][0];
       expect(event.timestamp).toBeGreaterThan(0);
@@ -520,26 +531,26 @@ describe('NetworkDetector', () => {
   // ONLINE/OFFLINE EVENT HANDLING TESTS
   // ============================================================================
 
-  describe('Online/Offline Events', () => {
+  describe("Online/Offline Events", () => {
     beforeEach(() => {
       detector = new NetworkDetector({ enablePeriodicCheck: false });
       detector.initialize();
     });
 
-    it('should handle offline event', () => {
+    it("should handle offline event", () => {
       const listener = vi.fn();
       detector.on(listener);
 
-      window.dispatchEvent(new Event('offline'));
+      window.dispatchEvent(new Event("offline"));
 
-      expect(detector.getStatus()).toBe('offline');
+      expect(detector.getStatus()).toBe("offline");
       expect(listener).toHaveBeenCalled();
     });
 
-    it('should handle online event with successful ping', async () => {
+    it("should handle online event with successful ping", async () => {
       // Start offline
-      window.dispatchEvent(new Event('offline'));
-      expect(detector.getStatus()).toBe('offline');
+      window.dispatchEvent(new Event("offline"));
+      expect(detector.getStatus()).toBe("offline");
 
       // Mock successful ping
       mockFetch.mockResolvedValue({ ok: true });
@@ -547,24 +558,24 @@ describe('NetworkDetector', () => {
       // Trigger online event
       const onlinePromise = new Promise<void>((resolve) => {
         detector.on((event) => {
-          if (event.status === 'online') {
+          if (event.status === "online") {
             resolve();
           }
         });
       });
 
-      window.dispatchEvent(new Event('online'));
+      window.dispatchEvent(new Event("online"));
 
       // Wait for async ping to complete
       await vi.runAllTimersAsync();
       await onlinePromise;
 
-      expect(detector.getStatus()).toBe('online');
+      expect(detector.getStatus()).toBe("online");
     });
 
-    it('should set unstable status when online but ping fails', async () => {
+    it("should set unstable status when online but ping fails", async () => {
       // Start offline
-      window.dispatchEvent(new Event('offline'));
+      window.dispatchEvent(new Event("offline"));
 
       // Mock failed ping
       mockFetch.mockResolvedValue({ ok: false });
@@ -572,28 +583,28 @@ describe('NetworkDetector', () => {
       // Trigger online event
       const unstablePromise = new Promise<void>((resolve) => {
         detector.on((event) => {
-          if (event.status === 'unstable') {
+          if (event.status === "unstable") {
             resolve();
           }
         });
       });
 
-      window.dispatchEvent(new Event('online'));
+      window.dispatchEvent(new Event("online"));
 
       // Wait for async ping
       await vi.runAllTimersAsync();
       await unstablePromise;
 
-      expect(detector.getStatus()).toBe('unstable');
+      expect(detector.getStatus()).toBe("unstable");
     });
 
-    it('should not emit duplicate status changes', () => {
+    it("should not emit duplicate status changes", () => {
       const listener = vi.fn();
       detector.on(listener);
 
       // Trigger offline twice
-      window.dispatchEvent(new Event('offline'));
-      window.dispatchEvent(new Event('offline'));
+      window.dispatchEvent(new Event("offline"));
+      window.dispatchEvent(new Event("offline"));
 
       // Should only emit once (initial status is online, first offline triggers change)
       expect(listener).toHaveBeenCalledTimes(1);
@@ -604,8 +615,8 @@ describe('NetworkDetector', () => {
   // PERIODIC CHECK TESTS
   // ============================================================================
 
-  describe('Periodic Checks', () => {
-    it('should run periodic checks when enabled', async () => {
+  describe("Periodic Checks", () => {
+    it("should run periodic checks when enabled", async () => {
       detector = new NetworkDetector({
         enablePeriodicCheck: true,
         pingInterval: 1000,
@@ -620,7 +631,7 @@ describe('NetworkDetector', () => {
       expect(mockFetch).toHaveBeenCalled();
     });
 
-    it('should not run periodic checks when disabled', async () => {
+    it("should not run periodic checks when disabled", async () => {
       detector = new NetworkDetector({
         enablePeriodicCheck: false,
       });
@@ -632,7 +643,7 @@ describe('NetworkDetector', () => {
       expect(mockFetch).not.toHaveBeenCalled();
     });
 
-    it('should detect online status during periodic check', async () => {
+    it("should detect online status during periodic check", async () => {
       detector = new NetworkDetector({
         enablePeriodicCheck: true,
         pingInterval: 1000,
@@ -640,8 +651,8 @@ describe('NetworkDetector', () => {
       detector.initialize();
 
       // Start offline
-      window.dispatchEvent(new Event('offline'));
-      expect(detector.getStatus()).toBe('offline');
+      window.dispatchEvent(new Event("offline"));
+      expect(detector.getStatus()).toBe("offline");
 
       // Mock successful ping
       mockNavigatorOnline(true);
@@ -654,10 +665,10 @@ describe('NetworkDetector', () => {
       await vi.advanceTimersByTimeAsync(1000);
 
       // Status should change to online
-      expect(detector.getStatus()).toBe('online');
+      expect(detector.getStatus()).toBe("online");
     });
 
-    it('should detect unstable status during periodic check', async () => {
+    it("should detect unstable status during periodic check", async () => {
       detector = new NetworkDetector({
         enablePeriodicCheck: true,
         pingInterval: 1000,
@@ -671,10 +682,10 @@ describe('NetworkDetector', () => {
       await vi.advanceTimersByTimeAsync(1000);
 
       // Status should change to unstable
-      expect(detector.getStatus()).toBe('unstable');
+      expect(detector.getStatus()).toBe("unstable");
     });
 
-    it('should stop periodic checks when destroyed', async () => {
+    it("should stop periodic checks when destroyed", async () => {
       detector = new NetworkDetector({
         enablePeriodicCheck: true,
         pingInterval: 1000,
@@ -692,7 +703,7 @@ describe('NetworkDetector', () => {
       expect(mockFetch).not.toHaveBeenCalled();
     });
 
-    it('should skip periodic check when navigator is offline', async () => {
+    it("should skip periodic check when navigator is offline", async () => {
       mockNavigatorOnline(false);
 
       detector = new NetworkDetector({
@@ -715,8 +726,8 @@ describe('NetworkDetector', () => {
   // INTEGRATION TESTS
   // ============================================================================
 
-  describe('Integration', () => {
-    it('should handle complete online -> offline -> online cycle', async () => {
+  describe("Integration", () => {
+    it("should handle complete online -> offline -> online cycle", async () => {
       detector = new NetworkDetector({ enablePeriodicCheck: false });
       detector.initialize();
 
@@ -724,26 +735,26 @@ describe('NetworkDetector', () => {
       detector.on((event) => events.push(event));
 
       // Start online
-      expect(detector.getStatus()).toBe('online');
+      expect(detector.getStatus()).toBe("online");
 
       // Go offline
-      window.dispatchEvent(new Event('offline'));
-      expect(detector.getStatus()).toBe('offline');
+      window.dispatchEvent(new Event("offline"));
+      expect(detector.getStatus()).toBe("offline");
 
       // Come back online
       mockFetch.mockResolvedValue({ ok: true });
-      window.dispatchEvent(new Event('online'));
+      window.dispatchEvent(new Event("online"));
       await vi.runAllTimersAsync();
 
-      expect(detector.getStatus()).toBe('online');
+      expect(detector.getStatus()).toBe("online");
       expect(events.length).toBeGreaterThan(0);
     });
 
-    it('should emit quality metrics when enabled', () => {
+    it("should emit quality metrics when enabled", () => {
       mockNavigatorConnection({
         rtt: 50,
         downlink: 20,
-        effectiveType: '4g',
+        effectiveType: "4g",
         saveData: false,
       });
 
@@ -757,14 +768,14 @@ describe('NetworkDetector', () => {
       detector.on(listener);
 
       // Trigger a status change to emit quality metrics
-      window.dispatchEvent(new Event('offline'));
+      window.dispatchEvent(new Event("offline"));
 
       // Check the offline event (quality should not be included for offline)
       expect(listener).toHaveBeenCalled();
 
       // Now trigger online to get quality metrics
       mockFetch.mockResolvedValue({ ok: true });
-      window.dispatchEvent(new Event('online'));
+      window.dispatchEvent(new Event("online"));
 
       // Wait for async ping
       vi.runAllTimersAsync();
@@ -775,11 +786,11 @@ describe('NetworkDetector', () => {
         .filter((event) => event.quality !== undefined);
 
       if (eventsWithQuality.length > 0) {
-        expect(eventsWithQuality[0].quality?.effectiveType).toBe('4g');
+        expect(eventsWithQuality[0].quality?.effectiveType).toBe("4g");
       }
     });
 
-    it('should not emit quality metrics when disabled', () => {
+    it("should not emit quality metrics when disabled", () => {
       detector = new NetworkDetector({
         enablePeriodicCheck: false,
         enableQualityCheck: false,
@@ -794,18 +805,18 @@ describe('NetworkDetector', () => {
       expect(event.quality).toBeUndefined();
     });
 
-    it('should handle rapid status changes', async () => {
+    it("should handle rapid status changes", async () => {
       detector = new NetworkDetector({ enablePeriodicCheck: false });
       detector.initialize();
 
       // Rapid offline -> online -> offline
-      window.dispatchEvent(new Event('offline'));
+      window.dispatchEvent(new Event("offline"));
       mockFetch.mockResolvedValue({ ok: true });
-      window.dispatchEvent(new Event('online'));
+      window.dispatchEvent(new Event("online"));
       await vi.runAllTimersAsync();
-      window.dispatchEvent(new Event('offline'));
+      window.dispatchEvent(new Event("offline"));
 
-      expect(detector.getStatus()).toBe('offline');
+      expect(detector.getStatus()).toBe("offline");
     });
   });
 });

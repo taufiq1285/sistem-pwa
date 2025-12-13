@@ -4,7 +4,7 @@
  * Supports integration with Sentry, LogRocket, or custom logging services
  */
 
-import type { ErrorInfo } from 'react';
+import type { ErrorInfo } from "react";
 
 // ============================================================================
 // TYPES
@@ -42,7 +42,7 @@ class ErrorLogger {
   constructor() {
     this.config = {
       enabled: !import.meta.env.DEV,
-      environment: import.meta.env.MODE || 'development',
+      environment: import.meta.env.MODE || "development",
       release: import.meta.env.VITE_APP_VERSION,
       sampleRate: 1.0,
     };
@@ -62,7 +62,7 @@ class ErrorLogger {
     // Setup global error handlers
     this.setupGlobalHandlers();
 
-    console.log('✅ Error Logger initialized', {
+    console.log("✅ Error Logger initialized", {
       enabled: this.config.enabled,
       environment: this.config.environment,
     });
@@ -71,7 +71,11 @@ class ErrorLogger {
   /**
    * Log React error boundary errors
    */
-  logReactError(error: Error, errorInfo: ErrorInfo, metadata?: Record<string, any>) {
+  logReactError(
+    error: Error,
+    errorInfo: ErrorInfo,
+    metadata?: Record<string, any>,
+  ) {
     const errorLog: ErrorLog = {
       message: error.message,
       stack: error.stack,
@@ -81,7 +85,7 @@ class ErrorLogger {
       url: window.location.href,
       metadata: {
         ...metadata,
-        errorType: 'React Error Boundary',
+        errorType: "React Error Boundary",
         errorName: error.name,
       },
     };
@@ -96,14 +100,14 @@ class ErrorLogger {
     const err = error instanceof ErrorEvent ? error.error : error;
 
     const errorLog: ErrorLog = {
-      message: err?.message || 'Unknown JavaScript error',
+      message: err?.message || "Unknown JavaScript error",
       stack: err?.stack,
       timestamp: new Date().toISOString(),
       userAgent: navigator.userAgent,
       url: window.location.href,
       metadata: {
         ...metadata,
-        errorType: 'JavaScript Error',
+        errorType: "JavaScript Error",
         errorName: err?.name,
       },
     };
@@ -116,14 +120,16 @@ class ErrorLogger {
    */
   logPromiseRejection(reason: any, metadata?: Record<string, any>) {
     const errorLog: ErrorLog = {
-      message: reason?.message || (reason != null ? String(reason) : 'Unhandled Promise Rejection'),
+      message:
+        reason?.message ||
+        (reason != null ? String(reason) : "Unhandled Promise Rejection"),
       stack: reason?.stack,
       timestamp: new Date().toISOString(),
       userAgent: navigator.userAgent,
       url: window.location.href,
       metadata: {
         ...metadata,
-        errorType: 'Unhandled Promise Rejection',
+        errorType: "Unhandled Promise Rejection",
         reason: String(reason),
       },
     };
@@ -135,7 +141,7 @@ class ErrorLogger {
    * Log custom errors
    */
   logError(error: Error | string, metadata?: Record<string, any>) {
-    const err = typeof error === 'string' ? new Error(error) : error;
+    const err = typeof error === "string" ? new Error(error) : error;
 
     const errorLog: ErrorLog = {
       message: err.message,
@@ -145,7 +151,7 @@ class ErrorLogger {
       url: window.location.href,
       metadata: {
         ...metadata,
-        errorType: 'Custom Error',
+        errorType: "Custom Error",
       },
     };
 
@@ -170,11 +176,11 @@ class ErrorLogger {
 
     // Log to console in development
     if (import.meta.env.DEV) {
-      console.group('🔴 Error Logged');
-      console.error('Message:', log.message);
-      console.error('Stack:', log.stack);
-      console.error('Component Stack:', log.componentStack);
-      console.error('Metadata:', log.metadata);
+      console.group("🔴 Error Logged");
+      console.error("Message:", log.message);
+      console.error("Stack:", log.stack);
+      console.error("Component Stack:", log.componentStack);
+      console.error("Metadata:", log.metadata);
       console.groupEnd();
     }
 
@@ -200,7 +206,7 @@ class ErrorLogger {
 
     // Store in localStorage for debugging
     try {
-      localStorage.setItem('error_logs', JSON.stringify(this.queue.slice(-10)));
+      localStorage.setItem("error_logs", JSON.stringify(this.queue.slice(-10)));
     } catch (e) {
       // Ignore localStorage errors
     }
@@ -219,7 +225,7 @@ class ErrorLogger {
   clearErrorLogs() {
     this.queue = [];
     try {
-      localStorage.removeItem('error_logs');
+      localStorage.removeItem("error_logs");
     } catch (e) {
       // Ignore localStorage errors
     }
@@ -248,7 +254,7 @@ class ErrorLogger {
     });
     */
 
-    console.log('📡 External error service configured (not yet implemented)');
+    console.log("📡 External error service configured (not yet implemented)");
   }
 
   /**
@@ -272,7 +278,7 @@ class ErrorLogger {
     */
 
     // Fallback: Send to custom endpoint
-    if (this.config.dsn && !this.config.dsn.includes('sentry')) {
+    if (this.config.dsn && !this.config.dsn.includes("sentry")) {
       this.sendToCustomEndpoint(log);
     }
   }
@@ -283,15 +289,15 @@ class ErrorLogger {
   private async sendToCustomEndpoint(log: ErrorLog) {
     try {
       await fetch(this.config.dsn!, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(log),
       });
     } catch (error) {
       // Silently fail - don't want error logger to cause errors
-      console.warn('Failed to send error log to custom endpoint', error);
+      console.warn("Failed to send error log to custom endpoint", error);
     }
   }
 
@@ -300,16 +306,19 @@ class ErrorLogger {
    */
   private setupGlobalHandlers() {
     // Handle uncaught JavaScript errors
-    window.addEventListener('error', (event: ErrorEvent) => {
+    window.addEventListener("error", (event: ErrorEvent) => {
       event.preventDefault(); // Prevent default browser error handling
       this.logJSError(event);
     });
 
     // Handle unhandled promise rejections
-    window.addEventListener('unhandledrejection', (event: PromiseRejectionEvent) => {
-      event.preventDefault(); // Prevent default browser error handling
-      this.logPromiseRejection(event.reason);
-    });
+    window.addEventListener(
+      "unhandledrejection",
+      (event: PromiseRejectionEvent) => {
+        event.preventDefault(); // Prevent default browser error handling
+        this.logPromiseRejection(event.reason);
+      },
+    );
   }
 
   /**
@@ -319,7 +328,10 @@ class ErrorLogger {
     // Store user context for future error logs
     // TODO: If using Sentry, call Sentry.setUser()
     try {
-      localStorage.setItem('error_logger_user', JSON.stringify({ userId, ...metadata }));
+      localStorage.setItem(
+        "error_logger_user",
+        JSON.stringify({ userId, ...metadata }),
+      );
     } catch (e) {
       // Ignore localStorage errors
     }
@@ -330,7 +342,7 @@ class ErrorLogger {
    */
   clearUser() {
     try {
-      localStorage.removeItem('error_logger_user');
+      localStorage.removeItem("error_logger_user");
     } catch (e) {
       // Ignore localStorage errors
     }
@@ -339,10 +351,14 @@ class ErrorLogger {
   /**
    * Add breadcrumb for debugging
    */
-  addBreadcrumb(message: string, category?: string, data?: Record<string, any>) {
+  addBreadcrumb(
+    message: string,
+    category?: string,
+    data?: Record<string, any>,
+  ) {
     // TODO: If using Sentry, call Sentry.addBreadcrumb()
     if (import.meta.env.DEV) {
-      console.log('🍞 Breadcrumb:', { message, category, data });
+      console.log("🍞 Breadcrumb:", { message, category, data });
     }
   }
 }
@@ -360,14 +376,21 @@ export const errorLogger = new ErrorLogger();
 /**
  * Log React error boundary errors
  */
-export function logReactError(error: Error, errorInfo: ErrorInfo, metadata?: Record<string, any>) {
+export function logReactError(
+  error: Error,
+  errorInfo: ErrorInfo,
+  metadata?: Record<string, any>,
+) {
   errorLogger.logReactError(error, errorInfo, metadata);
 }
 
 /**
  * Log custom errors
  */
-export function logError(error: Error | string, metadata?: Record<string, any>) {
+export function logError(
+  error: Error | string,
+  metadata?: Record<string, any>,
+) {
   errorLogger.logError(error, metadata);
 }
 
@@ -388,7 +411,11 @@ export function clearErrorUser() {
 /**
  * Add breadcrumb
  */
-export function addBreadcrumb(message: string, category?: string, data?: Record<string, any>) {
+export function addBreadcrumb(
+  message: string,
+  category?: string,
+  data?: Record<string, any>,
+) {
   errorLogger.addBreadcrumb(message, category, data);
 }
 

@@ -15,19 +15,19 @@
 /**
  * Network status
  */
-export type NetworkStatus = 'online' | 'offline' | 'unstable';
+export type NetworkStatus = "online" | "offline" | "unstable";
 
 /**
  * Connection type from Network Information API
  */
 export type ConnectionType =
-  | 'slow-2g'
-  | '2g'
-  | '3g'
-  | '4g'
-  | 'wifi'
-  | 'ethernet'
-  | 'unknown';
+  | "slow-2g"
+  | "2g"
+  | "3g"
+  | "4g"
+  | "wifi"
+  | "ethernet"
+  | "unknown";
 
 /**
  * Network quality metrics
@@ -77,14 +77,14 @@ type NetworkEventListener = (event: NetworkChangeEvent) => void;
  */
 export class NetworkDetector {
   private config: Required<NetworkDetectorConfig>;
-  private currentStatus: NetworkStatus = 'online';
+  private currentStatus: NetworkStatus = "online";
   private listeners: Set<NetworkEventListener> = new Set();
   private pingIntervalId: number | null = null;
   private isInitialized = false;
 
   constructor(config: NetworkDetectorConfig = {}) {
     this.config = {
-      pingUrl: config.pingUrl || '/api/ping',
+      pingUrl: config.pingUrl || "/api/ping",
       pingInterval: config.pingInterval || 30000, // 30 seconds
       pingTimeout: config.pingTimeout || 5000, // 5 seconds
       enableQualityCheck: config.enableQualityCheck ?? true,
@@ -100,8 +100,8 @@ export class NetworkDetector {
    * Get initial network status from browser
    */
   private getInitialStatus(): NetworkStatus {
-    if (typeof navigator === 'undefined') return 'online';
-    return navigator.onLine ? 'online' : 'offline';
+    if (typeof navigator === "undefined") return "online";
+    return navigator.onLine ? "online" : "offline";
   }
 
   /**
@@ -109,14 +109,14 @@ export class NetworkDetector {
    */
   initialize(): void {
     if (this.isInitialized) {
-      console.warn('NetworkDetector already initialized');
+      console.warn("NetworkDetector already initialized");
       return;
     }
 
     // Listen to browser online/offline events
-    if (typeof window !== 'undefined') {
-      window.addEventListener('online', this.handleOnline);
-      window.addEventListener('offline', this.handleOffline);
+    if (typeof window !== "undefined") {
+      window.addEventListener("online", this.handleOnline);
+      window.addEventListener("offline", this.handleOffline);
     }
 
     // Start periodic ping checks if enabled
@@ -125,7 +125,7 @@ export class NetworkDetector {
     }
 
     this.isInitialized = true;
-    console.log('✅ NetworkDetector initialized');
+    console.log("✅ NetworkDetector initialized");
 
     // Emit initial status
     this.emitStatusChange(this.currentStatus, true);
@@ -138,9 +138,9 @@ export class NetworkDetector {
     if (!this.isInitialized) return;
 
     // Remove event listeners
-    if (typeof window !== 'undefined') {
-      window.removeEventListener('online', this.handleOnline);
-      window.removeEventListener('offline', this.handleOffline);
+    if (typeof window !== "undefined") {
+      window.removeEventListener("online", this.handleOnline);
+      window.removeEventListener("offline", this.handleOffline);
     }
 
     // Stop periodic checks
@@ -150,22 +150,22 @@ export class NetworkDetector {
     this.listeners.clear();
 
     this.isInitialized = false;
-    console.log('🛑 NetworkDetector destroyed');
+    console.log("🛑 NetworkDetector destroyed");
   }
 
   /**
    * Handle browser online event
    */
   private handleOnline = async (): Promise<void> => {
-    console.log('📶 Browser online event detected');
+    console.log("📶 Browser online event detected");
 
     // Verify with ping test
     const isReachable = await this.ping();
 
     if (isReachable) {
-      this.updateStatus('online');
+      this.updateStatus("online");
     } else {
-      this.updateStatus('unstable');
+      this.updateStatus("unstable");
     }
   };
 
@@ -173,8 +173,8 @@ export class NetworkDetector {
    * Handle browser offline event
    */
   private handleOffline = (): void => {
-    console.log('📵 Browser offline event detected');
-    this.updateStatus('offline');
+    console.log("📵 Browser offline event detected");
+    this.updateStatus("offline");
   };
 
   /**
@@ -196,16 +196,20 @@ export class NetworkDetector {
    */
   private emitStatusChange(
     status: NetworkStatus,
-    skipQualityCheck = false
+    skipQualityCheck = false,
   ): void {
     const event: NetworkChangeEvent = {
       status,
-      isOnline: status === 'online',
+      isOnline: status === "online",
       timestamp: Date.now(),
     };
 
     // Add quality metrics if enabled and online
-    if (this.config.enableQualityCheck && !skipQualityCheck && status !== 'offline') {
+    if (
+      this.config.enableQualityCheck &&
+      !skipQualityCheck &&
+      status !== "offline"
+    ) {
       event.quality = this.checkQuality();
     }
 
@@ -214,7 +218,7 @@ export class NetworkDetector {
       try {
         listener(event);
       } catch (error) {
-        console.error('Error in network listener:', error);
+        console.error("Error in network listener:", error);
       }
     });
 
@@ -232,22 +236,24 @@ export class NetworkDetector {
 
     this.pingIntervalId = setInterval(async () => {
       // Only check if browser thinks we're online
-      if (typeof navigator !== 'undefined' && !navigator.onLine) return;
+      if (typeof navigator !== "undefined" && !navigator.onLine) return;
 
       const isReachable = await this.ping();
 
       if (isReachable) {
-        if (this.currentStatus !== 'online') {
-          this.updateStatus('online');
+        if (this.currentStatus !== "online") {
+          this.updateStatus("online");
         }
       } else {
-        if (this.currentStatus === 'online') {
-          this.updateStatus('unstable');
+        if (this.currentStatus === "online") {
+          this.updateStatus("unstable");
         }
       }
     }, this.config.pingInterval);
 
-    console.log(`⏰ Periodic network check started (interval: ${this.config.pingInterval}ms)`);
+    console.log(
+      `⏰ Periodic network check started (interval: ${this.config.pingInterval}ms)`,
+    );
   }
 
   /**
@@ -257,7 +263,7 @@ export class NetworkDetector {
     if (this.pingIntervalId) {
       clearInterval(this.pingIntervalId);
       this.pingIntervalId = null;
-      console.log('⏸️  Periodic network check stopped');
+      console.log("⏸️  Periodic network check stopped");
     }
   }
 
@@ -268,11 +274,14 @@ export class NetworkDetector {
   async ping(): Promise<boolean> {
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), this.config.pingTimeout);
+      const timeoutId = setTimeout(
+        () => controller.abort(),
+        this.config.pingTimeout,
+      );
 
       const response = await fetch(this.config.pingUrl, {
-        method: 'HEAD',
-        cache: 'no-cache',
+        method: "HEAD",
+        cache: "no-cache",
         signal: controller.signal,
       });
 
@@ -290,13 +299,16 @@ export class NetworkDetector {
    */
   checkQuality(): NetworkQuality | undefined {
     // Check if Network Information API is available
-    if (typeof navigator === 'undefined' || !('connection' in navigator)) {
+    if (typeof navigator === "undefined" || !("connection" in navigator)) {
       return undefined;
     }
 
     try {
       // Type assertion for Network Information API (not fully supported in TypeScript)
-      const connection = (navigator as any).connection || (navigator as any).mozConnection || (navigator as any).webkitConnection;
+      const connection =
+        (navigator as any).connection ||
+        (navigator as any).mozConnection ||
+        (navigator as any).webkitConnection;
 
       if (!connection) return undefined;
 
@@ -308,7 +320,7 @@ export class NetworkDetector {
         rtt: connection.rtt || 0,
       };
     } catch (error) {
-      console.warn('Failed to check network quality:', error);
+      console.warn("Failed to check network quality:", error);
       return undefined;
     }
   }
@@ -317,19 +329,19 @@ export class NetworkDetector {
    * Map effectiveType to ConnectionType
    */
   private mapEffectiveType(effectiveType: string | undefined): ConnectionType {
-    if (!effectiveType) return 'unknown';
+    if (!effectiveType) return "unknown";
 
     switch (effectiveType) {
-      case 'slow-2g':
-        return 'slow-2g';
-      case '2g':
-        return '2g';
-      case '3g':
-        return '3g';
-      case '4g':
-        return '4g';
+      case "slow-2g":
+        return "slow-2g";
+      case "2g":
+        return "2g";
+      case "3g":
+        return "3g";
+      case "4g":
+        return "4g";
       default:
-        return 'unknown';
+        return "unknown";
     }
   }
 
@@ -341,11 +353,14 @@ export class NetworkDetector {
 
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), this.config.pingTimeout);
+      const timeoutId = setTimeout(
+        () => controller.abort(),
+        this.config.pingTimeout,
+      );
 
       await fetch(this.config.pingUrl, {
-        method: 'HEAD',
-        cache: 'no-cache',
+        method: "HEAD",
+        cache: "no-cache",
         signal: controller.signal,
       });
 
@@ -409,21 +424,21 @@ export class NetworkDetector {
    * Check if currently online
    */
   isOnline(): boolean {
-    return this.currentStatus === 'online';
+    return this.currentStatus === "online";
   }
 
   /**
    * Check if currently offline
    */
   isOffline(): boolean {
-    return this.currentStatus === 'offline';
+    return this.currentStatus === "offline";
   }
 
   /**
    * Check if network is unstable
    */
   isUnstable(): boolean {
-    return this.currentStatus === 'unstable';
+    return this.currentStatus === "unstable";
   }
 
   /**

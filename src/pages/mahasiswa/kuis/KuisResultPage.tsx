@@ -12,23 +12,32 @@
  * Route: /mahasiswa/kuis/:kuisId/result/:attemptId
  */
 
-import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
-import { AlertCircle, ArrowLeft, Loader2 } from 'lucide-react';
-import { QuizResult } from '@/components/features/kuis/result/QuizResult';
-import { getAttemptById, canAttemptQuiz, gradeAnswer as gradeAnswerApi } from '@/lib/api/kuis.api';
-import { gradeAnswer, canAutoGrade } from '@/lib/utils/quiz-scoring';
-import { useAuth } from '@/lib/hooks/useAuth';
-import type { AttemptKuis, Soal, Jawaban, Kuis } from '@/types/kuis.types';
+import { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { AlertCircle, ArrowLeft, Loader2 } from "lucide-react";
+import { QuizResult } from "@/components/features/kuis/result/QuizResult";
+import {
+  getAttemptById,
+  canAttemptQuiz,
+  gradeAnswer as gradeAnswerApi,
+} from "@/lib/api/kuis.api";
+// ✅ SECURITY FIX: Import secure API to show jawaban_benar in results
+import { getSoalForResult } from "@/lib/api/kuis-secure.api";
+import { gradeAnswer, canAutoGrade } from "@/lib/utils/quiz-scoring";
+import { useAuth } from "@/lib/hooks/useAuth";
+import type { AttemptKuis, Soal, Jawaban, Kuis } from "@/types/kuis.types";
 
 // ============================================================================
 // COMPONENT
 // ============================================================================
 
 export default function KuisResultPage() {
-  const { kuisId, attemptId } = useParams<{ kuisId: string; attemptId: string }>();
+  const { kuisId, attemptId } = useParams<{
+    kuisId: string;
+    attemptId: string;
+  }>();
   const navigate = useNavigate();
   const { user } = useAuth();
 
@@ -87,8 +96,19 @@ export default function KuisResultPage() {
 
       // Extract data
       const quizData = attemptData.kuis as Kuis;
-      const questionsData = (quizData.soal as Soal[]) || [];
       const answersData = (attemptData.jawaban as Jawaban[]) || [];
+
+      // ✅ SECURITY FIX: Load questions WITH jawaban_benar for showing correct answers
+      let questionsData: Soal[];
+      try {
+        // Use secure API to get questions WITH jawaban_benar
+        questionsData = await getSoalForResult(quizData.id);
+        console.log("✅ Loaded soal with jawaban_benar for results");
+      } catch (err) {
+        // Fallback to data from attempt if API fails
+        console.warn("⚠️ Failed to load soal for result, using attempt data:", err);
+        questionsData = (quizData.soal as Soal[]) || [];
+      }
 
       setAttempt(attemptData);
       setQuiz(quizData);
@@ -98,8 +118,8 @@ export default function KuisResultPage() {
       // Auto-grade if needed
       await autoGradeAnswers(questionsData, answersData);
     } catch (err) {
-      console.error('Error loading attempt:', err);
-      setError(err instanceof Error ? err.message : 'Gagal memuat hasil kuis');
+      console.error("Error loading attempt:", err);
+      setError(err instanceof Error ? err.message : "Gagal memuat hasil kuis");
     } finally {
       setLoading(false);
     }
@@ -108,7 +128,10 @@ export default function KuisResultPage() {
   /**
    * Auto-grade MC/TF questions that haven't been graded yet
    */
-  async function autoGradeAnswers(questionsData: Soal[], answersData: Jawaban[]) {
+  async function autoGradeAnswers(
+    questionsData: Soal[],
+    answersData: Jawaban[],
+  ) {
     try {
       setGrading(true);
 
@@ -116,7 +139,10 @@ export default function KuisResultPage() {
 
       answersData.forEach((jawaban) => {
         // Skip if already graded
-        if (jawaban.poin_diperoleh !== null && jawaban.poin_diperoleh !== undefined) {
+        if (
+          jawaban.poin_diperoleh !== null &&
+          jawaban.poin_diperoleh !== undefined
+        ) {
           return;
         }
 
@@ -137,7 +163,7 @@ export default function KuisResultPage() {
           jawaban.id,
           result.poin_diperoleh,
           result.is_correct,
-          result.feedback
+          result.feedback,
         );
 
         gradingPromises.push(promise);
@@ -152,11 +178,11 @@ export default function KuisResultPage() {
           prev.map((jawaban) => {
             const graded = gradedAnswers.find((g) => g.id === jawaban.id);
             return graded || jawaban;
-          })
+          }),
         );
       }
     } catch (err) {
-      console.error('Error auto-grading answers:', err);
+      console.error("Error auto-grading answers:", err);
       // Don't block the UI if auto-grading fails
     } finally {
       setGrading(false);
@@ -173,7 +199,7 @@ export default function KuisResultPage() {
       const result = await canAttemptQuiz(kuisId, user.mahasiswa.id);
       setCanRetake(result.canAttempt);
     } catch (err) {
-      console.error('Error checking retake eligibility:', err);
+      console.error("Error checking retake eligibility:", err);
       setCanRetake(false);
     }
   }
@@ -182,7 +208,7 @@ export default function KuisResultPage() {
    * Navigate back to quiz list
    */
   function handleBack() {
-    navigate('/mahasiswa/kuis');
+    navigate("/mahasiswa/kuis");
   }
 
   /**
@@ -219,7 +245,7 @@ export default function KuisResultPage() {
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            {error || 'Hasil kuis tidak ditemukan'}
+            {error || "Hasil kuis tidak ditemukan"}
           </AlertDescription>
         </Alert>
 

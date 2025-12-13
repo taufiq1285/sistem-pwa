@@ -11,9 +11,9 @@
  * ✅ FIXED: Infinite loop issue by using refs for filter/sort/transform
  */
 
-import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
-import { indexedDBManager } from '../offline/indexeddb';
-import type { StoreName } from '@/types/offline.types';
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
+import { indexedDBManager } from "../offline/indexeddb";
+import type { StoreName } from "@/types/offline.types";
 
 // ============================================================================
 // TYPES
@@ -98,7 +98,7 @@ export interface UseLocalDataReturn<T> {
  */
 export function useLocalData<T extends { id: string }>(
   storeName: StoreName,
-  options: UseLocalDataOptions<T> = {}
+  options: UseLocalDataOptions<T> = {},
 ): UseLocalDataReturn<T> {
   const {
     autoLoad = true,
@@ -174,7 +174,8 @@ export function useLocalData<T extends { id: string }>(
       }
     } catch (err) {
       if (mountedRef.current) {
-        const error = err instanceof Error ? err : new Error('Failed to load data');
+        const error =
+          err instanceof Error ? err : new Error("Failed to load data");
         setError(error);
         console.error(`Failed to load data from ${storeName}:`, err);
       }
@@ -192,7 +193,7 @@ export function useLocalData<T extends { id: string }>(
     (id: string): T | undefined => {
       return data.find((item) => item.id === id);
     },
-    [data]
+    [data],
   );
 
   /**
@@ -230,7 +231,7 @@ export function useLocalData<T extends { id: string }>(
         throw err;
       }
     },
-    [storeName, load, optimistic]
+    [storeName, load, optimistic],
   );
 
   /**
@@ -243,15 +244,18 @@ export function useLocalData<T extends { id: string }>(
         if (optimistic && mountedRef.current) {
           setData((prev) =>
             prev.map((item) =>
-              item.id === id ? { ...item, ...updates } : item
-            )
+              item.id === id ? { ...item, ...updates } : item,
+            ),
           );
         }
 
         // Persist to IndexedDB
         const existingItem = await indexedDBManager.read<T>(storeName, id);
         if (existingItem) {
-          await indexedDBManager.update(storeName, { ...existingItem, ...updates });
+          await indexedDBManager.update(storeName, {
+            ...existingItem,
+            ...updates,
+          });
         }
 
         // Reload to ensure consistency
@@ -269,7 +273,7 @@ export function useLocalData<T extends { id: string }>(
         throw err;
       }
     },
-    [storeName, load, optimistic]
+    [storeName, load, optimistic],
   );
 
   /**
@@ -301,7 +305,7 @@ export function useLocalData<T extends { id: string }>(
         throw err;
       }
     },
-    [storeName, load, optimistic]
+    [storeName, load, optimistic],
   );
 
   /**
@@ -347,7 +351,7 @@ export function useLocalData<T extends { id: string }>(
     (predicate: (item: T) => boolean): T[] => {
       return data.filter(predicate);
     },
-    [data]
+    [data],
   );
 
   /**
@@ -357,7 +361,7 @@ export function useLocalData<T extends { id: string }>(
     (id: string): boolean => {
       return data.some((item) => item.id === id);
     },
-    [data]
+    [data],
   );
 
   // ============================================================================
@@ -448,6 +452,6 @@ export function useLocalData<T extends { id: string }>(
       find,
       has,
       count,
-    ]
+    ],
   );
 }

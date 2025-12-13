@@ -10,34 +10,36 @@
 -- ============================================================================
 
 -- ============================================================================
--- DROP OLD PERMISSIVE POLICIES
+-- DROP OLD PERMISSIVE POLICIES (Idempotent)
 -- ============================================================================
 
--- Drop old overly-permissive policies if they exist
+-- Drop all existing policies to ensure clean re-application
 DO $$
+DECLARE
+    policy_record RECORD;
 BEGIN
-    -- Users table
-    DROP POLICY IF EXISTS "users_select_all" ON users;
-    DROP POLICY IF EXISTS "Enable read access for all users" ON users;
-
-    -- Kuis table
-    DROP POLICY IF EXISTS "kuis_select" ON kuis;
-    DROP POLICY IF EXISTS "Enable read access for authenticated users only" ON kuis;
-
-    -- Mata Kuliah table
-    DROP POLICY IF EXISTS "mata_kuliah_select" ON mata_kuliah;
-    DROP POLICY IF EXISTS "Enable read access for all users" ON mata_kuliah;
-
-    -- Kelas table
-    DROP POLICY IF EXISTS "kelas_select" ON kelas;
-
-    -- Nilai table
-    DROP POLICY IF EXISTS "nilai_select" ON nilai;
-
-    RAISE NOTICE 'Old permissive policies dropped successfully';
+    FOR policy_record IN
+        SELECT policyname, tablename
+        FROM pg_policies
+        WHERE schemaname = 'public'
+        AND tablename IN (
+            'users', 'kuis', 'attempt_kuis', 'nilai', 'kelas',
+            'kelas_mahasiswa', 'peminjaman', 'inventaris', 'laboratorium',
+            'mata_kuliah', 'jadwal_praktikum', 'materi',
+            'mahasiswa', 'dosen', 'laboran'
+        )
+    LOOP
+        EXECUTE format(
+            'DROP POLICY IF EXISTS %I ON %I',
+            policy_record.policyname,
+            policy_record.tablename
+        );
+    END LOOP;
+    
+    RAISE NOTICE 'All existing policies dropped successfully';
 EXCEPTION
     WHEN OTHERS THEN
-        RAISE NOTICE 'Some old policies may not exist - continuing...';
+        RAISE NOTICE 'Policy cleanup error (continuing): %', SQLERRM;
 END $$;
 
 -- ============================================================================
@@ -330,11 +332,11 @@ CREATE POLICY "kelas_select_admin" ON kelas
     FOR SELECT
     USING (is_admin());
 
--- DOSEN: Can see their kelas
+-- DOSEN: Can see all active kelas (multi-dosen can use same kelas)
 CREATE POLICY "kelas_select_dosen" ON kelas
     FOR SELECT
     USING (
-        is_dosen() AND dosen_id = get_current_dosen_id()
+        is_dosen() AND is_active = TRUE
     );
 
 -- MAHASISWA: Can see kelas they're enrolled in

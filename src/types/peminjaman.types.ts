@@ -6,10 +6,16 @@
  */
 
 // Import types for use in this file
-import type { EquipmentCondition, BorrowingStatus } from './inventaris.types';
+import type { EquipmentCondition, BorrowingStatus } from "./inventaris.types";
 
 // Re-export types from inventaris.types for convenience
-export type { Inventaris, Peminjaman, CreatePeminjamanData, EquipmentCondition, BorrowingStatus } from './inventaris.types';
+export type {
+  Inventaris,
+  Peminjaman,
+  CreatePeminjamanData,
+  EquipmentCondition,
+  BorrowingStatus,
+} from "./inventaris.types";
 
 // ============================================================================
 // ADDITIONAL PEMINJAMAN TYPES
@@ -19,7 +25,7 @@ export type { Inventaris, Peminjaman, CreatePeminjamanData, EquipmentCondition, 
  * Peminjaman filter options
  */
 export interface PeminjamanFilterOptions {
-  status?: 'pending' | 'approved' | 'rejected' | 'returned' | 'overdue';
+  status?: "pending" | "approved" | "rejected" | "returned" | "overdue";
   peminjam_id?: string;
   dosen_id?: string;
   inventaris_id?: string;
@@ -49,7 +55,7 @@ export interface RejectPeminjamanData {
 export interface ReturnPeminjamanData {
   peminjaman_id: string;
   tanggal_kembali_aktual: string;
-  kondisi_kembali: 'baik' | 'rusak_ringan' | 'rusak_berat';
+  kondisi_kembali: "baik" | "rusak_ringan" | "rusak_berat";
   catatan?: string;
 }
 

@@ -133,8 +133,10 @@ describe("Mahasiswa API", () => {
             select: vi.fn().mockReturnValue({
               eq: vi.fn().mockReturnValue({
                 in: vi.fn().mockReturnValue({
-                  data: mockJadwal,
-                  error: null,
+                  eq: vi.fn().mockReturnValue({
+                    data: mockJadwal,
+                    error: null,
+                  }),
                 }),
               }),
             }),
@@ -144,9 +146,9 @@ describe("Mahasiswa API", () => {
           return createSafeMockBuilder({
             select: vi.fn().mockReturnValue({
               in: vi.fn().mockReturnValue({
-                lte: vi.fn().mockReturnValue({
-                  gte: vi.fn().mockReturnValue({
-                    eq: vi.fn().mockReturnValue({
+                eq: vi.fn().mockReturnValue({
+                  lte: vi.fn().mockReturnValue({
+                    gte: vi.fn().mockReturnValue({
                       data: mockKuis,
                       error: null,
                     }),
@@ -174,7 +176,7 @@ describe("Mahasiswa API", () => {
       const result = await mahasiswaAPI.getMahasiswaStats();
 
       expect(result).toEqual({
-        totalMataKuliah: 2,
+        totalKelasPraktikum: 2,
         totalKuis: 2,
         rataRataNilai: 85,
         jadwalHariIni: 1,
@@ -190,7 +192,7 @@ describe("Mahasiswa API", () => {
       const result = await mahasiswaAPI.getMahasiswaStats();
 
       expect(result).toEqual({
-        totalMataKuliah: 0,
+        totalKelasPraktikum: 0,
         totalKuis: 0,
         rataRataNilai: null,
         jadwalHariIni: 0,
@@ -257,7 +259,7 @@ describe("Mahasiswa API", () => {
       const result = await mahasiswaAPI.getMahasiswaStats();
 
       expect(result).toEqual({
-        totalMataKuliah: 0,
+        totalKelasPraktikum: 0,
         totalKuis: 0,
         rataRataNilai: null,
         jadwalHariIni: 0,

@@ -7,19 +7,22 @@
  * @vitest-environment jsdom
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
-import { useNetworkStatus } from '../../../lib/hooks/useNetworkStatus';
-import { networkDetector } from '../../../lib/offline/network-detector';
-import type { NetworkChangeEvent, NetworkStatus } from '../../../lib/offline/network-detector';
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { renderHook, waitFor } from "@testing-library/react";
+import { useNetworkStatus } from "../../../lib/hooks/useNetworkStatus";
+import { networkDetector } from "../../../lib/offline/network-detector";
+import type {
+  NetworkChangeEvent,
+  NetworkStatus,
+} from "../../../lib/offline/network-detector";
 
 // ============================================================================
 // MOCK SETUP
 // ============================================================================
 
-vi.mock('../../../lib/offline/network-detector', () => {
+vi.mock("../../../lib/offline/network-detector", () => {
   const listeners = new Set<(event: NetworkChangeEvent) => void>();
-  let mockStatus: NetworkStatus = 'online';
+  let mockStatus: NetworkStatus = "online";
   let mockReady = false;
 
   return {
@@ -37,14 +40,14 @@ vi.mock('../../../lib/offline/network-detector', () => {
       }),
       // Helper to trigger events for tests
       _triggerEvent: (event: NetworkChangeEvent) => {
-        listeners.forEach(listener => listener(event));
+        listeners.forEach((listener) => listener(event));
       },
       _setStatus: (status: NetworkStatus) => {
         mockStatus = status;
       },
       _reset: () => {
         listeners.clear();
-        mockStatus = 'online';
+        mockStatus = "online";
         mockReady = false;
       },
     },
@@ -55,7 +58,7 @@ vi.mock('../../../lib/offline/network-detector', () => {
 // TEST SUITE
 // ============================================================================
 
-describe('useNetworkStatus', () => {
+describe("useNetworkStatus", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     (networkDetector as any)._reset();
@@ -69,45 +72,45 @@ describe('useNetworkStatus', () => {
   // INITIALIZATION TESTS
   // ============================================================================
 
-  describe('Initialization', () => {
-    it('should initialize with online status', () => {
-      (networkDetector as any)._setStatus('online');
+  describe("Initialization", () => {
+    it("should initialize with online status", () => {
+      (networkDetector as any)._setStatus("online");
       const { result } = renderHook(() => useNetworkStatus());
 
-      expect(result.current.status).toBe('online');
+      expect(result.current.status).toBe("online");
       expect(result.current.isOnline).toBe(true);
       expect(result.current.isOffline).toBe(false);
       expect(result.current.isUnstable).toBe(false);
     });
 
-    it('should initialize with offline status', () => {
-      (networkDetector as any)._setStatus('offline');
+    it("should initialize with offline status", () => {
+      (networkDetector as any)._setStatus("offline");
       const { result } = renderHook(() => useNetworkStatus());
 
-      expect(result.current.status).toBe('offline');
+      expect(result.current.status).toBe("offline");
       expect(result.current.isOnline).toBe(false);
       expect(result.current.isOffline).toBe(true);
       expect(result.current.isUnstable).toBe(false);
     });
 
-    it('should initialize with unstable status', () => {
-      (networkDetector as any)._setStatus('unstable');
+    it("should initialize with unstable status", () => {
+      (networkDetector as any)._setStatus("unstable");
       const { result } = renderHook(() => useNetworkStatus());
 
-      expect(result.current.status).toBe('unstable');
+      expect(result.current.status).toBe("unstable");
       expect(result.current.isOnline).toBe(false);
       expect(result.current.isOffline).toBe(false);
       expect(result.current.isUnstable).toBe(true);
     });
 
-    it('should initialize network detector if not ready', () => {
+    it("should initialize network detector if not ready", () => {
       renderHook(() => useNetworkStatus());
 
       expect(networkDetector.isReady).toHaveBeenCalled();
       expect(networkDetector.initialize).toHaveBeenCalled();
     });
 
-    it('should not re-initialize if already ready', () => {
+    it("should not re-initialize if already ready", () => {
       (networkDetector.isReady as any).mockReturnValue(true);
 
       renderHook(() => useNetworkStatus());
@@ -115,13 +118,13 @@ describe('useNetworkStatus', () => {
       expect(networkDetector.initialize).not.toHaveBeenCalled();
     });
 
-    it('should subscribe to network detector events', () => {
+    it("should subscribe to network detector events", () => {
       renderHook(() => useNetworkStatus());
 
       expect(networkDetector.on).toHaveBeenCalledWith(expect.any(Function));
     });
 
-    it('should mark as ready after initialization', async () => {
+    it("should mark as ready after initialization", async () => {
       const { result } = renderHook(() => useNetworkStatus());
 
       await waitFor(() => {
@@ -134,85 +137,85 @@ describe('useNetworkStatus', () => {
   // STATUS CHANGE TESTS
   // ============================================================================
 
-  describe('Status Changes', () => {
-    it('should update status when going offline', async () => {
-      (networkDetector as any)._setStatus('online');
+  describe("Status Changes", () => {
+    it("should update status when going offline", async () => {
+      (networkDetector as any)._setStatus("online");
       const { result } = renderHook(() => useNetworkStatus());
 
-      expect(result.current.status).toBe('online');
+      expect(result.current.status).toBe("online");
 
       // Trigger offline event
       (networkDetector as any)._triggerEvent({
-        status: 'offline',
+        status: "offline",
         timestamp: Date.now(),
         quality: undefined,
       });
 
       await waitFor(() => {
-        expect(result.current.status).toBe('offline');
+        expect(result.current.status).toBe("offline");
         expect(result.current.isOffline).toBe(true);
         expect(result.current.isOnline).toBe(false);
       });
     });
 
-    it('should update status when going online', async () => {
-      (networkDetector as any)._setStatus('offline');
+    it("should update status when going online", async () => {
+      (networkDetector as any)._setStatus("offline");
       const { result } = renderHook(() => useNetworkStatus());
 
-      expect(result.current.status).toBe('offline');
+      expect(result.current.status).toBe("offline");
 
       // Trigger online event
       (networkDetector as any)._triggerEvent({
-        status: 'online',
+        status: "online",
         timestamp: Date.now(),
         quality: {
           latency: 50,
           downlink: 10,
-          effectiveType: '4g',
+          effectiveType: "4g",
           saveData: false,
           rtt: 50,
         },
       });
 
       await waitFor(() => {
-        expect(result.current.status).toBe('online');
+        expect(result.current.status).toBe("online");
         expect(result.current.isOnline).toBe(true);
         expect(result.current.isOffline).toBe(false);
       });
     });
 
-    it('should update status when becoming unstable', async () => {
-      (networkDetector as any)._setStatus('online');
+    it("should update status when becoming unstable", async () => {
+      (networkDetector as any)._setStatus("online");
       const { result } = renderHook(() => useNetworkStatus());
 
       // Trigger unstable event
       (networkDetector as any)._triggerEvent({
-        status: 'unstable',
+        status: "unstable",
         timestamp: Date.now(),
         quality: {
           latency: 500,
           downlink: 0.5,
-          effectiveType: 'slow-2g',
+          effectiveType: "slow-2g",
           saveData: true,
           rtt: 500,
         },
       });
 
       await waitFor(() => {
-        expect(result.current.status).toBe('unstable');
+        expect(result.current.status).toBe("unstable");
         expect(result.current.isUnstable).toBe(true);
         expect(result.current.isOnline).toBe(false);
         expect(result.current.isOffline).toBe(false);
       });
     });
 
-    it('should update lastChanged timestamp on status change', async () => {
+    it("should update lastChanged timestamp on status change", async () => {
       const { result } = renderHook(() => useNetworkStatus());
       const initialTimestamp = result.current.lastChanged;
 
       const newTimestamp = Date.now() + 1000;
       (networkDetector as any)._triggerEvent({
-        status: 'offline',
+        status: "offline",
         timestamp: newTimestamp,
         quality: undefined,
       });
@@ -223,19 +226,19 @@ describe('useNetworkStatus', () => {
       });
     });
 
-    it('should update quality metrics on status change', async () => {
+    it("should update quality metrics on status change", async () => {
       const { result } = renderHook(() => useNetworkStatus());
 
       const mockQuality = {
         latency: 100,
         downlink: 5,
-        effectiveType: '3g',
+        effectiveType: "3g",
         saveData: false,
         rtt: 100,
       };
 
       (networkDetector as any)._triggerEvent({
-        status: 'online',
+        status: "online",
         timestamp: Date.now(),
         quality: mockQuality,
       });
@@ -250,12 +253,12 @@ describe('useNetworkStatus', () => {
   // QUALITY METRICS TESTS
   // ============================================================================
 
-  describe('Quality Metrics', () => {
-    it('should expose quality metrics when available', async () => {
+  describe("Quality Metrics", () => {
+    it("should expose quality metrics when available", async () => {
       const mockQuality = {
         latency: 50,
         downlink: 10,
-        effectiveType: '4g',
+        effectiveType: "4g",
         saveData: false,
         rtt: 50,
       };
@@ -263,7 +266,7 @@ describe('useNetworkStatus', () => {
       const { result } = renderHook(() => useNetworkStatus());
 
       (networkDetector as any)._triggerEvent({
-        status: 'online',
+        status: "online",
         timestamp: Date.now(),
         quality: mockQuality,
       });
@@ -272,17 +275,17 @@ describe('useNetworkStatus', () => {
         expect(result.current.quality).toBeDefined();
         expect(result.current.quality?.latency).toBe(50);
         expect(result.current.quality?.downlink).toBe(10);
-        expect(result.current.quality?.effectiveType).toBe('4g');
+        expect(result.current.quality?.effectiveType).toBe("4g");
         expect(result.current.quality?.saveData).toBe(false);
         expect(result.current.quality?.rtt).toBe(50);
       });
     });
 
-    it('should handle undefined quality metrics', async () => {
+    it("should handle undefined quality metrics", async () => {
       const { result } = renderHook(() => useNetworkStatus());
 
       (networkDetector as any)._triggerEvent({
-        status: 'offline',
+        status: "offline",
         timestamp: Date.now(),
         quality: undefined,
       });
@@ -297,8 +300,8 @@ describe('useNetworkStatus', () => {
   // CLEANUP TESTS
   // ============================================================================
 
-  describe('Cleanup', () => {
-    it('should unsubscribe from network detector on unmount', () => {
+  describe("Cleanup", () => {
+    it("should unsubscribe from network detector on unmount", () => {
       const { unmount } = renderHook(() => useNetworkStatus());
 
       expect(networkDetector.on).toHaveBeenCalled();
@@ -308,7 +311,7 @@ describe('useNetworkStatus', () => {
       expect(networkDetector.off).toHaveBeenCalledWith(expect.any(Function));
     });
 
-    it('should not update state after unmount', async () => {
+    it("should not update state after unmount", async () => {
       const { result, unmount } = renderHook(() => useNetworkStatus());
 
       const initialStatus = result.current.status;
@@ -316,13 +319,13 @@ describe('useNetworkStatus', () => {
 
       // Try to trigger event after unmount
       (networkDetector as any)._triggerEvent({
-        status: 'offline',
+        status: "offline",
         timestamp: Date.now(),
         quality: undefined,
       });
 
       // Wait a bit to ensure no update happens
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
       // Status should not have changed
       expect(result.current.status).toBe(initialStatus);
@@ -333,8 +336,8 @@ describe('useNetworkStatus', () => {
   // MULTIPLE INSTANCES TESTS
   // ============================================================================
 
-  describe('Multiple Instances', () => {
-    it('should allow multiple hook instances', () => {
+  describe("Multiple Instances", () => {
+    it("should allow multiple hook instances", () => {
       const { result: result1 } = renderHook(() => useNetworkStatus());
       const { result: result2 } = renderHook(() => useNetworkStatus());
 
@@ -342,19 +345,19 @@ describe('useNetworkStatus', () => {
       expect(result1.current.isOnline).toBe(result2.current.isOnline);
     });
 
-    it('should sync status across multiple instances', async () => {
+    it("should sync status across multiple instances", async () => {
       const { result: result1 } = renderHook(() => useNetworkStatus());
       const { result: result2 } = renderHook(() => useNetworkStatus());
 
       (networkDetector as any)._triggerEvent({
-        status: 'offline',
+        status: "offline",
         timestamp: Date.now(),
         quality: undefined,
       });
 
       await waitFor(() => {
-        expect(result1.current.status).toBe('offline');
-        expect(result2.current.status).toBe('offline');
+        expect(result1.current.status).toBe("offline");
+        expect(result2.current.status).toBe("offline");
       });
     });
   });
@@ -363,9 +366,9 @@ describe('useNetworkStatus', () => {
   // DERIVED STATE TESTS
   // ============================================================================
 
-  describe('Derived State', () => {
-    it('should correctly derive isOnline from status', () => {
-      (networkDetector as any)._setStatus('online');
+  describe("Derived State", () => {
+    it("should correctly derive isOnline from status", () => {
+      (networkDetector as any)._setStatus("online");
       const { result } = renderHook(() => useNetworkStatus());
 
       expect(result.current.isOnline).toBe(true);
@@ -373,8 +376,8 @@ describe('useNetworkStatus', () => {
       expect(result.current.isUnstable).toBe(false);
     });
 
-    it('should correctly derive isOffline from status', () => {
-      (networkDetector as any)._setStatus('offline');
+    it("should correctly derive isOffline from status", () => {
+      (networkDetector as any)._setStatus("offline");
       const { result } = renderHook(() => useNetworkStatus());
 
       expect(result.current.isOnline).toBe(false);
@@ -382,8 +385,8 @@ describe('useNetworkStatus', () => {
       expect(result.current.isUnstable).toBe(false);
     });
 
-    it('should correctly derive isUnstable from status', () => {
-      (networkDetector as any)._setStatus('unstable');
+    it("should correctly derive isUnstable from status", () => {
+      (networkDetector as any)._setStatus("unstable");
       const { result } = renderHook(() => useNetworkStatus());
 
       expect(result.current.isOnline).toBe(false);
@@ -396,41 +399,41 @@ describe('useNetworkStatus', () => {
   // INTEGRATION TESTS
   // ============================================================================
 
-  describe('Integration', () => {
-    it('should handle rapid status changes', async () => {
+  describe("Integration", () => {
+    it("should handle rapid status changes", async () => {
       const { result } = renderHook(() => useNetworkStatus());
 
       // Trigger multiple rapid changes
       (networkDetector as any)._triggerEvent({
-        status: 'offline',
+        status: "offline",
         timestamp: Date.now(),
         quality: undefined,
       });
 
       (networkDetector as any)._triggerEvent({
-        status: 'unstable',
+        status: "unstable",
         timestamp: Date.now() + 100,
         quality: undefined,
       });
 
       (networkDetector as any)._triggerEvent({
-        status: 'online',
+        status: "online",
         timestamp: Date.now() + 200,
         quality: {
           latency: 50,
           downlink: 10,
-          effectiveType: '4g',
+          effectiveType: "4g",
           saveData: false,
           rtt: 50,
         },
       });
 
       await waitFor(() => {
-        expect(result.current.status).toBe('online');
+        expect(result.current.status).toBe("online");
       });
     });
 
-    it('should maintain consistent state during lifecycle', () => {
+    it("should maintain consistent state during lifecycle", () => {
       const { result, rerender } = renderHook(() => useNetworkStatus());
 
       const status1 = result.current.status;
