@@ -15,6 +15,8 @@ import {
   Send,
   AlertCircle,
   Loader2,
+  Upload,
+  FileText,
 } from "lucide-react";
 
 // UI Components
@@ -47,6 +49,7 @@ import {
 } from "./QuizNavigation";
 import { ConnectionLostAlert } from "./ConnectionLostAlert";
 import { OfflineAutoSave } from "./OfflineAutoSave";
+import { FileUpload, type UploadedFile } from "../FileUpload";
 
 // API & Types
 import {
@@ -61,6 +64,7 @@ import {
 } from "@/lib/api/kuis.api";
 // ✅ SECURITY FIX: Import secure API untuk hide jawaban_benar
 import { getSoalForAttempt } from "@/lib/api/kuis-secure.api";
+import { createLaporanUploader } from "@/lib/api/laporan-storage.api";
 import type { Kuis, Soal, AttemptKuis } from "@/types/kuis.types";
 import { TIPE_SOAL } from "@/types/kuis.types";
 
@@ -121,8 +125,11 @@ export function QuizAttempt({
   // Current state
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [fileUploads, setFileUploads] = useState<
+    Record<string, UploadedFile | null>
+  >({});
   const [flaggedQuestions, setFlaggedQuestions] = useState<Set<string>>(
-    new Set(),
+    new Set()
   );
 
   // UI state
@@ -143,6 +150,9 @@ export function QuizAttempt({
   const currentAnswer = currentQuestion
     ? answers[currentQuestion.id] || ""
     : "";
+  const currentFileUpload = currentQuestion
+    ? fileUploads[currentQuestion.id] || null
+    : null;
   const totalQuestions = questions.length;
   const isFirstQuestion = currentQuestionIndex === 0;
   const isLastQuestion = currentQuestionIndex === totalQuestions - 1;
@@ -151,7 +161,7 @@ export function QuizAttempt({
   // Question status for navigation
   const questionStatus: QuestionStatus[] = createQuestionStatusList(
     questions,
-    answers,
+    answers
   );
 
   // ============================================================================
@@ -246,7 +256,7 @@ export function QuizAttempt({
         // Load offline answers
         const offlineAnswers = await getOfflineAnswers(existingAttemptId);
         setAnswers(offlineAnswers);
-        toast.info("Melanjutkan kuis sebelumnya");
+        toast.info("Melanjutkan tugas sebelumnya");
       } else {
         // Start new attempt
         console.log("🔵 Starting new attempt for kuis:", kuisId);
@@ -257,16 +267,16 @@ export function QuizAttempt({
 
         // Cache attempt for offline use
         await cacheAttemptOffline(attemptData);
-        toast.success("Kuis dimulai!");
+        toast.success("Tugas praktikum dimulai!");
       }
 
       // ✅ Set attempt state (important!)
       setAttempt(attemptData);
       console.log("✅ Attempt loaded:", attemptData.id);
     } catch (err: any) {
-      const errorMessage = err?.message || "Gagal memuat kuis";
+      const errorMessage = err?.message || "Gagal memuat tugas praktikum";
       setError(errorMessage);
-      toast.error("Gagal memuat kuis", {
+      toast.error("Gagal memuat tugas praktikum", {
         description: errorMessage,
       });
     } finally {
@@ -340,6 +350,47 @@ export function QuizAttempt({
       [currentQuestion.id]: value,
     }));
   };
+
+  /**
+   * Handle file upload for file_upload type questions
+   */
+  const handleFileUpload = (file: UploadedFile) => {
+    if (!currentQuestion) return;
+
+    setFileUploads((prev) => ({
+      ...prev,
+      [currentQuestion.id]: file,
+    }));
+
+    // Also store file URL as answer for consistency
+    setAnswers((prev) => ({
+      ...prev,
+      [currentQuestion.id]: file.url,
+    }));
+
+    toast.success("File berhasil diupload", {
+      description: file.name,
+    });
+  };
+
+  /**
+   * Handle file removal
+   */
+  const handleFileRemove = () => {
+    if (!currentQuestion) return;
+
+    setFileUploads((prev) => ({
+      ...prev,
+      [currentQuestion.id]: null,
+    }));
+
+    setAnswers((prev) => {
+      const newAnswers = { ...prev };
+      delete newAnswers[currentQuestion.id];
+      return newAnswers;
+    });
+  };
+
   /**
    * Manual save answers (used before navigation/submit)
    */
@@ -430,13 +481,13 @@ export function QuizAttempt({
       // Clear timer data
       clearTimerData(attempt.id);
 
-      toast.success("Kuis berhasil disubmit");
+      toast.success("Tugas praktikum berhasil disubmit");
 
       // Redirect to results
       navigate(`/mahasiswa/kuis/${kuisId}/result/${attempt.id}`);
     } catch (err: any) {
       const errorMessage = err?.message || "Terjadi kesalahan";
-      toast.error("Gagal submit kuis", {
+      toast.error("Gagal submit tugas praktikum", {
         description: errorMessage,
       });
     } finally {
@@ -449,7 +500,7 @@ export function QuizAttempt({
    * Handle time up (auto-submit)
    */
   const handleTimeUp = () => {
-    toast.warning("Waktu habis! Kuis akan otomatis disubmit");
+    toast.warning("Waktu habis! Tugas praktikum akan otomatis disubmit");
     setTimeout(() => {
       handleSubmitQuiz();
     }, 2000);
@@ -464,7 +515,7 @@ export function QuizAttempt({
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center space-y-4">
           <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
-          <p className="text-muted-foreground">Memuat kuis...</p>
+          <p className="text-muted-foreground">Memuat tugas praktikum...</p>
         </div>
       </div>
     );
@@ -478,7 +529,9 @@ export function QuizAttempt({
     return (
       <Alert variant="destructive">
         <AlertCircle className="h-4 w-4" />
-        <AlertDescription>{error || "Gagal memuat kuis"}</AlertDescription>
+        <AlertDescription>
+          {error || "Gagal memuat tugas praktikum"}
+        </AlertDescription>
       </Alert>
     );
   }
@@ -558,7 +611,7 @@ export function QuizAttempt({
                   onClick={handleToggleFlag}
                   className={cn(
                     flaggedQuestions.has(currentQuestion?.id || "") &&
-                      "text-yellow-600",
+                      "text-yellow-600"
                   )}
                 >
                   <Flag className="h-5 w-5" />
@@ -593,7 +646,7 @@ export function QuizAttempt({
                           {option.text}
                         </Label>
                       </div>
-                    ),
+                    )
                   )}
                 </RadioGroup>
               )}
@@ -606,6 +659,80 @@ export function QuizAttempt({
                   rows={8}
                   className="resize-none"
                 />
+              )}
+
+              {currentQuestion?.tipe_soal === TIPE_SOAL.FILE_UPLOAD && (
+                <div className="space-y-4">
+                  {/* Instructions */}
+                  {currentQuestion.jawaban_benar && (
+                    <Alert className="bg-blue-50 border-blue-200">
+                      <FileText className="h-4 w-4 text-blue-600" />
+                      <AlertDescription className="text-blue-800">
+                        <strong>Instruksi:</strong>{" "}
+                        {(() => {
+                          try {
+                            const settings = JSON.parse(
+                              currentQuestion.jawaban_benar as string
+                            );
+                            return (
+                              settings.instructions ||
+                              "Upload file laporan praktikum Anda."
+                            );
+                          } catch {
+                            return "Upload file laporan praktikum Anda.";
+                          }
+                        })()}
+                      </AlertDescription>
+                    </Alert>
+                  )}
+
+                  {/* File Upload Component */}
+                  <FileUpload
+                    value={currentFileUpload}
+                    onUpload={handleFileUpload}
+                    onRemove={handleFileRemove}
+                    uploadFn={
+                      quiz && attempt
+                        ? createLaporanUploader(
+                            quiz.kelas_id,
+                            mahasiswaId,
+                            attempt.id,
+                            currentQuestion.id
+                          )
+                        : async () => {
+                            throw new Error("Attempt belum dimulai");
+                          }
+                    }
+                    accept={(() => {
+                      try {
+                        const settings = JSON.parse(
+                          currentQuestion.jawaban_benar as string
+                        );
+                        const accepts: string[] = [];
+                        if (settings.acceptedTypes?.pdf) accepts.push(".pdf");
+                        if (settings.acceptedTypes?.word)
+                          accepts.push(".doc,.docx");
+                        if (settings.acceptedTypes?.image)
+                          accepts.push(".jpg,.jpeg,.png");
+                        if (settings.acceptedTypes?.zip) accepts.push(".zip");
+                        return accepts.join(",") || ".pdf,.doc,.docx";
+                      } catch {
+                        return ".pdf,.doc,.docx";
+                      }
+                    })()}
+                    maxSize={(() => {
+                      try {
+                        const settings = JSON.parse(
+                          currentQuestion.jawaban_benar as string
+                        );
+                        return (settings.maxSizeMB || 10) * 1024 * 1024;
+                      } catch {
+                        return 10 * 1024 * 1024;
+                      }
+                    })()}
+                    placeholder="Seret file laporan ke sini atau klik untuk memilih"
+                  />
+                </div>
               )}
             </CardContent>
           </Card>
@@ -624,7 +751,7 @@ export function QuizAttempt({
             {isLastQuestion ? (
               <Button onClick={handleOpenSubmitDialog} className="gap-2">
                 <Send className="h-4 w-4" />
-                Submit Kuis
+                Submit Tugas
               </Button>
             ) : (
               <Button onClick={handleNext}>
@@ -661,7 +788,7 @@ export function QuizAttempt({
             size="lg"
           >
             <Send className="h-4 w-4" />
-            Submit Kuis
+            Submit Tugas
           </Button>
         </div>
       </div>
@@ -670,11 +797,11 @@ export function QuizAttempt({
       <AlertDialog open={showSubmitDialog} onOpenChange={setShowSubmitDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Submit Kuis?</AlertDialogTitle>
+            <AlertDialogTitle>Submit Tugas?</AlertDialogTitle>
             <AlertDialogDescription>
               {areAllQuestionsAnswered(questionStatus) ? (
                 <>
-                  Anda telah menjawab semua soal. Yakin ingin submit kuis
+                  Anda telah menjawab semua soal. Yakin ingin submit tugas
                   sekarang?
                   <br />
                   <br />

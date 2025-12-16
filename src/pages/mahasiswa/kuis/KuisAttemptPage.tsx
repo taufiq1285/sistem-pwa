@@ -1,9 +1,10 @@
 /**
- * KuisAttemptPage
+ * KuisAttemptPage (Tugas Praktikum)
  *
- * Purpose: Full page wrapper for quiz attempt
+ * Purpose: Full page wrapper for task attempt
  * Route: /mahasiswa/kuis/:kuisId/attempt or /mahasiswa/kuis/:kuisId/attempt/:attemptId
  * Role: Mahasiswa only
+ * Note: Table name remains "kuis" but UI displays "Tugas Praktikum"
  */
 
 import { useState, useEffect } from "react";
@@ -56,26 +57,26 @@ export default function KuisAttemptPage() {
       setQuiz(quizData);
 
       // ✅ SIMPLIFIED: Only check status, no date validation
-      // Kuis aktif = sudah dipublish oleh dosen (status = "published")
-      const status = quizData.status || 'draft';
+      // Tugas aktif = sudah dipublish oleh dosen (status = "published")
+      const status = quizData.status || "draft";
 
-      console.log("🔵 Quiz status:", status);
-      console.log("🔵 Quiz data:", quizData);
+      console.log("🔵 Task status:", status);
+      console.log("🔵 Task data:", quizData);
 
       // Only allow if status is "published" or "active"
-      if (status !== 'published' && status !== 'active') {
-        setError("Kuis ini belum dipublish oleh dosen");
+      if (status !== "published" && status !== "active") {
+        setError("Tugas praktikum ini belum dipublish oleh dosen");
         setCanAttempt(false);
         return;
       }
 
-      // All checks passed - kuis sudah dipublish, mahasiswa bisa akses
-      console.log("✅ Kuis sudah dipublish, mahasiswa bisa mengakses");
+      // All checks passed - tugas sudah dipublish, mahasiswa bisa akses
+      console.log("✅ Tugas sudah dipublish, mahasiswa bisa mengakses");
       setCanAttempt(true);
     } catch (err: any) {
-      setError(err.message || "Gagal memuat kuis");
+      setError(err.message || "Gagal memuat tugas praktikum");
       setCanAttempt(false);
-      toast.error("Gagal memuat kuis", {
+      toast.error("Gagal memuat tugas praktikum", {
         description: err.message,
       });
     } finally {
@@ -102,7 +103,7 @@ export default function KuisAttemptPage() {
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center space-y-4">
             <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
-            <p className="text-muted-foreground">Memuat kuis...</p>
+            <p className="text-muted-foreground">Memuat tugas praktikum...</p>
           </div>
         </div>
       </div>
@@ -123,20 +124,20 @@ export default function KuisAttemptPage() {
           className="mb-4"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Kembali ke Daftar Kuis
+          Kembali ke Daftar Tugas
         </Button>
 
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Tidak Dapat Mengakses Kuis</AlertTitle>
+          <AlertTitle>Tidak Dapat Mengakses Tugas</AlertTitle>
           <AlertDescription>
-            {error || "Terjadi kesalahan saat memuat kuis"}
+            {error || "Terjadi kesalahan saat memuat tugas praktikum"}
           </AlertDescription>
         </Alert>
 
         <div className="mt-4">
           <Button onClick={() => navigate("/mahasiswa/kuis")}>
-            Kembali ke Daftar Kuis
+            Kembali ke Daftar Tugas
           </Button>
         </div>
       </div>
@@ -171,7 +172,7 @@ export default function KuisAttemptPage() {
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            Anda harus login sebagai mahasiswa untuk mengerjakan kuis
+            Anda harus login sebagai mahasiswa untuk mengerjakan tugas praktikum
           </AlertDescription>
         </Alert>
       )}

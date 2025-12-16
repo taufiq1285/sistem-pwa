@@ -3,11 +3,13 @@
  * Defines navigation items for each role with icons and descriptions
  *
  * UPDATED: Added "Mata Kuliah" menu for Admin
- * REASON: Admin needs to manage courses before Dosen can create classes
+ * UPDATED: Added "Persetujuan Peminjaman" menu for Admin
+ * REASON: Admin can act as backup for Laboran to approve peminjaman requests
  */
 
 import {
   Home,
+  PackageCheck,
   Calendar,
   ClipboardList,
   Award,
@@ -59,10 +61,10 @@ const mahasiswaNavigation: NavigationItem[] = [
     description: "Jadwal praktikum kebidanan",
   },
   {
-    label: "Kuis",
+    label: "Tugas Praktikum",
     href: "/mahasiswa/kuis",
     icon: ClipboardList,
-    description: "Kuis dan ujian",
+    description: "Pre-test, post-test, dan laporan praktikum",
   },
   {
     label: "Nilai",
@@ -107,10 +109,10 @@ const dosenNavigation: NavigationItem[] = [
     description: "Kelola jadwal praktikum",
   },
   {
-    label: "Kuis",
+    label: "Tugas Praktikum",
     href: "/dosen/kuis",
     icon: ClipboardList,
-    description: "Kelola kuis",
+    description: "Pre-test, post-test, dan laporan praktikum",
   },
   {
     label: "Bank Soal",
@@ -179,6 +181,12 @@ const adminNavigation: NavigationItem[] = [
     description: "Kelola kelas",
   },
   {
+    label: "Jadwal Praktikum",
+    href: "/admin/jadwal-praktikum",
+    icon: Calendar,
+    description: "Kelola jadwal praktikum dosen",
+  },
+  {
     label: "Laboratories",
     href: "/admin/laboratories",
     icon: Building2,
@@ -189,6 +197,18 @@ const adminNavigation: NavigationItem[] = [
     href: "/admin/equipments",
     icon: Package,
     description: "Kelola peralatan",
+  },
+  {
+    label: "Persetujuan Peminjaman",
+    href: "/admin/peminjaman",
+    icon: ClipboardCheck,
+    description: "Persetujuan peminjaman alat",
+  },
+  {
+    label: "Kelola Peminjaman",
+    href: "/admin/peminjaman-aktif",
+    icon: PackageCheck,
+    description: "Kelola peminjaman aktif & pengembalian",
   },
   {
     label: "Notifikasi",
@@ -230,7 +250,13 @@ const laboranNavigation: NavigationItem[] = [
     label: "Persetujuan",
     href: "/laboran/persetujuan",
     icon: ClipboardCheck,
-    description: "Persetujuan peminjaman",
+    description: "Persetujuan peminjaman alat",
+  },
+  {
+    label: "Kelola Peminjaman",
+    href: "/laboran/peminjaman-aktif",
+    icon: PackageCheck,
+    description: "Kelola peminjaman aktif & pengembalian",
   },
   {
     label: "Laboratorium",
@@ -242,7 +268,7 @@ const laboranNavigation: NavigationItem[] = [
     label: "Kelola Jadwal",
     href: "/laboran/jadwal",
     icon: Calendar,
-    description: "Monitor & kelola jadwal praktikum",
+    description: "Persetujuan booking & kelola jadwal praktikum",
   },
   {
     label: "Laporan",
@@ -304,7 +330,7 @@ export function isRouteActive(currentPath: string, itemPath: string): boolean {
  */
 export function getCurrentNavigationItem(
   role: UserRole,
-  currentPath: string,
+  currentPath: string
 ): NavigationItem | undefined {
   const items = getNavigationItems(role);
   return items.find((item) => isRouteActive(currentPath, item.href));
@@ -315,7 +341,7 @@ export function getCurrentNavigationItem(
  */
 export function getBreadcrumbs(
   role: UserRole,
-  currentPath: string,
+  currentPath: string
 ): { label: string; href: string }[] {
   const segments = currentPath.split("/").filter(Boolean);
   const breadcrumbs: { label: string; href: string }[] = [];

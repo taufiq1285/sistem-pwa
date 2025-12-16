@@ -75,7 +75,7 @@ const mockShortAnswerQuestion: Soal = {
   kuis_id: "kuis-1",
   pertanyaan: "Sebutkan 3 bahasa pemrograman",
   tipe_soal: TIPE_SOAL.JAWABAN_SINGKAT,
-  jawaban_benar: null,
+  jawaban_benar: "JavaScript, Python, Java",
   poin: 15,
   urutan: 4,
   created_at: new Date().toISOString(),
@@ -127,15 +127,16 @@ describe("Quiz Scoring - Grading Logic", () => {
       expect(result.feedback).toContain("dinilai manual");
     });
 
-    it("should handle short answer questions (manual grading required)", () => {
+    it("should auto-grade short answer questions when correct answer is set", () => {
       const result = gradeAnswer(
         mockShortAnswerQuestion,
-        "JavaScript, Python, Java",
+        "JavaScript, Python, Java"
       );
 
-      expect(result.is_correct).toBe(false);
-      expect(result.poin_diperoleh).toBe(0);
-      expect(result.feedback).toContain("dinilai manual");
+      // Short answers are now auto-graded
+      expect(result.is_correct).toBe(true);
+      expect(result.poin_diperoleh).toBe(15);
+      expect(result.feedback).toBe("Jawaban Anda benar!");
     });
 
     it("should handle case-insensitive true/false answers", () => {
@@ -159,14 +160,14 @@ describe("Quiz Scoring - Grading Logic", () => {
     it("should return false for empty answer", () => {
       expect(checkAnswerCorrect(mockMultipleChoiceQuestion, "")).toBe(false);
       expect(checkAnswerCorrect(mockMultipleChoiceQuestion, null as any)).toBe(
-        false,
+        false
       );
     });
 
     it("should return false when no correct answer defined", () => {
       const questionWithoutAnswer = { ...mockEssayQuestion };
       expect(checkAnswerCorrect(questionWithoutAnswer, "any answer")).toBe(
-        false,
+        false
       );
     });
 
@@ -224,10 +225,10 @@ describe("Quiz Scoring - Label Formatting", () => {
   describe("getAnswerLabel", () => {
     it('should return "Tidak dijawab" for empty answer', () => {
       expect(getAnswerLabel(mockMultipleChoiceQuestion, "")).toBe(
-        "Tidak dijawab",
+        "Tidak dijawab"
       );
       expect(getAnswerLabel(mockMultipleChoiceQuestion, null as any)).toBe(
-        "Tidak dijawab",
+        "Tidak dijawab"
       );
     });
 
@@ -538,7 +539,7 @@ describe("Quiz Scoring - Batch Grading", () => {
   });
 
   describe("getManualGradingRequired", () => {
-    it("should return only manual grading questions", () => {
+    it("should return only manual grading questions (essay only)", () => {
       const questions = [
         mockMultipleChoiceQuestion,
         mockEssayQuestion,
@@ -548,9 +549,10 @@ describe("Quiz Scoring - Batch Grading", () => {
 
       const manual = getManualGradingRequired(questions);
 
-      expect(manual).toHaveLength(2);
+      // Only ESSAY requires manual grading now
+      // PILIHAN_GANDA, BENAR_SALAH, and JAWABAN_SINGKAT are auto-gradable
+      expect(manual).toHaveLength(1);
       expect(manual).toContain(mockEssayQuestion);
-      expect(manual).toContain(mockShortAnswerQuestion);
     });
 
     it("should return empty array if all auto-gradable", () => {

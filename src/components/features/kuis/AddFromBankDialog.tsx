@@ -99,7 +99,7 @@ export function AddFromBankDialog({
 
   const toggleSelection = (id: string) => {
     setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
     );
   };
 
@@ -143,7 +143,7 @@ export function AddFromBankDialog({
         <DialogHeader>
           <DialogTitle>Ambil Soal dari Bank</DialogTitle>
           <DialogDescription>
-            Pilih soal yang ingin ditambahkan ke kuis ini
+            Pilih soal yang ingin ditambahkan ke tugas praktikum ini
           </DialogDescription>
         </DialogHeader>
 
@@ -160,7 +160,10 @@ export function AddFromBankDialog({
               />
             </div>
 
-            <Select value={selectedTipeSoal} onValueChange={setSelectedTipeSoal}>
+            <Select
+              value={selectedTipeSoal}
+              onValueChange={setSelectedTipeSoal}
+            >
               <SelectTrigger className="w-[180px]">
                 <Filter className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="Semua tipe" />
@@ -299,7 +302,9 @@ export function AddFromBankDialog({
             onClick={handleAdd}
             disabled={selectedIds.length === 0 || isAdding}
           >
-            {isAdding ? "Menambahkan..." : `Tambahkan ${selectedIds.length} Soal`}
+            {isAdding
+              ? "Menambahkan..."
+              : `Tambahkan ${selectedIds.length} Soal`}
           </Button>
         </DialogFooter>
       </DialogContent>

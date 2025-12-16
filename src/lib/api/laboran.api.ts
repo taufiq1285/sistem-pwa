@@ -1185,3 +1185,425 @@ export const deleteLaboratorium = requirePermission(
   "manage:laboratorium",
   deleteLaboratoriumImpl,
 );
+
+// ============================================================================
+// APPROVAL HISTORY
+// ============================================================================
+
+export interface ApprovalHistory {
+  id: string;
+  peminjam_nama: string;
+  peminjam_nim: string;
+  inventaris_nama: string;
+  inventaris_kode: string;
+  laboratorium_nama: string;
+  jumlah_pinjam: number;
+  status: "approved" | "rejected";
+  approved_by_nama: string;
+  approved_by_role: string;
+  approved_at: string;
+  rejection_reason?: string;
+}
+
+/**
+ * Get approval history (approved/rejected peminjaman)
+ */
+export async function getApprovalHistory(
+  limit: number = 20,
+): Promise<ApprovalHistory[]> {
+  try {
+    const { data, error } = await supabase
+      .from("peminjaman")
+      .select(
+        `
+        id,
+        jumlah_pinjam,
+        status,
+        approved_at,
+        rejection_reason,
+        peminjam_id,
+        inventaris_id,
+        approved_by
+      `,
+      )
+      .in("status", ["approved", "rejected"])
+      .not("approved_by", "is", null)
+      .order("approved_at", { ascending: false })
+      .limit(limit);
+
+    if (error) throw error;
+
+    // Fetch related data separately
+    const peminjamIds = [
+      ...new Set(data?.map((item) => item.peminjam_id).filter(Boolean)),
+    ];
+    const inventarisIds = [
+      ...new Set(data?.map((item) => item.inventaris_id).filter(Boolean)),
+    ];
+    const approverIds = [
+      ...new Set(data?.map((item) => item.approved_by).filter((id): id is string => Boolean(id))),
+    ];
+
+    const [mahasiswaData, inventarisData, approverData] = await Promise.all([
+      peminjamIds.length > 0
+        ? supabase
+            .from("mahasiswa")
+            .select("id, nim, user_id, users!mahasiswa_user_id_fkey(full_name)")
+            .in("id", peminjamIds)
+        : Promise.resolve({ data: [] }),
+      inventarisIds.length > 0
+        ? supabase
+            .from("inventaris")
+            .select(
+              "id, kode_barang, nama_barang, laboratorium_id, laboratorium!inventaris_laboratorium_id_fkey(nama_lab)",
+            )
+            .in("id", inventarisIds)
+        : Promise.resolve({ data: [] }),
+      approverIds.length > 0
+        ? supabase
+            .from("users")
+            .select("id, full_name, role")
+            .in("id", approverIds)
+        : Promise.resolve({ data: [] }),
+    ]);
+
+    const mahasiswaMap = new Map(
+      mahasiswaData.data?.map((m: any) => [m.id, m]) || [],
+    );
+    const inventarisMap = new Map(
+      inventarisData.data?.map((i: any) => [i.id, i]) || [],
+    );
+    const approverMap = new Map(
+      approverData.data?.map((a: any) => [a.id, a]) || [],
+    );
+
+    return (data || []).map((item: any) => {
+      const mahasiswa = mahasiswaMap.get(item.peminjam_id);
+      const inventaris = inventarisMap.get(item.inventaris_id);
+      const approver = approverMap.get(item.approved_by);
+
+      return {
+        id: item.id,
+        peminjam_nama: mahasiswa?.users?.full_name || "Unknown",
+        peminjam_nim: mahasiswa?.nim || "-",
+        inventaris_nama: inventaris?.nama_barang || "Unknown",
+        inventaris_kode: inventaris?.kode_barang || "-",
+        laboratorium_nama: inventaris?.laboratorium?.nama_lab || "-",
+        jumlah_pinjam: item.jumlah_pinjam,
+        status: item.status,
+        approved_by_nama: approver?.full_name || "Unknown",
+        approved_by_role: approver?.role || "unknown",
+        approved_at: item.approved_at,
+        rejection_reason: item.rejection_reason,
+      };
+    });
+  } catch (error) {
+    console.error("Error fetching approval history:", error);
+    throw error;
+  }
+}
+
+// ============================================================================
+// ACTIVE BORROWINGS & RETURN MANAGEMENT
+// ============================================================================
+
+export interface ActiveBorrowing {
+  id: string;
+  peminjam_nama: string;
+  peminjam_nim: string;
+  inventaris_id: string;
+  inventaris_nama: string;
+  inventaris_kode: string;
+  laboratorium_nama: string;
+  jumlah_pinjam: number;
+  tanggal_pinjam: string;
+  tanggal_kembali_rencana: string;
+  keperluan: string;
+  kondisi_pinjam: string;
+  approved_at: string;
+  is_overdue: boolean;
+  days_overdue: number;
+}
+
+export interface ReturnedBorrowing {
+  id: string;
+  peminjam_nama: string;
+  peminjam_nim: string;
+  inventaris_nama: string;
+  inventaris_kode: string;
+  laboratorium_nama: string;
+  jumlah_pinjam: number;
+  tanggal_pinjam: string;
+  tanggal_kembali_rencana: string;
+  tanggal_kembali_aktual: string;
+  kondisi_pinjam: string;
+  kondisi_kembali: string;
+  keterangan_kembali: string | null;
+  denda: number;
+  was_overdue: boolean;
+}
+
+/**
+ * Get active borrowings (approved but not yet returned)
+ */
+export async function getActiveBorrowings(
+  limit: number = 100,
+): Promise<ActiveBorrowing[]> {
+  try {
+    const { data, error } = await supabase
+      .from("peminjaman")
+      .select(
+        `
+        id,
+        inventaris_id,
+        peminjam_id,
+        jumlah_pinjam,
+        tanggal_pinjam,
+        tanggal_kembali_rencana,
+        keperluan,
+        kondisi_pinjam,
+        approved_at,
+        created_at
+      `,
+      )
+      .eq("status", "approved")
+      .order("tanggal_kembali_rencana", { ascending: true })
+      .limit(limit);
+
+    if (error) throw error;
+
+    // Fetch related data separately
+    const peminjamIds = [
+      ...new Set(data?.map((item) => item.peminjam_id).filter((id): id is string => Boolean(id))),
+    ];
+    const inventarisIds = [
+      ...new Set(data?.map((item) => item.inventaris_id).filter((id): id is string => Boolean(id))),
+    ];
+
+    const [mahasiswaData, inventarisData] = await Promise.all([
+      peminjamIds.length > 0
+        ? supabase
+            .from("mahasiswa")
+            .select("id, nim, user_id, users!mahasiswa_user_id_fkey(full_name)")
+            .in("id", peminjamIds)
+        : Promise.resolve({ data: [] }),
+      inventarisIds.length > 0
+        ? supabase
+            .from("inventaris")
+            .select(
+              "id, kode_barang, nama_barang, laboratorium_id, laboratorium!inventaris_laboratorium_id_fkey(nama_lab)",
+            )
+            .in("id", inventarisIds)
+        : Promise.resolve({ data: [] }),
+    ]);
+
+    const mahasiswaMap = new Map(
+      mahasiswaData.data?.map((m: any) => [m.id, m]) || [],
+    );
+    const inventarisMap = new Map(
+      inventarisData.data?.map((i: any) => [i.id, i]) || [],
+    );
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    return (data || []).map((item: any) => {
+      const mahasiswa = mahasiswaMap.get(item.peminjam_id);
+      const inventaris = inventarisMap.get(item.inventaris_id);
+
+      const returnDate = new Date(item.tanggal_kembali_rencana);
+      returnDate.setHours(0, 0, 0, 0);
+      const isOverdue = returnDate < today;
+      const daysOverdue = isOverdue
+        ? Math.floor((today.getTime() - returnDate.getTime()) / (1000 * 60 * 60 * 24))
+        : 0;
+
+      return {
+        id: item.id,
+        peminjam_nama: mahasiswa?.users?.full_name || "Unknown",
+        peminjam_nim: mahasiswa?.nim || "-",
+        inventaris_id: item.inventaris_id,
+        inventaris_nama: inventaris?.nama_barang || "Unknown",
+        inventaris_kode: inventaris?.kode_barang || "-",
+        laboratorium_nama: inventaris?.laboratorium?.nama_lab || "-",
+        jumlah_pinjam: item.jumlah_pinjam,
+        tanggal_pinjam: item.tanggal_pinjam,
+        tanggal_kembali_rencana: item.tanggal_kembali_rencana,
+        keperluan: item.keperluan,
+        kondisi_pinjam: item.kondisi_pinjam || "baik",
+        approved_at: item.approved_at,
+        is_overdue: isOverdue,
+        days_overdue: daysOverdue,
+      };
+    });
+  } catch (error) {
+    console.error("Error fetching active borrowings:", error);
+    throw error;
+  }
+}
+
+/**
+ * Get returned borrowings history
+ */
+export async function getReturnedBorrowings(
+  limit: number = 50,
+): Promise<ReturnedBorrowing[]> {
+  try {
+    const { data, error } = await supabase
+      .from("peminjaman")
+      .select(
+        `
+        id,
+        inventaris_id,
+        peminjam_id,
+        jumlah_pinjam,
+        tanggal_pinjam,
+        tanggal_kembali_rencana,
+        tanggal_kembali_aktual,
+        kondisi_pinjam,
+        kondisi_kembali,
+        keterangan_kembali,
+        denda,
+        created_at
+      `,
+      )
+      .eq("status", "returned")
+      .order("tanggal_kembali_aktual", { ascending: false })
+      .limit(limit);
+
+    if (error) throw error;
+
+    // Fetch related data separately
+    const peminjamIds = [
+      ...new Set(data?.map((item) => item.peminjam_id).filter((id): id is string => Boolean(id))),
+    ];
+    const inventarisIds = [
+      ...new Set(data?.map((item) => item.inventaris_id).filter((id): id is string => Boolean(id))),
+    ];
+
+    const [mahasiswaData, inventarisData] = await Promise.all([
+      peminjamIds.length > 0
+        ? supabase
+            .from("mahasiswa")
+            .select("id, nim, user_id, users!mahasiswa_user_id_fkey(full_name)")
+            .in("id", peminjamIds)
+        : Promise.resolve({ data: [] }),
+      inventarisIds.length > 0
+        ? supabase
+            .from("inventaris")
+            .select(
+              "id, kode_barang, nama_barang, laboratorium_id, laboratorium!inventaris_laboratorium_id_fkey(nama_lab)",
+            )
+            .in("id", inventarisIds)
+        : Promise.resolve({ data: [] }),
+    ]);
+
+    const mahasiswaMap = new Map(
+      mahasiswaData.data?.map((m: any) => [m.id, m]) || [],
+    );
+    const inventarisMap = new Map(
+      inventarisData.data?.map((i: any) => [i.id, i]) || [],
+    );
+
+    return (data || []).map((item: any) => {
+      const mahasiswa = mahasiswaMap.get(item.peminjam_id);
+      const inventaris = inventarisMap.get(item.inventaris_id);
+
+      const returnDate = new Date(item.tanggal_kembali_rencana);
+      returnDate.setHours(0, 0, 0, 0);
+      const actualReturnDate = new Date(item.tanggal_kembali_aktual);
+      actualReturnDate.setHours(0, 0, 0, 0);
+      const wasOverdue = actualReturnDate > returnDate;
+
+      return {
+        id: item.id,
+        peminjam_nama: mahasiswa?.users?.full_name || "Unknown",
+        peminjam_nim: mahasiswa?.nim || "-",
+        inventaris_nama: inventaris?.nama_barang || "Unknown",
+        inventaris_kode: inventaris?.kode_barang || "-",
+        laboratorium_nama: inventaris?.laboratorium?.nama_lab || "-",
+        jumlah_pinjam: item.jumlah_pinjam,
+        tanggal_pinjam: item.tanggal_pinjam,
+        tanggal_kembali_rencana: item.tanggal_kembali_rencana,
+        tanggal_kembali_aktual: item.tanggal_kembali_aktual,
+        kondisi_pinjam: item.kondisi_pinjam || "baik",
+        kondisi_kembali: item.kondisi_kembali || "baik",
+        keterangan_kembali: item.keterangan_kembali,
+        denda: item.denda || 0,
+        was_overdue: wasOverdue,
+      };
+    });
+  } catch (error) {
+    console.error("Error fetching returned borrowings:", error);
+    throw error;
+  }
+}
+
+/**
+ * Mark borrowing as returned and restore inventory stock
+ */
+async function markBorrowingReturnedImpl(
+  peminjamanId: string,
+  kondisiKembali: "baik" | "rusak_ringan" | "rusak_berat" | "maintenance",
+  keterangan?: string,
+  denda?: number,
+): Promise<void> {
+  try {
+    // Step 1: Get peminjaman details
+    const { data: peminjamanData, error: fetchError } = await supabase
+      .from("peminjaman")
+      .select("inventaris_id, jumlah_pinjam")
+      .eq("id", peminjamanId)
+      .eq("status", "approved")
+      .single();
+
+    if (fetchError || !peminjamanData) {
+      throw new Error("Peminjaman not found or not in approved status");
+    }
+
+    // Step 2: Get current inventory stock
+    const { data: invData, error: invFetchError } = await supabase
+      .from("inventaris")
+      .select("jumlah_tersedia, nama_barang")
+      .eq("id", peminjamanData.inventaris_id)
+      .single();
+
+    if (invFetchError || !invData) {
+      throw new Error("Inventaris not found");
+    }
+
+    // Step 3: Update peminjaman status to returned
+    const { error: updateError } = await supabase
+      .from("peminjaman")
+      .update({
+        status: "returned",
+        tanggal_kembali_aktual: new Date().toISOString(),
+        kondisi_kembali: kondisiKembali,
+        keterangan_kembali: keterangan || null,
+        denda: denda || 0,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", peminjamanId)
+      .eq("status", "approved");
+
+    if (updateError) throw updateError;
+
+    // Step 4: RESTORE inventory stock (FIX BUG!)
+    const newStock = invData.jumlah_tersedia + peminjamanData.jumlah_pinjam;
+    const { error: stockError } = await supabase
+      .from("inventaris")
+      .update({ jumlah_tersedia: newStock })
+      .eq("id", peminjamanData.inventaris_id);
+
+    if (stockError) throw stockError;
+  } catch (error) {
+    console.error("Error marking borrowing as returned:", error);
+    throw error;
+  }
+}
+
+// 🔒 PROTECTED: Requires manage:peminjaman permission
+export const markBorrowingReturned = requirePermission(
+  "manage:peminjaman",
+  markBorrowingReturnedImpl,
+);

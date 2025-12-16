@@ -193,6 +193,65 @@ async function createKuisImpl(data: CreateKuisData): Promise<Kuis> {
 
     const result = await insert<Kuis>("kuis", dataWithDefaults);
     console.log("✅ API createKuis success:", result);
+
+    // ✅ AUTO-NOTIFICATION: Notify all mahasiswa in kelas when dosen creates new tugas
+    try {
+      // Get all mahasiswa in the kelas
+      const { data: enrollment, error: enrollError } = await supabase
+        .from("kelas_mahasiswa")
+        .select(
+          `
+          mahasiswa:mahasiswa_id (
+            id,
+            user_id
+          )
+        `,
+        )
+        .eq("kelas_id", data.kelas_id);
+
+      if (!enrollError && enrollment && enrollment.length > 0) {
+        // Get dosen info
+        const { data: dosen, error: dosenError } = await supabase
+          .from("dosen")
+          .select(
+            `
+            id,
+            user:user_id (
+              full_name
+            )
+          `,
+          )
+          .eq("id", data.dosen_id)
+          .single();
+
+        if (!dosenError && dosen) {
+          const mahasiswaUserIds = enrollment
+            .map((e: any) => e.mahasiswa?.user_id)
+            .filter(Boolean);
+          const dosenNama = (dosen as any).user?.full_name || "Dosen";
+
+          if (mahasiswaUserIds.length > 0) {
+            const { notifyMahasiswaTugasBaru } = await import(
+              "@/lib/api/notification.api"
+            );
+            await notifyMahasiswaTugasBaru(
+              mahasiswaUserIds,
+              dosenNama,
+              data.judul,
+              result.id,
+              data.kelas_id,
+            );
+            console.log(
+              `[NOTIFICATION] ${mahasiswaUserIds.length} mahasiswa notified: New tugas "${data.judul}"`,
+            );
+          }
+        }
+      }
+    } catch (notifError) {
+      // Don't fail the creation if notification fails
+      console.error("[NOTIFICATION] Failed to notify mahasiswa:", notifError);
+    }
+
     return result;
   } catch (error) {
     console.error("❌ API createKuis error:", error);

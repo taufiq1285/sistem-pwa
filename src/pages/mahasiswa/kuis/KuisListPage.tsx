@@ -1,9 +1,10 @@
 /**
- * KuisListPage - Mahasiswa
+ * KuisListPage - Mahasiswa (Tugas Praktikum)
  *
- * Purpose: Display list of available quizzes for students
+ * Purpose: Display list of available tasks for students
  * Route: /mahasiswa/kuis
- * Features: Filter by status, search, quiz cards, start quiz, view results
+ * Features: Filter by status, search, task cards, start task, view results
+ * Note: Table name remains "kuis" but UI displays "Tugas Praktikum"
  */
 
 import { useState, useEffect } from "react";
@@ -89,9 +90,12 @@ export default function KuisListPage() {
       const data = await getUpcomingQuizzes(user.mahasiswa.id);
       setQuizzes(data);
     } catch (err: any) {
-      const errorMessage = err?.message || "Gagal memuat daftar kuis";
+      const errorMessage =
+        err?.message || "Gagal memuat daftar tugas praktikum";
       setError(errorMessage);
-      toast.error("Gagal memuat kuis", { description: errorMessage });
+      toast.error("Gagal memuat tugas praktikum", {
+        description: errorMessage,
+      });
     } finally {
       setIsLoading(false);
     }
@@ -108,7 +112,7 @@ export default function KuisListPage() {
           quiz.judul.toLowerCase().includes(query) ||
           quiz.nama_mk.toLowerCase().includes(query) ||
           quiz.kode_mk.toLowerCase().includes(query) ||
-          quiz.nama_kelas.toLowerCase().includes(query),
+          quiz.nama_kelas.toLowerCase().includes(query)
       );
     }
     setFilteredQuizzes(filtered);
@@ -185,15 +189,53 @@ export default function KuisListPage() {
     const isPassed =
       hasBestScore && quiz.best_score! >= ((quiz as any).passing_grade || 0);
 
+    // Get border color based on task type
+    const getBorderColor = () => {
+      const tipe = (quiz as any).tipe_kuis;
+      if (tipe === "pre-test") return "border-l-blue-500";
+      if (tipe === "post-test") return "border-l-purple-500";
+      if (tipe === "laporan") return "border-l-orange-500";
+      return "border-l-gray-400";
+    };
+
+    // Get type badge style
+    const getTypeBadgeStyle = () => {
+      const tipe = (quiz as any).tipe_kuis;
+      if (tipe === "pre-test")
+        return "bg-blue-50 text-blue-700 border-blue-200";
+      if (tipe === "post-test")
+        return "bg-purple-50 text-purple-700 border-purple-200";
+      if (tipe === "laporan")
+        return "bg-orange-50 text-orange-700 border-orange-200";
+      return "";
+    };
+
+    // Get type emoji
+    const getTypeEmoji = () => {
+      const tipe = (quiz as any).tipe_kuis;
+      if (tipe === "pre-test") return "📝";
+      if (tipe === "post-test") return "📊";
+      if (tipe === "laporan") return "📄";
+      return "📋";
+    };
+
     return (
-      <Card className="hover:shadow-md transition-shadow">
+      <Card
+        className={cn(
+          "hover:shadow-lg transition-all duration-200 border-l-4",
+          getBorderColor()
+        )}
+      >
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
-              <div className="flex items-center gap-2 mb-2">
+              <div className="flex items-center gap-2 mb-2 flex-wrap">
                 {getStatusBadge(quiz.status)}
-                <Badge variant="outline" className="text-xs">
-                  {(quiz as any).tipe_kuis || "Campuran"}
+                <Badge
+                  variant="outline"
+                  className={cn("text-xs", getTypeBadgeStyle())}
+                >
+                  {getTypeEmoji()} {(quiz as any).tipe_kuis || "Campuran"}
                 </Badge>
               </div>
               <CardTitle className="text-lg mb-1">{quiz.judul}</CardTitle>
@@ -202,7 +244,9 @@ export default function KuisListPage() {
                 {quiz.nama_kelas && ` • ${quiz.nama_kelas}`}
               </CardDescription>
             </div>
-            <div className="flex-shrink-0">{getStatusIcon(quiz.status)}</div>
+            <div className="flex-shrink-0 p-2 bg-gray-50 rounded-full">
+              {getStatusIcon(quiz.status)}
+            </div>
           </div>
         </CardHeader>
 
@@ -241,14 +285,14 @@ export default function KuisListPage() {
                 "flex items-center justify-between p-3 rounded-lg text-sm",
                 isPassed
                   ? "bg-green-50 border border-green-200"
-                  : "bg-red-50 border border-red-200",
+                  : "bg-red-50 border border-red-200"
               )}
             >
               <div className="flex items-center gap-2">
                 <Trophy
                   className={cn(
                     "h-4 w-4",
-                    isPassed ? "text-green-600" : "text-red-600",
+                    isPassed ? "text-green-600" : "text-red-600"
                   )}
                 />
                 <span className="font-medium">Nilai Terbaik</span>
@@ -256,7 +300,7 @@ export default function KuisListPage() {
               <span
                 className={cn(
                   "font-bold text-lg",
-                  isPassed ? "text-green-700" : "text-red-700",
+                  isPassed ? "text-green-700" : "text-red-700"
                 )}
               >
                 {quiz.best_score}
@@ -268,10 +312,10 @@ export default function KuisListPage() {
             {canStart && (
               <Button
                 onClick={() => handleStartQuiz(quiz.id)}
-                className="flex-1 gap-2"
+                className="flex-1 gap-2 bg-emerald-600 hover:bg-emerald-700"
               >
                 <Play className="h-4 w-4" />
-                {quiz.attempts_used > 0 ? "Coba Lagi" : "Mulai Kuis"}
+                {quiz.attempts_used > 0 ? "Coba Lagi" : "Mulai Tugas"}
               </Button>
             )}
             {isCompleted && quiz.attempts_used > 0 && (
@@ -285,12 +329,22 @@ export default function KuisListPage() {
               </Button>
             )}
             {quiz.status === "upcoming" && (
-              <Button variant="outline" disabled className="flex-1">
+              <Button
+                variant="outline"
+                disabled
+                className="flex-1 text-blue-600"
+              >
+                <Clock className="h-4 w-4 mr-2" />
                 Belum Dimulai
               </Button>
             )}
             {quiz.status === "missed" && (
-              <Button variant="outline" disabled className="flex-1">
+              <Button
+                variant="outline"
+                disabled
+                className="flex-1 text-red-600"
+              >
+                <XCircle className="h-4 w-4 mr-2" />
                 Terlewat
               </Button>
             )}
@@ -311,7 +365,9 @@ export default function KuisListPage() {
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center space-y-4">
             <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
-            <p className="text-muted-foreground">Memuat daftar kuis...</p>
+            <p className="text-muted-foreground">
+              Memuat daftar tugas praktikum...
+            </p>
           </div>
         </div>
       </div>
@@ -335,11 +391,32 @@ export default function KuisListPage() {
 
   return (
     <div className="container mx-auto py-6 max-w-7xl space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Daftar Kuis</h1>
-        <p className="text-muted-foreground mt-1">
-          Kerjakan kuis sesuai jadwal yang tersedia
-        </p>
+      {/* Hero Header */}
+      <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-700 p-8 text-white">
+        {/* Decorative Elements */}
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-32 translate-x-32 blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-teal-400/20 rounded-full translate-y-24 -translate-x-24 blur-2xl" />
+
+        <div className="relative">
+          <h1 className="text-3xl font-bold flex items-center gap-3">
+            📋 Tugas Praktikum
+          </h1>
+          <p className="text-emerald-100 mt-2 max-w-xl">
+            Kerjakan tugas praktikum sesuai jadwal yang tersedia. Perhatikan
+            batas waktu pengerjaan!
+          </p>
+          <div className="flex gap-3 mt-4">
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-white/20 backdrop-blur-sm">
+              📝 Pre-Test
+            </span>
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-white/20 backdrop-blur-sm">
+              📊 Post-Test
+            </span>
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-white/20 backdrop-blur-sm">
+              📄 Laporan
+            </span>
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -373,7 +450,7 @@ export default function KuisListPage() {
                 </CardContent>
               </Card>
             );
-          },
+          }
         )}
       </div>
 
@@ -384,7 +461,7 @@ export default function KuisListPage() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Cari kuis, mata kuliah, atau kelas..."
+                  placeholder="Cari tugas praktikum, mata kuliah, atau kelas..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10"
@@ -418,13 +495,13 @@ export default function KuisListPage() {
                 </div>
               </div>
               <div>
-                <h3 className="text-lg font-semibold mb-1">Tidak Ada Kuis</h3>
+                <h3 className="text-lg font-semibold mb-1">Tidak Ada Tugas</h3>
                 <p className="text-muted-foreground">
                   {searchQuery
-                    ? "Tidak ada kuis yang sesuai dengan pencarian Anda"
+                    ? "Tidak ada tugas praktikum yang sesuai dengan pencarian Anda"
                     : statusFilter === "all"
-                      ? "Belum ada kuis yang tersedia"
-                      : `Tidak ada kuis dengan status "${statusFilter}"`}
+                      ? "Belum ada tugas praktikum yang tersedia"
+                      : `Tidak ada tugas praktikum dengan status "${statusFilter}"`}
                 </p>
               </div>
             </div>

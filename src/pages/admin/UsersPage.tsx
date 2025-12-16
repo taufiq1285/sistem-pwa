@@ -9,6 +9,9 @@ import {
   XCircle,
   Edit,
   Trash2,
+  GraduationCap,
+  BookOpen,
+  Microscope,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -43,6 +46,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import {
   getAllUsers,
@@ -64,6 +73,8 @@ const ROLE_BADGE = {
   laboran: "destructive" as const,
 };
 
+type UserRole = "admin" | "dosen" | "mahasiswa" | "laboran";
+
 export default function UsersPage() {
   const [users, setUsers] = useState<SystemUser[]>([]);
   const [stats, setStats] = useState<UserStats>({
@@ -77,7 +88,7 @@ export default function UsersPage() {
   });
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [roleFilter, setRoleFilter] = useState("all");
+  const [activeTab, setActiveTab] = useState<UserRole | "all">("all");
 
   // Edit dialog
   const [editingUser, setEditingUser] = useState<SystemUser | null>(null);
@@ -239,15 +250,108 @@ export default function UsersPage() {
     }
   };
 
-  const filteredUsers = users.filter((u) => {
+  // Filter users by search query
+  const searchFilteredUsers = users.filter((u) => {
     const match =
       u.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
       u.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (u.nim && u.nim.includes(searchQuery)) ||
       (u.nip && u.nip.includes(searchQuery));
-    const role = roleFilter === "all" || u.role === roleFilter;
-    return match && role;
+    return match;
   });
+
+  // Get users by role
+  const getUsersByRole = (role: UserRole) => {
+    return searchFilteredUsers.filter((u) => u.role === role);
+  };
+
+  const adminUsers = getUsersByRole("admin");
+  const dosenUsers = getUsersByRole("dosen");
+  const mahasiswaUsers = getUsersByRole("mahasiswa");
+  const laboranUsers = getUsersByRole("laboran");
+
+  // Render user table for a specific role
+  const renderUserTable = (roleUsers: SystemUser[], emptyMessage: string) => {
+    if (loading) {
+      return (
+        <div className="text-center py-12">
+          <RefreshCw className="h-8 w-8 animate-spin mx-auto text-muted-foreground" />
+        </div>
+      );
+    }
+
+    if (roleUsers.length === 0) {
+      return (
+        <div className="text-center py-12">
+          <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+          <p className="text-muted-foreground">{emptyMessage}</p>
+        </div>
+      );
+    }
+
+    return (
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Nama</TableHead>
+            <TableHead>Email</TableHead>
+            <TableHead>ID</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Aksi</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {roleUsers.map((u) => (
+            <TableRow key={u.id}>
+              <TableCell className="font-medium">{u.full_name}</TableCell>
+              <TableCell>{u.email}</TableCell>
+              <TableCell className="font-mono text-sm">
+                {u.nim || u.nip || u.nidn || "-"}
+              </TableCell>
+              <TableCell>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleToggle(u.id, u.is_active)}
+                >
+                  {u.is_active ? (
+                    <>
+                      <CheckCircle className="h-4 w-4 text-green-600 mr-1" />
+                      Aktif
+                    </>
+                  ) : (
+                    <>
+                      <XCircle className="h-4 w-4 text-red-600 mr-1" />
+                      Nonaktif
+                    </>
+                  )}
+                </Button>
+              </TableCell>
+              <TableCell>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleEdit(u)}
+                  >
+                    <Edit className="h-4 w-4 mr-1" />
+                    Edit
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDelete(u)}
+                  >
+                    <Trash2 className="h-4 w-4 text-red-600" />
+                  </Button>
+                </div>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    );
+  };
 
   return (
     <div className="container mx-auto py-6 max-w-7xl space-y-6">
@@ -325,115 +429,121 @@ export default function UsersPage() {
         </Card>
       </div>
 
-      {/* Search and Filter */}
+      {/* Search */}
       <div className="flex gap-4">
         <div className="flex-1 relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search..."
+            placeholder="Cari berdasarkan nama, email, NIM, atau NIP..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-9"
           />
         </div>
-        <Select value={roleFilter} onValueChange={setRoleFilter}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All</SelectItem>
-            <SelectItem value="admin">Admin</SelectItem>
-            <SelectItem value="dosen">Dosen</SelectItem>
-            <SelectItem value="mahasiswa">Mahasiswa</SelectItem>
-            <SelectItem value="laboran">Laboran</SelectItem>
-          </SelectContent>
-        </Select>
       </div>
 
-      {/* Users Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>System Users</CardTitle>
-          <CardDescription>Manage user accounts</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="text-center py-12">
-              <RefreshCw className="h-8 w-8 animate-spin mx-auto text-muted-foreground" />
-            </div>
-          ) : filteredUsers.length === 0 ? (
-            <div className="text-center py-12">
-              <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <p>No users found</p>
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>ID</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Action</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredUsers.map((u) => (
-                  <TableRow key={u.id}>
-                    <TableCell className="font-medium">{u.full_name}</TableCell>
-                    <TableCell>{u.email}</TableCell>
-                    <TableCell>
-                      <Badge variant={ROLE_BADGE[u.role]}>{u.role}</Badge>
-                    </TableCell>
-                    <TableCell className="font-mono text-sm">
-                      {u.nim || u.nip || u.nidn || "-"}
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleToggle(u.id, u.is_active)}
-                      >
-                        {u.is_active ? (
-                          <>
-                            <CheckCircle className="h-4 w-4 text-green-600 mr-1" />
-                            Active
-                          </>
-                        ) : (
-                          <>
-                            <XCircle className="h-4 w-4 text-red-600 mr-1" />
-                            Inactive
-                          </>
-                        )}
-                      </Button>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleEdit(u)}
-                        >
-                          <Edit className="h-4 w-4 mr-1" />
-                          Edit
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(u)}
-                        >
-                          <Trash2 className="h-4 w-4 text-red-600" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+      {/* Users Table with Tabs */}
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as UserRole | "all")} className="w-full">
+        <TabsList className="grid w-full grid-cols-5 mb-4">
+          <TabsTrigger value="all" className="flex items-center gap-2">
+            <Users className="h-4 w-4" />
+            Semua ({searchFilteredUsers.length})
+          </TabsTrigger>
+          <TabsTrigger value="admin" className="flex items-center gap-2">
+            <Shield className="h-4 w-4" />
+            Admin ({adminUsers.length})
+          </TabsTrigger>
+          <TabsTrigger value="dosen" className="flex items-center gap-2">
+            <GraduationCap className="h-4 w-4" />
+            Dosen ({dosenUsers.length})
+          </TabsTrigger>
+          <TabsTrigger value="mahasiswa" className="flex items-center gap-2">
+            <BookOpen className="h-4 w-4" />
+            Mahasiswa ({mahasiswaUsers.length})
+          </TabsTrigger>
+          <TabsTrigger value="laboran" className="flex items-center gap-2">
+            <Microscope className="h-4 w-4" />
+            Laboran ({laboranUsers.length})
+          </TabsTrigger>
+        </TabsList>
+
+        {/* All Users Tab */}
+        <TabsContent value="all">
+          <Card>
+            <CardHeader>
+              <CardTitle>Semua User</CardTitle>
+              <CardDescription>Kelola semua akun pengguna dalam sistem</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {renderUserTable(searchFilteredUsers, "Tidak ada user yang ditemukan")}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Admin Tab */}
+        <TabsContent value="admin">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="h-5 w-5" />
+                Administrator
+              </CardTitle>
+              <CardDescription>Kelola akun administrator sistem</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {renderUserTable(adminUsers, "Tidak ada admin yang ditemukan")}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Dosen Tab */}
+        <TabsContent value="dosen">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <GraduationCap className="h-5 w-5" />
+                Dosen
+              </CardTitle>
+              <CardDescription>Kelola akun dosen</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {renderUserTable(dosenUsers, "Tidak ada dosen yang ditemukan")}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Mahasiswa Tab */}
+        <TabsContent value="mahasiswa">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BookOpen className="h-5 w-5" />
+                Mahasiswa
+              </CardTitle>
+              <CardDescription>Kelola akun mahasiswa</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {renderUserTable(mahasiswaUsers, "Tidak ada mahasiswa yang ditemukan")}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Laboran Tab */}
+        <TabsContent value="laboran">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Microscope className="h-5 w-5" />
+                Laboran
+              </CardTitle>
+              <CardDescription>Kelola akun laboran</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {renderUserTable(laboranUsers, "Tidak ada laboran yang ditemukan")}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>

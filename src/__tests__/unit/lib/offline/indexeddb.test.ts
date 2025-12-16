@@ -139,7 +139,7 @@ describe("IndexedDBManager", () => {
       const info = await dbManager.getDatabaseInfo();
 
       expect(info).toHaveProperty("name", "sistem_praktikum_pwa");
-      expect(info).toHaveProperty("version", 1);
+      expect(info).toHaveProperty("version", 2);
       expect(info).toHaveProperty("stores");
       expect(info).toHaveProperty("totalSize");
       expect(info.stores).toBeInstanceOf(Array);
@@ -213,7 +213,7 @@ describe("IndexedDBManager", () => {
         await dbManager.create("nilai", mockNilai);
         const result = await dbManager.read<OfflineNilai>(
           "nilai",
-          mockNilai.id,
+          mockNilai.id
         );
         expect(result).toEqual(mockNilai);
       });
@@ -295,7 +295,7 @@ describe("IndexedDBManager", () => {
 
       it("should not throw error when deleting non-existent item", async () => {
         await expect(
-          dbManager.delete("kuis", "non-existent-id"),
+          dbManager.delete("kuis", "non-existent-id")
         ).resolves.not.toThrow();
       });
 
@@ -337,7 +337,7 @@ describe("IndexedDBManager", () => {
       const results = await dbManager.getByIndex<OfflineKuis>(
         "kuis",
         "kelas_id",
-        "kelas-1",
+        "kelas-1"
       );
 
       expect(results).toHaveLength(2);
@@ -527,7 +527,7 @@ describe("IndexedDBManager", () => {
     it("should set db_version metadata on initialization", async () => {
       const version = await dbManager.getMetadata("db_version");
       expect(version).toBeDefined();
-      expect(version).toBe(1);
+      expect(version).toBe(2);
     });
 
     it("should handle different metadata types", async () => {
@@ -582,7 +582,7 @@ describe("IndexedDBManager", () => {
       const info = await dbManager.getDatabaseInfo();
 
       expect(info.name).toBe("sistem_praktikum_pwa");
-      expect(info.version).toBe(1);
+      expect(info.version).toBe(2);
       expect(info.totalSize).toBeGreaterThanOrEqual(2);
     });
   });
@@ -607,7 +607,7 @@ describe("IndexedDBManager", () => {
       // Verify update
       const afterUpdate = await dbManager.read<OfflineKuis>(
         "kuis",
-        mockKuis.id,
+        mockKuis.id
       );
       expect(afterUpdate?.judul).toBe("Updated");
 
@@ -650,7 +650,7 @@ describe("IndexedDBManager", () => {
 
       await dbManager.batchDelete(
         "kuis",
-        items.slice(0, 5).map((i) => i.id),
+        items.slice(0, 5).map((i) => i.id)
       );
 
       const afterDelete = await dbManager.count("kuis");
@@ -658,7 +658,7 @@ describe("IndexedDBManager", () => {
 
       const remaining = await dbManager.getAll<OfflineKuis>("kuis");
       expect(remaining.every((k) => parseInt(k.id.split("-")[1]) >= 5)).toBe(
-        true,
+        true
       );
     });
 
@@ -669,7 +669,7 @@ describe("IndexedDBManager", () => {
           ...mockKuis,
           id: `large-${i}`,
           kelas_id: `kelas-${i % 5}`,
-        }),
+        })
       );
 
       const result = await dbManager.batchCreate("kuis", largeDataset);
@@ -682,14 +682,14 @@ describe("IndexedDBManager", () => {
       const kelas1Items = await dbManager.getByIndex<OfflineKuis>(
         "kuis",
         "kelas_id",
-        "kelas-1",
+        "kelas-1"
       );
       expect(kelas1Items).toHaveLength(20);
     });
 
     it("should handle concurrent operations", async () => {
       const operations = Array.from({ length: 10 }, (_, i) =>
-        dbManager.create("kuis", { ...mockKuis, id: `concurrent-${i}` }),
+        dbManager.create("kuis", { ...mockKuis, id: `concurrent-${i}` })
       );
 
       await Promise.all(operations);

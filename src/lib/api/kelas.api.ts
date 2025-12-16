@@ -72,7 +72,14 @@ export async function getKelas(filters?: KelasFilters): Promise<Kelas[]> {
     }
 
     const options = {
-      select: `*`,
+      select: `
+        *,
+        mata_kuliah:mata_kuliah_id (
+          id,
+          nama_mk,
+          kode_mk
+        )
+      `,
       order: {
         column: "nama_kelas",
         ascending: true,

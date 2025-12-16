@@ -1,9 +1,10 @@
 /**
- * KuisResultsPage - FIXED VERSION
+ * KuisResultsPage (Tugas Praktikum) - FIXED VERSION
  *
- * Purpose: Quiz results and analytics page for Dosen
+ * Purpose: Task results and analytics page for Dosen
  * Route: /dosen/kuis/:kuisId/results
- * Features: View statistics, student attempts, scores, question analysis
+ * Features: View statistics, student attempts, scores, question analysis, auto-sync nilai
+ * Note: Table name remains "kuis" but UI displays "Tugas Praktikum"
  *
  * FIXES APPLIED:
  * 1. Changed getAttemptByKuis to getAttemptsByKuis
@@ -12,6 +13,7 @@
  * 4. Changed all attempt.waktu_selesai to attempt.submitted_at
  * 5. Changed all status === 'completed' to status === 'graded'
  * 6. Removed unused FileText import
+ * 7. Updated all UI labels for "Tugas Praktikum"
  */
 
 import { useState, useEffect } from "react";
@@ -134,8 +136,8 @@ export default function KuisResultsPage() {
       const stats = calculateStatistics(attemptsData, quizData);
       setStatistics(stats);
     } catch (err: any) {
-      setError(err.message || "Gagal memuat data hasil kuis");
-      toast.error("Gagal memuat data hasil kuis", {
+      setError(err.message || "Gagal memuat data hasil tugas praktikum");
+      toast.error("Gagal memuat data hasil tugas praktikum", {
         description: err.message,
       });
     } finally {
@@ -156,7 +158,7 @@ export default function KuisResultsPage() {
     const filtered = attempts.filter(
       (attempt) =>
         attempt.mahasiswa?.user?.full_name.toLowerCase().includes(query) ||
-        attempt.mahasiswa?.nim.toLowerCase().includes(query),
+        attempt.mahasiswa?.nim.toLowerCase().includes(query)
     );
 
     setFilteredAttempts(filtered);
@@ -202,7 +204,7 @@ export default function KuisResultsPage() {
             attempt.submitted_at
               ? new Date(attempt.submitted_at).toLocaleString()
               : "-",
-          ].join(","),
+          ].join(",")
         ),
       ].join("\n");
 
@@ -210,13 +212,13 @@ export default function KuisResultsPage() {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `hasil-kuis-${quiz?.judul || "quiz"}.csv`;
+      a.download = `hasil-tugas-${quiz?.judul || "quiz"}.csv`;
       a.click();
       window.URL.revokeObjectURL(url);
 
-      toast.success("Hasil kuis berhasil diexport");
+      toast.success("Hasil tugas praktikum berhasil diexport");
     } catch (error) {
-      toast.error("Gagal export hasil kuis");
+      toast.error("Gagal export hasil tugas praktikum");
     }
   };
 
@@ -237,7 +239,9 @@ export default function KuisResultsPage() {
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center space-y-4">
             <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
-            <p className="text-muted-foreground">Memuat hasil kuis...</p>
+            <p className="text-muted-foreground">
+              Memuat hasil tugas praktikum...
+            </p>
           </div>
         </div>
       </div>
@@ -259,7 +263,7 @@ export default function KuisResultsPage() {
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            {error || "Gagal memuat data hasil kuis"}
+            {error || "Gagal memuat data hasil tugas praktikum"}
           </AlertDescription>
         </Alert>
 
@@ -280,13 +284,15 @@ export default function KuisResultsPage() {
       <div className="mb-6">
         <Button variant="ghost" size="sm" onClick={handleBack} className="mb-4">
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Kembali ke Daftar Kuis
+          Kembali ke Daftar Tugas
         </Button>
 
         <div className="flex items-start justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold">{quiz.judul}</h1>
-            <p className="text-muted-foreground mt-1">Hasil & Analisis Kuis</p>
+            <p className="text-muted-foreground mt-1">
+              Hasil & Analisis Tugas Praktikum
+            </p>
           </div>
 
           <Button onClick={handleExport} variant="outline" className="gap-2">
@@ -379,7 +385,7 @@ export default function KuisResultsPage() {
         <TabsContent value="overview" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Informasi Kuis</CardTitle>
+              <CardTitle>Informasi Tugas</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -466,7 +472,7 @@ export default function KuisResultsPage() {
                   <p className="text-muted-foreground">
                     {searchQuery
                       ? "Tidak ada hasil yang sesuai"
-                      : "Belum ada mahasiswa yang mengerjakan kuis ini"}
+                      : "Belum ada mahasiswa yang mengerjakan tugas ini"}
                   </p>
                 </div>
               ) : (
@@ -547,7 +553,7 @@ export default function KuisResultsPage() {
                             <span
                               className={cn(
                                 "font-semibold",
-                                isPassed ? "text-green-600" : "text-red-600",
+                                isPassed ? "text-green-600" : "text-red-600"
                               )}
                             >
                               {/* FIXED: Changed nilai to total_poin */}
@@ -564,7 +570,7 @@ export default function KuisResultsPage() {
                             {attempt.submitted_at && attempt.started_at
                               ? calculateDuration(
                                   attempt.started_at,
-                                  attempt.submitted_at,
+                                  attempt.submitted_at
                                 )
                               : "-"}
                           </TableCell>
@@ -615,7 +621,7 @@ export default function KuisResultsPage() {
  */
 function calculateStatistics(
   attempts: AttemptWithStudent[],
-  quiz: Kuis,
+  quiz: Kuis
 ): QuizStatistics {
   // FIXED: Changed status check from 'completed' to 'graded'
   const completedAttempts = attempts.filter((a) => a.status === "graded");
@@ -641,7 +647,7 @@ function calculateStatistics(
   const passingGrade = (quiz as any).passing_grade || 60;
   const passedCount = completedAttempts.filter(
     // FIXED: Changed nilai to total_poin
-    (a) => (a.total_poin || 0) >= passingGrade,
+    (a) => (a.total_poin || 0) >= passingGrade
   ).length;
   const passRate = (passedCount / completedAttempts.length) * 100;
 

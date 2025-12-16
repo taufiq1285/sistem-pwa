@@ -1,9 +1,10 @@
 /**
- * KuisListPage
+ * KuisListPage (Tugas Praktikum)
  *
- * Purpose: Main quiz list page for Dosen
+ * Purpose: Main task list page for Dosen (Tugas Praktikum)
  * Route: /dosen/kuis
- * Features: View all quizzes, filter, search, create new quiz
+ * Features: View all tasks, filter, search, create new task
+ * Note: Table name remains "kuis" but UI displays "Tugas Praktikum"
  */
 
 import { useState, useEffect } from "react";
@@ -32,7 +33,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { QuizCard } from "@/components/features/kuis/QuizCard";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { getKuis } from "@/lib/api/kuis.api";
-import type { Kuis, KuisFilters } from "@/types/kuis.types";
+import type { Kuis, KuisFilters, UI_LABELS } from "@/types/kuis.types";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -103,8 +104,8 @@ export default function KuisListPage() {
       const data = await getKuis(filters);
       setQuizzes(data);
     } catch (err: any) {
-      setError(err.message || "Gagal memuat daftar kuis");
-      toast.error("Gagal memuat daftar kuis", {
+      setError(err.message || "Gagal memuat daftar tugas praktikum");
+      toast.error("Gagal memuat daftar tugas praktikum", {
         description: err.message,
       });
     } finally {
@@ -124,7 +125,7 @@ export default function KuisListPage() {
       filtered = filtered.filter(
         (quiz) =>
           quiz.judul.toLowerCase().includes(query) ||
-          quiz.deskripsi?.toLowerCase().includes(query),
+          quiz.deskripsi?.toLowerCase().includes(query)
       );
     }
 
@@ -161,7 +162,7 @@ export default function KuisListPage() {
 
   // Get unique kelas for filter
   const kelasOptions = Array.from(
-    new Set(quizzes.map((q) => q.kelas_id)),
+    new Set(quizzes.map((q) => q.kelas_id))
   ).filter(Boolean);
 
   // Count by status
@@ -183,7 +184,9 @@ export default function KuisListPage() {
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center space-y-4">
             <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
-            <p className="text-muted-foreground">Memuat daftar kuis...</p>
+            <p className="text-muted-foreground">
+              Memuat daftar tugas praktikum...
+            </p>
           </div>
         </div>
       </div>
@@ -214,19 +217,43 @@ export default function KuisListPage() {
 
   return (
     <div className="container mx-auto py-6 max-w-7xl">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-bold">Daftar Kuis</h1>
-          <p className="text-muted-foreground mt-1">
-            Kelola kuis praktikum Anda
-          </p>
-        </div>
+      {/* Hero Header */}
+      <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-700 p-8 mb-6 text-white">
+        {/* Decorative Elements */}
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-32 translate-x-32 blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-purple-400/20 rounded-full translate-y-24 -translate-x-24 blur-2xl" />
 
-        <Button onClick={handleCreateQuiz} size="lg" className="gap-2">
-          <Plus className="h-5 w-5" />
-          Buat Kuis Baru
-        </Button>
+        <div className="relative flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold flex items-center gap-3">
+              📋 Daftar Tugas Praktikum
+            </h1>
+            <p className="text-blue-100 mt-2 max-w-xl">
+              Kelola tugas praktikum untuk mahasiswa. Fitur ini bersifat
+              opsional - buat hanya jika diperlukan untuk praktikum tertentu.
+            </p>
+            <div className="flex gap-3 mt-4">
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-white/20 backdrop-blur-sm">
+                📝 Pre-Test
+              </span>
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-white/20 backdrop-blur-sm">
+                📊 Post-Test
+              </span>
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-white/20 backdrop-blur-sm">
+                📄 Laporan
+              </span>
+            </div>
+          </div>
+
+          <Button
+            onClick={handleCreateQuiz}
+            size="lg"
+            className="gap-2 bg-white text-blue-700 hover:bg-blue-50 shadow-lg"
+          >
+            <Plus className="h-5 w-5" />
+            Buat Tugas Baru
+          </Button>
+        </div>
       </div>
 
       {/* Filters & Controls */}
@@ -236,7 +263,7 @@ export default function KuisListPage() {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Cari kuis..."
+              placeholder="Cari tugas praktikum..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
@@ -302,7 +329,7 @@ export default function KuisListPage() {
         </div>
       </Card>
 
-      {/* Quiz List/Grid */}
+      {/* Task List/Grid */}
       {filteredQuizzes.length === 0 ? (
         <Card className="p-12">
           <div className="text-center space-y-4">
@@ -310,11 +337,13 @@ export default function KuisListPage() {
               <AlertCircle className="h-8 w-8 text-muted-foreground" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold">Tidak ada kuis</h3>
+              <h3 className="text-lg font-semibold">
+                Tidak ada tugas praktikum
+              </h3>
               <p className="text-muted-foreground">
                 {searchQuery || statusFilter !== "all" || kelasFilter !== "all"
-                  ? "Tidak ada kuis yang sesuai dengan filter"
-                  : "Belum ada kuis yang dibuat"}
+                  ? "Tidak ada tugas yang sesuai dengan filter"
+                  : "Belum ada tugas praktikum yang dibuat"}
               </p>
             </div>
             {!searchQuery &&
@@ -322,7 +351,7 @@ export default function KuisListPage() {
               kelasFilter === "all" && (
                 <Button onClick={handleCreateQuiz} className="gap-2">
                   <Plus className="h-4 w-4" />
-                  Buat Kuis Pertama
+                  Buat Tugas Pertama
                 </Button>
               )}
           </div>
@@ -332,7 +361,7 @@ export default function KuisListPage() {
           className={cn(
             viewMode === "grid"
               ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
-              : "space-y-4",
+              : "space-y-4"
           )}
         >
           {filteredQuizzes.map((quiz) => (
@@ -350,7 +379,8 @@ export default function KuisListPage() {
       {/* Results Count */}
       {filteredQuizzes.length > 0 && (
         <div className="mt-6 text-center text-sm text-muted-foreground">
-          Menampilkan {filteredQuizzes.length} dari {quizzes.length} kuis
+          Menampilkan {filteredQuizzes.length} dari {quizzes.length} tugas
+          praktikum
         </div>
       )}
     </div>
@@ -368,16 +398,16 @@ export default function KuisListPage() {
  * - active: Sudah dipublish (mahasiswa bisa akses)
  */
 function getQuizStatusFromDates(quiz: Kuis): StatusFilter {
-  const status = quiz.status || 'draft';
+  const status = quiz.status || "draft";
 
   // Map database status to filter status
-  if (status === 'published') {
-    return 'active'; // Published quiz is active
-  } else if (status === 'draft') {
-    return 'draft';
-  } else if (status === 'archived') {
-    return 'ended';
+  if (status === "published") {
+    return "active"; // Published quiz is active
+  } else if (status === "draft") {
+    return "draft";
+  } else if (status === "archived") {
+    return "ended";
   }
 
-  return 'draft'; // Default
+  return "draft"; // Default
 }

@@ -22,7 +22,13 @@
       "Bash(start http://localhost:5173/cleanup-dosen.html)",
       "Bash(tree:*)",
       "Bash(psql:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(tasklist:*)",
+      "Bash(findstr:*)",
+      "Bash(python:*)",
+      "Bash(test:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []

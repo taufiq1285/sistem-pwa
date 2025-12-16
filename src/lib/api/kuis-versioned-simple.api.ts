@@ -86,6 +86,7 @@ export async function submitAnswerSafe(
 
 /**
  * Submit quiz - simplified without version checking
+ * AUTO-NOTIFICATION: Notifies dosen when mahasiswa submits tugas
  */
 export async function submitQuizSafe(
   data: SubmitQuizData,
@@ -99,12 +100,62 @@ export async function submitQuizSafe(
         sisa_waktu: data.sisa_waktu,
       })
       .eq("id", data.attempt_id)
-      .select()
+      .select(
+        `
+        *,
+        kuis:kuis_id (
+          id,
+          judul,
+          kelas_id,
+          kelas:kelas_id (
+            id,
+            dosen_id,
+            dosen:dosen_id (
+              id,
+              user_id
+            )
+          )
+        ),
+        mahasiswa:mahasiswa_id (
+          id,
+          user:user_id (
+            full_name
+          )
+        )
+      `,
+      )
       .single();
 
     if (error) {
       console.error("[KuisAPI] Submit quiz error:", error);
       throw new Error(error.message);
+    }
+
+    // ✅ AUTO-NOTIFICATION: Notify dosen when mahasiswa submits tugas
+    try {
+      const attempt = updatedAttempt as any;
+      const dosenUserId = attempt?.kuis?.kelas?.dosen?.user_id;
+      const mahasiswaNama = attempt?.mahasiswa?.user?.full_name || "Mahasiswa";
+      const tugasNama = attempt?.kuis?.judul || "Tugas Praktikum";
+
+      if (dosenUserId) {
+        const { notifyDosenTugasSubmitted } = await import(
+          "@/lib/api/notification.api"
+        );
+        await notifyDosenTugasSubmitted(
+          dosenUserId,
+          mahasiswaNama,
+          tugasNama,
+          data.attempt_id,
+          attempt.kuis_id,
+        );
+        console.log(
+          `[NOTIFICATION] Dosen notified: ${mahasiswaNama} submitted ${tugasNama}`,
+        );
+      }
+    } catch (notifError) {
+      // Don't fail the submission if notification fails
+      console.error("[NOTIFICATION] Failed to notify dosen:", notifError);
     }
 
     return updatedAttempt as AttemptKuis;

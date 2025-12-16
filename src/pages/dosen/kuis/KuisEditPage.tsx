@@ -1,9 +1,10 @@
 /**
- * KuisEditPage
+ * KuisEditPage (Tugas Praktikum)
  *
- * Purpose: Edit existing quiz page (Dosen)
+ * Purpose: Edit existing task page (Dosen)
  * Route: /dosen/kuis/:kuisId/edit
- * Note: KuisBuilderPage will auto-detect edit mode and quiz ID from URL
+ * Note: KuisBuilderPage will auto-detect edit mode and task ID from URL
+ * Note: Table name remains "kuis" but UI displays "Tugas Praktikum"
  */
 
 import KuisBuilderPage from "./KuisBuilderPage";

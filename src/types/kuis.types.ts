@@ -1,5 +1,10 @@
 /**
- * Kuis Type Definitions
+ * Tugas Praktikum Type Definitions
+ * (Previously named "Kuis" - database table name remains "kuis")
+ *
+ * PURPOSE: Fitur opsional untuk pre-test, post-test, laporan, atau
+ * tugas praktikum lainnya. Dosen dapat membuat tugas sesuai kebutuhan.
+ *
  * CRITICAL: Updated to match EXACT Supabase database schema
  * Database fields vs Old fields mapping:
  * - durasi_menit (NOT durasi)
@@ -32,6 +37,7 @@ export const TIPE_KUIS_LABELS = {
 export const TIPE_SOAL = {
   PILIHAN_GANDA: "pilihan_ganda",
   ESSAY: "essay",
+  FILE_UPLOAD: "file_upload",
 } as const;
 
 export type TipeSoal = (typeof TIPE_SOAL)[keyof typeof TIPE_SOAL];
@@ -39,6 +45,7 @@ export type TipeSoal = (typeof TIPE_SOAL)[keyof typeof TIPE_SOAL];
 export const TIPE_SOAL_LABELS = {
   pilihan_ganda: "Pilihan Ganda",
   essay: "Essay",
+  file_upload: "Upload File (Laporan)",
 } as const;
 
 export const QUIZ_STATUS = {
@@ -51,7 +58,7 @@ export type QuizStatus = (typeof QUIZ_STATUS)[keyof typeof QUIZ_STATUS];
 
 export const QUIZ_STATUS_LABELS = {
   draft: "Draft",
-  published: "Dipublikasikan",
+  published: "Aktif",
   archived: "Diarsipkan",
 } as const;
 
@@ -65,6 +72,43 @@ export const ATTEMPT_STATUS_LABELS = {
   in_progress: "Sedang Dikerjakan",
   submitted: "Sudah Dikumpulkan",
   graded: "Sudah Dinilai",
+} as const;
+
+// ============================================================================
+// UI LABELS - For display purposes (Tugas Praktikum context)
+// ============================================================================
+
+export const UI_LABELS = {
+  // Main feature name
+  FEATURE_NAME: "Tugas Praktikum",
+  FEATURE_NAME_SINGULAR: "Tugas Praktikum",
+  FEATURE_NAME_PLURAL: "Tugas Praktikum",
+
+  // Actions
+  CREATE_NEW: "Buat Tugas Baru",
+  EDIT: "Edit Tugas",
+  DELETE: "Hapus Tugas",
+  DUPLICATE: "Duplikat Tugas",
+  PUBLISH: "Publikasikan Tugas",
+  UNPUBLISH: "Batalkan Publikasi",
+
+  // Views
+  LIST: "Daftar Tugas Praktikum",
+  DETAILS: "Detail Tugas",
+  RESULTS: "Hasil Tugas",
+  BUILDER: "Pembuat Tugas",
+
+  // Student actions
+  START: "Mulai Mengerjakan",
+  CONTINUE: "Lanjutkan Mengerjakan",
+  SUBMIT: "Kumpulkan Tugas",
+  VIEW_RESULT: "Lihat Hasil",
+
+  // Descriptions
+  OPTIONAL_FEATURE:
+    "Fitur opsional untuk pre-test, post-test, laporan, atau tugas praktikum lainnya",
+  CREATE_DESCRIPTION:
+    "Anda dapat membuat tugas untuk praktikum tertentu sesuai kebutuhan",
 } as const;
 
 // ============================================================================
@@ -192,15 +236,19 @@ export interface Jawaban {
   id: string;
   attempt_id: string;
   soal_id: string;
-  jawaban_mahasiswa: string;  // Database column name
-  jawaban?: string;  // Alias for backward compatibility
+  jawaban_mahasiswa: string; // Database column name
+  jawaban?: string; // Alias for backward compatibility
   poin_diperoleh?: number | null;
   is_correct?: boolean | null;
   feedback?: string | null;
-  is_synced?: boolean;  // Client-side only
+  is_synced?: boolean; // Client-side only
   created_at?: string;
   updated_at?: string;
-
+  // File upload fields (for file_upload type questions)
+  file_url?: string | null;
+  file_name?: string | null;
+  file_size?: number | null;
+  file_type?: string | null;
   // Relations
   soal?: Soal;
   attempt?: {

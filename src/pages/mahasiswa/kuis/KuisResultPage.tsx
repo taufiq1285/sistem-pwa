@@ -1,13 +1,14 @@
 /**
- * KuisResultPage - Quiz Result Page for Mahasiswa
+ * KuisResultPage (Tugas Praktikum) - Task Result Page for Mahasiswa
  *
- * Purpose: Display quiz results after submission
+ * Purpose: Display task results after submission
  * Features:
- * - Load quiz attempt with answers
+ * - Load task attempt with answers
  * - Auto-grade MC/TF questions
  * - Display score and detailed review
  * - Handle navigation (back, retake)
  * - Show manual grading pending state
+ * Note: Table name remains "kuis" but UI displays "Tugas Praktikum"
  *
  * Route: /mahasiswa/kuis/:kuisId/result/:attemptId
  */
@@ -106,7 +107,10 @@ export default function KuisResultPage() {
         console.log("✅ Loaded soal with jawaban_benar for results");
       } catch (err) {
         // Fallback to data from attempt if API fails
-        console.warn("⚠️ Failed to load soal for result, using attempt data:", err);
+        console.warn(
+          "⚠️ Failed to load soal for result, using attempt data:",
+          err
+        );
         questionsData = (quizData.soal as Soal[]) || [];
       }
 
@@ -119,7 +123,11 @@ export default function KuisResultPage() {
       await autoGradeAnswers(questionsData, answersData);
     } catch (err) {
       console.error("Error loading attempt:", err);
-      setError(err instanceof Error ? err.message : "Gagal memuat hasil kuis");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Gagal memuat hasil tugas praktikum"
+      );
     } finally {
       setLoading(false);
     }
@@ -130,7 +138,7 @@ export default function KuisResultPage() {
    */
   async function autoGradeAnswers(
     questionsData: Soal[],
-    answersData: Jawaban[],
+    answersData: Jawaban[]
   ) {
     try {
       setGrading(true);
@@ -163,7 +171,7 @@ export default function KuisResultPage() {
           jawaban.id,
           result.poin_diperoleh,
           result.is_correct,
-          result.feedback,
+          result.feedback
         );
 
         gradingPromises.push(promise);
@@ -178,7 +186,7 @@ export default function KuisResultPage() {
           prev.map((jawaban) => {
             const graded = gradedAnswers.find((g) => g.id === jawaban.id);
             return graded || jawaban;
-          }),
+          })
         );
       }
     } catch (err) {
@@ -229,7 +237,9 @@ export default function KuisResultPage() {
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center space-y-4">
           <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
-          <p className="text-muted-foreground">Memuat hasil kuis...</p>
+          <p className="text-muted-foreground">
+            Memuat hasil tugas praktikum...
+          </p>
           {grading && (
             <p className="text-sm text-muted-foreground">Menilai jawaban...</p>
           )}
@@ -245,14 +255,14 @@ export default function KuisResultPage() {
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            {error || "Hasil kuis tidak ditemukan"}
+            {error || "Hasil tugas praktikum tidak ditemukan"}
           </AlertDescription>
         </Alert>
 
         <div className="mt-6">
           <Button onClick={handleBack} variant="outline">
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Kembali ke Daftar Kuis
+            Kembali ke Daftar Tugas
           </Button>
         </div>
       </div>

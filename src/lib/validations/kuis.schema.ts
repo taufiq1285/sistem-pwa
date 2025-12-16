@@ -119,8 +119,10 @@ const baseSoalSchema = z.object({
     [
       TIPE_SOAL.PILIHAN_GANDA,
       TIPE_SOAL.ESSAY,
+      TIPE_SOAL.BENAR_SALAH,
+      TIPE_SOAL.JAWABAN_SINGKAT,
     ] as any,
-    { message: "Tipe soal tidak valid" },
+    { message: "Tipe soal tidak valid" }
   ),
 
   poin: z
@@ -170,7 +172,7 @@ export const createKuisSchema = baseKuisSchema
     {
       message: "Tanggal selesai harus lebih besar dari tanggal mulai",
       path: ["tanggal_selesai"],
-    },
+    }
   );
 
 export type CreateKuisFormData = z.infer<typeof createKuisSchema>;
@@ -199,7 +201,7 @@ export const updateKuisSchema = baseKuisSchema
     {
       message: "Tanggal selesai harus setelah tanggal mulai",
       path: ["tanggal_selesai"],
-    },
+    }
   );
 
 export type UpdateKuisFormData = z.infer<typeof updateKuisSchema>;
@@ -228,7 +230,7 @@ export const createSoalPilihanGandaSchema = baseSoalSchema
     {
       message: "Harus ada tepat 1 jawaban yang benar untuk pilihan ganda",
       path: ["opsi_jawaban"],
-    },
+    }
   );
 
 export type CreateSoalPilihanGandaFormData = z.infer<
@@ -251,11 +253,44 @@ export const createSoalEssaySchema = baseSoalSchema.extend({
 export type CreateSoalEssayFormData = z.infer<typeof createSoalEssaySchema>;
 
 /**
+ * Schema for True/False question
+ */
+export const createSoalBenarSalahSchema = baseSoalSchema.extend({
+  kuis_id: z.string().uuid("ID kuis tidak valid"),
+  tipe_soal: z.literal(TIPE_SOAL.BENAR_SALAH as any),
+  jawaban_benar: z.enum(["true", "false"], {
+    message: "Jawaban benar harus 'true' atau 'false'",
+  }),
+});
+
+export type CreateSoalBenarSalahFormData = z.infer<
+  typeof createSoalBenarSalahSchema
+>;
+
+/**
+ * Schema for Short Answer question
+ */
+export const createSoalJawabanSingkatSchema = baseSoalSchema.extend({
+  kuis_id: z.string().uuid("ID kuis tidak valid"),
+  tipe_soal: z.literal(TIPE_SOAL.JAWABAN_SINGKAT as any),
+  jawaban_benar: z
+    .string()
+    .min(1, "Kunci jawaban harus diisi")
+    .max(500, "Kunci jawaban maksimal 500 karakter"),
+});
+
+export type CreateSoalJawabanSingkatFormData = z.infer<
+  typeof createSoalJawabanSingkatSchema
+>;
+
+/**
  * Generic create question schema (union of all types)
  */
 export const createSoalSchema = z.discriminatedUnion("tipe_soal", [
   createSoalPilihanGandaSchema,
   createSoalEssaySchema,
+  createSoalBenarSalahSchema,
+  createSoalJawabanSingkatSchema,
 ]);
 
 export type CreateSoalFormData = z.infer<typeof createSoalSchema>;
@@ -272,6 +307,14 @@ export const updateSoalSchema = z.discriminatedUnion("tipe_soal", [
   createSoalEssaySchema.partial().extend({
     id: z.string().uuid("ID soal tidak valid"),
     tipe_soal: z.literal(TIPE_SOAL.ESSAY as any),
+  }),
+  createSoalBenarSalahSchema.partial().extend({
+    id: z.string().uuid("ID soal tidak valid"),
+    tipe_soal: z.literal(TIPE_SOAL.BENAR_SALAH as any),
+  }),
+  createSoalJawabanSingkatSchema.partial().extend({
+    id: z.string().uuid("ID soal tidak valid"),
+    tipe_soal: z.literal(TIPE_SOAL.JAWABAN_SINGKAT as any),
   }),
 ]);
 

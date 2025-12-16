@@ -140,19 +140,19 @@ export type BobotNilaiData = z.infer<typeof bobotNilaiSchema>;
 
 /**
  * Calculate final grade (nilai_akhir) based on components
- * Default weights:
- * - Kuis: 15%
- * - Tugas: 20%
+ * UPDATED WEIGHTS (nilai_kuis & nilai_tugas NOT USED):
+ * - Kuis: 0% (NOT USED - field kept for backward compatibility)
+ * - Tugas: 0% (NOT USED - field kept for backward compatibility)
  * - UTS: 25%
  * - UAS: 30%
- * - Praktikum: 5%
+ * - Praktikum: 40% (AUTO-SYNCED from tugas praktikum attempts)
  * - Kehadiran: 5%
  *
- * @param nilai_kuis - Quiz grade (0-100)
- * @param nilai_tugas - Assignment grade (0-100)
+ * @param nilai_kuis - NOT USED (kept for backward compatibility)
+ * @param nilai_tugas - NOT USED (kept for backward compatibility)
  * @param nilai_uts - Midterm grade (0-100)
  * @param nilai_uas - Final exam grade (0-100)
- * @param nilai_praktikum - Practicum grade (0-100)
+ * @param nilai_praktikum - Practicum grade (0-100) - AUTO from attempts
  * @param nilai_kehadiran - Attendance grade (0-100)
  * @param customWeights - Custom weights (optional, must total to 100%)
  */
@@ -165,19 +165,20 @@ export function calculateNilaiAkhir(
   nilai_kehadiran: number = 0,
   customWeights?: BobotNilai | null,
 ): number {
-  // Convert percentage weights to decimal (e.g., 15% -> 0.15)
+  // Convert percentage weights to decimal (e.g., 25% -> 0.25)
+  // NOTE: nilai_kuis & nilai_tugas weights set to 0 (NOT USED)
   const weights = {
-    kuis: (customWeights?.kuis ?? 15) / 100,
-    tugas: (customWeights?.tugas ?? 20) / 100,
+    kuis: (customWeights?.kuis ?? 0) / 100, // ❌ NOT USED
+    tugas: (customWeights?.tugas ?? 0) / 100, // ❌ NOT USED
     uts: (customWeights?.uts ?? 25) / 100,
     uas: (customWeights?.uas ?? 30) / 100,
-    praktikum: (customWeights?.praktikum ?? 5) / 100,
+    praktikum: (customWeights?.praktikum ?? 40) / 100, // ✅ AUTO-SYNCED
     kehadiran: (customWeights?.kehadiran ?? 5) / 100,
   };
 
   const nilaiAkhir =
-    nilai_kuis * weights.kuis +
-    nilai_tugas * weights.tugas +
+    nilai_kuis * weights.kuis + // Will be 0
+    nilai_tugas * weights.tugas + // Will be 0
     nilai_uts * weights.uts +
     nilai_uas * weights.uas +
     nilai_praktikum * weights.praktikum +
@@ -188,14 +189,15 @@ export function calculateNilaiAkhir(
 
 /**
  * Get default bobot nilai (grade weights)
+ * UPDATED: nilai_kuis & nilai_tugas set to 0
  */
 export function getDefaultBobotNilai(): BobotNilai {
   return {
-    kuis: 15,
-    tugas: 20,
+    kuis: 0, // ❌ NOT USED
+    tugas: 0, // ❌ NOT USED
     uts: 25,
     uas: 30,
-    praktikum: 5,
+    praktikum: 40, // ✅ AUTO-SYNCED from tugas praktikum
     kehadiran: 5,
   };
 }

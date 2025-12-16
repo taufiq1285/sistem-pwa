@@ -1,9 +1,10 @@
 /**
- * AttemptDetailPage (Placeholder)
+ * AttemptDetailPage (Tugas Praktikum) - Placeholder
  *
- * Purpose: Detailed view of student's quiz attempt (Dosen)
+ * Purpose: Detailed view of student's task attempt (Dosen)
  * Route: /dosen/kuis/:kuisId/attempt/:attemptId
  * Status: Basic placeholder - can be enhanced later with full grading UI
+ * Note: Table name remains "kuis" but UI displays "Tugas Praktikum"
  */
 
 import { useParams, useNavigate } from "react-router-dom";
@@ -28,10 +29,10 @@ export default function AttemptDetailPage() {
       {/* Header */}
       <Button variant="ghost" size="sm" onClick={handleBack} className="mb-4">
         <ArrowLeft className="h-4 w-4 mr-2" />
-        Kembali ke Hasil Kuis
+        Kembali ke Hasil Tugas
       </Button>
 
-      <h1 className="text-3xl font-bold mb-6">Detail Percobaan</h1>
+      <h1 className="text-3xl font-bold mb-6">Detail Percobaan Mahasiswa</h1>
 
       {/* Placeholder Card */}
       <Card>

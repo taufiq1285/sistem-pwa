@@ -51,7 +51,7 @@ export function DashboardPage() {
     UpcomingPracticumType[]
   >([]);
   const [pendingGrading, setPendingGrading] = useState<PendingGradingType[]>(
-    [],
+    []
   );
   const [activeKuis, setActiveKuis] = useState<KuisWithStats[]>([]);
   const [peminjamanRequests, setPeminjamanRequests] = useState<
@@ -148,7 +148,7 @@ export function DashboardPage() {
   };
 
   const getStatusVariant = (
-    status: string,
+    status: string
   ): "default" | "secondary" | "destructive" | "outline" => {
     switch (status) {
       case "menunggu":
@@ -272,7 +272,7 @@ export function DashboardPage() {
             <div className="absolute inset-0 bg-gradient-to-br from-purple-500 to-purple-600"></div>
             <CardHeader className="relative flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-white/90">
-                Kuis Aktif
+                Tugas Aktif
               </CardTitle>
               <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
                 <FileQuestion className="h-5 w-5 text-white" />
@@ -325,7 +325,7 @@ export function DashboardPage() {
                 <div className="p-3 bg-blue-100 rounded-xl group-hover:bg-blue-500 transition-colors">
                   <Plus className="h-6 w-6 text-blue-600 group-hover:text-white" />
                 </div>
-                <span className="font-semibold">Buat Kuis Baru</span>
+                <span className="font-semibold">Buat Tugas Baru</span>
               </Button>
               <Button
                 variant="outline"
@@ -513,7 +513,7 @@ export function DashboardPage() {
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
                 <CardTitle>Perlu Dinilai</CardTitle>
-                <CardDescription>Kuis yang sudah dikumpulkan</CardDescription>
+                <CardDescription>Tugas yang sudah dikumpulkan</CardDescription>
               </div>
               <Button
                 variant="ghost"
@@ -564,8 +564,8 @@ export function DashboardPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
-                <CardTitle>Kuis Aktif</CardTitle>
-                <CardDescription>Kuis yang sedang berjalan</CardDescription>
+                <CardTitle>Tugas Aktif</CardTitle>
+                <CardDescription>Tugas yang sedang berjalan</CardDescription>
               </div>
               <Button
                 variant="ghost"
@@ -579,7 +579,7 @@ export function DashboardPage() {
             <CardContent>
               {activeKuis.length === 0 ? (
                 <p className="text-sm text-gray-500 text-center py-8">
-                  Tidak ada kuis aktif
+                  Tidak ada tugas aktif
                 </p>
               ) : (
                 <div className="space-y-3">

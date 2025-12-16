@@ -57,7 +57,7 @@ const QUIZ_TYPE_OPTIONS: QuizTypeOption[] = [
     type: TIPE_KUIS.PILIHAN_GANDA,
     label: TIPE_KUIS_LABELS.pilihan_ganda,
     description:
-      "Kuis dengan soal pilihan ganda dan benar/salah. Penilaian otomatis.",
+      "Tugas dengan soal pilihan ganda dan benar/salah. Penilaian otomatis.",
     icon: CheckCircle2,
     questionTypes: ["Pilihan Ganda (A, B, C, D...)", "Benar/Salah"],
     color: "blue",
@@ -65,7 +65,8 @@ const QUIZ_TYPE_OPTIONS: QuizTypeOption[] = [
   {
     type: TIPE_KUIS.ESSAY,
     label: TIPE_KUIS_LABELS.essay,
-    description: "Kuis dengan soal essay. Dosen menilai secara manual.",
+    description:
+      "Tugas dengan soal essay (laporan praktikum). Dosen menilai secara manual.",
     icon: FileText,
     questionTypes: ["Essay (jawaban panjang)"],
     color: "purple",
@@ -73,7 +74,7 @@ const QUIZ_TYPE_OPTIONS: QuizTypeOption[] = [
   {
     type: TIPE_KUIS.CAMPURAN,
     label: TIPE_KUIS_LABELS.campuran,
-    description: "Kuis dengan berbagai tipe soal (pilihan ganda, essay, dll).",
+    description: "Tugas dengan berbagai tipe soal (pilihan ganda, essay, dll).",
     icon: Layers,
     questionTypes: ["Pilihan Ganda", "Benar/Salah", "Essay", "Jawaban Singkat"],
     color: "green",
@@ -92,9 +93,9 @@ export function QuizTypeSelector({
     <div className="space-y-6">
       {/* Header */}
       <div className="text-center">
-        <h2 className="text-2xl font-bold mb-2">Pilih Tipe Kuis</h2>
+        <h2 className="text-2xl font-bold mb-2">Pilih Tipe Tugas</h2>
         <p className="text-muted-foreground">
-          Pilih jenis kuis yang ingin Anda buat
+          Pilih jenis tugas praktikum yang ingin Anda buat
         </p>
       </div>
 
@@ -109,7 +110,7 @@ export function QuizTypeSelector({
               key={option.type}
               className={cn(
                 "cursor-pointer transition-all hover:shadow-lg",
-                isSelected && "ring-2 ring-primary",
+                isSelected && "ring-2 ring-primary"
               )}
               onClick={() => onSelect(option.type)}
             >
@@ -122,7 +123,7 @@ export function QuizTypeSelector({
                       option.color === "purple" &&
                         "bg-purple-100 dark:bg-purple-900",
                       option.color === "green" &&
-                        "bg-green-100 dark:bg-green-900",
+                        "bg-green-100 dark:bg-green-900"
                     )}
                   >
                     <Icon
@@ -133,7 +134,7 @@ export function QuizTypeSelector({
                         option.color === "purple" &&
                           "text-purple-600 dark:text-purple-400",
                         option.color === "green" &&
-                          "text-green-600 dark:text-green-400",
+                          "text-green-600 dark:text-green-400"
                       )}
                     />
                   </div>
@@ -196,7 +197,7 @@ export function getAllowedQuestionTypes(quizType: TipeKuis): string[] {
  */
 export function isQuestionTypeAllowed(
   quizType: TipeKuis,
-  questionType: string,
+  questionType: string
 ): boolean {
   if (quizType === TIPE_KUIS.CAMPURAN) {
     return true; // All types allowed

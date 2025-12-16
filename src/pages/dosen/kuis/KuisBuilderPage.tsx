@@ -1,9 +1,10 @@
 /**
- * KuisBuilderPage
+ * KuisBuilderPage (Tugas Praktikum)
  *
- * Purpose: Full page wrapper for quiz builder
+ * Purpose: Full page wrapper for task builder
  * Route: /dosen/kuis/create or /dosen/kuis/:kuisId/edit
  * Role: Dosen only
+ * Note: Table name remains "kuis" but UI displays "Tugas Praktikum"
  */
 
 import { useState, useEffect } from "react";
@@ -41,17 +42,17 @@ export default function KuisBuilderPage() {
       setIsLoading(true);
       const quizData = await getKuisById(id);
 
-      // Verify the quiz belongs to this dosen
+      // Verify the task belongs to this dosen
       if (quizData.dosen_id !== dosenId) {
-        toast.error("Anda tidak memiliki akses untuk mengedit kuis ini");
+        toast.error("Anda tidak memiliki akses untuk mengedit tugas ini");
         navigate("/dosen/kuis");
         return;
       }
 
       setQuiz(quizData);
     } catch (error: any) {
-      console.error("Error loading quiz:", error);
-      toast.error(error.message || "Gagal memuat data kuis");
+      console.error("Error loading task:", error);
+      toast.error(error.message || "Gagal memuat data tugas");
       navigate("/dosen/kuis");
     } finally {
       setIsLoading(false);
@@ -72,14 +73,14 @@ export default function KuisBuilderPage() {
     return null;
   }
 
-  // Show loading state when fetching quiz data
+  // Show loading state when fetching task data
   if (isEditing && isLoading) {
     return (
       <div className="container mx-auto py-6 max-w-5xl">
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center space-y-4">
             <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
-            <p className="text-muted-foreground">Memuat data kuis...</p>
+            <p className="text-muted-foreground">Memuat data tugas praktikum...</p>
           </div>
         </div>
       </div>
@@ -97,16 +98,16 @@ export default function KuisBuilderPage() {
           className="mb-4"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Kembali ke Daftar Kuis
+          Kembali ke Daftar Tugas
         </Button>
 
         <h1 className="text-3xl font-bold">
-          {isEditing ? "Edit Kuis" : "Buat Kuis Baru"}
+          {isEditing ? "Edit Tugas Praktikum" : "Buat Tugas Praktikum Baru"}
         </h1>
         <p className="text-muted-foreground mt-2">
           {isEditing
-            ? "Edit informasi dan soal kuis"
-            : "Buat kuis baru untuk mahasiswa Anda"}
+            ? "Edit informasi dan soal tugas praktikum"
+            : "Buat tugas praktikum baru (opsional: pre-test, post-test, laporan)"}
         </p>
       </div>
 

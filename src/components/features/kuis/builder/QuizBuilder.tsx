@@ -1,16 +1,26 @@
 /**
- * QuizBuilder - IMPROVED FLOW WITH CLEAR STEPS
+ * QuizBuilder (Tugas Praktikum) - Simple & Optional
  *
- * Flow:
- * Step 1: Fill quiz info → Save Quiz Info (explicit button)
- * Step 2: Add questions (Buat Baru / Dari Bank)
- * Step 3: Publish quiz (Draft → Published)
+ * Flow sederhana:
+ * 1. Isi info tugas → Simpan
+ * 2. (Opsional) Tambah soal jika diperlukan
+ * 3. (Opsional) Publish jika ada soal
+ *
+ * Note: Fitur ini OPSIONAL - tidak semua praktikum memerlukan tes
  */
 
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Trash2, AlertCircle, Target, FileText, Save, CheckCircle, BookOpen } from "lucide-react";
+import {
+  Plus,
+  Trash2,
+  AlertCircle,
+  FileText,
+  Save,
+  CheckCircle,
+  BookOpen,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -62,6 +72,9 @@ interface QuizBuilderProps {
   quiz?: Kuis;
   kelasId?: string;
   dosenId: string;
+  defaultTipe?: "pre_test" | "post_test" | "laporan";
+  cbtMode?: boolean; // CBT mode - multiple choice only (for Tes)
+  laporanMode?: boolean; // Laporan mode - essay/upload only
   onSave?: (quiz: Kuis) => void;
   onCancel?: () => void;
 }
@@ -76,6 +89,9 @@ export function QuizBuilder({
   quiz,
   kelasId,
   dosenId,
+  defaultTipe,
+  cbtMode = false,
+  laporanMode = false,
   onSave,
   onCancel: _onCancel,
 }: QuizBuilderProps) {
@@ -232,7 +248,7 @@ export function QuizBuilder({
 
     // Validate required fields
     if (!formData.judul || !formData.judul.trim()) {
-      toast.error("Judul kuis harus diisi");
+      toast.error("Judul tugas harus diisi");
       return;
     }
     if (!formData.kelas_id) {
@@ -255,16 +271,16 @@ export function QuizBuilder({
         // Update existing quiz
         const updated = await updateKuis(currentQuiz.id, dataToSave);
         setCurrentQuiz(updated);
-        toast.success("Informasi kuis berhasil diperbarui");
+        toast.success("Informasi tugas berhasil diperbarui");
       } else {
         // Create new quiz
         const savedQuiz = await createKuis(dataToSave);
         setCurrentQuiz(savedQuiz);
-        toast.success("Kuis berhasil disimpan! Sekarang tambahkan soal.");
+        toast.success("Tugas berhasil disimpan! Sekarang tambahkan soal.");
       }
     } catch (error) {
       console.error("Error saving quiz:", error);
-      toast.error("Gagal menyimpan kuis", {
+      toast.error("Gagal menyimpan tugas", {
         description: (error as Error).message,
       });
     } finally {
@@ -275,7 +291,7 @@ export function QuizBuilder({
   // ✅ IMPROVED: No auto-save, require quiz to be saved first
   const handleAddQuestion = () => {
     if (!currentQuiz) {
-      toast.error("Simpan informasi kuis terlebih dahulu");
+      toast.error("Simpan informasi tugas terlebih dahulu");
       return;
     }
     setEditorState({ isOpen: true, index: questions.length });
@@ -289,7 +305,7 @@ export function QuizBuilder({
 
     if (!currentQuiz) {
       console.log("❌ No currentQuiz");
-      toast.error("Kuis belum disimpan");
+      toast.error("Tugas belum disimpan");
       return;
     }
 
@@ -299,7 +315,9 @@ export function QuizBuilder({
       return;
     }
 
-    const confirmed = confirm("Yakin ingin publish kuis ini? Mahasiswa akan bisa mengerjakan kuis ini.");
+    const confirmed = confirm(
+      "Yakin ingin publish tugas ini? Mahasiswa akan bisa mengerjakan tugas ini."
+    );
     console.log("🔵 User confirmed:", confirmed);
 
     if (!confirmed) {
@@ -313,10 +331,12 @@ export function QuizBuilder({
       const updated = await updateKuis(currentQuiz.id, { status: "published" });
       console.log("✅ Updated quiz:", updated);
       setCurrentQuiz(updated);
-      toast.success("Kuis berhasil dipublish! Mahasiswa sekarang bisa mengerjakan kuis ini.");
+      toast.success(
+        "Tugas berhasil dipublish! Mahasiswa sekarang bisa mengerjakan tugas ini."
+      );
     } catch (error) {
       console.error("❌ Error publishing quiz:", error);
-      toast.error("Gagal publish kuis", {
+      toast.error("Gagal publish tugas", {
         description: (error as Error).message,
       });
     } finally {
@@ -349,7 +369,7 @@ export function QuizBuilder({
         // Update existing question
         savedQuestion = await updateSoal(editorState.question.id, questionData);
         setQuestions((prev) =>
-          prev.map((q) => (q.id === savedQuestion.id ? savedQuestion : q)),
+          prev.map((q) => (q.id === savedQuestion.id ? savedQuestion : q))
         );
         toast.success("Soal berhasil diperbarui");
       } else {
@@ -404,6 +424,8 @@ export function QuizBuilder({
         question={editorState.question}
         urutan={(editorState.index || 0) + 1}
         defaultPoin={1}
+        cbtMode={cbtMode}
+        laporanMode={laporanMode}
         onSave={handleSaveQuestion}
         onCancel={() => setEditorState({ isOpen: false })}
       />
@@ -415,63 +437,71 @@ export function QuizBuilder({
 
   return (
     <div className="space-y-6">
-      {/* ✅ NEW: Step Indicator */}
-      <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-        <div className="flex items-center gap-4">
-          {/* Step 1 */}
-          <div className={cn("flex items-center gap-2", currentQuiz ? "text-green-600" : "text-primary")}>
-            {currentQuiz ? <CheckCircle className="h-5 w-5" /> : <div className="h-5 w-5 rounded-full border-2 border-current flex items-center justify-center text-xs font-bold">1</div>}
-            <span className="font-medium">Informasi Kuis</span>
-          </div>
-
-          <div className={cn("h-px w-8 bg-border", currentQuiz && "bg-green-600")} />
-
-          {/* Step 2 */}
-          <div className={cn("flex items-center gap-2", questions.length > 0 ? "text-green-600" : currentQuiz ? "text-primary" : "text-muted-foreground")}>
-            {questions.length > 0 ? <CheckCircle className="h-5 w-5" /> : <div className="h-5 w-5 rounded-full border-2 border-current flex items-center justify-center text-xs font-bold">2</div>}
-            <span className="font-medium">Tambah Soal</span>
-          </div>
-
-          <div className={cn("h-px w-8 bg-border", questions.length > 0 && "bg-green-600")} />
-
-          {/* Step 3 */}
-          <div className={cn("flex items-center gap-2", quizStatus === "published" ? "text-green-600" : questions.length > 0 ? "text-primary" : "text-muted-foreground")}>
-            {quizStatus === "published" ? <CheckCircle className="h-5 w-5" /> : <div className="h-5 w-5 rounded-full border-2 border-current flex items-center justify-center text-xs font-bold">3</div>}
-            <span className="font-medium">Publish</span>
+      {/* Simple Status Header - Different based on mode */}
+      <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg border">
+        <div className="flex items-center gap-3">
+          <div className="text-2xl">{laporanMode ? "📄" : "🖥️"}</div>
+          <div>
+            <h2 className="font-semibold text-lg">
+              {isEditing
+                ? laporanMode
+                  ? "Edit Laporan"
+                  : "Edit Tes CBT"
+                : laporanMode
+                  ? "Buat Laporan"
+                  : "Buat Tes CBT"}
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              {laporanMode
+                ? "Laporan Praktikum - Essay / Upload"
+                : "Computer Based Test - Pilihan Ganda"}
+            </p>
           </div>
         </div>
 
         {/* Status Badge */}
-        <div>
-          {quizStatus === "draft" ? (
-            <Badge variant="outline" className="text-yellow-600 border-yellow-600">
-              🟡 Draft
-            </Badge>
-          ) : quizStatus === "published" ? (
-            <Badge variant="outline" className="text-green-600 border-green-600">
-              🟢 Published
-            </Badge>
-          ) : (
-            <Badge variant="outline">
-              {quizStatus}
-            </Badge>
-          )}
-        </div>
+        {currentQuiz && (
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-muted-foreground">
+              {questions.length} soal • {totalPoints} poin
+            </span>
+            {quizStatus === "draft" ? (
+              <Badge className="bg-yellow-100 text-yellow-700 border-yellow-300 px-4 py-1">
+                🟡 Draft
+              </Badge>
+            ) : quizStatus === "published" ? (
+              <Badge className="bg-green-100 text-green-700 border-green-300 px-4 py-1">
+                🟢 Aktif
+              </Badge>
+            ) : (
+              <Badge variant="outline">{quizStatus}</Badge>
+            )}
+          </div>
+        )}
       </div>
 
+      {/* Info Card - Simplified */}
       <Card>
-        <CardHeader>
-          <CardTitle>Step 1: Informasi Kuis</CardTitle>
+        <CardHeader className="pb-4">
+          <CardTitle className="text-lg flex items-center gap-2">
+            {laporanMode ? "📄 Informasi Laporan" : "📝 Informasi Tes"}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2 space-y-2">
-                <Label htmlFor="judul">Judul Kuis *</Label>
+                <Label htmlFor="judul">
+                  {laporanMode ? "Judul Laporan" : "Judul Tes"} *
+                </Label>
                 <Input
                   id="judul"
                   {...register("judul")}
-                  placeholder="Contoh: Kuis Anatomi"
+                  placeholder={
+                    laporanMode
+                      ? "Contoh: Laporan Praktikum Anatomi - Modul 1"
+                      : "Contoh: Pre-Test Praktikum Anatomi"
+                  }
                   className={cn(errors.judul && "border-destructive")}
                 />
                 {errors.judul && (
@@ -537,207 +567,181 @@ export function QuizBuilder({
                 />
               </div>
 
-              {/* ✅ NEW: Info alert */}
+              {/* Info note */}
               <div className="md:col-span-2">
-                {!currentQuiz ? (
-                  <Alert>
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>
-                      Simpan informasi kuis terlebih dahulu sebelum menambah soal.
-                    </AlertDescription>
-                  </Alert>
-                ) : (
+                {currentQuiz && (
                   <Alert className="bg-green-50 border-green-200">
                     <CheckCircle className="h-4 w-4 text-green-600" />
                     <AlertDescription className="text-green-900">
-                      Informasi kuis sudah tersimpan. Sekarang tambahkan soal untuk kuis ini.
+                      {laporanMode
+                        ? "✓ Laporan tersimpan. Tambahkan soal essay/upload jika diperlukan."
+                        : "✓ Tes tersimpan. Tambahkan soal pilihan ganda."}
                     </AlertDescription>
                   </Alert>
                 )}
               </div>
             </div>
 
-            {/* ✅ NEW: Explicit Save Button */}
+            {/* Save Button */}
             <div className="flex justify-end pt-4 border-t">
-              <Button
-                onClick={handleSaveQuizInfo}
-                disabled={isSavingQuiz}
-                size="lg"
-              >
+              <Button onClick={handleSaveQuizInfo} disabled={isSavingQuiz}>
                 <Save className="h-4 w-4 mr-2" />
-                {isSavingQuiz ? "Menyimpan..." : currentQuiz ? "Perbarui Informasi Kuis" : "Simpan Informasi Kuis"}
+                {isSavingQuiz
+                  ? "Menyimpan..."
+                  : currentQuiz
+                    ? "Perbarui"
+                    : laporanMode
+                      ? "Simpan Laporan"
+                      : "Simpan Tes"}
               </Button>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Step 2: Daftar Soal</CardTitle>
-              <p className="text-sm text-muted-foreground">
-                {questions.length} soal · {totalPoints} poin total
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                onClick={() => setShowBankDialog(true)}
-                disabled={!currentQuiz}
-                size="sm"
-                title={!currentQuiz ? "Simpan informasi kuis terlebih dahulu" : "Ambil soal dari Bank Soal"}
-              >
-                <BookOpen className="h-4 w-4 mr-2" />
-                Ambil dari Bank
-              </Button>
-              <Button
-                onClick={handleAddQuestion}
-                disabled={!currentQuiz}
-                size="sm"
-                title={!currentQuiz ? "Simpan informasi kuis terlebih dahulu" : "Buat soal baru"}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Buat Soal Baru
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {questions.length === 0 && (
-            <div className="text-center py-12">
-              <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              {!currentQuiz ? (
-                <div>
-                  <p className="text-muted-foreground mb-4">
-                    Simpan informasi kuis terlebih dahulu untuk menambah soal
-                  </p>
-                </div>
-              ) : (
-                <div>
-                  <p className="text-muted-foreground mb-4">
-                    Belum ada soal. Pilih salah satu:
-                  </p>
-                  <div className="flex gap-3 justify-center">
-                    <Button variant="outline" onClick={() => setShowBankDialog(true)}>
-                      <BookOpen className="h-4 w-4 mr-2" />
-                      Ambil dari Bank Soal
-                    </Button>
-                    <Button onClick={handleAddQuestion}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Buat Soal Baru
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-          {questions.length > 0 && (
-            <div className="space-y-3">
-              {questions.map((q, i) => (
-                <Card key={q.id}>
-                  <CardContent className="p-4">
-                    <div className="flex items-start gap-4">
-                      <Badge variant="outline">#{i + 1}</Badge>
-                      <div className="flex-1">
-                        <p className="font-medium">{q.pertanyaan}</p>
-                        <div className="flex gap-4 mt-2 text-sm text-muted-foreground">
-                          <span>
-                            <Target className="h-3 w-3 inline mr-1" />
-                            {q.poin} poin
-                          </span>
-                          <Badge variant="secondary" className="text-xs">
-                            {q.tipe_soal}
-                          </Badge>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEditQuestion(q, i)}
-                        >
-                          Edit
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDeleteQuestion(q.id)}
-                          className="text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* ✅ NEW: Step 3 - Publish Section */}
-      {currentQuiz && questions.length > 0 && (
+      {/* Soal Card - Show after quiz saved */}
+      {currentQuiz && (
         <Card>
-          <CardHeader>
-            <CardTitle>Step 3: Publish Kuis</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <Alert>
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  {quizStatus === "draft" ? (
-                    <>
-                      Kuis masih dalam status <strong>Draft</strong>. Mahasiswa belum bisa melihat dan mengerjakan kuis ini.
-                      Klik tombol <strong>Publish</strong> untuk mengaktifkan kuis.
-                    </>
-                  ) : (
-                    <>
-                      Kuis sudah <strong>Published</strong>. Mahasiswa sekarang bisa melihat dan mengerjakan kuis ini.
-                    </>
-                  )}
-                </AlertDescription>
-              </Alert>
-
-              <div className="flex justify-between items-center pt-4 border-t">
-                <div>
-                  <p className="text-sm text-muted-foreground">
-                    {questions.length} soal · {totalPoints} poin total
-                  </p>
-                  {/* DEBUG INFO */}
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Status: {quizStatus} | Has Quiz: {currentQuiz ? "✅" : "❌"} | Has Questions: {questions.length > 0 ? "✅" : "❌"}
-                  </p>
-                </div>
-                <div className="flex gap-2">
-                  {quizStatus === "draft" ? (
-                    <Button
-                      onClick={handlePublishQuiz}
-                      disabled={isPublishing}
-                      size="lg"
-                      className="bg-green-600 hover:bg-green-700"
-                    >
-                      <CheckCircle className="h-4 w-4 mr-2" />
-                      {isPublishing ? "Publishing..." : "Publish Kuis"}
-                    </Button>
-                  ) : (
-                    <div className="text-sm text-green-600 font-medium">
-                      ✅ Kuis sudah published
-                    </div>
-                  )}
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  {laporanMode ? "📝 Soal Laporan" : "📋 Soal Pilihan Ganda"}
+                  <Badge variant="secondary" className="ml-2">
+                    {questions.length} soal
+                  </Badge>
+                </CardTitle>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {laporanMode
+                    ? "Buat pertanyaan essay atau upload file"
+                    : "Buat soal manual atau ambil dari Bank Soal"}
+                </p>
+              </div>
+              <div className="flex gap-2">
+                {!laporanMode && (
                   <Button
                     variant="outline"
-                    onClick={() => {
-                      if (onSave) onSave(currentQuiz);
-                    }}
-                    size="lg"
+                    onClick={() => setShowBankDialog(true)}
+                    size="sm"
                   >
-                    Kembali ke Daftar Kuis
+                    <BookOpen className="h-4 w-4 mr-2" />
+                    Bank Soal
                   </Button>
-                </div>
+                )}
+                <Button onClick={handleAddQuestion} size="sm">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Buat Soal
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {questions.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <FileText className="h-10 w-10 mx-auto mb-3 opacity-50" />
+                <p>Belum ada soal</p>
+                <p className="text-sm">
+                  {laporanMode
+                    ? "Buat pertanyaan essay atau upload file"
+                    : "Buat soal baru atau ambil dari Bank Soal"}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {questions.map((q, i) => (
+                  <div
+                    key={q.id}
+                    className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30"
+                  >
+                    <Badge variant="outline" className="shrink-0">
+                      #{i + 1}
+                    </Badge>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium truncate">{q.pertanyaan}</p>
+                      <div className="flex gap-2 mt-1">
+                        <Badge variant="secondary" className="text-xs">
+                          {q.tipe_soal}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground">
+                          {q.poin} poin
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex gap-1 shrink-0">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleEditQuestion(q, i)}
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteQuestion(q.id)}
+                        className="text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Publish Section */}
+      {currentQuiz && (
+        <Card
+          className={cn(
+            "border-2",
+            quizStatus === "published"
+              ? "border-green-300 bg-green-50/50"
+              : "border-dashed"
+          )}
+        >
+          <CardContent className="py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                {quizStatus === "published" ? (
+                  <>
+                    <CheckCircle className="h-5 w-5 text-green-600" />
+                    <span className="font-medium text-green-700">
+                      Tes aktif - mahasiswa dapat mengerjakan
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <AlertCircle className="h-5 w-5 text-muted-foreground" />
+                    <span className="text-muted-foreground">
+                      {questions.length > 0
+                        ? "Klik Publish untuk mengaktifkan tes"
+                        : "Tambahkan soal terlebih dahulu"}
+                    </span>
+                  </>
+                )}
+              </div>
+              <div className="flex gap-2">
+                {quizStatus === "draft" && questions.length > 0 && (
+                  <Button
+                    onClick={handlePublishQuiz}
+                    disabled={isPublishing}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    {isPublishing ? "Publishing..." : "Publish"}
+                  </Button>
+                )}
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    if (onSave && currentQuiz) onSave(currentQuiz);
+                  }}
+                >
+                  Selesai
+                </Button>
               </div>
             </div>
           </CardContent>

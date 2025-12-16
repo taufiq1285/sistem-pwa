@@ -20,6 +20,8 @@ import {
   Edit2,
   AlertTriangle,
   CheckCircle,
+  FileText,
+  ClipboardCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -66,6 +68,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PermintaanPerbaikanTab } from "@/components/features/penilaian/PermintaanPerbaikanTab";
 import { useAuth } from "@/lib/hooks/useAuth";
 import {
   getMahasiswaForGrading,
@@ -98,6 +102,10 @@ export default function DosenPenilaianPage() {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [mataKuliahList, setMataKuliahList] = useState<
+    Array<{ id: string; nama_mk: string; kode_mk: string }>
+  >([]);
+  const [selectedMataKuliah, setSelectedMataKuliah] = useState<string>("");
   const [kelasList, setKelasList] = useState<Kelas[]>([]);
   const [selectedKelas, setSelectedKelas] = useState<string>("");
   const [mahasiswaList, setMahasiswaList] = useState<NilaiWithMahasiswa[]>([]);
@@ -134,6 +142,10 @@ export default function DosenPenilaianPage() {
   const [showSaveConfirmDialog, setShowSaveConfirmDialog] = useState(false);
   const [showSwitchKelasWarning, setShowSwitchKelasWarning] = useState(false);
   const [pendingKelasSwitch, setPendingKelasSwitch] = useState<string>("");
+  const [showSwitchMataKuliahWarning, setShowSwitchMataKuliahWarning] =
+    useState(false);
+  const [pendingMataKuliahSwitch, setPendingMataKuliahSwitch] =
+    useState<string>("");
 
   // ============================================================================
   // EFFECTS
@@ -141,9 +153,18 @@ export default function DosenPenilaianPage() {
 
   useEffect(() => {
     if (user?.dosen?.id) {
-      loadKelas();
+      loadMataKuliahDiajarkan();
     }
   }, [user?.dosen?.id]);
+
+  useEffect(() => {
+    if (selectedMataKuliah) {
+      loadKelas();
+    } else {
+      setKelasList([]);
+      setSelectedKelas("");
+    }
+  }, [selectedMataKuliah]);
 
   useEffect(() => {
     if (selectedKelas) {
@@ -155,12 +176,60 @@ export default function DosenPenilaianPage() {
   // DATA LOADING
   // ============================================================================
 
-  const loadKelas = async () => {
+  /**
+   * Load mata kuliah yang diajarkan oleh dosen
+   */
+  const loadMataKuliahDiajarkan = async () => {
     try {
       setLoading(true);
       if (!user?.dosen?.id) return;
 
-      const data = await getKelas({ is_active: true });
+      // Get all kelas diajarkan dosen
+      const allKelas = await getKelas({
+        dosen_id: user.dosen.id,
+        is_active: true,
+      });
+
+      // Extract unique mata kuliah from kelas
+      const mataKuliahMap = new Map();
+      allKelas.forEach((kelas) => {
+        if (kelas.mata_kuliah_id && kelas.mata_kuliah) {
+          mataKuliahMap.set(kelas.mata_kuliah_id, {
+            id: kelas.mata_kuliah_id,
+            nama_mk: kelas.mata_kuliah.nama_mk,
+            kode_mk: kelas.mata_kuliah.kode_mk || "",
+          });
+        }
+      });
+
+      const uniqueMataKuliah = Array.from(mataKuliahMap.values());
+      setMataKuliahList(uniqueMataKuliah);
+
+      // Auto-select first mata kuliah if available
+      if (uniqueMataKuliah.length > 0 && !selectedMataKuliah) {
+        setSelectedMataKuliah(uniqueMataKuliah[0].id);
+      }
+    } catch (error) {
+      console.error("Error loading mata kuliah:", error);
+      toast.error("Gagal memuat data mata kuliah");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /**
+   * Load kelas untuk mata kuliah yang dipilih
+   */
+  const loadKelas = async () => {
+    try {
+      setLoading(true);
+      if (!user?.dosen?.id || !selectedMataKuliah) return;
+
+      const data = await getKelas({
+        dosen_id: user.dosen.id,
+        mata_kuliah_id: selectedMataKuliah,
+        is_active: true,
+      });
       setKelasList(data);
 
       // Auto-select first kelas if available
@@ -321,8 +390,32 @@ export default function DosenPenilaianPage() {
   };
 
   // ============================================================================
-  // KELAS SWITCHING WITH WARNING
+  // MATA KULIAH & KELAS SWITCHING WITH WARNING
   // ============================================================================
+
+  const handleMataKuliahChange = (newMataKuliahId: string) => {
+    // Check if there are unsaved changes
+    if (editedGrades.size > 0) {
+      setPendingMataKuliahSwitch(newMataKuliahId);
+      setShowSwitchMataKuliahWarning(true);
+    } else {
+      setSelectedMataKuliah(newMataKuliahId);
+      setSelectedKelas(""); // Reset kelas selection
+    }
+  };
+
+  const confirmMataKuliahSwitch = () => {
+    setEditedGrades(new Map()); // Discard unsaved changes
+    setSelectedMataKuliah(pendingMataKuliahSwitch);
+    setSelectedKelas(""); // Reset kelas selection
+    setShowSwitchMataKuliahWarning(false);
+    setPendingMataKuliahSwitch("");
+  };
+
+  const cancelMataKuliahSwitch = () => {
+    setShowSwitchMataKuliahWarning(false);
+    setPendingMataKuliahSwitch("");
+  };
 
   const handleKelasChange = (newKelasId: string) => {
     // Check if there are unsaved changes
@@ -505,10 +598,16 @@ export default function DosenPenilaianPage() {
   // HELPERS
   // ============================================================================
 
+  // Get current selected mata kuliah info
+  const currentMataKuliahInfo = mataKuliahList.find(
+    (mk) => mk.id === selectedMataKuliah,
+  );
+  const currentMataKuliah =
+    currentMataKuliahInfo?.nama_mk || "Tidak diketahui";
+  const currentKodeMataKuliah = currentMataKuliahInfo?.kode_mk || "";
+
   // Get current selected kelas info
   const currentKelas = kelasList.find((k) => k.id === selectedKelas);
-  const currentMataKuliah =
-    currentKelas?.mata_kuliah?.nama_mk || "Tidak diketahui";
   const currentNamaKelas = currentKelas?.nama_kelas || "";
 
   const getDisplayValue = (
@@ -551,7 +650,9 @@ export default function DosenPenilaianPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Penilaian Mahasiswa</h1>
-          <p className="text-gray-600">Input dan kelola nilai mahasiswa</p>
+          <p className="text-gray-600">
+            Input nilai dan review permintaan perbaikan nilai
+          </p>
         </div>
         <div className="flex items-center gap-2">
           {selectedKelas && (
@@ -561,7 +662,7 @@ export default function DosenPenilaianPage() {
               className="flex items-center gap-2"
             >
               <Settings className="w-4 h-4" />
-              Atur Bobot Nilai
+              Atur Bobot untuk {currentMataKuliah}
             </Button>
           )}
           <Button
@@ -579,6 +680,31 @@ export default function DosenPenilaianPage() {
         </div>
       </div>
 
+      {/* Tabs Container */}
+      <Tabs defaultValue="penilaian" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="penilaian" className="gap-2">
+            <FileText className="h-4 w-4" />
+            Penilaian Mahasiswa
+          </TabsTrigger>
+          <TabsTrigger value="permintaan" className="gap-2">
+            <ClipboardCheck className="h-4 w-4" />
+            Permintaan Perbaikan
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Tab 1: Penilaian (Existing Content) */}
+        <TabsContent value="penilaian" className="space-y-6">
+          {/* Info: Bobot Nilai Per Mata Kuliah */}
+          <Alert className="border-indigo-500 bg-indigo-50 dark:bg-indigo-950">
+        <AlertDescription className="text-sm text-indigo-900 dark:text-indigo-100">
+          <strong>💡 Info:</strong> Setiap mata kuliah dapat memiliki bobot
+          nilai yang berbeda. Anda dapat mengatur bobot nilai (Kuis, Tugas,
+          UTS, UAS, Praktikum, Kehadiran) untuk setiap mata kuliah yang Anda
+          ajarkan melalui tombol "Atur Bobot".
+        </AlertDescription>
+      </Alert>
+
       {/* Active Kelas Alert - PROMINENT */}
       {selectedKelas && (
         <Alert className="border-blue-500 bg-blue-50 dark:bg-blue-950">
@@ -594,21 +720,33 @@ export default function DosenPenilaianPage() {
         </Alert>
       )}
 
-      {/* Kelas Selection, Summary & Bobot Nilai */}
-      <div className="grid gap-4 md:grid-cols-3">
+      {/* Selection Steps: Mata Kuliah & Kelas */}
+      <div className="grid gap-4 md:grid-cols-2">
+        {/* Step 1: Pilih Mata Kuliah */}
         <Card>
           <CardHeader>
-            <CardTitle>Pilih Kelas</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <span className="flex items-center justify-center w-6 h-6 bg-blue-600 text-white rounded-full text-sm font-bold">
+                1
+              </span>
+              Pilih Mata Kuliah
+            </CardTitle>
+            <CardDescription>
+              Pilih mata kuliah yang akan dinilai
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <Select value={selectedKelas} onValueChange={handleKelasChange}>
+            <Select
+              value={selectedMataKuliah}
+              onValueChange={handleMataKuliahChange}
+            >
               <SelectTrigger>
-                <SelectValue placeholder="Pilih kelas" />
+                <SelectValue placeholder="Pilih mata kuliah" />
               </SelectTrigger>
               <SelectContent>
-                {kelasList.map((kelas) => (
-                  <SelectItem key={kelas.id} value={kelas.id}>
-                    {kelas.mata_kuliah?.nama_mk} - {kelas.nama_kelas}
+                {mataKuliahList.map((mk) => (
+                  <SelectItem key={mk.id} value={mk.id}>
+                    {mk.kode_mk} - {mk.nama_mk}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -616,46 +754,87 @@ export default function DosenPenilaianPage() {
           </CardContent>
         </Card>
 
-        {summary && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Ringkasan Nilai</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-gray-600">Total Mahasiswa</p>
-                  <p className="text-2xl font-bold">
-                    {summary.total_mahasiswa}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Sudah Dinilai</p>
-                  <p className="text-2xl font-bold text-green-600">
-                    {summary.sudah_dinilai}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Belum Dinilai</p>
-                  <p className="text-2xl font-bold text-orange-600">
-                    {summary.belum_dinilai}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Rata-rata</p>
-                  <p className="text-2xl font-bold text-blue-600">
-                    {summary.rata_rata.toFixed(2)}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        {/* Step 2: Pilih Kelas */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <span className="flex items-center justify-center w-6 h-6 bg-blue-600 text-white rounded-full text-sm font-bold">
+                2
+              </span>
+              Pilih Kelas
+            </CardTitle>
+            <CardDescription>
+              {selectedMataKuliah
+                ? "Pilih kelas untuk mata kuliah yang dipilih"
+                : "Pilih mata kuliah terlebih dahulu"}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Select
+              value={selectedKelas}
+              onValueChange={handleKelasChange}
+              disabled={!selectedMataKuliah}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Pilih kelas" />
+              </SelectTrigger>
+              <SelectContent>
+                {kelasList.map((kelas) => (
+                  <SelectItem key={kelas.id} value={kelas.id}>
+                    {kelas.nama_kelas}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </CardContent>
+        </Card>
+      </div>
 
-        {selectedKelas && (
+      {/* Summary & Bobot Nilai - Only show when kelas selected */}
+      {selectedKelas && (
+        <div className="grid gap-4 md:grid-cols-2">
+          {summary && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Ringkasan Nilai</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-600">Total Mahasiswa</p>
+                    <p className="text-2xl font-bold">
+                      {summary.total_mahasiswa}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Sudah Dinilai</p>
+                    <p className="text-2xl font-bold text-green-600">
+                      {summary.sudah_dinilai}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Belum Dinilai</p>
+                    <p className="text-2xl font-bold text-orange-600">
+                      {summary.belum_dinilai}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Rata-rata</p>
+                    <p className="text-2xl font-bold text-blue-600">
+                      {summary.rata_rata.toFixed(2)}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           <Card>
             <CardHeader>
-              <CardTitle>Bobot Nilai Saat Ini</CardTitle>
+              <CardTitle>Bobot Nilai</CardTitle>
+              <CardDescription className="text-xs">
+                Bobot untuk {currentMataKuliah}
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-2 text-sm">
@@ -690,8 +869,8 @@ export default function DosenPenilaianPage() {
               </div>
             </CardContent>
           </Card>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Search */}
       <div className="flex items-center gap-4">
@@ -736,8 +915,9 @@ export default function DosenPenilaianPage() {
                       <TableHead className="w-12">No</TableHead>
                       <TableHead>NIM</TableHead>
                       <TableHead>Nama</TableHead>
-                      <TableHead className="text-center">Kuis</TableHead>
-                      <TableHead className="text-center">Tugas</TableHead>
+                      {/* HIDDEN: Kuis & Tugas (bobot 0%) */}
+                      {/* <TableHead className="text-center">Kuis</TableHead>
+                      <TableHead className="text-center">Tugas</TableHead> */}
                       <TableHead className="text-center">UTS</TableHead>
                       <TableHead className="text-center">UAS</TableHead>
                       <TableHead className="text-center">Praktikum</TableHead>
@@ -777,7 +957,8 @@ export default function DosenPenilaianPage() {
                           <TableCell className="font-medium">
                             {mahasiswa.mahasiswa.user.full_name}
                           </TableCell>
-                          <TableCell>
+                          {/* HIDDEN: Nilai Kuis & Tugas (bobot 0%) */}
+                          {/* <TableCell>
                             <Input
                               type="number"
                               min="0"
@@ -810,7 +991,7 @@ export default function DosenPenilaianPage() {
                               }
                               className="w-20 text-center"
                             />
-                          </TableCell>
+                          </TableCell> */}
                           <TableCell>
                             <Input
                               type="number"
@@ -952,23 +1133,42 @@ export default function DosenPenilaianPage() {
         </Alert>
       )}
 
-      {/* Info */}
-      {hasChanges && (
-        <Alert>
-          <AlertDescription>
-            Ada {editedGrades.size} perubahan yang belum disimpan. Klik "Simpan
-            Semua" untuk menyimpan semua perubahan.
-          </AlertDescription>
-        </Alert>
-      )}
+          {/* Info */}
+          {hasChanges && (
+            <Alert>
+              <AlertDescription>
+                Ada {editedGrades.size} perubahan yang belum disimpan. Klik "Simpan
+                Semua" untuk menyimpan semua perubahan.
+              </AlertDescription>
+            </Alert>
+          )}
+        </TabsContent>
+
+        {/* Tab 2: Permintaan Perbaikan (NEW) */}
+        <TabsContent value="permintaan">
+          {user?.dosen?.id ? (
+            <PermintaanPerbaikanTab dosenId={user.dosen.id} />
+          ) : (
+            <Alert>
+              <AlertDescription>
+                Anda harus login sebagai dosen untuk mengakses fitur ini
+              </AlertDescription>
+            </Alert>
+          )}
+        </TabsContent>
+      </Tabs>
 
       {/* Bobot Nilai Configuration Dialog */}
       <Dialog open={showBobotDialog} onOpenChange={setShowBobotDialog}>
         <DialogContent className="sm:max-w-md max-h-[90vh] flex flex-col">
           <DialogHeader>
-            <DialogTitle>Atur Bobot Nilai</DialogTitle>
+            <DialogTitle>
+              Atur Bobot Nilai - {currentMataKuliah}
+            </DialogTitle>
             <DialogDescription>
-              Sesuaikan bobot penilaian untuk kelas ini. Total harus 100%.
+              Sesuaikan bobot penilaian untuk mata kuliah{" "}
+              <strong>{currentMataKuliah}</strong> (Kelas: {currentNamaKelas}).
+              Total harus 100%.
             </DialogDescription>
           </DialogHeader>
 
@@ -1154,8 +1354,9 @@ export default function DosenPenilaianPage() {
           <div className="space-y-6 py-4 overflow-y-auto flex-1">
             {/* Grade Inputs - 2 columns */}
             <div className="grid grid-cols-2 gap-6">
+              {/* HIDDEN: Nilai Kuis & Tugas (bobot 0%, tidak digunakan) */}
               {/* Kuis */}
-              <div className="space-y-2">
+              {/* <div className="space-y-2">
                 <Label htmlFor="edit-kuis" className="font-medium">
                   Nilai Kuis ({currentBobot.kuis}%)
                 </Label>
@@ -1174,10 +1375,10 @@ export default function DosenPenilaianPage() {
                   }
                   className="w-full"
                 />
-              </div>
+              </div> */}
 
               {/* Tugas */}
-              <div className="space-y-2">
+              {/* <div className="space-y-2">
                 <Label htmlFor="edit-tugas" className="font-medium">
                   Nilai Tugas ({currentBobot.tugas}%)
                 </Label>
@@ -1196,7 +1397,7 @@ export default function DosenPenilaianPage() {
                   }
                   className="w-full"
                 />
-              </div>
+              </div> */}
 
               {/* UTS */}
               <div className="space-y-2">
@@ -1406,6 +1607,50 @@ export default function DosenPenilaianPage() {
               className="bg-blue-600 hover:bg-blue-700"
             >
               Ya, Simpan untuk {currentMataKuliah}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Switch Mata Kuliah Warning Dialog */}
+      <AlertDialog
+        open={showSwitchMataKuliahWarning}
+        onOpenChange={setShowSwitchMataKuliahWarning}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-orange-600">
+              <AlertTriangle className="h-5 w-5" />
+              Peringatan: Ada Perubahan Belum Disimpan!
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3">
+              <p>
+                Anda memiliki <strong>{editedGrades.size} perubahan</strong>{" "}
+                yang belum disimpan untuk:
+              </p>
+              <div className="p-3 bg-orange-50 dark:bg-orange-950 rounded-md border border-orange-200 dark:border-orange-800">
+                <p className="font-semibold text-orange-900 dark:text-orange-100">
+                  📚 {currentMataKuliah} - {currentNamaKelas}
+                </p>
+              </div>
+              <p className="text-sm text-gray-600">
+                Jika Anda pindah mata kuliah sekarang, semua perubahan akan{" "}
+                <strong>hilang</strong>.
+              </p>
+              <p className="text-sm font-semibold text-orange-700">
+                Apakah Anda yakin ingin pindah mata kuliah tanpa menyimpan?
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={cancelMataKuliahSwitch}>
+              Batal, Tetap di Mata Kuliah Ini
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmMataKuliahSwitch}
+              className="bg-orange-600 hover:bg-orange-700"
+            >
+              Ya, Pindah Mata Kuliah (Buang Perubahan)
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

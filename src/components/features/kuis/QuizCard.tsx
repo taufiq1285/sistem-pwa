@@ -1,9 +1,10 @@
 /**
- * QuizCard Component
+ * QuizCard Component (Tugas Praktikum)
  *
- * Purpose: Display quiz information in card format with actions
+ * Purpose: Display task information in card format with actions
  * Used by: KuisListPage (Dosen)
  * Features: Publish/unpublish, edit, delete, duplicate, view results
+ * Note: Table name remains "kuis" but UI displays "Tugas Praktikum"
  */
 
 import React, { useState } from "react";
@@ -161,20 +162,20 @@ export function QuizCard({
       if (isPublished) {
         // Unpublish: change status from 'published' to 'draft'
         await unpublishKuis(quiz.id);
-        toast.success("Kuis berhasil di-unpublish", {
-          description: "Kuis tidak akan muncul di akun mahasiswa",
+        toast.success("Tugas berhasil di-unpublish", {
+          description: "Tugas tidak akan muncul di akun mahasiswa",
         });
       } else {
         // Publish: change status from 'draft' to 'published'
         await publishKuis(quiz.id);
-        toast.success("Kuis berhasil dipublish", {
-          description: "Kuis sekarang muncul di akun mahasiswa",
+        toast.success("Tugas berhasil dipublish", {
+          description: "Tugas sekarang muncul di akun mahasiswa",
         });
       }
 
       onUpdate?.();
     } catch (error: unknown) {
-      toast.error("Gagal mengubah status kuis", {
+      toast.error("Gagal mengubah status tugas", {
         description: (error as Error).message,
       });
     } finally {
@@ -191,16 +192,16 @@ export function QuizCard({
     try {
       const duplicated = await duplicateKuis(quiz.id);
 
-      toast.success("Kuis berhasil diduplikasi", {
-        description: "Kuis baru telah dibuat",
+      toast.success("Tugas berhasil diduplikasi", {
+        description: "Tugas baru telah dibuat",
       });
 
       onUpdate?.();
 
-      // Navigate to edit the duplicated quiz
+      // Navigate to edit the duplicated task
       navigate(`/dosen/kuis/${duplicated.id}/edit`);
     } catch (error: unknown) {
-      toast.error("Gagal menduplikasi kuis", {
+      toast.error("Gagal menduplikasi tugas", {
         description: (error as Error).message,
       });
     } finally {
@@ -217,12 +218,12 @@ export function QuizCard({
     try {
       await deleteKuis(quiz.id);
 
-      toast.success("Kuis berhasil dihapus");
+      toast.success("Tugas berhasil dihapus");
 
       onDelete?.();
       setShowDeleteDialog(false);
     } catch (error: unknown) {
-      toast.error("Gagal menghapus kuis", {
+      toast.error("Gagal menghapus tugas", {
         description: (error as Error).message,
       });
     } finally {
@@ -238,8 +239,9 @@ export function QuizCard({
     <>
       <Card
         className={cn(
-          "hover:shadow-md transition-shadow",
+          "hover:shadow-lg transition-all duration-200 border-l-4",
           compact && "border-dashed",
+          isPublished ? "border-l-green-500" : "border-l-yellow-500"
         )}
       >
         <CardHeader className={cn("pb-3", compact && "pb-2")}>
@@ -247,16 +249,50 @@ export function QuizCard({
             <div className="flex-1 min-w-0">
               {/* Status & Type Badges */}
               <div className="flex items-center gap-2 mb-2 flex-wrap">
-                <Badge variant={statusVariant}>{statusLabel}</Badge>
+                <Badge
+                  variant={statusVariant}
+                  className={cn(
+                    isPublished &&
+                      "bg-green-100 text-green-700 border-green-300",
+                    !isPublished &&
+                      quizStatus === "draft" &&
+                      "bg-yellow-100 text-yellow-700 border-yellow-300"
+                  )}
+                >
+                  {isPublished
+                    ? "🟢 Aktif"
+                    : quizStatus === "draft"
+                      ? "🟡 Draft"
+                      : statusLabel}
+                </Badge>
 
                 {(quiz as any).tipe_kuis && (
-                  <Badge variant="outline">{(quiz as any).tipe_kuis}</Badge>
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      "font-medium",
+                      (quiz as any).tipe_kuis === "pre-test" &&
+                        "bg-blue-50 text-blue-700 border-blue-200",
+                      (quiz as any).tipe_kuis === "post-test" &&
+                        "bg-purple-50 text-purple-700 border-purple-200",
+                      (quiz as any).tipe_kuis === "laporan" &&
+                        "bg-orange-50 text-orange-700 border-orange-200"
+                    )}
+                  >
+                    {(quiz as any).tipe_kuis === "pre-test" && "📝 "}
+                    {(quiz as any).tipe_kuis === "post-test" && "📊 "}
+                    {(quiz as any).tipe_kuis === "laporan" && "📄 "}
+                    {(quiz as any).tipe_kuis}
+                  </Badge>
                 )}
 
                 {isPublished && (
-                  <Badge variant="secondary" className="gap-1">
+                  <Badge
+                    variant="secondary"
+                    className="gap-1 bg-blue-50 text-blue-600"
+                  >
                     <Eye className="h-3 w-3" />
-                    Published
+                    Tersedia
                   </Badge>
                 )}
               </div>
@@ -265,7 +301,7 @@ export function QuizCard({
               <h3
                 className={cn(
                   "font-semibold truncate",
-                  compact ? "text-base" : "text-lg",
+                  compact ? "text-base" : "text-lg"
                 )}
               >
                 {quiz.judul}
@@ -343,7 +379,7 @@ export function QuizCard({
           <div
             className={cn(
               "grid gap-3",
-              compact ? "grid-cols-2" : "grid-cols-2 md:grid-cols-4",
+              compact ? "grid-cols-2" : "grid-cols-2 md:grid-cols-4"
             )}
           >
             {/* Questions Count */}
@@ -407,7 +443,7 @@ export function QuizCard({
         <CardFooter
           className={cn(
             "flex items-center justify-between pt-3 border-t",
-            compact && "pt-2",
+            compact && "pt-2"
           )}
         >
           {/* Date Range */}
@@ -456,10 +492,10 @@ export function QuizCard({
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <AlertCircle className="h-5 w-5 text-destructive" />
-              Hapus Kuis?
+              Hapus Tugas?
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Apakah Anda yakin ingin menghapus kuis "{quiz.judul}"?
+              Apakah Anda yakin ingin menghapus tugas "{quiz.judul}"?
               <br />
               <br />
               <strong>Perhatian:</strong> Semua data termasuk soal, percobaan

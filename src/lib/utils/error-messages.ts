@@ -21,11 +21,11 @@ export const ERROR_MESSAGES = {
   },
 
   QUIZ: {
-    NOT_FOUND: "Kuis tidak ditemukan.",
-    NOT_ACTIVE: "Kuis tidak aktif atau sudah berakhir.",
-    NOT_PUBLISHED: "Kuis belum dipublish oleh dosen.",
-    ALREADY_SUBMITTED: "Anda sudah submit kuis ini.",
-    TIME_EXPIRED: "Waktu kuis telah habis.",
+    NOT_FOUND: "Tugas praktikum tidak ditemukan.",
+    NOT_ACTIVE: "Tugas praktikum tidak aktif atau sudah berakhir.",
+    NOT_PUBLISHED: "Tugas praktikum belum dipublish oleh dosen.",
+    ALREADY_SUBMITTED: "Anda sudah submit tugas praktikum ini.",
+    TIME_EXPIRED: "Waktu tugas praktikum telah habis.",
     MAX_ATTEMPTS_REACHED: "Anda sudah mencapai batas maksimal percobaan.",
   },
 
@@ -69,7 +69,7 @@ export function formatError(error: unknown): string {
 
 export function createError(
   message: string,
-  context?: Record<string, any>,
+  context?: Record<string, any>
 ): Error {
   const error = new Error(message);
   if (context) (error as any).context = context;

@@ -16,7 +16,14 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Save, X, AlertCircle, Database } from "lucide-react";
+import {
+  Save,
+  X,
+  AlertCircle,
+  Database,
+  Upload,
+  CheckSquare,
+} from "lucide-react";
 
 // Question type components
 import {
@@ -30,6 +37,12 @@ import {
   getDefaultEssaySettings,
   type EssaySettings,
 } from "../question-types/Essay";
+import {
+  FileUploadQuestion,
+  validateFileUploadSettings,
+  getDefaultFileUploadSettings,
+  type FileUploadSettings,
+} from "../question-types/FileUploadQuestion";
 
 // Types
 import type { Soal, OpsiJawaban } from "@/types/kuis.types";
@@ -64,6 +77,16 @@ interface QuestionEditorProps {
   defaultPoin?: number;
 
   /**
+   * CBT Mode - only multiple choice (for Tes)
+   */
+  cbtMode?: boolean;
+
+  /**
+   * Laporan Mode - only essay/upload (for Laporan)
+   */
+  laporanMode?: boolean;
+
+  /**
    * Callback when question is saved
    */
   onSave: (questionData: CreateSoalData | UpdateSoalData) => void;
@@ -88,6 +111,8 @@ export function QuestionEditor({
   question,
   urutan,
   defaultPoin = 1,
+  cbtMode = false,
+  laporanMode = false,
   onSave,
   onCancel,
 }: QuestionEditorProps) {
@@ -97,9 +122,16 @@ export function QuestionEditor({
 
   const isEditing = !!question;
 
+  // Determine default type based on mode
+  const getDefaultType = () => {
+    if (cbtMode) return TIPE_SOAL.PILIHAN_GANDA;
+    if (laporanMode) return TIPE_SOAL.ESSAY;
+    return question?.tipe_soal || TIPE_SOAL.PILIHAN_GANDA;
+  };
+
   // Question type state
   const [questionType, setQuestionType] = useState<string>(
-    question?.tipe_soal || TIPE_SOAL.PILIHAN_GANDA,
+    question?.tipe_soal || getDefaultType()
   );
 
   // Basic question data
@@ -109,20 +141,25 @@ export function QuestionEditor({
 
   // Multiple choice state
   const [options, setOptions] = useState<OpsiJawaban[]>(
-    question?.opsi_jawaban || generateDefaultOptions(),
+    question?.opsi_jawaban || generateDefaultOptions()
   );
   const [correctAnswerId, setCorrectAnswerId] = useState<string>(
-    question?.opsi_jawaban?.find((opt: OpsiJawaban) => opt.is_correct)?.id ||
-      "",
+    question?.opsi_jawaban?.find((opt: OpsiJawaban) => opt.is_correct)?.id || ""
   );
 
   // Essay state
   const [essaySettings, setEssaySettings] = useState<EssaySettings>(
     question?.tipe_soal === TIPE_SOAL.ESSAY && question?.jawaban_benar
       ? JSON.parse(question.jawaban_benar as string)
-      : getDefaultEssaySettings(),
+      : getDefaultEssaySettings()
   );
-
+  // File Upload state
+  const [fileUploadSettings, setFileUploadSettings] =
+    useState<FileUploadSettings>(
+      question?.tipe_soal === TIPE_SOAL.FILE_UPLOAD && question?.jawaban_benar
+        ? JSON.parse(question.jawaban_benar as string)
+        : getDefaultFileUploadSettings()
+    );
   // Bank Soal state - Default true (auto-save), only show for new questions
   const [saveToBank, setSaveToBank] = useState(true);
 
@@ -147,6 +184,8 @@ export function QuestionEditor({
       setCorrectAnswerId("");
     } else if (newType === TIPE_SOAL.ESSAY) {
       setEssaySettings(getDefaultEssaySettings());
+    } else if (newType === TIPE_SOAL.FILE_UPLOAD) {
+      setFileUploadSettings(getDefaultFileUploadSettings());
     }
   };
 
@@ -178,6 +217,12 @@ export function QuestionEditor({
       if (!essayValidation.isValid) {
         errors.push(...essayValidation.errors);
       }
+    } else if (questionType === TIPE_SOAL.FILE_UPLOAD) {
+      const fileUploadValidation =
+        validateFileUploadSettings(fileUploadSettings);
+      if (!fileUploadValidation.isValid) {
+        errors.push(...fileUploadValidation.errors);
+      }
     }
 
     return {
@@ -201,7 +246,10 @@ export function QuestionEditor({
     setIsSaving(true);
 
     // Prepare question data based on type
-    const questionData: Partial<CreateSoalData> & { id?: string; saveToBank?: boolean } = {
+    const questionData: Partial<CreateSoalData> & {
+      id?: string;
+      saveToBank?: boolean;
+    } = {
       kuis_id: kuisId,
       pertanyaan: pertanyaan.trim(),
       tipe_soal: questionType as any,
@@ -216,6 +264,8 @@ export function QuestionEditor({
       questionData.opsi_jawaban = options;
     } else if (questionType === TIPE_SOAL.ESSAY) {
       questionData.jawaban_benar = JSON.stringify(essaySettings);
+    } else if (questionType === TIPE_SOAL.FILE_UPLOAD) {
+      questionData.jawaban_benar = JSON.stringify(fileUploadSettings);
     }
 
     // Add ID if editing
@@ -283,35 +333,84 @@ export function QuestionEditor({
       <CardContent className="space-y-6">
         {/* Question Type & Points */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Question Type */}
-          <div className="md:col-span-2 space-y-2">
-            <Label htmlFor="tipe_soal">
-              Tipe Soal
-              <span className="text-destructive ml-1">*</span>
-            </Label>
-            <Select
-              value={questionType}
-              onValueChange={handleTypeChange}
-              disabled={isEditing}
-            >
-              <SelectTrigger id="tipe_soal">
-                <SelectValue placeholder="Pilih tipe soal" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={TIPE_SOAL.PILIHAN_GANDA}>
-                  {TIPE_SOAL_LABELS.pilihan_ganda}
-                </SelectItem>
-                <SelectItem value={TIPE_SOAL.ESSAY}>
-                  {TIPE_SOAL_LABELS.essay}
-                </SelectItem>
-              </SelectContent>
-            </Select>
-            {isEditing && (
+          {/* Question Type - CBT mode only shows Pilihan Ganda, Laporan mode shows Essay/Upload */}
+          {cbtMode ? (
+            <div className="md:col-span-2 space-y-2">
+              <Label>Tipe Soal</Label>
+              <div className="flex items-center gap-2 h-10 px-3 rounded-md border bg-muted/50">
+                <CheckSquare className="h-4 w-4 text-blue-500" />
+                <span className="text-sm">Pilihan Ganda (CBT)</span>
+              </div>
               <p className="text-xs text-muted-foreground">
-                Tipe soal tidak dapat diubah saat edit
+                Mode CBT hanya mendukung soal pilihan ganda
               </p>
-            )}
-          </div>
+            </div>
+          ) : laporanMode ? (
+            <div className="md:col-span-2 space-y-2">
+              <Label htmlFor="tipe_soal">
+                Tipe Soal
+                <span className="text-destructive ml-1">*</span>
+              </Label>
+              <Select
+                value={questionType}
+                onValueChange={handleTypeChange}
+                disabled={isEditing}
+              >
+                <SelectTrigger id="tipe_soal">
+                  <SelectValue placeholder="Pilih tipe soal" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={TIPE_SOAL.ESSAY}>
+                    {TIPE_SOAL_LABELS.essay}
+                  </SelectItem>
+                  <SelectItem value={TIPE_SOAL.FILE_UPLOAD}>
+                    <div className="flex items-center gap-2">
+                      <Upload className="h-4 w-4 text-orange-500" />
+                      {TIPE_SOAL_LABELS.file_upload}
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Mode Laporan mendukung essay atau upload file
+              </p>
+            </div>
+          ) : (
+            <div className="md:col-span-2 space-y-2">
+              <Label htmlFor="tipe_soal">
+                Tipe Soal
+                <span className="text-destructive ml-1">*</span>
+              </Label>
+              <Select
+                value={questionType}
+                onValueChange={handleTypeChange}
+                disabled={isEditing}
+              >
+                <SelectTrigger id="tipe_soal">
+                  <SelectValue placeholder="Pilih tipe soal" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={TIPE_SOAL.PILIHAN_GANDA}>
+                    {TIPE_SOAL_LABELS.pilihan_ganda}
+                  </SelectItem>
+                  <SelectItem value={TIPE_SOAL.ESSAY}>
+                    {TIPE_SOAL_LABELS.essay}
+                  </SelectItem>
+                  <SelectItem value={TIPE_SOAL.FILE_UPLOAD}>
+                    <div className="flex items-center gap-2">
+                      <Upload className="h-4 w-4 text-orange-500" />
+                      {TIPE_SOAL_LABELS.file_upload}
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+              {isEditing && (
+                <p className="text-xs text-muted-foreground">
+                  Tipe soal tidak dapat diubah saat edit
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Points */}
           <div className="space-y-2">
@@ -348,7 +447,7 @@ export function QuestionEditor({
             className={cn(
               showErrors &&
                 (!pertanyaan.trim() || pertanyaan.trim().length < 10) &&
-                "border-destructive",
+                "border-destructive"
             )}
           />
           <div className="flex justify-between text-xs text-muted-foreground">
@@ -378,6 +477,14 @@ export function QuestionEditor({
               characterLimit={essaySettings.characterLimit}
               rubric={essaySettings.rubric}
               onChange={setEssaySettings}
+              showErrors={showErrors}
+            />
+          )}
+
+          {questionType === TIPE_SOAL.FILE_UPLOAD && (
+            <FileUploadQuestion
+              settings={fileUploadSettings}
+              onChange={setFileUploadSettings}
               showErrors={showErrors}
             />
           )}
@@ -421,8 +528,9 @@ export function QuestionEditor({
                 Simpan ke Bank Soal
               </Label>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Soal akan disimpan ke Bank Soal agar dapat digunakan kembali untuk kuis lain di masa depan.
-                Sangat disarankan untuk soal-soal fundamental yang sering dipakai.
+                Soal akan disimpan ke Bank Soal agar dapat digunakan kembali
+                untuk kuis lain di masa depan. Sangat disarankan untuk soal-soal
+                fundamental yang sering dipakai.
               </p>
             </div>
           </div>
@@ -488,7 +596,7 @@ export function transformSoalToEditor(soal: Soal): Partial<Soal> {
  * Transform editor data to API format
  */
 export function transformEditorToSoal(
-  editorData: Partial<CreateSoalData>,
+  editorData: Partial<CreateSoalData>
 ): Partial<CreateSoalData> {
   const data: Partial<CreateSoalData> = {
     kuis_id: editorData.kuis_id,
@@ -502,6 +610,8 @@ export function transformEditorToSoal(
   if (editorData.tipe_soal === TIPE_SOAL.PILIHAN_GANDA) {
     data.opsi_jawaban = editorData.opsi_jawaban;
   } else if (editorData.tipe_soal === TIPE_SOAL.ESSAY) {
+    data.jawaban_benar = editorData.jawaban_benar;
+  } else if (editorData.tipe_soal === TIPE_SOAL.FILE_UPLOAD) {
     data.jawaban_benar = editorData.jawaban_benar;
   }
 

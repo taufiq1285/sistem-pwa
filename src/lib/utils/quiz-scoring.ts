@@ -97,8 +97,12 @@ export interface GradedAnswer extends Jawaban {
 export function gradeAnswer(soal: Soal, jawaban: string): GradingResult {
   const tipeSoal = soal.tipe_soal;
 
-  // Only auto-grade Multiple Choice
-  if (tipeSoal !== TIPE_SOAL.PILIHAN_GANDA) {
+  // Auto-grade Multiple Choice, True/False, and Short Answer
+  if (
+    tipeSoal !== TIPE_SOAL.PILIHAN_GANDA &&
+    tipeSoal !== TIPE_SOAL.BENAR_SALAH &&
+    tipeSoal !== TIPE_SOAL.JAWABAN_SINGKAT
+  ) {
     return {
       poin_diperoleh: 0,
       is_correct: false,
@@ -132,6 +136,20 @@ export function checkAnswerCorrect(soal: Soal, jawaban: string): boolean {
     return jawaban.trim() === soal.jawaban_benar.trim();
   }
 
+  if (tipeSoal === TIPE_SOAL.BENAR_SALAH) {
+    // For true/false, compare case-insensitively
+    return (
+      jawaban.trim().toLowerCase() === soal.jawaban_benar.trim().toLowerCase()
+    );
+  }
+
+  if (tipeSoal === TIPE_SOAL.JAWABAN_SINGKAT) {
+    // For short answer, compare case-insensitively with trimmed whitespace
+    return (
+      jawaban.trim().toLowerCase() === soal.jawaban_benar.trim().toLowerCase()
+    );
+  }
+
   return false;
 }
 
@@ -143,11 +161,21 @@ export function getCorrectAnswerLabel(soal: Soal): string {
 
   if (tipeSoal === TIPE_SOAL.PILIHAN_GANDA && soal.opsi_jawaban) {
     const correctOption = soal.opsi_jawaban.find(
-      (opt) => opt.id === soal.jawaban_benar,
+      (opt) => opt.id === soal.jawaban_benar
     );
     return correctOption
       ? `${correctOption.label}. ${correctOption.text}`
       : soal.jawaban_benar || "-";
+  }
+
+  if (tipeSoal === TIPE_SOAL.BENAR_SALAH) {
+    // Display "Benar" or "Salah" for true/false questions
+    const answer = soal.jawaban_benar?.toLowerCase();
+    return answer === "true"
+      ? "Benar"
+      : answer === "false"
+        ? "Salah"
+        : soal.jawaban_benar || "-";
   }
 
   return soal.jawaban_benar || "-";
@@ -168,7 +196,13 @@ export function getAnswerLabel(soal: Soal, jawaban: string): string {
       : jawaban;
   }
 
-  // For essay, return the text directly
+  if (tipeSoal === TIPE_SOAL.BENAR_SALAH) {
+    // Display "Benar" or "Salah" for true/false answers
+    const answer = jawaban.trim().toLowerCase();
+    return answer === "true" ? "Benar" : answer === "false" ? "Salah" : jawaban;
+  }
+
+  // For essay and short answer, return the text directly
   return jawaban;
 }
 
@@ -182,7 +216,7 @@ export function getAnswerLabel(soal: Soal, jawaban: string): string {
 export function calculateQuizScore(
   questions: Soal[],
   answers: Jawaban[],
-  passingScore: number = 70,
+  passingScore: number = 70
 ): QuizScore {
   // Create a map of answers by soal_id for quick lookup
   const answerMap = new Map<string, Jawaban>();
@@ -207,8 +241,12 @@ export function calculateQuizScore(
       return;
     }
 
-    // Only auto-grade Multiple Choice questions
-    if (soal.tipe_soal === TIPE_SOAL.PILIHAN_GANDA) {
+    // Auto-grade Multiple Choice, True/False, and Short Answer questions
+    if (
+      soal.tipe_soal === TIPE_SOAL.PILIHAN_GANDA ||
+      soal.tipe_soal === TIPE_SOAL.BENAR_SALAH ||
+      soal.tipe_soal === TIPE_SOAL.JAWABAN_SINGKAT
+    ) {
       const result = gradeAnswer(soal, jawaban.jawaban);
       totalPoin += result.poin_diperoleh;
 
@@ -297,7 +335,7 @@ export function getGradeColor(grade: string): string {
  */
 export function gradeAllAnswers(
   questions: Soal[],
-  answers: Jawaban[],
+  answers: Jawaban[]
 ): GradedAnswer[] {
   const gradedAnswers: GradedAnswer[] = [];
 
@@ -325,14 +363,24 @@ export function gradeAllAnswers(
  * Check if all questions can be auto-graded
  */
 export function canAutoGrade(questions: Soal[]): boolean {
-  return questions.every((q) => q.tipe_soal === TIPE_SOAL.PILIHAN_GANDA);
+  const autoGradableTypes = [
+    TIPE_SOAL.PILIHAN_GANDA,
+    TIPE_SOAL.BENAR_SALAH,
+    TIPE_SOAL.JAWABAN_SINGKAT,
+  ];
+  return questions.every((q) => autoGradableTypes.includes(q.tipe_soal));
 }
 
 /**
  * Get list of questions that need manual grading
  */
 export function getManualGradingRequired(questions: Soal[]): Soal[] {
-  return questions.filter((q) => q.tipe_soal !== TIPE_SOAL.PILIHAN_GANDA);
+  const autoGradableTypes = [
+    TIPE_SOAL.PILIHAN_GANDA,
+    TIPE_SOAL.BENAR_SALAH,
+    TIPE_SOAL.JAWABAN_SINGKAT,
+  ];
+  return questions.filter((q) => !autoGradableTypes.includes(q.tipe_soal));
 }
 
 // ============================================================================
@@ -361,6 +409,12 @@ export function getQuizStats(questions: Soal[], answers: Jawaban[]): QuizStats {
   let incorrect = 0;
   let pendingGrading = 0;
 
+  const autoGradableTypes = [
+    TIPE_SOAL.PILIHAN_GANDA,
+    TIPE_SOAL.BENAR_SALAH,
+    TIPE_SOAL.JAWABAN_SINGKAT,
+  ];
+
   questions.forEach((soal) => {
     const jawaban = answerMap.get(soal.id);
 
@@ -377,7 +431,7 @@ export function getQuizStats(questions: Soal[], answers: Jawaban[]): QuizStats {
       } else {
         incorrect++;
       }
-    } else if (soal.tipe_soal === TIPE_SOAL.PILIHAN_GANDA) {
+    } else if (autoGradableTypes.includes(soal.tipe_soal)) {
       // Can auto-grade
       const result = gradeAnswer(soal, jawaban.jawaban);
       if (result.is_correct) {

@@ -25,13 +25,15 @@ import { UnauthorizedPage } from "@/pages/public/UnauthorizedPage";
 // Admin Pages
 import { DashboardPage as AdminDashboard } from "@/pages/admin/DashboardPage";
 import MataKuliahPage from "@/pages/admin/MataKuliahPage";
-import KelasPage from "@/pages/admin/KelasPage";
+import KelasPage from "@/pages/admin/KelasPageEnhanced"; // ✅ ENHANCED: Now supports dosen reassignment
 import AdminUsersPage from "@/pages/admin/UsersPage";
 import AdminLaboratoriesPage from "@/pages/admin/LaboratoriesPage";
 import AdminEquipmentsPage from "@/pages/admin/EquipmentsPage";
 import AdminAnnouncementsPage from "@/pages/admin/AnnouncementsPage";
 import AdminAnalyticsPage from "@/pages/admin/AnalyticsPage";
 import AdminSyncManagementPage from "@/pages/admin/SyncManagementPage";
+import PeminjamanApprovalPage from "@/pages/admin/PeminjamanApprovalPage";
+import AdminJadwalPraktikumPage from "@/pages/admin/JadwalPraktikumPage"; // ✅ NEW: Admin kelola jadwal praktikum
 
 // Dosen Pages
 import { DashboardPage as DosenDashboard } from "@/pages/dosen/DashboardPage";
@@ -80,6 +82,7 @@ import MahasiswaPengumumanPage from "@/pages/mahasiswa/PengumumanPage";
 import { DashboardPage as LaboranDashboard } from "@/pages/laboran/DashboardPage";
 import LaboranInventarisPage from "@/pages/laboran/InventarisPage";
 import LaboranPersetujuanPage from "@/pages/laboran/PersetujuanPage";
+import LaboranPeminjamanAktifPage from "@/pages/laboran/PeminjamanAktifPage";
 import LaboranLaboratoriumPage from "@/pages/laboran/LaboratoriumPage";
 import LaboranJadwalApprovalPage from "@/pages/laboran/JadwalApprovalPage";
 import LaboranLaporanPage from "@/pages/laboran/LaporanPage";
@@ -152,6 +155,20 @@ export function AppRouter() {
         }
       />
 
+      {/* Jadwal Praktikum Management - NEW! ✅ */}
+      <Route
+        path="/admin/jadwal-praktikum"
+        element={
+          <ProtectedRoute>
+            <RoleGuard allowedRoles={["admin"]}>
+              <AppLayout>
+                <AdminJadwalPraktikumPage />
+              </AppLayout>
+            </RoleGuard>
+          </ProtectedRoute>
+        }
+      />
+
       {/* Admin - Users */}
       <Route
         path="/admin/users"
@@ -184,6 +201,30 @@ export function AppRouter() {
             <RoleGuard allowedRoles={["admin"]}>
               <AppLayout>
                 <AdminEquipmentsPage />
+              </AppLayout>
+            </RoleGuard>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/peminjaman"
+        element={
+          <ProtectedRoute>
+            <RoleGuard allowedRoles={["admin"]}>
+              <AppLayout>
+                <PeminjamanApprovalPage />
+              </AppLayout>
+            </RoleGuard>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/peminjaman-aktif"
+        element={
+          <ProtectedRoute>
+            <RoleGuard allowedRoles={["admin"]}>
+              <AppLayout>
+                <LaboranPeminjamanAktifPage />
               </AppLayout>
             </RoleGuard>
           </ProtectedRoute>
@@ -677,6 +718,18 @@ export function AppRouter() {
             <RoleGuard allowedRoles={["laboran"]}>
               <AppLayout>
                 <LaboranPersetujuanPage />
+              </AppLayout>
+            </RoleGuard>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/laboran/peminjaman-aktif"
+        element={
+          <ProtectedRoute>
+            <RoleGuard allowedRoles={["laboran"]}>
+              <AppLayout>
+                <LaboranPeminjamanAktifPage />
               </AppLayout>
             </RoleGuard>
           </ProtectedRoute>

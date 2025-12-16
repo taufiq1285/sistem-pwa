@@ -81,7 +81,7 @@ export function QuizResult({
   const score = calculateQuizScore(
     questions,
     answers,
-    quiz.passing_score ?? 70,
+    quiz.passing_score ?? 70
   );
 
   // Format dates
@@ -103,7 +103,7 @@ export function QuizResult({
           (new Date(attempt.submitted_at).getTime() -
             new Date(attempt.started_at).getTime()) /
             1000 /
-            60,
+            60
         )
       : 0;
 
@@ -128,7 +128,7 @@ export function QuizResult({
           {canRetake && onRetake && (
             <Button onClick={onRetake}>
               <RotateCcw className="h-4 w-4 mr-2" />
-              Ulangi Kuis
+              Ulangi Tugas
             </Button>
           )}
         </div>
@@ -140,7 +140,7 @@ export function QuizResult({
       {/* Quiz Info */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Informasi Kuis</CardTitle>
+          <CardTitle className="text-lg">Informasi Tugas Praktikum</CardTitle>
         </CardHeader>
         <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div>

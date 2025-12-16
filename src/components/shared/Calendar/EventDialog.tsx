@@ -68,7 +68,7 @@ export function EventDialog({
         icon: Calendar,
       },
       quiz: {
-        label: "Kuis",
+        label: "Tugas Praktikum",
         color: "destructive" as const,
         icon: FileText,
       },

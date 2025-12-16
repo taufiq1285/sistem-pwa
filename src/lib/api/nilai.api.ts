@@ -440,6 +440,82 @@ async function deleteNilaiImpl(id: string): Promise<void> {
 export const deleteNilai = requirePermission("manage:nilai", deleteNilaiImpl);
 
 // ============================================================================
+// AUTO-SYNC NILAI PRAKTIKUM FROM TUGAS PRAKTIKUM
+// ============================================================================
+
+/**
+ * Sync nilai_praktikum from attempt_kuis (tugas praktikum)
+ * Calculate average of all graded attempts in the same kelas
+ *
+ * @param mahasiswaId - ID mahasiswa
+ * @param kelasId - ID kelas
+ * @returns Updated nilai record
+ */
+async function syncNilaiPraktikumFromAttemptsImpl(
+  mahasiswaId: string,
+  kelasId: string,
+): Promise<Nilai> {
+  try {
+    // Get all graded attempts for this mahasiswa in this kelas
+    const { data: attempts, error: attemptsError } = await supabase
+      .from("attempt_kuis")
+      .select(
+        `
+        id,
+        nilai_akhir,
+        status,
+        kuis:kuis_id (
+          id,
+          kelas_id
+        )
+      `,
+      )
+      .eq("mahasiswa_id", mahasiswaId)
+      .eq("status", "graded") // Only count graded attempts
+      .not("nilai_akhir", "is", null); // Ensure nilai_akhir exists
+
+    if (attemptsError) throw handleError(attemptsError);
+
+    // Filter attempts by kelas_id (since join doesn't support eq on nested field)
+    const kelasAttempts = (attempts || []).filter(
+      (attempt: any) => attempt.kuis?.kelas_id === kelasId,
+    );
+
+    // Calculate average nilai_praktikum
+    let nilaiPraktikum = 0;
+    if (kelasAttempts.length > 0) {
+      const totalNilai = kelasAttempts.reduce(
+        (sum: number, attempt: any) => sum + (attempt.nilai_akhir || 0),
+        0,
+      );
+      nilaiPraktikum = totalNilai / kelasAttempts.length;
+      // Round to 2 decimal places
+      nilaiPraktikum = Math.round(nilaiPraktikum * 100) / 100;
+    }
+
+    // Update nilai record with auto-synced nilai_praktikum
+    const updated = await updateNilaiImpl(mahasiswaId, kelasId, {
+      nilai_praktikum: nilaiPraktikum,
+    });
+
+    console.log(
+      `[AUTO-SYNC] Nilai praktikum synced for mahasiswa ${mahasiswaId} in kelas ${kelasId}: ${nilaiPraktikum} (from ${kelasAttempts.length} attempts)`,
+    );
+
+    return updated;
+  } catch (error) {
+    console.error("syncNilaiPraktikumFromAttempts error:", error);
+    throw handleError(error);
+  }
+}
+
+// 🔒 PROTECTED: Only system/dosen can trigger this
+export const syncNilaiPraktikumFromAttempts = requirePermission(
+  "manage:nilai",
+  syncNilaiPraktikumFromAttemptsImpl,
+);
+
+// ============================================================================
 // STATISTICS & ANALYTICS
 // ============================================================================
 
