@@ -1,9 +1,9 @@
 name: Keep Supabase Project Active
 
 on:
-  # Jalankan setiap 6 hari (sebelum batas 7 hari Supabase)
+  # Jalankan setiap 2 hari (lebih aman, jauh sebelum batas 7 hari Supabase)
   schedule:
-    - cron: '0 0 */6 * *'  # Setiap 6 hari pada jam 00:00 UTC
+    - cron: '0 0 */2 * *'  # Setiap 2 hari pada jam 00:00 UTC
 
   # Bisa juga dijalankan manual dari GitHub Actions tab
   workflow_dispatch:
@@ -56,5 +56,5 @@ jobs:
       - name: Log Activity
         run: |
           echo "📅 Last ping: $(date)"
-          echo "⏰ Next scheduled ping: in 6 days"
+          echo "⏰ Next scheduled ping: in 2 days"
           echo "✨ Workflow completed successfully!"
