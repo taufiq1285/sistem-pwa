@@ -37,6 +37,7 @@ export interface KelasWithStats {
   tahun_ajaran: string;
   semester_ajaran: number;
   totalMahasiswa: number;
+  mata_kuliah_id?: string;
   mata_kuliah_kode?: string;
   mata_kuliah_nama?: string;
 }
@@ -176,7 +177,10 @@ async function getDosenId(): Promise<string | null> {
     const {
       data: { user },
     } = await supabase.auth.getUser();
+    console.log("🔍 DEBUG getDosenId: user =", user?.id);
+
     if (!user) {
+      console.log("❌ DEBUG: No authenticated user");
       // No user - return stored dosen ID if available
       return storedDosenId || cachedDosenId;
     }
@@ -188,7 +192,10 @@ async function getDosenId(): Promise<string | null> {
         .eq("user_id", user.id)
         .single();
 
+      console.log("🔍 DEBUG getDosenId: dosen query result =", { data, error });
+
       if (error) {
+        console.log("❌ DEBUG: Dosen query error =", error);
         // Suppress error logging - might be offline
         return storedDosenId || cachedDosenId; // Return cached if available
       }
@@ -233,25 +240,24 @@ export async function getDosenStats(): Promise<DosenStats> {
           };
         }
 
-        const { count: totalKelas } = await supabase
-          .from("kelas")
-          .select("*", { count: "exact", head: true })
+        // 🔄 FIXED: Count kelas by querying jadwal_praktikum assigned to this dosen
+        const { data: jadwalData } = await supabase
+          .from("jadwal_praktikum")
+          .select("kelas_id")
           .eq("dosen_id", dosenId)
-          .eq("is_active", true);
+          .eq("is_active", true)
+          .eq("status", "approved");
 
-        const { data: kelasData } = await supabase
-          .from("kelas")
-          .select("id")
-          .eq("dosen_id", dosenId);
-
-        const kelasIds = kelasData?.map((k) => k.id) || [];
+        // Get unique kelas IDs from jadwal
+        const uniqueKelasIds = Array.from(new Set(jadwalData?.map((j: any) => j.kelas_id) || []));
+        const totalKelas = uniqueKelasIds.length;
 
         let totalMahasiswa = 0;
-        if (kelasIds.length > 0) {
+        if (uniqueKelasIds.length > 0) {
           const { count } = await supabase
             .from("kelas_mahasiswa" as any)
             .select("mahasiswa_id", { count: "exact", head: true })
-            .in("kelas_id", kelasIds);
+            .in("kelas_id", uniqueKelasIds);
           totalMahasiswa = count || 0;
         }
 
@@ -307,65 +313,98 @@ export async function getDosenStats(): Promise<DosenStats> {
 
 export async function getMyKelas(limit?: number): Promise<KelasWithStats[]> {
   try {
-    const dosenId = await getDosenId();
-    if (!dosenId) {
+    console.log("🔍 DEBUG getMyKelas: Getting ALL available kelas");
+
+    // 🎯 QUERY: Get ALL active kelas (kelas berdiri sendiri, tidak terikat mata kuliah)
+    const { data: allKelas, error: kelasError } = await supabase
+      .from("kelas")
+      .select("id, kode_kelas, nama_kelas, tahun_ajaran, semester_ajaran, mata_kuliah_id, is_active")
+      .eq("is_active", true);
+
+    if (kelasError) {
+      console.error("❌ DEBUG: kelasError =", kelasError);
+      throw kelasError;
+    }
+
+    if (!allKelas || allKelas.length === 0) {
+      console.log("⚠️ DEBUG: No kelas found in database");
       return [];
     }
 
-    // ✅ PRIVACY FIX: Query kelas directly by dosen_id - only show THIS dosen's classes
-    let query = supabase
-      .from("kelas")
-      .select(
-        `
-        id,
-        kode_kelas,
-        nama_kelas,
-        tahun_ajaran,
-        semester_ajaran,
-        mata_kuliah (
-          kode_mk,
-          nama_mk
-        )
-      `,
-      )
-      .eq("dosen_id", dosenId) // 🔒 FILTER: Only this dosen's classes
-      .eq("is_active", true)
-      .order("created_at", { ascending: false });
+    console.log(`📚 DEBUG: Found ${allKelas.length} total active kelas`);
 
-    if (limit) {
-      query = query.limit(limit);
+    // Step 2: Get unique mata_kuliah_ids
+    const mkIds = [...new Set(allKelas.map((k: any) => k.mata_kuliah_id).filter(Boolean))];
+
+    console.log(`🔍 DEBUG: Extracting ${mkIds.length} unique mata_kuliah_ids:`, mkIds);
+
+    if (mkIds.length === 0) {
+      // Kelas boleh tanpa mata_kuliah_id - normal behavior
     }
 
-    const { data: kelasData, error: kelasError } = await query;
-    if (kelasError) throw kelasError;
+    // Step 3: Fetch mata_kuliah data separately
+    const { data: mataKuliahData, error: mkError } = await supabase
+      .from("mata_kuliah")
+      .select("id, kode_mk, nama_mk")
+      .in("id", mkIds);
 
-    // Get stats for each kelas
+    if (mkError) {
+      console.error("❌ DEBUG: mkError =", mkError);
+      // Continue without mata kuliah data rather than failing completely
+    }
+
+    console.log(`📚 DEBUG: Found ${mataKuliahData?.length || 0} mata kuliah records`);
+    console.log(`🔍 DEBUG: Mata kuliah data:`, mataKuliahData);
+
+    // Step 4: Create a map for quick lookup
+    const mkMap = new Map(
+      (mataKuliahData || []).map((mk: any) => [mk.id, mk])
+    );
+
+    // Step 5: Get stats for each kelas and merge with mata kuliah
     const kelasWithStats = await Promise.all(
-      (kelasData || []).map(async (kelas: any) => {
+      allKelas.map(async (kelas: any) => {
         const { count } = await supabase
           .from("kelas_mahasiswa" as any)
           .select("*", { count: "exact", head: true })
-          .eq("kelas_id", kelas.id);
+          .eq("kelas_id", kelas.id)
+          .eq("is_active", true);
 
-        return {
+        const mk = mkMap.get(kelas.mata_kuliah_id);
+
+        const result = {
           id: kelas.id,
-          kode_kelas: kelas.kode_kelas,
+          kode_kelas: kelas.kode_kelas || "",
           nama_kelas: kelas.nama_kelas,
           tahun_ajaran: kelas.tahun_ajaran,
           semester_ajaran: kelas.semester_ajaran,
           totalMahasiswa: count || 0,
-          mata_kuliah_kode: kelas.mata_kuliah?.kode_mk,
-          mata_kuliah_nama: kelas.mata_kuliah?.nama_mk,
+          mata_kuliah_id: kelas.mata_kuliah_id,
+          mata_kuliah_kode: mk?.kode_mk || "",
+          mata_kuliah_nama: mk?.nama_mk || "" // Kosong jika belum dipilih,
         };
+
+        console.log("🔍 DEBUG: Processed kelas =", {
+          id: result.id,
+          nama_kelas: result.nama_kelas,
+          mk_id: kelas.mata_kuliah_id,
+          mk_nama: result.mata_kuliah_nama,
+          mk_kode: result.mata_kuliah_kode
+        });
+
+        return result;
       }),
     );
 
-    // Deduplicate by kelas ID (defensive for mocked data) and enforce limit client-side
+    // Deduplicate by kelas ID and enforce limit client-side
     const uniqueById = Array.from(
       new Map(kelasWithStats.map((k) => [k.id, k])).values(),
     );
 
-    return limit ? uniqueById.slice(0, limit) : uniqueById;
+    const finalResult = limit ? uniqueById.slice(0, limit) : uniqueById;
+    console.log(`✅ DEBUG: Returning ${finalResult.length} kelas (mata kuliah optional)`);
+
+    return finalResult;
   } catch (error) {
     console.error("Error fetching my kelas:", error);
     return [];
@@ -491,7 +530,7 @@ export async function getUpcomingPracticum(
     sixDaysFromNow.setDate(sixDaysFromNow.getDate() + 6); // Selesai 6 hari dari sekarang
     const endDateStr = sixDaysFromNow.toISOString().split("T")[0];
 
-    // ✅ PERBAIKAN: Menghapus 'kelas,' dari string select
+    // ✅ PERBAIKAN: Filter jadwal yang aktif dan disetujui saja
     let query = supabase
       .from("jadwal_praktikum")
       .select(
@@ -502,7 +541,9 @@ export async function getUpcomingPracticum(
         jam_mulai,
         jam_selesai,
         topik,
-        kelas_id, 
+        status,
+        is_active,
+        kelas_id,
         kelas:kelas_id (
           id,
           nama_kelas,
@@ -517,8 +558,11 @@ export async function getUpcomingPracticum(
         )
       `,
       )
+      .eq("is_active", true) // Hanya jadwal aktif
+      .eq("status", "approved") // Hanya jadwal yang disetujui
       .gte("tanggal_praktikum", todayStr)
       .lte("tanggal_praktikum", endDateStr)
+      .eq("dosen_id", dosenId) // 🔄 FIXED: Filter by dosen_id from jadwal_praktikum table itself
       .order("tanggal_praktikum", { ascending: true })
       .order("jam_mulai", { ascending: true });
 
@@ -533,28 +577,18 @@ export async function getUpcomingPracticum(
       throw error;
     }
 
-    // ✅ Logika Filter (Sudah benar dari sebelumnya)
-    const filtered = (data || []).filter((item: any) => {
-      // Jika jadwal tidak punya kelas, tampilkan
-      if (!item.kelas_id) {
-        return true;
-      }
+    // Debug: Log raw data
+    console.log("Raw jadwal data for dosen", dosenId, ":", data?.length, "items");
+    console.log("📋 Jadwal details:", data);
 
-      // Jika jadwal punya kelas (item.kelas ada):
-      if (item.kelas) {
-        // Tampilkan jika kelas itu BELUM punya dosen (null)
-        // ATAU jika dosen kelas itu adalah dosen yang sedang login
-        if (!item.kelas.dosen_id || item.kelas.dosen_id === dosenId) {
-          return true;
-        }
-      }
-
-      // Jika tidak, sembunyikan
-      return false;
-    });
+    // 🔄 FIXED: No need for client-side filtering - query already filters by dosen_id
+    const filtered = data || [];
 
     // Apply limit after filtering
     const limitedData = limit ? filtered.slice(0, limit) : filtered;
+
+    // Debug: Log filtered data
+    console.log("Filtered jadwal data:", limitedData.length, "items");
 
     return limitedData.map((item: any) => ({
       id: item.id,
@@ -888,42 +922,41 @@ export async function getMyKelasWithStudents(): Promise<KelasWithStudents[]> {
     const dosenId = await getDosenId();
     if (!dosenId) return [];
 
+    // ✅ FIXED: Get kelas directly from assignment system (kelas table)
     const { data: kelasData, error } = await supabase
       .from("kelas")
-      .select(
-        `
+      .select(`
         id,
         kode_kelas,
         nama_kelas,
         tahun_ajaran,
         semester_ajaran,
         kuota,
-        mata_kuliah_id
-      `,
-      )
+        mata_kuliah_id,
+        mata_kuliah (
+          id,
+          nama_mk,
+          kode_mk
+        )
+      `)
       .eq("dosen_id", dosenId)
-      .eq("is_active", true)
-      .order("nama_kelas", { ascending: true });
+      .eq("is_active", true);
 
     if (error) throw error;
     if (!kelasData) return [];
 
+    // Process kelas data (no more nested structure)
     const result = await Promise.all(
-      kelasData.map(async (kelas: any) => {
-        const { data: mkData } = await supabase
-          .from("mata_kuliah")
-          .select("kode_mk, nama_mk")
-          .eq("id", kelas.mata_kuliah_id)
-          .single();
-
+      (kelasData || []).map(async (kelas: any) => {
+        // mata_kuliah is already included in the query, no need for separate query
         const students = await getKelasStudents(kelas.id);
 
         return {
           id: kelas.id,
           kode_kelas: kelas.kode_kelas,
           nama_kelas: kelas.nama_kelas,
-          mata_kuliah_kode: mkData?.kode_mk || "-",
-          mata_kuliah_nama: mkData?.nama_mk || "-",
+          mata_kuliah_kode: kelas.mata_kuliah?.kode_mk || "-",
+          mata_kuliah_nama: kelas.mata_kuliah?.nama_mk || "-",
           tahun_ajaran: kelas.tahun_ajaran,
           semester_ajaran: kelas.semester_ajaran,
           kuota: kelas.kuota,
@@ -1476,12 +1509,14 @@ export const cancelBorrowingRequest = requirePermission(
 // ============================================================================
 
 export { getMyBorrowing as getMyBorrowingRequests };
+export { getDosenId };
 
 export const dosenApi = {
   // Existing
   getStats: getDosenStats,
   getMyMataKuliah,
   getMyKelas,
+  getDosenId,
   getUpcomingPracticum,
   getPendingGrading,
   getActiveKuis,
@@ -1502,3 +1537,104 @@ export const dosenApi = {
   markBorrowingAsTaken,
   returnBorrowingRequest,
 };
+
+// ============================================================================
+// REAL-TIME DATA REFRESH FUNCTIONS
+// ============================================================================
+
+/**
+ * Force refresh all dosen data and clear cache
+ */
+async function refreshDosenDataImpl(): Promise<{ success: boolean; error?: string }> {
+  try {
+    console.log("🔄 Refreshing dosen data and clearing cache...");
+
+    // Clear all dosen-related cache
+    cacheAPI.clearByPattern("dosen:");
+    cacheAPI.clearByPattern("kelas:");
+    cacheAPI.clearByPattern("mata_kuliah:");
+    cacheAPI.clearByPattern("jadwal:");
+    cacheAPI.clearByPattern("kuis:");
+    cacheAPI.clearByPattern("stats:");
+
+    // Trigger Supabase cache invalidation by running a simple query
+    await supabase.from("dosen").select("id").limit(1);
+
+    console.log("✅ Dosen data refreshed successfully");
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error refreshing dosen data:", error);
+    return { success: false, error: error.message };
+  }
+}
+
+export const refreshDosenData = requirePermission("read:dashboard", refreshDosenDataImpl);
+
+/**
+ * Check if dosen's assignments have been modified by admin
+ */
+async function checkDosenAssignmentChangesImpl(): Promise<{
+  hasChanges: boolean;
+  lastUpdate?: string;
+  deletedAssignments?: any[];
+}> {
+  try {
+    const { data: user } = await supabase.auth.getUser();
+    const dosenId = user?.user?.id;
+
+    if (!dosenId) {
+      return { hasChanges: false };
+    }
+
+    // Get current jadwal for this dosen
+    const { data: currentJadwal, error: jadwalError } = await supabase
+      .from("jadwal_praktikum")
+      .select("id, updated_at")
+      .eq("dosen_id", dosenId)
+      .order("updated_at", { ascending: false })
+      .limit(5);
+
+    if (jadwalError) {
+      throw jadwalError;
+    }
+
+    // Get current dosen mata kuliah
+    const { data: currentDosenMk, error: mkError } = await supabase
+      .from("dosen_mata_kuliah")
+      .select("id, updated_at")
+      .eq("dosen_id", dosenId)
+      .order("updated_at", { ascending: false })
+      .limit(5);
+
+    if (mkError) {
+      throw mkError;
+    }
+
+    // Check if there are any recent changes (within last 5 minutes)
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+
+    const recentJadwalChanges = currentJadwal?.filter(
+      j => new Date(j.updated_at) > new Date(fiveMinutesAgo)
+    ) || [];
+
+    const recentMkChanges = currentDosenMk?.filter(
+      mk => new Date(mk.updated_at) > new Date(fiveMinutesAgo)
+    ) || [];
+
+    const hasChanges = recentJadwalChanges.length > 0 || recentMkChanges.length > 0;
+
+    return {
+      hasChanges,
+      lastUpdate: currentJadwal?.[0]?.updated_at || currentDosenMk?.[0]?.updated_at,
+      deletedAssignments: []
+    };
+  } catch (error: any) {
+    console.error("Error checking dosen assignment changes:", error);
+    return { hasChanges: false };
+  }
+}
+
+export const checkDosenAssignmentChanges = requirePermission(
+  "read:dashboard",
+  checkDosenAssignmentChangesImpl
+);

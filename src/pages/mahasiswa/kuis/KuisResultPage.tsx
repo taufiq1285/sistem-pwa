@@ -164,7 +164,7 @@ export default function KuisResultPage() {
         }
 
         // Grade the answer
-        const result = gradeAnswer(soal, jawaban.jawaban);
+        const result = gradeAnswer(soal, jawaban.jawaban || "");
 
         // Save to database
         const promise = gradeAnswerApi(

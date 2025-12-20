@@ -15,7 +15,7 @@ import {
   Award,
   Users,
   FileText,
-  Settings,
+  // Settings, // ❌ DISABLED: Unused (was for Sync Management)
   Package,
   BarChart3,
   ClipboardCheck,
@@ -180,13 +180,7 @@ const adminNavigation: NavigationItem[] = [
     icon: Users,
     description: "Kelola kelas",
   },
-  {
-    label: "Jadwal Praktikum",
-    href: "/admin/jadwal-praktikum",
-    icon: Calendar,
-    description: "Kelola jadwal praktikum dosen",
-  },
-  {
+    {
     label: "Laboratories",
     href: "/admin/laboratories",
     icon: Building2,
@@ -210,24 +204,32 @@ const adminNavigation: NavigationItem[] = [
     icon: PackageCheck,
     description: "Kelola peminjaman aktif & pengembalian",
   },
+    {
+    label: "Manajemen Assignment",
+    href: "/admin/manajemen-assignment",
+    icon: Users,
+    description: "Kelola assignment & jadwal terpadu",
+  },
   {
     label: "Notifikasi",
     href: "/admin/notifikasi",
     icon: Bell,
     description: "Kelola pengumuman",
   },
-  {
-    label: "Analytics",
-    href: "/admin/analytics",
-    icon: BarChart3,
-    description: "Analitik sistem",
-  },
-  {
-    label: "Sync Management",
-    href: "/admin/sync-management",
-    icon: Settings,
-    description: "Kelola sinkronisasi",
-  },
+  // ❌ DISABLED: Analytics - tidak dalam scope proposal penelitian
+  // {
+  //   label: "Analytics",
+  //   href: "/admin/analytics",
+  //   icon: BarChart3,
+  //   description: "Analitik sistem",
+  // },
+  // ❌ DISABLED: Sync Management - tidak dalam scope proposal penelitian
+  // {
+  //   label: "Sync Management",
+  //   href: "/admin/sync-management",
+  //   icon: Settings,
+  //   description: "Kelola sinkronisasi",
+  // },
 ];
 
 /**

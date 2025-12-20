@@ -71,22 +71,54 @@ export async function getKelas(filters?: KelasFilters): Promise<Kelas[]> {
       });
     }
 
+    // Filter untuk kelas yang punya jadwal aktif
+    if (filters?.with_active_jadwal) {
+      filterConditions.push({
+        column: "jadwal_praktikum.is_active",
+        operator: "eq" as const,
+        value: true,
+      });
+    }
+
     const options = {
-      select: `
-        *,
-        mata_kuliah:mata_kuliah_id (
-          id,
-          nama_mk,
-          kode_mk
-        )
-      `,
+      select: filters?.with_active_jadwal
+        ? `
+          *,
+          mata_kuliah:mata_kuliah_id (
+            id,
+            nama_mk,
+            kode_mk
+          ),
+          jadwal_praktikum!inner(id)
+        `
+        : `
+          *,
+          mata_kuliah:mata_kuliah_id (
+            id,
+            nama_mk,
+            kode_mk
+          )
+        `,
       order: {
         column: "nama_kelas",
         ascending: true,
       },
     };
 
-    return await queryWithFilters<Kelas>("kelas", filterConditions, options);
+    const results = await queryWithFilters<Kelas>("kelas", filterConditions, options);
+
+    // Remove duplicates jika ada multiple jadwal
+    if (filters?.with_active_jadwal) {
+      const uniqueKelas = Array.from(
+        new Map(results.map((k: any) => [k.id, {
+          ...k,
+          jadwal_praktikum: undefined, // Remove jadwal_praktikum dari response
+        }])).values()
+      );
+      return uniqueKelas;
+    }
+
+    return results;
   } catch (error: unknown) {
     console.error("Error fetching kelas:", error);
     throw new Error(`Failed to fetch kelas: ${(error as Error).message}`);
@@ -172,10 +204,37 @@ export const updateKelas = requirePermission("manage:kelas", updateKelasImpl);
  */
 async function deleteKelasImpl(id: string): Promise<void> {
   try {
+    console.log(`🗑️ Attempting to delete kelas with id: ${id}`);
+
+    // First, let's check if the kelas exists
+    const { supabase } = await import("@/lib/supabase/client");
+    const { data: kelasCheck, error: checkError } = await supabase
+      .from("kelas")
+      .select("id, nama_kelas")
+      .eq("id", id)
+      .single();
+
+    if (checkError) {
+      console.error("❌ Error checking kelas existence:", checkError);
+      throw new Error(`Kelas not found or cannot be accessed: ${checkError.message}`);
+    }
+
+    console.log(`✅ Found kelas: ${kelasCheck?.nama_kelas} (${kelasCheck?.id})`);
+
+    // Now try to delete
     await remove("kelas", id);
+
+    console.log(`✅ Successfully deleted kelas: ${id}`);
   } catch (error: unknown) {
-    console.error("Error deleting kelas:", error);
-    throw new Error(`Failed to delete kelas: ${(error as Error).message}`);
+    console.error("❌ Error deleting kelas:", error);
+
+    // Check for specific RLS permission errors
+    const errorMessage = (error as Error).message;
+    if (errorMessage.includes("permission denied") || errorMessage.includes("RLS")) {
+      throw new Error("You don't have permission to delete this kelas. Please ensure you are logged in as an admin.");
+    }
+
+    throw new Error(`Failed to delete kelas: ${errorMessage}`);
   }
 }
 
@@ -294,14 +353,34 @@ async function enrollStudentImpl(
     }
 
     // Step 4: Enroll student (now safe, already validated)
+    // Get mahasiswa semester info if available
+    let semesterData = null;
+    try {
+      const { data: mhsData } = await supabase
+        .from("mahasiswa")
+        .select("semester")
+        .eq("id", mahasiswaId)
+        .single();
+
+      semesterData = mhsData?.semester;
+    } catch (err) {
+      // Semester column might not exist, continue without it
+      console.warn("Could not fetch semester data:", err);
+    }
+
+    // Prepare the base insert payload
+    const insertPayload: any = {
+      kelas_id: kelasId,
+      mahasiswa_id: mahasiswaId,
+      is_active: true,
+      enrolled_at: new Date().toISOString(),
+    };
+
+    // Only include semester columns if we have semester data
+    // The trigger will handle setting these values automatically if the columns exist
     const { data, error } = await supabase
       .from("kelas_mahasiswa")
-      .insert({
-        kelas_id: kelasId,
-        mahasiswa_id: mahasiswaId,
-        is_active: true,
-        enrolled_at: new Date().toISOString(),
-      })
+      .insert(insertPayload)
       .select()
       .single();
 

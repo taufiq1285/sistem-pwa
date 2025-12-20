@@ -309,20 +309,24 @@ async function createPermintaanImpl(
         .eq("id", data.mahasiswa_id)
         .single();
 
-      // Notify dosen
-      const dosenUserId = kelasInfo.dosen?.user?.id;
-      if (dosenUserId) {
-        await createNotification({
-          user_id: dosenUserId,
-          title: "Permintaan Perbaikan Nilai",
-          message: `${mahasiswaInfo?.user?.full_name || "Mahasiswa"} mengajukan permintaan perbaikan nilai ${data.komponen_nilai.toUpperCase()} untuk kelas ${kelasInfo.mata_kuliah?.nama_mk}`,
-          type: "perbaikan_nilai_request",
-          data: {
-            permintaan_id: permintaan.id,
-            kelas_id: data.kelas_id,
-            komponen_nilai: data.komponen_nilai,
-          },
-        });
+      // Notify dosen (best effort - don't fail if notification fails)
+      try {
+        const dosenUserId = kelasInfo.dosen?.user?.id;
+        if (dosenUserId) {
+          await createNotification({
+            user_id: dosenUserId,
+            title: "Permintaan Perbaikan Nilai",
+            message: `${mahasiswaInfo?.user?.full_name || "Mahasiswa"} mengajukan permintaan perbaikan nilai ${data.komponen_nilai.toUpperCase()} untuk kelas ${kelasInfo.mata_kuliah?.nama_mk}`,
+            type: "perbaikan_nilai_request",
+            data: {
+              permintaan_id: permintaan.id,
+              kelas_id: data.kelas_id,
+              komponen_nilai: data.komponen_nilai,
+            },
+          });
+        }
+      } catch (notifError) {
+        console.error("[NOTIFICATION] Failed to notify dosen:", notifError);
       }
     }
 
@@ -370,28 +374,32 @@ async function approvePermintaanImpl(
     // Get permintaan info for notification
     const permintaan = await getPermintaanById(data.permintaan_id);
 
-    // Notify mahasiswa
-    const mahasiswaUserId = permintaan.mahasiswa?.user?.full_name;
-    if (mahasiswaUserId) {
-      const { data: mahasiswa } = await supabase
-        .from("mahasiswa")
-        .select("user_id")
-        .eq("id", permintaan.mahasiswa_id)
-        .single();
+    // Notify mahasiswa (best effort - don't fail if notification fails)
+    try {
+      const mahasiswaUserId = permintaan.mahasiswa?.user?.full_name;
+      if (mahasiswaUserId) {
+        const { data: mahasiswa } = await supabase
+          .from("mahasiswa")
+          .select("user_id")
+          .eq("id", permintaan.mahasiswa_id)
+          .single();
 
-      if (mahasiswa?.user_id) {
-        await createNotification({
-          user_id: mahasiswa.user_id,
-          title: "Permintaan Perbaikan Nilai Disetujui",
-          message: `Permintaan perbaikan nilai ${permintaan.komponen_nilai.toUpperCase()} Anda untuk ${permintaan.kelas?.mata_kuliah?.nama_mk} telah disetujui. Nilai baru: ${data.nilai_baru}`,
-          type: "perbaikan_nilai_response",
-          data: {
-            permintaan_id: data.permintaan_id,
-            status: "approved",
-            nilai_baru: data.nilai_baru,
-          },
-        });
+        if (mahasiswa?.user_id) {
+          await createNotification({
+            user_id: mahasiswa.user_id,
+            title: "Permintaan Perbaikan Nilai Disetujui",
+            message: `Permintaan perbaikan nilai ${permintaan.komponen_nilai.toUpperCase()} Anda untuk ${permintaan.kelas?.mata_kuliah?.nama_mk} telah disetujui. Nilai baru: ${data.nilai_baru}`,
+            type: "perbaikan_nilai_response",
+            data: {
+              permintaan_id: data.permintaan_id,
+              status: "approved",
+              nilai_baru: data.nilai_baru,
+            },
+          });
+        }
       }
+    } catch (notifError) {
+      console.error("[NOTIFICATION] Failed to notify mahasiswa:", notifError);
     }
 
     return updated as PermintaanPerbaikanNilai;
@@ -433,25 +441,29 @@ async function rejectPermintaanImpl(
     // Get permintaan info for notification
     const permintaan = await getPermintaanById(data.permintaan_id);
 
-    // Notify mahasiswa
-    const { data: mahasiswa } = await supabase
-      .from("mahasiswa")
-      .select("user_id")
-      .eq("id", permintaan.mahasiswa_id)
-      .single();
+    // Notify mahasiswa (best effort - don't fail if notification fails)
+    try {
+      const { data: mahasiswa } = await supabase
+        .from("mahasiswa")
+        .select("user_id")
+        .eq("id", permintaan.mahasiswa_id)
+        .single();
 
-    if (mahasiswa?.user_id) {
-      await createNotification({
-        user_id: mahasiswa.user_id,
-        title: "Permintaan Perbaikan Nilai Ditolak",
-        message: `Permintaan perbaikan nilai ${permintaan.komponen_nilai.toUpperCase()} Anda untuk ${permintaan.kelas?.mata_kuliah?.nama_mk} ditolak. Alasan: ${data.response_dosen}`,
-        type: "perbaikan_nilai_response",
-        data: {
-          permintaan_id: data.permintaan_id,
-          status: "rejected",
-          response: data.response_dosen,
-        },
-      });
+      if (mahasiswa?.user_id) {
+        await createNotification({
+          user_id: mahasiswa.user_id,
+          title: "Permintaan Perbaikan Nilai Ditolak",
+          message: `Permintaan perbaikan nilai ${permintaan.komponen_nilai.toUpperCase()} Anda untuk ${permintaan.kelas?.mata_kuliah?.nama_mk} ditolak. Alasan: ${data.response_dosen}`,
+          type: "perbaikan_nilai_response",
+          data: {
+            permintaan_id: data.permintaan_id,
+            status: "rejected",
+            response: data.response_dosen,
+          },
+        });
+      }
+    } catch (notifError) {
+      console.error("[NOTIFICATION] Failed to notify mahasiswa:", notifError);
     }
 
     return updated as PermintaanPerbaikanNilai;

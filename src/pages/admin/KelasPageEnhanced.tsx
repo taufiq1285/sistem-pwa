@@ -2,13 +2,12 @@
  * Admin Kelas Management Page - ENHANCED
  *
  * Features:
- * - View all Kelas
+ * - View all Kelas (Universal Class)
  * - Create/Edit/Delete Kelas
- * - ASSIGN/REASSIGN DOSEN to Kelas ✅ NEW
- * - Assign Mata Kuliah to Kelas ✅ NEW
- * - Konfirmasi dialog saat ganti dosen ✅ NEW
- * - Auto-notification ke mahasiswa saat dosen diganti ✅ NEW
  * - Manage student enrollments
+ *
+ * NOTE: Kelas bersifat universal, bisa digunakan oleh banyak dosen tanpa assign spesifik
+ * NOTE: Mata kuliah dikelola di fitur terpisah
  */
 
 import { useState, useEffect, useRef } from "react";
@@ -19,9 +18,8 @@ import {
   Users,
   Loader2,
   AlertCircle,
-  UserPlus,
+  UserCheck,
   CheckCircle,
-  AlertTriangle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { normalize } from "@/lib/utils/normalize";
@@ -82,30 +80,15 @@ import {
   deleteKelas,
   getEnrolledStudents,
 } from "@/lib/api/kelas.api";
-import { getMataKuliah } from "@/lib/api/mata-kuliah.api";
-import { supabase } from "@/lib/supabase/client";
-import {
-  notifyMahasiswaDosenChanged,
-  notifyDosenNewAssignment,
-  notifyDosenRemoval,
-} from "@/lib/api/notification.api";
 import type { Kelas } from "@/types/kelas.types";
-import type { MataKuliah } from "@/types/mata-kuliah.types";
+import { KelolaMahasiswaDialog } from "@/components/features/kelas/KelolaMahasiswaDialog";
 
-interface DosenInfo {
-  id: string;
-  nip: string;
-  user_id: string;
-  full_name: string;
-}
 
 export default function KelasPageEnhanced() {
   const hasLoadedRef = useRef(false);
 
   // State
   const [kelasList, setKelasList] = useState<Kelas[]>([]);
-  const [mataKuliahList, setMataKuliahList] = useState<MataKuliah[]>([]);
-  const [dosenList, setDosenList] = useState<DosenInfo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   // Form state
@@ -113,22 +96,19 @@ export default function KelasPageEnhanced() {
   const [editingKelas, setEditingKelas] = useState<Kelas | null>(null);
   const [formData, setFormData] = useState({
     nama_kelas: "",
-    mata_kuliah_id: "",
-    dosen_id: "",
     semester_ajaran: 1,
     tahun_ajaran: `${new Date().getFullYear()}/${new Date().getFullYear() + 1}`,
-    ruangan: "",
     kuota: 30,
   });
-
-  // Konfirmasi dialog state
-  const [showDosenChangeConfirm, setShowDosenChangeConfirm] = useState(false);
-  const [pendingSaveData, setPendingSaveData] = useState<any>(null);
 
   // Delete confirmation state
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [deletingKelas, setDeletingKelas] = useState<Kelas | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // Kelola Mahasiswa dialog state
+  const [showKelolaMahasiswa, setShowKelolaMahasiswa] = useState(false);
+  const [selectedKelasForMahasiswa, setSelectedKelasForMahasiswa] = useState<Kelas | null>(null);
 
   useEffect(() => {
     if (hasLoadedRef.current) return;
@@ -139,7 +119,7 @@ export default function KelasPageEnhanced() {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      await Promise.all([loadKelas(), loadMataKuliah(), loadDosen()]);
+      await loadKelas();
     } catch (error) {
       toast.error("Gagal memuat data");
     } finally {
@@ -157,57 +137,12 @@ export default function KelasPageEnhanced() {
     }
   };
 
-  const loadMataKuliah = async () => {
-    try {
-      const data = await getMataKuliah();
-      setMataKuliahList(data);
-    } catch (error: any) {
-      console.error("Error loading mata kuliah:", error);
-      throw error;
-    }
-  };
-
-  const loadDosen = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("dosen")
-        .select(
-          `
-          id,
-          nip,
-          user_id,
-          users:user_id (
-            full_name
-          )
-        `,
-        )
-        .order("nip", { ascending: true });
-
-      if (error) throw error;
-
-      const dosenData: DosenInfo[] = (data || []).map((d: any) => ({
-        id: d.id,
-        nip: d.nip,
-        user_id: d.user_id,
-        full_name: d.users?.full_name || "Unknown",
-      }));
-
-      setDosenList(dosenData);
-    } catch (error: any) {
-      console.error("Error loading dosen:", error);
-      throw error;
-    }
-  };
-
   const handleCreate = () => {
     setEditingKelas(null);
     setFormData({
       nama_kelas: "",
-      mata_kuliah_id: "",
-      dosen_id: "",
       semester_ajaran: 1,
       tahun_ajaran: `${new Date().getFullYear()}/${new Date().getFullYear() + 1}`,
-      ruangan: "",
       kuota: 30,
     });
     setShowFormDialog(true);
@@ -217,11 +152,8 @@ export default function KelasPageEnhanced() {
     setEditingKelas(kelas);
     setFormData({
       nama_kelas: kelas.nama_kelas,
-      mata_kuliah_id: kelas.mata_kuliah_id || "",
-      dosen_id: kelas.dosen_id || "",
       semester_ajaran: kelas.semester_ajaran,
       tahun_ajaran: kelas.tahun_ajaran,
-      ruangan: kelas.ruangan || "",
       kuota: kelas.kuota || 30,
     });
     setShowFormDialog(true);
@@ -233,15 +165,7 @@ export default function KelasPageEnhanced() {
       return;
     }
 
-    // Check if dosen changed (only for edit mode)
-    if (editingKelas && editingKelas.dosen_id !== formData.dosen_id) {
-      // Trigger konfirmasi dialog
-      setPendingSaveData(formData);
-      setShowDosenChangeConfirm(true);
-      return;
-    }
-
-    // No dosen change, proceed normally
+    // Proceed normally - no dosen assignment needed for universal class
     await executeSave(formData);
   };
 
@@ -250,11 +174,8 @@ export default function KelasPageEnhanced() {
     try {
       const normalizedFormData: any = {
         nama_kelas: normalize.kelasNama(data.nama_kelas),
-        mata_kuliah_id: data.mata_kuliah_id || null,
-        dosen_id: data.dosen_id || null,
         semester_ajaran: data.semester_ajaran,
         tahun_ajaran: data.tahun_ajaran,
-        ruangan: data.ruangan || null,
         kuota: data.kuota,
       };
 
@@ -270,11 +191,8 @@ export default function KelasPageEnhanced() {
       setShowFormDialog(false);
       setFormData({
         nama_kelas: "",
-        mata_kuliah_id: "",
-        dosen_id: "",
         semester_ajaran: 1,
         tahun_ajaran: `${new Date().getFullYear()}/${new Date().getFullYear() + 1}`,
-        ruangan: "",
         kuota: 30,
       });
     } catch (error: any) {
@@ -285,90 +203,10 @@ export default function KelasPageEnhanced() {
     }
   };
 
-  const confirmDosenChange = async () => {
-    if (!pendingSaveData || !editingKelas) return;
-
-    setShowDosenChangeConfirm(false);
-    setIsProcessing(true);
-
-    try {
-      // 1. Update kelas
-      await updateKelas(editingKelas.id, {
-        nama_kelas: normalize.kelasNama(pendingSaveData.nama_kelas),
-        mata_kuliah_id: pendingSaveData.mata_kuliah_id || null,
-        dosen_id: pendingSaveData.dosen_id || null,
-        semester_ajaran: pendingSaveData.semester_ajaran,
-        tahun_ajaran: pendingSaveData.tahun_ajaran,
-        ruangan: pendingSaveData.ruangan || null,
-        kuota: pendingSaveData.kuota,
-      });
-
-      // 2. Get mahasiswa list
-      const enrolledStudents = await getEnrolledStudents(editingKelas.id);
-      const mahasiswaUserIds = enrolledStudents
-        .map((e: any) => e.mahasiswa?.users?.id || e.mahasiswa?.user_id)
-        .filter(Boolean);
-
-      // 3. Get dosen info
-      const oldDosen = dosenList.find((d) => d.id === editingKelas.dosen_id);
-      const newDosen = dosenList.find((d) => d.id === pendingSaveData.dosen_id);
-      const mataKuliah = mataKuliahList.find(
-        (mk) => mk.id === pendingSaveData.mata_kuliah_id,
-      );
-
-      // 4. Send notifications
-      if (mahasiswaUserIds.length > 0 && oldDosen && newDosen) {
-        await notifyMahasiswaDosenChanged(
-          mahasiswaUserIds,
-          pendingSaveData.nama_kelas,
-          mataKuliah?.nama_mk || "Mata Kuliah",
-          oldDosen.full_name,
-          newDosen.full_name,
-          editingKelas.id,
-        );
-
-        // Notify new dosen
-        await notifyDosenNewAssignment(
-          newDosen.user_id,
-          pendingSaveData.nama_kelas,
-          mataKuliah?.nama_mk || "Mata Kuliah",
-          mahasiswaUserIds.length,
-          editingKelas.id,
-        );
-
-        // Notify old dosen
-        if (oldDosen.user_id) {
-          await notifyDosenRemoval(
-            oldDosen.user_id,
-            pendingSaveData.nama_kelas,
-            mataKuliah?.nama_mk || "Mata Kuliah",
-            newDosen.full_name,
-            editingKelas.id,
-          );
-        }
-
-        console.log(
-          `[NOTIFICATION] ${mahasiswaUserIds.length} mahasiswa notified about dosen change`,
-        );
-      }
-
-      toast.success(
-        `Dosen berhasil diganti. ${mahasiswaUserIds.length} mahasiswa telah dinotifikasi.`,
-      );
-      await loadKelas();
-      setShowFormDialog(false);
-      setPendingSaveData(null);
-    } catch (error: any) {
-      console.error("Error changing dosen:", error);
-      toast.error(error.message || "Gagal mengganti dosen");
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const cancelDosenChange = () => {
-    setShowDosenChangeConfirm(false);
-    setPendingSaveData(null);
+  
+  const handleKelolaMahasiswa = (kelas: Kelas) => {
+    setSelectedKelasForMahasiswa(kelas);
+    setShowKelolaMahasiswa(true);
   };
 
   const handleDelete = (kelas: Kelas) => {
@@ -394,20 +232,8 @@ export default function KelasPageEnhanced() {
     }
   };
 
-  // Helper to get mata kuliah name
-  const getMataKuliahName = (id: string | null) => {
-    if (!id) return "-";
-    const mk = mataKuliahList.find((m) => m.id === id);
-    return mk ? `${mk.kode_mk} - ${mk.nama_mk}` : "-";
-  };
-
-  // Helper to get dosen name
-  const getDosenName = (id: string | null) => {
-    if (!id) return "-";
-    const dosen = dosenList.find((d) => d.id === id);
-    return dosen ? dosen.full_name : "-";
-  };
-
+  
+  
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -423,7 +249,7 @@ export default function KelasPageEnhanced() {
         <div>
           <h1 className="text-3xl font-bold">Manajemen Kelas</h1>
           <p className="text-gray-600">
-            Kelola kelas, assign dosen, dan atur mata kuliah
+            Kelola kelas universal untuk pengelolaan mahasiswa
           </p>
         </div>
         <Button onClick={handleCreate}>
@@ -436,9 +262,9 @@ export default function KelasPageEnhanced() {
       <Alert>
         <AlertCircle className="h-4 w-4" />
         <AlertDescription>
-          <strong>Fitur Baru:</strong> Admin sekarang bisa mengganti dosen untuk
-          kelas yang sudah berjalan. Mahasiswa akan otomatis dinotifikasi saat
-          terjadi pergantian dosen.
+          <strong>Fitur Baru:</strong> Kelas universal untuk pengelolaan mahasiswa.
+          Admin bisa mengelola mahasiswa di kelas, menambah mahasiswa yang sudah registrasi,
+          dan update realtime saat ada mahasiswa baru.
         </AlertDescription>
       </Alert>
 
@@ -455,8 +281,6 @@ export default function KelasPageEnhanced() {
             <TableHeader>
               <TableRow>
                 <TableHead>Nama Kelas</TableHead>
-                <TableHead>Mata Kuliah</TableHead>
-                <TableHead>Dosen</TableHead>
                 <TableHead>Semester/Tahun</TableHead>
                 <TableHead>Kuota</TableHead>
                 <TableHead>Aksi</TableHead>
@@ -465,7 +289,7 @@ export default function KelasPageEnhanced() {
             <TableBody>
               {kelasList.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8">
+                  <TableCell colSpan={4} className="text-center py-8">
                     Belum ada kelas. Klik "Buat Kelas Baru" untuk memulai.
                   </TableCell>
                 </TableRow>
@@ -476,15 +300,18 @@ export default function KelasPageEnhanced() {
                       {kelas.nama_kelas}
                     </TableCell>
                     <TableCell>
-                      {getMataKuliahName(kelas.mata_kuliah_id)}
-                    </TableCell>
-                    <TableCell>{getDosenName(kelas.dosen_id)}</TableCell>
-                    <TableCell>
                       Semester {kelas.semester_ajaran} • {kelas.tahun_ajaran}
                     </TableCell>
                     <TableCell>{kelas.kuota || "-"}</TableCell>
                     <TableCell>
                       <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleKelolaMahasiswa(kelas)}
+                        >
+                          <UserCheck className="h-4 w-4" />
+                        </Button>
                         <Button
                           variant="outline"
                           size="sm"
@@ -518,8 +345,8 @@ export default function KelasPageEnhanced() {
             </DialogTitle>
             <DialogDescription>
               {editingKelas
-                ? "Ubah informasi kelas termasuk dosen pengampu"
-                : "Isi formulir untuk membuat kelas baru"}
+                ? "Ubah informasi kelas universal untuk pengelolaan mahasiswa"
+                : "Isi formulir untuk membuat kelas universal baru"}
             </DialogDescription>
           </DialogHeader>
 
@@ -537,55 +364,8 @@ export default function KelasPageEnhanced() {
               />
             </div>
 
-            {/* Mata Kuliah */}
-            <div>
-              <Label htmlFor="mata_kuliah_id">Mata Kuliah</Label>
-              <Select
-                value={formData.mata_kuliah_id}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, mata_kuliah_id: value })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Pilih mata kuliah" />
-                </SelectTrigger>
-                <SelectContent>
-                  {mataKuliahList.map((mk) => (
-                    <SelectItem key={mk.id} value={mk.id}>
-                      {mk.kode_mk} - {mk.nama_mk}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Dosen */}
-            <div>
-              <Label htmlFor="dosen_id">Dosen Pengampu</Label>
-              <Select
-                value={formData.dosen_id}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, dosen_id: value })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Pilih dosen" />
-                </SelectTrigger>
-                <SelectContent>
-                  {dosenList.map((dosen) => (
-                    <SelectItem key={dosen.id} value={dosen.id}>
-                      {dosen.nip} - {dosen.full_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {editingKelas && editingKelas.dosen_id !== formData.dosen_id && (
-                <p className="text-sm text-orange-600 mt-1">
-                  ⚠️ Dosen akan diganti. Mahasiswa akan dinotifikasi.
-                </p>
-              )}
-            </div>
-
+            
+            
             {/* Semester & Tahun Ajaran */}
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -618,39 +398,26 @@ export default function KelasPageEnhanced() {
               </div>
             </div>
 
-            {/* Ruangan & Kuota */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="ruangan">Ruangan</Label>
-                <Input
-                  id="ruangan"
-                  placeholder="Lab 101"
-                  value={formData.ruangan}
-                  onChange={(e) =>
-                    setFormData({ ...formData, ruangan: e.target.value })
+            {/* Kuota */}
+            <div>
+              <Label htmlFor="kuota">Kuota</Label>
+              <Input
+                id="kuota"
+                type="text"
+                inputMode="numeric"
+                placeholder="30"
+                value={formData.kuota}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  // Allow empty or numeric values only
+                  if (value === "" || /^\d+$/.test(value)) {
+                    setFormData({
+                      ...formData,
+                      kuota: value === "" ? 0 : parseInt(value),
+                    });
                   }
-                />
-              </div>
-              <div>
-                <Label htmlFor="kuota">Kuota</Label>
-                <Input
-                  id="kuota"
-                  type="text"
-                  inputMode="numeric"
-                  placeholder="30"
-                  value={formData.kuota}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    // Allow empty or numeric values only
-                    if (value === "" || /^\d+$/.test(value)) {
-                      setFormData({
-                        ...formData,
-                        kuota: value === "" ? 0 : parseInt(value),
-                      });
-                    }
-                  }}
-                />
-              </div>
+                }}
+              />
             </div>
           </div>
 
@@ -679,82 +446,19 @@ export default function KelasPageEnhanced() {
         </DialogContent>
       </Dialog>
 
-      {/* Konfirmasi Dialog Pergantian Dosen */}
-      <AlertDialog
-        open={showDosenChangeConfirm}
-        onOpenChange={setShowDosenChangeConfirm}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-orange-600" />
-              Konfirmasi Pergantian Dosen
-            </AlertDialogTitle>
-            <AlertDialogDescription asChild>
-              <div className="space-y-3">
-                <p>Anda akan mengganti dosen untuk kelas:</p>
-                <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded-md border border-blue-200 dark:border-blue-800">
-                  <p className="font-semibold text-blue-900 dark:text-blue-100">
-                    📚 {pendingSaveData?.nama_kelas}
-                  </p>
-                  <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
-                    {getMataKuliahName(pendingSaveData?.mata_kuliah_id)}
-                  </p>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm font-medium">Dosen Lama:</p>
-                    <p className="text-sm text-red-600">
-                      {getDosenName(editingKelas?.dosen_id)}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">Dosen Baru:</p>
-                    <p className="text-sm text-green-600">
-                      {getDosenName(pendingSaveData?.dosen_id)}
-                    </p>
-                  </div>
-                </div>
-                <div className="mt-3 p-2 bg-orange-50 dark:bg-orange-950 rounded border border-orange-200">
-                  <p className="text-sm font-semibold text-orange-900 dark:text-orange-100">
-                    Dampak Pergantian:
-                  </p>
-                  <ul className="text-sm text-orange-800 dark:text-orange-200 list-disc list-inside mt-1">
-                    <li>Mahasiswa akan mendapat notifikasi</li>
-                    <li>Dosen lama dan baru akan dinotifikasi</li>
-                    <li>Semua tugas yang sudah dibuat tetap ada</li>
-                    <li>Nilai yang sudah diinput tetap ada</li>
-                  </ul>
-                </div>
-                <p className="text-sm font-semibold text-gray-700">
-                  Apakah Anda yakin ingin melanjutkan?
-                </p>
-              </div>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={cancelDosenChange}>
-              Batal
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmDosenChange}
-              className="bg-orange-600 hover:bg-orange-700"
-            >
-              Ya, Ganti Dosen
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
+      
       {/* Delete Confirmation Dialog */}
       {deletingKelas && (
         <DeleteConfirmDialog
-          isOpen={isDeleteDialogOpen}
-          onClose={() => {
-            setIsDeleteDialogOpen(false);
-            setDeletingKelas(null);
+          open={isDeleteDialogOpen}
+          onOpenChange={(open) => {
+            if (!open) {
+              setIsDeleteDialogOpen(false);
+              setDeletingKelas(null);
+            }
           }}
           onConfirm={confirmDelete}
+          title="Hapus Kelas"
           itemName={deletingKelas.nama_kelas}
           itemType="Kelas"
           description={`${deletingKelas.tahun_ajaran} - Semester ${deletingKelas.semester_ajaran}`}
@@ -763,6 +467,24 @@ export default function KelasPageEnhanced() {
             "Mahasiswa yang terdaftar akan kehilangan akses ke kelas ini",
             "Semua data nilai dan tugas terkait akan hilang",
           ]}
+        />
+      )}
+
+      {/* Kelola Mahasiswa Dialog */}
+      {selectedKelasForMahasiswa && (
+        <KelolaMahasiswaDialog
+          open={showKelolaMahasiswa}
+          onOpenChange={(open) => {
+            setShowKelolaMahasiswa(open);
+            if (!open) {
+              setSelectedKelasForMahasiswa(null);
+            }
+          }}
+          kelas={{
+            id: selectedKelasForMahasiswa.id,
+            nama_kelas: selectedKelasForMahasiswa.nama_kelas,
+            kuota: selectedKelasForMahasiswa.kuota,
+          }}
         />
       )}
     </div>

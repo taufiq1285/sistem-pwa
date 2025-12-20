@@ -51,6 +51,7 @@ export interface BatchUpdateNilaiItem {
 
 export interface BatchUpdateNilaiData {
   kelas_id: string;
+  mata_kuliah_id?: string; // Mata kuliah yang dipilih dosen
   nilai_list: BatchUpdateNilaiItem[];
 }
 
@@ -401,10 +402,14 @@ async function batchUpdateNilaiImpl(
 
     for (const item of batchData.nilai_list) {
       try {
+        const itemWithMK = {
+          ...item,
+          mata_kuliah_id: batchData.mata_kuliah_id, // Include mata kuliah
+        };
         const updated = await updateNilaiImpl(
           item.mahasiswa_id,
           batchData.kelas_id,
-          item,
+          itemWithMK,
         );
         results.push(updated);
       } catch (error) {

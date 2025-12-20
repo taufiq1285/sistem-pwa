@@ -290,10 +290,11 @@ export function QuizAttempt({
 
   /**
    * Navigate to specific question
+   * FIXED: Only auto-save if answer exists
    */
   const handleGoToQuestion = (questionNumber: number) => {
-    // Save current answer first
-    if (currentAnswer && !isSaving) {
+    // Save current answer first (only if not empty)
+    if (currentAnswer && currentAnswer.trim() !== "" && !isSaving) {
       handleAutoSave();
     }
 
@@ -393,9 +394,14 @@ export function QuizAttempt({
 
   /**
    * Manual save answers (used before navigation/submit)
+   * FIXED: Only save if answer is not empty
    */
   const handleAutoSave = async () => {
-    if (!attempt || !currentQuestion || !currentAnswer) return;
+    // Don't save if no answer
+    if (!attempt || !currentQuestion || !currentAnswer || currentAnswer.trim() === "") {
+      console.log("⚠️ Skipping auto-save: No answer to save");
+      return;
+    }
 
     setIsSaving(true);
 
@@ -405,6 +411,7 @@ export function QuizAttempt({
         soal_id: currentQuestion.id,
         jawaban: currentAnswer,
       });
+      console.log("✅ Answer auto-saved:", currentQuestion.id);
     } catch (err: any) {
       console.error("Manual save failed:", err);
       // Don't show error to user, will retry
@@ -565,7 +572,7 @@ export function QuizAttempt({
       {/* Connection Status Alert */}
       <ConnectionLostAlert />
 
-      {/* Offline Auto-Save */}
+      {/* Offline Auto-Save - FIXED: Only enabled if answer is not empty */}
       <OfflineAutoSave
         saveKey={`quiz_${attempt.id}_${currentQuestion?.id}`}
         data={{
@@ -574,10 +581,14 @@ export function QuizAttempt({
           jawaban: currentAnswer,
         }}
         onSave={async (data) => {
-          await submitAnswerOffline(data);
+          // Only save if jawaban is not empty
+          if (data.jawaban && data.jawaban.trim() !== "") {
+            await submitAnswerOffline(data);
+            console.log("✅ Auto-saved (offline):", data.soal_id);
+          }
         }}
         delay={3000}
-        enabled={!!currentAnswer}
+        enabled={!!currentAnswer && currentAnswer.trim() !== ""}
       />
 
       {/* Main Content */}

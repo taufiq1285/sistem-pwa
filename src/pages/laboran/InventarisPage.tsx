@@ -560,15 +560,18 @@ export default function InventarisPage() {
                   <Label htmlFor="jumlah">Jumlah Total *</Label>
                   <Input
                     id="jumlah"
-                    type="number"
-                    min="0"
+                    type="text"
+                    inputMode="numeric"
                     value={formData.jumlah || 0}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        jumlah: parseInt(e.target.value) || 0,
-                      })
-                    }
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === "" || /^\d+$/.test(value)) {
+                        setFormData({
+                          ...formData,
+                          jumlah: value === "" ? 0 : parseInt(value),
+                        });
+                      }
+                    }}
                     required
                   />
                 </div>
@@ -576,15 +579,18 @@ export default function InventarisPage() {
                   <Label htmlFor="jumlah_tersedia">Jumlah Tersedia *</Label>
                   <Input
                     id="jumlah_tersedia"
-                    type="number"
-                    min="0"
+                    type="text"
+                    inputMode="numeric"
                     value={formData.jumlah_tersedia || 0}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        jumlah_tersedia: parseInt(e.target.value) || 0,
-                      })
-                    }
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === "" || /^\d+$/.test(value)) {
+                        setFormData({
+                          ...formData,
+                          jumlah_tersedia: value === "" ? 0 : parseInt(value),
+                        });
+                      }
+                    }}
                     required
                   />
                 </div>
@@ -614,31 +620,36 @@ export default function InventarisPage() {
                   <Label htmlFor="harga_satuan">Harga Satuan (Rp)</Label>
                   <Input
                     id="harga_satuan"
-                    type="number"
-                    min="0"
+                    type="text"
+                    inputMode="numeric"
                     value={formData.harga_satuan || ""}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        harga_satuan: parseFloat(e.target.value) || undefined,
-                      })
-                    }
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === "" || /^\d*\.?\d*$/.test(value)) {
+                        setFormData({
+                          ...formData,
+                          harga_satuan: value === "" ? undefined : parseFloat(value),
+                        });
+                      }
+                    }}
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="tahun_pengadaan">Tahun Pengadaan</Label>
                   <Input
                     id="tahun_pengadaan"
-                    type="number"
-                    min="1900"
-                    max="2100"
+                    type="text"
+                    inputMode="numeric"
                     value={formData.tahun_pengadaan || ""}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        tahun_pengadaan: parseInt(e.target.value) || undefined,
-                      })
-                    }
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === "" || /^\d+$/.test(value)) {
+                        setFormData({
+                          ...formData,
+                          tahun_pengadaan: value === "" ? undefined : parseInt(value),
+                        });
+                      }
+                    }}
                   />
                 </div>
               </div>
@@ -743,15 +754,18 @@ export default function InventarisPage() {
               <div className="space-y-2">
                 <Label>Amount</Label>
                 <Input
-                  type="number"
-                  min="0"
+                  type="text"
+                  inputMode="numeric"
                   value={stockAdjustment.amount}
-                  onChange={(e) =>
-                    setStockAdjustment({
-                      ...stockAdjustment,
-                      amount: parseInt(e.target.value) || 0,
-                    })
-                  }
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value === "" || /^\d+$/.test(value)) {
+                      setStockAdjustment({
+                        ...stockAdjustment,
+                        amount: value === "" ? 0 : parseInt(value),
+                      });
+                    }
+                  }}
                 />
               </div>
             </div>

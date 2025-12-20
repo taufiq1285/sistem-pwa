@@ -307,6 +307,21 @@ export function QuizCard({
                 {quiz.judul}
               </h3>
 
+              {/* Mata Kuliah & Kelas Info */}
+              {quiz.kelas && (
+                <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+                  <span className="inline-flex items-center gap-1">
+                    📚
+                    <span className="font-medium text-blue-700">
+                      {quiz.kelas.mata_kuliah?.kode_mk}
+                    </span>
+                    - {quiz.kelas.mata_kuliah?.nama_mk}
+                  </span>
+                  <span className="text-gray-400">•</span>
+                  <span>Kelas: {quiz.kelas.nama_kelas}</span>
+                </div>
+              )}
+
               {/* Description */}
               {quiz.deskripsi && !compact && (
                 <p className="text-sm text-muted-foreground mt-1 line-clamp-2">

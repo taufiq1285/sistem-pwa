@@ -22,6 +22,7 @@ import {
   CheckCircle,
   FileText,
   ClipboardCheck,
+  Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -79,6 +80,8 @@ import {
   type BatchUpdateNilaiData,
 } from "@/lib/api/nilai.api";
 import { getKelas, updateKelas } from "@/lib/api/kelas.api";
+import { getMyKelas } from "@/lib/api/dosen.api";
+import { getMataKuliah } from "@/lib/api/mata-kuliah.api";
 import type { NilaiWithMahasiswa, NilaiSummary } from "@/types/nilai.types";
 import type { Kelas, BobotNilai } from "@/types/kelas.types";
 import { toast } from "sonner";
@@ -184,31 +187,18 @@ export default function DosenPenilaianPage() {
       setLoading(true);
       if (!user?.dosen?.id) return;
 
-      // Get all kelas diajarkan dosen
-      const allKelas = await getKelas({
-        dosen_id: user.dosen.id,
-        is_active: true,
-      });
+      // 🎯 Fetch mata kuliah directly from mata_kuliah table
+      // Dosen bebas pilih mata kuliah apapun yang aktif
+      const mataKuliahData = await getMataKuliah({ is_active: true });
+      const mataKuliahArray = mataKuliahData.map((mk: any) => ({
+        id: mk.id,
+        nama_mk: mk.nama_mk,
+        kode_mk: mk.kode_mk,
+      }));
+      setMataKuliahList(mataKuliahArray);
 
-      // Extract unique mata kuliah from kelas
-      const mataKuliahMap = new Map();
-      allKelas.forEach((kelas) => {
-        if (kelas.mata_kuliah_id && kelas.mata_kuliah) {
-          mataKuliahMap.set(kelas.mata_kuliah_id, {
-            id: kelas.mata_kuliah_id,
-            nama_mk: kelas.mata_kuliah.nama_mk,
-            kode_mk: kelas.mata_kuliah.kode_mk || "",
-          });
-        }
-      });
-
-      const uniqueMataKuliah = Array.from(mataKuliahMap.values());
-      setMataKuliahList(uniqueMataKuliah);
-
-      // Auto-select first mata kuliah if available
-      if (uniqueMataKuliah.length > 0 && !selectedMataKuliah) {
-        setSelectedMataKuliah(uniqueMataKuliah[0].id);
-      }
+      // DO NOT auto-select: Dosen must manually choose
+      // User should see welcome screen and choose manually
     } catch (error) {
       console.error("Error loading mata kuliah:", error);
       toast.error("Gagal memuat data mata kuliah");
@@ -225,17 +215,13 @@ export default function DosenPenilaianPage() {
       setLoading(true);
       if (!user?.dosen?.id || !selectedMataKuliah) return;
 
-      const data = await getKelas({
-        dosen_id: user.dosen.id,
-        mata_kuliah_id: selectedMataKuliah,
-        is_active: true,
-      });
-      setKelasList(data);
+      // 🎯 Load all kelas - dosen bebas pilih kelas manapun
+      // Kelas dan mata kuliah dipilih independently
+      const allKelas = await getMyKelas();
+      setKelasList(allKelas);
 
-      // Auto-select first kelas if available
-      if (data.length > 0 && !selectedKelas) {
-        setSelectedKelas(data[0].id);
-      }
+      // DO NOT auto-select: Dosen must manually choose kelas
+      // User should see selection options and choose manually
     } catch (error) {
       console.error("Error loading kelas:", error);
       toast.error("Gagal memuat data kelas");
@@ -459,6 +445,7 @@ export default function DosenPenilaianPage() {
 
       const batchData: BatchUpdateNilaiData = {
         kelas_id: selectedKelas,
+        mata_kuliah_id: selectedMataKuliah,
         nilai_list: Array.from(editedGrades.entries()).map(
           ([mahasiswaId, data]) => ({
             mahasiswa_id: mahasiswaId,
@@ -613,20 +600,58 @@ export default function DosenPenilaianPage() {
   const getDisplayValue = (
     mahasiswa: NilaiWithMahasiswa,
     field: keyof NilaiWithMahasiswa,
-  ): number => {
+  ): string => {
     const edited = editedGrades.get(mahasiswa.mahasiswa_id);
+
+    let value: number | undefined = undefined;
+
     if (edited && field in edited) {
-      return edited[field] as number;
+      value = edited[field] as number;
+    } else if (field in mahasiswa) {
+      value = mahasiswa[field] as number;
     }
-    return (mahasiswa[field] as number) ?? 0;
+
+    // Return empty string for null/undefined values
+    return value !== null && value !== undefined && !isNaN(value) ? value.toString() : "";
   };
 
-  const filteredMahasiswa = mahasiswaList.filter((m) => {
+  // Check if mahasiswa has been graded
+  const isMahasiswaGraded = (mahasiswa: NilaiWithMahasiswa): boolean => {
+    const gradeFields = ['nilai_uts', 'nilai_uas', 'nilai_praktikum', 'nilai_kehadiran'];
+    return gradeFields.some(field => {
+      const edited = editedGrades.get(mahasiswa.mahasiswa_id);
+
+      let value: number | undefined = undefined;
+
+      if (edited && field in edited) {
+        value = edited[field] as number;
+      } else if (field in mahasiswa) {
+        value = mahasiswa[field] as number;
+      }
+
+      return value !== null && value !== undefined && !isNaN(value) && value > 0;
+    });
+  };
+
+  // Get input styling based on whether value is empty or not
+  const getInputClass = (mahasiswa: NilaiWithMahasiswa, field: keyof NilaiWithMahasiswa): string => {
+    const hasValue = getDisplayValue(mahasiswa, field) !== "";
+    const baseClass = "w-20 text-center border transition-colors";
+
+    if (hasValue) {
+      return `${baseClass} border-green-200 bg-green-50 focus:border-green-400 focus:bg-green-100`;
+    } else {
+      return `${baseClass} border-gray-200 bg-yellow-50 focus:border-yellow-400 focus:bg-yellow-100 placeholder:text-gray-400`;
+    }
+  };
+
+  const filteredMahasiswa = (mahasiswaList || []).filter((m) => {
+    if (!m || !m.mahasiswa || !m.mahasiswa.user) return false;
     if (!searchQuery) return true;
     const query = searchQuery.toLowerCase();
     return (
-      m.mahasiswa.nim.toLowerCase().includes(query) ||
-      m.mahasiswa.user.full_name.toLowerCase().includes(query)
+      (m.mahasiswa.nim && m.mahasiswa.nim.toLowerCase().includes(query)) ||
+      (m.mahasiswa.user.full_name && m.mahasiswa.user.full_name.toLowerCase().includes(query))
     );
   });
 
@@ -651,34 +676,208 @@ export default function DosenPenilaianPage() {
         <div>
           <h1 className="text-3xl font-bold">Penilaian Mahasiswa</h1>
           <p className="text-gray-600">
-            Input nilai dan review permintaan perbaikan nilai
+            {selectedKelas
+              ? "Input nilai mahasiswa dengan visual indicators untuk kemudahan tracking"
+              : "Pilih mata kuliah dan kelas untuk memulai penilaian"
+            }
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          {selectedKelas && (
+        {selectedKelas && (
+          <div className="flex items-center gap-2">
             <Button
               variant="outline"
               onClick={handleOpenBobotDialog}
               className="flex items-center gap-2"
             >
               <Settings className="w-4 h-4" />
-              Atur Bobot untuk {currentMataKuliah}
+              Atur Bobot
             </Button>
-          )}
-          <Button
-            onClick={handleSaveAll}
-            disabled={!hasChanges || saving}
-            className="flex items-center gap-2"
-          >
-            {saving ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Save className="w-4 h-4" />
-            )}
-            Simpan Semua {hasChanges && `(${editedGrades.size})`}
-          </Button>
-        </div>
+            <Button
+              onClick={handleSaveAll}
+              disabled={!hasChanges || saving}
+              className="flex items-center gap-2"
+            >
+              {saving ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Save className="w-4 h-4" />
+              )}
+              Simpan Semua {hasChanges && `(${editedGrades.size})`}
+            </Button>
+          </div>
+        )}
       </div>
+
+      {/* Empty State - Belum Pilih Kelas */}
+      {!selectedKelas && (
+        <div className="space-y-6">
+          {/* Welcome Card */}
+          <Card className="border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50">
+            <CardContent className="flex flex-col items-center justify-center py-12">
+              <div className="bg-blue-100 p-4 rounded-full mb-4">
+                <ClipboardCheck className="w-12 h-12 text-blue-600" />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                Selamat Datang di Halaman Penilaian
+              </h2>
+              <p className="text-gray-600 text-center max-w-md mb-6">
+                Untuk memulai memberikan nilai, silakan pilih mata kuliah dan kelas yang Anda ajarkan
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Selection Steps Card */}
+          <Card className="border-2 border-gray-200">
+            <CardHeader className="border-b bg-gray-50">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <FileText className="w-5 h-5 text-blue-600" />
+                Langkah 1: Pilih Mata Kuliah & Kelas
+              </CardTitle>
+              <CardDescription>
+                Pilih mata kuliah dan kelas yang akan dinilai. Pastikan Anda memilih yang benar.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Mata Kuliah Selection */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="flex items-center justify-center w-7 h-7 bg-blue-600 text-white rounded-full text-sm font-bold">
+                      1
+                    </span>
+                    <Label htmlFor="mata-kuliah-select" className="text-base font-semibold">
+                      Pilih Mata Kuliah
+                    </Label>
+                  </div>
+                  <Select value={selectedMataKuliah} onValueChange={handleMataKuliahChange}>
+                    <SelectTrigger id="mata-kuliah-select" className="h-11">
+                      <SelectValue placeholder="-- Pilih Mata Kuliah --" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {mataKuliahList.length === 0 ? (
+                        <div className="p-4 text-center text-gray-500">
+                          Tidak ada mata kuliah tersedia
+                        </div>
+                      ) : (
+                        mataKuliahList.map((mk) => (
+                          <SelectItem key={mk.id} value={mk.id}>
+                            <div className="flex flex-col">
+                              <span className="font-medium">{mk.nama_mk}</span>
+                              {mk.kode_mk && (
+                                <span className="text-xs text-gray-500">{mk.kode_mk}</span>
+                              )}
+                            </div>
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                  {selectedMataKuliah && (
+                    <div className="flex items-center gap-2 text-sm text-green-600">
+                      <CheckCircle className="w-4 h-4" />
+                      <span>Mata kuliah dipilih</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Kelas Selection */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className={`flex items-center justify-center w-7 h-7 rounded-full text-sm font-bold ${
+                      selectedMataKuliah ? 'bg-blue-600 text-white' : 'bg-gray-300 text-gray-500'
+                    }`}>
+                      2
+                    </span>
+                    <Label htmlFor="kelas-select" className="text-base font-semibold">
+                      Pilih Kelas
+                    </Label>
+                  </div>
+                  <Select
+                    value={selectedKelas}
+                    onValueChange={handleKelasChange}
+                    disabled={!selectedMataKuliah}
+                  >
+                    <SelectTrigger id="kelas-select" className="h-11" disabled={!selectedMataKuliah}>
+                      <SelectValue
+                        placeholder={
+                          !selectedMataKuliah
+                            ? "Pilih mata kuliah terlebih dahulu"
+                            : kelasList.length === 0
+                              ? "Tidak ada kelas tersedia"
+                              : "-- Pilih Kelas --"
+                        }
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {kelasList.length === 0 ? (
+                        <div className="p-4 text-center text-gray-500">
+                          {selectedMataKuliah
+                            ? "Tidak ada kelas untuk mata kuliah ini"
+                            : "Pilih mata kuliah terlebih dahulu"
+                          }
+                        </div>
+                      ) : (
+                        kelasList.map((kelas) => (
+                          <SelectItem key={kelas.id} value={kelas.id}>
+                            {kelas.nama_kelas}
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                  {!selectedMataKuliah && (
+                    <div className="flex items-center gap-2 text-sm text-gray-500">
+                      <AlertTriangle className="w-4 h-4" />
+                      <span>Pilih mata kuliah terlebih dahulu</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Info Helper */}
+              {selectedMataKuliah && kelasList.length > 0 && (
+                <Alert className="mt-6 border-blue-200 bg-blue-50">
+                  <CheckCircle className="h-4 w-4 text-blue-600" />
+                  <AlertDescription>
+                    <strong>Siap!</strong> Silakan pilih kelas untuk {currentMataKuliahInfo?.nama_mk} dan mulai memberikan nilai.
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {selectedMataKuliah && kelasList.length === 0 && (
+                <Alert className="mt-6 border-orange-200 bg-orange-50">
+                  <AlertTriangle className="h-4 w-4 text-orange-600" />
+                  <AlertDescription>
+                    Belum ada kelas untuk mata kuliah <strong>{currentMataKuliahInfo?.nama_mk}</strong>.
+                    Silakan hubungi admin untuk menambahkan kelas.
+                  </AlertDescription>
+                </Alert>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Info Card */}
+          <Card className="border-indigo-200 bg-indigo-50">
+            <CardContent className="py-4">
+              <div className="flex items-start gap-3">
+                <div className="bg-indigo-100 p-2 rounded-lg">
+                  <Settings className="w-5 h-5 text-indigo-600" />
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-semibold text-indigo-900 mb-1">
+                    Informasi Penting
+                  </h4>
+                  <ul className="text-sm text-indigo-800 space-y-1">
+                    <li>• Setiap mata kuliah dapat memiliki bobot nilai yang berbeda</li>
+                    <li>• Anda dapat mengatur bobot nilai setelah memilih kelas</li>
+                    <li>• Pastikan memilih mata kuliah dan kelas yang benar sebelum input nilai</li>
+                  </ul>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Tabs Container */}
       <Tabs defaultValue="penilaian" className="space-y-4">
@@ -695,224 +894,232 @@ export default function DosenPenilaianPage() {
 
         {/* Tab 1: Penilaian (Existing Content) */}
         <TabsContent value="penilaian" className="space-y-6">
-          {/* Info: Bobot Nilai Per Mata Kuliah */}
-          <Alert className="border-indigo-500 bg-indigo-50 dark:bg-indigo-950">
-        <AlertDescription className="text-sm text-indigo-900 dark:text-indigo-100">
-          <strong>💡 Info:</strong> Setiap mata kuliah dapat memiliki bobot
-          nilai yang berbeda. Anda dapat mengatur bobot nilai (Kuis, Tugas,
-          UTS, UAS, Praktikum, Kehadiran) untuk setiap mata kuliah yang Anda
-          ajarkan melalui tombol "Atur Bobot".
-        </AlertDescription>
-      </Alert>
-
-      {/* Active Kelas Alert - PROMINENT */}
-      {selectedKelas && (
-        <Alert className="border-blue-500 bg-blue-50 dark:bg-blue-950">
-          <CheckCircle className="h-5 w-5 text-blue-600" />
-          <AlertDescription className="text-base font-semibold text-blue-900 dark:text-blue-100">
-            <div className="flex items-center gap-2">
-              <span>Sedang menginput nilai untuk:</span>
-              <span className="px-3 py-1 bg-blue-600 text-white rounded-md">
-                {currentMataKuliah} - {currentNamaKelas}
-              </span>
-            </div>
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {/* Selection Steps: Mata Kuliah & Kelas */}
-      <div className="grid gap-4 md:grid-cols-2">
-        {/* Step 1: Pilih Mata Kuliah */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <span className="flex items-center justify-center w-6 h-6 bg-blue-600 text-white rounded-full text-sm font-bold">
-                1
-              </span>
-              Pilih Mata Kuliah
-            </CardTitle>
-            <CardDescription>
-              Pilih mata kuliah yang akan dinilai
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Select
-              value={selectedMataKuliah}
-              onValueChange={handleMataKuliahChange}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Pilih mata kuliah" />
-              </SelectTrigger>
-              <SelectContent>
-                {mataKuliahList.map((mk) => (
-                  <SelectItem key={mk.id} value={mk.id}>
-                    {mk.kode_mk} - {mk.nama_mk}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </CardContent>
-        </Card>
-
-        {/* Step 2: Pilih Kelas */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <span className="flex items-center justify-center w-6 h-6 bg-blue-600 text-white rounded-full text-sm font-bold">
-                2
-              </span>
-              Pilih Kelas
-            </CardTitle>
-            <CardDescription>
-              {selectedMataKuliah
-                ? "Pilih kelas untuk mata kuliah yang dipilih"
-                : "Pilih mata kuliah terlebih dahulu"}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Select
-              value={selectedKelas}
-              onValueChange={handleKelasChange}
-              disabled={!selectedMataKuliah}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Pilih kelas" />
-              </SelectTrigger>
-              <SelectContent>
-                {kelasList.map((kelas) => (
-                  <SelectItem key={kelas.id} value={kelas.id}>
-                    {kelas.nama_kelas}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Summary & Bobot Nilai - Only show when kelas selected */}
-      {selectedKelas && (
-        <div className="grid gap-4 md:grid-cols-2">
-          {summary && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Ringkasan Nilai</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-gray-600">Total Mahasiswa</p>
-                    <p className="text-2xl font-bold">
-                      {summary.total_mahasiswa}
-                    </p>
+          {/* Class Info Card - Only show when kelas selected */}
+          {selectedKelas && (
+            <>
+              {/* Active Class Banner */}
+              <Card className="border-2 border-blue-300 bg-gradient-to-r from-blue-50 to-indigo-50">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <CheckCircle className="w-6 h-6 text-green-600" />
+                        <CardTitle className="text-xl">Kelas Aktif</CardTitle>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-lg font-bold text-blue-900">
+                          {currentMataKuliahInfo?.kode_mk} - {currentMataKuliahInfo?.nama_mk}
+                        </p>
+                        <p className="text-base text-gray-700">
+                          Kelas: <span className="font-semibold">{currentNamaKelas}</span> • {mahasiswaList?.length || 0} mahasiswa terdaftar
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        if (editedGrades.size > 0) {
+                          setPendingKelasSwitch("");
+                          setShowSwitchKelasWarning(true);
+                        } else {
+                          setSelectedKelas("");
+                        }
+                      }}
+                      className="flex items-center gap-2"
+                    >
+                      <FileText className="w-4 h-4" />
+                      Ganti Kelas
+                    </Button>
                   </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Sudah Dinilai</p>
-                    <p className="text-2xl font-bold text-green-600">
-                      {summary.sudah_dinilai}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Belum Dinilai</p>
-                    <p className="text-2xl font-bold text-orange-600">
-                      {summary.belum_dinilai}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Rata-rata</p>
-                    <p className="text-2xl font-bold text-blue-600">
-                      {summary.rata_rata.toFixed(2)}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardHeader>
+              </Card>
+
+              {/* Summary Cards - Improved Layout */}
+              <div className="grid gap-4 md:grid-cols-2">
+                {/* Bobot Nilai Card */}
+                <Card className="border-purple-200 bg-purple-50">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle className="text-base">Bobot Penilaian</CardTitle>
+                        <CardDescription className="text-xs mt-1">
+                          Komponen nilai untuk {currentMataKuliahInfo?.nama_mk}
+                        </CardDescription>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleOpenBobotDialog}
+                        className="text-purple-700 hover:text-purple-900 hover:bg-purple-100"
+                      >
+                        <Settings className="w-4 h-4 mr-1" />
+                        Edit
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div className="flex justify-between items-center p-2 bg-white rounded border border-purple-100">
+                        <span className="text-gray-700">UTS</span>
+                        <span className="font-bold text-purple-700">{currentBobot.uts}%</span>
+                      </div>
+                      <div className="flex justify-between items-center p-2 bg-white rounded border border-purple-100">
+                        <span className="text-gray-700">UAS</span>
+                        <span className="font-bold text-purple-700">{currentBobot.uas}%</span>
+                      </div>
+                      <div className="flex justify-between items-center p-2 bg-white rounded border border-purple-100">
+                        <span className="text-gray-700">Praktikum</span>
+                        <span className="font-bold text-purple-700">{currentBobot.praktikum}%</span>
+                      </div>
+                      <div className="flex justify-between items-center p-2 bg-white rounded border border-purple-100">
+                        <span className="text-gray-700">Kehadiran</span>
+                        <span className="font-bold text-purple-700">{currentBobot.kehadiran}%</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Summary Statistik */}
+                {summary && (
+                  <Card className="border-green-200 bg-green-50">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base">Ringkasan Penilaian</CardTitle>
+                      <CardDescription className="text-xs mt-1">
+                        Status penilaian kelas ini
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="p-3 bg-white rounded border border-green-100">
+                          <p className="text-xs text-gray-600 mb-1">Total Mahasiswa</p>
+                          <p className="text-2xl font-bold text-gray-900">
+                            {summary.total_mahasiswa}
+                          </p>
+                        </div>
+                        <div className="p-3 bg-white rounded border border-green-100">
+                          <p className="text-xs text-gray-600 mb-1">Sudah Dinilai</p>
+                          <p className="text-2xl font-bold text-green-600">
+                            {summary.sudah_dinilai}
+                          </p>
+                        </div>
+                        <div className="p-3 bg-white rounded border border-green-100">
+                          <p className="text-xs text-gray-600 mb-1">Belum Dinilai</p>
+                          <p className="text-2xl font-bold text-orange-600">
+                            {summary.belum_dinilai}
+                          </p>
+                        </div>
+                        <div className="p-3 bg-white rounded border border-green-100">
+                          <p className="text-xs text-gray-600 mb-1">Rata-rata</p>
+                          <p className="text-2xl font-bold text-blue-600">
+                            {summary.rata_rata.toFixed(1)}
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            </>
           )}
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Bobot Nilai</CardTitle>
-              <CardDescription className="text-xs">
-                Bobot untuk {currentMataKuliah}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Kuis:</span>
-                  <span className="font-semibold">{currentBobot.kuis}%</span>
+          {/* Legend & Helper Info */}
+          {selectedKelas && (
+            <Alert className="border-blue-200 bg-blue-50">
+              <AlertDescription>
+                <div className="space-y-2">
+                  <p className="font-semibold text-blue-900 mb-2">Panduan Input Nilai:</p>
+                  <div className="grid md:grid-cols-3 gap-3 text-sm">
+                    <div className="flex items-center gap-2">
+                      <div className="w-5 h-5 bg-yellow-50 border-2 border-yellow-400 rounded"></div>
+                      <span className="text-gray-700">Kotak kuning = Belum ada nilai</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-5 h-5 bg-green-50 border-2 border-green-400 rounded"></div>
+                      <span className="text-gray-700">Kotak hijau = Sudah ada nilai</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-700">Double-click baris untuk edit lengkap</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Tugas:</span>
-                  <span className="font-semibold">{currentBobot.tugas}%</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">UTS:</span>
-                  <span className="font-semibold">{currentBobot.uts}%</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">UAS:</span>
-                  <span className="font-semibold">{currentBobot.uas}%</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Praktikum:</span>
-                  <span className="font-semibold">
-                    {currentBobot.praktikum}%
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Kehadiran:</span>
-                  <span className="font-semibold">
-                    {currentBobot.kehadiran}%
-                  </span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+              </AlertDescription>
+            </Alert>
+          )}
 
-      {/* Search */}
-      <div className="flex items-center gap-4">
-        <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <Input
-            placeholder="Cari mahasiswa (NIM atau nama)..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-      </div>
-
-      {/* Grades Table */}
-      {selectedKelas ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Daftar Nilai Mahasiswa</CardTitle>
-            <CardDescription>
-              Nilai akan otomatis dihitung ketika Anda mengubah komponen nilai
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="flex items-center justify-center h-64">
-                <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+          {/* Search */}
+          {selectedKelas && (
+            <div className="flex items-center gap-4">
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Input
+                  placeholder="Cari mahasiswa (NIM atau nama)..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
               </div>
-            ) : filteredMahasiswa.length === 0 ? (
-              <Alert>
-                <AlertDescription>
-                  {searchQuery
-                    ? "Tidak ada mahasiswa yang sesuai dengan pencarian"
-                    : "Belum ada mahasiswa terdaftar di kelas ini"}
-                </AlertDescription>
-              </Alert>
-            ) : (
+            </div>
+          )}
+
+          {/* Grades Table */}
+          {selectedKelas && (
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-xl">Daftar Nilai Mahasiswa</CardTitle>
+                    <CardDescription className="mt-1">
+                      {filteredMahasiswa.length} mahasiswa • Double-click baris untuk edit detail
+                    </CardDescription>
+                  </div>
+                  {searchQuery && (
+                    <div className="text-sm text-gray-600">
+                      Hasil pencarian: {filteredMahasiswa.length} dari {mahasiswaList.length}
+                    </div>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <div className="flex items-center justify-center h-64">
+                    <div className="text-center">
+                      <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-3" />
+                      <p className="text-gray-600">Memuat data mahasiswa...</p>
+                    </div>
+                  </div>
+                ) : filteredMahasiswa.length === 0 ? (
+                  <div className="text-center py-16">
+                    <div className="bg-gray-100 p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                      {searchQuery ? (
+                        <Search className="w-8 h-8 text-gray-400" />
+                      ) : (
+                        <Users className="w-8 h-8 text-gray-400" />
+                      )}
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                      {searchQuery ? "Tidak Ada Hasil Pencarian" : "Belum Ada Mahasiswa"}
+                    </h3>
+                    <p className="text-gray-600 mb-4">
+                      {searchQuery
+                        ? `Tidak ditemukan mahasiswa dengan kata kunci "${searchQuery}"`
+                        : "Kelas ini belum memiliki mahasiswa terdaftar"}
+                    </p>
+                    {searchQuery && (
+                      <Button
+                        variant="outline"
+                        onClick={() => setSearchQuery("")}
+                      >
+                        Hapus Pencarian
+                      </Button>
+                    )}
+                  </div>
+                ) : (
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead className="w-12">No</TableHead>
+                      <TableHead>Status</TableHead>
                       <TableHead>NIM</TableHead>
                       <TableHead>Nama</TableHead>
                       {/* HIDDEN: Kuis & Tugas (bobot 0%) */}
@@ -951,6 +1158,21 @@ export default function DosenPenilaianPage() {
                           title="Double-click untuk edit detail"
                         >
                           <TableCell>{index + 1}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center justify-center">
+                              {isMahasiswaGraded(mahasiswa) ? (
+                                <div className="flex items-center gap-1 px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
+                                  <CheckCircle className="w-3 h-3" />
+                                  Selesai
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-1 px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-medium">
+                                  <AlertTriangle className="w-3 h-3" />
+                                  Belum
+                                </div>
+                              )}
+                            </div>
+                          </TableCell>
                           <TableCell className="font-mono">
                             {mahasiswa.mahasiswa.nim}
                           </TableCell>
@@ -998,6 +1220,7 @@ export default function DosenPenilaianPage() {
                               min="0"
                               max="100"
                               step="0.01"
+                              placeholder="-"
                               value={getDisplayValue(mahasiswa, "nilai_uts")}
                               onChange={(e) =>
                                 handleGradeChange(
@@ -1006,7 +1229,7 @@ export default function DosenPenilaianPage() {
                                   e.target.value,
                                 )
                               }
-                              className="w-20 text-center"
+                              className={getInputClass(mahasiswa, "nilai_uts")}
                             />
                           </TableCell>
                           <TableCell>
@@ -1015,6 +1238,7 @@ export default function DosenPenilaianPage() {
                               min="0"
                               max="100"
                               step="0.01"
+                              placeholder="-"
                               value={getDisplayValue(mahasiswa, "nilai_uas")}
                               onChange={(e) =>
                                 handleGradeChange(
@@ -1023,7 +1247,7 @@ export default function DosenPenilaianPage() {
                                   e.target.value,
                                 )
                               }
-                              className="w-20 text-center"
+                              className={getInputClass(mahasiswa, "nilai_uas")}
                             />
                           </TableCell>
                           <TableCell>
@@ -1032,6 +1256,7 @@ export default function DosenPenilaianPage() {
                               min="0"
                               max="100"
                               step="0.01"
+                              placeholder="-"
                               value={getDisplayValue(
                                 mahasiswa,
                                 "nilai_praktikum",
@@ -1043,7 +1268,7 @@ export default function DosenPenilaianPage() {
                                   e.target.value,
                                 )
                               }
-                              className="w-20 text-center"
+                              className={getInputClass(mahasiswa, "nilai_praktikum")}
                             />
                           </TableCell>
                           <TableCell>
@@ -1052,6 +1277,7 @@ export default function DosenPenilaianPage() {
                               min="0"
                               max="100"
                               step="0.01"
+                              placeholder="-"
                               value={getDisplayValue(
                                 mahasiswa,
                                 "nilai_kehadiran",
@@ -1063,7 +1289,7 @@ export default function DosenPenilaianPage() {
                                   e.target.value,
                                 )
                               }
-                              className="w-20 text-center"
+                              className={getInputClass(mahasiswa, "nilai_kehadiran")}
                             />
                           </TableCell>
                           <TableCell className="text-center font-bold">
@@ -1121,24 +1347,21 @@ export default function DosenPenilaianPage() {
                     })}
                   </TableBody>
                 </Table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      ) : (
-        <Alert>
-          <AlertDescription>
-            Pilih kelas terlebih dahulu untuk melihat daftar mahasiswa
-          </AlertDescription>
-        </Alert>
-      )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
-          {/* Info */}
-          {hasChanges && (
-            <Alert>
-              <AlertDescription>
-                Ada {editedGrades.size} perubahan yang belum disimpan. Klik "Simpan
-                Semua" untuk menyimpan semua perubahan.
+          {/* Unsaved Changes Warning */}
+          {selectedKelas && hasChanges && (
+            <Alert className="border-orange-300 bg-orange-50">
+              <AlertTriangle className="h-5 w-5 text-orange-600" />
+              <AlertDescription className="flex items-center justify-between">
+                <span className="text-orange-900">
+                  <strong>Perhatian!</strong> Ada {editedGrades.size} perubahan yang belum disimpan.
+                  Klik tombol <strong>"Simpan Semua"</strong> di pojok kanan atas untuk menyimpan.
+                </span>
               </AlertDescription>
             </Alert>
           )}

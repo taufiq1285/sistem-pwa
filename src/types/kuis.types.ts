@@ -38,6 +38,10 @@ export const TIPE_SOAL = {
   PILIHAN_GANDA: "pilihan_ganda",
   ESSAY: "essay",
   FILE_UPLOAD: "file_upload",
+  BENAR_SALAH: "benar_salah",
+  JAWABAN_SINGKAT: "jawaban_singkat",
+  MENJODORKAN: "menjodohkan",
+  ISIAN_SINGKAT: "isian_singkat",
 } as const;
 
 export type TipeSoal = (typeof TIPE_SOAL)[keyof typeof TIPE_SOAL];
@@ -46,6 +50,10 @@ export const TIPE_SOAL_LABELS = {
   pilihan_ganda: "Pilihan Ganda",
   essay: "Essay",
   file_upload: "Upload File (Laporan)",
+  benar_salah: "Benar/Salah",
+  jawaban_singkat: "Jawaban Singkat",
+  menjodohkan: "Menjodohkan",
+  isian_singkat: "Isian Singkat",
 } as const;
 
 export const QUIZ_STATUS = {

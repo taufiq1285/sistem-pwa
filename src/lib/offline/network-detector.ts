@@ -462,5 +462,9 @@ export class NetworkDetector {
 
 /**
  * Default network detector instance
+ * Periodic ping disabled to avoid 500 errors when /api/ping doesn't exist
  */
-export const networkDetector = new NetworkDetector();
+export const networkDetector = new NetworkDetector({
+  enablePeriodicCheck: false,
+  enableQualityCheck: false,
+});

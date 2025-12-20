@@ -108,6 +108,7 @@ export function QuizBuilder({
   const [kelasList, setKelasList] = useState<Kelas[]>([]);
   const [isLoadingKelas, setIsLoadingKelas] = useState(false);
   const [mataKuliahList, setMataKuliahList] = useState<MataKuliah[]>([]);
+  const [selectedMataKuliah, setSelectedMataKuliah] = useState<string>("");
 
   const [showCreateKelasDialog, setShowCreateKelasDialog] = useState(false);
   const [isCreatingKelas, setIsCreatingKelas] = useState(false);
@@ -169,16 +170,36 @@ export function QuizBuilder({
   const formData = watch();
 
   useEffect(() => {
-    loadKelas();
     loadMataKuliah();
+    // If editing, load kelas for the quiz's mata kuliah
+    if (quiz?.kelas?.mata_kuliah_id) {
+      setSelectedMataKuliah(quiz.kelas.mata_kuliah_id);
+      loadKelas(quiz.kelas.mata_kuliah_id);
+    }
   }, [dosenId]);
 
-  const loadKelas = async () => {
+  // Load kelas when mata kuliah changes
+  useEffect(() => {
+    if (selectedMataKuliah) {
+      loadKelas(selectedMataKuliah);
+      // Reset kelas selection when mata kuliah changes
+      setValue("kelas_id", "");
+    } else {
+      setKelasList([]);
+    }
+  }, [selectedMataKuliah]);
+
+  const loadKelas = async (mataKuliahId?: string) => {
     setIsLoadingKelas(true);
     try {
-      const data = await getKelas({ is_active: true });
+      // Load ALL active kelas (not limited to those with jadwal)
+      // Dosen can create tugas before jadwal is created
+      const data = await getKelas({
+        is_active: true,
+        mata_kuliah_id: mataKuliahId,
+      });
       setKelasList(data);
-      if (data.length === 1 && !isEditing) setValue("kelas_id", data[0].id);
+      if (data.length === 1 && !isEditing && mataKuliahId) setValue("kelas_id", data[0].id);
     } catch (_error: unknown) {
       // ✅ FIXED: Unused variable
       toast.error("Gagal memuat kelas");
@@ -264,7 +285,7 @@ export function QuizBuilder({
     try {
       const dataToSave = {
         ...formData,
-        status: "draft", // Always start as draft
+        status: "draft" as const, // Always start as draft
       };
 
       if (currentQuiz) {
@@ -511,30 +532,59 @@ export function QuizBuilder({
                 )}
               </div>
 
+              {/* Dropdown Mata Kuliah */}
               <div className="md:col-span-2 space-y-2">
-                <Label htmlFor="kelas_id">Kelas *</Label>
+                <Label htmlFor="mata_kuliah">Pilih Mata Kuliah *</Label>
+                <Select
+                  value={selectedMataKuliah}
+                  onValueChange={setSelectedMataKuliah}
+                  disabled={isEditing}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Pilih mata kuliah..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {mataKuliahList.map((mk) => (
+                      <SelectItem key={mk.id} value={mk.id}>
+                        <div className="flex flex-col">
+                          <span className="font-semibold">{mk.kode_mk}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {mk.nama_mk}
+                          </span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Dropdown Kelas */}
+              <div className="md:col-span-2 space-y-2">
+                <Label htmlFor="kelas_id">Pilih Kelas *</Label>
                 <Select
                   value={formData.kelas_id || ""}
                   onValueChange={(value) => setValue("kelas_id", value)}
-                  disabled={isLoadingKelas || isEditing}
+                  disabled={!selectedMataKuliah || isLoadingKelas || isEditing}
                 >
                   <SelectTrigger
                     className={cn(errors.kelas_id && "border-destructive")}
                   >
                     <SelectValue
                       placeholder={
-                        isLoadingKelas
-                          ? "Memuat..."
-                          : kelasList.length === 0
-                            ? "Tidak ada kelas aktif - Hubungi admin"
-                            : "Pilih kelas..."
+                        !selectedMataKuliah
+                          ? "Pilih mata kuliah terlebih dahulu"
+                          : isLoadingKelas
+                            ? "Memuat kelas..."
+                            : kelasList.length === 0
+                              ? "Tidak ada kelas untuk mata kuliah ini"
+                              : "Pilih kelas..."
                       }
                     />
                   </SelectTrigger>
                   <SelectContent>
                     {kelasList.map((kelas) => (
                       <SelectItem key={kelas.id} value={kelas.id}>
-                        {kelas.nama_kelas} - {kelas.kode_kelas}
+                        {kelas.nama_kelas} ({kelas.kode_kelas})
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -543,6 +593,21 @@ export function QuizBuilder({
                   <p className="text-sm text-destructive">
                     {errors.kelas_id.message}
                   </p>
+                )}
+                {formData.kelas_id && selectedMataKuliah && (
+                  <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-start gap-2">
+                      <div className="text-blue-600 mt-0.5">📚</div>
+                      <div className="flex-1">
+                        <p className="text-sm font-semibold text-blue-900">
+                          {mataKuliahList.find((mk) => mk.id === selectedMataKuliah)?.nama_mk}
+                        </p>
+                        <p className="text-xs text-blue-700">
+                          Kelas: {kelasList.find((k) => k.id === formData.kelas_id)?.nama_kelas}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 )}
               </div>
 

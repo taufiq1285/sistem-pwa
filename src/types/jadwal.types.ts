@@ -55,6 +55,7 @@ export interface Jadwal {
 export interface CreateJadwalData {
   kelas?: string; // ❌ OLD: Keep for backward compatibility
   kelas_id?: string; // ✅ NEW: Primary field to use
+  mata_kuliah_id?: string; // ✅ NEW: Mata kuliah yang diajar
   laboratorium_id: string;
   tanggal_praktikum: string | Date;
   jam_mulai: string;

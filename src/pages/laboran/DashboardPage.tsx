@@ -31,7 +31,6 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Building2,
   Package,
   ClipboardCheck,
   AlertTriangle,
@@ -230,12 +229,10 @@ export function DashboardPage() {
         <div className="max-w-7xl mx-auto">
           <div className="animate-pulse space-y-6">
             <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-            <div className="grid gap-6 md:grid-cols-4">
-              {[...Array(4)].map((_, i) => (
-                <div key={i} className="h-32 bg-gray-200 rounded"></div>
-              ))}
+            <div className="grid gap-6 lg:grid-cols-2">
+              <div className="h-64 bg-gray-200 rounded"></div>
+              <div className="h-64 bg-gray-200 rounded"></div>
             </div>
-            <div className="h-64 bg-gray-200 rounded"></div>
           </div>
         </div>
       </div>
@@ -263,98 +260,39 @@ export function DashboardPage() {
           </Alert>
         )}
 
-        {/* Stats Cards */}
-        <div className="grid gap-6 md:grid-cols-4">
-          <Card className="hover:shadow-lg transition-shadow">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">
-                Total Laboratorium
-              </CardTitle>
-              <Building2 className="h-4 w-4 text-blue-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats?.totalLab || 0}</div>
-              <p className="text-xs text-gray-500 mt-1">Ruangan lab aktif</p>
-            </CardContent>
-          </Card>
-
-          <Card className="hover:shadow-lg transition-shadow">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">
-                Total Alat
-              </CardTitle>
-              <Package className="h-4 w-4 text-green-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {stats?.totalInventaris || 0}
-              </div>
-              <p className="text-xs text-gray-500 mt-1">Item inventaris</p>
-            </CardContent>
-          </Card>
-
-          <Card
-            className="hover:shadow-lg transition-shadow cursor-pointer"
-            onClick={() => navigate("/laboran/persetujuan")}
-          >
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">
-                Perlu Persetujuan
-              </CardTitle>
-              <ClipboardCheck className="h-4 w-4 text-orange-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {stats?.pendingApprovals || 0}
-              </div>
-              <p className="text-xs text-gray-500 mt-1">Menunggu approval</p>
-            </CardContent>
-          </Card>
-
-          <Card
-            className="hover:shadow-lg transition-shadow cursor-pointer"
-            onClick={() => navigate("/laboran/inventaris")}
-          >
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">
-                Stok Rendah
-              </CardTitle>
-              <AlertTriangle className="h-4 w-4 text-red-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {stats?.lowStockAlerts || 0}
-              </div>
-              <p className="text-xs text-gray-500 mt-1">Perlu restocking</p>
-            </CardContent>
-          </Card>
-        </div>
-
         {/* Main Content Grid */}
         <div className="grid gap-6 lg:grid-cols-2">
           {/* Pending Approvals */}
           <Card className="lg:col-span-2">
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
-                <CardTitle>Persetujuan Peminjaman</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <ClipboardCheck className="h-5 w-5" />
+                  Persetujuan Peminjaman
+                </CardTitle>
                 <CardDescription>
-                  Peminjaman yang menunggu approval
+                  {stats?.pendingApprovals || 0} peminjaman yang menunggu approval
                 </CardDescription>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate("/laboran/persetujuan")}
-              >
-                Lihat Semua
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
+              {pendingApprovals.length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => navigate("/laboran/persetujuan")}
+                >
+                  Lihat Semua
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              )}
             </CardHeader>
             <CardContent>
               {pendingApprovals.length === 0 ? (
-                <p className="text-sm text-gray-500 text-center py-8">
-                  Tidak ada peminjaman yang menunggu approval
-                </p>
+                <div className="text-center py-8">
+                  <ClipboardCheck className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                  <p className="text-sm text-gray-600">
+                    Tidak ada peminjaman yang menunggu approval
+                  </p>
+                </div>
               ) : (
                 <div className="space-y-3">
                   {pendingApprovals.map((approval) => (
@@ -426,25 +364,33 @@ export function DashboardPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
-                <CardTitle>Peringatan Stok</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5" />
+                  Peringatan Stok
+                </CardTitle>
                 <CardDescription>
-                  Alat dengan stok rendah (&lt; 5)
+                  {stats?.lowStockAlerts || 0} alat dengan stok rendah (&lt; 5)
                 </CardDescription>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate("/laboran/inventaris")}
-              >
-                Lihat Semua
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
+              {inventoryAlerts.length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => navigate("/laboran/inventaris")}
+                >
+                  Lihat Semua
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              )}
             </CardHeader>
             <CardContent>
               {inventoryAlerts.length === 0 ? (
-                <p className="text-sm text-gray-500 text-center py-8">
-                  Semua stok alat mencukupi
-                </p>
+                <div className="text-center py-8">
+                  <Package className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                  <p className="text-sm text-gray-600">
+                    Semua stok alat mencukupi
+                  </p>
+                </div>
               ) : (
                 <div className="space-y-3">
                   {inventoryAlerts.map((alert) => (
@@ -495,25 +441,33 @@ export function DashboardPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
-                <CardTitle>Jadwal Lab Hari Ini</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <Clock className="h-5 w-5" />
+                  Jadwal Lab Hari Ini
+                </CardTitle>
                 <CardDescription>
                   Praktikum yang berlangsung hari ini
                 </CardDescription>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate("/laboran/laboratorium")}
-              >
-                Lihat Semua
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
+              {labSchedule.length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => navigate("/laboran/laboratorium")}
+                >
+                  Lihat Semua
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              )}
             </CardHeader>
             <CardContent>
               {labSchedule.length === 0 ? (
-                <p className="text-sm text-gray-500 text-center py-8">
-                  Tidak ada jadwal lab hari ini
-                </p>
+                <div className="text-center py-8">
+                  <FlaskConical className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                  <p className="text-sm text-gray-600">
+                    Tidak ada jadwal lab hari ini
+                  </p>
+                </div>
               ) : (
                 <div className="space-y-3">
                   {labSchedule.map((schedule) => (

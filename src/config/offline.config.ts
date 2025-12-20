@@ -80,7 +80,7 @@ export const CACHE_CONFIG = {
 } as const;
 
 export const NETWORK_CONFIG = {
-  checkQuality: true,
+  checkQuality: false, // Disabled to avoid 500 errors - no /api/ping endpoint
   pingUrl: "/api/ping",
   pingInterval: 30000,
   quality: {

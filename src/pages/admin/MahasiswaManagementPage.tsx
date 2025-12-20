@@ -227,7 +227,7 @@ export default function AdminMahasiswaPage() {
                 <SelectValue placeholder="Angkatan" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Semua Angkatan</SelectItem>
+                <SelectItem value="all">Semua Angkatan</SelectItem>
                 {angkatanList.map((tahun) => (
                   <SelectItem key={tahun} value={tahun.toString()}>
                     {tahun}
@@ -241,7 +241,7 @@ export default function AdminMahasiswaPage() {
                 <SelectValue placeholder="Semester" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Semua Semester</SelectItem>
+                <SelectItem value="all">Semua Semester</SelectItem>
                 {[1, 2, 3, 4, 5, 6, 7, 8].map((sem) => (
                   <SelectItem key={sem} value={sem.toString()}>
                     Semester {sem}
@@ -255,7 +255,7 @@ export default function AdminMahasiswaPage() {
                 <SelectValue placeholder="Program Studi" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Semua Program</SelectItem>
+                <SelectItem value="all">Semua Program</SelectItem>
                 {programList.map((program) => (
                   <SelectItem key={program} value={program}>
                     {program}

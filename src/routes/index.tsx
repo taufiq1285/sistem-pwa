@@ -25,15 +25,18 @@ import { UnauthorizedPage } from "@/pages/public/UnauthorizedPage";
 // Admin Pages
 import { DashboardPage as AdminDashboard } from "@/pages/admin/DashboardPage";
 import MataKuliahPage from "@/pages/admin/MataKuliahPage";
-import KelasPage from "@/pages/admin/KelasPageEnhanced"; // ✅ ENHANCED: Now supports dosen reassignment
+import KelasPageEnhanced from "@/pages/admin/KelasPageEnhanced"; // ✅ ENHANCED: With Kelola Mahasiswa feature
 import AdminUsersPage from "@/pages/admin/UsersPage";
 import AdminLaboratoriesPage from "@/pages/admin/LaboratoriesPage";
 import AdminEquipmentsPage from "@/pages/admin/EquipmentsPage";
 import AdminAnnouncementsPage from "@/pages/admin/AnnouncementsPage";
-import AdminAnalyticsPage from "@/pages/admin/AnalyticsPage";
-import AdminSyncManagementPage from "@/pages/admin/SyncManagementPage";
+// ❌ DISABLED: Analytics & Sync tidak dalam scope proposal penelitian
+// import AdminAnalyticsPage from "@/pages/admin/AnalyticsPage";
+// import AdminSyncManagementPage from "@/pages/admin/SyncManagementPage";
 import PeminjamanApprovalPage from "@/pages/admin/PeminjamanApprovalPage";
-import AdminJadwalPraktikumPage from "@/pages/admin/JadwalPraktikumPage"; // ✅ NEW: Admin kelola jadwal praktikum
+import AdminProfilePage from "@/pages/admin/ProfilePage"; // ✅ NEW: Admin profile page
+import ManajemenAssignmentPage from "@/pages/admin/ManajemenAssignmentPage"; // ✅ NEW: Unified assignment & jadwal management
+import KelasMataKuliahPage from "@/pages/admin/KelasMataKuliahPage"; // ✅ NEW: Admin kelas-mata_kuliah assignment
 
 // Dosen Pages
 import { DashboardPage as DosenDashboard } from "@/pages/dosen/DashboardPage";
@@ -77,6 +80,7 @@ import MahasiswaMateriPage from "@/pages/mahasiswa/MateriPage";
 import MahasiswaNilaiPage from "@/pages/mahasiswa/NilaiPage";
 import MahasiswaPresensiPage from "@/pages/mahasiswa/PresensiPage";
 import MahasiswaPengumumanPage from "@/pages/mahasiswa/PengumumanPage";
+import MahasiswaProfilePage from "@/pages/mahasiswa/ProfilePage"; // ✅ NEW: Mahasiswa profile page
 
 // Laboran Pages
 import { DashboardPage as LaboranDashboard } from "@/pages/laboran/DashboardPage";
@@ -141,6 +145,20 @@ export function AppRouter() {
         }
       />
 
+      {/* Kelas Mata Kuliah Assignment */}
+      <Route
+        path="/admin/kelas-mata-kuliah"
+        element={
+          <ProtectedRoute>
+            <RoleGuard allowedRoles={["admin"]}>
+              <AppLayout>
+                <KelasMataKuliahPage />
+              </AppLayout>
+            </RoleGuard>
+          </ProtectedRoute>
+        }
+      />
+
       {/* Kelas Management */}
       <Route
         path="/admin/kelas"
@@ -148,27 +166,14 @@ export function AppRouter() {
           <ProtectedRoute>
             <RoleGuard allowedRoles={["admin"]}>
               <AppLayout>
-                <KelasPage />
+                <KelasPageEnhanced />
               </AppLayout>
             </RoleGuard>
           </ProtectedRoute>
         }
       />
 
-      {/* Jadwal Praktikum Management - NEW! ✅ */}
-      <Route
-        path="/admin/jadwal-praktikum"
-        element={
-          <ProtectedRoute>
-            <RoleGuard allowedRoles={["admin"]}>
-              <AppLayout>
-                <AdminJadwalPraktikumPage />
-              </AppLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        }
-      />
-
+  
       {/* Admin - Users */}
       <Route
         path="/admin/users"
@@ -242,6 +247,18 @@ export function AppRouter() {
           </ProtectedRoute>
         }
       />
+        <Route
+        path="/admin/manajemen-assignment"
+        element={
+          <ProtectedRoute>
+            <RoleGuard allowedRoles={["admin"]}>
+              <AppLayout>
+                <ManajemenAssignmentPage />
+              </AppLayout>
+            </RoleGuard>
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/admin/notifikasi"
         element={
@@ -254,7 +271,8 @@ export function AppRouter() {
           </ProtectedRoute>
         }
       />
-      <Route
+      {/* ❌ DISABLED: Analytics route - tidak dalam scope proposal */}
+      {/* <Route
         path="/admin/analytics"
         element={
           <ProtectedRoute>
@@ -265,14 +283,29 @@ export function AppRouter() {
             </RoleGuard>
           </ProtectedRoute>
         }
-      />
-      <Route
+      /> */}
+      {/* ❌ DISABLED: Sync Management route - tidak dalam scope proposal */}
+      {/* <Route
         path="/admin/sync-management"
         element={
           <ProtectedRoute>
             <RoleGuard allowedRoles={["admin"]}>
               <AppLayout>
                 <AdminSyncManagementPage />
+              </AppLayout>
+            </RoleGuard>
+          </ProtectedRoute>
+        }
+      /> */}
+
+      {/* ✅ NEW: Admin Profile Route */}
+      <Route
+        path="/admin/profil"
+        element={
+          <ProtectedRoute>
+            <RoleGuard allowedRoles={["admin"]}>
+              <AppLayout>
+                <AdminProfilePage />
               </AppLayout>
             </RoleGuard>
           </ProtectedRoute>
@@ -661,8 +694,21 @@ export function AppRouter() {
         }
       />
 
+      {/* ✅ NEW: Mahasiswa Profile Route */}
+      <Route
+        path="/mahasiswa/profil"
+        element={
+          <ProtectedRoute>
+            <RoleGuard allowedRoles={["mahasiswa"]}>
+              <AppLayout>
+                <MahasiswaProfilePage />
+              </AppLayout>
+            </RoleGuard>
+          </ProtectedRoute>
+        }
+      />
+
       {/* TODO: Add more mahasiswa routes as they are implemented
-      <Route path="/mahasiswa/profil" element={...} />
       <Route path="/mahasiswa/offline-sync" element={...} />
       */}
 

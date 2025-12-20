@@ -355,14 +355,18 @@ export default function LaboratoriesPage() {
               <Label htmlFor="kapasitas">Capacity</Label>
               <Input
                 id="kapasitas"
-                type="number"
+                type="text"
+                inputMode="numeric"
                 value={editFormData.kapasitas || ""}
-                onChange={(e) =>
-                  setEditFormData({
-                    ...editFormData,
-                    kapasitas: parseInt(e.target.value),
-                  })
-                }
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === "" || /^\d+$/.test(value)) {
+                    setEditFormData({
+                      ...editFormData,
+                      kapasitas: value === "" ? 0 : parseInt(value),
+                    });
+                  }
+                }}
               />
             </div>
             <div>
@@ -452,14 +456,18 @@ export default function LaboratoriesPage() {
               <Label htmlFor="new_kapasitas">Capacity</Label>
               <Input
                 id="new_kapasitas"
-                type="number"
+                type="text"
+                inputMode="numeric"
                 value={addFormData.kapasitas}
-                onChange={(e) =>
-                  setAddFormData({
-                    ...addFormData,
-                    kapasitas: parseInt(e.target.value) || 0,
-                  })
-                }
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === "" || /^\d+$/.test(value)) {
+                    setAddFormData({
+                      ...addFormData,
+                      kapasitas: value === "" ? 0 : parseInt(value),
+                    });
+                  }
+                }}
                 placeholder="30"
               />
             </div>

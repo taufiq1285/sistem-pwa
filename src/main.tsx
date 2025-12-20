@@ -3,7 +3,8 @@ import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App.tsx";
 import { registerServiceWorker } from "./lib/pwa/register-sw";
-import { initializeSyncManager } from "./lib/offline/sync-manager";
+// ❌ DISABLED: Sync Manager tidak dalam scope proposal penelitian
+// import { initializeSyncManager } from "./lib/offline/sync-manager";
 import { logger } from "@/lib/utils/logger";
 
 // Render app
@@ -149,10 +150,10 @@ if (!isDevelopment || enablePWAInDev) {
             logger.info("✅ Service Worker registered successfully");
             logger.info("Scope:", registration.scope);
 
-            // Initialize sync manager after SW is ready
-            initializeSyncManager().catch((error) => {
-              logger.error("Failed to initialize sync manager:", error);
-            });
+            // ❌ DISABLED: Sync Manager initialization tidak dalam scope proposal
+            // initializeSyncManager().catch((error) => {
+            //   logger.error("Failed to initialize sync manager:", error);
+            // });
           },
           onUpdate: (registration) => {
             // Prevent handling the same update multiple times

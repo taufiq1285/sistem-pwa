@@ -1336,7 +1336,7 @@ CREATE POLICY "inventaris_select_all" ON inventaris
 
 DROP POLICY IF EXISTS "inventaris_manage" ON inventaris;
 CREATE POLICY "inventaris_manage" ON inventaris
-    FOR ALL USING (is_admin() OR is_laboran());
+    FOR ALL USING (is_admin() OR EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role = 'laboran'));
 
 -- ============================================================================
 -- PART 16.12: RLS POLICIES - PEMINJAMAN TABLE
@@ -1360,7 +1360,7 @@ DROP POLICY IF EXISTS "peminjaman_update" ON peminjaman;
 CREATE POLICY "peminjaman_update" ON peminjaman
     FOR UPDATE USING (
         is_admin() OR 
-        is_laboran() OR
+        EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role = 'laboran') OR
         (peminjam_id = auth.uid() AND status = 'pending')
     );
 

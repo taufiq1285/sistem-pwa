@@ -63,8 +63,8 @@ export default function KuisAttemptPage() {
       console.log("🔵 Task status:", status);
       console.log("🔵 Task data:", quizData);
 
-      // Only allow if status is "published" or "active"
-      if (status !== "published" && status !== "active") {
+      // Only allow if status is "published"
+      if (status !== "published") {
         setError("Tugas praktikum ini belum dipublish oleh dosen");
         setCanAttempt(false);
         return;

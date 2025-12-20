@@ -86,6 +86,13 @@ export async function getKuis(filters?: KuisFilters): Promise<Kuis[]> {
         operator: "eq" as const,
         value: filters.status,
       });
+    } else {
+      // ✅ By default, exclude archived kuis
+      filterConditions.push({
+        column: "status",
+        operator: "neq" as const,
+        value: "archived",
+      });
     }
 
     const options = {

@@ -687,16 +687,19 @@ export default function LaboratoriumPage() {
                 <Label htmlFor="kapasitas">Kapasitas</Label>
                 <Input
                   id="kapasitas"
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
                   value={formData.kapasitas}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      kapasitas: parseInt(e.target.value) || 0,
-                    })
-                  }
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value === "" || /^\d+$/.test(value)) {
+                      setFormData({
+                        ...formData,
+                        kapasitas: value === "" ? 0 : parseInt(value),
+                      });
+                    }
+                  }}
                   placeholder="30"
-                  min="1"
                 />
               </div>
             </div>

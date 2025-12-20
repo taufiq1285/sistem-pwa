@@ -34,8 +34,8 @@ export interface BankSoal {
   tags?: string[] | null;
 
   // Metadata
-  is_public?: boolean;
-  usage_count?: number;
+  is_public?: boolean | null;
+  usage_count?: number | null;
 
   // Timestamps
   created_at?: string;

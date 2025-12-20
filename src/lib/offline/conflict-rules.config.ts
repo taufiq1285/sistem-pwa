@@ -12,7 +12,6 @@
  * conflictRules.forEach(rule => registerConflictRule(rule));
  */
 
-import type { ConflictResolutionRule } from "./smart-conflict-resolver";
 
 // ============================================================================
 // ATTEMPT_KUIS - Quiz Attempts
@@ -45,7 +44,7 @@ const attemptKuisRule: ConflictResolutionRule = {
   timestampField: "updated_at",
 
   // Validation before merging
-  validator: (localData, remoteData) => {
+  validator: (localData: any, remoteData: any) => {
     // Cannot have two different submissions
     if (
       localData.status === "submitted" &&
@@ -117,7 +116,7 @@ const jawabanRule: ConflictResolutionRule = {
 
   timestampField: "updated_at",
 
-  validator: (localData, remoteData) => {
+  validator: (localData: any, remoteData: any) => {
     // Cannot change answer after grading
     if (
       remoteData.graded_at &&
@@ -175,7 +174,7 @@ const nilaiRule: ConflictResolutionRule = {
 
   timestampField: "updated_at",
 
-  validator: (localData, remoteData) => {
+  validator: (localData: any, remoteData: any) => {
     // Detect large grade changes (possible error)
     const localFinal = localData.nilai_akhir || 0;
     const remoteFinal = remoteData.nilai_akhir || 0;
@@ -219,7 +218,7 @@ const kehadiranRule: ConflictResolutionRule = {
 
   timestampField: "updated_at",
 
-  validator: (localData, remoteData) => {
+  validator: (localData: any, remoteData: any) => {
     if (localData.mahasiswa_id !== remoteData.mahasiswa_id) {
       return "Student ID mismatch";
     }
@@ -269,7 +268,7 @@ const materiRule: ConflictResolutionRule = {
 
   timestampField: "updated_at",
 
-  validator: (localData, remoteData) => {
+  validator: (localData: any, remoteData: any) => {
     if (localData.dosen_id !== remoteData.dosen_id) {
       return "Teacher ID mismatch";
     }
@@ -310,7 +309,7 @@ const soalRule: ConflictResolutionRule = {
 
   timestampField: "updated_at",
 
-  validator: (localData, remoteData) => {
+  validator: (localData: any, remoteData: any) => {
     if (localData.kuis_id !== remoteData.kuis_id) {
       return "Quiz ID mismatch";
     }
@@ -344,7 +343,7 @@ const kuisRule: ConflictResolutionRule = {
   // Note: kuis table has 'version' not '_version'
   timestampField: "updated_at",
 
-  validator: (localData, remoteData) => {
+  validator: (localData: any, remoteData: any) => {
     if (localData.dosen_id !== remoteData.dosen_id) {
       return "Teacher ID mismatch";
     }

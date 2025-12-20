@@ -123,10 +123,11 @@ export async function getNotificationSummary(
 
 /**
  * Create a single notification
+ * Returns null if fails (best-effort approach)
  */
 export async function createNotification(
   data: CreateNotificationData,
-): Promise<Notification> {
+): Promise<Notification | null> {
   try {
     const { data: notification, error } = await supabase
       .from("notifications")
@@ -141,12 +142,17 @@ export async function createNotification(
       .select()
       .single();
 
-    if (error) throw handleError(error);
+    if (error) {
+      console.error("createNotification error:", error);
+      // Don't throw - return null to prevent blocking main operations
+      return null;
+    }
 
     return notification as Notification;
   } catch (error) {
     console.error("createNotification error:", error);
-    throw handleError(error);
+    // Don't throw - return null to prevent blocking main operations
+    return null;
   }
 }
 
@@ -172,12 +178,18 @@ export async function createBulkNotifications(
       )
       .select();
 
-    if (error) throw handleError(error);
+    if (error) {
+      console.error("createBulkNotifications error:", error);
+      // Don't throw - return empty array if notification fails
+      // This is a best-effort operation that shouldn't block main operations
+      return [];
+    }
 
     return (data || []) as Notification[];
   } catch (error) {
     console.error("createBulkNotifications error:", error);
-    throw handleError(error);
+    // Don't throw - return empty array to prevent blocking main operations
+    return [];
   }
 }
 
@@ -299,6 +311,7 @@ export async function deleteReadNotifications(userId: string): Promise<void> {
 
 /**
  * Notify dosen when mahasiswa submits tugas praktikum
+ * Returns null if notification fails (best-effort)
  */
 export async function notifyDosenTugasSubmitted(
   dosenId: string,
@@ -306,7 +319,7 @@ export async function notifyDosenTugasSubmitted(
   tugasNama: string,
   attemptId: string,
   kuisId: string,
-): Promise<Notification> {
+): Promise<Notification | null> {
   return createNotification({
     user_id: dosenId,
     title: "Tugas Praktikum Dikerjakan",

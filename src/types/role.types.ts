@@ -114,6 +114,7 @@ export const ROLE_METADATA: Record<UserRole, RoleMetadata> = {
     icon: "GraduationCap",
     dashboardPath: "/dosen",
     permissions: [
+      "read:dashboard",
       "manage:mata_kuliah",
       "view:mata_kuliah",
       "manage:kelas",

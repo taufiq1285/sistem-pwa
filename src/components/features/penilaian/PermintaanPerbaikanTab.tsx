@@ -461,11 +461,15 @@ export function PermintaanPerbaikanTab({ dosenId }: PermintaanPerbaikanTabProps)
                     Nilai Baru <span className="text-red-500">*</span>
                   </Label>
                   <Input
-                    type="number"
-                    min="0"
-                    max="100"
+                    type="text"
+                    inputMode="numeric"
                     value={nilaiBaru}
-                    onChange={(e) => setNilaiBaru(e.target.value)}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === "" || /^\d*\.?\d*$/.test(value)) {
+                        setNilaiBaru(value);
+                      }
+                    }}
                     placeholder="0-100"
                     className="mt-1"
                   />

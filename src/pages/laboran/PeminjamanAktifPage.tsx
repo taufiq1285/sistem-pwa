@@ -62,6 +62,7 @@ import {
   type ActiveBorrowing,
   type ReturnedBorrowing,
 } from "@/lib/api/laboran.api";
+import { getRBACErrorMessage } from "@/lib/errors/permission.errors";
 
 // ============================================================================
 // COMPONENT
@@ -154,8 +155,9 @@ export default function PeminjamanAktifPage() {
         loadReturnedBorrowings();
       }
     } catch (error) {
-      console.error(error);
-      toast.error("Gagal menandai pengembalian");
+      console.error("Error marking borrowing as returned:", error);
+      const errorMessage = getRBACErrorMessage(error);
+      toast.error(errorMessage);
     } finally {
       setProcessing(false);
     }
@@ -598,16 +600,18 @@ export default function PeminjamanAktifPage() {
                 <Label htmlFor="denda">Denda (Rp)</Label>
                 <Input
                   id="denda"
-                  type="number"
-                  min="0"
-                  step="1000"
+                  type="text"
+                  inputMode="numeric"
                   value={returnForm.denda}
-                  onChange={(e) =>
-                    setReturnForm({
-                      ...returnForm,
-                      denda: parseInt(e.target.value) || 0,
-                    })
-                  }
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value === "" || /^\d+$/.test(value)) {
+                      setReturnForm({
+                        ...returnForm,
+                        denda: value === "" ? 0 : parseInt(value),
+                      });
+                    }
+                  }}
                 />
                 {returnDialog.borrowing.is_overdue && (
                   <p className="text-xs text-muted-foreground">

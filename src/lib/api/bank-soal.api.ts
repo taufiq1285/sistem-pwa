@@ -17,7 +17,7 @@ import type {
   BankSoalFilters,
   BankSoalStats,
 } from "@/types/bank-soal.types";
-import type { Soal, CreateSoalData } from "@/types/kuis.types";
+import type { TipeSoal, Soal, CreateSoalData, OpsiJawaban } from "@/types/kuis.types";
 
 // ============================================================================
 // GET OPERATIONS
@@ -72,7 +72,13 @@ export async function getBankSoal(
   const { data, error } = await query;
 
   if (error) throw error;
-  return data || [];
+  return (data || []).map(item => ({
+    ...item,
+    tipe_soal: item.tipe_soal as TipeSoal,
+    opsi_jawaban: item.opsi_jawaban as unknown as OpsiJawaban[] | null,
+    is_public: item.is_public || false,
+    usage_count: item.usage_count || 0
+  }));
 }
 
 /**
@@ -96,7 +102,13 @@ export async function getBankSoalById(id: string): Promise<BankSoal> {
   if (error) throw error;
   if (!data) throw new Error("Question not found");
 
-  return data;
+  return {
+    ...data,
+    tipe_soal: data.tipe_soal as TipeSoal,
+    opsi_jawaban: data.opsi_jawaban as unknown as OpsiJawaban[] | null,
+    is_public: data.is_public || false,
+    usage_count: data.usage_count || 0
+  };
 }
 
 /**
@@ -160,14 +172,20 @@ export async function createBankSoal(
 ): Promise<BankSoal> {
   const { data: newQuestion, error } = await supabase
     .from("bank_soal")
-    .insert([data])
+    .insert([data as any])
     .select()
     .single();
 
   if (error) throw error;
   if (!newQuestion) throw new Error("Failed to create question");
 
-  return newQuestion;
+  return {
+    ...newQuestion,
+    tipe_soal: newQuestion.tipe_soal as TipeSoal,
+    opsi_jawaban: newQuestion.opsi_jawaban as unknown as OpsiJawaban[] | null,
+    is_public: newQuestion.is_public || false,
+    usage_count: newQuestion.usage_count || 0
+  };
 }
 
 /**
@@ -205,7 +223,7 @@ export async function updateBankSoal(
 ): Promise<BankSoal> {
   const { data: updated, error } = await supabase
     .from("bank_soal")
-    .update(data)
+    .update(data as any)
     .eq("id", id)
     .select()
     .single();
@@ -213,7 +231,13 @@ export async function updateBankSoal(
   if (error) throw error;
   if (!updated) throw new Error("Failed to update question");
 
-  return updated;
+  return {
+    ...updated,
+    tipe_soal: updated.tipe_soal as TipeSoal,
+    opsi_jawaban: updated.opsi_jawaban as unknown as OpsiJawaban[] | null,
+    is_public: updated.is_public || false,
+    usage_count: updated.usage_count || 0
+  };
 }
 
 /**

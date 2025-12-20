@@ -227,21 +227,30 @@ export async function getCurrentLaboranId(): Promise<string | null> {
  * @throws {PermissionError} If user lacks permission
  */
 export async function checkPermission(permission: Permission): Promise<void> {
+  console.log("🔍 DEBUG: checkPermission called:", permission);
   const user = await getCurrentUserWithRole();
+  console.log("🔍 DEBUG: user:", user);
 
   // Admin bypass - admin can do everything
   if (user.role === "admin") {
+    console.log("✅ DEBUG: Admin bypass for permission:", permission);
     return;
   }
 
   // Check if user has permission
-  if (!hasPermission(user.role, permission)) {
+  const hasPermissionResult = hasPermission(user.role, permission);
+  console.log("🔍 DEBUG: hasPermission result:", hasPermissionResult, "for role:", user.role, "permission:", permission);
+
+  if (!hasPermissionResult) {
+    console.error("❌ DEBUG: Permission denied for role:", user.role, "permission:", permission);
     throw new PermissionError(
       `Missing permission: ${permission}`,
       permission,
       user.role,
     );
   }
+
+  console.log("✅ DEBUG: Permission granted for role:", user.role, "permission:", permission);
 }
 
 /**

@@ -140,15 +140,11 @@ export function QuizResult({
       {/* Quiz Info */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Informasi Tugas Praktikum</CardTitle>
+          <CardTitle className="text-lg">Informasi Pengerjaan</CardTitle>
         </CardHeader>
-        <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <CardContent className="grid grid-cols-2 md:grid-cols-3 gap-4">
           <div>
-            <p className="text-sm text-muted-foreground mb-1">Percobaan</p>
-            <p className="font-semibold">{attempt.attempt_number}</p>
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground mb-1">Durasi</p>
+            <p className="text-sm text-muted-foreground mb-1">Durasi Pengerjaan</p>
             <p className="font-semibold">{duration} menit</p>
           </div>
           <div>

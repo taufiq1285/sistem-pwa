@@ -160,10 +160,14 @@ export default function KuisListPage() {
   // COMPUTED VALUES
   // ============================================================================
 
-  // Get unique kelas for filter
+  // Get unique kelas for filter with full kelas data
   const kelasOptions = Array.from(
-    new Set(quizzes.map((q) => q.kelas_id))
-  ).filter(Boolean);
+    new Map(
+      quizzes
+        .filter((q) => q.kelas)
+        .map((q) => [q.kelas_id, q.kelas])
+    ).values()
+  );
 
   // Count by status
   const statusCounts = {
@@ -296,14 +300,14 @@ export default function KuisListPage() {
           {/* Kelas Filter */}
           {kelasOptions.length > 0 && (
             <Select value={kelasFilter} onValueChange={setKelasFilter}>
-              <SelectTrigger className="w-full lg:w-[180px]">
-                <SelectValue placeholder="Kelas" />
+              <SelectTrigger className="w-full lg:w-[250px]">
+                <SelectValue placeholder="Filter Mata Kuliah" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Semua Kelas</SelectItem>
-                {kelasOptions.map((kelasId) => (
-                  <SelectItem key={kelasId} value={kelasId}>
-                    Kelas {kelasId}
+                <SelectItem value="all">Semua Mata Kuliah</SelectItem>
+                {kelasOptions.map((kelas) => (
+                  <SelectItem key={kelas.id} value={kelas.id}>
+                    {kelas.mata_kuliah?.kode_mk} - {kelas.mata_kuliah?.nama_mk} ({kelas.nama_kelas})
                   </SelectItem>
                 ))}
               </SelectContent>

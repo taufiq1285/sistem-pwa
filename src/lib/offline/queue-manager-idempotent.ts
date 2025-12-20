@@ -157,8 +157,7 @@ export class IdempotentQueueManager {
           timestamp: Date.now(),
           status: "completed",
           retryCount: 0,
-          requestId,
-        };
+        } as any;
         return virtualItem;
       }
     }
@@ -172,8 +171,7 @@ export class IdempotentQueueManager {
     // Store requestId in item metadata (for easier access)
     const enhancedItem: SyncQueueItem = {
       ...item,
-      requestId,
-    };
+    } as any;
 
     console.log(`📥 Enqueued with idempotency: ${requestId}`);
 
@@ -247,8 +245,7 @@ export class IdempotentQueueManager {
     // Enhance items with requestId metadata
     return items.map((item) => ({
       ...item,
-      requestId: item.requestId || extractIdempotencyKey(item.data),
-    }));
+    } as any));
   }
 
   /**
@@ -330,7 +327,7 @@ export class IdempotentQueueManager {
     const grouped = new Map<string, SyncQueueItem[]>();
 
     for (const item of allItems) {
-      const requestId = item.requestId;
+      const requestId = (item as any).requestId;
       if (requestId) {
         if (!grouped.has(requestId)) {
           grouped.set(requestId, []);

@@ -321,13 +321,23 @@ export default function JadwalPage() {
     try {
       setIsCreating(true);
 
+      // 🔍 DEBUG: Log data yang masuk
+      console.log("🔍 DEBUG handleCreate called with data:", {
+        data,
+        kelasList: kelasList.map(k => ({ id: k.id, nama_kelas: k.nama_kelas })),
+        laboratoriumList: laboratoriumList.map(l => ({ id: l.id, nama_lab: l.nama_lab }))
+      });
+
       // Dosen HANYA bisa memilih kelas yang sudah ada
       // Cari kelas dari list
       const selectedKelas = kelasList.find(
         (k) => k.nama_kelas === data.kelas_nama,
       );
 
+      console.log("🔍 DEBUG: selectedKelas:", selectedKelas);
+
       if (!selectedKelas) {
+        console.error("❌ Kelas tidak ditemukan:", data.kelas_nama);
         toast.error("Kelas tidak ditemukan", {
           description:
             "Pilih kelas yang sudah ada. Jika tidak ada, hubungi Admin.",
@@ -336,6 +346,7 @@ export default function JadwalPage() {
       }
 
       const kelasId = selectedKelas.id;
+      console.log("🔍 DEBUG: kelasId:", kelasId);
 
       // ✅ Dosen memilih kelas yang sudah ada (dibuat Admin)
       const createData: CreateJadwalData = {
@@ -349,17 +360,23 @@ export default function JadwalPage() {
         is_active: data.is_active ?? true,
       };
 
-      await createJadwal(createData);
+      console.log("🔍 DEBUG: createData:", createData);
+
+      console.log("🔍 DEBUG: Memanggil createJadwal...");
+      const result = await createJadwal(createData);
+      console.log("✅ DEBUG: createJadwal success:", result);
 
       toast.success("Jadwal berhasil ditambahkan");
       setIsCreateOpen(false);
       createForm.reset();
       fetchJadwal();
     } catch (error: any) {
+      console.error("❌ DEBUG: Error di handleCreate:", error);
       toast.error("Gagal menambahkan jadwal", {
-        description: error.message,
+        description: error.message || "Unknown error occurred",
       });
     } finally {
+      console.log("🔍 DEBUG: setIsCreating(false)");
       setIsCreating(false);
     }
   };

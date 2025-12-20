@@ -309,7 +309,7 @@ SET search_path = public;
 CREATE OR REPLACE FUNCTION public.audit_trigger_function()
 RETURNS TRIGGER AS $$
 BEGIN
-    INSERT INTO public.audit_log (
+    INSERT INTO public.audit_logs (
         table_name,
         record_id,
         action,
@@ -344,7 +344,7 @@ RETURNS UUID AS $$
 DECLARE
     v_audit_id UUID;
 BEGIN
-    INSERT INTO public.audit_log (table_name, record_id, action, old_data, new_data, user_id)
+    INSERT INTO public.audit_logs (table_name, record_id, action, old_data, new_data, user_id)
     VALUES (p_table_name, p_record_id, p_action, p_old_data, p_new_data, (SELECT auth.uid()))
     RETURNING id INTO v_audit_id;
     RETURN v_audit_id;
@@ -369,7 +369,7 @@ RETURNS TABLE (
 BEGIN
     RETURN QUERY
     SELECT al.id, al.action, al.old_data, al.new_data, al.user_id, al.created_at
-    FROM public.audit_log al
+    FROM public.audit_logs al
     WHERE al.table_name = p_table_name AND al.record_id = p_record_id
     ORDER BY al.created_at DESC;
 END;
@@ -384,7 +384,7 @@ DECLARE
     v_count INTEGER;
 BEGIN
     WITH deleted AS (
-        DELETE FROM public.audit_log
+        DELETE FROM public.audit_logs
         WHERE created_at < NOW() - (p_days_old || ' days')::INTERVAL
         RETURNING id
     )
@@ -404,7 +404,7 @@ RETURNS UUID AS $$
 DECLARE
     v_log_id UUID;
 BEGIN
-    INSERT INTO public.sensitive_operations_log (operation, details, user_id)
+    INSERT INTO public.sensitive_operations (operation, details, user_id)
     VALUES (p_operation, p_details, (SELECT auth.uid()))
     RETURNING id INTO v_log_id;
     RETURN v_log_id;

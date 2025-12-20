@@ -2,13 +2,10 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/hooks/useAuth";
 import {
   BookOpen,
-  FileQuestion,
-  Award,
   Calendar,
   Clock,
   MapPin,
-  ArrowRight,
-  Info, // ✅ NEW: Info icon for messaging
+  Info,
 } from "lucide-react";
 import {
   Card,
@@ -17,7 +14,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert"; // ✅ NEW: Alert component
 // ❌ REMOVED: EnrollKelasDialog import
@@ -113,9 +109,9 @@ export function DashboardPage() {
         <div className="max-w-7xl mx-auto">
           <div className="animate-pulse space-y-6">
             <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-            <div className="grid gap-6 md:grid-cols-4">
-              {[...Array(4)].map((_, i) => (
-                <div key={i} className="h-32 bg-gray-200 rounded"></div>
+            <div className="grid gap-6 md:grid-cols-2">
+              {[...Array(2)].map((_, i) => (
+                <div key={i} className="h-64 bg-gray-200 rounded"></div>
               ))}
             </div>
           </div>
@@ -133,68 +129,7 @@ export function DashboardPage() {
           <p className="text-gray-500 mt-1">Selamat datang, {user?.email}</p>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid gap-6 md:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">
-                Kelas Praktikum
-              </CardTitle>
-              <BookOpen className="h-4 w-4 text-gray-400" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {stats?.totalKelasPraktikum || 0}
-              </div>
-              <p className="text-xs text-gray-500 mt-1">Kelas yang diikuti</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">
-                Tugas Berlangsung
-              </CardTitle>
-              <FileQuestion className="h-4 w-4 text-gray-400" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats?.totalKuis || 0}</div>
-              <p className="text-xs text-gray-500 mt-1">Sedang berlangsung</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">
-                Rata-rata Nilai
-              </CardTitle>
-              <Award className="h-4 w-4 text-gray-400" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {stats?.rataRataNilai ? stats.rataRataNilai.toFixed(1) : "-"}
-              </div>
-              <p className="text-xs text-gray-500 mt-1">Dari semua tugas</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">
-                Jadwal Hari Ini
-              </CardTitle>
-              <Calendar className="h-4 w-4 text-gray-400" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {stats?.jadwalHariIni || 0}
-              </div>
-              <p className="text-xs text-gray-500 mt-1">Praktikum</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* ✅ UPDATED: Info Alert (Only if no classes) */}
+        {/* Info Alert (Only if no classes) */}
         {myKelas.length === 0 && (
           <Alert className="border-blue-200 bg-blue-50">
             <Info className="h-4 w-4 text-blue-600" />
@@ -209,9 +144,13 @@ export function DashboardPage() {
           {/* My Classes */}
           <Card>
             <CardHeader>
-              <CardTitle>Kelas Saya</CardTitle>
-              <CardDescription>Kelas yang sedang diikuti</CardDescription>
-              {/* ❌ REMOVED: "+ Tambah" button */}
+              <CardTitle className="flex items-center gap-2">
+                <BookOpen className="h-5 w-5" />
+                Kelas Saya
+              </CardTitle>
+              <CardDescription>
+                {stats?.totalKelasPraktikum || 0} kelas praktikum yang diikuti
+              </CardDescription>
             </CardHeader>
             <CardContent>
               {myKelas.length === 0 ? (
@@ -224,7 +163,6 @@ export function DashboardPage() {
                     Pendaftaran kelas dilakukan oleh dosen atau admin. Silakan
                     hubungi dosen pengampu untuk informasi lebih lanjut.
                   </p>
-                  {/* ❌ REMOVED: "Daftar Kelas Sekarang" button */}
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -263,17 +201,14 @@ export function DashboardPage() {
 
           {/* Upcoming Schedule */}
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Jadwal Praktikum</CardTitle>
-                <CardDescription>7 hari ke depan</CardDescription>
-              </div>
-              {myJadwal.length > 0 && (
-                <Button variant="ghost" size="sm">
-                  Lihat Semua
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              )}
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Calendar className="h-5 w-5" />
+                Jadwal Praktikum
+              </CardTitle>
+              <CardDescription>
+                {stats?.jadwalHariIni || 0} praktikum hari ini • 7 hari ke depan
+              </CardDescription>
             </CardHeader>
             <CardContent>
               {myJadwal.length === 0 ? (
@@ -331,8 +266,6 @@ export function DashboardPage() {
           </Card>
         </div>
       </div>
-
-      {/* ❌ REMOVED: EnrollKelasDialog component */}
     </div>
   );
 }

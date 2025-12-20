@@ -32,22 +32,13 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Plus,
   Search,
-  Filter,
   Trash2,
   Edit,
   BookOpen,
   TrendingUp,
   Target,
-  FileText,
 } from "lucide-react";
 import { toast } from "sonner";
 import { QuestionEditor } from "@/components/features/kuis/builder/QuestionEditor";
@@ -61,7 +52,7 @@ export default function BankSoalPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedTipeSoal, setSelectedTipeSoal] = useState<string>("all");
+  const [selectedTipeSoal, setSelectedTipeSoal] = useState<string>(TIPE_SOAL.PILIHAN_GANDA); // Only pilihan ganda
 
   const [showEditor, setShowEditor] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState<BankSoal | null>(null);
@@ -109,9 +100,8 @@ export default function BankSoalPage() {
         filters.search = searchQuery;
       }
 
-      if (selectedTipeSoal && selectedTipeSoal !== "all") {
-        filters.tipe_soal = selectedTipeSoal as any;
-      }
+      // Always filter only pilihan ganda
+      filters.tipe_soal = TIPE_SOAL.PILIHAN_GANDA as any;
 
       const data = await getBankSoal(filters);
       setQuestions(data);
@@ -195,6 +185,7 @@ export default function BankSoalPage() {
         question={editingQuestion as any}
         urutan={1}
         defaultPoin={1}
+        cbtMode={true} // Force only pilihan ganda
         onSave={handleSaveQuestion}
         onCancel={() => {
           setShowEditor(false);
@@ -221,49 +212,19 @@ export default function BankSoalPage() {
         </Button>
       </div>
 
-      {/* Statistics Cards */}
+      {/* Statistics Cards - Only Pilihan Ganda */}
       {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total Soal
+                Total Soal Pilihan Ganda
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-2">
                 <BookOpen className="h-5 w-5 text-blue-600" />
-                <div className="text-2xl font-bold">{stats.total_questions}</div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Pilihan Ganda
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-2">
-                <Target className="h-5 w-5 text-green-600" />
-                <div className="text-2xl font-bold">
-                  {stats.pilihan_ganda_count}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Essay
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-2">
-                <FileText className="h-5 w-5 text-purple-600" />
-                <div className="text-2xl font-bold">{stats.essay_count}</div>
+                <div className="text-2xl font-bold">{stats.pilihan_ganda_count}</div>
               </div>
             </CardContent>
           </Card>
@@ -281,43 +242,41 @@ export default function BankSoalPage() {
               </div>
             </CardContent>
           </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Rata-rata Poin
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-2">
+                <Target className="h-5 w-5 text-green-600" />
+                <div className="text-2xl font-bold">
+                  {stats.pilihan_ganda_count > 0
+                    ? Math.round(stats.total_usage / stats.pilihan_ganda_count)
+                    : 0}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       )}
 
-      {/* Filters */}
+      {/* Search - Only Pilihan Ganda */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Filter & Pencarian</CardTitle>
+          <CardTitle className="text-lg">Pencarian Soal Pilihan Ganda</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Cari soal..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9"
-                />
-              </div>
-            </div>
-
-            <Select value={selectedTipeSoal} onValueChange={setSelectedTipeSoal}>
-              <SelectTrigger className="w-[200px]">
-                <Filter className="h-4 w-4 mr-2" />
-                <SelectValue placeholder="Semua tipe" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Semua Tipe</SelectItem>
-                <SelectItem value={TIPE_SOAL.PILIHAN_GANDA}>
-                  {TIPE_SOAL_LABELS.pilihan_ganda}
-                </SelectItem>
-                <SelectItem value={TIPE_SOAL.ESSAY}>
-                  {TIPE_SOAL_LABELS.essay}
-                </SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Cari soal pilihan ganda..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9"
+            />
           </div>
         </CardContent>
       </Card>

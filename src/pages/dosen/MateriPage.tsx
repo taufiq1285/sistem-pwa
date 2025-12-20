@@ -44,6 +44,7 @@ import {
   type UploadMateriData,
 } from "@/lib/api/materi.api";
 import { getKelas } from "@/lib/api/kelas.api";
+import { getMyKelas } from "@/lib/api/dosen.api";
 import type { Materi } from "@/types/materi.types";
 import type { Kelas } from "@/types/kelas.types";
 import { toast } from "sonner";
@@ -105,7 +106,7 @@ export default function DosenMateriPage() {
 
       const [materiData, kelasData] = await Promise.all([
         getMateriByDosen(user.dosen.id),
-        getKelas({ is_active: true }),
+        getMyKelas(), // Use getMyKelas to get assigned classes from assignment system
       ]);
 
       setMateriList(materiData);

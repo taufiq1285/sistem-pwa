@@ -3,7 +3,8 @@
  * Top navigation bar with user menu and notifications
  */
 
-import { Bell, Menu, User, LogOut, Settings } from "lucide-react";
+import { Bell, Menu, User, LogOut } from "lucide-react";
+// import { Settings } from "lucide-react"; // ❌ DISABLED: Unused
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -33,7 +34,7 @@ interface HeaderProps {
   onMenuClick?: () => void;
   onNotificationClick?: () => void;
   onProfileClick?: () => void;
-  onSettingsClick?: () => void;
+  // onSettingsClick?: () => void; // ❌ DISABLED: Settings tidak dalam scope proposal
   onLogout?: () => void;
   className?: string;
 }
@@ -51,7 +52,7 @@ export function Header({
   onMenuClick,
   onNotificationClick,
   onProfileClick,
-  onSettingsClick,
+  // onSettingsClick, // ❌ DISABLED: Settings tidak dalam scope proposal
   onLogout,
   className,
 }: HeaderProps) {
@@ -145,10 +146,11 @@ export function Header({
                 <User className="mr-2 h-4 w-4" />
                 <span>Profil</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={onSettingsClick}>
+              {/* ❌ DISABLED: Menu Pengaturan - tidak dalam scope proposal */}
+              {/* <DropdownMenuItem onClick={onSettingsClick}>
                 <Settings className="mr-2 h-4 w-4" />
                 <span>Pengaturan</span>
-              </DropdownMenuItem>
+              </DropdownMenuItem> */}
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={onLogout} className="text-red-600">
                 <LogOut className="mr-2 h-4 w-4" />

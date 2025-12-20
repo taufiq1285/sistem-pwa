@@ -1,24 +1,34 @@
 /**
- * KehadiranPage - Dosen
+ * KehadiranPage - Dosen (Redesigned)
  *
- * Purpose: Input and view student attendance records
+ * Purpose: Input student attendance records
  * Features:
- * - Input attendance per jadwal praktikum (bulk)
- * - View attendance report by kelas with date range
- * - Edit/delete individual attendance records
- * - Statistics and summary view
+ * - Select mata kuliah first (supporting multiple mata kuliah per dosen)
+ * - Select kelas under that mata kuliah
+ * - Select tanggal kehadiran
+ * - Input attendance per kelas + tanggal (bulk)
+ * - Clean, modern UI without view/report
  */
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { toast } from "sonner";
+import { getMyKelas } from "@/lib/api/dosen.api";
+import { getMataKuliah } from "@/lib/api/mata-kuliah.api";
+import { supabase } from "@/lib/supabase/client";
 import {
-  Search,
-  RefreshCw,
-  Edit2,
-  Trash2,
+  BookOpen,
+  Users,
+  Calendar,
   Save,
   AlertCircle,
+  CheckCircle2,
+  Clock,
+  ChevronRight,
+  Filter,
+  X,
+  Download,
+  History,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,26 +54,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   getKehadiranByJadwal,
-  getKehadiranByKelas,
   saveKehadiranBulk,
-  updateKehadiran,
-  deleteKehadiran,
+  getKehadiranForExport,
   type KehadiranStatus,
 } from "@/lib/api/kehadiran.api";
-import { supabase } from "@/lib/supabase/client";
+import { exportKehadiranToCSV, formatExportFilename } from "@/lib/utils/kehadiran-export";
+import { KehadiranHistory } from "@/components/features/kehadiran/KehadiranHistory";
+import { cn } from "@/lib/utils";
 
 // ============================================================================
 // TYPES
@@ -78,20 +80,18 @@ interface AttendanceRecord {
   kehadiran_id?: string;
 }
 
-interface JadwalOption {
+interface MataKuliahOption {
   id: string;
-  kelas_nama: string;
-  mata_kuliah_nama: string;
-  tanggal: string;
-  jam_mulai: string;
-  jam_selesai: string;
+  nama_mk: string;
+  kode_mk: string;
 }
 
 interface KelasOption {
   id: string;
   nama_kelas: string;
-  mata_kuliah_nama: string;
+  kode_kelas: string;
 }
+
 
 // ============================================================================
 // STATUS CONSTANTS
@@ -101,11 +101,12 @@ const STATUS_OPTIONS: {
   value: KehadiranStatus;
   label: string;
   color: string;
+  icon: string;
 }[] = [
-  { value: "hadir", label: "Hadir", color: "bg-green-100 text-green-800" },
-  { value: "izin", label: "Izin", color: "bg-blue-100 text-blue-800" },
-  { value: "sakit", label: "Sakit", color: "bg-yellow-100 text-yellow-800" },
-  { value: "alpha", label: "Alpha", color: "bg-red-100 text-red-800" },
+  { value: "hadir", label: "Hadir", color: "bg-green-100 text-green-800 border-green-300", icon: "✓" },
+  { value: "izin", label: "Izin", color: "bg-blue-100 text-blue-800 border-blue-300", icon: "📝" },
+  { value: "sakit", label: "Sakit", color: "bg-yellow-100 text-yellow-800 border-yellow-300", icon: "🏥" },
+  { value: "alpha", label: "Alpha", color: "bg-red-100 text-red-800 border-red-300", icon: "✗" },
 ];
 
 // ============================================================================
@@ -116,53 +117,35 @@ export default function DosenKehadiranPage() {
   const { user } = useAuth();
 
   // ============================================================================
-  // STATE - GENERAL
+  // STATE
   // ============================================================================
 
   const [loading, setLoading] = useState(false);
-  const [jadwalList, setJadwalList] = useState<JadwalOption[]>([]);
-  const [kelasList, setKelasList] = useState<KelasOption[]>([]);
-
-  // ============================================================================
-  // STATE - TAB 1: INPUT KEHADIRAN
-  // ============================================================================
-
-  const [selectedJadwal, setSelectedJadwal] = useState<string>("");
-  const [attendanceRecords, setAttendanceRecords] = useState<
-    AttendanceRecord[]
-  >([]);
   const [isSavingAttendance, setIsSavingAttendance] = useState(false);
-  const [editingRecords, setEditingRecords] = useState<Set<string>>(new Set());
 
-  // ============================================================================
-  // STATE - TAB 2: VIEW/REPORT
-  // ============================================================================
+  // Step selections
+  const [mataKuliahList, setMataKuliahList] = useState<MataKuliahOption[]>([]);
+  const [selectedMataKuliah, setSelectedMataKuliah] = useState<string>("");
 
+  const [kelasList, setKelasList] = useState<KelasOption[]>([]);
   const [selectedKelas, setSelectedKelas] = useState<string>("");
-  const [startDate, setStartDate] = useState<string>("");
-  const [endDate, setEndDate] = useState<string>("");
-  const [reportRecords, setReportRecords] = useState<any[]>([]);
-  const [reportStats, setReportStats] = useState<any>(null);
-  const [isLoadingReport, setIsLoadingReport] = useState(false);
 
-  // ============================================================================
-  // STATE - EDIT DIALOG
-  // ============================================================================
-
-  const [editingRecord, setEditingRecord] = useState<AttendanceRecord | null>(
-    null,
-  );
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [editFormData, setEditFormData] = useState<Partial<AttendanceRecord>>(
-    {},
+  const [selectedTanggal, setSelectedTanggal] = useState<string>(
+    new Date().toISOString().split("T")[0]
   );
 
-  // ============================================================================
-  // STATE - DELETE DIALOG
-  // ============================================================================
+  // Attendance records
+  const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
-  const [deletingRecord] = useState<AttendanceRecord | null>(null);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  // Filters
+  const [tahunAjaranFilter, setTahunAjaranFilter] = useState<string>("__all__");
+  const [semesterFilter, setSemesterFilter] = useState<string>("__all__");
+  const [tahunAjaranOptions, setTahunAjaranOptions] = useState<string[]>([]);
+  const [semesterOptions, setSemesterOptions] = useState<number[]>([]);
+
+  // Tabs
+  const [activeTab, setActiveTab] = useState<"input" | "history">("input");
 
   // ============================================================================
   // EFFECTS
@@ -170,105 +153,132 @@ export default function DosenKehadiranPage() {
 
   useEffect(() => {
     if (user?.dosen?.id) {
-      loadJadwalAndKelas();
+      loadMataKuliah();
     }
   }, [user?.dosen?.id]);
+
+  // Load kelas when mata kuliah changes
+  useEffect(() => {
+    if (selectedMataKuliah) {
+      loadKelas(selectedMataKuliah);
+      setSelectedKelas("");
+      setAttendanceRecords([]);
+    }
+  }, [selectedMataKuliah]);
+
+  // Load mahasiswa when kelas changes
+  useEffect(() => {
+    if (selectedKelas) {
+      loadMahasiswaForKehadiran(selectedKelas);
+    }
+  }, [selectedKelas]);
 
   // ============================================================================
   // HANDLERS - LOAD DATA
   // ============================================================================
 
-  const loadJadwalAndKelas = async () => {
+  const loadMataKuliah = async () => {
     try {
       setLoading(true);
 
-      // Get current dosen's classes
-      const { data: kelasData, error: kelasError } = await supabase
-        .from("kelas")
-        .select("id, nama_kelas, mata_kuliah_id")
-        .eq("dosen_id", user?.dosen?.id || "");
+      // 🎯 Fetch mata kuliah directly from mata_kuliah table
+      const mataKuliahData = await getMataKuliah({ is_active: true });
+      console.log("🔍 DEBUG KehadiranPage: Fetched mata kuliah =", mataKuliahData);
 
-      if (kelasError) throw kelasError;
+      // Convert to dropdown format
+      const mataKuliahArray = mataKuliahData.map((mk: any) => ({
+        id: mk.id,
+        nama_mk: mk.nama_mk,
+        kode_mk: mk.kode_mk,
+      }));
 
-      // Enrich kelas dengan mata kuliah info
-      const enrichedKelas = await Promise.all(
-        (kelasData || []).map(async (k: any) => {
-          const { data: mkData } = await supabase
-            .from("mata_kuliah")
-            .select("nama_mk")
-            .eq("id", k.mata_kuliah_id)
-            .single();
+      console.log("🔍 DEBUG KehadiranPage: mataKuliahArray =", mataKuliahArray);
+      setMataKuliahList(mataKuliahArray);
 
-          return {
-            id: k.id,
-            nama_kelas: k.nama_kelas,
-            mata_kuliah_nama: mkData?.nama_mk || "-",
-          };
-        }),
-      );
+      // Get kelas for filter options only
+      const kelasData = await getMyKelas();
+      console.log("🔍 DEBUG KehadiranPage: kelasData =", kelasData);
 
-      setKelasList(enrichedKelas);
+      // Extract unique filter options
+      const tahunAjaranSet = new Set<string>();
+      const semesterSet = new Set<number>();
+      kelasData.forEach((k: any) => {
+        if (k.tahun_ajaran) tahunAjaranSet.add(k.tahun_ajaran);
+        if (k.semester_ajaran) semesterSet.add(k.semester_ajaran);
+      });
 
-      // Get jadwal for dosen's classes
-      if (enrichedKelas.length > 0) {
-        const kelasIds = enrichedKelas.map((k) => k.id);
-        const { data: jadwalData, error: jadwalError } = await supabase
-          .from("jadwal_praktikum")
-          .select("id, kelas_id, tanggal_praktikum, jam_mulai, jam_selesai")
-          .in("kelas_id", kelasIds)
-          .order("tanggal_praktikum", { ascending: false });
+      const tahunOptions = Array.from(tahunAjaranSet).sort().reverse(); // Terbaru dulu
+      const semOptions = Array.from(semesterSet).sort((a, b) => a - b);
 
-        if (jadwalError) throw jadwalError;
+      setTahunAjaranOptions(tahunOptions);
+      setSemesterOptions(semOptions);
 
-        // Enrich jadwal dengan kelas & mata kuliah info
-        const enrichedJadwal = (jadwalData || []).map((j: any) => {
-          const kelas = enrichedKelas.find((k) => k.id === j.kelas_id);
-          return {
-            id: j.id,
-            kelas_nama: kelas?.nama_kelas || "-",
-            mata_kuliah_nama: kelas?.mata_kuliah_nama || "-",
-            tanggal: j.tanggal_praktikum,
-            jam_mulai: j.jam_mulai,
-            jam_selesai: j.jam_selesai,
-          };
-        });
-
-        setJadwalList(enrichedJadwal);
-      }
+      console.log("🔍 DEBUG Filter options:", { tahunOptions, semOptions });
     } catch (error) {
-      console.error("Error loading jadwal and kelas:", error);
-      toast.error("Gagal memuat jadwal dan kelas");
+      console.error("Error loading mata kuliah:", error);
+      toast.error("Gagal memuat daftar mata kuliah");
     } finally {
       setLoading(false);
     }
   };
 
-  const loadAttendanceForJadwal = async (jadwalId: string) => {
+  const loadKelas = async (mataKuliahId: string) => {
     try {
       setLoading(true);
 
-      // Get kehadiran records
-      const kehadiran = await getKehadiranByJadwal(jadwalId);
+      console.log("🔍 DEBUG KehadiranPage loadKelas: mataKuliahId =", mataKuliahId);
+      console.log("🔍 DEBUG KehadiranPage: mataKuliahList =", mataKuliahList);
 
-      // Get all mahasiswa in this kelas (from jadwal)
-      const { data: jadwalData } = await supabase
-        .from("jadwal_praktikum")
-        .select("kelas_id")
-        .eq("id", jadwalId)
-        .single();
+      // Get all assigned kelas and filter by mata kuliah
+      const allKelas = await getMyKelas();
+      console.log("🔍 DEBUG KehadiranPage: allKelas =", allKelas);
 
-      if (!jadwalData) throw new Error("Jadwal not found");
+      // Mata kuliah selected (for attendance record only, not for filtering kelas)
+      console.log("🔍 DEBUG KehadiranPage: Selected mata kuliah =", mataKuliahId);
 
-      // Get mahasiswa in this kelas - dari kelas_mahasiswa (enrollment)
+      // Filter kelas by tahun ajaran and semester (mata kuliah independent)
+      const filteredKelas = allKelas.filter(kelas => {
+        // Filter by tahun ajaran if selected
+        if (tahunAjaranFilter && tahunAjaranFilter !== "__all__" && kelas.tahun_ajaran !== tahunAjaranFilter) return false;
+
+        // Filter by semester if selected
+        if (semesterFilter && semesterFilter !== "__all__" && kelas.semester_ajaran.toString() !== semesterFilter) return false;
+
+        return true;
+      });
+      console.log("🔍 DEBUG KehadiranPage: filteredKelas =", filteredKelas);
+
+      // Transform to KelasOption format
+      const uniqueKelas = filteredKelas.map((kelas: any) => ({
+        id: kelas.id,
+        nama_kelas: kelas.nama_kelas,
+        kode_kelas: kelas.kode_kelas || "",
+      }));
+
+      setKelasList(uniqueKelas);
+    } catch (error) {
+      console.error("Error loading kelas:", error);
+      toast.error("Gagal memuat daftar kelas");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadMahasiswaForKehadiran = async (kelasId: string) => {
+    try {
+      setLoading(true);
+
+      // Get all mahasiswa in this kelas
       const { data: mahasiswaData, error: mahasiswaError } = await supabase
         .from("kelas_mahasiswa")
         .select("mahasiswa_id, mahasiswa(id, nim, user_id)")
-        .eq("kelas_id", jadwalData.kelas_id!)
+        .eq("kelas_id", kelasId)
+        .eq("is_active", true)
         .limit(100);
 
       if (mahasiswaError) throw mahasiswaError;
 
-      // Get user data untuk mendapat full_name
+      // Get user data for names
       const mahasiswaIds = (mahasiswaData || []).map(
         (m) => m.mahasiswa.user_id,
       );
@@ -281,95 +291,26 @@ export default function DosenKehadiranPage() {
         usersData?.map((u) => [u.id, u.full_name]) || [],
       );
 
-      // Map to attendance records
-      const records = (mahasiswaData || []).map((item: any) => {
-        const existing = kehadiran.find(
-          (k) => k.mahasiswa_id === item.mahasiswa_id,
-        );
-        return {
-          mahasiswa_id: item.mahasiswa_id,
-          nim: item.mahasiswa.nim,
-          nama: usersMap.get(item.mahasiswa.user_id) || "-",
-          status: (existing?.status || "hadir") as KehadiranStatus,
-          keterangan: existing?.keterangan || "",
-          kehadiran_id: existing?.id,
-        };
-      });
+      // Map to attendance records (default: hadir)
+      const records = (mahasiswaData || []).map((item: any) => ({
+        mahasiswa_id: item.mahasiswa_id,
+        nim: item.mahasiswa.nim,
+        nama: usersMap.get(item.mahasiswa.user_id) || "-",
+        status: "hadir" as KehadiranStatus,
+        keterangan: "",
+      }));
 
       setAttendanceRecords(records);
-      setEditingRecords(new Set());
+      setHasUnsavedChanges(false);
     } catch (error) {
-      console.error("Error loading attendance:", error);
-      toast.error("Gagal memuat data kehadiran");
+      console.error("Error loading mahasiswa:", error);
+      toast.error("Gagal memuat data mahasiswa");
     } finally {
       setLoading(false);
     }
   };
 
-  const loadReportForKelas = async (
-    kelasId: string,
-    start: string,
-    end: string,
-  ) => {
-    try {
-      setIsLoadingReport(true);
-
-      // Get kehadiran by kelas
-      const kehadiran = await getKehadiranByKelas(kelasId, start, end);
-
-      // Group by mahasiswa and calculate stats
-      const mahasiswaMap = new Map<string, any>();
-
-      kehadiran.forEach((record) => {
-        const key = record.mahasiswa_id;
-        if (!mahasiswaMap.has(key)) {
-          mahasiswaMap.set(key, {
-            mahasiswa_id: record.mahasiswa_id,
-            nim: record.mahasiswa.nim,
-            nama: record.mahasiswa.user.full_name,
-            hadir: 0,
-            izin: 0,
-            sakit: 0,
-            alpha: 0,
-            records: [],
-          });
-        }
-
-        const mhs = mahasiswaMap.get(key);
-        mhs[record.status]++;
-        mhs.records.push(record);
-      });
-
-      const reportData = Array.from(mahasiswaMap.values());
-
-      // Calculate summary stats
-      let totalHadir = 0,
-        totalIzin = 0,
-        totalSakit = 0,
-        totalAlpha = 0;
-      reportData.forEach((mhs) => {
-        totalHadir += mhs.hadir;
-        totalIzin += mhs.izin;
-        totalSakit += mhs.sakit;
-        totalAlpha += mhs.alpha;
-      });
-
-      setReportRecords(reportData);
-      setReportStats({
-        totalHadir,
-        totalIzin,
-        totalSakit,
-        totalAlpha,
-        totalStudents: reportData.length,
-      });
-    } catch (error) {
-      console.error("Error loading report:", error);
-      toast.error("Gagal memuat laporan kehadiran");
-    } finally {
-      setIsLoadingReport(false);
-    }
-  };
-
+  
   // ============================================================================
   // HANDLERS - INPUT KEHADIRAN
   // ============================================================================
@@ -380,7 +321,7 @@ export default function DosenKehadiranPage() {
         r.mahasiswa_id === mahasiswaId ? { ...r, status } : r,
       ),
     );
-    setEditingRecords((prev) => new Set(prev).add(mahasiswaId));
+    setHasUnsavedChanges(true);
   };
 
   const handleKeteranganChange = (mahasiswaId: string, keterangan: string) => {
@@ -389,21 +330,22 @@ export default function DosenKehadiranPage() {
         r.mahasiswa_id === mahasiswaId ? { ...r, keterangan } : r,
       ),
     );
-    setEditingRecords((prev) => new Set(prev).add(mahasiswaId));
+    setHasUnsavedChanges(true);
   };
 
   const handleSaveAttendance = async () => {
-    if (!selectedJadwal) {
-      toast.error("Pilih jadwal terlebih dahulu");
+    if (!selectedKelas) {
+      toast.error("Pilih kelas terlebih dahulu");
       return;
     }
 
     try {
       setIsSavingAttendance(true);
 
+      // Create kehadiran data per kelas + tanggal
       const bulkData = {
-        jadwal_id: selectedJadwal,
-        tanggal: new Date().toISOString().split("T")[0],
+        kelas_id: selectedKelas,
+        tanggal: selectedTanggal,
         kehadiran: attendanceRecords.map((r) => ({
           mahasiswa_id: r.mahasiswa_id,
           status: r.status,
@@ -411,12 +353,16 @@ export default function DosenKehadiranPage() {
         })),
       };
 
-      await saveKehadiranBulk(bulkData);
-      toast.success("Kehadiran berhasil disimpan");
-      setEditingRecords(new Set());
+      // Save kehadiran per kelas + tanggal
+      await saveKehadiranBulk({
+        kelas_id: selectedKelas,
+        mata_kuliah_id: selectedMataKuliah,
+        tanggal: selectedTanggal,
+        kehadiran: bulkData.kehadiran,
+      });
 
-      // Reload data
-      await loadAttendanceForJadwal(selectedJadwal);
+      toast.success("Kehadiran berhasil disimpan");
+      setHasUnsavedChanges(false);
     } catch (error: any) {
       console.error("Error saving attendance:", error);
       toast.error(
@@ -427,81 +373,43 @@ export default function DosenKehadiranPage() {
     }
   };
 
-  // ============================================================================
-  // HANDLERS - VIEW/REPORT
-  // ============================================================================
-
-  const handleLoadReport = () => {
-    if (!selectedKelas || !startDate || !endDate) {
-      toast.error("Pilih kelas dan tanggal range");
-      return;
-    }
-
-    if (new Date(startDate) > new Date(endDate)) {
-      toast.error("Tanggal awal harus sebelum tanggal akhir");
-      return;
-    }
-
-    loadReportForKelas(selectedKelas, startDate, endDate);
-  };
-
-  // ============================================================================
-  // HANDLERS - EDIT/DELETE
-  // ============================================================================
-
-  const handleEditRecord = (record: AttendanceRecord) => {
-    setEditingRecord(record);
-    setEditFormData({
-      status: record.status,
-      keterangan: record.keterangan,
-    });
-    setIsEditDialogOpen(true);
-  };
-
-  const handleSaveEdit = async () => {
-    if (!editingRecord?.kehadiran_id) {
-      toast.error("Record ID not found");
+  const handleExportAttendance = async () => {
+    if (!selectedKelas || !selectedMataKuliah) {
+      toast.error("Pilih kelas dan mata kuliah terlebih dahulu");
       return;
     }
 
     try {
-      await updateKehadiran(editingRecord.kehadiran_id, {
-        status: editFormData.status,
-        keterangan: editFormData.keterangan,
-      });
-      toast.success("Kehadiran berhasil diupdate");
-      setIsEditDialogOpen(false);
+      setLoading(true);
 
-      // Reload report
-      if (selectedKelas && startDate && endDate) {
-        await loadReportForKelas(selectedKelas, startDate, endDate);
+      // Get mata kuliah and kelas names
+      const selectedMK = mataKuliahList.find(mk => mk.id === selectedMataKuliah);
+      const selectedKls = kelasList.find(k => k.id === selectedKelas);
+
+      // Fetch data
+      const exportData = await getKehadiranForExport(selectedKelas, selectedTanggal);
+
+      if (exportData.length === 0) {
+        toast.warning("Tidak ada data kehadiran untuk diekspor. Silakan simpan kehadiran terlebih dahulu.");
+        return;
       }
-    } catch (error: any) {
-      toast.error(
-        "Gagal mengupdate kehadiran: " + (error.message || "Unknown error"),
+
+      // Generate filename
+      const filename = formatExportFilename(
+        selectedMK?.nama_mk || 'kehadiran',
+        selectedKls?.nama_kelas || 'kelas',
+        selectedTanggal
       );
-    }
-  };
 
-  const confirmDelete = async () => {
-    if (!deletingRecord?.kehadiran_id) {
-      toast.error("Record ID not found");
-      return;
-    }
+      // Export
+      exportKehadiranToCSV(exportData, filename);
 
-    try {
-      await deleteKehadiran(deletingRecord.kehadiran_id);
-      toast.success("Kehadiran berhasil dihapus");
-      setIsDeleteDialogOpen(false);
-
-      // Reload report
-      if (selectedKelas && startDate && endDate) {
-        await loadReportForKelas(selectedKelas, startDate, endDate);
-      }
+      toast.success(`Data berhasil diekspor: ${filename}`);
     } catch (error: any) {
-      toast.error(
-        "Gagal menghapus kehadiran: " + (error.message || "Unknown error"),
-      );
+      console.error("Error exporting:", error);
+      toast.error("Gagal mengekspor data: " + (error.message || "Unknown error"));
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -511,8 +419,9 @@ export default function DosenKehadiranPage() {
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("id-ID", {
-      day: "2-digit",
-      month: "2-digit",
+      weekday: "long",
+      day: "numeric",
+      month: "long",
       year: "numeric",
     });
   };
@@ -521,384 +430,409 @@ export default function DosenKehadiranPage() {
     return timeString.slice(0, 5);
   };
 
+  // Calculate stats
+  const stats = {
+    hadir: attendanceRecords.filter((r) => r.status === "hadir").length,
+    izin: attendanceRecords.filter((r) => r.status === "izin").length,
+    sakit: attendanceRecords.filter((r) => r.status === "sakit").length,
+    alpha: attendanceRecords.filter((r) => r.status === "alpha").length,
+  };
+
   // ============================================================================
   // RENDER
   // ============================================================================
 
   return (
     <div className="container mx-auto py-6 max-w-7xl space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Kehadiran Praktikum</h1>
-          <p className="text-muted-foreground">
-            Input dan lihat kehadiran mahasiswa
+      {/* Hero Header */}
+      <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-teal-600 via-emerald-600 to-green-700 p-8 text-white">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-32 translate-x-32 blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-emerald-400/20 rounded-full translate-y-24 -translate-x-24 blur-2xl" />
+
+        <div className="relative">
+          <h1 className="text-3xl font-bold flex items-center gap-3">
+            📋 Kehadiran Praktikum
+          </h1>
+          <p className="text-emerald-100 mt-2 max-w-xl">
+            Input kehadiran mahasiswa praktikum. Pilih mata kuliah, kelas, dan tanggal kehadiran.
           </p>
         </div>
-        <Button variant="outline" onClick={loadJadwalAndKelas}>
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Refresh
-        </Button>
       </div>
 
-      {/* Main Tabs */}
-      <Tabs defaultValue="input" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="input">Input Kehadiran</TabsTrigger>
-          <TabsTrigger value="report">View/Report</TabsTrigger>
-        </TabsList>
-
-        {/* ================================================================== */}
-        {/* TAB 1: INPUT KEHADIRAN */}
-        {/* ================================================================== */}
-
-        <TabsContent value="input" className="space-y-6">
-          {/* Jadwal Selection */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Pilih Jadwal Praktikum</CardTitle>
-              <CardDescription>
-                Pilih jadwal untuk input kehadiran
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <Select
-                  value={selectedJadwal}
-                  onValueChange={(value) => {
-                    setSelectedJadwal(value);
-                    loadAttendanceForJadwal(value);
+      {/* Filter Card */}
+      {(tahunAjaranOptions.length > 0 || semesterOptions.length > 0) && (
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Filter className="h-5 w-5 text-muted-foreground" />
+                <CardTitle className="text-base">Filter Kelas</CardTitle>
+              </div>
+              {(tahunAjaranFilter !== "__all__" || semesterFilter !== "__all__") && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setTahunAjaranFilter("__all__");
+                    setSemesterFilter("__all__");
                   }}
+                  className="gap-1"
                 >
+                  <X className="h-3 w-3" />
+                  Reset Filter
+                </Button>
+              )}
+            </div>
+            <CardDescription>
+              Filter kelas berdasarkan tahun ajaran dan semester
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Tahun Ajaran Filter */}
+              <div>
+                <label className="text-sm font-medium mb-2 block">
+                  Tahun Ajaran
+                </label>
+                <Select value={tahunAjaranFilter} onValueChange={setTahunAjaranFilter}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Pilih jadwal praktikum..." />
+                    <SelectValue placeholder="Semua Tahun Ajaran" />
                   </SelectTrigger>
                   <SelectContent>
-                    {jadwalList.map((jadwal) => (
-                      <SelectItem key={jadwal.id} value={jadwal.id}>
-                        {jadwal.mata_kuliah_nama} - {jadwal.kelas_nama} (
-                        {formatDate(jadwal.tanggal)}{" "}
-                        {formatTime(jadwal.jam_mulai)})
+                    <SelectItem value="__all__">Semua Tahun Ajaran</SelectItem>
+                    {tahunAjaranOptions.map((ta) => (
+                      <SelectItem key={ta} value={ta}>
+                        {ta}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
-            </CardContent>
-          </Card>
 
-          {/* Attendance Input Table */}
-          {selectedJadwal && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Input Kehadiran</CardTitle>
-                <CardDescription>
-                  Atur status kehadiran untuk setiap mahasiswa
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {loading ? (
-                  <div className="text-center py-8">Loading...</div>
-                ) : attendanceRecords.length === 0 ? (
-                  <Alert>
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>
-                      Tidak ada mahasiswa dalam kelas ini atau belum ada data.
-                    </AlertDescription>
-                  </Alert>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="rounded-md border overflow-x-auto">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>NIM</TableHead>
-                            <TableHead>Nama</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead>Keterangan</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {attendanceRecords.map((record) => (
-                            <TableRow key={record.mahasiswa_id}>
-                              <TableCell className="font-mono text-sm">
-                                {record.nim}
-                              </TableCell>
-                              <TableCell>{record.nama}</TableCell>
-                              <TableCell>
-                                <Select
-                                  value={record.status}
-                                  onValueChange={(value) =>
-                                    handleStatusChange(
-                                      record.mahasiswa_id,
-                                      value as KehadiranStatus,
-                                    )
-                                  }
-                                >
-                                  <SelectTrigger className="w-32">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {STATUS_OPTIONS.map((option) => (
-                                      <SelectItem
-                                        key={option.value}
-                                        value={option.value}
-                                      >
-                                        {option.label}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              </TableCell>
-                              <TableCell>
-                                <Input
-                                  placeholder="Catatan..."
-                                  value={record.keterangan}
-                                  onChange={(e) =>
-                                    handleKeteranganChange(
-                                      record.mahasiswa_id,
-                                      e.target.value,
-                                    )
-                                  }
-                                  className="w-full"
-                                />
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
+              {/* Semester Filter */}
+              <div>
+                <label className="text-sm font-medium mb-2 block">
+                  Semester
+                </label>
+                <Select value={semesterFilter} onValueChange={setSemesterFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Semua Semester" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__all__">Semua Semester</SelectItem>
+                    {semesterOptions.map((sem) => (
+                      <SelectItem key={sem} value={sem.toString()}>
+                        Semester {sem}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Step Selection Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Step 1: Mata Kuliah */}
+        <Card className={cn(
+          "border-2 transition-all",
+          selectedMataKuliah ? "border-green-300 bg-green-50/50" : "border-gray-200"
+        )}>
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-2">
+              <div className={cn(
+                "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold",
+                selectedMataKuliah ? "bg-green-600 text-white" : "bg-gray-200 text-gray-600"
+              )}>
+                1
+              </div>
+              <CardTitle className="text-base">Mata Kuliah</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <Select
+              value={selectedMataKuliah}
+              onValueChange={setSelectedMataKuliah}
+            >
+              <SelectTrigger className={cn(
+                selectedMataKuliah && "border-green-500"
+              )}>
+                <SelectValue placeholder="Pilih mata kuliah..." />
+              </SelectTrigger>
+              <SelectContent>
+                {mataKuliahList.map((mk) => (
+                  <SelectItem key={mk.id} value={mk.id}>
+                    <div className="flex flex-col">
+                      <span className="font-semibold">{mk.kode_mk}</span>
+                      <span className="text-xs text-muted-foreground">{mk.nama_mk}</span>
                     </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {selectedMataKuliah && (
+              <div className="mt-2 flex items-center gap-1 text-xs text-green-700">
+                <CheckCircle2 className="h-3 w-3" />
+                <span>Mata kuliah dipilih</span>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        variant="outline"
-                        onClick={() => {
-                          setSelectedJadwal("");
-                          setAttendanceRecords([]);
-                          setEditingRecords(new Set());
-                        }}
-                      >
-                        Clear
-                      </Button>
-                      <Button
-                        onClick={handleSaveAttendance}
-                        disabled={
-                          isSavingAttendance || editingRecords.size === 0
-                        }
-                      >
-                        <Save className="h-4 w-4 mr-2" />
-                        {isSavingAttendance
-                          ? "Menyimpan..."
-                          : "Simpan Kehadiran"}
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
+        {/* Step 2: Kelas */}
+        <Card className={cn(
+          "border-2 transition-all",
+          !selectedMataKuliah && "opacity-50",
+          selectedKelas ? "border-green-300 bg-green-50/50" : "border-gray-200"
+        )}>
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-2">
+              <div className={cn(
+                "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold",
+                selectedKelas ? "bg-green-600 text-white" : "bg-gray-200 text-gray-600"
+              )}>
+                2
+              </div>
+              <CardTitle className="text-base">Kelas</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <Select
+              value={selectedKelas}
+              onValueChange={setSelectedKelas}
+              disabled={!selectedMataKuliah}
+            >
+              <SelectTrigger className={cn(
+                selectedKelas && "border-green-500"
+              )}>
+                <SelectValue placeholder={
+                  selectedMataKuliah ? "Pilih kelas..." : "Pilih mata kuliah dulu"
+                } />
+              </SelectTrigger>
+              <SelectContent>
+                {kelasList.map((kelas) => (
+                  <SelectItem key={kelas.id} value={kelas.id}>
+                    {kelas.nama_kelas} ({kelas.kode_kelas})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {selectedKelas && (
+              <div className="mt-2 flex items-center gap-1 text-xs text-green-700">
+                <CheckCircle2 className="h-3 w-3" />
+                <span>Kelas dipilih</span>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-        {/* ================================================================== */}
-        {/* TAB 2: VIEW/REPORT */}
-        {/* ================================================================== */}
+        {/* Step 3: Tanggal */}
+        <Card className={cn(
+          "border-2 transition-all",
+          !selectedKelas && "opacity-50",
+          selectedTanggal ? "border-green-300 bg-green-50/50" : "border-gray-200"
+        )}>
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-2">
+              <div className={cn(
+                "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold",
+                selectedTanggal ? "bg-green-600 text-white" : "bg-gray-200 text-gray-600"
+              )}>
+                3
+              </div>
+              <CardTitle className="text-base">Tanggal Kehadiran</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <Input
+              type="date"
+              value={selectedTanggal}
+              onChange={(e) => setSelectedTanggal(e.target.value)}
+              disabled={!selectedKelas}
+              className={cn(
+                selectedTanggal && "border-green-500"
+              )}
+            />
+            {selectedTanggal && (
+              <div className="mt-2 flex items-center gap-1 text-xs text-green-700">
+                <CheckCircle2 className="h-3 w-3" />
+                <span>Tanggal: {formatDate(selectedTanggal)}</span>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
-        <TabsContent value="report" className="space-y-6">
-          {/* Filter Card */}
+      {/* Statistics Cards */}
+      {selectedKelas && attendanceRecords.length > 0 && (
+        <div className="grid gap-4 md:grid-cols-4">
           <Card>
-            <CardHeader>
-              <CardTitle>Filter Laporan</CardTitle>
-              <CardDescription>
-                Pilih kelas dan tanggal untuk melihat laporan
-              </CardDescription>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Hadir</CardTitle>
+              <div className="text-2xl">✓</div>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <Label htmlFor="report-kelas">Kelas</Label>
-                  <Select
-                    value={selectedKelas}
-                    onValueChange={setSelectedKelas}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Pilih kelas..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {kelasList.map((kelas) => (
-                        <SelectItem key={kelas.id} value={kelas.id}>
-                          {kelas.mata_kuliah_nama} - {kelas.nama_kelas}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="start-date">Dari Tanggal</Label>
-                  <Input
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="end-date">Sampai Tanggal</Label>
-                  <Input
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                  />
-                </div>
-              </div>
-
-              <div className="mt-4">
-                <Button onClick={handleLoadReport} disabled={isLoadingReport}>
-                  <Search className="h-4 w-4 mr-2" />
-                  {isLoadingReport ? "Loading..." : "Tampilkan Laporan"}
-                </Button>
-              </div>
+              <div className="text-2xl font-bold text-green-600">{stats.hadir}</div>
+              <p className="text-xs text-muted-foreground">mahasiswa</p>
             </CardContent>
           </Card>
 
-          {/* Statistics Cards */}
-          {reportStats && (
-            <div className="grid gap-4 md:grid-cols-5">
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Total Mahasiswa
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {reportStats.totalStudents}
-                  </div>
-                </CardContent>
-              </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Izin</CardTitle>
+              <div className="text-2xl">📝</div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-blue-600">{stats.izin}</div>
+              <p className="text-xs text-muted-foreground">mahasiswa</p>
+            </CardContent>
+          </Card>
 
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium">Hadir</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-green-600">
-                    {reportStats.totalHadir}
-                  </div>
-                </CardContent>
-              </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Sakit</CardTitle>
+              <div className="text-2xl">🏥</div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-yellow-600">{stats.sakit}</div>
+              <p className="text-xs text-muted-foreground">mahasiswa</p>
+            </CardContent>
+          </Card>
 
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium">Izin</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-blue-600">
-                    {reportStats.totalIzin}
-                  </div>
-                </CardContent>
-              </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Alpha</CardTitle>
+              <div className="text-2xl">✗</div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-red-600">{stats.alpha}</div>
+              <p className="text-xs text-muted-foreground">mahasiswa</p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium">Sakit</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-yellow-600">
-                    {reportStats.totalSakit}
-                  </div>
-                </CardContent>
-              </Card>
+      {/* Tabs for Input and History */}
+      {selectedKelas && (
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "input" | "history")}>
+          <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-6">
+            <TabsTrigger value="input" className="gap-2">
+              <Calendar className="h-4 w-4" />
+              Input Kehadiran
+            </TabsTrigger>
+            <TabsTrigger value="history" className="gap-2">
+              <History className="h-4 w-4" />
+              Riwayat
+            </TabsTrigger>
+          </TabsList>
 
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium">Alpha</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-red-600">
-                    {reportStats.totalAlpha}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-
-          {/* Report Table */}
-          {reportRecords.length > 0 && (
+          <TabsContent value="input" className="space-y-6">
+            {/* Attendance Input Table */}
             <Card>
-              <CardHeader>
-                <CardTitle>Detail Kehadiran</CardTitle>
-                <CardDescription>Rekap kehadiran per mahasiswa</CardDescription>
-              </CardHeader>
-              <CardContent>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Input Kehadiran</CardTitle>
+                <CardDescription>
+                  {attendanceRecords.length} mahasiswa • {formatDate(selectedTanggal)}
+                </CardDescription>
+              </div>
+              <div className="flex gap-2 items-center">
+                {hasUnsavedChanges && (
+                  <Badge variant="outline" className="border-yellow-500 text-yellow-700">
+                    <Clock className="h-3 w-3 mr-1" />
+                    Belum disimpan
+                  </Badge>
+                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleExportAttendance}
+                  disabled={loading || attendanceRecords.length === 0}
+                  className="gap-2"
+                >
+                  <Download className="h-4 w-4" />
+                  Export CSV
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="text-center py-8">
+                <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-2" />
+                <p className="text-muted-foreground">Memuat data...</p>
+              </div>
+            ) : attendanceRecords.length === 0 ? (
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  Tidak ada mahasiswa dalam kelas ini atau belum ada data.
+                </AlertDescription>
+              </Alert>
+            ) : (
+              <div className="space-y-4">
                 <div className="rounded-md border overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>NIM</TableHead>
-                        <TableHead>Nama</TableHead>
-                        <TableHead className="text-center">Hadir</TableHead>
-                        <TableHead className="text-center">Izin</TableHead>
-                        <TableHead className="text-center">Sakit</TableHead>
-                        <TableHead className="text-center">Alpha</TableHead>
-                        <TableHead className="text-center">
-                          Persentase
-                        </TableHead>
-                        <TableHead className="text-center">Actions</TableHead>
+                        <TableHead className="w-[100px]">NIM</TableHead>
+                        <TableHead>Nama Mahasiswa</TableHead>
+                        <TableHead className="w-[150px]">Status</TableHead>
+                        <TableHead>Keterangan</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {reportRecords.map((record) => {
-                        const total =
-                          record.hadir +
-                          record.izin +
-                          record.sakit +
-                          record.alpha;
-                        const persentase =
-                          total > 0
-                            ? Math.round((record.hadir / total) * 100)
-                            : 0;
+                      {attendanceRecords.map((record) => {
+                        const statusOption = STATUS_OPTIONS.find(s => s.value === record.status);
                         return (
                           <TableRow key={record.mahasiswa_id}>
                             <TableCell className="font-mono text-sm">
                               {record.nim}
                             </TableCell>
-                            <TableCell>{record.nama}</TableCell>
-                            <TableCell className="text-center">
-                              {record.hadir}
-                            </TableCell>
-                            <TableCell className="text-center">
-                              {record.izin}
-                            </TableCell>
-                            <TableCell className="text-center">
-                              {record.sakit}
-                            </TableCell>
-                            <TableCell className="text-center">
-                              {record.alpha}
-                            </TableCell>
-                            <TableCell className="text-center font-medium">
-                              {persentase}%
-                            </TableCell>
-                            <TableCell className="text-center">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => {
-                                  const firstRecord = record.records[0];
-                                  if (firstRecord) {
-                                    handleEditRecord({
-                                      mahasiswa_id: record.mahasiswa_id,
-                                      nim: record.nim,
-                                      nama: record.nama,
-                                      status: firstRecord.status,
-                                      keterangan: firstRecord.keterangan || "",
-                                      kehadiran_id: firstRecord.id,
-                                    });
-                                  }
-                                }}
+                            <TableCell className="font-medium">{record.nama}</TableCell>
+                            <TableCell>
+                              <Select
+                                value={record.status}
+                                onValueChange={(value) =>
+                                  handleStatusChange(
+                                    record.mahasiswa_id,
+                                    value as KehadiranStatus,
+                                  )
+                                }
                               >
-                                <Edit2 className="h-4 w-4" />
-                              </Button>
+                                <SelectTrigger className="w-[140px]">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {STATUS_OPTIONS.map((option) => (
+                                    <SelectItem
+                                      key={option.value}
+                                      value={option.value}
+                                    >
+                                      <div className="flex items-center gap-2">
+                                        <span>{option.icon}</span>
+                                        <span>{option.label}</span>
+                                      </div>
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </TableCell>
+                            <TableCell>
+                              <Input
+                                placeholder="Catatan (opsional)..."
+                                value={record.keterangan}
+                                onChange={(e) =>
+                                  handleKeteranganChange(
+                                    record.mahasiswa_id,
+                                    e.target.value,
+                                  )
+                                }
+                                className="w-full"
+                              />
                             </TableCell>
                           </TableRow>
                         );
@@ -906,140 +840,70 @@ export default function DosenKehadiranPage() {
                     </TableBody>
                   </Table>
                 </div>
-              </CardContent>
-            </Card>
-          )}
 
-          {selectedKelas && reportStats === null && !isLoadingReport && (
-            <Alert>
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                Klik "Tampilkan Laporan" untuk melihat data kehadiran.
-              </AlertDescription>
-            </Alert>
-          )}
-        </TabsContent>
-      </Tabs>
-
-      {/* ================================================================== */}
-      {/* EDIT DIALOG */}
-      {/* ================================================================== */}
-
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit Kehadiran</DialogTitle>
-            <DialogDescription>
-              Update status kehadiran mahasiswa
-            </DialogDescription>
-          </DialogHeader>
-
-          {editingRecord && (
-            <div className="space-y-4">
-              <div>
-                <Label className="text-base font-semibold">
-                  {editingRecord.nama}
-                </Label>
-                <p className="text-sm text-muted-foreground">
-                  {editingRecord.nim}
-                </p>
+                <div className="flex justify-end gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setAttendanceRecords([]);
+                      setHasUnsavedChanges(false);
+                    }}
+                  >
+                    Reset
+                  </Button>
+                  <Button
+                    onClick={handleSaveAttendance}
+                    disabled={isSavingAttendance || !hasUnsavedChanges}
+                    size="lg"
+                    className="gap-2"
+                  >
+                    {isSavingAttendance ? (
+                      <>
+                        <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
+                        Menyimpan...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="h-4 w-4" />
+                        Simpan Kehadiran
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
+            )}
+          </CardContent>
+        </Card>
+          </TabsContent>
 
-              <div>
-                <Label htmlFor="edit-status">Status</Label>
-                <Select
-                  value={editFormData.status || "hadir"}
-                  onValueChange={(value) =>
-                    setEditFormData({
-                      ...editFormData,
-                      status: value as KehadiranStatus,
-                    })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {STATUS_OPTIONS.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+          <TabsContent value="history">
+            <KehadiranHistory
+              kelasId={selectedKelas}
+              kelasNama={kelasList.find(k => k.id === selectedKelas)?.nama_kelas || ""}
+              onSelectDate={(date) => {
+                setSelectedTanggal(date);
+                setActiveTab("input");
+                loadMahasiswaForKehadiran(selectedKelas);
+              }}
+            />
+          </TabsContent>
+        </Tabs>
+      )}
 
-              <div>
-                <Label htmlFor="edit-keterangan">Keterangan</Label>
-                <Textarea
-                  id="edit-keterangan"
-                  placeholder="Tambahkan catatan..."
-                  value={editFormData.keterangan || ""}
-                  onChange={(e) =>
-                    setEditFormData({
-                      ...editFormData,
-                      keterangan: e.target.value,
-                    })
-                  }
-                />
-              </div>
-
-              <div className="flex justify-end gap-2 pt-4">
-                <Button
-                  variant="outline"
-                  onClick={() => setIsEditDialogOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button onClick={handleSaveEdit}>
-                  <Save className="h-4 w-4 mr-2" />
-                  Save
-                </Button>
-              </div>
+      {/* Empty State */}
+      {!selectedKelas && (
+        <Card className="border-2 border-dashed">
+          <CardContent className="flex flex-col items-center justify-center py-16">
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+              <Users className="h-8 w-8 text-gray-400" />
             </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* ================================================================== */}
-      {/* DELETE DIALOG */}
-      {/* ================================================================== */}
-
-      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete Kehadiran</DialogTitle>
-            <DialogDescription>
-              Apakah Anda yakin ingin menghapus record kehadiran ini?
-            </DialogDescription>
-          </DialogHeader>
-
-          {deletingRecord && (
-            <div className="space-y-4">
-              <div className="p-4 border rounded-lg bg-red-50 dark:bg-red-950/20">
-                <p className="text-sm font-medium">Record yang akan dihapus:</p>
-                <p className="text-lg font-bold mt-1">{deletingRecord.nama}</p>
-                <p className="text-sm text-muted-foreground">
-                  {deletingRecord.nim}
-                </p>
-              </div>
-
-              <div className="flex justify-end gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setIsDeleteDialogOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button variant="destructive" onClick={confirmDelete}>
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Delete
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+            <h3 className="text-lg font-semibold mb-2">Pilih Mata Kuliah dan Kelas</h3>
+            <p className="text-muted-foreground text-center max-w-md">
+              Ikuti langkah di atas untuk mulai input kehadiran mahasiswa praktikum.
+            </p>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

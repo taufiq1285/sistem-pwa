@@ -70,12 +70,12 @@ export function AppLayout({ children, className }: AppLayoutProps) {
     }
   };
 
-  // Handle navigation to settings
-  const handleSettingsClick = () => {
-    if (role) {
-      navigate(`/${role}/pengaturan`);
-    }
-  };
+  // ❌ DISABLED: Settings navigation - tidak dalam scope proposal
+  // const handleSettingsClick = () => {
+  //   if (role) {
+  //     navigate(`/${role}/pengaturan`);
+  //   }
+  // };
 
   // Handle notification click (only for admin, others use dropdown)
   const handleNotificationClick = () => {
@@ -126,7 +126,7 @@ export function AppLayout({ children, className }: AppLayoutProps) {
           onMenuClick={() => setMobileNavOpen(true)}
           onNotificationClick={handleNotificationClick}
           onProfileClick={handleProfileClick}
-          onSettingsClick={handleSettingsClick}
+          // onSettingsClick={handleSettingsClick} // ❌ DISABLED
           onLogout={handleLogout}
         />
 

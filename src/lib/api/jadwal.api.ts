@@ -3,6 +3,7 @@
  * API functions for schedule management
  */
 
+import { supabase } from "@/lib/supabase/client";
 import {
   query,
   queryWithFilters,
@@ -25,7 +26,6 @@ import {
   requirePermission,
   requirePermissionAndOwnership,
 } from "@/lib/middleware";
-import { supabase } from "@/lib/supabase/client";
 import { logger } from "@/lib/utils/logger";
 
 // ============================================================================
@@ -39,7 +39,27 @@ import { logger } from "@/lib/utils/logger";
  */
 export async function getJadwal(filters?: JadwalFilters): Promise<Jadwal[]> {
   try {
+    console.log("📋 getJadwal called with filters:", filters);
     const filterConditions = [];
+
+    // 🆕 CRITICAL FIX: Filter by current dosen user_id for data isolation
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user?.id) {
+      // Find the dosen record associated with this user
+      const { data: dosenData } = await supabase
+        .from("dosen")
+        .select("id")
+        .eq("user_id", user.id)
+        .single();
+
+      if (dosenData?.id) {
+        filterConditions.push({
+          column: "dosen_id",
+          operator: "eq" as const,
+          value: dosenData.id,
+        });
+      }
+    }
 
     // Apply filters
     if (filters?.kelas) {
@@ -99,6 +119,8 @@ export async function getJadwal(filters?: JadwalFilters): Promise<Jadwal[]> {
           )
         : await query<Jadwal>("jadwal_praktikum", options);
 
+    console.log(`📋 getJadwal returning ${data?.length || 0} items:`, data);
+    console.log(`📋 getJadwal filterConditions:`, filterConditions);
     return data;
   } catch (error) {
     const apiError = handleError(error);
@@ -153,8 +175,15 @@ function parseTimeString(timeStr: string, referenceDate: Date): Date {
   // Remove seconds if present (08:00:00 → 08:00)
   const timeWithoutSeconds = timeStr.substring(0, 5);
 
-  // Parse with HH:mm format
-  return parse(timeWithoutSeconds, "HH:mm", referenceDate);
+  // Split time components
+  const [hours, minutes] = timeWithoutSeconds.split(":").map(Number);
+
+  // Create new date with the reference date's year, month, and day
+  // but with the specified hours and minutes, preserving local timezone
+  const result = new Date(referenceDate);
+  result.setHours(hours, minutes, 0, 0);
+
+  return result;
 }
 
 /**
@@ -245,33 +274,14 @@ export async function getCalendarEvents(
         }
 
         // ✅ FIX: Parse tanggal dengan benar (timezone-safe)
-        // Gunakan format YYYY-MM-DD langsung tanpa timezone conversion
+        // Parse date in local timezone (WIB/UTC+8)
         const [year, month, day] = j.tanggal_praktikum.split("-").map(Number);
-        const date = new Date(year, month - 1, day); // Local date tanpa timezone issue
+        const localDate = new Date(year, month - 1, day); // Local date tanpa timezone issue
 
-        // 🔍 DEBUG: Log setiap jadwal yang diproses
-        console.log("🔍 Processing jadwal:", {
-          id: j.id,
-          kelas: j.kelas,
-          tanggal_praktikum: j.tanggal_praktikum,
-          parsed_date: date.toISOString(),
-          parsed_date_local: date.toString(),
-          jam_mulai: j.jam_mulai,
-          jam_selesai: j.jam_selesai,
-        });
-
+  
         // Parse time strings and combine with the actual date
-        const jamMulaiDate = parseTimeString(j.jam_mulai, date);
-        const jamSelesaiDate = parseTimeString(j.jam_selesai, date);
-
-        // 🔍 DEBUG: Log hasil parsing time
-        console.log("🔍 Parsed times:", {
-          id: j.id,
-          jamMulaiDate: jamMulaiDate.toISOString(),
-          jamSelesaiDate: jamSelesaiDate.toISOString(),
-          isValid:
-            !isNaN(jamMulaiDate.getTime()) && !isNaN(jamSelesaiDate.getTime()),
-        });
+        const jamMulaiDate = parseTimeString(j.jam_mulai, localDate);
+        const jamSelesaiDate = parseTimeString(j.jam_selesai, localDate);
 
         // Validate parsed dates
         if (isNaN(jamMulaiDate.getTime()) || isNaN(jamSelesaiDate.getTime())) {
@@ -296,11 +306,25 @@ export async function getCalendarEvents(
           ? `${mataKuliahNama} - ${kelasNama} - ${labNama}`
           : `${kelasNama} - ${labNama}`;
 
+        // Create timezone-aware ISO string by manually constructing the UTC time
+        // This ensures that 08:00 WIB is properly displayed as 08:00 in the calendar
+        const createLocalISO = (date: Date) => {
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, '0');
+          const hours = String(date.getHours()).padStart(2, '0');
+          const minutes = String(date.getMinutes()).padStart(2, '0');
+          const seconds = String(date.getSeconds()).padStart(2, '0');
+
+          // Create ISO string that preserves local time by adding Z (treat as UTC)
+          return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.000Z`;
+        };
+
         const event = {
           id: j.id,
           title,
-          start: jamMulaiDate.toISOString(),
-          end: jamSelesaiDate.toISOString(),
+          start: createLocalISO(jamMulaiDate),
+          end: createLocalISO(jamSelesaiDate),
           type: "class" as const,
           color: "#3b82f6",
           location: j.laboratorium?.nama_lab,
@@ -316,14 +340,6 @@ export async function getCalendarEvents(
         };
 
         events.push(event);
-
-        // 🔍 DEBUG: Log event yang dibuat
-        console.log("✅ Event created:", {
-          id: event.id,
-          title: event.title,
-          start: event.start,
-          end: event.end,
-        });
       } catch (parseError) {
         console.warn("❌ Error parsing jadwal event:", j.id, parseError);
       }
@@ -356,6 +372,8 @@ export async function getCalendarEvents(
  */
 async function createJadwalImpl(data: CreateJadwalData): Promise<Jadwal> {
   try {
+    console.log("🔍 DEBUG: createJadwalImpl called with:", data);
+
     // Auto-compute hari from tanggal_praktikum
     const tanggalPraktikum =
       data.tanggal_praktikum instanceof Date
@@ -400,10 +418,24 @@ async function createJadwalImpl(data: CreateJadwalData): Promise<Jadwal> {
       );
     }
 
-    // ✅ PERBAIKAN FINAL: Ganti 'jadwalpraktikum' menjadi 'jadwal_praktikum'
-    // ✅ HYBRID APPROVAL: Auto-approve if no conflict (conflict already checked above)
-    return await insert<Jadwal>("jadwal_praktikum", {
+    // Get current dosen ID
+    const { data: { user } } = await supabase.auth.getUser();
+    let dosenId = null;
+
+    if (user?.id) {
+      const { data: dosenData } = await supabase
+        .from("dosen")
+        .select("id")
+        .eq("user_id", user.id)
+        .single();
+
+      dosenId = dosenData?.id;
+    }
+
+    const insertData = {
       kelas_id: data.kelas_id,
+      mata_kuliah_id: data.mata_kuliah_id,
+      dosen_id: dosenId, // ✅ Tambahkan dosen_id yang sedang login
       laboratorium_id: data.laboratorium_id,
       tanggal_praktikum: format(tanggalPraktikum, "yyyy-MM-dd"),
       hari,
@@ -412,7 +444,17 @@ async function createJadwalImpl(data: CreateJadwalData): Promise<Jadwal> {
       topik: data.topik,
       catatan: data.catatan,
       is_active: true, // HYBRID: Auto-approved (laboran can cancel later if needed)
-    });
+      status: "approved", // ✅ FIX: Set status to approved for auto-approval
+    };
+
+    console.log("🔍 DEBUG: Insert data:", insertData);
+    console.log("🔍 DEBUG: Memanggil insert function...");
+
+    // ✅ PERBAIKAN FINAL: Ganti 'jadwalpraktikum' menjadi 'jadwal_praktikum'
+    // ✅ HYBRID APPROVAL: Auto-approve if no conflict (conflict already checked above)
+    const result = await insert<Jadwal>("jadwal_praktikum", insertData);
+    console.log("✅ DEBUG: Insert success:", result);
+    return result;
   } catch (error) {
     const apiError = handleError(error);
     logError(apiError, "createJadwal");

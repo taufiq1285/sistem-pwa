@@ -137,7 +137,7 @@ export function AnswerReview({
               )}
             >
               <p className="whitespace-pre-wrap">
-                {getAnswerLabel(soal, jawaban.jawaban)}
+                {getAnswerLabel(soal, jawaban.jawaban || "")}
               </p>
             </div>
           )}

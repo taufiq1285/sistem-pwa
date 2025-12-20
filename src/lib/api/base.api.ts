@@ -359,6 +359,7 @@ export async function insert<T = any>(
   data: Partial<T>,
 ): Promise<T> {
   try {
+    console.log("🔍 DEBUG: insert called with table:", table, "data:", data);
     const { data: result, error } = await supabase
       // PERBAIKAN: 'as any' diperlukan di sini untuk generic API
 
@@ -367,16 +368,22 @@ export async function insert<T = any>(
       .select()
       .single();
 
+    console.log("🔍 DEBUG: insert result:", { result, error });
+
     if (error) {
+      console.error("❌ DEBUG: insert error:", error);
       throw handleError(error);
     }
 
     if (!result) {
+      console.error("❌ DEBUG: insert failed - no data returned");
       throw new BaseApiError("Insert failed - no data returned");
     }
 
+    console.log("✅ DEBUG: insert success:", result);
     return result as T;
   } catch (error) {
+    console.error("❌ DEBUG: insert catch error:", error);
     const apiError = handleError(error);
     logError(apiError, `insert:${table}`);
     throw apiError;
@@ -533,15 +540,73 @@ export async function updateMany<T = any>(
  */
 export async function remove(table: string, id: string): Promise<boolean> {
   try {
-    const { error } = await supabase
-      // PERBAIKAN: 'as any' diperlukan di sini untuk generic API
+    console.log(`🗑️ Deleting from ${table} where id = ${id}`);
 
+    // ✅ FIXED: Different soft delete strategies based on table
+    let softDeleteUpdate: any = null;
+
+    // Tables with 'is_active' column (exclude kelas because of trigger issue)
+    const hasIsActive = ['mahasiswa', 'dosen', 'admin', 'laboratorium', 'inventaris', 'mata_kuliah'];
+
+    // Tables that should use hard delete
+    const hardDeleteTables = ['kelas'];
+
+    // Tables with 'status' column (kuis, bank_soal)
+    const hasStatus = ['kuis', 'bank_soal'];
+
+    // Check for hard delete tables first
+    if (hardDeleteTables.includes(table)) {
+      console.log(`🔧 Using hard delete for ${table}`);
+      const { error, count } = await supabase
+        .from(table as any)
+        .delete()
+        .eq("id", id);
+
+      console.log(`📊 Hard delete result: error=${!!error}, count=${count}`);
+
+      if (error) {
+        console.error(`❌ Delete failed for ${table}:${id}:`, error);
+        throw handleError(error);
+      }
+
+      return true;
+    } else if (hasIsActive.includes(table)) {
+      console.log(`🔧 Using soft delete: is_active = false for ${table}`);
+      softDeleteUpdate = { is_active: false };
+    } else if (hasStatus.includes(table)) {
+      console.log(`🔧 Using soft delete: status = 'archived' for ${table}`);
+      softDeleteUpdate = { status: 'archived' };
+    } else {
+      // Hard delete for tables without soft delete support
+      console.log(`🔧 Using hard delete for ${table}`);
+      const { error, count } = await supabase
+        .from(table as any)
+        .delete()
+        .eq("id", id);
+
+      console.log(`📊 Hard delete result: error=${!!error}, count=${count}`);
+
+      if (error) {
+        console.error(`❌ Delete failed for ${table}:${id}:`, error);
+        throw handleError(error);
+      }
+
+      return true;
+    }
+
+    // Perform soft delete
+    const { data: updateResult, error: updateError } = await supabase
       .from(table as any)
-      .delete()
-      .eq("id", id);
+      .update(softDeleteUpdate)
+      .eq("id", id)
+      .select('id')
+      .single();
 
-    if (error) {
-      throw handleError(error);
+    console.log(`📊 Soft delete result:`, { updateResult, updateError });
+
+    if (updateError) {
+      console.error(`❌ Soft delete failed for ${table}:${id}:`, updateError);
+      throw handleError(updateError);
     }
 
     return true;

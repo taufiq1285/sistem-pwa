@@ -27,14 +27,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Search, Filter, CheckSquare, Square, BookOpen } from "lucide-react";
+import { Search, BookOpen } from "lucide-react";
 import { toast } from "sonner";
 
 interface AddFromBankDialogProps {
@@ -60,7 +53,7 @@ export function AddFromBankDialog({
   const [isAdding, setIsAdding] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedTipeSoal, setSelectedTipeSoal] = useState<string>("all");
+  const [selectedTipeSoal, setSelectedTipeSoal] = useState<string>(TIPE_SOAL.PILIHAN_GANDA); // Only pilihan ganda
 
   useEffect(() => {
     if (open) {
@@ -83,9 +76,8 @@ export function AddFromBankDialog({
         filters.search = searchQuery;
       }
 
-      if (selectedTipeSoal && selectedTipeSoal !== "all") {
-        filters.tipe_soal = selectedTipeSoal as any;
-      }
+      // Always filter only pilihan ganda
+      filters.tipe_soal = TIPE_SOAL.PILIHAN_GANDA as any;
 
       const data = await getBankSoal(filters);
       setQuestions(data);
@@ -147,37 +139,16 @@ export function AddFromBankDialog({
           </DialogDescription>
         </DialogHeader>
 
-        {/* Filters */}
+        {/* Search - Only Pilihan Ganda */}
         <div className="space-y-4">
-          <div className="flex gap-3">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Cari soal..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9"
-              />
-            </div>
-
-            <Select
-              value={selectedTipeSoal}
-              onValueChange={setSelectedTipeSoal}
-            >
-              <SelectTrigger className="w-[180px]">
-                <Filter className="h-4 w-4 mr-2" />
-                <SelectValue placeholder="Semua tipe" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Semua Tipe</SelectItem>
-                <SelectItem value={TIPE_SOAL.PILIHAN_GANDA}>
-                  {TIPE_SOAL_LABELS.pilihan_ganda}
-                </SelectItem>
-                <SelectItem value={TIPE_SOAL.ESSAY}>
-                  {TIPE_SOAL_LABELS.essay}
-                </SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Cari soal pilihan ganda..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9"
+            />
           </div>
 
           {/* Select All */}

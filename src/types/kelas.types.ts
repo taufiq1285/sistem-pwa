@@ -50,6 +50,7 @@ export interface KelasFilters {
   semester_ajaran?: number;
   tahun_ajaran?: string;
   is_active?: boolean;
+  with_active_jadwal?: boolean; // Only return kelas with active jadwal_praktikum
 }
 
 export interface CreateKelasData {

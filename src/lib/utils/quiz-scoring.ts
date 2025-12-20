@@ -347,7 +347,7 @@ export function gradeAllAnswers(
     const soal = questionMap.get(jawaban.soal_id);
     if (!soal) return;
 
-    const grading = gradeAnswer(soal, jawaban.jawaban);
+    const grading = gradeAnswer(soal, jawaban.jawaban || "");
 
     gradedAnswers.push({
       ...jawaban,
@@ -368,7 +368,7 @@ export function canAutoGrade(questions: Soal[]): boolean {
     TIPE_SOAL.BENAR_SALAH,
     TIPE_SOAL.JAWABAN_SINGKAT,
   ];
-  return questions.every((q) => autoGradableTypes.includes(q.tipe_soal));
+  return questions.every((q) => autoGradableTypes.includes(q.tipe_soal as any));
 }
 
 /**
@@ -380,7 +380,7 @@ export function getManualGradingRequired(questions: Soal[]): Soal[] {
     TIPE_SOAL.BENAR_SALAH,
     TIPE_SOAL.JAWABAN_SINGKAT,
   ];
-  return questions.filter((q) => !autoGradableTypes.includes(q.tipe_soal));
+  return questions.filter((q) => !autoGradableTypes.includes(q.tipe_soal as any));
 }
 
 // ============================================================================
@@ -431,7 +431,7 @@ export function getQuizStats(questions: Soal[], answers: Jawaban[]): QuizStats {
       } else {
         incorrect++;
       }
-    } else if (autoGradableTypes.includes(soal.tipe_soal)) {
+    } else if (autoGradableTypes.includes(soal.tipe_soal as any)) {
       // Can auto-grade
       const result = gradeAnswer(soal, jawaban.jawaban);
       if (result.is_correct) {

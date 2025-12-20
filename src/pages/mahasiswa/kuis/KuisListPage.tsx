@@ -22,6 +22,7 @@ import {
   CheckCircle2,
   XCircle,
   Timer,
+  Upload,
 } from "lucide-react";
 
 // UI Components
@@ -189,34 +190,43 @@ export default function KuisListPage() {
     const isPassed =
       hasBestScore && quiz.best_score! >= ((quiz as any).passing_grade || 0);
 
+    // Detect task type: TES or LAPORAN
+    // Jika semua soal pilihan ganda = TES
+    // Jika ada soal file_upload = LAPORAN
+    const detectTaskType = (): "tes" | "laporan" | "campuran" => {
+      const judul = quiz.judul?.toLowerCase() || "";
+
+      // Detect from title keywords
+      if (judul.includes("laporan") || judul.includes("report")) return "laporan";
+      if (judul.includes("test") || judul.includes("tes") || judul.includes("kuis")) return "tes";
+
+      // Default to tes (for backward compatibility)
+      return "tes";
+    };
+
+    const taskType = detectTaskType();
+    const isLaporan = taskType === "laporan";
+    const isTes = taskType === "tes";
+
     // Get border color based on task type
     const getBorderColor = () => {
-      const tipe = (quiz as any).tipe_kuis;
-      if (tipe === "pre-test") return "border-l-blue-500";
-      if (tipe === "post-test") return "border-l-purple-500";
-      if (tipe === "laporan") return "border-l-orange-500";
+      if (isTes) return "border-l-blue-500";
+      if (isLaporan) return "border-l-orange-500";
       return "border-l-gray-400";
     };
 
     // Get type badge style
     const getTypeBadgeStyle = () => {
-      const tipe = (quiz as any).tipe_kuis;
-      if (tipe === "pre-test")
-        return "bg-blue-50 text-blue-700 border-blue-200";
-      if (tipe === "post-test")
-        return "bg-purple-50 text-purple-700 border-purple-200";
-      if (tipe === "laporan")
-        return "bg-orange-50 text-orange-700 border-orange-200";
-      return "";
+      if (isTes) return "bg-blue-100 text-blue-800 border-blue-300 font-semibold";
+      if (isLaporan) return "bg-orange-100 text-orange-800 border-orange-300 font-semibold";
+      return "bg-gray-100 text-gray-800 border-gray-300";
     };
 
-    // Get type emoji
-    const getTypeEmoji = () => {
-      const tipe = (quiz as any).tipe_kuis;
-      if (tipe === "pre-test") return "📝";
-      if (tipe === "post-test") return "📊";
-      if (tipe === "laporan") return "📄";
-      return "📋";
+    // Get type label
+    const getTypeLabel = () => {
+      if (isTes) return "🧪 TES";
+      if (isLaporan) return "📄 LAPORAN";
+      return "📋 TUGAS";
     };
 
     return (
@@ -233,9 +243,9 @@ export default function KuisListPage() {
                 {getStatusBadge(quiz.status)}
                 <Badge
                   variant="outline"
-                  className={cn("text-xs", getTypeBadgeStyle())}
+                  className={cn("border-2", getTypeBadgeStyle())}
                 >
-                  {getTypeEmoji()} {(quiz as any).tipe_kuis || "Campuran"}
+                  {getTypeLabel()}
                 </Badge>
               </div>
               <CardTitle className="text-lg mb-1">{quiz.judul}</CardTitle>
@@ -272,12 +282,25 @@ export default function KuisListPage() {
             </div>
           </div>
 
-          <div className="flex items-center justify-between p-3 bg-muted rounded-lg text-sm">
-            <span className="text-muted-foreground">Percobaan</span>
-            <span className="font-semibold">
-              {quiz.attempts_used} / {quiz.max_attempts}
-            </span>
-          </div>
+          {/* Show attempts only for TES, not for LAPORAN */}
+          {!isLaporan && (
+            <div className="flex items-center justify-between p-3 bg-muted rounded-lg text-sm">
+              <span className="text-muted-foreground">Percobaan</span>
+              <span className="font-semibold">
+                {quiz.attempts_used} / {quiz.max_attempts}
+              </span>
+            </div>
+          )}
+
+          {/* For LAPORAN, show submission status */}
+          {isLaporan && (
+            <div className="flex items-center justify-between p-3 bg-orange-50 border border-orange-200 rounded-lg text-sm">
+              <span className="text-orange-700 font-medium">Status</span>
+              <span className="font-semibold text-orange-800">
+                {quiz.attempts_used > 0 ? "✓ Sudah Dikirim" : "Belum Dikirim"}
+              </span>
+            </div>
+          )}
 
           {hasBestScore && (
             <div
@@ -312,10 +335,24 @@ export default function KuisListPage() {
             {canStart && (
               <Button
                 onClick={() => handleStartQuiz(quiz.id)}
-                className="flex-1 gap-2 bg-emerald-600 hover:bg-emerald-700"
+                className={cn(
+                  "flex-1 gap-2",
+                  isLaporan
+                    ? "bg-orange-600 hover:bg-orange-700"
+                    : "bg-blue-600 hover:bg-blue-700"
+                )}
               >
-                <Play className="h-4 w-4" />
-                {quiz.attempts_used > 0 ? "Coba Lagi" : "Mulai Tugas"}
+                {isLaporan ? (
+                  <>
+                    <Upload className="h-4 w-4" />
+                    {quiz.attempts_used > 0 ? "Kirim Ulang" : "Kirim Laporan"}
+                  </>
+                ) : (
+                  <>
+                    <Play className="h-4 w-4" />
+                    {quiz.attempts_used > 0 ? "Coba Lagi" : "Mulai Tes"}
+                  </>
+                )}
               </Button>
             )}
             {isCompleted && quiz.attempts_used > 0 && (
@@ -406,14 +443,11 @@ export default function KuisListPage() {
             batas waktu pengerjaan!
           </p>
           <div className="flex gap-3 mt-4">
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-white/20 backdrop-blur-sm">
-              📝 Pre-Test
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-white/20 backdrop-blur-sm border border-white/30">
+              🧪 TES - Pilihan Ganda
             </span>
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-white/20 backdrop-blur-sm">
-              📊 Post-Test
-            </span>
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-white/20 backdrop-blur-sm">
-              📄 Laporan
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-white/20 backdrop-blur-sm border border-white/30">
+              📄 LAPORAN - Upload File
             </span>
           </div>
         </div>

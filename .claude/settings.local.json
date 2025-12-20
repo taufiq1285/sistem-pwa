@@ -1,36 +1,24 @@
 {
   "permissions": {
     "allow": [
+      "Bash(npm run build:*)",
       "Bash(npx supabase:*)",
-      "Bash(node check-permissions.cjs:*)",
       "Bash(npx tsc:*)",
       "Bash(npm run dev:*)",
       "Bash(find:*)",
-      "Bash(cat:*)",
-      "Bash(node -e:*)",
-      "Bash(lsof:*)",
-      "Bash(npm install:*)",
-      "Bash(npm run type-check:*)",
-      "Bash(npm run lint:*)",
-      "Bash(node:*)",
-      "Bash(npm run build:*)",
-      "Bash(npm run test:*)",
-      "Bash(npm test:*)",
-      "Bash(git checkout:*)",
-      "Bash(curl:*)",
       "Bash(grep:*)",
-      "Bash(start http://localhost:5173/cleanup-dosen.html)",
-      "Bash(tree:*)",
-      "Bash(psql:*)",
       "Bash(ls:*)",
-      "Bash(tasklist:*)",
-      "Bash(findstr:*)",
-      "Bash(python:*)",
-      "Bash(test:*)",
-      "Bash(git add:*)",
-      "Bash(git commit:*)"
-    ],
-    "deny": [],
-    "ask": []
+      "Bash(cat:*)",
+      "Bash(psql:*)",
+      "Bash(rm:*)",
+      "Bash(npx tsx:*)",
+      "Bash(node patch-getMyKelas.js:*)",
+      "Bash(node patch-kehadiran.cjs:*)",
+      "Bash(node patch-kelas-filter.cjs:*)",
+      "Bash(node patch-kehadiran-mk.cjs:*)",
+      "Bash(node patch-save-kehadiran-mk.cjs:*)",
+      "Bash(node patch-nilai-mk.cjs:*)",
+      "Bash(node:*)"
+    ]
   }
 }

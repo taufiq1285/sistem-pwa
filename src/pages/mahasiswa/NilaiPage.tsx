@@ -616,7 +616,7 @@ export default function MahasiswaNilaiPageEnhanced() {
                   {Object.entries(KOMPONEN_NILAI_LABELS).map(([key, label]) => (
                     <SelectItem key={key} value={key}>
                       {label} (
-                      {selectedNilai?.[`nilai_${key}` as keyof Nilai] || 0})
+                      {String(selectedNilai?.[`nilai_${key}` as keyof Nilai] || 0)})
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -626,11 +626,15 @@ export default function MahasiswaNilaiPageEnhanced() {
             <div>
               <Label>Nilai Usulan (Opsional)</Label>
               <Input
-                type="number"
-                min="0"
-                max="100"
+                type="text"
+                inputMode="numeric"
                 value={nilaiUsulan}
-                onChange={(e) => setNilaiUsulan(e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === "" || /^\d*\.?\d*$/.test(value)) {
+                    setNilaiUsulan(value);
+                  }
+                }}
                 placeholder="Contoh: 85"
               />
             </div>

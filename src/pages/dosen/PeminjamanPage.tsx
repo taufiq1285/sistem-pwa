@@ -163,7 +163,6 @@ export default function PeminjamanPage() {
   // Ajukan Peminjaman State
   const [equipment, setEquipment] = useState<AvailableEquipment[]>([]);
   const [loadingEquipment, setLoadingEquipment] = useState(true);
-  const [equipmentSearch, setEquipmentSearch] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedEquipment, setSelectedEquipment] =
@@ -267,12 +266,6 @@ export default function PeminjamanPage() {
     const status = statusFilter === "all" || b.status === statusFilter;
     return match && status;
   });
-
-  const filteredEquipment = equipment.filter(
-    (item) =>
-      item.nama_barang.toLowerCase().includes(equipmentSearch.toLowerCase()) ||
-      item.kode_barang.toLowerCase().includes(equipmentSearch.toLowerCase()),
-  );
 
   // Stats
   const stats = {
@@ -715,88 +708,20 @@ export default function PeminjamanPage() {
 
         {/* Tab 2: Ajukan Peminjaman */}
         <TabsContent value="request" className="space-y-4">
-          <div className="flex justify-between items-center">
-            <div>
-              <h3 className="text-lg font-semibold">Alat Tersedia</h3>
-              <p className="text-sm text-muted-foreground">
-                {equipment.length} alat dapat dipinjam
+          <Card className="border-2 border-dashed">
+            <CardContent className="flex flex-col items-center justify-center py-16">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                <Plus className="h-8 w-8 text-blue-600" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Ajukan Peminjaman Alat</h3>
+              <p className="text-muted-foreground text-center mb-6 max-w-md">
+                Klik tombol di bawah untuk mengajukan peminjaman alat laboratorium.
+                Pilih alat dan isi detail peminjaman pada form yang muncul.
               </p>
-            </div>
-            <Button onClick={() => setDialogOpen(true)} className="gap-2">
-              <Plus className="h-4 w-4" />
-              Ajukan Peminjaman
-            </Button>
-          </div>
-
-          {/* Equipment Search */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Cari alat berdasarkan nama atau kode..."
-              value={equipmentSearch}
-              onChange={(e) => setEquipmentSearch(e.target.value)}
-              className="pl-9"
-            />
-          </div>
-
-          {/* Equipment List */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Daftar Alat Tersedia</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {loadingEquipment ? (
-                <div className="text-center py-8">
-                  <p className="text-muted-foreground">Memuat daftar alat...</p>
-                </div>
-              ) : filteredEquipment.length === 0 ? (
-                <div className="text-center py-8">
-                  <Package className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                  <p className="text-muted-foreground">
-                    {equipmentSearch
-                      ? "Alat tidak ditemukan"
-                      : "Tidak ada alat tersedia"}
-                  </p>
-                </div>
-              ) : (
-                <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-                  {filteredEquipment.map((item) => (
-                    <div
-                      key={item.id}
-                      className="p-3 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
-                      onClick={() => {
-                        setSelectedEquipment(item);
-                        form.setValue("inventaris_id", item.id);
-                        setDialogOpen(true);
-                      }}
-                    >
-                      <div className="font-medium text-sm">
-                        {item.nama_barang}
-                      </div>
-                      <div className="text-xs text-muted-foreground mt-1">
-                        Kode: {item.kode_barang}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        Lab: {item.laboratorium?.nama_lab || "N/A"}
-                      </div>
-                      <div className="flex justify-between items-end mt-2">
-                        <div className="text-xs">
-                          <span className="text-green-600 font-semibold">
-                            {item.jumlah_tersedia}
-                          </span>
-                          <span className="text-muted-foreground">
-                            {" "}
-                            tersedia
-                          </span>
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          {item.kondisi}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+              <Button onClick={() => setDialogOpen(true)} size="lg" className="gap-2">
+                <Plus className="h-5 w-5" />
+                Buat Pengajuan Peminjaman
+              </Button>
             </CardContent>
           </Card>
         </TabsContent>
