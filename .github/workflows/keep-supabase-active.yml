@@ -1,0 +1,38 @@
+name: Keep Supabase Project Active
+
+on:
+  # Jalankan setiap 6 hari (sebelum batas 7 hari Supabase)
+  schedule:
+    - cron: '0 0 */6 * *'  # Setiap 6 hari pada jam 00:00 UTC
+
+  # Bisa juga dijalankan manual dari GitHub Actions tab
+  workflow_dispatch:
+
+jobs:
+  ping-supabase:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Ping Supabase Database
+        run: |
+          echo "Pinging Supabase to keep project active..."
+
+          # Melakukan request ke Supabase REST API
+          response=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "apikey: ${{ secrets.VITE_SUPABASE_ANON_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.VITE_SUPABASE_ANON_KEY }}" \
+            "${{ secrets.VITE_SUPABASE_URL }}/rest/v1/")
+
+          echo "Response status: $response"
+
+          if [ $response -eq 200 ] || [ $response -eq 401 ] || [ $response -eq 404 ]; then
+            echo "✓ Supabase project is active!"
+          else
+            echo "⚠ Unexpected response: $response"
+            exit 1
+          fi
+
+      - name: Log Activity
+        run: |
+          echo "Last ping: $(date)"
+          echo "Next scheduled ping: in 6 days"
