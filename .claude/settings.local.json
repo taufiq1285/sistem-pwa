@@ -18,7 +18,8 @@
       "Bash(node patch-kehadiran-mk.cjs:*)",
       "Bash(node patch-save-kehadiran-mk.cjs:*)",
       "Bash(node patch-nilai-mk.cjs:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(mkdir:*)"
     ]
   }
 }
