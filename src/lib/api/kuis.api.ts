@@ -14,6 +14,7 @@ import {
   remove,
   withApiResponse,
 } from "./base.api";
+import { notifyMahasiswaTugasBaru } from "./notification.api";
 import type {
   Kuis,
   Soal,
@@ -39,6 +40,105 @@ import {
   getCurrentDosenId,
   getCurrentMahasiswaId,
 } from "@/lib/middleware/permission.middleware";
+import {
+  OwnershipError,
+  PermissionError,
+} from "@/lib/errors/permission.errors";
+import type { Permission } from "@/types/permission.types";
+
+// ============================================================================
+// SECURITY HELPERS (MAHASISWA OWNERSHIP)
+// ============================================================================
+
+async function assertCurrentMahasiswaMatches(
+  requestedMahasiswaId: string,
+  permission: Permission,
+): Promise<void> {
+  const currentMahasiswaId = await getCurrentMahasiswaId();
+  if (!currentMahasiswaId) {
+    throw new PermissionError(
+      "Anda harus login sebagai mahasiswa untuk melakukan aksi ini",
+      permission,
+    );
+  }
+
+  if (currentMahasiswaId !== requestedMahasiswaId) {
+    throw new OwnershipError(
+      "Anda hanya dapat mengakses data milik Anda sendiri",
+      "mahasiswa",
+      requestedMahasiswaId,
+    );
+  }
+}
+
+async function assertAttemptOwnedByCurrentMahasiswa(
+  attemptId: string,
+  permission: Permission,
+): Promise<void> {
+  const currentMahasiswaId = await getCurrentMahasiswaId();
+  if (!currentMahasiswaId) {
+    throw new PermissionError(
+      "Anda harus login sebagai mahasiswa untuk melakukan aksi ini",
+      permission,
+    );
+  }
+
+  const attempt = await getById<{ mahasiswa_id: string }>(
+    "attempt_kuis",
+    attemptId,
+    { select: "id,mahasiswa_id" },
+  );
+
+  if ((attempt as any).mahasiswa_id !== currentMahasiswaId) {
+    throw new OwnershipError(
+      "Anda hanya dapat mengakses attempt milik Anda sendiri",
+      "attempt_kuis",
+      attemptId,
+    );
+  }
+}
+
+type KuisAttemptMeta = {
+  id: string;
+  kelas_id: string;
+  status?: string | null;
+  tanggal_mulai?: string | null;
+  tanggal_selesai?: string | null;
+  max_attempts?: number | null;
+};
+
+async function assertMahasiswaEnrolledInKelasForKuis(
+  kuisId: string,
+  mahasiswaId: string,
+  permission: Permission,
+): Promise<KuisAttemptMeta> {
+  const { data: kuisMeta, error: kuisError } = await supabase
+    .from("kuis")
+    .select("id,kelas_id,status,tanggal_mulai,tanggal_selesai,max_attempts")
+    .eq("id", kuisId)
+    .single();
+
+  if (kuisError || !kuisMeta) {
+    throw new Error("Tugas praktikum tidak ditemukan");
+  }
+
+  const { data: enrollment, error: enrollmentError } = await supabase
+    .from("kelas_mahasiswa")
+    .select("id")
+    .eq("kelas_id", (kuisMeta as any).kelas_id)
+    .eq("mahasiswa_id", mahasiswaId)
+    .eq("is_active", true)
+    .limit(1);
+
+  if (enrollmentError || !enrollment || enrollment.length === 0) {
+    throw new PermissionError(
+      "Anda tidak terdaftar pada kelas untuk tugas praktikum ini",
+      permission,
+    );
+  }
+
+  return kuisMeta as unknown as KuisAttemptMeta;
+}
 
 // ============================================================================
 // EXTENDED TYPES
@@ -238,9 +338,6 @@ async function createKuisImpl(data: CreateKuisData): Promise<Kuis> {
           const dosenNama = (dosen as any).user?.full_name || "Dosen";
 
           if (mahasiswaUserIds.length > 0) {
-            const { notifyMahasiswaTugasBaru } = await import(
-              "@/lib/api/notification.api"
-            );
             await notifyMahasiswaTugasBaru(
               mahasiswaUserIds,
               dosenNama,
@@ -688,8 +785,60 @@ export async function getAttemptById(id: string): Promise<AttemptKuis> {
 }
 
 // Internal implementation (unwrapped)
+async function getAttemptByIdForMahasiswaImpl(
+  id: string,
+): Promise<AttemptKuis> {
+  try {
+    await assertAttemptOwnedByCurrentMahasiswa(id, "view:attempt_kuis");
+
+    // ✅ Do NOT embed soal here. Mahasiswa results page fetches soal via secure API
+    // and only shows jawaban_benar after submission.
+    return await getById<AttemptKuis>("attempt_kuis", id, {
+      select: `
+        *,
+        kuis:kuis_id (*),
+        mahasiswa:mahasiswa_id (
+          nim,
+          users:user_id (
+            full_name
+          )
+        ),
+        jawaban:jawaban(*)
+      `,
+    });
+  } catch (error) {
+    const apiError = handleError(error);
+    logError(apiError, `getAttemptByIdForMahasiswa:${id}`);
+    throw apiError;
+  }
+}
+
+// 🔒 PROTECTED: Mahasiswa can only view their own attempt
+const getAttemptByIdForMahasiswaProtected = requirePermission(
+  "view:attempt_kuis",
+  getAttemptByIdForMahasiswaImpl,
+);
+
+export async function getAttemptByIdForMahasiswa(
+  id: string,
+): Promise<AttemptKuis> {
+  return await getAttemptByIdForMahasiswaProtected(id);
+}
+
+// Internal implementation (unwrapped)
 async function startAttemptImpl(data: StartAttemptData): Promise<AttemptKuis> {
   try {
+    await assertCurrentMahasiswaMatches(
+      data.mahasiswa_id,
+      "create:attempt_kuis",
+    );
+
+    const kuisMeta = await assertMahasiswaEnrolledInKelasForKuis(
+      data.kuis_id,
+      data.mahasiswa_id,
+      "create:attempt_kuis",
+    );
+
     // Get all existing attempts for this quiz and mahasiswa
     const existingAttempts = await getAttempts({
       kuis_id: data.kuis_id,
@@ -698,7 +847,7 @@ async function startAttemptImpl(data: StartAttemptData): Promise<AttemptKuis> {
 
     // ✅ Check if there's an ongoing attempt (in_progress)
     const ongoingAttempt = existingAttempts.find(
-      (attempt) => attempt.status === "in_progress"
+      (attempt) => attempt.status === "in_progress",
     );
 
     if (ongoingAttempt) {
@@ -707,10 +856,12 @@ async function startAttemptImpl(data: StartAttemptData): Promise<AttemptKuis> {
     }
 
     // ✅ Check max_attempts (if set)
-    const quiz = await getKuisById(data.kuis_id);
-    if (quiz.max_attempts && existingAttempts.length >= quiz.max_attempts) {
+    if (
+      kuisMeta.max_attempts &&
+      existingAttempts.length >= kuisMeta.max_attempts
+    ) {
       throw new Error(
-        `Anda sudah mencapai batas maksimal ${quiz.max_attempts} kali percobaan`
+        `Anda sudah mencapai batas maksimal ${kuisMeta.max_attempts} kali percobaan`,
       );
     }
 
@@ -741,7 +892,7 @@ async function startAttemptImpl(data: StartAttemptData): Promise<AttemptKuis> {
         });
 
         const existingAttempt = retryAttempts.find(
-          (attempt) => attempt.status === "in_progress"
+          (attempt) => attempt.status === "in_progress",
         );
 
         if (existingAttempt) {
@@ -770,6 +921,11 @@ export const startAttempt = requirePermission(
 // ✅ FASE 3 Week 4: Updated to use versioned API with optimistic locking
 async function submitQuizImpl(data: SubmitQuizData): Promise<AttemptKuis> {
   try {
+    await assertAttemptOwnedByCurrentMahasiswa(
+      data.attempt_id,
+      "update:attempt_kuis",
+    );
+
     // Import versioned wrapper dynamically to avoid circular dependency
     const { submitQuizSafe } = await import("./kuis-versioned-simple.api");
 
@@ -823,6 +979,11 @@ export async function getJawabanByAttempt(
 // ✅ FASE 3 Week 4: Updated to use versioned API with optimistic locking
 async function submitAnswerImpl(data: SubmitAnswerData): Promise<Jawaban> {
   try {
+    await assertAttemptOwnedByCurrentMahasiswa(
+      data.attempt_id,
+      "update:jawaban",
+    );
+
     // Import versioned wrapper dynamically to avoid circular dependency
     const { submitAnswerSafe } = await import("./kuis-versioned-simple.api");
 
@@ -851,15 +1012,11 @@ async function gradeAnswerImpl(
 ): Promise<Jawaban> {
   try {
     // Import simplified wrapper dynamically to avoid circular dependency
-    const { gradeAnswerWithVersion } = await import("./kuis-versioned-simple.api");
+    const { gradeAnswerWithVersion } =
+      await import("./kuis-versioned-simple.api");
 
     // Use simplified wrapper - direct database operation
-    return await gradeAnswerWithVersion(
-      id,
-      poinDiperoleh,
-      isCorrect,
-      feedback,
-    );
+    return await gradeAnswerWithVersion(id, poinDiperoleh, isCorrect, feedback);
   } catch (error) {
     const apiError = handleError(error);
     logError(apiError, `gradeAnswer:${id}`);
@@ -900,6 +1057,8 @@ export async function getUpcomingQuizzes(
   mahasiswaId: string,
 ): Promise<UpcomingQuiz[]> {
   try {
+    await assertCurrentMahasiswaMatches(mahasiswaId, "view:kuis");
+
     const now = new Date().toISOString();
 
     // ✅ STEP 1: Get enrolled kelas IDs (client-side filtering approach)
@@ -1088,7 +1247,13 @@ export async function canAttemptQuiz(
   mahasiswaId: string,
 ): Promise<{ canAttempt: boolean; reason?: string }> {
   try {
-    const quiz = await getKuisById(kuisId);
+    await assertCurrentMahasiswaMatches(mahasiswaId, "view:attempt_kuis");
+
+    const quiz = await assertMahasiswaEnrolledInKelasForKuis(
+      kuisId,
+      mahasiswaId,
+      "view:attempt_kuis",
+    );
 
     const status = (quiz as any).status;
     if (status && status !== "published") {
@@ -1161,15 +1326,18 @@ const OFFLINE_STORES = {
 export async function cacheQuizOffline(quiz: Kuis): Promise<void> {
   try {
     // Check if already cached
-    const existing = await indexedDBManager.getById(OFFLINE_STORES.QUIZ, quiz.id);
+    const existing = await indexedDBManager.getById(
+      OFFLINE_STORES.QUIZ,
+      quiz.id,
+    );
 
     if (existing) {
       // Update existing cache
-      await indexedDBManager.update(OFFLINE_STORES.QUIZ, quiz.id, {
+      await indexedDBManager.update(OFFLINE_STORES.QUIZ, {
         id: quiz.id,
         data: quiz,
         cachedAt: new Date().toISOString(),
-      });
+      } as any);
     } else {
       // Create new cache
       await indexedDBManager.create(OFFLINE_STORES.QUIZ, {
@@ -1193,15 +1361,18 @@ export async function cacheQuestionsOffline(
 ): Promise<void> {
   try {
     // Check if already cached
-    const existing = await indexedDBManager.getById(OFFLINE_STORES.QUESTIONS, kuisId);
+    const existing = await indexedDBManager.getById(
+      OFFLINE_STORES.QUESTIONS,
+      kuisId,
+    );
 
     if (existing) {
       // Update existing cache
-      await indexedDBManager.update(OFFLINE_STORES.QUESTIONS, kuisId, {
+      await indexedDBManager.update(OFFLINE_STORES.QUESTIONS, {
         id: kuisId,
         data: questions,
         cachedAt: new Date().toISOString(),
-      });
+      } as any);
     } else {
       // Create new cache
       await indexedDBManager.create(OFFLINE_STORES.QUESTIONS, {
@@ -1301,15 +1472,18 @@ export async function getOfflineAnswers(
 export async function cacheAttemptOffline(attempt: AttemptKuis): Promise<void> {
   try {
     // Check if already cached
-    const existing = await indexedDBManager.getById(OFFLINE_STORES.ATTEMPTS, attempt.id);
+    const existing = await indexedDBManager.getById(
+      OFFLINE_STORES.ATTEMPTS,
+      attempt.id,
+    );
 
     if (existing) {
       // Update existing cache
-      await indexedDBManager.update(OFFLINE_STORES.ATTEMPTS, attempt.id, {
+      await indexedDBManager.update(OFFLINE_STORES.ATTEMPTS, {
         id: attempt.id,
         data: attempt,
         cachedAt: new Date().toISOString(),
-      });
+      } as any);
     } else {
       // Create new cache
       await indexedDBManager.create(OFFLINE_STORES.ATTEMPTS, {
@@ -1441,7 +1615,8 @@ export async function syncOfflineAnswers(attemptId: string): Promise<void> {
     );
 
     // Import versioned wrapper
-    const { submitAnswerWithVersion } = await import("./kuis-versioned-simple.api");
+    const { submitAnswerWithVersion } =
+      await import("./kuis-versioned-simple.api");
 
     // Sync each answer with version check
     for (const soalId of answerIds) {

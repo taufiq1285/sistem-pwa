@@ -1,0 +1,113 @@
+================================================================================
+SQL CODE SIAP COPY-PASTE UNTUK SUPABASE
+================================================================================
+
+INSTRUKSI CEPAT:
+1. Buka https://app.supabase.com
+2. Pilih project "sistem-praktikum-pwa"
+3. Klik SQL Editor di sidebar
+4. Copy salah SATU block code di bawah
+5. Paste di SQL Editor
+6. Klik tombol RUN
+7. Tunggu "Success"
+8. Done! ✅
+
+================================================================================
+OPSI 1: RECOMMENDED (Pilih ini dulu!) ✅
+================================================================================
+
+-- Hapus policy lama
+DROP POLICY IF EXISTS "Allow dosen to create borrowing requests" ON peminjaman;
+DROP POLICY IF EXISTS "Allow laboran to manage peminjaman" ON peminjaman;
+DROP POLICY IF EXISTS "Users can view peminjaman" ON peminjaman;
+
+-- Policy 1: Allow create requests
+CREATE POLICY "Allow authenticated users to create borrowing requests"
+ON peminjaman
+FOR INSERT
+WITH CHECK (auth.uid() IS NOT NULL);
+
+-- Policy 2: Allow view
+CREATE POLICY "Allow authenticated users to view peminjaman"
+ON peminjaman
+FOR SELECT
+USING (auth.uid() IS NOT NULL);
+
+-- Policy 3: Allow laboran update
+CREATE POLICY "Allow laboran to update peminjaman"
+ON peminjaman
+FOR UPDATE
+USING (
+  EXISTS (
+    SELECT 1 FROM laboran WHERE user_id = auth.uid()
+  )
+)
+WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM laboran WHERE user_id = auth.uid()
+  )
+);
+
+-- Enable RLS
+ALTER TABLE peminjaman ENABLE ROW LEVEL SECURITY;
+
+================================================================================
+OPSI 2: SIMPLE (Jika Opsi 1 Error) ⚡
+================================================================================
+
+-- Hapus semua policy lama
+DROP POLICY IF EXISTS "Allow dosen to create borrowing requests" ON peminjaman;
+DROP POLICY IF EXISTS "Allow laboran to manage peminjaman" ON peminjaman;
+DROP POLICY IF EXISTS "Users can view peminjaman" ON peminjaman;
+DROP POLICY IF EXISTS "Allow authenticated users to create borrowing requests" ON peminjaman;
+DROP POLICY IF EXISTS "Allow authenticated users to view peminjaman" ON peminjaman;
+DROP POLICY IF EXISTS "Allow laboran to update peminjaman" ON peminjaman;
+
+-- Policy tunggal
+CREATE POLICY "Allow all authenticated actions on peminjaman"
+ON peminjaman
+FOR ALL
+USING (auth.uid() IS NOT NULL)
+WITH CHECK (auth.uid() IS NOT NULL);
+
+-- Enable RLS
+ALTER TABLE peminjaman ENABLE ROW LEVEL SECURITY;
+
+================================================================================
+OPSI 3: PALING SIMPLE (Last Resort) 💨
+================================================================================
+
+-- Disable RLS semuanya
+DROP POLICY IF EXISTS "Allow dosen to create borrowing requests" ON peminjaman;
+DROP POLICY IF EXISTS "Allow laboran to manage peminjaman" ON peminjaman;
+DROP POLICY IF EXISTS "Users can view peminjaman" ON peminjaman;
+DROP POLICY IF EXISTS "Allow authenticated users to create borrowing requests" ON peminjaman;
+DROP POLICY IF EXISTS "Allow authenticated users to view peminjaman" ON peminjaman;
+DROP POLICY IF EXISTS "Allow laboran to update peminjaman" ON peminjaman;
+DROP POLICY IF EXISTS "Allow all authenticated actions on peminjaman" ON peminjaman;
+
+ALTER TABLE peminjaman DISABLE ROW LEVEL SECURITY;
+
+================================================================================
+VERIFY QUERY (Jalankan setelah salah satu opsi di atas)
+================================================================================
+
+SELECT tablename, rowsecurity
+FROM pg_tables
+WHERE tablename = 'peminjaman';
+
+-- Expected: rowsecurity = true (untuk Opsi 1 & 2)
+-- Expected: rowsecurity = false (untuk Opsi 3)
+
+================================================================================
+TESTING CHECKLIST:
+================================================================================
+
+✅ Refresh browser (Ctrl+F5)
+✅ Logout dan login ulang
+✅ Cek halaman Peminjaman Alat
+✅ Coba submit permintaan
+✅ Lihat di console (F12) apakah ada error
+✅ Permintaan muncul dengan status "Menunggu"
+
+SUKSES! 🎉

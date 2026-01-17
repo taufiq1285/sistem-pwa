@@ -22,7 +22,11 @@ export type KomponenNilai =
 /**
  * Request status
  */
-export type StatusPermintaan = "pending" | "approved" | "rejected" | "cancelled";
+export type StatusPermintaan =
+  | "pending"
+  | "approved"
+  | "rejected"
+  | "cancelled";
 
 // ============================================================================
 // MAIN TYPES
@@ -63,8 +67,7 @@ export interface PermintaanPerbaikanNilai {
 /**
  * Permintaan with populated relations
  */
-export interface PermintaanPerbaikanWithRelations
-  extends PermintaanPerbaikanNilai {
+export interface PermintaanPerbaikanWithRelations extends PermintaanPerbaikanNilai {
   mahasiswa?: {
     id: string;
     nim: string;

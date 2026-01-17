@@ -324,8 +324,14 @@ export default function JadwalPage() {
       // 🔍 DEBUG: Log data yang masuk
       console.log("🔍 DEBUG handleCreate called with data:", {
         data,
-        kelasList: kelasList.map(k => ({ id: k.id, nama_kelas: k.nama_kelas })),
-        laboratoriumList: laboratoriumList.map(l => ({ id: l.id, nama_lab: l.nama_lab }))
+        kelasList: kelasList.map((k) => ({
+          id: k.id,
+          nama_kelas: k.nama_kelas,
+        })),
+        laboratoriumList: laboratoriumList.map((l) => ({
+          id: l.id,
+          nama_lab: l.nama_lab,
+        })),
       });
 
       // Dosen HANYA bisa memilih kelas yang sudah ada

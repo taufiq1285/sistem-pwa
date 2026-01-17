@@ -89,10 +89,12 @@ export function DashboardPage() {
     UpcomingPracticumType[]
   >([]);
   const [pendingGrading, setPendingGrading] = useState<PendingGradingType[]>(
-    []
+    [],
   );
   const [activeKuis, setActiveKuis] = useState<KuisWithStats[]>([]);
-  const [selectedKelas, setSelectedKelas] = useState<KelasWithStats | null>(null);
+  const [selectedKelas, setSelectedKelas] = useState<KelasWithStats | null>(
+    null,
+  );
   const [kelasMahasiswa, setKelasMahasiswa] = useState<any[]>([]);
   const [loadingMahasiswa, setLoadingMahasiswa] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -108,70 +110,76 @@ export function DashboardPage() {
       const setupRealtimeSubscriptions = () => {
         // Subscribe ke kelas changes
         const kelasSubscription = supabase
-          .channel('kelas-changes')
+          .channel("kelas-changes")
           .on(
-            'postgres_changes',
+            "postgres_changes",
             {
-              event: '*', // INSERT, UPDATE, DELETE
-              schema: 'public',
-              table: 'kelas',
-              filter: `dosen_id=eq.${user.id}`
+              event: "*", // INSERT, UPDATE, DELETE
+              schema: "public",
+              table: "kelas",
+              filter: `dosen_id=eq.${user.id}`,
             },
             () => {
-              console.log('Kelas changed, refreshing dashboard...');
+              console.log("Kelas changed, refreshing dashboard...");
               setHasDataChanges(true);
               setIsRefreshing(true);
               fetchDashboardData().finally(() => {
                 setIsRefreshing(false);
                 setLastRefresh(new Date());
               });
-            }
+            },
           )
           .subscribe();
 
         // Subscribe ke kuis changes
         const kuisSubscription = supabase
-          .channel('kuis-changes')
+          .channel("kuis-changes")
           .on(
-            'postgres_changes',
+            "postgres_changes",
             {
-              event: '*',
-              schema: 'public',
-              table: 'kuis'
+              event: "*",
+              schema: "public",
+              table: "kuis",
             },
             (payload) => {
-              console.log('Kuis changed, refreshing dashboard...', payload);
+              console.log("Kuis changed, refreshing dashboard...", payload);
               setHasDataChanges(true);
               setIsRefreshing(true);
               fetchDashboardData().finally(() => {
                 setIsRefreshing(false);
                 setLastRefresh(new Date());
               });
-            }
+            },
           )
           .subscribe();
 
         // Subscribe ke jadwal_praktikum changes (admin delete)
         const jadwalSubscription = supabase
-          .channel('jadwal-changes')
+          .channel("jadwal-changes")
           .on(
-            'postgres_changes',
+            "postgres_changes",
             {
-              event: '*',
-              schema: 'public',
-              table: 'jadwal_praktikum'
+              event: "*",
+              schema: "public",
+              table: "jadwal_praktikum",
             },
             (payload) => {
-              console.log('Jadwal praktikum changed, refreshing dashboard...', payload);
+              console.log(
+                "Jadwal praktikum changed, refreshing dashboard...",
+                payload,
+              );
               // Check if this affects current dosen
-              if (payload.eventType === 'DELETE' || payload.eventType === 'UPDATE') {
+              if (
+                payload.eventType === "DELETE" ||
+                payload.eventType === "UPDATE"
+              ) {
                 // Check if the change affects current dosen
-                const oldData = payload.old;
-                const newData = payload.new;
+                const oldData = payload.old as any;
+                const newData = payload.new as any;
 
                 if (
-                  (oldData && oldData.dosen_id === user.id) ||
-                  (newData && newData.dosen_id === user.id)
+                  (oldData && (oldData as any).dosen_id === user.id) ||
+                  (newData && (newData as any).dosen_id === user.id)
                 ) {
                   setHasDataChanges(true);
                   setIsRefreshing(true);
@@ -181,23 +189,29 @@ export function DashboardPage() {
                   });
                 }
               }
-            }
+            },
           )
           .subscribe();
 
         // Subscribe ke dosen_mata_kuliah changes (admin delete)
         const dosenMkSubscription = supabase
-          .channel('dosen-mk-changes')
+          .channel("dosen-mk-changes")
           .on(
-            'postgres_changes',
+            "postgres_changes",
             {
-              event: '*',
-              schema: 'public',
-              table: 'dosen_mata_kuliah'
+              event: "*",
+              schema: "public",
+              table: "dosen_mata_kuliah",
             },
             (payload) => {
-              console.log('Dosen mata kuliah changed, refreshing dashboard...', payload);
-              if (payload.eventType === 'DELETE' || payload.eventType === 'UPDATE') {
+              console.log(
+                "Dosen mata kuliah changed, refreshing dashboard...",
+                payload,
+              );
+              if (
+                payload.eventType === "DELETE" ||
+                payload.eventType === "UPDATE"
+              ) {
                 setHasDataChanges(true);
                 setIsRefreshing(true);
                 fetchDashboardData().finally(() => {
@@ -205,29 +219,29 @@ export function DashboardPage() {
                   setLastRefresh(new Date());
                 });
               }
-            }
+            },
           )
           .subscribe();
 
         // Subscribe ke kuis_attempt changes (untuk grading updates)
         const attemptSubscription = supabase
-          .channel('attempt-changes')
+          .channel("attempt-changes")
           .on(
-            'postgres_changes',
+            "postgres_changes",
             {
-              event: '*',
-              schema: 'public',
-              table: 'kuis_attempt'
+              event: "*",
+              schema: "public",
+              table: "kuis_attempt",
             },
             () => {
-              console.log('Kuis attempt changed, refreshing dashboard...');
+              console.log("Kuis attempt changed, refreshing dashboard...");
               setHasDataChanges(true);
               setIsRefreshing(true);
               fetchDashboardData().finally(() => {
                 setIsRefreshing(false);
                 setLastRefresh(new Date());
               });
-            }
+            },
           )
           .subscribe();
 
@@ -304,17 +318,19 @@ export function DashboardPage() {
       }
 
       // Get assignments for this dosen (similar logic to admin page)
-      const { data: rawData, error } = await supabase
-        .from('jadwal_praktikum')
-        .select(`
+      const { data: rawData, error } = await (supabase as any)
+        .from("jadwal_praktikum")
+        .select(
+          `
           dosen_id,
           mata_kuliah_id,
           kelas_id,
           mata_kuliah:mata_kuliah!inner(id, nama_mk, kode_mk),
           kelas:kelas!inner(id, nama_kelas, kode_kelas, tahun_ajaran, semester_ajaran)
-        `)
-        .eq('dosen_id', user.id)
-        .eq('is_active', true);
+        `,
+        )
+        .eq("dosen_id", user.id)
+        .eq("is_active", true);
 
       if (error) throw error;
       if (!rawData || rawData.length === 0) {
@@ -335,11 +351,11 @@ export function DashboardPage() {
             kelas_id: item.kelas_id,
             total_jadwal: 0,
             total_mahasiswa: 0,
-            tanggal_mulai: '',
-            tanggal_selesai: '',
+            tanggal_mulai: "",
+            tanggal_selesai: "",
             mata_kuliah: item.mata_kuliah,
             kelas: item.kelas,
-            jadwalDetail: []
+            jadwalDetail: [],
           });
         }
       });
@@ -349,9 +365,10 @@ export function DashboardPage() {
 
       for (const [key, assignment] of assignmentMap) {
         // Get all jadwal for this assignment
-        const { data: jadwalData, error: jadwalError } = await supabase
-          .from('jadwal_praktikum')
-          .select(`
+        const { data: jadwalData, error: jadwalError } = await (supabase as any)
+          .from("jadwal_praktikum")
+          .select(
+            `
             id,
             tanggal_praktikum,
             hari,
@@ -359,41 +376,49 @@ export function DashboardPage() {
             jam_selesai,
             topik,
             status
-          `)
-          .eq('dosen_id', assignment.dosen_id)
-          .eq('mata_kuliah_id', assignment.mata_kuliah_id)
-          .eq('kelas_id', assignment.kelas_id)
-          .eq('is_active', true)
-          .order('tanggal_praktikum', { ascending: true });
+          `,
+          )
+          .eq("dosen_id", assignment.dosen_id)
+          .eq("mata_kuliah_id", assignment.mata_kuliah_id)
+          .eq("kelas_id", assignment.kelas_id)
+          .eq("is_active", true)
+          .order("tanggal_praktikum", { ascending: true });
 
         // Get mahasiswa count for this kelas
-        const { count: mahasiswaCount } = await supabase
-          .from('mahasiswa')
-          .select('*', { count: 'exact', head: true })
-          .eq('kelas_id', assignment.kelas_id)
-          .eq('is_active', true);
+        const mahasiswaResult: any = await (supabase as any)
+          .from("mahasiswa")
+          .select("*", { count: "exact", head: true })
+          .eq("kelas_id", assignment.kelas_id)
+          .eq("is_active", true);
+
+        const { count: mahasiswaCount } = mahasiswaResult;
 
         if (jadwalError) {
-          console.warn('Error fetching jadwal details for assignment:', key, jadwalError);
+          console.warn(
+            "Error fetching jadwal details for assignment:",
+            key,
+            jadwalError,
+          );
           continue;
         }
 
         const jadwalDetail = jadwalData || [];
-        const dates = jadwalDetail.map(j => j.tanggal_praktikum).filter(Boolean);
+        const dates = (jadwalDetail as any[])
+          .map((j) => j.tanggal_praktikum)
+          .filter(Boolean);
 
         assignmentsWithDetails.push({
           ...assignment,
           total_jadwal: jadwalDetail.length,
           total_mahasiswa: mahasiswaCount || 0,
-          tanggal_mulai: dates.length > 0 ? dates[0] : '',
-          tanggal_selesai: dates.length > 0 ? dates[dates.length - 1] : '',
+          tanggal_mulai: dates.length > 0 ? dates[0] : "",
+          tanggal_selesai: dates.length > 0 ? dates[dates.length - 1] : "",
         });
       }
 
       setAssignments(assignmentsWithDetails);
-
     } catch (error: any) {
-      console.error('Error fetching assignments:', error);
+      console.error("Error fetching assignments:", error);
       // Don't show error toast for assignments, just log it
     }
   };
@@ -408,19 +433,14 @@ export function DashboardPage() {
       await fetchAssignments();
 
       console.log("📞 Calling getUpcomingPracticum...");
-      const [
-        statsData,
-        kelasData,
-        practicumData,
-        gradingData,
-        kuisData,
-      ] = await Promise.allSettled([
-        getDosenStats(),
-        getMyKelas(5),
-        getUpcomingPracticum(5),
-        getPendingGrading(5),
-        getActiveKuis(5),
-      ]);
+      const [statsData, kelasData, practicumData, gradingData, kuisData] =
+        await Promise.allSettled([
+          getDosenStats(),
+          getMyKelas(5),
+          getUpcomingPracticum(5),
+          getPendingGrading(5),
+          getActiveKuis(5),
+        ]);
 
       if (statsData.status === "fulfilled") {
         setStats(statsData.value);
@@ -431,7 +451,11 @@ export function DashboardPage() {
       }
 
       if (practicumData.status === "fulfilled") {
-        console.log("✅ getUpcomingPracticum success:", practicumData.value?.length, "items");
+        console.log(
+          "✅ getUpcomingPracticum success:",
+          practicumData.value?.length,
+          "items",
+        );
         setUpcomingPracticum(practicumData.value || []);
       } else {
         console.log("❌ getUpcomingPracticum failed:", practicumData.reason);
@@ -457,21 +481,25 @@ export function DashboardPage() {
     try {
       setLoadingMahasiswa(true);
       const { data, error } = await supabase
-        .from('mahasiswa_kelas')
-        .select(`
+        .from("kelas_mahasiswa" as any)
+        .select(
+          `
           mahasiswa:nim(
             nim,
             full_name,
             email,
             phone
           )
-        `)
-        .eq('kelas_id', kelasId);
+        `,
+        )
+        .eq("kelas_id", kelasId);
 
       if (error) throw error;
-      setKelasMahasiswa(data?.map(item => item.mahasiswa).filter(Boolean) || []);
+      setKelasMahasiswa(
+        data?.map((item) => (item as any).mahasiswa).filter(Boolean) || [],
+      );
     } catch (err) {
-      console.error('Error fetching mahasiswa:', err);
+      console.error("Error fetching mahasiswa:", err);
       setKelasMahasiswa([]);
     } finally {
       setLoadingMahasiswa(false);
@@ -507,7 +535,6 @@ export function DashboardPage() {
     sunday: "Minggu",
   };
 
-  
   if (loading) {
     return (
       <div className="p-8">
@@ -543,7 +570,8 @@ export function DashboardPage() {
               Selamat datang, {user?.full_name || user?.email}
               {lastRefresh && (
                 <span className="ml-2 text-xs text-gray-400">
-                  • Terakhir diperbarui: {lastRefresh.toLocaleTimeString('id-ID')}
+                  • Terakhir diperbarui:{" "}
+                  {lastRefresh.toLocaleTimeString("id-ID")}
                 </span>
               )}
             </p>
@@ -586,7 +614,9 @@ export function DashboardPage() {
               }}
               disabled={loading || isRefreshing}
             >
-              <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              <RefreshCw
+                className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
+              />
               Refresh
             </Button>
           </div>
@@ -608,7 +638,9 @@ export function DashboardPage() {
                 Assignment Diberikan
               </CardTitle>
               <CardDescription>
-                {assignments.length} assignment dengan {assignments.reduce((sum, a) => sum + a.total_mahasiswa, 0)} mahasiswa
+                {assignments.length} assignment dengan{" "}
+                {assignments.reduce((sum, a) => sum + a.total_mahasiswa, 0)}{" "}
+                mahasiswa
               </CardDescription>
               {assignments.length > 0 && (
                 <Button
@@ -656,7 +688,8 @@ export function DashboardPage() {
                           </Badge>
                         </div>
                         <p className="text-xs text-gray-600 mt-1">
-                          {assignment.kelas.nama_kelas} • {assignment.kelas.tahun_ajaran}
+                          {assignment.kelas.nama_kelas} •{" "}
+                          {assignment.kelas.tahun_ajaran}
                         </p>
                         <div className="flex items-center gap-4 mt-2">
                           <span className="text-xs text-blue-600 font-medium">
@@ -687,9 +720,7 @@ export function DashboardPage() {
                 <Calendar className="h-5 w-5" />
                 Jadwal Mengajar
               </CardTitle>
-              <CardDescription>
-                Praktikum 7 hari ke depan
-              </CardDescription>
+              <CardDescription>Praktikum 7 hari ke depan</CardDescription>
               {upcomingPracticum.length > 0 && (
                 <Button
                   variant="ghost"
@@ -735,11 +766,12 @@ export function DashboardPage() {
                         <div className="flex items-center gap-3 mt-2">
                           <span className="text-xs text-purple-600 font-medium">
                             <Clock className="h-3 w-3 mr-1" />
-                            {dayNames[jadwal.hari.toLowerCase()] ||
-                              jadwal.hari}, {formatDate(jadwal.tanggal_praktikum)}
+                            {dayNames[jadwal.hari.toLowerCase()] || jadwal.hari}
+                            , {formatDate(jadwal.tanggal_praktikum)}
                           </span>
                           <span className="text-xs text-purple-600 font-medium">
-                            {formatTime(jadwal.jam_mulai)} - {formatTime(jadwal.jam_selesai)}
+                            {formatTime(jadwal.jam_mulai)} -{" "}
+                            {formatTime(jadwal.jam_selesai)}
                           </span>
                         </div>
                         <p className="text-xs text-gray-500">
@@ -785,9 +817,7 @@ export function DashboardPage() {
                   <p className="text-sm text-gray-600 font-medium">
                     Semua tugas sudah dinilai
                   </p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Kerja bagus! 🎉
-                  </p>
+                  <p className="text-xs text-gray-500 mt-1">Kerja bagus! 🎉</p>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -795,7 +825,9 @@ export function DashboardPage() {
                     <div
                       key={item.id}
                       className="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
-                      onClick={() => navigate(`/dosen/penilaian?task=${item.id}`)}
+                      onClick={() =>
+                        navigate(`/dosen/penilaian?task=${item.id}`)
+                      }
                     >
                       <div className="flex-shrink-0">
                         <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
@@ -884,7 +916,8 @@ export function DashboardPage() {
                         </p>
                         <div className="flex items-center gap-4 mt-2">
                           <span className="text-xs text-purple-600 font-medium">
-                            ⏰ {formatDate(kuis.tanggal_mulai)} - {formatDate(kuis.tanggal_selesai)}
+                            ⏰ {formatDate(kuis.tanggal_mulai)} -{" "}
+                            {formatDate(kuis.tanggal_selesai)}
                           </span>
                         </div>
                         <div className="flex items-center gap-3 mt-1">
@@ -907,7 +940,10 @@ export function DashboardPage() {
       </div>
 
       {/* Kelas Detail Modal */}
-      <Dialog open={!!selectedKelas} onOpenChange={() => setSelectedKelas(null)}>
+      <Dialog
+        open={!!selectedKelas}
+        onOpenChange={() => setSelectedKelas(null)}
+      >
         <DialogContent className="max-w-2xl max-h-[80vh]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -945,12 +981,18 @@ export function DashboardPage() {
 
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div className="p-3 bg-gray-50 rounded-lg">
-                    <div className="font-medium text-gray-700">Tahun Ajaran</div>
-                    <div className="text-gray-900">{selectedKelas.tahun_ajaran}</div>
+                    <div className="font-medium text-gray-700">
+                      Tahun Ajaran
+                    </div>
+                    <div className="text-gray-900">
+                      {selectedKelas.tahun_ajaran}
+                    </div>
                   </div>
                   <div className="p-3 bg-gray-50 rounded-lg">
                     <div className="font-medium text-gray-700">Semester</div>
-                    <div className="text-gray-900">{selectedKelas.semester || "-"}</div>
+                    <div className="text-gray-900">
+                      {selectedKelas.semester_ajaran || "-"}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -965,7 +1007,10 @@ export function DashboardPage() {
                 {loadingMahasiswa ? (
                   <div className="space-y-2">
                     {[...Array(5)].map((_, i) => (
-                      <div key={i} className="h-12 bg-gray-200 rounded-lg animate-pulse" />
+                      <div
+                        key={i}
+                        className="h-12 bg-gray-200 rounded-lg animate-pulse"
+                      />
                     ))}
                   </div>
                 ) : kelasMahasiswa.length === 0 ? (
@@ -1008,7 +1053,10 @@ export function DashboardPage() {
 
               {/* Action Buttons */}
               <div className="flex justify-end gap-2 pt-4 border-t">
-                <Button variant="outline" onClick={() => setSelectedKelas(null)}>
+                <Button
+                  variant="outline"
+                  onClick={() => setSelectedKelas(null)}
+                >
                   Tutup
                 </Button>
                 <Button

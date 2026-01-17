@@ -76,7 +76,9 @@ export function KelolaMahasiswaDialog({
   onOpenChange,
   kelas,
 }: KelolaMahasiswaDialogProps) {
-  const [enrolledStudents, setEnrolledStudents] = useState<KelasMahasiswa[]>([]);
+  const [enrolledStudents, setEnrolledStudents] = useState<KelasMahasiswa[]>(
+    [],
+  );
   const [availableMahasiswa, setAvailableMahasiswa] = useState<Mahasiswa[]>([]);
   const [selectedMahasiswa, setSelectedMahasiswa] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -150,7 +152,7 @@ export function KelolaMahasiswaDialog({
           } else if (payload.eventType === "DELETE") {
             toast.info("Mahasiswa dikeluarkan dari kelas");
           }
-        }
+        },
       )
       .subscribe((status) => {
         console.log("Realtime status:", status);
@@ -166,10 +168,16 @@ export function KelolaMahasiswaDialog({
 
   const filteredMahasiswa = availableMahasiswa.filter(
     (mahasiswa) =>
-      !enrolledStudents.some((enrolled) => enrolled.mahasiswa_id === mahasiswa.id) &&
+      !enrolledStudents.some(
+        (enrolled) => enrolled.mahasiswa_id === mahasiswa.id,
+      ) &&
       (mahasiswa.nim.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        mahasiswa.users.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        mahasiswa.users.email.toLowerCase().includes(searchQuery.toLowerCase()))
+        mahasiswa.users.full_name
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase()) ||
+        mahasiswa.users.email
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase())),
   );
 
   const handleAddStudents = async () => {
@@ -182,11 +190,13 @@ export function KelolaMahasiswaDialog({
     try {
       await Promise.all(
         selectedMahasiswa.map((mahasiswaId) =>
-          enrollStudent(kelas.id, mahasiswaId)
-        )
+          enrollStudent(kelas.id, mahasiswaId),
+        ),
       );
 
-      toast.success(`${selectedMahasiswa.length} mahasiswa berhasil ditambahkan`);
+      toast.success(
+        `${selectedMahasiswa.length} mahasiswa berhasil ditambahkan`,
+      );
       setSelectedMahasiswa([]);
       await loadData();
     } catch (error: any) {
@@ -233,7 +243,7 @@ export function KelolaMahasiswaDialog({
     setSelectedMahasiswa((prev) =>
       prev.includes(mahasiswaId)
         ? prev.filter((id) => id !== mahasiswaId)
-        : [...prev, mahasiswaId]
+        : [...prev, mahasiswaId],
     );
   };
 
@@ -246,7 +256,9 @@ export function KelolaMahasiswaDialog({
   };
 
   const currentEnrollment = enrolledStudents.filter((e) => e.is_active).length;
-  const availableSlots = kelas.kuota ? kelas.kuota - currentEnrollment : Infinity;
+  const availableSlots = kelas.kuota
+    ? kelas.kuota - currentEnrollment
+    : Infinity;
   const isClassFull = availableSlots <= 0;
 
   return (
@@ -266,7 +278,10 @@ export function KelolaMahasiswaDialog({
                 {currentEnrollment}/{kelas.kuota || "∞"} Mahasiswa
               </Badge>
               {realtimeConnected && (
-                <Badge variant="outline" className="text-xs flex items-center gap-1">
+                <Badge
+                  variant="outline"
+                  className="text-xs flex items-center gap-1"
+                >
                   <Wifi className="h-3 w-3" />
                   Realtime Active
                 </Badge>
@@ -296,7 +311,9 @@ export function KelolaMahasiswaDialog({
               {enrolledStudents.length === 0 ? (
                 <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg">
                   <Users className="h-12 w-12 mx-auto text-gray-400 mb-2" />
-                  <p className="text-gray-500">Belum ada mahasiswa yang terdaftar</p>
+                  <p className="text-gray-500">
+                    Belum ada mahasiswa yang terdaftar
+                  </p>
                 </div>
               ) : (
                 <div className="border rounded-lg overflow-hidden">
@@ -314,30 +331,39 @@ export function KelolaMahasiswaDialog({
                     <TableBody>
                       {enrolledStudents.map((student, index) => (
                         <TableRow key={student.id}>
-                          <TableCell className="font-medium">{index + 1}</TableCell>
+                          <TableCell className="font-medium">
+                            {index + 1}
+                          </TableCell>
                           <TableCell>{student.mahasiswa?.nim || "-"}</TableCell>
                           <TableCell className="font-medium">
                             <div className="flex items-center gap-2">
                               <Avatar className="h-6 w-6">
                                 <AvatarImage src="" />
                                 <AvatarFallback className="text-xs">
-                                  {student.mahasiswa?.users?.full_name?.[0] || "M"}
+                                  {student.mahasiswa?.users?.full_name?.[0] ||
+                                    "M"}
                                 </AvatarFallback>
                               </Avatar>
                               {student.mahasiswa?.users?.full_name || "-"}
                             </div>
                           </TableCell>
-                          <TableCell>{student.mahasiswa?.users?.email || "-"}</TableCell>
+                          <TableCell>
+                            {student.mahasiswa?.users?.email || "-"}
+                          </TableCell>
                           <TableCell>
                             <Badge
-                              variant={student.is_active ? "default" : "secondary"}
+                              variant={
+                                student.is_active ? "default" : "secondary"
+                              }
                             >
                               {student.is_active ? "Aktif" : "Tidak Aktif"}
                             </Badge>
                           </TableCell>
                           <TableCell>
                             {student.enrolled_at
-                              ? new Date(student.enrolled_at).toLocaleDateString("id-ID")
+                              ? new Date(
+                                  student.enrolled_at,
+                                ).toLocaleDateString("id-ID")
                               : "-"}
                           </TableCell>
                         </TableRow>
@@ -388,12 +414,16 @@ export function KelolaMahasiswaDialog({
                       <Checkbox
                         id="select-all"
                         checked={
-                          selectedMahasiswa.length === filteredMahasiswa.length &&
+                          selectedMahasiswa.length ===
+                            filteredMahasiswa.length &&
                           filteredMahasiswa.length > 0
                         }
                         onCheckedChange={selectAllMahasiswa}
                       />
-                      <Label htmlFor="select-all" className="text-sm font-medium">
+                      <Label
+                        htmlFor="select-all"
+                        className="text-sm font-medium"
+                      >
                         Pilih Semua ({filteredMahasiswa.length})
                       </Label>
                     </div>
@@ -469,8 +499,8 @@ export function KelolaMahasiswaDialog({
               Tambah Mahasiswa Baru
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Tambahkan mahasiswa baru yang belum terdaftar ke sistem dan masukkan ke
-              kelas {kelas.nama_kelas}
+              Tambahkan mahasiswa baru yang belum terdaftar ke sistem dan
+              masukkan ke kelas {kelas.nama_kelas}
             </AlertDialogDescription>
           </AlertDialogHeader>
 
@@ -510,7 +540,10 @@ export function KelolaMahasiswaDialog({
                 placeholder="Contoh: john.doe@example.com"
                 value={newStudentForm.email}
                 onChange={(e) =>
-                  setNewStudentForm({ ...newStudentForm, email: e.target.value })
+                  setNewStudentForm({
+                    ...newStudentForm,
+                    email: e.target.value,
+                  })
                 }
               />
             </div>

@@ -69,8 +69,12 @@ import { getRBACErrorMessage } from "@/lib/errors/permission.errors";
 // ============================================================================
 
 export default function PeminjamanAktifPage() {
-  const [activeBorrowings, setActiveBorrowings] = useState<ActiveBorrowing[]>([]);
-  const [returnedBorrowings, setReturnedBorrowings] = useState<ReturnedBorrowing[]>([]);
+  const [activeBorrowings, setActiveBorrowings] = useState<ActiveBorrowing[]>(
+    [],
+  );
+  const [returnedBorrowings, setReturnedBorrowings] = useState<
+    ReturnedBorrowing[]
+  >([]);
   const [loading, setLoading] = useState(true);
   const [returnedLoading, setReturnedLoading] = useState(false);
   const [processing, setProcessing] = useState(false);
@@ -182,9 +186,17 @@ export default function PeminjamanAktifPage() {
   const getKondisiBadge = (kondisi: string) => {
     switch (kondisi) {
       case "baik":
-        return <Badge variant="default" className="bg-green-600">Baik</Badge>;
+        return (
+          <Badge variant="default" className="bg-green-600">
+            Baik
+          </Badge>
+        );
       case "rusak_ringan":
-        return <Badge variant="default" className="bg-yellow-600">Rusak Ringan</Badge>;
+        return (
+          <Badge variant="default" className="bg-yellow-600">
+            Rusak Ringan
+          </Badge>
+        );
       case "rusak_berat":
         return <Badge variant="destructive">Rusak Berat</Badge>;
       case "maintenance":
@@ -229,7 +241,9 @@ export default function PeminjamanAktifPage() {
             <AlertTriangle className="h-4 w-4 text-red-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">{overdueCount}</div>
+            <div className="text-2xl font-bold text-red-600">
+              {overdueCount}
+            </div>
             <p className="text-xs text-muted-foreground">
               Melebihi tanggal kembali
             </p>
@@ -245,13 +259,19 @@ export default function PeminjamanAktifPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {returnedBorrowings.filter((r) => {
-                const today = new Date().toDateString();
-                const returnDate = new Date(r.tanggal_kembali_aktual).toDateString();
-                return today === returnDate;
-              }).length}
+              {
+                returnedBorrowings.filter((r) => {
+                  const today = new Date().toDateString();
+                  const returnDate = new Date(
+                    r.tanggal_kembali_aktual,
+                  ).toDateString();
+                  return today === returnDate;
+                }).length
+              }
             </div>
-            <p className="text-xs text-muted-foreground">Pengembalian hari ini</p>
+            <p className="text-xs text-muted-foreground">
+              Pengembalian hari ini
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -616,7 +636,8 @@ export default function PeminjamanAktifPage() {
                 {returnDialog.borrowing.is_overdue && (
                   <p className="text-xs text-muted-foreground">
                     Saran: Rp 5.000/hari × {returnDialog.borrowing.days_overdue}{" "}
-                    hari = {formatCurrency(returnDialog.borrowing.days_overdue * 5000)}
+                    hari ={" "}
+                    {formatCurrency(returnDialog.borrowing.days_overdue * 5000)}
                   </p>
                 )}
               </div>

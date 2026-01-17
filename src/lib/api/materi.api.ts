@@ -19,6 +19,7 @@ import {
   remove,
   withApiResponse,
 } from "./base.api";
+import { supabase } from "@/lib/supabase/client";
 import type { Materi, CreateMateriData } from "@/types/materi.types";
 import {
   uploadMateriFile,
@@ -357,9 +358,6 @@ export async function downloadMateri(id: string): Promise<void> {
  */
 export async function incrementDownloadCount(id: string): Promise<void> {
   try {
-    // Import supabase client
-    const { supabase } = await import("@/lib/supabase/client");
-
     // Use Postgres function instead of direct UPDATE
     // @ts-expect-error - Custom RPC function not in generated types
     const { error } = await supabase.rpc("increment_materi_download_count", {

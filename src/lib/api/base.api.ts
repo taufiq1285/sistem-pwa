@@ -546,13 +546,20 @@ export async function remove(table: string, id: string): Promise<boolean> {
     let softDeleteUpdate: any = null;
 
     // Tables with 'is_active' column (exclude kelas because of trigger issue)
-    const hasIsActive = ['mahasiswa', 'dosen', 'admin', 'laboratorium', 'inventaris', 'mata_kuliah'];
+    const hasIsActive = [
+      "mahasiswa",
+      "dosen",
+      "admin",
+      "laboratorium",
+      "inventaris",
+      "mata_kuliah",
+    ];
 
     // Tables that should use hard delete
-    const hardDeleteTables = ['kelas'];
+    const hardDeleteTables = ["kelas"];
 
     // Tables with 'status' column (kuis, bank_soal)
-    const hasStatus = ['kuis', 'bank_soal'];
+    const hasStatus = ["kuis", "bank_soal"];
 
     // Check for hard delete tables first
     if (hardDeleteTables.includes(table)) {
@@ -575,7 +582,7 @@ export async function remove(table: string, id: string): Promise<boolean> {
       softDeleteUpdate = { is_active: false };
     } else if (hasStatus.includes(table)) {
       console.log(`🔧 Using soft delete: status = 'archived' for ${table}`);
-      softDeleteUpdate = { status: 'archived' };
+      softDeleteUpdate = { status: "archived" };
     } else {
       // Hard delete for tables without soft delete support
       console.log(`🔧 Using hard delete for ${table}`);
@@ -599,7 +606,7 @@ export async function remove(table: string, id: string): Promise<boolean> {
       .from(table as any)
       .update(softDeleteUpdate)
       .eq("id", id)
-      .select('id')
+      .select("id")
       .single();
 
     console.log(`📊 Soft delete result:`, { updateResult, updateError });

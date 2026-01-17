@@ -128,11 +128,12 @@ export interface Kuis {
   id: string;
   kelas_id: string;
   dosen_id: string;
+  mata_kuliah_id?: string | null; // NEW: For multi-dosen grading access
   judul: string;
   deskripsi?: string | null;
 
   // Timing & Duration - EXACT DATABASE FIELD NAMES
-  durasi_menit: number; // ✅ NOT "durasi"
+  durasi_menit?: number | null; // ✅ NOT "durasi" - NULLABLE for laporan (no time limit)
   tanggal_mulai?: string | null; // timestamp with time zone - auto-set if not provided
   tanggal_selesai?: string | null; // timestamp with time zone - auto-set if not provided
 
@@ -164,6 +165,11 @@ export interface Kuis {
       nama_mk: string;
       kode_mk: string;
     };
+  };
+  mata_kuliah?: {
+    id: string;
+    kode_mk: string;
+    nama_mk: string;
   };
   dosen?: {
     user?: {
@@ -278,7 +284,7 @@ export interface UpcomingQuiz {
   dosen_name: string;
 
   // Quiz details - UPDATED FIELD NAMES
-  durasi_menit: number; // ✅ NOT durasi
+  durasi_menit?: number | null; // ✅ NULLABLE for laporan (no time limit)
   tanggal_mulai: string;
   tanggal_selesai: string;
   passing_score?: number | null; // ✅ NOT passing_grade
@@ -361,11 +367,12 @@ export interface QuizAutoSaveData {
 export interface CreateKuisData {
   kelas_id: string;
   dosen_id: string;
+  mata_kuliah_id?: string | null; // NEW: Auto-populated from kelas, enables multi-dosen grading
   judul: string;
   deskripsi?: string;
 
   // UPDATED FIELD NAMES TO MATCH DATABASE
-  durasi_menit: number; // ✅ NOT durasi
+  durasi_menit?: number | null; // ✅ NOT durasi - NULLABLE for laporan (default: 10080 menit)
   tanggal_mulai?: string | null; // ✅ Optional - auto-set by API if not provided
   tanggal_selesai?: string | null; // ✅ Optional - auto-set by API if not provided
   passing_score?: number | null; // ✅ NOT passing_grade - NULLABLE to match DB

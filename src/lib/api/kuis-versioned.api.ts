@@ -84,7 +84,7 @@ export async function submitQuizSafe(
     const attempt = await getAttemptById(data.attempt_id);
 
     // Check if table has _version column
-    if (attempt._version !== undefined) {
+    if ((attempt as any)._version !== undefined) {
       const result = await submitQuizWithVersion(data, attempt);
 
       if (result.success && result.data) {
@@ -150,7 +150,7 @@ export async function submitAnswerWithVersion(
       .insert({
         attempt_id: data.attempt_id,
         soal_id: data.soal_id,
-        jawaban_mahasiswa: data.jawaban,  // Column name is jawaban_mahasiswa, not jawaban
+        jawaban_mahasiswa: data.jawaban, // Column name is jawaban_mahasiswa, not jawaban
       })
       .select()
       .single();
@@ -183,7 +183,7 @@ export async function submitAnswerWithVersion(
     existing.id,
     currentVersion,
     {
-      jawaban_mahasiswa: data.jawaban,  // Column name is jawaban_mahasiswa, not jawaban
+      jawaban_mahasiswa: data.jawaban, // Column name is jawaban_mahasiswa, not jawaban
       updated_at: new Date().toISOString(),
     },
     Date.now(),
@@ -221,10 +221,7 @@ export async function submitAnswerSafe(
   }
 
   // Failed - throw error (no fallback to avoid circular dependency)
-  console.error(
-    "[VersionedKuis] Submit answer failed:",
-    result.error
-  );
+  console.error("[VersionedKuis] Submit answer failed:", result.error);
   throw new Error(result.error || "Failed to submit answer");
 }
 
@@ -372,8 +369,7 @@ export async function gradeAnswerWithVersion(
       poin_diperoleh: poinDiperoleh,
       is_correct: isCorrect,
       feedback: feedback || null,
-      graded_at: new Date().toISOString(),
-    },
+    } as any,
   );
 
   if (!result.success && result.conflict) {
@@ -398,13 +394,15 @@ export async function gradeAnswerWithVersion(
  * Check if quiz attempt has unsaved conflicts
  */
 export async function hasAttemptConflicts(attemptId: string): Promise<boolean> {
-  const { data, error } = await supabase
+  const result: any = await (supabase as any)
     .from("conflict_log")
-    .select("id")
+    .select("*")
     .eq("table_name", "attempt_kuis")
     .eq("record_id", attemptId)
     .eq("status", "pending")
     .limit(1);
+
+  const { data, error } = result;
 
   if (error) {
     console.error("[VersionedKuis] Error checking conflicts:", error);
@@ -424,7 +422,7 @@ export async function hasAnswerConflicts(attemptId: string): Promise<boolean> {
 
   if (answerIds.length === 0) return false;
 
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from("conflict_log")
     .select("id")
     .eq("table_name", "jawaban")
@@ -449,7 +447,7 @@ export async function getAttemptConflictsCount(
   const answers = await getJawabanByAttempt(attemptId);
   const answerIds = answers.map((a) => a.id);
 
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from("conflict_log")
     .select("id")
     .or(

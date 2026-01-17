@@ -1,0 +1,154 @@
+import { useState, useEffect } from 'react';
+import { Megaphone, Plus, Bell, RefreshCw, Trash2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { toast } from 'sonner';
+import { getAllAnnouncements, getAnnouncementStats, deleteAnnouncement, type AnnouncementStats } from '@/lib/api/announcements.api';
+import type { Pengumuman } from '@/types/common.types';
+import { formatDate } from '@/lib/utils/format';
+
+export default function AnnouncementsPage() {
+  const [announcements, setAnnouncements] = useState<Pengumuman[]>([]);
+  const [stats, setStats] = useState<AnnouncementStats>({ total: 0, active: 0, highPriority: 0, scheduled: 0 });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadAnnouncements();
+  }, []);
+
+  const loadAnnouncements = async () => {
+    try {
+      setLoading(true);
+      const [announcementsData, statsData] = await Promise.all([
+        getAllAnnouncements(),
+        getAnnouncementStats(),
+      ]);
+      setAnnouncements(announcementsData);
+      setStats(statsData);
+    } catch (error) {
+      toast.error('Failed to load announcements');
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this announcement?')) return;
+    try {
+      await deleteAnnouncement(id);
+      toast.success('Announcement deleted');
+      await loadAnnouncements();
+    } catch (error) {
+      toast.error('Failed to delete announcement');
+      console.error(error);
+    }
+  };
+
+  const getPriorityVariant = (priority?: string | null) => {
+    if (priority === 'high') return 'destructive';
+    if (priority === 'normal') return 'secondary';
+    return 'outline';
+  };
+
+  return (
+    <div className="container mx-auto py-6 max-w-7xl space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Announcements</h1>
+          <p className="text-muted-foreground">Manage system-wide announcements</p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={loadAnnouncements}>
+            <RefreshCw className="h-4 w-4 mr-2" />Refresh
+          </Button>
+          <Button onClick={() => toast.info('Create announcement feature')}>
+            <Plus className="h-4 w-4 mr-2" />Create
+          </Button>
+        </div>
+      </div>
+      <div className="grid gap-4 md:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total</CardTitle>
+            <Megaphone className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.total}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Active</CardTitle>
+            <Bell className="h-4 w-4 text-green-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.active}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">High Priority</CardTitle>
+            <Badge variant="destructive">High</Badge>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.highPriority}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Scheduled</CardTitle>
+            <Bell className="h-4 w-4 text-blue-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.scheduled}</div>
+          </CardContent>
+        </Card>
+      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>All Announcements</CardTitle>
+          <CardDescription>System-wide notifications</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="text-center py-8">
+              <RefreshCw className="h-8 w-8 animate-spin mx-auto text-muted-foreground" />
+            </div>
+          ) : announcements.length === 0 ? (
+            <div className="text-center py-8">
+              <Megaphone className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+              <p>No announcements found</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {announcements.map((announcement) => (
+                <div key={announcement.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex items-center gap-4">
+                    <Megaphone className="h-8 w-8 text-muted-foreground" />
+                    <div>
+                      <h3 className="font-semibold">{announcement.judul}</h3>
+                      <p className="text-sm text-muted-foreground">
+                        {announcement.created_at ? formatDate(announcement.created_at) : 'Unknown date'} • {announcement.penulis?.full_name || 'Unknown author'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Badge variant={getPriorityVariant(announcement.prioritas)}>
+                      {announcement.prioritas || 'normal'}
+                    </Badge>
+                    <Badge variant="default">{announcement.tipe || 'info'}</Badge>
+                    <Button variant="ghost" size="sm" onClick={() => handleDelete(announcement.id)}>
+                      <Trash2 className="h-4 w-4 text-red-600" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

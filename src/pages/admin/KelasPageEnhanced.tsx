@@ -83,7 +83,6 @@ import {
 import type { Kelas } from "@/types/kelas.types";
 import { KelolaMahasiswaDialog } from "@/components/features/kelas/KelolaMahasiswaDialog";
 
-
 export default function KelasPageEnhanced() {
   const hasLoadedRef = useRef(false);
 
@@ -108,7 +107,8 @@ export default function KelasPageEnhanced() {
 
   // Kelola Mahasiswa dialog state
   const [showKelolaMahasiswa, setShowKelolaMahasiswa] = useState(false);
-  const [selectedKelasForMahasiswa, setSelectedKelasForMahasiswa] = useState<Kelas | null>(null);
+  const [selectedKelasForMahasiswa, setSelectedKelasForMahasiswa] =
+    useState<Kelas | null>(null);
 
   useEffect(() => {
     if (hasLoadedRef.current) return;
@@ -203,7 +203,6 @@ export default function KelasPageEnhanced() {
     }
   };
 
-  
   const handleKelolaMahasiswa = (kelas: Kelas) => {
     setSelectedKelasForMahasiswa(kelas);
     setShowKelolaMahasiswa(true);
@@ -232,8 +231,6 @@ export default function KelasPageEnhanced() {
     }
   };
 
-  
-  
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -262,9 +259,9 @@ export default function KelasPageEnhanced() {
       <Alert>
         <AlertCircle className="h-4 w-4" />
         <AlertDescription>
-          <strong>Fitur Baru:</strong> Kelas universal untuk pengelolaan mahasiswa.
-          Admin bisa mengelola mahasiswa di kelas, menambah mahasiswa yang sudah registrasi,
-          dan update realtime saat ada mahasiswa baru.
+          <strong>Fitur Baru:</strong> Kelas universal untuk pengelolaan
+          mahasiswa. Admin bisa mengelola mahasiswa di kelas, menambah mahasiswa
+          yang sudah registrasi, dan update realtime saat ada mahasiswa baru.
         </AlertDescription>
       </Alert>
 
@@ -364,8 +361,6 @@ export default function KelasPageEnhanced() {
               />
             </div>
 
-            
-            
             {/* Semester & Tahun Ajaran */}
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -446,7 +441,6 @@ export default function KelasPageEnhanced() {
         </DialogContent>
       </Dialog>
 
-      
       {/* Delete Confirmation Dialog */}
       {deletingKelas && (
         <DeleteConfirmDialog

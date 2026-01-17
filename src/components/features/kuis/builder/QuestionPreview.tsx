@@ -6,13 +6,7 @@
  * Features: Display-only view of questions as students will see them
  */
 
-import {
-  Eye,
-  FileText,
-  CheckCircle,
-  Circle,
-  AlertCircle,
-} from "lucide-react";
+import { Eye, FileText, CheckCircle, Circle, AlertCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";

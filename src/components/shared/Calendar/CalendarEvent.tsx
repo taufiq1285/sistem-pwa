@@ -78,7 +78,7 @@ export function CalendarEvent({
         className={cn(
           "flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer",
           "hover:bg-accent transition-colors",
-          className
+          className,
         )}
         style={{
           borderLeft: `4px solid ${event.color || "#3b82f6"}`,
@@ -117,7 +117,7 @@ export function CalendarEvent({
       onClick={handleClick}
       className={cn(
         "p-4 cursor-pointer hover:shadow-md transition-shadow",
-        className
+        className,
       )}
       style={{
         borderLeft: `4px solid ${event.color || "#3b82f6"}`,

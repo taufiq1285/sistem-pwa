@@ -200,7 +200,9 @@ export async function createBulkNotifications(
 /**
  * Mark notification as read
  */
-export async function markAsRead(notificationId: string): Promise<Notification> {
+export async function markAsRead(
+  notificationId: string,
+): Promise<Notification> {
   try {
     const { data, error } = await supabase
       .from("notifications")

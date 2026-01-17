@@ -54,14 +54,14 @@ function validateFile(file: File): void {
   // Check file size
   if (file.size > MAX_FILE_SIZE) {
     throw new Error(
-      `Ukuran file terlalu besar. Maksimal 20MB, file Anda: ${(file.size / 1024 / 1024).toFixed(2)}MB`
+      `Ukuran file terlalu besar. Maksimal 20MB, file Anda: ${(file.size / 1024 / 1024).toFixed(2)}MB`,
     );
   }
 
   // Check MIME type
   if (!ALLOWED_MIME_TYPES.includes(file.type)) {
     throw new Error(
-      `Tipe file tidak didukung: ${file.type}. Gunakan PDF, Word, gambar (JPG/PNG), atau ZIP.`
+      `Tipe file tidak didukung: ${file.type}. Gunakan PDF, Word, gambar (JPG/PNG), atau ZIP.`,
     );
   }
 }
@@ -74,7 +74,7 @@ function validateFile(file: File): void {
  * Upload file laporan ke Supabase Storage
  */
 export async function uploadLaporan(
-  params: UploadLaporanParams
+  params: UploadLaporanParams,
 ): Promise<LaporanFileInfo> {
   const { file, kelasId, mahasiswaId, attemptId, soalId } = params;
 
@@ -147,7 +147,7 @@ export function createLaporanUploader(
   kelasId: string,
   mahasiswaId: string,
   attemptId: string,
-  soalId?: string
+  soalId?: string,
 ): (file: File) => Promise<UploadedFile> {
   return async (file: File): Promise<UploadedFile> => {
     const result = await uploadLaporan({
@@ -176,7 +176,7 @@ export function createLaporanUploader(
  */
 export async function getLaporanSignedUrl(
   filePath: string,
-  expiresIn: number = 60 * 60 // 1 hour default
+  expiresIn: number = 60 * 60, // 1 hour default
 ): Promise<string> {
   const { data, error } = await supabase.storage
     .from(BUCKET_NAME)
@@ -231,7 +231,7 @@ export async function deleteLaporan(filePath: string): Promise<void> {
 export async function listLaporanFiles(
   kelasId: string,
   mahasiswaId: string,
-  attemptId: string
+  attemptId: string,
 ): Promise<Array<{ name: string; size: number; created_at: string }>> {
   const folderPath = `${kelasId}/${mahasiswaId}/${attemptId}`;
 
@@ -262,7 +262,7 @@ export function extractPathFromUrl(url: string): string | null {
     // Handle signed URLs
     const urlObj = new URL(url);
     const pathMatch = urlObj.pathname.match(
-      /\/storage\/v1\/object\/(?:sign|public)\/laporan\/(.+)/
+      /\/storage\/v1\/object\/(?:sign|public)\/laporan\/(.+)/,
     );
     if (pathMatch) {
       return decodeURIComponent(pathMatch[1].split("?")[0]);

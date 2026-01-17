@@ -80,52 +80,63 @@ export interface DeleteAssignmentOptions {
  */
 export async function getUnifiedAssignments(
   filters?: AssignmentFilters,
-  search?: string
+  search?: string,
 ): Promise<UnifiedAssignmentWithSchedules[]> {
   try {
-    console.log('🔍 Fetching unified assignments with filters:', filters, 'search:', search);
+    console.log(
+      "🔍 Fetching unified assignments with filters:",
+      filters,
+      "search:",
+      search,
+    );
 
     // Build master assignment query
-    let query = supabase
-      .from('jadwal_praktikum')
-      .select(`
+    const query = supabase
+      .from("jadwal_praktikum")
+      .select(
+        `
         dosen_id,
         mata_kuliah_id,
         kelas_id,
         dosen:users!inner(id, full_name, email),
         mata_kuliah:mata_kuliah!inner(id, nama_mk, kode_mk),
         kelas:kelas!inner(id, nama_kelas, kode_kelas)
-      `)
-      .eq('is_active', true);
+      `,
+      )
+      .eq("is_active", true);
 
     // Apply filters
+    let typedQuery: any = query;
     if (filters?.dosen_id) {
-      query = query.eq('dosen_id', filters.dosen_id);
+      typedQuery = typedQuery.eq("dosen_id", filters.dosen_id);
     }
 
     if (filters?.mata_kuliah_id) {
-      query = query.eq('mata_kuliah_id', filters.mata_kuliah_id);
+      typedQuery = typedQuery.eq("mata_kuliah_id", filters.mata_kuliah_id);
     }
 
     if (filters?.kelas_id) {
-      query = query.eq('kelas_id', filters.kelas_id);
+      typedQuery = typedQuery.eq("kelas_id", filters.kelas_id);
     }
 
     if (filters?.status) {
-      query = query.eq('status', filters.status);
+      typedQuery = typedQuery.eq("status", filters.status);
     }
 
     if (filters?.tahun_ajaran) {
-      query = query.eq('kelas.tahun_ajaran', filters.tahun_ajaran);
+      typedQuery = typedQuery.eq("kelas.tahun_ajaran", filters.tahun_ajaran);
     }
 
     if (filters?.semester) {
-      query = query.eq('kelas.semester_ajaran', filters.semester);
+      typedQuery = typedQuery.eq(
+        "kelas.semester_ajaran",
+        parseInt(filters.semester as string, 10),
+      );
     }
 
     // Apply search
     if (search) {
-      query = query.or(`
+      typedQuery = typedQuery.or(`
         dosen.full_name.ilike.%${search}%,
         mata_kuliah.nama_mk.ilike.%${search}%,
         mata_kuliah.kode_mk.ilike.%${search}%,
@@ -134,7 +145,7 @@ export async function getUnifiedAssignments(
       `);
     }
 
-    const { data: rawData, error } = await query;
+    const { data: rawData, error } = await typedQuery;
 
     if (error) throw error;
     if (!rawData || rawData.length === 0) return [];
@@ -151,8 +162,8 @@ export async function getUnifiedAssignments(
           mata_kuliah_id: item.mata_kuliah_id,
           kelas_id: item.kelas_id,
           total_jadwal: 0,
-          tanggal_mulai: '',
-          tanggal_selesai: '',
+          tanggal_mulai: "",
+          tanggal_selesai: "",
           dosen: item.dosen,
           mata_kuliah: item.mata_kuliah,
           kelas: item.kelas,
@@ -165,9 +176,10 @@ export async function getUnifiedAssignments(
 
     for (const [key, assignment] of assignmentMap) {
       // Get all jadwal for this assignment
-      const { data: jadwalData, error: jadwalError } = await supabase
-        .from('jadwal_praktikum')
-        .select(`
+      const { data: jadwalData, error: jadwalError } = await (supabase as any)
+        .from("jadwal_praktikum")
+        .select(
+          `
           id,
           tanggal_praktikum,
           hari,
@@ -180,36 +192,44 @@ export async function getUnifiedAssignments(
             nama_lab,
             kode_lab
           )
-        `)
-        .eq('dosen_id', assignment.dosen_id)
-        .eq('mata_kuliah_id', assignment.mata_kuliah_id)
-        .eq('kelas_id', assignment.kelas_id)
-        .eq('is_active', true)
-        .order('tanggal_praktikum', { ascending: true });
+        `,
+        )
+        .eq("dosen_id", assignment.dosen_id)
+        .eq("mata_kuliah_id", assignment.mata_kuliah_id)
+        .eq("kelas_id", assignment.kelas_id)
+        .eq("is_active", true)
+        .order("tanggal_praktikum", { ascending: true });
 
       if (jadwalError) {
-        console.warn('Error fetching jadwal details for assignment:', key, jadwalError);
+        console.warn(
+          "Error fetching jadwal details for assignment:",
+          key,
+          jadwalError,
+        );
         continue;
       }
 
       const jadwalDetail = jadwalData || [];
-      const dates = jadwalDetail.map(j => j.tanggal_praktikum).filter(Boolean);
+      const dates = (jadwalDetail as any[])
+        .map((j) => j.tanggal_praktikum)
+        .filter(Boolean);
 
       assignmentsWithSchedules.push({
         ...assignment,
         total_jadwal: jadwalDetail.length,
-        tanggal_mulai: dates.length > 0 ? dates[0] : '',
-        tanggal_selesai: dates.length > 0 ? dates[dates.length - 1] : '',
-        jadwalDetail: jadwalDetail as JadwalDetail[],
+        tanggal_mulai: dates.length > 0 ? dates[0] : "",
+        tanggal_selesai: dates.length > 0 ? dates[dates.length - 1] : "",
+        jadwalDetail: jadwalDetail as unknown as JadwalDetail[],
       });
     }
 
-    console.log(`✅ Found ${assignmentsWithSchedules.length} unified assignments`);
+    console.log(
+      `✅ Found ${assignmentsWithSchedules.length} unified assignments`,
+    );
     return assignmentsWithSchedules;
-
   } catch (error) {
     const apiError = handleError(error);
-    logError(apiError, 'getUnifiedAssignments');
+    logError(apiError, "getUnifiedAssignments");
     throw apiError;
   }
 }
@@ -221,18 +241,23 @@ export async function deleteAssignmentCascade(
   dosenId: string,
   mataKuliahId: string,
   kelasId: string,
-  options?: DeleteAssignmentOptions
+  options?: DeleteAssignmentOptions,
 ): Promise<{ success: boolean; message: string; details?: any }> {
   try {
-    console.log('🗑️ Deleting assignment cascade:', { dosenId, mataKuliahId, kelasId, options });
+    console.log("🗑️ Deleting assignment cascade:", {
+      dosenId,
+      mataKuliahId,
+      kelasId,
+      options,
+    });
 
     // Start by counting what will be deleted
-    const { data: jadwalToDelete, error: countError } = await supabase
-      .from('jadwal_praktikum')
-      .select('id, tanggal_praktikum, topik')
-      .eq('dosen_id', dosenId)
-      .eq('mata_kuliah_id', mataKuliahId)
-      .eq('kelas_id', kelasId);
+    const { data: jadwalToDelete, error: countError } = await (supabase as any)
+      .from("jadwal_praktikum")
+      .select("id, tanggal_praktikum, topik")
+      .eq("dosen_id", dosenId)
+      .eq("mata_kuliah_id", mataKuliahId)
+      .eq("kelas_id", kelasId);
 
     if (countError) throw countError;
 
@@ -240,12 +265,12 @@ export async function deleteAssignmentCascade(
     console.log(`Found ${totalJadwal} jadwal to delete`);
 
     // Step 1: Delete all jadwal praktikum for this assignment
-    const { error: jadwalDeleteError } = await supabase
-      .from('jadwal_praktikum')
+    const { error: jadwalDeleteError } = await (supabase as any)
+      .from("jadwal_praktikum")
       .delete()
-      .eq('dosen_id', dosenId)
-      .eq('mata_kuliah_id', mataKuliahId)
-      .eq('kelas_id', kelasId);
+      .eq("dosen_id", dosenId)
+      .eq("mata_kuliah_id", mataKuliahId)
+      .eq("kelas_id", kelasId);
 
     if (jadwalDeleteError) throw jadwalDeleteError;
 
@@ -256,28 +281,29 @@ export async function deleteAssignmentCascade(
     if (options?.alsoDeleteKelas) {
       // Check if kelas has any students
       const { count, error: studentCountError } = await supabase
-        .from('kelas_mahasiswa')
-        .select('*', { count: 'exact', head: true })
-        .eq('kelas_id', kelasId);
+        .from("kelas_mahasiswa")
+        .select("*", { count: "exact", head: true })
+        .eq("kelas_id", kelasId);
 
       if (studentCountError) throw studentCountError;
 
       if (count === 0) {
         // Check if kelas has other active jadwal
-        const { count: otherJadwalCount, error: otherJadwalError } = await supabase
-          .from('jadwal_praktikum')
-          .select('*', { count: 'exact', head: true })
-          .eq('kelas_id', kelasId)
-          .eq('is_active', true);
+        const { count: otherJadwalCount, error: otherJadwalError } =
+          await supabase
+            .from("jadwal_praktikum")
+            .select("*", { count: "exact", head: true })
+            .eq("kelas_id", kelasId)
+            .eq("is_active", true);
 
         if (otherJadwalError) throw otherJadwalError;
 
         if (otherJadwalCount === 0) {
           // Safe to delete the kelas
           const { error: kelasDeleteError } = await supabase
-            .from('kelas')
+            .from("kelas")
             .delete()
-            .eq('id', kelasId);
+            .eq("id", kelasId);
 
           if (kelasDeleteError) throw kelasDeleteError;
           kelasDeleted = true;
@@ -287,21 +313,23 @@ export async function deleteAssignmentCascade(
     }
 
     // Step 3: Clean up dosen_mata_kuliah if no other assignments for this mata kuliah
-    const { data: otherAssignments, error: otherAssignError } = await supabase
-      .from('jadwal_praktikum')
-      .select('id')
-      .eq('dosen_id', dosenId)
-      .eq('mata_kuliah_id', mataKuliahId)
-      .eq('is_active', true);
+    const { data: otherAssignments, error: otherAssignError } = await (
+      supabase as any
+    )
+      .from("jadwal_praktikum")
+      .select("id")
+      .eq("dosen_id", dosenId)
+      .eq("mata_kuliah_id", mataKuliahId)
+      .eq("is_active", true);
 
     if (otherAssignError) throw otherAssignError;
 
     if (!otherAssignments || otherAssignments.length === 0) {
       const { error: dmDeleteError } = await supabase
-        .from('dosen_mata_kuliah')
+        .from("dosen_mata_kuliah" as any)
         .delete()
-        .eq('dosen_id', dosenId)
-        .eq('mata_kuliah_id', mataKuliahId);
+        .eq("dosen_id", dosenId)
+        .eq("mata_kuliah_id", mataKuliahId);
 
       if (dmDeleteError) throw dmDeleteError;
       console.log(`✅ Cleaned up dosen_mata_kuliah record`);
@@ -311,39 +339,37 @@ export async function deleteAssignmentCascade(
     if (options?.notifyDosen) {
       // Get dosen details for notification
       const { data: dosenData } = await supabase
-        .from('users')
-        .select('full_name, email')
-        .eq('id', dosenId)
+        .from("users")
+        .select("full_name, email")
+        .eq("id", dosenId)
         .single();
 
       const { data: mkData } = await supabase
-        .from('mata_kuliah')
-        .select('nama_mk')
-        .eq('id', mataKuliahId)
+        .from("mata_kuliah")
+        .select("nama_mk")
+        .eq("id", mataKuliahId)
         .single();
 
       const { data: kelasData } = await supabase
-        .from('kelas')
-        .select('nama_kelas')
-        .eq('id', kelasId)
+        .from("kelas")
+        .select("nama_kelas")
+        .eq("id", kelasId)
         .single();
 
       // Create notification
-      await supabase
-        .from('notifications')
-        .insert({
-          user_id: dosenId,
-          title: 'Assignment Dihapus',
-          message: `Assignment untuk mata kuliah ${mkData?.nama_mk} di kelas ${kelasData?.nama_kelas} telah dihapus oleh admin.`,
-          type: 'assignment_deleted',
-          metadata: {
-            dosen_id: dosenId,
-            mata_kuliah_id: mataKuliahId,
-            kelas_id: kelasId,
-            deleted_jadwal_count: totalJadwal,
-            kelas_deleted: kelasDeleted
-          }
-        });
+      await supabase.from("notifications").insert({
+        user_id: dosenId,
+        title: "Assignment Dihapus",
+        message: `Assignment untuk mata kuliah ${mkData?.nama_mk} di kelas ${kelasData?.nama_kelas} telah dihapus oleh admin.`,
+        type: "assignment_deleted",
+        metadata: {
+          dosen_id: dosenId,
+          mata_kuliah_id: mataKuliahId,
+          kelas_id: kelasId,
+          deleted_jadwal_count: totalJadwal,
+          kelas_deleted: kelasDeleted,
+        },
+      });
 
       console.log(`✅ Sent notification to dosen ${dosenData?.full_name}`);
     }
@@ -353,20 +379,19 @@ export async function deleteAssignmentCascade(
       message: `Assignment berhasil dihapus`,
       details: {
         deleted_jadwal_count: totalJadwal,
-        kelas_deleted,
-        jadwal_details: jadwalToDelete
-      }
+        kelas_deleted: kelasDeleted,
+        jadwal_details: jadwalToDelete,
+      },
     };
-
   } catch (error) {
-    console.error('Error in deleteAssignmentCascade:', error);
+    console.error("Error in deleteAssignmentCascade:", error);
     const apiError = handleError(error);
-    logError(apiError, 'deleteAssignmentCascade');
+    logError(apiError, "deleteAssignmentCascade");
 
     return {
       success: false,
-      message: apiError.message || 'Gagal menghapus assignment',
-      details: { error: apiError }
+      message: apiError.message || "Gagal menghapus assignment",
+      details: { error: apiError },
     };
   }
 }
@@ -385,39 +410,45 @@ export async function getAssignmentStats(): Promise<{
   try {
     // Get unique assignments
     const { data: assignmentsData, error: assignmentsError } = await supabase
-      .from('jadwal_praktikum')
-      .select('dosen_id, mata_kuliah_id, kelas_id')
-      .eq('is_active', true);
+      .from("jadwal_praktikum")
+      .select("dosen_id, mata_kuliah_id, kelas_id")
+      .eq("is_active", true);
 
     if (assignmentsError) throw assignmentsError;
 
     // Get total jadwal
     const { count: totalJadwal, error: jadwalError } = await supabase
-      .from('jadwal_praktikum')
-      .select('*', { count: 'exact', head: true })
-      .eq('is_active', true);
+      .from("jadwal_praktikum")
+      .select("*", { count: "exact", head: true })
+      .eq("is_active", true);
 
     if (jadwalError) throw jadwalError;
 
     // Get active jadwal (scheduled)
-    const { count: activeJadwal, error: activeError } = await supabase
-      .from('jadwal_praktikum')
-      .select('*', { count: 'exact', head: true })
-      .eq('is_active', true)
-      .eq('status', 'scheduled');
+    const { count: activeJadwal, error: activeError } = await (supabase as any)
+      .from("jadwal_praktikum")
+      .select("*", { count: "exact", head: true })
+      .eq("is_active", true)
+      .eq("status", "scheduled");
 
     if (activeError) throw activeError;
 
     const assignments = assignmentsData || [];
 
     // Calculate unique counts
-    const uniqueDosen = new Set(assignments.map(a => a.dosen_id)).size;
-    const uniqueMataKuliah = new Set(assignments.map(a => a.mata_kuliah_id)).size;
-    const uniqueKelas = new Set(assignments.map(a => a.kelas_id)).size;
+    const uniqueDosen = new Set((assignments as any[]).map((a) => a.dosen_id))
+      .size;
+    const uniqueMataKuliah = new Set(
+      (assignments as any[]).map((a) => a.mata_kuliah_id),
+    ).size;
+    const uniqueKelas = new Set((assignments as any[]).map((a) => a.kelas_id))
+      .size;
 
     // Group unique assignments
     const uniqueAssignments = new Set(
-      assignments.map(a => `${a.dosen_id}-${a.mata_kuliah_id}-${a.kelas_id}`)
+      (assignments as any[]).map(
+        (a) => `${a.dosen_id}-${a.mata_kuliah_id}-${a.kelas_id}`,
+      ),
     ).size;
 
     return {
@@ -428,10 +459,9 @@ export async function getAssignmentStats(): Promise<{
       unique_mata_kuliah: uniqueMataKuliah,
       unique_kelas: uniqueKelas,
     };
-
   } catch (error) {
     const apiError = handleError(error);
-    logError(apiError, 'getAssignmentStats');
+    logError(apiError, "getAssignmentStats");
     throw apiError;
   }
 }
@@ -441,18 +471,18 @@ export async function getAssignmentStats(): Promise<{
 // ============================================================================
 
 export const getUnifiedAssignmentsWithPermission = requirePermission(
-  'read:assignments',
-  getUnifiedAssignments
+  "read:assignments",
+  getUnifiedAssignments,
 );
 
 export const deleteAssignmentWithPermission = requirePermission(
-  'delete:assignments',
-  deleteAssignmentCascade
+  "delete:assignments",
+  deleteAssignmentCascade,
 );
 
 export const getAssignmentStatsWithPermission = requirePermission(
-  'read:assignments',
-  getAssignmentStats
+  "read:assignments",
+  getAssignmentStats,
 );
 
 // ============================================================================

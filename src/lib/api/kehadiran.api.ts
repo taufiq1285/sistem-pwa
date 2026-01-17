@@ -49,7 +49,7 @@ export interface CreateKehadiranData {
 
 export interface BulkKehadiranData {
   jadwal_id?: string; // Legacy support
-  kelas_id?: string;  // New: Support kelas-based attendance
+  kelas_id?: string; // New: Support kelas-based attendance
   mata_kuliah_id?: string; // Mata kuliah yang dipilih dosen
   tanggal: string;
   kehadiran: Array<{
@@ -203,22 +203,20 @@ async function saveKehadiranBulkImpl(data: BulkKehadiranData): Promise<void> {
   try {
     // Determine if we're using jadwal_id or kelas_id
     const identifier = data.kelas_id || data.jadwal_id;
-    const identifierType = data.kelas_id ? 'kelas_id' : 'jadwal_id';
+    const identifierType = data.kelas_id ? "kelas_id" : "jadwal_id";
 
     const records = data.kehadiran.map((item) => ({
-      [identifierType]: identifier, // Use either kelas_id or jadwal_id
+      jadwal_id: data.jadwal_id!, // Use jadwal_id as required field
       mahasiswa_id: item.mahasiswa_id,
       status: item.status,
       keterangan: item.keterangan || null,
-      mata_kuliah_id: data.mata_kuliah_id || null, // Include mata kuliah
     }));
 
-    // Check if records exist for this identifier + tanggal
+    // Check if records exist for this jadwal_id
     const { data: existing } = await supabase
       .from("kehadiran")
       .select("id, mahasiswa_id")
-      .eq(identifierType, identifier)
-      .eq("tanggal", data.tanggal);
+      .eq("jadwal_id", data.jadwal_id!);
 
     if (existing && existing.length > 0) {
       // Update existing records
@@ -232,20 +230,13 @@ async function saveKehadiranBulkImpl(data: BulkKehadiranData): Promise<void> {
             .update(record)
             .eq("id", existingRecord.id);
         } else {
-          return supabase.from("kehadiran").insert({
-            ...record,
-            tanggal: data.tanggal
-          });
+          return supabase.from("kehadiran").insert(record);
         }
       });
       await Promise.all(updates);
     } else {
-      // Insert new records with tanggal
-      const recordsWithTanggal = records.map(record => ({
-        ...record,
-        tanggal: data.tanggal
-      }));
-      const { error } = await supabase.from("kehadiran").insert(recordsWithTanggal);
+      // Insert new records
+      const { error } = await supabase.from("kehadiran").insert(records as any);
       if (error) throw error;
     }
   } catch (error) {
@@ -451,7 +442,7 @@ export async function getMahasiswaKehadiran(
  */
 export async function getKehadiranForExport(
   kelasId: string,
-  tanggal: string
+  tanggal: string,
 ): Promise<any[]> {
   try {
     // Get kelas info
@@ -462,9 +453,10 @@ export async function getKehadiranForExport(
       .single();
 
     // Get kehadiran records with mata kuliah
-    const { data: kehadiranData, error } = await supabase
+    const result: any = await (supabase as any)
       .from("kehadiran")
-      .select(`
+      .select(
+        `
         status,
         keterangan,
         mata_kuliah:mata_kuliah_id (
@@ -474,24 +466,31 @@ export async function getKehadiranForExport(
           nim,
           users:user_id (full_name)
         )
-      `)
+      `,
+      )
       .eq("kelas_id", kelasId)
       .eq("tanggal", tanggal)
       .order("mahasiswa(nim)");
+
+    const { data: kehadiranData, error } = result;
 
     if (error) throw error;
 
     return (kehadiranData || []).map((item: any) => ({
       tanggal,
-      kelas: kelasData?.nama_kelas || '-',
-      mata_kuliah: item.mata_kuliah?.nama_mk || '-',
-      nim: item.mahasiswa?.nim || '-',
-      nama_mahasiswa: item.mahasiswa?.users?.full_name || '-',
+      kelas: kelasData?.nama_kelas || "-",
+      mata_kuliah: item.mata_kuliah?.nama_mk || "-",
+      nim: item.mahasiswa?.nim || "-",
+      nama_mahasiswa: item.mahasiswa?.users?.full_name || "-",
       status: item.status,
-      keterangan: item.keterangan || ''
+      keterangan: item.keterangan || "",
     }));
   } catch (error) {
-    logger.error("Failed to fetch kehadiran for export", { kelasId, tanggal, error });
+    logger.error("Failed to fetch kehadiran for export", {
+      kelasId,
+      tanggal,
+      error,
+    });
     throw handleSupabaseError(error);
   }
 }
@@ -517,19 +516,21 @@ export async function getKehadiranHistory(
   kelasId: string,
   startDate?: string,
   endDate?: string,
-  limit: number = 30
+  limit: number = 30,
 ): Promise<KehadiranHistoryRecord[]> {
   try {
-    let query = supabase
+    let query: any = (supabase as any)
       .from("kehadiran")
-      .select(`
+      .select(
+        `
         tanggal,
         status,
         kelas:kelas_id (
           id,
           nama_kelas
         )
-      `)
+      `,
+      )
       .eq("kelas_id", kelasId)
       .order("tanggal", { ascending: false });
 
@@ -548,21 +549,21 @@ export async function getKehadiranHistory(
         historyMap.set(tanggal, {
           tanggal,
           kelas_id: record.kelas?.id || kelasId,
-          kelas_nama: record.kelas?.nama_kelas || '-',
+          kelas_nama: record.kelas?.nama_kelas || "-",
           total_mahasiswa: 0,
           hadir: 0,
           izin: 0,
           sakit: 0,
-          alpha: 0
+          alpha: 0,
         });
       }
 
       const stats = historyMap.get(tanggal);
       stats.total_mahasiswa++;
-      if (record.status === 'hadir') stats.hadir++;
-      if (record.status === 'izin') stats.izin++;
-      if (record.status === 'sakit') stats.sakit++;
-      if (record.status === 'alpha') stats.alpha++;
+      if (record.status === "hadir") stats.hadir++;
+      if (record.status === "izin") stats.izin++;
+      if (record.status === "sakit") stats.sakit++;
+      if (record.status === "alpha") stats.alpha++;
     });
 
     return Array.from(historyMap.values())

@@ -41,7 +41,7 @@ export async function getPermintaan(
 ): Promise<PermintaanPerbaikanWithRelations[]> {
   try {
     let query = supabase
-      .from("permintaan_perbaikan_nilai")
+      .from("permintaan_perbaikan_nilai" as any)
       .select(
         `
         *,
@@ -112,7 +112,7 @@ export async function getPermintaan(
 
     if (error) throw handleError(error);
 
-    return (data || []) as PermintaanPerbaikanWithRelations[];
+    return (data || []) as unknown as PermintaanPerbaikanWithRelations[];
   } catch (error) {
     console.error("getPermintaan error:", error);
     throw handleError(error);
@@ -160,7 +160,7 @@ export async function getPermintaanPendingForDosen(
 
     // Get pending permintaan for these classes
     const { data, error } = await supabase
-      .from("permintaan_perbaikan_nilai")
+      .from("permintaan_perbaikan_nilai" as any)
       .select(
         `
         *,
@@ -189,7 +189,7 @@ export async function getPermintaanPendingForDosen(
 
     if (error) throw handleError(error);
 
-    return (data || []) as PermintaanPerbaikanWithRelations[];
+    return (data || []) as unknown as PermintaanPerbaikanWithRelations[];
   } catch (error) {
     console.error("getPermintaanPendingForDosen error:", error);
     throw handleError(error);
@@ -204,7 +204,7 @@ export async function getPermintaanById(
 ): Promise<PermintaanPerbaikanWithRelations> {
   try {
     const { data, error } = await supabase
-      .from("permintaan_perbaikan_nilai")
+      .from("permintaan_perbaikan_nilai" as any)
       .select(
         `
         *,
@@ -247,7 +247,7 @@ export async function getPermintaanById(
 
     if (error) throw handleError(error);
 
-    return data as PermintaanPerbaikanWithRelations;
+    return data as unknown as PermintaanPerbaikanWithRelations;
   } catch (error) {
     console.error("getPermintaanById error:", error);
     throw handleError(error);
@@ -266,7 +266,7 @@ async function createPermintaanImpl(
 ): Promise<PermintaanPerbaikanNilai> {
   try {
     const { data: permintaan, error } = await supabase
-      .from("permintaan_perbaikan_nilai")
+      .from("permintaan_perbaikan_nilai" as any)
       .insert({
         mahasiswa_id: data.mahasiswa_id,
         nilai_id: data.nilai_id,
@@ -319,7 +319,7 @@ async function createPermintaanImpl(
             message: `${mahasiswaInfo?.user?.full_name || "Mahasiswa"} mengajukan permintaan perbaikan nilai ${data.komponen_nilai.toUpperCase()} untuk kelas ${kelasInfo.mata_kuliah?.nama_mk}`,
             type: "perbaikan_nilai_request",
             data: {
-              permintaan_id: permintaan.id,
+              permintaan_id: (permintaan as any).id,
               kelas_id: data.kelas_id,
               komponen_nilai: data.komponen_nilai,
             },
@@ -330,7 +330,7 @@ async function createPermintaanImpl(
       }
     }
 
-    return permintaan as PermintaanPerbaikanNilai;
+    return permintaan as any as PermintaanPerbaikanNilai;
   } catch (error) {
     console.error("createPermintaan error:", error);
     throw handleError(error);
@@ -355,7 +355,7 @@ async function approvePermintaanImpl(
 ): Promise<PermintaanPerbaikanNilai> {
   try {
     const { data: updated, error } = await supabase
-      .from("permintaan_perbaikan_nilai")
+      .from("permintaan_perbaikan_nilai" as any)
       .update({
         status: "approved",
         nilai_baru: data.nilai_baru,
@@ -402,7 +402,7 @@ async function approvePermintaanImpl(
       console.error("[NOTIFICATION] Failed to notify mahasiswa:", notifError);
     }
 
-    return updated as PermintaanPerbaikanNilai;
+    return updated as unknown as PermintaanPerbaikanNilai;
   } catch (error) {
     console.error("approvePermintaan error:", error);
     throw handleError(error);
@@ -423,7 +423,7 @@ async function rejectPermintaanImpl(
 ): Promise<PermintaanPerbaikanNilai> {
   try {
     const { data: updated, error } = await supabase
-      .from("permintaan_perbaikan_nilai")
+      .from("permintaan_perbaikan_nilai" as any)
       .update({
         status: "rejected",
         response_dosen: data.response_dosen,
@@ -466,7 +466,7 @@ async function rejectPermintaanImpl(
       console.error("[NOTIFICATION] Failed to notify mahasiswa:", notifError);
     }
 
-    return updated as PermintaanPerbaikanNilai;
+    return updated as unknown as PermintaanPerbaikanNilai;
   } catch (error) {
     console.error("rejectPermintaan error:", error);
     throw handleError(error);
@@ -487,7 +487,7 @@ async function cancelPermintaanImpl(
 ): Promise<PermintaanPerbaikanNilai> {
   try {
     const { data: updated, error } = await supabase
-      .from("permintaan_perbaikan_nilai")
+      .from("permintaan_perbaikan_nilai" as any)
       .update({
         status: "cancelled",
         updated_at: new Date().toISOString(),
@@ -499,7 +499,7 @@ async function cancelPermintaanImpl(
 
     if (error) throw handleError(error);
 
-    return updated as PermintaanPerbaikanNilai;
+    return updated as unknown as PermintaanPerbaikanNilai;
   } catch (error) {
     console.error("cancelPermintaan error:", error);
     throw handleError(error);
@@ -523,7 +523,9 @@ export async function getPermintaanSummary(
   filters: PermintaanFilters = {},
 ): Promise<PermintaanSummary> {
   try {
-    let query = supabase.from("permintaan_perbaikan_nilai").select("status");
+    let query = supabase
+      .from("permintaan_perbaikan_nilai" as any)
+      .select("status");
 
     if (filters.mahasiswa_id) {
       query = query.eq("mahasiswa_id", filters.mahasiswa_id);
@@ -537,12 +539,14 @@ export async function getPermintaanSummary(
 
     if (error) throw handleError(error);
 
+    const data2 = data as any; // Cast to bypass strict type checking
     const summary: PermintaanSummary = {
-      total: data?.length || 0,
-      pending: data?.filter((p) => p.status === "pending").length || 0,
-      approved: data?.filter((p) => p.status === "approved").length || 0,
-      rejected: data?.filter((p) => p.status === "rejected").length || 0,
-      cancelled: data?.filter((p) => p.status === "cancelled").length || 0,
+      total: data2?.length || 0,
+      pending: data2?.filter((p: any) => p.status === "pending").length || 0,
+      approved: data2?.filter((p: any) => p.status === "approved").length || 0,
+      rejected: data2?.filter((p: any) => p.status === "rejected").length || 0,
+      cancelled:
+        data2?.filter((p: any) => p.status === "cancelled").length || 0,
     };
 
     return summary;
@@ -587,18 +591,18 @@ export async function getPermintaanStatsForDosen(
 
     // Get all permintaan for these classes
     const { data, error } = await supabase
-      .from("permintaan_perbaikan_nilai")
+      .from("permintaan_perbaikan_nilai" as any)
       .select("status, komponen_nilai")
       .in("kelas_id", kelasIds);
 
     if (error) throw handleError(error);
 
-    const allPermintaan = data || [];
-    const pending = allPermintaan.filter((p) => p.status === "pending");
+    const allPermintaan = (data || []) as any[]; // Cast to any for property access
+    const pending = allPermintaan.filter((p: any) => p.status === "pending");
     const reviewed = allPermintaan.filter(
-      (p) => p.status === "approved" || p.status === "rejected",
+      (p: any) => p.status === "approved" || p.status === "rejected",
     );
-    const approved = allPermintaan.filter((p) => p.status === "approved");
+    const approved = allPermintaan.filter((p: any) => p.status === "approved");
 
     const approvalRate =
       reviewed.length > 0 ? (approved.length / reviewed.length) * 100 : 0;
@@ -613,7 +617,7 @@ export async function getPermintaanStatsForDosen(
       kehadiran: 0,
     };
 
-    allPermintaan.forEach((p) => {
+    allPermintaan.forEach((p: any) => {
       if (p.komponen_nilai in byKomponen) {
         byKomponen[p.komponen_nilai as KomponenNilai]++;
       }

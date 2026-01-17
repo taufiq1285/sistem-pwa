@@ -69,7 +69,7 @@ export function formatError(error: unknown): string {
 
 export function createError(
   message: string,
-  context?: Record<string, any>
+  context?: Record<string, any>,
 ): Error {
   const error = new Error(message);
   if (context) (error as any).context = context;

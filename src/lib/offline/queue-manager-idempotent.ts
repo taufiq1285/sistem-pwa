@@ -243,9 +243,12 @@ export class IdempotentQueueManager {
     const items = await queueManager.getAllItems(status);
 
     // Enhance items with requestId metadata
-    return items.map((item) => ({
-      ...item,
-    } as any));
+    return items.map(
+      (item) =>
+        ({
+          ...item,
+        }) as any,
+    );
   }
 
   /**

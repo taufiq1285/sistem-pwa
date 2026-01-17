@@ -4,22 +4,70 @@
 
 import { vi } from "vitest";
 
-export const createSupabaseMock = () => ({
-  from: vi.fn(() => ({
+export const createSupabaseMock = () => {
+  const queryBuilder = {
     select: vi.fn().mockReturnThis(),
     insert: vi.fn().mockReturnThis(),
     update: vi.fn().mockReturnThis(),
     delete: vi.fn().mockReturnThis(),
+    upsert: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
+    neq: vi.fn().mockReturnThis(),
+    gt: vi.fn().mockReturnThis(),
+    gte: vi.fn().mockReturnThis(),
+    lt: vi.fn().mockReturnThis(),
+    lte: vi.fn().mockReturnThis(),
+    like: vi.fn().mockReturnThis(),
+    ilike: vi.fn().mockReturnThis(),
+    is: vi.fn().mockReturnThis(),
+    in: vi.fn().mockReturnThis(),
+    contains: vi.fn().mockReturnThis(),
+    containedBy: vi.fn().mockReturnThis(),
+    range: vi.fn().mockReturnThis(),
+    or: vi.fn().mockReturnThis(),
+    not: vi.fn().mockReturnThis(),
+    filter: vi.fn().mockReturnThis(),
+    match: vi.fn().mockReturnThis(),
+    order: vi.fn().mockReturnThis(),
+    limit: vi.fn().mockReturnThis(),
     single: vi.fn().mockResolvedValue({ data: null, error: null }),
-  })),
-  auth: {
-    getSession: vi
-      .fn()
-      .mockResolvedValue({ data: { session: null }, error: null }),
-    signIn: vi.fn().mockResolvedValue({ data: null, error: null }),
-    signOut: vi.fn().mockResolvedValue({ error: null }),
-  },
-});
+    maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+    csv: vi.fn().mockResolvedValue({ data: null, error: null }),
+    then: vi.fn((resolve) => resolve({ data: [], error: null })),
+  };
+
+  return {
+    from: vi.fn(() => queryBuilder),
+    rpc: vi.fn().mockResolvedValue({ data: null, error: null }),
+    auth: {
+      getSession: vi
+        .fn()
+        .mockResolvedValue({ data: { session: null }, error: null }),
+      getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null }),
+      signIn: vi.fn().mockResolvedValue({ data: null, error: null }),
+      signInWithPassword: vi
+        .fn()
+        .mockResolvedValue({ data: null, error: null }),
+      signOut: vi.fn().mockResolvedValue({ error: null }),
+      signUp: vi.fn().mockResolvedValue({ data: null, error: null }),
+      resetPasswordForEmail: vi
+        .fn()
+        .mockResolvedValue({ data: null, error: null }),
+      updateUser: vi.fn().mockResolvedValue({ data: null, error: null }),
+      onAuthStateChange: vi.fn(() => ({
+        data: { subscription: { unsubscribe: vi.fn() } },
+      })),
+    },
+    storage: {
+      from: vi.fn(() => ({
+        upload: vi.fn().mockResolvedValue({ data: null, error: null }),
+        download: vi.fn().mockResolvedValue({ data: null, error: null }),
+        remove: vi.fn().mockResolvedValue({ data: null, error: null }),
+        list: vi.fn().mockResolvedValue({ data: [], error: null }),
+        getPublicUrl: vi.fn(() => ({ data: { publicUrl: "" } })),
+      })),
+    },
+  };
+};
 
 export const supabaseMock = createSupabaseMock();

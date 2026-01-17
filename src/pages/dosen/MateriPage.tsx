@@ -110,7 +110,7 @@ export default function DosenMateriPage() {
       ]);
 
       setMateriList(materiData);
-      setKelasList(kelasData);
+      setKelasList(kelasData as unknown as Kelas[]);
     } catch (error) {
       console.error("Error loading data:", error);
       toast.error("Gagal memuat data");

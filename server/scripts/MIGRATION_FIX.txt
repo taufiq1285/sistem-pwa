@@ -1,0 +1,28 @@
+✅ FIX APPLIED: Idempotent Migration File
+
+Problem: 
+ERROR: 42710: policy "users_select_admin" for table "users" already exists
+
+Root Cause:
+Migration file dropped only OLD policy names but not NEW ones created in migration.
+This caused duplicate error when running migration a second time.
+
+Solution:
+Updated DROP section to use dynamic query that drops ALL existing policies
+from all tables before recreating them. This makes migration idempotent.
+
+Changes Made:
+- File: supabase/migrations/21_enhanced_rls_policies.sql
+- Updated: Lines 14-45 (DROP OLD PERMISSIVE POLICIES section)
+- New approach: Query pg_policies catalog and drop all dynamically
+
+Benefits:
+✅ Migration can be run multiple times safely
+✅ No duplicate policy errors
+✅ Clean re-application of policies
+✅ Still safe (uses IF EXISTS)
+
+Next Step:
+Re-run the migration:
+  Option 1: supabase db reset (resets entire DB)
+  Option 2: Copy updated SQL and run in Supabase SQL Editor

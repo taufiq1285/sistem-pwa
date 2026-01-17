@@ -1,14 +1,16 @@
 /**
- * TODO: Implement [filename]
- *
- * Purpose: [Brief description]
- * Priority: [High/Medium/Low]
- * Dependencies: [List dependencies]
- *
- * Related files:
- * - [File 1]
- * - [File 2]
+ * useSupabase Hook
+ * Provides access to Supabase client in React components
  */
 
-// TODO: Add implementation
-export {};
+import { useMemo } from "react";
+import { supabase } from "@/lib/supabase/client";
+
+/**
+ * Hook for accessing Supabase client
+ * Memoizes the client instance to prevent unnecessary re-renders
+ * @returns Supabase client instance
+ */
+export function useSupabase() {
+  return useMemo(() => supabase, []);
+}

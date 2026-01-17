@@ -50,6 +50,23 @@ import { cn } from "@/lib/utils";
 
 type QuizStatus = "all" | "upcoming" | "ongoing" | "completed" | "missed";
 
+type TaskKind = "tes" | "laporan" | "tugas";
+
+function detectTaskKind(quiz: UpcomingQuiz): TaskKind {
+  const judul = quiz.judul?.toLowerCase() || "";
+
+  // Strong hint: laporan biasanya tidak punya timer
+  const durasi = quiz.durasi_menit;
+  if (durasi == null || durasi <= 0) return "laporan";
+
+  // Backward-compatible keyword detection
+  if (judul.includes("laporan") || judul.includes("report")) return "laporan";
+  if (judul.includes("test") || judul.includes("tes") || judul.includes("kuis"))
+    return "tes";
+
+  return "tugas";
+}
+
 export default function KuisListPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -113,7 +130,7 @@ export default function KuisListPage() {
           quiz.judul.toLowerCase().includes(query) ||
           quiz.nama_mk.toLowerCase().includes(query) ||
           quiz.kode_mk.toLowerCase().includes(query) ||
-          quiz.nama_kelas.toLowerCase().includes(query)
+          quiz.nama_kelas.toLowerCase().includes(query),
       );
     }
     setFilteredQuizzes(filtered);
@@ -188,25 +205,11 @@ export default function KuisListPage() {
     const isCompleted = quiz.status === "completed";
     const hasBestScore = typeof quiz.best_score === "number";
     const isPassed =
-      hasBestScore && quiz.best_score! >= ((quiz as any).passing_grade || 0);
+      hasBestScore && quiz.best_score! >= (quiz.passing_score || 0);
 
-    // Detect task type: TES or LAPORAN
-    // Jika semua soal pilihan ganda = TES
-    // Jika ada soal file_upload = LAPORAN
-    const detectTaskType = (): "tes" | "laporan" | "campuran" => {
-      const judul = quiz.judul?.toLowerCase() || "";
-
-      // Detect from title keywords
-      if (judul.includes("laporan") || judul.includes("report")) return "laporan";
-      if (judul.includes("test") || judul.includes("tes") || judul.includes("kuis")) return "tes";
-
-      // Default to tes (for backward compatibility)
-      return "tes";
-    };
-
-    const taskType = detectTaskType();
-    const isLaporan = taskType === "laporan";
-    const isTes = taskType === "tes";
+    const taskKind = detectTaskKind(quiz);
+    const isLaporan = taskKind === "laporan";
+    const isTes = taskKind === "tes";
 
     // Get border color based on task type
     const getBorderColor = () => {
@@ -217,8 +220,10 @@ export default function KuisListPage() {
 
     // Get type badge style
     const getTypeBadgeStyle = () => {
-      if (isTes) return "bg-blue-100 text-blue-800 border-blue-300 font-semibold";
-      if (isLaporan) return "bg-orange-100 text-orange-800 border-orange-300 font-semibold";
+      if (isTes)
+        return "bg-blue-100 text-blue-800 border-blue-300 font-semibold";
+      if (isLaporan)
+        return "bg-orange-100 text-orange-800 border-orange-300 font-semibold";
       return "bg-gray-100 text-gray-800 border-gray-300";
     };
 
@@ -229,11 +234,17 @@ export default function KuisListPage() {
       return "📋 TUGAS";
     };
 
+    const formatDuration = (): string => {
+      const durasi = quiz.durasi_menit;
+      if (durasi == null || durasi <= 0) return "Tanpa timer";
+      return `${durasi} menit`;
+    };
+
     return (
       <Card
         className={cn(
           "hover:shadow-lg transition-all duration-200 border-l-4",
-          getBorderColor()
+          getBorderColor(),
         )}
       >
         <CardHeader className="pb-3">
@@ -254,7 +265,7 @@ export default function KuisListPage() {
                 {quiz.nama_kelas && ` • ${quiz.nama_kelas}`}
               </CardDescription>
             </div>
-            <div className="flex-shrink-0 p-2 bg-gray-50 rounded-full">
+            <div className="shrink-0 p-2 bg-gray-50 rounded-full">
               {getStatusIcon(quiz.status)}
             </div>
           </div>
@@ -264,7 +275,7 @@ export default function KuisListPage() {
           <div className="grid grid-cols-2 gap-3 text-sm">
             <div className="flex items-center gap-2 text-muted-foreground">
               <Timer className="h-4 w-4" />
-              <span>{quiz.durasi_menit} menit</span>
+              <span>{formatDuration()}</span>
             </div>
             <div className="flex items-center gap-2 text-muted-foreground">
               <FileQuestion className="h-4 w-4" />
@@ -272,25 +283,27 @@ export default function KuisListPage() {
             </div>
             <div className="flex items-center gap-2 text-muted-foreground">
               <Calendar className="h-4 w-4" />
-              <span className="text-xs">{formatDate(quiz.tanggal_mulai)}</span>
+              <span className="text-xs">
+                Mulai: {formatDate(quiz.tanggal_mulai)}
+              </span>
             </div>
             <div className="flex items-center gap-2 text-muted-foreground">
               <Calendar className="h-4 w-4" />
               <span className="text-xs">
-                {formatDate(quiz.tanggal_selesai)}
+                Deadline: {formatDate(quiz.tanggal_selesai)}
               </span>
             </div>
           </div>
 
-          {/* Show attempts only for TES, not for LAPORAN */}
-          {!isLaporan && (
+          {/* HIDDEN: Attempts info (not used - all quiz = 1 attempt) */}
+          {/* {!isLaporan && (
             <div className="flex items-center justify-between p-3 bg-muted rounded-lg text-sm">
               <span className="text-muted-foreground">Percobaan</span>
               <span className="font-semibold">
                 {quiz.attempts_used} / {quiz.max_attempts}
               </span>
             </div>
-          )}
+          )} */}
 
           {/* For LAPORAN, show submission status */}
           {isLaporan && (
@@ -308,14 +321,14 @@ export default function KuisListPage() {
                 "flex items-center justify-between p-3 rounded-lg text-sm",
                 isPassed
                   ? "bg-green-50 border border-green-200"
-                  : "bg-red-50 border border-red-200"
+                  : "bg-red-50 border border-red-200",
               )}
             >
               <div className="flex items-center gap-2">
                 <Trophy
                   className={cn(
                     "h-4 w-4",
-                    isPassed ? "text-green-600" : "text-red-600"
+                    isPassed ? "text-green-600" : "text-red-600",
                   )}
                 />
                 <span className="font-medium">Nilai Terbaik</span>
@@ -323,7 +336,7 @@ export default function KuisListPage() {
               <span
                 className={cn(
                   "font-bold text-lg",
-                  isPassed ? "text-green-700" : "text-red-700"
+                  isPassed ? "text-green-700" : "text-red-700",
                 )}
               >
                 {quiz.best_score}
@@ -339,7 +352,7 @@ export default function KuisListPage() {
                   "flex-1 gap-2",
                   isLaporan
                     ? "bg-orange-600 hover:bg-orange-700"
-                    : "bg-blue-600 hover:bg-blue-700"
+                    : "bg-blue-600 hover:bg-blue-700",
                 )}
               >
                 {isLaporan ? (
@@ -350,7 +363,7 @@ export default function KuisListPage() {
                 ) : (
                   <>
                     <Play className="h-4 w-4" />
-                    {quiz.attempts_used > 0 ? "Coba Lagi" : "Mulai Tes"}
+                    {quiz.attempts_used > 0 ? "Lanjutkan Tes" : "Mulai Tes"}
                   </>
                 )}
               </Button>
@@ -429,7 +442,7 @@ export default function KuisListPage() {
   return (
     <div className="container mx-auto py-6 max-w-7xl space-y-6">
       {/* Hero Header */}
-      <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-700 p-8 text-white">
+      <div className="relative overflow-hidden rounded-xl bg-linear-to-r from-emerald-600 via-teal-600 to-cyan-700 p-8 text-white">
         {/* Decorative Elements */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-32 translate-x-32 blur-3xl" />
         <div className="absolute bottom-0 left-0 w-48 h-48 bg-teal-400/20 rounded-full translate-y-24 -translate-x-24 blur-2xl" />
@@ -454,38 +467,52 @@ export default function KuisListPage() {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {(["upcoming", "ongoing", "completed", "missed"] as const).map(
-          (status, idx) => {
-            const icons = [Clock, Play, CheckCircle2, XCircle];
-            const colors = ["blue", "green", "gray", "red"];
-            const labels = [
-              "Akan Datang",
-              "Berlangsung",
-              "Selesai",
-              "Terlewat",
-            ];
-            const Icon = icons[idx];
-            return (
-              <Card key={status}>
-                <CardContent className="pt-6">
-                  <div className="flex items-center gap-3">
-                    <div className={`p-2 bg-${colors[idx]}-100 rounded-lg`}>
-                      <Icon className={`h-5 w-5 text-${colors[idx]}-600`} />
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">
-                        {labels[idx]}
-                      </p>
-                      <p className="text-2xl font-bold">
-                        {getCountByStatus(status)}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          }
-        )}
+        {[
+          {
+            status: "upcoming" as const,
+            label: "Akan Datang",
+            Icon: Clock,
+            iconWrap: "bg-blue-100",
+            iconColor: "text-blue-600",
+          },
+          {
+            status: "ongoing" as const,
+            label: "Berlangsung",
+            Icon: Play,
+            iconWrap: "bg-green-100",
+            iconColor: "text-green-600",
+          },
+          {
+            status: "completed" as const,
+            label: "Selesai",
+            Icon: CheckCircle2,
+            iconWrap: "bg-gray-100",
+            iconColor: "text-gray-600",
+          },
+          {
+            status: "missed" as const,
+            label: "Terlewat",
+            Icon: XCircle,
+            iconWrap: "bg-red-100",
+            iconColor: "text-red-600",
+          },
+        ].map(({ status, label, Icon, iconWrap, iconColor }) => (
+          <Card key={status}>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className={cn("p-2 rounded-lg", iconWrap)}>
+                  <Icon className={cn("h-5 w-5", iconColor)} />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">{label}</p>
+                  <p className="text-2xl font-bold">
+                    {getCountByStatus(status)}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       <Card>
@@ -513,6 +540,7 @@ export default function KuisListPage() {
                 <TabsTrigger value="upcoming">Akan Datang</TabsTrigger>
                 <TabsTrigger value="ongoing">Berlangsung</TabsTrigger>
                 <TabsTrigger value="completed">Selesai</TabsTrigger>
+                <TabsTrigger value="missed">Terlewat</TabsTrigger>
               </TabsList>
             </Tabs>
           </div>

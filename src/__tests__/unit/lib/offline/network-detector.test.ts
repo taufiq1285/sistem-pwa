@@ -35,13 +35,11 @@ vi.useFakeTimers();
 const mockPerformanceNow = vi.fn();
 global.performance = { now: mockPerformanceNow } as any;
 
-// Helper to mock navigator.onLine
+// Helper to mock navigator.onLine (no-op, already mocked globally)
 function mockNavigatorOnline(isOnline: boolean) {
-  Object.defineProperty(global.navigator, "onLine", {
-    writable: true,
-    configurable: true,
-    value: isOnline,
-  });
+  // Skip - navigator.onLine already mocked in setup.ts
+  // Just update the value using writable
+  (global.navigator as any).onLine = isOnline;
 }
 
 // Helper to mock navigator.connection

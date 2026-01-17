@@ -1,0 +1,90 @@
+
+> vite-project@0.0.0 build
+> tsc -b && vite build
+
+src/lib/admin/cleanup-users.ts(212,52): error TS2339: Property 'email' does not exist on type 'never'.
+src/lib/api/assignment.api.ts(605,13): error TS2589: Type instantiation is excessively deep and possibly infinite.
+src/lib/api/bank-soal.api.ts(247,40): error TS2345: Argument of type '"increment_bank_soal_usage"' is not assignable to parameter of type '"check_version_conflict" | "get_active_kuis_for_mahasiswa" | "get_jadwal_praktikum_mahasiswa" | "get_quiz_attempt_details" | "get_user_role" | "log_conflict" | "safe_update_with_version" | "show_limit" | "show_trgm"'.
+src/lib/api/bank-soal.api.ts(326,3): error TS2322: Type '{ created_at: string; id: string; jawaban_benar: string; kuis_id: string; media_url: string; pembahasan: string; pertanyaan: string; pilihan_jawaban: Json; poin: number; rubrik_penilaian: Json; tipe: "multiple_choice" | ... 2 more ... | "short_answer"; updated_at: string; urutan: number; }[]' is not assignable to type 'Soal[]'.
+  Property 'tipe_soal' is missing in type '{ created_at: string; id: string; jawaban_benar: string; kuis_id: string; media_url: string; pembahasan: string; pertanyaan: string; pilihan_jawaban: Json; poin: number; rubrik_penilaian: Json; tipe: "multiple_choice" | ... 2 more ... | "short_answer"; updated_at: string; urutan: number; }' but required in type 'Soal'.
+src/lib/api/bank-soal.api.ts(371,3): error TS2322: Type '{ created_at: string; dosen_id: string; id: string; is_public: boolean; jawaban_benar: string; mata_kuliah_id: string; opsi_jawaban: Json; penjelasan: string; pertanyaan: string; poin: number; tags: string[]; tipe_soal: string; updated_at: string; usage_count: number; }[]' is not assignable to type 'BankSoal[]'.
+  Type '{ created_at: string; dosen_id: string; id: string; is_public: boolean; jawaban_benar: string; mata_kuliah_id: string; opsi_jawaban: Json; penjelasan: string; pertanyaan: string; poin: number; tags: string[]; tipe_soal: string; updated_at: string; usage_count: number; }' is not assignable to type 'BankSoal'.
+    Types of property 'tipe_soal' are incompatible.
+      Type 'string' is not assignable to type 'TipeSoal'.
+src/lib/api/jadwal.api.ts(455,61): error TS2345: Argument of type '{ kelas_id: string; mata_kuliah_id: string; dosen_id: any; laboratorium_id: string; tanggal_praktikum: string; hari: "senin" | "selasa" | "rabu" | "kamis" | "jumat" | "sabtu" | "minggu"; ... 5 more ...; status: string; }' is not assignable to parameter of type 'Partial<Jadwal>'.
+  Types of property 'status' are incompatible.
+    Type 'string' is not assignable to type '"pending" | "approved" | "rejected" | "cancelled"'.
+src/lib/api/kehadiran.api.ts(456,50): error TS2589: Type instantiation is excessively deep and possibly infinite.
+src/lib/api/kehadiran.api.ts(456,50): error TS2589: Type instantiation is excessively deep and possibly infinite.
+src/lib/api/kuis-secure.api.ts(37,12): error TS2352: Conversion of type '(SelectQueryError<"Invalid Relationships cannot infer result type"> | SelectQueryError<"Invalid RelationName cannot infer result type">)[]' to type 'Soal[]' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type 'SelectQueryError<"Invalid Relationships cannot infer result type"> | SelectQueryError<"Invalid RelationName cannot infer result type">' is not comparable to type 'Soal'.
+    Type '{ error: true; } & String' is missing the following properties from type 'Soal': id, kuis_id, pertanyaan, tipe_soal, and 2 more.
+src/lib/api/kuis-secure.api.ts(64,12): error TS2352: Conversion of type '{ created_at: string; id: string; jawaban_benar: string; kuis_id: string; media_url: string; pembahasan: string; pertanyaan: string; pilihan_jawaban: Json; poin: number; rubrik_penilaian: Json; tipe: "multiple_choice" | ... 2 more ... | "short_answer"; updated_at: string; urutan: number; }[]' to type 'Soal[]' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Property 'tipe_soal' is missing in type '{ created_at: string; id: string; jawaban_benar: string; kuis_id: string; media_url: string; pembahasan: string; pertanyaan: string; pilihan_jawaban: Json; poin: number; rubrik_penilaian: Json; tipe: "multiple_choice" | ... 2 more ... | "short_answer"; updated_at: string; urutan: number; }' but required in type 'Soal'.
+src/lib/api/kuis-versioned-simple.api.ts(161,12): error TS2352: Conversion of type '{ attempt_number: number; auto_save_data: Json; created_at: string; device_id: string; id: string; is_offline_attempt: boolean; is_passed: boolean; kuis_id: string; last_auto_save_at: string; ... 12 more ...; mahasiswa: { ...; }; }' to type 'AttemptKuis' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Types of property 'kuis' are incompatible.
+    Type '{ id: string; judul: string; kelas_id: string; kelas: { id: string; dosen_id: string; dosen: { id: string; user_id: string; }; }; }' is missing the following properties from type 'Kuis': dosen_id, durasi_menit
+src/lib/api/kuis-versioned.api.ts(397,33): error TS2589: Type instantiation is excessively deep and possibly infinite.
+src/lib/api/kuis.api.ts(1166,67): error TS2554: Expected 2 arguments, but got 3.
+src/lib/api/kuis.api.ts(1200,71): error TS2554: Expected 2 arguments, but got 3.
+src/lib/api/kuis.api.ts(1310,74): error TS2554: Expected 2 arguments, but got 3.
+src/lib/api/permintaan-perbaikan.api.ts(115,12): error TS2352: Conversion of type '(SelectQueryError<"Invalid Relationships cannot infer result type"> | SelectQueryError<"Invalid RelationName cannot infer result type">)[]' to type 'PermintaanPerbaikanWithRelations[]' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type 'SelectQueryError<"Invalid Relationships cannot infer result type"> | SelectQueryError<"Invalid RelationName cannot infer result type">' is not comparable to type 'PermintaanPerbaikanWithRelations'.
+    Type '{ error: true; } & String' is missing the following properties from type 'PermintaanPerbaikanWithRelations': id, mahasiswa_id, nilai_id, kelas_id, and 12 more.
+src/lib/api/permintaan-perbaikan.api.ts(192,12): error TS2352: Conversion of type '(SelectQueryError<"Invalid Relationships cannot infer result type"> | SelectQueryError<"Invalid RelationName cannot infer result type">)[]' to type 'PermintaanPerbaikanWithRelations[]' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type 'SelectQueryError<"Invalid Relationships cannot infer result type"> | SelectQueryError<"Invalid RelationName cannot infer result type">' is not comparable to type 'PermintaanPerbaikanWithRelations'.
+    Type '{ error: true; } & String' is missing the following properties from type 'PermintaanPerbaikanWithRelations': id, mahasiswa_id, nilai_id, kelas_id, and 12 more.
+src/lib/api/permintaan-perbaikan.api.ts(250,12): error TS2352: Conversion of type 'SelectQueryError<"Invalid Relationships cannot infer result type"> | SelectQueryError<"Invalid RelationName cannot infer result type">' to type 'PermintaanPerbaikanWithRelations' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type '{ error: true; } & String' is missing the following properties from type 'PermintaanPerbaikanWithRelations': id, mahasiswa_id, nilai_id, kelas_id, and 12 more.
+src/lib/api/permintaan-perbaikan.api.ts(322,41): error TS2339: Property 'id' does not exist on type 'SelectQueryError<"Invalid Relationships cannot infer result type"> | SelectQueryError<"Invalid RelationName cannot infer result type">'.
+  Property 'id' does not exist on type 'SelectQueryError<"Invalid Relationships cannot infer result type">'.
+src/lib/api/permintaan-perbaikan.api.ts(405,12): error TS2352: Conversion of type 'SelectQueryError<"Invalid Relationships cannot infer result type"> | SelectQueryError<"Invalid RelationName cannot infer result type">' to type 'PermintaanPerbaikanNilai' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type '{ error: true; } & String' is missing the following properties from type 'PermintaanPerbaikanNilai': id, mahasiswa_id, nilai_id, kelas_id, and 12 more.
+src/lib/api/permintaan-perbaikan.api.ts(469,12): error TS2352: Conversion of type 'SelectQueryError<"Invalid Relationships cannot infer result type"> | SelectQueryError<"Invalid RelationName cannot infer result type">' to type 'PermintaanPerbaikanNilai' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type '{ error: true; } & String' is missing the following properties from type 'PermintaanPerbaikanNilai': id, mahasiswa_id, nilai_id, kelas_id, and 12 more.
+src/lib/api/permintaan-perbaikan.api.ts(502,12): error TS2352: Conversion of type 'SelectQueryError<"Invalid Relationships cannot infer result type"> | SelectQueryError<"Invalid RelationName cannot infer result type">' to type 'PermintaanPerbaikanNilai' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type '{ error: true; } & String' is missing the following properties from type 'PermintaanPerbaikanNilai': id, mahasiswa_id, nilai_id, kelas_id, and 12 more.
+src/lib/api/permintaan-perbaikan.api.ts(544,38): error TS2339: Property 'status' does not exist on type 'SelectQueryError<"Invalid Relationships cannot infer result type"> | SelectQueryError<"Invalid RelationName cannot infer result type">'.
+  Property 'status' does not exist on type 'SelectQueryError<"Invalid Relationships cannot infer result type">'.
+src/lib/api/permintaan-perbaikan.api.ts(545,39): error TS2339: Property 'status' does not exist on type 'SelectQueryError<"Invalid Relationships cannot infer result type"> | SelectQueryError<"Invalid RelationName cannot infer result type">'.
+  Property 'status' does not exist on type 'SelectQueryError<"Invalid Relationships cannot infer result type">'.
+src/lib/api/permintaan-perbaikan.api.ts(546,39): error TS2339: Property 'status' does not exist on type 'SelectQueryError<"Invalid Relationships cannot infer result type"> | SelectQueryError<"Invalid RelationName cannot infer result type">'.
+  Property 'status' does not exist on type 'SelectQueryError<"Invalid Relationships cannot infer result type">'.
+src/lib/api/permintaan-perbaikan.api.ts(547,40): error TS2339: Property 'status' does not exist on type 'SelectQueryError<"Invalid Relationships cannot infer result type"> | SelectQueryError<"Invalid RelationName cannot infer result type">'.
+  Property 'status' does not exist on type 'SelectQueryError<"Invalid Relationships cannot infer result type">'.
+src/lib/api/permintaan-perbaikan.api.ts(599,51): error TS2339: Property 'status' does not exist on type 'SelectQueryError<"Invalid Relationships cannot infer result type"> | SelectQueryError<"Invalid RelationName cannot infer result type">'.
+  Property 'status' does not exist on type 'SelectQueryError<"Invalid Relationships cannot infer result type">'.
+src/lib/api/permintaan-perbaikan.api.ts(601,16): error TS2339: Property 'status' does not exist on type 'SelectQueryError<"Invalid Relationships cannot infer result type"> | SelectQueryError<"Invalid RelationName cannot infer result type">'.
+  Property 'status' does not exist on type 'SelectQueryError<"Invalid Relationships cannot infer result type">'.
+src/lib/api/permintaan-perbaikan.api.ts(601,43): error TS2339: Property 'status' does not exist on type 'SelectQueryError<"Invalid Relationships cannot infer result type"> | SelectQueryError<"Invalid RelationName cannot infer result type">'.
+  Property 'status' does not exist on type 'SelectQueryError<"Invalid Relationships cannot infer result type">'.
+src/lib/api/permintaan-perbaikan.api.ts(603,52): error TS2339: Property 'status' does not exist on type 'SelectQueryError<"Invalid Relationships cannot infer result type"> | SelectQueryError<"Invalid RelationName cannot infer result type">'.
+  Property 'status' does not exist on type 'SelectQueryError<"Invalid Relationships cannot infer result type">'.
+src/lib/api/permintaan-perbaikan.api.ts(619,13): error TS2339: Property 'komponen_nilai' does not exist on type 'SelectQueryError<"Invalid Relationships cannot infer result type"> | SelectQueryError<"Invalid RelationName cannot infer result type">'.
+  Property 'komponen_nilai' does not exist on type 'SelectQueryError<"Invalid Relationships cannot infer result type">'.
+src/lib/api/permintaan-perbaikan.api.ts(620,22): error TS2339: Property 'komponen_nilai' does not exist on type 'SelectQueryError<"Invalid Relationships cannot infer result type"> | SelectQueryError<"Invalid RelationName cannot infer result type">'.
+  Property 'komponen_nilai' does not exist on type 'SelectQueryError<"Invalid Relationships cannot infer result type">'.
+src/lib/api/unified-assignment.api.ts(221,23): error TS2352: Conversion of type 'SelectQueryError<"column 'status' does not exist on 'jadwal_praktikum'.">[]' to type 'JadwalDetail[]' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type '{ error: true; } & String' is missing the following properties from type 'JadwalDetail': id, tanggal_praktikum, hari, jam_mulai, and 4 more.
+src/lib/offline/conflict-rules.config.ts(69,3): error TS2353: Object literal may only specify known properties, and 'autoResolveIfClient' does not exist in type 'ConflictRule'.
+src/lib/offline/conflict-rules.config.ts(296,3): error TS2353: Object literal may only specify known properties, and 'autoResolveIfClient' does not exist in type 'ConflictRule'.
+src/pages/admin/ManajemenAssignmentPage.tsx(180,17): error TS2589: Type instantiation is excessively deep and possibly infinite.
+src/pages/admin/ManajemenAssignmentPage.tsx(184,17): error TS2589: Type instantiation is excessively deep and possibly infinite.
+src/pages/admin/ManajemenAssignmentPage.tsx(192,17): error TS2589: Type instantiation is excessively deep and possibly infinite.
+src/pages/admin/ManajemenAssignmentPage.tsx(195,20): error TS2339: Property 'tahun_ajaran' does not exist on type 'AssignmentFilters'.
+src/pages/admin/ManajemenAssignmentPage.tsx(196,56): error TS2339: Property 'tahun_ajaran' does not exist on type 'AssignmentFilters'.
+src/pages/admin/ManajemenAssignmentPage.tsx(293,25): error TS2339: Property 'tanggal_praktikum' does not exist on type 'SelectQueryError<"column 'status' does not exist on 'jadwal_praktikum'.">'.
+src/pages/api/admin/delete-assignment-cascade.ts(7,43): error TS2307: Cannot find module 'next/server' or its corresponding type declarations.
+src/pages/api/admin/delete-assignment-cascade.ts(8,30): error TS2307: Cannot find module '@/lib/supabase/server' or its corresponding type declarations.
+src/pages/api/admin/delete-assignment-cascade.ts(269,11): error TS2591: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node` and then add 'node' to the types field in your tsconfig.
+src/pages/api/admin/unified-assignments.ts(8,43): error TS2307: Cannot find module 'next/server' or its corresponding type declarations.
+src/pages/api/admin/unified-assignments.ts(168,45): error TS2339: Property 'tanggal_praktikum' does not exist on type 'SelectQueryError<"column 'status' does not exist on 'jadwal_praktikum'.">'.
+src/pages/api/admin/unified-assignments.ts(347,45): error TS2339: Property 'tanggal_praktikum' does not exist on type 'SelectQueryError<"column 'status' does not exist on 'jadwal_praktikum'.">'.
+src/pages/dosen/DashboardPage.tsx(388,49): error TS2589: Type instantiation is excessively deep and possibly infinite.
+src/pages/dosen/DashboardPage.tsx(388,49): error TS2589: Type instantiation is excessively deep and possibly infinite.
+src/pages/dosen/DashboardPage.tsx(497,34): error TS2339: Property 'mahasiswa' does not exist on type 'SelectQueryError<"Invalid Relationships cannot infer result type"> | SelectQueryError<"Invalid RelationName cannot infer result type">'.
+  Property 'mahasiswa' does not exist on type 'SelectQueryError<"Invalid Relationships cannot infer result type">'.
+src/pages/dosen/MateriPage.tsx(113,20): error TS2352: Conversion of type 'KelasWithStats[]' to type 'Kelas[]' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type 'KelasWithStats' is missing the following properties from type 'Kelas': dosen_id, ruangan, kuota, is_active, and 2 more.
+src/pages/dosen/PenilaianPage.tsx(221,20): error TS2352: Conversion of type 'KelasWithStats[]' to type 'Kelas[]' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type 'KelasWithStats' is missing the following properties from type 'Kelas': dosen_id, ruangan, kuota, is_active, and 2 more.

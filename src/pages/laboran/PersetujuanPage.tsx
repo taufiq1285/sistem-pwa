@@ -60,7 +60,9 @@ import {
 
 export default function PersetujuanPage() {
   // State for equipment borrowing
-  const [equipmentRequests, setEquipmentRequests] = useState<PendingApproval[]>([]);
+  const [equipmentRequests, setEquipmentRequests] = useState<PendingApproval[]>(
+    [],
+  );
   const [loadingEquipment, setLoadingEquipment] = useState(true);
 
   // Dialog states
@@ -169,7 +171,8 @@ export default function PersetujuanPage() {
             Kelola persetujuan peminjaman alat laboratorium
           </p>
           <p className="text-sm text-muted-foreground mt-1">
-            💡 Untuk persetujuan booking ruangan, lihat menu <strong>"Kelola Jadwal Praktikum"</strong>
+            💡 Untuk persetujuan booking ruangan, lihat menu{" "}
+            <strong>"Kelola Jadwal Praktikum"</strong>
           </p>
         </div>
 
@@ -181,7 +184,8 @@ export default function PersetujuanPage() {
               Ada permintaan yang menunggu persetujuan
             </AlertTitle>
             <AlertDescription className="text-yellow-700">
-              Terdapat {totalPending} permintaan peminjaman alat yang perlu ditinjau dan disetujui.
+              Terdapat {totalPending} permintaan peminjaman alat yang perlu
+              ditinjau dan disetujui.
             </AlertDescription>
           </Alert>
         )}

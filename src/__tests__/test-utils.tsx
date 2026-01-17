@@ -21,19 +21,52 @@ export function renderWithProviders(
   return render(ui, { wrapper: Wrapper, ...options });
 }
 
+// Helper to generate valid UUID v4
+export const generateUUID = () => {
+  if (typeof crypto !== "undefined" && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+};
+
+// Predefined UUIDs for consistent testing
+export const TEST_UUIDS = {
+  USER_1: "550e8400-e29b-41d4-a716-446655440001",
+  USER_2: "550e8400-e29b-41d4-a716-446655440002",
+  DOSEN_1: "550e8400-e29b-41d4-a716-446655440011",
+  DOSEN_2: "550e8400-e29b-41d4-a716-446655440012",
+  MAHASISWA_1: "550e8400-e29b-41d4-a716-446655440021",
+  MAHASISWA_2: "550e8400-e29b-41d4-a716-446655440022",
+  KELAS_1: "550e8400-e29b-41d4-a716-446655440031",
+  KELAS_2: "550e8400-e29b-41d4-a716-446655440032",
+  MATA_KULIAH_1: "550e8400-e29b-41d4-a716-446655440041",
+  MATA_KULIAH_2: "550e8400-e29b-41d4-a716-446655440042",
+  KUIS_1: "550e8400-e29b-41d4-a716-446655440051",
+  KUIS_2: "550e8400-e29b-41d4-a716-446655440052",
+  LAB_1: "550e8400-e29b-41d4-a716-446655440061",
+  LAB_2: "550e8400-e29b-41d4-a716-446655440062",
+  INVENTARIS_1: "550e8400-e29b-41d4-a716-446655440071",
+  INVENTARIS_2: "550e8400-e29b-41d4-a716-446655440072",
+};
+
 export const createMockUser = (overrides = {}) => ({
-  id: "test-user-id",
+  id: TEST_UUIDS.USER_1,
   email: "test@example.com",
   full_name: "Test User",
+  nama: "Test User",
   role: "mahasiswa",
   created_at: new Date().toISOString(),
   ...overrides,
 });
 
 export const createMockKuis = (overrides = {}) => ({
-  id: "test-kuis-id",
-  kelas_id: "test-kelas-id",
-  dosen_id: "test-dosen-id",
+  id: TEST_UUIDS.KUIS_1,
+  kelas_id: TEST_UUIDS.KELAS_1,
+  dosen_id: TEST_UUIDS.DOSEN_1,
   judul: "Test Quiz",
   deskripsi: "Test Description",
   durasi_menit: 60,
@@ -42,6 +75,40 @@ export const createMockKuis = (overrides = {}) => ({
   max_attempts: 3,
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),
+  ...overrides,
+});
+
+export const createMockKelas = (overrides = {}) => ({
+  id: TEST_UUIDS.KELAS_1,
+  nama_kelas: "Test Kelas",
+  mata_kuliah_id: TEST_UUIDS.MATA_KULIAH_1,
+  dosen_id: TEST_UUIDS.DOSEN_1,
+  semester: "Ganjil",
+  tahun_ajaran: "2024/2025",
+  kuota: 30,
+  is_active: true,
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
+  ...overrides,
+});
+
+export const createMockDosen = (overrides = {}) => ({
+  id: TEST_UUIDS.DOSEN_1,
+  user_id: TEST_UUIDS.USER_1,
+  nip: "1234567890",
+  nama: "Dr. Test Dosen",
+  email: "dosen@example.com",
+  created_at: new Date().toISOString(),
+  ...overrides,
+});
+
+export const createMockMahasiswa = (overrides = {}) => ({
+  id: TEST_UUIDS.MAHASISWA_1,
+  user_id: TEST_UUIDS.USER_1,
+  nim: "2021001",
+  nama: "Test Mahasiswa",
+  email: "mahasiswa@example.com",
+  created_at: new Date().toISOString(),
   ...overrides,
 });
 

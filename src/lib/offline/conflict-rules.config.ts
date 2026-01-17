@@ -12,12 +12,13 @@
  * conflictRules.forEach(rule => registerConflictRule(rule));
  */
 
+import type { ConflictRule } from "./smart-conflict-resolver";
 
 // ============================================================================
 // ATTEMPT_KUIS - Quiz Attempts
 // ============================================================================
 
-const attemptKuisRule: ConflictResolutionRule = {
+const attemptKuisRule: ConflictRule = {
   entity: "attempt_kuis",
 
   // Fields that should NEVER be overwritten (student ownership)
@@ -39,9 +40,6 @@ const attemptKuisRule: ConflictResolutionRule = {
     "synced_at", // Server sync timestamp
     "sync_status", // Server sync status
   ],
-
-  // Timestamp fields for LWW
-  timestampField: "updated_at",
 
   // Validation before merging
   validator: (localData: any, remoteData: any) => {
@@ -66,35 +64,13 @@ const attemptKuisRule: ConflictResolutionRule = {
 
     return null; // Valid
   },
-
-  // Auto-resolve if client data is more important
-  autoResolveIfClient: (localData, remoteData) => {
-    // Always use local auto_save_data (student draft)
-    if (
-      localData.status === "in_progress" &&
-      remoteData.status === "in_progress"
-    ) {
-      // Use whichever was updated most recently
-      const localTime = new Date(localData.updated_at || 0).getTime();
-      const remoteTime = new Date(remoteData.updated_at || 0).getTime();
-      return localTime > remoteTime;
-    }
-
-    // Server wins if already graded
-    if (remoteData.status === "graded") {
-      return false; // Use server
-    }
-
-    // Default: use newer timestamp
-    return false; // Let LWW decide
-  },
 };
 
 // ============================================================================
 // JAWABAN - Individual Quiz Answers
 // ============================================================================
 
-const jawabanRule: ConflictResolutionRule = {
+const jawabanRule: ConflictRule = {
   entity: "jawaban",
 
   protectedFields: [
@@ -114,8 +90,6 @@ const jawabanRule: ConflictResolutionRule = {
     "graded_at", // When it was graded
   ],
 
-  timestampField: "updated_at",
-
   validator: (localData: any, remoteData: any) => {
     // Cannot change answer after grading
     if (
@@ -132,34 +106,13 @@ const jawabanRule: ConflictResolutionRule = {
 
     return null;
   },
-
-  autoResolveIfClient: (localData, remoteData) => {
-    // If remote is graded, server wins
-    if (remoteData.graded_at) {
-      return false; // Use server (graded)
-    }
-
-    // If both are drafts, use most recent
-    if (!localData.graded_at && !remoteData.graded_at) {
-      const localTime = new Date(
-        localData.saved_at || localData.updated_at || 0,
-      ).getTime();
-      const remoteTime = new Date(
-        remoteData.saved_at || remoteData.updated_at || 0,
-      ).getTime();
-      return localTime > remoteTime;
-    }
-
-    // Default: server wins
-    return false;
-  },
 };
 
 // ============================================================================
 // NILAI - Grades
 // ============================================================================
 
-const nilaiRule: ConflictResolutionRule = {
+const nilaiRule: ConflictRule = {
   entity: "nilai",
 
   protectedFields: [
@@ -171,8 +124,6 @@ const nilaiRule: ConflictResolutionRule = {
     "nilai_akhir", // Final grade - calculated by server
     "nilai_huruf", // Letter grade - auto-calculated
   ],
-
-  timestampField: "updated_at",
 
   validator: (localData: any, remoteData: any) => {
     // Detect large grade changes (possible error)
@@ -191,19 +142,13 @@ const nilaiRule: ConflictResolutionRule = {
 
     return null;
   },
-
-  autoResolveIfClient: () => {
-    // Grades are always server-authoritative
-    // Teacher enters grades via web interface, server is source of truth
-    return false; // Always use server
-  },
 };
 
 // ============================================================================
 // KEHADIRAN - Attendance
 // ============================================================================
 
-const kehadiranRule: ConflictResolutionRule = {
+const kehadiranRule: ConflictRule = {
   entity: "kehadiran",
 
   protectedFields: [
@@ -216,8 +161,6 @@ const kehadiranRule: ConflictResolutionRule = {
     "status", // Final status can be edited by teacher
   ],
 
-  timestampField: "updated_at",
-
   validator: (localData: any, remoteData: any) => {
     if (localData.mahasiswa_id !== remoteData.mahasiswa_id) {
       return "Student ID mismatch";
@@ -229,29 +172,13 @@ const kehadiranRule: ConflictResolutionRule = {
 
     return null;
   },
-
-  autoResolveIfClient: (localData, remoteData) => {
-    // Check-in time: earliest wins
-    if (localData.waktu_check_in && remoteData.waktu_check_in) {
-      const localTime = new Date(localData.waktu_check_in).getTime();
-      const remoteTime = new Date(remoteData.waktu_check_in).getTime();
-
-      // Earlier check-in wins
-      if (localTime < remoteTime) {
-        return true; // Use local
-      }
-    }
-
-    // Status changes by teacher (server) should win
-    return false; // Use server
-  },
 };
 
 // ============================================================================
 // MATERI - Course Materials
 // ============================================================================
 
-const materiRule: ConflictResolutionRule = {
+const materiRule: ConflictRule = {
   entity: "materi",
 
   protectedFields: [
@@ -266,8 +193,6 @@ const materiRule: ConflictResolutionRule = {
     "published_at", // Publication time
   ],
 
-  timestampField: "updated_at",
-
   validator: (localData: any, remoteData: any) => {
     if (localData.dosen_id !== remoteData.dosen_id) {
       return "Teacher ID mismatch";
@@ -279,19 +204,13 @@ const materiRule: ConflictResolutionRule = {
 
     return null;
   },
-
-  autoResolveIfClient: () => {
-    // Materials are mostly read-only for students
-    // Teacher edits via web interface
-    return false; // Server wins
-  },
 };
 
 // ============================================================================
 // SOAL - Quiz Questions
 // ============================================================================
 
-const soalRule: ConflictResolutionRule = {
+const soalRule: ConflictRule = {
   entity: "soal",
 
   protectedFields: [
@@ -307,8 +226,6 @@ const soalRule: ConflictResolutionRule = {
     "pembahasan", // Explanation - teacher adds
   ],
 
-  timestampField: "updated_at",
-
   validator: (localData: any, remoteData: any) => {
     if (localData.kuis_id !== remoteData.kuis_id) {
       return "Quiz ID mismatch";
@@ -316,18 +233,13 @@ const soalRule: ConflictResolutionRule = {
 
     return null;
   },
-
-  autoResolveIfClient: () => {
-    // Questions are teacher-managed, server is authoritative
-    return false; // Server wins
-  },
 };
 
 // ============================================================================
 // KUIS - Quiz Definition
 // ============================================================================
 
-const kuisRule: ConflictResolutionRule = {
+const kuisRule: ConflictRule = {
   entity: "kuis",
 
   protectedFields: [
@@ -341,7 +253,6 @@ const kuisRule: ConflictResolutionRule = {
   ],
 
   // Note: kuis table has 'version' not '_version'
-  timestampField: "updated_at",
 
   validator: (localData: any, remoteData: any) => {
     if (localData.dosen_id !== remoteData.dosen_id) {
@@ -359,11 +270,6 @@ const kuisRule: ConflictResolutionRule = {
 
     return null;
   },
-
-  autoResolveIfClient: () => {
-    // Quiz definition is teacher-managed
-    return false; // Server wins
-  },
 };
 
 // ============================================================================
@@ -374,7 +280,7 @@ const kuisRule: ConflictResolutionRule = {
  * All conflict resolution rules
  * Priority order: from most frequently updated to least
  */
-export const conflictRules: ConflictResolutionRule[] = [
+export const conflictRules: ConflictRule[] = [
   attemptKuisRule, // HIGH PRIORITY - constantly updated during quiz
   jawabanRule, // HIGH PRIORITY - constantly updated during quiz
   kehadiranRule, // MEDIUM - updated during check-in
@@ -387,9 +293,7 @@ export const conflictRules: ConflictResolutionRule[] = [
 /**
  * Get rule for specific entity
  */
-export function getRuleForEntity(
-  entity: string,
-): ConflictResolutionRule | undefined {
+export function getRuleForEntity(entity: string): ConflictRule | undefined {
   return conflictRules.find((rule) => rule.entity === entity);
 }
 

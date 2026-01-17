@@ -53,8 +53,12 @@ export async function safeUpdateWithVersion<T = any>(
       };
     }
 
-    // Check result
-    const result = Array.isArray(data) ? data[0] : data;
+    // Cast result to proper type
+    const result = (Array.isArray(data) ? data[0] : data) as {
+      success: boolean;
+      new_version: number;
+      error: string | null;
+    } | null;
 
     if (!result || !result.success) {
       // Version conflict detected
@@ -67,7 +71,7 @@ export async function safeUpdateWithVersion<T = any>(
 
       // Fetch current remote data
       const { data: remoteData, error: fetchError } = await supabase
-        .from(tableName)
+        .from(tableName as any)
         .select("*")
         .eq("id", id)
         .single();
@@ -82,12 +86,12 @@ export async function safeUpdateWithVersion<T = any>(
 
       return {
         success: false,
-        error: result?.error,
+        error: result?.error || undefined,
         conflict: {
           local: updates,
           remote: remoteData,
           localVersion: expectedVersion,
-          remoteVersion: result?.new_version || remoteData._version || 0,
+          remoteVersion: result?.new_version || 0,
         },
       };
     }
@@ -159,7 +163,7 @@ export async function updateWithAutoResolve<T = any>(
     if (resolution.data) {
       // Direct update (no version check this time, we already resolved)
       const { data: updatedData, error: updateError } = await supabase
-        .from(tableName)
+        .from(tableName as any)
         .update(resolution.data)
         .eq("id", id)
         .select()
@@ -174,8 +178,8 @@ export async function updateWithAutoResolve<T = any>(
 
       return {
         success: true,
-        data: updatedData,
-        newVersion: updatedData._version,
+        data: updatedData as T,
+        newVersion: (updatedData as any)?._version || 0,
       };
     }
   }
@@ -221,7 +225,7 @@ export async function updateWithConflictLog<T = any>(
     try {
       const { error: logError } = await supabase.rpc("log_conflict", {
         p_entity: tableName,
-        p_entity_id: id,
+        p_record_id: id,
         p_local_version: result.conflict.localVersion,
         p_remote_version: result.conflict.remoteVersion,
         p_local_data: result.conflict.local,
@@ -275,7 +279,11 @@ export async function checkVersionConflict(
       };
     }
 
-    const result = Array.isArray(data) ? data[0] : data;
+    const result = (Array.isArray(data) ? data[0] : data) as {
+      has_conflict: boolean;
+      current_version: number;
+      message: string;
+    } | null;
 
     return {
       hasConflict: result?.has_conflict || false,

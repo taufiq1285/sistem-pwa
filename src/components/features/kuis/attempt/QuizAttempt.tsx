@@ -39,7 +39,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 // Custom Components
-import { QuizTimer, clearTimerData } from "./QuizTimer";
+import { QuizTimer, clearTimerData, getStoredTimeRemaining } from "./QuizTimer";
 import {
   QuizNavigation,
   createQuestionStatusList,
@@ -56,6 +56,7 @@ import {
   getKuisByIdOffline,
   getSoalByKuisOffline,
   startAttempt,
+  getAttemptByIdForMahasiswa,
   submitAnswerOffline,
   submitQuiz,
   getOfflineAnswers,
@@ -129,7 +130,7 @@ export function QuizAttempt({
     Record<string, UploadedFile | null>
   >({});
   const [flaggedQuestions, setFlaggedQuestions] = useState<Set<string>>(
-    new Set()
+    new Set(),
   );
 
   // UI state
@@ -158,10 +159,15 @@ export function QuizAttempt({
   const isLastQuestion = currentQuestionIndex === totalQuestions - 1;
   const totalPoints = questions.reduce((sum, q) => sum + (q.poin || 0), 0);
 
+  // Check if this is a LAPORAN mode (all questions are file uploads)
+  const isLaporanMode =
+    questions.length > 0 &&
+    questions.every((q) => q.tipe_soal === TIPE_SOAL.FILE_UPLOAD);
+
   // Question status for navigation
   const questionStatus: QuestionStatus[] = createQuestionStatusList(
     questions,
-    answers
+    answers,
   );
 
   // ============================================================================
@@ -239,24 +245,31 @@ export function QuizAttempt({
       let attemptData: AttemptKuis;
 
       if (existingAttemptId) {
-        // Resume existing attempt
+        // Resume existing attempt (fetch real data for accurate status/timer)
         console.log("🔵 Resuming attempt:", existingAttemptId);
+        if (isOnline) {
+          attemptData = await getAttemptByIdForMahasiswa(existingAttemptId);
 
-        // Get attempt data (assuming we have it or can fetch it)
-        // For now, create a minimal attempt object
-        attemptData = {
-          id: existingAttemptId,
-          kuis_id: kuisId,
-          mahasiswa_id: mahasiswaId,
-          attempt_number: 1,
-          status: "in_progress",
-          started_at: new Date().toISOString(),
-        } as AttemptKuis;
-
-        // Load offline answers
-        const offlineAnswers = await getOfflineAnswers(existingAttemptId);
-        setAnswers(offlineAnswers);
-        toast.info("Melanjutkan tugas sebelumnya");
+          // If attempt already finished, redirect to result
+          if (
+            (attemptData as any).status &&
+            (attemptData as any).status !== "in_progress"
+          ) {
+            toast.info("Tugas sudah disubmit, membuka hasil...");
+            navigate(`/mahasiswa/kuis/${kuisId}/result/${existingAttemptId}`);
+            return;
+          }
+        } else {
+          // Offline: minimal attempt object; answers restored from offline storage below
+          attemptData = {
+            id: existingAttemptId,
+            kuis_id: kuisId,
+            mahasiswa_id: mahasiswaId,
+            attempt_number: 1,
+            status: "in_progress",
+            started_at: new Date().toISOString(),
+          } as AttemptKuis;
+        }
       } else {
         // Start new attempt
         console.log("🔵 Starting new attempt for kuis:", kuisId);
@@ -270,9 +283,38 @@ export function QuizAttempt({
         toast.success("Tugas praktikum dimulai!");
       }
 
+      // ✅ Restore offline answers for THIS attempt (covers refresh/resume)
+      const offlineAnswers = await getOfflineAnswers(attemptData.id);
+      setAnswers(offlineAnswers);
+
+      // Best-effort restore file uploads UI from stored answers (URL strings)
+      setFileUploads(() => {
+        const restored: Record<string, UploadedFile | null> = {};
+        for (const soal of orderedQuestions) {
+          if (soal.tipe_soal !== TIPE_SOAL.FILE_UPLOAD) continue;
+          const url = offlineAnswers[soal.id];
+          if (!url) continue;
+          const name =
+            typeof url === "string"
+              ? url.split("/").pop() || "laporan"
+              : "laporan";
+          restored[soal.id] = {
+            url: String(url),
+            name,
+            size: 0,
+            type: "",
+          };
+        }
+        return restored;
+      });
+
       // ✅ Set attempt state (important!)
       setAttempt(attemptData);
       console.log("✅ Attempt loaded:", attemptData.id);
+
+      if (existingAttemptId) {
+        toast.info("Melanjutkan tugas sebelumnya");
+      }
     } catch (err: any) {
       const errorMessage = err?.message || "Gagal memuat tugas praktikum";
       setError(errorMessage);
@@ -398,7 +440,12 @@ export function QuizAttempt({
    */
   const handleAutoSave = async () => {
     // Don't save if no answer
-    if (!attempt || !currentQuestion || !currentAnswer || currentAnswer.trim() === "") {
+    if (
+      !attempt ||
+      !currentQuestion ||
+      !currentAnswer ||
+      currentAnswer.trim() === ""
+    ) {
       console.log("⚠️ Skipping auto-save: No answer to save");
       return;
     }
@@ -446,17 +493,8 @@ export function QuizAttempt({
   const getRemainingTime = (): number => {
     if (!attempt) return 0;
 
-    try {
-      const timerKey = `quiz_timer_${attempt.id}`;
-      const timerData = localStorage.getItem(timerKey);
-
-      if (timerData) {
-        const parsed = JSON.parse(timerData);
-        return parsed.remainingSeconds || 0;
-      }
-    } catch (err) {
-      console.error("Failed to get remaining time from localStorage:", err);
-    }
+    const stored = getStoredTimeRemaining(attempt.id);
+    if (typeof stored === "number" && Number.isFinite(stored)) return stored;
 
     // Fallback to ref
     return remainingTimeRef.current || 0;
@@ -558,15 +596,20 @@ export function QuizAttempt({
           )}
         </div>
 
-        {/* Timer (Compact) */}
-        <QuizTimer
-          durationMinutes={
-            (quiz as any).durasi || (quiz as any).durasi_menit || 60
-          }
-          attemptId={attempt.id}
-          onTimeUp={handleTimeUp}
-          compact
-        />
+        {/* Timer (Compact) - Hide for LAPORAN */}
+        {!isLaporanMode && (
+          <QuizTimer
+            durationMinutes={
+              (quiz as any).durasi || (quiz as any).durasi_menit || 60
+            }
+            attemptId={attempt.id}
+            onTimeUp={handleTimeUp}
+            startTime={
+              attempt.started_at ? new Date(attempt.started_at) : undefined
+            }
+            compact
+          />
+        )}
       </div>
 
       {/* Connection Status Alert */}
@@ -622,7 +665,7 @@ export function QuizAttempt({
                   onClick={handleToggleFlag}
                   className={cn(
                     flaggedQuestions.has(currentQuestion?.id || "") &&
-                      "text-yellow-600"
+                      "text-yellow-600",
                   )}
                 >
                   <Flag className="h-5 w-5" />
@@ -657,7 +700,7 @@ export function QuizAttempt({
                           {option.text}
                         </Label>
                       </div>
-                    )
+                    ),
                   )}
                 </RadioGroup>
               )}
@@ -683,7 +726,7 @@ export function QuizAttempt({
                         {(() => {
                           try {
                             const settings = JSON.parse(
-                              currentQuestion.jawaban_benar as string
+                              currentQuestion.jawaban_benar as string,
                             );
                             return (
                               settings.instructions ||
@@ -708,7 +751,7 @@ export function QuizAttempt({
                             quiz.kelas_id,
                             mahasiswaId,
                             attempt.id,
-                            currentQuestion.id
+                            currentQuestion.id,
                           )
                         : async () => {
                             throw new Error("Attempt belum dimulai");
@@ -717,7 +760,7 @@ export function QuizAttempt({
                     accept={(() => {
                       try {
                         const settings = JSON.parse(
-                          currentQuestion.jawaban_benar as string
+                          currentQuestion.jawaban_benar as string,
                         );
                         const accepts: string[] = [];
                         if (settings.acceptedTypes?.pdf) accepts.push(".pdf");
@@ -734,7 +777,7 @@ export function QuizAttempt({
                     maxSize={(() => {
                       try {
                         const settings = JSON.parse(
-                          currentQuestion.jawaban_benar as string
+                          currentQuestion.jawaban_benar as string,
                         );
                         return (settings.maxSizeMB || 10) * 1024 * 1024;
                       } catch {
@@ -775,14 +818,16 @@ export function QuizAttempt({
 
         {/* Sidebar */}
         <div className="space-y-6">
-          {/* Timer (Full) */}
-          <QuizTimer
-            durationMinutes={
-              (quiz as any).durasi || (quiz as any).durasi_menit || 60
-            }
-            attemptId={attempt.id}
-            onTimeUp={handleTimeUp}
-          />
+          {/* Timer (Full) - Hide for LAPORAN */}
+          {!isLaporanMode && (
+            <QuizTimer
+              durationMinutes={
+                (quiz as any).durasi || (quiz as any).durasi_menit || 60
+              }
+              attemptId={attempt.id}
+              onTimeUp={handleTimeUp}
+            />
+          )}
 
           {/* Navigation */}
           <QuizNavigation

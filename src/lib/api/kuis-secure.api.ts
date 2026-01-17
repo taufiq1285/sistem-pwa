@@ -25,7 +25,7 @@ export async function getSoalForAttempt(kuisId: string): Promise<Soal[]> {
     console.log("🔒 [Secure API] Fetching soal WITHOUT jawaban_benar");
 
     const { data, error } = await supabase
-      .from("soal_mahasiswa") // ✅ Use secure view
+      .from("soal_mahasiswa" as any) // ✅ Use secure view
       .select("*")
       .eq("kuis_id", kuisId)
       .order("urutan", { ascending: true });
@@ -34,7 +34,57 @@ export async function getSoalForAttempt(kuisId: string): Promise<Soal[]> {
 
     console.log(`✅ [Secure API] Fetched ${data.length} soal (answers hidden)`);
 
-    return data as Soal[];
+    // Map tipe to tipe_soal for compatibility
+    const mapped = (data || []).map((soal: any) => ({
+      ...soal,
+      tipe_soal: soal.tipe || soal.tipe_soal,
+    }));
+
+    // ✅ LAPORAN SUPPORT:
+    // For FILE_UPLOAD questions, `jawaban_benar` is used as JSON settings (instructions/acceptedTypes/maxSize),
+    // not as a "correct answer". It's safe and needed to show to mahasiswa during attempt.
+    const fileUploadIds = mapped
+      .filter((soal: any) => (soal.tipe || soal.tipe_soal) === "file_upload")
+      .map((soal: any) => soal.id)
+      .filter(Boolean);
+
+    if (fileUploadIds.length > 0) {
+      try {
+        const { data: configRows, error: configError } = await supabase
+          .from("soal")
+          .select("id,jawaban_benar")
+          .in("id", fileUploadIds);
+
+        if (!configError && configRows) {
+          const configById = new Map(
+            (configRows as any[]).map((row) => [row.id, row]),
+          );
+
+          return mapped.map((soal: any) => {
+            const tipe = soal.tipe || soal.tipe_soal;
+            if (tipe !== "file_upload") return soal;
+
+            const cfg = configById.get(soal.id);
+            if (!cfg) return soal;
+
+            return {
+              ...soal,
+              jawaban_benar:
+                cfg.jawaban_benar !== undefined
+                  ? cfg.jawaban_benar
+                  : soal.jawaban_benar,
+            };
+          }) as unknown as Soal[];
+        }
+      } catch (err) {
+        console.warn(
+          "⚠️ [Secure API] Failed to load FILE_UPLOAD settings from soal table:",
+          err,
+        );
+      }
+    }
+
+    return mapped as unknown as Soal[];
   } catch (error) {
     const apiError = handleError(error);
     logError(apiError, `getSoalForAttempt:${kuisId}`);
@@ -49,7 +99,9 @@ export async function getSoalForAttempt(kuisId: string): Promise<Soal[]> {
  */
 export async function getSoalForResult(kuisId: string): Promise<Soal[]> {
   try {
-    console.log("📊 [Secure API] Fetching soal WITH jawaban_benar (for results)");
+    console.log(
+      "📊 [Secure API] Fetching soal WITH jawaban_benar (for results)",
+    );
 
     const { data, error } = await supabase
       .from("soal") // ✅ Use original table
@@ -59,9 +111,15 @@ export async function getSoalForResult(kuisId: string): Promise<Soal[]> {
 
     if (error) throw error;
 
-    console.log(`✅ [Secure API] Fetched ${data.length} soal (with answers for results)`);
+    console.log(
+      `✅ [Secure API] Fetched ${data.length} soal (with answers for results)`,
+    );
 
-    return data as Soal[];
+    // Map tipe to tipe_soal for compatibility
+    return (data || []).map((soal: any) => ({
+      ...soal,
+      tipe_soal: soal.tipe || soal.tipe_soal,
+    })) as unknown as Soal[];
   } catch (error) {
     const apiError = handleError(error);
     logError(apiError, `getSoalForResult:${kuisId}`);
@@ -80,7 +138,8 @@ export async function getKuisForAttempt(kuisId: string): Promise<Kuis> {
     // Get kuis data
     const { data: kuisData, error: kuisError } = await supabase
       .from("kuis")
-      .select(`
+      .select(
+        `
         *,
         kelas:kelas_id (
           nama_kelas,
@@ -94,7 +153,8 @@ export async function getKuisForAttempt(kuisId: string): Promise<Kuis> {
             full_name
           )
         )
-      `)
+      `,
+      )
       .eq("id", kuisId)
       .single();
 
@@ -129,7 +189,8 @@ export async function getKuisForResult(kuisId: string): Promise<Kuis> {
     // Get kuis data
     const { data: kuisData, error: kuisError } = await supabase
       .from("kuis")
-      .select(`
+      .select(
+        `
         *,
         kelas:kelas_id (
           nama_kelas,
@@ -143,7 +204,8 @@ export async function getKuisForResult(kuisId: string): Promise<Kuis> {
             full_name
           )
         )
-      `)
+      `,
+      )
       .eq("id", kuisId)
       .single();
 
@@ -179,7 +241,7 @@ export async function getKuisForResult(kuisId: string): Promise<Kuis> {
  */
 export function canSeeAnswers(
   userRole: string,
-  attemptStatus?: "in_progress" | "submitted" | "graded"
+  attemptStatus?: "in_progress" | "submitted" | "graded",
 ): boolean {
   // Dosen and Admin can always see answers
   if (userRole === "dosen" || userRole === "admin") {

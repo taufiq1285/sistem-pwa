@@ -109,7 +109,7 @@ export interface AssignmentFilters {
   tahun_ajaran?: string;
   semester_ajaran?: number;
   hari?: string;
-  status?: 'active' | 'inactive' | 'all';
+  status?: "active" | "inactive" | "all";
   search?: string; // search by dosen name, mata kuliah, atau kelas
 }
 

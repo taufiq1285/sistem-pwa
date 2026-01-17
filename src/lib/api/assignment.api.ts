@@ -31,7 +31,7 @@ import type {
  * Returns detailed tracking data with filters
  */
 async function getAllAssignmentsImpl(
-  filters?: AssignmentFilters
+  filters?: AssignmentFilters,
 ): Promise<DosenAssignmentTracking[]> {
   let query = supabase
     .from("jadwal_praktikum")
@@ -92,7 +92,7 @@ async function getAllAssignmentsImpl(
           email
         )
       )
-    `
+    `,
     )
     .order("created_at", { ascending: false });
 
@@ -104,7 +104,7 @@ async function getAllAssignmentsImpl(
   }
 
   if (filters?.hari) {
-    query = query.eq("hari", filters.hari);
+    query = query.eq("hari", filters.hari as any);
   }
 
   if (filters?.laboratorium_id) {
@@ -121,7 +121,7 @@ async function getAllAssignmentsImpl(
   console.log("🔍 Raw assignment data from DB:", {
     count: data?.length || 0,
     data: data,
-    firstRecord: data?.[0]
+    firstRecord: data?.[0],
   });
 
   if (!data) return [];
@@ -138,7 +138,7 @@ async function getAllAssignmentsImpl(
         kelas_dosen_id: jadwal.kelas?.dosen?.id,
         kelasData: jadwal.kelas,
         kelas_mata_kuliah: jadwal.kelas?.mata_kuliah,
-        kelas_mata_kuliah_id: jadwal.kelas?.mata_kuliah_id
+        kelas_mata_kuliah_id: jadwal.kelas?.mata_kuliah_id,
       });
 
       // Only include jadwal with complete kelas data
@@ -166,7 +166,10 @@ async function getAllAssignmentsImpl(
       // Apply additional filters
       if (filters?.dosen_id) {
         // Check both jadwal.dosen_id and kelas.dosen_id
-        if (jadwal.dosen_id !== filters.dosen_id && jadwal.kelas?.dosen?.id !== filters.dosen_id) {
+        if (
+          jadwal.dosen_id !== filters.dosen_id &&
+          jadwal.kelas?.dosen?.id !== filters.dosen_id
+        ) {
           console.log("❌ Skipping - dosen filter mismatch");
           return false;
         }
@@ -230,15 +233,30 @@ async function getAllAssignmentsImpl(
 
       // Dosen info - prioritize jadwal.dosen over kelas.dosen
       dosen_id: jadwal.dosen?.id || jadwal.kelas?.dosen?.id || "",
-      dosen_name: (jadwal.dosen?.users?.full_name || jadwal.kelas?.dosen?.users?.full_name) || "Belum ada dosen",
-      dosen_email: (jadwal.dosen?.users?.email || jadwal.kelas?.dosen?.users?.email) || "",
+      dosen_name:
+        jadwal.dosen?.users?.full_name ||
+        jadwal.kelas?.dosen?.users?.full_name ||
+        "Belum ada dosen",
+      dosen_email:
+        jadwal.dosen?.users?.email || jadwal.kelas?.dosen?.users?.email || "",
       dosen_nip: jadwal.dosen?.nip || jadwal.kelas?.dosen?.nip || "-",
 
       // Mata kuliah info - prioritize mata_kuliah from jadwal (dosen's choice), fallback to kelas
-      mata_kuliah_id: jadwal.mata_kuliah?.id || jadwal.kelas?.mata_kuliah?.id || jadwal.mata_kuliah_id || "",
-      mata_kuliah_nama: jadwal.mata_kuliah?.nama_mk || jadwal.kelas?.mata_kuliah?.nama_mk || "Belum ada mata kuliah",
-      mata_kuliah_kode: jadwal.mata_kuliah?.kode_mk || jadwal.kelas?.mata_kuliah?.kode_mk || "-",
-      mata_kuliah_sks: jadwal.mata_kuliah?.sks || jadwal.kelas?.mata_kuliah?.sks || 0,
+      mata_kuliah_id:
+        jadwal.mata_kuliah?.id ||
+        jadwal.kelas?.mata_kuliah?.id ||
+        jadwal.mata_kuliah_id ||
+        "",
+      mata_kuliah_nama:
+        jadwal.mata_kuliah?.nama_mk ||
+        jadwal.kelas?.mata_kuliah?.nama_mk ||
+        "Belum ada mata kuliah",
+      mata_kuliah_kode:
+        jadwal.mata_kuliah?.kode_mk ||
+        jadwal.kelas?.mata_kuliah?.kode_mk ||
+        "-",
+      mata_kuliah_sks:
+        jadwal.mata_kuliah?.sks || jadwal.kelas?.mata_kuliah?.sks || 0,
 
       // Stats (will be populated later)
       mahasiswa_count: 0,
@@ -263,7 +281,7 @@ async function getAllAssignmentsImpl(
         acc[item.kelas_id] = (acc[item.kelas_id] || 0) + 1;
         return acc;
       },
-      {}
+      {},
     );
 
     assignments = assignments.map((a) => ({
@@ -280,14 +298,14 @@ async function getAllAssignmentsImpl(
         a.dosen_name.toLowerCase().includes(searchLower) ||
         a.mata_kuliah_nama.toLowerCase().includes(searchLower) ||
         a.mata_kuliah_kode.toLowerCase().includes(searchLower) ||
-        a.kelas_nama.toLowerCase().includes(searchLower)
+        a.kelas_nama.toLowerCase().includes(searchLower),
     );
   }
 
   console.log("🔍 Final assignments result:", {
     inputCount: data?.length || 0,
     outputCount: assignments.length,
-    assignments: assignments
+    assignments: assignments,
   });
 
   return assignments;
@@ -295,7 +313,7 @@ async function getAllAssignmentsImpl(
 
 export const getAllAssignments = requirePermission(
   "manage:kelas",
-  getAllAssignmentsImpl
+  getAllAssignmentsImpl,
 );
 
 /**
@@ -313,7 +331,7 @@ async function getAssignmentSummaryImpl(): Promise<DosenAssignmentSummary[]> {
       acc[assignment.dosen_id].push(assignment);
       return acc;
     },
-    {}
+    {},
   );
 
   // Transform to summary
@@ -321,10 +339,12 @@ async function getAssignmentSummaryImpl(): Promise<DosenAssignmentSummary[]> {
     ([dosenId, assignments]) => {
       const first = assignments[0];
       const uniqueKelas = new Set(assignments.map((a) => a.kelas_id));
-      const uniqueMataKuliah = new Set(assignments.map((a) => a.mata_kuliah_id));
+      const uniqueMataKuliah = new Set(
+        assignments.map((a) => a.mata_kuliah_id),
+      );
       const totalMahasiswa = assignments.reduce(
         (sum, a) => sum + a.mahasiswa_count,
-        0
+        0,
       );
 
       return {
@@ -338,7 +358,7 @@ async function getAssignmentSummaryImpl(): Promise<DosenAssignmentSummary[]> {
         total_mahasiswa: totalMahasiswa,
         assignments: assignments,
       };
-    }
+    },
   );
 
   return summaries.sort((a, b) => b.total_jadwal - a.total_jadwal);
@@ -346,7 +366,7 @@ async function getAssignmentSummaryImpl(): Promise<DosenAssignmentSummary[]> {
 
 export const getAssignmentSummary = requirePermission(
   "manage:kelas",
-  getAssignmentSummaryImpl
+  getAssignmentSummaryImpl,
 );
 
 /**
@@ -354,9 +374,7 @@ export const getAssignmentSummary = requirePermission(
  */
 async function getAssignmentStatsImpl(): Promise<AssignmentStats> {
   // Get all dosen (assuming all are active since table doesn't have is_active column)
-  const { data: dosenData } = await supabase
-    .from("dosen")
-    .select("id");
+  const { data: dosenData } = await supabase.from("dosen").select("id");
 
   const totalDosenAktif = dosenData?.length || 0;
 
@@ -391,7 +409,7 @@ async function getAssignmentStatsImpl(): Promise<AssignmentStats> {
 
   // Get kelas with jadwal
   const kelasIdsWithJadwal = new Set(
-    (dosenWithJadwal || []).map((j: any) => j.kelas_id)
+    (dosenWithJadwal || []).map((j: any) => j.kelas_id),
   );
 
   const kelasDenganJadwal = kelasIdsWithJadwal.size;
@@ -408,7 +426,7 @@ async function getAssignmentStatsImpl(): Promise<AssignmentStats> {
   const mataKuliahIds = new Set(
     (jadwalData || [])
       .filter((j: any) => j.kelas?.mata_kuliah_id)
-      .map((j: any) => j.kelas.mata_kuliah_id)
+      .map((j: any) => j.kelas.mata_kuliah_id),
   );
 
   const totalMataKuliahDiajarkan = mataKuliahIds.size;
@@ -427,7 +445,7 @@ async function getAssignmentStatsImpl(): Promise<AssignmentStats> {
 
 export const getAssignmentStats = requirePermission(
   "manage:kelas",
-  getAssignmentStatsImpl
+  getAssignmentStatsImpl,
 );
 
 // ============================================================================
@@ -449,7 +467,7 @@ async function getAllDosenImpl(): Promise<DosenInfo[]> {
         full_name,
         email
       )
-    `
+    `,
     )
     .order("users(full_name)");
 
@@ -490,7 +508,7 @@ async function getAllMataKuliahImpl(): Promise<MataKuliahInfo[]> {
 
 export const getAllMataKuliah = requirePermission(
   "manage:kelas",
-  getAllMataKuliahImpl
+  getAllMataKuliahImpl,
 );
 
 /**
@@ -500,7 +518,7 @@ async function getAllKelasForFilterImpl(): Promise<KelasInfo[]> {
   const { data, error } = await supabase
     .from("kelas")
     .select(
-      "id, nama_kelas, kode_kelas, tahun_ajaran, semester_ajaran, is_active"
+      "id, nama_kelas, kode_kelas, tahun_ajaran, semester_ajaran, is_active",
     )
     .eq("is_active", true)
     .order("tahun_ajaran", { ascending: false })
@@ -517,7 +535,7 @@ async function getAllKelasForFilterImpl(): Promise<KelasInfo[]> {
 
 export const getAllKelasForFilter = requirePermission(
   "manage:kelas",
-  getAllKelasForFilterImpl
+  getAllKelasForFilterImpl,
 );
 
 // ============================================================================
@@ -528,21 +546,20 @@ export const getAllKelasForFilter = requirePermission(
  * Get academic assignments from kelas table
  * Shows dosen + mata kuliah + kelas assignments directly
  */
-async function getAcademicAssignmentsImpl(
-  filters?: {
-    dosen_id?: string;
-    mata_kuliah_id?: string;
-    kelas_id?: string;
-    tahun_ajaran?: string;
-    semester_ajaran?: number;
-    search?: string;
-    status?: "all" | "active" | "inactive";
-  }
-): Promise<DosenAssignmentTracking[]> {
+async function getAcademicAssignmentsImpl(filters?: {
+  dosen_id?: string;
+  mata_kuliah_id?: string;
+  kelas_id?: string;
+  tahun_ajaran?: string;
+  semester_ajaran?: number;
+  search?: string;
+  status?: "all" | "active" | "inactive";
+}): Promise<DosenAssignmentTracking[]> {
   // Get assignments directly from kelas table
-  let query = supabase
+  const query = supabase
     .from("kelas")
-    .select(`
+    .select(
+      `
       id,
       nama_kelas,
       kode_kelas,
@@ -569,29 +586,31 @@ async function getAcademicAssignmentsImpl(
           email
         )
       )
-    `)
+    `,
+    )
     .order("tahun_ajaran", { ascending: false })
     .order("semester_ajaran", { ascending: false })
     .order("nama_kelas");
 
   // Apply filters
+  let typedQuery: any = query;
   if (filters?.dosen_id) {
-    query = query.eq("dosen_id", filters.dosen_id);
+    typedQuery = typedQuery.eq("dosen_id", filters.dosen_id);
   }
 
   if (filters?.mata_kuliah_id) {
-    query = query.eq("mata_kuliah_id", filters.mata_kuliah_id);
+    typedQuery = typedQuery.eq("mata_kuliah_id", filters.mata_kuliah_id);
   }
 
   if (filters?.kelas_id) {
-    query = query.eq("kelas_id", filters.kelas_id);
+    typedQuery = typedQuery.eq("kelas_id", filters.kelas_id);
   }
 
   if (filters?.status && filters.status !== "all") {
-    query = query.eq("is_active", filters.status === "active");
+    typedQuery = typedQuery.eq("is_active", filters.status === "active");
   }
 
-  const { data, error } = await query;
+  const { data, error } = await typedQuery;
 
   if (error) {
     console.error("Error fetching academic assignments:", error);
@@ -607,7 +626,7 @@ async function getAcademicAssignmentsImpl(
   data.forEach((jadwal: any) => {
     if (!jadwal.kelas) return; // Skip if no kelas data
 
-    const key = `${jadwal.dosen_id || 'no-dosen'}-${jadwal.mata_kuliah_id || 'no-mk'}-${jadwal.kelas_id}`;
+    const key = `${jadwal.dosen_id || "no-dosen"}-${jadwal.mata_kuliah_id || "no-mk"}-${jadwal.kelas_id}`;
 
     if (!uniqueAssignments.has(key)) {
       uniqueAssignments.set(key, {
@@ -636,15 +655,27 @@ async function getAcademicAssignmentsImpl(
 
         // Dosen info from jadwal or kelas
         dosen_id: jadwal.dosen?.id || jadwal.kelas?.dosen?.id || "",
-        dosen_name: (jadwal.dosen?.users?.full_name || jadwal.kelas?.dosen?.users?.full_name) || "Belum ada dosen",
-        dosen_email: (jadwal.dosen?.users?.email || jadwal.kelas?.dosen?.users?.email) || "",
+        dosen_name:
+          jadwal.dosen?.users?.full_name ||
+          jadwal.kelas?.dosen?.users?.full_name ||
+          "Belum ada dosen",
+        dosen_email:
+          jadwal.dosen?.users?.email || jadwal.kelas?.dosen?.users?.email || "",
         dosen_nip: jadwal.dosen?.nip || jadwal.kelas?.dosen?.nip || "-",
 
         // Mata kuliah info from jadwal or kelas
-        mata_kuliah_id: jadwal.mata_kuliah?.id || jadwal.kelas?.mata_kuliah?.id || "",
-        mata_kuliah_nama: jadwal.mata_kuliah?.nama_mk || jadwal.kelas?.mata_kuliah?.nama_mk || "Belum ada mata kuliah",
-        mata_kuliah_kode: jadwal.mata_kuliah?.kode_mk || jadwal.kelas?.mata_kuliah?.kode_mk || "-",
-        mata_kuliah_sks: jadwal.mata_kuliah?.sks || jadwal.kelas?.mata_kuliah?.sks || 0,
+        mata_kuliah_id:
+          jadwal.mata_kuliah?.id || jadwal.kelas?.mata_kuliah?.id || "",
+        mata_kuliah_nama:
+          jadwal.mata_kuliah?.nama_mk ||
+          jadwal.kelas?.mata_kuliah?.nama_mk ||
+          "Belum ada mata kuliah",
+        mata_kuliah_kode:
+          jadwal.mata_kuliah?.kode_mk ||
+          jadwal.kelas?.mata_kuliah?.kode_mk ||
+          "-",
+        mata_kuliah_sks:
+          jadwal.mata_kuliah?.sks || jadwal.kelas?.mata_kuliah?.sks || 0,
 
         // Stats
         mahasiswa_count: 0,
@@ -703,29 +734,35 @@ async function getAcademicAssignmentsImpl(
 
   // Apply filters
   if (filters?.dosen_id) {
-    assignments = assignments.filter(a => a.dosen_id === filters.dosen_id);
+    assignments = assignments.filter((a) => a.dosen_id === filters.dosen_id);
   }
 
   if (filters?.mata_kuliah_id) {
-    assignments = assignments.filter(a => a.mata_kuliah_id === filters.mata_kuliah_id);
+    assignments = assignments.filter(
+      (a) => a.mata_kuliah_id === filters.mata_kuliah_id,
+    );
   }
 
   if (filters?.kelas_id) {
-    assignments = assignments.filter(a => a.kelas_id === filters.kelas_id);
+    assignments = assignments.filter((a) => a.kelas_id === filters.kelas_id);
   }
 
   if (filters?.tahun_ajaran) {
-    assignments = assignments.filter(a => a.tahun_ajaran === filters.tahun_ajaran);
+    assignments = assignments.filter(
+      (a) => a.tahun_ajaran === filters.tahun_ajaran,
+    );
   }
 
   if (filters?.semester_ajaran !== undefined) {
-    assignments = assignments.filter(a => a.semester_ajaran === filters.semester_ajaran);
+    assignments = assignments.filter(
+      (a) => a.semester_ajaran === filters.semester_ajaran,
+    );
   }
 
   // Apply status filter
   if (filters?.status && filters.status !== "all") {
-    assignments = assignments.filter(a =>
-      filters.status === "active" ? a.jadwal_is_active : !a.jadwal_is_active
+    assignments = assignments.filter((a) =>
+      filters.status === "active" ? a.jadwal_is_active : !a.jadwal_is_active,
     );
   }
 
@@ -738,7 +775,7 @@ async function getAcademicAssignmentsImpl(
         a.mata_kuliah_nama.toLowerCase().includes(searchLower) ||
         a.mata_kuliah_kode.toLowerCase().includes(searchLower) ||
         a.kelas_nama.toLowerCase().includes(searchLower) ||
-        a.kelas_kode.toLowerCase().includes(searchLower)
+        a.kelas_kode.toLowerCase().includes(searchLower),
     );
   }
 
@@ -747,7 +784,7 @@ async function getAcademicAssignmentsImpl(
 
 export const getAcademicAssignments = requirePermission(
   "manage:kelas",
-  getAcademicAssignmentsImpl
+  getAcademicAssignmentsImpl,
 );
 
 /**
@@ -759,19 +796,21 @@ async function getAcademicAssignmentStatsImpl(): Promise<AssignmentStats> {
     .select("dosen_id, mata_kuliah_id, is_active")
     .eq("is_active", true);
 
-  const { data: dosenData } = await supabase
-    .from("dosen")
-    .select("id");
+  const { data: dosenData } = await supabase.from("dosen").select("id");
 
   const totalDosenAktif = dosenData?.length || 0;
 
   const kelas = kelasData || [];
   const totalKelas = kelas.length;
-  const kelasDenganDosen = kelas.filter(k => k.dosen_id).length;
-  const kelasDenganMataKuliah = kelas.filter(k => k.mata_kuliah_id).length;
+  const kelasDenganDosen = kelas.filter((k) => k.dosen_id).length;
+  const kelasDenganMataKuliah = kelas.filter((k) => k.mata_kuliah_id).length;
 
-  const uniqueDosenIds = new Set(kelas.filter(k => k.dosen_id).map(k => k.dosen_id));
-  const uniqueMataKuliahIds = new Set(kelas.filter(k => k.mata_kuliah_id).map(k => k.mata_kuliah_id));
+  const uniqueDosenIds = new Set(
+    kelas.filter((k) => k.dosen_id).map((k) => k.dosen_id),
+  );
+  const uniqueMataKuliahIds = new Set(
+    kelas.filter((k) => k.mata_kuliah_id).map((k) => k.mata_kuliah_id),
+  );
 
   return {
     total_dosen_aktif: totalDosenAktif,
@@ -787,7 +826,7 @@ async function getAcademicAssignmentStatsImpl(): Promise<AssignmentStats> {
 
 export const getAcademicAssignmentStats = requirePermission(
   "manage:kelas",
-  getAcademicAssignmentStatsImpl
+  getAcademicAssignmentStatsImpl,
 );
 
 // ============================================================================
@@ -831,7 +870,7 @@ async function createAcademicAssignmentImpl(data: {
 
 export const createAcademicAssignment = requirePermission(
   "manage:kelas",
-  createAcademicAssignmentImpl
+  createAcademicAssignmentImpl,
 );
 
 /**
@@ -844,7 +883,7 @@ async function updateAcademicAssignmentImpl(
     mata_kuliah_id?: string;
     kelas_id?: string;
     catatan?: string;
-  }
+  },
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const updateData: any = {
@@ -874,14 +913,14 @@ async function updateAcademicAssignmentImpl(
 
 export const updateAcademicAssignment = requirePermission(
   "manage:kelas",
-  updateAcademicAssignmentImpl
+  updateAcademicAssignmentImpl,
 );
 
 /**
  * Clear academic assignment (remove dosen and mata kuliah from kelas)
  */
 async function clearAcademicAssignmentImpl(
-  kelasId: string
+  kelasId: string,
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const { error } = await supabase
@@ -908,7 +947,7 @@ async function clearAcademicAssignmentImpl(
 
 export const clearAcademicAssignment = requirePermission(
   "manage:kelas",
-  clearAcademicAssignmentImpl
+  clearAcademicAssignmentImpl,
 );
 
 /**
@@ -916,7 +955,7 @@ export const clearAcademicAssignment = requirePermission(
  */
 async function toggleKelasStatusImpl(
   kelasId: string,
-  isActive: boolean
+  isActive: boolean,
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const { error } = await supabase
@@ -941,5 +980,5 @@ async function toggleKelasStatusImpl(
 
 export const toggleKelasStatus = requirePermission(
   "manage:kelas",
-  toggleKelasStatusImpl
+  toggleKelasStatusImpl,
 );

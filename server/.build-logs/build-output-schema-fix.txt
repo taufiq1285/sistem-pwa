@@ -1,0 +1,44 @@
+
+> vite-project@0.0.0 build
+> tsc -b && vite build
+
+src/lib/api/laboran.api.ts(576,8): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(values: { created_at?: string | null | undefined; foto_url?: string | null | undefined; harga_satuan?: number | null | undefined; id?: string | undefined; is_available_for_borrowing?: boolean | null | undefined; ... 11 more ...; updated_at?: string | ... 1 more ... | undefined; }, options?: { ...; } | undefined): PostgrestFilterBuilder<...>', gave the following error.
+    Type 'string | null' is not assignable to type 'string'.
+      Type 'null' is not assignable to type 'string'.
+  Overload 2 of 2, '(values: { created_at?: string | null | undefined; foto_url?: string | null | undefined; harga_satuan?: number | null | undefined; id?: string | undefined; is_available_for_borrowing?: boolean | null | undefined; ... 11 more ...; updated_at?: string | ... 1 more ... | undefined; }[], options?: { ...; } | undefined): PostgrestFilterBuilder<...>', gave the following error.
+    Object literal may only specify known properties, and 'kode_barang' does not exist in type '{ created_at?: string | null | undefined; foto_url?: string | null | undefined; harga_satuan?: number | null | undefined; id?: string | undefined; is_available_for_borrowing?: boolean | null | undefined; ... 11 more ...; updated_at?: string | ... 1 more ... | undefined; }[]'.
+src/pages/admin/EquipmentsPage-FIXED.tsx(47,5): error TS2353: Object literal may only specify known properties, and 'is_available_for_borrowing' does not exist in type 'CreateInventarisData | (() => CreateInventarisData)'.
+src/pages/admin/EquipmentsPage-FIXED.tsx(98,7): error TS2353: Object literal may only specify known properties, and 'is_available_for_borrowing' does not exist in type 'SetStateAction<CreateInventarisData>'.
+src/pages/admin/EquipmentsPage-FIXED.tsx(339,19): error TS2322: Type 'string | null | undefined' is not assignable to type 'string | undefined'.
+  Type 'null' is not assignable to type 'string | undefined'.
+src/pages/admin/EquipmentsPage-FIXED.tsx(364,21): error TS2322: Type 'string | null | undefined' is not assignable to type 'string | number | readonly string[] | undefined'.
+  Type 'null' is not assignable to type 'string | number | readonly string[] | undefined'.
+src/pages/admin/EquipmentsPage-FIXED.tsx(373,21): error TS2322: Type 'string | null | undefined' is not assignable to type 'string | number | readonly string[] | undefined'.
+  Type 'null' is not assignable to type 'string | number | readonly string[] | undefined'.
+src/pages/admin/EquipmentsPage-FIXED.tsx(384,19): error TS2322: Type 'string | null | undefined' is not assignable to type 'string | number | readonly string[] | undefined'.
+  Type 'null' is not assignable to type 'string | number | readonly string[] | undefined'.
+src/pages/admin/EquipmentsPage-FIXED.tsx(414,21): error TS2322: Type 'number | null | undefined' is not assignable to type 'string | number | readonly string[] | undefined'.
+  Type 'null' is not assignable to type 'string | number | readonly string[] | undefined'.
+src/pages/admin/EquipmentsPage-FIXED.tsx(424,21): error TS2322: Type 'number | null | undefined' is not assignable to type 'string | number | readonly string[] | undefined'.
+  Type 'null' is not assignable to type 'string | number | readonly string[] | undefined'.
+src/pages/admin/EquipmentsPage-FIXED.tsx(435,19): error TS2322: Type 'string | null | undefined' is not assignable to type 'string | number | readonly string[] | undefined'.
+  Type 'null' is not assignable to type 'string | number | readonly string[] | undefined'.
+src/pages/admin/EquipmentsPage-FIXED.tsx(446,38): error TS2339: Property 'foto_url' does not exist on type 'CreateInventarisData'.
+src/pages/admin/EquipmentsPage-FIXED.tsx(447,68): error TS2353: Object literal may only specify known properties, and 'foto_url' does not exist in type 'SetStateAction<CreateInventarisData>'.
+src/pages/admin/EquipmentsPage-FIXED.tsx(456,40): error TS2339: Property 'is_available_for_borrowing' does not exist on type 'CreateInventarisData'.
+src/pages/admin/EquipmentsPage-FIXED.tsx(457,68): error TS2353: Object literal may only specify known properties, and 'is_available_for_borrowing' does not exist in type 'SetStateAction<CreateInventarisData>'.
+src/pages/admin/EquipmentsPage.tsx(361,21): error TS2322: Type 'string | null | undefined' is not assignable to type 'string | number | readonly string[] | undefined'.
+  Type 'null' is not assignable to type 'string | number | readonly string[] | undefined'.
+src/pages/admin/EquipmentsPage.tsx(370,21): error TS2322: Type 'string | null | undefined' is not assignable to type 'string | number | readonly string[] | undefined'.
+  Type 'null' is not assignable to type 'string | number | readonly string[] | undefined'.
+src/pages/admin/EquipmentsPage.tsx(381,19): error TS2322: Type 'string | null | undefined' is not assignable to type 'string | number | readonly string[] | undefined'.
+  Type 'null' is not assignable to type 'string | number | readonly string[] | undefined'.
+src/pages/admin/EquipmentsPage.tsx(411,21): error TS2322: Type 'number | null | undefined' is not assignable to type 'string | number | readonly string[] | undefined'.
+  Type 'null' is not assignable to type 'string | number | readonly string[] | undefined'.
+src/pages/admin/EquipmentsPage.tsx(421,21): error TS2322: Type 'number | null | undefined' is not assignable to type 'string | number | readonly string[] | undefined'.
+  Type 'null' is not assignable to type 'string | number | readonly string[] | undefined'.
+src/pages/laboran/InventarisPage.tsx(83,5): error TS2353: Object literal may only specify known properties, and 'is_available_for_borrowing' does not exist in type 'Partial<CreateInventarisData> | (() => Partial<CreateInventarisData>)'.
+src/pages/laboran/InventarisPage.tsx(121,36): error TS2353: Object literal may only specify known properties, and 'is_available_for_borrowing' does not exist in type 'SetStateAction<Partial<CreateInventarisData>>'.
+src/pages/laboran/InventarisPage.tsx(138,7): error TS2353: Object literal may only specify known properties, and 'is_available_for_borrowing' does not exist in type 'SetStateAction<Partial<CreateInventarisData>>'.
+src/pages/laboran/InventarisPage.tsx(138,40): error TS2339: Property 'is_available_for_borrowing' does not exist on type 'InventarisListItem'.

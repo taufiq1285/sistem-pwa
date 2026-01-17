@@ -271,7 +271,8 @@ export function DashboardPage() {
                   Persetujuan Peminjaman
                 </CardTitle>
                 <CardDescription>
-                  {stats?.pendingApprovals || 0} peminjaman yang menunggu approval
+                  {stats?.pendingApprovals || 0} peminjaman yang menunggu
+                  approval
                 </CardDescription>
               </div>
               {pendingApprovals.length > 0 && (

@@ -79,7 +79,7 @@ export class NetworkDetector {
   private config: Required<NetworkDetectorConfig>;
   private currentStatus: NetworkStatus = "online";
   private listeners: Set<NetworkEventListener> = new Set();
-  private pingIntervalId: number | null = null;
+  private pingIntervalId: ReturnType<typeof setInterval> | null = null;
   private isInitialized = false;
 
   constructor(config: NetworkDetectorConfig = {}) {

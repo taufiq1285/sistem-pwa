@@ -5,10 +5,8 @@
  * Uses direct Supabase operations instead
  */
 
-import {
-  getAttemptById,
-  getJawabanByAttempt,
-} from "./kuis.api";
+import { getAttemptById, getJawabanByAttempt } from "./kuis.api";
+import { notifyDosenTugasSubmitted } from "./notification.api";
 import type {
   AttemptKuis,
   Jawaban,
@@ -139,9 +137,6 @@ export async function submitQuizSafe(
       const tugasNama = attempt?.kuis?.judul || "Tugas Praktikum";
 
       if (dosenUserId) {
-        const { notifyDosenTugasSubmitted } = await import(
-          "@/lib/api/notification.api"
-        );
         await notifyDosenTugasSubmitted(
           dosenUserId,
           mahasiswaNama,
@@ -158,7 +153,7 @@ export async function submitQuizSafe(
       console.error("[NOTIFICATION] Failed to notify dosen:", notifError);
     }
 
-    return updatedAttempt as AttemptKuis;
+    return updatedAttempt as unknown as AttemptKuis;
   } catch (error) {
     console.error("[KuisAPI] submitQuizSafe error:", error);
     throw error;

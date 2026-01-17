@@ -1,12 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/hooks/useAuth";
-import {
-  BookOpen,
-  Calendar,
-  Clock,
-  MapPin,
-  Info,
-} from "lucide-react";
+import { BookOpen, Calendar, Clock, MapPin, Info } from "lucide-react";
 import {
   Card,
   CardContent,

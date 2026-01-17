@@ -223,8 +223,9 @@ export default function MahasiswaNilaiPageEnhanced() {
     try {
       setSubmitting(true);
 
-      const nilaiLama =
-        selectedNilai[`nilai_${komponenNilai}` as keyof Nilai] as number;
+      const nilaiLama = selectedNilai[
+        `nilai_${komponenNilai}` as keyof Nilai
+      ] as number;
 
       await createPermintaan({
         mahasiswa_id: user!.mahasiswa!.id,
@@ -592,7 +593,10 @@ export default function MahasiswaNilaiPageEnhanced() {
       </Tabs>
 
       {/* Dialog: Ajukan Permintaan Perbaikan */}
-      <Dialog open={permintaanDialogOpen} onOpenChange={setPermintaanDialogOpen}>
+      <Dialog
+        open={permintaanDialogOpen}
+        onOpenChange={setPermintaanDialogOpen}
+      >
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Ajukan Permintaan Perbaikan Nilai</DialogTitle>
@@ -616,7 +620,10 @@ export default function MahasiswaNilaiPageEnhanced() {
                   {Object.entries(KOMPONEN_NILAI_LABELS).map(([key, label]) => (
                     <SelectItem key={key} value={key}>
                       {label} (
-                      {String(selectedNilai?.[`nilai_${key}` as keyof Nilai] || 0)})
+                      {String(
+                        selectedNilai?.[`nilai_${key}` as keyof Nilai] || 0,
+                      )}
+                      )
                     </SelectItem>
                   ))}
                 </SelectContent>

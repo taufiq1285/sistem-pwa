@@ -53,7 +53,9 @@ export function AddFromBankDialog({
   const [isAdding, setIsAdding] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedTipeSoal, setSelectedTipeSoal] = useState<string>(TIPE_SOAL.PILIHAN_GANDA); // Only pilihan ganda
+  const [selectedTipeSoal, setSelectedTipeSoal] = useState<string>(
+    TIPE_SOAL.PILIHAN_GANDA,
+  ); // Only pilihan ganda
 
   useEffect(() => {
     if (open) {
@@ -91,7 +93,7 @@ export function AddFromBankDialog({
 
   const toggleSelection = (id: string) => {
     setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
     );
   };
 

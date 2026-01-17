@@ -28,6 +28,10 @@ import {
 } from "@/lib/middleware";
 import { logger } from "@/lib/utils/logger";
 
+// Debug logging (disabled in tests and production)
+const DEBUG_JADWAL_LOGS =
+  import.meta.env.DEV && import.meta.env.MODE !== "test";
+
 // ============================================================================
 // QUERY OPERATIONS
 // ============================================================================
@@ -39,11 +43,14 @@ import { logger } from "@/lib/utils/logger";
  */
 export async function getJadwal(filters?: JadwalFilters): Promise<Jadwal[]> {
   try {
-    console.log("📋 getJadwal called with filters:", filters);
+    if (DEBUG_JADWAL_LOGS)
+      console.log("📋 getJadwal called with filters:", filters);
     const filterConditions = [];
 
     // 🆕 CRITICAL FIX: Filter by current dosen user_id for data isolation
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (user?.id) {
       // Find the dosen record associated with this user
       const { data: dosenData } = await supabase
@@ -119,8 +126,10 @@ export async function getJadwal(filters?: JadwalFilters): Promise<Jadwal[]> {
           )
         : await query<Jadwal>("jadwal_praktikum", options);
 
-    console.log(`📋 getJadwal returning ${data?.length || 0} items:`, data);
-    console.log(`📋 getJadwal filterConditions:`, filterConditions);
+    if (DEBUG_JADWAL_LOGS) {
+      console.log(`📋 getJadwal returning ${data?.length || 0} items:`, data);
+      console.log(`📋 getJadwal filterConditions:`, filterConditions);
+    }
     return data;
   } catch (error) {
     const apiError = handleError(error);
@@ -198,14 +207,16 @@ export async function getCalendarEvents(
 ): Promise<CalendarEvent[]> {
   try {
     // 🔍 DEBUG: Log parameter yang masuk
-    console.log("🔍 getCalendarEvents called:", {
-      startDate: format(startDate, "yyyy-MM-dd HH:mm:ss"),
-      endDate: format(endDate, "yyyy-MM-dd HH:mm:ss"),
-      startDateISO: startDate.toISOString(),
-      endDateISO: endDate.toISOString(),
-      startDateFormatted: format(startDate, "yyyy-MM-dd"),
-      endDateFormatted: format(endDate, "yyyy-MM-dd"),
-    });
+    if (DEBUG_JADWAL_LOGS) {
+      console.log("🔍 getCalendarEvents called:", {
+        startDate: format(startDate, "yyyy-MM-dd HH:mm:ss"),
+        endDate: format(endDate, "yyyy-MM-dd HH:mm:ss"),
+        startDateISO: startDate.toISOString(),
+        endDateISO: endDate.toISOString(),
+        startDateFormatted: format(startDate, "yyyy-MM-dd"),
+        endDateFormatted: format(endDate, "yyyy-MM-dd"),
+      });
+    }
 
     // ✅ PERBAIKAN FINAL: Ganti 'jadwalpraktikum' menjadi 'jadwal_praktikum'
     // ✅ HYBRID APPROVAL: Only show approved jadwal in calendar
@@ -278,7 +289,6 @@ export async function getCalendarEvents(
         const [year, month, day] = j.tanggal_praktikum.split("-").map(Number);
         const localDate = new Date(year, month - 1, day); // Local date tanpa timezone issue
 
-  
         // Parse time strings and combine with the actual date
         const jamMulaiDate = parseTimeString(j.jam_mulai, localDate);
         const jamSelesaiDate = parseTimeString(j.jam_selesai, localDate);
@@ -310,11 +320,11 @@ export async function getCalendarEvents(
         // This ensures that 08:00 WIB is properly displayed as 08:00 in the calendar
         const createLocalISO = (date: Date) => {
           const year = date.getFullYear();
-          const month = String(date.getMonth() + 1).padStart(2, '0');
-          const day = String(date.getDate()).padStart(2, '0');
-          const hours = String(date.getHours()).padStart(2, '0');
-          const minutes = String(date.getMinutes()).padStart(2, '0');
-          const seconds = String(date.getSeconds()).padStart(2, '0');
+          const month = String(date.getMonth() + 1).padStart(2, "0");
+          const day = String(date.getDate()).padStart(2, "0");
+          const hours = String(date.getHours()).padStart(2, "0");
+          const minutes = String(date.getMinutes()).padStart(2, "0");
+          const seconds = String(date.getSeconds()).padStart(2, "0");
 
           // Create ISO string that preserves local time by adding Z (treat as UTC)
           return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.000Z`;
@@ -419,7 +429,9 @@ async function createJadwalImpl(data: CreateJadwalData): Promise<Jadwal> {
     }
 
     // Get current dosen ID
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     let dosenId = null;
 
     if (user?.id) {
@@ -452,7 +464,7 @@ async function createJadwalImpl(data: CreateJadwalData): Promise<Jadwal> {
 
     // ✅ PERBAIKAN FINAL: Ganti 'jadwalpraktikum' menjadi 'jadwal_praktikum'
     // ✅ HYBRID APPROVAL: Auto-approve if no conflict (conflict already checked above)
-    const result = await insert<Jadwal>("jadwal_praktikum", insertData);
+    const result = await insert<Jadwal>("jadwal_praktikum", insertData as any);
     console.log("✅ DEBUG: Insert success:", result);
     return result;
   } catch (error) {

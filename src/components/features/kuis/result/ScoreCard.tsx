@@ -72,7 +72,7 @@ export function ScoreCard({
           "pb-4",
           score.passed
             ? "bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950 dark:to-emerald-950"
-            : "bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-950 dark:to-orange-950"
+            : "bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-950 dark:to-orange-950",
         )}
       >
         <div className="flex items-start justify-between gap-4">
@@ -103,7 +103,7 @@ export function ScoreCard({
             <div
               className={cn(
                 "inline-flex items-center justify-center w-20 h-20 rounded-full border-4 text-3xl font-bold",
-                getGradeColor(score.grade)
+                getGradeColor(score.grade),
               )}
             >
               {score.grade}

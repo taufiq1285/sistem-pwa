@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { CreateSoalData, UpdateSoalData } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,7 @@ import {
   Database,
   Upload,
   CheckSquare,
+  AlertTriangle,
 } from "lucide-react";
 
 // Question type components
@@ -60,6 +61,11 @@ interface QuestionEditorProps {
    * Kuis ID (required for creating questions)
    */
   kuisId: string;
+
+  /**
+   * Dosen ID (for duplicate check)
+   */
+  dosenId: string;
 
   /**
    * Existing question data (for editing)
@@ -108,6 +114,7 @@ interface QuestionEditorProps {
 
 export function QuestionEditor({
   kuisId,
+  dosenId,
   question,
   urutan,
   defaultPoin = 1,
@@ -131,7 +138,7 @@ export function QuestionEditor({
 
   // Question type state
   const [questionType, setQuestionType] = useState<string>(
-    question?.tipe_soal || getDefaultType()
+    question?.tipe_soal || getDefaultType(),
   );
 
   // Basic question data
@@ -141,31 +148,75 @@ export function QuestionEditor({
 
   // Multiple choice state
   const [options, setOptions] = useState<OpsiJawaban[]>(
-    question?.opsi_jawaban || generateDefaultOptions()
+    question?.opsi_jawaban || generateDefaultOptions(),
   );
   const [correctAnswerId, setCorrectAnswerId] = useState<string>(
-    question?.opsi_jawaban?.find((opt: OpsiJawaban) => opt.is_correct)?.id || ""
+    question?.opsi_jawaban?.find((opt: OpsiJawaban) => opt.is_correct)?.id ||
+      "",
   );
 
   // Essay state
   const [essaySettings, setEssaySettings] = useState<EssaySettings>(
     question?.tipe_soal === TIPE_SOAL.ESSAY && question?.jawaban_benar
       ? JSON.parse(question.jawaban_benar as string)
-      : getDefaultEssaySettings()
+      : getDefaultEssaySettings(),
   );
   // File Upload state
   const [fileUploadSettings, setFileUploadSettings] =
     useState<FileUploadSettings>(
       question?.tipe_soal === TIPE_SOAL.FILE_UPLOAD && question?.jawaban_benar
         ? JSON.parse(question.jawaban_benar as string)
-        : getDefaultFileUploadSettings()
+        : getDefaultFileUploadSettings(),
     );
   // Bank Soal state - Default true (auto-save), only show for new questions
   const [saveToBank, setSaveToBank] = useState(true);
 
+  // Duplicate detection state
+  const [duplicateQuestions, setDuplicateQuestions] = useState<any[]>([]);
+  const [isCheckingDuplicates, setIsCheckingDuplicates] = useState(false);
+
   // UI state
   const [showErrors, setShowErrors] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+
+  // ============================================================================
+  // EFFECTS
+  // ============================================================================
+
+  /**
+   * Check for duplicates when pertanyaan changes (debounced)
+   */
+  useEffect(() => {
+    if (
+      !saveToBank ||
+      isEditing ||
+      !pertanyaan.trim() ||
+      pertanyaan.length < 10
+    ) {
+      setDuplicateQuestions([]);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setIsCheckingDuplicates(true);
+      try {
+        const { checkDuplicateBankSoal } =
+          await import("@/lib/api/bank-soal.api");
+        const duplicates = await checkDuplicateBankSoal(
+          pertanyaan,
+          dosenId,
+          questionType as any,
+        );
+        setDuplicateQuestions(duplicates);
+      } catch (error) {
+        console.error("Error checking duplicates:", error);
+      } finally {
+        setIsCheckingDuplicates(false);
+      }
+    }, 1000); // 1 second debounce
+
+    return () => clearTimeout(timer);
+  }, [pertanyaan, questionType, saveToBank, isEditing, dosenId]);
 
   // ============================================================================
   // HANDLERS
@@ -447,13 +498,59 @@ export function QuestionEditor({
             className={cn(
               showErrors &&
                 (!pertanyaan.trim() || pertanyaan.trim().length < 10) &&
-                "border-destructive"
+                "border-destructive",
             )}
           />
           <div className="flex justify-between text-xs text-muted-foreground">
             <span>Minimal 10 karakter</span>
             <span>{pertanyaan.length} karakter</span>
           </div>
+
+          {/* Duplicate Warning */}
+          {isCheckingDuplicates && (
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                Memeriksa soal duplikat di bank soal...
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {!isCheckingDuplicates &&
+            duplicateQuestions.length > 0 &&
+            saveToBank && (
+              <Alert
+                variant="destructive"
+                className="border-orange-500 bg-orange-50"
+              >
+                <AlertTriangle className="h-4 w-4 text-orange-600" />
+                <AlertDescription className="text-orange-900">
+                  <div className="font-semibold mb-2">
+                    ⚠️ Ditemukan {duplicateQuestions.length} soal serupa di bank
+                    soal!
+                  </div>
+                  <div className="text-sm space-y-1">
+                    {duplicateQuestions.slice(0, 2).map((dup, idx) => (
+                      <div
+                        key={idx}
+                        className="pl-4 border-l-2 border-orange-300"
+                      >
+                        "{dup.pertanyaan.substring(0, 80)}..."
+                      </div>
+                    ))}
+                    {duplicateQuestions.length > 2 && (
+                      <div className="text-xs italic">
+                        Dan {duplicateQuestions.length - 2} soal lainnya...
+                      </div>
+                    )}
+                  </div>
+                  <div className="mt-2 text-sm">
+                    <strong>Rekomendasi:</strong> Gunakan soal dari bank soal
+                    atau ubah pertanyaan agar tidak duplikat.
+                  </div>
+                </AlertDescription>
+              </Alert>
+            )}
         </div>
 
         <Separator />
@@ -596,7 +693,7 @@ export function transformSoalToEditor(soal: Soal): Partial<Soal> {
  * Transform editor data to API format
  */
 export function transformEditorToSoal(
-  editorData: Partial<CreateSoalData>
+  editorData: Partial<CreateSoalData>,
 ): Partial<CreateSoalData> {
   const data: Partial<CreateSoalData> = {
     kuis_id: editorData.kuis_id,

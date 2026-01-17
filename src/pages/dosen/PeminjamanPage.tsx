@@ -713,12 +713,19 @@ export default function PeminjamanPage() {
               <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
                 <Plus className="h-8 w-8 text-blue-600" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">Ajukan Peminjaman Alat</h3>
+              <h3 className="text-xl font-semibold mb-2">
+                Ajukan Peminjaman Alat
+              </h3>
               <p className="text-muted-foreground text-center mb-6 max-w-md">
-                Klik tombol di bawah untuk mengajukan peminjaman alat laboratorium.
-                Pilih alat dan isi detail peminjaman pada form yang muncul.
+                Klik tombol di bawah untuk mengajukan peminjaman alat
+                laboratorium. Pilih alat dan isi detail peminjaman pada form
+                yang muncul.
               </p>
-              <Button onClick={() => setDialogOpen(true)} size="lg" className="gap-2">
+              <Button
+                onClick={() => setDialogOpen(true)}
+                size="lg"
+                className="gap-2"
+              >
                 <Plus className="h-5 w-5" />
                 Buat Pengajuan Peminjaman
               </Button>

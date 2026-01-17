@@ -72,7 +72,9 @@ interface PermintaanPerbaikanTabProps {
 // COMPONENT
 // ============================================================================
 
-export function PermintaanPerbaikanTab({ dosenId }: PermintaanPerbaikanTabProps) {
+export function PermintaanPerbaikanTab({
+  dosenId,
+}: PermintaanPerbaikanTabProps) {
   // State
   const [loading, setLoading] = useState(true);
   const [permintaanList, setPermintaanList] = useState<
@@ -132,7 +134,11 @@ export function PermintaanPerbaikanTab({ dosenId }: PermintaanPerbaikanTabProps)
 
     // Validation
     if (reviewAction === "approve") {
-      if (!nilaiBaru || parseFloat(nilaiBaru) < 0 || parseFloat(nilaiBaru) > 100) {
+      if (
+        !nilaiBaru ||
+        parseFloat(nilaiBaru) < 0 ||
+        parseFloat(nilaiBaru) > 100
+      ) {
         toast.error("Nilai baru harus diisi (0-100)");
         return;
       }
@@ -254,7 +260,11 @@ export function PermintaanPerbaikanTab({ dosenId }: PermintaanPerbaikanTabProps)
                   .map(([key, count]) => (
                     <div key={key} className="flex justify-between">
                       <span className="text-gray-600">
-                        {KOMPONEN_NILAI_LABELS[key as keyof typeof KOMPONEN_NILAI_LABELS]}
+                        {
+                          KOMPONEN_NILAI_LABELS[
+                            key as keyof typeof KOMPONEN_NILAI_LABELS
+                          ]
+                        }
                       </span>
                       <span className="font-semibold">{count}</span>
                     </div>
@@ -271,8 +281,9 @@ export function PermintaanPerbaikanTab({ dosenId }: PermintaanPerbaikanTabProps)
       <Alert>
         <AlertCircle className="h-4 w-4" />
         <AlertDescription>
-          <strong>Catatan:</strong> Saat Anda menyetujui permintaan, nilai mahasiswa akan{" "}
-          <strong>otomatis diupdate</strong> dan mahasiswa akan menerima notifikasi.
+          <strong>Catatan:</strong> Saat Anda menyetujui permintaan, nilai
+          mahasiswa akan <strong>otomatis diupdate</strong> dan mahasiswa akan
+          menerima notifikasi.
         </AlertDescription>
       </Alert>
 
@@ -310,8 +321,12 @@ export function PermintaanPerbaikanTab({ dosenId }: PermintaanPerbaikanTabProps)
                   {permintaanList.map((req) => (
                     <TableRow key={req.id}>
                       <TableCell>
-                        <div className="font-medium">{req.mahasiswa?.user.full_name}</div>
-                        <div className="text-xs text-gray-500">{req.mahasiswa?.nim}</div>
+                        <div className="font-medium">
+                          {req.mahasiswa?.user.full_name}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {req.mahasiswa?.nim}
+                        </div>
                       </TableCell>
                       <TableCell>
                         <div className="font-medium">
@@ -339,7 +354,9 @@ export function PermintaanPerbaikanTab({ dosenId }: PermintaanPerbaikanTabProps)
                           <span className="text-gray-400">-</span>
                         )}
                       </TableCell>
-                      <TableCell className="text-sm">{formatDate(req.created_at)}</TableCell>
+                      <TableCell className="text-sm">
+                        {formatDate(req.created_at)}
+                      </TableCell>
                       <TableCell>
                         <div className="flex gap-2">
                           <Button

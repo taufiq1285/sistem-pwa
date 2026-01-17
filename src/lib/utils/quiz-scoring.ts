@@ -161,7 +161,7 @@ export function getCorrectAnswerLabel(soal: Soal): string {
 
   if (tipeSoal === TIPE_SOAL.PILIHAN_GANDA && soal.opsi_jawaban) {
     const correctOption = soal.opsi_jawaban.find(
-      (opt) => opt.id === soal.jawaban_benar
+      (opt) => opt.id === soal.jawaban_benar,
     );
     return correctOption
       ? `${correctOption.label}. ${correctOption.text}`
@@ -216,7 +216,7 @@ export function getAnswerLabel(soal: Soal, jawaban: string): string {
 export function calculateQuizScore(
   questions: Soal[],
   answers: Jawaban[],
-  passingScore: number = 70
+  passingScore: number = 70,
 ): QuizScore {
   // Create a map of answers by soal_id for quick lookup
   const answerMap = new Map<string, Jawaban>();
@@ -335,7 +335,7 @@ export function getGradeColor(grade: string): string {
  */
 export function gradeAllAnswers(
   questions: Soal[],
-  answers: Jawaban[]
+  answers: Jawaban[],
 ): GradedAnswer[] {
   const gradedAnswers: GradedAnswer[] = [];
 
@@ -380,7 +380,9 @@ export function getManualGradingRequired(questions: Soal[]): Soal[] {
     TIPE_SOAL.BENAR_SALAH,
     TIPE_SOAL.JAWABAN_SINGKAT,
   ];
-  return questions.filter((q) => !autoGradableTypes.includes(q.tipe_soal as any));
+  return questions.filter(
+    (q) => !autoGradableTypes.includes(q.tipe_soal as any),
+  );
 }
 
 // ============================================================================

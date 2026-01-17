@@ -84,7 +84,7 @@ describe("Kuis Validation Schemas", () => {
         judul: "Quiz Pemrograman",
         kelas_id: "123e4567-e89b-12d3-a456-426614174000",
         dosen_id: "123e4567-e89b-12d3-a456-426614174001",
-        durasi_menit: 400,
+        durasi_menit: 10081,
         tanggal_mulai: new Date().toISOString(),
         tanggal_selesai: new Date(
           Date.now() + 7 * 24 * 60 * 60 * 1000,

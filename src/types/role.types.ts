@@ -103,6 +103,7 @@ export const ROLE_METADATA: Record<UserRole, RoleMetadata> = {
       "view:analytics",
       "view:nilai",
       "manage:notification",
+      "read:assignments",
     ],
   },
   dosen: {

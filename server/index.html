@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- PWA Meta Tags -->
+    <meta name="description" content="Sistem Praktikum Kebidanan - Progressive Web App dengan dukungan offline" />
+    <meta name="theme-color" content="#3b82f6" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Praktikum" />
+
+    <!-- Performance & Network Hints -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="format-detection" content="telephone=no" />
+
+    <!-- Offline Support -->
+    <meta name="application-name" content="Sistem Praktikum" />
+    <meta name="msapplication-TileColor" content="#3b82f6" />
+    <meta name="msapplication-tap-highlight" content="no" />
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+
+    <!-- Apple Touch Icon -->
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+    <title>Sistem Praktikum Kebidanan</title>
+    <!-- Preload critical resources -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+  </head>
+  <body>
+    <!-- App container -->
+    <div id="root"></div>
+
+    <!-- Fallback for users with JavaScript disabled -->
+    <noscript>
+      <div style="
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        font-family: system-ui, -apple-system, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem;
+        text-align: center;
+      ">
+        <div>
+          <h1 style="font-size: 2rem; margin-bottom: 1rem;">JavaScript Diperlukan</h1>
+          <p style="font-size: 1.1rem; opacity: 0.9;">
+            Sistem Praktikum memerlukan JavaScript untuk berfungsi.<br>
+            Mohon aktifkan JavaScript di browser Anda dan muat ulang halaman.
+          </p>
+        </div>
+      </div>
+    </noscript>
+
+    <!-- Service Worker Migration (Production-Safe) -->
+    <script>
+      // One-time migration from old SW versions
+      // Only runs once per user using localStorage flag
+      (function() {
+        'use strict';
+
+        const MIGRATION_FLAG = 'pwa_v102_migration_completed';
+        const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+        // Check if migration already completed
+        if (localStorage.getItem(MIGRATION_FLAG)) {
+          return; // Already migrated, skip
+        }
+
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.getRegistrations()
+            .then(function(registrations) {
+              if (registrations.length === 0) {
+                // No SW to migrate
+                localStorage.setItem(MIGRATION_FLAG, new Date().toISOString());
+                return;
+              }
+
+              if (isDev) {
+                console.log('[SW Migration] Found ' + registrations.length + ' Service Worker(s) to check');
+              }
+
+              // Check each SW version before unregistering
+              var needsCleanup = false;
+              var checkPromises = registrations.map(function(reg) {
+                return new Promise(function(resolve) {
+                  if (!reg.active) {
+                    resolve(false);
+                    return;
+                  }
+
+                  // Check version via message
+                  var channel = new MessageChannel();
+                  reg.active.postMessage({ type: 'GET_VERSION' }, [channel.port2]);
+
+                  channel.port1.onmessage = function(event) {
+                    var version = event.data && event.data.version;
+                    // Unregister if old version (not v1.0.2)
+                    if (version && version !== 'v1.0.2') {
+                      if (isDev) console.log('[SW Migration] Old version detected:', version);
+                      resolve(true);
+                    } else {
+                      resolve(false);
+                    }
+                  };
+
+                  // Timeout after 1 second
+                  setTimeout(function() {
+                    resolve(false);
+                  }, 1000);
+                });
+              });
+
+              Promise.all(checkPromises).then(function(results) {
+                needsCleanup = results.some(function(r) { return r; });
+
+                if (!needsCleanup) {
+                  // Current SW is already v1.0.2, no cleanup needed
+                  localStorage.setItem(MIGRATION_FLAG, new Date().toISOString());
+                  if (isDev) console.log('[SW Migration] Current version OK, no migration needed');
+                  return;
+                }
+
+                // Cleanup needed - backup auth session first
+                var authBackup = null;
+                try {
+                  var authKey = Object.keys(localStorage).find(function(key) {
+                    return key.startsWith('sb-') && key.includes('-auth-token');
+                  });
+                  if (authKey) {
+                    authBackup = {
+                      key: authKey,
+                      value: localStorage.getItem(authKey)
+                    };
+                  }
+                } catch (err) {
+                  // Silent fail
+                }
+
+                // Unregister old SWs
+                var unregisterPromises = registrations.map(function(reg) {
+                  return reg.unregister();
+                });
+
+                Promise.all(unregisterPromises)
+                  .then(function() {
+                    // Restore auth
+                    if (authBackup && authBackup.value) {
+                      try {
+                        localStorage.setItem(authBackup.key, authBackup.value);
+                      } catch (err) {
+                        // Silent fail
+                      }
+                    }
+
+                    // Mark migration complete
+                    localStorage.setItem(MIGRATION_FLAG, new Date().toISOString());
+
+                    if (isDev) console.log('[SW Migration] ✅ Migration complete, reloading...');
+
+                    // Reload once
+                    setTimeout(function() {
+                      window.location.reload();
+                    }, 500);
+                  });
+              });
+            })
+            .catch(function(error) {
+              // Mark as migrated to avoid infinite loop on error
+              localStorage.setItem(MIGRATION_FLAG, new Date().toISOString());
+            });
+        }
+      })();
+    </script>
+
+    <!-- Main app script -->
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

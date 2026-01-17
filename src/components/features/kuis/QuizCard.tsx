@@ -241,7 +241,7 @@ export function QuizCard({
         className={cn(
           "hover:shadow-lg transition-all duration-200 border-l-4",
           compact && "border-dashed",
-          isPublished ? "border-l-green-500" : "border-l-yellow-500"
+          isPublished ? "border-l-green-500" : "border-l-yellow-500",
         )}
       >
         <CardHeader className={cn("pb-3", compact && "pb-2")}>
@@ -256,7 +256,7 @@ export function QuizCard({
                       "bg-green-100 text-green-700 border-green-300",
                     !isPublished &&
                       quizStatus === "draft" &&
-                      "bg-yellow-100 text-yellow-700 border-yellow-300"
+                      "bg-yellow-100 text-yellow-700 border-yellow-300",
                   )}
                 >
                   {isPublished
@@ -276,7 +276,7 @@ export function QuizCard({
                       (quiz as any).tipe_kuis === "post-test" &&
                         "bg-purple-50 text-purple-700 border-purple-200",
                       (quiz as any).tipe_kuis === "laporan" &&
-                        "bg-orange-50 text-orange-700 border-orange-200"
+                        "bg-orange-50 text-orange-700 border-orange-200",
                     )}
                   >
                     {(quiz as any).tipe_kuis === "pre-test" && "📝 "}
@@ -301,7 +301,7 @@ export function QuizCard({
               <h3
                 className={cn(
                   "font-semibold truncate",
-                  compact ? "text-base" : "text-lg"
+                  compact ? "text-base" : "text-lg",
                 )}
               >
                 {quiz.judul}
@@ -394,7 +394,7 @@ export function QuizCard({
           <div
             className={cn(
               "grid gap-3",
-              compact ? "grid-cols-2" : "grid-cols-2 md:grid-cols-4"
+              compact ? "grid-cols-2" : "grid-cols-2 md:grid-cols-4",
             )}
           >
             {/* Questions Count */}
@@ -458,7 +458,7 @@ export function QuizCard({
         <CardFooter
           className={cn(
             "flex items-center justify-between pt-3 border-t",
-            compact && "pt-2"
+            compact && "pt-2",
           )}
         >
           {/* Date Range */}

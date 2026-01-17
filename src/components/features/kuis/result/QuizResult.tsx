@@ -81,7 +81,7 @@ export function QuizResult({
   const score = calculateQuizScore(
     questions,
     answers,
-    quiz.passing_score ?? 70
+    quiz.passing_score ?? 70,
   );
 
   // Format dates
@@ -103,7 +103,7 @@ export function QuizResult({
           (new Date(attempt.submitted_at).getTime() -
             new Date(attempt.started_at).getTime()) /
             1000 /
-            60
+            60,
         )
       : 0;
 
@@ -144,7 +144,9 @@ export function QuizResult({
         </CardHeader>
         <CardContent className="grid grid-cols-2 md:grid-cols-3 gap-4">
           <div>
-            <p className="text-sm text-muted-foreground mb-1">Durasi Pengerjaan</p>
+            <p className="text-sm text-muted-foreground mb-1">
+              Durasi Pengerjaan
+            </p>
             <p className="font-semibold">{duration} menit</p>
           </div>
           <div>

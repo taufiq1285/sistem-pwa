@@ -628,7 +628,8 @@ export default function InventarisPage() {
                       if (value === "" || /^\d*\.?\d*$/.test(value)) {
                         setFormData({
                           ...formData,
-                          harga_satuan: value === "" ? undefined : parseFloat(value),
+                          harga_satuan:
+                            value === "" ? undefined : parseFloat(value),
                         });
                       }
                     }}
@@ -646,7 +647,8 @@ export default function InventarisPage() {
                       if (value === "" || /^\d+$/.test(value)) {
                         setFormData({
                           ...formData,
-                          tahun_pengadaan: value === "" ? undefined : parseInt(value),
+                          tahun_pengadaan:
+                            value === "" ? undefined : parseInt(value),
                         });
                       }
                     }}

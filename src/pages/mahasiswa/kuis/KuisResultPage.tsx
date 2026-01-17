@@ -20,7 +20,7 @@ import { Button } from "@/components/ui/button";
 import { AlertCircle, ArrowLeft, Loader2 } from "lucide-react";
 import { QuizResult } from "@/components/features/kuis/result/QuizResult";
 import {
-  getAttemptById,
+  getAttemptByIdForMahasiswa,
   canAttemptQuiz,
   gradeAnswer as gradeAnswerApi,
 } from "@/lib/api/kuis.api";
@@ -93,7 +93,15 @@ export default function KuisResultPage() {
       setError(null);
 
       // Load attempt with all related data
-      const attemptData = await getAttemptById(attemptId);
+      const attemptData = await getAttemptByIdForMahasiswa(attemptId);
+
+      // Block results access before submission
+      if ((attemptData as any).status === "in_progress") {
+        setError(
+          "Tugas praktikum belum disubmit. Silakan kembali dan submit dulu.",
+        );
+        return;
+      }
 
       // Extract data
       const quizData = attemptData.kuis as Kuis;
@@ -109,7 +117,7 @@ export default function KuisResultPage() {
         // Fallback to data from attempt if API fails
         console.warn(
           "⚠️ Failed to load soal for result, using attempt data:",
-          err
+          err,
         );
         questionsData = (quizData.soal as Soal[]) || [];
       }
@@ -126,7 +134,7 @@ export default function KuisResultPage() {
       setError(
         err instanceof Error
           ? err.message
-          : "Gagal memuat hasil tugas praktikum"
+          : "Gagal memuat hasil tugas praktikum",
       );
     } finally {
       setLoading(false);
@@ -138,7 +146,7 @@ export default function KuisResultPage() {
    */
   async function autoGradeAnswers(
     questionsData: Soal[],
-    answersData: Jawaban[]
+    answersData: Jawaban[],
   ) {
     try {
       setGrading(true);
@@ -171,7 +179,7 @@ export default function KuisResultPage() {
           jawaban.id,
           result.poin_diperoleh,
           result.is_correct,
-          result.feedback
+          result.feedback,
         );
 
         gradingPromises.push(promise);
@@ -186,7 +194,7 @@ export default function KuisResultPage() {
           prev.map((jawaban) => {
             const graded = gradedAnswers.find((g) => g.id === jawaban.id);
             return graded || jawaban;
-          })
+          }),
         );
       }
     } catch (err) {

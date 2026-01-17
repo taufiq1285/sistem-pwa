@@ -77,7 +77,27 @@ export function useConflicts(): UseConflictsReturn {
 
       if (fetchError) throw fetchError;
 
-      setConflicts(data || []);
+      // Transform database rows to ConflictData interface
+      const transformedData: ConflictData[] = (data || []).map((row: any) => ({
+        id: row.id,
+        queue_item_id: row.queue_item_id,
+        user_id: row.user_id,
+        table_name: row.table_name,
+        record_id: row.record_id,
+        client_data: row.client_data,
+        server_data: row.remote_data, // remote_data maps to server_data
+        resolution_strategy: row.resolution_strategy,
+        resolved_data: row.resolved_data,
+        resolved_by: row.resolved_by,
+        resolved_at: row.resolved_at,
+        created_at: row.created_at,
+        local_version: row.local_version,
+        remote_version: row.remote_version,
+        status: row.status,
+        winner: row.winner,
+      }));
+
+      setConflicts(transformedData);
     } catch (err) {
       console.error("Error fetching conflicts:", err);
       setError(err as Error);
@@ -129,7 +149,7 @@ export function useConflicts(): UseConflictsReturn {
         if (conflict) {
           // Apply resolved data to the actual table
           const { error: applyError } = await supabase
-            .from(conflict.table_name)
+            .from(conflict.table_name as any)
             .update(resolvedData)
             .eq("id", conflict.record_id);
 

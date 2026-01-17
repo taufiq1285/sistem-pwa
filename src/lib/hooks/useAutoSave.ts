@@ -144,7 +144,9 @@ export function useAutoSave<T>(
 
   // Refs
   const savedDataRef = useRef<T>(initialData);
-  const saveTimeoutRef = useRef<number | undefined>(undefined);
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined,
+  );
   const mountedRef = useRef<boolean>(true);
   const savingRef = useRef<boolean>(false);
 

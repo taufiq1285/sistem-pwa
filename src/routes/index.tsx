@@ -173,7 +173,6 @@ export function AppRouter() {
         }
       />
 
-  
       {/* Admin - Users */}
       <Route
         path="/admin/users"
@@ -247,7 +246,7 @@ export function AppRouter() {
           </ProtectedRoute>
         }
       />
-        <Route
+      <Route
         path="/admin/manajemen-assignment"
         element={
           <ProtectedRoute>

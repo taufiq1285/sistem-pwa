@@ -46,13 +46,15 @@ const baseKuisSchema = z.object({
 
   kelas_id: z.string().uuid("Kelas ID tidak valid"),
 
+  // UPDATED: Durasi always required (no default to avoid optional type)
+  // Untuk CBT: 60 menit, untuk laporan: 10080 menit (1 minggu)
   durasi_menit: z
     .number({
       message: "Durasi harus diisi dan berupa angka",
     })
     .int("Durasi harus berupa bilangan bulat")
     .min(MIN_QUIZ_DURATION, `Durasi minimal ${MIN_QUIZ_DURATION} menit`)
-    .max(MAX_QUIZ_DURATION, `Durasi maksimal ${MAX_QUIZ_DURATION} menit`),
+    .max(10080, `Durasi maksimal 10080 menit (1 minggu)`),
 
   tanggal_mulai: z.string().optional().nullable(),
 
@@ -122,7 +124,7 @@ const baseSoalSchema = z.object({
       TIPE_SOAL.BENAR_SALAH,
       TIPE_SOAL.JAWABAN_SINGKAT,
     ] as any,
-    { message: "Tipe soal tidak valid" }
+    { message: "Tipe soal tidak valid" },
   ),
 
   poin: z
@@ -172,7 +174,7 @@ export const createKuisSchema = baseKuisSchema
     {
       message: "Tanggal selesai harus lebih besar dari tanggal mulai",
       path: ["tanggal_selesai"],
-    }
+    },
   );
 
 export type CreateKuisFormData = z.infer<typeof createKuisSchema>;
@@ -201,7 +203,7 @@ export const updateKuisSchema = baseKuisSchema
     {
       message: "Tanggal selesai harus setelah tanggal mulai",
       path: ["tanggal_selesai"],
-    }
+    },
   );
 
 export type UpdateKuisFormData = z.infer<typeof updateKuisSchema>;
@@ -230,7 +232,7 @@ export const createSoalPilihanGandaSchema = baseSoalSchema
     {
       message: "Harus ada tepat 1 jawaban yang benar untuk pilihan ganda",
       path: ["opsi_jawaban"],
-    }
+    },
   );
 
 export type CreateSoalPilihanGandaFormData = z.infer<

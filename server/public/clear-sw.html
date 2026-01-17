@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clear Service Worker - Sistem Praktikum</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 2rem;
+    }
+
+    .container {
+      background: white;
+      border-radius: 1rem;
+      padding: 3rem 2rem;
+      max-width: 600px;
+      width: 100%;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: #1f2937;
+      margin-bottom: 1rem;
+    }
+
+    .status {
+      padding: 1rem;
+      border-radius: 0.5rem;
+      margin: 1rem 0;
+      font-size: 0.875rem;
+    }
+
+    .status.info {
+      background: #dbeafe;
+      color: #1e40af;
+      border: 1px solid #93c5fd;
+    }
+
+    .status.success {
+      background: #d1fae5;
+      color: #065f46;
+      border: 1px solid #6ee7b7;
+    }
+
+    .status.error {
+      background: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #fca5a5;
+    }
+
+    button {
+      padding: 0.75rem 2rem;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 0.5rem;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s;
+      margin: 0.5rem;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .log {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 0.5rem;
+      padding: 1rem;
+      margin-top: 1rem;
+      max-height: 300px;
+      overflow-y: auto;
+      font-family: monospace;
+      font-size: 0.75rem;
+    }
+
+    .log-entry {
+      padding: 0.25rem 0;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .log-entry:last-child {
+      border-bottom: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔧 Service Worker Manager</h1>
+    <p style="color: #6b7280; margin-bottom: 1.5rem;">
+      Gunakan halaman ini untuk unregister Service Worker lama dan memaksa update ke versi terbaru.
+    </p>
+
+    <div id="status" class="status info">
+      ⏳ Memeriksa Service Worker...
+    </div>
+
+    <div>
+      <button onclick="clearServiceWorkers()" id="clearBtn">
+        🗑️ Clear All Service Workers
+      </button>
+      <button onclick="checkServiceWorkers()" id="checkBtn">
+        🔍 Check Status
+      </button>
+      <button onclick="goToApp()" id="appBtn">
+        🏠 Back to App
+      </button>
+    </div>
+
+    <div class="log" id="log"></div>
+  </div>
+
+  <script>
+    const statusEl = document.getElementById('status');
+    const logEl = document.getElementById('log');
+    const clearBtn = document.getElementById('clearBtn');
+    const checkBtn = document.getElementById('checkBtn');
+
+    function log(message, type = 'info') {
+      const entry = document.createElement('div');
+      entry.className = 'log-entry';
+      const timestamp = new Date().toLocaleTimeString();
+      entry.textContent = `[${timestamp}] ${message}`;
+      logEl.appendChild(entry);
+      logEl.scrollTop = logEl.scrollHeight;
+      console.log(message);
+    }
+
+    function setStatus(message, type = 'info') {
+      statusEl.textContent = message;
+      statusEl.className = `status ${type}`;
+    }
+
+    async function checkServiceWorkers() {
+      try {
+        log('Checking Service Workers...');
+        clearBtn.disabled = true;
+        checkBtn.disabled = true;
+
+        if (!('serviceWorker' in navigator)) {
+          setStatus('❌ Service Worker tidak didukung di browser ini', 'error');
+          log('Service Worker not supported');
+          return;
+        }
+
+        const registrations = await navigator.serviceWorker.getRegistrations();
+
+        if (registrations.length === 0) {
+          setStatus('✅ Tidak ada Service Worker yang terdaftar', 'success');
+          log('No Service Workers found');
+        } else {
+          setStatus(`📋 Ditemukan ${registrations.length} Service Worker`, 'info');
+          log(`Found ${registrations.length} Service Worker(s)`);
+
+          for (let i = 0; i < registrations.length; i++) {
+            const reg = registrations[i];
+            log(`SW ${i + 1}: ${reg.scope}`);
+
+            if (reg.active) {
+              log(`  - Active: ${reg.active.scriptURL}`);
+
+              // Try to get version
+              try {
+                const messageChannel = new MessageChannel();
+                reg.active.postMessage({ type: 'GET_VERSION' }, [messageChannel.port2]);
+
+                const versionPromise = new Promise((resolve) => {
+                  messageChannel.port1.onmessage = (event) => {
+                    if (event.data && event.data.version) {
+                      resolve(event.data.version);
+                    } else {
+                      resolve('unknown');
+                    }
+                  };
+
+                  setTimeout(() => resolve('timeout'), 1000);
+                });
+
+                const version = await versionPromise;
+                log(`  - Version: ${version}`);
+
+                if (version !== 'v1.0.2') {
+                  log(`  ⚠️ Outdated! Latest version is v1.0.2`);
+                  setStatus(`⚠️ Service Worker versi lama terdeteksi (${version}). Klik "Clear" untuk update!`, 'error');
+                }
+              } catch (err) {
+                log(`  - Could not determine version: ${err.message}`);
+              }
+            }
+
+            if (reg.waiting) {
+              log(`  - Waiting: ${reg.waiting.scriptURL}`);
+            }
+
+            if (reg.installing) {
+              log(`  - Installing: ${reg.installing.scriptURL}`);
+            }
+          }
+        }
+      } catch (error) {
+        setStatus(`❌ Error: ${error.message}`, 'error');
+        log(`Error checking SW: ${error.message}`);
+      } finally {
+        clearBtn.disabled = false;
+        checkBtn.disabled = false;
+      }
+    }
+
+    async function clearServiceWorkers() {
+      try {
+        log('Starting Service Worker cleanup...');
+        setStatus('⏳ Menghapus Service Worker...', 'info');
+        clearBtn.disabled = true;
+        checkBtn.disabled = true;
+
+        if (!('serviceWorker' in navigator)) {
+          setStatus('❌ Service Worker tidak didukung', 'error');
+          log('Service Worker not supported');
+          return;
+        }
+
+        const registrations = await navigator.serviceWorker.getRegistrations();
+
+        if (registrations.length === 0) {
+          setStatus('ℹ️ Tidak ada Service Worker yang perlu dihapus', 'info');
+          log('No Service Workers to unregister');
+          clearBtn.disabled = false;
+          checkBtn.disabled = false;
+          return;
+        }
+
+        log(`Unregistering ${registrations.length} Service Worker(s)...`);
+
+        let successCount = 0;
+        for (const registration of registrations) {
+          try {
+            const success = await registration.unregister();
+            if (success) {
+              successCount++;
+              log(`✅ Unregistered: ${registration.scope}`);
+            } else {
+              log(`❌ Failed to unregister: ${registration.scope}`);
+            }
+          } catch (err) {
+            log(`❌ Error unregistering ${registration.scope}: ${err.message}`);
+          }
+        }
+
+        if (successCount === registrations.length) {
+          setStatus(`✅ Berhasil menghapus semua Service Worker (${successCount})`, 'success');
+          log('All Service Workers unregistered successfully');
+
+          // Clear session storage
+          sessionStorage.removeItem('sw_force_updated');
+          log('Cleared session storage flag');
+
+          // Prompt to reload
+          log('Reloading page in 2 seconds...');
+          setTimeout(() => {
+            window.location.href = '/';
+          }, 2000);
+        } else {
+          setStatus(`⚠️ Berhasil menghapus ${successCount}/${registrations.length} Service Worker`, 'error');
+          log(`Partial success: ${successCount}/${registrations.length}`);
+        }
+
+      } catch (error) {
+        setStatus(`❌ Error: ${error.message}`, 'error');
+        log(`Error during cleanup: ${error.message}`);
+      } finally {
+        if (!document.querySelector('.status.success')) {
+          clearBtn.disabled = false;
+          checkBtn.disabled = false;
+        }
+      }
+    }
+
+    function goToApp() {
+      window.location.href = '/';
+    }
+
+    // Auto-check on load
+    window.addEventListener('load', () => {
+      log('Page loaded');
+      setTimeout(checkServiceWorkers, 500);
+    });
+  </script>
+</body>
+</html>

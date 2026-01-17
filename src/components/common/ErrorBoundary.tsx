@@ -6,6 +6,7 @@
 
 import { Component, type ReactNode } from "react";
 import type { ErrorInfo } from "react";
+import { logReactError } from "@/lib/utils/error-logger";
 import { ErrorFallback } from "./ErrorFallback";
 
 // ============================================================================
@@ -49,12 +50,9 @@ export class ErrorBoundary extends Component<
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
-    // Import error logger dynamically to avoid circular dependencies
-    import("@/lib/utils/error-logger").then(({ logReactError }) => {
-      // Log error to error logging service
-      logReactError(error, errorInfo, {
-        resetKeys: this.props.resetKeys,
-      });
+    // Log error to error logging service
+    logReactError(error, errorInfo, {
+      resetKeys: this.props.resetKeys,
     });
 
     // Call custom error handler if provided

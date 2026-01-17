@@ -129,7 +129,7 @@ export default function AttemptDetailPage() {
   const handleGradeChange = (
     jawabanId: string,
     field: "poin_diperoleh" | "feedback",
-    value: number | string
+    value: number | string,
   ) => {
     setGradingState((prev) => ({
       ...prev,
@@ -160,7 +160,7 @@ export default function AttemptDetailPage() {
           jawaban.id,
           poinDiperoleh,
           isCorrect,
-          grading.feedback
+          grading.feedback,
         );
       });
 
@@ -182,11 +182,7 @@ export default function AttemptDetailPage() {
 
   const handleBack = () => {
     if (hasChanges) {
-      if (
-        !confirm(
-          "Ada perubahan yang belum disimpan. Yakin ingin kembali?"
-        )
-      ) {
+      if (!confirm("Ada perubahan yang belum disimpan. Yakin ingin kembali?")) {
         return;
       }
     }
@@ -246,9 +242,7 @@ export default function AttemptDetailPage() {
 
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            {error || "Data tidak ditemukan"}
-          </AlertDescription>
+          <AlertDescription>{error || "Data tidak ditemukan"}</AlertDescription>
         </Alert>
       </div>
     );
@@ -336,7 +330,7 @@ export default function AttemptDetailPage() {
                     {format(
                       new Date(attempt.started_at),
                       "dd MMM yyyy, HH:mm",
-                      { locale: localeId }
+                      { locale: localeId },
                     )}
                   </span>
                 </div>
@@ -348,7 +342,7 @@ export default function AttemptDetailPage() {
                     {format(
                       new Date(attempt.submitted_at),
                       "dd MMM yyyy, HH:mm",
-                      { locale: localeId }
+                      { locale: localeId },
                     )}
                   </span>
                 </div>
@@ -418,18 +412,16 @@ export default function AttemptDetailPage() {
               <div className="flex justify-between">
                 <span className="text-gray-600">Benar:</span>
                 <span className="font-medium text-green-600">
-                  {attempt.jawaban?.filter((j) =>
-                    checkAnswer(j, j.soal!)
-                  ).length || 0}
+                  {attempt.jawaban?.filter((j) => checkAnswer(j, j.soal!))
+                    .length || 0}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Salah/Belum Dinilai:</span>
                 <span className="font-medium text-red-600">
                   {(kuis?.soal?.length || 0) -
-                    (attempt.jawaban?.filter((j) =>
-                      checkAnswer(j, j.soal!)
-                    ).length || 0)}
+                    (attempt.jawaban?.filter((j) => checkAnswer(j, j.soal!))
+                      .length || 0)}
                 </span>
               </div>
             </div>
@@ -447,9 +439,7 @@ export default function AttemptDetailPage() {
         </CardHeader>
         <CardContent className="space-y-6">
           {kuis?.soal?.map((soal, index) => {
-            const jawaban = attempt.jawaban?.find(
-              (j) => j.soal_id === soal.id
-            );
+            const jawaban = attempt.jawaban?.find((j) => j.soal_id === soal.id);
             const isCorrect = jawaban ? checkAnswer(jawaban, soal) : false;
             const grading = jawaban ? gradingState[jawaban.id] : null;
             const autoGraded = isAutoGraded(soal);
@@ -461,7 +451,7 @@ export default function AttemptDetailPage() {
                   "p-6 border-2 rounded-lg",
                   isCorrect
                     ? "border-green-200 bg-green-50"
-                    : "border-gray-200 bg-gray-50"
+                    : "border-gray-200 bg-gray-50",
                 )}
               >
                 {/* Question Header */}
@@ -504,7 +494,7 @@ export default function AttemptDetailPage() {
                         <p
                           className={cn(
                             "font-semibold",
-                            isCorrect ? "text-green-700" : "text-red-700"
+                            isCorrect ? "text-green-700" : "text-red-700",
                           )}
                         >
                           {jawaban?.jawaban_mahasiswa || "Tidak dijawab"}
@@ -558,7 +548,7 @@ export default function AttemptDetailPage() {
                               handleGradeChange(
                                 jawaban.id,
                                 "poin_diperoleh",
-                                Number(e.target.value)
+                                Number(e.target.value),
                               )
                             }
                             className="mt-1"
@@ -575,7 +565,7 @@ export default function AttemptDetailPage() {
                               handleGradeChange(
                                 jawaban.id,
                                 "feedback",
-                                e.target.value
+                                e.target.value,
                               )
                             }
                             placeholder="Berikan feedback untuk mahasiswa..."
@@ -648,7 +638,7 @@ export default function AttemptDetailPage() {
                               handleGradeChange(
                                 jawaban.id,
                                 "poin_diperoleh",
-                                Number(e.target.value)
+                                Number(e.target.value),
                               )
                             }
                             className="mt-1"
@@ -665,7 +655,7 @@ export default function AttemptDetailPage() {
                               handleGradeChange(
                                 jawaban.id,
                                 "feedback",
-                                e.target.value
+                                e.target.value,
                               )
                             }
                             placeholder="Berikan feedback untuk mahasiswa..."

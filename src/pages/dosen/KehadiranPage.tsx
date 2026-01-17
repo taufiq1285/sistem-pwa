@@ -63,7 +63,10 @@ import {
   getKehadiranForExport,
   type KehadiranStatus,
 } from "@/lib/api/kehadiran.api";
-import { exportKehadiranToCSV, formatExportFilename } from "@/lib/utils/kehadiran-export";
+import {
+  exportKehadiranToCSV,
+  formatExportFilename,
+} from "@/lib/utils/kehadiran-export";
 import { KehadiranHistory } from "@/components/features/kehadiran/KehadiranHistory";
 import { cn } from "@/lib/utils";
 
@@ -92,7 +95,6 @@ interface KelasOption {
   kode_kelas: string;
 }
 
-
 // ============================================================================
 // STATUS CONSTANTS
 // ============================================================================
@@ -103,10 +105,30 @@ const STATUS_OPTIONS: {
   color: string;
   icon: string;
 }[] = [
-  { value: "hadir", label: "Hadir", color: "bg-green-100 text-green-800 border-green-300", icon: "✓" },
-  { value: "izin", label: "Izin", color: "bg-blue-100 text-blue-800 border-blue-300", icon: "📝" },
-  { value: "sakit", label: "Sakit", color: "bg-yellow-100 text-yellow-800 border-yellow-300", icon: "🏥" },
-  { value: "alpha", label: "Alpha", color: "bg-red-100 text-red-800 border-red-300", icon: "✗" },
+  {
+    value: "hadir",
+    label: "Hadir",
+    color: "bg-green-100 text-green-800 border-green-300",
+    icon: "✓",
+  },
+  {
+    value: "izin",
+    label: "Izin",
+    color: "bg-blue-100 text-blue-800 border-blue-300",
+    icon: "📝",
+  },
+  {
+    value: "sakit",
+    label: "Sakit",
+    color: "bg-yellow-100 text-yellow-800 border-yellow-300",
+    icon: "🏥",
+  },
+  {
+    value: "alpha",
+    label: "Alpha",
+    color: "bg-red-100 text-red-800 border-red-300",
+    icon: "✗",
+  },
 ];
 
 // ============================================================================
@@ -131,11 +153,13 @@ export default function DosenKehadiranPage() {
   const [selectedKelas, setSelectedKelas] = useState<string>("");
 
   const [selectedTanggal, setSelectedTanggal] = useState<string>(
-    new Date().toISOString().split("T")[0]
+    new Date().toISOString().split("T")[0],
   );
 
   // Attendance records
-  const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
+  const [attendanceRecords, setAttendanceRecords] = useState<
+    AttendanceRecord[]
+  >([]);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   // Filters
@@ -182,8 +206,11 @@ export default function DosenKehadiranPage() {
       setLoading(true);
 
       // 🎯 Fetch mata kuliah directly from mata_kuliah table
-      const mataKuliahData = await getMataKuliah({ is_active: true });
-      console.log("🔍 DEBUG KehadiranPage: Fetched mata kuliah =", mataKuliahData);
+      const mataKuliahData = await getMataKuliah();
+      console.log(
+        "🔍 DEBUG KehadiranPage: Fetched mata kuliah =",
+        mataKuliahData,
+      );
 
       // Convert to dropdown format
       const mataKuliahArray = mataKuliahData.map((mk: any) => ({
@@ -226,7 +253,10 @@ export default function DosenKehadiranPage() {
     try {
       setLoading(true);
 
-      console.log("🔍 DEBUG KehadiranPage loadKelas: mataKuliahId =", mataKuliahId);
+      console.log(
+        "🔍 DEBUG KehadiranPage loadKelas: mataKuliahId =",
+        mataKuliahId,
+      );
       console.log("🔍 DEBUG KehadiranPage: mataKuliahList =", mataKuliahList);
 
       // Get all assigned kelas and filter by mata kuliah
@@ -234,15 +264,28 @@ export default function DosenKehadiranPage() {
       console.log("🔍 DEBUG KehadiranPage: allKelas =", allKelas);
 
       // Mata kuliah selected (for attendance record only, not for filtering kelas)
-      console.log("🔍 DEBUG KehadiranPage: Selected mata kuliah =", mataKuliahId);
+      console.log(
+        "🔍 DEBUG KehadiranPage: Selected mata kuliah =",
+        mataKuliahId,
+      );
 
       // Filter kelas by tahun ajaran and semester (mata kuliah independent)
-      const filteredKelas = allKelas.filter(kelas => {
+      const filteredKelas = allKelas.filter((kelas) => {
         // Filter by tahun ajaran if selected
-        if (tahunAjaranFilter && tahunAjaranFilter !== "__all__" && kelas.tahun_ajaran !== tahunAjaranFilter) return false;
+        if (
+          tahunAjaranFilter &&
+          tahunAjaranFilter !== "__all__" &&
+          kelas.tahun_ajaran !== tahunAjaranFilter
+        )
+          return false;
 
         // Filter by semester if selected
-        if (semesterFilter && semesterFilter !== "__all__" && kelas.semester_ajaran.toString() !== semesterFilter) return false;
+        if (
+          semesterFilter &&
+          semesterFilter !== "__all__" &&
+          kelas.semester_ajaran.toString() !== semesterFilter
+        )
+          return false;
 
         return true;
       });
@@ -310,7 +353,6 @@ export default function DosenKehadiranPage() {
     }
   };
 
-  
   // ============================================================================
   // HANDLERS - INPUT KEHADIRAN
   // ============================================================================
@@ -383,22 +425,29 @@ export default function DosenKehadiranPage() {
       setLoading(true);
 
       // Get mata kuliah and kelas names
-      const selectedMK = mataKuliahList.find(mk => mk.id === selectedMataKuliah);
-      const selectedKls = kelasList.find(k => k.id === selectedKelas);
+      const selectedMK = mataKuliahList.find(
+        (mk) => mk.id === selectedMataKuliah,
+      );
+      const selectedKls = kelasList.find((k) => k.id === selectedKelas);
 
       // Fetch data
-      const exportData = await getKehadiranForExport(selectedKelas, selectedTanggal);
+      const exportData = await getKehadiranForExport(
+        selectedKelas,
+        selectedTanggal,
+      );
 
       if (exportData.length === 0) {
-        toast.warning("Tidak ada data kehadiran untuk diekspor. Silakan simpan kehadiran terlebih dahulu.");
+        toast.warning(
+          "Tidak ada data kehadiran untuk diekspor. Silakan simpan kehadiran terlebih dahulu.",
+        );
         return;
       }
 
       // Generate filename
       const filename = formatExportFilename(
-        selectedMK?.nama_mk || 'kehadiran',
-        selectedKls?.nama_kelas || 'kelas',
-        selectedTanggal
+        selectedMK?.nama_mk || "kehadiran",
+        selectedKls?.nama_kelas || "kelas",
+        selectedTanggal,
       );
 
       // Export
@@ -407,7 +456,9 @@ export default function DosenKehadiranPage() {
       toast.success(`Data berhasil diekspor: ${filename}`);
     } catch (error: any) {
       console.error("Error exporting:", error);
-      toast.error("Gagal mengekspor data: " + (error.message || "Unknown error"));
+      toast.error(
+        "Gagal mengekspor data: " + (error.message || "Unknown error"),
+      );
     } finally {
       setLoading(false);
     }
@@ -445,16 +496,17 @@ export default function DosenKehadiranPage() {
   return (
     <div className="container mx-auto py-6 max-w-7xl space-y-6">
       {/* Hero Header */}
-      <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-teal-600 via-emerald-600 to-green-700 p-8 text-white">
+      <div className="relative overflow-hidden rounded-xl bg-linear-to-r from-pink-500 via-rose-500 to-purple-600 p-8 text-white">
         <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-32 translate-x-32 blur-3xl" />
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-emerald-400/20 rounded-full translate-y-24 -translate-x-24 blur-2xl" />
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-rose-400/20 rounded-full translate-y-24 -translate-x-24 blur-2xl" />
 
         <div className="relative">
           <h1 className="text-3xl font-bold flex items-center gap-3">
             📋 Kehadiran Praktikum
           </h1>
-          <p className="text-emerald-100 mt-2 max-w-xl">
-            Input kehadiran mahasiswa praktikum. Pilih mata kuliah, kelas, dan tanggal kehadiran.
+          <p className="text-pink-100 mt-2 max-w-xl">
+            Input kehadiran mahasiswa praktikum. Pilih mata kuliah, kelas, dan
+            tanggal kehadiran.
           </p>
         </div>
       </div>
@@ -468,7 +520,8 @@ export default function DosenKehadiranPage() {
                 <Filter className="h-5 w-5 text-muted-foreground" />
                 <CardTitle className="text-base">Filter Kelas</CardTitle>
               </div>
-              {(tahunAjaranFilter !== "__all__" || semesterFilter !== "__all__") && (
+              {(tahunAjaranFilter !== "__all__" ||
+                semesterFilter !== "__all__") && (
                 <Button
                   variant="outline"
                   size="sm"
@@ -494,7 +547,10 @@ export default function DosenKehadiranPage() {
                 <label className="text-sm font-medium mb-2 block">
                   Tahun Ajaran
                 </label>
-                <Select value={tahunAjaranFilter} onValueChange={setTahunAjaranFilter}>
+                <Select
+                  value={tahunAjaranFilter}
+                  onValueChange={setTahunAjaranFilter}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Semua Tahun Ajaran" />
                   </SelectTrigger>
@@ -514,7 +570,10 @@ export default function DosenKehadiranPage() {
                 <label className="text-sm font-medium mb-2 block">
                   Semester
                 </label>
-                <Select value={semesterFilter} onValueChange={setSemesterFilter}>
+                <Select
+                  value={semesterFilter}
+                  onValueChange={setSemesterFilter}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Semua Semester" />
                   </SelectTrigger>
@@ -536,16 +595,24 @@ export default function DosenKehadiranPage() {
       {/* Step Selection Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Step 1: Mata Kuliah */}
-        <Card className={cn(
-          "border-2 transition-all",
-          selectedMataKuliah ? "border-green-300 bg-green-50/50" : "border-gray-200"
-        )}>
+        <Card
+          className={cn(
+            "border-2 transition-all",
+            selectedMataKuliah
+              ? "border-green-300 bg-green-50/50"
+              : "border-gray-200",
+          )}
+        >
           <CardHeader className="pb-3">
             <div className="flex items-center gap-2">
-              <div className={cn(
-                "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold",
-                selectedMataKuliah ? "bg-green-600 text-white" : "bg-gray-200 text-gray-600"
-              )}>
+              <div
+                className={cn(
+                  "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold",
+                  selectedMataKuliah
+                    ? "bg-green-600 text-white"
+                    : "bg-gray-200 text-gray-600",
+                )}
+              >
                 1
               </div>
               <CardTitle className="text-base">Mata Kuliah</CardTitle>
@@ -556,9 +623,9 @@ export default function DosenKehadiranPage() {
               value={selectedMataKuliah}
               onValueChange={setSelectedMataKuliah}
             >
-              <SelectTrigger className={cn(
-                selectedMataKuliah && "border-green-500"
-              )}>
+              <SelectTrigger
+                className={cn(selectedMataKuliah && "border-green-500")}
+              >
                 <SelectValue placeholder="Pilih mata kuliah..." />
               </SelectTrigger>
               <SelectContent>
@@ -566,7 +633,9 @@ export default function DosenKehadiranPage() {
                   <SelectItem key={mk.id} value={mk.id}>
                     <div className="flex flex-col">
                       <span className="font-semibold">{mk.kode_mk}</span>
-                      <span className="text-xs text-muted-foreground">{mk.nama_mk}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {mk.nama_mk}
+                      </span>
                     </div>
                   </SelectItem>
                 ))}
@@ -582,17 +651,25 @@ export default function DosenKehadiranPage() {
         </Card>
 
         {/* Step 2: Kelas */}
-        <Card className={cn(
-          "border-2 transition-all",
-          !selectedMataKuliah && "opacity-50",
-          selectedKelas ? "border-green-300 bg-green-50/50" : "border-gray-200"
-        )}>
+        <Card
+          className={cn(
+            "border-2 transition-all",
+            !selectedMataKuliah && "opacity-50",
+            selectedKelas
+              ? "border-green-300 bg-green-50/50"
+              : "border-gray-200",
+          )}
+        >
           <CardHeader className="pb-3">
             <div className="flex items-center gap-2">
-              <div className={cn(
-                "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold",
-                selectedKelas ? "bg-green-600 text-white" : "bg-gray-200 text-gray-600"
-              )}>
+              <div
+                className={cn(
+                  "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold",
+                  selectedKelas
+                    ? "bg-green-600 text-white"
+                    : "bg-gray-200 text-gray-600",
+                )}
+              >
                 2
               </div>
               <CardTitle className="text-base">Kelas</CardTitle>
@@ -604,12 +681,16 @@ export default function DosenKehadiranPage() {
               onValueChange={setSelectedKelas}
               disabled={!selectedMataKuliah}
             >
-              <SelectTrigger className={cn(
-                selectedKelas && "border-green-500"
-              )}>
-                <SelectValue placeholder={
-                  selectedMataKuliah ? "Pilih kelas..." : "Pilih mata kuliah dulu"
-                } />
+              <SelectTrigger
+                className={cn(selectedKelas && "border-green-500")}
+              >
+                <SelectValue
+                  placeholder={
+                    selectedMataKuliah
+                      ? "Pilih kelas..."
+                      : "Pilih mata kuliah dulu"
+                  }
+                />
               </SelectTrigger>
               <SelectContent>
                 {kelasList.map((kelas) => (
@@ -629,17 +710,25 @@ export default function DosenKehadiranPage() {
         </Card>
 
         {/* Step 3: Tanggal */}
-        <Card className={cn(
-          "border-2 transition-all",
-          !selectedKelas && "opacity-50",
-          selectedTanggal ? "border-green-300 bg-green-50/50" : "border-gray-200"
-        )}>
+        <Card
+          className={cn(
+            "border-2 transition-all",
+            !selectedKelas && "opacity-50",
+            selectedTanggal
+              ? "border-green-300 bg-green-50/50"
+              : "border-gray-200",
+          )}
+        >
           <CardHeader className="pb-3">
             <div className="flex items-center gap-2">
-              <div className={cn(
-                "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold",
-                selectedTanggal ? "bg-green-600 text-white" : "bg-gray-200 text-gray-600"
-              )}>
+              <div
+                className={cn(
+                  "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold",
+                  selectedTanggal
+                    ? "bg-green-600 text-white"
+                    : "bg-gray-200 text-gray-600",
+                )}
+              >
                 3
               </div>
               <CardTitle className="text-base">Tanggal Kehadiran</CardTitle>
@@ -651,9 +740,7 @@ export default function DosenKehadiranPage() {
               value={selectedTanggal}
               onChange={(e) => setSelectedTanggal(e.target.value)}
               disabled={!selectedKelas}
-              className={cn(
-                selectedTanggal && "border-green-500"
-              )}
+              className={cn(selectedTanggal && "border-green-500")}
             />
             {selectedTanggal && (
               <div className="mt-2 flex items-center gap-1 text-xs text-green-700">
@@ -674,7 +761,9 @@ export default function DosenKehadiranPage() {
               <div className="text-2xl">✓</div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">{stats.hadir}</div>
+              <div className="text-2xl font-bold text-green-600">
+                {stats.hadir}
+              </div>
               <p className="text-xs text-muted-foreground">mahasiswa</p>
             </CardContent>
           </Card>
@@ -685,7 +774,9 @@ export default function DosenKehadiranPage() {
               <div className="text-2xl">📝</div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-blue-600">{stats.izin}</div>
+              <div className="text-2xl font-bold text-blue-600">
+                {stats.izin}
+              </div>
               <p className="text-xs text-muted-foreground">mahasiswa</p>
             </CardContent>
           </Card>
@@ -696,7 +787,9 @@ export default function DosenKehadiranPage() {
               <div className="text-2xl">🏥</div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-yellow-600">{stats.sakit}</div>
+              <div className="text-2xl font-bold text-yellow-600">
+                {stats.sakit}
+              </div>
               <p className="text-xs text-muted-foreground">mahasiswa</p>
             </CardContent>
           </Card>
@@ -707,7 +800,9 @@ export default function DosenKehadiranPage() {
               <div className="text-2xl">✗</div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-red-600">{stats.alpha}</div>
+              <div className="text-2xl font-bold text-red-600">
+                {stats.alpha}
+              </div>
               <p className="text-xs text-muted-foreground">mahasiswa</p>
             </CardContent>
           </Card>
@@ -716,7 +811,10 @@ export default function DosenKehadiranPage() {
 
       {/* Tabs for Input and History */}
       {selectedKelas && (
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "input" | "history")}>
+        <Tabs
+          value={activeTab}
+          onValueChange={(v) => setActiveTab(v as "input" | "history")}
+        >
           <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-6">
             <TabsTrigger value="input" className="gap-2">
               <Calendar className="h-4 w-4" />
@@ -731,155 +829,165 @@ export default function DosenKehadiranPage() {
           <TabsContent value="input" className="space-y-6">
             {/* Attendance Input Table */}
             <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Input Kehadiran</CardTitle>
-                <CardDescription>
-                  {attendanceRecords.length} mahasiswa • {formatDate(selectedTanggal)}
-                </CardDescription>
-              </div>
-              <div className="flex gap-2 items-center">
-                {hasUnsavedChanges && (
-                  <Badge variant="outline" className="border-yellow-500 text-yellow-700">
-                    <Clock className="h-3 w-3 mr-1" />
-                    Belum disimpan
-                  </Badge>
-                )}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleExportAttendance}
-                  disabled={loading || attendanceRecords.length === 0}
-                  className="gap-2"
-                >
-                  <Download className="h-4 w-4" />
-                  Export CSV
-                </Button>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="text-center py-8">
-                <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-2" />
-                <p className="text-muted-foreground">Memuat data...</p>
-              </div>
-            ) : attendanceRecords.length === 0 ? (
-              <Alert>
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  Tidak ada mahasiswa dalam kelas ini atau belum ada data.
-                </AlertDescription>
-              </Alert>
-            ) : (
-              <div className="space-y-4">
-                <div className="rounded-md border overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-[100px]">NIM</TableHead>
-                        <TableHead>Nama Mahasiswa</TableHead>
-                        <TableHead className="w-[150px]">Status</TableHead>
-                        <TableHead>Keterangan</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {attendanceRecords.map((record) => {
-                        const statusOption = STATUS_OPTIONS.find(s => s.value === record.status);
-                        return (
-                          <TableRow key={record.mahasiswa_id}>
-                            <TableCell className="font-mono text-sm">
-                              {record.nim}
-                            </TableCell>
-                            <TableCell className="font-medium">{record.nama}</TableCell>
-                            <TableCell>
-                              <Select
-                                value={record.status}
-                                onValueChange={(value) =>
-                                  handleStatusChange(
-                                    record.mahasiswa_id,
-                                    value as KehadiranStatus,
-                                  )
-                                }
-                              >
-                                <SelectTrigger className="w-[140px]">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {STATUS_OPTIONS.map((option) => (
-                                    <SelectItem
-                                      key={option.value}
-                                      value={option.value}
-                                    >
-                                      <div className="flex items-center gap-2">
-                                        <span>{option.icon}</span>
-                                        <span>{option.label}</span>
-                                      </div>
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </TableCell>
-                            <TableCell>
-                              <Input
-                                placeholder="Catatan (opsional)..."
-                                value={record.keterangan}
-                                onChange={(e) =>
-                                  handleKeteranganChange(
-                                    record.mahasiswa_id,
-                                    e.target.value,
-                                  )
-                                }
-                                className="w-full"
-                              />
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                </div>
-
-                <div className="flex justify-end gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setAttendanceRecords([]);
-                      setHasUnsavedChanges(false);
-                    }}
-                  >
-                    Reset
-                  </Button>
-                  <Button
-                    onClick={handleSaveAttendance}
-                    disabled={isSavingAttendance || !hasUnsavedChanges}
-                    size="lg"
-                    className="gap-2"
-                  >
-                    {isSavingAttendance ? (
-                      <>
-                        <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
-                        Menyimpan...
-                      </>
-                    ) : (
-                      <>
-                        <Save className="h-4 w-4" />
-                        Simpan Kehadiran
-                      </>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Input Kehadiran</CardTitle>
+                    <CardDescription>
+                      {attendanceRecords.length} mahasiswa •{" "}
+                      {formatDate(selectedTanggal)}
+                    </CardDescription>
+                  </div>
+                  <div className="flex gap-2 items-center">
+                    {hasUnsavedChanges && (
+                      <Badge
+                        variant="outline"
+                        className="border-yellow-500 text-yellow-700"
+                      >
+                        <Clock className="h-3 w-3 mr-1" />
+                        Belum disimpan
+                      </Badge>
                     )}
-                  </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleExportAttendance}
+                      disabled={loading || attendanceRecords.length === 0}
+                      className="gap-2"
+                    >
+                      <Download className="h-4 w-4" />
+                      Export CSV
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-2" />
+                    <p className="text-muted-foreground">Memuat data...</p>
+                  </div>
+                ) : attendanceRecords.length === 0 ? (
+                  <Alert>
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      Tidak ada mahasiswa dalam kelas ini atau belum ada data.
+                    </AlertDescription>
+                  </Alert>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="rounded-md border overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="w-[100px]">NIM</TableHead>
+                            <TableHead>Nama Mahasiswa</TableHead>
+                            <TableHead className="w-[150px]">Status</TableHead>
+                            <TableHead>Keterangan</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {attendanceRecords.map((record) => {
+                            const statusOption = STATUS_OPTIONS.find(
+                              (s) => s.value === record.status,
+                            );
+                            return (
+                              <TableRow key={record.mahasiswa_id}>
+                                <TableCell className="font-mono text-sm">
+                                  {record.nim}
+                                </TableCell>
+                                <TableCell className="font-medium">
+                                  {record.nama}
+                                </TableCell>
+                                <TableCell>
+                                  <Select
+                                    value={record.status}
+                                    onValueChange={(value) =>
+                                      handleStatusChange(
+                                        record.mahasiswa_id,
+                                        value as KehadiranStatus,
+                                      )
+                                    }
+                                  >
+                                    <SelectTrigger className="w-[140px]">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {STATUS_OPTIONS.map((option) => (
+                                        <SelectItem
+                                          key={option.value}
+                                          value={option.value}
+                                        >
+                                          <div className="flex items-center gap-2">
+                                            <span>{option.icon}</span>
+                                            <span>{option.label}</span>
+                                          </div>
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                </TableCell>
+                                <TableCell>
+                                  <Input
+                                    placeholder="Catatan (opsional)..."
+                                    value={record.keterangan}
+                                    onChange={(e) =>
+                                      handleKeteranganChange(
+                                        record.mahasiswa_id,
+                                        e.target.value,
+                                      )
+                                    }
+                                    className="w-full"
+                                  />
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                    </div>
+
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setAttendanceRecords([]);
+                          setHasUnsavedChanges(false);
+                        }}
+                      >
+                        Reset
+                      </Button>
+                      <Button
+                        onClick={handleSaveAttendance}
+                        disabled={isSavingAttendance || !hasUnsavedChanges}
+                        size="lg"
+                        className="gap-2"
+                      >
+                        {isSavingAttendance ? (
+                          <>
+                            <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
+                            Menyimpan...
+                          </>
+                        ) : (
+                          <>
+                            <Save className="h-4 w-4" />
+                            Simpan Kehadiran
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="history">
             <KehadiranHistory
               kelasId={selectedKelas}
-              kelasNama={kelasList.find(k => k.id === selectedKelas)?.nama_kelas || ""}
+              kelasNama={
+                kelasList.find((k) => k.id === selectedKelas)?.nama_kelas || ""
+              }
               onSelectDate={(date) => {
                 setSelectedTanggal(date);
                 setActiveTab("input");
@@ -897,9 +1005,12 @@ export default function DosenKehadiranPage() {
             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
               <Users className="h-8 w-8 text-gray-400" />
             </div>
-            <h3 className="text-lg font-semibold mb-2">Pilih Mata Kuliah dan Kelas</h3>
+            <h3 className="text-lg font-semibold mb-2">
+              Pilih Mata Kuliah dan Kelas
+            </h3>
             <p className="text-muted-foreground text-center max-w-md">
-              Ikuti langkah di atas untuk mulai input kehadiran mahasiswa praktikum.
+              Ikuti langkah di atas untuk mulai input kehadiran mahasiswa
+              praktikum.
             </p>
           </CardContent>
         </Card>

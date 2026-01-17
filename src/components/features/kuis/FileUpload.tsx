@@ -160,7 +160,7 @@ export function FileUpload({
       (type) =>
         type === fileExt ||
         type === mimeType ||
-        (type.endsWith("/*") && mimeType.startsWith(type.replace("/*", "/")))
+        (type.endsWith("/*") && mimeType.startsWith(type.replace("/*", "/"))),
     );
 
     if (!isValidType) {
@@ -209,7 +209,7 @@ export function FileUpload({
         setUploadProgress(0);
       }
     },
-    [uploadFn, onUpload, maxSize, accept]
+    [uploadFn, onUpload, maxSize, accept],
   );
 
   const handleDragOver = useCallback(
@@ -220,7 +220,7 @@ export function FileUpload({
         setIsDragging(true);
       }
     },
-    [disabled]
+    [disabled],
   );
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
@@ -242,7 +242,7 @@ export function FileUpload({
         handleFileSelect(files[0]);
       }
     },
-    [disabled, handleFileSelect]
+    [disabled, handleFileSelect],
   );
 
   const handleClick = () => {
@@ -353,7 +353,7 @@ export function FileUpload({
             !disabled &&
             "border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/50",
           disabled && "cursor-not-allowed opacity-50 bg-muted",
-          isUploading && "pointer-events-none"
+          isUploading && "pointer-events-none",
         )}
       >
         <input
@@ -382,13 +382,13 @@ export function FileUpload({
               <div
                 className={cn(
                   "p-4 rounded-full",
-                  isDragging ? "bg-primary/10" : "bg-muted"
+                  isDragging ? "bg-primary/10" : "bg-muted",
                 )}
               >
                 <Upload
                   className={cn(
                     "h-8 w-8",
-                    isDragging ? "text-primary" : "text-muted-foreground"
+                    isDragging ? "text-primary" : "text-muted-foreground",
                   )}
                 />
               </div>

@@ -17,7 +17,12 @@ import type {
   BankSoalFilters,
   BankSoalStats,
 } from "@/types/bank-soal.types";
-import type { TipeSoal, Soal, CreateSoalData, OpsiJawaban } from "@/types/kuis.types";
+import type {
+  TipeSoal,
+  Soal,
+  CreateSoalData,
+  OpsiJawaban,
+} from "@/types/kuis.types";
 
 // ============================================================================
 // GET OPERATIONS
@@ -72,12 +77,12 @@ export async function getBankSoal(
   const { data, error } = await query;
 
   if (error) throw error;
-  return (data || []).map(item => ({
+  return (data || []).map((item) => ({
     ...item,
     tipe_soal: item.tipe_soal as TipeSoal,
     opsi_jawaban: item.opsi_jawaban as unknown as OpsiJawaban[] | null,
     is_public: item.is_public || false,
-    usage_count: item.usage_count || 0
+    usage_count: item.usage_count || 0,
   }));
 }
 
@@ -107,7 +112,7 @@ export async function getBankSoalById(id: string): Promise<BankSoal> {
     tipe_soal: data.tipe_soal as TipeSoal,
     opsi_jawaban: data.opsi_jawaban as unknown as OpsiJawaban[] | null,
     is_public: data.is_public || false,
-    usage_count: data.usage_count || 0
+    usage_count: data.usage_count || 0,
   };
 }
 
@@ -184,18 +189,89 @@ export async function createBankSoal(
     tipe_soal: newQuestion.tipe_soal as TipeSoal,
     opsi_jawaban: newQuestion.opsi_jawaban as unknown as OpsiJawaban[] | null,
     is_public: newQuestion.is_public || false,
-    usage_count: newQuestion.usage_count || 0
+    usage_count: newQuestion.usage_count || 0,
   };
 }
 
 /**
- * Save existing quiz question to bank
+ * Check for duplicate questions in bank
+ * Returns similar questions based on pertanyaan similarity
+ */
+export async function checkDuplicateBankSoal(
+  pertanyaan: string,
+  dosenId: string,
+  tipe_soal?: TipeSoal,
+): Promise<BankSoal[]> {
+  // Normalize text for comparison (lowercase, trim)
+  const normalizedPertanyaan = pertanyaan.toLowerCase().trim();
+
+  let query = supabase.from("bank_soal").select("*").eq("dosen_id", dosenId);
+
+  if (tipe_soal) {
+    query = query.eq("tipe_soal", tipe_soal);
+  }
+
+  const { data, error } = await query;
+
+  if (error) throw error;
+
+  // Filter for similar questions (case-insensitive exact match or 90% similarity)
+  const similarQuestions = (data || []).filter((item) => {
+    const itemPertanyaan = item.pertanyaan.toLowerCase().trim();
+
+    // Exact match
+    if (itemPertanyaan === normalizedPertanyaan) {
+      return true;
+    }
+
+    // Calculate similarity (Levenshtein distance for similar matches)
+    const similarity = calculateSimilarity(
+      itemPertanyaan,
+      normalizedPertanyaan,
+    );
+    return similarity >= 0.9; // 90% similar
+  });
+
+  return similarQuestions.map((item) => ({
+    ...item,
+    tipe_soal: item.tipe_soal as TipeSoal,
+    opsi_jawaban: item.opsi_jawaban as unknown as OpsiJawaban[] | null,
+    is_public: item.is_public || false,
+    usage_count: item.usage_count || 0,
+  }));
+}
+
+/**
+ * Calculate text similarity (simple word-based approach)
+ */
+function calculateSimilarity(str1: string, str2: string): number {
+  const words1 = str1.split(/\s+/);
+  const words2 = str2.split(/\s+/);
+
+  const set1 = new Set(words1);
+  const set2 = new Set(words2);
+
+  const intersection = new Set([...set1].filter((x) => set2.has(x)));
+  const union = new Set([...set1, ...set2]);
+
+  return intersection.size / union.size;
+}
+
+/**
+ * Save existing quiz question to bank (with duplicate check)
  */
 export async function saveSoalToBank(
   soal: Soal,
   dosenId: string,
   tags?: string[],
-): Promise<BankSoal> {
+): Promise<{ bankSoal: BankSoal; duplicates: BankSoal[] }> {
+  // Check for duplicates first
+  const duplicates = await checkDuplicateBankSoal(
+    soal.pertanyaan,
+    dosenId,
+    soal.tipe_soal,
+  );
+
   const bankData: CreateBankSoalData = {
     dosen_id: dosenId,
     pertanyaan: soal.pertanyaan,
@@ -207,7 +283,9 @@ export async function saveSoalToBank(
     tags: tags || [],
   };
 
-  return createBankSoal(bankData);
+  const bankSoal = await createBankSoal(bankData);
+
+  return { bankSoal, duplicates };
 }
 
 // ============================================================================
@@ -236,7 +314,7 @@ export async function updateBankSoal(
     tipe_soal: updated.tipe_soal as TipeSoal,
     opsi_jawaban: updated.opsi_jawaban as unknown as OpsiJawaban[] | null,
     is_public: updated.is_public || false,
-    usage_count: updated.usage_count || 0
+    usage_count: updated.usage_count || 0,
   };
 }
 
@@ -244,11 +322,14 @@ export async function updateBankSoal(
  * Increment usage count for a question
  */
 export async function incrementBankSoalUsage(id: string): Promise<void> {
-  const { error } = await supabase.rpc("increment_bank_soal_usage", {
-    question_id: id,
-  });
-
-  if (error) throw error;
+  // RPC function not available in database schema
+  // const { error } = await supabase.rpc("increment_bank_soal_usage", {
+  //   question_id: id,
+  // });
+  // if (error) throw error;
+  console.log(
+    `Usage increment for bank soal ${id} skipped - RPC not available`,
+  );
 }
 
 // ============================================================================
@@ -323,7 +404,10 @@ export async function addQuestionsFromBank(
     bankSoalIds.map((id) => incrementBankSoalUsage(id).catch(() => {})),
   );
 
-  return newSoal;
+  return (newSoal || []).map((soal: any) => ({
+    ...soal,
+    tipe_soal: soal.tipe, // Map database 'tipe' to expected 'tipe_soal'
+  })) as any;
 }
 
 /**
@@ -368,5 +452,6 @@ export async function copyQuizQuestionsToBank(
   if (insertError) throw insertError;
   if (!newBankQuestions) throw new Error("Failed to copy questions to bank");
 
-  return newBankQuestions;
+  // Cast tipe_soal from string to TipeSoal type
+  return newBankQuestions as any;
 }

@@ -64,6 +64,19 @@ export interface OwnershipOptions {
 const userRoleCache = new Map<string, { role: UserRole; timestamp: number }>();
 const CACHE_TTL = 5 * 60 * 1000; // 5 menit
 
+// Debug logging (disabled in tests and production)
+const DEBUG_PERMISSION_LOGS =
+  import.meta.env.DEV && import.meta.env.MODE !== "test";
+const debugLog = (...args: unknown[]) => {
+  if (DEBUG_PERMISSION_LOGS) console.log(...args);
+};
+const debugWarn = (...args: unknown[]) => {
+  if (DEBUG_PERMISSION_LOGS) console.warn(...args);
+};
+const debugError = (...args: unknown[]) => {
+  if (DEBUG_PERMISSION_LOGS) console.error(...args);
+};
+
 /**
  * Clear user role cache (dipanggil saat logout)
  */
@@ -227,22 +240,34 @@ export async function getCurrentLaboranId(): Promise<string | null> {
  * @throws {PermissionError} If user lacks permission
  */
 export async function checkPermission(permission: Permission): Promise<void> {
-  console.log("🔍 DEBUG: checkPermission called:", permission);
+  debugLog("🔍 DEBUG: checkPermission called:", permission);
   const user = await getCurrentUserWithRole();
-  console.log("🔍 DEBUG: user:", user);
+  debugLog("🔍 DEBUG: user:", user);
 
   // Admin bypass - admin can do everything
   if (user.role === "admin") {
-    console.log("✅ DEBUG: Admin bypass for permission:", permission);
+    debugLog("✅ DEBUG: Admin bypass for permission:", permission);
     return;
   }
 
   // Check if user has permission
   const hasPermissionResult = hasPermission(user.role, permission);
-  console.log("🔍 DEBUG: hasPermission result:", hasPermissionResult, "for role:", user.role, "permission:", permission);
+  debugLog(
+    "🔍 DEBUG: hasPermission result:",
+    hasPermissionResult,
+    "for role:",
+    user.role,
+    "permission:",
+    permission,
+  );
 
   if (!hasPermissionResult) {
-    console.error("❌ DEBUG: Permission denied for role:", user.role, "permission:", permission);
+    debugError(
+      "❌ DEBUG: Permission denied for role:",
+      user.role,
+      "permission:",
+      permission,
+    );
     throw new PermissionError(
       `Missing permission: ${permission}`,
       permission,
@@ -250,7 +275,12 @@ export async function checkPermission(permission: Permission): Promise<void> {
     );
   }
 
-  console.log("✅ DEBUG: Permission granted for role:", user.role, "permission:", permission);
+  debugLog(
+    "✅ DEBUG: Permission granted for role:",
+    user.role,
+    "permission:",
+    permission,
+  );
 }
 
 /**
@@ -372,7 +402,7 @@ export async function requireOwnership(
 
   // Admin bypass (if allowed)
   if (allowAdmin && user.role === "admin") {
-    console.log(`✅ Admin bypass: ownership check for ${table}/${resourceId}`);
+    debugLog(`✅ Admin bypass: ownership check for ${table}/${resourceId}`);
     return;
   }
 
@@ -393,7 +423,7 @@ export async function requireOwnership(
   if (ownerField === "user_id") {
     // Direct user ownership
     if (ownerId !== user.id) {
-      console.warn(
+      debugWarn(
         `❌ Ownership denied: ${user.id} tried to access ${table}/${resourceId} owned by ${ownerId}`,
       );
       throw new OwnershipError(
@@ -443,9 +473,7 @@ export async function requireOwnership(
     }
   }
 
-  console.log(
-    `✅ Ownership verified: ${user.role} owns ${table}/${resourceId}`,
-  );
+  debugLog(`✅ Ownership verified: ${user.role} owns ${table}/${resourceId}`);
 }
 
 /**

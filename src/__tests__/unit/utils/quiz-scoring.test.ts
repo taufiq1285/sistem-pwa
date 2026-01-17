@@ -130,7 +130,7 @@ describe("Quiz Scoring - Grading Logic", () => {
     it("should auto-grade short answer questions when correct answer is set", () => {
       const result = gradeAnswer(
         mockShortAnswerQuestion,
-        "JavaScript, Python, Java"
+        "JavaScript, Python, Java",
       );
 
       // Short answers are now auto-graded
@@ -160,14 +160,14 @@ describe("Quiz Scoring - Grading Logic", () => {
     it("should return false for empty answer", () => {
       expect(checkAnswerCorrect(mockMultipleChoiceQuestion, "")).toBe(false);
       expect(checkAnswerCorrect(mockMultipleChoiceQuestion, null as any)).toBe(
-        false
+        false,
       );
     });
 
     it("should return false when no correct answer defined", () => {
       const questionWithoutAnswer = { ...mockEssayQuestion };
       expect(checkAnswerCorrect(questionWithoutAnswer, "any answer")).toBe(
-        false
+        false,
       );
     });
 
@@ -225,10 +225,10 @@ describe("Quiz Scoring - Label Formatting", () => {
   describe("getAnswerLabel", () => {
     it('should return "Tidak dijawab" for empty answer', () => {
       expect(getAnswerLabel(mockMultipleChoiceQuestion, "")).toBe(
-        "Tidak dijawab"
+        "Tidak dijawab",
       );
       expect(getAnswerLabel(mockMultipleChoiceQuestion, null as any)).toBe(
-        "Tidak dijawab"
+        "Tidak dijawab",
       );
     });
 

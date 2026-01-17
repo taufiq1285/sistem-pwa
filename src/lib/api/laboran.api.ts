@@ -174,10 +174,13 @@ export async function getPendingApprovals(
     ]);
 
     const mahasiswaMap = new Map(
-      mahasiswaData.data?.map((m: any) => [m.id, m]) || [],
+      (mahasiswaData.data?.map((m: any) => [m.id, m]) || []) as [string, any][],
     );
     const inventarisMap = new Map(
-      inventarisData.data?.map((i: any) => [i.id, i]) || [],
+      (inventarisData.data?.map((i: any) => [i.id, i]) || []) as [
+        string,
+        any,
+      ][],
     );
 
     return (data || []).map((item: any) => {
@@ -349,12 +352,21 @@ export async function getLabScheduleToday(
     ]);
 
     // Create maps for quick lookup
-    const kelasMap = new Map(kelasData.data?.map((k: any) => [k.id, k]) || []);
-    const labMap = new Map(labData.data?.map((l: any) => [l.id, l]) || []);
-    const mataKuliahMap = new Map(
-      mataKuliahData.data?.map((mk: any) => [mk.id, mk]) || [],
+    const kelasMap = new Map(
+      (kelasData.data?.map((k: any) => [k.id, k]) || []) as [string, any][],
     );
-    const dosenMap = new Map(dosenData.data?.map((d: any) => [d.id, d]) || []);
+    const labMap = new Map(
+      (labData.data?.map((l: any) => [l.id, l]) || []) as [string, any][],
+    );
+    const mataKuliahMap = new Map(
+      (mataKuliahData.data?.map((mk: any) => [mk.id, mk]) || []) as [
+        string,
+        any,
+      ][],
+    );
+    const dosenMap = new Map(
+      (dosenData.data?.map((d: any) => [d.id, d]) || []) as [string, any][],
+    );
 
     return data.map((item: any) => {
       const kelas = kelasMap.get(item.kelas_id);
@@ -1241,7 +1253,11 @@ export async function getApprovalHistory(
       ...new Set(data?.map((item) => item.inventaris_id).filter(Boolean)),
     ];
     const approverIds = [
-      ...new Set(data?.map((item) => item.approved_by).filter((id): id is string => Boolean(id))),
+      ...new Set(
+        data
+          ?.map((item) => item.approved_by)
+          .filter((id): id is string => Boolean(id)),
+      ),
     ];
 
     const [mahasiswaData, inventarisData, approverData] = await Promise.all([
@@ -1268,13 +1284,16 @@ export async function getApprovalHistory(
     ]);
 
     const mahasiswaMap = new Map(
-      mahasiswaData.data?.map((m: any) => [m.id, m]) || [],
+      (mahasiswaData.data?.map((m: any) => [m.id, m]) || []) as [string, any][],
     );
     const inventarisMap = new Map(
-      inventarisData.data?.map((i: any) => [i.id, i]) || [],
+      (inventarisData.data?.map((i: any) => [i.id, i]) || []) as [
+        string,
+        any,
+      ][],
     );
     const approverMap = new Map(
-      approverData.data?.map((a: any) => [a.id, a]) || [],
+      (approverData.data?.map((a: any) => [a.id, a]) || []) as [string, any][],
     );
 
     return (data || []).map((item: any) => {
@@ -1291,8 +1310,8 @@ export async function getApprovalHistory(
         laboratorium_nama: inventaris?.laboratorium?.nama_lab || "-",
         jumlah_pinjam: item.jumlah_pinjam,
         status: item.status,
-        approved_by_nama: approver?.full_name || "Unknown",
-        approved_by_role: approver?.role || "unknown",
+        approved_by_nama: (approver as any)?.full_name || "Unknown",
+        approved_by_role: (approver as any)?.role || "unknown",
         approved_at: item.approved_at,
         rejection_reason: item.rejection_reason,
       };
@@ -1374,10 +1393,18 @@ export async function getActiveBorrowings(
 
     // Fetch related data separately
     const peminjamIds = [
-      ...new Set(data?.map((item) => item.peminjam_id).filter((id): id is string => Boolean(id))),
+      ...new Set(
+        data
+          ?.map((item) => item.peminjam_id)
+          .filter((id): id is string => Boolean(id)),
+      ),
     ];
     const inventarisIds = [
-      ...new Set(data?.map((item) => item.inventaris_id).filter((id): id is string => Boolean(id))),
+      ...new Set(
+        data
+          ?.map((item) => item.inventaris_id)
+          .filter((id): id is string => Boolean(id)),
+      ),
     ];
 
     const [mahasiswaData, inventarisData] = await Promise.all([
@@ -1398,10 +1425,13 @@ export async function getActiveBorrowings(
     ]);
 
     const mahasiswaMap = new Map(
-      mahasiswaData.data?.map((m: any) => [m.id, m]) || [],
+      (mahasiswaData.data?.map((m: any) => [m.id, m]) || []) as [string, any][],
     );
     const inventarisMap = new Map(
-      inventarisData.data?.map((i: any) => [i.id, i]) || [],
+      (inventarisData.data?.map((i: any) => [i.id, i]) || []) as [
+        string,
+        any,
+      ][],
     );
 
     const today = new Date();
@@ -1415,7 +1445,9 @@ export async function getActiveBorrowings(
       returnDate.setHours(0, 0, 0, 0);
       const isOverdue = returnDate < today;
       const daysOverdue = isOverdue
-        ? Math.floor((today.getTime() - returnDate.getTime()) / (1000 * 60 * 60 * 24))
+        ? Math.floor(
+            (today.getTime() - returnDate.getTime()) / (1000 * 60 * 60 * 24),
+          )
         : 0;
 
       return {
@@ -1475,10 +1507,18 @@ export async function getReturnedBorrowings(
 
     // Fetch related data separately
     const peminjamIds = [
-      ...new Set(data?.map((item) => item.peminjam_id).filter((id): id is string => Boolean(id))),
+      ...new Set(
+        data
+          ?.map((item) => item.peminjam_id)
+          .filter((id): id is string => Boolean(id)),
+      ),
     ];
     const inventarisIds = [
-      ...new Set(data?.map((item) => item.inventaris_id).filter((id): id is string => Boolean(id))),
+      ...new Set(
+        data
+          ?.map((item) => item.inventaris_id)
+          .filter((id): id is string => Boolean(id)),
+      ),
     ];
 
     const [mahasiswaData, inventarisData] = await Promise.all([
@@ -1499,10 +1539,13 @@ export async function getReturnedBorrowings(
     ]);
 
     const mahasiswaMap = new Map(
-      mahasiswaData.data?.map((m: any) => [m.id, m]) || [],
+      (mahasiswaData.data?.map((m: any) => [m.id, m]) || []) as [string, any][],
     );
     const inventarisMap = new Map(
-      inventarisData.data?.map((i: any) => [i.id, i]) || [],
+      (inventarisData.data?.map((i: any) => [i.id, i]) || []) as [
+        string,
+        any,
+      ][],
     );
 
     return (data || []).map((item: any) => {
@@ -1517,11 +1560,11 @@ export async function getReturnedBorrowings(
 
       return {
         id: item.id,
-        peminjam_nama: mahasiswa?.users?.full_name || "Unknown",
-        peminjam_nim: mahasiswa?.nim || "-",
-        inventaris_nama: inventaris?.nama_barang || "Unknown",
-        inventaris_kode: inventaris?.kode_barang || "-",
-        laboratorium_nama: inventaris?.laboratorium?.nama_lab || "-",
+        peminjam_nama: (mahasiswa as any)?.users?.full_name || "Unknown",
+        peminjam_nim: (mahasiswa as any)?.nim || "-",
+        inventaris_nama: (inventaris as any)?.nama_barang || "Unknown",
+        inventaris_kode: (inventaris as any)?.kode_barang || "-",
+        laboratorium_nama: (inventaris as any)?.laboratorium?.nama_lab || "-",
         jumlah_pinjam: item.jumlah_pinjam,
         tanggal_pinjam: item.tanggal_pinjam,
         tanggal_kembali_rencana: item.tanggal_kembali_rencana,

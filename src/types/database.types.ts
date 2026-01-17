@@ -1509,6 +1509,120 @@ export type Database = {
           },
         ];
       };
+      permintaan_perbaikan_nilai: {
+        Row: {
+          catatan_dosen: string | null;
+          created_at: string | null;
+          id: string;
+          kelas_id: string;
+          komponen_nilai: string;
+          mahasiswa_id: string;
+          nilai_id: string;
+          nilai_sebelum: number | null;
+          nilai_sesudah: number | null;
+          reviewed_at: string | null;
+          reviewed_by: string | null;
+          status: string;
+          updated_at: string | null;
+        };
+        Insert: {
+          catatan_dosen?: string | null;
+          created_at?: string | null;
+          id?: string;
+          kelas_id: string;
+          komponen_nilai: string;
+          mahasiswa_id: string;
+          nilai_id: string;
+          nilai_sebelum?: number | null;
+          nilai_sesudah?: number | null;
+          reviewed_at?: string | null;
+          reviewed_by?: string | null;
+          status: string;
+          updated_at?: string | null;
+        };
+        Update: {
+          catatan_dosen?: string | null;
+          created_at?: string | null;
+          id?: string;
+          kelas_id?: string;
+          komponen_nilai?: string;
+          mahasiswa_id?: string;
+          nilai_id?: string;
+          nilai_sebelum?: number | null;
+          nilai_sesudah?: number | null;
+          reviewed_at?: string | null;
+          reviewed_by?: string | null;
+          status?: string;
+          updated_at?: string | null;
+        };
+        Relationships: [];
+      };
+      dosen_mata_kuliah: {
+        Row: {
+          created_at: string | null;
+          dosen_id: string;
+          id: string;
+          is_active: boolean | null;
+          mata_kuliah_id: string;
+          updated_at: string | null;
+        };
+        Insert: {
+          created_at?: string | null;
+          dosen_id: string;
+          id?: string;
+          is_active?: boolean | null;
+          mata_kuliah_id: string;
+          updated_at?: string | null;
+        };
+        Update: {
+          created_at?: string | null;
+          dosen_id?: string;
+          id?: string;
+          is_active?: boolean | null;
+          mata_kuliah_id?: string;
+          updated_at?: string | null;
+        };
+        Relationships: [];
+      };
+      profiles: {
+        Row: {
+          avatar_url: string | null;
+          created_at: string | null;
+          email: string;
+          full_name: string;
+          id: string;
+          is_active: boolean | null;
+          last_seen_at: string | null;
+          metadata: Json | null;
+          role: Database["public"]["Enums"]["user_role"];
+          updated_at: string | null;
+        };
+        Insert: {
+          avatar_url?: string | null;
+          created_at?: string | null;
+          email: string;
+          full_name: string;
+          id?: string;
+          is_active?: boolean | null;
+          last_seen_at?: string | null;
+          metadata?: Json | null;
+          role: Database["public"]["Enums"]["user_role"];
+          updated_at?: string | null;
+        };
+        Update: {
+          avatar_url?: string | null;
+          created_at?: string | null;
+          email?: string;
+          full_name?: string;
+          id?: string;
+          is_active?: boolean | null;
+          last_seen_at?: string | null;
+          metadata?: Json | null;
+          role?: Database["public"]["Enums"]["user_role"];
+          updated_at?: string | null;
+        };
+        Relationships: [];
+      };
       sync_history: {
         Row: {
           completed_at: string | null;
@@ -1675,6 +1789,18 @@ export type Database = {
       };
     };
     Functions: {
+      check_version_conflict: {
+        Args: {
+          p_table_name: string;
+          p_id: string;
+          p_expected_version: number;
+        };
+        Returns: {
+          has_conflict: boolean;
+          current_version: number;
+          message: string;
+        };
+      };
       get_active_kuis_for_mahasiswa: {
         Args: { p_mahasiswa_id: string };
         Returns: {
@@ -1717,6 +1843,30 @@ export type Database = {
       get_user_role: {
         Args: never;
         Returns: Database["public"]["Enums"]["user_role"];
+      };
+      log_conflict: {
+        Args: {
+          p_entity: string;
+          p_record_id: string;
+          p_local_version: number;
+          p_remote_version: number;
+          p_local_data: Json;
+          p_remote_data: Json;
+        };
+        Returns: { success: boolean };
+      };
+      safe_update_with_version: {
+        Args: {
+          p_table_name: string;
+          p_id: string;
+          p_expected_version: number;
+          p_data: Json;
+        };
+        Returns: {
+          success: boolean;
+          new_version: number;
+          error: string | null;
+        };
       };
       show_limit: { Args: never; Returns: number };
       show_trgm: { Args: { "": string }; Returns: string[] };

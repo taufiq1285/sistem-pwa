@@ -156,62 +156,41 @@ describe("Dosen API - Dashboard Stats", () => {
       const dosenBuilder = mockQueryBuilder();
       dosenBuilder.single.mockResolvedValue({ data: mockDosen, error: null });
 
-      // Mock stats queries with proper chaining
-      const kelasCountBuilder = {
-        select: vi.fn(function () {
-          return this;
-        }),
-        eq: vi.fn(function () {
-          return this;
-        }), // Chainable
-        then: vi.fn((onFulfilled) =>
-          Promise.resolve({ count: 5, error: null }).then(onFulfilled),
-        ),
-      };
-
-      const kelasDataBuilder = mockQueryBuilder();
-      kelasDataBuilder._setResolveValue({
-        data: [{ id: "kelas-1" }, { id: "kelas-2" }],
+      // getDosenStats now computes stats from jadwal_praktikum, kelas_mahasiswa, kuis, attempt_kuis
+      const jadwalBuilder = mockQueryBuilder();
+      jadwalBuilder._setResolveValue({
+        data: [
+          { kelas_id: "kelas-1" },
+          { kelas_id: "kelas-2" },
+          { kelas_id: "kelas-3" },
+          { kelas_id: "kelas-4" },
+          { kelas_id: "kelas-5" },
+        ],
         error: null,
       });
 
-      const mahasiswaCountBuilder = {
-        select: vi.fn().mockReturnThis(),
-        in: vi.fn().mockResolvedValue({ count: 120, error: null }),
-      };
+      const mahasiswaCountBuilder = mockQueryBuilder();
+      mahasiswaCountBuilder._setResolveValue({ count: 120, error: null });
 
-      const kuisCountBuilder = {
-        select: vi.fn(function () {
-          return this;
-        }),
-        eq: vi.fn(function () {
-          return this;
-        }), // Chainable
-        then: vi.fn((onFulfilled) =>
-          Promise.resolve({ count: 8, error: null }).then(onFulfilled),
-        ),
-      };
+      const activeKuisCountBuilder = mockQueryBuilder();
+      activeKuisCountBuilder._setResolveValue({ count: 8, error: null });
 
-      const kuisDataBuilder = mockQueryBuilder();
-      kuisDataBuilder._setResolveValue({
+      const kuisIdsBuilder = mockQueryBuilder();
+      kuisIdsBuilder._setResolveValue({
         data: [{ id: "kuis-1" }, { id: "kuis-2" }],
         error: null,
       });
 
-      const attemptCountBuilder = {
-        select: vi.fn().mockReturnThis(),
-        in: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockResolvedValue({ count: 15, error: null }),
-      };
+      const pendingGradingCountBuilder = mockQueryBuilder();
+      pendingGradingCountBuilder._setResolveValue({ count: 15, error: null });
 
       (supabase.from as any)
-        .mockReturnValueOnce(dosenBuilder) // Get dosen ID
-        .mockReturnValueOnce(kelasCountBuilder) // Count active kelas
-        .mockReturnValueOnce(kelasDataBuilder) // Get kelas IDs
-        .mockReturnValueOnce(mahasiswaCountBuilder) // Count mahasiswa
-        .mockReturnValueOnce(kuisCountBuilder) // Count active kuis
-        .mockReturnValueOnce(kuisDataBuilder) // Get kuis IDs
-        .mockReturnValueOnce(attemptCountBuilder); // Count pending grading
+        .mockReturnValueOnce(dosenBuilder) // getDosenId: dosen
+        .mockReturnValueOnce(jadwalBuilder) // jadwal_praktikum
+        .mockReturnValueOnce(mahasiswaCountBuilder) // kelas_mahasiswa count
+        .mockReturnValueOnce(activeKuisCountBuilder) // kuis count (published)
+        .mockReturnValueOnce(kuisIdsBuilder) // kuis ids
+        .mockReturnValueOnce(pendingGradingCountBuilder); // attempt_kuis submitted count
 
       const result = await getDosenStats();
 
@@ -302,7 +281,6 @@ describe("Dosen API - Kelas Management", () => {
 
   describe("getMyKelas", () => {
     it("should return kelas with stats for dosen", async () => {
-      // Mock supabase.from("kelas").select(...).eq(...).eq(...)
       const kelasBuilder = mockQueryBuilder();
       kelasBuilder._setResolveValue({
         data: [
@@ -312,25 +290,32 @@ describe("Dosen API - Kelas Management", () => {
             nama_kelas: "Kelas A",
             tahun_ajaran: "2024/2025",
             semester_ajaran: 1,
-            dosen_id: "dosen-1",
-            mata_kuliah: {
-              kode_mk: "IF101",
-              nama_mk: "Pemrograman Web",
-            },
+            mata_kuliah_id: "mk-1",
+            is_active: true,
           },
         ],
         error: null,
       });
 
-      // Mock supabase.from("kelas_mahasiswa").select(...).eq(...)
-      const mahasiswaCountBuilder = {
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockResolvedValue({ count: 30, error: null }),
-      };
+      const mkBuilder = mockQueryBuilder();
+      mkBuilder._setResolveValue({
+        data: [
+          {
+            id: "mk-1",
+            kode_mk: "IF101",
+            nama_mk: "Pemrograman Web",
+          },
+        ],
+        error: null,
+      });
+
+      const mahasiswaCountBuilder = mockQueryBuilder();
+      mahasiswaCountBuilder._setResolveValue({ count: 30, error: null });
 
       (supabase.from as any)
-        .mockReturnValueOnce(kelasBuilder) // First call: kelas query
-        .mockReturnValueOnce(mahasiswaCountBuilder); // Second call: kelas_mahasiswa count
+        .mockReturnValueOnce(kelasBuilder) // kelas
+        .mockReturnValueOnce(mkBuilder) // mata_kuliah
+        .mockReturnValueOnce(mahasiswaCountBuilder); // kelas_mahasiswa count
 
       const result = await getMyKelas();
 
@@ -342,6 +327,7 @@ describe("Dosen API - Kelas Management", () => {
         tahun_ajaran: "2024/2025",
         semester_ajaran: 1,
         totalMahasiswa: 30,
+        mata_kuliah_id: "mk-1",
         mata_kuliah_kode: "IF101",
         mata_kuliah_nama: "Pemrograman Web",
       });
@@ -358,7 +344,8 @@ describe("Dosen API - Kelas Management", () => {
             nama_kelas: "Kelas A",
             tahun_ajaran: "2024/2025",
             semester_ajaran: 1,
-            mata_kuliah: { kode_mk: "IF101", nama_mk: "Web" },
+            mata_kuliah_id: "mk-1",
+            is_active: true,
           },
           {
             id: "kelas-2",
@@ -366,7 +353,8 @@ describe("Dosen API - Kelas Management", () => {
             nama_kelas: "Kelas B",
             tahun_ajaran: "2024/2025",
             semester_ajaran: 1,
-            mata_kuliah: { kode_mk: "IF102", nama_mk: "Web2" },
+            mata_kuliah_id: "mk-2",
+            is_active: true,
           },
           {
             id: "kelas-3",
@@ -374,20 +362,29 @@ describe("Dosen API - Kelas Management", () => {
             nama_kelas: "Kelas C",
             tahun_ajaran: "2024/2025",
             semester_ajaran: 1,
-            mata_kuliah: { kode_mk: "IF103", nama_mk: "Web3" },
+            mata_kuliah_id: "mk-3",
+            is_active: true,
           },
         ],
         error: null,
       });
 
-      // Mock all mahasiswa count calls (will be called 3x but limit should apply after)
-      const countBuilder = {
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockResolvedValue({ count: 10, error: null }),
-      };
+      const mkBuilder = mockQueryBuilder();
+      mkBuilder._setResolveValue({
+        data: [
+          { id: "mk-1", kode_mk: "IF101", nama_mk: "Web" },
+          { id: "mk-2", kode_mk: "IF102", nama_mk: "Web2" },
+          { id: "mk-3", kode_mk: "IF103", nama_mk: "Web3" },
+        ],
+        error: null,
+      });
+
+      const countBuilder = mockQueryBuilder();
+      countBuilder._setResolveValue({ count: 10, error: null });
 
       (supabase.from as any)
         .mockReturnValueOnce(kelasBuilder)
+        .mockReturnValueOnce(mkBuilder)
         .mockReturnValue(countBuilder);
 
       const result = await getMyKelas(2);
@@ -418,7 +415,8 @@ describe("Dosen API - Kelas Management", () => {
             nama_kelas: "Kelas A",
             tahun_ajaran: "2024/2025",
             semester_ajaran: 1,
-            mata_kuliah: { kode_mk: "IF101", nama_mk: "Web" },
+            mata_kuliah_id: "mk-1",
+            is_active: true,
           },
           {
             id: "kelas-1",
@@ -426,7 +424,8 @@ describe("Dosen API - Kelas Management", () => {
             nama_kelas: "Kelas A",
             tahun_ajaran: "2024/2025",
             semester_ajaran: 1,
-            mata_kuliah: { kode_mk: "IF101", nama_mk: "Web" },
+            mata_kuliah_id: "mk-1",
+            is_active: true,
           }, // Duplicate
           {
             id: "kelas-2",
@@ -434,20 +433,28 @@ describe("Dosen API - Kelas Management", () => {
             nama_kelas: "Kelas B",
             tahun_ajaran: "2024/2025",
             semester_ajaran: 1,
-            mata_kuliah: { kode_mk: "IF102", nama_mk: "Web2" },
+            mata_kuliah_id: "mk-2",
+            is_active: true,
           },
         ],
         error: null,
       });
 
-      // Mock all mahasiswa count calls
-      const countBuilder = {
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockResolvedValue({ count: 10, error: null }),
-      };
+      const mkBuilder = mockQueryBuilder();
+      mkBuilder._setResolveValue({
+        data: [
+          { id: "mk-1", kode_mk: "IF101", nama_mk: "Web" },
+          { id: "mk-2", kode_mk: "IF102", nama_mk: "Web2" },
+        ],
+        error: null,
+      });
+
+      const countBuilder = mockQueryBuilder();
+      countBuilder._setResolveValue({ count: 10, error: null });
 
       (supabase.from as any)
         .mockReturnValueOnce(kelasBuilder)
+        .mockReturnValueOnce(mkBuilder)
         .mockReturnValue(countBuilder);
 
       const result = await getMyKelas();

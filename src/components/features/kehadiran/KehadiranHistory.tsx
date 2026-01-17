@@ -4,11 +4,20 @@
  */
 
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronUp, Calendar, Users } from "lucide-react";
-import { getKehadiranHistory, type KehadiranHistoryRecord } from "@/lib/api/kehadiran.api";
+import {
+  getKehadiranHistory,
+  type KehadiranHistoryRecord,
+} from "@/lib/api/kehadiran.api";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -18,7 +27,11 @@ interface KehadiranHistoryProps {
   onSelectDate?: (date: string) => void;
 }
 
-export function KehadiranHistory({ kelasId, kelasNama, onSelectDate }: KehadiranHistoryProps) {
+export function KehadiranHistory({
+  kelasId,
+  kelasNama,
+  onSelectDate,
+}: KehadiranHistoryProps) {
   const [history, setHistory] = useState<KehadiranHistoryRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [expandedDates, setExpandedDates] = useState<Set<string>>(new Set());
@@ -41,7 +54,7 @@ export function KehadiranHistory({ kelasId, kelasNama, onSelectDate }: Kehadiran
   };
 
   const toggleExpand = (date: string) => {
-    setExpandedDates(prev => {
+    setExpandedDates((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(date)) {
         newSet.delete(date);
@@ -85,7 +98,9 @@ export function KehadiranHistory({ kelasId, kelasNama, onSelectDate }: Kehadiran
           <div className="text-center text-muted-foreground">
             <Calendar className="h-16 w-16 mx-auto mb-3 opacity-30" />
             <p className="text-lg font-medium">Belum ada riwayat kehadiran</p>
-            <p className="text-sm mt-1">Mulai input kehadiran untuk melihat riwayat</p>
+            <p className="text-sm mt-1">
+              Mulai input kehadiran untuk melihat riwayat
+            </p>
           </div>
         </CardContent>
       </Card>
@@ -107,7 +122,10 @@ export function KehadiranHistory({ kelasId, kelasNama, onSelectDate }: Kehadiran
         <div className="space-y-2">
           {history.map((record) => {
             const isExpanded = expandedDates.has(record.tanggal);
-            const percentage = calculatePercentage(record.hadir, record.total_mahasiswa);
+            const percentage = calculatePercentage(
+              record.hadir,
+              record.total_mahasiswa,
+            );
 
             return (
               <div
@@ -119,29 +137,44 @@ export function KehadiranHistory({ kelasId, kelasNama, onSelectDate }: Kehadiran
                   className="w-full p-4 hover:bg-muted/50 transition-colors flex items-center justify-between text-left"
                 >
                   <div className="flex-1">
-                    <div className="font-medium text-base">{formatDate(record.tanggal)}</div>
+                    <div className="font-medium text-base">
+                      {formatDate(record.tanggal)}
+                    </div>
                     <div className="text-sm text-muted-foreground mt-1 flex items-center gap-2">
                       <Users className="h-3 w-3" />
-                      {record.total_mahasiswa} mahasiswa • {percentage}% kehadiran
+                      {record.total_mahasiswa} mahasiswa • {percentage}%
+                      kehadiran
                     </div>
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                    <Badge
+                      variant="outline"
+                      className="bg-green-50 text-green-700 border-green-200"
+                    >
                       ✓ {record.hadir}
                     </Badge>
                     {record.izin > 0 && (
-                      <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                      <Badge
+                        variant="outline"
+                        className="bg-blue-50 text-blue-700 border-blue-200"
+                      >
                         📝 {record.izin}
                       </Badge>
                     )}
                     {record.sakit > 0 && (
-                      <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+                      <Badge
+                        variant="outline"
+                        className="bg-yellow-50 text-yellow-700 border-yellow-200"
+                      >
                         🏥 {record.sakit}
                       </Badge>
                     )}
                     {record.alpha > 0 && (
-                      <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
+                      <Badge
+                        variant="outline"
+                        className="bg-red-50 text-red-700 border-red-200"
+                      >
                         ✗ {record.alpha}
                       </Badge>
                     )}
@@ -157,31 +190,63 @@ export function KehadiranHistory({ kelasId, kelasNama, onSelectDate }: Kehadiran
                   <div className="px-4 pb-4 bg-muted/20 border-t">
                     <div className="grid grid-cols-4 gap-4 pt-4">
                       <div className="text-center">
-                        <div className="text-3xl font-bold text-green-600">{record.hadir}</div>
-                        <div className="text-xs text-muted-foreground mt-1">Hadir</div>
+                        <div className="text-3xl font-bold text-green-600">
+                          {record.hadir}
+                        </div>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          Hadir
+                        </div>
                         <div className="text-xs text-muted-foreground">
-                          ({Math.round((record.hadir / record.total_mahasiswa) * 100)}%)
+                          (
+                          {Math.round(
+                            (record.hadir / record.total_mahasiswa) * 100,
+                          )}
+                          %)
                         </div>
                       </div>
                       <div className="text-center">
-                        <div className="text-3xl font-bold text-blue-600">{record.izin}</div>
-                        <div className="text-xs text-muted-foreground mt-1">Izin</div>
+                        <div className="text-3xl font-bold text-blue-600">
+                          {record.izin}
+                        </div>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          Izin
+                        </div>
                         <div className="text-xs text-muted-foreground">
-                          ({Math.round((record.izin / record.total_mahasiswa) * 100)}%)
+                          (
+                          {Math.round(
+                            (record.izin / record.total_mahasiswa) * 100,
+                          )}
+                          %)
                         </div>
                       </div>
                       <div className="text-center">
-                        <div className="text-3xl font-bold text-yellow-600">{record.sakit}</div>
-                        <div className="text-xs text-muted-foreground mt-1">Sakit</div>
+                        <div className="text-3xl font-bold text-yellow-600">
+                          {record.sakit}
+                        </div>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          Sakit
+                        </div>
                         <div className="text-xs text-muted-foreground">
-                          ({Math.round((record.sakit / record.total_mahasiswa) * 100)}%)
+                          (
+                          {Math.round(
+                            (record.sakit / record.total_mahasiswa) * 100,
+                          )}
+                          %)
                         </div>
                       </div>
                       <div className="text-center">
-                        <div className="text-3xl font-bold text-red-600">{record.alpha}</div>
-                        <div className="text-xs text-muted-foreground mt-1">Alpha</div>
+                        <div className="text-3xl font-bold text-red-600">
+                          {record.alpha}
+                        </div>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          Alpha
+                        </div>
                         <div className="text-xs text-muted-foreground">
-                          ({Math.round((record.alpha / record.total_mahasiswa) * 100)}%)
+                          (
+                          {Math.round(
+                            (record.alpha / record.total_mahasiswa) * 100,
+                          )}
+                          %)
                         </div>
                       </div>
                     </div>

@@ -1,0 +1,711 @@
+/**
+ * PeminjamanPage - Laboran
+ * Manage equipment borrowing and room booking approvals
+ */
+
+import { useState, useEffect } from 'react';
+import AppLayout from '@/components/layout/AppLayout';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { toast } from 'sonner';
+import {
+  Package,
+  CheckCircle,
+  XCircle,
+  Clock,
+  Search,
+  Filter,
+  Building2,
+  PackageCheck,
+} from 'lucide-react';
+
+import {
+  getAllPeminjaman,
+  markAsReturned,
+  getPendingRoomBookings,
+  approveRoomBooking,
+  rejectRoomBooking,
+  type PeminjamanDetail,
+  type RoomBookingRequest,
+} from '@/lib/api/peminjaman-extensions';
+
+import {
+  approvePeminjaman,
+  rejectPeminjaman,
+} from '@/lib/api/laboran.api';
+
+const PeminjamanPage = () => {
+  // ===== STATE =====
+  const [activeTab, setActiveTab] = useState<'equipment' | 'room'>('equipment');
+  const [loading, setLoading] = useState(true);
+
+  // Equipment Borrowing
+  const [peminjaman, setPeminjaman] = useState<PeminjamanDetail[]>([]);
+  const [statusFilter, setStatusFilter] = useState<string>('');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Room Booking
+  const [roomBookings, setRoomBookings] = useState<RoomBookingRequest[]>([]);
+
+  // Dialogs
+  const [approveDialog, setApproveDialog] = useState<{
+    open: boolean;
+    type: 'equipment' | 'room';
+    id: string;
+    title: string;
+  }>({ open: false, type: 'equipment', id: '', title: '' });
+
+  const [rejectDialog, setRejectDialog] = useState<{
+    open: boolean;
+    type: 'equipment' | 'room';
+    id: string;
+    title: string;
+  }>({ open: false, type: 'equipment', id: '', title: '' });
+  const [rejectionReason, setRejectionReason] = useState('');
+
+  const [returnDialog, setReturnDialog] = useState<{
+    open: boolean;
+    id: string;
+    title: string;
+  }>({ open: false, id: '', title: '' });
+  const [returnData, setReturnData] = useState<{
+    kondisi: 'baik' | 'rusak_ringan' | 'rusak_berat' | 'maintenance';
+    keterangan: string;
+  }>({
+    kondisi: 'baik',
+    keterangan: '',
+  });
+
+  // ===== FETCH DATA =====
+  const fetchPeminjaman = async () => {
+    try {
+      setLoading(true);
+      const params: {
+        limit: number;
+        status?: 'pending' | 'approved' | 'rejected' | 'returned' | 'overdue';
+      } = { limit: 100 };
+      if (statusFilter) params.status = statusFilter as 'pending' | 'approved' | 'rejected' | 'returned' | 'overdue';
+
+      const { data } = await getAllPeminjaman(params);
+
+      let filtered = data;
+      if (searchQuery) {
+        filtered = data.filter(
+          (p) =>
+            p.peminjam_nama.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            p.peminjam_nim.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            p.inventaris_nama.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+      }
+
+      setPeminjaman(filtered);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to load peminjaman';
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchRoomBookings = async () => {
+    try {
+      setLoading(true);
+      const data = await getPendingRoomBookings();
+      setRoomBookings(data);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to load room bookings';
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'equipment') {
+      fetchPeminjaman();
+    } else {
+      fetchRoomBookings();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, statusFilter, searchQuery]);
+
+  // ===== HANDLERS =====
+  const handleApprove = async () => {
+    try {
+      if (approveDialog.type === 'equipment') {
+        await approvePeminjaman(approveDialog.id);
+        toast.success('Equipment borrowing approved');
+        await fetchPeminjaman();
+      } else {
+        await approveRoomBooking(approveDialog.id);
+        toast.success('Room booking approved');
+        await fetchRoomBookings();
+      }
+      setApproveDialog({ ...approveDialog, open: false });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to approve';
+      toast.error(message);
+    }
+  };
+
+  const handleReject = async () => {
+    try {
+      if (!rejectionReason.trim()) {
+        toast.error('Please provide rejection reason');
+        return;
+      }
+
+      if (rejectDialog.type === 'equipment') {
+        await rejectPeminjaman(rejectDialog.id, rejectionReason);
+        toast.success('Equipment borrowing rejected');
+        await fetchPeminjaman();
+      } else {
+        await rejectRoomBooking(rejectDialog.id, rejectionReason);
+        toast.success('Room booking rejected');
+        await fetchRoomBookings();
+      }
+
+      setRejectDialog({ ...rejectDialog, open: false });
+      setRejectionReason('');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to reject';
+      toast.error(message);
+    }
+  };
+
+  const handleReturn = async () => {
+    try {
+      if (!returnData.kondisi) {
+        toast.error('Please select return condition');
+        return;
+      }
+
+      await markAsReturned(returnDialog.id, returnData.kondisi, returnData.keterangan);
+      toast.success('Equipment marked as returned');
+      await fetchPeminjaman();
+
+      setReturnDialog({ ...returnDialog, open: false });
+      setReturnData({ kondisi: 'baik', keterangan: '' });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to mark as returned';
+      toast.error(message);
+    }
+  };
+
+  // ===== STATUS BADGES =====
+  const getStatusBadge = (status: string) => {
+    const variants: Record<string, { variant: 'default' | 'secondary' | 'destructive' | 'outline'; icon: React.ComponentType<{ className?: string }> }> = {
+      pending: { variant: 'secondary', icon: Clock },
+      approved: { variant: 'default', icon: CheckCircle },
+      rejected: { variant: 'destructive', icon: XCircle },
+      returned: { variant: 'outline', icon: PackageCheck },
+      overdue: { variant: 'destructive', icon: XCircle },
+    };
+
+    const config = variants[status] || variants.pending;
+    const Icon = config.icon;
+
+    return (
+      <Badge variant={config.variant} className="flex items-center gap-1">
+        <Icon className="h-3 w-3" />
+        {status.charAt(0).toUpperCase() + status.slice(1)}
+      </Badge>
+    );
+  };
+
+  // ===== STATS =====
+  const stats = {
+    pending: peminjaman.filter((p) => p.status === 'pending').length,
+    approved: peminjaman.filter((p) => p.status === 'approved').length,
+    returned: peminjaman.filter((p) => p.status === 'returned').length,
+    roomPending: roomBookings.length,
+  };
+
+  return (
+    <AppLayout>
+      <div className="space-y-6 p-6">
+        {/* Header */}
+        <div>
+          <h1 className="text-3xl font-bold">Peminjaman & Booking</h1>
+          <p className="text-muted-foreground mt-2">
+            Manage equipment borrowing requests and room booking approvals
+          </p>
+        </div>
+
+        {/* Stats Cards */}
+        <div className="grid gap-4 md:grid-cols-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Pending Equipment</CardTitle>
+              <Clock className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.pending}</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Approved</CardTitle>
+              <CheckCircle className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.approved}</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Returned</CardTitle>
+              <PackageCheck className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.returned}</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Pending Rooms</CardTitle>
+              <Building2 className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.roomPending}</div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Main Content */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Approval Management</CardTitle>
+            <CardDescription>
+              Review and process equipment borrowing and room booking requests
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'equipment' | 'room')}>
+              <TabsList className="grid w-full grid-cols-2 mb-4">
+                <TabsTrigger value="equipment">
+                  <Package className="h-4 w-4 mr-2" />
+                  Equipment Borrowing ({stats.pending})
+                </TabsTrigger>
+                <TabsTrigger value="room">
+                  <Building2 className="h-4 w-4 mr-2" />
+                  Room Booking ({stats.roomPending})
+                </TabsTrigger>
+              </TabsList>
+
+              {/* EQUIPMENT BORROWING TAB */}
+              <TabsContent value="equipment" className="space-y-4">
+                {/* Filters */}
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search by name, NIM, or equipment..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-8"
+                    />
+                  </div>
+                  <Select value={statusFilter || undefined} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="w-[180px]">
+                      <Filter className="h-4 w-4 mr-2" />
+                      <SelectValue placeholder="All Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="approved">Approved</SelectItem>
+                      <SelectItem value="rejected">Rejected</SelectItem>
+                      <SelectItem value="returned">Returned</SelectItem>
+                      <SelectItem value="overdue">Overdue</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {statusFilter && (
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setStatusFilter('')}
+                      title="Clear status filter"
+                    >
+                      <XCircle className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+
+                {/* Table */}
+                <div className="rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Borrower</TableHead>
+                        <TableHead>Equipment</TableHead>
+                        <TableHead>Qty</TableHead>
+                        <TableHead>Purpose</TableHead>
+                        <TableHead>Borrow Date</TableHead>
+                        <TableHead>Return Date</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {loading ? (
+                        <TableRow>
+                          <TableCell colSpan={8} className="text-center py-8">
+                            Loading...
+                          </TableCell>
+                        </TableRow>
+                      ) : peminjaman.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={8} className="text-center py-8">
+                            No borrowing requests found
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        peminjaman.map((item) => (
+                          <TableRow key={item.id}>
+                            <TableCell>
+                              <div>
+                                <p className="font-medium">{item.peminjam_nama}</p>
+                                <p className="text-sm text-muted-foreground">{item.peminjam_nim}</p>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div>
+                                <p className="font-medium">{item.inventaris_nama}</p>
+                                <p className="text-sm text-muted-foreground">{item.inventaris_kode}</p>
+                              </div>
+                            </TableCell>
+                            <TableCell>{item.jumlah_pinjam}</TableCell>
+                            <TableCell className="max-w-[200px] truncate">
+                              {item.keperluan}
+                            </TableCell>
+                            <TableCell>
+                              {new Date(item.tanggal_pinjam).toLocaleDateString('id-ID')}
+                            </TableCell>
+                            <TableCell>
+                              {new Date(item.tanggal_kembali_rencana).toLocaleDateString('id-ID')}
+                            </TableCell>
+                            <TableCell>{getStatusBadge(item.status)}</TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex justify-end gap-2">
+                                {item.status === 'pending' && (
+                                  <>
+                                    <Button
+                                      size="sm"
+                                      variant="default"
+                                      onClick={() =>
+                                        setApproveDialog({
+                                          open: true,
+                                          type: 'equipment',
+                                          id: item.id,
+                                          title: `${item.inventaris_nama} - ${item.peminjam_nama}`,
+                                        })
+                                      }
+                                    >
+                                      <CheckCircle className="h-4 w-4 mr-1" />
+                                      Approve
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="destructive"
+                                      onClick={() =>
+                                        setRejectDialog({
+                                          open: true,
+                                          type: 'equipment',
+                                          id: item.id,
+                                          title: `${item.inventaris_nama} - ${item.peminjam_nama}`,
+                                        })
+                                      }
+                                    >
+                                      <XCircle className="h-4 w-4 mr-1" />
+                                      Reject
+                                    </Button>
+                                  </>
+                                )}
+                                {item.status === 'approved' && !item.tanggal_kembali_aktual && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() =>
+                                      setReturnDialog({
+                                        open: true,
+                                        id: item.id,
+                                        title: `${item.inventaris_nama} - ${item.peminjam_nama}`,
+                                      })
+                                    }
+                                  >
+                                    <PackageCheck className="h-4 w-4 mr-1" />
+                                    Mark Returned
+                                  </Button>
+                                )}
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </TabsContent>
+
+              {/* ROOM BOOKING TAB */}
+              <TabsContent value="room" className="space-y-4">
+                <div className="rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Class</TableHead>
+                        <TableHead>Lecturer</TableHead>
+                        <TableHead>Laboratory</TableHead>
+                        <TableHead>Schedule</TableHead>
+                        <TableHead>Topic</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {loading ? (
+                        <TableRow>
+                          <TableCell colSpan={6} className="text-center py-8">
+                            Loading...
+                          </TableCell>
+                        </TableRow>
+                      ) : roomBookings.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={6} className="text-center py-8">
+                            No pending room booking requests
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        roomBookings.map((booking) => (
+                          <TableRow key={booking.id}>
+                            <TableCell>
+                              <div>
+                                <p className="font-medium">{booking.mata_kuliah_nama}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  {booking.kelas_nama}
+                                </p>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div>
+                                <p className="font-medium">{booking.dosen_nama}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  {booking.dosen_nip}
+                                </p>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div>
+                                <p className="font-medium">{booking.laboratorium_nama}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  {booking.laboratorium_kode} (Capacity: {booking.laboratorium_kapasitas})
+                                </p>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div>
+                                <p className="font-medium">
+                                  {booking.hari}, {booking.jam_mulai} - {booking.jam_selesai}
+                                </p>
+                                {booking.tanggal_praktikum && (
+                                  <p className="text-sm text-muted-foreground">
+                                    {new Date(booking.tanggal_praktikum).toLocaleDateString('id-ID')}
+                                  </p>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell>{booking.topik || '-'}</TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex justify-end gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="default"
+                                  onClick={() =>
+                                    setApproveDialog({
+                                      open: true,
+                                      type: 'room',
+                                      id: booking.id,
+                                      title: `${booking.laboratorium_nama} - ${booking.mata_kuliah_nama}`,
+                                    })
+                                  }
+                                >
+                                  <CheckCircle className="h-4 w-4 mr-1" />
+                                  Approve
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() =>
+                                    setRejectDialog({
+                                      open: true,
+                                      type: 'room',
+                                      id: booking.id,
+                                      title: `${booking.laboratorium_nama} - ${booking.mata_kuliah_nama}`,
+                                    })
+                                  }
+                                >
+                                  <XCircle className="h-4 w-4 mr-1" />
+                                  Reject
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Approve Dialog */}
+      <Dialog open={approveDialog.open} onOpenChange={(open) => setApproveDialog({ ...approveDialog, open })}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Approve Request</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to approve this{' '}
+              {approveDialog.type === 'equipment' ? 'equipment borrowing' : 'room booking'} request?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="font-medium">{approveDialog.title}</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setApproveDialog({ ...approveDialog, open: false })}>
+              Cancel
+            </Button>
+            <Button onClick={handleApprove}>
+              <CheckCircle className="h-4 w-4 mr-2" />
+              Approve
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reject Dialog */}
+      <Dialog open={rejectDialog.open} onOpenChange={(open) => setRejectDialog({ ...rejectDialog, open })}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reject Request</DialogTitle>
+            <DialogDescription>
+              Please provide a reason for rejecting this{' '}
+              {rejectDialog.type === 'equipment' ? 'equipment borrowing' : 'room booking'} request.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <p className="font-medium">{rejectDialog.title}</p>
+            <div className="space-y-2">
+              <Label htmlFor="rejection-reason">Rejection Reason *</Label>
+              <Textarea
+                id="rejection-reason"
+                placeholder="Enter rejection reason..."
+                value={rejectionReason}
+                onChange={(e) => setRejectionReason(e.target.value)}
+                rows={4}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRejectDialog({ ...rejectDialog, open: false })}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleReject}>
+              <XCircle className="h-4 w-4 mr-2" />
+              Reject
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Return Dialog */}
+      <Dialog open={returnDialog.open} onOpenChange={(open) => setReturnDialog({ ...returnDialog, open })}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Mark as Returned</DialogTitle>
+            <DialogDescription>Record the return of borrowed equipment</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <p className="font-medium">{returnDialog.title}</p>
+            <div className="space-y-2">
+              <Label htmlFor="return-condition">Condition *</Label>
+              <Select
+                value={returnData.kondisi}
+                onValueChange={(value) => setReturnData({ ...returnData, kondisi: value as typeof returnData.kondisi })}
+              >
+                <SelectTrigger id="return-condition">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="baik">Good (Baik)</SelectItem>
+                  <SelectItem value="rusak_ringan">Minor Damage (Rusak Ringan)</SelectItem>
+                  <SelectItem value="rusak_berat">Major Damage (Rusak Berat)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="return-notes">Notes</Label>
+              <Textarea
+                id="return-notes"
+                placeholder="Any notes about the returned item..."
+                value={returnData.keterangan}
+                onChange={(e) => setReturnData({ ...returnData, keterangan: e.target.value })}
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setReturnDialog({ ...returnDialog, open: false })}>
+              Cancel
+            </Button>
+            <Button onClick={handleReturn}>
+              <PackageCheck className="h-4 w-4 mr-2" />
+              Mark as Returned
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </AppLayout>
+  );
+};
+
+export default PeminjamanPage;

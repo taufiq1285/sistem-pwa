@@ -62,7 +62,8 @@ export default function KelasMataKuliahPage() {
       const [kelasResponse, mkResponse] = await Promise.all([
         supabase
           .from("kelas")
-          .select(`
+          .select(
+            `
             *,
             mata_kuliah (
               id,
@@ -70,7 +71,8 @@ export default function KelasMataKuliahPage() {
               kode_mk,
               sks
             )
-          `)
+          `,
+          )
           .eq("is_active", true)
           .order("nama_kelas"),
         supabase
@@ -83,7 +85,7 @@ export default function KelasMataKuliahPage() {
       if (kelasResponse.error) throw kelasResponse.error;
       if (mkResponse.error) throw mkResponse.error;
 
-      setKelasList(kelasResponse.data || []);
+      setKelasList((kelasResponse.data || []) as any);
       setMataKuliahList(mkResponse.data || []);
     } catch (error: any) {
       console.error("Error loading data:", error);
@@ -97,10 +99,12 @@ export default function KelasMataKuliahPage() {
     try {
       setSaving(true);
 
-      const updatesArray = Object.entries(updates).map(([kelasId, mataKuliahId]) => ({
-        id: kelasId,
-        mata_kuliah_id: mataKuliahId === "null" ? null : mataKuliahId,
-      }));
+      const updatesArray = Object.entries(updates).map(
+        ([kelasId, mataKuliahId]) => ({
+          id: kelasId,
+          mata_kuliah_id: mataKuliahId === "null" ? null : mataKuliahId,
+        }),
+      );
 
       if (updatesArray.length === 0) {
         toast.info("Tidak ada perubahan untuk disimpan");
@@ -131,7 +135,7 @@ export default function KelasMataKuliahPage() {
     }
   }
 
-  const kelasWithoutMK = kelasList.filter(k => !k.mata_kuliah_id);
+  const kelasWithoutMK = kelasList.filter((k) => !k.mata_kuliah_id);
   const hasChanges = Object.keys(updates).length > 0;
 
   if (loading) {
@@ -145,7 +149,9 @@ export default function KelasMataKuliahPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Assign Mata Kuliah ke Kelas</h1>
+        <h1 className="text-3xl font-bold tracking-tight">
+          Assign Mata Kuliah ke Kelas
+        </h1>
         <p className="text-muted-foreground">
           Atur mata kuliah untuk kelas yang belum memiliki mata kuliah
         </p>
@@ -188,8 +194,9 @@ export default function KelasMataKuliahPage() {
         <Alert>
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            Terdapat {kelasWithoutMK.length} kelas yang belum memiliki mata kuliah.
-            Pilih mata kuliah yang sesuai untuk setiap kelas, lalu klik Simpan.
+            Terdapat {kelasWithoutMK.length} kelas yang belum memiliki mata
+            kuliah. Pilih mata kuliah yang sesuai untuk setiap kelas, lalu klik
+            Simpan.
           </AlertDescription>
         </Alert>
       )}
@@ -247,9 +254,12 @@ export default function KelasMataKuliahPage() {
                     <TableCell>
                       {kelas.mata_kuliah ? (
                         <div>
-                          <div className="font-medium">{kelas.mata_kuliah.nama_mk}</div>
+                          <div className="font-medium">
+                            {kelas.mata_kuliah.nama_mk}
+                          </div>
                           <div className="text-sm text-muted-foreground">
-                            {kelas.mata_kuliah.kode_mk} ({kelas.mata_kuliah.sks} SKS)
+                            {kelas.mata_kuliah.kode_mk} ({kelas.mata_kuliah.sks}{" "}
+                            SKS)
                           </div>
                         </div>
                       ) : (
@@ -260,9 +270,9 @@ export default function KelasMataKuliahPage() {
                       <Select
                         value={updates[kelas.id] || ""}
                         onValueChange={(value) => {
-                          setUpdates(prev => ({
+                          setUpdates((prev) => ({
                             ...prev,
-                            [kelas.id]: value
+                            [kelas.id]: value,
                           }));
                         }}
                       >
@@ -308,7 +318,7 @@ SELECT id, nama_mk FROM mata_kuliah WHERE is_active = true;
 -- Then update kelas
 UPDATE kelas
 SET mata_kuliah_id = 'YOUR_MATA_KULIAH_ID'
-WHERE mata_kuliah_id IS NULL;`
+WHERE mata_kuliah_id IS NULL;`,
               );
               toast.success("SQL script copied to clipboard!");
             }}

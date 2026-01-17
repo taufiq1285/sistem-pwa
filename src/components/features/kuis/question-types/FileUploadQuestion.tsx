@@ -133,7 +133,7 @@ export function validateFileUploadSettings(settings: FileUploadSettings): {
 // ============================================================================
 
 export function getAcceptString(
-  types: FileUploadSettings["acceptedTypes"]
+  types: FileUploadSettings["acceptedTypes"],
 ): string {
   const accepts: string[] = [];
 
@@ -145,7 +145,7 @@ export function getAcceptString(
       ".doc",
       ".docx",
       "application/msword",
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     );
   }
   if (types.image) {
@@ -175,7 +175,7 @@ export function FileUploadQuestion({
 
   const updateAcceptedType = (
     type: keyof FileUploadSettings["acceptedTypes"],
-    checked: boolean
+    checked: boolean,
   ) => {
     onChange({
       ...settings,
@@ -216,7 +216,7 @@ export function FileUploadQuestion({
           value={settings.instructions}
           onChange={(e) => updateSettings({ instructions: e.target.value })}
           className={cn(
-            showErrors && !settings.instructions.trim() && "border-destructive"
+            showErrors && !settings.instructions.trim() && "border-destructive",
           )}
         />
         <p className="text-xs text-muted-foreground">
@@ -238,7 +238,7 @@ export function FileUploadQuestion({
               "flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors",
               settings.acceptedTypes.pdf
                 ? "bg-red-50 border-red-200"
-                : "hover:bg-muted/50"
+                : "hover:bg-muted/50",
             )}
           >
             <Checkbox
@@ -259,7 +259,7 @@ export function FileUploadQuestion({
               "flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors",
               settings.acceptedTypes.word
                 ? "bg-blue-50 border-blue-200"
-                : "hover:bg-muted/50"
+                : "hover:bg-muted/50",
             )}
           >
             <Checkbox
@@ -280,7 +280,7 @@ export function FileUploadQuestion({
               "flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors",
               settings.acceptedTypes.image
                 ? "bg-green-50 border-green-200"
-                : "hover:bg-muted/50"
+                : "hover:bg-muted/50",
             )}
           >
             <Checkbox
@@ -301,7 +301,7 @@ export function FileUploadQuestion({
               "flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors",
               settings.acceptedTypes.zip
                 ? "bg-yellow-50 border-yellow-200"
-                : "hover:bg-muted/50"
+                : "hover:bg-muted/50",
             )}
           >
             <Checkbox
@@ -343,7 +343,7 @@ export function FileUploadQuestion({
             className={cn(
               showErrors &&
                 (settings.maxSizeMB < 1 || settings.maxSizeMB > 20) &&
-                "border-destructive"
+                "border-destructive",
             )}
           />
           <p className="text-xs text-muted-foreground">Maksimal 20 MB</p>

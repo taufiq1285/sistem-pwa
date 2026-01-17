@@ -21,7 +21,14 @@ import {
   calculateDuration,
   parseCreateJadwalForm,
   safeParseCreateJadwal,
-} from "../../../lib/validations/Jadwal.schema ";
+} from "../../../lib/validations/jadwal.schema";
+
+const futureDate = (daysFromNow = 30) => {
+  const date = new Date();
+  date.setHours(0, 0, 0, 0);
+  date.setDate(date.getDate() + daysFromNow);
+  return date;
+};
 
 describe("Jadwal Schema Validation", () => {
   describe("jadwalSchema - Valid Cases", () => {
@@ -29,7 +36,7 @@ describe("Jadwal Schema Validation", () => {
       const validData = {
         kelas: "A",
         laboratorium_id: "123e4567-e89b-12d3-a456-426614174000",
-        tanggal_praktikum: new Date("2025-12-31"),
+        tanggal_praktikum: futureDate(),
         jam_mulai: "08:00",
         jam_selesai: "10:00",
         topik: "Praktikum ANC: Pemeriksaan Leopold I-IV",
@@ -45,7 +52,7 @@ describe("Jadwal Schema Validation", () => {
       const data = {
         kelas: "A-1",
         laboratorium_id: "123e4567-e89b-12d3-a456-426614174000",
-        tanggal_praktikum: new Date("2025-12-31"),
+        tanggal_praktikum: futureDate(),
         jam_mulai: "08:00",
         jam_selesai: "10:00",
       };
@@ -58,7 +65,7 @@ describe("Jadwal Schema Validation", () => {
       const data = {
         kelas: "A",
         laboratorium_id: "123e4567-e89b-12d3-a456-426614174000",
-        tanggal_praktikum: new Date("2025-12-31"),
+        tanggal_praktikum: futureDate(),
         jam_mulai: "08:00",
         jam_selesai: "08:30",
       };
@@ -71,7 +78,7 @@ describe("Jadwal Schema Validation", () => {
       const data = {
         kelas: "A",
         laboratorium_id: "123e4567-e89b-12d3-a456-426614174000",
-        tanggal_praktikum: new Date("2025-12-31"),
+        tanggal_praktikum: futureDate(),
         jam_mulai: "08:00",
         jam_selesai: "10:00",
         topik: "1234567890", // Exactly 10 chars
@@ -85,7 +92,7 @@ describe("Jadwal Schema Validation", () => {
       const data = {
         kelas: "A",
         laboratorium_id: "123e4567-e89b-12d3-a456-426614174000",
-        tanggal_praktikum: new Date("2025-12-31"),
+        tanggal_praktikum: futureDate(),
         jam_mulai: "08:00",
         jam_selesai: "10:00",
         topik: "",
@@ -101,7 +108,7 @@ describe("Jadwal Schema Validation", () => {
       const data = {
         kelas: "a",
         laboratorium_id: "123e4567-e89b-12d3-a456-426614174000",
-        tanggal_praktikum: new Date("2025-12-31"),
+        tanggal_praktikum: futureDate(),
         jam_mulai: "08:00",
         jam_selesai: "10:00",
       };
@@ -117,7 +124,7 @@ describe("Jadwal Schema Validation", () => {
       const data = {
         kelas: "ABCDEFGHIJK",
         laboratorium_id: "123e4567-e89b-12d3-a456-426614174000",
-        tanggal_praktikum: new Date("2025-12-31"),
+        tanggal_praktikum: futureDate(),
         jam_mulai: "08:00",
         jam_selesai: "10:00",
       };
@@ -130,7 +137,7 @@ describe("Jadwal Schema Validation", () => {
       const data = {
         kelas: "A",
         laboratorium_id: "invalid-uuid",
-        tanggal_praktikum: new Date("2025-12-31"),
+        tanggal_praktikum: futureDate(),
         jam_mulai: "08:00",
         jam_selesai: "10:00",
       };
@@ -160,7 +167,7 @@ describe("Jadwal Schema Validation", () => {
       const data = {
         kelas: "A",
         laboratorium_id: "123e4567-e89b-12d3-a456-426614174000",
-        tanggal_praktikum: new Date("2025-12-31"),
+        tanggal_praktikum: futureDate(),
         jam_mulai: "25:00", // Invalid hour
         jam_selesai: "10:00",
       };
@@ -176,7 +183,7 @@ describe("Jadwal Schema Validation", () => {
       const data = {
         kelas: "A",
         laboratorium_id: "123e4567-e89b-12d3-a456-426614174000",
-        tanggal_praktikum: new Date("2025-12-31"),
+        tanggal_praktikum: futureDate(),
         jam_mulai: "10:00",
         jam_selesai: "08:00",
       };
@@ -192,7 +199,7 @@ describe("Jadwal Schema Validation", () => {
       const data = {
         kelas: "A",
         laboratorium_id: "123e4567-e89b-12d3-a456-426614174000",
-        tanggal_praktikum: new Date("2025-12-31"),
+        tanggal_praktikum: futureDate(),
         jam_mulai: "08:00",
         jam_selesai: "08:29", // Only 29 minutes
       };
@@ -208,7 +215,7 @@ describe("Jadwal Schema Validation", () => {
       const data = {
         kelas: "A",
         laboratorium_id: "123e4567-e89b-12d3-a456-426614174000",
-        tanggal_praktikum: new Date("2025-12-31"),
+        tanggal_praktikum: futureDate(),
         jam_mulai: "08:00",
         jam_selesai: "10:00",
         topik: "Short", // Only 5 chars
@@ -225,7 +232,7 @@ describe("Jadwal Schema Validation", () => {
       const data = {
         kelas: "A",
         laboratorium_id: "123e4567-e89b-12d3-a456-426614174000",
-        tanggal_praktikum: new Date("2025-12-31"),
+        tanggal_praktikum: futureDate(),
         jam_mulai: "08:00",
         jam_selesai: "10:00",
         topik: "A".repeat(201),
@@ -239,7 +246,7 @@ describe("Jadwal Schema Validation", () => {
       const data = {
         kelas: "A",
         laboratorium_id: "123e4567-e89b-12d3-a456-426614174000",
-        tanggal_praktikum: new Date("2025-12-31"),
+        tanggal_praktikum: futureDate(),
         jam_mulai: "08:00",
         jam_selesai: "10:00",
         catatan: "A".repeat(501),
@@ -304,7 +311,7 @@ describe("Jadwal Schema Validation", () => {
     it("should accept valid conflict check data", () => {
       const data = {
         laboratorium_id: "123e4567-e89b-12d3-a456-426614174000",
-        tanggal_praktikum: new Date("2025-12-31"),
+        tanggal_praktikum: futureDate(),
         jam_mulai: "08:00",
         jam_selesai: "10:00",
       };
@@ -316,7 +323,7 @@ describe("Jadwal Schema Validation", () => {
     it("should accept exclude_id for update operations", () => {
       const data = {
         laboratorium_id: "123e4567-e89b-12d3-a456-426614174000",
-        tanggal_praktikum: new Date("2025-12-31"),
+        tanggal_praktikum: futureDate(),
         jam_mulai: "08:00",
         jam_selesai: "10:00",
         exclude_id: "123e4567-e89b-12d3-a456-426614174001",
@@ -380,7 +387,7 @@ describe("Jadwal Schema Validation", () => {
         const data = {
           kelas: "A",
           laboratorium_id: "123e4567-e89b-12d3-a456-426614174000",
-          tanggal_praktikum: new Date("2025-12-31"),
+          tanggal_praktikum: futureDate(),
           jam_mulai: "08:00",
           jam_selesai: "10:00",
         };
@@ -402,7 +409,7 @@ describe("Jadwal Schema Validation", () => {
         const data = {
           kelas: "A",
           laboratorium_id: "123e4567-e89b-12d3-a456-426614174000",
-          tanggal_praktikum: new Date("2025-12-31"),
+          tanggal_praktikum: futureDate(),
           jam_mulai: "08:00",
           jam_selesai: "10:00",
         };

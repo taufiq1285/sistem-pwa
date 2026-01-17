@@ -77,6 +77,8 @@ interface KelasWithAssignment {
   tahun_ajaran: string;
   semester_ajaran: number;
   is_active: boolean;
+  dosen_id?: string | null;
+  mata_kuliah_id?: string | null;
   mata_kuliah?: {
     id: string;
     nama_mk: string;
@@ -136,7 +138,8 @@ export default function AcademicAssignmentPage() {
 
   // Edit dialog
   const [isEditOpen, setIsEditOpen] = useState(false);
-  const [selectedKelas, setSelectedKelas] = useState<KelasWithAssignment | null>(null);
+  const [selectedKelas, setSelectedKelas] =
+    useState<KelasWithAssignment | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -145,7 +148,13 @@ export default function AcademicAssignmentPage() {
 
   useEffect(() => {
     applyFilters();
-  }, [kelasList, filterDosen, filterMataKuliah, filterTahunAjaran, searchQuery]);
+  }, [
+    kelasList,
+    filterDosen,
+    filterMataKuliah,
+    filterTahunAjaran,
+    searchQuery,
+  ]);
 
   async function loadData() {
     try {
@@ -154,7 +163,8 @@ export default function AcademicAssignmentPage() {
       const [kelasResponse, dosenResponse, mkResponse] = await Promise.all([
         supabase
           .from("kelas")
-          .select(`
+          .select(
+            `
             *,
             mata_kuliah:mata_kuliah_id (
               id,
@@ -171,13 +181,15 @@ export default function AcademicAssignmentPage() {
                 email
               )
             )
-          `)
+          `,
+          )
           .eq("is_active", true)
           .order("tahun_ajaran", { ascending: false })
           .order("nama_kelas"),
         supabase
           .from("dosen")
-          .select(`
+          .select(
+            `
             id,
             nip,
             users:user_id (
@@ -185,7 +197,8 @@ export default function AcademicAssignmentPage() {
               full_name,
               email
             )
-          `)
+          `,
+          )
           .order("users(full_name)"),
         supabase
           .from("mata_kuliah")
@@ -207,7 +220,7 @@ export default function AcademicAssignmentPage() {
           email: d.users?.email || "",
           nip: d.nip,
           is_active: true,
-        }))
+        })),
       );
       setMataKuliahList(mkResponse.data || []);
 
@@ -234,12 +247,16 @@ export default function AcademicAssignmentPage() {
 
     // Filter by mata kuliah
     if (filterMataKuliah !== "all") {
-      filtered = filtered.filter((kelas) => kelas.mata_kuliah?.id === filterMataKuliah);
+      filtered = filtered.filter(
+        (kelas) => kelas.mata_kuliah?.id === filterMataKuliah,
+      );
     }
 
     // Filter by tahun ajaran
     if (filterTahunAjaran !== "all") {
-      filtered = filtered.filter((kelas) => kelas.tahun_ajaran === filterTahunAjaran);
+      filtered = filtered.filter(
+        (kelas) => kelas.tahun_ajaran === filterTahunAjaran,
+      );
     }
 
     // Search filter
@@ -250,7 +267,7 @@ export default function AcademicAssignmentPage() {
           kelas.nama_kelas.toLowerCase().includes(searchLower) ||
           kelas.kode_kelas.toLowerCase().includes(searchLower) ||
           kelas.dosen?.users?.full_name?.toLowerCase().includes(searchLower) ||
-          kelas.mata_kuliah?.nama_mk?.toLowerCase().includes(searchLower)
+          kelas.mata_kuliah?.nama_mk?.toLowerCase().includes(searchLower),
       );
     }
 
@@ -323,7 +340,8 @@ export default function AcademicAssignmentPage() {
       <div>
         <h1 className="text-3xl font-bold">Assignment Dosen Akademik</h1>
         <p className="text-gray-600">
-          Monitor dan kelola assignment dosen untuk mata kuliah dan kelas (bukan praktikum)
+          Monitor dan kelola assignment dosen untuk mata kuliah dan kelas (bukan
+          praktikum)
         </p>
       </div>
 
@@ -331,7 +349,9 @@ export default function AcademicAssignmentPage() {
       <div className="grid grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total Kelas Aktif</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Total Kelas Aktif
+            </CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -350,7 +370,12 @@ export default function AcademicAssignmentPage() {
           <CardContent>
             <div className="text-2xl font-bold">{dosenList.length}</div>
             <p className="text-xs text-muted-foreground">
-              {dosenList.filter((d) => kelasList.some((k) => k.dosen_id === d.id)).length} mengajar
+              {
+                dosenList.filter((d) =>
+                  kelasList.some((k) => k.dosen_id === d.id),
+                ).length
+              }{" "}
+              mengajar
             </p>
           </CardContent>
         </Card>
@@ -363,14 +388,21 @@ export default function AcademicAssignmentPage() {
           <CardContent>
             <div className="text-2xl font-bold">{mataKuliahList.length}</div>
             <p className="text-xs text-muted-foreground">
-              {mataKuliahList.filter((mk) => kelasList.some((k) => k.mata_kuliah_id === mk.id)).length} diajarkan
+              {
+                mataKuliahList.filter((mk) =>
+                  kelasList.some((k) => k.mata_kuliah_id === mk.id),
+                ).length
+              }{" "}
+              diajarkan
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Assignment Complete</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Assignment Complete
+            </CardTitle>
             <CheckCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -379,8 +411,12 @@ export default function AcademicAssignmentPage() {
             </div>
             <p className="text-xs text-muted-foreground">
               {Math.round(
-                (kelasList.filter((k) => k.dosen_id && k.mata_kuliah_id).length / kelasList.length) * 100
-              )}% dari total
+                (kelasList.filter((k) => k.dosen_id && k.mata_kuliah_id)
+                  .length /
+                  kelasList.length) *
+                  100,
+              )}
+              % dari total
             </p>
           </CardContent>
         </Card>
@@ -398,7 +434,8 @@ export default function AcademicAssignmentPage() {
                 <div key={tahunAjaran} className="text-sm">
                   <div className="font-medium">{tahunAjaran}</div>
                   <div className="text-gray-600">
-                    {stats.total} kelas, {stats.withDosen} dengan dosen, {stats.withMataKuliah} dengan mata kuliah
+                    {stats.total} kelas, {stats.withDosen} dengan dosen,{" "}
+                    {stats.withMataKuliah} dengan mata kuliah
                   </div>
                 </div>
               ))}
@@ -416,10 +453,7 @@ export default function AcademicAssignmentPage() {
           <div className="grid grid-cols-4 gap-4">
             <div>
               <Label>Dosen</Label>
-              <Select
-                value={filterDosen}
-                onValueChange={setFilterDosen}
-              >
+              <Select value={filterDosen} onValueChange={setFilterDosen}>
                 <SelectTrigger>
                   <SelectValue placeholder="Semua Dosen" />
                 </SelectTrigger>
@@ -523,16 +557,20 @@ export default function AcademicAssignmentPage() {
                     <TableCell>
                       <div>
                         <div className="font-medium">{kelas.nama_kelas}</div>
-                        <div className="text-xs text-gray-500">{kelas.kode_kelas}</div>
+                        <div className="text-xs text-gray-500">
+                          {kelas.kode_kelas}
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div>
                         <div className="font-medium">
-                          {kelas.mata_kuliah?.nama_mk || "Belum ada mata kuliah"}
+                          {kelas.mata_kuliah?.nama_mk ||
+                            "Belum ada mata kuliah"}
                         </div>
                         <div className="text-xs text-gray-500">
-                          {kelas.mata_kuliah?.kode_mk || "-"} • {kelas.mata_kuliah?.sks || 0} SKS
+                          {kelas.mata_kuliah?.kode_mk || "-"} •{" "}
+                          {kelas.mata_kuliah?.sks || 0} SKS
                         </div>
                       </div>
                     </TableCell>
@@ -559,12 +597,18 @@ export default function AcademicAssignmentPage() {
                         <Badge
                           variant={kelas.dosen_id ? "default" : "secondary"}
                         >
-                          {kelas.dosen_id ? "Dosen Assigned" : "Belum ada Dosen"}
+                          {kelas.dosen_id
+                            ? "Dosen Assigned"
+                            : "Belum ada Dosen"}
                         </Badge>
                         <Badge
-                          variant={kelas.mata_kuliah_id ? "default" : "secondary"}
+                          variant={
+                            kelas.mata_kuliah_id ? "default" : "secondary"
+                          }
                         >
-                          {kelas.mata_kuliah_id ? "Mata Kuliah Set" : "Belum ada MK"}
+                          {kelas.mata_kuliah_id
+                            ? "Mata Kuliah Set"
+                            : "Belum ada MK"}
                         </Badge>
                       </div>
                     </TableCell>
@@ -597,15 +641,17 @@ export default function AcademicAssignmentPage() {
           </DialogHeader>
 
           {selectedKelas && (
-            <form onSubmit={(e) => {
-              e.preventDefault();
-              const formData = new FormData(e.currentTarget);
-              handleEditSubmit({
-                dosen_id: formData.get("dosen_id") as string,
-                mata_kuliah_id: formData.get("mata_kuliah_id") as string,
-                catatan: formData.get("catatan") as string,
-              });
-            }}>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const formData = new FormData(e.currentTarget);
+                handleEditSubmit({
+                  dosen_id: formData.get("dosen_id") as string,
+                  mata_kuliah_id: formData.get("mata_kuliah_id") as string,
+                  catatan: formData.get("catatan") as string,
+                });
+              }}
+            >
               <div className="space-y-4">
                 <div>
                   <Label htmlFor="dosen_id">Dosen Pengajar</Label>
@@ -652,7 +698,7 @@ export default function AcademicAssignmentPage() {
                   <Textarea
                     name="catatan"
                     placeholder="Tambahkan catatan untuk perubahan ini..."
-                    defaultValue={selectedKelas.catatan || ""}
+                    defaultValue=""
                   />
                 </div>
               </div>
@@ -666,7 +712,9 @@ export default function AcademicAssignmentPage() {
                   Batal
                 </Button>
                 <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {isSubmitting && (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  )}
                   Simpan Perubahan
                 </Button>
               </DialogFooter>

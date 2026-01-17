@@ -110,16 +110,6 @@ export function QuizBuilder({
   const [mataKuliahList, setMataKuliahList] = useState<MataKuliah[]>([]);
   const [selectedMataKuliah, setSelectedMataKuliah] = useState<string>("");
 
-  const [showCreateKelasDialog, setShowCreateKelasDialog] = useState(false);
-  const [isCreatingKelas, setIsCreatingKelas] = useState(false);
-  const [newKelasData, setNewKelasData] = useState({
-    nama_kelas: "",
-    mata_kuliah_id: "", // DROPDOWN, bukan text input
-    semester_ajaran: 1,
-    tahun_ajaran:
-      new Date().getFullYear() + "/" + (new Date().getFullYear() + 1),
-  });
-
   // Helper to convert ISO date to datetime-local format (kept for editing if needed later)
   const formatDateTimeLocal = (isoString: string) => {
     const date = new Date(isoString);
@@ -144,9 +134,9 @@ export function QuizBuilder({
           dosen_id: quiz.dosen_id,
           judul: quiz.judul,
           deskripsi: quiz.deskripsi || "",
-          durasi_menit: quiz.durasi_menit,
+          durasi_menit: quiz.durasi_menit || (laporanMode ? 10080 : 60),
           passing_score: quiz.passing_score ?? null,
-          max_attempts: quiz.max_attempts ?? null,
+          max_attempts: 1, // Fixed: always 1 attempt
           randomize_questions: quiz.randomize_questions ?? false,
           randomize_options: quiz.randomize_options ?? false,
           show_results_immediately: quiz.show_results_immediately ?? true,
@@ -157,7 +147,8 @@ export function QuizBuilder({
           dosen_id: dosenId,
           judul: "",
           deskripsi: "",
-          durasi_menit: 60,
+          // Laporan: 1 minggu (10080 menit), CBT: 60 menit
+          durasi_menit: laporanMode ? 10080 : 60,
           passing_score: 70,
           max_attempts: 1,
           randomize_questions: false,
@@ -171,37 +162,61 @@ export function QuizBuilder({
 
   useEffect(() => {
     loadMataKuliah();
-    // If editing, load kelas for the quiz's mata kuliah
-    if (quiz?.kelas?.mata_kuliah_id) {
-      setSelectedMataKuliah(quiz.kelas.mata_kuliah_id);
-      loadKelas(quiz.kelas.mata_kuliah_id);
-    }
+    // FIXED: Load ALL global kelas (not tied to mata kuliah)
+    loadKelas();
   }, [dosenId]);
 
-  // Load kelas when mata kuliah changes
+  // Load kelas when mata kuliah changes (for display purposes only)
   useEffect(() => {
     if (selectedMataKuliah) {
-      loadKelas(selectedMataKuliah);
+      // Kelas bersifat GLOBAL, tidak perlu reload berdasarkan MK
       // Reset kelas selection when mata kuliah changes
       setValue("kelas_id", "");
-    } else {
-      setKelasList([]);
     }
   }, [selectedMataKuliah]);
 
   const loadKelas = async (mataKuliahId?: string) => {
     setIsLoadingKelas(true);
     try {
-      // Load ALL active kelas (not limited to those with jadwal)
-      // Dosen can create tugas before jadwal is created
+      console.log(
+        "🔍 Loading ALL active kelas (global, not tied to mata_kuliah)",
+      );
+
+      // FIXED: Load ALL active kelas (GLOBAL - tidak terikat mata kuliah)
+      // Kelas dibuat UMUM oleh admin, tidak perlu filter by mata_kuliah_id
       const data = await getKelas({
         is_active: true,
-        mata_kuliah_id: mataKuliahId,
+        // REMOVED: mata_kuliah_id filter - kelas bersifat GLOBAL
       });
+
+      console.log("✅ Kelas loaded:", data.length, "kelas found");
+      console.log(
+        "📋 Kelas list:",
+        data.map((k) => ({
+          id: k.id,
+          nama: k.nama_kelas,
+          kode: k.kode_kelas,
+          global: true,
+        })),
+      );
+
       setKelasList(data);
-      if (data.length === 1 && !isEditing && mataKuliahId) setValue("kelas_id", data[0].id);
-    } catch (_error: unknown) {
-      // ✅ FIXED: Unused variable
+
+      // Auto-select if only one kelas available
+      if (data.length === 1 && !isEditing) {
+        setValue("kelas_id", data[0].id);
+        console.log("🎯 Auto-selected kelas:", data[0].nama_kelas);
+      }
+
+      // Show warning if no kelas found
+      if (data.length === 0) {
+        console.warn("⚠️ No kelas found in database");
+        toast.warning("Belum ada kelas", {
+          description: "Kelas bersifat UMUM dan dibuat oleh Admin",
+        });
+      }
+    } catch (error: unknown) {
+      console.error("❌ Error loading kelas:", error);
       toast.error("Gagal memuat kelas");
     } finally {
       setIsLoadingKelas(false);
@@ -218,50 +233,7 @@ export function QuizBuilder({
     }
   };
 
-  const handleQuickCreateKelas = async () => {
-    if (!newKelasData.nama_kelas.trim() || !newKelasData.mata_kuliah_id) {
-      toast.error("Pilih mata kuliah dan isi nama kelas");
-      return;
-    }
-
-    setIsCreatingKelas(true);
-
-    try {
-      const kodeKelas = newKelasData.nama_kelas
-        .toUpperCase()
-        .replace(/\s+/g, "-");
-
-      const kelas = await createKelas({
-        nama_kelas: newKelasData.nama_kelas,
-        kode_kelas: kodeKelas,
-        mata_kuliah_id: newKelasData.mata_kuliah_id,
-        dosen_id: dosenId,
-        semester_ajaran: parseInt(String(newKelasData.semester_ajaran)),
-        tahun_ajaran: newKelasData.tahun_ajaran,
-        is_active: true,
-      });
-
-      toast.success("Kelas berhasil dibuat!");
-      await loadKelas();
-      setValue("kelas_id", kelas.id);
-      setShowCreateKelasDialog(false);
-
-      setNewKelasData({
-        nama_kelas: "",
-        mata_kuliah_id: "",
-        semester_ajaran: 1,
-        tahun_ajaran:
-          new Date().getFullYear() + "/" + (new Date().getFullYear() + 1),
-      });
-    } catch (_error: unknown) {
-      // ✅ FIXED: Unused variable
-      toast.error("Gagal membuat kelas", {
-        description: (_error as Error).message,
-      });
-    } finally {
-      setIsCreatingKelas(false);
-    }
-  };
+  // REMOVED: handleQuickCreateKelas - Kelas dibuat oleh admin, dosen hanya memilih
 
   // ✅ NEW: Explicit save quiz info button handler
   const handleSaveQuizInfo = async () => {
@@ -276,7 +248,8 @@ export function QuizBuilder({
       toast.error("Pilih kelas terlebih dahulu");
       return;
     }
-    if (!formData.durasi_menit || formData.durasi_menit < 5) {
+    // Skip durasi validation for laporan (no time limit needed)
+    if (!laporanMode && (!formData.durasi_menit || formData.durasi_menit < 5)) {
       toast.error("Durasi minimal 5 menit");
       return;
     }
@@ -337,7 +310,7 @@ export function QuizBuilder({
     }
 
     const confirmed = confirm(
-      "Yakin ingin publish tugas ini? Mahasiswa akan bisa mengerjakan tugas ini."
+      "Yakin ingin publish tugas ini? Mahasiswa akan bisa mengerjakan tugas ini.",
     );
     console.log("🔵 User confirmed:", confirmed);
 
@@ -353,7 +326,7 @@ export function QuizBuilder({
       console.log("✅ Updated quiz:", updated);
       setCurrentQuiz(updated);
       toast.success(
-        "Tugas berhasil dipublish! Mahasiswa sekarang bisa mengerjakan tugas ini."
+        "Tugas berhasil dipublish! Mahasiswa sekarang bisa mengerjakan tugas ini.",
       );
     } catch (error) {
       console.error("❌ Error publishing quiz:", error);
@@ -390,7 +363,7 @@ export function QuizBuilder({
         // Update existing question
         savedQuestion = await updateSoal(editorState.question.id, questionData);
         setQuestions((prev) =>
-          prev.map((q) => (q.id === savedQuestion.id ? savedQuestion : q))
+          prev.map((q) => (q.id === savedQuestion.id ? savedQuestion : q)),
         );
         toast.success("Soal berhasil diperbarui");
       } else {
@@ -442,6 +415,7 @@ export function QuizBuilder({
     return (
       <QuestionEditor
         kuisId={currentQuiz!.id}
+        dosenId={dosenId}
         question={editorState.question}
         urutan={(editorState.index || 0) + 1}
         defaultPoin={1}
@@ -466,15 +440,15 @@ export function QuizBuilder({
             <h2 className="font-semibold text-lg">
               {isEditing
                 ? laporanMode
-                  ? "Edit Laporan"
+                  ? "Edit Tugas Laporan"
                   : "Edit Tes CBT"
                 : laporanMode
-                  ? "Buat Laporan"
+                  ? "Buat Tugas Laporan"
                   : "Buat Tes CBT"}
             </h2>
             <p className="text-sm text-muted-foreground">
               {laporanMode
-                ? "Laporan Praktikum - Essay / Upload"
+                ? "Tugas Praktikum - Essay / Upload File"
                 : "Computer Based Test - Pilihan Ganda"}
             </p>
           </div>
@@ -594,16 +568,52 @@ export function QuizBuilder({
                     {errors.kelas_id.message}
                   </p>
                 )}
+
+                {/* Info jika tidak ada kelas */}
+                {selectedMataKuliah &&
+                  !isLoadingKelas &&
+                  kelasList.length === 0 && (
+                    <Alert className="bg-orange-50 border-orange-200">
+                      <AlertCircle className="h-4 w-4 text-orange-600" />
+                      <AlertDescription className="text-orange-900">
+                        <p className="font-semibold mb-2">
+                          Belum ada kelas untuk mata kuliah ini
+                        </p>
+                        <p className="text-sm mb-3">
+                          Kelas bersifat <strong>UMUM</strong> dan dibuat oleh{" "}
+                          <strong>Admin</strong> di menu Manajemen Kelas. Dosen
+                          hanya memilih kelas yang sudah tersedia untuk
+                          diberikan tugas.
+                        </p>
+                        <div className="flex gap-2 text-xs">
+                          <Badge variant="outline" className="bg-white">
+                            📞 Hubungi Admin
+                          </Badge>
+                          <Badge variant="outline" className="bg-white">
+                            🏫 Buat Kelas di Manajemen Kelas
+                          </Badge>
+                        </div>
+                      </AlertDescription>
+                    </Alert>
+                  )}
                 {formData.kelas_id && selectedMataKuliah && (
                   <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                     <div className="flex items-start gap-2">
                       <div className="text-blue-600 mt-0.5">📚</div>
                       <div className="flex-1">
                         <p className="text-sm font-semibold text-blue-900">
-                          {mataKuliahList.find((mk) => mk.id === selectedMataKuliah)?.nama_mk}
+                          {
+                            mataKuliahList.find(
+                              (mk) => mk.id === selectedMataKuliah,
+                            )?.nama_mk
+                          }
                         </p>
                         <p className="text-xs text-blue-700">
-                          Kelas: {kelasList.find((k) => k.id === formData.kelas_id)?.nama_kelas}
+                          Kelas:{" "}
+                          {
+                            kelasList.find((k) => k.id === formData.kelas_id)
+                              ?.nama_kelas
+                          }
                         </p>
                       </div>
                     </div>
@@ -621,16 +631,19 @@ export function QuizBuilder({
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="durasi_menit">Durasi (menit) *</Label>
-                <Input
-                  id="durasi_menit"
-                  type="number"
-                  {...register("durasi_menit", { valueAsNumber: true })}
-                  min={5}
-                  className={cn(errors.durasi_menit && "border-destructive")}
-                />
-              </div>
+              {/* HIDDEN: Durasi tidak ditampilkan untuk laporan (no time limit) */}
+              {!laporanMode && (
+                <div className="space-y-2">
+                  <Label htmlFor="durasi_menit">Durasi (menit) *</Label>
+                  <Input
+                    id="durasi_menit"
+                    type="number"
+                    {...register("durasi_menit", { valueAsNumber: true })}
+                    min={5}
+                    className={cn(errors.durasi_menit && "border-destructive")}
+                  />
+                </div>
+              )}
 
               {/* Info note */}
               <div className="md:col-span-2">
@@ -664,35 +677,31 @@ export function QuizBuilder({
         </CardContent>
       </Card>
 
-      {/* Soal Card - Show after quiz saved */}
-      {currentQuiz && (
+      {/* Soal Card - Show after quiz saved (not for laporan mode) */}
+      {currentQuiz && !laporanMode && (
         <Card>
           <CardHeader className="pb-4">
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="text-lg flex items-center gap-2">
-                  {laporanMode ? "📝 Soal Laporan" : "📋 Soal Pilihan Ganda"}
+                  📋 Soal Pilihan Ganda
                   <Badge variant="secondary" className="ml-2">
                     {questions.length} soal
                   </Badge>
                 </CardTitle>
                 <p className="text-sm text-muted-foreground mt-1">
-                  {laporanMode
-                    ? "Buat pertanyaan essay atau upload file"
-                    : "Buat soal manual atau ambil dari Bank Soal"}
+                  Buat soal manual atau ambil dari Bank Soal
                 </p>
               </div>
               <div className="flex gap-2">
-                {!laporanMode && (
-                  <Button
-                    variant="outline"
-                    onClick={() => setShowBankDialog(true)}
-                    size="sm"
-                  >
-                    <BookOpen className="h-4 w-4 mr-2" />
-                    Bank Soal
-                  </Button>
-                )}
+                <Button
+                  variant="outline"
+                  onClick={() => setShowBankDialog(true)}
+                  size="sm"
+                >
+                  <BookOpen className="h-4 w-4 mr-2" />
+                  Bank Soal
+                </Button>
                 <Button onClick={handleAddQuestion} size="sm">
                   <Plus className="h-4 w-4 mr-2" />
                   Buat Soal
@@ -706,9 +715,7 @@ export function QuizBuilder({
                 <FileText className="h-10 w-10 mx-auto mb-3 opacity-50" />
                 <p>Belum ada soal</p>
                 <p className="text-sm">
-                  {laporanMode
-                    ? "Buat pertanyaan essay atau upload file"
-                    : "Buat soal baru atau ambil dari Bank Soal"}
+                  Buat soal baru atau ambil dari Bank Soal
                 </p>
               </div>
             ) : (
@@ -764,7 +771,7 @@ export function QuizBuilder({
             "border-2",
             quizStatus === "published"
               ? "border-green-300 bg-green-50/50"
-              : "border-dashed"
+              : "border-dashed",
           )}
         >
           <CardContent className="py-4">
@@ -783,22 +790,26 @@ export function QuizBuilder({
                     <span className="text-muted-foreground">
                       {questions.length > 0
                         ? "Klik Publish untuk mengaktifkan tes"
-                        : "Tambahkan soal terlebih dahulu"}
+                        : laporanMode
+                          ? "Klik Publish untuk mengaktifkan tugas laporan"
+                          : "Tambahkan soal terlebih dahulu"}
                     </span>
                   </>
                 )}
               </div>
               <div className="flex gap-2">
-                {quizStatus === "draft" && questions.length > 0 && (
-                  <Button
-                    onClick={handlePublishQuiz}
-                    disabled={isPublishing}
-                    className="bg-green-600 hover:bg-green-700"
-                  >
-                    <CheckCircle className="h-4 w-4 mr-2" />
-                    {isPublishing ? "Publishing..." : "Publish"}
-                  </Button>
-                )}
+                {/* FIXED: Laporan tidak perlu soal, bisa langsung publish */}
+                {quizStatus === "draft" &&
+                  (laporanMode || questions.length > 0) && (
+                    <Button
+                      onClick={handlePublishQuiz}
+                      disabled={isPublishing}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      {isPublishing ? "Publishing..." : "Publish"}
+                    </Button>
+                  )}
                 <Button
                   variant="outline"
                   onClick={() => {

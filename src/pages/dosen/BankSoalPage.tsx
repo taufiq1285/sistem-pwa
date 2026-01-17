@@ -52,7 +52,9 @@ export default function BankSoalPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedTipeSoal, setSelectedTipeSoal] = useState<string>(TIPE_SOAL.PILIHAN_GANDA); // Only pilihan ganda
+  const [selectedTipeSoal, setSelectedTipeSoal] = useState<string>(
+    TIPE_SOAL.PILIHAN_GANDA,
+  ); // Only pilihan ganda
 
   const [showEditor, setShowEditor] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState<BankSoal | null>(null);
@@ -179,9 +181,19 @@ export default function BankSoalPage() {
   };
 
   if (showEditor) {
+    if (!dosenId) {
+      return (
+        <div className="space-y-4">
+          <h1 className="text-2xl font-bold">Bank Soal</h1>
+          <p className="text-muted-foreground">Memuat data dosen…</p>
+        </div>
+      );
+    }
+
     return (
       <QuestionEditor
         kuisId="bank" // Dummy kuis ID for bank
+        dosenId={dosenId}
         question={editingQuestion as any}
         urutan={1}
         defaultPoin={1}
@@ -224,7 +236,9 @@ export default function BankSoalPage() {
             <CardContent>
               <div className="flex items-center gap-2">
                 <BookOpen className="h-5 w-5 text-blue-600" />
-                <div className="text-2xl font-bold">{stats.pilihan_ganda_count}</div>
+                <div className="text-2xl font-bold">
+                  {stats.pilihan_ganda_count}
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -266,7 +280,9 @@ export default function BankSoalPage() {
       {/* Search - Only Pilihan Ganda */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Pencarian Soal Pilihan Ganda</CardTitle>
+          <CardTitle className="text-lg">
+            Pencarian Soal Pilihan Ganda
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="relative">
@@ -311,7 +327,11 @@ export default function BankSoalPage() {
                     <div className="flex items-center gap-2 mb-2">
                       <Badge variant="outline">{q.poin} poin</Badge>
                       <Badge variant="secondary">
-                        {TIPE_SOAL_LABELS[q.tipe_soal as keyof typeof TIPE_SOAL_LABELS]}
+                        {
+                          TIPE_SOAL_LABELS[
+                            q.tipe_soal as keyof typeof TIPE_SOAL_LABELS
+                          ]
+                        }
                       </Badge>
                       {q.usage_count && q.usage_count > 0 && (
                         <Badge variant="outline" className="text-xs">
@@ -323,7 +343,11 @@ export default function BankSoalPage() {
                     {q.tags && q.tags.length > 0 && (
                       <div className="flex gap-1 mt-2">
                         {q.tags.map((tag) => (
-                          <Badge key={tag} variant="outline" className="text-xs">
+                          <Badge
+                            key={tag}
+                            variant="outline"
+                            className="text-xs"
+                          >
                             {tag}
                           </Badge>
                         ))}

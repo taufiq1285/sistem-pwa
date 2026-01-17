@@ -77,18 +77,23 @@ export function JadwalApprovalPage() {
   const [pendingLoading, setPendingLoading] = useState(false);
 
   // Data states
-  const [pendingBookings, setPendingBookings] = useState<RoomBookingRequest[]>([]);
+  const [pendingBookings, setPendingBookings] = useState<RoomBookingRequest[]>(
+    [],
+  );
   const [jadwalList, setJadwalList] = useState<Jadwal[]>([]);
   const [labList, setLabList] = useState<Laboratorium[]>([]);
 
   // Filters
-  const [statusFilter, setStatusFilter] = useState<"all" | "approved" | "cancelled">("all");
+  const [statusFilter, setStatusFilter] = useState<
+    "all" | "approved" | "cancelled"
+  >("all");
   const [labFilter, setLabFilter] = useState<string>("all");
 
   // Dialog states
   const [showApproveDialog, setShowApproveDialog] = useState(false);
   const [showRejectDialog, setShowRejectDialog] = useState(false);
-  const [selectedBooking, setSelectedBooking] = useState<RoomBookingRequest | null>(null);
+  const [selectedBooking, setSelectedBooking] =
+    useState<RoomBookingRequest | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
 
   const [showCancelDialog, setShowCancelDialog] = useState(false);
@@ -300,8 +305,12 @@ export function JadwalApprovalPage() {
             <Clock className="h-4 w-4 text-yellow-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">{stats.pending}</div>
-            <p className="text-xs text-muted-foreground">Permintaan booking ruangan</p>
+            <div className="text-2xl font-bold text-yellow-600">
+              {stats.pending}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Permintaan booking ruangan
+            </p>
           </CardContent>
         </Card>
 
@@ -313,8 +322,12 @@ export function JadwalApprovalPage() {
             <CheckCircle2 className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{stats.approved}</div>
-            <p className="text-xs text-muted-foreground">Jadwal yang sudah disetujui</p>
+            <div className="text-2xl font-bold text-green-600">
+              {stats.approved}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Jadwal yang sudah disetujui
+            </p>
           </CardContent>
         </Card>
 
@@ -326,8 +339,12 @@ export function JadwalApprovalPage() {
             <XCircle className="h-4 w-4 text-red-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">{stats.cancelled}</div>
-            <p className="text-xs text-muted-foreground">Jadwal yang dibatalkan</p>
+            <div className="text-2xl font-bold text-red-600">
+              {stats.cancelled}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Jadwal yang dibatalkan
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -355,7 +372,12 @@ export function JadwalApprovalPage() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle>Permintaan Booking Ruangan Lab</CardTitle>
-                <Button variant="outline" size="sm" onClick={loadPendingBookings} className="gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={loadPendingBookings}
+                  className="gap-2"
+                >
                   <RefreshCw className="h-4 w-4" />
                   Refresh
                 </Button>
@@ -388,34 +410,52 @@ export function JadwalApprovalPage() {
                   <TableBody>
                     {pendingBookings.map((booking) => (
                       <TableRow key={booking.id}>
-                        <TableCell className="font-medium">{booking.kelas_nama}</TableCell>
+                        <TableCell className="font-medium">
+                          {booking.kelas_nama}
+                        </TableCell>
                         <TableCell>{booking.mata_kuliah_nama}</TableCell>
                         <TableCell>
                           <div>
-                            <div className="font-medium text-sm">{booking.dosen_nama}</div>
-                            <div className="text-xs text-muted-foreground">{booking.dosen_nip}</div>
+                            <div className="font-medium text-sm">
+                              {booking.dosen_nama}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {booking.dosen_nip}
+                            </div>
                           </div>
                         </TableCell>
                         <TableCell>
                           <div>
-                            <div className="font-medium text-sm">{booking.laboratorium_nama}</div>
+                            <div className="font-medium text-sm">
+                              {booking.laboratorium_nama}
+                            </div>
                             <div className="text-xs text-muted-foreground">
-                              {booking.laboratorium_kode} • Kapasitas: {booking.laboratorium_kapasitas}
+                              {booking.laboratorium_kode} • Kapasitas:{" "}
+                              {booking.laboratorium_kapasitas}
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell className="capitalize">{booking.hari}</TableCell>
+                        <TableCell className="capitalize">
+                          {booking.hari}
+                        </TableCell>
                         <TableCell>
                           {booking.jam_mulai} - {booking.jam_selesai}
                         </TableCell>
                         <TableCell>
                           {booking.tanggal_praktikum
-                            ? format(new Date(booking.tanggal_praktikum), "dd MMM yyyy", {
-                                locale: localeId,
-                              })
+                            ? format(
+                                new Date(booking.tanggal_praktikum),
+                                "dd MMM yyyy",
+                                {
+                                  locale: localeId,
+                                },
+                              )
                             : "-"}
                         </TableCell>
-                        <TableCell className="max-w-xs truncate" title={booking.topik || "-"}>
+                        <TableCell
+                          className="max-w-xs truncate"
+                          title={booking.topik || "-"}
+                        >
                           {booking.topik || "-"}
                         </TableCell>
                         <TableCell>
@@ -458,7 +498,12 @@ export function JadwalApprovalPage() {
                   <Filter className="h-5 w-5 text-gray-500" />
                   <CardTitle>Filter Jadwal Aktif</CardTitle>
                 </div>
-                <Button variant="outline" size="sm" onClick={loadJadwalData} className="gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={loadJadwalData}
+                  className="gap-2"
+                >
                   <RefreshCw className="h-4 w-4" />
                   Refresh
                 </Button>
@@ -468,7 +513,10 @@ export function JadwalApprovalPage() {
               <div className="grid gap-4 md:grid-cols-2 mb-4">
                 <div className="space-y-2">
                   <Label>Laboratorium</Label>
-                  <Select value={labFilter} onValueChange={(value) => setLabFilter(value)}>
+                  <Select
+                    value={labFilter}
+                    onValueChange={(value) => setLabFilter(value)}
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -486,7 +534,8 @@ export function JadwalApprovalPage() {
 
               {loading ? (
                 <LoadingSpinner />
-              ) : jadwalList.filter((j) => j.status === "approved").length === 0 ? (
+              ) : jadwalList.filter((j) => j.status === "approved").length ===
+                0 ? (
                 <EmptyState
                   icon={Calendar}
                   title="Tidak ada jadwal aktif"
@@ -511,9 +560,13 @@ export function JadwalApprovalPage() {
                         <TableRow key={jadwal.id}>
                           <TableCell>
                             {jadwal.tanggal_praktikum
-                              ? format(new Date(jadwal.tanggal_praktikum), "dd MMM yyyy", {
-                                  locale: localeId,
-                                })
+                              ? format(
+                                  new Date(jadwal.tanggal_praktikum),
+                                  "dd MMM yyyy",
+                                  {
+                                    locale: localeId,
+                                  },
+                                )
                               : "-"}
                           </TableCell>
                           <TableCell>
@@ -522,14 +575,17 @@ export function JadwalApprovalPage() {
                           <TableCell>
                             <div>
                               <div className="font-medium">
-                                {(jadwal.kelas as any)?.mata_kuliah?.nama_mk || "Praktikum"}
+                                {(jadwal.kelas as any)?.mata_kuliah?.nama_mk ||
+                                  "Praktikum"}
                               </div>
                               <div className="text-sm text-gray-500">
                                 {(jadwal.kelas as any)?.nama_kelas || "-"}
                               </div>
                             </div>
                           </TableCell>
-                          <TableCell>{(jadwal.laboratorium as any)?.nama_lab || "-"}</TableCell>
+                          <TableCell>
+                            {(jadwal.laboratorium as any)?.nama_lab || "-"}
+                          </TableCell>
                           <TableCell className="max-w-xs truncate">
                             {jadwal.topik || "-"}
                           </TableCell>
@@ -562,7 +618,8 @@ export function JadwalApprovalPage() {
             <CardContent>
               {loading ? (
                 <LoadingSpinner />
-              ) : jadwalList.filter((j) => j.status === "cancelled").length === 0 ? (
+              ) : jadwalList.filter((j) => j.status === "cancelled").length ===
+                0 ? (
                 <EmptyState
                   icon={History}
                   title="Tidak ada jadwal dibatalkan"
@@ -587,9 +644,13 @@ export function JadwalApprovalPage() {
                         <TableRow key={jadwal.id}>
                           <TableCell>
                             {jadwal.tanggal_praktikum
-                              ? format(new Date(jadwal.tanggal_praktikum), "dd MMM yyyy", {
-                                  locale: localeId,
-                                })
+                              ? format(
+                                  new Date(jadwal.tanggal_praktikum),
+                                  "dd MMM yyyy",
+                                  {
+                                    locale: localeId,
+                                  },
+                                )
                               : "-"}
                           </TableCell>
                           <TableCell>
@@ -598,24 +659,37 @@ export function JadwalApprovalPage() {
                           <TableCell>
                             <div>
                               <div className="font-medium">
-                                {(jadwal.kelas as any)?.mata_kuliah?.nama_mk || "Praktikum"}
+                                {(jadwal.kelas as any)?.mata_kuliah?.nama_mk ||
+                                  "Praktikum"}
                               </div>
                               <div className="text-sm text-gray-500">
                                 {(jadwal.kelas as any)?.nama_kelas || "-"}
                               </div>
                             </div>
                           </TableCell>
-                          <TableCell>{(jadwal.laboratorium as any)?.nama_lab || "-"}</TableCell>
+                          <TableCell>
+                            {(jadwal.laboratorium as any)?.nama_lab || "-"}
+                          </TableCell>
                           <TableCell>
                             <div className="text-sm">
                               {jadwal.cancellation_reason && (
-                                <div className="italic">"{jadwal.cancellation_reason}"</div>
+                                <div className="italic">
+                                  "{jadwal.cancellation_reason}"
+                                </div>
                               )}
                               {jadwal.cancelled_by && (
                                 <div className="text-xs text-gray-500 mt-1">
-                                  Oleh: {(jadwal as any).cancelled_by_user?.full_name}
+                                  Oleh:{" "}
+                                  {(jadwal as any).cancelled_by_user?.full_name}
                                   {jadwal.cancelled_at && (
-                                    <> • {format(new Date(jadwal.cancelled_at), "dd MMM HH:mm")}</>
+                                    <>
+                                      {" "}
+                                      •{" "}
+                                      {format(
+                                        new Date(jadwal.cancelled_at),
+                                        "dd MMM HH:mm",
+                                      )}
+                                    </>
                                   )}
                                 </div>
                               )}
@@ -659,20 +733,25 @@ export function JadwalApprovalPage() {
             <div className="py-4">
               <div className="rounded-lg bg-gray-50 p-4 space-y-2">
                 <div className="text-sm">
-                  <span className="font-medium">Kelas:</span> {selectedBooking.kelas_nama}
+                  <span className="font-medium">Kelas:</span>{" "}
+                  {selectedBooking.kelas_nama}
                 </div>
                 <div className="text-sm">
-                  <span className="font-medium">Mata Kuliah:</span> {selectedBooking.mata_kuliah_nama}
+                  <span className="font-medium">Mata Kuliah:</span>{" "}
+                  {selectedBooking.mata_kuliah_nama}
                 </div>
                 <div className="text-sm">
-                  <span className="font-medium">Dosen:</span> {selectedBooking.dosen_nama}
+                  <span className="font-medium">Dosen:</span>{" "}
+                  {selectedBooking.dosen_nama}
                 </div>
                 <div className="text-sm">
-                  <span className="font-medium">Lab:</span> {selectedBooking.laboratorium_nama}
+                  <span className="font-medium">Lab:</span>{" "}
+                  {selectedBooking.laboratorium_nama}
                 </div>
                 <div className="text-sm">
-                  <span className="font-medium">Waktu:</span> {selectedBooking.hari},{" "}
-                  {selectedBooking.jam_mulai} - {selectedBooking.jam_selesai}
+                  <span className="font-medium">Waktu:</span>{" "}
+                  {selectedBooking.hari}, {selectedBooking.jam_mulai} -{" "}
+                  {selectedBooking.jam_selesai}
                 </div>
               </div>
             </div>
@@ -714,10 +793,12 @@ export function JadwalApprovalPage() {
             <div className="space-y-4 py-4">
               <div className="rounded-lg bg-gray-50 p-4 space-y-2">
                 <div className="text-sm">
-                  <span className="font-medium">Kelas:</span> {selectedBooking.kelas_nama}
+                  <span className="font-medium">Kelas:</span>{" "}
+                  {selectedBooking.kelas_nama}
                 </div>
                 <div className="text-sm">
-                  <span className="font-medium">Lab:</span> {selectedBooking.laboratorium_nama}
+                  <span className="font-medium">Lab:</span>{" "}
+                  {selectedBooking.laboratorium_nama}
                 </div>
               </div>
 
@@ -764,7 +845,8 @@ export function JadwalApprovalPage() {
               Batalkan Jadwal Praktikum
             </DialogTitle>
             <DialogDescription>
-              Jadwal akan dihilangkan dari calendar. Anda dapat mengaktifkan kembali nanti.
+              Jadwal akan dihilangkan dari calendar. Anda dapat mengaktifkan
+              kembali nanti.
             </DialogDescription>
           </DialogHeader>
 
@@ -773,7 +855,8 @@ export function JadwalApprovalPage() {
               <div className="rounded-lg bg-gray-50 p-4 space-y-2">
                 <div className="text-sm">
                   <span className="font-medium">Mata Kuliah:</span>{" "}
-                  {(selectedJadwal.kelas as any)?.mata_kuliah?.nama_mk || "Praktikum"}
+                  {(selectedJadwal.kelas as any)?.mata_kuliah?.nama_mk ||
+                    "Praktikum"}
                 </div>
                 <div className="text-sm">
                   <span className="font-medium">Kelas:</span>{" "}
@@ -820,7 +903,10 @@ export function JadwalApprovalPage() {
       </Dialog>
 
       {/* Reactivate Dialog */}
-      <Dialog open={showReactivateDialog} onOpenChange={setShowReactivateDialog}>
+      <Dialog
+        open={showReactivateDialog}
+        onOpenChange={setShowReactivateDialog}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -837,7 +923,8 @@ export function JadwalApprovalPage() {
               <div className="rounded-lg bg-gray-50 p-4 space-y-2">
                 <div className="text-sm">
                   <span className="font-medium">Mata Kuliah:</span>{" "}
-                  {(selectedJadwal.kelas as any)?.mata_kuliah?.nama_mk || "Praktikum"}
+                  {(selectedJadwal.kelas as any)?.mata_kuliah?.nama_mk ||
+                    "Praktikum"}
                 </div>
                 <div className="text-sm">
                   <span className="font-medium">Lab:</span>{" "}

@@ -69,6 +69,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // API
 import { supabase } from "@/lib/supabase/client";
+import type { Database } from "@/types/database.types";
 import type { Jadwal } from "@/types/jadwal.types";
 import type { Kelas, MataKuliah } from "@/types";
 
@@ -91,6 +92,7 @@ interface JadwalWithDetails extends Jadwal {
     id: string;
     nama_lab: string;
     kode_lab: string;
+    kapasitas: number;
   };
   dosen?: {
     id: string;
@@ -98,6 +100,8 @@ interface JadwalWithDetails extends Jadwal {
     email: string;
     nip: string;
   };
+  mata_kuliah_id?: string;
+  dosen_id?: string;
 }
 
 interface EditFormData {
@@ -132,8 +136,18 @@ export default function AssignmentManagementPage() {
   // Modal states
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isReassignOpen, setIsReassignOpen] = useState(false);
-  const [selectedJadwal, setSelectedJadwal] = useState<JadwalWithDetails | null>(null);
+  const [selectedJadwal, setSelectedJadwal] =
+    useState<JadwalWithDetails | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Form state for edit dialog
+  const [editFormData, setEditFormData] = useState<EditFormData | null>(null);
+
+  // Form state for reassign dialog
+  const [reassignFormData, setReassignFormData] = useState<{
+    dosen_id: string;
+    reason: string;
+  }>({ dosen_id: "", reason: "" });
 
   useEffect(() => {
     loadData();
@@ -152,11 +166,12 @@ export default function AssignmentManagementPage() {
         kelasResponse,
         mkResponse,
         labResponse,
-        dosenResponse
+        dosenResponse,
       ] = await Promise.all([
         supabase
           .from("jadwal_praktikum")
-          .select(`
+          .select(
+            `
             *,
             kelas:kelas_id (
               id,
@@ -185,7 +200,8 @@ export default function AssignmentManagementPage() {
                 email
               )
             )
-          `)
+          `,
+          )
           .order("created_at", { ascending: false }),
         supabase
           .from("kelas")
@@ -204,7 +220,8 @@ export default function AssignmentManagementPage() {
           .order("nama_lab"),
         supabase
           .from("dosen")
-          .select(`
+          .select(
+            `
             id,
             nip,
             users:user_id (
@@ -212,7 +229,8 @@ export default function AssignmentManagementPage() {
               full_name,
               email
             )
-          `)
+          `,
+          )
           .order("users(full_name)"),
       ]);
 
@@ -222,17 +240,23 @@ export default function AssignmentManagementPage() {
       if (labResponse.error) throw labResponse.error;
       if (dosenResponse.error) throw dosenResponse.error;
 
-      const processedJadwal = (jadwalResponse.data || []).map((jadwal) => ({
-        ...jadwal,
-        kelas: kelasResponse.data?.find(k => k.id === jadwal.kelas_id),
-        mata_kuliah: mkResponse.data?.find(mk => mk.id === jadwal.mata_kuliah_id),
-        laboratorium: labResponse.data?.find(l => l.id === jadwal.laboratorium_id),
-        dosen: dosenResponse.data?.find(d => d.id === jadwal.dosen_id),
-      }));
+      const processedJadwal = (jadwalResponse.data || []).map(
+        (jadwal: any) => ({
+          ...jadwal,
+          kelas: kelasResponse.data?.find((k) => k.id === jadwal.kelas_id),
+          mata_kuliah: mkResponse.data?.find(
+            (mk) => mk.id === jadwal.mata_kuliah_id,
+          ),
+          laboratorium: labResponse.data?.find(
+            (l) => l.id === jadwal.laboratorium_id,
+          ),
+          dosen: dosenResponse.data?.find((d) => d.id === jadwal.dosen_id),
+        }),
+      );
 
-      setJadwalList(processedJadwal);
-      setKelasList(kelasResponse.data || []);
-      setMataKuliahList(mkResponse.data || []);
+      setJadwalList(processedJadwal as JadwalWithDetails[]);
+      setKelasList((kelasResponse.data || []) as Kelas[]);
+      setMataKuliahList((mkResponse.data || []) as any as MataKuliah[]);
       setLaboratoriumList(labResponse.data || []);
       setDosenList(dosenResponse.data || []);
     } catch (error: any) {
@@ -264,14 +288,15 @@ export default function AssignmentManagementPage() {
     // Search filter
     if (searchQuery) {
       const searchLower = searchQuery.toLowerCase();
-      filtered = filtered.filter((j) =>
-        j.kelas?.nama_kelas?.toLowerCase().includes(searchLower) ||
-        j.kelas?.kode_kelas?.toLowerCase().includes(searchLower) ||
-        j.mata_kuliah?.nama_mk?.toLowerCase().includes(searchLower) ||
-        j.mata_kuliah?.kode_mk?.toLowerCase().includes(searchLower) ||
-        j.laboratorium?.nama_lab?.toLowerCase().includes(searchLower) ||
-        j.dosen?.full_name?.toLowerCase().includes(searchLower) ||
-        j.dosen?.nip?.toLowerCase().includes(searchLower)
+      filtered = filtered.filter(
+        (j) =>
+          j.kelas?.nama_kelas?.toLowerCase().includes(searchLower) ||
+          j.kelas?.kode_kelas?.toLowerCase().includes(searchLower) ||
+          j.mata_kuliah?.nama_mk?.toLowerCase().includes(searchLower) ||
+          j.mata_kuliah?.kode_mk?.toLowerCase().includes(searchLower) ||
+          j.laboratorium?.nama_lab?.toLowerCase().includes(searchLower) ||
+          j.dosen?.full_name?.toLowerCase().includes(searchLower) ||
+          j.dosen?.nip?.toLowerCase().includes(searchLower),
       );
     }
 
@@ -280,6 +305,19 @@ export default function AssignmentManagementPage() {
 
   const handleEdit = (jadwal: JadwalWithDetails) => {
     setSelectedJadwal(jadwal);
+    setEditFormData({
+      tanggal_praktikum: jadwal.tanggal_praktikum,
+      jam_mulai: jadwal.jam_mulai,
+      jam_selesai: jadwal.jam_selesai,
+      topik: jadwal.topik || "",
+      catatan: jadwal.catatan || "",
+      status:
+        (jadwal.status as "approved" | "pending" | "rejected" | "cancelled") ||
+        "pending",
+      laboratorium_id: jadwal.laboratorium_id,
+      dosen_id: jadwal.dosen_id,
+      kelas_id: jadwal.kelas_id,
+    });
     setIsEditOpen(true);
   };
 
@@ -289,7 +327,11 @@ export default function AssignmentManagementPage() {
   };
 
   const handleDelete = async (jadwal: JadwalWithDetails) => {
-    if (!confirm(`Hapus jadwal "${jadwal.topik || 'Tanpa Topik'}" pada ${format(new Date(jadwal.tanggal_praktikum), 'dd MMM yyyy')}?`)) {
+    if (
+      !confirm(
+        `Hapus jadwal "${jadwal.topik || "Tanpa Topik"}" pada ${format(new Date(jadwal.tanggal_praktikum), "dd MMM yyyy")}?`,
+      )
+    ) {
       return;
     }
 
@@ -315,11 +357,25 @@ export default function AssignmentManagementPage() {
     try {
       setIsSubmitting(true);
 
+      const dayMapping: Record<string, string> = {
+        monday: "senin",
+        tuesday: "selasa",
+        wednesday: "rabu",
+        thursday: "kamis",
+        friday: "jumat",
+        saturday: "sabtu",
+        sunday: "minggu",
+      };
+      const dayInEnglish = format(new Date(data.tanggal_praktikum), "EEEE", {
+        locale: localeId,
+      }).toLowerCase();
+      const hari = dayMapping[dayInEnglish] || dayInEnglish;
+
       const { error } = await supabase
         .from("jadwal_praktikum")
         .update({
           tanggal_praktikum: data.tanggal_praktikum,
-          hari: format(new Date(data.tanggal_praktikum), "EEEE", { localeId }).toLowerCase(),
+          hari: hari as Database["public"]["Enums"]["day_of_week"],
           jam_mulai: data.jam_mulai,
           jam_selesai: data.jam_selesai,
           topik: data.topik,
@@ -345,7 +401,10 @@ export default function AssignmentManagementPage() {
     }
   };
 
-  const handleReassignSubmit = async (data: { dosen_id: string; reason?: string }) => {
+  const handleReassignSubmit = async (data: {
+    dosen_id: string;
+    reason?: string;
+  }) => {
     if (!selectedJadwal) return;
 
     try {
@@ -356,7 +415,7 @@ export default function AssignmentManagementPage() {
         .update({
           dosen_id: data.dosen_id,
           catatan: data.reason
-            ? `Reassigned: ${data.reason} (Previous: ${selectedJadwal.catatan || 'N/A'})`
+            ? `Reassigned: ${data.reason} (Previous: ${selectedJadwal.catatan || "N/A"})`
             : `Reassigned from previous dosen`,
           updated_at: new Date().toISOString(),
         })
@@ -413,7 +472,9 @@ export default function AssignmentManagementPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Management Assignment Dosen</h1>
+        <h1 className="text-3xl font-bold tracking-tight">
+          Management Assignment Dosen
+        </h1>
         <p className="text-muted-foreground">
           Kelola dan manajemen jadwal praktikum dosen
         </p>
@@ -455,7 +516,11 @@ export default function AssignmentManagementPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600">
-              {filteredJadwal.filter((j) => ["cancelled", "rejected"].includes(j.status)).length}
+              {
+                filteredJadwal.filter((j) =>
+                  ["cancelled", "rejected"].includes(j.status),
+                ).length
+              }
             </div>
           </CardContent>
         </Card>
@@ -556,7 +621,10 @@ export default function AssignmentManagementPage() {
                 {filteredJadwal.map((jadwal) => (
                   <TableRow key={jadwal.id}>
                     <TableCell>
-                      {format(new Date(jadwal.tanggal_praktikum), "dd MMM yyyy")}
+                      {format(
+                        new Date(jadwal.tanggal_praktikum),
+                        "dd MMM yyyy",
+                      )}
                     </TableCell>
                     <TableCell className="capitalize">
                       {jadwal.hari || "-"}
@@ -605,10 +673,14 @@ export default function AssignmentManagementPage() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge className={getStatusColor(jadwal.status || "pending")}>
+                      <Badge
+                        className={getStatusColor(jadwal.status || "pending")}
+                      >
                         {getStatusIcon(jadwal.status || "pending")}
                         <span className="ml-1">
-                          {(jadwal.status || "pending").charAt(0).toUpperCase() +
+                          {(jadwal.status || "pending")
+                            .charAt(0)
+                            .toUpperCase() +
                             (jadwal.status || "pending").slice(1)}
                         </span>
                       </Badge>
@@ -667,35 +739,67 @@ export default function AssignmentManagementPage() {
                 <div>
                   <Label htmlFor="tanggal_praktikum">Tanggal Praktikum</Label>
                   <Input
-                    id="tanggal_praktikum"
                     type="date"
-                    defaultValue={selectedJadwal.tanggal_praktikum}
+                    value={editFormData?.tanggal_praktikum || ""}
+                    onChange={(e) => {
+                      if (editFormData) {
+                        setEditFormData({
+                          ...editFormData,
+                          tanggal_praktikum: e.target.value,
+                        });
+                      }
+                    }}
                   />
                 </div>
 
                 <div>
                   <Label htmlFor="jam_mulai">Jam Mulai</Label>
                   <Input
-                    id="jam_mulai"
                     type="time"
-                    defaultValue={selectedJadwal.jam_mulai}
+                    value={editFormData?.jam_mulai || ""}
+                    onChange={(e) => {
+                      if (editFormData) {
+                        setEditFormData({
+                          ...editFormData,
+                          jam_mulai: e.target.value,
+                        });
+                      }
+                    }}
                   />
                 </div>
 
                 <div>
                   <Label htmlFor="jam_selesai">Jam Selesai</Label>
                   <Input
-                    id="jam_selesai"
                     type="time"
-                    defaultValue={selectedJadwal.jam_selesai}
+                    value={editFormData?.jam_selesai || ""}
+                    onChange={(e) => {
+                      if (editFormData) {
+                        setEditFormData({
+                          ...editFormData,
+                          jam_selesai: e.target.value,
+                        });
+                      }
+                    }}
                   />
                 </div>
 
                 <div>
                   <Label htmlFor="status">Status</Label>
                   <Select
-                    id="status"
-                    defaultValue={selectedJadwal.status || "pending"}
+                    value={editFormData?.status || "pending"}
+                    onValueChange={(value) => {
+                      if (editFormData) {
+                        setEditFormData({
+                          ...editFormData,
+                          status: value as
+                            | "pending"
+                            | "approved"
+                            | "rejected"
+                            | "cancelled",
+                        });
+                      }
+                    }}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -712,8 +816,15 @@ export default function AssignmentManagementPage() {
                 <div>
                   <Label htmlFor="laboratorium_id">Laboratorium</Label>
                   <Select
-                    id="laboratorium_id"
-                    defaultValue={selectedJadwal.laboratorium_id}
+                    value={editFormData?.laboratorium_id || ""}
+                    onValueChange={(value) => {
+                      if (editFormData) {
+                        setEditFormData({
+                          ...editFormData,
+                          laboratorium_id: value,
+                        });
+                      }
+                    }}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -732,9 +843,16 @@ export default function AssignmentManagementPage() {
               <div>
                 <Label htmlFor="topik">Topik</Label>
                 <Textarea
-                  id="topik"
                   placeholder="Topik atau materi praktikum..."
-                  defaultValue={selectedJadwal.topik || ""}
+                  value={editFormData?.topik || ""}
+                  onChange={(e) => {
+                    if (editFormData) {
+                      setEditFormData({
+                        ...editFormData,
+                        topik: e.target.value,
+                      });
+                    }
+                  }}
                   className="resize-none"
                   rows={3}
                 />
@@ -743,9 +861,16 @@ export default function AssignmentManagementPage() {
               <div>
                 <Label htmlFor="catatan">Catatan</Label>
                 <Textarea
-                  id="catatan"
                   placeholder="Catatan tambahan..."
-                  defaultValue={selectedJadwal.catatan || ""}
+                  value={editFormData?.catatan || ""}
+                  onChange={(e) => {
+                    if (editFormData) {
+                      setEditFormData({
+                        ...editFormData,
+                        catatan: e.target.value,
+                      });
+                    }
+                  }}
                   className="resize-none"
                   rows={2}
                 />
@@ -763,20 +888,19 @@ export default function AssignmentManagementPage() {
                 <Button
                   type="button"
                   onClick={() => {
-                    const formData = {
-                      tanggal_praktikum: document.getElementById("tanggal_praktikum")?.value || selectedJadwal.tanggal_praktikum,
-                      jam_mulai: document.getElementById("jam_mulai")?.value || selectedJadwal.jam_mulai,
-                      jam_selesai: document.getElementById("jam_selesai")?.value || selectedJadwal.jam_selesai,
-                      topik: document.getElementById("topik")?.value || "",
-                      catatan: document.getElementById("catatan")?.value || "",
-                      status: document.getElementById("status")?.value || selectedJadwal.status || "pending",
-                      laboratorium_id: document.getElementById("laboratorium_id")?.value || selectedJadwal.laboratorium_id,
-                    };
-                    handleEditSubmit(formData);
+                    if (editFormData && selectedJadwal) {
+                      handleEditSubmit({
+                        ...editFormData,
+                        laboratorium_id: editFormData.laboratorium_id,
+                        dosen_id: editFormData.dosen_id,
+                      });
+                    }
                   }}
                   disabled={isSubmitting}
                 >
-                  {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {isSubmitting && (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  )}
                   Simpan
                 </Button>
               </DialogFooter>
@@ -801,26 +925,41 @@ export default function AssignmentManagementPage() {
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
                   <div>
-                    <strong>Info Jadwal:</strong> {selectedJadwal.kelas?.nama_kelas} - {selectedJadwal.mata_kuliah?.nama_mk}
+                    <strong>Info Jadwal:</strong>{" "}
+                    {selectedJadwal.kelas?.nama_kelas} -{" "}
+                    {selectedJadwal.mata_kuliah?.nama_mk}
                   </div>
                   <div className="text-sm mt-1">
-                    {format(new Date(selectedJadwal.tanggal_praktikum), "dd MMM yyyy HH:mm")} - {selectedJadwal.jam_mulai} s/d {selectedJadwal.jam_selesai}
+                    {format(
+                      new Date(selectedJadwal.tanggal_praktikum),
+                      "dd MMM yyyy HH:mm",
+                    )}{" "}
+                    - {selectedJadwal.jam_mulai} s/d{" "}
+                    {selectedJadwal.jam_selesai}
                   </div>
                 </AlertDescription>
               </Alert>
 
               <div>
                 <Label htmlFor="dosen_id">Dosen Baru</Label>
-                <Select id="dosen_id" defaultValue="">
+                <Select
+                  value={reassignFormData.dosen_id}
+                  onValueChange={(value) =>
+                    setReassignFormData({
+                      ...reassignFormData,
+                      dosen_id: value,
+                    })
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Pilih dosen baru" />
                   </SelectTrigger>
                   <SelectContent>
                     {dosenList
-                      .filter(d => d.id !== selectedJadwal.dosen_id)
-                      .map((dosen) => (
-                        <SelectItem key={d.id} value={d.id}>
-                          {d.full_name} ({d.nip})
+                      .filter((d: any) => d.id !== selectedJadwal.dosen_id)
+                      .map((dosen: any) => (
+                        <SelectItem key={dosen.id} value={dosen.id}>
+                          {dosen.users?.full_name} ({dosen.nip})
                         </SelectItem>
                       ))}
                   </SelectContent>
@@ -834,6 +973,13 @@ export default function AssignmentManagementPage() {
                   placeholder="Kenapa jadwal ini dipindahkan ke dosen baru?"
                   className="resize-none"
                   rows={3}
+                  value={reassignFormData.reason}
+                  onChange={(e) =>
+                    setReassignFormData({
+                      ...reassignFormData,
+                      reason: e.target.value,
+                    })
+                  }
                 />
               </div>
 
@@ -848,16 +994,12 @@ export default function AssignmentManagementPage() {
                 </Button>
                 <Button
                   type="button"
-                  onClick={() => {
-                    const formData = {
-                      dosen_id: document.getElementById("dosen_id")?.value || "",
-                      reason: document.getElementById("reason")?.value,
-                    };
-                    handleReassignSubmit(formData);
-                  }}
+                  onClick={() => handleReassignSubmit(reassignFormData)}
                   disabled={isSubmitting}
                 >
-                  {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {isSubmitting && (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  )}
                   Pindahkan
                 </Button>
               </DialogFooter>

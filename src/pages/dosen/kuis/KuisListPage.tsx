@@ -125,7 +125,7 @@ export default function KuisListPage() {
       filtered = filtered.filter(
         (quiz) =>
           quiz.judul.toLowerCase().includes(query) ||
-          quiz.deskripsi?.toLowerCase().includes(query)
+          quiz.deskripsi?.toLowerCase().includes(query),
       );
     }
 
@@ -163,10 +163,8 @@ export default function KuisListPage() {
   // Get unique kelas for filter with full kelas data
   const kelasOptions = Array.from(
     new Map(
-      quizzes
-        .filter((q) => q.kelas)
-        .map((q) => [q.kelas_id, q.kelas])
-    ).values()
+      quizzes.filter((q) => q.kelas).map((q) => [q.kelas_id, q.kelas]),
+    ).values(),
   );
 
   // Count by status
@@ -305,9 +303,13 @@ export default function KuisListPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Semua Mata Kuliah</SelectItem>
-                {kelasOptions.map((kelas) => (
-                  <SelectItem key={kelas.id} value={kelas.id}>
-                    {kelas.mata_kuliah?.kode_mk} - {kelas.mata_kuliah?.nama_mk} ({kelas.nama_kelas})
+                {kelasOptions.map((kelas: any) => (
+                  <SelectItem
+                    key={kelas.kelas_id || kelas.id}
+                    value={kelas.kelas_id || kelas.id}
+                  >
+                    {kelas.mata_kuliah?.kode_mk} - {kelas.mata_kuliah?.nama_mk}{" "}
+                    ({kelas.nama_kelas})
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -365,7 +367,7 @@ export default function KuisListPage() {
           className={cn(
             viewMode === "grid"
               ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
-              : "space-y-4"
+              : "space-y-4",
           )}
         >
           {filteredQuizzes.map((quiz) => (

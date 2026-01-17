@@ -119,7 +119,9 @@ export function useLocalData<T extends { id: string }>(
   const [loaded, setLoaded] = useState<boolean>(false);
 
   // Refs for cleanup
-  const refreshIntervalRef = useRef<number | undefined>(undefined);
+  const refreshIntervalRef = useRef<ReturnType<typeof setInterval> | undefined>(
+    undefined,
+  );
   const mountedRef = useRef<boolean>(true);
 
   // ✅ FIX: Use refs for filter/sort/transform to prevent infinite loops

@@ -46,12 +46,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import {
   getAllUsers,
@@ -443,7 +438,11 @@ export default function UsersPage() {
       </div>
 
       {/* Users Table with Tabs */}
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as UserRole | "all")} className="w-full">
+      <Tabs
+        value={activeTab}
+        onValueChange={(v) => setActiveTab(v as UserRole | "all")}
+        className="w-full"
+      >
         <TabsList className="grid w-full grid-cols-5 mb-4">
           <TabsTrigger value="all" className="flex items-center gap-2">
             <Users className="h-4 w-4" />
@@ -472,10 +471,15 @@ export default function UsersPage() {
           <Card>
             <CardHeader>
               <CardTitle>Semua User</CardTitle>
-              <CardDescription>Kelola semua akun pengguna dalam sistem</CardDescription>
+              <CardDescription>
+                Kelola semua akun pengguna dalam sistem
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              {renderUserTable(searchFilteredUsers, "Tidak ada user yang ditemukan")}
+              {renderUserTable(
+                searchFilteredUsers,
+                "Tidak ada user yang ditemukan",
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -488,7 +492,9 @@ export default function UsersPage() {
                 <Shield className="h-5 w-5" />
                 Administrator
               </CardTitle>
-              <CardDescription>Kelola akun administrator sistem</CardDescription>
+              <CardDescription>
+                Kelola akun administrator sistem
+              </CardDescription>
             </CardHeader>
             <CardContent>
               {renderUserTable(adminUsers, "Tidak ada admin yang ditemukan")}
@@ -523,7 +529,10 @@ export default function UsersPage() {
               <CardDescription>Kelola akun mahasiswa</CardDescription>
             </CardHeader>
             <CardContent>
-              {renderUserTable(mahasiswaUsers, "Tidak ada mahasiswa yang ditemukan")}
+              {renderUserTable(
+                mahasiswaUsers,
+                "Tidak ada mahasiswa yang ditemukan",
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -539,7 +548,10 @@ export default function UsersPage() {
               <CardDescription>Kelola akun laboran</CardDescription>
             </CardHeader>
             <CardContent>
-              {renderUserTable(laboranUsers, "Tidak ada laboran yang ditemukan")}
+              {renderUserTable(
+                laboranUsers,
+                "Tidak ada laboran yang ditemukan",
+              )}
             </CardContent>
           </Card>
         </TabsContent>

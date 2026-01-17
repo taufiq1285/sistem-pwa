@@ -124,9 +124,7 @@ const DB_CONFIG: IndexedDBConfig = {
     {
       name: "offline_quiz",
       keyPath: "id",
-      indexes: [
-        { name: "cachedAt", keyPath: "cachedAt" },
-      ],
+      indexes: [{ name: "cachedAt", keyPath: "cachedAt" }],
     },
     // Offline Questions Cache
     {

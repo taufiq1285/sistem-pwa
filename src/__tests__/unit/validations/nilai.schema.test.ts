@@ -208,7 +208,7 @@ describe("Nilai Schema Validation", () => {
       expect(result.success).toBe(false);
       if (!result.success) {
         expect(result.error.issues[0].message).toContain(
-          "Minimal harus ada satu mahasiswa"
+          "Minimal harus ada satu mahasiswa",
         );
       }
     });
@@ -325,7 +325,7 @@ describe("Nilai Schema Validation", () => {
       expect(result.success).toBe(false);
       if (!result.success) {
         expect(result.error.issues[0].message).toBe(
-          "Total bobot nilai harus 100%"
+          "Total bobot nilai harus 100%",
         );
       }
     });
@@ -344,7 +344,7 @@ describe("Nilai Schema Validation", () => {
       expect(result.success).toBe(false);
       if (!result.success) {
         expect(result.error.issues[0].message).toBe(
-          "Total bobot nilai harus 100%"
+          "Total bobot nilai harus 100%",
         );
       }
     });
@@ -387,7 +387,7 @@ describe("Nilai Schema Validation", () => {
         90, // uts: 90 * 0.25 = 22.5
         95, // uas: 95 * 0.30 = 28.5
         100, // praktikum: 100 * 0.40 = 40
-        100 // kehadiran: 100 * 0.05 = 5
+        100, // kehadiran: 100 * 0.05 = 5
       );
       // Total = 0 + 0 + 22.5 + 28.5 + 40 + 5 = 96
 
@@ -421,7 +421,7 @@ describe("Nilai Schema Validation", () => {
         80, // uas: 80 * 0.40 = 32
         80, // praktikum: 80 * 0.05 = 4
         80, // kehadiran: 80 * 0.05 = 4
-        customWeights
+        customWeights,
       );
       // Total = 8 + 8 + 24 + 32 + 4 + 4 = 80
 
@@ -435,7 +435,7 @@ describe("Nilai Schema Validation", () => {
         91.11, // uts: 91.11 * 0.25 = 22.7775
         95.55, // uas: 95.55 * 0.30 = 28.665
         97.77, // praktikum: 97.77 * 0.40 = 39.108
-        99.99 // kehadiran: 99.99 * 0.05 = 4.9995
+        99.99, // kehadiran: 99.99 * 0.05 = 4.9995
       );
       // Total = 0 + 0 + 22.7775 + 28.665 + 39.108 + 4.9995 = 95.55
       // Rounded to 2 decimal places = 95.55
@@ -463,7 +463,7 @@ describe("Nilai Schema Validation", () => {
         60, // uts: 60 * 0.25 = 15
         60, // uas: 60 * 0.30 = 18
         60, // praktikum: 60 * 0.40 = 24
-        60 // kehadiran: 60 * 0.05 = 3
+        60, // kehadiran: 60 * 0.05 = 3
       );
       // Total = 0 + 0 + 15 + 18 + 24 + 3 = 60
 

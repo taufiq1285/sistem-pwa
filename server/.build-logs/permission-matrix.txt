@@ -1,0 +1,74 @@
+=================================================================
+PERMISSION MATRIX - All Roles
+=================================================================
+
+Legend:
+✓ = Has permission
+✗ = Does not have permission
+
+-----------------------------------------------------------------
+Permission                  | Admin | Dosen | Mahasiswa | Laboran
+-----------------------------------------------------------------
+manage:user                 |   ✓   |   ✗   |     ✗     |    ✗
+manage:users                |   ✓   |   ✗   |     ✗     |    ✗
+view:all_users              |   ✓   |   ✗   |     ✗     |    ✗
+manage:mahasiswa            |   ✓   |   ✗   |     ✗     |    ✗
+view:mahasiswa              |   ✓   |   ✓   |     ✗     |    ✗
+manage:dosen                |   ✓   |   ✗   |     ✗     |    ✗
+manage:laboran              |   ✓   |   ✗   |     ✗     |    ✗
+manage:admin                |   ✓   |   ✗   |     ✗     |    ✗
+-----------------------------------------------------------------
+manage:mata_kuliah          |   ✓   |   ✓   |     ✗     |    ✗
+view:mata_kuliah            |   ✓   |   ✓   |     ✗     |    ✗
+-----------------------------------------------------------------
+manage:kelas                |   ✓   |   ✓   |     ✗     |    ✗
+manage:kelas_mahasiswa      |   ✓   |   ✓   |     ✗     |    ✗
+-----------------------------------------------------------------
+manage:jadwal               |   ✓   |   ✓   |     ✗     |    ✗
+view:jadwal                 |   ✓   |   ✓   |     ✓     |    ✓
+-----------------------------------------------------------------
+manage:kehadiran            |   ✓   |   ✓   |     ✓     |    ✓
+-----------------------------------------------------------------
+manage:kuis                 |   ✓   |   ✓   |     ✗     |    ✗
+view:kuis                   |   ✓   |   ✗   |     ✓     |    ✗
+manage:soal                 |   ✓   |   ✓   |     ✗     |    ✗
+create:attempt_kuis         |   ✓   |   ✗   |     ✓     |    ✗
+update:attempt_kuis         |   ✓   |   ✗   |     ✓     |    ✗
+view:attempt_kuis           |   ✓   |   ✗   |     ✓     |    ✗
+grade:attempt_kuis          |   ✓   |   ✓   |     ✗     |    ✗
+create:jawaban              |   ✓   |   ✗   |     ✓     |    ✗
+update:jawaban              |   ✓   |   ✗   |     ✓     |    ✗
+view:jawaban                |   ✓   |   ✓   |     ✓     |    ✗
+-----------------------------------------------------------------
+manage:nilai                |   ✓   |   ✓   |     ✗     |    ✗
+view:nilai                  |   ✓   |   ✗   |     ✓     |    ✗
+-----------------------------------------------------------------
+manage:materi               |   ✓   |   ✓   |     ✗     |    ✗
+view:materi                 |   ✓   |   ✓   |     ✓     |    ✗
+-----------------------------------------------------------------
+create:peminjaman           |   ✓   |   ✓   |     ✓     |    ✗
+update:peminjaman           |   ✓   |   ✓   |     ✗     |    ✓
+view:peminjaman             |   ✓   |   ✓   |     ✓     |    ✓
+manage:peminjaman           |   ✓   |   ✗   |     ✗     |    ✓
+-----------------------------------------------------------------
+manage:inventaris           |   ✓   |   ✗   |     ✗     |    ✓
+manage:laboratorium         |   ✓   |   ✗   |     ✗     |    ✓
+-----------------------------------------------------------------
+manage:pengumuman           |   ✓   |   ✗   |     ✗     |    ✗
+create:pengumuman           |   ✓   |   ✓   |     ✗     |    ✗
+view:pengumuman             |   ✓   |   ✗   |     ✓     |    ✗
+-----------------------------------------------------------------
+view:notification           |   ✓   |   ✓   |     ✓     |    ✓
+manage:notification         |   ✓   |   ✗   |     ✗     |    ✗
+-----------------------------------------------------------------
+view:dashboard              |   ✓   |   ✗   |     ✗     |    ✗
+view:analytics              |   ✓   |   ✗   |     ✗     |    ✗
+manage:sync                 |   ✓   |   ✗   |     ✗     |    ✗
+-----------------------------------------------------------------
+
+Total Permissions:
+- Admin:     22 permissions (Full Access)
+- Dosen:     20 permissions
+- Mahasiswa: 15 permissions
+- Laboran:    8 permissions
+

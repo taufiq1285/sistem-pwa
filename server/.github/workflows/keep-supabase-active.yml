@@ -1,0 +1,60 @@
+name: Keep Supabase Project Active
+
+on:
+  # Jalankan setiap 2 hari (lebih aman, jauh sebelum batas 7 hari Supabase)
+  schedule:
+    - cron: '0 0 */2 * *'  # Setiap 2 hari pada jam 00:00 UTC
+
+  # Bisa juga dijalankan manual dari GitHub Actions tab
+  workflow_dispatch:
+
+jobs:
+  ping-supabase:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Ping Supabase Database
+        run: |
+          echo "🔄 Pinging Supabase to keep project active..."
+          echo "URL: ${{ secrets.VITE_SUPABASE_URL }}"
+
+          # Method 1: Ping REST API endpoint
+          echo "📡 Attempting REST API ping..."
+          response=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "apikey: ${{ secrets.VITE_SUPABASE_ANON_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.VITE_SUPABASE_ANON_KEY }}" \
+            "${{ secrets.VITE_SUPABASE_URL }}/rest/v1/" || echo "000")
+
+          echo "REST API Response: $response"
+
+          # Method 2: Ping health check endpoint
+          echo "🏥 Attempting health check ping..."
+          health_response=$(curl -s -o /dev/null -w "%{http_code}" \
+            "${{ secrets.VITE_SUPABASE_URL }}/rest/v1/health" || echo "000")
+
+          echo "Health Check Response: $health_response"
+
+          # Method 3: Simple connection test
+          echo "🌐 Attempting simple connection..."
+          simple_response=$(curl -s -o /dev/null -w "%{http_code}" \
+            "${{ secrets.VITE_SUPABASE_URL }}" || echo "000")
+
+          echo "Simple Connection Response: $simple_response"
+
+          # Check if any method succeeded (any response other than 000 means connection worked)
+          if [ "$response" != "000" ] || [ "$health_response" != "000" ] || [ "$simple_response" != "000" ]; then
+            echo "✅ Success! Supabase project is active and responding."
+            echo "At least one ping method succeeded - project will stay active."
+          else
+            echo "❌ All ping methods failed. Please check:"
+            echo "  1. VITE_SUPABASE_URL is set correctly in secrets"
+            echo "  2. VITE_SUPABASE_ANON_KEY is set correctly in secrets"
+            echo "  3. Supabase project is not paused manually"
+            exit 1
+          fi
+
+      - name: Log Activity
+        run: |
+          echo "📅 Last ping: $(date)"
+          echo "⏰ Next scheduled ping: in 2 days"
+          echo "✨ Workflow completed successfully!"

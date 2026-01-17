@@ -180,7 +180,7 @@ const adminNavigation: NavigationItem[] = [
     icon: Users,
     description: "Kelola kelas",
   },
-    {
+  {
     label: "Laboratories",
     href: "/admin/laboratories",
     icon: Building2,
@@ -204,7 +204,7 @@ const adminNavigation: NavigationItem[] = [
     icon: PackageCheck,
     description: "Kelola peminjaman aktif & pengembalian",
   },
-    {
+  {
     label: "Manajemen Assignment",
     href: "/admin/manajemen-assignment",
     icon: Users,
@@ -332,7 +332,7 @@ export function isRouteActive(currentPath: string, itemPath: string): boolean {
  */
 export function getCurrentNavigationItem(
   role: UserRole,
-  currentPath: string
+  currentPath: string,
 ): NavigationItem | undefined {
   const items = getNavigationItems(role);
   return items.find((item) => isRouteActive(currentPath, item.href));
@@ -343,7 +343,7 @@ export function getCurrentNavigationItem(
  */
 export function getBreadcrumbs(
   role: UserRole,
-  currentPath: string
+  currentPath: string,
 ): { label: string; href: string }[] {
   const segments = currentPath.split("/").filter(Boolean);
   const breadcrumbs: { label: string; href: string }[] = [];

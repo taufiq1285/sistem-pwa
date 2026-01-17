@@ -1,14 +1,11 @@
 /// <reference types="vitest" />
-import path from "path"
-import tailwindcss from "@tailwindcss/vite"
-import react from "@vitejs/plugin-react"
-import { defineConfig } from "vite"
+import path from "path";
+import tailwindcss from "@tailwindcss/vite";
+import react from "@vitejs/plugin-react";
+import { defineConfig } from "vite";
 
 export default defineConfig({
-  plugins: [
-    react(),
-    tailwindcss(),
-  ],
+  plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
@@ -16,98 +13,66 @@ export default defineConfig({
   },
   server: {
     headers: {
-      'Cache-Control': 'no-store',
+      "Cache-Control": "no-store",
     },
     proxy: {
-      '/api': {
-        target: 'http://localhost:3001',
+      "/api": {
+        target: "http://localhost:3001",
         changeOrigin: true,
       },
     },
   },
   build: {
-    minify: 'esbuild',
+    minify: "esbuild",
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
-        manualChunks: (id) => {
-          // React ecosystem
-          if (id.includes('node_modules/react') || 
-              id.includes('node_modules/react-dom') || 
-              id.includes('node_modules/react-router-dom')) {
-            return 'vendor-react'
-          }
-          
+        manualChunks: {
+          // React core - must be first, no other dependencies
+          "vendor-react": [
+            "react",
+            "react-dom",
+            "react-router-dom",
+            "scheduler",
+          ],
           // Supabase
-          if (id.includes('node_modules/@supabase')) {
-            return 'vendor-supabase'
-          }
-          
+          "vendor-supabase": ["@supabase/supabase-js"],
           // Charts library
-          if (id.includes('node_modules/recharts')) {
-            return 'vendor-charts'
-          }
-          
+          "vendor-charts": ["recharts"],
           // Date utilities
-          if (id.includes('node_modules/date-fns')) {
-            return 'vendor-date'
-          }
-          
-          // Icons
-          if (id.includes('node_modules/lucide-react')) {
-            return 'vendor-icons'
-          }
-          
+          "vendor-date": ["date-fns"],
           // Form libraries
-          if (id.includes('node_modules/react-hook-form') || 
-              id.includes('node_modules/zod') ||
-              id.includes('node_modules/@hookform')) {
-            return 'vendor-forms'
-          }
-          
-          // UI components (Radix UI)
-          if (id.includes('node_modules/@radix-ui')) {
-            return 'vendor-ui'
-          }
-          
-          // Other vendor libraries
-          if (id.includes('node_modules/')) {
-            return 'vendor-misc'
-          }
+          "vendor-forms": ["react-hook-form", "zod", "@hookform/resolvers"],
         },
-        
-        chunkFileNames: (chunkInfo) => {
-          const facadeModuleId = chunkInfo.facadeModuleId 
-            ? chunkInfo.facadeModuleId.split('/').pop() 
-            : 'chunk'
-          return `assets/js/${facadeModuleId}-[hash].js`
-        },
-        entryFileNames: 'assets/js/[name]-[hash].js',
-        assetFileNames: 'assets/[ext]/[name]-[hash].[ext]',
+        chunkFileNames: "assets/js/[name]-[hash].js",
+        entryFileNames: "assets/js/[name]-[hash].js",
+        assetFileNames: "assets/[ext]/[name]-[hash].[ext]",
       },
     },
-    
+
     sourcemap: false,
-    target: 'esnext',
+    target: "esnext",
     cssCodeSplit: true,
   },
-  
+
   optimizeDeps: {
     include: [
-      'react',
-      'react-dom',
-      'react-router-dom',
-      '@supabase/supabase-js',
+      "react",
+      "react-dom",
+      "react-router-dom",
+      "@supabase/supabase-js",
     ],
   },
-  
+
   test: {
     globals: true,
-    environment: 'jsdom',
-    setupFiles: ['./src/__tests__/setup.ts'],
+    environment: "jsdom",
+    setupFiles: ["./src/__tests__/setup.ts"],
+    include: ["src/__tests__/**/*.{test,spec}.{ts,tsx}"],
+    exclude: ["server/**"],
     coverage: {
-      provider: 'v8',
-      reporter: ['text', 'json', 'html'],
+      provider: "v8",
+      reporter: ["text", "json", "html"],
     },
   },
-})
+});

@@ -7,7 +7,7 @@
  */
 
 import { queryWithFilters, getById, insert, update, remove } from "./base.api";
-
+import { supabase } from "@/lib/supabase/client";
 import { requirePermission } from "@/lib/middleware";
 
 import type {
@@ -105,15 +105,24 @@ export async function getKelas(filters?: KelasFilters): Promise<Kelas[]> {
       },
     };
 
-    const results = await queryWithFilters<Kelas>("kelas", filterConditions, options);
+    const results = await queryWithFilters<Kelas>(
+      "kelas",
+      filterConditions,
+      options,
+    );
 
     // Remove duplicates jika ada multiple jadwal
     if (filters?.with_active_jadwal) {
       const uniqueKelas = Array.from(
-        new Map(results.map((k: any) => [k.id, {
-          ...k,
-          jadwal_praktikum: undefined, // Remove jadwal_praktikum dari response
-        }])).values()
+        new Map(
+          results.map((k: any) => [
+            k.id,
+            {
+              ...k,
+              jadwal_praktikum: undefined, // Remove jadwal_praktikum dari response
+            },
+          ]),
+        ).values(),
       );
       return uniqueKelas;
     }
@@ -207,7 +216,6 @@ async function deleteKelasImpl(id: string): Promise<void> {
     console.log(`🗑️ Attempting to delete kelas with id: ${id}`);
 
     // First, let's check if the kelas exists
-    const { supabase } = await import("@/lib/supabase/client");
     const { data: kelasCheck, error: checkError } = await supabase
       .from("kelas")
       .select("id, nama_kelas")
@@ -216,10 +224,14 @@ async function deleteKelasImpl(id: string): Promise<void> {
 
     if (checkError) {
       console.error("❌ Error checking kelas existence:", checkError);
-      throw new Error(`Kelas not found or cannot be accessed: ${checkError.message}`);
+      throw new Error(
+        `Kelas not found or cannot be accessed: ${checkError.message}`,
+      );
     }
 
-    console.log(`✅ Found kelas: ${kelasCheck?.nama_kelas} (${kelasCheck?.id})`);
+    console.log(
+      `✅ Found kelas: ${kelasCheck?.nama_kelas} (${kelasCheck?.id})`,
+    );
 
     // Now try to delete
     await remove("kelas", id);
@@ -230,8 +242,13 @@ async function deleteKelasImpl(id: string): Promise<void> {
 
     // Check for specific RLS permission errors
     const errorMessage = (error as Error).message;
-    if (errorMessage.includes("permission denied") || errorMessage.includes("RLS")) {
-      throw new Error("You don't have permission to delete this kelas. Please ensure you are logged in as an admin.");
+    if (
+      errorMessage.includes("permission denied") ||
+      errorMessage.includes("RLS")
+    ) {
+      throw new Error(
+        "You don't have permission to delete this kelas. Please ensure you are logged in as an admin.",
+      );
     }
 
     throw new Error(`Failed to delete kelas: ${errorMessage}`);
@@ -269,7 +286,6 @@ export async function getEnrolledStudents(
   kelasId: string,
 ): Promise<KelasMahasiswa[]> {
   try {
-    const { supabase } = await import("@/lib/supabase/client");
     const { data, error } = await supabase
       .from("kelas_mahasiswa")
       .select(
@@ -307,8 +323,6 @@ async function enrollStudentImpl(
   mahasiswaId: string,
 ): Promise<KelasMahasiswa> {
   try {
-    const { supabase } = await import("@/lib/supabase/client");
-
     // Step 1: Get kelas info (kuota, nama_kelas) (CRITICAL FIX)
     const { data: kelasData, error: kelasError } = await supabase
       .from("kelas")
@@ -408,7 +422,6 @@ async function unenrollStudentImpl(
   mahasiswaId: string,
 ): Promise<void> {
   try {
-    const { supabase } = await import("@/lib/supabase/client");
     const { error } = await supabase
       .from("kelas_mahasiswa")
       .delete()
@@ -439,7 +452,6 @@ async function toggleStudentStatusImpl(
   isActive: boolean,
 ): Promise<void> {
   try {
-    const { supabase } = await import("@/lib/supabase/client");
     const { error } = await supabase
       .from("kelas_mahasiswa")
       .update({ is_active: isActive })
@@ -474,8 +486,6 @@ export async function getAllMahasiswa(): Promise<
   }>
 > {
   try {
-    const { supabase } = await import("@/lib/supabase/client");
-
     // Get mahasiswa data
     const { data: mahasiswaData, error: mahasiswaError } = await supabase
       .from("mahasiswa")
@@ -530,8 +540,6 @@ async function createOrEnrollMahasiswaImpl(
   },
 ): Promise<{ success: boolean; message: string; mahasiswaId?: string }> {
   try {
-    const { supabase } = await import("@/lib/supabase/client");
-
     // Check if mahasiswa with NIM already exists
     const { data: existingMahasiswa } = await supabase
       .from("mahasiswa")

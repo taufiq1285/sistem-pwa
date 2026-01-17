@@ -319,6 +319,15 @@ describe("Kelas API - CRUD Operations", () => {
     it("should delete kelas by ID", async () => {
       vi.mocked(remove).mockResolvedValue(true);
 
+      // deleteKelasImpl performs an existence check via Supabase before calling remove()
+      const kelasCheckBuilder = mockQueryBuilder();
+      kelasCheckBuilder.single.mockResolvedValue({
+        data: { id: "kelas-1", nama_kelas: "Kelas A" },
+        error: null,
+      });
+
+      vi.mocked(supabase.from).mockReturnValueOnce(kelasCheckBuilder);
+
       await deleteKelas("kelas-1");
 
       expect(remove).toHaveBeenCalledWith("kelas", "kelas-1");
@@ -399,6 +408,13 @@ describe("Kelas API - Student Enrollment", () => {
         error: null,
       });
 
+      // Step 4a: Optional mahasiswa semester lookup
+      const semesterBuilder = mockQueryBuilder();
+      semesterBuilder.single.mockResolvedValue({
+        data: { semester: 1 },
+        error: null,
+      });
+
       // Step 4: Insert enrollment
       const insertBuilder = mockQueryBuilder();
       insertBuilder.single.mockResolvedValue({
@@ -410,6 +426,7 @@ describe("Kelas API - Student Enrollment", () => {
         .mockReturnValueOnce(kelasBuilder)
         .mockReturnValueOnce(countBuilder as any)
         .mockReturnValueOnce(existingBuilder)
+        .mockReturnValueOnce(semesterBuilder)
         .mockReturnValueOnce(insertBuilder);
 
       const result = await enrollStudent("kelas-1", "mhs-1");
@@ -501,6 +518,12 @@ describe("Kelas API - Student Enrollment", () => {
         error: null,
       });
 
+      const semesterBuilder = mockQueryBuilder();
+      semesterBuilder.single.mockResolvedValue({
+        data: { semester: 1 },
+        error: null,
+      });
+
       const insertBuilder = mockQueryBuilder();
       insertBuilder.single.mockResolvedValue({
         data: mockEnrollment,
@@ -511,6 +534,7 @@ describe("Kelas API - Student Enrollment", () => {
         .mockReturnValueOnce(kelasBuilder)
         .mockReturnValueOnce(countBuilder as any)
         .mockReturnValueOnce(existingBuilder)
+        .mockReturnValueOnce(semesterBuilder)
         .mockReturnValueOnce(insertBuilder);
 
       const result = await enrollStudent("kelas-1", "mhs-1");
@@ -700,6 +724,12 @@ describe("Kelas API - Student Management", () => {
         }),
       };
 
+      const semesterBuilder = mockQueryBuilder();
+      semesterBuilder.single.mockResolvedValue({
+        data: { semester: 1 },
+        error: null,
+      });
+
       const insertEnrollBuilder = {
         insert: vi.fn().mockReturnThis(),
         select: vi.fn().mockReturnThis(),
@@ -715,6 +745,7 @@ describe("Kelas API - Student Management", () => {
         .mockReturnValueOnce(kelasBuilder)
         .mockReturnValueOnce(countBuilder)
         .mockReturnValueOnce(checkEnrollBuilder)
+        .mockReturnValueOnce(semesterBuilder)
         .mockReturnValueOnce(insertEnrollBuilder);
 
       const result = await createOrEnrollMahasiswa("kelas-1", {
@@ -782,6 +813,12 @@ describe("Kelas API - Student Management", () => {
         }),
       };
 
+      const semesterBuilder = mockQueryBuilder();
+      semesterBuilder.single.mockResolvedValue({
+        data: { semester: 1 },
+        error: null,
+      });
+
       const insertEnrollBuilder = {
         insert: vi.fn().mockReturnThis(),
         select: vi.fn().mockReturnThis(),
@@ -800,6 +837,7 @@ describe("Kelas API - Student Management", () => {
         .mockReturnValueOnce(kelasBuilder)
         .mockReturnValueOnce(countBuilder)
         .mockReturnValueOnce(checkEnrollBuilder)
+        .mockReturnValueOnce(semesterBuilder)
         .mockReturnValueOnce(insertEnrollBuilder);
 
       const result = await createOrEnrollMahasiswa("kelas-1", {

@@ -99,7 +99,8 @@ export default function KelasPageSimple() {
 
   // Mahasiswa management state
   const [showMahasiswaDialog, setShowMahasiswaDialog] = useState(false);
-  const [selectedKelasForMahasiswa, setSelectedKelasForMahasiswa] = useState<Kelas | null>(null);
+  const [selectedKelasForMahasiswa, setSelectedKelasForMahasiswa] =
+    useState<Kelas | null>(null);
   const [mahasiswaInKelas, setMahasiswaInKelas] = useState<Mahasiswa[]>([]);
   const [allMahasiswa, setAllMahasiswa] = useState<Mahasiswa[]>([]);
   const [loadingMahasiswa, setLoadingMahasiswa] = useState(false);
@@ -111,17 +112,17 @@ export default function KelasPageSimple() {
 
     // Realtime subscription untuk mahasiswa baru
     const subscription = supabase
-      .channel('mahasiswa-changes')
+      .channel("mahasiswa-changes")
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'mahasiswa',
+          event: "INSERT",
+          schema: "public",
+          table: "mahasiswa",
         },
         () => {
           loadAllMahasiswa();
-        }
+        },
       )
       .subscribe();
 
@@ -135,7 +136,9 @@ export default function KelasPageSimple() {
       setLoading(true);
       const { data, error } = await supabase
         .from("kelas")
-        .select("id, nama_kelas, kode_kelas, tahun_ajaran, semester_ajaran, is_active, created_at")
+        .select(
+          "id, nama_kelas, kode_kelas, tahun_ajaran, semester_ajaran, is_active, created_at",
+        )
         .eq("is_active", true)
         .order("tahun_ajaran", { ascending: false })
         .order("nama_kelas", { ascending: true });
@@ -193,9 +196,9 @@ export default function KelasPageSimple() {
     setIsSaving(true);
     try {
       // Generate kode_kelas
-      const kode_kelas = formData.nama_kelas
-        .toUpperCase()
-        .replace(/\s+/g, "-") + `-${formData.angkatan}`;
+      const kode_kelas =
+        formData.nama_kelas.toUpperCase().replace(/\s+/g, "-") +
+        `-${formData.angkatan}`;
 
       if (isEditing && selectedKelas) {
         // Update existing kelas
@@ -212,18 +215,16 @@ export default function KelasPageSimple() {
         toast.success("Kelas berhasil diperbarui");
       } else {
         // Create new kelas
-        const { error } = await supabase
-          .from("kelas")
-          .insert({
-            nama_kelas: formData.nama_kelas,
-            kode_kelas: kode_kelas,
-            tahun_ajaran: formData.angkatan.toString(),
-            semester_ajaran: 1,
-            is_active: true,
-            // Field yang dibiarkan null (nanti di-assign terpisah)
-            mata_kuliah_id: null,
-            dosen_id: null,
-          });
+        const { error } = await supabase.from("kelas").insert({
+          nama_kelas: formData.nama_kelas,
+          kode_kelas: kode_kelas,
+          tahun_ajaran: formData.angkatan.toString(),
+          semester_ajaran: 1,
+          is_active: true,
+          // Field yang dibiarkan null (nanti di-assign terpisah)
+          mata_kuliah_id: null,
+          dosen_id: null,
+        });
 
         if (error) throw error;
         toast.success("Kelas berhasil ditambahkan");
@@ -270,7 +271,8 @@ export default function KelasPageSimple() {
     try {
       const { data, error } = await supabase
         .from("mahasiswa")
-        .select(`
+        .select(
+          `
           id,
           nim,
           angkatan,
@@ -281,7 +283,8 @@ export default function KelasPageSimple() {
             full_name,
             email
           )
-        `)
+        `,
+        )
         .order("nim", { ascending: true });
 
       if (error) throw error;
@@ -294,7 +297,7 @@ export default function KelasPageSimple() {
         email: mhs.users?.email || "-",
         angkatan: mhs.angkatan,
         program_studi: mhs.program_studi,
-        user_id: mhs.user_id
+        user_id: mhs.user_id,
       }));
 
       setAllMahasiswa(transformedData);
@@ -317,7 +320,8 @@ export default function KelasPageSimple() {
       setLoadingMahasiswa(true);
       const { data, error } = await supabase
         .from("kelas_mahasiswa")
-        .select(`
+        .select(
+          `
           mahasiswa_id,
           mahasiswa:mahasiswa_id (
             id,
@@ -331,7 +335,8 @@ export default function KelasPageSimple() {
               email
             )
           )
-        `)
+        `,
+        )
         .eq("kelas_id", kelasId)
         .eq("is_active", true);
 
@@ -348,7 +353,7 @@ export default function KelasPageSimple() {
             email: item.mahasiswa.users?.email || "-",
             angkatan: item.mahasiswa.angkatan,
             program_studi: item.mahasiswa.program_studi,
-            user_id: item.mahasiswa.user_id
+            user_id: item.mahasiswa.user_id,
           };
         })
         .filter((mhs: any) => mhs !== null);
@@ -367,13 +372,11 @@ export default function KelasPageSimple() {
     if (!selectedKelasForMahasiswa) return;
 
     try {
-      const { error } = await supabase
-        .from("kelas_mahasiswa")
-        .insert({
-          kelas_id: selectedKelasForMahasiswa.id,
-          mahasiswa_id: mahasiswaId,
-          is_active: true,
-        });
+      const { error } = await supabase.from("kelas_mahasiswa").insert({
+        kelas_id: selectedKelasForMahasiswa.id,
+        mahasiswa_id: mahasiswaId,
+        is_active: true,
+      });
 
       if (error) {
         if (error.code === "23505") {
@@ -417,7 +420,7 @@ export default function KelasPageSimple() {
     (kelas) =>
       kelas.nama_kelas.toLowerCase().includes(searchTerm.toLowerCase()) ||
       kelas.kode_kelas.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      kelas.tahun_ajaran.includes(searchTerm)
+      kelas.tahun_ajaran.includes(searchTerm),
   );
 
   return (
@@ -572,7 +575,8 @@ export default function KelasPageSimple() {
                 onChange={(e) =>
                   setFormData({
                     ...formData,
-                    angkatan: parseInt(e.target.value) || new Date().getFullYear(),
+                    angkatan:
+                      parseInt(e.target.value) || new Date().getFullYear(),
                   })
                 }
               />
@@ -607,6 +611,7 @@ export default function KelasPageSimple() {
         onOpenChange={setShowDeleteDialog}
         onConfirm={handleDeleteConfirm}
         title="Hapus Kelas"
+        itemType="kelas"
         description={
           kelasToDelete
             ? `Yakin ingin menghapus kelas "${kelasToDelete.nama_kelas}"? Kelas tidak akan terhapus permanen, hanya dinonaktifkan.`

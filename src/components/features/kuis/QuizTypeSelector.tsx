@@ -110,7 +110,7 @@ export function QuizTypeSelector({
               key={option.type}
               className={cn(
                 "cursor-pointer transition-all hover:shadow-lg",
-                isSelected && "ring-2 ring-primary"
+                isSelected && "ring-2 ring-primary",
               )}
               onClick={() => onSelect(option.type)}
             >
@@ -123,7 +123,7 @@ export function QuizTypeSelector({
                       option.color === "purple" &&
                         "bg-purple-100 dark:bg-purple-900",
                       option.color === "green" &&
-                        "bg-green-100 dark:bg-green-900"
+                        "bg-green-100 dark:bg-green-900",
                     )}
                   >
                     <Icon
@@ -134,7 +134,7 @@ export function QuizTypeSelector({
                         option.color === "purple" &&
                           "text-purple-600 dark:text-purple-400",
                         option.color === "green" &&
-                          "text-green-600 dark:text-green-400"
+                          "text-green-600 dark:text-green-400",
                       )}
                     />
                   </div>
@@ -197,7 +197,7 @@ export function getAllowedQuestionTypes(quizType: TipeKuis): string[] {
  */
 export function isQuestionTypeAllowed(
   quizType: TipeKuis,
-  questionType: string
+  questionType: string,
 ): boolean {
   if (quizType === TIPE_KUIS.CAMPURAN) {
     return true; // All types allowed

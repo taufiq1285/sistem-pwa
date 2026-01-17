@@ -51,7 +51,8 @@ export type PermissionResource =
   | "notification"
   | "sync"
   | "dashboard"
-  | "analytics";
+  | "analytics"
+  | "assignments";
 
 /**
  * Permission string format: "action:resource"

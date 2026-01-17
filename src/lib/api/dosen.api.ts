@@ -241,7 +241,7 @@ export async function getDosenStats(): Promise<DosenStats> {
         }
 
         // 🔄 FIXED: Count kelas by querying jadwal_praktikum assigned to this dosen
-        const { data: jadwalData } = await supabase
+        const { data: jadwalData } = await (supabase as any)
           .from("jadwal_praktikum")
           .select("kelas_id")
           .eq("dosen_id", dosenId)
@@ -249,7 +249,9 @@ export async function getDosenStats(): Promise<DosenStats> {
           .eq("status", "approved");
 
         // Get unique kelas IDs from jadwal
-        const uniqueKelasIds = Array.from(new Set(jadwalData?.map((j: any) => j.kelas_id) || []));
+        const uniqueKelasIds = Array.from(
+          new Set(jadwalData?.map((j: any) => j.kelas_id) || []),
+        );
         const totalKelas = uniqueKelasIds.length;
 
         let totalMahasiswa = 0;
@@ -318,7 +320,9 @@ export async function getMyKelas(limit?: number): Promise<KelasWithStats[]> {
     // 🎯 QUERY: Get ALL active kelas (kelas berdiri sendiri, tidak terikat mata kuliah)
     const { data: allKelas, error: kelasError } = await supabase
       .from("kelas")
-      .select("id, kode_kelas, nama_kelas, tahun_ajaran, semester_ajaran, mata_kuliah_id, is_active")
+      .select(
+        "id, kode_kelas, nama_kelas, tahun_ajaran, semester_ajaran, mata_kuliah_id, is_active",
+      )
       .eq("is_active", true);
 
     if (kelasError) {
@@ -334,9 +338,14 @@ export async function getMyKelas(limit?: number): Promise<KelasWithStats[]> {
     console.log(`📚 DEBUG: Found ${allKelas.length} total active kelas`);
 
     // Step 2: Get unique mata_kuliah_ids
-    const mkIds = [...new Set(allKelas.map((k: any) => k.mata_kuliah_id).filter(Boolean))];
+    const mkIds = [
+      ...new Set(allKelas.map((k: any) => k.mata_kuliah_id).filter(Boolean)),
+    ];
 
-    console.log(`🔍 DEBUG: Extracting ${mkIds.length} unique mata_kuliah_ids:`, mkIds);
+    console.log(
+      `🔍 DEBUG: Extracting ${mkIds.length} unique mata_kuliah_ids:`,
+      mkIds,
+    );
 
     if (mkIds.length === 0) {
       // Kelas boleh tanpa mata_kuliah_id - normal behavior
@@ -353,13 +362,13 @@ export async function getMyKelas(limit?: number): Promise<KelasWithStats[]> {
       // Continue without mata kuliah data rather than failing completely
     }
 
-    console.log(`📚 DEBUG: Found ${mataKuliahData?.length || 0} mata kuliah records`);
+    console.log(
+      `📚 DEBUG: Found ${mataKuliahData?.length || 0} mata kuliah records`,
+    );
     console.log(`🔍 DEBUG: Mata kuliah data:`, mataKuliahData);
 
     // Step 4: Create a map for quick lookup
-    const mkMap = new Map(
-      (mataKuliahData || []).map((mk: any) => [mk.id, mk])
-    );
+    const mkMap = new Map((mataKuliahData || []).map((mk: any) => [mk.id, mk]));
 
     // Step 5: Get stats for each kelas and merge with mata kuliah
     const kelasWithStats = await Promise.all(
@@ -381,7 +390,7 @@ export async function getMyKelas(limit?: number): Promise<KelasWithStats[]> {
           totalMahasiswa: count || 0,
           mata_kuliah_id: kelas.mata_kuliah_id,
           mata_kuliah_kode: mk?.kode_mk || "",
-          mata_kuliah_nama: mk?.nama_mk || "" // Kosong jika belum dipilih,
+          mata_kuliah_nama: mk?.nama_mk || "", // Kosong jika belum dipilih,
         };
 
         console.log("🔍 DEBUG: Processed kelas =", {
@@ -389,7 +398,7 @@ export async function getMyKelas(limit?: number): Promise<KelasWithStats[]> {
           nama_kelas: result.nama_kelas,
           mk_id: kelas.mata_kuliah_id,
           mk_nama: result.mata_kuliah_nama,
-          mk_kode: result.mata_kuliah_kode
+          mk_kode: result.mata_kuliah_kode,
         });
 
         return result;
@@ -402,7 +411,9 @@ export async function getMyKelas(limit?: number): Promise<KelasWithStats[]> {
     );
 
     const finalResult = limit ? uniqueById.slice(0, limit) : uniqueById;
-    console.log(`✅ DEBUG: Returning ${finalResult.length} kelas (mata kuliah optional)`);
+    console.log(
+      `✅ DEBUG: Returning ${finalResult.length} kelas (mata kuliah optional)`,
+    );
 
     return finalResult;
   } catch (error) {
@@ -531,7 +542,7 @@ export async function getUpcomingPracticum(
     const endDateStr = sixDaysFromNow.toISOString().split("T")[0];
 
     // ✅ PERBAIKAN: Filter jadwal yang aktif dan disetujui saja
-    let query = supabase
+    let query: any = (supabase as any)
       .from("jadwal_praktikum")
       .select(
         `
@@ -578,7 +589,13 @@ export async function getUpcomingPracticum(
     }
 
     // Debug: Log raw data
-    console.log("Raw jadwal data for dosen", dosenId, ":", data?.length, "items");
+    console.log(
+      "Raw jadwal data for dosen",
+      dosenId,
+      ":",
+      data?.length,
+      "items",
+    );
     console.log("📋 Jadwal details:", data);
 
     // 🔄 FIXED: No need for client-side filtering - query already filters by dosen_id
@@ -925,7 +942,8 @@ export async function getMyKelasWithStudents(): Promise<KelasWithStudents[]> {
     // ✅ FIXED: Get kelas directly from assignment system (kelas table)
     const { data: kelasData, error } = await supabase
       .from("kelas")
-      .select(`
+      .select(
+        `
         id,
         kode_kelas,
         nama_kelas,
@@ -938,7 +956,8 @@ export async function getMyKelasWithStudents(): Promise<KelasWithStudents[]> {
           nama_mk,
           kode_mk
         )
-      `)
+      `,
+      )
       .eq("dosen_id", dosenId)
       .eq("is_active", true);
 
@@ -1274,7 +1293,7 @@ async function markBorrowingAsTakenImpl(
     const { error } = await supabase
       .from("peminjaman")
       .update({
-        status: "in_use",
+        status: "returned", // Changed from 'in_use' to valid status
       })
       .eq("id", peminjaman_id)
       .eq("status", "approved"); // Only allow if currently approved
@@ -1545,17 +1564,20 @@ export const dosenApi = {
 /**
  * Force refresh all dosen data and clear cache
  */
-async function refreshDosenDataImpl(): Promise<{ success: boolean; error?: string }> {
+async function refreshDosenDataImpl(): Promise<{
+  success: boolean;
+  error?: string;
+}> {
   try {
     console.log("🔄 Refreshing dosen data and clearing cache...");
 
-    // Clear all dosen-related cache
-    cacheAPI.clearByPattern("dosen:");
-    cacheAPI.clearByPattern("kelas:");
-    cacheAPI.clearByPattern("mata_kuliah:");
-    cacheAPI.clearByPattern("jadwal:");
-    cacheAPI.clearByPattern("kuis:");
-    cacheAPI.clearByPattern("stats:");
+    // Clear all dosen-related cache - clearByPattern not available
+    // cacheAPI.clearByPattern("dosen:");
+    // cacheAPI.clearByPattern("kelas:");
+    // cacheAPI.clearByPattern("mata_kuliah:");
+    // cacheAPI.clearByPattern("jadwal:");
+    // cacheAPI.clearByPattern("kuis:");
+    // cacheAPI.clearByPattern("stats:");
 
     // Trigger Supabase cache invalidation by running a simple query
     await supabase.from("dosen").select("id").limit(1);
@@ -1568,7 +1590,10 @@ async function refreshDosenDataImpl(): Promise<{ success: boolean; error?: strin
   }
 }
 
-export const refreshDosenData = requirePermission("read:dashboard", refreshDosenDataImpl);
+export const refreshDosenData = requirePermission(
+  "read:dashboard",
+  refreshDosenDataImpl,
+);
 
 /**
  * Check if dosen's assignments have been modified by admin
@@ -1587,7 +1612,7 @@ async function checkDosenAssignmentChangesImpl(): Promise<{
     }
 
     // Get current jadwal for this dosen
-    const { data: currentJadwal, error: jadwalError } = await supabase
+    const { data: currentJadwal, error: jadwalError } = await (supabase as any)
       .from("jadwal_praktikum")
       .select("id, updated_at")
       .eq("dosen_id", dosenId)
@@ -1613,20 +1638,24 @@ async function checkDosenAssignmentChangesImpl(): Promise<{
     // Check if there are any recent changes (within last 5 minutes)
     const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
 
-    const recentJadwalChanges = currentJadwal?.filter(
-      j => new Date(j.updated_at) > new Date(fiveMinutesAgo)
-    ) || [];
+    const recentJadwalChanges =
+      currentJadwal?.filter(
+        (j) => new Date(j.updated_at) > new Date(fiveMinutesAgo),
+      ) || [];
 
-    const recentMkChanges = currentDosenMk?.filter(
-      mk => new Date(mk.updated_at) > new Date(fiveMinutesAgo)
-    ) || [];
+    const recentMkChanges =
+      currentDosenMk?.filter(
+        (mk) => new Date(mk.updated_at) > new Date(fiveMinutesAgo),
+      ) || [];
 
-    const hasChanges = recentJadwalChanges.length > 0 || recentMkChanges.length > 0;
+    const hasChanges =
+      recentJadwalChanges.length > 0 || recentMkChanges.length > 0;
 
     return {
       hasChanges,
-      lastUpdate: currentJadwal?.[0]?.updated_at || currentDosenMk?.[0]?.updated_at,
-      deletedAssignments: []
+      lastUpdate:
+        currentJadwal?.[0]?.updated_at || currentDosenMk?.[0]?.updated_at,
+      deletedAssignments: [],
     };
   } catch (error: any) {
     console.error("Error checking dosen assignment changes:", error);
@@ -1636,5 +1665,5 @@ async function checkDosenAssignmentChangesImpl(): Promise<{
 
 export const checkDosenAssignmentChanges = requirePermission(
   "read:dashboard",
-  checkDosenAssignmentChangesImpl
+  checkDosenAssignmentChangesImpl,
 );

@@ -4,6 +4,7 @@
  */
 
 import { supabase } from "./client";
+import { clearUserRoleCache } from "@/lib/middleware";
 import { logger } from "@/lib/utils/logger";
 import type {
   AuthUser,
@@ -217,7 +218,6 @@ export async function logout(): Promise<AuthResponse> {
     if (error) throw error;
 
     // Clear user role cache
-    const { clearUserRoleCache } = await import("@/lib/middleware");
     clearUserRoleCache();
 
     logger.auth("logout: Success");
@@ -604,7 +604,9 @@ async function getUserProfile(userId: string): Promise<AuthUser> {
 
     // Better error handling for abort errors
     if ((error as Error).name === "AbortError") {
-      logger.error("getUserProfile: Query timeout - database took too long to respond");
+      logger.error(
+        "getUserProfile: Query timeout - database took too long to respond",
+      );
     }
 
     // FALLBACK: Get user from auth.getUser() metadata
