@@ -198,63 +198,10 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
-          // React core
-          if (
-            id.includes("node_modules/react") ||
-            id.includes("node_modules/react-dom") ||
-            id.includes("node_modules/scheduler")
-          ) {
-            return "vendor-react";
-          }
-          // React Router
-          if (id.includes("node_modules/react-router")) {
-            return "vendor-router";
-          }
-          // Supabase
-          if (id.includes("node_modules/@supabase")) {
-            return "vendor-supabase";
-          }
-          // Charts library - keep together to avoid circular dependency issues
-          if (
-            id.includes("node_modules/recharts") ||
-            id.includes("node_modules/d3-") ||
-            id.includes("node_modules/rrule") ||
-            id.includes("node_modules/victory") ||
-            id.includes("node_modules/d3-array") ||
-            id.includes("node_modules/d3-scale") ||
-            id.includes("node_modules/d3-shape") ||
-            id.includes("node_modules/d3-time") ||
-            id.includes("node_modules/d3-time-format")
-          ) {
-            return "vendor-charts";
-          }
-          // Date utilities
-          if (id.includes("node_modules/date-fns")) {
-            return "vendor-date";
-          }
-          // Form libraries
-          if (
-            id.includes("node_modules/react-hook-form") ||
-            id.includes("node_modules/zod") ||
-            id.includes("node_modules/@hookform")
-          ) {
-            return "vendor-forms";
-          }
-          // Radix UI components
-          if (id.includes("node_modules/@radix-ui")) {
-            return "vendor-ui";
-          }
-          // TanStack Query
-          if (id.includes("node_modules/@tanstack")) {
-            return "vendor-query";
-          }
-          // Lucide icons
-          if (id.includes("node_modules/lucide")) {
-            return "vendor-icons";
-          }
-          // Other node_modules
+          // Simplified chunking to avoid circular dependencies
           if (id.includes("node_modules")) {
-            return "vendor-misc";
+            // Group all vendors together to avoid circular dependency issues
+            return "vendor";
           }
         },
         chunkFileNames: "assets/js/[name]-[hash].js",
