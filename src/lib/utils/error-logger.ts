@@ -62,10 +62,12 @@ class ErrorLogger {
     // Setup global error handlers
     this.setupGlobalHandlers();
 
-    console.log("✅ Error Logger initialized", {
-      enabled: this.config.enabled,
-      environment: this.config.environment,
-    });
+    // Only log in development or if explicitly enabled
+    if (import.meta.env.DEV || this.config.enabled) {
+      console.log(
+        `✅ Error Logger initialized (${this.config.environment}) - ${this.config.enabled ? "Enabled" : "Disabled"}`,
+      );
+    }
   }
 
   /**

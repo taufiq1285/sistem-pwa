@@ -326,7 +326,7 @@ describe("Kelas API - CRUD Operations", () => {
         error: null,
       });
 
-      vi.mocked(supabase.from).mockReturnValueOnce(kelasCheckBuilder);
+      vi.mocked(supabase.from).mockReturnValueOnce(kelasCheckBuilder as any);
 
       await deleteKelas("kelas-1");
 
@@ -423,11 +423,11 @@ describe("Kelas API - Student Enrollment", () => {
       });
 
       vi.mocked(supabase.from)
-        .mockReturnValueOnce(kelasBuilder)
+        .mockReturnValueOnce(kelasBuilder as any)
         .mockReturnValueOnce(countBuilder as any)
-        .mockReturnValueOnce(existingBuilder)
-        .mockReturnValueOnce(semesterBuilder)
-        .mockReturnValueOnce(insertBuilder);
+        .mockReturnValueOnce(existingBuilder as any)
+        .mockReturnValueOnce(semesterBuilder as any)
+        .mockReturnValueOnce(insertBuilder as any);
 
       const result = await enrollStudent("kelas-1", "mhs-1");
 
@@ -449,7 +449,7 @@ describe("Kelas API - Student Enrollment", () => {
       const countBuilder = { select: countSelect };
 
       vi.mocked(supabase.from)
-        .mockReturnValueOnce(kelasBuilder)
+        .mockReturnValueOnce(kelasBuilder as any)
         .mockReturnValueOnce(countBuilder as any);
 
       await expect(enrollStudent("kelas-1", "mhs-1")).rejects.toThrow(
@@ -479,9 +479,9 @@ describe("Kelas API - Student Enrollment", () => {
       });
 
       vi.mocked(supabase.from)
-        .mockReturnValueOnce(kelasBuilder)
+        .mockReturnValueOnce(kelasBuilder as any)
         .mockReturnValueOnce(countBuilder as any)
-        .mockReturnValueOnce(existingBuilder);
+        .mockReturnValueOnce(existingBuilder as any);
 
       await expect(enrollStudent("kelas-1", "mhs-1")).rejects.toThrow(
         "sudah terdaftar",
@@ -531,11 +531,11 @@ describe("Kelas API - Student Enrollment", () => {
       });
 
       vi.mocked(supabase.from)
-        .mockReturnValueOnce(kelasBuilder)
+        .mockReturnValueOnce(kelasBuilder as any)
         .mockReturnValueOnce(countBuilder as any)
-        .mockReturnValueOnce(existingBuilder)
-        .mockReturnValueOnce(semesterBuilder)
-        .mockReturnValueOnce(insertBuilder);
+        .mockReturnValueOnce(existingBuilder as any)
+        .mockReturnValueOnce(semesterBuilder as any)
+        .mockReturnValueOnce(insertBuilder as any);
 
       const result = await enrollStudent("kelas-1", "mhs-1");
 
@@ -740,13 +740,13 @@ describe("Kelas API - Student Management", () => {
       };
 
       vi.mocked(supabase.from)
-        .mockReturnValueOnce(existingMhsBuilder)
-        .mockReturnValueOnce(enrollmentBuilder)
-        .mockReturnValueOnce(kelasBuilder)
-        .mockReturnValueOnce(countBuilder)
-        .mockReturnValueOnce(checkEnrollBuilder)
-        .mockReturnValueOnce(semesterBuilder)
-        .mockReturnValueOnce(insertEnrollBuilder);
+        .mockReturnValueOnce(existingMhsBuilder as any)
+        .mockReturnValueOnce(enrollmentBuilder as any)
+        .mockReturnValueOnce(kelasBuilder as any)
+        .mockReturnValueOnce(countBuilder as any)
+        .mockReturnValueOnce(checkEnrollBuilder as any)
+        .mockReturnValueOnce(semesterBuilder as any)
+        .mockReturnValueOnce(insertEnrollBuilder as any);
 
       const result = await createOrEnrollMahasiswa("kelas-1", {
         nim: "BD2321001",
@@ -829,16 +829,16 @@ describe("Kelas API - Student Management", () => {
       };
 
       vi.mocked(supabase.from)
-        .mockReturnValueOnce(existingMhsBuilder)
-        .mockReturnValueOnce(existingEmailBuilder)
-        .mockReturnValueOnce(profileBuilder)
-        .mockReturnValueOnce(mahasiswaBuilder)
-        .mockReturnValueOnce(enrollCheckBuilder)
-        .mockReturnValueOnce(kelasBuilder)
-        .mockReturnValueOnce(countBuilder)
-        .mockReturnValueOnce(checkEnrollBuilder)
-        .mockReturnValueOnce(semesterBuilder)
-        .mockReturnValueOnce(insertEnrollBuilder);
+        .mockReturnValueOnce(existingMhsBuilder as any)
+        .mockReturnValueOnce(existingEmailBuilder as any)
+        .mockReturnValueOnce(profileBuilder as any)
+        .mockReturnValueOnce(mahasiswaBuilder as any)
+        .mockReturnValueOnce(enrollCheckBuilder as any)
+        .mockReturnValueOnce(kelasBuilder as any)
+        .mockReturnValueOnce(countBuilder as any)
+        .mockReturnValueOnce(checkEnrollBuilder as any)
+        .mockReturnValueOnce(semesterBuilder as any)
+        .mockReturnValueOnce(insertEnrollBuilder as any);
 
       const result = await createOrEnrollMahasiswa("kelas-1", {
         nim: "BD2321002",
@@ -869,8 +869,8 @@ describe("Kelas API - Student Management", () => {
       };
 
       vi.mocked(supabase.from)
-        .mockReturnValueOnce(existingMhsBuilder)
-        .mockReturnValueOnce(existingEmailBuilder);
+        .mockReturnValueOnce(existingMhsBuilder as any)
+        .mockReturnValueOnce(existingEmailBuilder as any);
 
       const result = await createOrEnrollMahasiswa("kelas-1", {
         nim: "BD2321003",
@@ -905,8 +905,8 @@ describe("Kelas API - Student Management", () => {
       };
 
       vi.mocked(supabase.from)
-        .mockReturnValueOnce(existingMhsBuilder)
-        .mockReturnValueOnce(enrollmentBuilder);
+        .mockReturnValueOnce(existingMhsBuilder as any)
+        .mockReturnValueOnce(enrollmentBuilder as any);
 
       const result = await createOrEnrollMahasiswa("kelas-1", {
         nim: "BD2321001",
@@ -958,10 +958,10 @@ describe("Kelas API - Student Management", () => {
       };
 
       vi.mocked(supabase.from)
-        .mockReturnValueOnce(existingMhsBuilder)
-        .mockReturnValueOnce(existingEmailBuilder)
-        .mockReturnValueOnce(profileBuilder)
-        .mockReturnValueOnce(mahasiswaBuilder);
+        .mockReturnValueOnce(existingMhsBuilder as any)
+        .mockReturnValueOnce(existingEmailBuilder as any)
+        .mockReturnValueOnce(profileBuilder as any)
+        .mockReturnValueOnce(mahasiswaBuilder as any);
 
       const result = await createOrEnrollMahasiswa("kelas-1", {
         nim: "BD2321001",

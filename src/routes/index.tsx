@@ -19,6 +19,7 @@ import { RegisterPage } from "@/pages/auth/RegisterPage";
 import { ForgotPasswordPage } from "@/pages/auth/ForgotPasswordPage";
 
 // Public Pages
+import { HomePage } from "@/pages/public/HomePage";
 import { NotFoundPage } from "@/pages/public/NotFoundPage";
 import { UnauthorizedPage } from "@/pages/public/UnauthorizedPage";
 
@@ -855,11 +856,8 @@ export function AppRouter() {
       {/* FALLBACK ROUTES */}
       {/* ================================================================== */}
 
-      {/* Home route - redirect to login */}
-      <Route
-        path={ROUTES.HOME}
-        element={<Navigate to={ROUTES.LOGIN} replace />}
-      />
+      {/* Home route - Landing page */}
+      <Route path={ROUTES.HOME} element={<HomePage />} />
 
       {/* Catch-all route - 404 */}
       <Route path="*" element={<NotFoundPage />} />

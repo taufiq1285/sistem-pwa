@@ -262,7 +262,7 @@ export function extractPathFromUrl(url: string): string | null {
     // Handle signed URLs
     const urlObj = new URL(url);
     const pathMatch = urlObj.pathname.match(
-      /\/storage\/v1\/object\/(?:sign|public)\/laporan\/(.+)/,
+      /\/storage\/v1\/object\/(?:sign|public)\/(.+)/,
     );
     if (pathMatch) {
       return decodeURIComponent(pathMatch[1].split("?")[0]);

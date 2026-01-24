@@ -279,7 +279,7 @@ export class NetworkDetector {
         this.config.pingTimeout,
       );
 
-      const response = await fetch(this.config.pingUrl, {
+      await fetch(this.config.pingUrl, {
         method: "HEAD",
         cache: "no-cache",
         signal: controller.signal,
@@ -287,7 +287,9 @@ export class NetworkDetector {
 
       clearTimeout(timeoutId);
 
-      return response.ok;
+      // Any HTTP response (including 401, 403, 404, etc.) means server is reachable
+      // Only network errors (timeout, DNS failure, etc.) should return false
+      return true;
     } catch (error) {
       // Network error, timeout, or abort
       return false;
@@ -462,9 +464,18 @@ export class NetworkDetector {
 
 /**
  * Default network detector instance
- * Periodic ping disabled to avoid 500 errors when /api/ping doesn't exist
+ *
+ * Configuration:
+ * - Periodic check enabled with browser's online/offline events as fallback
+ * - Uses Supabase Storage endpoint (no auth required) as ping endpoint
+ * - Quality check disabled for better performance
  */
 export const networkDetector = new NetworkDetector({
-  enablePeriodicCheck: false,
-  enableQualityCheck: false,
+  pingUrl: import.meta.env.VITE_SUPABASE_URL
+    ? `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/`
+    : "/api/health", // Fallback to local health endpoint
+  pingInterval: 60000, // 1 minute
+  pingTimeout: 5000, // 5 seconds
+  enablePeriodicCheck: true, // Enable for reliable offline detection
+  enableQualityCheck: false, // Disabled for performance
 });

@@ -210,16 +210,23 @@ export async function getUnifiedAssignments(
       }
 
       const jadwalDetail = jadwalData || [];
-      const dates = (jadwalDetail as any[])
-        .map((j) => j.tanggal_praktikum)
-        .filter(Boolean);
+
+      // Validate jadwal data and filter out errors
+      const validJadwal = Array.isArray(jadwalDetail)
+        ? jadwalDetail.filter(
+            (j): j is JadwalDetail =>
+              j && typeof j === "object" && "tanggal_praktikum" in j,
+          )
+        : [];
+
+      const dates = validJadwal.map((j) => j.tanggal_praktikum).filter(Boolean);
 
       assignmentsWithSchedules.push({
         ...assignment,
-        total_jadwal: jadwalDetail.length,
+        total_jadwal: validJadwal.length,
         tanggal_mulai: dates.length > 0 ? dates[0] : "",
         tanggal_selesai: dates.length > 0 ? dates[dates.length - 1] : "",
-        jadwalDetail: jadwalDetail as unknown as JadwalDetail[],
+        jadwalDetail: validJadwal,
       });
     }
 

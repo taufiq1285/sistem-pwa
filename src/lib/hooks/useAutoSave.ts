@@ -141,9 +141,9 @@ export function useAutoSave<T>(
   const [status, setStatus] = useState<SaveStatus>("idle");
   const [lastSaved, setLastSaved] = useState<number | null>(null);
   const [error, setError] = useState<Error | null>(null);
+  const savedDataRef = useRef<T>(initialData);
 
   // Refs
-  const savedDataRef = useRef<T>(initialData);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(
     undefined,
   );
@@ -158,7 +158,7 @@ export function useAutoSave<T>(
 
   const hasUnsavedChanges = useMemo(() => {
     return !isEqual(data, savedDataRef.current);
-  }, [data, isEqual]);
+  }, [data, isEqual, lastSaved]);
 
   // ============================================================================
   // CALLBACKS

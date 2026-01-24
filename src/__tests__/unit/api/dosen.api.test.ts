@@ -18,6 +18,7 @@ import {
   getStudentStats,
   getPendingGrading,
   getActiveKuis,
+  getMyKelasWithStudents,
   __resetDosenIdCache,
   __setDosenIdCache,
 } from "../../../lib/api/dosen.api";
@@ -36,6 +37,10 @@ vi.mock("../../../lib/supabase/client", () => ({
     from: vi.fn(),
   },
 }));
+
+// Mock supabase.from to return different builders based on table name
+const mockSupabaseFrom = vi.fn();
+(supabase.from as any) = mockSupabaseFrom;
 
 vi.mock("../../../lib/offline/api-cache", () => ({
   cacheAPI: vi.fn((_, fn) => fn()),
@@ -670,106 +675,85 @@ describe("Dosen API - Student Management", () => {
   });
 
   describe("getStudentStats", () => {
-    /**
-     * SKIPPED: Complex Integration Test
-     *
-     * WHY SKIPPED:
-     * - getStudentStats() calls internal getMyKelasWithStudents()
-     * - getMyKelasWithStudents() uses Promise.all() for parallel Supabase queries
-     * - Each query requires fresh mock builder with proper method chaining
-     * - vi.spyOn() cannot intercept internal function calls after module import
-     *
-     * LOGIC STATUS: ✅ WORKING IN PRODUCTION
-     *
-     * COVERAGE: ✅ Covered by:
-     * - getMyKelas tests (19 tests passing)
-     * - getKelasStudents tests (3 tests passing)
-     * - Dashboard integration tests
-     *
-     * RECOMMENDATION: Refactor as integration test or extract getMyKelasWithStudents
-     */
-    it.skip("should return aggregated student statistics", async () => {
+    it("should return aggregated student statistics", async () => {
       localStorageMock.setItem("cached_dosen_id", "dosen-1");
 
-      // Mock complete flow: kelas -> mata_kuliah -> students
+      // Mock the kelas query that getMyKelasWithStudents makes
+      const mockKelasData = [
+        {
+          id: "kelas-1",
+          kode_kelas: "IF-101",
+          nama_kelas: "Kelas A",
+          tahun_ajaran: "2024/2025",
+          semester_ajaran: "Ganjil",
+          kuota: 30,
+          mata_kuliah_id: "mk-1",
+          mata_kuliah: {
+            id: "mk-1",
+            nama_mk: "Pemrograman Web",
+            kode_mk: "IF101",
+          },
+        },
+        {
+          id: "kelas-2",
+          kode_kelas: "IF-102",
+          nama_kelas: "Kelas B",
+          tahun_ajaran: "2024/2025",
+          semester_ajaran: "Ganjil",
+          kuota: 30,
+          mata_kuliah_id: "mk-2",
+          mata_kuliah: {
+            id: "mk-2",
+            nama_mk: "Pemrograman Web Lanjut",
+            kode_mk: "IF102",
+          },
+        },
+      ];
+
       const kelasBuilder = mockQueryBuilder();
-      kelasBuilder._setResolveValue({
-        data: [
-          {
-            id: "kelas-1",
-            kode_kelas: "IF-101",
-            nama_kelas: "Kelas A",
-            tahun_ajaran: "2024",
-            semester_ajaran: 1,
-            kuota: 30,
-            mata_kuliah_id: "mk-1",
+      kelasBuilder._setResolveValue({ data: mockKelasData, error: null });
+
+      // Mock getKelasStudents to return 30 students per class
+      const mockStudents = Array.from({ length: 30 }, (_, i) => ({
+        id: `student-${i}`,
+        mahasiswa_id: `mahasiswa-${i}`,
+        nim: `BD232100${i.toString().padStart(2, "0")}`,
+        nama: `Student ${i}`,
+        email: `student${i}@example.com`,
+        enrolled_at: "2024-01-01T00:00:00Z",
+        is_active: true,
+      }));
+
+      const mockStudentData = mockStudents.map((student) => ({
+        id: student.id,
+        mahasiswa_id: student.mahasiswa_id,
+        enrolled_at: student.enrolled_at,
+        is_active: student.is_active,
+        mahasiswa: {
+          id: student.mahasiswa_id,
+          nim: student.nim,
+          users: {
+            nama: student.nama,
+            email: student.email,
           },
-          {
-            id: "kelas-2",
-            kode_kelas: "IF-102",
-            nama_kelas: "Kelas B",
-            tahun_ajaran: "2024",
-            semester_ajaran: 1,
-            kuota: 30,
-            mata_kuliah_id: "mk-1",
-          },
-        ],
+        },
+      }));
+
+      const kelasMahasiswaBuilder = mockQueryBuilder();
+      kelasMahasiswaBuilder._setResolveValue({
+        data: mockStudentData,
         error: null,
       });
 
-      // Mock mata kuliah queries (need fresh builder for each call)
-      const createMkBuilder = () => {
-        const builder = mockQueryBuilder();
-        builder.single = vi.fn().mockResolvedValue({
-          data: { kode_mk: "IF101", nama_mk: "Pemrograman Web" },
-          error: null,
-        });
-        return builder;
-      };
-
-      // Mock student queries for each kelas
-      const studentsBuilder1 = {
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        order: vi.fn().mockResolvedValue({
-          data: new Array(30).fill(null).map((_, i) => ({
-            id: `enrollment-${i}`,
-            mahasiswa: {
-              id: `mhs-${i}`,
-              nim: `BD232100${i}`,
-              users: { nama: `Student ${i}`, email: `student${i}@example.com` },
-            },
-          })),
-          error: null,
-        }),
-      };
-
-      const studentsBuilder2 = {
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        order: vi.fn().mockResolvedValue({
-          data: new Array(30).fill(null).map((_, i) => ({
-            id: `enrollment-${30 + i}`,
-            mahasiswa: {
-              id: `mhs-${30 + i}`,
-              nim: `BD232100${30 + i}`,
-              users: {
-                nama: `Student ${30 + i}`,
-                email: `student${30 + i}@example.com`,
-              },
-            },
-          })),
-          error: null,
-        }),
-      };
-
-      // Setup call sequence
-      (supabase.from as any)
-        .mockReturnValueOnce(kelasBuilder) // Get kelas
-        .mockReturnValueOnce(createMkBuilder()) // Get MK for kelas-1
-        .mockReturnValueOnce(studentsBuilder1) // Get students for kelas-1
-        .mockReturnValueOnce(createMkBuilder()) // Get MK for kelas-2
-        .mockReturnValueOnce(studentsBuilder2); // Get students for kelas-2
+      // Set up mock to return different builders based on table name
+      mockSupabaseFrom.mockImplementation((tableName: string) => {
+        if (tableName === "kelas") {
+          return kelasBuilder;
+        } else if (tableName === "kelas_mahasiswa") {
+          return kelasMahasiswaBuilder;
+        }
+        return mockQueryBuilder(); // Default builder for other tables
+      });
 
       const result = await getStudentStats();
 

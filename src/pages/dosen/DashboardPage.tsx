@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { supabase } from "@/lib/supabase/client";
+import { networkDetector } from "@/lib/offline/network-detector";
 import { RefreshCw } from "lucide-react";
 import {
   Card,
@@ -255,11 +256,30 @@ export function DashboardPage() {
         };
       };
 
-      const cleanup = setupRealtimeSubscriptions();
+      // ✅ Only setup real-time subscriptions when ONLINE
+      let cleanup: (() => void) | undefined;
+      if (networkDetector.isOnline()) {
+        try {
+          cleanup = setupRealtimeSubscriptions();
+        } catch (error) {
+          console.warn(
+            "⚠️ Failed to setup real-time subscriptions (offline mode?):",
+            error,
+          );
+          cleanup = undefined;
+        }
+      } else {
+        console.log("ℹ️ Offline mode - skipping real-time subscriptions");
+      }
 
-      // Check for data changes setiap 10 detik
+      // Check for data changes setiap 10 detik (only when online)
       const changeCheckInterval = setInterval(async () => {
         try {
+          // Skip if offline
+          if (!networkDetector.isOnline()) {
+            return;
+          }
+
           const result = await checkDosenAssignmentChanges();
 
           if (result.hasChanges) {
@@ -279,12 +299,22 @@ export function DashboardPage() {
             setHasDataChanges(false);
           }
         } catch (error) {
-          console.error("Error checking data changes:", error);
+          // Silently fail in offline mode
+          if (!networkDetector.isOnline()) {
+            console.log("ℹ️ Offline mode - skipping data change check");
+          } else {
+            console.error("Error checking data changes:", error);
+          }
         }
       }, 10000);
 
-      // Auto-refresh setiap 30 detik sebagai fallback
+      // Auto-refresh setiap 30 detik sebagai fallback (only when online)
       const intervalId = setInterval(() => {
+        // Skip if offline
+        if (!networkDetector.isOnline()) {
+          return;
+        }
+
         setIsRefreshing(true);
         fetchDashboardData().finally(() => {
           setIsRefreshing(false);
@@ -294,7 +324,7 @@ export function DashboardPage() {
 
       // Cleanup on unmount
       return () => {
-        cleanup();
+        cleanup?.();
         clearInterval(intervalId);
         clearInterval(changeCheckInterval);
       };
@@ -314,6 +344,15 @@ export function DashboardPage() {
     try {
       if (!user?.id) {
         setAssignments([]);
+        return;
+      }
+
+      // ✅ Skip if offline - use cached data or return empty
+      if (!networkDetector.isOnline()) {
+        console.log(
+          "ℹ️ Offline mode - skipping assignments fetch, using cached data",
+        );
+        // Keep existing data or set empty
         return;
       }
 
@@ -418,7 +457,12 @@ export function DashboardPage() {
 
       setAssignments(assignmentsWithDetails);
     } catch (error: any) {
-      console.error("Error fetching assignments:", error);
+      // Silently fail in offline mode
+      if (!networkDetector.isOnline()) {
+        console.log("ℹ️ Offline mode - using cached assignments data");
+      } else {
+        console.error("Error fetching assignments:", error);
+      }
       // Don't show error toast for assignments, just log it
     }
   };
@@ -469,8 +513,14 @@ export function DashboardPage() {
         setActiveKuis(kuisData.value || []);
       }
     } catch (err) {
-      console.error("Error fetching dashboard data:", err);
-      setError("Gagal memuat data dashboard. Silakan refresh halaman.");
+      // Handle offline mode gracefully
+      if (!networkDetector.isOnline()) {
+        console.log("ℹ️ Offline mode - showing cached dashboard data");
+        setError(null); // Don't show error in offline mode
+      } else {
+        console.error("Error fetching dashboard data:", err);
+        setError("Gagal memuat data dashboard. Silakan refresh halaman.");
+      }
     } finally {
       setLoading(false);
     }
@@ -480,6 +530,14 @@ export function DashboardPage() {
   const fetchMahasiswaByKelas = async (kelasId: string) => {
     try {
       setLoadingMahasiswa(true);
+
+      // ✅ Skip if offline
+      if (!networkDetector.isOnline()) {
+        console.log("ℹ️ Offline mode - skipping mahasiswa fetch");
+        setKelasMahasiswa([]);
+        return;
+      }
+
       const { data, error } = await supabase
         .from("kelas_mahasiswa" as any)
         .select(
@@ -499,7 +557,12 @@ export function DashboardPage() {
         data?.map((item) => (item as any).mahasiswa).filter(Boolean) || [],
       );
     } catch (err) {
-      console.error("Error fetching mahasiswa:", err);
+      // Silently fail in offline mode
+      if (!networkDetector.isOnline()) {
+        console.log("ℹ️ Offline mode - could not fetch mahasiswa");
+      } else {
+        console.error("Error fetching mahasiswa:", err);
+      }
       setKelasMahasiswa([]);
     } finally {
       setLoadingMahasiswa(false);

@@ -66,6 +66,7 @@ export const ALLOWED_MATERI_TYPES = [
   "application/vnd.openxmlformats-officedocument.presentationml.presentation",
   // Text
   "text/plain",
+  "application/json",
   // Images
   "image/jpeg",
   "image/png",
@@ -99,27 +100,66 @@ export async function uploadFile(
 ): Promise<string> {
   const { cacheControl = "3600", upsert = false, onProgress } = options;
 
-  // Upload file
-  const { data, error } = await supabase.storage
-    .from(bucket)
-    .upload(path, file, {
-      cacheControl,
-      upsert,
+  try {
+    // Upload file with correct content type metadata
+    const { data, error } = await supabase.storage
+      .from(bucket)
+      .upload(path, file, {
+        cacheControl,
+        upsert,
+        contentType: file.type, // Set correct MIME type to prevent issues
+      });
+
+    if (error) {
+      // Provide more detailed error message
+      console.error("Storage upload error:", error);
+      if (error.message.includes("mime type")) {
+        throw new Error(
+          `Tipe file ${file.type} tidak didukung. Error: ${error.message}`,
+        );
+      }
+      if (
+        error.message.includes("bucket") ||
+        error.message.includes("not found")
+      ) {
+        throw new Error(
+          `Bucket ${bucket} tidak ditemukan. Silakan hubungi administrator.`,
+        );
+      }
+      if (error.message.includes("policy") || error.message.includes("RLS")) {
+        throw new Error(
+          `Anda tidak memiliki izin untuk mengupload file. Error: ${error.message}`,
+        );
+      }
+      throw error;
+    }
+
+    if (!data?.path) {
+      throw new Error("Gagal mengupload file: path tidak tersedia");
+    }
+
+    // Simulate progress (Supabase doesn't support progress callback yet)
+    if (onProgress) {
+      onProgress(100);
+    }
+
+    // Get public URL
+    const { data: urlData } = supabase.storage
+      .from(bucket)
+      .getPublicUrl(data.path);
+
+    return urlData.publicUrl;
+  } catch (error: any) {
+    console.error("Upload file error:", {
+      bucket,
+      path,
+      fileName: file.name,
+      fileType: file.type,
+      fileSize: file.size,
+      error,
     });
-
-  if (error) throw error;
-
-  // Simulate progress (Supabase doesn't support progress callback yet)
-  if (onProgress) {
-    onProgress(100);
+    throw error;
   }
-
-  // Get public URL
-  const { data: urlData } = supabase.storage
-    .from(bucket)
-    .getPublicUrl(data.path);
-
-  return urlData.publicUrl;
 }
 
 /**
@@ -230,6 +270,22 @@ export async function deleteFiles(
 export function getFileUrl(bucket: string, path: string): string {
   const { data } = supabase.storage.from(bucket).getPublicUrl(path);
   return data.publicUrl;
+}
+
+/**
+ * Get signed URL for private buckets (valid for 1 hour by default)
+ */
+export async function getSignedUrl(
+  bucket: string,
+  path: string,
+  expiresIn: number = 3600,
+): Promise<string> {
+  const { data, error } = await supabase.storage
+    .from(bucket)
+    .createSignedUrl(path, expiresIn);
+
+  if (error) throw error;
+  return data.signedUrl;
 }
 
 /**

@@ -5,9 +5,52 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // Mock supabase
+const createMockQuery = () => {
+  const mockQuery = {
+    select: vi.fn().mockReturnThis(),
+    insert: vi.fn().mockReturnThis(),
+    update: vi.fn().mockReturnThis(),
+    delete: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    neq: vi.fn().mockReturnThis(),
+    gt: vi.fn().mockReturnThis(),
+    gte: vi.fn().mockReturnThis(),
+    lt: vi.fn().mockReturnThis(),
+    lte: vi.fn().mockReturnThis(),
+    like: vi.fn().mockReturnThis(),
+    ilike: vi.fn().mockReturnThis(),
+    is: vi.fn().mockReturnThis(),
+    in: vi.fn().mockReturnThis(),
+    contains: vi.fn().mockReturnThis(),
+    containedBy: vi.fn().mockReturnThis(),
+    range: vi.fn().mockReturnThis(),
+    overlaps: vi.fn().mockReturnThis(),
+    order: vi.fn().mockReturnThis(),
+    limit: vi.fn().mockReturnThis(),
+    single: vi.fn(),
+    maybeSingle: vi.fn(),
+    csv: vi.fn(),
+    abortSignal: vi.fn().mockReturnThis(),
+    // Add rpc method for functions
+    rpc: vi.fn(),
+  };
+  return mockQuery;
+};
+
 vi.mock("@/lib/supabase/client", () => ({
   supabase: {
-    from: vi.fn(),
+    from: vi.fn(() => createMockQuery()),
+    rpc: vi.fn(),
+    storage: {
+      from: vi.fn(() => ({
+        upload: vi.fn(),
+        download: vi.fn(),
+        getPublicUrl: vi.fn(() => ({ data: { publicUrl: "" } })),
+        createSignedUrl: vi.fn(() => ({ data: { signedUrl: "" } })),
+        remove: vi.fn(),
+        list: vi.fn(),
+      })),
+    },
     auth: { getUser: vi.fn() },
   },
 }));

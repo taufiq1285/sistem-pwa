@@ -51,6 +51,7 @@ import { TIPE_SOAL, TIPE_SOAL_LABELS } from "@/types/kuis.types";
 
 // Utils
 import { cn } from "@/lib/utils";
+import { checkDuplicateBankSoal } from "@/lib/api/bank-soal.api";
 
 // ============================================================================
 // TYPES
@@ -200,8 +201,6 @@ export function QuestionEditor({
     const timer = setTimeout(async () => {
       setIsCheckingDuplicates(true);
       try {
-        const { checkDuplicateBankSoal } =
-          await import("@/lib/api/bank-soal.api");
         const duplicates = await checkDuplicateBankSoal(
           pertanyaan,
           dosenId,

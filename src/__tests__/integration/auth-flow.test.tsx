@@ -724,7 +724,13 @@ describe("Authentication Flow - CORE LOGIC", () => {
         full_name: "New Flow User",
         role: "mahasiswa",
         is_active: true,
-        nim: "BD2321999",
+        mahasiswa: {
+          id: "mhs-new-flow-123",
+          nim: "BD2321999",
+          program_studi: "Kebidanan",
+          angkatan: 2023,
+          semester: 1,
+        },
       };
 
       vi.mocked(supabase.auth.signInWithPassword).mockResolvedValue({
@@ -759,7 +765,7 @@ describe("Authentication Flow - CORE LOGIC", () => {
 
       expect(loginResult.success).toBe(true);
       expect(loginResult.user?.email).toBe("newflow@example.com");
-      expect(loginResult.user?.nim).toBe("BD2321999");
+      expect(loginResult.user?.mahasiswa?.nim).toBe("BD2321999");
     });
   });
 });

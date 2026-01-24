@@ -27,14 +27,19 @@ type MateriTable = Database["public"]["Tables"] extends {
 export interface Materi extends MateriTable {
   // Relations
   dosen?: {
-    full_name: string;
+    id: string;
+    users: {
+      full_name: string;
+    };
     gelar_depan?: string;
     gelar_belakang?: string;
   };
   kelas?: {
+    id: string;
     nama_kelas: string;
     mata_kuliah?: {
       nama_mk: string;
+      kode_mk?: string;
     };
   };
 }

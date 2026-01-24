@@ -8,7 +8,7 @@
  */
 
 import { supabase } from "@/lib/supabase/client";
-import type { Soal, Kuis } from "@/types/kuis.types";
+import type { Soal, Kuis, TipeSoal } from "@/types/kuis.types";
 import { handleError, logError } from "@/lib/utils/errors";
 
 // ============================================================================
@@ -62,19 +62,63 @@ export async function getSoalForAttempt(kuisId: string): Promise<Soal[]> {
 
           return mapped.map((soal: any) => {
             const tipe = soal.tipe || soal.tipe_soal;
-            if (tipe !== "file_upload") return soal;
+            if (tipe !== "file_upload") {
+              // Return properly typed object
+              return {
+                id: soal.id,
+                kuis_id: soal.kuis_id,
+                pertanyaan: soal.pertanyaan,
+                tipe_soal: tipe as TipeSoal,
+                poin: soal.poin,
+                urutan: soal.urutan,
+                pilihan_jawaban: soal.pilihan_jawaban,
+                jawaban_benar: soal.jawaban_benar,
+                pembahasan: soal.pembahasan,
+                media_url: soal.media_url,
+                rubrik_penilaian: soal.rubrik_penilaian,
+                created_at: soal.created_at,
+                updated_at: soal.updated_at,
+              };
+            }
 
             const cfg = configById.get(soal.id);
-            if (!cfg) return soal;
+            if (!cfg) {
+              return {
+                id: soal.id,
+                kuis_id: soal.kuis_id,
+                pertanyaan: soal.pertanyaan,
+                tipe_soal: tipe as TipeSoal,
+                poin: soal.poin,
+                urutan: soal.urutan,
+                pilihan_jawaban: soal.pilihan_jawaban,
+                jawaban_benar: soal.jawaban_benar,
+                pembahasan: soal.pembahasan,
+                media_url: soal.media_url,
+                rubrik_penilaian: soal.rubrik_penilaian,
+                created_at: soal.created_at,
+                updated_at: soal.updated_at,
+              };
+            }
 
             return {
-              ...soal,
+              id: soal.id,
+              kuis_id: soal.kuis_id,
+              pertanyaan: soal.pertanyaan,
+              tipe_soal: tipe as TipeSoal,
+              poin: soal.poin,
+              urutan: soal.urutan,
+              pilihan_jawaban: soal.pilihan_jawaban,
               jawaban_benar:
                 cfg.jawaban_benar !== undefined
                   ? cfg.jawaban_benar
                   : soal.jawaban_benar,
+              pembahasan: soal.pembahasan,
+              media_url: soal.media_url,
+              rubrik_penilaian: soal.rubrik_penilaian,
+              created_at: soal.created_at,
+              updated_at: soal.updated_at,
             };
-          }) as unknown as Soal[];
+          });
         }
       } catch (err) {
         console.warn(
@@ -84,7 +128,22 @@ export async function getSoalForAttempt(kuisId: string): Promise<Soal[]> {
       }
     }
 
-    return mapped as unknown as Soal[];
+    // Properly type the mapped data
+    return mapped.map((soal: any) => ({
+      id: soal.id,
+      kuis_id: soal.kuis_id,
+      pertanyaan: soal.pertanyaan,
+      tipe_soal: (soal.tipe || soal.tipe_soal) as TipeSoal,
+      poin: soal.poin,
+      urutan: soal.urutan,
+      pilihan_jawaban: soal.pilihan_jawaban,
+      jawaban_benar: soal.jawaban_benar,
+      pembahasan: soal.pembahasan,
+      media_url: soal.media_url,
+      rubrik_penilaian: soal.rubrik_penilaian,
+      created_at: soal.created_at,
+      updated_at: soal.updated_at,
+    }));
   } catch (error) {
     const apiError = handleError(error);
     logError(apiError, `getSoalForAttempt:${kuisId}`);
@@ -117,9 +176,20 @@ export async function getSoalForResult(kuisId: string): Promise<Soal[]> {
 
     // Map tipe to tipe_soal for compatibility
     return (data || []).map((soal: any) => ({
-      ...soal,
-      tipe_soal: soal.tipe || soal.tipe_soal,
-    })) as unknown as Soal[];
+      id: soal.id,
+      kuis_id: soal.kuis_id,
+      pertanyaan: soal.pertanyaan,
+      tipe_soal: (soal.tipe || soal.tipe_soal) as TipeSoal,
+      poin: soal.poin,
+      urutan: soal.urutan,
+      pilihan_jawaban: soal.pilihan_jawaban,
+      jawaban_benar: soal.jawaban_benar,
+      pembahasan: soal.pembahasan,
+      media_url: soal.media_url,
+      rubrik_penilaian: soal.rubrik_penilaian,
+      created_at: soal.created_at,
+      updated_at: soal.updated_at,
+    }));
   } catch (error) {
     const apiError = handleError(error);
     logError(apiError, `getSoalForResult:${kuisId}`);

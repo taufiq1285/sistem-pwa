@@ -47,9 +47,9 @@ vi.mock("@/lib/offline/indexeddb", () => ({
         (item: any) => item.attempt_id !== undefined,
       );
     }),
-    update: vi.fn(async (store, id, data) => {
-      mockOfflineStorage[id] = { ...mockOfflineStorage[id], ...data };
-      return mockOfflineStorage[id];
+    update: vi.fn(async (store, item) => {
+      mockOfflineStorage[item.id] = { ...mockOfflineStorage[item.id], ...item };
+      return mockOfflineStorage[item.id];
     }),
     delete: vi.fn(async (store, id) => {
       delete mockOfflineStorage[id];
@@ -148,15 +148,19 @@ describe("Offline Sync Flow", () => {
       });
 
       // Update answer
-      await indexedDBManager.update("offline_answers", answerId, {
+      await indexedDBManager.update("offline_answers", {
+        id: answerId,
+        attempt_id: "attempt-1",
+        soal_id: "soal-1",
         jawaban: "Updated Answer",
+        synced: false,
       });
 
       const updated = await indexedDBManager.getById(
         "offline_answers",
         answerId,
       );
-      expect(updated.jawaban).toBe("Updated Answer");
+      expect((updated as any).jawaban).toBe("Updated Answer");
     });
 
     it("should delete synced answers", async () => {
@@ -240,9 +244,9 @@ describe("Offline Sync Flow", () => {
 
       // Verify order is maintained
       const sorted = queued.sort((a: any, b: any) => a.order - b.order);
-      expect(sorted[0].soal_id).toBe("soal-1");
-      expect(sorted[1].soal_id).toBe("soal-2");
-      expect(sorted[2].soal_id).toBe("soal-3");
+      expect((sorted[0] as any).soal_id).toBe("soal-1");
+      expect((sorted[1] as any).soal_id).toBe("soal-2");
+      expect((sorted[2] as any).soal_id).toBe("soal-3");
     });
   });
 
@@ -356,7 +360,7 @@ describe("Offline Sync Flow", () => {
           );
 
           if (stored) {
-            retryCount = stored.retryCount || 0;
+            retryCount = (stored as any).retryCount || 0;
             retryCount++;
 
             if (retryCount >= maxRetries) {
@@ -366,7 +370,8 @@ describe("Offline Sync Flow", () => {
             }
 
             // Update retry count
-            await indexedDBManager.update("offline_answers", answer.id, {
+            await indexedDBManager.update("offline_answers", {
+              ...answer,
               retryCount,
             });
           }
@@ -398,13 +403,17 @@ describe("Offline Sync Flow", () => {
       });
 
       // Second submission (more recent)
-      await indexedDBManager.update("offline_answers", answerId, {
+      await indexedDBManager.update("offline_answers", {
+        id: answerId,
+        attempt_id: "attempt-1",
+        soal_id: "soal-1",
         jawaban: "Second Answer",
         timestamp: Date.now(),
+        synced: false,
       });
 
       const final = await indexedDBManager.getById("offline_answers", answerId);
-      expect(final.jawaban).toBe("Second Answer");
+      expect((final as any).jawaban).toBe("Second Answer");
     });
 
     it("should use most recent answer in case of conflicts", async () => {
@@ -458,8 +467,8 @@ describe("Offline Sync Flow", () => {
 
       // Verify data integrity
       expect(retrieved).toEqual(originalAnswer);
-      expect(retrieved.jawaban).toBe(originalAnswer.jawaban);
-      expect(retrieved.metadata).toEqual(originalAnswer.metadata);
+      expect((retrieved as any).jawaban).toBe(originalAnswer.jawaban);
+      expect((retrieved as any).metadata).toEqual(originalAnswer.metadata);
     });
 
     it("should validate data before sync", async () => {
@@ -497,7 +506,7 @@ describe("Offline Sync Flow", () => {
       );
 
       expect(retrieved).toBeTruthy();
-      expect(retrieved.jawaban).toBe("");
+      expect((retrieved as any).jawaban).toBe("");
     });
   });
 

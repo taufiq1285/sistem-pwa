@@ -462,3 +462,16 @@ export async function getAttemptConflictsCount(
 
   return data?.length || 0;
 }
+
+// ============================================================================
+// RE-EXPORTS FOR TESTING
+// ============================================================================
+
+export {
+  updateWithAutoResolve,
+  updateWithConflictLog,
+  getVersion,
+  type VersionedUpdateResult,
+} from "./versioned-update.api";
+
+export { getAttemptById, getJawabanByAttempt } from "./kuis.api";

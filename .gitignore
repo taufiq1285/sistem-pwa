@@ -10,7 +10,19 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+dev-dist
 *.local
+
+# Test outputs and build artifacts
+test-*.txt
+*-test-*.txt
+*-output.txt
+*-run.txt
+coverage/
+test-output.json
+test-results.json
+vitest-*.json
+coverage-*.txt
 
 # Editor directories and files
 .vscode/*
@@ -25,3 +37,37 @@ dist-ssr
 .env.local
 
 .vercel
+
+# Temporary files
+*.bak
+*.tmp
+nul
+calculateQuizScore
+getQuizStats
+gradeAllAnswers
+login
+should
+prettier
+
+# SQL debug files
+debug_*.sql
+cek_*.sql
+
+# Documentation (optional - remove if you want to commit docs)
+ASSIGNMENT_*.md
+PERMINTAAN_*.md
+*_FIXES.md
+*_GUIDE.md
+IOS_*.md
+PWA_*.md
+
+# Misc folders
+Authentication/
+Cascade/
+Complete/
+Notification/
+Quiz/
+Unified/
+Update/
+vite-project@*/
+

@@ -211,6 +211,16 @@ export default function JadwalPage() {
       const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
 
       const events = await getCalendarEvents(calendarStart, calendarEnd);
+      console.log("=== DEBUG CALENDAR ===");
+      console.log(
+        "Jadwal List (filtered by is_active=true):",
+        jadwalList.length,
+      );
+      console.log("Calendar Events:", events.length);
+      console.log(
+        "Calendar Events data:",
+        events.map((e) => ({ id: e.id, title: e.title, start: e.start })),
+      );
       setCalendarEvents(events);
     } catch (error: any) {
       toast.error("Gagal memuat data jadwal", {

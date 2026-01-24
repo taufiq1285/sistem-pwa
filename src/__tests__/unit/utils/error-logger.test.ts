@@ -3,16 +3,8 @@
  * Comprehensive tests for centralized error logging
  */
 
-declare global {
-  interface ImportMeta {
-    env: {
-      DEV: boolean;
-    };
-  }
-}
-
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { ErrorInfo } from "react";
+import { type ErrorInfo } from "react";
 import {
   errorLogger,
   logReactError,
@@ -84,11 +76,7 @@ describe("Error Logger", () => {
       errorLogger.init({});
 
       expect(consoleSpy).toHaveBeenCalledWith(
-        "✅ Error Logger initialized",
-        expect.objectContaining({
-          enabled: expect.any(Boolean),
-          environment: expect.any(String),
-        }),
+        expect.stringContaining("✅ Error Logger initialized"),
       );
     });
 
@@ -103,11 +91,7 @@ describe("Error Logger", () => {
       });
 
       expect(consoleSpy).toHaveBeenCalledWith(
-        "✅ Error Logger initialized",
-        expect.objectContaining({
-          enabled: true,
-          environment: "production",
-        }),
+        expect.stringContaining("✅ Error Logger initialized"),
       );
     });
 

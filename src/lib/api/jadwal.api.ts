@@ -206,61 +206,125 @@ export async function getCalendarEvents(
   endDate: Date,
 ): Promise<CalendarEvent[]> {
   try {
-    // 🔍 DEBUG: Log parameter yang masuk
-    if (DEBUG_JADWAL_LOGS) {
-      console.log("🔍 getCalendarEvents called:", {
-        startDate: format(startDate, "yyyy-MM-dd HH:mm:ss"),
-        endDate: format(endDate, "yyyy-MM-dd HH:mm:ss"),
-        startDateISO: startDate.toISOString(),
-        endDateISO: endDate.toISOString(),
-        startDateFormatted: format(startDate, "yyyy-MM-dd"),
-        endDateFormatted: format(endDate, "yyyy-MM-dd"),
-      });
+    console.log("🚨 getCalendarEvents CALLED - DATES:", {
+      start: format(startDate, "yyyy-MM-dd"),
+      end: format(endDate, "yyyy-MM-dd"),
+    });
+
+    // 🆕 CRITICAL FIX: Filter by current dosen user_id for data isolation
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    // Build filter conditions
+    const filterConditions = [
+      {
+        column: "tanggal_praktikum",
+        operator: "gte" as const,
+        value: format(startDate, "yyyy-MM-dd"),
+      },
+      {
+        column: "tanggal_praktikum",
+        operator: "lte" as const,
+        value: format(endDate, "yyyy-MM-dd"),
+      },
+      {
+        column: "is_active",
+        operator: "eq" as const,
+        value: true, // ✅ HANYA jadwal aktif
+      },
+      {
+        column: "status",
+        operator: "eq" as const,
+        value: "approved", // ✅ HANYA jadwal yang disetujui
+      },
+    ];
+
+    // Get dosen's kelas IDs if user is logged in as dosen
+    let kelasIdsFilter: string[] | null = null;
+    console.log("🔍 Checking user:", user?.id);
+
+    if (user?.id) {
+      const { data: dosenData, error: dosenError } = await supabase
+        .from("dosen")
+        .select("id")
+        .eq("user_id", user.id)
+        .single();
+
+      console.log("🔍 Dosen query result:", { dosenData, dosenError });
+
+      if (dosenData?.id) {
+        const { data: kelasData, error: kelasError } = await supabase
+          .from("kelas")
+          .select("id, nama_kelas")
+          .eq("dosen_id", dosenData.id);
+
+        console.log("🔍 Kelas query result:", { kelasData, kelasError });
+
+        kelasIdsFilter = kelasData?.map((k: any) => k.id) || [];
+        console.log("✅ Filtering by kelas_ids:", kelasIdsFilter);
+      } else {
+        console.log("⚠️ No dosen found for this user - will show all jadwal");
+      }
+    } else {
+      console.log("⚠️ No user logged in - will show all jadwal");
     }
 
     // ✅ PERBAIKAN FINAL: Ganti 'jadwalpraktikum' menjadi 'jadwal_praktikum'
-    // ✅ HYBRID APPROVAL: Only show approved jadwal in calendar
-    const jadwalList = await queryWithFilters<Jadwal>(
-      "jadwal_praktikum",
-      [
+    let jadwalList: Jadwal[];
+
+    if (kelasIdsFilter && kelasIdsFilter.length > 0) {
+      // Filter by kelas_ids if dosen
+      jadwalList = await queryWithFilters<Jadwal>(
+        "jadwal_praktikum",
+        [
+          ...filterConditions,
+          {
+            column: "kelas_id",
+            operator: "in" as const,
+            value: kelasIdsFilter,
+          },
+        ],
         {
-          column: "tanggal_praktikum",
-          operator: "gte" as const,
-          value: format(startDate, "yyyy-MM-dd"),
-        },
-        {
-          column: "tanggal_praktikum",
-          operator: "lte" as const,
-          value: format(endDate, "yyyy-MM-dd"),
-        },
-        {
-          column: "is_active",
-          operator: "eq" as const,
-          value: true,
-        },
-        {
-          column: "status",
-          operator: "eq" as const,
-          value: "approved",
-        },
-      ],
-      {
-        select: `
-        *,
-        kelas:kelas_id (
-          nama_kelas,
-          mata_kuliah (
-            nama_mk
+          select: `
+          *,
+          kelas:kelas_id (
+            nama_kelas,
+            mata_kuliah (
+              nama_mk
+            )
+          ),
+          laboratorium:laboratorium_id (
+            nama_lab,
+            kode_lab,
+            kapasitas
           )
-        ),
-        laboratorium:laboratorium_id (
-          nama_lab,
-          kode_lab,
-          kapasitas
-        )
-      `,
-      },
-    );
+        `,
+        },
+      );
+    } else {
+      // No filter (admin or not logged in)
+      jadwalList = await queryWithFilters<Jadwal>(
+        "jadwal_praktikum",
+        filterConditions,
+        {
+          select: `
+          *,
+          kelas:kelas_id (
+            nama_kelas,
+            mata_kuliah (
+              nama_mk
+            )
+          ),
+          laboratorium:laboratorium_id (
+            nama_lab,
+            kode_lab,
+            kapasitas
+          )
+        `,
+        },
+      );
+    }
 
     // 🔍 DEBUG: Log hasil query
     console.log("🔍 Query result:", {
@@ -270,6 +334,8 @@ export async function getCalendarEvents(
         tanggal: j.tanggal_praktikum,
         kelas: j.kelas,
         jam: `${j.jam_mulai} - ${j.jam_selesai}`,
+        is_active: j.is_active,
+        status: j.status,
       })),
       fullData: jadwalList,
     });
@@ -444,10 +510,8 @@ async function createJadwalImpl(data: CreateJadwalData): Promise<Jadwal> {
       dosenId = dosenData?.id;
     }
 
-    const insertData = {
+    const insertData: Partial<Jadwal> = {
       kelas_id: data.kelas_id,
-      mata_kuliah_id: data.mata_kuliah_id,
-      dosen_id: dosenId, // ✅ Tambahkan dosen_id yang sedang login
       laboratorium_id: data.laboratorium_id,
       tanggal_praktikum: format(tanggalPraktikum, "yyyy-MM-dd"),
       hari,
@@ -456,7 +520,7 @@ async function createJadwalImpl(data: CreateJadwalData): Promise<Jadwal> {
       topik: data.topik,
       catatan: data.catatan,
       is_active: true, // HYBRID: Auto-approved (laboran can cancel later if needed)
-      status: "approved", // ✅ FIX: Set status to approved for auto-approval
+      status: "approved" as const, // ✅ FIX: Set status to approved for auto-approval
     };
 
     console.log("🔍 DEBUG: Insert data:", insertData);
@@ -464,7 +528,7 @@ async function createJadwalImpl(data: CreateJadwalData): Promise<Jadwal> {
 
     // ✅ PERBAIKAN FINAL: Ganti 'jadwalpraktikum' menjadi 'jadwal_praktikum'
     // ✅ HYBRID APPROVAL: Auto-approve if no conflict (conflict already checked above)
-    const result = await insert<Jadwal>("jadwal_praktikum", insertData as any);
+    const result = await insert<Jadwal>("jadwal_praktikum", insertData);
     console.log("✅ DEBUG: Insert success:", result);
     return result;
   } catch (error) {

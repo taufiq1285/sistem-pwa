@@ -7,6 +7,7 @@ import { SyncProvider } from "@/providers/SyncProvider";
 import { AppRouter } from "@/routes";
 import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 import { OfflineIndicator } from "@/components/offline/OfflineIndicator";
+import { PWAInstallPrompt } from "@/components/pwa/PWAInstallPrompt";
 import { useEffect } from "react";
 import errorLogger from "@/lib/utils/error-logger";
 import { initializeCacheManager } from "@/lib/utils/cache-manager";
@@ -41,6 +42,7 @@ function App() {
               <SyncProvider autoSync={true}>
                 <AuthProvider>
                   <OfflineIndicator position="top" hideWhenOnline={true} />
+                  <PWAInstallPrompt />
                   <AppRouter />
                 </AuthProvider>
               </SyncProvider>

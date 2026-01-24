@@ -17,11 +17,12 @@
  * - Admin bypass (admin can do everything)
  * - Ownership validation
  * - Backward compatible with existing error handling
+ * - OFFLINE MODE: Falls back to stored session when Supabase is unavailable
  */
 
 import { supabase } from "@/lib/supabase/client";
 import { hasPermission } from "@/lib/utils/permissions";
-import type { UserRole } from "@/types/auth.types";
+import type { UserRole, AuthUser } from "@/types/auth.types";
 import type { Permission } from "@/types/permission.types";
 import {
   PermissionError,
@@ -29,6 +30,7 @@ import {
   AuthenticationError,
   RoleNotFoundError,
 } from "@/lib/errors/permission.errors";
+import { restoreOfflineSession } from "@/lib/offline/offline-auth";
 
 // ============================================================================
 // TYPE DEFINITIONS
@@ -89,20 +91,38 @@ export function clearUserRoleCache(): void {
  * @throws {AuthenticationError} If user not authenticated
  */
 export async function getCurrentUser(): Promise<CurrentUser> {
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
+  // Try online mode first
+  try {
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
 
-  if (authError || !user) {
-    throw new AuthenticationError("User not authenticated");
+    if (!authError && user) {
+      return {
+        id: user.id,
+        role: "mahasiswa", // Default, will be overridden below
+        email: user.email,
+      };
+    }
+  } catch (error) {
+    // Supabase unavailable, fall through to offline mode
+    debugWarn("⚠️ Supabase unavailable, trying offline session");
   }
 
-  return {
-    id: user.id,
-    role: "mahasiswa", // Default, will be overridden below
-    email: user.email,
-  };
+  // Fallback to offline session
+  const offlineSession = await restoreOfflineSession();
+  if (offlineSession) {
+    debugLog("✅ Using offline session for getCurrentUser");
+    return {
+      id: offlineSession.user.id,
+      role: offlineSession.user.role,
+      email: offlineSession.user.email,
+    };
+  }
+
+  // No user found online or offline
+  throw new AuthenticationError("User not authenticated");
 }
 
 /**
@@ -111,52 +131,84 @@ export async function getCurrentUser(): Promise<CurrentUser> {
  * @throws {RoleNotFoundError} If user role not found
  */
 export async function getCurrentUserWithRole(): Promise<CurrentUser> {
-  // Get authenticated user
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
+  // Try online mode first
+  try {
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
 
-  if (authError || !user) {
-    throw new AuthenticationError("User not authenticated");
+    if (!authError && user) {
+      // Check if running in test environment
+      const isTestEnv = import.meta.env.MODE === "test";
+
+      // Check cache first (skip in tests to avoid stale cross-test state)
+      const cached = userRoleCache.get(user.id);
+      if (!isTestEnv && cached && Date.now() - cached.timestamp < CACHE_TTL) {
+        return {
+          id: user.id,
+          role: cached.role,
+          email: user.email,
+        };
+      }
+
+      // Get user role from database
+      const { data: userData, error: userError } = await supabase
+        .from("users")
+        .select("role")
+        .eq("id", user.id)
+        .single();
+
+      if (!userError && userData) {
+        // Update cache
+        userRoleCache.set(user.id, {
+          role: userData.role as UserRole,
+          timestamp: Date.now(),
+        });
+
+        return {
+          id: user.id,
+          role: userData.role as UserRole,
+          email: user.email,
+        };
+      }
+    }
+  } catch (error) {
+    // Supabase unavailable, fall through to offline mode
+    debugWarn("⚠️ Supabase unavailable, trying offline session for role");
   }
 
-  // Check if running in test environment using Vite's import.meta.env
-  // This is safe for both browser and Node.js environments
-  const isTestEnv = import.meta.env.MODE === "test";
+  // Fallback to offline session
+  const offlineSession = await restoreOfflineSession();
+  if (offlineSession) {
+    const user = offlineSession.user;
+    debugLog("✅ Using offline session for getCurrentUserWithRole:", user.role);
 
-  // Check cache first (skip in tests to avoid stale cross-test state)
-  const cached = userRoleCache.get(user.id);
-  if (!isTestEnv && cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    // Check cache for offline user
+    const cached = userRoleCache.get(user.id);
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+      return {
+        id: user.id,
+        role: cached.role,
+        email: user.email,
+      };
+    }
+
+    // Update cache with offline user's role
+    userRoleCache.set(user.id, {
+      role: user.role,
+      timestamp: Date.now(),
+    });
+
     return {
       id: user.id,
-      role: cached.role,
+      role: user.role,
       email: user.email,
     };
   }
 
-  // Get user role from database
-  const { data: userData, error: userError } = await supabase
-    .from("users")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  if (userError || !userData) {
-    throw new RoleNotFoundError(`Role not found for user ${user.id}`, user.id);
-  }
-
-  // Update cache
-  userRoleCache.set(user.id, {
-    role: userData.role as UserRole,
-    timestamp: Date.now(),
-  });
-
-  return {
-    id: user.id,
-    role: userData.role as UserRole,
-    email: user.email,
-  };
+  // No user found online or offline
+  throw new AuthenticationError("User not authenticated");
 }
 
 /**
@@ -165,19 +217,32 @@ export async function getCurrentUserWithRole(): Promise<CurrentUser> {
  */
 export async function getCurrentDosenId(): Promise<string | null> {
   try {
-    const user = await getCurrentUser();
+    // Try online mode first
+    try {
+      const user = await getCurrentUser();
 
-    const { data, error } = await supabase
-      .from("dosen")
-      .select("id")
-      .eq("user_id", user.id)
-      .single();
+      const { data, error } = await supabase
+        .from("dosen")
+        .select("id")
+        .eq("user_id", user.id)
+        .single();
 
-    if (error || !data) {
-      return null;
+      if (!error && data) {
+        return data.id;
+      }
+    } catch {
+      // Supabase unavailable, fall through to offline mode
+      debugWarn("⚠️ Supabase unavailable for dosen ID, trying offline session");
     }
 
-    return data.id;
+    // Fallback to offline session
+    const offlineSession = await restoreOfflineSession();
+    if (offlineSession?.user.dosen?.id) {
+      debugLog("✅ Using offline session for dosen ID");
+      return offlineSession.user.dosen.id;
+    }
+
+    return null;
   } catch {
     return null;
   }
@@ -189,19 +254,34 @@ export async function getCurrentDosenId(): Promise<string | null> {
  */
 export async function getCurrentMahasiswaId(): Promise<string | null> {
   try {
-    const user = await getCurrentUser();
+    // Try online mode first
+    try {
+      const user = await getCurrentUser();
 
-    const { data, error } = await supabase
-      .from("mahasiswa")
-      .select("id")
-      .eq("user_id", user.id)
-      .single();
+      const { data, error } = await supabase
+        .from("mahasiswa")
+        .select("id")
+        .eq("user_id", user.id)
+        .single();
 
-    if (error || !data) {
-      return null;
+      if (!error && data) {
+        return data.id;
+      }
+    } catch {
+      // Supabase unavailable, fall through to offline mode
+      debugWarn(
+        "⚠️ Supabase unavailable for mahasiswa ID, trying offline session",
+      );
     }
 
-    return data.id;
+    // Fallback to offline session
+    const offlineSession = await restoreOfflineSession();
+    if (offlineSession?.user.mahasiswa?.id) {
+      debugLog("✅ Using offline session for mahasiswa ID");
+      return offlineSession.user.mahasiswa.id;
+    }
+
+    return null;
   } catch {
     return null;
   }
@@ -213,19 +293,34 @@ export async function getCurrentMahasiswaId(): Promise<string | null> {
  */
 export async function getCurrentLaboranId(): Promise<string | null> {
   try {
-    const user = await getCurrentUser();
+    // Try online mode first
+    try {
+      const user = await getCurrentUser();
 
-    const { data, error } = await supabase
-      .from("laboran")
-      .select("id")
-      .eq("user_id", user.id)
-      .single();
+      const { data, error } = await supabase
+        .from("laboran")
+        .select("id")
+        .eq("user_id", user.id)
+        .single();
 
-    if (error || !data) {
-      return null;
+      if (!error && data) {
+        return data.id;
+      }
+    } catch {
+      // Supabase unavailable, fall through to offline mode
+      debugWarn(
+        "⚠️ Supabase unavailable for laboran ID, trying offline session",
+      );
     }
 
-    return data.id;
+    // Fallback to offline session
+    const offlineSession = await restoreOfflineSession();
+    if (offlineSession?.user.laboran?.id) {
+      debugLog("✅ Using offline session for laboran ID");
+      return offlineSession.user.laboran.id;
+    }
+
+    return null;
   } catch {
     return null;
   }

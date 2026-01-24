@@ -42,6 +42,7 @@ import {
   User,
   FlaskConical,
 } from "lucide-react";
+import { networkDetector } from "@/lib/offline/network-detector";
 import {
   getLaboranStats,
   getPendingApprovals,
@@ -96,20 +97,37 @@ export function DashboardPage() {
       setError(null);
 
       const [statsData, approvalsData, alertsData, scheduleData] =
-        await Promise.all([
+        await Promise.allSettled([
           getLaboranStats(),
           getPendingApprovals(10),
           getInventoryAlerts(10),
           getLabScheduleToday(10),
         ]);
 
-      setStats(statsData);
-      setPendingApprovals(approvalsData);
-      setInventoryAlerts(alertsData);
-      setLabSchedule(scheduleData);
+      if (statsData.status === "fulfilled") {
+        setStats(statsData.value);
+      }
+
+      if (approvalsData.status === "fulfilled") {
+        setPendingApprovals(approvalsData.value);
+      }
+
+      if (alertsData.status === "fulfilled") {
+        setInventoryAlerts(alertsData.value);
+      }
+
+      if (scheduleData.status === "fulfilled") {
+        setLabSchedule(scheduleData.value);
+      }
     } catch (err) {
-      console.error("Error fetching dashboard data:", err);
-      setError("Gagal memuat data dashboard. Silakan refresh halaman.");
+      // Handle offline mode gracefully
+      if (!networkDetector.isOnline()) {
+        console.log("ℹ️ Offline mode - showing cached dashboard data");
+        setError(null); // Don't show error in offline mode
+      } else {
+        console.error("Error fetching dashboard data:", err);
+        setError("Gagal memuat data dashboard. Silakan refresh halaman.");
+      }
     } finally {
       setLoading(false);
     }

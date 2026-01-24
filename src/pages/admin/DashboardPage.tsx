@@ -59,6 +59,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import { networkDetector } from "@/lib/offline/network-detector";
 import {
   getDashboardStats,
   getUserGrowth,
@@ -128,7 +129,7 @@ export function DashboardPage() {
             usageData,
             usersData,
             announcementsData,
-          ] = await Promise.all([
+          ] = await Promise.allSettled([
             getDashboardStats(),
             getUserGrowth(),
             getUserDistribution(),
@@ -137,15 +138,38 @@ export function DashboardPage() {
             getRecentAnnouncements(5),
           ]);
 
-          setStats(statsData);
-          setUserGrowth(growthData);
-          setUserDistribution(distributionData);
-          setLabUsage(usageData);
-          setRecentUsers(usersData);
-          setRecentAnnouncements(announcementsData);
+          if (statsData.status === "fulfilled") {
+            setStats(statsData.value);
+          }
+
+          if (growthData.status === "fulfilled") {
+            setUserGrowth(growthData.value);
+          }
+
+          if (distributionData.status === "fulfilled") {
+            setUserDistribution(distributionData.value);
+          }
+
+          if (usageData.status === "fulfilled") {
+            setLabUsage(usageData.value);
+          }
+
+          if (usersData.status === "fulfilled") {
+            setRecentUsers(usersData.value);
+          }
+
+          if (announcementsData.status === "fulfilled") {
+            setRecentAnnouncements(announcementsData.value);
+          }
         } catch (err) {
-          console.error("Error fetching dashboard data:", err);
-          setError("Failed to load dashboard data");
+          // Handle offline mode gracefully
+          if (!networkDetector.isOnline()) {
+            console.log("ℹ️ Offline mode - showing cached dashboard data");
+            setError(null); // Don't show error in offline mode
+          } else {
+            console.error("Error fetching dashboard data:", err);
+            setError("Failed to load dashboard data");
+          }
         } finally {
           setLoading(false);
         }
@@ -178,7 +202,7 @@ export function DashboardPage() {
         usageData,
         usersData,
         announcementsData,
-      ] = await Promise.all([
+      ] = await Promise.allSettled([
         getDashboardStats(),
         getUserGrowth(),
         getUserDistribution(),
@@ -187,15 +211,38 @@ export function DashboardPage() {
         getRecentAnnouncements(5),
       ]);
 
-      setStats(statsData);
-      setUserGrowth(growthData);
-      setUserDistribution(distributionData);
-      setLabUsage(usageData);
-      setRecentUsers(usersData);
-      setRecentAnnouncements(announcementsData);
+      if (statsData.status === "fulfilled") {
+        setStats(statsData.value);
+      }
+
+      if (growthData.status === "fulfilled") {
+        setUserGrowth(growthData.value);
+      }
+
+      if (distributionData.status === "fulfilled") {
+        setUserDistribution(distributionData.value);
+      }
+
+      if (usageData.status === "fulfilled") {
+        setLabUsage(usageData.value);
+      }
+
+      if (usersData.status === "fulfilled") {
+        setRecentUsers(usersData.value);
+      }
+
+      if (announcementsData.status === "fulfilled") {
+        setRecentAnnouncements(announcementsData.value);
+      }
     } catch (err) {
-      console.error("Error refreshing dashboard data:", err);
-      setError("Failed to refresh dashboard data");
+      // Handle offline mode gracefully
+      if (!networkDetector.isOnline()) {
+        console.log("ℹ️ Offline mode - could not refresh dashboard");
+        setError(null);
+      } else {
+        console.error("Error refreshing dashboard data:", err);
+        setError("Failed to refresh dashboard data");
+      }
     } finally {
       setRefreshing(false);
     }

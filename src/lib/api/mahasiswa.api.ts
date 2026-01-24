@@ -283,6 +283,7 @@ export async function getAvailableKelas(): Promise<AvailableKelas[]> {
           mkData = data;
         }
 
+        // Get count of active enrollments
         const { count: jumlahMahasiswa } = await supabase
           .from("kelas_mahasiswa")
           .select("*", { count: "exact", head: true })
@@ -393,6 +394,7 @@ async function enrollToKelasImpl(
       return { success: false, message: "Kelas tidak ditemukan" };
     }
 
+    // Get count of active enrollments for this kelas
     const { count: enrolledCount } = await supabase
       .from("kelas_mahasiswa")
       .select("*", { count: "exact", head: true })
@@ -522,46 +524,78 @@ export async function getMyKelas(): Promise<MyKelas[]> {
 
 export async function getMyJadwal(limit?: number): Promise<JadwalMahasiswa[]> {
   try {
+    console.log("🚨 getMyJadwal CALLED");
     const mahasiswaId = await getMahasiswaId();
+    console.log("🔍 Mahasiswa ID:", mahasiswaId);
+
     if (!mahasiswaId) return [];
 
-    const { data: enrolledData } = await supabase
+    const { data: enrolledData, error: enrollError } = await supabase
       .from("kelas_mahasiswa")
-      .select("kelas_id")
+      .select("kelas_id, is_active")
       .eq("mahasiswa_id", mahasiswaId)
       .eq("is_active", true);
 
-    if (!enrolledData || enrolledData.length === 0) return [];
+    console.log("🔍 Enrolled data:", enrolledData);
+    console.log("🔍 Enroll error:", enrollError);
+
+    if (!enrolledData || enrolledData.length === 0) {
+      console.log("⚠️ No enrolled kelas found");
+      return [];
+    }
 
     const kelasIds = enrolledData.map((e: any) => e.kelas_id);
+    console.log("🔍 Kelas IDs:", kelasIds);
 
-    const today = new Date().toISOString().split("T")[0];
-    const nextWeek = new Date();
-    nextWeek.setDate(nextWeek.getDate() + 7);
-    const nextWeekStr = nextWeek.toISOString().split("T")[0];
+    // Get jadwal from 30 days ago to 30 days in future (instead of only future)
+    const today = new Date();
+    const pastDate = new Date();
+    pastDate.setDate(pastDate.getDate() - 30); // 30 hari yang lalu
+    const futureDate = new Date();
+    futureDate.setDate(futureDate.getDate() + 30); // 30 hari ke depan
 
-    let query = supabase
+    // Format date as YYYY-MM-DD for DATE column type
+    const formatDate = (date: Date) => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    };
+
+    const pastDateStr = formatDate(pastDate);
+    const futureDateStr = formatDate(futureDate);
+
+    console.log("🔍 Date range:", {
+      pastDate: pastDateStr,
+      today: formatDate(today),
+      future: futureDateStr,
+    });
+    console.log("🔍 Kelas IDs filter:", kelasIds);
+
+    const { data: jadwalData, error: jadwalError } = await supabase
       .from("jadwal_praktikum")
       .select(
         "id, tanggal_praktikum, hari, jam_mulai, jam_selesai, topik, kelas_id, laboratorium_id",
       )
       .in("kelas_id", kelasIds)
-      .gte("tanggal_praktikum", today)
-      .lte("tanggal_praktikum", nextWeekStr)
+      .gte("tanggal_praktikum", pastDateStr)
+      .lte("tanggal_praktikum", futureDateStr)
       .eq("is_active", true)
       .order("tanggal_praktikum", { ascending: true })
-      .order("jam_mulai", { ascending: true });
+      .order("jam_mulai", { ascending: true })
+      .limit(limit || 50);
 
-    if (limit) {
-      query = query.limit(limit);
+    console.log("🔍 Jadwal query result:", { jadwalData, jadwalError });
+
+    if (!jadwalData || jadwalData.length === 0) {
+      console.log("No jadwal found");
+      return [];
     }
 
-    const { data, error } = await query;
-    if (error) throw error;
-    if (!data) return [];
+    console.log("Found", jadwalData.length, "jadwal");
 
     const result = await Promise.all(
-      data.map(async (item: any) => {
+      jadwalData.map(async (item: any) => {
         const { data: kelasData } = await supabase
           .from("kelas")
           .select("nama_kelas, mata_kuliah_id")

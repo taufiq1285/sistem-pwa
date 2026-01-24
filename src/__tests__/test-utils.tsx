@@ -2,6 +2,7 @@
  * Test Utilities
  */
 
+import { vi } from "vitest";
 import { render } from "@testing-library/react";
 import type { RenderOptions } from "@testing-library/react";
 import type { ReactElement, ReactNode } from "react";
@@ -120,3 +121,41 @@ export const waitForNextTick = () =>
 
 export * from "@testing-library/react";
 export { default as userEvent } from "@testing-library/user-event";
+
+/**
+ * Helper function to setup Supabase auth and middleware mocks
+ * This should be called in beforeEach() of tests that use requirePermission middleware
+ */
+export function setupSupabaseAuthMock(
+  overrides: { userId?: string; role?: string } = {},
+) {
+  const { userId = TEST_UUIDS.USER_1, role = "admin" } = overrides;
+
+  return {
+    // Mock auth getUser
+    auth: {
+      getUser: vi.fn().mockResolvedValue({
+        data: { user: { id: userId, role } },
+        error: null,
+      }),
+    },
+    // Mock user role query (from middleware)
+    from: vi.fn().mockImplementation((table: string) => {
+      if (table === "users") {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnThis(),
+            single: vi.fn().mockResolvedValue({
+              data: { role },
+              error: null,
+            }),
+          }),
+        };
+      }
+      // Default mock for other tables
+      return {
+        select: vi.fn().mockReturnThis(),
+      };
+    }),
+  };
+}

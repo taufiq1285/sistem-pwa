@@ -265,6 +265,7 @@ describe("Quiz Scoring - Score Calculation", () => {
           id: "jawaban-1",
           attempt_id: "attempt-1",
           soal_id: "soal-1",
+          jawaban_mahasiswa: "b",
           jawaban: "b",
           poin_diperoleh: null,
           is_correct: null,
@@ -275,6 +276,7 @@ describe("Quiz Scoring - Score Calculation", () => {
           id: "jawaban-2",
           attempt_id: "attempt-1",
           soal_id: "soal-2",
+          jawaban_mahasiswa: "true",
           jawaban: "true",
           poin_diperoleh: null,
           is_correct: null,
@@ -302,7 +304,8 @@ describe("Quiz Scoring - Score Calculation", () => {
           id: "jawaban-1",
           attempt_id: "attempt-1",
           soal_id: "soal-1",
-          jawaban: "b", // Correct (10 points)
+          jawaban_mahasiswa: "b", // Correct (10 points)
+          jawaban: "b",
           poin_diperoleh: null,
           is_correct: null,
           created_at: new Date().toISOString(),
@@ -312,7 +315,8 @@ describe("Quiz Scoring - Score Calculation", () => {
           id: "jawaban-2",
           attempt_id: "attempt-1",
           soal_id: "soal-2",
-          jawaban: "false", // Incorrect (0 points)
+          jawaban_mahasiswa: "false", // Incorrect (0 points)
+          jawaban: "false",
           poin_diperoleh: null,
           is_correct: null,
           created_at: new Date().toISOString(),
@@ -337,6 +341,7 @@ describe("Quiz Scoring - Score Calculation", () => {
           id: "jawaban-1",
           attempt_id: "attempt-1",
           soal_id: "soal-1",
+          jawaban_mahasiswa: "b",
           jawaban: "b",
           poin_diperoleh: null,
           is_correct: null,
@@ -359,6 +364,7 @@ describe("Quiz Scoring - Score Calculation", () => {
           id: "jawaban-1",
           attempt_id: "attempt-1",
           soal_id: "soal-1",
+          jawaban_mahasiswa: "b",
           jawaban: "b",
           poin_diperoleh: null,
           is_correct: null,
@@ -369,6 +375,7 @@ describe("Quiz Scoring - Score Calculation", () => {
           id: "jawaban-2",
           attempt_id: "attempt-1",
           soal_id: "soal-3",
+          jawaban_mahasiswa: "Essay answer",
           jawaban: "Essay answer",
           poin_diperoleh: 15, // Manually graded
           is_correct: true,
@@ -390,6 +397,7 @@ describe("Quiz Scoring - Score Calculation", () => {
           id: "jawaban-1",
           attempt_id: "attempt-1",
           soal_id: "soal-1",
+          jawaban_mahasiswa: "b",
           jawaban: "b",
           poin_diperoleh: null,
           is_correct: null,
@@ -473,6 +481,7 @@ describe("Quiz Scoring - Batch Grading", () => {
           id: "jawaban-1",
           attempt_id: "attempt-1",
           soal_id: "soal-1",
+          jawaban_mahasiswa: "b",
           jawaban: "b",
           poin_diperoleh: null,
           is_correct: null,
@@ -483,6 +492,7 @@ describe("Quiz Scoring - Batch Grading", () => {
           id: "jawaban-2",
           attempt_id: "attempt-1",
           soal_id: "soal-2",
+          jawaban_mahasiswa: "false",
           jawaban: "false",
           poin_diperoleh: null,
           is_correct: null,
@@ -506,6 +516,7 @@ describe("Quiz Scoring - Batch Grading", () => {
           id: "jawaban-1",
           attempt_id: "attempt-1",
           soal_id: "non-existent",
+          jawaban_mahasiswa: "b",
           jawaban: "b",
           poin_diperoleh: null,
           is_correct: null,
@@ -582,7 +593,8 @@ describe("Quiz Scoring - Statistics", () => {
           id: "jawaban-1",
           attempt_id: "attempt-1",
           soal_id: "soal-1",
-          jawaban: "b", // Correct
+          jawaban_mahasiswa: "b", // Correct
+          jawaban: "b",
           poin_diperoleh: null,
           is_correct: null,
           created_at: new Date().toISOString(),
@@ -592,7 +604,8 @@ describe("Quiz Scoring - Statistics", () => {
           id: "jawaban-2",
           attempt_id: "attempt-1",
           soal_id: "soal-2",
-          jawaban: "false", // Incorrect
+          jawaban_mahasiswa: "false", // Incorrect
+          jawaban: "false",
           poin_diperoleh: null,
           is_correct: null,
           created_at: new Date().toISOString(),
@@ -619,6 +632,7 @@ describe("Quiz Scoring - Statistics", () => {
           id: "jawaban-1",
           attempt_id: "attempt-1",
           soal_id: "soal-3",
+          jawaban_mahasiswa: "Essay answer",
           jawaban: "Essay answer",
           poin_diperoleh: 18,
           is_correct: true,
@@ -641,6 +655,7 @@ describe("Quiz Scoring - Statistics", () => {
           id: "jawaban-1",
           attempt_id: "attempt-1",
           soal_id: "soal-3",
+          jawaban_mahasiswa: "Essay answer",
           jawaban: "Essay answer",
           poin_diperoleh: null,
           is_correct: null,
@@ -690,7 +705,8 @@ describe("Quiz Scoring - Statistics", () => {
           id: "jawaban-1",
           attempt_id: "attempt-1",
           soal_id: "soal-1",
-          jawaban: "b", // Correct
+          jawaban_mahasiswa: "b", // Correct
+          jawaban: "b",
           poin_diperoleh: null,
           is_correct: null,
           created_at: new Date().toISOString(),
@@ -700,7 +716,8 @@ describe("Quiz Scoring - Statistics", () => {
           id: "jawaban-2",
           attempt_id: "attempt-1",
           soal_id: "soal-2",
-          jawaban: "true", // Correct
+          jawaban_mahasiswa: "true", // Correct
+          jawaban: "true",
           poin_diperoleh: null,
           is_correct: null,
           created_at: new Date().toISOString(),
@@ -710,7 +727,8 @@ describe("Quiz Scoring - Statistics", () => {
           id: "jawaban-3",
           attempt_id: "attempt-1",
           soal_id: "soal-5",
-          jawaban: "b", // Incorrect (correct answer is 'a')
+          jawaban_mahasiswa: "b", // Incorrect (correct answer is 'a')
+          jawaban: "b",
           poin_diperoleh: null,
           is_correct: null,
           created_at: new Date().toISOString(),

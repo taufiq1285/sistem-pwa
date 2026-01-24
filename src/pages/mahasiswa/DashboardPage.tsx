@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert"; // ✅ NEW: Alert component
+import { networkDetector } from "@/lib/offline/network-detector";
 // ❌ REMOVED: EnrollKelasDialog import
 import {
   getMahasiswaStats,
@@ -61,7 +62,12 @@ export function DashboardPage() {
         setMyJadwal(jadwalData.value);
       }
     } catch (error) {
-      console.error("Error fetching dashboard data:", error);
+      // Handle offline mode gracefully
+      if (!networkDetector.isOnline()) {
+        console.log("ℹ️ Offline mode - showing cached dashboard data");
+      } else {
+        console.error("Error fetching dashboard data:", error);
+      }
     } finally {
       setLoading(false);
     }

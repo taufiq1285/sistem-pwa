@@ -28,6 +28,7 @@ import {
   RoleNotFoundError,
 } from "../../../lib/errors/permission.errors";
 import { supabase } from "../../../lib/supabase/client";
+// Mock offline auth modulevi.mock("../../../lib/offline/offline-auth", () => ({  restoreOfflineSession: vi.fn().mockResolvedValue(null),}));
 import type { UserRole } from "../../../types/auth.types";
 
 // ============================================================================
@@ -138,11 +139,16 @@ describe("Permission Middleware", () => {
       );
     });
 
-    it("should throw RoleNotFoundError if user role not found in database", async () => {
+    it("should throw AuthenticationError if user role not found in database (offline fallback)", async () => {
       mockSupabaseAuth({ id: mockUser.id, email: mockUser.email });
       mockSupabaseFrom("users", null, new Error("User not found"));
 
-      await expect(getCurrentUserWithRole()).rejects.toThrow(RoleNotFoundError);
+      await expect(getCurrentUserWithRole()).rejects.toThrow(
+        AuthenticationError,
+      );
+      await expect(getCurrentUserWithRole()).rejects.toThrow(
+        "User not authenticated",
+      );
     });
 
     it("should get role for admin user", async () => {

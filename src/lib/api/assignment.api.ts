@@ -590,7 +590,7 @@ async function getAcademicAssignmentsImpl(filters?: {
     )
     .order("tahun_ajaran", { ascending: false })
     .order("semester_ajaran", { ascending: false })
-    .order("nama_kelas");
+    .order("nama_kelas") as any;
 
   // Apply filters
   let typedQuery: any = query;

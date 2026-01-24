@@ -45,9 +45,8 @@ describe("Jadwal API", () => {
   const mockJadwalWithLab: Jadwal = {
     ...mockJadwal,
     kelas: {
-      id: "kelas-1",
       nama_kelas: "A",
-    },
+    } as any, // Type assertion for nested object
     laboratorium: {
       id: "lab-1",
       nama_lab: "Lab Kebidanan 1",

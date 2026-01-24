@@ -5,11 +5,10 @@
     "noEmit": true
   },
   "include": [
-    "src/__tests__/**/*.ts",
-    "src/__tests__/**/*.tsx",
-    "src/**/*.test.ts",
-    "src/**/*.test.tsx",
-    "src/**/*.spec.ts",
-    "src/**/*.spec.tsx"
+    "src/**/*.ts",
+    "src/**/*.tsx"
+  ],
+  "exclude": [
+    "node_modules/**"
   ]
 }

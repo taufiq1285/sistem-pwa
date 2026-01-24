@@ -10,6 +10,7 @@ import { useAuth } from "@/lib/hooks/useAuth"; // ✅ UNCOMMENT
 import { useRole } from "@/lib/hooks/useRole"; // ✅ UNCOMMENT
 import { useSessionTimeout } from "@/lib/hooks/useSessionTimeout"; // ✅ NEW
 import { useMultiTabSync } from "@/lib/hooks/useMultiTabSync"; // ✅ NEW
+import { useNotificationPolling } from "@/lib/hooks/useNotificationPolling"; // ✅ NEW: Auto-refresh notifications
 import { Header } from "./Header";
 import { Sidebar } from "./Sidebar";
 import { MobileNav } from "./MobileNav";
@@ -45,6 +46,12 @@ export function AppLayout({ children, className }: AppLayoutProps) {
 
   // ✅ NEW: Multi-tab sync (auto logout if different user logs in another tab)
   useMultiTabSync();
+
+  // ✅ NEW: Auto-refresh notifications every 30 seconds (without WebSocket)
+  useNotificationPolling({
+    interval: 30000, // 30 seconds
+    enabled: true, // Can be toggled via settings if needed
+  });
 
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 

@@ -5,9 +5,9 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook } from "@testing-library/react";
-import { ReactNode } from "react";
+import { type ReactNode } from "react";
 import { useTheme } from "@/lib/hooks/useTheme";
-import { ThemeContext, ThemeContextValue } from "@/context/ThemeContext";
+import { ThemeContext, type ThemeContextValue } from "@/context/ThemeContext";
 
 describe("useTheme", () => {
   let consoleWarnSpy: ReturnType<typeof vi.spyOn>;

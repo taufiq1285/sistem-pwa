@@ -121,7 +121,7 @@ export function MateriCard({
     : "-";
 
   const dosenName = materi.dosen
-    ? `${materi.dosen.gelar_depan || ""} ${materi.dosen.full_name} ${materi.dosen.gelar_belakang || ""}`.trim()
+    ? `${materi.dosen.gelar_depan || ""} ${materi.dosen.users.full_name} ${materi.dosen.gelar_belakang || ""}`.trim()
     : "Unknown";
 
   const mataKuliahName = materi.kelas?.mata_kuliah?.nama_mk || "-";
@@ -195,6 +195,21 @@ export function MateriCard({
               <Badge variant={isActive ? "default" : "secondary"}>
                 {isActive ? "Published" : "Draft"}
               </Badge>
+
+              {mataKuliahName && mataKuliahName !== "-" && (
+                <Badge
+                  variant="secondary"
+                  className="bg-primary/10 text-primary border-primary/20"
+                >
+                  {mataKuliahName}
+                </Badge>
+              )}
+
+              {materi.kelas?.nama_kelas && (
+                <Badge variant="outline" className="text-xs">
+                  {materi.kelas.nama_kelas}
+                </Badge>
+              )}
 
               {mingguKe && <Badge variant="outline">Minggu {mingguKe}</Badge>}
 

@@ -29,6 +29,10 @@ import {
   createBulkNotifications,
 } from "@/lib/api/notification.api";
 
+// Type helper for Supabase query results with complex relationships
+type SupabaseResult<T> = T | null;
+type SupabaseResultArray<T> = T[];
+
 // ============================================================================
 // QUERY OPERATIONS
 // ============================================================================
@@ -112,7 +116,8 @@ export async function getPermintaan(
 
     if (error) throw handleError(error);
 
-    return (data || []) as unknown as PermintaanPerbaikanWithRelations[];
+    return (data ||
+      []) as unknown as SupabaseResultArray<PermintaanPerbaikanWithRelations>;
   } catch (error) {
     console.error("getPermintaan error:", error);
     throw handleError(error);
@@ -189,7 +194,8 @@ export async function getPermintaanPendingForDosen(
 
     if (error) throw handleError(error);
 
-    return (data || []) as unknown as PermintaanPerbaikanWithRelations[];
+    return (data ||
+      []) as unknown as SupabaseResultArray<PermintaanPerbaikanWithRelations>;
   } catch (error) {
     console.error("getPermintaanPendingForDosen error:", error);
     throw handleError(error);
@@ -247,7 +253,7 @@ export async function getPermintaanById(
 
     if (error) throw handleError(error);
 
-    return data as unknown as PermintaanPerbaikanWithRelations;
+    return data as unknown as SupabaseResult<PermintaanPerbaikanWithRelations>;
   } catch (error) {
     console.error("getPermintaanById error:", error);
     throw handleError(error);
@@ -319,7 +325,8 @@ async function createPermintaanImpl(
             message: `${mahasiswaInfo?.user?.full_name || "Mahasiswa"} mengajukan permintaan perbaikan nilai ${data.komponen_nilai.toUpperCase()} untuk kelas ${kelasInfo.mata_kuliah?.nama_mk}`,
             type: "perbaikan_nilai_request",
             data: {
-              permintaan_id: (permintaan as any).id,
+              permintaan_id: (permintaan as unknown as PermintaanPerbaikanNilai)
+                .id,
               kelas_id: data.kelas_id,
               komponen_nilai: data.komponen_nilai,
             },
@@ -330,7 +337,7 @@ async function createPermintaanImpl(
       }
     }
 
-    return permintaan as any as PermintaanPerbaikanNilai;
+    return permintaan as unknown as SupabaseResult<PermintaanPerbaikanNilai>;
   } catch (error) {
     console.error("createPermintaan error:", error);
     throw handleError(error);
@@ -371,13 +378,17 @@ async function approvePermintaanImpl(
 
     if (error) throw handleError(error);
 
+    // Validate updated data exists and is not an error
+    if (!updated || typeof updated !== "object") {
+      throw new Error("Failed to update permintaan perbaikan nilai");
+    }
+
     // Get permintaan info for notification
     const permintaan = await getPermintaanById(data.permintaan_id);
 
     // Notify mahasiswa (best effort - don't fail if notification fails)
     try {
-      const mahasiswaUserId = permintaan.mahasiswa?.user?.full_name;
-      if (mahasiswaUserId) {
+      if (permintaan.mahasiswa_id) {
         const { data: mahasiswa } = await supabase
           .from("mahasiswa")
           .select("user_id")
@@ -402,7 +413,7 @@ async function approvePermintaanImpl(
       console.error("[NOTIFICATION] Failed to notify mahasiswa:", notifError);
     }
 
-    return updated as unknown as PermintaanPerbaikanNilai;
+    return updated as PermintaanPerbaikanNilai;
   } catch (error) {
     console.error("approvePermintaan error:", error);
     throw handleError(error);
@@ -438,35 +449,42 @@ async function rejectPermintaanImpl(
 
     if (error) throw handleError(error);
 
+    // Validate updated data exists and is not an error
+    if (!updated || typeof updated !== "object") {
+      throw new Error("Failed to update permintaan perbaikan nilai");
+    }
+
     // Get permintaan info for notification
     const permintaan = await getPermintaanById(data.permintaan_id);
 
     // Notify mahasiswa (best effort - don't fail if notification fails)
     try {
-      const { data: mahasiswa } = await supabase
-        .from("mahasiswa")
-        .select("user_id")
-        .eq("id", permintaan.mahasiswa_id)
-        .single();
+      if (permintaan.mahasiswa_id) {
+        const { data: mahasiswa } = await supabase
+          .from("mahasiswa")
+          .select("user_id")
+          .eq("id", permintaan.mahasiswa_id)
+          .single();
 
-      if (mahasiswa?.user_id) {
-        await createNotification({
-          user_id: mahasiswa.user_id,
-          title: "Permintaan Perbaikan Nilai Ditolak",
-          message: `Permintaan perbaikan nilai ${permintaan.komponen_nilai.toUpperCase()} Anda untuk ${permintaan.kelas?.mata_kuliah?.nama_mk} ditolak. Alasan: ${data.response_dosen}`,
-          type: "perbaikan_nilai_response",
-          data: {
-            permintaan_id: data.permintaan_id,
-            status: "rejected",
-            response: data.response_dosen,
-          },
-        });
+        if (mahasiswa?.user_id) {
+          await createNotification({
+            user_id: mahasiswa.user_id,
+            title: "Permintaan Perbaikan Nilai Ditolak",
+            message: `Permintaan perbaikan nilai ${permintaan.komponen_nilai.toUpperCase()} Anda untuk ${permintaan.kelas?.mata_kuliah?.nama_mk} ditolak. Alasan: ${data.response_dosen}`,
+            type: "perbaikan_nilai_response",
+            data: {
+              permintaan_id: data.permintaan_id,
+              status: "rejected",
+              response: data.response_dosen,
+            },
+          });
+        }
       }
     } catch (notifError) {
       console.error("[NOTIFICATION] Failed to notify mahasiswa:", notifError);
     }
 
-    return updated as unknown as PermintaanPerbaikanNilai;
+    return updated as PermintaanPerbaikanNilai;
   } catch (error) {
     console.error("rejectPermintaan error:", error);
     throw handleError(error);
@@ -499,7 +517,12 @@ async function cancelPermintaanImpl(
 
     if (error) throw handleError(error);
 
-    return updated as unknown as PermintaanPerbaikanNilai;
+    // Validate updated data exists and is not an error
+    if (!updated || typeof updated !== "object") {
+      throw new Error("Failed to cancel permintaan perbaikan nilai");
+    }
+
+    return updated as PermintaanPerbaikanNilai;
   } catch (error) {
     console.error("cancelPermintaan error:", error);
     throw handleError(error);
@@ -539,14 +562,15 @@ export async function getPermintaanSummary(
 
     if (error) throw handleError(error);
 
-    const data2 = data as any; // Cast to bypass strict type checking
+    // Type-safe cast for status query result
+    const statusData = data as unknown as Array<{ status: string }> | null;
     const summary: PermintaanSummary = {
-      total: data2?.length || 0,
-      pending: data2?.filter((p: any) => p.status === "pending").length || 0,
-      approved: data2?.filter((p: any) => p.status === "approved").length || 0,
-      rejected: data2?.filter((p: any) => p.status === "rejected").length || 0,
+      total: statusData?.length || 0,
+      pending: statusData?.filter((p) => p.status === "pending").length || 0,
+      approved: statusData?.filter((p) => p.status === "approved").length || 0,
+      rejected: statusData?.filter((p) => p.status === "rejected").length || 0,
       cancelled:
-        data2?.filter((p: any) => p.status === "cancelled").length || 0,
+        statusData?.filter((p) => p.status === "cancelled").length || 0,
     };
 
     return summary;
@@ -597,15 +621,18 @@ export async function getPermintaanStatsForDosen(
 
     if (error) throw handleError(error);
 
-    const allPermintaan = (data || []) as any[]; // Cast to any for property access
-    const pending = allPermintaan.filter((p: any) => p.status === "pending");
+    const allPermintaan = (data || []) as unknown as Array<{
+      status: string;
+      komponen_nilai: string;
+    }>;
+    const pending = allPermintaan.filter((p) => p.status === "pending");
     const reviewed = allPermintaan.filter(
-      (p: any) => p.status === "approved" || p.status === "rejected",
+      (p) => p.status === "approved" || p.status === "rejected",
     );
-    const approved = allPermintaan.filter((p: any) => p.status === "approved");
+    const approved = allPermintaan.filter((p) => p.status === "approved");
 
     const approvalRate =
-      reviewed.length > 0 ? (approved.length / reviewed.length) * 100 : 0;
+      reviewed.length > 0 ? approved.length / reviewed.length : 0;
 
     // Count by komponen
     const byKomponen: Record<KomponenNilai, number> = {
@@ -617,7 +644,7 @@ export async function getPermintaanStatsForDosen(
       kehadiran: 0,
     };
 
-    allPermintaan.forEach((p: any) => {
+    allPermintaan.forEach((p) => {
       if (p.komponen_nilai in byKomponen) {
         byKomponen[p.komponen_nilai as KomponenNilai]++;
       }

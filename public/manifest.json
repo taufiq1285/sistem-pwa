@@ -1,13 +1,14 @@
 {
-  "name": "Sistem Praktikum Kebidanan",
-  "short_name": "Praktikum",
-  "description": "PWA untuk manajemen praktikum kebidanan",
+  "name": "Sistem Praktikum Akademi Kebidanan Mega Buana",
+  "short_name": "Praktikum AKMB",
+  "description": "Sistem Informasi Praktikum - Akademi Kebidanan Mega Buana",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
   "theme_color": "#3b82f6",
   "background_color": "#ffffff",
+  "categories": ["education", "medical", "health"],
   "icons": [
     {
       "src": "/icons/icon-48x48.png",
@@ -68,12 +69,6 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
-    },
-    {
-      "src": "/logo.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any"
     }
   ]
 }

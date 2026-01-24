@@ -2,10 +2,8 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App.tsx";
-import { registerServiceWorker } from "./lib/pwa/register-sw";
-// ❌ DISABLED: Sync Manager tidak dalam scope proposal penelitian
-// import { initializeSyncManager } from "./lib/offline/sync-manager";
 import { logger } from "@/lib/utils/logger";
+import { registerServiceWorker } from "@/lib/pwa/register-sw";
 
 // Render app
 createRoot(document.getElementById("root")!).render(
@@ -15,189 +13,138 @@ createRoot(document.getElementById("root")!).render(
 );
 
 // ============================================================================
-// SERVICE WORKER - FORCE CLEAR OLD VERSION FIRST
+// PWA SERVICE WORKER REGISTRATION
 // ============================================================================
 
 const isDevelopment = import.meta.env.DEV;
-const enablePWAInDev = import.meta.env.VITE_PWA_DEV !== "false";
 
-// Flag to prevent handling update multiple times
-let updateHandled = false;
+if (isDevelopment) {
+  logger.info("🔧 Development Mode: PWA enabled for testing");
+} else {
+  logger.info("🚀 Production Mode: PWA enabled");
+}
+
+// Register Service Worker
+registerServiceWorker({
+  swPath: "/sw.js", // Default path from vite-plugin-pwa
+  scope: "/",
+  checkUpdateInterval: 60 * 60 * 1000, // Check every hour
+  enableAutoUpdate: true,
+
+  // Called when Service Worker is successfully registered
+  onSuccess: (registration) => {
+    logger.info("✅ Service Worker registered successfully", {
+      scope: registration.scope,
+      active: registration.active?.state,
+    });
+  },
+
+  // Called when a new Service Worker version is available
+  onUpdate: (registration) => {
+    logger.info("🔄 New Service Worker version available", {
+      waiting: registration.waiting?.state,
+      active: registration.active?.state,
+    });
+
+    // Show update notification to user
+    if (isDevelopment) {
+      // In development, auto-reload for easier testing
+      logger.info("🔧 Dev mode: Auto-reloading for update");
+    } else {
+      // In production, show notification
+      showUpdateAvailableNotification();
+    }
+  },
+
+  // Called when registration fails
+  onError: (error) => {
+    logger.error("❌ Service Worker registration failed", error);
+  },
+});
 
 /**
- * Check Service Worker version
- * Returns version string or null if unable to determine
+ * Show update available notification to user
  */
-async function checkSWVersion(
-  registration: ServiceWorkerRegistration,
-): Promise<string | null> {
-  return new Promise((resolve) => {
-    if (!registration.active) {
-      resolve(null);
-      return;
+function showUpdateAvailableNotification() {
+  // Create notification element
+  const notification = document.createElement("div");
+  notification.id = "pwa-update-notification";
+  notification.style.cssText = `
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 16px 24px;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    z-index: 9999;
+    font-family: system-ui, -apple-system, sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    animation: slideIn 0.3s ease-out;
+  `;
+
+  notification.innerHTML = `
+    <div style="flex: 1">
+      <div style="font-weight: 600; margin-bottom: 4px;">Update Tersedia!</div>
+      <div style="font-size: 14px; opacity: 0.9;">Versi baru aplikasi sudah tersedia.</div>
+    </div>
+    <button id="pwa-update-btn" style="
+      background: white;
+      color: #667eea;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s;
+    ">Update</button>
+    <button id="pwa-dismiss-btn" style="
+      background: transparent;
+      color: white;
+      border: 1px solid rgba(255,255,255,0.3);
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+    ">✕</button>
+  `;
+
+  // Add styles for animation
+  const style = document.createElement("style");
+  style.textContent = `
+    @keyframes slideIn {
+      from { transform: translateY(100px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
     }
+  `;
+  document.head.appendChild(style);
 
-    const messageChannel = new MessageChannel();
-    registration.active.postMessage({ type: "GET_VERSION" }, [
-      messageChannel.port2,
-    ]);
+  // Add notification to DOM
+  document.body.appendChild(notification);
 
-    messageChannel.port1.onmessage = (event) => {
-      resolve(event.data?.version || null);
-    };
+  // Handle update button click
+  document.getElementById("pwa-update-btn")?.addEventListener("click", () => {
+    // Reload to activate new Service Worker
+    window.location.reload();
+  });
 
-    // Timeout after 1 second
-    setTimeout(() => resolve(null), 1000);
+  // Handle dismiss button click
+  document.getElementById("pwa-dismiss-btn")?.addEventListener("click", () => {
+    notification.remove();
   });
 }
 
-/**
- * Force unregister OLD Service Workers only
- * Production-safe: Only unregisters if version mismatch
- */
-async function forceUnregisterOldSW(): Promise<void> {
-  const TARGET_VERSION = "v1.0.2";
-
-  if ("serviceWorker" in navigator) {
-    try {
-      const registrations = await navigator.serviceWorker.getRegistrations();
-
-      if (registrations.length === 0) {
-        logger.info("[SW Cleanup] No existing Service Workers");
-        return;
-      }
-
-      logger.info(
-        `[SW Cleanup] Checking ${registrations.length} Service Worker(s)`,
-      );
-
-      let unregisteredCount = 0;
-
-      for (const registration of registrations) {
-        try {
-          // Check version first
-          const version = await checkSWVersion(registration);
-
-          if (version === TARGET_VERSION) {
-            logger.info(`[SW Cleanup] ✅ Current version OK: ${version}`);
-            continue; // Skip unregistering current version
-          }
-
-          // Old version detected or unable to determine - unregister
-          if (version) {
-            logger.info(
-              `[SW Cleanup] Found old version: ${version} (target: ${TARGET_VERSION})`,
-            );
-          } else {
-            logger.info("[SW Cleanup] Found unversioned SW, will unregister");
-          }
-
-          const success = await registration.unregister();
-          if (success) {
-            logger.info(
-              "[SW Cleanup] ✅ Unregistered old SW:",
-              registration.scope,
-            );
-            unregisteredCount++;
-          }
-        } catch (err) {
-          logger.error("[SW Cleanup] ❌ Failed to process registration:", err);
-        }
-      }
-
-      // Only clear caches if we unregistered something
-      if (unregisteredCount > 0) {
-        logger.info("[SW Cleanup] Clearing old caches...");
-        const cacheNames = await caches.keys();
-
-        for (const cacheName of cacheNames) {
-          // Only delete old version caches
-          if (!cacheName.includes(TARGET_VERSION.replace("v", ""))) {
-            await caches.delete(cacheName);
-            logger.info("[SW Cleanup] 🗑️ Deleted old cache:", cacheName);
-          }
-        }
-
-        logger.info(
-          `[SW Cleanup] ✅ Cleanup complete (${unregisteredCount} SW unregistered)`,
-        );
-      } else {
-        logger.info("[SW Cleanup] ✅ No cleanup needed, all SW up to date");
-      }
-    } catch (error) {
-      logger.error("[SW Cleanup] Error during cleanup:", error);
-    }
-  }
+// Log PWA status
+if ("serviceWorker" in navigator) {
+  logger.info("✅ Service Worker API supported");
+} else {
+  logger.warn("⚠️ Service Worker API not supported in this browser");
 }
 
-if (!isDevelopment || enablePWAInDev) {
-  // Enable full SW functionality
-  logger.info(
-    isDevelopment
-      ? "🔧 Development Mode: Service Worker ENABLED for PWA testing"
-      : "🚀 Production Mode: Service Worker ENABLED",
-  );
-
-  // Force clear old SW first, then register new one
-  forceUnregisterOldSW()
-    .then(() => {
-      logger.info("[SW] Starting fresh registration...");
-
-      // Wait a bit for cleanup to complete
-      setTimeout(() => {
-        registerServiceWorker({
-          onSuccess: (registration) => {
-            logger.info("✅ Service Worker registered successfully");
-            logger.info("Scope:", registration.scope);
-
-            // ❌ DISABLED: Sync Manager initialization tidak dalam scope proposal
-            // initializeSyncManager().catch((error) => {
-            //   logger.error("Failed to initialize sync manager:", error);
-            // });
-          },
-          onUpdate: (registration) => {
-            // Prevent handling the same update multiple times
-            if (updateHandled) {
-              logger.info("[SW] Update already handled, skipping...");
-              return;
-            }
-
-            updateHandled = true;
-
-            logger.info("New service worker version available");
-            logger.info("Refresh page to activate new version");
-
-            // Auto-activate update without prompting
-            // This will reload the page once via controllerchange event
-            if (registration.waiting) {
-              registration.waiting.postMessage({ type: "SKIP_WAITING" });
-              logger.info("New version will activate on next page load");
-            }
-          },
-          onError: (error) => {
-            logger.error("❌ Service Worker registration failed:", error);
-          },
-          enableAutoUpdate: false, // Disabled to prevent update loops
-          checkUpdateInterval: 60 * 60 * 1000, // Check every hour
-        });
-      }, 500); // Wait 500ms after cleanup
-    })
-    .catch((error) => {
-      logger.error("[SW] Cleanup failed, proceeding anyway:", error);
-    });
+if ("ononline" in window && "onoffline" in window) {
+  logger.info("✅ Online/Offline events supported");
 } else {
-  // Development: SW disabled
-  logger.info(
-    "🔧 Development Mode: Service Worker disabled (set VITE_PWA_DEV=true to enable)",
-  );
-
-  // Unregister any existing service workers from previous sessions
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.getRegistrations().then((registrations) => {
-      registrations.forEach((registration) => {
-        registration.unregister();
-        logger.info("Unregistered old service worker");
-      });
-    });
-  }
+  logger.warn("⚠️ Online/Offline events not supported");
 }

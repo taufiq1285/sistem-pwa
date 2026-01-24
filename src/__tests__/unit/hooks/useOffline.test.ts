@@ -13,6 +13,7 @@ import { useOffline } from "../../../lib/hooks/useOffline";
 import { indexedDBManager } from "../../../lib/offline/indexeddb";
 import type { NetworkChangeEvent } from "../../../lib/offline/network-detector";
 import { useNetworkStatus } from "../../../lib/hooks/useNetworkStatus";
+import type { StoreName } from "../../../types/offline.types";
 
 // ============================================================================
 // MOCK SETUP
@@ -174,7 +175,7 @@ describe("useOffline", () => {
 
       const { result } = renderHook(() => useOffline());
 
-      await result.current.saveOffline("custom", data);
+      await result.current.saveOffline("custom" as StoreName, data);
 
       expect(indexedDBManager.create).toHaveBeenCalledWith("custom", data);
     });

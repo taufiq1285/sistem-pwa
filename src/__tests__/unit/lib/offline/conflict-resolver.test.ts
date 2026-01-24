@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import {
   ConflictResolver,
-  ConflictData,
+  type ConflictData,
   resolveConflict,
   wouldConflict,
 } from "../../../../lib/offline/conflict-resolver";

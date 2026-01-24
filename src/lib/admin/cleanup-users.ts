@@ -209,9 +209,9 @@ export async function deleteUserByEmail(
       throw error;
     }
 
-    const authUser = (authUsers.users as any[]).find(
-      (u: any) => u.email === email,
-    );
+    const authUser = (
+      authUsers.users as Array<{ id: string; email: string }>
+    ).find((u: any) => u.email === email);
 
     if (!authUser) {
       return {

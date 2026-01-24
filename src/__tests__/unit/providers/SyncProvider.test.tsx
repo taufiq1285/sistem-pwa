@@ -28,6 +28,19 @@ const mockStats = {
   failed: 2,
 };
 
+// Create stable mock return object
+const mockSyncReturnValue = {
+  addToQueue: vi.fn(),
+  processQueue: mockProcessQueue,
+  retryFailed: vi.fn(),
+  clearCompleted: vi.fn(),
+  stats: mockStats,
+  isProcessing: false,
+  isReady: true,
+  refreshStats: vi.fn(),
+  getAllItems: vi.fn(),
+};
+
 // ✅ FIXED: Proper type definition without 'as const' to allow mutation
 let mockNetworkStatus: {
   isOnline: boolean;
@@ -42,17 +55,7 @@ let mockNetworkStatus: {
 };
 
 vi.mock("@/lib/hooks/useSync", () => ({
-  useSync: vi.fn(() => ({
-    addToQueue: vi.fn(),
-    processQueue: mockProcessQueue,
-    retryFailed: vi.fn(),
-    clearCompleted: vi.fn(),
-    stats: mockStats,
-    isProcessing: false,
-    isReady: true,
-    refreshStats: vi.fn(),
-    getAllItems: vi.fn(),
-  })),
+  useSync: vi.fn(() => mockSyncReturnValue),
 }));
 
 vi.mock("@/lib/hooks/useNetworkStatus", () => ({
@@ -97,6 +100,10 @@ describe("SyncProvider", () => {
     mockStats.syncing = 0;
     mockStats.completed = 3;
     mockStats.failed = 2;
+    // Reset mockSyncReturnValue
+    mockSyncReturnValue.stats = mockStats;
+    mockSyncReturnValue.isProcessing = false;
+    mockSyncReturnValue.isReady = true;
   });
 
   afterEach(() => {
@@ -205,21 +212,21 @@ describe("SyncProvider", () => {
       });
 
       expect(mockProcessQueue).not.toHaveBeenCalled();
+
+      // Reset network status
+      vi.mocked(useNetworkStatus).mockReturnValue({
+        isOnline: true,
+        isOffline: false,
+        status: "online",
+        isUnstable: false,
+        lastChanged: Date.now(),
+        isReady: true,
+      });
     });
 
     it("should not auto-sync when not ready", async () => {
-      // ✅ FIXED: Use vi.mocked instead of dynamic require
-      vi.mocked(useSync).mockReturnValue({
-        addToQueue: vi.fn(),
-        processQueue: mockProcessQueue,
-        retryFailed: vi.fn(),
-        clearCompleted: vi.fn(),
-        stats: mockStats,
-        isProcessing: false,
-        isReady: false, // Not ready
-        refreshStats: vi.fn(),
-        getAllItems: vi.fn(),
-      });
+      // ✅ FIXED: Use the stable mock object
+      mockSyncReturnValue.isReady = false;
 
       render(
         <SyncProvider autoSync={true}>
@@ -232,21 +239,14 @@ describe("SyncProvider", () => {
       });
 
       expect(mockProcessQueue).not.toHaveBeenCalled();
+
+      // Reset
+      mockSyncReturnValue.isReady = true;
     });
 
     it("should not auto-sync when no pending items", async () => {
-      // ✅ FIXED: Use vi.mocked instead of dynamic require
-      vi.mocked(useSync).mockReturnValue({
-        addToQueue: vi.fn(),
-        processQueue: mockProcessQueue,
-        retryFailed: vi.fn(),
-        clearCompleted: vi.fn(),
-        stats: { ...mockStats, pending: 0 }, // No pending items
-        isProcessing: false,
-        isReady: true,
-        refreshStats: vi.fn(),
-        getAllItems: vi.fn(),
-      });
+      // ✅ FIXED: Use the stable mock object
+      mockSyncReturnValue.stats = { ...mockStats, pending: 0 };
 
       render(
         <SyncProvider autoSync={true}>
@@ -259,27 +259,12 @@ describe("SyncProvider", () => {
       });
 
       expect(mockProcessQueue).not.toHaveBeenCalled();
+
+      // Reset
+      mockSyncReturnValue.stats = mockStats;
     });
 
-    /**
-     * SKIPPED: Auto-Sync Timing Complexity
-     *
-     * WHY SKIPPED:
-     * - Auto-sync uses intervals + network status changes + React context
-     * - Multiple async operations with complex dependencies
-     * - waitFor() with async intervals causes timeout issues
-     * - Fake timers don't simulate real event loop behavior
-     *
-     * LOGIC STATUS: ✅ WORKING IN PRODUCTION
-     *
-     * COVERAGE: ✅ Covered by:
-     * - Manual sync tests (14 tests passing)
-     * - Queue management tests
-     * - Error handling tests
-     *
-     * RECOMMENDATION: E2E tests or simplify SyncProvider for testability
-     */
-    it.skip("should handle auto-sync errors gracefully", async () => {
+    it("should handle auto-sync errors gracefully", async () => {
       const consoleErrorSpy = vi
         .spyOn(console, "error")
         .mockImplementation(() => {});
@@ -287,16 +272,19 @@ describe("SyncProvider", () => {
         .spyOn(console, "log")
         .mockImplementation(() => {});
       const error = new Error("Sync failed");
-      mockProcessQueue.mockRejectedValueOnce(error);
 
-      await act(async () => {
-        render(
-          <SyncProvider autoSync={true}>
-            <TestConsumer />
-          </SyncProvider>,
-        );
-      });
+      // Mock to reject once, then resolve
+      mockProcessQueue
+        .mockRejectedValueOnce(error)
+        .mockResolvedValueOnce(undefined);
 
+      render(
+        <SyncProvider autoSync={true}>
+          <TestConsumer />
+        </SyncProvider>,
+      );
+
+      // Wait for auto-sync to be triggered
       await waitFor(
         () => {
           expect(mockProcessQueue).toHaveBeenCalled();
@@ -304,9 +292,13 @@ describe("SyncProvider", () => {
         { timeout: 3000 },
       );
 
+      // Wait for error to be logged
       await waitFor(
         () => {
-          expect(consoleErrorSpy).toHaveBeenCalled();
+          expect(consoleErrorSpy).toHaveBeenCalledWith(
+            "Auto-sync failed:",
+            error,
+          );
         },
         { timeout: 3000 },
       );
@@ -315,43 +307,45 @@ describe("SyncProvider", () => {
       consoleLogSpy.mockRestore();
     });
 
-    /** SKIPPED: Same auto-sync timing complexity as above */
-    it.skip("should trigger auto-sync when coming back online", async () => {
-      // ✅ FIXED: Now properly typed to allow status change
+    it("should trigger auto-sync when coming back online", async () => {
+      // Clear any previous calls
+      mockProcessQueue.mockClear();
+
       // Start offline
       mockNetworkStatus.isOnline = false;
       mockNetworkStatus.isOffline = true;
-      mockNetworkStatus.status = "offline"; // ✅ This now works!
+      mockNetworkStatus.status = "offline";
 
-      let rerender: any;
-      await act(async () => {
-        const result = render(
-          <SyncProvider autoSync={true}>
-            <TestConsumer />
-          </SyncProvider>,
-        );
-        rerender = result.rerender;
-      });
+      // Start with autoSync disabled to avoid initial sync
+      const { rerender } = render(
+        <SyncProvider autoSync={false}>
+          <TestConsumer />
+        </SyncProvider>,
+      );
 
-      await act(async () => {
-        await new Promise((resolve) => setTimeout(resolve, 50));
-      });
+      // Wait a bit to ensure no sync happened while offline and autoSync disabled
+      await waitFor(
+        () => {
+          expect(screen.getByTestId("isReady")).toHaveTextContent("true");
+        },
+        { timeout: 2000 },
+      );
 
       expect(mockProcessQueue).not.toHaveBeenCalled();
 
-      // Go online
+      // Go online AND enable autoSync
       mockNetworkStatus.isOnline = true;
       mockNetworkStatus.isOffline = false;
       mockNetworkStatus.status = "online";
 
-      await act(async () => {
-        rerender(
-          <SyncProvider autoSync={true}>
-            <TestConsumer />
-          </SyncProvider>,
-        );
-      });
+      // Rerender with both online status and autoSync enabled
+      rerender(
+        <SyncProvider autoSync={true}>
+          <TestConsumer />
+        </SyncProvider>,
+      );
 
+      // Wait for auto-sync to be triggered
       await waitFor(
         () => {
           expect(mockProcessQueue).toHaveBeenCalled();
@@ -412,24 +406,20 @@ describe("SyncProvider", () => {
       expect(screen.getByTestId("hasClear")).toHaveTextContent("true");
     });
 
-    /** SKIPPED: React context + async state updates = timing issues */
-    it.skip("should share context across multiple children", async () => {
-      await act(async () => {
-        render(
-          <SyncProvider>
-            <TestConsumer />
-            <TestConsumer />
-            <TestConsumer />
-          </SyncProvider>,
-        );
-      });
+    it("should share context across multiple children", () => {
+      render(
+        <SyncProvider>
+          <TestConsumer />
+          <TestConsumer />
+          <TestConsumer />
+        </SyncProvider>,
+      );
 
-      await waitFor(() => {
-        const pendingElements = screen.getAllByTestId("pending");
-        expect(pendingElements).toHaveLength(3);
-        pendingElements.forEach((el) => {
-          expect(el).toHaveTextContent("5");
-        });
+      // All children should have access to the same context
+      const pendingElements = screen.getAllByTestId("pending");
+      expect(pendingElements).toHaveLength(3);
+      pendingElements.forEach((el) => {
+        expect(el).toHaveTextContent("5");
       });
     });
   });
@@ -439,32 +429,32 @@ describe("SyncProvider", () => {
   // ============================================================================
 
   describe("Props", () => {
-    /** SKIPPED: Auto-sync timing complexity */
-    it.skip("should respect autoSync prop", async () => {
-      let rerender: any;
-      await act(async () => {
-        const result = render(
-          <SyncProvider autoSync={false}>
-            <TestConsumer />
-          </SyncProvider>,
-        );
-        rerender = result.rerender;
-      });
+    it("should respect autoSync prop", async () => {
+      // Render with autoSync=false
+      const { rerender } = render(
+        <SyncProvider autoSync={false}>
+          <TestConsumer />
+        </SyncProvider>,
+      );
 
-      await act(async () => {
-        await new Promise((resolve) => setTimeout(resolve, 100));
-      });
+      // Wait to ensure no sync was triggered
+      await waitFor(
+        () => {
+          expect(screen.getByTestId("isReady")).toHaveTextContent("true");
+        },
+        { timeout: 2000 },
+      );
 
       expect(mockProcessQueue).not.toHaveBeenCalled();
 
-      await act(async () => {
-        rerender(
-          <SyncProvider autoSync={true}>
-            <TestConsumer />
-          </SyncProvider>,
-        );
-      });
+      // Rerender with autoSync=true
+      rerender(
+        <SyncProvider autoSync={true}>
+          <TestConsumer />
+        </SyncProvider>,
+      );
 
+      // Wait for auto-sync to be triggered
       await waitFor(
         () => {
           expect(mockProcessQueue).toHaveBeenCalled();
@@ -473,16 +463,14 @@ describe("SyncProvider", () => {
       );
     });
 
-    /** SKIPPED: Auto-sync timing complexity */
-    it.skip("should default autoSync to true", async () => {
-      await act(async () => {
-        render(
-          <SyncProvider>
-            <TestConsumer />
-          </SyncProvider>,
-        );
-      });
+    it("should default autoSync to true", async () => {
+      render(
+        <SyncProvider>
+          <TestConsumer />
+        </SyncProvider>,
+      );
 
+      // Wait for auto-sync to be triggered (defaults to true)
       await waitFor(
         () => {
           expect(mockProcessQueue).toHaveBeenCalled();
@@ -522,44 +510,38 @@ describe("SyncProvider", () => {
       });
     });
 
-    /** SKIPPED: Stats updates + React context timing issues */
-    it.skip("should handle stats updates", async () => {
-      let rerender: any;
-      await act(async () => {
-        const result = render(
-          <SyncProvider>
-            <TestConsumer />
-          </SyncProvider>,
-        );
-        rerender = result.rerender;
-      });
+    it("should handle stats updates", async () => {
+      const { rerender } = render(
+        <SyncProvider>
+          <TestConsumer />
+        </SyncProvider>,
+      );
 
+      // Wait for initial stats
       await waitFor(() => {
         expect(screen.getByTestId("pending")).toHaveTextContent("5");
       });
 
       // Update stats in the mock
-      mockStats.pending = 10;
+      mockSyncReturnValue.stats = { ...mockStats, pending: 10 };
 
-      await act(async () => {
-        rerender(
-          <SyncProvider>
-            <TestConsumer />
-          </SyncProvider>,
-        );
-      });
+      // Rerender to trigger context update
+      rerender(
+        <SyncProvider>
+          <TestConsumer />
+        </SyncProvider>,
+      );
 
+      // Wait for updated stats
       await waitFor(() => {
         expect(screen.getByTestId("pending")).toHaveTextContent("10");
       });
 
       // Reset stats back
-      mockStats.pending = 5;
+      mockSyncReturnValue.stats = mockStats;
     });
 
     it("should handle processing state changes", () => {
-      // ✅ FIXED: Use vi.mocked instead of dynamic require
-
       const { rerender } = render(
         <SyncProvider>
           <TestConsumer />
@@ -569,17 +551,7 @@ describe("SyncProvider", () => {
       expect(screen.getByTestId("isProcessing")).toHaveTextContent("false");
 
       // Start processing
-      vi.mocked(useSync).mockReturnValue({
-        addToQueue: vi.fn(),
-        processQueue: mockProcessQueue,
-        retryFailed: vi.fn(),
-        clearCompleted: vi.fn(),
-        stats: mockStats,
-        isProcessing: true,
-        isReady: true,
-        refreshStats: vi.fn(),
-        getAllItems: vi.fn(),
-      });
+      mockSyncReturnValue.isProcessing = true;
 
       rerender(
         <SyncProvider>
@@ -588,6 +560,9 @@ describe("SyncProvider", () => {
       );
 
       expect(screen.getByTestId("isProcessing")).toHaveTextContent("true");
+
+      // Reset
+      mockSyncReturnValue.isProcessing = false;
     });
   });
 

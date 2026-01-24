@@ -66,6 +66,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useAuth } from "@/lib/hooks/useAuth";
+import { networkDetector } from "@/lib/offline/network-detector";
 import { supabase } from "@/lib/supabase/client";
 
 // Types
@@ -128,6 +130,8 @@ interface DeleteConfirmationData {
 }
 
 export default function ManajemenAssignmentPage() {
+  const { user } = useAuth();
+
   // State Management
   const [assignments, setAssignments] = useState<AssignmentDetail[]>([]);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
@@ -371,26 +375,18 @@ export default function ManajemenAssignmentPage() {
     if (!deleteConfirmation) return;
 
     try {
-      const {
-        data: { user },
-        error: authError,
-      } = await supabase.auth.getUser();
+      // ✅ Check if offline
+      if (!networkDetector.isOnline()) {
+        toast.error("Tidak dapat menghapus assignment saat offline");
+        return;
+      }
 
-      if (authError || !user) {
+      // ✅ Use user from useAuth hook (component level)
+      if (!user) {
         throw new Error("Unauthorized - silakan login terlebih dahulu");
       }
 
-      const { data: profile, error: profileError } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", user.id)
-        .single();
-
-      if (profileError) {
-        throw new Error(profileError.message);
-      }
-
-      if (profile?.role !== "admin") {
+      if (user.role !== "admin") {
         throw new Error("Forbidden - akses admin diperlukan");
       }
 

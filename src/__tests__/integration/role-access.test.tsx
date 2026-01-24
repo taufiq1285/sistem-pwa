@@ -9,7 +9,7 @@ import { MemoryRouter, Routes, Route } from "react-router-dom";
 import { ProtectedRoute } from "@/components/common/ProtectedRoute";
 import { RoleGuard } from "@/components/common/RoleGuard";
 import { ROUTES } from "@/config/routes.config";
-import type { User } from "@/types/auth.types";
+import type { AuthUser } from "@/types/auth.types";
 
 // Mock useAuth hook
 const mockUseAuth = vi.fn();
@@ -31,16 +31,23 @@ describe("Role-based Access Control - CORE LOGIC", () => {
   });
 
   describe("Mahasiswa Role Access", () => {
-    const mahasiswaUser: User = {
+    const mahasiswaUser: AuthUser = {
       id: "mhs-123",
       email: "mahasiswa@test.com",
       full_name: "Test Mahasiswa",
       role: "mahasiswa",
       is_active: true,
-      nim: "BD2321001",
-      program_studi: "Kebidanan",
-      angkatan: 2023,
-      semester: 1,
+      avatar_url: null,
+      last_seen_at: null,
+      metadata: null,
+      updated_at: null,
+      mahasiswa: {
+        id: "mhs-profile-123",
+        nim: "BD2321001",
+        program_studi: "Kebidanan",
+        angkatan: 2023,
+        semester: 1,
+      },
       created_at: new Date().toISOString(),
     };
 
@@ -169,16 +176,23 @@ describe("Role-based Access Control - CORE LOGIC", () => {
   });
 
   describe("Dosen Role Access", () => {
-    const dosenUser: User = {
+    const dosenUser: AuthUser = {
       id: "dosen-123",
       email: "dosen@test.com",
       full_name: "Test Dosen",
       role: "dosen",
       is_active: true,
-      nidn: "1234567890",
-      nip: "198001012020011001",
-      gelar_depan: "Dr.",
-      gelar_belakang: "M.Keb",
+      avatar_url: null,
+      last_seen_at: null,
+      metadata: null,
+      updated_at: null,
+      dosen: {
+        id: "dosen-profile-123",
+        nip: "198001012020011001",
+        nidn: "1234567890",
+        gelar_depan: "Dr.",
+        gelar_belakang: "M.Keb",
+      },
       created_at: new Date().toISOString(),
     };
 
@@ -276,12 +290,16 @@ describe("Role-based Access Control - CORE LOGIC", () => {
   });
 
   describe("Laboran Role Access", () => {
-    const laboranUser: User = {
+    const laboranUser: AuthUser = {
       id: "laboran-123",
       email: "laboran@test.com",
       full_name: "Test Laboran",
       role: "laboran",
       is_active: true,
+      avatar_url: null,
+      last_seen_at: null,
+      metadata: null,
+      updated_at: null,
       created_at: new Date().toISOString(),
     };
 
@@ -379,12 +397,16 @@ describe("Role-based Access Control - CORE LOGIC", () => {
   });
 
   describe("Admin Role Access", () => {
-    const adminUser: User = {
+    const adminUser: AuthUser = {
       id: "admin-123",
       email: "admin@test.com",
       full_name: "Test Admin",
       role: "admin",
       is_active: true,
+      avatar_url: null,
+      last_seen_at: null,
+      metadata: null,
+      updated_at: null,
       created_at: new Date().toISOString(),
     };
 
@@ -570,12 +592,16 @@ describe("Role-based Access Control - CORE LOGIC", () => {
 
   describe("Multi-Role Access", () => {
     it("should allow access when user role matches any allowed role", async () => {
-      const dosenUser: User = {
+      const dosenUser: AuthUser = {
         id: "dosen-123",
         email: "dosen@test.com",
         full_name: "Test Dosen",
         role: "dosen",
         is_active: true,
+        avatar_url: null,
+        last_seen_at: null,
+        metadata: null,
+        updated_at: null,
         created_at: new Date().toISOString(),
       };
 
@@ -611,12 +637,16 @@ describe("Role-based Access Control - CORE LOGIC", () => {
     });
 
     it("should deny access when user role does not match any allowed roles", async () => {
-      const mahasiswaUser: User = {
+      const mahasiswaUser: AuthUser = {
         id: "mhs-123",
         email: "mahasiswa@test.com",
         full_name: "Test Mahasiswa",
         role: "mahasiswa",
         is_active: true,
+        avatar_url: null,
+        last_seen_at: null,
+        metadata: null,
+        updated_at: null,
         created_at: new Date().toISOString(),
       };
 

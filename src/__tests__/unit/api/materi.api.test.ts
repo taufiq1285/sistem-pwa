@@ -31,6 +31,12 @@ vi.mock("../../../lib/supabase/storage", () => ({
   STORAGE_BUCKETS: { MATERI: "materi" },
 }));
 
+vi.mock("../../../lib/supabase/client", () => ({
+  supabase: {
+    rpc: vi.fn().mockResolvedValue({ error: null }),
+  },
+}));
+
 vi.mock("../../../lib/middleware", () => ({
   requirePermission: vi.fn((permission, fn) => fn),
   requirePermissionAndOwnership: vi.fn(
@@ -127,26 +133,17 @@ describe("Materi API", () => {
   });
 
   describe("downloadMateri", () => {
-    /**
-     * SKIPPED: Mock Timeout Issue (Low Priority)
-     *
-     * WHY SKIPPED:
-     * - downloadFileAsBlob mock causes timeout
-     * - Not critical for core functionality
-     *
-     * LOGIC STATUS: ✅ WORKING IN PRODUCTION
-     *
-     * COVERAGE: ✅ Other materi operations tested (7 tests passing)
-     *
-     * RECOMMENDATION: Low priority - file download is edge case
-     */
-    it.skip("should download file", async () => {
+    it("should download file", async () => {
       vi.mocked(getById).mockResolvedValue(mockMateri);
-      vi.mocked(downloadFileAsBlob).mockResolvedValue();
+      vi.mocked(downloadFileAsBlob).mockResolvedValue(undefined);
 
       await downloadMateri("materi-1");
 
-      expect(downloadFileAsBlob).toHaveBeenCalled();
+      expect(downloadFileAsBlob).toHaveBeenCalledWith(
+        "materi",
+        "file.pdf",
+        "Materi 1",
+      );
     });
   });
 

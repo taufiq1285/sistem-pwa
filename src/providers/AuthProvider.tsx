@@ -5,7 +5,7 @@
  * ✅ NEW: Added offline authentication support
  */
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { AuthContext } from "@/context/AuthContext";
 import logger from "@/lib/utils/logger";
 import type {
@@ -20,7 +20,6 @@ import {
   storeOfflineCredentials,
   storeOfflineSession,
   storeUserData,
-  clearAllOfflineAuthData,
   clearOfflineSession,
   restoreOfflineSession,
 } from "@/lib/offline/offline-auth";
@@ -107,6 +106,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
   );
   const [loading, setLoading] = useState(!initialCache);
   const [initialized, setInitialized] = useState(!!initialCache);
+
+  // Store timeout ID for cleanup
+  const logoutTimeoutRef = useRef<number | null>(null);
+
+  // Clear timeout on unmount to prevent "window is not defined" errors in tests
+  useEffect(() => {
+    return () => {
+      if (logoutTimeoutRef.current) {
+        clearTimeout(logoutTimeoutRef.current);
+        logoutTimeoutRef.current = null;
+      }
+    };
+  }, []);
 
   const updateAuthState = useCallback(
     (newUser: AuthUser | null, newSession: AuthSession | null) => {
@@ -287,6 +299,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const logout = useCallback(async () => {
     console.log("🔵 logout: START - INSTANT MODE ⚡");
 
+    // Clear any existing timeout
+    if (logoutTimeoutRef.current) {
+      clearTimeout(logoutTimeoutRef.current);
+      logoutTimeoutRef.current = null;
+    }
+
     // ✅ OPTIMIZATION: Clear state IMMEDIATELY for instant logout
     console.log("🔵 Clearing state & storage FIRST...");
     updateAuthState(null, null);
@@ -313,16 +331,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
 
         // 2. Clear offline session in background (with timeout)
+        // This only clears the current session, NOT credentials
         const offlineSessionPromise = clearOfflineSession().catch((error) => {
           console.warn("⚠️ Clear offline session error:", error);
         });
 
-        // 3. Comprehensive cache cleanup in background (with timeout)
+        // 3. Clear session storage only (keep localStorage & IndexedDB for offline functionality)
+        // Keep offline credentials and user data intact for next offline login
         const cacheCleanupPromise = cleanupAllCache({
-          clearIndexedDB: true,
-          clearLocalStorage: true,
-          clearSessionStorage: true,
-          clearServiceWorkerCache: true,
+          clearIndexedDB: false, // ✅ KEEP IndexedDB (offline credentials, user data, cache)
+          clearLocalStorage: false, // ✅ KEEP localStorage (theme, settings, etc.)
+          clearSessionStorage: true, // ✅ Clear sessionStorage (temp data only)
+          clearServiceWorkerCache: false, // ✅ KEEP Service Worker cache for offline PWA
         }).catch((error) => {
           console.warn("⚠️ Cache cleanup error:", error);
         });
@@ -334,6 +354,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         ]);
 
         console.log("✅ Background cleanup completed");
+        console.log("✅ Offline credentials preserved for next offline login");
       } catch (error) {
         console.warn("⚠️ Background cleanup failed:", error);
       }
@@ -341,10 +362,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     console.log("✅ logout: COMPLETE (instant!)");
 
-    // ✅ Redirect immediately without waiting
-    setTimeout(() => {
-      window.location.href = "/login";
-    }, 100);
+    // ✅ Redirect to landing page immediately without waiting
+    // Check if window is available (for test environments)
+    if (typeof window !== "undefined") {
+      logoutTimeoutRef.current = setTimeout(() => {
+        window.location.href = "/";
+      }, 100) as unknown as number;
+    }
   }, [updateAuthState]);
 
   const resetPassword = useCallback(async (email: string) => {

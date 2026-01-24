@@ -405,9 +405,20 @@ export async function addQuestionsFromBank(
   );
 
   return (newSoal || []).map((soal: any) => ({
-    ...soal,
-    tipe_soal: soal.tipe, // Map database 'tipe' to expected 'tipe_soal'
-  })) as any;
+    id: soal.id,
+    kuis_id: soal.kuis_id,
+    pertanyaan: soal.pertanyaan,
+    tipe_soal: soal.tipe as TipeSoal, // Map database 'tipe' to expected 'tipe_soal'
+    poin: soal.poin,
+    urutan: soal.urutan,
+    pilihan_jawaban: soal.pilihan_jawaban,
+    jawaban_benar: soal.jawaban_benar,
+    pembahasan: soal.pembahasan,
+    media_url: soal.media_url,
+    rubrik_penilaian: soal.rubrik_penilaian,
+    created_at: soal.created_at,
+    updated_at: soal.updated_at,
+  }));
 }
 
 /**
@@ -453,5 +464,11 @@ export async function copyQuizQuestionsToBank(
   if (!newBankQuestions) throw new Error("Failed to copy questions to bank");
 
   // Cast tipe_soal from string to TipeSoal type
-  return newBankQuestions as any;
+  return newBankQuestions.map((item: any) => ({
+    ...item,
+    tipe_soal: item.tipe_soal as TipeSoal,
+    opsi_jawaban: item.opsi_jawaban as unknown as OpsiJawaban[] | null,
+    is_public: item.is_public || false,
+    usage_count: item.usage_count || 0,
+  }));
 }

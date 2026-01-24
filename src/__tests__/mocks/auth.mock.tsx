@@ -3,7 +3,7 @@
  */
 
 import { vi } from "vitest";
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 import { TEST_UUIDS } from "../test-utils";
 
 export const createMockAuthContext = (overrides = {}) => ({

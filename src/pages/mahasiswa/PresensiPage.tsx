@@ -24,7 +24,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { supabase } from "@/lib/supabase/client";
+import { useAuth } from "@/lib/hooks/useAuth";
+import { networkDetector } from "@/lib/offline/network-detector";
 import {
   getMahasiswaKehadiran,
   type MahasiswaKehadiranRecord,
@@ -33,45 +34,45 @@ import {
 import { toast } from "sonner";
 
 export default function PresensiPage() {
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [records, setRecords] = useState<MahasiswaKehadiranRecord[]>([]);
 
   useEffect(() => {
-    loadPresensi();
-  }, []);
+    if (user?.id) {
+      loadPresensi();
+    }
+  }, [user?.id]);
 
   const loadPresensi = async () => {
     try {
       setLoading(true);
 
-      // Get current user
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) {
-        toast.error("User tidak terautentikasi");
-        return;
-      }
-
-      // Get mahasiswa profile
-      const { data: mahasiswaData, error: mahasiswaError } = await supabase
-        .from("mahasiswa")
-        .select("id")
-        .eq("user_id", user.id)
-        .single();
-
-      if (mahasiswaError) throw mahasiswaError;
-      if (!mahasiswaData) {
+      // ✅ Check if mahasiswa data exists
+      if (!user?.mahasiswa?.id) {
         toast.error("Profil mahasiswa tidak ditemukan");
         return;
       }
 
+      // ✅ Skip if offline - use cached data
+      if (!networkDetector.isOnline()) {
+        console.log("ℹ️ Offline mode - showing cached presensi data");
+        // Keep existing data or show empty state
+        return;
+      }
+
       // Load kehadiran records
-      const data = await getMahasiswaKehadiran(mahasiswaData.id);
+      const data = await getMahasiswaKehadiran(user.mahasiswa.id);
       setRecords(data);
     } catch (error) {
-      console.error("Error loading presensi:", error);
-      toast.error("Gagal memuat data presensi");
+      // Handle offline mode gracefully
+      if (!networkDetector.isOnline()) {
+        console.log("ℹ️ Offline mode - could not load presensi");
+        toast.info("Mode offline - menampilkan data tersimpan");
+      } else {
+        console.error("Error loading presensi:", error);
+        toast.error("Gagal memuat data presensi");
+      }
     } finally {
       setLoading(false);
     }
