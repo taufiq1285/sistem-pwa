@@ -214,11 +214,17 @@ export default defineConfig({
           if (id.includes("node_modules/@supabase")) {
             return "vendor-supabase";
           }
-          // Charts library (recharts + d3 dependencies)
+          // Charts library - keep together to avoid circular dependency issues
           if (
             id.includes("node_modules/recharts") ||
             id.includes("node_modules/d3-") ||
-            id.includes("node_modules/rrule")
+            id.includes("node_modules/rrule") ||
+            id.includes("node_modules/victory") ||
+            id.includes("node_modules/d3-array") ||
+            id.includes("node_modules/d3-scale") ||
+            id.includes("node_modules/d3-shape") ||
+            id.includes("node_modules/d3-time") ||
+            id.includes("node_modules/d3-time-format")
           ) {
             return "vendor-charts";
           }
