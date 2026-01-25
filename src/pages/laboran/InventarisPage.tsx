@@ -68,6 +68,7 @@ import {
   type CreateInventarisData,
 } from "@/lib/api/laboran.api";
 import type { EquipmentCondition } from "@/types/inventaris.types";
+import { cacheAPI, invalidateCache } from "@/lib/offline/api-cache";
 
 const KONDISI_OPTIONS: {
   value: EquipmentCondition;
@@ -111,17 +112,27 @@ export default function InventarisPage() {
   });
 
   useEffect(() => {
-    loadInventaris();
-    loadCategories();
+    loadInventaris(false);
+    loadCategories(false);
   }, [searchQuery, selectedKategori]);
 
-  const loadInventaris = async () => {
+  const loadInventaris = async (forceRefresh = false) => {
     try {
       setLoading(true);
-      const result = await getInventarisList({
-        search: searchQuery || undefined,
-        kategori: selectedKategori || undefined,
-      });
+      const cacheKey = `inventaris_list_${searchQuery || ""}_${selectedKategori || ""}`;
+      const result = await cacheAPI(
+        cacheKey,
+        () =>
+          getInventarisList({
+            search: searchQuery || undefined,
+            kategori: selectedKategori || undefined,
+          }),
+        {
+          ttl: 5 * 60 * 1000, // 5 minutes
+          forceRefresh,
+          staleWhileRevalidate: true,
+        },
+      );
       setInventaris(result.data);
       setTotalCount(result.count);
     } catch (error) {
@@ -132,9 +143,17 @@ export default function InventarisPage() {
     }
   };
 
-  const loadCategories = async () => {
+  const loadCategories = async (forceRefresh = false) => {
     try {
-      const cats = await getInventarisCategories();
+      const cats = await cacheAPI(
+        "inventaris_categories",
+        getInventarisCategories,
+        {
+          ttl: 20 * 60 * 1000, // 20 minutes - categories rarely change
+          forceRefresh,
+          staleWhileRevalidate: true,
+        },
+      );
       if (cats.length > 0) setCategories(cats);
     } catch (error) {
       console.error("Failed to load categories:", error);
@@ -191,7 +210,9 @@ export default function InventarisPage() {
         toast.success("Inventaris created successfully");
       }
       setIsFormOpen(false);
-      loadInventaris();
+      // Invalidate all inventaris caches
+      await invalidateCache("inventaris_list_");
+      await loadInventaris(true);
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Failed to save inventaris";
@@ -205,7 +226,9 @@ export default function InventarisPage() {
       await deleteInventaris(selectedItem.id);
       toast.success("Inventaris deleted successfully");
       setIsDeleteOpen(false);
-      loadInventaris();
+      // Invalidate all inventaris caches
+      await invalidateCache("inventaris_list_");
+      await loadInventaris(true);
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Failed to delete inventaris";
@@ -223,7 +246,9 @@ export default function InventarisPage() {
       );
       toast.success("Stock updated successfully");
       setIsStockOpen(false);
-      loadInventaris();
+      // Invalidate all inventaris caches
+      await invalidateCache("inventaris_list_");
+      await loadInventaris(true);
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Failed to update stock";

@@ -43,6 +43,7 @@ import {
   FlaskConical,
 } from "lucide-react";
 import { networkDetector } from "@/lib/offline/network-detector";
+import { cacheAPI, invalidateCache } from "@/lib/offline/api-cache";
 import {
   getLaboranStats,
   getPendingApprovals,
@@ -91,34 +92,48 @@ export function DashboardPage() {
     }
   }, [user?.id]);
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = async (forceRefresh = false) => {
     try {
       setLoading(true);
       setError(null);
 
+      // Use cacheAPI with stale-while-revalidate for offline support
       const [statsData, approvalsData, alertsData, scheduleData] =
-        await Promise.allSettled([
-          getLaboranStats(),
-          getPendingApprovals(10),
-          getInventoryAlerts(10),
-          getLabScheduleToday(10),
+        await Promise.all([
+          cacheAPI(`laboran_stats_${user?.id}`, () => getLaboranStats(), {
+            ttl: 10 * 60 * 1000, // 10 minutes
+            forceRefresh,
+            staleWhileRevalidate: true,
+          }),
+          cacheAPI(
+            `laboran_approvals_${user?.id}`,
+            () => getPendingApprovals(10),
+            {
+              ttl: 2 * 60 * 1000, // 2 minutes (approvals need fresh data)
+              forceRefresh,
+              staleWhileRevalidate: true,
+            },
+          ),
+          cacheAPI(`laboran_alerts_${user?.id}`, () => getInventoryAlerts(10), {
+            ttl: 5 * 60 * 1000, // 5 minutes
+            forceRefresh,
+            staleWhileRevalidate: true,
+          }),
+          cacheAPI(
+            `laboran_schedule_${user?.id}`,
+            () => getLabScheduleToday(10),
+            {
+              ttl: 5 * 60 * 1000, // 5 minutes
+              forceRefresh,
+              staleWhileRevalidate: true,
+            },
+          ),
         ]);
 
-      if (statsData.status === "fulfilled") {
-        setStats(statsData.value);
-      }
-
-      if (approvalsData.status === "fulfilled") {
-        setPendingApprovals(approvalsData.value);
-      }
-
-      if (alertsData.status === "fulfilled") {
-        setInventoryAlerts(alertsData.value);
-      }
-
-      if (scheduleData.status === "fulfilled") {
-        setLabSchedule(scheduleData.value);
-      }
+      setStats(statsData);
+      setPendingApprovals(approvalsData);
+      setInventoryAlerts(alertsData);
+      setLabSchedule(scheduleData);
     } catch (err) {
       // Handle offline mode gracefully
       if (!networkDetector.isOnline()) {
@@ -144,8 +159,10 @@ export function DashboardPage() {
 
       toast.success("Peminjaman telah disetujui");
 
-      // Refresh data
-      await fetchDashboardData();
+      // Invalidate cache and refresh data
+      await invalidateCache(`laboran_approvals_${user?.id}`);
+      await invalidateCache(`laboran_stats_${user?.id}`);
+      await fetchDashboardData(true);
     } catch (err) {
       console.error("Error approving peminjaman:", err);
       toast.error("Gagal menyetujui peminjaman");
@@ -183,7 +200,11 @@ export function DashboardPage() {
       setRejectDialogOpen(false);
       setSelectedPeminjaman(null);
       setRejectionReason("");
-      await fetchDashboardData();
+
+      // Invalidate cache and refresh data
+      await invalidateCache(`laboran_approvals_${user?.id}`);
+      await invalidateCache(`laboran_stats_${user?.id}`);
+      await fetchDashboardData(true);
     } catch (err) {
       console.error("Error rejecting peminjaman:", err);
       toast.error("Gagal menolak peminjaman");

@@ -27,6 +27,7 @@ import { getMateri, downloadMateri } from "@/lib/api/materi.api";
 import type { Materi } from "@/types/materi.types";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase/client";
+import { cacheAPI } from "@/lib/offline/api-cache";
 
 // ============================================================================
 // COMPONENT
@@ -78,41 +79,43 @@ export default function MahasiswaMateriPage() {
   // DATA LOADING
   // ============================================================================
 
-  async function loadData() {
+  async function loadData(forceRefresh = false) {
     if (!user?.mahasiswa?.id) return;
 
     try {
       setLoading(true);
 
-      // Get enrolled kelas IDs
-      const { data: enrollments, error: enrollmentError } = await supabase
-        .from("kelas_mahasiswa")
-        .select("kelas_id, mahasiswa_id, is_active")
-        .eq("mahasiswa_id", user.mahasiswa.id)
-        .eq("is_active", true);
+      // Use cacheAPI for materi with offline support
+      const enrolledMateri = await cacheAPI(
+        `mahasiswa_materi_${user?.mahasiswa?.id}`,
+        async () => {
+          // Get enrolled kelas IDs
+          const { data: enrollments, error: enrollmentError } = await supabase
+            .from("kelas_mahasiswa")
+            .select("kelas_id, mahasiswa_id, is_active")
+            .eq("mahasiswa_id", user.mahasiswa.id)
+            .eq("is_active", true);
 
-      console.log("=== DEBUG ENROLLMENTS ===");
-      console.log("Mahasiswa ID:", user.mahasiswa.id);
-      console.log("Enrollments raw:", enrollments);
-      console.log("Enrollment error:", enrollmentError);
-      console.log("Enrollments count:", enrollments?.length || 0);
+          if (enrollmentError) throw enrollmentError;
 
-      const kelasIds = enrollments?.map((e) => e.kelas_id) || [];
-      console.log("Kelas IDs:", kelasIds);
-      setEnrolledKelasIds(kelasIds);
+          const kelasIds = enrollments?.map((e) => e.kelas_id) || [];
+          setEnrolledKelasIds(kelasIds);
 
-      // Get all materi and filter by enrolled kelas
-      const allMateri = await getMateri({ is_active: true });
-      console.log("All materi:", allMateri.length);
-      console.log("Sample materi:", allMateri[0]);
+          // Get all materi and filter by enrolled kelas
+          const allMateri = await getMateri({ is_active: true });
 
-      // Filter materi by enrolled kelas
-      const enrolledMateri = allMateri.filter((m) =>
-        kelasIds.includes(m.kelas_id),
+          // Filter materi by enrolled kelas
+          return allMateri.filter((m) => kelasIds.includes(m.kelas_id));
+        },
+        {
+          ttl: 15 * 60 * 1000, // 15 minutes (materi changes less frequently)
+          forceRefresh,
+          staleWhileRevalidate: true,
+        },
       );
-      console.log("Enrolled materi:", enrolledMateri.length);
 
       setMateriList(enrolledMateri);
+      console.log("[Materi] Data loaded:", enrolledMateri.length, "materi");
     } catch (error) {
       console.error("Error loading materi:", error);
       toast.error("Gagal memuat materi");

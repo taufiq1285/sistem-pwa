@@ -5,7 +5,13 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/hooks/useAuth";
-import { supabase } from "@/lib/supabase/client";
+import { cacheAPI, invalidateCache } from "@/lib/offline/api-cache";
+import {
+  getDosenProfile,
+  updateDosenProfile,
+  updateUserProfile,
+  type DosenProfile,
+} from "@/lib/api/profile.api";
 import {
   Card,
   CardContent,
@@ -27,16 +33,6 @@ import {
 } from "lucide-react";
 import { PageHeader } from "@/components/common/PageHeader";
 
-interface DosenProfile {
-  id: string;
-  nip: string;
-  nidn?: string;
-  gelar_depan?: string;
-  gelar_belakang?: string;
-  fakultas?: string;
-  program_studi?: string;
-}
-
 interface UserProfile {
   full_name: string;
   email: string;
@@ -56,12 +52,14 @@ export default function ProfilePage() {
 
   const [dosenProfile, setDosenProfile] = useState<DosenProfile>({
     id: "",
-    nip: "",
+    user_id: "",
     nidn: "",
+    nama_dosen: "",
+    program_studi: "",
+    nip: "",
     gelar_depan: "",
     gelar_belakang: "",
     fakultas: "",
-    program_studi: "",
   });
 
   useEffect(() => {
@@ -70,47 +68,39 @@ export default function ProfilePage() {
     }
   }, [user]);
 
-  const fetchProfile = async () => {
+  const fetchProfile = async (forceRefresh = false) => {
     try {
       setLoading(true);
       setError(null);
 
       if (!user?.id) return;
 
-      // Get user data
-      const { data: userData, error: userError } = await supabase
-        .from("users")
-        .select("full_name, email")
-        .eq("id", user.id)
-        .single();
+      const profileData = await cacheAPI(
+        `dosen_profile_${user.id}`,
+        () => getDosenProfile(user.id),
+        {
+          ttl: 20 * 60 * 1000, // 20 minutes - profile data rarely changes
+          forceRefresh,
+          staleWhileRevalidate: true,
+        },
+      );
 
-      if (userError) throw userError;
-
-      // Get dosen data
-      const { data: dosenData, error: dosenError } = await supabase
-        .from("dosen")
-        .select("*")
-        .eq("user_id", user.id)
-        .single();
-
-      if (dosenError) throw dosenError;
-
-      if (userData) {
+      if (profileData) {
         setUserProfile({
-          full_name: userData.full_name || "",
-          email: userData.email || "",
+          full_name: profileData.users?.full_name || "",
+          email: profileData.users?.email || "",
         });
-      }
 
-      if (dosenData) {
         setDosenProfile({
-          id: dosenData.id,
-          nip: dosenData.nip || "",
-          nidn: dosenData.nidn || "",
-          gelar_depan: dosenData.gelar_depan || "",
-          gelar_belakang: dosenData.gelar_belakang || "",
-          fakultas: dosenData.fakultas || "",
-          program_studi: dosenData.program_studi || "",
+          id: profileData.id,
+          user_id: profileData.user_id,
+          nidn: profileData.nidn || "",
+          nama_dosen: profileData.nama_dosen,
+          program_studi: profileData.program_studi || "",
+          nip: profileData.nip || "",
+          gelar_depan: profileData.gelar_depan || "",
+          gelar_belakang: profileData.gelar_belakang || "",
+          fakultas: profileData.fakultas || "",
         });
       }
     } catch (err: any) {
@@ -129,34 +119,23 @@ export default function ProfilePage() {
 
       if (!user?.id) return;
 
-      // Update users table
-      const { error: userError } = await supabase
-        .from("users")
-        .update({
-          full_name: userProfile.full_name,
-        })
-        .eq("id", user.id);
+      // Update user profile
+      await updateUserProfile(user.id, userProfile);
 
-      if (userError) throw userError;
-
-      // Update dosen table
-      const { error: dosenError } = await supabase
-        .from("dosen")
-        .update({
-          nidn: dosenProfile.nidn,
-          gelar_depan: dosenProfile.gelar_depan,
-          gelar_belakang: dosenProfile.gelar_belakang,
-          fakultas: dosenProfile.fakultas,
-          program_studi: dosenProfile.program_studi,
-        })
-        .eq("user_id", user.id);
-
-      if (dosenError) throw dosenError;
+      // Update dosen profile
+      await updateDosenProfile(dosenProfile.id, {
+        nidn: dosenProfile.nidn,
+        gelar_depan: dosenProfile.gelar_depan,
+        gelar_belakang: dosenProfile.gelar_belakang,
+        fakultas: dosenProfile.fakultas,
+        program_studi: dosenProfile.program_studi,
+      });
 
       setSuccess("Profil berhasil diperbarui!");
 
-      // Refresh profile
-      await fetchProfile();
+      // Invalidate cache and reload
+      await invalidateCache(`dosen_profile_${user.id}`);
+      await fetchProfile(true);
     } catch (err: any) {
       console.error("Error saving profile:", err);
       setError(err.message || "Gagal menyimpan profil");
@@ -327,7 +306,11 @@ export default function ProfilePage() {
 
         {/* Action Buttons */}
         <div className="flex justify-end gap-3">
-          <Button variant="outline" onClick={fetchProfile} disabled={saving}>
+          <Button
+            variant="outline"
+            onClick={() => fetchProfile(false)}
+            disabled={saving}
+          >
             Batal
           </Button>
           <Button onClick={handleSave} disabled={saving}>

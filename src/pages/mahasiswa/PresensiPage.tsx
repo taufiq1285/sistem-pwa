@@ -26,6 +26,7 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { networkDetector } from "@/lib/offline/network-detector";
+import { cacheAPI } from "@/lib/offline/api-cache";
 import {
   getMahasiswaKehadiran,
   type MahasiswaKehadiranRecord,
@@ -44,7 +45,7 @@ export default function PresensiPage() {
     }
   }, [user?.id]);
 
-  const loadPresensi = async () => {
+  const loadPresensi = async (forceRefresh = false) => {
     try {
       setLoading(true);
 
@@ -54,16 +55,19 @@ export default function PresensiPage() {
         return;
       }
 
-      // ✅ Skip if offline - use cached data
-      if (!networkDetector.isOnline()) {
-        console.log("ℹ️ Offline mode - showing cached presensi data");
-        // Keep existing data or show empty state
-        return;
-      }
+      // Use cacheAPI with stale-while-revalidate for offline support
+      const data = await cacheAPI(
+        `mahasiswa_presensi_${user?.mahasiswa?.id}`,
+        () => getMahasiswaKehadiran(user.mahasiswa.id),
+        {
+          ttl: 10 * 60 * 1000, // 10 minutes
+          forceRefresh,
+          staleWhileRevalidate: true,
+        },
+      );
 
-      // Load kehadiran records
-      const data = await getMahasiswaKehadiran(user.mahasiswa.id);
       setRecords(data);
+      console.log("[Presensi] Data loaded:", data.length, "records");
     } catch (error) {
       // Handle offline mode gracefully
       if (!networkDetector.isOnline()) {

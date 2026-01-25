@@ -19,7 +19,14 @@
       "Bash(node patch-save-kehadiran-mk.cjs:*)",
       "Bash(node patch-nilai-mk.cjs:*)",
       "Bash(node:*)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(vercel:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run format:*)",
+      "Bash(npm run validate:*)",
+      "Bash(comm:*)",
+      "Bash(vite build:*)",
+      "Bash(echo:*)"
     ]
   }
 }

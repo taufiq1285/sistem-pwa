@@ -36,6 +36,7 @@ import { getKuis } from "@/lib/api/kuis.api";
 import type { Kuis, KuisFilters, UI_LABELS } from "@/types/kuis.types";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { cacheAPI, invalidateCache } from "@/lib/offline/api-cache";
 
 // ============================================================================
 // TYPES
@@ -89,7 +90,7 @@ export default function KuisListPage() {
   /**
    * Load all quizzes
    */
-  const loadQuizzes = async () => {
+  const loadQuizzes = async (forceRefresh = false) => {
     setIsLoading(true);
     setError(null);
 
@@ -101,8 +102,19 @@ export default function KuisListPage() {
         filters.dosen_id = user.dosen.id;
       }
 
-      const data = await getKuis(filters);
+      // Use cacheAPI with stale-while-revalidate for offline support
+      const data = await cacheAPI(
+        `dosen_kuis_${user?.dosen?.id || "all"}`,
+        () => getKuis(filters),
+        {
+          ttl: 5 * 60 * 1000, // 5 minutes
+          forceRefresh,
+          staleWhileRevalidate: true,
+        },
+      );
+
       setQuizzes(data);
+      console.log("[Dosen KuisList] Data loaded:", data.length, "quizzes");
     } catch (err: any) {
       setError(err.message || "Gagal memuat daftar tugas praktikum");
       toast.error("Gagal memuat daftar tugas praktikum", {
@@ -207,7 +219,7 @@ export default function KuisListPage() {
           <AlertDescription>{error}</AlertDescription>
         </Alert>
         <div className="mt-4">
-          <Button onClick={loadQuizzes}>Coba Lagi</Button>
+          <Button onClick={() => loadQuizzes(true)}>Coba Lagi</Button>
         </div>
       </div>
     );

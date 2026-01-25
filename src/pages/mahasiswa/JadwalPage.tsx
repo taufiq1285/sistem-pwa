@@ -29,8 +29,11 @@ import {
   type MyKelas,
   type JadwalMahasiswa,
 } from "@/lib/api/mahasiswa.api";
+import { useAuth } from "@/lib/hooks/useAuth";
+import { cacheAPI } from "@/lib/offline/api-cache";
 
 export default function JadwalPage() {
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [myKelas, setMyKelas] = useState<MyKelas[]>([]);
   const [allJadwal, setAllJadwal] = useState<JadwalMahasiswa[]>([]);
@@ -38,19 +41,32 @@ export default function JadwalPage() {
   const [selectedTab, setSelectedTab] = useState("upcoming");
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    if (user?.id) {
+      fetchData();
+    }
+  }, [user?.id]);
 
-  const fetchData = async () => {
+  const fetchData = async (forceRefresh = false) => {
     try {
       setLoading(true);
+
+      // Use cacheAPI with stale-while-revalidate for offline support
       const [kelasData, jadwalData] = await Promise.all([
-        getMyKelas(),
-        getMyJadwal(50), // Get more jadwal
+        cacheAPI(`mahasiswa_kelas_${user?.id}`, () => getMyKelas(), {
+          ttl: 10 * 60 * 1000, // 10 minutes
+          forceRefresh,
+          staleWhileRevalidate: true,
+        }),
+        cacheAPI(`mahasiswa_jadwal_full_${user?.id}`, () => getMyJadwal(50), {
+          ttl: 5 * 60 * 1000, // 5 minutes (schedule changes frequently)
+          forceRefresh,
+          staleWhileRevalidate: true,
+        }),
       ]);
 
       setMyKelas(kelasData);
       setAllJadwal(jadwalData);
+      console.log("[JadwalPage] Data loaded:", jadwalData.length, "jadwal");
     } catch (error) {
       console.error("Error fetching data:", error);
       toast.error("Gagal memuat data jadwal");

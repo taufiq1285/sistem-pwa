@@ -48,6 +48,7 @@ import { getMyKelas } from "@/lib/api/dosen.api";
 import type { Materi } from "@/types/materi.types";
 import type { Kelas } from "@/types/kelas.types";
 import { toast } from "sonner";
+import { cacheAPI, invalidateCache } from "@/lib/offline/api-cache";
 import { MAX_FILE_SIZE, formatFileSize } from "@/lib/supabase/storage";
 
 // ============================================================================
@@ -98,19 +99,37 @@ export default function DosenMateriPage() {
   // DATA LOADING
   // ============================================================================
 
-  async function loadData() {
+  async function loadData(forceRefresh = false) {
     if (!user?.dosen?.id) return;
 
     try {
       setLoading(true);
 
+      // Use cacheAPI with stale-while-revalidate for offline support
       const [materiData, kelasData] = await Promise.all([
-        getMateriByDosen(user.dosen.id),
-        getMyKelas(), // Use getMyKelas to get assigned classes from assignment system
+        cacheAPI(
+          `dosen_materi_${user?.dosen?.id}`,
+          () => getMateriByDosen(user.dosen.id),
+          {
+            ttl: 10 * 60 * 1000, // 10 minutes
+            forceRefresh,
+            staleWhileRevalidate: true,
+          },
+        ),
+        cacheAPI(`dosen_kelas_materi_${user?.dosen?.id}`, () => getMyKelas(), {
+          ttl: 15 * 60 * 1000, // 15 minutes (kelas jarang berubah)
+          forceRefresh,
+          staleWhileRevalidate: true,
+        }),
       ]);
 
       setMateriList(materiData);
       setKelasList(kelasData as unknown as Kelas[]);
+      console.log(
+        "[Dosen MateriPage] Data loaded:",
+        materiData.length,
+        "materi",
+      );
     } catch (error) {
       console.error("Error loading data:", error);
       toast.error("Gagal memuat data");

@@ -5,7 +5,12 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/hooks/useAuth";
-import { supabase } from "@/lib/supabase/client";
+import { cacheAPI, invalidateCache } from "@/lib/offline/api-cache";
+import {
+  getMahasiswaProfile,
+  updateMahasiswaProfile,
+  updateUserProfile,
+} from "@/lib/api/profile.api";
 import {
   Card,
   CardContent,
@@ -75,47 +80,37 @@ export default function ProfilePage() {
     }
   }, [user]);
 
-  const fetchProfile = async () => {
+  const fetchProfile = async (forceRefresh = false) => {
     try {
       setLoading(true);
       setError(null);
 
-      // Get user data
-      const { data: userData, error: userError } = await supabase
-        .from("users")
-        .select("full_name, email")
-        .eq("id", user?.id!)
-        .single();
+      const profileData = await cacheAPI(
+        `mahasiswa_profile_${user?.id}`,
+        () => getMahasiswaProfile(user!.id!),
+        {
+          ttl: 20 * 60 * 1000, // 20 minutes - profile data rarely changes
+          forceRefresh,
+          staleWhileRevalidate: true,
+        },
+      );
 
-      if (userError) throw userError;
-
-      // Get mahasiswa data
-      const { data: mahasiswaData, error: mahasiswaError } = await supabase
-        .from("mahasiswa")
-        .select("*")
-        .eq("user_id", user?.id!)
-        .single();
-
-      if (mahasiswaError) throw mahasiswaError;
-
-      if (userData) {
+      if (profileData) {
         setUserProfile({
-          full_name: userData?.full_name || "",
-          email: userData?.email || "",
+          full_name: profileData.users?.full_name || "",
+          email: profileData.users?.email || "",
           phone: "",
         });
-      }
 
-      if (mahasiswaData) {
         setMahasiswaProfile({
-          id: mahasiswaData?.id || "",
-          nim: mahasiswaData?.nim || "",
-          program_studi: mahasiswaData?.program_studi || "",
-          angkatan: mahasiswaData?.angkatan || new Date().getFullYear(),
-          semester: mahasiswaData?.semester || 1,
-          gender: (mahasiswaData?.gender as "L" | "P" | null) || null,
-          date_of_birth: mahasiswaData?.date_of_birth || "",
-          address: mahasiswaData?.address || "",
+          id: profileData.id || "",
+          nim: profileData.nim || "",
+          program_studi: profileData.program_studi || "",
+          angkatan: profileData.angkatan || new Date().getFullYear(),
+          semester: profileData.semester || 1,
+          gender: profileData.gender || null,
+          date_of_birth: profileData.date_of_birth || "",
+          address: profileData.address || "",
         });
       }
     } catch (err: any) {
@@ -132,32 +127,21 @@ export default function ProfilePage() {
       setError(null);
       setSuccess(null);
 
-      // Update users table
-      const { error: userError } = await supabase
-        .from("users")
-        .update({
-          full_name: userProfile.full_name,
-        })
-        .eq("id", user?.id!);
+      // Update user profile
+      await updateUserProfile(user!.id!, userProfile);
 
-      if (userError) throw userError;
-
-      // Update mahasiswa table
-      const { error: mahasiswaError } = await supabase
-        .from("mahasiswa")
-        .update({
-          gender: mahasiswaProfile.gender,
-          date_of_birth: mahasiswaProfile.date_of_birth,
-          address: mahasiswaProfile.address,
-        })
-        .eq("user_id", user?.id!);
-
-      if (mahasiswaError) throw mahasiswaError;
+      // Update mahasiswa profile
+      await updateMahasiswaProfile(mahasiswaProfile.id, {
+        gender: mahasiswaProfile.gender,
+        date_of_birth: mahasiswaProfile.date_of_birth,
+        address: mahasiswaProfile.address,
+      });
 
       setSuccess("Profil berhasil diperbarui!");
 
-      // Refresh profile
-      await fetchProfile();
+      // Invalidate cache and reload
+      await invalidateCache(`mahasiswa_profile_${user?.id}`);
+      await fetchProfile(true);
     } catch (err: any) {
       console.error("Error saving profile:", err);
       setError(err.message || "Gagal menyimpan profil");
@@ -379,7 +363,11 @@ export default function ProfilePage() {
 
         {/* Action Buttons */}
         <div className="flex justify-end gap-3">
-          <Button variant="outline" onClick={fetchProfile} disabled={saving}>
+          <Button
+            variant="outline"
+            onClick={() => fetchProfile(false)}
+            disabled={saving}
+          >
             Batal
           </Button>
           <Button onClick={handleSave} disabled={saving}>

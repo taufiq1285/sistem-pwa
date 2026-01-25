@@ -5,7 +5,13 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/hooks/useAuth";
-import { supabase } from "@/lib/supabase/client";
+import { cacheAPI, invalidateCache } from "@/lib/offline/api-cache";
+import {
+  getLaboranProfile,
+  updateLaboranProfile,
+  updateUserProfile,
+  type LaboranProfile,
+} from "@/lib/api/profile.api";
 import {
   Card,
   CardContent,
@@ -27,12 +33,6 @@ import {
 } from "lucide-react";
 import { PageHeader } from "@/components/common/PageHeader";
 
-interface LaboranProfile {
-  id: string;
-  nip: string;
-  shift?: string;
-}
-
 interface UserProfile {
   full_name: string;
   email: string;
@@ -52,7 +52,9 @@ export default function ProfilePage() {
 
   const [laboranProfile, setLaboranProfile] = useState<LaboranProfile>({
     id: "",
+    user_id: "",
     nip: "",
+    nama_laboran: "",
     shift: "",
   });
 
@@ -62,43 +64,35 @@ export default function ProfilePage() {
     }
   }, [user]);
 
-  const fetchProfile = async () => {
+  const fetchProfile = async (forceRefresh = false) => {
     try {
       setLoading(true);
       setError(null);
 
       if (!user?.id) return;
 
-      // Get user data
-      const { data: userData, error: userError } = await supabase
-        .from("users")
-        .select("full_name, email")
-        .eq("id", user.id)
-        .single();
+      const profileData = await cacheAPI(
+        `laboran_profile_${user.id}`,
+        () => getLaboranProfile(user.id),
+        {
+          ttl: 20 * 60 * 1000, // 20 minutes - profile data rarely changes
+          forceRefresh,
+          staleWhileRevalidate: true,
+        },
+      );
 
-      if (userError) throw userError;
-
-      // Get laboran data
-      const { data: laboranData, error: laboranError } = await supabase
-        .from("laboran")
-        .select("*")
-        .eq("user_id", user.id)
-        .single();
-
-      if (laboranError) throw laboranError;
-
-      if (userData) {
+      if (profileData) {
         setUserProfile({
-          full_name: userData.full_name || "",
-          email: userData.email || "",
+          full_name: profileData.users?.full_name || "",
+          email: profileData.users?.email || "",
         });
-      }
 
-      if (laboranData) {
         setLaboranProfile({
-          id: laboranData.id,
-          nip: laboranData.nip || "",
-          shift: laboranData.shift || "",
+          id: profileData.id,
+          user_id: profileData.user_id,
+          nip: profileData.nip || "",
+          nama_laboran: profileData.nama_laboran,
+          shift: profileData.shift || "",
         });
       }
     } catch (err: any) {
@@ -117,30 +111,19 @@ export default function ProfilePage() {
 
       if (!user?.id) return;
 
-      // Update users table
-      const { error: userError } = await supabase
-        .from("users")
-        .update({
-          full_name: userProfile.full_name,
-        })
-        .eq("id", user.id);
+      // Update user profile
+      await updateUserProfile(user.id, userProfile);
 
-      if (userError) throw userError;
-
-      // Update laboran table
-      const { error: laboranError } = await supabase
-        .from("laboran")
-        .update({
-          shift: laboranProfile.shift,
-        })
-        .eq("user_id", user.id);
-
-      if (laboranError) throw laboranError;
+      // Update laboran profile
+      await updateLaboranProfile(laboranProfile.id, {
+        shift: laboranProfile.shift,
+      });
 
       setSuccess("Profil berhasil diperbarui!");
 
-      // Refresh profile
-      await fetchProfile();
+      // Invalidate cache and reload
+      await invalidateCache(`laboran_profile_${user.id}`);
+      await fetchProfile(true);
     } catch (err: any) {
       console.error("Error saving profile:", err);
       setError(err.message || "Gagal menyimpan profil");
@@ -266,7 +249,11 @@ export default function ProfilePage() {
 
         {/* Action Buttons */}
         <div className="flex justify-end gap-3">
-          <Button variant="outline" onClick={fetchProfile} disabled={saving}>
+          <Button
+            variant="outline"
+            onClick={() => fetchProfile(false)}
+            disabled={saving}
+          >
             Batal
           </Button>
           <Button onClick={handleSave} disabled={saving}>

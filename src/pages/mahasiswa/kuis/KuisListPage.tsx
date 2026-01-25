@@ -44,6 +44,7 @@ import { useAuth } from "@/lib/hooks/useAuth";
 import { getUpcomingQuizzes } from "@/lib/api/kuis.api";
 import type { UpcomingQuiz } from "@/types/kuis.types";
 import { toast } from "sonner";
+import { cacheAPI } from "@/lib/offline/api-cache";
 
 // Utils
 import { cn } from "@/lib/utils";
@@ -96,7 +97,7 @@ export default function KuisListPage() {
     }
   }, [searchParams]);
 
-  const loadQuizzes = async () => {
+  const loadQuizzes = async (forceRefresh = false) => {
     if (!user?.mahasiswa?.id) {
       setError("Data mahasiswa tidak ditemukan");
       setIsLoading(false);
@@ -105,8 +106,18 @@ export default function KuisListPage() {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await getUpcomingQuizzes(user.mahasiswa.id);
+      // Use cacheAPI with stale-while-revalidate for offline support
+      const data = await cacheAPI(
+        `mahasiswa_kuis_${user?.mahasiswa?.id}`,
+        () => getUpcomingQuizzes(user.mahasiswa.id),
+        {
+          ttl: 5 * 60 * 1000, // 5 minutes (quiz status changes frequently)
+          forceRefresh,
+          staleWhileRevalidate: true,
+        },
+      );
       setQuizzes(data);
+      console.log("[KuisList] Data loaded:", data.length, "quizzes");
     } catch (err: any) {
       const errorMessage =
         err?.message || "Gagal memuat daftar tugas praktikum";
@@ -433,7 +444,7 @@ export default function KuisListPage() {
           <AlertDescription>{error}</AlertDescription>
         </Alert>
         <div className="mt-4">
-          <Button onClick={loadQuizzes}>Coba Lagi</Button>
+          <Button onClick={() => loadQuizzes(true)}>Coba Lagi</Button>
         </div>
       </div>
     );

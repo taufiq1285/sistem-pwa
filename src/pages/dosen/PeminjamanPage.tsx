@@ -73,6 +73,7 @@ import {
   returnBorrowingRequest,
   markBorrowingAsTaken,
 } from "@/lib/api/dosen.api";
+import { cacheAPI, invalidateCache } from "@/lib/offline/api-cache";
 
 // ============================================================================
 // TYPES & VALIDATION
@@ -228,14 +229,22 @@ export default function PeminjamanPage() {
 
   // Load data on mount
   useEffect(() => {
-    loadBorrowings();
-    loadEquipment();
+    loadBorrowings(false);
+    loadEquipment(false);
   }, []);
 
-  const loadBorrowings = async () => {
+  const loadBorrowings = async (forceRefresh = false) => {
     try {
       setLoadingHistory(true);
-      const data = await getMyBorrowing();
+      const data = await cacheAPI(
+        "dosen_my_borrowings",
+        () => getMyBorrowing(),
+        {
+          ttl: 3 * 60 * 1000, // 3 minutes - borrowing status changes frequently
+          forceRefresh,
+          staleWhileRevalidate: true,
+        },
+      );
       setBorrowings(data);
     } catch (error) {
       toast.error("Gagal memuat data peminjaman");
@@ -245,10 +254,18 @@ export default function PeminjamanPage() {
     }
   };
 
-  const loadEquipment = async () => {
+  const loadEquipment = async (forceRefresh = false) => {
     try {
       setLoadingEquipment(true);
-      const data = await getAvailableEquipment();
+      const data = await cacheAPI(
+        "dosen_available_equipment",
+        () => getAvailableEquipment(),
+        {
+          ttl: 5 * 60 * 1000, // 5 minutes - equipment availability changes
+          forceRefresh,
+          staleWhileRevalidate: true,
+        },
+      );
       setEquipment(data as AvailableEquipment[]);
     } catch (error) {
       toast.error("Gagal memuat daftar alat");
@@ -322,9 +339,11 @@ export default function PeminjamanPage() {
       form.reset();
       setSelectedEquipment(null);
 
-      // Reload both data
-      await loadBorrowings();
-      await loadEquipment();
+      // Invalidate cache and reload both data
+      await invalidateCache("dosen_my_borrowings");
+      await invalidateCache("dosen_available_equipment");
+      await loadBorrowings(true);
+      await loadEquipment(true);
     } catch (error) {
       console.error(error);
       toast.error("Gagal membuat pengajuan peminjaman");
@@ -342,7 +361,9 @@ export default function PeminjamanPage() {
         "Alat sudah diambil dan status berubah menjadi sedang dipinjam",
       );
       setTakenDialogOpen(false);
-      await loadBorrowings();
+      // Invalidate cache and reload
+      await invalidateCache("dosen_my_borrowings");
+      await loadBorrowings(true);
     } catch (error) {
       console.error(error);
       toast.error("Gagal menandai alat sebagai diambil");
@@ -365,8 +386,10 @@ export default function PeminjamanPage() {
       setReturnDialogOpen(false);
       returnForm.reset();
 
-      // Reload data
-      await loadBorrowings();
+      // Invalidate cache and reload data
+      await invalidateCache("dosen_my_borrowings");
+      await invalidateCache("dosen_available_equipment");
+      await loadBorrowings(true);
     } catch (error) {
       console.error(error);
       toast.error("Gagal mengembalikan alat");
@@ -450,9 +473,11 @@ export default function PeminjamanPage() {
       setSelectedEditEquipment(null);
       editForm.reset();
 
-      // Reload data
-      await loadBorrowings();
-      await loadEquipment();
+      // Invalidate cache and reload data
+      await invalidateCache("dosen_my_borrowings");
+      await invalidateCache("dosen_available_equipment");
+      await loadBorrowings(true);
+      await loadEquipment(true);
     } catch (error: any) {
       console.error(error);
       toast.error(error.message || "Gagal memperbarui peminjaman");
@@ -485,8 +510,11 @@ export default function PeminjamanPage() {
       setCancelingId(null);
       setCancelingData(null);
 
-      // Reload data
-      await loadBorrowings();
+      // Invalidate cache and reload data
+      await invalidateCache("dosen_my_borrowings");
+      await invalidateCache("dosen_available_equipment");
+      await loadBorrowings(true);
+      await loadEquipment(true);
     } catch (error: any) {
       console.error(error);
       toast.error(error.message || "Gagal membatalkan peminjaman");
