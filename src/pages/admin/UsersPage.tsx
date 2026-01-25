@@ -60,6 +60,7 @@ import {
   type UpdateUserData,
   type CreateUserData,
 } from "@/lib/api/users.api";
+import { cacheAPI, invalidateCache } from "@/lib/offline/api-cache";
 
 const ROLE_BADGE = {
   admin: "default" as const,
@@ -111,14 +112,29 @@ export default function UsersPage() {
     loadUsers();
   }, []);
 
-  const loadUsers = async () => {
+  const loadUsers = async (forceRefresh = false) => {
     try {
-      console.log("[loadUsers] START - fetching fresh data...");
+      console.log(
+        "[loadUsers] START - fetching data... (forceRefresh:",
+        forceRefresh,
+        ")",
+      );
       setLoading(true);
+
+      // Use cacheAPI with stale-while-revalidate pattern
       const [usersData, statsData] = await Promise.all([
-        getAllUsers(),
-        getUserStats(),
+        cacheAPI("all_users", getAllUsers, {
+          ttl: 10 * 60 * 1000, // 10 minutes cache
+          forceRefresh,
+          staleWhileRevalidate: true, // Show stale data immediately when offline
+        }),
+        cacheAPI("user_stats", getUserStats, {
+          ttl: 10 * 60 * 1000, // 10 minutes cache
+          forceRefresh,
+          staleWhileRevalidate: true,
+        }),
       ]);
+
       console.log("[loadUsers] Data fetched:", {
         userCount: usersData.length,
         stats: statsData,
@@ -139,7 +155,9 @@ export default function UsersPage() {
     try {
       await toggleUserStatus(userId, !currentStatus);
       toast.success("Status updated");
-      await loadUsers();
+      await invalidateCache("all_users");
+      await invalidateCache("user_stats");
+      await loadUsers(true);
     } catch (error) {
       toast.error("Gagal mengubah status");
     }
@@ -162,7 +180,9 @@ export default function UsersPage() {
       await updateUser(editingUser.id, editFormData);
       toast.success("User updated successfully");
       setIsEditDialogOpen(false);
-      await loadUsers();
+      await invalidateCache("all_users");
+      await invalidateCache("user_stats");
+      await loadUsers(true);
     } catch (error) {
       toast.error("Failed to update user");
       console.error(error);
@@ -197,7 +217,9 @@ export default function UsersPage() {
       await createUser(addFormData);
       toast.success("User created successfully");
       setIsAddDialogOpen(false);
-      await loadUsers();
+      await invalidateCache("all_users");
+      await invalidateCache("user_stats");
+      await loadUsers(true);
     } catch (error: any) {
       toast.error(
         "Failed to create user: " + (error.message || "Unknown error"),
@@ -227,9 +249,11 @@ export default function UsersPage() {
       setIsDeleteDialogOpen(false);
       setDeletingUser(null);
 
-      // Force reload from server
+      // Invalidate cache and reload
+      await invalidateCache("all_users");
+      await invalidateCache("user_stats");
       console.log("[confirmDelete] Reloading user list...");
-      await loadUsers();
+      await loadUsers(true);
       console.log("[confirmDelete] Reload complete!");
     } catch (error: any) {
       console.error("[confirmDelete] Delete failed:", error);
@@ -357,7 +381,7 @@ export default function UsersPage() {
           <p className="text-muted-foreground">Manage all system users</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={loadUsers}>
+          <Button variant="outline" onClick={() => loadUsers(true)}>
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>

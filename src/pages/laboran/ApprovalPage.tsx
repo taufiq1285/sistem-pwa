@@ -33,6 +33,7 @@ import {
   approvePeminjaman,
   rejectPeminjaman,
 } from "@/lib/api/laboran.api";
+import { cacheAPI, invalidateCache } from "@/lib/offline/api-cache";
 
 // ============================================================================
 // TYPES
@@ -68,13 +69,21 @@ export default function ApprovalPage() {
   );
 
   useEffect(() => {
-    loadRequests();
+    loadRequests(false);
   }, []);
 
-  const loadRequests = async () => {
+  const loadRequests = async (forceRefresh = false) => {
     try {
       setLoading(true);
-      const data = await getPendingApprovals(100);
+      const data = await cacheAPI(
+        "laboran_pending_approvals",
+        () => getPendingApprovals(100),
+        {
+          ttl: 2 * 60 * 1000, // 2 minutes - approvals need fresh data
+          forceRefresh,
+          staleWhileRevalidate: true,
+        },
+      );
       setRequests(data);
     } catch (error) {
       toast.error("Gagal memuat requests peminjaman");
@@ -90,6 +99,9 @@ export default function ApprovalPage() {
       await approvePeminjaman(requestId);
       toast.success("Peminjaman disetujui dan stok otomatis berkurang");
       setRequests(requests.filter((r) => r.id !== requestId));
+      // Invalidate cache and reload
+      await invalidateCache("laboran_pending_approvals");
+      await loadRequests(true);
     } catch (error) {
       console.error(error);
       toast.error("Gagal menyetujui peminjaman");
@@ -118,6 +130,9 @@ export default function ApprovalPage() {
       setRequests(requests.filter((r) => r.id !== selectedRequestId));
       setRejectDialogOpen(false);
       setRejectReason("");
+      // Invalidate cache and reload
+      await invalidateCache("laboran_pending_approvals");
+      await loadRequests(true);
     } catch (error) {
       console.error(error);
       toast.error("Gagal menolak peminjaman");

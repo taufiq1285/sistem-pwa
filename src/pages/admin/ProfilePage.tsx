@@ -5,7 +5,8 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/hooks/useAuth";
-import { supabase } from "@/lib/supabase/client";
+import { cacheAPI, invalidateCache } from "@/lib/offline/api-cache";
+import { getAdminProfile, updateAdminProfile } from "@/lib/api/profile.api";
 import {
   Card,
   CardContent,
@@ -52,25 +53,26 @@ export default function AdminProfilePage() {
     }
   }, [user]);
 
-  const fetchProfile = async () => {
+  const fetchProfile = async (forceRefresh = false) => {
     try {
       setLoading(true);
       setError(null);
 
-      // Get user data
-      const { data: userData, error: userError } = await supabase
-        .from("users")
-        .select("full_name, email, role")
-        .eq("id", user?.id!)
-        .single();
+      const profileData = await cacheAPI(
+        `admin_profile_${user?.id}`,
+        () => getAdminProfile(user!.id!),
+        {
+          ttl: 20 * 60 * 1000, // 20 minutes - profile data rarely changes
+          forceRefresh,
+          staleWhileRevalidate: true,
+        },
+      );
 
-      if (userError) throw userError;
-
-      if (userData) {
+      if (profileData) {
         setProfile({
-          full_name: userData.full_name || "",
-          email: userData.email || "",
-          role: userData.role || "admin",
+          full_name: profileData.full_name || "",
+          email: profileData.email || "",
+          role: profileData.role || "admin",
         });
       }
     } catch (err: any) {
@@ -87,20 +89,14 @@ export default function AdminProfilePage() {
       setError(null);
       setSuccess(null);
 
-      // Update users table
-      const { error: updateError } = await supabase
-        .from("users")
-        .update({
-          full_name: profile.full_name,
-        })
-        .eq("id", user?.id!);
-
-      if (updateError) throw updateError;
+      // Update admin profile
+      await updateAdminProfile(user!.id!, profile);
 
       setSuccess("Profil berhasil diperbarui!");
 
-      // Refresh profile
-      await fetchProfile();
+      // Invalidate cache and reload
+      await invalidateCache(`admin_profile_${user?.id}`);
+      await fetchProfile(true);
     } catch (err: any) {
       console.error("Error saving profile:", err);
       setError(err.message || "Gagal menyimpan profil");
@@ -201,7 +197,11 @@ export default function AdminProfilePage() {
 
         {/* Action Buttons */}
         <div className="flex justify-end gap-3">
-          <Button variant="outline" onClick={fetchProfile} disabled={saving}>
+          <Button
+            variant="outline"
+            onClick={() => fetchProfile(false)}
+            disabled={saving}
+          >
             Batal
           </Button>
           <Button onClick={handleSave} disabled={saving}>

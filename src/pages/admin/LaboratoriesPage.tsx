@@ -49,6 +49,7 @@ import {
   type UpdateLaboratoriumData,
   type CreateLaboratoriumData,
 } from "@/lib/api/laboran.api";
+import { cacheAPI, invalidateCache } from "@/lib/offline/api-cache";
 
 export default function LaboratoriesPage() {
   const [laboratories, setLaboratories] = useState<Laboratorium[]>([]);
@@ -76,15 +77,25 @@ export default function LaboratoriesPage() {
   });
 
   useEffect(() => {
-    loadLaboratories();
+    loadLaboratories(false);
   }, [searchQuery]);
 
-  const loadLaboratories = async () => {
+  const loadLaboratories = async (forceRefresh = false) => {
     try {
       setLoading(true);
-      const data = await getLaboratoriumList({
-        search: searchQuery || undefined,
-      });
+      const cacheKey = `admin_laboratories_${searchQuery || ""}`;
+      const data = await cacheAPI(
+        cacheKey,
+        () =>
+          getLaboratoriumList({
+            search: searchQuery || undefined,
+          }),
+        {
+          ttl: 10 * 60 * 1000, // 10 minutes - laboratories rarely change
+          forceRefresh,
+          staleWhileRevalidate: true,
+        },
+      );
       setLaboratories(data);
     } catch (error) {
       toast.error("Failed to load laboratories");
@@ -113,7 +124,9 @@ export default function LaboratoriesPage() {
       await updateLaboratorium(editingLab.id, editFormData);
       toast.success("Laboratory updated successfully");
       setIsEditDialogOpen(false);
-      await loadLaboratories();
+      // Invalidate cache and reload
+      await invalidateCache("admin_laboratories_");
+      await loadLaboratories(true);
     } catch (error) {
       toast.error("Failed to update laboratory");
       console.error(error);
@@ -142,7 +155,9 @@ export default function LaboratoriesPage() {
       await createLaboratorium(addFormData);
       toast.success("Laboratory created successfully");
       setIsAddDialogOpen(false);
-      await loadLaboratories();
+      // Invalidate cache and reload
+      await invalidateCache("admin_laboratories_");
+      await loadLaboratories(true);
     } catch (error: any) {
       toast.error(
         "Failed to create laboratory: " + (error.message || "Unknown error"),
@@ -165,7 +180,9 @@ export default function LaboratoriesPage() {
       );
       setIsDeleteDialogOpen(false);
       setDeletingLab(null);
-      await loadLaboratories();
+      // Invalidate cache and reload
+      await invalidateCache("admin_laboratories_");
+      await loadLaboratories(true);
     } catch (error: any) {
       toast.error(
         "Failed to delete laboratory: " + (error.message || "Unknown error"),

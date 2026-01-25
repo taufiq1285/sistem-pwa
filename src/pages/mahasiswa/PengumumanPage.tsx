@@ -5,6 +5,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/hooks/useAuth";
+import { cacheAPI } from "@/lib/offline/api-cache";
 import { getAllAnnouncements } from "@/lib/api/announcements.api";
 import type { Pengumuman } from "@/types/common.types";
 import {
@@ -30,12 +31,20 @@ export default function PengumumanPage() {
     loadAnnouncements();
   }, []);
 
-  const loadAnnouncements = async () => {
+  const loadAnnouncements = async (forceRefresh = false) => {
     try {
       setLoading(true);
       setError(null);
 
-      const data = await getAllAnnouncements();
+      const data = await cacheAPI(
+        "mahasiswa_announcements",
+        () => getAllAnnouncements(),
+        {
+          ttl: 10 * 60 * 1000, // 10 minutes - announcements change moderately
+          forceRefresh,
+          staleWhileRevalidate: true,
+        },
+      );
 
       // Filter announcements for mahasiswa role
       const now = new Date().toISOString();

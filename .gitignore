@@ -71,3 +71,4 @@ Unified/
 Update/
 vite-project@*/
 
+.env*.local

@@ -76,6 +76,7 @@ import {
   type KelasMahasiswa,
 } from "@/lib/api/kelas.api";
 import type { Kelas } from "@/types/kelas.types";
+import { cacheAPI, invalidateCache } from "@/lib/offline/api-cache";
 
 export default function KelasPage() {
   // Ref untuk prevent double load di strict mode
@@ -138,10 +139,18 @@ export default function KelasPage() {
     }
   };
 
-  const loadKelas = async () => {
+  const loadKelas = async (forceRefresh = false) => {
     try {
       const startTime = performance.now();
-      const data = await getKelas({ is_active: undefined }); // Load all kelas
+      const data = await cacheAPI(
+        "admin_all_kelas",
+        () => getKelas({ is_active: undefined }), // Load all kelas
+        {
+          ttl: 10 * 60 * 1000, // 10 minutes - kelas data changes slowly
+          forceRefresh,
+          staleWhileRevalidate: true,
+        },
+      );
       const endTime = performance.now();
       console.log(`⏱️ Load kelas took: ${(endTime - startTime).toFixed(2)}ms`);
       setKelasList(data);
@@ -203,7 +212,9 @@ export default function KelasPage() {
         toast.success("Kelas berhasil dibuat");
       }
       setShowFormDialog(false);
-      await loadKelas();
+      // Invalidate cache and reload
+      await invalidateCache("admin_all_kelas");
+      await loadKelas(true);
     } catch (error: any) {
       toast.error(error.message || "Gagal menyimpan kelas");
     } finally {
@@ -224,7 +235,9 @@ export default function KelasPage() {
       toast.success("Kelas berhasil dihapus");
       setIsDeleteDialogOpen(false);
       setDeletingKelas(null);
-      await loadKelas();
+      // Invalidate cache and reload
+      await invalidateCache("admin_all_kelas");
+      await loadKelas(true);
     } catch (error: any) {
       toast.error(error.message || "Gagal menghapus kelas");
     }
@@ -236,8 +249,20 @@ export default function KelasPage() {
     setIsProcessing(true);
     try {
       const [enrolled, all] = await Promise.all([
-        getEnrolledStudents(kelas.id),
-        getAllMahasiswa(),
+        cacheAPI(
+          `admin_kelas_enrolled_${kelas.id}`,
+          () => getEnrolledStudents(kelas.id),
+          {
+            ttl: 5 * 60 * 1000, // 5 minutes
+            forceRefresh: false,
+            staleWhileRevalidate: true,
+          },
+        ),
+        cacheAPI("admin_all_mahasiswa", () => getAllMahasiswa(), {
+          ttl: 10 * 60 * 1000, // 10 minutes - mahasiswa list changes slowly
+          forceRefresh: false,
+          staleWhileRevalidate: true,
+        }),
       ]);
       setEnrolledStudents(enrolled);
       setAllMahasiswa(all);
@@ -257,7 +282,15 @@ export default function KelasPage() {
           async () => {
             // Reload mahasiswa list saat ada mahasiswa baru
             try {
-              const updatedMahasiswa = await getAllMahasiswa();
+              const updatedMahasiswa = await cacheAPI(
+                "admin_all_mahasiswa",
+                () => getAllMahasiswa(),
+                {
+                  ttl: 10 * 60 * 1000,
+                  forceRefresh: true,
+                  staleWhileRevalidate: true,
+                },
+              );
               setAllMahasiswa(updatedMahasiswa);
               toast.success("Mahasiswa baru tersedia untuk dipilih");
             } catch (error) {
@@ -290,7 +323,17 @@ export default function KelasPage() {
       // Enroll existing mahasiswa
       await enrollStudent(selectedKelas.id, selectedMahasiswaId);
       toast.success("Mahasiswa berhasil ditambahkan");
-      const enrolled = await getEnrolledStudents(selectedKelas.id);
+      // Invalidate cache and reload
+      await invalidateCache(`admin_kelas_enrolled_${selectedKelas.id}`);
+      const enrolled = await cacheAPI(
+        `admin_kelas_enrolled_${selectedKelas.id}`,
+        () => getEnrolledStudents(selectedKelas.id),
+        {
+          ttl: 5 * 60 * 1000,
+          forceRefresh: true,
+          staleWhileRevalidate: true,
+        },
+      );
       setEnrolledStudents(enrolled);
       setShowAddStudentDialog(false);
       setSelectedMahasiswaId("");
@@ -309,7 +352,17 @@ export default function KelasPage() {
     try {
       await unenrollStudent(selectedKelas.id, mahasiswaId);
       toast.success("Mahasiswa berhasil dihapus");
-      const enrolled = await getEnrolledStudents(selectedKelas.id);
+      // Invalidate cache and reload
+      await invalidateCache(`admin_kelas_enrolled_${selectedKelas.id}`);
+      const enrolled = await cacheAPI(
+        `admin_kelas_enrolled_${selectedKelas.id}`,
+        () => getEnrolledStudents(selectedKelas.id),
+        {
+          ttl: 5 * 60 * 1000,
+          forceRefresh: true,
+          staleWhileRevalidate: true,
+        },
+      );
       setEnrolledStudents(enrolled);
     } catch (error: any) {
       toast.error(error.message || "Gagal menghapus mahasiswa");
@@ -328,7 +381,17 @@ export default function KelasPage() {
     try {
       await toggleStudentStatus(selectedKelas.id, mahasiswaId, !currentStatus);
       toast.success("Status berhasil diubah");
-      const enrolled = await getEnrolledStudents(selectedKelas.id);
+      // Invalidate cache and reload
+      await invalidateCache(`admin_kelas_enrolled_${selectedKelas.id}`);
+      const enrolled = await cacheAPI(
+        `admin_kelas_enrolled_${selectedKelas.id}`,
+        () => getEnrolledStudents(selectedKelas.id),
+        {
+          ttl: 5 * 60 * 1000,
+          forceRefresh: true,
+          staleWhileRevalidate: true,
+        },
+      );
       setEnrolledStudents(enrolled);
     } catch (error: any) {
       toast.error(error.message || "Gagal mengubah status");

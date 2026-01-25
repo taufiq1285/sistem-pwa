@@ -15,6 +15,7 @@ import { useAuth } from "@/lib/hooks/useAuth";
 import { toast } from "sonner";
 import { getMyKelas } from "@/lib/api/dosen.api";
 import { getMataKuliah } from "@/lib/api/mata-kuliah.api";
+import { cacheAPI } from "@/lib/offline/api-cache";
 import { supabase } from "@/lib/supabase/client";
 import {
   BookOpen,
@@ -201,12 +202,21 @@ export default function DosenKehadiranPage() {
   // HANDLERS - LOAD DATA
   // ============================================================================
 
-  const loadMataKuliah = async () => {
+  const loadMataKuliah = async (forceRefresh = false) => {
     try {
       setLoading(true);
 
-      // 🎯 Fetch mata kuliah directly from mata_kuliah table
-      const mataKuliahData = await getMataKuliah();
+      // Use cacheAPI with stale-while-revalidate for offline support
+      const mataKuliahData = await cacheAPI(
+        `dosen_mk_kehadiran_${user?.dosen?.id}`,
+        () => getMataKuliah(),
+        {
+          ttl: 20 * 60 * 1000, // 20 minutes (mata kuliah jarang berubah)
+          forceRefresh,
+          staleWhileRevalidate: true,
+        },
+      );
+
       console.log(
         "🔍 DEBUG KehadiranPage: Fetched mata kuliah =",
         mataKuliahData,
@@ -249,7 +259,7 @@ export default function DosenKehadiranPage() {
     }
   };
 
-  const loadKelas = async (mataKuliahId: string) => {
+  const loadKelas = async (mataKuliahId: string, forceRefresh = false) => {
     try {
       setLoading(true);
 
@@ -259,8 +269,16 @@ export default function DosenKehadiranPage() {
       );
       console.log("🔍 DEBUG KehadiranPage: mataKuliahList =", mataKuliahList);
 
-      // Get all assigned kelas and filter by mata kuliah
-      const allKelas = await getMyKelas();
+      // Use cacheAPI for offline support
+      const allKelas = await cacheAPI(
+        `dosen_kelas_kehadiran_${user?.dosen?.id}`,
+        () => getMyKelas(),
+        {
+          ttl: 15 * 60 * 1000, // 15 minutes
+          forceRefresh,
+          staleWhileRevalidate: true,
+        },
+      );
       console.log("🔍 DEBUG KehadiranPage: allKelas =", allKelas);
 
       // Mata kuliah selected (for attendance record only, not for filtering kelas)

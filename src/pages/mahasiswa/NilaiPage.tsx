@@ -77,6 +77,7 @@ import {
 } from "@/types/permintaan-perbaikan.types";
 import { toast } from "sonner";
 import { getGradeStatus } from "@/lib/validations/nilai.schema";
+import { cacheAPI } from "@/lib/offline/api-cache";
 
 // ============================================================================
 // TYPES
@@ -124,18 +125,36 @@ export default function MahasiswaNilaiPageEnhanced() {
     }
   }, [user?.mahasiswa?.id]);
 
-  const loadData = async () => {
+  const loadData = async (forceRefresh = false) => {
     try {
       setLoading(true);
       if (!user?.mahasiswa?.id) return;
 
+      // Use cacheAPI with stale-while-revalidate for offline support
       const [nilaiData, permintaanData] = await Promise.all([
-        getNilaiByMahasiswa(user.mahasiswa.id),
-        getPermintaanByMahasiswa(user.mahasiswa.id),
+        cacheAPI(
+          `mahasiswa_nilai_${user?.mahasiswa?.id}`,
+          () => getNilaiByMahasiswa(user.mahasiswa.id),
+          {
+            ttl: 15 * 60 * 1000, // 15 minutes (nilai jarang berubah)
+            forceRefresh,
+            staleWhileRevalidate: true,
+          },
+        ),
+        cacheAPI(
+          `mahasiswa_permintaan_${user?.mahasiswa?.id}`,
+          () => getPermintaanByMahasiswa(user.mahasiswa.id),
+          {
+            ttl: 5 * 60 * 1000, // 5 minutes
+            forceRefresh,
+            staleWhileRevalidate: true,
+          },
+        ),
       ]);
 
       setNilaiList(nilaiData);
       setPermintaanList(permintaanData);
+      console.log("[NilaiPage] Data loaded:", nilaiData.length, "nilai");
     } catch (error) {
       console.error("Error loading data:", error);
       toast.error("Gagal memuat data nilai");

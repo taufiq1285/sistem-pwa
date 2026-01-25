@@ -63,6 +63,7 @@ import {
   type ReturnedBorrowing,
 } from "@/lib/api/laboran.api";
 import { getRBACErrorMessage } from "@/lib/errors/permission.errors";
+import { cacheAPI, invalidateCache } from "@/lib/offline/api-cache";
 
 // ============================================================================
 // COMPONENT
@@ -95,13 +96,21 @@ export default function PeminjamanAktifPage() {
   });
 
   useEffect(() => {
-    loadActiveBorrowings();
+    loadActiveBorrowings(false);
   }, []);
 
-  const loadActiveBorrowings = async () => {
+  const loadActiveBorrowings = async (forceRefresh = false) => {
     try {
       setLoading(true);
-      const data = await getActiveBorrowings(100);
+      const data = await cacheAPI(
+        "laboran_active_borrowings",
+        () => getActiveBorrowings(100),
+        {
+          ttl: 3 * 60 * 1000, // 3 minutes - active borrowings change frequently
+          forceRefresh,
+          staleWhileRevalidate: true,
+        },
+      );
       setActiveBorrowings(data);
     } catch (error) {
       toast.error("Gagal memuat peminjaman aktif");
@@ -111,10 +120,18 @@ export default function PeminjamanAktifPage() {
     }
   };
 
-  const loadReturnedBorrowings = async () => {
+  const loadReturnedBorrowings = async (forceRefresh = false) => {
     try {
       setReturnedLoading(true);
-      const data = await getReturnedBorrowings(50);
+      const data = await cacheAPI(
+        "laboran_returned_borrowings",
+        () => getReturnedBorrowings(50),
+        {
+          ttl: 10 * 60 * 1000, // 10 minutes - history is more stable
+          forceRefresh,
+          staleWhileRevalidate: true,
+        },
+      );
       setReturnedBorrowings(data);
     } catch (error) {
       toast.error("Gagal memuat riwayat pengembalian");
@@ -153,10 +170,12 @@ export default function PeminjamanAktifPage() {
       setReturnDialog({ open: false, borrowing: null });
       setReturnForm({ kondisi: "baik", keterangan: "", denda: 0 });
 
-      // Reload data
-      loadActiveBorrowings();
+      // Invalidate cache and reload data
+      await invalidateCache("laboran_active_borrowings");
+      await invalidateCache("laboran_returned_borrowings");
+      await loadActiveBorrowings(true);
       if (returnedBorrowings.length > 0) {
-        loadReturnedBorrowings();
+        await loadReturnedBorrowings(true);
       }
     } catch (error) {
       console.error("Error marking borrowing as returned:", error);
@@ -288,7 +307,7 @@ export default function PeminjamanAktifPage() {
             className="gap-2"
             onClick={() => {
               if (returnedBorrowings.length === 0) {
-                loadReturnedBorrowings();
+                loadReturnedBorrowings(false);
               }
             }}
           >

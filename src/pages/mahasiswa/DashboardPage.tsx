@@ -11,7 +11,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert"; // ✅ NEW: Alert component
 import { networkDetector } from "@/lib/offline/network-detector";
-// ❌ REMOVED: EnrollKelasDialog import
+import { cacheAPI } from "@/lib/offline/api-cache";
 import {
   getMahasiswaStats,
   getMyKelas,
@@ -41,26 +41,39 @@ export function DashboardPage() {
     }
   }, [user?.id]);
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = async (forceRefresh = false) => {
     try {
       setLoading(true);
-      const [statsData, kelasData, jadwalData] = await Promise.allSettled([
-        getMahasiswaStats(),
-        getMyKelas(),
-        getMyJadwal(5),
+      console.log(
+        "[Mahasiswa Dashboard] Fetching data... (forceRefresh:",
+        forceRefresh,
+        ")",
+      );
+
+      // Use cacheAPI with stale-while-revalidate for offline support
+      const [statsData, kelasData, jadwalData] = await Promise.all([
+        cacheAPI(`mahasiswa_stats_${user?.id}`, () => getMahasiswaStats(), {
+          ttl: 10 * 60 * 1000, // 10 minutes
+          forceRefresh,
+          staleWhileRevalidate: true,
+        }),
+        cacheAPI(`mahasiswa_kelas_${user?.id}`, () => getMyKelas(), {
+          ttl: 10 * 60 * 1000, // 10 minutes
+          forceRefresh,
+          staleWhileRevalidate: true,
+        }),
+        cacheAPI(`mahasiswa_jadwal_${user?.id}`, () => getMyJadwal(5), {
+          ttl: 5 * 60 * 1000, // 5 minutes (schedule changes more frequently)
+          forceRefresh,
+          staleWhileRevalidate: true,
+        }),
       ]);
 
-      if (statsData.status === "fulfilled") {
-        setStats(statsData.value);
-      }
+      setStats(statsData);
+      setMyKelas(kelasData);
+      setMyJadwal(jadwalData);
 
-      if (kelasData.status === "fulfilled") {
-        setMyKelas(kelasData.value);
-      }
-
-      if (jadwalData.status === "fulfilled") {
-        setMyJadwal(jadwalData.value);
-      }
+      console.log("[Mahasiswa Dashboard] Data loaded successfully");
     } catch (error) {
       // Handle offline mode gracefully
       if (!networkDetector.isOnline()) {

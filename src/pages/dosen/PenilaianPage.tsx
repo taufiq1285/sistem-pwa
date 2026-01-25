@@ -85,6 +85,7 @@ import { getMataKuliah } from "@/lib/api/mata-kuliah.api";
 import type { NilaiWithMahasiswa, NilaiSummary } from "@/types/nilai.types";
 import type { Kelas, BobotNilai } from "@/types/kelas.types";
 import { toast } from "sonner";
+import { cacheAPI, invalidateCache } from "@/lib/offline/api-cache";
 import {
   calculateNilaiAkhir,
   getNilaiHuruf,
@@ -182,14 +183,22 @@ export default function DosenPenilaianPage() {
   /**
    * Load mata kuliah yang diajarkan oleh dosen
    */
-  const loadMataKuliahDiajarkan = async () => {
+  const loadMataKuliahDiajarkan = async (forceRefresh = false) => {
     try {
       setLoading(true);
       if (!user?.dosen?.id) return;
 
-      // 🎯 Fetch mata kuliah directly from mata_kuliah table
-      // Dosen bebas pilih mata kuliah apapun yang aktif
-      const mataKuliahData = await getMataKuliah();
+      // 🎯 Fetch mata kuliah with offline caching
+      const mataKuliahData = await cacheAPI(
+        `dosen_mata_kuliah_${user?.dosen?.id}`,
+        () => getMataKuliah(),
+        {
+          ttl: 20 * 60 * 1000, // 20 minutes (mata kuliah jarang berubah)
+          forceRefresh,
+          staleWhileRevalidate: true,
+        },
+      );
+
       const mataKuliahArray = mataKuliahData.map((mk: any) => ({
         id: mk.id,
         nama_mk: mk.nama_mk,
@@ -197,8 +206,7 @@ export default function DosenPenilaianPage() {
       }));
       setMataKuliahList(mataKuliahArray);
 
-      // DO NOT auto-select: Dosen must manually choose
-      // User should see welcome screen and choose manually
+      console.log("[Penilaian] Mata kuliah loaded:", mataKuliahArray.length);
     } catch (error) {
       console.error("Error loading mata kuliah:", error);
       toast.error("Gagal memuat data mata kuliah");
@@ -210,18 +218,24 @@ export default function DosenPenilaianPage() {
   /**
    * Load kelas untuk mata kuliah yang dipilih
    */
-  const loadKelas = async () => {
+  const loadKelas = async (forceRefresh = false) => {
     try {
       setLoading(true);
       if (!user?.dosen?.id || !selectedMataKuliah) return;
 
-      // 🎯 Load all kelas - dosen bebas pilih kelas manapun
-      // Kelas dan mata kuliah dipilih independently
-      const allKelas = await getMyKelas();
-      setKelasList(allKelas as unknown as Kelas[]);
+      // 🎯 Load all kelas with offline caching
+      const allKelas = await cacheAPI(
+        `dosen_kelas_penilaian_${user?.dosen?.id}`,
+        () => getMyKelas(),
+        {
+          ttl: 15 * 60 * 1000, // 15 minutes
+          forceRefresh,
+          staleWhileRevalidate: true,
+        },
+      );
 
-      // DO NOT auto-select: Dosen must manually choose kelas
-      // User should see selection options and choose manually
+      setKelasList(allKelas as unknown as Kelas[]);
+      console.log("[Penilaian] Kelas loaded:", allKelas.length);
     } catch (error) {
       console.error("Error loading kelas:", error);
       toast.error("Gagal memuat data kelas");
@@ -233,14 +247,30 @@ export default function DosenPenilaianPage() {
   /**
    * Load all kelas data in PARALLEL for better performance
    */
-  const loadAllKelasData = async () => {
+  const loadAllKelasData = async (forceRefresh = false) => {
     try {
       setLoading(true);
 
-      // Run all API calls in PARALLEL using Promise.all
+      // Run all API calls in PARALLEL using cacheAPI
       const [mahasiswaData, summaryData] = await Promise.all([
-        getMahasiswaForGrading(selectedKelas),
-        getNilaiSummary(selectedKelas),
+        cacheAPI(
+          `dosen_mahasiswa_${selectedKelas}`,
+          () => getMahasiswaForGrading(selectedKelas),
+          {
+            ttl: 5 * 60 * 1000, // 5 minutes (grading changes frequently)
+            forceRefresh,
+            staleWhileRevalidate: true,
+          },
+        ),
+        cacheAPI(
+          `dosen_nilai_summary_${selectedKelas}`,
+          () => getNilaiSummary(selectedKelas),
+          {
+            ttl: 5 * 60 * 1000, // 5 minutes
+            forceRefresh,
+            staleWhileRevalidate: true,
+          },
+        ),
       ]);
 
       // Update states
@@ -250,6 +280,12 @@ export default function DosenPenilaianPage() {
 
       // Load bobot nilai (synchronous)
       loadBobotNilai();
+
+      console.log(
+        "[Penilaian] Kelas data loaded:",
+        mahasiswaData.length,
+        "students",
+      );
     } catch (error) {
       console.error("Error loading kelas data:", error);
       toast.error("Gagal memuat data kelas");

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { supabase } from "@/lib/supabase/client";
 import { networkDetector } from "@/lib/offline/network-detector";
+import { cacheAPI } from "@/lib/offline/api-cache";
 import { RefreshCw } from "lucide-react";
 import {
   Card,
@@ -340,122 +341,127 @@ export function DashboardPage() {
   }, [user?.id]);
 
   // Fetch assignments yang diberikan admin kepada dosen ini
-  const fetchAssignments = async () => {
+  const fetchAssignments = async (forceRefresh = false) => {
     try {
       if (!user?.id) {
         setAssignments([]);
         return;
       }
 
-      // ✅ Skip if offline - use cached data or return empty
-      if (!networkDetector.isOnline()) {
-        console.log(
-          "ℹ️ Offline mode - skipping assignments fetch, using cached data",
-        );
-        // Keep existing data or set empty
-        return;
-      }
+      // Use cacheAPI for assignments with offline support
+      const assignmentsData = await cacheAPI(
+        `dosen_assignments_${user?.id}`,
+        async () => {
+          // Get assignments for this dosen (similar logic to admin page)
+          const { data: rawData, error } = await (supabase as any)
+            .from("jadwal_praktikum")
+            .select(
+              `
+              dosen_id,
+              mata_kuliah_id,
+              kelas_id,
+              mata_kuliah:mata_kuliah!inner(id, nama_mk, kode_mk),
+              kelas:kelas!inner(id, nama_kelas, kode_kelas, tahun_ajaran, semester_ajaran)
+            `,
+            )
+            .eq("dosen_id", user.id)
+            .eq("is_active", true);
 
-      // Get assignments for this dosen (similar logic to admin page)
-      const { data: rawData, error } = await (supabase as any)
-        .from("jadwal_praktikum")
-        .select(
-          `
-          dosen_id,
-          mata_kuliah_id,
-          kelas_id,
-          mata_kuliah:mata_kuliah!inner(id, nama_mk, kode_mk),
-          kelas:kelas!inner(id, nama_kelas, kode_kelas, tahun_ajaran, semester_ajaran)
-        `,
-        )
-        .eq("dosen_id", user.id)
-        .eq("is_active", true);
+          if (error) throw error;
+          if (!rawData || rawData.length === 0) {
+            return [];
+          }
 
-      if (error) throw error;
-      if (!rawData || rawData.length === 0) {
-        setAssignments([]);
-        return;
-      }
+          // Group by unique assignment (dosen + mata_kuliah + kelas)
+          const assignmentMap = new Map<string, any>();
 
-      // Group by unique assignment (dosen + mata_kuliah + kelas)
-      const assignmentMap = new Map<string, any>();
+          rawData.forEach((item: any) => {
+            const key = `${item.dosen_id}-${item.mata_kuliah_id}-${item.kelas_id}`;
 
-      rawData.forEach((item: any) => {
-        const key = `${item.dosen_id}-${item.mata_kuliah_id}-${item.kelas_id}`;
-
-        if (!assignmentMap.has(key)) {
-          assignmentMap.set(key, {
-            dosen_id: item.dosen_id,
-            mata_kuliah_id: item.mata_kuliah_id,
-            kelas_id: item.kelas_id,
-            total_jadwal: 0,
-            total_mahasiswa: 0,
-            tanggal_mulai: "",
-            tanggal_selesai: "",
-            mata_kuliah: item.mata_kuliah,
-            kelas: item.kelas,
-            jadwalDetail: [],
+            if (!assignmentMap.has(key)) {
+              assignmentMap.set(key, {
+                dosen_id: item.dosen_id,
+                mata_kuliah_id: item.mata_kuliah_id,
+                kelas_id: item.kelas_id,
+                total_jadwal: 0,
+                total_mahasiswa: 0,
+                tanggal_mulai: "",
+                tanggal_selesai: "",
+                mata_kuliah: item.mata_kuliah,
+                kelas: item.kelas,
+                jadwalDetail: [],
+              });
+            }
           });
-        }
-      });
 
-      // Get detailed schedules and mahasiswa count for each assignment
-      const assignmentsWithDetails = [];
+          // Get detailed schedules and mahasiswa count for each assignment
+          const assignmentsWithDetails = [];
 
-      for (const [key, assignment] of assignmentMap) {
-        // Get all jadwal for this assignment
-        const { data: jadwalData, error: jadwalError } = await (supabase as any)
-          .from("jadwal_praktikum")
-          .select(
-            `
-            id,
-            tanggal_praktikum,
-            hari,
-            jam_mulai,
-            jam_selesai,
-            topik,
-            status
-          `,
-          )
-          .eq("dosen_id", assignment.dosen_id)
-          .eq("mata_kuliah_id", assignment.mata_kuliah_id)
-          .eq("kelas_id", assignment.kelas_id)
-          .eq("is_active", true)
-          .order("tanggal_praktikum", { ascending: true });
+          for (const [key, assignment] of assignmentMap) {
+            // Get all jadwal for this assignment
+            const { data: jadwalData, error: jadwalError } = await (
+              supabase as any
+            )
+              .from("jadwal_praktikum")
+              .select(
+                `
+                id,
+                tanggal_praktikum,
+                hari,
+                jam_mulai,
+                jam_selesai,
+                topik,
+                status
+              `,
+              )
+              .eq("dosen_id", assignment.dosen_id)
+              .eq("mata_kuliah_id", assignment.mata_kuliah_id)
+              .eq("kelas_id", assignment.kelas_id)
+              .eq("is_active", true)
+              .order("tanggal_praktikum", { ascending: true });
 
-        // Get mahasiswa count for this kelas
-        const mahasiswaResult: any = await (supabase as any)
-          .from("mahasiswa")
-          .select("*", { count: "exact", head: true })
-          .eq("kelas_id", assignment.kelas_id)
-          .eq("is_active", true);
+            // Get mahasiswa count for this kelas
+            const mahasiswaResult: any = await (supabase as any)
+              .from("mahasiswa")
+              .select("*", { count: "exact", head: true })
+              .eq("kelas_id", assignment.kelas_id)
+              .eq("is_active", true);
 
-        const { count: mahasiswaCount } = mahasiswaResult;
+            const { count: mahasiswaCount } = mahasiswaResult;
 
-        if (jadwalError) {
-          console.warn(
-            "Error fetching jadwal details for assignment:",
-            key,
-            jadwalError,
-          );
-          continue;
-        }
+            if (jadwalError) {
+              console.warn(
+                "Error fetching jadwal details for assignment:",
+                key,
+                jadwalError,
+              );
+              continue;
+            }
 
-        const jadwalDetail = jadwalData || [];
-        const dates = (jadwalDetail as any[])
-          .map((j) => j.tanggal_praktikum)
-          .filter(Boolean);
+            const jadwalDetail = jadwalData || [];
+            const dates = (jadwalDetail as any[])
+              .map((j) => j.tanggal_praktikum)
+              .filter(Boolean);
 
-        assignmentsWithDetails.push({
-          ...assignment,
-          total_jadwal: jadwalDetail.length,
-          total_mahasiswa: mahasiswaCount || 0,
-          tanggal_mulai: dates.length > 0 ? dates[0] : "",
-          tanggal_selesai: dates.length > 0 ? dates[dates.length - 1] : "",
-        });
-      }
+            assignmentsWithDetails.push({
+              ...assignment,
+              total_jadwal: jadwalDetail.length,
+              total_mahasiswa: mahasiswaCount || 0,
+              tanggal_mulai: dates.length > 0 ? dates[0] : "",
+              tanggal_selesai: dates.length > 0 ? dates[dates.length - 1] : "",
+            });
+          }
 
-      setAssignments(assignmentsWithDetails);
+          return assignmentsWithDetails;
+        },
+        {
+          ttl: 10 * 60 * 1000, // 10 minutes
+          forceRefresh,
+          staleWhileRevalidate: true,
+        },
+      );
+
+      setAssignments(assignmentsData);
     } catch (error: any) {
       // Silently fail in offline mode
       if (!networkDetector.isOnline()) {
@@ -467,51 +473,57 @@ export function DashboardPage() {
     }
   };
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = async (forceRefresh = false) => {
     try {
       console.log("🔄 fetchDashboardData called...");
       setLoading(true);
       setError(null);
 
       // Fetch assignments juga
-      await fetchAssignments();
+      await fetchAssignments(forceRefresh);
 
-      console.log("📞 Calling getUpcomingPracticum...");
+      console.log("📞 Calling dashboard APIs with caching...");
+      // Use cacheAPI with stale-while-revalidate for offline support
       const [statsData, kelasData, practicumData, gradingData, kuisData] =
-        await Promise.allSettled([
-          getDosenStats(),
-          getMyKelas(5),
-          getUpcomingPracticum(5),
-          getPendingGrading(5),
-          getActiveKuis(5),
+        await Promise.all([
+          cacheAPI(`dosen_stats_${user?.id}`, () => getDosenStats(), {
+            ttl: 10 * 60 * 1000, // 10 minutes
+            forceRefresh,
+            staleWhileRevalidate: true,
+          }),
+          cacheAPI(`dosen_kelas_${user?.id}`, () => getMyKelas(5), {
+            ttl: 10 * 60 * 1000,
+            forceRefresh,
+            staleWhileRevalidate: true,
+          }),
+          cacheAPI(
+            `dosen_practicum_${user?.id}`,
+            () => getUpcomingPracticum(5),
+            {
+              ttl: 5 * 60 * 1000, // 5 minutes (schedule changes frequently)
+              forceRefresh,
+              staleWhileRevalidate: true,
+            },
+          ),
+          cacheAPI(`dosen_grading_${user?.id}`, () => getPendingGrading(5), {
+            ttl: 5 * 60 * 1000,
+            forceRefresh,
+            staleWhileRevalidate: true,
+          }),
+          cacheAPI(`dosen_kuis_${user?.id}`, () => getActiveKuis(5), {
+            ttl: 5 * 60 * 1000,
+            forceRefresh,
+            staleWhileRevalidate: true,
+          }),
         ]);
 
-      if (statsData.status === "fulfilled") {
-        setStats(statsData.value);
-      }
+      setStats(statsData);
+      setMyKelas(kelasData || []);
+      setUpcomingPracticum(practicumData || []);
+      setPendingGrading(gradingData || []);
+      setActiveKuis(kuisData || []);
 
-      if (kelasData.status === "fulfilled") {
-        setMyKelas(kelasData.value || []);
-      }
-
-      if (practicumData.status === "fulfilled") {
-        console.log(
-          "✅ getUpcomingPracticum success:",
-          practicumData.value?.length,
-          "items",
-        );
-        setUpcomingPracticum(practicumData.value || []);
-      } else {
-        console.log("❌ getUpcomingPracticum failed:", practicumData.reason);
-      }
-
-      if (gradingData.status === "fulfilled") {
-        setPendingGrading(gradingData.value || []);
-      }
-
-      if (kuisData.status === "fulfilled") {
-        setActiveKuis(kuisData.value || []);
-      }
+      console.log("✅ Dashboard data loaded successfully");
     } catch (err) {
       // Handle offline mode gracefully
       if (!networkDetector.isOnline()) {

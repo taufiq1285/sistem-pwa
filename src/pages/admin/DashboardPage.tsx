@@ -75,6 +75,7 @@ import {
   type RecentAnnouncement,
 } from "@/lib/api/admin.api";
 import { logout } from "@/lib/supabase/auth";
+import { cacheAPI } from "@/lib/offline/api-cache";
 
 // ============================================================================
 // CONSTANTS
@@ -115,68 +116,8 @@ export function DashboardPage() {
   }, []);
 
   // Fetch all data
-  useEffect(() => {
-    if (user?.id) {
-      async function fetchData() {
-        try {
-          setLoading(true);
-          setError(null);
-
-          const [
-            statsData,
-            growthData,
-            distributionData,
-            usageData,
-            usersData,
-            announcementsData,
-          ] = await Promise.allSettled([
-            getDashboardStats(),
-            getUserGrowth(),
-            getUserDistribution(),
-            getLabUsage(),
-            getRecentUsers(5),
-            getRecentAnnouncements(5),
-          ]);
-
-          if (statsData.status === "fulfilled") {
-            setStats(statsData.value);
-          }
-
-          if (growthData.status === "fulfilled") {
-            setUserGrowth(growthData.value);
-          }
-
-          if (distributionData.status === "fulfilled") {
-            setUserDistribution(distributionData.value);
-          }
-
-          if (usageData.status === "fulfilled") {
-            setLabUsage(usageData.value);
-          }
-
-          if (usersData.status === "fulfilled") {
-            setRecentUsers(usersData.value);
-          }
-
-          if (announcementsData.status === "fulfilled") {
-            setRecentAnnouncements(announcementsData.value);
-          }
-        } catch (err) {
-          // Handle offline mode gracefully
-          if (!networkDetector.isOnline()) {
-            console.log("ℹ️ Offline mode - showing cached dashboard data");
-            setError(null); // Don't show error in offline mode
-          } else {
-            console.error("Error fetching dashboard data:", err);
-            setError("Failed to load dashboard data");
-          }
-        } finally {
-          setLoading(false);
-        }
-      }
-
-      fetchData();
-    } else {
+  const fetchDashboardData = async (forceRefresh = false) => {
+    if (!user?.id) {
       // Clear data if no user
       setStats(null);
       setUserGrowth([]);
@@ -184,15 +125,11 @@ export function DashboardPage() {
       setLabUsage([]);
       setRecentUsers([]);
       setRecentAnnouncements([]);
+      return;
     }
-  }, [user?.id]);
-
-  // Refresh data handler
-  const handleRefresh = async () => {
-    if (refreshing) return;
 
     try {
-      setRefreshing(true);
+      setLoading(true);
       setError(null);
 
       const [
@@ -203,12 +140,40 @@ export function DashboardPage() {
         usersData,
         announcementsData,
       ] = await Promise.allSettled([
-        getDashboardStats(),
-        getUserGrowth(),
-        getUserDistribution(),
-        getLabUsage(),
-        getRecentUsers(5),
-        getRecentAnnouncements(5),
+        cacheAPI("admin_dashboard_stats", () => getDashboardStats(), {
+          ttl: 5 * 60 * 1000, // 5 minutes
+          forceRefresh,
+          staleWhileRevalidate: true,
+        }),
+        cacheAPI("admin_user_growth", () => getUserGrowth(), {
+          ttl: 10 * 60 * 1000, // 10 minutes - growth data changes slowly
+          forceRefresh,
+          staleWhileRevalidate: true,
+        }),
+        cacheAPI("admin_user_distribution", () => getUserDistribution(), {
+          ttl: 10 * 60 * 1000, // 10 minutes - distribution changes slowly
+          forceRefresh,
+          staleWhileRevalidate: true,
+        }),
+        cacheAPI("admin_lab_usage", () => getLabUsage(), {
+          ttl: 10 * 60 * 1000, // 10 minutes - usage changes slowly
+          forceRefresh,
+          staleWhileRevalidate: true,
+        }),
+        cacheAPI("admin_recent_users", () => getRecentUsers(5), {
+          ttl: 5 * 60 * 1000, // 5 minutes
+          forceRefresh,
+          staleWhileRevalidate: true,
+        }),
+        cacheAPI(
+          "admin_recent_announcements",
+          () => getRecentAnnouncements(5),
+          {
+            ttl: 5 * 60 * 1000, // 5 minutes
+            forceRefresh,
+            staleWhileRevalidate: true,
+          },
+        ),
       ]);
 
       if (statsData.status === "fulfilled") {
@@ -234,6 +199,33 @@ export function DashboardPage() {
       if (announcementsData.status === "fulfilled") {
         setRecentAnnouncements(announcementsData.value);
       }
+    } catch (err) {
+      // Handle offline mode gracefully
+      if (!networkDetector.isOnline()) {
+        console.log("ℹ️ Offline mode - showing cached dashboard data");
+        setError(null); // Don't show error in offline mode
+      } else {
+        console.error("Error fetching dashboard data:", err);
+        setError("Failed to load dashboard data");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDashboardData(false);
+  }, [user?.id]);
+
+  // Refresh data handler
+  const handleRefresh = async () => {
+    if (refreshing) return;
+
+    try {
+      setRefreshing(true);
+      setError(null);
+
+      await fetchDashboardData(true);
     } catch (err) {
       // Handle offline mode gracefully
       if (!networkDetector.isOnline()) {

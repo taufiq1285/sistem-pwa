@@ -38,6 +38,7 @@ import {
 import type { Pengumuman, CreatePengumumanData } from "@/types/common.types";
 import { formatDate } from "@/lib/utils/format";
 import { useAuth } from "@/lib/hooks/useAuth";
+import { cacheAPI, invalidateCache } from "@/lib/offline/api-cache";
 
 export default function AnnouncementsPage() {
   const { user } = useAuth();
@@ -69,7 +70,7 @@ export default function AnnouncementsPage() {
     useState<Pengumuman | null>(null);
 
   useEffect(() => {
-    loadAnnouncements();
+    loadAnnouncements(false);
   }, []);
 
   useEffect(() => {
@@ -78,12 +79,20 @@ export default function AnnouncementsPage() {
     }
   }, [user]);
 
-  const loadAnnouncements = async () => {
+  const loadAnnouncements = async (forceRefresh = false) => {
     try {
       setLoading(true);
       const [announcementsData, statsData] = await Promise.all([
-        getAllAnnouncements(),
-        getAnnouncementStats(),
+        cacheAPI("admin_announcements", () => getAllAnnouncements(), {
+          ttl: 5 * 60 * 1000, // 5 minutes - announcements change frequently
+          forceRefresh,
+          staleWhileRevalidate: true,
+        }),
+        cacheAPI("admin_announcement_stats", () => getAnnouncementStats(), {
+          ttl: 5 * 60 * 1000, // 5 minutes
+          forceRefresh,
+          staleWhileRevalidate: true,
+        }),
       ]);
       setAnnouncements(announcementsData);
       setStats(statsData);
@@ -108,7 +117,10 @@ export default function AnnouncementsPage() {
       toast.success("Pengumuman berhasil dihapus");
       setIsDeleteDialogOpen(false);
       setDeletingAnnouncement(null);
-      await loadAnnouncements();
+      // Invalidate cache and reload
+      await invalidateCache("admin_announcements");
+      await invalidateCache("admin_announcement_stats");
+      await loadAnnouncements(true);
     } catch (error) {
       toast.error("Gagal menghapus pengumuman");
       console.error(error);
@@ -147,7 +159,10 @@ export default function AnnouncementsPage() {
       });
       toast.success("Announcement created successfully");
       setIsAddDialogOpen(false);
-      await loadAnnouncements();
+      // Invalidate cache and reload
+      await invalidateCache("admin_announcements");
+      await invalidateCache("admin_announcement_stats");
+      await loadAnnouncements(true);
     } catch (error: any) {
       toast.error(
         "Failed to create announcement: " + (error.message || "Unknown error"),
@@ -173,7 +188,7 @@ export default function AnnouncementsPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={loadAnnouncements}>
+          <Button variant="outline" onClick={() => loadAnnouncements(true)}>
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
