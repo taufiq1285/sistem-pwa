@@ -34,6 +34,7 @@ interface AuthProviderProps {
 // ============================================================================
 
 const AUTH_CACHE_KEY = "auth_cache";
+const LOGOUT_FLAG_KEY = "auth_logout_flag";
 const CACHE_VERSION = "v1";
 
 interface AuthCache {
@@ -92,6 +93,34 @@ function clearCachedAuth() {
   }
 }
 
+function setLogoutFlag() {
+  try {
+    localStorage.setItem(LOGOUT_FLAG_KEY, Date.now().toString());
+  } catch (error) {
+    console.warn("Failed to set logout flag:", error);
+  }
+}
+
+function getLogoutFlag(): number | null {
+  try {
+    const flag = localStorage.getItem(LOGOUT_FLAG_KEY);
+    if (!flag) return null;
+    const timestamp = parseInt(flag, 10);
+
+    // Clear flag if older than 5 minutes
+    const FIVE_MINUTES = 5 * 60 * 1000;
+    if (Date.now() - timestamp > FIVE_MINUTES) {
+      localStorage.removeItem(LOGOUT_FLAG_KEY);
+      return null;
+    }
+
+    return timestamp;
+  } catch (error) {
+    console.warn("Failed to get logout flag:", error);
+    return null;
+  }
+}
+
 // ============================================================================
 // PROVIDER
 // ============================================================================
@@ -142,21 +171,33 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
 
         const currentSession = await authApi.getSession();
+        const logoutFlag = getLogoutFlag();
 
         if (mounted) {
           if (currentSession) {
+            // Clear logout flag if user has active session
+            if (logoutFlag) {
+              localStorage.removeItem(LOGOUT_FLAG_KEY);
+            }
+
             // Store online session to offline storage
             await storeOfflineSession(currentSession.user, currentSession);
             await storeUserData(currentSession.user);
             updateAuthState(currentSession.user, currentSession);
           } else {
-            // Try to restore from offline session
-            const offlineSession = await restoreOfflineSession();
-            if (offlineSession) {
-              logger.auth("Restored session from offline storage");
-              updateAuthState(offlineSession.user, offlineSession.session);
-            } else {
+            // Check if user just logged out (don't auto-login in this case)
+            if (logoutFlag) {
+              logger.auth("User just logged out - skipping offline session restore");
               updateAuthState(null, null);
+            } else {
+              // Try to restore from offline session
+              const offlineSession = await restoreOfflineSession();
+              if (offlineSession) {
+                logger.auth("Restored session from offline storage");
+                updateAuthState(offlineSession.user, offlineSession.session);
+              } else {
+                updateAuthState(null, null);
+              }
             }
           }
           setInitialized(true);
@@ -309,6 +350,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     console.log("🔵 Clearing state & storage FIRST...");
     updateAuthState(null, null);
     clearCachedAuth();
+    setLogoutFlag(); // ✅ Set flag to prevent auto-login from offline session
     setLoading(false); // Set false immediately for instant UI update
 
     // ✅ Run cleanup operations in background (non-blocking)
@@ -354,7 +396,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         ]);
 
         console.log("✅ Background cleanup completed");
-        console.log("✅ Offline credentials preserved for next offline login");
+        console.log("✅ Offline session cleared, credentials preserved for next offline login");
       } catch (error) {
         console.warn("⚠️ Background cleanup failed:", error);
       }
