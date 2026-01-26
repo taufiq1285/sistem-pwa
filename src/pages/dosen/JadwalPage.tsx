@@ -753,8 +753,8 @@ export default function JadwalPage() {
       />
 
       {/* Filters */}
-      <Card>
-        <CardContent className="pt-6">
+      <Card className="border-0 shadow-xl p-6">
+        <CardContent>
           <div className="flex flex-wrap gap-4">
             <Select value={filterLab} onValueChange={setFilterLab}>
               <SelectTrigger className="w-[200px]">
@@ -828,8 +828,8 @@ export default function JadwalPage() {
 
         {/* List View */}
         <TabsContent value="list" className="mt-6">
-          <Card>
-            <CardContent className="p-0">
+          <Card className="border-0 shadow-xl p-6">
+            <CardContent>
               {jadwalList.length === 0 ? (
                 <EmptyState
                   title="Tidak ada jadwal"
@@ -919,10 +919,12 @@ export default function JadwalPage() {
 
       {/* Create Modal */}
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-6">
           <DialogHeader>
-            <DialogTitle>Tambah Jadwal Praktikum</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-xl font-bold">
+              Tambah Jadwal Praktikum
+            </DialogTitle>
+            <DialogDescription className="text-base font-semibold">
               Lengkapi form berikut untuk menambahkan jadwal baru
             </DialogDescription>
           </DialogHeader>
@@ -957,10 +959,12 @@ export default function JadwalPage() {
 
       {/* Edit Modal */}
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-6">
           <DialogHeader>
-            <DialogTitle>Edit Jadwal Praktikum</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-xl font-bold">
+              Edit Jadwal Praktikum
+            </DialogTitle>
+            <DialogDescription className="text-base font-semibold">
               Perbarui informasi jadwal praktikum
             </DialogDescription>
           </DialogHeader>

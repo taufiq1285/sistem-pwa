@@ -241,7 +241,7 @@ export default function MahasiswaMateriPage() {
       <div className="mb-6">
         <div className="flex items-center gap-3 mb-2">
           <BookOpen className="h-8 w-8 text-primary" />
-          <h1 className="text-3xl font-bold">Materi Pembelajaran</h1>
+          <h1 className="text-4xl font-extrabold">Materi Pembelajaran</h1>
         </div>
         <p className="text-muted-foreground">
           Akses materi pembelajaran dari dosen Anda
@@ -323,19 +323,19 @@ export default function MahasiswaMateriPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <div className="bg-card border rounded-lg p-4">
             <p className="text-sm text-muted-foreground">Total Materi</p>
-            <p className="text-2xl font-bold">{materiList.length}</p>
+            <p className="text-4xl font-extrabold">{materiList.length}</p>
           </div>
           <div className="bg-card border rounded-lg p-4">
             <p className="text-sm text-muted-foreground">Mata Kuliah</p>
-            <p className="text-2xl font-bold">{uniqueMataKuliah.length}</p>
+            <p className="text-4xl font-extrabold">{uniqueMataKuliah.length}</p>
           </div>
           <div className="bg-card border rounded-lg p-4">
             <p className="text-sm text-muted-foreground">Kelas Terdaftar</p>
-            <p className="text-2xl font-bold">{uniqueKelas.length}</p>
+            <p className="text-4xl font-extrabold">{uniqueKelas.length}</p>
           </div>
           <div className="bg-card border rounded-lg p-4">
             <p className="text-sm text-muted-foreground">Materi Minggu Ini</p>
-            <p className="text-2xl font-bold">
+            <p className="text-4xl font-extrabold">
               {
                 materiList.filter((m) => {
                   const now = new Date();

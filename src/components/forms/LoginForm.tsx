@@ -257,7 +257,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
         {!isSubmitting && (
           <div className="pt-2 border-t">
             <div className="flex items-start gap-2 text-xs text-gray-600">
-              <ShieldCheck className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
+              <ShieldCheck className="h-4 w-4 text-green-600 shrink-0 mt-0.5" />
               <p>
                 {isOnline ? (
                   <>

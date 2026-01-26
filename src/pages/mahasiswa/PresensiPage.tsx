@@ -165,7 +165,7 @@ export default function PresensiPage() {
       <div>
         <div className="flex items-center gap-3 mb-2">
           <ClipboardCheck className="h-8 w-8 text-primary" />
-          <h1 className="text-3xl font-bold">Presensi Praktikum</h1>
+          <h1 className="text-4xl font-extrabold">Presensi Praktikum</h1>
         </div>
         <p className="text-gray-600 dark:text-gray-400">
           Rekap kehadiran praktikum Anda
@@ -174,67 +174,67 @@ export default function PresensiPage() {
 
       {/* Summary Stats */}
       <div className="grid gap-4 md:grid-cols-5">
-        <Card>
+        <Card className="border-0 shadow-xl p-6">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">
               Total Pertemuan
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{stats.total}</div>
+            <div className="text-4xl font-extrabold">{stats.total}</div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-0 shadow-xl p-6">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Hadir</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
               <CheckCircle2 className="h-5 w-5 text-green-600" />
-              <div className="text-3xl font-bold text-green-600">
+              <div className="text-4xl font-extrabold text-green-600">
                 {stats.hadir}
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-0 shadow-xl p-6">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Izin</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
               <Clock className="h-5 w-5 text-blue-600" />
-              <div className="text-3xl font-bold text-blue-600">
+              <div className="text-4xl font-extrabold text-blue-600">
                 {stats.izin}
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-0 shadow-xl p-6">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Sakit</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
               <AlertCircle className="h-5 w-5 text-yellow-600" />
-              <div className="text-3xl font-bold text-yellow-600">
+              <div className="text-4xl font-extrabold text-yellow-600">
                 {stats.sakit}
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-0 shadow-xl p-6">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Alpha</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
               <XCircle className="h-5 w-5 text-red-600" />
-              <div className="text-3xl font-bold text-red-600">
+              <div className="text-4xl font-extrabold text-red-600">
                 {stats.alpha}
               </div>
             </div>
@@ -243,7 +243,7 @@ export default function PresensiPage() {
       </div>
 
       {/* Persentase Kehadiran */}
-      <Card>
+      <Card className="border-0 shadow-xl p-6">
         <CardHeader>
           <CardTitle>Persentase Kehadiran</CardTitle>
         </CardHeader>
@@ -278,7 +278,7 @@ export default function PresensiPage() {
       </Card>
 
       {/* Riwayat Presensi */}
-      <Card>
+      <Card className="border-0 shadow-xl p-6">
         <CardHeader>
           <CardTitle>Riwayat Presensi</CardTitle>
         </CardHeader>

@@ -192,25 +192,29 @@ export default function AdminMahasiswaPage() {
   // ============================================================================
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold">Manajemen Mahasiswa</h1>
-          <p className="text-muted-foreground mt-1">
+          <h1 className="text-4xl font-extrabold">Manajemen Mahasiswa</h1>
+          <p className="text-lg font-semibold text-muted-foreground mt-2">
             Total {filteredList.length} mahasiswa
           </p>
         </div>
-        <Button onClick={loadMahasiswa} variant="outline">
+        <Button
+          onClick={loadMahasiswa}
+          variant="outline"
+          className="border-2 font-semibold"
+        >
           <RefreshCw className="h-4 w-4 mr-2" />
           Refresh
         </Button>
       </div>
 
       {/* Filters */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Filter & Cari</CardTitle>
+      <Card className="border-0 shadow-xl">
+        <CardHeader className="pb-3 p-6">
+          <CardTitle className="text-lg font-bold">Filter & Cari</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
@@ -272,6 +276,7 @@ export default function AdminMahasiswaPage() {
                 setFilterSemester("");
                 setFilterProgram("");
               }}
+              className="font-semibold border-2"
             >
               Clear
             </Button>
@@ -280,17 +285,23 @@ export default function AdminMahasiswaPage() {
       </Card>
 
       {/* Table */}
-      <Card>
-        <CardHeader>
+      <Card className="border-0 shadow-xl">
+        <CardHeader className="p-6">
           <div className="flex justify-between items-center">
             <div>
-              <CardTitle>Daftar Mahasiswa</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-xl font-bold">
+                Daftar Mahasiswa
+              </CardTitle>
+              <CardDescription className="text-base font-semibold mt-1">
                 {selectedRows.size > 0 && `${selectedRows.size} dipilih`}
               </CardDescription>
             </div>
             {selectedRows.size > 0 && (
-              <Button variant="secondary" size="sm">
+              <Button
+                variant="secondary"
+                size="sm"
+                className="font-semibold bg-linear-to-r from-blue-500 to-indigo-600 text-white border-0"
+              >
                 Update Semester Bulk
               </Button>
             )}
@@ -311,7 +322,7 @@ export default function AdminMahasiswaPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-10">
+                    <TableHead className="w-10 font-semibold">
                       <Checkbox
                         checked={
                           selectedRows.size === filteredList.length &&
@@ -320,13 +331,17 @@ export default function AdminMahasiswaPage() {
                         onCheckedChange={handleToggleAllRows}
                       />
                     </TableHead>
-                    <TableHead>Nama</TableHead>
-                    <TableHead>NIM</TableHead>
-                    <TableHead>Angkatan</TableHead>
-                    <TableHead>Semester</TableHead>
-                    <TableHead>Program Studi</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead className="text-right">Aksi</TableHead>
+                    <TableHead className="font-semibold">Nama</TableHead>
+                    <TableHead className="font-semibold">NIM</TableHead>
+                    <TableHead className="font-semibold">Angkatan</TableHead>
+                    <TableHead className="font-semibold">Semester</TableHead>
+                    <TableHead className="font-semibold">
+                      Program Studi
+                    </TableHead>
+                    <TableHead className="font-semibold">Email</TableHead>
+                    <TableHead className="text-right font-semibold">
+                      Aksi
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

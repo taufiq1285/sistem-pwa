@@ -99,11 +99,9 @@ export function PageHeader({
 
           {/* Title & Description */}
           <div className="flex-1 min-w-0">
-            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-              {title}
-            </h1>
+            <h1 className="text-4xl font-extrabold tracking-tight">{title}</h1>
             {description && (
-              <p className="mt-2 text-sm text-muted-foreground max-w-2xl">
+              <p className="mt-2 text-lg font-semibold max-w-2xl">
                 {description}
               </p>
             )}

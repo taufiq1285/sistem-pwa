@@ -138,7 +138,7 @@ export function DashboardPage() {
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-3xl font-bold">Dashboard Mahasiswa</h1>
+          <h1 className="text-4xl font-extrabold">Dashboard Mahasiswa</h1>
           <p className="text-gray-500 mt-1">Selamat datang, {user?.email}</p>
         </div>
 
@@ -155,7 +155,7 @@ export function DashboardPage() {
 
         <div className="grid gap-6 lg:grid-cols-2">
           {/* My Classes */}
-          <Card>
+          <Card className="border-0 shadow-xl p-6">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <BookOpen className="h-5 w-5" />
@@ -213,7 +213,7 @@ export function DashboardPage() {
           </Card>
 
           {/* Upcoming Schedule */}
-          <Card>
+          <Card className="border-0 shadow-xl p-6">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Calendar className="h-5 w-5" />

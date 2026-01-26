@@ -231,7 +231,7 @@ export default function PeminjamanAktifPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold">Kelola Peminjaman Alat</h1>
+        <h1 className="text-4xl font-extrabold">Kelola Peminjaman Alat</h1>
         <p className="text-muted-foreground">
           Pantau peminjaman aktif dan tandai barang yang sudah dikembalikan
         </p>
@@ -239,7 +239,7 @@ export default function PeminjamanAktifPage() {
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-3">
-        <Card>
+        <Card className="border-0 shadow-xl p-6">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               Sedang Dipinjam
@@ -247,20 +247,22 @@ export default function PeminjamanAktifPage() {
             <Package className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{activeBorrowings.length}</div>
+            <div className="text-4xl font-extrabold">
+              {activeBorrowings.length}
+            </div>
             <p className="text-xs text-muted-foreground">
               Alat yang belum dikembalikan
             </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-0 shadow-xl p-6">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Terlambat</CardTitle>
             <AlertTriangle className="h-4 w-4 text-red-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">
+            <div className="text-4xl font-extrabold text-red-600">
               {overdueCount}
             </div>
             <p className="text-xs text-muted-foreground">
@@ -269,7 +271,7 @@ export default function PeminjamanAktifPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-0 shadow-xl p-6">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               Dikembalikan Hari Ini
@@ -277,7 +279,7 @@ export default function PeminjamanAktifPage() {
             <CheckCircle className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-4xl font-extrabold">
               {
                 returnedBorrowings.filter((r) => {
                   const today = new Date().toDateString();
@@ -318,7 +320,7 @@ export default function PeminjamanAktifPage() {
 
         {/* Active Borrowings Tab */}
         <TabsContent value="active">
-          <Card>
+          <Card className="border-0 shadow-xl p-6">
             <CardHeader>
               <CardTitle>Daftar Peminjaman Aktif</CardTitle>
             </CardHeader>
@@ -429,7 +431,7 @@ export default function PeminjamanAktifPage() {
 
         {/* Returned Borrowings Tab */}
         <TabsContent value="returned">
-          <Card>
+          <Card className="border-0 shadow-xl p-6">
             <CardHeader>
               <CardTitle>Riwayat Pengembalian</CardTitle>
             </CardHeader>

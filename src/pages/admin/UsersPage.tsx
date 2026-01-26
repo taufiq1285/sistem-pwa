@@ -373,19 +373,30 @@ export default function UsersPage() {
   };
 
   return (
-    <div className="container mx-auto py-6 max-w-7xl space-y-6">
+    <div className="container mx-auto py-8 max-w-7xl space-y-8">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">User Management</h1>
-          <p className="text-muted-foreground">Manage all system users</p>
+          <h1 className="text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+            User Management
+          </h1>
+          <p className="text-lg font-semibold text-slate-600 dark:text-slate-400 mt-2">
+            Manage all system users
+          </p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => loadUsers(true)}>
+        <div className="flex gap-3">
+          <Button
+            variant="outline"
+            onClick={() => loadUsers(true)}
+            className="font-semibold border-2 hover:bg-slate-100 dark:hover:bg-slate-700"
+          >
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
-          <Button onClick={handleAdd}>
+          <Button
+            onClick={handleAdd}
+            className="font-semibold bg-linear-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 shadow-lg shadow-blue-500/30"
+          >
             <UserPlus className="h-4 w-4 mr-2" />
             Add User
           </Button>
@@ -393,57 +404,87 @@ export default function UsersPage() {
       </div>
 
       {/* Statistics Cards */}
-      <div className="grid gap-4 md:grid-cols-5">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+      <div className="grid gap-5 md:grid-cols-5">
+        <Card className="border-0 shadow-lg bg-linear-to-br from-blue-50 to-indigo-50 dark:from-blue-950/40 dark:to-indigo-950/40 hover:shadow-xl hover:scale-105 transition-all duration-300">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+            <CardTitle className="text-base font-bold text-blue-900 dark:text-blue-100">
+              Total
+            </CardTitle>
+            <div className="p-2 bg-linear-to-br from-blue-500 to-indigo-600 rounded-lg shadow-md">
+              <Users className="h-5 w-5 text-white" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.total}</div>
-            <p className="text-xs text-muted-foreground">
+            <div className="text-4xl font-extrabold text-blue-900 dark:text-white mb-2">
+              {stats.total}
+            </div>
+            <p className="text-sm font-bold text-slate-700 dark:text-slate-300">
               {stats.active} active
             </p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Admin</CardTitle>
-            <Shield className="h-4 w-4" />
+        <Card className="border-0 shadow-lg bg-linear-to-br from-purple-50 to-violet-50 dark:from-purple-950/40 dark:to-violet-950/40 hover:shadow-xl hover:scale-105 transition-all duration-300">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+            <CardTitle className="text-base font-bold text-purple-900 dark:text-purple-100">
+              Admin
+            </CardTitle>
+            <div className="p-2 bg-linear-to-br from-purple-500 to-violet-600 rounded-lg shadow-md">
+              <Shield className="h-5 w-5 text-white" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.admin}</div>
+            <div className="text-4xl font-extrabold text-purple-900 dark:text-white">
+              {stats.admin}
+            </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Dosen</CardTitle>
-            <Badge variant="secondary">Dosen</Badge>
+        <Card className="border-0 shadow-lg bg-linear-to-br from-cyan-50 to-blue-50 dark:from-cyan-950/40 dark:to-blue-950/40 hover:shadow-xl hover:scale-105 transition-all duration-300">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+            <CardTitle className="text-base font-bold text-cyan-900 dark:text-cyan-100">
+              Dosen
+            </CardTitle>
+            <div className="p-2 bg-linear-to-br from-cyan-500 to-blue-600 rounded-lg shadow-md">
+              <GraduationCap className="h-5 w-5 text-white" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.dosen}</div>
+            <div className="text-4xl font-extrabold text-cyan-900 dark:text-white">
+              {stats.dosen}
+            </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Mahasiswa</CardTitle>
-            <Badge variant="outline">Mhs</Badge>
+        <Card className="border-0 shadow-lg bg-linear-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/40 dark:to-teal-950/40 hover:shadow-xl hover:scale-105 transition-all duration-300">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+            <CardTitle className="text-base font-bold text-emerald-900 dark:text-emerald-100">
+              Mahasiswa
+            </CardTitle>
+            <div className="p-2 bg-linear-to-br from-emerald-500 to-teal-600 rounded-lg shadow-md">
+              <BookOpen className="h-5 w-5 text-white" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.mahasiswa}</div>
+            <div className="text-4xl font-extrabold text-emerald-900 dark:text-white">
+              {stats.mahasiswa}
+            </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Laboran</CardTitle>
-            <Badge variant="destructive">Lab</Badge>
+        <Card className="border-0 shadow-lg bg-linear-to-br from-orange-50 to-amber-50 dark:from-orange-950/40 dark:to-amber-950/40 hover:shadow-xl hover:scale-105 transition-all duration-300">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+            <CardTitle className="text-base font-bold text-orange-900 dark:text-orange-100">
+              Laboran
+            </CardTitle>
+            <div className="p-2 bg-linear-to-br from-orange-500 to-amber-600 rounded-lg shadow-md">
+              <Microscope className="h-5 w-5 text-white" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.laboran}</div>
+            <div className="text-4xl font-extrabold text-orange-900 dark:text-white">
+              {stats.laboran}
+            </div>
           </CardContent>
         </Card>
       </div>

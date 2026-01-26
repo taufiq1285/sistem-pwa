@@ -310,7 +310,7 @@ export default function MahasiswaNilaiPageEnhanced() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Nilai Akademik</h1>
+          <h1 className="text-4xl font-extrabold">Nilai Akademik</h1>
           <p className="text-gray-600">
             Lihat nilai per kelas, per mata kuliah, dan ajukan perbaikan
           </p>
@@ -374,7 +374,7 @@ export default function MahasiswaNilaiPageEnhanced() {
 
         {/* Tab: Per Kelas */}
         <TabsContent value="per-kelas">
-          <Card>
+          <Card className="border-0 shadow-xl p-6">
             <CardHeader>
               <CardTitle>Nilai Per Kelas</CardTitle>
               <CardDescription>
@@ -458,7 +458,7 @@ export default function MahasiswaNilaiPageEnhanced() {
 
         {/* Tab: Per Mata Kuliah (Kumulatif) */}
         <TabsContent value="per-mk">
-          <Card>
+          <Card className="border-0 shadow-xl p-6">
             <CardHeader>
               <CardTitle>Nilai Per Mata Kuliah (Kumulatif)</CardTitle>
               <CardDescription>
@@ -534,7 +534,7 @@ export default function MahasiswaNilaiPageEnhanced() {
 
         {/* Tab: Riwayat Permintaan */}
         <TabsContent value="permintaan">
-          <Card>
+          <Card className="border-0 shadow-xl p-6">
             <CardHeader>
               <CardTitle>Riwayat Permintaan Perbaikan Nilai</CardTitle>
               <CardDescription>

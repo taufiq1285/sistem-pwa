@@ -283,10 +283,10 @@ export function DashboardPage() {
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Header */}
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="text-4xl font-extrabold text-gray-900">
             Dashboard Laboran
           </h1>
-          <p className="text-gray-600 mt-1">
+          <p className="text-lg font-semibold mt-1">
             Selamat datang, {user?.full_name || user?.email}
           </p>
         </div>
@@ -302,14 +302,14 @@ export function DashboardPage() {
         {/* Main Content Grid */}
         <div className="grid gap-6 lg:grid-cols-2">
           {/* Pending Approvals */}
-          <Card className="lg:col-span-2">
+          <Card className="lg:col-span-2 border-0 shadow-xl p-6">
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 text-base font-bold">
                   <ClipboardCheck className="h-5 w-5" />
                   Persetujuan Peminjaman
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-base font-semibold">
                   {stats?.pendingApprovals || 0} peminjaman yang menunggu
                   approval
                 </CardDescription>
@@ -340,7 +340,7 @@ export function DashboardPage() {
                       key={approval.id}
                       className="flex gap-3 p-4 border rounded-lg hover:bg-gray-50 transition-colors"
                     >
-                      <div className="flex-shrink-0">
+                      <div className="shrink-0">
                         <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                           <Package className="h-5 w-5 text-blue-600" />
                         </div>
@@ -372,7 +372,7 @@ export function DashboardPage() {
                           </p>
                         )}
                       </div>
-                      <div className="flex flex-col gap-2 flex-shrink-0">
+                      <div className="flex flex-col gap-2 shrink-0">
                         <Button
                           size="sm"
                           onClick={() => handleApprove(approval.id)}
@@ -401,7 +401,7 @@ export function DashboardPage() {
           </Card>
 
           {/* Inventory Alerts */}
-          <Card>
+          <Card className="border-0 shadow-xl p-6">
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
                 <CardTitle className="flex items-center gap-2">
@@ -438,7 +438,7 @@ export function DashboardPage() {
                       key={alert.id}
                       className="flex gap-3 p-3 border rounded-lg hover:bg-gray-50 transition-colors"
                     >
-                      <div className="flex-shrink-0">
+                      <div className="shrink-0">
                         <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
                           <AlertTriangle className="h-5 w-5 text-red-600" />
                         </div>
@@ -478,7 +478,7 @@ export function DashboardPage() {
           </Card>
 
           {/* Lab Schedule Today */}
-          <Card>
+          <Card className="border-0 shadow-xl p-6">
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
                 <CardTitle className="flex items-center gap-2">
@@ -515,7 +515,7 @@ export function DashboardPage() {
                       key={schedule.id}
                       className="flex gap-3 p-3 border rounded-lg hover:bg-gray-50 transition-colors"
                     >
-                      <div className="flex-shrink-0">
+                      <div className="shrink-0">
                         <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
                           <FlaskConical className="h-5 w-5 text-purple-600" />
                         </div>

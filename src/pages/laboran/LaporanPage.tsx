@@ -363,7 +363,7 @@ export default function LaporanPage() {
         {/* Header with Refresh Button */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Laporan & Analitik</h1>
+            <h1 className="text-4xl font-extrabold">Laporan & Analitik</h1>
             <p className="text-muted-foreground mt-1">
               Statistik dan laporan lengkap sistem laboratorium
             </p>
@@ -417,7 +417,7 @@ export default function LaporanPage() {
                     Statistik Peminjaman
                   </h2>
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                    <Card>
+                    <Card className="border-0 shadow-xl p-6">
                       <CardHeader>
                         <CardDescription>Total Peminjaman</CardDescription>
                         <CardTitle className="text-3xl">
@@ -431,7 +431,7 @@ export default function LaporanPage() {
                       </CardContent>
                     </Card>
 
-                    <Card>
+                    <Card className="border-0 shadow-xl p-6">
                       <CardHeader>
                         <CardDescription>Pending</CardDescription>
                         <CardTitle className="text-3xl flex items-center gap-2">
@@ -444,7 +444,7 @@ export default function LaporanPage() {
                       </CardContent>
                     </Card>
 
-                    <Card>
+                    <Card className="border-0 shadow-xl p-6">
                       <CardHeader>
                         <CardDescription>Disetujui</CardDescription>
                         <CardTitle className="text-3xl flex items-center gap-2">
@@ -457,7 +457,7 @@ export default function LaporanPage() {
                       </CardContent>
                     </Card>
 
-                    <Card>
+                    <Card className="border-0 shadow-xl p-6">
                       <CardHeader>
                         <CardDescription>Dikembalikan</CardDescription>
                         <CardTitle className="text-3xl flex items-center gap-2">
@@ -479,7 +479,7 @@ export default function LaporanPage() {
                   <h2 className="text-xl font-semibold mb-4">
                     Status Inventaris
                   </h2>
-                  <Card>
+                  <Card className="border-0 shadow-xl p-6">
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
                         <Package className="h-5 w-5" />
@@ -495,7 +495,7 @@ export default function LaporanPage() {
                           <p className="text-sm font-medium text-muted-foreground">
                             Total Item
                           </p>
-                          <p className="text-2xl font-bold">
+                          <p className="text-4xl font-extrabold">
                             {equipmentStats?.total_items || 0}
                           </p>
                         </div>
@@ -504,7 +504,7 @@ export default function LaporanPage() {
                           <p className="text-sm font-medium text-muted-foreground">
                             Tersedia
                           </p>
-                          <p className="text-2xl font-bold text-green-600">
+                          <p className="text-4xl font-extrabold text-green-600">
                             {equipmentStats?.available || 0}
                           </p>
                         </div>
@@ -513,7 +513,7 @@ export default function LaporanPage() {
                           <p className="text-sm font-medium text-muted-foreground">
                             Sedang Dipinjam
                           </p>
-                          <p className="text-2xl font-bold text-blue-600">
+                          <p className="text-4xl font-extrabold text-blue-600">
                             {equipmentStats?.borrowed || 0}
                           </p>
                         </div>
@@ -523,7 +523,7 @@ export default function LaporanPage() {
                             <AlertTriangle className="h-4 w-4 text-red-500" />
                             Stok Rendah
                           </p>
-                          <p className="text-2xl font-bold text-red-600">
+                          <p className="text-4xl font-extrabold text-red-600">
                             {equipmentStats?.low_stock || 0}
                           </p>
                           <p className="text-xs text-muted-foreground">
@@ -536,7 +536,7 @@ export default function LaporanPage() {
                             <PackageOpen className="h-4 w-4 text-red-500" />
                             Habis
                           </p>
-                          <p className="text-2xl font-bold text-red-600">
+                          <p className="text-4xl font-extrabold text-red-600">
                             {equipmentStats?.out_of_stock || 0}
                           </p>
                           <p className="text-xs text-muted-foreground">
@@ -548,7 +548,7 @@ export default function LaporanPage() {
                           <p className="text-sm font-medium text-muted-foreground">
                             Kategori
                           </p>
-                          <p className="text-2xl font-bold">
+                          <p className="text-4xl font-extrabold">
                             {equipmentStats?.total_categories || 0}
                           </p>
                         </div>
@@ -564,7 +564,7 @@ export default function LaporanPage() {
                   <h2 className="text-xl font-semibold mb-4">
                     Penggunaan Laboratorium
                   </h2>
-                  <Card>
+                  <Card className="border-0 shadow-xl p-6">
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
                         <Building2 className="h-5 w-5" />
@@ -580,7 +580,7 @@ export default function LaporanPage() {
                           <p className="text-sm font-medium text-muted-foreground">
                             Total Laboratorium
                           </p>
-                          <p className="text-2xl font-bold">
+                          <p className="text-4xl font-extrabold">
                             {labStats?.total_labs || 0}
                           </p>
                         </div>
@@ -589,7 +589,7 @@ export default function LaporanPage() {
                           <p className="text-sm font-medium text-muted-foreground">
                             Jadwal Aktif
                           </p>
-                          <p className="text-2xl font-bold text-green-600">
+                          <p className="text-4xl font-extrabold text-green-600">
                             {labStats?.active_schedules || 0}
                           </p>
                         </div>
@@ -598,7 +598,7 @@ export default function LaporanPage() {
                           <p className="text-sm font-medium text-muted-foreground">
                             Booking Disetujui
                           </p>
-                          <p className="text-2xl font-bold text-blue-600">
+                          <p className="text-4xl font-extrabold text-blue-600">
                             {labStats?.approved_bookings || 0}
                           </p>
                         </div>
@@ -607,7 +607,7 @@ export default function LaporanPage() {
                           <p className="text-sm font-medium text-muted-foreground">
                             Booking Pending
                           </p>
-                          <p className="text-2xl font-bold text-yellow-600">
+                          <p className="text-4xl font-extrabold text-yellow-600">
                             {labStats?.pending_bookings || 0}
                           </p>
                         </div>
@@ -616,7 +616,7 @@ export default function LaporanPage() {
                           <p className="text-sm font-medium text-muted-foreground">
                             Total Kapasitas
                           </p>
-                          <p className="text-2xl font-bold">
+                          <p className="text-4xl font-extrabold">
                             {labStats?.total_capacity || 0}
                           </p>
                           <p className="text-xs text-muted-foreground">
@@ -657,7 +657,7 @@ export default function LaporanPage() {
                 <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
               </div>
             ) : topBorrowed.length === 0 ? (
-              <Card>
+              <Card className="border-0 shadow-xl p-6">
                 <CardContent className="flex flex-col items-center justify-center py-12">
                   <TrendingUp className="h-12 w-12 text-muted-foreground mb-4" />
                   <p className="text-muted-foreground">
@@ -666,7 +666,7 @@ export default function LaporanPage() {
                 </CardContent>
               </Card>
             ) : (
-              <Card>
+              <Card className="border-0 shadow-xl p-6">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -724,7 +724,7 @@ export default function LaporanPage() {
               </div>
             ) : (
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                <Card>
+                <Card className="border-0 shadow-xl p-6">
                   <CardHeader>
                     <CardDescription>Total Item</CardDescription>
                     <CardTitle className="text-3xl">
@@ -741,7 +741,7 @@ export default function LaporanPage() {
                   </CardContent>
                 </Card>
 
-                <Card>
+                <Card className="border-0 shadow-xl p-6">
                   <CardHeader>
                     <CardDescription className="flex items-center gap-2">
                       <AlertTriangle className="h-4 w-4 text-red-500" />
@@ -756,7 +756,7 @@ export default function LaporanPage() {
                   </CardContent>
                 </Card>
 
-                <Card>
+                <Card className="border-0 shadow-xl p-6">
                   <CardHeader>
                     <CardDescription>Kategori</CardDescription>
                     <CardTitle className="text-3xl">
@@ -799,7 +799,7 @@ export default function LaporanPage() {
                 <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
               </div>
             ) : labUtilization.length === 0 ? (
-              <Card>
+              <Card className="border-0 shadow-xl p-6">
                 <CardContent className="flex flex-col items-center justify-center py-12">
                   <Building2 className="h-12 w-12 text-muted-foreground mb-4" />
                   <p className="text-muted-foreground">
@@ -808,7 +808,7 @@ export default function LaporanPage() {
                 </CardContent>
               </Card>
             ) : (
-              <Card>
+              <Card className="border-0 shadow-xl p-6">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -881,14 +881,14 @@ export default function LaporanPage() {
                 <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
               </div>
             ) : recentActivities.length === 0 ? (
-              <Card>
+              <Card className="border-0 shadow-xl p-6">
                 <CardContent className="flex flex-col items-center justify-center py-12">
                   <Activity className="h-12 w-12 text-muted-foreground mb-4" />
                   <p className="text-muted-foreground">Belum ada aktivitas</p>
                 </CardContent>
               </Card>
             ) : (
-              <Card>
+              <Card className="border-0 shadow-xl p-6">
                 <CardContent className="space-y-4">
                   {recentActivities.map((activity) => (
                     <div

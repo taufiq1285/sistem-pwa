@@ -168,7 +168,7 @@ export default function ProfilePage() {
         )}
 
         {/* User Information Card */}
-        <Card>
+        <Card className="border-0 shadow-xl p-6">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <User className="h-5 w-5" />
@@ -220,7 +220,7 @@ export default function ProfilePage() {
         </Card>
 
         {/* Work Information Card */}
-        <Card>
+        <Card className="border-0 shadow-xl p-6">
           <CardHeader>
             <CardTitle>Informasi Pekerjaan</CardTitle>
             <CardDescription>

@@ -124,7 +124,7 @@ export function MobileNav({
                       active && "bg-accent text-accent-foreground",
                     )}
                   >
-                    <Icon className="h-5 w-5 flex-shrink-0" />
+                    <Icon className="h-5 w-5 shrink-0" />
                     <span className="flex-1">{item.label}</span>
                     {item.badge !== undefined && (
                       <Badge variant="secondary">{item.badge}</Badge>

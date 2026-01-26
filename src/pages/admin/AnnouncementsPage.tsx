@@ -182,17 +182,24 @@ export default function AnnouncementsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Announcements</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-4xl font-extrabold">Announcements</h1>
+          <p className="text-lg font-semibold text-muted-foreground mt-2">
             Manage system-wide announcements
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => loadAnnouncements(true)}>
+          <Button
+            variant="outline"
+            onClick={() => loadAnnouncements(true)}
+            className="font-semibold border-2"
+          >
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
-          <Button onClick={handleAdd}>
+          <Button
+            onClick={handleAdd}
+            className="font-semibold bg-linear-to-r from-blue-500 to-indigo-600"
+          >
             <Plus className="h-4 w-4 mr-2" />
             Create
           </Button>
@@ -201,52 +208,62 @@ export default function AnnouncementsPage() {
 
       {/* Statistics */}
       <div className="grid gap-4 md:grid-cols-4">
-        <Card>
+        <Card className="border-0 shadow-lg bg-linear-to-r from-blue-500 to-blue-600 text-white">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total</CardTitle>
-            <Megaphone className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-base font-bold text-white">
+              Total
+            </CardTitle>
+            <Megaphone className="h-5 w-5 text-white" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.total}</div>
+            <div className="text-4xl font-extrabold">{stats.total}</div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-0 shadow-lg bg-linear-to-r from-green-500 to-green-600 text-white">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active</CardTitle>
-            <Bell className="h-4 w-4 text-green-600" />
+            <CardTitle className="text-base font-bold text-white">
+              Active
+            </CardTitle>
+            <Bell className="h-5 w-5 text-white" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.active}</div>
+            <div className="text-4xl font-extrabold">{stats.active}</div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-0 shadow-lg bg-linear-to-r from-red-500 to-red-600 text-white">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">High Priority</CardTitle>
-            <Badge variant="destructive">High</Badge>
+            <CardTitle className="text-base font-bold text-white">
+              High Priority
+            </CardTitle>
+            <Badge className="bg-white text-red-600 font-bold">High</Badge>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.highPriority}</div>
+            <div className="text-4xl font-extrabold">{stats.highPriority}</div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-0 shadow-lg bg-linear-to-r from-purple-500 to-purple-600 text-white">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Scheduled</CardTitle>
-            <Bell className="h-4 w-4 text-blue-600" />
+            <CardTitle className="text-base font-bold text-white">
+              Scheduled
+            </CardTitle>
+            <Bell className="h-5 w-5 text-white" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.scheduled}</div>
+            <div className="text-4xl font-extrabold">{stats.scheduled}</div>
           </CardContent>
         </Card>
       </div>
 
       {/* Announcements List */}
-      <Card>
-        <CardHeader>
-          <CardTitle>All Announcements</CardTitle>
-          <CardDescription>System-wide notifications</CardDescription>
+      <Card className="border-0 shadow-xl">
+        <CardHeader className="p-6">
+          <CardTitle className="text-xl font-bold">All Announcements</CardTitle>
+          <CardDescription className="text-base font-semibold mt-1">
+            System-wide notifications
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -301,10 +318,12 @@ export default function AnnouncementsPage() {
 
       {/* Add Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-6">
           <DialogHeader>
-            <DialogTitle>Create New Announcement</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-xl font-bold">
+              Create New Announcement
+            </DialogTitle>
+            <DialogDescription className="text-base font-semibold">
               Create a new system announcement
             </DialogDescription>
           </DialogHeader>
@@ -443,10 +462,16 @@ export default function AnnouncementsPage() {
               <Button
                 variant="outline"
                 onClick={() => setIsAddDialogOpen(false)}
+                className="font-semibold border-2"
               >
                 Cancel
               </Button>
-              <Button onClick={handleCreate}>Create Announcement</Button>
+              <Button
+                onClick={handleCreate}
+                className="font-semibold bg-linear-to-r from-blue-500 to-indigo-600"
+              >
+                Create Announcement
+              </Button>
             </div>
           </div>
         </DialogContent>

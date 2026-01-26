@@ -297,7 +297,7 @@ export function JadwalApprovalPage() {
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-3">
-        <Card>
+        <Card className="border-0 shadow-xl p-6">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">
               Menunggu Persetujuan
@@ -305,7 +305,7 @@ export function JadwalApprovalPage() {
             <Clock className="h-4 w-4 text-yellow-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">
+            <div className="text-4xl font-extrabold text-yellow-600">
               {stats.pending}
             </div>
             <p className="text-xs text-muted-foreground">
@@ -314,7 +314,7 @@ export function JadwalApprovalPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-0 shadow-xl p-6">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">
               Jadwal Aktif
@@ -322,7 +322,7 @@ export function JadwalApprovalPage() {
             <CheckCircle2 className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">
+            <div className="text-4xl font-extrabold text-green-600">
               {stats.approved}
             </div>
             <p className="text-xs text-muted-foreground">
@@ -331,7 +331,7 @@ export function JadwalApprovalPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-0 shadow-xl p-6">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">
               Dibatalkan
@@ -339,7 +339,7 @@ export function JadwalApprovalPage() {
             <XCircle className="h-4 w-4 text-red-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">
+            <div className="text-4xl font-extrabold text-red-600">
               {stats.cancelled}
             </div>
             <p className="text-xs text-muted-foreground">
@@ -368,7 +368,7 @@ export function JadwalApprovalPage() {
 
         {/* TAB 1: Menunggu Persetujuan */}
         <TabsContent value="pending">
-          <Card>
+          <Card className="border-0 shadow-xl p-6">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle>Permintaan Booking Ruangan Lab</CardTitle>
@@ -491,7 +491,7 @@ export function JadwalApprovalPage() {
 
         {/* TAB 2: Jadwal Aktif */}
         <TabsContent value="active">
-          <Card>
+          <Card className="border-0 shadow-xl p-6">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -611,7 +611,7 @@ export function JadwalApprovalPage() {
 
         {/* TAB 3: Riwayat (Cancelled) */}
         <TabsContent value="cancelled">
-          <Card>
+          <Card className="border-0 shadow-xl p-6">
             <CardHeader>
               <CardTitle>Jadwal yang Dibatalkan</CardTitle>
             </CardHeader>

@@ -338,8 +338,8 @@ export default function AcademicAssignmentPage() {
     <div className="container mx-auto py-6 space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold">Assignment Dosen Akademik</h1>
-        <p className="text-gray-600">
+        <h1 className="text-4xl font-extrabold">Assignment Dosen Akademik</h1>
+        <p className="text-lg font-semibold text-gray-600 mt-2">
           Monitor dan kelola assignment dosen untuk mata kuliah dan kelas (bukan
           praktikum)
         </p>
@@ -347,29 +347,31 @@ export default function AcademicAssignmentPage() {
 
       {/* Statistics Cards */}
       <div className="grid grid-cols-4 gap-4">
-        <Card>
+        <Card className="border-0 shadow-lg bg-linear-to-r from-blue-500 to-blue-600 text-white">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">
+            <CardTitle className="text-base font-bold text-white">
               Total Kelas Aktif
             </CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <Users className="h-5 w-5 text-white" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{kelasList.length}</div>
-            <p className="text-xs text-muted-foreground">
+            <div className="text-4xl font-extrabold">{kelasList.length}</div>
+            <p className="text-sm font-bold text-white mt-1">
               {kelasList.filter((k) => k.dosen_id).length} dengan dosen assigned
             </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-0 shadow-lg bg-linear-to-r from-purple-500 to-purple-600 text-white">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Dosen Aktif</CardTitle>
-            <BookOpen className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-base font-bold text-white">
+              Dosen Aktif
+            </CardTitle>
+            <BookOpen className="h-5 w-5 text-white" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{dosenList.length}</div>
-            <p className="text-xs text-muted-foreground">
+            <div className="text-4xl font-extrabold">{dosenList.length}</div>
+            <p className="text-sm font-bold text-white mt-1">
               {
                 dosenList.filter((d) =>
                   kelasList.some((k) => k.dosen_id === d.id),
@@ -380,14 +382,18 @@ export default function AcademicAssignmentPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-0 shadow-lg bg-linear-to-r from-green-500 to-green-600 text-white">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Mata Kuliah</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-base font-bold text-white">
+              Mata Kuliah
+            </CardTitle>
+            <Calendar className="h-5 w-5 text-white" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{mataKuliahList.length}</div>
-            <p className="text-xs text-muted-foreground">
+            <div className="text-4xl font-extrabold">
+              {mataKuliahList.length}
+            </div>
+            <p className="text-sm font-bold text-white mt-1">
               {
                 mataKuliahList.filter((mk) =>
                   kelasList.some((k) => k.mata_kuliah_id === mk.id),
@@ -398,18 +404,18 @@ export default function AcademicAssignmentPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-0 shadow-lg bg-linear-to-r from-indigo-500 to-indigo-600 text-white">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">
+            <CardTitle className="text-base font-bold text-white">
               Assignment Complete
             </CardTitle>
-            <CheckCircle className="h-4 w-4 text-muted-foreground" />
+            <CheckCircle className="h-5 w-5 text-white" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-4xl font-extrabold">
               {kelasList.filter((k) => k.dosen_id && k.mata_kuliah_id).length}
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm font-bold text-white mt-1">
               {Math.round(
                 (kelasList.filter((k) => k.dosen_id && k.mata_kuliah_id)
                   .length /
@@ -424,9 +430,11 @@ export default function AcademicAssignmentPage() {
 
       {/* Tahun Ajaran Stats */}
       {tahunAjaranStats.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Statistik per Tahun Ajaran</CardTitle>
+        <Card className="border-0 shadow-xl">
+          <CardHeader className="p-6">
+            <CardTitle className="text-xl font-bold">
+              Statistik per Tahun Ajaran
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-3 gap-4">
@@ -445,9 +453,11 @@ export default function AcademicAssignmentPage() {
       )}
 
       {/* Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Filter & Pencarian</CardTitle>
+      <Card className="border-0 shadow-xl">
+        <CardHeader className="p-6">
+          <CardTitle className="text-xl font-bold">
+            Filter & Pencarian
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-4 gap-4">
@@ -525,10 +535,12 @@ export default function AcademicAssignmentPage() {
       </Card>
 
       {/* Kelas Assignment Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Daftar Assignment Kelas</CardTitle>
-          <CardDescription>
+      <Card className="border-0 shadow-xl">
+        <CardHeader className="p-6">
+          <CardTitle className="text-xl font-bold">
+            Daftar Assignment Kelas
+          </CardTitle>
+          <CardDescription className="text-base font-semibold mt-1">
             Total {filteredKelas.length} kelas ditemukan
           </CardDescription>
         </CardHeader>
@@ -536,12 +548,12 @@ export default function AcademicAssignmentPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Kelas</TableHead>
-                <TableHead>Mata Kuliah</TableHead>
-                <TableHead>Dosen</TableHead>
-                <TableHead>Tahun Ajaran</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Aksi</TableHead>
+                <TableHead className="font-semibold">Kelas</TableHead>
+                <TableHead className="font-semibold">Mata Kuliah</TableHead>
+                <TableHead className="font-semibold">Dosen</TableHead>
+                <TableHead className="font-semibold">Tahun Ajaran</TableHead>
+                <TableHead className="font-semibold">Status</TableHead>
+                <TableHead className="font-semibold">Aksi</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -617,6 +629,7 @@ export default function AcademicAssignmentPage() {
                         variant="outline"
                         size="sm"
                         onClick={() => handleEdit(kelas)}
+                        className="font-semibold border-2"
                       >
                         <Edit className="h-4 w-4 mr-1" />
                         Edit
@@ -632,10 +645,12 @@ export default function AcademicAssignmentPage() {
 
       {/* Edit Assignment Dialog */}
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[500px] p-6">
           <DialogHeader>
-            <DialogTitle>Edit Assignment Kelas</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-xl font-bold">
+              Edit Assignment Kelas
+            </DialogTitle>
+            <DialogDescription className="text-base font-semibold">
               Ubah dosen dan mata kuliah untuk kelas {selectedKelas?.nama_kelas}
             </DialogDescription>
           </DialogHeader>
@@ -708,10 +723,15 @@ export default function AcademicAssignmentPage() {
                   type="button"
                   variant="outline"
                   onClick={() => setIsEditOpen(false)}
+                  className="font-semibold border-2"
                 >
                   Batal
                 </Button>
-                <Button type="submit" disabled={isSubmitting}>
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="font-semibold bg-linear-to-r from-blue-500 to-indigo-600"
+                >
                   {isSubmitting && (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   )}

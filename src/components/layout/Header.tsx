@@ -59,7 +59,7 @@ export function Header({
   return (
     <header
       className={cn(
-        "sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
+        "sticky top-0 z-40 w-full border-b border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl shadow-md",
         className,
       )}
     >
@@ -69,23 +69,23 @@ export function Header({
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden"
+            className="md:hidden hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
             onClick={onMenuClick}
             title="Toggle menu"
           >
-            <Menu className="h-5 w-5" />
+            <Menu className="h-5 w-5 text-slate-700 dark:text-slate-300" />
           </Button>
 
           {/* Page title or breadcrumb can go here */}
           <div className="hidden md:block">
-            <h1 className="text-lg font-semibold">
+            <h1 className="text-lg font-bold text-slate-900 dark:text-white">
               {/* This can be dynamic based on current route */}
             </h1>
           </div>
         </div>
 
         {/* Right: Actions */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           {/* Notifications - Dropdown for dosen/mahasiswa/laboran, Button for admin */}
           {showNotificationDropdown ? (
             <NotificationDropdown />
@@ -93,21 +93,19 @@ export function Header({
             <Button
               variant="ghost"
               size="icon"
-              className="relative"
+              className="relative hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors"
               onClick={onNotificationClick}
               title="Notifications"
             >
-              <>
-                <Bell className="h-5 w-5" />
-                {notificationCount > 0 && (
-                  <Badge
-                    variant="destructive"
-                    className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs"
-                  >
-                    {notificationCount > 9 ? "9+" : notificationCount}
-                  </Badge>
-                )}
-              </>
+              <Bell className="h-5 w-5 text-slate-700 dark:text-slate-300" />
+              {notificationCount > 0 && (
+                <Badge
+                  variant="destructive"
+                  className="absolute -top-1 -right-1 h-6 w-6 rounded-full p-0 flex items-center justify-center text-xs font-bold border-2 border-white dark:border-slate-800 shadow-lg"
+                >
+                  {notificationCount > 9 ? "9+" : notificationCount}
+                </Badge>
+              )}
             </Button>
           )}
 
@@ -119,30 +117,38 @@ export function Header({
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
-                className="relative h-9 w-9 rounded-full"
+                className="relative h-10 w-10 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
                 title="User menu"
               >
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-linear-to-br from-blue-500 to-indigo-600 text-white text-base font-bold shadow-lg shadow-blue-500/30 ring-2 ring-white dark:ring-slate-700">
                   {userName.charAt(0).toUpperCase()}
                 </div>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56" align="end" forceMount>
-              <DropdownMenuLabel className="font-normal">
-                <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">{userName}</p>
-                  <p className="text-xs leading-none text-muted-foreground">
+            <DropdownMenuContent className="w-64" align="end" forceMount>
+              <DropdownMenuLabel className="font-normal p-4">
+                <div className="flex flex-col space-y-2">
+                  <p className="text-base font-bold leading-none text-slate-900 dark:text-white">
+                    {userName}
+                  </p>
+                  <p className="text-sm font-medium leading-none text-slate-600 dark:text-slate-400">
                     {userEmail}
                   </p>
                   {userRole && (
-                    <p className="text-xs leading-none text-muted-foreground">
+                    <Badge
+                      variant="secondary"
+                      className="w-fit text-xs font-bold bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 border border-blue-300 dark:border-blue-600"
+                    >
                       {ROLE_LABELS[userRole]}
-                    </p>
+                    </Badge>
                   )}
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={onProfileClick}>
+              <DropdownMenuItem
+                onClick={onProfileClick}
+                className="text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer"
+              >
                 <User className="mr-2 h-4 w-4" />
                 <span>Profil</span>
               </DropdownMenuItem>
@@ -152,7 +158,10 @@ export function Header({
                 <span>Pengaturan</span>
               </DropdownMenuItem> */}
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={onLogout} className="text-red-600">
+              <DropdownMenuItem
+                onClick={onLogout}
+                className="text-sm font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 cursor-pointer"
+              >
                 <LogOut className="mr-2 h-4 w-4" />
                 <span>Logout</span>
               </DropdownMenuItem>

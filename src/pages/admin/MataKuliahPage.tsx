@@ -272,20 +272,23 @@ export default function MataKuliahPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Mata Kuliah</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-4xl font-extrabold">Mata Kuliah</h1>
+          <p className="text-lg font-semibold text-muted-foreground mt-2">
             Kelola mata kuliah untuk sistem
           </p>
         </div>
-        <Button onClick={handleAdd}>
+        <Button
+          onClick={handleAdd}
+          className="font-semibold bg-linear-to-r from-blue-500 to-indigo-600"
+        >
           <Plus className="h-4 w-4 mr-2" />
           Tambah Mata Kuliah
         </Button>
       </div>
 
       {/* Data Table */}
-      <Card>
-        <CardContent className="pt-6">
+      <Card className="border-0 shadow-xl">
+        <CardContent className="pt-6 p-6">
           <DataTable
             columns={columns}
             data={mataKuliahList}
@@ -302,12 +305,14 @@ export default function MataKuliahPage() {
 
       {/* Dialog */}
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[500px] p-6">
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className="text-xl font-bold">
               {editingMK ? "Edit Mata Kuliah" : "Tambah Mata Kuliah"}
             </DialogTitle>
-            <DialogDescription>Isi informasi mata kuliah</DialogDescription>
+            <DialogDescription className="text-base font-semibold">
+              Isi informasi mata kuliah
+            </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
@@ -417,10 +422,15 @@ export default function MataKuliahPage() {
               variant="outline"
               onClick={() => setShowDialog(false)}
               disabled={isSaving}
+              className="font-semibold border-2"
             >
               Batal
             </Button>
-            <Button onClick={handleSave} disabled={isSaving}>
+            <Button
+              onClick={handleSave}
+              disabled={isSaving}
+              className="font-semibold bg-linear-to-r from-blue-500 to-indigo-600"
+            >
               {isSaving ? "Menyimpan..." : editingMK ? "Simpan" : "Tambah"}
             </Button>
           </DialogFooter>

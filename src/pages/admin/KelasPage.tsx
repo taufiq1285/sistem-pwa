@@ -420,12 +420,15 @@ export default function KelasPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Kelola Kelas</h1>
-          <p className="text-muted-foreground mt-1">
+          <h1 className="text-4xl font-extrabold">Kelola Kelas</h1>
+          <p className="text-lg font-semibold text-muted-foreground mt-2">
             Buat kelas dan assign mahasiswa
           </p>
         </div>
-        <Button onClick={handleCreate}>
+        <Button
+          onClick={handleCreate}
+          className="font-semibold bg-linear-to-r from-blue-500 to-indigo-600"
+        >
           <Plus className="h-4 w-4 mr-2" />
           Buat Kelas
         </Button>
@@ -441,10 +444,12 @@ export default function KelasPage() {
       </Alert>
 
       {/* Kelas Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Daftar Kelas</CardTitle>
-          <CardDescription>Total {kelasList.length} kelas</CardDescription>
+      <Card className="border-0 shadow-xl">
+        <CardHeader className="p-6">
+          <CardTitle className="text-xl font-bold">Daftar Kelas</CardTitle>
+          <CardDescription className="text-base font-semibold mt-1">
+            Total {kelasList.length} kelas
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {kelasList.length === 0 ? (
@@ -456,10 +461,14 @@ export default function KelasPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nama Kelas</TableHead>
-                  <TableHead>Semester/Tahun</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Aksi</TableHead>
+                  <TableHead className="font-semibold">Nama Kelas</TableHead>
+                  <TableHead className="font-semibold">
+                    Semester/Tahun
+                  </TableHead>
+                  <TableHead className="font-semibold">Status</TableHead>
+                  <TableHead className="text-right font-semibold">
+                    Aksi
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -512,12 +521,12 @@ export default function KelasPage() {
 
       {/* Create/Edit Kelas Dialog */}
       <Dialog open={showFormDialog} onOpenChange={setShowFormDialog}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md p-6">
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className="text-xl font-bold">
               {editingKelas ? "Edit Kelas" : "Buat Kelas Baru"}
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-base font-semibold">
               Isi informasi kelas di bawah ini
             </DialogDescription>
           </DialogHeader>
@@ -579,10 +588,15 @@ export default function KelasPage() {
               variant="outline"
               onClick={() => setShowFormDialog(false)}
               disabled={isProcessing}
+              className="font-semibold border-2"
             >
               Batal
             </Button>
-            <Button onClick={handleSaveKelas} disabled={isProcessing}>
+            <Button
+              onClick={handleSaveKelas}
+              disabled={isProcessing}
+              className="font-semibold bg-linear-to-r from-blue-500 to-indigo-600"
+            >
               {isProcessing && (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               )}
