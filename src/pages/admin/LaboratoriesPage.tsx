@@ -196,12 +196,15 @@ export default function LaboratoriesPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Laboratories Management</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-4xl font-extrabold">Laboratories Management</h1>
+          <p className="text-lg font-semibold text-muted-foreground mt-2">
             Manage all laboratory facilities
           </p>
         </div>
-        <Button onClick={handleAdd}>
+        <Button
+          onClick={handleAdd}
+          className="font-semibold bg-linear-to-r from-blue-500 to-indigo-600"
+        >
           <Plus className="h-4 w-4 mr-2" />
           Add Laboratory
         </Button>
@@ -209,37 +212,41 @@ export default function LaboratoriesPage() {
 
       {/* Statistics */}
       <div className="grid gap-4 md:grid-cols-3">
-        <Card>
+        <Card className="border-0 shadow-lg bg-linear-to-r from-blue-500 to-blue-600 text-white">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Labs</CardTitle>
-            <Building2 className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-base font-bold text-white">
+              Total Labs
+            </CardTitle>
+            <Building2 className="h-5 w-5 text-white" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{laboratories.length}</div>
+            <div className="text-4xl font-extrabold">{laboratories.length}</div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-0 shadow-lg bg-linear-to-r from-purple-500 to-purple-600 text-white">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
+            <CardTitle className="text-base font-bold text-white">
               Total Capacity
             </CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <Users className="h-5 w-5 text-white" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-4xl font-extrabold">
               {laboratories.reduce((sum, lab) => sum + (lab.kapasitas || 0), 0)}
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-0 shadow-lg bg-linear-to-r from-green-500 to-green-600 text-white">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Labs</CardTitle>
-            <Building2 className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-base font-bold text-white">
+              Active Labs
+            </CardTitle>
+            <Building2 className="h-5 w-5 text-white" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-4xl font-extrabold">
               {laboratories.filter((lab) => lab.is_active).length}
             </div>
           </CardContent>
@@ -260,10 +267,10 @@ export default function LaboratoriesPage() {
       </div>
 
       {/* Laboratories Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>All Laboratories</CardTitle>
-          <CardDescription>
+      <Card className="border-0 shadow-xl">
+        <CardHeader className="p-6">
+          <CardTitle className="text-xl font-bold">All Laboratories</CardTitle>
+          <CardDescription className="text-base font-semibold mt-1">
             Manage laboratory facilities and information
           </CardDescription>
         </CardHeader>
@@ -276,12 +283,12 @@ export default function LaboratoriesPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Code</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Location</TableHead>
-                  <TableHead>Capacity</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Actions</TableHead>
+                  <TableHead className="font-semibold">Code</TableHead>
+                  <TableHead className="font-semibold">Name</TableHead>
+                  <TableHead className="font-semibold">Location</TableHead>
+                  <TableHead className="font-semibold">Capacity</TableHead>
+                  <TableHead className="font-semibold">Status</TableHead>
+                  <TableHead className="font-semibold">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -332,10 +339,14 @@ export default function LaboratoriesPage() {
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md p-6">
           <DialogHeader>
-            <DialogTitle>Edit Laboratory</DialogTitle>
-            <DialogDescription>Update laboratory information</DialogDescription>
+            <DialogTitle className="text-xl font-bold">
+              Edit Laboratory
+            </DialogTitle>
+            <DialogDescription className="text-base font-semibold">
+              Update laboratory information
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
@@ -417,10 +428,16 @@ export default function LaboratoriesPage() {
               <Button
                 variant="outline"
                 onClick={() => setIsEditDialogOpen(false)}
+                className="font-semibold border-2"
               >
                 Cancel
               </Button>
-              <Button onClick={handleUpdate}>Save Changes</Button>
+              <Button
+                onClick={handleUpdate}
+                className="font-semibold bg-linear-to-r from-blue-500 to-indigo-600"
+              >
+                Save Changes
+              </Button>
             </div>
           </div>
         </DialogContent>
@@ -428,10 +445,12 @@ export default function LaboratoriesPage() {
 
       {/* Add Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md p-6">
           <DialogHeader>
-            <DialogTitle>Add New Laboratory</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-xl font-bold">
+              Add New Laboratory
+            </DialogTitle>
+            <DialogDescription className="text-base font-semibold">
               Create a new laboratory facility
             </DialogDescription>
           </DialogHeader>
@@ -517,10 +536,16 @@ export default function LaboratoriesPage() {
               <Button
                 variant="outline"
                 onClick={() => setIsAddDialogOpen(false)}
+                className="font-semibold border-2"
               >
                 Cancel
               </Button>
-              <Button onClick={handleCreate}>Create Laboratory</Button>
+              <Button
+                onClick={handleCreate}
+                className="font-semibold bg-linear-to-r from-blue-500 to-indigo-600"
+              >
+                Create Laboratory
+              </Button>
             </div>
           </div>
         </DialogContent>

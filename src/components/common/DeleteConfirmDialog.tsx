@@ -65,7 +65,7 @@ export function DeleteConfirmDialog({
             <p className="text-sm font-semibold text-red-800 dark:text-red-300 mb-2">
               {itemType} yang akan dihapus:
             </p>
-            <p className="text-lg font-bold text-gray-900 dark:text-white break-words">
+            <p className="text-lg font-bold text-gray-900 dark:text-white wrap-break-wordwordword">
               {itemName}
             </p>
             {description && (

@@ -216,8 +216,8 @@ export default function PeminjamanApprovalPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold">Persetujuan Peminjaman Alat</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-4xl font-extrabold">Persetujuan Peminjaman Alat</h1>
+        <p className="text-lg font-semibold text-muted-foreground mt-2">
           Sebagai Admin, Anda dapat menyetujui atau menolak permintaan
           peminjaman alat dari mahasiswa dan dosen
         </p>
@@ -244,47 +244,52 @@ export default function PeminjamanApprovalPage() {
 
       {/* Stats */}
       <div className="grid gap-4 md:grid-cols-3">
-        <Card>
+        <Card className="border-0 shadow-lg bg-linear-to-r from-yellow-500 to-orange-500 text-white">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
+            <CardTitle className="text-base font-bold text-white">
               Menunggu Persetujuan
             </CardTitle>
-            <Clock className="h-4 w-4 text-yellow-600" />
+            <Clock className="h-5 w-5 text-white" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{requests.length}</div>
-            <p className="text-xs text-muted-foreground">
+            <div className="text-4xl font-extrabold">{requests.length}</div>
+            <p className="text-sm font-bold text-white mt-1">
               Requests yang belum diproses
             </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-0 shadow-lg bg-linear-to-r from-red-500 to-red-600 text-white">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Role Anda</CardTitle>
-            <User className="h-4 w-4 text-red-600" />
+            <CardTitle className="text-base font-bold text-white">
+              Role Anda
+            </CardTitle>
+            <User className="h-5 w-5 text-white" />
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <Badge variant="destructive" className="text-base">
+              <Badge
+                variant="destructive"
+                className="text-base bg-white text-red-600"
+              >
                 Administrator
               </Badge>
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-sm font-bold text-white mt-1">
               Approval dengan role admin
             </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-0 shadow-lg bg-linear-to-r from-blue-500 to-blue-600 text-white">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
+            <CardTitle className="text-base font-bold text-white">
               Catatan Penting
             </CardTitle>
-            <AlertCircle className="h-4 w-4 text-blue-600" />
+            <AlertCircle className="h-5 w-5 text-white" />
           </CardHeader>
           <CardContent>
-            <p className="text-sm">
+            <p className="text-base font-bold">
               Saat approve: stok <strong>otomatis berkurang</strong>
               <br />
               Saat reject: stok tetap normal
@@ -308,9 +313,11 @@ export default function PeminjamanApprovalPage() {
 
         {/* Pending Requests Tab */}
         <TabsContent value="pending">
-          <Card>
-            <CardHeader>
-              <CardTitle>Daftar Permintaan Peminjaman</CardTitle>
+          <Card className="border-0 shadow-xl">
+            <CardHeader className="p-6">
+              <CardTitle className="text-xl font-bold">
+                Daftar Permintaan Peminjaman
+              </CardTitle>
             </CardHeader>
             <CardContent>
               {loading ? (
@@ -330,14 +337,22 @@ export default function PeminjamanApprovalPage() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Peminjam</TableHead>
-                        <TableHead>Alat</TableHead>
-                        <TableHead>Lab</TableHead>
-                        <TableHead>Jumlah</TableHead>
-                        <TableHead>Tanggal Pinjam</TableHead>
-                        <TableHead>Tanggal Kembali</TableHead>
-                        <TableHead>Keperluan</TableHead>
-                        <TableHead>Aksi</TableHead>
+                        <TableHead className="font-semibold">
+                          Peminjam
+                        </TableHead>
+                        <TableHead className="font-semibold">Alat</TableHead>
+                        <TableHead className="font-semibold">Lab</TableHead>
+                        <TableHead className="font-semibold">Jumlah</TableHead>
+                        <TableHead className="font-semibold">
+                          Tanggal Pinjam
+                        </TableHead>
+                        <TableHead className="font-semibold">
+                          Tanggal Kembali
+                        </TableHead>
+                        <TableHead className="font-semibold">
+                          Keperluan
+                        </TableHead>
+                        <TableHead className="font-semibold">Aksi</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -381,7 +396,7 @@ export default function PeminjamanApprovalPage() {
                                 variant="default"
                                 onClick={() => handleApprove(request.id)}
                                 disabled={processing === request.id}
-                                className="gap-1"
+                                className="gap-1 font-semibold bg-linear-to-r from-green-500 to-green-600"
                               >
                                 {processing === request.id ? (
                                   <Loader2 className="h-3 w-3 animate-spin" />
@@ -395,7 +410,7 @@ export default function PeminjamanApprovalPage() {
                                 variant="destructive"
                                 onClick={() => handleRejectClick(request.id)}
                                 disabled={processing === request.id}
-                                className="gap-1"
+                                className="gap-1 font-semibold"
                               >
                                 {processing === request.id ? (
                                   <Loader2 className="h-3 w-3 animate-spin" />
@@ -418,9 +433,11 @@ export default function PeminjamanApprovalPage() {
 
         {/* Approval History Tab */}
         <TabsContent value="history">
-          <Card>
-            <CardHeader>
-              <CardTitle>Riwayat Persetujuan Peminjaman</CardTitle>
+          <Card className="border-0 shadow-xl">
+            <CardHeader className="p-6">
+              <CardTitle className="text-xl font-bold">
+                Riwayat Persetujuan Peminjaman
+              </CardTitle>
             </CardHeader>
             <CardContent>
               {historyLoading ? (
@@ -440,13 +457,17 @@ export default function PeminjamanApprovalPage() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Peminjam</TableHead>
-                        <TableHead>Alat</TableHead>
-                        <TableHead>Jumlah</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Disetujui Oleh</TableHead>
-                        <TableHead>Role</TableHead>
-                        <TableHead>Waktu</TableHead>
+                        <TableHead className="font-semibold">
+                          Peminjam
+                        </TableHead>
+                        <TableHead className="font-semibold">Alat</TableHead>
+                        <TableHead className="font-semibold">Jumlah</TableHead>
+                        <TableHead className="font-semibold">Status</TableHead>
+                        <TableHead className="font-semibold">
+                          Disetujui Oleh
+                        </TableHead>
+                        <TableHead className="font-semibold">Role</TableHead>
+                        <TableHead className="font-semibold">Waktu</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -494,10 +515,12 @@ export default function PeminjamanApprovalPage() {
 
       {/* Reject Dialog */}
       <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[500px] p-6">
           <DialogHeader>
-            <DialogTitle>Tolak Permintaan Peminjaman</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-xl font-bold">
+              Tolak Permintaan Peminjaman
+            </DialogTitle>
+            <DialogDescription className="text-base font-semibold">
               Berikan alasan mengapa permintaan ini ditolak
             </DialogDescription>
           </DialogHeader>
@@ -516,6 +539,7 @@ export default function PeminjamanApprovalPage() {
               variant="outline"
               onClick={() => setRejectDialogOpen(false)}
               disabled={processing === selectedRequestId}
+              className="font-semibold border-2"
             >
               Batal
             </Button>
@@ -523,7 +547,7 @@ export default function PeminjamanApprovalPage() {
               variant="destructive"
               onClick={handleRejectConfirm}
               disabled={processing === selectedRequestId}
-              className="gap-2"
+              className="gap-2 font-semibold"
             >
               {processing === selectedRequestId && (
                 <Loader2 className="h-4 w-4 animate-spin" />

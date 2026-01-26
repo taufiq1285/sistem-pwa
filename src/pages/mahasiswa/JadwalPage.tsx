@@ -3,7 +3,7 @@
  * Display schedule for enrolled classes - READ ONLY
  *
  * CHANGES FROM ORIGINAL:
- * ❌ REMOVED: Self-enrollment button & dialog
+ * ❌ REMOVED: Self-enrollment Button & dialog
  * ❌ REMOVED: "Daftar Kelas" functionality
  * ✅ ADDED: Info banner for clarity
  * ✅ UPDATED: Empty states (no enrollment CTA)
@@ -129,12 +129,12 @@ export default function JadwalPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Jadwal Praktikum</h1>
+            <h1 className="text-4xl font-extrabold">Jadwal Praktikum</h1>
             <p className="text-gray-500 mt-1">
               Lihat jadwal praktikum untuk semua kelas yang Anda ikuti
             </p>
           </div>
-          {/* ❌ REMOVED: Daftar Kelas button */}
+          {/* ❌ REMOVED: Daftar Kelas Button */}
         </div>
 
         {/* ✅ NEW: Info Banner */}
@@ -160,7 +160,7 @@ export default function JadwalPage() {
                   pengampu atau koordinator program studi untuk informasi
                   pendaftaran kelas.
                 </p>
-                {/* ❌ REMOVED: Daftar Kelas button */}
+                {/* ❌ REMOVED: Daftar Kelas Button */}
               </div>
             </CardContent>
           </Card>
@@ -182,7 +182,7 @@ export default function JadwalPage() {
             {/* Today's Schedule */}
             <TabsContent value="today" className="space-y-4">
               {todayJadwal.length === 0 ? (
-                <Card>
+                <Card className="border-0 shadow-xl p-6">
                   <CardContent className="p-6">
                     <div className="text-center py-6">
                       <Calendar className="h-12 w-12 text-gray-300 mx-auto mb-3" />
@@ -244,7 +244,7 @@ export default function JadwalPage() {
             {/* Upcoming Schedule */}
             <TabsContent value="upcoming" className="space-y-6">
               {upcomingDates.length === 0 ? (
-                <Card>
+                <Card className="border-0 shadow-xl p-6">
                   <CardContent className="p-6">
                     <div className="text-center py-6">
                       <Calendar className="h-12 w-12 text-gray-300 mx-auto mb-3" />
@@ -311,7 +311,7 @@ export default function JadwalPage() {
             {/* All Schedule */}
             <TabsContent value="all" className="space-y-6">
               {sortedDates.length === 0 ? (
-                <Card>
+                <Card className="border-0 shadow-xl p-6">
                   <CardContent className="p-6">
                     <div className="text-center py-6">
                       <Calendar className="h-12 w-12 text-gray-300 mx-auto mb-3" />

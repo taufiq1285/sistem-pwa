@@ -32,7 +32,7 @@ export function ConflictsPage() {
     <div className="container max-w-4xl mx-auto py-8 space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold mb-2">Conflict Resolution</h1>
+        <h1 className="text-4xl font-extrabold mb-2">Conflict Resolution</h1>
         <p className="text-muted-foreground">
           Manage and resolve data conflicts between local and server
         </p>
@@ -40,7 +40,7 @@ export function ConflictsPage() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
+        <Card className="border-0 shadow-xl p-6">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Pending Conflicts
@@ -48,7 +48,7 @@ export function ConflictsPage() {
           </CardHeader>
           <CardContent>
             <div className="flex items-baseline justify-between">
-              <span className="text-3xl font-bold">
+              <span className="text-4xl font-extrabold">
                 {pendingConflicts.length}
               </span>
               {pendingConflicts.length > 0 && (
@@ -58,7 +58,7 @@ export function ConflictsPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-0 shadow-xl p-6">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Resolved
@@ -66,7 +66,7 @@ export function ConflictsPage() {
           </CardHeader>
           <CardContent>
             <div className="flex items-baseline justify-between">
-              <span className="text-3xl font-bold text-green-600">
+              <span className="text-4xl font-extrabold text-green-600">
                 {resolvedConflicts.length}
               </span>
               <Badge variant="outline">Success</Badge>
@@ -74,14 +74,14 @@ export function ConflictsPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-0 shadow-xl p-6">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Total Conflicts
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <span className="text-3xl font-bold">{conflicts.length}</span>
+            <span className="text-4xl font-extrabold">{conflicts.length}</span>
           </CardContent>
         </Card>
       </div>
@@ -97,7 +97,7 @@ export function ConflictsPage() {
       )}
 
       {/* Main Content */}
-      <Card>
+      <Card className="border-0 shadow-xl p-6">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
@@ -188,7 +188,7 @@ export function ConflictsPage() {
       </Card>
 
       {/* How It Works */}
-      <Card>
+      <Card className="border-0 shadow-xl p-6">
         <CardHeader>
           <CardTitle>How Conflict Resolution Works</CardTitle>
         </CardHeader>

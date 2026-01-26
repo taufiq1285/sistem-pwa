@@ -172,7 +172,6 @@ describe("Laboran API", () => {
           id: "mhs-1",
           nim: "12345",
           user_id: "user-1",
-          users: { full_name: "John Doe" },
         },
       ];
 
@@ -186,13 +185,20 @@ describe("Laboran API", () => {
         },
       ];
 
+      const mockUsers = [
+        {
+          id: "user-1",
+          full_name: "John Doe",
+        },
+      ];
+
       vi.mocked(supabase.from).mockImplementation((table: string) => {
         if (table === "peminjaman") {
           return {
             select: vi.fn().mockReturnValue({
               eq: vi.fn().mockReturnValue({
                 order: vi.fn().mockReturnValue({
-                  limit: vi.fn().mockReturnValue({
+                  limit: vi.fn().mockResolvedValue({
                     data: mockPeminjaman,
                     error: null,
                   }),
@@ -204,8 +210,18 @@ describe("Laboran API", () => {
         if (table === "mahasiswa") {
           return {
             select: vi.fn().mockReturnValue({
-              in: vi.fn().mockReturnValue({
+              in: vi.fn().mockResolvedValue({
                 data: mockMahasiswa,
+                error: null,
+              }),
+            }),
+          } as any;
+        }
+        if (table === "dosen") {
+          return {
+            select: vi.fn().mockReturnValue({
+              in: vi.fn().mockResolvedValue({
+                data: [],
                 error: null,
               }),
             }),
@@ -214,8 +230,18 @@ describe("Laboran API", () => {
         if (table === "inventaris") {
           return {
             select: vi.fn().mockReturnValue({
-              in: vi.fn().mockReturnValue({
+              in: vi.fn().mockResolvedValue({
                 data: mockInventaris,
+                error: null,
+              }),
+            }),
+          } as any;
+        }
+        if (table === "users") {
+          return {
+            select: vi.fn().mockReturnValue({
+              in: vi.fn().mockResolvedValue({
+                data: mockUsers,
                 error: null,
               }),
             }),
@@ -262,7 +288,7 @@ describe("Laboran API", () => {
             select: vi.fn().mockReturnValue({
               eq: vi.fn().mockReturnValue({
                 order: vi.fn().mockReturnValue({
-                  limit: vi.fn().mockReturnValue({
+                  limit: vi.fn().mockResolvedValue({
                     data: mockPeminjaman,
                     error: null,
                   }),
@@ -273,7 +299,7 @@ describe("Laboran API", () => {
         }
         return {
           select: vi.fn().mockReturnValue({
-            in: vi.fn().mockReturnValue({
+            in: vi.fn().mockResolvedValue({
               data: [],
               error: null,
             }),
@@ -288,7 +314,7 @@ describe("Laboran API", () => {
     });
 
     it("should respect limit parameter", async () => {
-      const limitMock = vi.fn().mockReturnValue({
+      const limitMock = vi.fn().mockResolvedValue({
         data: [],
         error: null,
       });

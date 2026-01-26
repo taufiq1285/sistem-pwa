@@ -141,13 +141,15 @@ export default function AdminProfilePage() {
         )}
 
         {/* User Information Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+        <Card className="border-0 shadow-xl">
+          <CardHeader className="p-6">
+            <CardTitle className="flex items-center gap-2 text-xl font-bold">
               <User className="h-5 w-5" />
               Informasi Akun
             </CardTitle>
-            <CardDescription>Informasi akun administrator</CardDescription>
+            <CardDescription className="text-base font-semibold mt-1">
+              Informasi akun administrator
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
@@ -201,10 +203,15 @@ export default function AdminProfilePage() {
             variant="outline"
             onClick={() => fetchProfile(false)}
             disabled={saving}
+            className="font-semibold border-2"
           >
             Batal
           </Button>
-          <Button onClick={handleSave} disabled={saving}>
+          <Button
+            onClick={handleSave}
+            disabled={saving}
+            className="font-semibold bg-linear-to-r from-blue-500 to-indigo-600"
+          >
             <Save className="mr-2 h-4 w-4" />
             {saving ? "Menyimpan..." : "Simpan Perubahan"}
           </Button>

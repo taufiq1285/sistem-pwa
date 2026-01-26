@@ -58,12 +58,16 @@ export default function AnalyticsPage() {
     <div className="container mx-auto py-6 max-w-7xl space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Analytics Dashboard</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-4xl font-extrabold">Analytics Dashboard</h1>
+          <p className="text-lg font-semibold text-muted-foreground mt-2">
             System statistics and insights
           </p>
         </div>
-        <Button variant="outline" onClick={loadMetrics}>
+        <Button
+          variant="outline"
+          onClick={loadMetrics}
+          className="font-semibold border-2"
+        >
           <RefreshCw className="h-4 w-4 mr-2" />
           Refresh
         </Button>
@@ -75,74 +79,80 @@ export default function AnalyticsPage() {
       ) : (
         <>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Card>
+            <Card className="border-0 shadow-lg bg-linear-to-r from-blue-500 to-blue-600 text-white">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
+                <CardTitle className="text-base font-bold text-white">
                   Total Users
                 </CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
+                <Users className="h-5 w-5 text-white" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{metrics.totalUsers}</div>
-                <p className="text-xs text-muted-foreground flex items-center mt-1">
-                  <TrendingUp className="h-3 w-3 mr-1 text-green-600" />
+                <div className="text-4xl font-extrabold">
+                  {metrics.totalUsers}
+                </div>
+                <p className="text-sm font-bold flex items-center mt-1 text-white">
+                  <TrendingUp className="h-3 w-3 mr-1" />
                   All system users
                 </p>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="border-0 shadow-lg bg-linear-to-r from-purple-500 to-purple-600 text-white">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Equipment</CardTitle>
-                <Package className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-base font-bold text-white">
+                  Equipment
+                </CardTitle>
+                <Package className="h-5 w-5 text-white" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
+                <div className="text-4xl font-extrabold">
                   {metrics.totalEquipment}
                 </div>
-                <p className="text-xs text-muted-foreground">Inventory items</p>
+                <p className="text-sm font-bold text-white">Inventory items</p>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="border-0 shadow-lg bg-linear-to-r from-green-500 to-green-600 text-white">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
+                <CardTitle className="text-base font-bold text-white">
                   Borrowings
                 </CardTitle>
-                <Activity className="h-4 w-4 text-muted-foreground" />
+                <Activity className="h-5 w-5 text-white" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
+                <div className="text-4xl font-extrabold">
                   {metrics.totalBorrowings}
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-sm font-bold text-white">
                   {metrics.activeBorrowings} active requests
                 </p>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="border-0 shadow-lg bg-linear-to-r from-orange-500 to-orange-600 text-white">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
+                <CardTitle className="text-base font-bold text-white">
                   Active Classes
                 </CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
+                <Users className="h-5 w-5 text-white" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
+                <div className="text-4xl font-extrabold">
                   {metrics.activeClasses}
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Current semester
-                </p>
+                <p className="text-sm font-bold text-white">Current semester</p>
               </CardContent>
             </Card>
           </div>
-          <Card>
-            <CardHeader>
+          <Card className="border-0 shadow-xl">
+            <CardHeader className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle>System Health</CardTitle>
-                  <CardDescription>Overall system status</CardDescription>
+                  <CardTitle className="text-xl font-bold">
+                    System Health
+                  </CardTitle>
+                  <CardDescription className="text-base font-semibold mt-1">
+                    Overall system status
+                  </CardDescription>
                 </div>
-                <Badge variant="default" className={healthColor}>
+                <Badge variant="default" className={`${healthColor} font-bold`}>
                   {metrics.systemHealth}
                 </Badge>
               </div>

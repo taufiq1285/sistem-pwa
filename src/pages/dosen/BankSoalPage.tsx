@@ -212,8 +212,8 @@ export default function BankSoalPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Bank Soal</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-4xl font-extrabold">Bank Soal</h1>
+          <p className="text-lg font-semibold">
             Kelola soal yang dapat digunakan kembali untuk kuis
           </p>
         </div>
@@ -227,46 +227,48 @@ export default function BankSoalPage() {
       {/* Statistics Cards - Only Pilihan Ganda */}
       {stats && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card>
+          <Card className="border-0 shadow-lg bg-linear-to-br from-blue-50 to-indigo-50">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
+              <CardTitle className="text-sm font-bold text-blue-900">
                 Total Soal Pilihan Ganda
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-2">
                 <BookOpen className="h-5 w-5 text-blue-600" />
-                <div className="text-2xl font-bold">
+                <div className="text-4xl font-bold text-blue-900">
                   {stats.pilihan_ganda_count}
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border-0 shadow-lg bg-linear-to-br from-orange-50 to-amber-50">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
+              <CardTitle className="text-sm font-bold text-orange-900">
                 Total Penggunaan
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-2">
                 <TrendingUp className="h-5 w-5 text-orange-600" />
-                <div className="text-2xl font-bold">{stats.total_usage}</div>
+                <div className="text-4xl font-bold text-orange-900">
+                  {stats.total_usage}
+                </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border-0 shadow-lg bg-linear-to-br from-green-50 to-emerald-50">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
+              <CardTitle className="text-sm font-bold text-green-900">
                 Rata-rata Poin
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-2">
                 <Target className="h-5 w-5 text-green-600" />
-                <div className="text-2xl font-bold">
+                <div className="text-4xl font-bold text-green-900">
                   {stats.pilihan_ganda_count > 0
                     ? Math.round(stats.total_usage / stats.pilihan_ganda_count)
                     : 0}
@@ -278,9 +280,9 @@ export default function BankSoalPage() {
       )}
 
       {/* Search - Only Pilihan Ganda */}
-      <Card>
+      <Card className="border-0 shadow-xl p-6">
         <CardHeader>
-          <CardTitle className="text-lg">
+          <CardTitle className="text-base font-bold">
             Pencarian Soal Pilihan Ganda
           </CardTitle>
         </CardHeader>
@@ -300,16 +302,16 @@ export default function BankSoalPage() {
       {/* Questions List */}
       <div className="space-y-3">
         {isLoading ? (
-          <Card>
-            <CardContent className="p-12 text-center">
-              <p className="text-muted-foreground">Memuat soal...</p>
+          <Card className="border-0 shadow-xl p-12">
+            <CardContent className="text-center">
+              <p className="text-base font-semibold">Memuat soal...</p>
             </CardContent>
           </Card>
         ) : questions.length === 0 ? (
-          <Card>
-            <CardContent className="p-12 text-center">
+          <Card className="border-0 shadow-xl p-12">
+            <CardContent className="text-center">
               <BookOpen className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground mb-4">
+              <p className="text-base font-semibold mb-4">
                 Belum ada soal di bank
               </p>
               <Button onClick={() => setShowEditor(true)}>
@@ -320,13 +322,15 @@ export default function BankSoalPage() {
           </Card>
         ) : (
           questions.map((q) => (
-            <Card key={q.id}>
-              <CardContent className="p-4">
+            <Card key={q.id} className="border-0 shadow-xl p-6">
+              <CardContent>
                 <div className="flex items-start gap-4">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
-                      <Badge variant="outline">{q.poin} poin</Badge>
-                      <Badge variant="secondary">
+                      <Badge variant="outline" className="font-semibold">
+                        {q.poin} poin
+                      </Badge>
+                      <Badge variant="secondary" className="font-semibold">
                         {
                           TIPE_SOAL_LABELS[
                             q.tipe_soal as keyof typeof TIPE_SOAL_LABELS
@@ -334,19 +338,22 @@ export default function BankSoalPage() {
                         }
                       </Badge>
                       {q.usage_count && q.usage_count > 0 && (
-                        <Badge variant="outline" className="text-xs">
+                        <Badge
+                          variant="outline"
+                          className="text-sm font-semibold"
+                        >
                           {q.usage_count}x digunakan
                         </Badge>
                       )}
                     </div>
-                    <p className="font-medium">{q.pertanyaan}</p>
+                    <p className="text-base font-medium">{q.pertanyaan}</p>
                     {q.tags && q.tags.length > 0 && (
                       <div className="flex gap-1 mt-2">
                         {q.tags.map((tag) => (
                           <Badge
                             key={tag}
                             variant="outline"
-                            className="text-xs"
+                            className="text-sm font-semibold"
                           >
                             {tag}
                           </Badge>
@@ -360,6 +367,7 @@ export default function BankSoalPage() {
                       variant="ghost"
                       size="sm"
                       onClick={() => handleEdit(q)}
+                      className="font-semibold"
                     >
                       <Edit className="h-4 w-4" />
                     </Button>
@@ -367,7 +375,7 @@ export default function BankSoalPage() {
                       variant="ghost"
                       size="sm"
                       onClick={() => handleDelete(q.id)}
-                      className="text-destructive hover:text-destructive"
+                      className="text-destructive hover:text-destructive font-semibold"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>

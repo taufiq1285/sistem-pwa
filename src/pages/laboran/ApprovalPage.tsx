@@ -153,7 +153,7 @@ export default function ApprovalPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold">Persetujuan Peminjaman</h1>
+        <h1 className="text-4xl font-extrabold">Persetujuan Peminjaman</h1>
         <p className="text-muted-foreground">
           Kelola dan setujui permintaan peminjaman alat dari dosen
         </p>
@@ -161,7 +161,7 @@ export default function ApprovalPage() {
 
       {/* Stats */}
       <div className="grid gap-4 md:grid-cols-2">
-        <Card>
+        <Card className="border-0 shadow-xl p-6">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               Menunggu Persetujuan
@@ -169,14 +169,14 @@ export default function ApprovalPage() {
             <Clock className="h-4 w-4 text-yellow-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{requests.length}</div>
+            <div className="text-4xl font-extrabold">{requests.length}</div>
             <p className="text-xs text-muted-foreground">
               Requests yang belum diproses
             </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-0 shadow-xl p-6">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               Catatan Penting
@@ -194,7 +194,7 @@ export default function ApprovalPage() {
       </div>
 
       {/* Requests Table */}
-      <Card>
+      <Card className="border-0 shadow-xl p-6">
         <CardHeader>
           <CardTitle>Daftar Permintaan Peminjaman</CardTitle>
         </CardHeader>

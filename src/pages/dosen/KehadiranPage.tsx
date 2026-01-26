@@ -519,10 +519,10 @@ export default function DosenKehadiranPage() {
         <div className="absolute bottom-0 left-0 w-48 h-48 bg-rose-400/20 rounded-full translate-y-24 -translate-x-24 blur-2xl" />
 
         <div className="relative">
-          <h1 className="text-3xl font-bold flex items-center gap-3">
+          <h1 className="text-4xl font-extrabold flex items-center gap-3">
             📋 Kehadiran Praktikum
           </h1>
-          <p className="text-pink-100 mt-2 max-w-xl">
+          <p className="text-lg font-semibold mt-2 max-w-xl">
             Input kehadiran mahasiswa praktikum. Pilih mata kuliah, kelas, dan
             tanggal kehadiran.
           </p>

@@ -193,7 +193,7 @@ export default function MahasiswaNilaiPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Nilai Akademik</h1>
+          <h1 className="text-4xl font-extrabold">Nilai Akademik</h1>
           <p className="text-gray-600">Lihat nilai dan transkrip Anda</p>
         </div>
         <Button
@@ -210,7 +210,7 @@ export default function MahasiswaNilaiPage() {
 
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-4">
-        <Card>
+        <Card className="border-0 shadow-xl p-6">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">
               IPK / GPA
@@ -219,12 +219,12 @@ export default function MahasiswaNilaiPage() {
           <CardContent>
             <div className="flex items-center gap-2">
               <TrendingUp className="w-5 h-5 text-blue-600" />
-              <p className="text-3xl font-bold">{ipk.toFixed(2)}</p>
+              <p className="text-4xl font-extrabold">{ipk.toFixed(2)}</p>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-0 shadow-xl p-6">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">
               Total SKS
@@ -233,12 +233,12 @@ export default function MahasiswaNilaiPage() {
           <CardContent>
             <div className="flex items-center gap-2">
               <FileText className="w-5 h-5 text-green-600" />
-              <p className="text-3xl font-bold">{totalSKS}</p>
+              <p className="text-4xl font-extrabold">{totalSKS}</p>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-0 shadow-xl p-6">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">
               Kelas Praktikum
@@ -247,12 +247,12 @@ export default function MahasiswaNilaiPage() {
           <CardContent>
             <div className="flex items-center gap-2">
               <Award className="w-5 h-5 text-purple-600" />
-              <p className="text-3xl font-bold">{filteredNilai.length}</p>
+              <p className="text-4xl font-extrabold">{filteredNilai.length}</p>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-0 shadow-xl p-6">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">
               Grade A
@@ -261,7 +261,7 @@ export default function MahasiswaNilaiPage() {
           <CardContent>
             <div className="flex items-center gap-2">
               <Award className="w-5 h-5 text-yellow-600" />
-              <p className="text-3xl font-bold">{gradeDistribution.A}</p>
+              <p className="text-4xl font-extrabold">{gradeDistribution.A}</p>
             </div>
           </CardContent>
         </Card>
@@ -269,7 +269,7 @@ export default function MahasiswaNilaiPage() {
 
       {/* Filters */}
       <div className="grid gap-4 md:grid-cols-2">
-        <Card>
+        <Card className="border-0 shadow-xl p-6">
           <CardHeader>
             <CardTitle>Filter Semester</CardTitle>
           </CardHeader>
@@ -293,7 +293,7 @@ export default function MahasiswaNilaiPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-0 shadow-xl p-6">
           <CardHeader>
             <CardTitle>Filter Tahun Ajaran</CardTitle>
           </CardHeader>
@@ -319,7 +319,7 @@ export default function MahasiswaNilaiPage() {
       </div>
 
       {/* Grades Table */}
-      <Card>
+      <Card className="border-0 shadow-xl p-6">
         <CardHeader>
           <CardTitle>Daftar Nilai</CardTitle>
           <CardDescription>
@@ -436,7 +436,7 @@ export default function MahasiswaNilaiPage() {
 
       {/* Grade Distribution */}
       {filteredNilai.length > 0 && (
-        <Card>
+        <Card className="border-0 shadow-xl p-6">
           <CardHeader>
             <CardTitle>Distribusi Nilai</CardTitle>
             <CardDescription>
@@ -448,7 +448,7 @@ export default function MahasiswaNilaiPage() {
               {Object.entries(gradeDistribution).map(([grade, count]) => (
                 <div key={grade} className="text-center">
                   <div
-                    className={`text-2xl font-bold mb-1 ${
+                    className={`text-4xl font-extrabold mb-1 ${
                       grade === "A"
                         ? "text-green-600"
                         : grade === "B"

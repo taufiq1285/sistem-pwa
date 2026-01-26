@@ -26,7 +26,16 @@
       "Bash(npm run validate:*)",
       "Bash(comm:*)",
       "Bash(vite build:*)",
-      "Bash(echo:*)"
+      "Bash(echo:*)",
+      "Bash(npm run type-check:*)",
+      "Bash(for:*)",
+      "Bash(do if [ -f \"$file\" ])",
+      "Bash(then sed -i 's/@\\\\/components\\\\/ui\\\\/Button/@\\\\/components\\\\/ui\\\\/button/g' \"$file\")",
+      "Bash(fi:*)",
+      "Bash(done)",
+      "Bash(npm run test)",
+      "Bash(npm run test:*)",
+      "Bash(npx vitest:*)"
     ]
   }
 }

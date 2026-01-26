@@ -527,61 +527,63 @@ export default function PeminjamanPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold">Peminjaman Alat</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-4xl font-extrabold">Peminjaman Alat</h1>
+        <p className="text-lg font-semibold">
           Kelola peminjaman peralatan laboratorium
         </p>
       </div>
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-5">
-        <Card>
+        <Card className="border-0 shadow-lg bg-linear-to-br from-blue-50 to-indigo-50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-bold">Total</CardTitle>
+            <Package className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.total}</div>
+            <div className="text-4xl font-extrabold text-blue-900">
+              {stats.total}
+            </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Menunggu</CardTitle>
+            <CardTitle className="text-sm font-bold">Menunggu</CardTitle>
             <Clock className="h-4 w-4 text-yellow-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.menunggu}</div>
+            <div className="text-4xl font-extrabold">{stats.menunggu}</div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Disetujui</CardTitle>
+            <CardTitle className="text-sm font-bold">Disetujui</CardTitle>
             <CheckCircle className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.disetujui}</div>
+            <div className="text-4xl font-extrabold">{stats.disetujui}</div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Dikembalikan</CardTitle>
+            <CardTitle className="text-sm font-bold">Dikembalikan</CardTitle>
             <RotateCcw className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.dikembalikan}</div>
+            <div className="text-4xl font-extrabold">{stats.dikembalikan}</div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Ditolak</CardTitle>
+            <CardTitle className="text-sm font-bold">Ditolak</CardTitle>
             <XCircle className="h-4 w-4 text-red-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.ditolak}</div>
+            <div className="text-4xl font-extrabold">{stats.ditolak}</div>
           </CardContent>
         </Card>
       </div>
@@ -627,11 +629,11 @@ export default function PeminjamanPage() {
             <CardContent>
               {loadingHistory ? (
                 <div className="text-center py-8">
-                  <p className="text-muted-foreground">Memuat data...</p>
+                  <p className="text-orange-600">Memuat data...</p>
                 </div>
               ) : filteredBorrowings.length === 0 ? (
                 <div className="text-center py-8">
-                  <p className="text-muted-foreground">Tidak ada data</p>
+                  <p className="text-orange-600">Tidak ada data</p>
                 </div>
               ) : (
                 <Table>

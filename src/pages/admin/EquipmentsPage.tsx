@@ -257,17 +257,24 @@ export default function EquipmentsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Equipment Management</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-4xl font-extrabold">Equipment Management</h1>
+          <p className="text-lg font-semibold text-muted-foreground mt-2">
             Manage laboratory equipment and inventory
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={loadData}>
+          <Button
+            variant="outline"
+            onClick={loadData}
+            className="font-semibold border-2"
+          >
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
-          <Button onClick={handleAdd}>
+          <Button
+            onClick={handleAdd}
+            className="font-semibold bg-linear-to-r from-blue-500 to-indigo-600"
+          >
             <Plus className="h-4 w-4 mr-2" />
             Add Equipment
           </Button>
@@ -276,45 +283,51 @@ export default function EquipmentsPage() {
 
       {/* Statistics */}
       <div className="grid gap-4 md:grid-cols-4">
-        <Card>
+        <Card className="border-0 shadow-lg bg-linear-to-r from-blue-500 to-blue-600 text-white">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-base font-bold text-white">
+              Total
+            </CardTitle>
+            <Package className="h-5 w-5 text-white" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.total}</div>
+            <div className="text-4xl font-extrabold">{stats.total}</div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-0 shadow-lg bg-linear-to-r from-green-500 to-green-600 text-white">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
+            <CardTitle className="text-base font-bold text-white">
               Good Condition
             </CardTitle>
-            <Package className="h-4 w-4 text-green-600" />
+            <Package className="h-5 w-5 text-white" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.available}</div>
+            <div className="text-4xl font-extrabold">{stats.available}</div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-0 shadow-lg bg-linear-to-r from-red-500 to-red-600 text-white">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Damaged</CardTitle>
-            <AlertCircle className="h-4 w-4 text-red-600" />
+            <CardTitle className="text-base font-bold text-white">
+              Damaged
+            </CardTitle>
+            <AlertCircle className="h-5 w-5 text-white" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.damaged}</div>
+            <div className="text-4xl font-extrabold">{stats.damaged}</div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-0 shadow-lg bg-linear-to-r from-orange-500 to-orange-600 text-white">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">In Use</CardTitle>
-            <AlertCircle className="h-4 w-4 text-yellow-600" />
+            <CardTitle className="text-base font-bold text-white">
+              In Use
+            </CardTitle>
+            <AlertCircle className="h-5 w-5 text-white" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.borrowed}</div>
+            <div className="text-4xl font-extrabold">{stats.borrowed}</div>
           </CardContent>
         </Card>
       </div>
@@ -333,10 +346,12 @@ export default function EquipmentsPage() {
       </div>
 
       {/* Equipment Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Equipment Inventory</CardTitle>
-          <CardDescription>
+      <Card className="border-0 shadow-xl">
+        <CardHeader className="p-6">
+          <CardTitle className="text-xl font-bold">
+            Equipment Inventory
+          </CardTitle>
+          <CardDescription className="text-base font-semibold mt-1">
             All laboratory equipment and supplies
           </CardDescription>
         </CardHeader>
@@ -354,12 +369,12 @@ export default function EquipmentsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Code</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Stock</TableHead>
-                  <TableHead>Condition</TableHead>
-                  <TableHead>Actions</TableHead>
+                  <TableHead className="font-semibold">Code</TableHead>
+                  <TableHead className="font-semibold">Name</TableHead>
+                  <TableHead className="font-semibold">Category</TableHead>
+                  <TableHead className="font-semibold">Stock</TableHead>
+                  <TableHead className="font-semibold">Condition</TableHead>
+                  <TableHead className="font-semibold">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -427,10 +442,12 @@ export default function EquipmentsPage() {
 
       {/* Add Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-6">
           <DialogHeader>
-            <DialogTitle>Add New Equipment</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-xl font-bold">
+              Add New Equipment
+            </DialogTitle>
+            <DialogDescription className="text-base font-semibold">
               Create a new equipment/inventory item
             </DialogDescription>
           </DialogHeader>
@@ -620,10 +637,16 @@ export default function EquipmentsPage() {
               <Button
                 variant="outline"
                 onClick={() => setIsAddDialogOpen(false)}
+                className="font-semibold border-2"
               >
                 Cancel
               </Button>
-              <Button onClick={handleCreate}>Create Equipment</Button>
+              <Button
+                onClick={handleCreate}
+                className="font-semibold bg-linear-to-r from-blue-500 to-indigo-600"
+              >
+                Create Equipment
+              </Button>
             </div>
           </div>
         </DialogContent>
@@ -631,10 +654,12 @@ export default function EquipmentsPage() {
 
       {/* Edit Equipment Dialog - Similar structure to Add */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-6">
           <DialogHeader>
-            <DialogTitle>Edit Equipment</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-xl font-bold">
+              Edit Equipment
+            </DialogTitle>
+            <DialogDescription className="text-base font-semibold">
               Update equipment/inventory item
             </DialogDescription>
           </DialogHeader>
@@ -763,10 +788,16 @@ export default function EquipmentsPage() {
               <Button
                 variant="outline"
                 onClick={() => setIsEditDialogOpen(false)}
+                className="font-semibold border-2"
               >
                 Cancel
               </Button>
-              <Button onClick={handleUpdate}>Update Equipment</Button>
+              <Button
+                onClick={handleUpdate}
+                className="font-semibold bg-linear-to-r from-blue-500 to-indigo-600"
+              >
+                Update Equipment
+              </Button>
             </div>
           </div>
         </DialogContent>

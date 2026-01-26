@@ -114,7 +114,7 @@ export default function DosenPengumumanPage() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold">Notifikasi</h1>
+          <h1 className="text-4xl font-extrabold">Notifikasi</h1>
           <p className="text-gray-600 mt-1">
             Informasi dan pemberitahuan penting
           </p>
@@ -141,7 +141,7 @@ export default function DosenPengumumanPage() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold">Notifikasi</h1>
+          <h1 className="text-4xl font-extrabold">Notifikasi</h1>
           <p className="text-gray-600 mt-1">
             Informasi dan pemberitahuan penting
           </p>
@@ -160,7 +160,7 @@ export default function DosenPengumumanPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Notifikasi</h1>
+          <h1 className="text-4xl font-extrabold">Notifikasi</h1>
           <p className="text-gray-600 mt-1">
             Informasi dan pemberitahuan penting
           </p>

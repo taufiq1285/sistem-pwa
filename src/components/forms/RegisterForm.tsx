@@ -206,11 +206,11 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
           >
             <Alert
               variant="destructive"
-              className="border-2 border-red-600 bg-gradient-to-r from-red-50 to-red-100 shadow-xl p-5 relative overflow-hidden"
+              className="border-2 border-red-600 bg-linear-to-r from-red-50 to-red-100 shadow-xl p-5 relative overflow-hidden"
             >
               <div className="absolute inset-0 bg-red-600 opacity-5 animate-pulse"></div>
               <div className="relative flex gap-3 items-start">
-                <AlertCircle className="h-7 w-7 text-red-600 flex-shrink-0 mt-0.5" />
+                <AlertCircle className="h-7 w-7 text-red-600 shrink-0 mt-0.5" />
                 <div className="flex-1">
                   <h3 className="font-bold text-lg text-red-900 mb-1">
                     Registrasi Gagal!
@@ -231,10 +231,10 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
               animation: "slideDown 0.4s ease-out, fadeIn 0.3s ease-in",
             }}
           >
-            <Alert className="border-2 border-green-600 bg-gradient-to-r from-green-50 to-green-100 shadow-xl p-5 relative overflow-hidden">
+            <Alert className="border-2 border-green-600 bg-linear-to-r from-green-50 to-green-100 shadow-xl p-5 relative overflow-hidden">
               <div className="absolute inset-0 bg-green-600 opacity-5 animate-pulse"></div>
               <div className="relative flex gap-3 items-start">
-                <CheckCircle2 className="h-7 w-7 text-green-600 flex-shrink-0 mt-0.5" />
+                <CheckCircle2 className="h-7 w-7 text-green-600 shrink-0 mt-0.5" />
                 <div className="flex-1">
                   <h3 className="font-bold text-lg text-green-900 mb-1">
                     Registrasi Berhasil!

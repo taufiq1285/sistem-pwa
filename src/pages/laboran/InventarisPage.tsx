@@ -291,7 +291,7 @@ export default function InventarisPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Inventaris Lab</h1>
+            <h1 className="text-4xl font-extrabold">Inventaris Lab</h1>
             <p className="text-muted-foreground">
               Manage laboratory equipment and inventory
             </p>
@@ -314,14 +314,14 @@ export default function InventarisPage() {
               <Package className="h-4 w-4 text-muted-foreground" />
               <h3 className="text-sm font-medium">Total Items</h3>
             </div>
-            <p className="text-2xl font-bold mt-2">{totalCount}</p>
+            <p className="text-4xl font-extrabold mt-2">{totalCount}</p>
           </div>
           <div className="rounded-lg border bg-card p-6">
             <div className="flex items-center gap-2">
               <AlertCircle className="h-4 w-4 text-yellow-600" />
               <h3 className="text-sm font-medium">Low Stock</h3>
             </div>
-            <p className="text-2xl font-bold mt-2">
+            <p className="text-4xl font-extrabold mt-2">
               {inventaris.filter((i) => i.jumlah_tersedia < 5).length}
             </p>
           </div>
@@ -330,7 +330,7 @@ export default function InventarisPage() {
               <Filter className="h-4 w-4 text-muted-foreground" />
               <h3 className="text-sm font-medium">Categories</h3>
             </div>
-            <p className="text-2xl font-bold mt-2">{categories.length}</p>
+            <p className="text-4xl font-extrabold mt-2">{categories.length}</p>
           </div>
         </div>
 
@@ -740,11 +740,13 @@ export default function InventarisPage() {
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <p className="text-muted-foreground">Current Total</p>
-                    <p className="text-2xl font-bold">{selectedItem?.jumlah}</p>
+                    <p className="text-4xl font-extrabold">
+                      {selectedItem?.jumlah}
+                    </p>
                   </div>
                   <div>
                     <p className="text-muted-foreground">Available</p>
-                    <p className="text-2xl font-bold">
+                    <p className="text-4xl font-extrabold">
                       {selectedItem?.jumlah_tersedia}
                     </p>
                   </div>

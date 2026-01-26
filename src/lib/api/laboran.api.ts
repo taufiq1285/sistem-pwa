@@ -139,6 +139,7 @@ export async function getPendingApprovals(
         tanggal_kembali_rencana,
         created_at,
         peminjam_id,
+        dosen_id,
         inventaris_id
       `,
       )
@@ -148,20 +149,34 @@ export async function getPendingApprovals(
 
     if (error) throw error;
 
-    // Fetch related data separately to avoid foreign key issues
+    // Separate mahasiswa and dosen IDs
     const peminjamIds = [
-      ...new Set(data?.map((item) => item.peminjam_id).filter(Boolean)),
+      ...new Set(
+        data
+          ?.map((item) => item.peminjam_id)
+          .filter((id): id is string => Boolean(id)),
+      ),
+    ];
+    const dosenIds = [
+      ...new Set(
+        data
+          ?.map((item) => item.dosen_id)
+          .filter((id): id is string => Boolean(id)),
+      ),
     ];
     const inventarisIds = [
       ...new Set(data?.map((item) => item.inventaris_id).filter(Boolean)),
     ];
 
-    const [mahasiswaData, inventarisData] = await Promise.all([
+    const [mahasiswaData, dosenData, inventarisData] = await Promise.all([
       peminjamIds.length > 0
         ? supabase
             .from("mahasiswa")
-            .select("id, nim, user_id, users!mahasiswa_user_id_fkey(full_name)")
+            .select("id, nim, user_id")
             .in("id", peminjamIds)
+        : Promise.resolve({ data: [] }),
+      dosenIds.length > 0
+        ? supabase.from("dosen").select("id, nip, user_id").in("id", dosenIds)
         : Promise.resolve({ data: [] }),
       inventarisIds.length > 0
         ? supabase
@@ -173,8 +188,27 @@ export async function getPendingApprovals(
         : Promise.resolve({ data: [] }),
     ]);
 
+    // Fetch user names separately to avoid nested join issues
+    const allUserIds = [
+      ...new Set([
+        ...(mahasiswaData.data?.map((m: any) => m.user_id).filter(Boolean) ||
+          []),
+        ...(dosenData.data?.map((d: any) => d.user_id).filter(Boolean) || []),
+      ]),
+    ];
+    const usersData =
+      allUserIds.length > 0
+        ? await supabase
+            .from("users")
+            .select("id, full_name")
+            .in("id", allUserIds)
+        : { data: [] };
+
     const mahasiswaMap = new Map(
       (mahasiswaData.data?.map((m: any) => [m.id, m]) || []) as [string, any][],
+    );
+    const dosenMap = new Map(
+      (dosenData.data?.map((d: any) => [d.id, d]) || []) as [string, any][],
     );
     const inventarisMap = new Map(
       (inventarisData.data?.map((i: any) => [i.id, i]) || []) as [
@@ -182,15 +216,37 @@ export async function getPendingApprovals(
         any,
       ][],
     );
+    const usersMap = new Map(
+      (usersData.data?.map((u: any) => [u.id, u]) || []) as [string, any][],
+    );
 
     return (data || []).map((item: any) => {
-      const mahasiswa = mahasiswaMap.get(item.peminjam_id);
       const inventaris = inventarisMap.get(item.inventaris_id);
+
+      // Check if peminjam is mahasiswa or dosen
+      let peminjamNama = "Unknown";
+      let peminjamNim = "-";
+
+      if (item.dosen_id) {
+        // Peminjam is DOSEN
+        const dosen = dosenMap.get(item.dosen_id);
+        const user = dosen?.user_id ? usersMap.get(dosen.user_id) : null;
+        peminjamNama = user?.full_name || dosen?.nip || "Unknown";
+        peminjamNim = dosen?.nip || "-";
+      } else if (item.peminjam_id) {
+        // Peminjam is MAHASISWA
+        const mahasiswa = mahasiswaMap.get(item.peminjam_id);
+        const user = mahasiswa?.user_id
+          ? usersMap.get(mahasiswa.user_id)
+          : null;
+        peminjamNama = user?.full_name || mahasiswa?.nim || "Unknown";
+        peminjamNim = mahasiswa?.nim || "-";
+      }
 
       return {
         id: item.id,
-        peminjam_nama: mahasiswa?.users?.full_name || "Unknown",
-        peminjam_nim: mahasiswa?.nim || "-",
+        peminjam_nama: peminjamNama,
+        peminjam_nim: peminjamNim,
         inventaris_nama: inventaris?.nama_barang || "Unknown",
         inventaris_kode: inventaris?.kode_barang || "-",
         laboratorium_nama: inventaris?.laboratorium?.nama_lab || "-",
@@ -1234,6 +1290,7 @@ export async function getApprovalHistory(
         approved_at,
         rejection_reason,
         peminjam_id,
+        dosen_id,
         inventaris_id,
         approved_by
       `,
@@ -1247,7 +1304,18 @@ export async function getApprovalHistory(
 
     // Fetch related data separately
     const peminjamIds = [
-      ...new Set(data?.map((item) => item.peminjam_id).filter(Boolean)),
+      ...new Set(
+        data
+          ?.map((item) => item.peminjam_id)
+          .filter((id): id is string => Boolean(id)),
+      ),
+    ];
+    const dosenIds = [
+      ...new Set(
+        data
+          ?.map((item) => item.dosen_id)
+          .filter((id): id is string => Boolean(id)),
+      ),
     ];
     const inventarisIds = [
       ...new Set(data?.map((item) => item.inventaris_id).filter(Boolean)),
@@ -1260,31 +1328,55 @@ export async function getApprovalHistory(
       ),
     ];
 
-    const [mahasiswaData, inventarisData, approverData] = await Promise.all([
-      peminjamIds.length > 0
-        ? supabase
-            .from("mahasiswa")
-            .select("id, nim, user_id, users!mahasiswa_user_id_fkey(full_name)")
-            .in("id", peminjamIds)
-        : Promise.resolve({ data: [] }),
-      inventarisIds.length > 0
-        ? supabase
-            .from("inventaris")
-            .select(
-              "id, kode_barang, nama_barang, laboratorium_id, laboratorium!inventaris_laboratorium_id_fkey(nama_lab)",
-            )
-            .in("id", inventarisIds)
-        : Promise.resolve({ data: [] }),
-      approverIds.length > 0
-        ? supabase
+    const [mahasiswaData, dosenData, inventarisData, approverData] =
+      await Promise.all([
+        peminjamIds.length > 0
+          ? supabase
+              .from("mahasiswa")
+              .select("id, nim, user_id")
+              .in("id", peminjamIds)
+          : Promise.resolve({ data: [] }),
+        dosenIds.length > 0
+          ? supabase.from("dosen").select("id, nip, user_id").in("id", dosenIds)
+          : Promise.resolve({ data: [] }),
+        inventarisIds.length > 0
+          ? supabase
+              .from("inventaris")
+              .select(
+                "id, kode_barang, nama_barang, laboratorium_id, laboratorium!inventaris_laboratorium_id_fkey(nama_lab)",
+              )
+              .in("id", inventarisIds)
+          : Promise.resolve({ data: [] }),
+        approverIds.length > 0
+          ? supabase
+              .from("users")
+              .select("id, full_name, role")
+              .in("id", approverIds)
+          : Promise.resolve({ data: [] }),
+      ]);
+
+    // Fetch all user names
+    const allUserIds = [
+      ...new Set([
+        ...(mahasiswaData.data?.map((m: any) => m.user_id).filter(Boolean) ||
+          []),
+        ...(dosenData.data?.map((d: any) => d.user_id).filter(Boolean) || []),
+        ...(approverData.data?.map((a: any) => a.id).filter(Boolean) || []),
+      ]),
+    ];
+    const usersData =
+      allUserIds.length > 0
+        ? await supabase
             .from("users")
-            .select("id, full_name, role")
-            .in("id", approverIds)
-        : Promise.resolve({ data: [] }),
-    ]);
+            .select("id, full_name")
+            .in("id", allUserIds)
+        : { data: [] };
 
     const mahasiswaMap = new Map(
       (mahasiswaData.data?.map((m: any) => [m.id, m]) || []) as [string, any][],
+    );
+    const dosenMap = new Map(
+      (dosenData.data?.map((d: any) => [d.id, d]) || []) as [string, any][],
     );
     const inventarisMap = new Map(
       (inventarisData.data?.map((i: any) => [i.id, i]) || []) as [
@@ -1295,16 +1387,38 @@ export async function getApprovalHistory(
     const approverMap = new Map(
       (approverData.data?.map((a: any) => [a.id, a]) || []) as [string, any][],
     );
+    const usersMap = new Map(
+      (usersData.data?.map((u: any) => [u.id, u]) || []) as [string, any][],
+    );
 
     return (data || []).map((item: any) => {
-      const mahasiswa = mahasiswaMap.get(item.peminjam_id);
       const inventaris = inventarisMap.get(item.inventaris_id);
       const approver = approverMap.get(item.approved_by);
 
+      // Check if peminjam is mahasiswa or dosen
+      let peminjamNama = "Unknown";
+      let peminjamNim = "-";
+
+      if (item.dosen_id) {
+        // Peminjam is DOSEN
+        const dosen = dosenMap.get(item.dosen_id);
+        const user = dosen?.user_id ? usersMap.get(dosen.user_id) : null;
+        peminjamNama = user?.full_name || dosen?.nip || "Unknown";
+        peminjamNim = dosen?.nip || "-";
+      } else if (item.peminjam_id) {
+        // Peminjam is MAHASISWA
+        const mahasiswa = mahasiswaMap.get(item.peminjam_id);
+        const user = mahasiswa?.user_id
+          ? usersMap.get(mahasiswa.user_id)
+          : null;
+        peminjamNama = user?.full_name || mahasiswa?.nim || "Unknown";
+        peminjamNim = mahasiswa?.nim || "-";
+      }
+
       return {
         id: item.id,
-        peminjam_nama: mahasiswa?.users?.full_name || "Unknown",
-        peminjam_nim: mahasiswa?.nim || "-",
+        peminjam_nama: peminjamNama,
+        peminjam_nim: peminjamNim,
         inventaris_nama: inventaris?.nama_barang || "Unknown",
         inventaris_kode: inventaris?.kode_barang || "-",
         laboratorium_nama: inventaris?.laboratorium?.nama_lab || "-",
@@ -1376,6 +1490,7 @@ export async function getActiveBorrowings(
         id,
         inventaris_id,
         peminjam_id,
+        dosen_id,
         jumlah_pinjam,
         tanggal_pinjam,
         tanggal_kembali_rencana,
@@ -1399,6 +1514,13 @@ export async function getActiveBorrowings(
           .filter((id): id is string => Boolean(id)),
       ),
     ];
+    const dosenIds = [
+      ...new Set(
+        data
+          ?.map((item) => item.dosen_id)
+          .filter((id): id is string => Boolean(id)),
+      ),
+    ];
     const inventarisIds = [
       ...new Set(
         data
@@ -1407,12 +1529,15 @@ export async function getActiveBorrowings(
       ),
     ];
 
-    const [mahasiswaData, inventarisData] = await Promise.all([
+    const [mahasiswaData, dosenData, inventarisData] = await Promise.all([
       peminjamIds.length > 0
         ? supabase
             .from("mahasiswa")
-            .select("id, nim, user_id, users!mahasiswa_user_id_fkey(full_name)")
+            .select("id, nim, user_id")
             .in("id", peminjamIds)
+        : Promise.resolve({ data: [] }),
+      dosenIds.length > 0
+        ? supabase.from("dosen").select("id, nip, user_id").in("id", dosenIds)
         : Promise.resolve({ data: [] }),
       inventarisIds.length > 0
         ? supabase
@@ -1424,8 +1549,27 @@ export async function getActiveBorrowings(
         : Promise.resolve({ data: [] }),
     ]);
 
+    // Fetch all user names
+    const allUserIds = [
+      ...new Set([
+        ...(mahasiswaData.data?.map((m: any) => m.user_id).filter(Boolean) ||
+          []),
+        ...(dosenData.data?.map((d: any) => d.user_id).filter(Boolean) || []),
+      ]),
+    ];
+    const usersData =
+      allUserIds.length > 0
+        ? await supabase
+            .from("users")
+            .select("id, full_name")
+            .in("id", allUserIds)
+        : { data: [] };
+
     const mahasiswaMap = new Map(
       (mahasiswaData.data?.map((m: any) => [m.id, m]) || []) as [string, any][],
+    );
+    const dosenMap = new Map(
+      (dosenData.data?.map((d: any) => [d.id, d]) || []) as [string, any][],
     );
     const inventarisMap = new Map(
       (inventarisData.data?.map((i: any) => [i.id, i]) || []) as [
@@ -1433,13 +1577,35 @@ export async function getActiveBorrowings(
         any,
       ][],
     );
+    const usersMap = new Map(
+      (usersData.data?.map((u: any) => [u.id, u]) || []) as [string, any][],
+    );
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
     return (data || []).map((item: any) => {
-      const mahasiswa = mahasiswaMap.get(item.peminjam_id);
       const inventaris = inventarisMap.get(item.inventaris_id);
+
+      // Check if peminjam is mahasiswa or dosen
+      let peminjamNama = "Unknown";
+      let peminjamNim = "-";
+
+      if (item.dosen_id) {
+        // Peminjam is DOSEN
+        const dosen = dosenMap.get(item.dosen_id);
+        const user = dosen?.user_id ? usersMap.get(dosen.user_id) : null;
+        peminjamNama = user?.full_name || dosen?.nip || "Unknown";
+        peminjamNim = dosen?.nip || "-";
+      } else if (item.peminjam_id) {
+        // Peminjam is MAHASISWA
+        const mahasiswa = mahasiswaMap.get(item.peminjam_id);
+        const user = mahasiswa?.user_id
+          ? usersMap.get(mahasiswa.user_id)
+          : null;
+        peminjamNama = user?.full_name || mahasiswa?.nim || "Unknown";
+        peminjamNim = mahasiswa?.nim || "-";
+      }
 
       const returnDate = new Date(item.tanggal_kembali_rencana);
       returnDate.setHours(0, 0, 0, 0);
@@ -1452,8 +1618,8 @@ export async function getActiveBorrowings(
 
       return {
         id: item.id,
-        peminjam_nama: mahasiswa?.users?.full_name || "Unknown",
-        peminjam_nim: mahasiswa?.nim || "-",
+        peminjam_nama: peminjamNama,
+        peminjam_nim: peminjamNim,
         inventaris_id: item.inventaris_id,
         inventaris_nama: inventaris?.nama_barang || "Unknown",
         inventaris_kode: inventaris?.kode_barang || "-",
@@ -1488,6 +1654,7 @@ export async function getReturnedBorrowings(
         id,
         inventaris_id,
         peminjam_id,
+        dosen_id,
         jumlah_pinjam,
         tanggal_pinjam,
         tanggal_kembali_rencana,
@@ -1513,6 +1680,13 @@ export async function getReturnedBorrowings(
           .filter((id): id is string => Boolean(id)),
       ),
     ];
+    const dosenIds = [
+      ...new Set(
+        data
+          ?.map((item) => item.dosen_id)
+          .filter((id): id is string => Boolean(id)),
+      ),
+    ];
     const inventarisIds = [
       ...new Set(
         data
@@ -1521,12 +1695,15 @@ export async function getReturnedBorrowings(
       ),
     ];
 
-    const [mahasiswaData, inventarisData] = await Promise.all([
+    const [mahasiswaData, dosenData, inventarisData] = await Promise.all([
       peminjamIds.length > 0
         ? supabase
             .from("mahasiswa")
-            .select("id, nim, user_id, users!mahasiswa_user_id_fkey(full_name)")
+            .select("id, nim, user_id")
             .in("id", peminjamIds)
+        : Promise.resolve({ data: [] }),
+      dosenIds.length > 0
+        ? supabase.from("dosen").select("id, nip, user_id").in("id", dosenIds)
         : Promise.resolve({ data: [] }),
       inventarisIds.length > 0
         ? supabase
@@ -1538,8 +1715,27 @@ export async function getReturnedBorrowings(
         : Promise.resolve({ data: [] }),
     ]);
 
+    // Fetch all user names
+    const allUserIds = [
+      ...new Set([
+        ...(mahasiswaData.data?.map((m: any) => m.user_id).filter(Boolean) ||
+          []),
+        ...(dosenData.data?.map((d: any) => d.user_id).filter(Boolean) || []),
+      ]),
+    ];
+    const usersData =
+      allUserIds.length > 0
+        ? await supabase
+            .from("users")
+            .select("id, full_name")
+            .in("id", allUserIds)
+        : { data: [] };
+
     const mahasiswaMap = new Map(
       (mahasiswaData.data?.map((m: any) => [m.id, m]) || []) as [string, any][],
+    );
+    const dosenMap = new Map(
+      (dosenData.data?.map((d: any) => [d.id, d]) || []) as [string, any][],
     );
     const inventarisMap = new Map(
       (inventarisData.data?.map((i: any) => [i.id, i]) || []) as [
@@ -1547,10 +1743,32 @@ export async function getReturnedBorrowings(
         any,
       ][],
     );
+    const usersMap = new Map(
+      (usersData.data?.map((u: any) => [u.id, u]) || []) as [string, any][],
+    );
 
     return (data || []).map((item: any) => {
-      const mahasiswa = mahasiswaMap.get(item.peminjam_id);
       const inventaris = inventarisMap.get(item.inventaris_id);
+
+      // Check if peminjam is mahasiswa or dosen
+      let peminjamNama = "Unknown";
+      let peminjamNim = "-";
+
+      if (item.dosen_id) {
+        // Peminjam is DOSEN
+        const dosen = dosenMap.get(item.dosen_id);
+        const user = dosen?.user_id ? usersMap.get(dosen.user_id) : null;
+        peminjamNama = user?.full_name || dosen?.nip || "Unknown";
+        peminjamNim = dosen?.nip || "-";
+      } else if (item.peminjam_id) {
+        // Peminjam is MAHASISWA
+        const mahasiswa = mahasiswaMap.get(item.peminjam_id);
+        const user = mahasiswa?.user_id
+          ? usersMap.get(mahasiswa.user_id)
+          : null;
+        peminjamNama = user?.full_name || mahasiswa?.nim || "Unknown";
+        peminjamNim = mahasiswa?.nim || "-";
+      }
 
       const returnDate = new Date(item.tanggal_kembali_rencana);
       returnDate.setHours(0, 0, 0, 0);
@@ -1560,11 +1778,11 @@ export async function getReturnedBorrowings(
 
       return {
         id: item.id,
-        peminjam_nama: (mahasiswa as any)?.users?.full_name || "Unknown",
-        peminjam_nim: (mahasiswa as any)?.nim || "-",
-        inventaris_nama: (inventaris as any)?.nama_barang || "Unknown",
-        inventaris_kode: (inventaris as any)?.kode_barang || "-",
-        laboratorium_nama: (inventaris as any)?.laboratorium?.nama_lab || "-",
+        peminjam_nama: peminjamNama,
+        peminjam_nim: peminjamNim,
+        inventaris_nama: inventaris?.nama_barang || "Unknown",
+        inventaris_kode: inventaris?.kode_barang || "-",
+        laboratorium_nama: inventaris?.laboratorium?.nama_lab || "-",
         jumlah_pinjam: item.jumlah_pinjam,
         tanggal_pinjam: item.tanggal_pinjam,
         tanggal_kembali_rencana: item.tanggal_kembali_rencana,

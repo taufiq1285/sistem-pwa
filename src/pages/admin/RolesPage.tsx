@@ -246,12 +246,16 @@ export default function RolesPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Roles & Permissions</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-4xl font-extrabold">Roles & Permissions</h1>
+          <p className="text-lg font-semibold text-muted-foreground mt-2">
             Manage user roles and access permissions across the system
           </p>
         </div>
-        <Button variant="outline" onClick={loadStats}>
+        <Button
+          variant="outline"
+          onClick={loadStats}
+          className="font-semibold border-2"
+        >
           <RefreshCw className="h-4 w-4 mr-2" />
           Refresh
         </Button>
@@ -268,7 +272,7 @@ export default function RolesPage() {
             {roles.map((role) => (
               <Card
                 key={role.key}
-                className="hover:shadow-lg transition-shadow"
+                className="hover:shadow-xl transition-shadow border-0 shadow-lg"
               >
                 <CardHeader>
                   <div className="flex items-center justify-between">
@@ -279,18 +283,24 @@ export default function RolesPage() {
                         className={`h-6 w-6 ${role.color.replace("bg-", "text-")}`}
                       />
                     </div>
-                    <Badge variant={role.variant}>{role.name}</Badge>
+                    <Badge variant={role.variant} className="font-semibold">
+                      {role.name}
+                    </Badge>
                   </div>
-                  <CardTitle className="mt-4 text-2xl">{role.users}</CardTitle>
-                  <p className="text-xs text-muted-foreground">Active users</p>
+                  <CardTitle className="mt-4 text-4xl font-extrabold">
+                    {role.users}
+                  </CardTitle>
+                  <p className="text-base font-bold text-muted-foreground">
+                    Active users
+                  </p>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-base font-semibold text-muted-foreground">
                       {role.description}
                     </p>
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-1 text-sm font-semibold text-muted-foreground">
                         <Lock className="h-3 w-3" />
                         <span>{getTotalPermissions(role)} permissions</span>
                       </div>
@@ -298,6 +308,7 @@ export default function RolesPage() {
                         variant="ghost"
                         size="sm"
                         onClick={() => handleViewDetails(role)}
+                        className="font-semibold"
                       >
                         <Eye className="h-4 w-4 mr-1" />
                         View
@@ -310,51 +321,62 @@ export default function RolesPage() {
           </div>
 
           {/* Summary Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle>System Overview</CardTitle>
-              <CardDescription>Total users across all roles</CardDescription>
+          <Card className="border-0 shadow-xl">
+            <CardHeader className="p-6">
+              <CardTitle className="text-xl font-bold">
+                System Overview
+              </CardTitle>
+              <CardDescription className="text-base font-semibold mt-1">
+                Total users across all roles
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid gap-4 md:grid-cols-3">
-                <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="flex items-center justify-between p-5 border-2 rounded-lg bg-linear-to-r from-blue-50 to-blue-100">
                   <div>
-                    <p className="text-sm text-muted-foreground">Total Users</p>
-                    <p className="text-2xl font-bold">{stats.total}</p>
+                    <p className="text-base font-semibold text-muted-foreground">
+                      Total Users
+                    </p>
+                    <p className="text-4xl font-extrabold">{stats.total}</p>
                   </div>
-                  <UsersIcon className="h-8 w-8 text-muted-foreground" />
+                  <UsersIcon className="h-8 w-8 text-blue-600" />
                 </div>
-                <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="flex items-center justify-between p-5 border-2 rounded-lg bg-linear-to-r from-green-50 to-green-100">
                   <div>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-base font-semibold text-muted-foreground">
                       Active Users
                     </p>
-                    <p className="text-2xl font-bold text-green-600">
+                    <p className="text-4xl font-extrabold text-green-600">
                       {stats.active}
                     </p>
                   </div>
-                  <Badge variant="outline" className="bg-green-50">
+                  <Badge
+                    variant="outline"
+                    className="bg-green-50 text-green-700 font-semibold"
+                  >
                     Active
                   </Badge>
                 </div>
-                <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="flex items-center justify-between p-5 border-2 rounded-lg bg-linear-to-r from-gray-50 to-gray-100">
                   <div>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-base font-semibold text-muted-foreground">
                       Inactive Users
                     </p>
-                    <p className="text-2xl font-bold text-gray-600">
+                    <p className="text-4xl font-extrabold text-gray-600">
                       {stats.inactive}
                     </p>
                   </div>
-                  <Badge variant="secondary">Inactive</Badge>
+                  <Badge variant="secondary" className="font-semibold">
+                    Inactive
+                  </Badge>
                 </div>
               </div>
             </CardContent>
           </Card>
 
           {/* Info Card */}
-          <Card className="border-blue-200 bg-blue-50/50">
-            <CardContent className="pt-6">
+          <Card className="border-2 border-blue-200 bg-blue-50/50 shadow-xl">
+            <CardContent className="pt-6 p-6">
               <div className="flex items-start gap-3">
                 <FileText className="h-5 w-5 text-blue-600 mt-0.5" />
                 <div className="space-y-1">
@@ -377,28 +399,34 @@ export default function RolesPage() {
 
       {/* Detail Dialog */}
       <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto p-6">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
+            <DialogTitle className="flex items-center gap-2 text-xl font-bold">
               <Shield className="h-5 w-5" />
               {selectedRole?.name} Permissions
             </DialogTitle>
-            <DialogDescription>{selectedRole?.description}</DialogDescription>
+            <DialogDescription className="text-base font-semibold">
+              {selectedRole?.description}
+            </DialogDescription>
           </DialogHeader>
 
           {selectedRole && (
             <div className="space-y-6">
               {/* Stats */}
               <div className="grid grid-cols-2 gap-4">
-                <div className="p-3 border rounded-lg">
-                  <p className="text-sm text-muted-foreground">Active Users</p>
-                  <p className="text-2xl font-bold">{selectedRole.users}</p>
+                <div className="p-4 border-2 rounded-lg bg-blue-50">
+                  <p className="text-base font-semibold text-muted-foreground">
+                    Active Users
+                  </p>
+                  <p className="text-4xl font-extrabold">
+                    {selectedRole.users}
+                  </p>
                 </div>
-                <div className="p-3 border rounded-lg">
-                  <p className="text-sm text-muted-foreground">
+                <div className="p-4 border-2 rounded-lg bg-purple-50">
+                  <p className="text-base font-semibold text-muted-foreground">
                     Total Permissions
                   </p>
-                  <p className="text-2xl font-bold">
+                  <p className="text-4xl font-extrabold">
                     {getTotalPermissions(selectedRole)}
                   </p>
                 </div>
@@ -406,7 +434,7 @@ export default function RolesPage() {
 
               {/* Permissions by Category */}
               <div className="space-y-4">
-                <h3 className="font-semibold text-lg">Capabilities</h3>
+                <h3 className="font-bold text-lg">Capabilities</h3>
                 {selectedRole.permissions.map((category, idx) => (
                   <div key={idx} className="border rounded-lg p-4 space-y-3">
                     <div className="flex items-center gap-2">
@@ -432,6 +460,7 @@ export default function RolesPage() {
                 <Button
                   variant="outline"
                   onClick={() => setIsDetailDialogOpen(false)}
+                  className="font-semibold border-2"
                 >
                   Close
                 </Button>

@@ -166,7 +166,9 @@ export default function PersetujuanPage() {
       <div className="space-y-6">
         {/* Page Header */}
         <div>
-          <h1 className="text-3xl font-bold">Persetujuan Peminjaman Alat</h1>
+          <h1 className="text-4xl font-extrabold">
+            Persetujuan Peminjaman Alat
+          </h1>
           <p className="text-muted-foreground">
             Kelola persetujuan peminjaman alat laboratorium
           </p>
@@ -191,7 +193,7 @@ export default function PersetujuanPage() {
         )}
 
         {/* Statistics Card */}
-        <Card>
+        <Card className="border-0 shadow-xl p-6">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               Pending Peminjaman Alat
@@ -199,7 +201,9 @@ export default function PersetujuanPage() {
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{equipmentRequests.length}</div>
+            <div className="text-4xl font-extrabold">
+              {equipmentRequests.length}
+            </div>
             <p className="text-xs text-muted-foreground">
               Permintaan peminjaman yang perlu disetujui
             </p>
@@ -222,7 +226,7 @@ export default function PersetujuanPage() {
         </div>
 
         {/* Equipment Borrowing Requests */}
-        <Card>
+        <Card className="border-0 shadow-xl p-6">
           <CardHeader>
             <CardTitle>Permintaan Peminjaman Alat</CardTitle>
             <CardDescription>

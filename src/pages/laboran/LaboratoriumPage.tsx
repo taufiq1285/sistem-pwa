@@ -277,7 +277,7 @@ export default function LaboratoriumPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Laboratorium</h1>
+            <h1 className="text-4xl font-extrabold">Laboratorium</h1>
             <p className="text-muted-foreground">
               Kelola informasi laboratorium dan fasilitas
             </p>
@@ -296,7 +296,7 @@ export default function LaboratoriumPage() {
 
         {/* Statistics Cards */}
         <div className="grid gap-4 md:grid-cols-3">
-          <Card>
+          <Card className="border-0 shadow-xl p-6">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
                 Total Laboratorium
@@ -304,14 +304,16 @@ export default function LaboratoriumPage() {
               <Building2 className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{laboratories.length}</div>
+              <div className="text-4xl font-extrabold">
+                {laboratories.length}
+              </div>
               <p className="text-xs text-muted-foreground">
                 Laboratorium aktif
               </p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border-0 shadow-xl p-6">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
                 Total Kapasitas
@@ -319,7 +321,7 @@ export default function LaboratoriumPage() {
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
+              <div className="text-4xl font-extrabold">
                 {laboratories.reduce(
                   (sum, lab) => sum + (lab.kapasitas || 0),
                   0,
@@ -329,7 +331,7 @@ export default function LaboratoriumPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border-0 shadow-xl p-6">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
                 Rata-rata Kapasitas
@@ -337,7 +339,7 @@ export default function LaboratoriumPage() {
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
+              <div className="text-4xl font-extrabold">
                 {laboratories.length > 0
                   ? Math.round(
                       laboratories.reduce(
@@ -366,7 +368,7 @@ export default function LaboratoriumPage() {
         </div>
 
         {/* Laboratories Table */}
-        <Card>
+        <Card className="border-0 shadow-xl p-6">
           <CardHeader>
             <CardTitle>Daftar Laboratorium</CardTitle>
             <CardDescription>
@@ -474,7 +476,7 @@ export default function LaboratoriumPage() {
           {selectedLab && (
             <div className="space-y-6">
               {/* Lab Info */}
-              <Card>
+              <Card className="border-0 shadow-xl p-6">
                 <CardHeader>
                   <CardTitle>Informasi Laboratorium</CardTitle>
                 </CardHeader>
@@ -530,7 +532,7 @@ export default function LaboratoriumPage() {
               </Card>
 
               {/* Schedule */}
-              <Card>
+              <Card className="border-0 shadow-xl p-6">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Calendar className="h-4 w-4" />
@@ -580,7 +582,7 @@ export default function LaboratoriumPage() {
               </Card>
 
               {/* Equipment */}
-              <Card>
+              <Card className="border-0 shadow-xl p-6">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Package className="h-4 w-4" />

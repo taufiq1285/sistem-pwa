@@ -149,40 +149,46 @@ export default function KelasMataKuliahPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">
+        <h1 className="text-4xl font-extrabold tracking-tight">
           Assign Mata Kuliah ke Kelas
         </h1>
-        <p className="text-muted-foreground">
+        <p className="text-lg font-semibold text-muted-foreground mt-2">
           Atur mata kuliah untuk kelas yang belum memiliki mata kuliah
         </p>
       </div>
 
       {/* Summary */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
+        <Card className="border-0 shadow-lg bg-linear-to-r from-blue-500 to-blue-600 text-white">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">Total Kelas Aktif</CardTitle>
+            <CardTitle className="text-base font-bold text-white">
+              Total Kelas Aktif
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{kelasList.length}</div>
+            <div className="text-4xl font-extrabold">{kelasList.length}</div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="border-0 shadow-lg bg-linear-to-r from-orange-500 to-orange-600 text-white">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">Belum Ada Mata Kuliah</CardTitle>
+            <CardTitle className="text-base font-bold text-white">
+              Belum Ada Mata Kuliah
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-600">
+            <div className="text-4xl font-extrabold">
               {kelasWithoutMK.length}
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="border-0 shadow-lg bg-linear-to-r from-green-500 to-green-600 text-white">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">Sudah Ada Mata Kuliah</CardTitle>
+            <CardTitle className="text-base font-bold text-white">
+              Sudah Ada Mata Kuliah
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">
+            <div className="text-4xl font-extrabold">
               {kelasList.length - kelasWithoutMK.length}
             </div>
           </CardContent>
@@ -204,7 +210,11 @@ export default function KelasMataKuliahPage() {
       {/* Controls */}
       {hasChanges && (
         <div className="flex justify-end">
-          <Button onClick={handleSave} disabled={saving}>
+          <Button
+            onClick={handleSave}
+            disabled={saving}
+            className="font-semibold bg-linear-to-r from-blue-500 to-indigo-600"
+          >
             {saving ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -221,10 +231,10 @@ export default function KelasMataKuliahPage() {
       )}
 
       {/* Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Daftar Kelas</CardTitle>
-          <CardDescription>
+      <Card className="border-0 shadow-xl">
+        <CardHeader className="p-6">
+          <CardTitle className="text-xl font-bold">Daftar Kelas</CardTitle>
+          <CardDescription className="text-base font-semibold mt-1">
             Kelas yang perlu diassign mata kuliah
           </CardDescription>
         </CardHeader>
@@ -238,10 +248,14 @@ export default function KelasMataKuliahPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nama Kelas</TableHead>
-                  <TableHead>Kode Kelas</TableHead>
-                  <TableHead>Mata Kuliah Saat Ini</TableHead>
-                  <TableHead>Pilih Mata Kuliah</TableHead>
+                  <TableHead className="font-semibold">Nama Kelas</TableHead>
+                  <TableHead className="font-semibold">Kode Kelas</TableHead>
+                  <TableHead className="font-semibold">
+                    Mata Kuliah Saat Ini
+                  </TableHead>
+                  <TableHead className="font-semibold">
+                    Pilih Mata Kuliah
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -297,9 +311,9 @@ export default function KelasMataKuliahPage() {
       </Card>
 
       {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
+      <Card className="border-0 shadow-xl">
+        <CardHeader className="p-6">
+          <CardTitle className="text-xl font-bold">Quick Actions</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <p>Atau gunakan SQL script untuk batch update:</p>
@@ -322,6 +336,7 @@ WHERE mata_kuliah_id IS NULL;`,
               );
               toast.success("SQL script copied to clipboard!");
             }}
+            className="font-semibold border-2"
           >
             Copy SQL Script
           </Button>

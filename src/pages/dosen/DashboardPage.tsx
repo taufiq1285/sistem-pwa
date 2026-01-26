@@ -633,7 +633,7 @@ export function DashboardPage() {
         <div className="flex items-center justify-between">
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-bold">Dashboard Dosen v2.0</h1>
+              <h1 className="text-4xl font-extrabold">Dashboard Dosen v2.0</h1>
               {hasDataChanges && (
                 <div className="flex items-center gap-1 px-2 py-1 bg-orange-100 text-orange-800 rounded-full text-sm font-medium">
                   <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
@@ -641,10 +641,10 @@ export function DashboardPage() {
                 </div>
               )}
             </div>
-            <p className="text-gray-500 mt-1">
+            <p className="text-lg font-semibold mt-1">
               Selamat datang, {user?.full_name || user?.email}
               {lastRefresh && (
-                <span className="ml-2 text-xs text-gray-400">
+                <span className="ml-2 text-sm text-gray-400">
                   • Terakhir diperbarui:{" "}
                   {lastRefresh.toLocaleTimeString("id-ID")}
                 </span>
@@ -670,7 +670,7 @@ export function DashboardPage() {
                     setLastRefresh(new Date());
                   });
                 }}
-                className="border-orange-200 text-orange-700 hover:bg-orange-50"
+                className="border-orange-200 text-orange-700 hover:bg-orange-50 font-semibold border-2"
               >
                 <RefreshCw className="h-4 w-4" />
                 Perbarui
@@ -688,6 +688,7 @@ export function DashboardPage() {
                 });
               }}
               disabled={loading || isRefreshing}
+              className="font-semibold border-2"
             >
               <RefreshCw
                 className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
@@ -706,13 +707,13 @@ export function DashboardPage() {
 
         <div className="grid gap-6 lg:grid-cols-2">
           {/* Assignment Saya */}
-          <Card>
+          <Card className="border-0 shadow-xl p-6">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2 text-base font-bold">
                 <Users className="h-5 w-5" />
                 Assignment Diberikan
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-base font-semibold">
                 {assignments.length} assignment dengan{" "}
                 {assignments.reduce((sum, a) => sum + a.total_mahasiswa, 0)}{" "}
                 mahasiswa
@@ -722,7 +723,7 @@ export function DashboardPage() {
                   variant="ghost"
                   size="sm"
                   onClick={() => navigate("/dosen/jadwal")}
-                  className="ml-auto"
+                  className="ml-auto font-semibold"
                 >
                   <Eye className="h-4 w-4 mr-1" />
                   Kelola Jadwal
@@ -733,10 +734,10 @@ export function DashboardPage() {
               {assignments.length === 0 ? (
                 <div className="text-center py-8">
                   <Users className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                  <p className="text-sm text-gray-600 font-medium">
+                  <p className="text-base font-medium">
                     Belum ada assignment yang diberikan
                   </p>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-sm text-gray-500 mt-1">
                     Hubungi admin untuk penugasan assignment
                   </p>
                 </div>
@@ -748,34 +749,34 @@ export function DashboardPage() {
                       className="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
                       onClick={() => navigate("/dosen/jadwal")}
                     >
-                      <div className="flex-shrink-0">
+                      <div className="shrink-0">
                         <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                           <BookOpen className="h-5 w-5 text-blue-600" />
                         </div>
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <h4 className="font-medium text-sm">
+                          <h4 className="font-medium text-base">
                             {assignment.mata_kuliah.nama_mk}
                           </h4>
-                          <Badge variant="secondary" className="text-xs">
+                          <Badge variant="secondary" className="text-sm">
                             {assignment.mata_kuliah.kode_mk}
                           </Badge>
                         </div>
-                        <p className="text-xs text-gray-600 mt-1">
+                        <p className="text-sm text-gray-600 mt-1">
                           {assignment.kelas.nama_kelas} •{" "}
                           {assignment.kelas.tahun_ajaran}
                         </p>
                         <div className="flex items-center gap-4 mt-2">
-                          <span className="text-xs text-blue-600 font-medium">
+                          <span className="text-sm text-blue-600 font-bold">
                             <Users className="h-3 w-3 mr-1" />
                             {assignment.total_mahasiswa} mahasiswa
                           </span>
-                          <span className="text-xs text-green-600 font-medium">
+                          <span className="text-sm text-green-600 font-bold">
                             <Calendar className="h-3 w-3 mr-1" />
                             {assignment.total_jadwal} jadwal
                           </span>
-                          <span className="text-xs text-gray-500">
+                          <span className="text-sm text-gray-500">
                             {assignment.kelas.semester_ajaran} semester
                           </span>
                         </div>
@@ -789,13 +790,15 @@ export function DashboardPage() {
           </Card>
 
           {/* Jadwal Mengajar */}
-          <Card>
+          <Card className="border-0 shadow-xl p-6">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2 text-base font-bold">
                 <Calendar className="h-5 w-5" />
                 Jadwal Mengajar
               </CardTitle>
-              <CardDescription>Praktikum 7 hari ke depan</CardDescription>
+              <CardDescription className="text-base font-semibold">
+                Praktikum 7 hari ke depan
+              </CardDescription>
               {upcomingPracticum.length > 0 && (
                 <Button
                   variant="ghost"
@@ -812,10 +815,10 @@ export function DashboardPage() {
               {upcomingPracticum.length === 0 ? (
                 <div className="text-center py-8">
                   <Calendar className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                  <p className="text-sm text-gray-600 font-medium">
+                  <p className="text-base font-medium">
                     Tidak ada jadwal minggu ini
                   </p>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-sm text-gray-500 mt-1">
                     Jadwal praktikum akan muncul di sini
                   </p>
                 </div>
@@ -826,30 +829,30 @@ export function DashboardPage() {
                       key={jadwal.id}
                       className="flex gap-3 p-3 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
                     >
-                      <div className="flex-shrink-0">
+                      <div className="shrink-0">
                         <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
                           <Calendar className="h-5 w-5 text-purple-600" />
                         </div>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-medium text-sm truncate">
+                        <h4 className="font-medium text-base truncate">
                           {jadwal.mata_kuliah_nama}
                         </h4>
-                        <p className="text-xs text-gray-500 mt-1">
+                        <p className="text-sm text-gray-500 mt-1">
                           {jadwal.kelas_nama} • {jadwal.topik}
                         </p>
                         <div className="flex items-center gap-3 mt-2">
-                          <span className="text-xs text-purple-600 font-medium">
+                          <span className="text-sm text-purple-600 font-bold">
                             <Clock className="h-3 w-3 mr-1" />
                             {dayNames[jadwal.hari.toLowerCase()] || jadwal.hari}
                             , {formatDate(jadwal.tanggal_praktikum)}
                           </span>
-                          <span className="text-xs text-purple-600 font-medium">
+                          <span className="text-sm text-purple-600 font-bold">
                             {formatTime(jadwal.jam_mulai)} -{" "}
                             {formatTime(jadwal.jam_selesai)}
                           </span>
                         </div>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-sm text-gray-500">
                           📍 {jadwal.lab_nama}
                         </p>
                       </div>
@@ -864,13 +867,13 @@ export function DashboardPage() {
 
         <div className="grid gap-6 lg:grid-cols-2">
           {/* Menunggu Penilaian */}
-          <Card>
+          <Card className="border-0 shadow-xl p-6">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2 text-base font-bold">
                 <AlertTriangle className="h-5 w-5" />
                 Menunggu Penilaian
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-base font-semibold">
                 {stats?.pendingGrading || 0} tugas perlu dinilai
               </CardDescription>
               {pendingGrading.length > 0 && (
@@ -889,10 +892,10 @@ export function DashboardPage() {
               {pendingGrading.length === 0 ? (
                 <div className="text-center py-8">
                   <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-3" />
-                  <p className="text-sm text-gray-600 font-medium">
+                  <p className="text-base font-medium">
                     Semua tugas sudah dinilai
                   </p>
-                  <p className="text-xs text-gray-500 mt-1">Kerja bagus! 🎉</p>
+                  <p className="text-sm text-gray-500 mt-1">Kerja bagus! 🎉</p>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -904,26 +907,26 @@ export function DashboardPage() {
                         navigate(`/dosen/penilaian?task=${item.id}`)
                       }
                     >
-                      <div className="flex-shrink-0">
+                      <div className="shrink-0">
                         <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
                           <Edit className="h-5 w-5 text-orange-600" />
                         </div>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-medium text-sm truncate">
+                        <h4 className="font-medium text-base truncate">
                           {item.mahasiswa_nama}
                         </h4>
-                        <p className="text-xs text-gray-500 mt-0.5">
+                        <p className="text-sm text-gray-500 mt-0.5">
                           NIM: {item.mahasiswa_nim}
                         </p>
-                        <p className="text-xs text-gray-500 mt-0.5">
+                        <p className="text-sm text-gray-500 mt-0.5">
                           {item.mata_kuliah_nama} • {item.kuis_judul}
                         </p>
                         <div className="flex items-center gap-3 mt-2">
-                          <span className="text-xs text-orange-600 font-medium">
+                          <span className="text-sm text-orange-600 font-bold">
                             Attempt #{item.attempt_number}
                           </span>
-                          <span className="text-xs text-gray-400">
+                          <span className="text-sm text-gray-400">
                             📅 {formatDate(item.submitted_at)}
                           </span>
                         </div>
@@ -937,13 +940,13 @@ export function DashboardPage() {
           </Card>
 
           {/* Tugas Aktif */}
-          <Card>
+          <Card className="border-0 shadow-xl p-6">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2 text-base font-bold">
                 <Target className="h-5 w-5" />
                 Tugas Aktif
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-base font-semibold">
                 {stats?.activeKuis || 0} kuis sedang berjalan
               </CardDescription>
               {activeKuis.length > 0 && (
@@ -962,10 +965,8 @@ export function DashboardPage() {
               {activeKuis.length === 0 ? (
                 <div className="text-center py-8">
                   <XCircle className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                  <p className="text-sm text-gray-600 font-medium">
-                    Tidak ada tugas aktif
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-base font-medium">Tidak ada tugas aktif</p>
+                  <p className="text-sm text-gray-500 mt-1">
                     Buat tugas baru untuk memulai kembali
                   </p>
                 </div>
@@ -977,29 +978,29 @@ export function DashboardPage() {
                       className="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
                       onClick={() => navigate(`/dosen/kuis/${kuis.id}`)}
                     >
-                      <div className="flex-shrink-0">
+                      <div className="shrink-0">
                         <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
                           <Eye className="h-5 w-5 text-purple-600" />
                         </div>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-medium text-sm truncate">
+                        <h4 className="font-medium text-base truncate">
                           {kuis.judul}
                         </h4>
-                        <p className="text-xs text-gray-500 mt-1">
+                        <p className="text-sm text-gray-500 mt-1">
                           {kuis.kelas_nama}
                         </p>
                         <div className="flex items-center gap-4 mt-2">
-                          <span className="text-xs text-purple-600 font-medium">
+                          <span className="text-sm text-purple-600 font-bold">
                             ⏰ {formatDate(kuis.tanggal_mulai)} -{" "}
                             {formatDate(kuis.tanggal_selesai)}
                           </span>
                         </div>
                         <div className="flex items-center gap-3 mt-1">
-                          <span className="text-xs text-blue-600 font-medium">
+                          <span className="text-sm text-blue-600 font-bold">
                             ✅ {kuis.submitted_count}/{kuis.total_attempts}
                           </span>
-                          <span className="text-xs text-gray-400">
+                          <span className="text-sm text-gray-400">
                             Dikumpulkan
                           </span>
                         </div>
@@ -1019,13 +1020,13 @@ export function DashboardPage() {
         open={!!selectedKelas}
         onOpenChange={() => setSelectedKelas(null)}
       >
-        <DialogContent className="max-w-2xl max-h-[80vh]">
+        <DialogContent className="max-w-2xl max-h-[80vh] p-6">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
+            <DialogTitle className="flex items-center gap-2 text-xl font-bold">
               <BookOpen className="h-5 w-5" />
               Detail Kelas
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-base font-semibold">
               Informasi lengkap kelas dan daftar mahasiswa
             </DialogDescription>
           </DialogHeader>

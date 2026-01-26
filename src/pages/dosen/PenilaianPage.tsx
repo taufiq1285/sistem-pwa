@@ -759,7 +759,7 @@ export default function DosenPenilaianPage() {
       {!selectedKelas && (
         <div className="space-y-6">
           {/* Welcome Card */}
-          <Card className="border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50">
+          <Card className="border-2 border-blue-200 bg-linear-to-br from-blue-50 to-indigo-50">
             <CardContent className="flex flex-col items-center justify-center py-12">
               <div className="bg-blue-100 p-4 rounded-full mb-4">
                 <ClipboardCheck className="w-12 h-12 text-blue-600" />
@@ -975,7 +975,7 @@ export default function DosenPenilaianPage() {
           {selectedKelas && (
             <>
               {/* Active Class Banner */}
-              <Card className="border-2 border-blue-300 bg-gradient-to-r from-blue-50 to-indigo-50">
+              <Card className="border-2 border-blue-300 bg-linear-to-r from-blue-50 to-indigo-50">
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
