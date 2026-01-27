@@ -24,17 +24,16 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { TableBody } from "@/components/ui/table";
 import { TableSkeleton } from "@/components/shared/DataTable/TableSkeleton";
 import { EnhancedTable, EnhancedTableHeader, EnhancedTableRow, EnhancedTableHead, EnhancedTableCell } from "@/components/shared/DataTable/EnhancedTable";
 import { EnhancedEmptyState, EmptySearchResults } from "@/components/shared/DataTable/EnhancedEmptyState";
+import { useRowSelection } from "@/components/shared/DataTable/useRowSelection";
+import { useTableExport } from "@/components/shared/DataTable/useTableExport";
+import { ColumnVisibilityDropdown } from "@/components/shared/DataTable/ColumnVisibility";
+import { BulkActionsBar, BulkActions } from "@/components/shared/DataTable/BulkActionsBar";
+import { RowSelectionHeader, RowSelectionCell } from "@/components/shared/DataTable/RowSelectionColumn";
+import { Download } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -110,6 +109,19 @@ export default function UsersPage() {
     nidn: "",
     phone: "",
   });
+
+  // Column visibility state
+  const [columnVisibility, setColumnVisibility] = useState({
+    select: true,
+    name: true,
+    email: true,
+    id: true,
+    status: true,
+    actions: true,
+  });
+
+  // Export functionality
+  const { exportToCSV } = useTableExport<SystemUser>();
 
   useEffect(() => {
     loadUsers();
@@ -292,8 +304,73 @@ export default function UsersPage() {
   const mahasiswaUsers = getUsersByRole("mahasiswa");
   const laboranUsers = getUsersByRole("laboran");
 
-  // Render user table for a specific role
-  const renderUserTable = (roleUsers: SystemUser[], emptyMessage: string) => {
+  // Handle export for current role users
+  const handleExport = (roleUsers: SystemUser[], roleName: string) => {
+    exportToCSV({
+      columns: [
+        { key: "full_name", label: "Name" },
+        { key: "email", label: "Email" },
+        {
+          key: "nim",
+          label: "ID",
+          formatter: (val, row) => val || row.nip || row.nidn || "-",
+        },
+        {
+          key: "role",
+          label: "Role",
+          formatter: (val) => val?.toUpperCase() || "-",
+        },
+        {
+          key: "is_active",
+          label: "Status",
+          formatter: (val) => (val ? "Active" : "Inactive"),
+        },
+      ],
+      data: roleUsers,
+      filename: `users-${roleName}-${new Date().toISOString().split("T")[0]}`,
+    });
+    toast.success(`Exported ${roleUsers.length} users to CSV`);
+  };
+
+  // Handle bulk delete
+  const handleBulkDelete = async (selectedUsers: SystemUser[]) => {
+    if (!confirm(`Delete ${selectedUsers.length} users?`)) return;
+
+    try {
+      await Promise.all(
+        selectedUsers.map((user) => deleteUser(user.id))
+      );
+      toast.success(`Successfully deleted ${selectedUsers.length} users`);
+      await loadUsers(true);
+    } catch (error: any) {
+      toast.error("Failed to delete users: " + error.message);
+    }
+  };
+
+  // Handle bulk activate/deactivate
+  const handleBulkToggleStatus = async (selectedUsers: SystemUser[], newStatus: boolean) => {
+    try {
+      await Promise.all(
+        selectedUsers.map((user) => updateUser(user.id, { is_active: newStatus }))
+      );
+      toast.success(`Successfully ${newStatus ? "activated" : "deactivated"} ${selectedUsers.length} users`);
+      await loadUsers(true);
+    } catch (error: any) {
+      toast.error("Failed to update users: " + error.message);
+    }
+  };
+
+  // Render user table for a specific role with Phase 2 features
+  const renderUserTable = (
+    roleUsers: SystemUser[],
+    emptyMessage: string,
+    roleName: string
+  ) => {
+    // Row selection
+    const rowSelection = useRowSelection({
+      data: roleUsers,
+      getKey: (u) => u.id,
+    });
     if (loading) {
       return (
         <TableSkeleton
@@ -326,67 +403,139 @@ export default function UsersPage() {
     }
 
     return (
-      <EnhancedTable>
-        <EnhancedTableHeader>
-          <EnhancedTableRow>
-            <EnhancedTableHead>Nama</EnhancedTableHead>
-            <EnhancedTableHead>Email</EnhancedTableHead>
-            <EnhancedTableHead>ID</EnhancedTableHead>
-            <EnhancedTableHead>Status</EnhancedTableHead>
-            <EnhancedTableHead>Aksi</EnhancedTableHead>
-          </EnhancedTableRow>
-        </EnhancedTableHeader>
-        <TableBody>
-          {roleUsers.map((u) => (
-            <EnhancedTableRow key={u.id}>
-              <EnhancedTableCell className="font-medium">{u.full_name}</EnhancedTableCell>
-              <EnhancedTableCell>{u.email}</EnhancedTableCell>
-              <EnhancedTableCell className="font-mono text-xs">
-                {u.nim || u.nip || u.nidn || "-"}
-              </EnhancedTableCell>
-              <EnhancedTableCell>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleToggle(u.id, u.is_active)}
-                  className="hover:bg-muted"
-                >
-                  {u.is_active ? (
-                    <>
-                      <CheckCircle className="h-4 w-4 text-green-600 mr-1" />
-                      Aktif
-                    </>
-                  ) : (
-                    <>
-                      <XCircle className="h-4 w-4 text-red-600 mr-1" />
-                      Nonaktif
-                    </>
-                  )}
-                </Button>
-              </EnhancedTableCell>
-              <EnhancedTableCell>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleEdit(u)}
-                  >
-                    <Edit className="h-4 w-4 mr-1" />
-                    Edit
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleDelete(u)}
-                  >
-                    <Trash2 className="h-4 w-4 text-red-600" />
-                  </Button>
-                </div>
-              </EnhancedTableCell>
+      <>
+        {/* Bulk Actions Bar */}
+        <BulkActionsBar
+          selectedCount={rowSelection.selectedCount}
+          onClearSelection={rowSelection.clearSelection}
+          isAllSelected={rowSelection.isAllSelected}
+          isSomeSelected={rowSelection.isSomeSelected}
+          onSelectAll={() => rowSelection.toggleAll()}
+          actions={[
+            BulkActions.delete(() => handleBulkDelete(rowSelection.selectedItems), rowSelection.selectedCount),
+            BulkActions.activate(() => handleBulkToggleStatus(rowSelection.selectedItems, true)),
+            BulkActions.deactivate(() => handleBulkToggleStatus(rowSelection.selectedItems, false)),
+          ]}
+        />
+
+        {/* Toolbar with Export and Column Visibility */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleExport(roleUsers, roleName)}
+              className="font-semibold"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Export CSV
+            </Button>
+            <ColumnVisibilityDropdown
+              columns={[
+                { id: "select", label: "Select", visible: true },
+                { id: "name", label: "Name", visible: columnVisibility.name },
+                { id: "email", label: "Email", visible: columnVisibility.email },
+                { id: "id", label: "ID", visible: columnVisibility.id },
+                { id: "status", label: "Status", visible: columnVisibility.status },
+                { id: "actions", label: "Actions", visible: columnVisibility.actions },
+              ]}
+              onColumnToggle={(columnId) => {
+                setColumnVisibility((prev) => ({
+                  ...prev,
+                  [columnId]: !prev[columnId as keyof typeof prev],
+                }));
+              }}
+            />
+          </div>
+        </div>
+
+        <EnhancedTable>
+          <EnhancedTableHeader>
+            <EnhancedTableRow>
+              {columnVisibility.select && (
+                <EnhancedTableHead className="w-[50px]">
+                  <RowSelectionHeader
+                    checked={rowSelection.isAllSelected}
+                    indeterminate={rowSelection.isSomeSelected}
+                    onCheckedChange={() => rowSelection.toggleAll()}
+                  />
+                </EnhancedTableHead>
+              )}
+              {columnVisibility.name && <EnhancedTableHead>Nama</EnhancedTableHead>}
+              {columnVisibility.email && <EnhancedTableHead>Email</EnhancedTableHead>}
+              {columnVisibility.id && <EnhancedTableHead>ID</EnhancedTableHead>}
+              {columnVisibility.status && <EnhancedTableHead>Status</EnhancedTableHead>}
+              {columnVisibility.actions && <EnhancedTableHead>Aksi</EnhancedTableHead>}
             </EnhancedTableRow>
-          ))}
-        </TableBody>
-      </EnhancedTable>
+          </EnhancedTableHeader>
+          <TableBody>
+            {roleUsers.map((u) => (
+              <EnhancedTableRow key={u.id}>
+                {columnVisibility.select && (
+                  <EnhancedTableCell>
+                    <RowSelectionCell
+                      checked={rowSelection.isSelected(u)}
+                      onCheckedChange={() => rowSelection.toggleRow(u)}
+                    />
+                  </EnhancedTableCell>
+                )}
+                {columnVisibility.name && (
+                  <EnhancedTableCell className="font-medium">{u.full_name}</EnhancedTableCell>
+                )}
+                {columnVisibility.email && <EnhancedTableCell>{u.email}</EnhancedTableCell>}
+                {columnVisibility.id && (
+                  <EnhancedTableCell className="font-mono text-xs">
+                    {u.nim || u.nip || u.nidn || "-"}
+                  </EnhancedTableCell>
+                )}
+                {columnVisibility.status && (
+                  <EnhancedTableCell>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleToggle(u.id, u.is_active)}
+                      className="hover:bg-muted"
+                    >
+                      {u.is_active ? (
+                        <>
+                          <CheckCircle className="h-4 w-4 text-green-600 mr-1" />
+                          Aktif
+                        </>
+                      ) : (
+                        <>
+                          <XCircle className="h-4 w-4 text-red-600 mr-1" />
+                          Nonaktif
+                        </>
+                      )}
+                    </Button>
+                  </EnhancedTableCell>
+                )}
+                {columnVisibility.actions && (
+                  <EnhancedTableCell>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleEdit(u)}
+                      >
+                        <Edit className="h-4 w-4 mr-1" />
+                        Edit
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDelete(u)}
+                      >
+                        <Trash2 className="h-4 w-4 text-red-600" />
+                      </Button>
+                    </div>
+                  </EnhancedTableCell>
+                )}
+              </EnhancedTableRow>
+            ))}
+          </TableBody>
+        </EnhancedTable>
+      </>
     );
   };
 
@@ -562,6 +711,7 @@ export default function UsersPage() {
               {renderUserTable(
                 searchFilteredUsers,
                 "Tidak ada user yang ditemukan",
+                "all"
               )}
             </CardContent>
           </Card>
@@ -580,7 +730,7 @@ export default function UsersPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {renderUserTable(adminUsers, "Tidak ada admin yang ditemukan")}
+              {renderUserTable(adminUsers, "Tidak ada admin yang ditemukan", "admin")}
             </CardContent>
           </Card>
         </TabsContent>
@@ -596,7 +746,7 @@ export default function UsersPage() {
               <CardDescription>Kelola akun dosen</CardDescription>
             </CardHeader>
             <CardContent>
-              {renderUserTable(dosenUsers, "Tidak ada dosen yang ditemukan")}
+              {renderUserTable(dosenUsers, "Tidak ada dosen yang ditemukan", "dosen")}
             </CardContent>
           </Card>
         </TabsContent>
@@ -615,6 +765,7 @@ export default function UsersPage() {
               {renderUserTable(
                 mahasiswaUsers,
                 "Tidak ada mahasiswa yang ditemukan",
+                "mahasiswa"
               )}
             </CardContent>
           </Card>
@@ -634,6 +785,7 @@ export default function UsersPage() {
               {renderUserTable(
                 laboranUsers,
                 "Tidak ada laboran yang ditemukan",
+                "laboran"
               )}
             </CardContent>
           </Card>
