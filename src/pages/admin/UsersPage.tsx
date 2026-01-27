@@ -32,6 +32,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { TableSkeleton } from "@/components/shared/DataTable/TableSkeleton";
+import { EnhancedTable, EnhancedTableHeader, EnhancedTableRow, EnhancedTableHead, EnhancedTableCell } from "@/components/shared/DataTable/EnhancedTable";
+import { EnhancedEmptyState, EmptySearchResults } from "@/components/shared/DataTable/EnhancedEmptyState";
 import {
   Select,
   SelectContent,
@@ -293,45 +296,60 @@ export default function UsersPage() {
   const renderUserTable = (roleUsers: SystemUser[], emptyMessage: string) => {
     if (loading) {
       return (
-        <div className="text-center py-12">
-          <RefreshCw className="h-8 w-8 animate-spin mx-auto text-muted-foreground" />
-        </div>
+        <TableSkeleton
+          rows={5}
+          columns={5}
+          columnWidths={["200px", "250px", "150px", "120px", "180px"]}
+        />
       );
     }
 
     if (roleUsers.length === 0) {
+      if (searchQuery) {
+        return (
+          <EmptySearchResults
+            onClear={() => setSearchQuery("")}
+          />
+        );
+      }
       return (
-        <div className="text-center py-12">
-          <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-          <p className="text-muted-foreground">{emptyMessage}</p>
-        </div>
+        <EnhancedEmptyState
+          icon={Users}
+          title={emptyMessage}
+          description="Tambahkan user baru untuk memulai pengelolaan sistem."
+          action={{
+            label: "Tambah User",
+            onClick: handleAdd,
+          }}
+        />
       );
     }
 
     return (
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Nama</TableHead>
-            <TableHead>Email</TableHead>
-            <TableHead>ID</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Aksi</TableHead>
-          </TableRow>
-        </TableHeader>
+      <EnhancedTable>
+        <EnhancedTableHeader>
+          <EnhancedTableRow>
+            <EnhancedTableHead>Nama</EnhancedTableHead>
+            <EnhancedTableHead>Email</EnhancedTableHead>
+            <EnhancedTableHead>ID</EnhancedTableHead>
+            <EnhancedTableHead>Status</EnhancedTableHead>
+            <EnhancedTableHead>Aksi</EnhancedTableHead>
+          </EnhancedTableRow>
+        </EnhancedTableHeader>
         <TableBody>
           {roleUsers.map((u) => (
-            <TableRow key={u.id}>
-              <TableCell className="font-medium">{u.full_name}</TableCell>
-              <TableCell>{u.email}</TableCell>
-              <TableCell className="font-mono text-sm">
+            <EnhancedTableRow key={u.id}>
+              <EnhancedTableCell className="font-medium">{u.full_name}</EnhancedTableCell>
+              <EnhancedTableCell>{u.email}</EnhancedTableCell>
+              <EnhancedTableCell className="font-mono text-xs">
                 {u.nim || u.nip || u.nidn || "-"}
-              </TableCell>
-              <TableCell>
+              </EnhancedTableCell>
+              <EnhancedTableCell>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => handleToggle(u.id, u.is_active)}
+                  className="hover:bg-muted"
                 >
                   {u.is_active ? (
                     <>
@@ -345,8 +363,8 @@ export default function UsersPage() {
                     </>
                   )}
                 </Button>
-              </TableCell>
-              <TableCell>
+              </EnhancedTableCell>
+              <EnhancedTableCell>
                 <div className="flex gap-2">
                   <Button
                     variant="outline"
@@ -364,11 +382,11 @@ export default function UsersPage() {
                     <Trash2 className="h-4 w-4 text-red-600" />
                   </Button>
                 </div>
-              </TableCell>
-            </TableRow>
+              </EnhancedTableCell>
+            </EnhancedTableRow>
           ))}
         </TableBody>
-      </Table>
+      </EnhancedTable>
     );
   };
 

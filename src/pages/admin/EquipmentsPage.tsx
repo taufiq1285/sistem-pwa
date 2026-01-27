@@ -33,6 +33,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { TableSkeleton } from "@/components/shared/DataTable/TableSkeleton";
+import { EnhancedTable, EnhancedTableHeader, EnhancedTableRow, EnhancedTableHead, EnhancedTableCell } from "@/components/shared/DataTable/EnhancedTable";
+import { EnhancedEmptyState, EmptySearchResults } from "@/components/shared/DataTable/EnhancedEmptyState";
 import {
   Dialog,
   DialogContent,
@@ -357,50 +360,61 @@ export default function EquipmentsPage() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="text-center py-8">
-              <RefreshCw className="h-8 w-8 animate-spin mx-auto text-muted-foreground" />
-            </div>
+            <TableSkeleton
+              rows={5}
+              columns={6}
+              columnWidths={["120px", "200px", "120px", "100px", "120px", "160px"]}
+            />
           ) : filteredInventaris.length === 0 ? (
-            <div className="text-center py-8">
-              <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <p>No equipment found</p>
-            </div>
+            searchQuery ? (
+              <EmptySearchResults onClear={() => setSearchQuery("")} />
+            ) : (
+              <EnhancedEmptyState
+                icon={Package}
+                title="No equipment found"
+                description="Add equipment to start managing your laboratory inventory."
+                action={{
+                  label: "Add Equipment",
+                  onClick: handleAdd,
+                }}
+              />
+            )
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="font-semibold">Code</TableHead>
-                  <TableHead className="font-semibold">Name</TableHead>
-                  <TableHead className="font-semibold">Category</TableHead>
-                  <TableHead className="font-semibold">Stock</TableHead>
-                  <TableHead className="font-semibold">Condition</TableHead>
-                  <TableHead className="font-semibold">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
+            <EnhancedTable>
+              <EnhancedTableHeader>
+                <EnhancedTableRow>
+                  <EnhancedTableHead>Code</EnhancedTableHead>
+                  <EnhancedTableHead>Name</EnhancedTableHead>
+                  <EnhancedTableHead>Category</EnhancedTableHead>
+                  <EnhancedTableHead>Stock</EnhancedTableHead>
+                  <EnhancedTableHead>Condition</EnhancedTableHead>
+                  <EnhancedTableHead>Actions</EnhancedTableHead>
+                </EnhancedTableRow>
+              </EnhancedTableHeader>
               <TableBody>
                 {filteredInventaris.map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCell className="font-mono">
+                  <EnhancedTableRow key={item.id}>
+                    <EnhancedTableCell className="font-mono text-xs">
                       {item.kode_barang}
-                    </TableCell>
-                    <TableCell className="font-medium">
+                    </EnhancedTableCell>
+                    <EnhancedTableCell className="font-medium">
                       {item.nama_barang}
-                    </TableCell>
-                    <TableCell>{item.kategori || "-"}</TableCell>
-                    <TableCell>
+                    </EnhancedTableCell>
+                    <EnhancedTableCell>{item.kategori || "-"}</EnhancedTableCell>
+                    <EnhancedTableCell>
                       <span
                         className={
                           item.jumlah_tersedia < item.jumlah
-                            ? "text-orange-600"
+                            ? "text-orange-600 font-semibold"
                             : ""
                         }
                       >
                         {item.jumlah_tersedia}
                       </span>
-                      {" / "}
-                      {item.jumlah}
-                    </TableCell>
-                    <TableCell>
+                      <span className="text-muted-foreground mx-1">/</span>
+                      <span className="text-muted-foreground">{item.jumlah}</span>
+                    </EnhancedTableCell>
+                    <EnhancedTableCell>
                       <Badge
                         variant={
                           item.kondisi === "baik"
@@ -410,10 +424,14 @@ export default function EquipmentsPage() {
                               : "destructive"
                         }
                       >
-                        {item.kondisi}
+                        {item.kondisi === "rusak_ringan"
+                          ? "Minor Damage"
+                          : item.kondisi === "rusak_berat"
+                            ? "Major Damage"
+                            : item.kondisi}
                       </Badge>
-                    </TableCell>
-                    <TableCell>
+                    </EnhancedTableCell>
+                    <EnhancedTableCell>
                       <div className="flex gap-2">
                         <Button
                           variant="outline"
@@ -431,8 +449,8 @@ export default function EquipmentsPage() {
                           <Trash2 className="h-4 w-4 text-red-600" />
                         </Button>
                       </div>
-                    </TableCell>
-                  </TableRow>
+                    </EnhancedTableCell>
+                  </EnhancedTableRow>
                 ))}
               </TableBody>
             </Table>
