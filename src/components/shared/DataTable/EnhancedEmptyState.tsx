@@ -3,7 +3,7 @@
  * Provides visual empty states with icons and CTAs
  */
 
-import { LucideIcon } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
@@ -29,7 +29,7 @@ export function EnhancedEmptyState({
     <div
       className={cn(
         "flex flex-col items-center justify-center py-16 px-4 text-center",
-        className
+        className,
       )}
     >
       {Icon && (
@@ -37,9 +37,7 @@ export function EnhancedEmptyState({
           <Icon className="h-8 w-8 text-muted-foreground" />
         </div>
       )}
-      <h3 className="text-lg font-semibold text-foreground mb-2">
-        {title}
-      </h3>
+      <h3 className="text-lg font-semibold text-foreground mb-2">{title}</h3>
       <p className="text-sm text-muted-foreground max-w-md mb-6">
         {description}
       </p>
@@ -68,19 +66,13 @@ export function EmptyNoData({
   );
 }
 
-export function EmptySearchResults({
-  onClear,
-}: {
-  onClear?: () => void;
-}) {
+export function EmptySearchResults({ onClear }: { onClear?: () => void }) {
   return (
     <EnhancedEmptyState
       title="Tidak ada hasil ditemukan"
       description="Coba ubah kata kunci pencarian atau filter yang digunakan."
       action={
-        onClear
-          ? { label: "Hapus Pencarian", onClick: onClear }
-          : undefined
+        onClear ? { label: "Hapus Pencarian", onClick: onClear } : undefined
       }
     />
   );
@@ -113,9 +105,7 @@ export function EmptyError({
       <h3 className="text-lg font-semibold text-foreground mb-2">
         Kesalahan Memuat Data
       </h3>
-      <p className="text-sm text-muted-foreground max-w-md mb-6">
-        {message}
-      </p>
+      <p className="text-sm text-muted-foreground max-w-md mb-6">{message}</p>
       {onRetry && (
         <Button onClick={onRetry} variant="outline" className="font-semibold">
           Coba Lagi

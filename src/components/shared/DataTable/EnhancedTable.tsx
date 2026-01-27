@@ -58,7 +58,7 @@ export function EnhancedTableRow({
 export function EnhancedTableHead({
   className,
   ...props
-}: React.ThHTMLAttributes<HTMLThElement>) {
+}: React.ThHTMLAttributes<HTMLTableHeaderCellElement>) {
   return (
     <TableHead
       className={cn(
