@@ -59,6 +59,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { TableSkeleton } from "@/components/shared/DataTable/TableSkeleton";
+import { EnhancedTable, EnhancedTableHeader, EnhancedTableRow, EnhancedTableHead, EnhancedTableCell } from "@/components/shared/DataTable/EnhancedTable";
+import { EnhancedEmptyState } from "@/components/shared/DataTable/EnhancedEmptyState";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
@@ -407,10 +410,26 @@ export default function KelasPage() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto py-6 max-w-7xl">
-        <div className="flex items-center justify-center min-h-[400px]">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="container mx-auto py-6 max-w-7xl space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-4xl font-extrabold">Kelola Kelas</h1>
+            <p className="text-lg font-semibold text-muted-foreground mt-2">
+              Buat kelas dan assign mahasiswa
+            </p>
+          </div>
         </div>
+        <Card className="border-0 shadow-xl">
+          <CardHeader className="p-6">
+            <CardTitle className="text-xl font-bold">Daftar Kelas</CardTitle>
+            <CardDescription className="text-base font-semibold mt-1">
+              Memuat data...
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <TableSkeleton rows={5} columns={4} columnWidths={["200px", "180px", "100px", "200px"]} />
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -453,68 +472,71 @@ export default function KelasPage() {
         </CardHeader>
         <CardContent>
           {kelasList.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              Belum ada kelas. Klik &quot;Buat Kelas&quot; untuk membuat kelas
-              baru.
-            </div>
+            <EnhancedEmptyState
+              icon={Users}
+              title="Belum ada kelas"
+              description="Buat kelas baru dan mulai kelola mahasiswa untuk praktikum."
+              action={{
+                label: "Buat Kelas",
+                onClick: handleCreate,
+              }}
+            />
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="font-semibold">Nama Kelas</TableHead>
-                  <TableHead className="font-semibold">
-                    Semester/Tahun
-                  </TableHead>
-                  <TableHead className="font-semibold">Status</TableHead>
-                  <TableHead className="text-right font-semibold">
-                    Aksi
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
+            <EnhancedTable>
+              <EnhancedTableHeader>
+                <EnhancedTableRow>
+                  <EnhancedTableHead>Nama Kelas</EnhancedTableHead>
+                  <EnhancedTableHead>Semester/Tahun</EnhancedTableHead>
+                  <EnhancedTableHead>Status</EnhancedTableHead>
+                  <EnhancedTableHead className="text-right">Aksi</EnhancedTableHead>
+                </EnhancedTableRow>
+              </EnhancedTableHeader>
               <TableBody>
                 {kelasList.map((kelas) => (
-                  <TableRow key={kelas.id}>
-                    <TableCell className="font-medium">
+                  <EnhancedTableRow key={kelas.id}>
+                    <EnhancedTableCell className="font-medium">
                       {kelas.nama_kelas}
-                    </TableCell>
-                    <TableCell>
+                    </EnhancedTableCell>
+                    <EnhancedTableCell>
                       Semester {kelas.semester_ajaran} • {kelas.tahun_ajaran}
-                    </TableCell>
-                    <TableCell>
+                    </EnhancedTableCell>
+                    <EnhancedTableCell>
                       <Badge
                         variant={kelas.is_active ? "default" : "secondary"}
                       >
                         {kelas.is_active ? "Aktif" : "Tidak Aktif"}
                       </Badge>
-                    </TableCell>
-                    <TableCell className="text-right space-x-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleManageStudents(kelas)}
-                      >
-                        <Users className="h-4 w-4 mr-1" />
-                        Kelola Mahasiswa
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEdit(kelas)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDelete(kelas)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
+                    </EnhancedTableCell>
+                    <EnhancedTableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleManageStudents(kelas)}
+                        >
+                          <Users className="h-4 w-4 mr-1" />
+                          Kelola
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEdit(kelas)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDelete(kelas)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </EnhancedTableCell>
+                  </EnhancedTableRow>
                 ))}
               </TableBody>
-            </Table>
+            </EnhancedTable>
           )}
         </CardContent>
       </Card>
@@ -640,33 +662,45 @@ export default function KelasPage() {
             </div>
 
             {enrolledStudents.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                Belum ada mahasiswa di kelas ini
+              <div className="text-center py-8">
+                <EnhancedEmptyState
+                  icon={Users}
+                  title="Belum ada mahasiswa di kelas ini"
+                  description="Tambahkan mahasiswa untuk memulai pengelolaan kelas."
+                  action={{
+                    label: "Tambah Mahasiswa",
+                    onClick: () => setShowAddStudentDialog(true),
+                  }}
+                />
               </div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>NIM</TableHead>
-                    <TableHead>Nama</TableHead>
-                    <TableHead>Angkatan</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Aksi</TableHead>
-                  </TableRow>
-                </TableHeader>
+              <EnhancedTable>
+                <EnhancedTableHeader>
+                  <EnhancedTableRow>
+                    <EnhancedTableHead>NIM</EnhancedTableHead>
+                    <EnhancedTableHead>Nama</EnhancedTableHead>
+                    <EnhancedTableHead>Angkatan</EnhancedTableHead>
+                    <EnhancedTableHead>Email</EnhancedTableHead>
+                    <EnhancedTableHead>Status</EnhancedTableHead>
+                    <EnhancedTableHead className="text-right">Aksi</EnhancedTableHead>
+                  </EnhancedTableRow>
+                </EnhancedTableHeader>
                 <TableBody>
                   {enrolledStudents.map((enrollment) => (
-                    <TableRow key={enrollment.id}>
-                      <TableCell>{enrollment.mahasiswa?.nim}</TableCell>
-                      <TableCell>
+                    <EnhancedTableRow key={enrollment.id}>
+                      <EnhancedTableCell className="font-mono text-xs">
+                        {enrollment.mahasiswa?.nim}
+                      </EnhancedTableCell>
+                      <EnhancedTableCell className="font-medium">
                         {enrollment.mahasiswa?.users?.full_name}
-                      </TableCell>
-                      <TableCell>{enrollment.mahasiswa?.angkatan}</TableCell>
-                      <TableCell>
+                      </EnhancedTableCell>
+                      <EnhancedTableCell>
+                        {enrollment.mahasiswa?.angkatan}
+                      </EnhancedTableCell>
+                      <EnhancedTableCell className="text-xs text-muted-foreground">
                         {enrollment.mahasiswa?.users?.email}
-                      </TableCell>
-                      <TableCell>
+                      </EnhancedTableCell>
+                      <EnhancedTableCell>
                         <Button
                           variant="ghost"
                           size="sm"
@@ -676,16 +710,17 @@ export default function KelasPage() {
                               enrollment.is_active ?? false,
                             )
                           }
+                          className="hover:bg-muted"
                         >
                           {enrollment.is_active ? (
                             <CheckCircle className="h-4 w-4 text-green-600 mr-1" />
                           ) : (
                             <XCircle className="h-4 w-4 text-red-600 mr-1" />
                           )}
-                          {enrollment.is_active ? "Aktif" : "Tidak Aktif"}
+                          {enrollment.is_active ? "Aktif" : "Nonaktif"}
                         </Button>
-                      </TableCell>
-                      <TableCell className="text-right">
+                      </EnhancedTableCell>
+                      <EnhancedTableCell className="text-right">
                         <Button
                           variant="outline"
                           size="sm"
@@ -695,11 +730,11 @@ export default function KelasPage() {
                         >
                           <UserMinus className="h-4 w-4" />
                         </Button>
-                      </TableCell>
-                    </TableRow>
+                      </EnhancedTableCell>
+                    </EnhancedTableRow>
                   ))}
                 </TableBody>
-              </Table>
+              </EnhancedTable>
             )}
           </div>
         </DialogContent>

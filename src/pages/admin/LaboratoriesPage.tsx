@@ -32,6 +32,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { TableSkeleton } from "@/components/shared/DataTable/TableSkeleton";
+import { EnhancedTable, EnhancedTableHeader, EnhancedTableRow, EnhancedTableHead, EnhancedTableCell } from "@/components/shared/DataTable/EnhancedTable";
+import { EnhancedEmptyState, EmptySearchResults } from "@/components/shared/DataTable/EnhancedEmptyState";
 import {
   Dialog,
   DialogContent,
@@ -276,41 +279,59 @@ export default function LaboratoriesPage() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="text-center py-8">Loading...</div>
+            <TableSkeleton
+              rows={5}
+              columns={6}
+              columnWidths={["120px", "200px", "150px", "80px", "100px", "160px"]}
+            />
           ) : laboratories.length === 0 ? (
-            <div className="text-center py-8">No laboratories found</div>
+            searchQuery ? (
+              <EmptySearchResults onClear={() => setSearchQuery("")} />
+            ) : (
+              <EnhancedEmptyState
+                icon={Building2}
+                title="No laboratories found"
+                description="Create your first laboratory to get started with lab management."
+                action={{
+                  label: "Add Laboratory",
+                  onClick: handleAdd,
+                }}
+              />
+            )
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="font-semibold">Code</TableHead>
-                  <TableHead className="font-semibold">Name</TableHead>
-                  <TableHead className="font-semibold">Location</TableHead>
-                  <TableHead className="font-semibold">Capacity</TableHead>
-                  <TableHead className="font-semibold">Status</TableHead>
-                  <TableHead className="font-semibold">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
+            <EnhancedTable>
+              <EnhancedTableHeader>
+                <EnhancedTableRow>
+                  <EnhancedTableHead>Code</EnhancedTableHead>
+                  <EnhancedTableHead>Name</EnhancedTableHead>
+                  <EnhancedTableHead>Location</EnhancedTableHead>
+                  <EnhancedTableHead>Capacity</EnhancedTableHead>
+                  <EnhancedTableHead>Status</EnhancedTableHead>
+                  <EnhancedTableHead>Actions</EnhancedTableHead>
+                </EnhancedTableRow>
+              </EnhancedTableHeader>
               <TableBody>
                 {laboratories.map((lab) => (
-                  <TableRow key={lab.id}>
-                    <TableCell className="font-mono">{lab.kode_lab}</TableCell>
-                    <TableCell className="font-medium">
+                  <EnhancedTableRow key={lab.id}>
+                    <EnhancedTableCell className="font-mono text-xs">
+                      {lab.kode_lab}
+                    </EnhancedTableCell>
+                    <EnhancedTableCell className="font-medium">
                       {lab.nama_lab}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1">
+                    </EnhancedTableCell>
+                    <EnhancedTableCell>
+                      <div className="flex items-center gap-1 text-muted-foreground">
                         <MapPin className="h-3 w-3" />
                         {lab.lokasi || "-"}
                       </div>
-                    </TableCell>
-                    <TableCell>{lab.kapasitas}</TableCell>
-                    <TableCell>
+                    </EnhancedTableCell>
+                    <EnhancedTableCell>{lab.kapasitas}</EnhancedTableCell>
+                    <EnhancedTableCell>
                       <Badge variant={lab.is_active ? "default" : "secondary"}>
                         {lab.is_active ? "Active" : "Inactive"}
                       </Badge>
-                    </TableCell>
-                    <TableCell>
+                    </EnhancedTableCell>
+                    <EnhancedTableCell>
                       <div className="flex items-center gap-2">
                         <Button
                           variant="outline"
@@ -328,11 +349,11 @@ export default function LaboratoriesPage() {
                           <Trash2 className="h-4 w-4 text-red-600" />
                         </Button>
                       </div>
-                    </TableCell>
-                  </TableRow>
+                    </EnhancedTableCell>
+                  </EnhancedTableRow>
                 ))}
               </TableBody>
-            </Table>
+            </EnhancedTable>
           )}
         </CardContent>
       </Card>
