@@ -83,8 +83,14 @@ export class NetworkDetector {
   private isInitialized = false;
 
   constructor(config: NetworkDetectorConfig = {}) {
+    // Get Supabase URL from env or use a reliable endpoint
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "";
+    const defaultPingUrl = supabaseUrl
+      ? `${supabaseUrl}/rest/v1/` // Supabase REST API endpoint
+      : "/api/ping"; // Fallback to local API
+
     this.config = {
-      pingUrl: config.pingUrl || "/api/ping",
+      pingUrl: config.pingUrl || defaultPingUrl,
       pingInterval: config.pingInterval || 30000, // 30 seconds
       pingTimeout: config.pingTimeout || 5000, // 5 seconds
       enableQualityCheck: config.enableQualityCheck ?? true,
@@ -279,10 +285,12 @@ export class NetworkDetector {
         this.config.pingTimeout,
       );
 
-      await fetch(this.config.pingUrl, {
-        method: "HEAD",
+      // Use GET instead of HEAD, and mode: 'cors' for better compatibility
+      const response = await fetch(this.config.pingUrl, {
+        method: "GET",
         cache: "no-cache",
         signal: controller.signal,
+        mode: "cors",
       });
 
       clearTimeout(timeoutId);
@@ -291,7 +299,7 @@ export class NetworkDetector {
       // Only network errors (timeout, DNS failure, etc.) should return false
       return true;
     } catch (error) {
-      // Network error, timeout, or abort
+      // Network error, timeout, or abort - silent fail (no console error)
       return false;
     }
   }
