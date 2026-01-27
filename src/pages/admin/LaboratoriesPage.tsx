@@ -24,17 +24,16 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { TableBody } from "@/components/ui/table";
 import { TableSkeleton } from "@/components/shared/DataTable/TableSkeleton";
 import { EnhancedTable, EnhancedTableHeader, EnhancedTableRow, EnhancedTableHead, EnhancedTableCell } from "@/components/shared/DataTable/EnhancedTable";
 import { EnhancedEmptyState, EmptySearchResults } from "@/components/shared/DataTable/EnhancedEmptyState";
+import { useRowSelection } from "@/components/shared/DataTable/useRowSelection";
+import { useTableExport } from "@/components/shared/DataTable/useTableExport";
+import { ColumnVisibilityDropdown } from "@/components/shared/DataTable/ColumnVisibility";
+import { BulkActionsBar, BulkActions } from "@/components/shared/DataTable/BulkActionsBar";
+import { RowSelectionHeader, RowSelectionCell } from "@/components/shared/DataTable/RowSelectionColumn";
+import { Download } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -78,6 +77,20 @@ export default function LaboratoriesPage() {
     keterangan: "",
     is_active: true,
   });
+
+  // Phase 2: Column visibility state
+  const [columnVisibility, setColumnVisibility] = useState({
+    select: true,
+    code: true,
+    name: true,
+    location: true,
+    capacity: true,
+    status: true,
+    actions: true,
+  });
+
+  // Phase 2: Export functionality
+  const { exportToCSV } = useTableExport<Laboratorium>();
 
   useEffect(() => {
     loadLaboratories(false);
@@ -172,6 +185,75 @@ export default function LaboratoriesPage() {
   const handleDelete = (lab: Laboratorium) => {
     setDeletingLab(lab);
     setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!deletingLab) return;
+
+    try {
+      await deleteLaboratorium(deletingLab.id);
+      toast.success("Laboratory berhasil dihapus");
+      setIsDeleteDialogOpen(false);
+      setDeletingLab(null);
+      // Invalidate cache and reload
+      await invalidateCache("admin_laboratories_");
+      await loadLaboratories(true);
+    } catch (error: any) {
+      toast.error("Gagal menghapus laboratory: " + error.message);
+    }
+  };
+
+  // Phase 2: Handle export
+  const handleExport = () => {
+    exportToCSV({
+      columns: [
+        { key: "kode_lab", label: "Code" },
+        { key: "nama_lab", label: "Name" },
+        { key: "lokasi", label: "Location" },
+        { key: "kapasitas", label: "Capacity" },
+        {
+          key: "is_active",
+          label: "Status",
+          formatter: (val) => (val ? "Active" : "Inactive"),
+        },
+      ],
+      data: laboratories,
+      filename: `laboratories-${new Date().toISOString().split("T")[0]}`,
+    });
+    toast.success(`Exported ${laboratories.length} laboratories to CSV`);
+  };
+
+  // Phase 2: Handle bulk delete
+  const handleBulkDelete = async (selectedLabs: Laboratorium[]) => {
+    if (!confirm(`Delete ${selectedLabs.length} laboratories?`)) return;
+
+    try {
+      await Promise.all(selectedLabs.map((lab) => deleteLaboratorium(lab.id)));
+      toast.success(`Successfully deleted ${selectedLabs.length} laboratories`);
+      await invalidateCache("admin_laboratories_");
+      await loadLaboratories(true);
+    } catch (error: any) {
+      toast.error("Failed to delete laboratories: " + error.message);
+    }
+  };
+
+  // Phase 2: Handle bulk toggle status
+  const handleBulkToggleStatus = async (
+    selectedLabs: Laboratorium[],
+    newStatus: boolean
+  ) => {
+    try {
+      await Promise.all(
+        selectedLabs.map((lab) =>
+          updateLaboratorium(lab.id, { is_active: newStatus })
+        )
+      );
+      toast.success(`Successfully ${newStatus ? "activated" : "deactivated"} ${selectedLabs.length} laboratories`);
+      await invalidateCache("admin_laboratories_");
+      await loadLaboratories(true);
+    } catch (error: any) {
+      toast.error("Failed to update laboratories: " + error.message);
+    }
   };
 
   const confirmDelete = async () => {
