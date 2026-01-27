@@ -10,7 +10,7 @@ export default defineConfig({
     react(),
     tailwindcss(),
     VitePWA({
-      registerType: "autoUpdate",
+      registerType: "prompt",
       includeAssets: ["favicon.png", "apple-touch-icon.png", "logo.svg"],
       manifest: {
         name: "Sistem Praktikum Akademi Kebidanan Mega Buana",
@@ -171,7 +171,7 @@ export default defineConfig({
         clientsClaim: true,
       },
       devOptions: {
-        enabled: true,
+        enabled: false,
         type: "module",
       },
     }),

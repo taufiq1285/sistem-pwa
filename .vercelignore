@@ -1,0 +1,24 @@
+# Ignore development files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Ignore testing
+coverage
+.nyc_output
+
+# Ignore IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# Ignore OS
+.DS_Store
+Thumbs.db
+
+# Ignore build artifacts (Vercel builds automatically)
+dist
+.node_modules
