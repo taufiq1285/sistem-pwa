@@ -13,6 +13,9 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 
+// Re-export TableBody for convenience
+export { TableBody };
+
 interface EnhancedTableProps {
   children: React.ReactNode;
   className?: string
@@ -82,6 +85,3 @@ export function EnhancedTableCell({
   );
 }
 
-export function TableBody({ className, ...props }: React.HTMLAttributes<HTMLTableSectionElement>) {
-  return <TableBody className={cn("", className)} {...props} />;
-}
