@@ -627,391 +627,465 @@ export function DashboardPage() {
   }
 
   return (
-    <div className="p-8">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-4xl font-extrabold">Dashboard Dosen v2.0</h1>
-              {hasDataChanges && (
-                <div className="flex items-center gap-1 px-2 py-1 bg-orange-100 text-orange-800 rounded-full text-sm font-medium">
-                  <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
-                  Data diperbarui
+    <>
+      <div className="min-h-screen bg-linear-to-br from-indigo-50 via-blue-50 to-purple-50 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950">
+        <div className="p-8">
+          <div className="max-w-7xl mx-auto space-y-8">
+            {/* Header */}
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <div className="flex items-center gap-4 mb-3">
+                  <div className="p-3 bg-linear-to-br from-indigo-500 to-purple-600 rounded-2xl shadow-lg shadow-indigo-500/30">
+                    <Users className="h-8 w-8 text-white" />
+                  </div>
+                  <div>
+                    <h1 className="text-5xl font-extrabold text-transparent bg-clip-text bg-linear-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400">
+                      Dashboard Dosen
+                    </h1>
+                    <p className="text-lg font-bold text-gray-700 dark:text-gray-300 mt-1">
+                      Selamat datang,{" "}
+                      <span className="text-indigo-600 dark:text-indigo-400">
+                        {user?.full_name || user?.email}
+                      </span>
+                    </p>
+                  </div>
+                  {hasDataChanges && (
+                    <div className="flex items-center gap-2 px-4 py-2 bg-linear-to-r from-orange-100 to-amber-100 text-orange-900 rounded-full text-sm font-bold border-2 border-orange-300 shadow-lg">
+                      <div className="w-2.5 h-2.5 bg-orange-500 rounded-full animate-pulse"></div>
+                      Data diperbarui
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-            <p className="text-lg font-semibold mt-1">
-              Selamat datang, {user?.full_name || user?.email}
-              {lastRefresh && (
-                <span className="ml-2 text-sm text-gray-400">
-                  • Terakhir diperbarui:{" "}
-                  {lastRefresh.toLocaleTimeString("id-ID")}
-                </span>
-              )}
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            {isRefreshing && (
-              <div className="flex items-center gap-2 text-sm text-blue-600">
-                <RefreshCw className="h-4 w-4 animate-spin" />
-                <span>Memperbarui data...</span>
+                {lastRefresh && (
+                  <p className="text-base font-semibold text-gray-500 dark:text-gray-400 ml-1">
+                    Terakhir diperbarui:{" "}
+                    {lastRefresh.toLocaleTimeString("id-ID")}
+                  </p>
+                )}
               </div>
-            )}
-            {hasDataChanges && !isRefreshing && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setHasDataChanges(false);
-                  setIsRefreshing(true);
-                  fetchDashboardData().finally(() => {
-                    setIsRefreshing(false);
-                    setLastRefresh(new Date());
-                  });
-                }}
-                className="border-orange-200 text-orange-700 hover:bg-orange-50 font-semibold border-2"
+              <div className="flex items-center gap-2">
+                {isRefreshing && (
+                  <div className="flex items-center gap-2 text-sm text-blue-600">
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                    <span>Memperbarui data...</span>
+                  </div>
+                )}
+                {hasDataChanges && !isRefreshing && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setHasDataChanges(false);
+                      setIsRefreshing(true);
+                      fetchDashboardData().finally(() => {
+                        setIsRefreshing(false);
+                        setLastRefresh(new Date());
+                      });
+                    }}
+                    className="border-orange-200 text-orange-700 hover:bg-orange-50 font-semibold border-2"
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                    Perbarui
+                  </Button>
+                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setIsRefreshing(true);
+                    setHasDataChanges(false); // Clear change indicator on manual refresh
+                    fetchDashboardData().finally(() => {
+                      setIsRefreshing(false);
+                      setLastRefresh(new Date());
+                    });
+                  }}
+                  disabled={loading || isRefreshing}
+                  className="font-semibold border-2"
+                >
+                  <RefreshCw
+                    className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
+                  />
+                  Refresh
+                </Button>
+              </div>
+            </div>
+
+            {error && (
+              <Alert
+                variant="destructive"
+                className="border-red-200 bg-red-50 shadow-lg"
               >
-                <RefreshCw className="h-4 w-4" />
-                Perbarui
-              </Button>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription className="font-semibold">
+                  {error}
+                </AlertDescription>
+              </Alert>
             )}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setIsRefreshing(true);
-                setHasDataChanges(false); // Clear change indicator on manual refresh
-                fetchDashboardData().finally(() => {
-                  setIsRefreshing(false);
-                  setLastRefresh(new Date());
-                });
-              }}
-              disabled={loading || isRefreshing}
-              className="font-semibold border-2"
-            >
-              <RefreshCw
-                className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
-              />
-              Refresh
-            </Button>
+
+            <div className="grid gap-6 lg:grid-cols-2">
+              {/* Assignment Saya */}
+              <Card className="group hover:shadow-2xl transition-all duration-300 border-0 shadow-xl bg-linear-to-br from-blue-50 to-indigo-50 dark:from-blue-950/40 dark:to-indigo-950/40 backdrop-blur-sm overflow-hidden relative">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-linear-to-br from-blue-400/20 to-indigo-400/20 rounded-full blur-3xl -mr-16 -mt-16" />
+                <CardHeader className="relative">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="p-2.5 bg-linear-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg shadow-blue-500/30">
+                          <Users className="h-5 w-5 text-white" />
+                        </div>
+                        <CardTitle className="text-xl font-bold text-blue-900 dark:text-blue-100">
+                          Assignment Diberikan
+                        </CardTitle>
+                      </div>
+                      <CardDescription className="text-base font-semibold text-gray-700 dark:text-gray-400">
+                        {assignments.length} assignment dengan{" "}
+                        {assignments.reduce(
+                          (sum, a) => sum + a.total_mahasiswa,
+                          0,
+                        )}{" "}
+                        mahasiswa
+                      </CardDescription>
+                    </div>
+                    {assignments.length > 0 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => navigate("/dosen/jadwal")}
+                        className="hover:bg-blue-100 font-semibold"
+                      >
+                        <Eye className="h-4 w-4 mr-1" />
+                        Kelola Jadwal
+                      </Button>
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent className="relative">
+                  {assignments.length === 0 ? (
+                    <div className="text-center py-12">
+                      <div className="inline-flex p-4 bg-blue-50 rounded-full mb-4">
+                        <Users className="h-12 w-12 text-blue-400" />
+                      </div>
+                      <p className="text-lg font-bold text-gray-900 mb-2">
+                        Belum ada assignment yang diberikan
+                      </p>
+                      <p className="text-base font-medium text-gray-600">
+                        Hubungi admin untuk penugasan assignment
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {assignments.map((assignment, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center gap-3 p-4 border-2 border-blue-100 rounded-xl hover:bg-blue-50 hover:border-blue-300 transition-all duration-300 cursor-pointer shadow-sm hover:shadow-md"
+                          onClick={() => navigate("/dosen/jadwal")}
+                        >
+                          <div className="shrink-0">
+                            <div className="w-12 h-12 bg-linear-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg flex items-center justify-center">
+                              <BookOpen className="h-5 w-5 text-white" />
+                            </div>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-bold text-base text-gray-900">
+                                {assignment.mata_kuliah.nama_mk}
+                              </h4>
+                              <Badge
+                                variant="secondary"
+                                className="text-sm bg-blue-100 text-blue-700"
+                              >
+                                {assignment.mata_kuliah.kode_mk}
+                              </Badge>
+                            </div>
+                            <p className="text-sm font-semibold text-gray-700 mt-1">
+                              {assignment.kelas.nama_kelas} •{" "}
+                              {assignment.kelas.tahun_ajaran}
+                            </p>
+                            <div className="flex items-center gap-4 mt-2">
+                              <span className="text-sm font-bold text-blue-600">
+                                <Users className="h-3 w-3 mr-1" />
+                                {assignment.total_mahasiswa} mahasiswa
+                              </span>
+                              <span className="text-sm font-bold text-green-600">
+                                <Calendar className="h-3 w-3 mr-1" />
+                                {assignment.total_jadwal} jadwal
+                              </span>
+                              <span className="text-sm font-semibold text-gray-500">
+                                {assignment.kelas.semester_ajaran} semester
+                              </span>
+                            </div>
+                          </div>
+                          <ArrowRight className="h-5 w-5 text-blue-600" />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Jadwal Mengajar */}
+              <Card className="group hover:shadow-2xl transition-all duration-300 border-0 shadow-xl bg-linear-to-br from-purple-50 to-violet-50 dark:from-purple-950/40 dark:to-violet-950/40 backdrop-blur-sm overflow-hidden relative">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-linear-to-br from-purple-400/20 to-violet-400/20 rounded-full blur-3xl -mr-16 -mt-16" />
+                <CardHeader className="relative">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="p-2.5 bg-linear-to-br from-purple-500 to-violet-600 rounded-xl shadow-lg shadow-purple-500/30">
+                          <Calendar className="h-5 w-5 text-white" />
+                        </div>
+                        <CardTitle className="text-xl font-bold text-purple-900 dark:text-purple-100">
+                          Jadwal Mengajar
+                        </CardTitle>
+                      </div>
+                      <CardDescription className="text-base font-semibold text-gray-700 dark:text-gray-400">
+                        Praktikum 7 hari ke depan
+                      </CardDescription>
+                    </div>
+                    {upcomingPracticum.length > 0 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => navigate("/dosen/jadwal")}
+                        className="hover:bg-purple-100 font-semibold"
+                      >
+                        <Eye className="h-4 w-4 mr-1" />
+                        Lihat Semua
+                      </Button>
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent className="relative">
+                  {upcomingPracticum.length === 0 ? (
+                    <div className="text-center py-12">
+                      <div className="inline-flex p-4 bg-purple-50 rounded-full mb-4">
+                        <Calendar className="h-12 w-12 text-purple-400" />
+                      </div>
+                      <p className="text-lg font-bold text-gray-900 mb-2">
+                        Tidak ada jadwal minggu ini
+                      </p>
+                      <p className="text-base font-medium text-gray-600">
+                        Jadwal praktikum akan muncul di sini
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {upcomingPracticum.map((jadwal) => (
+                        <div
+                          key={jadwal.id}
+                          className="flex gap-3 p-4 border-2 border-purple-100 rounded-xl hover:bg-purple-50 hover:border-purple-300 transition-all duration-300 cursor-pointer shadow-sm hover:shadow-md"
+                        >
+                          <div className="shrink-0">
+                            <div className="w-12 h-12 bg-linear-to-br from-purple-500 to-violet-600 rounded-xl shadow-lg flex items-center justify-center">
+                              <Calendar className="h-5 w-5 text-white" />
+                            </div>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-bold text-base truncate text-gray-900">
+                              {jadwal.mata_kuliah_nama}
+                            </h4>
+                            <p className="text-sm font-semibold text-gray-700 mt-1">
+                              {jadwal.kelas_nama} • {jadwal.topik}
+                            </p>
+                            <div className="flex items-center gap-3 mt-2">
+                              <span className="text-sm font-bold text-purple-600">
+                                <Clock className="h-3 w-3 mr-1" />
+                                {dayNames[jadwal.hari.toLowerCase()] ||
+                                  jadwal.hari}
+                                , {formatDate(jadwal.tanggal_praktikum)}
+                              </span>
+                              <span className="text-sm font-bold text-purple-600">
+                                {formatTime(jadwal.jam_mulai)} -{" "}
+                                {formatTime(jadwal.jam_selesai)}
+                              </span>
+                            </div>
+                            <p className="text-sm font-semibold text-gray-600">
+                              📍 {jadwal.lab_nama}
+                            </p>
+                          </div>
+                          <ArrowRight className="h-5 w-5 text-purple-600" />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="grid gap-6 lg:grid-cols-2">
+              {/* Menunggu Penilaian */}
+              <Card className="group hover:shadow-2xl transition-all duration-300 border-0 shadow-xl bg-linear-to-br from-orange-50 to-amber-50 dark:from-orange-950/40 dark:to-amber-950/40 backdrop-blur-sm overflow-hidden relative">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-linear-to-br from-orange-400/20 to-amber-400/20 rounded-full blur-3xl -mr-16 -mt-16" />
+                <CardHeader className="relative">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="p-2.5 bg-linear-to-br from-orange-500 to-amber-600 rounded-xl shadow-lg shadow-orange-500/30">
+                          <AlertTriangle className="h-5 w-5 text-white" />
+                        </div>
+                        <CardTitle className="text-xl font-bold text-orange-900 dark:text-orange-100">
+                          Menunggu Penilaian
+                        </CardTitle>
+                      </div>
+                      <CardDescription className="text-base font-semibold text-gray-700 dark:text-gray-400">
+                        {stats?.pendingGrading || 0} tugas perlu dinilai
+                      </CardDescription>
+                    </div>
+                    {pendingGrading.length > 0 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => navigate("/dosen/penilaian")}
+                        className="hover:bg-orange-100 font-semibold"
+                      >
+                        <Eye className="h-4 w-4 mr-1" />
+                        Lihat Semua
+                      </Button>
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent className="relative">
+                  {pendingGrading.length === 0 ? (
+                    <div className="text-center py-12">
+                      <div className="inline-flex p-4 bg-green-50 rounded-full mb-4">
+                        <CheckCircle className="h-12 w-12 text-green-500" />
+                      </div>
+                      <p className="text-lg font-bold text-gray-900 mb-2">
+                        Semua tugas sudah dinilai
+                      </p>
+                      <p className="text-base font-medium text-gray-600">
+                        Kerja bagus! 🎉
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {pendingGrading.map((item) => (
+                        <div
+                          key={item.id}
+                          className="flex items-center gap-3 p-4 border-2 border-orange-100 rounded-xl hover:bg-orange-50 hover:border-orange-300 transition-all duration-300 cursor-pointer shadow-sm hover:shadow-md"
+                          onClick={() =>
+                            navigate(`/dosen/penilaian?task=${item.id}`)
+                          }
+                        >
+                          <div className="shrink-0">
+                            <div className="w-10 h-10 bg-linear-to-br from-orange-500 to-amber-600 rounded-xl shadow-lg flex items-center justify-center">
+                              <Edit className="h-5 w-5 text-white" />
+                            </div>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-bold text-base truncate text-gray-900">
+                              {item.mahasiswa_nama}
+                            </h4>
+                            <p className="text-sm font-semibold text-gray-600 mt-0.5">
+                              NIM: {item.mahasiswa_nim}
+                            </p>
+                            <p className="text-sm font-semibold text-gray-600 mt-0.5">
+                              {item.mata_kuliah_nama} • {item.kuis_judul}
+                            </p>
+                            <div className="flex items-center gap-3 mt-2">
+                              <span className="text-sm text-orange-600 font-bold">
+                                Attempt #{item.attempt_number}
+                              </span>
+                              <span className="text-sm text-gray-400">
+                                📅 {formatDate(item.submitted_at)}
+                              </span>
+                            </div>
+                          </div>
+                          <ArrowRight className="h-5 w-5 text-orange-600" />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Tugas Aktif */}
+              <Card className="group hover:shadow-2xl transition-all duration-300 border-0 shadow-xl bg-linear-to-br from-indigo-50 to-blue-50 dark:from-indigo-950/40 dark:to-blue-950/40 backdrop-blur-sm overflow-hidden relative">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-linear-to-br from-indigo-400/20 to-blue-400/20 rounded-full blur-3xl -mr-16 -mt-16" />
+                <CardHeader className="relative">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="p-2.5 bg-linear-to-br from-indigo-500 to-blue-600 rounded-xl shadow-lg shadow-indigo-500/30">
+                          <Target className="h-5 w-5 text-white" />
+                        </div>
+                        <CardTitle className="text-xl font-bold text-indigo-900 dark:text-indigo-100">
+                          Tugas Aktif
+                        </CardTitle>
+                      </div>
+                      <CardDescription className="text-base font-semibold text-gray-700 dark:text-gray-400">
+                        {stats?.activeKuis || 0} kuis sedang berjalan
+                      </CardDescription>
+                    </div>
+                    {activeKuis.length > 0 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => navigate("/dosen/kuis")}
+                        className="hover:bg-indigo-100 font-semibold"
+                      >
+                        <Eye className="h-4 w-4 mr-1" />
+                        Kelola
+                      </Button>
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent className="relative">
+                  {activeKuis.length === 0 ? (
+                    <div className="text-center py-12">
+                      <div className="inline-flex p-4 bg-indigo-50 rounded-full mb-4">
+                        <XCircle className="h-12 w-12 text-indigo-400" />
+                      </div>
+                      <p className="text-lg font-bold text-gray-900 mb-2">
+                        Tidak ada tugas aktif
+                      </p>
+                      <p className="text-base font-medium text-gray-600">
+                        Buat tugas baru untuk memulai kembali
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {activeKuis.map((kuis) => (
+                        <div
+                          key={kuis.id}
+                          className="flex items-center gap-3 p-4 border-2 border-indigo-100 rounded-xl hover:bg-indigo-50 hover:border-indigo-300 transition-all duration-300 cursor-pointer shadow-sm hover:shadow-md"
+                          onClick={() => navigate(`/dosen/kuis/${kuis.id}`)}
+                        >
+                          <div className="shrink-0">
+                            <div className="w-10 h-10 bg-linear-to-br from-indigo-500 to-blue-600 rounded-xl shadow-lg flex items-center justify-center">
+                              <Eye className="h-5 w-5 text-white" />
+                            </div>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-bold text-base truncate text-gray-900">
+                              {kuis.judul}
+                            </h4>
+                            <p className="text-sm font-semibold text-gray-700 mt-1">
+                              {kuis.kelas_nama}
+                            </p>
+                            <div className="flex items-center gap-4 mt-2">
+                              <span className="text-sm font-bold text-indigo-600">
+                                ⏰ {formatDate(kuis.tanggal_mulai)} -{" "}
+                                {formatDate(kuis.tanggal_selesai)}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-3 mt-1">
+                              <span className="text-sm font-bold text-green-600">
+                                ✅ {kuis.submitted_count}/{kuis.total_attempts}
+                              </span>
+                              <span className="text-sm font-semibold text-gray-600">
+                                Dikumpulkan
+                              </span>
+                            </div>
+                          </div>
+                          <ArrowRight className="h-5 w-5 text-indigo-600" />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           </div>
-        </div>
-
-        {error && (
-          <Alert variant="destructive" className="border-red-200 bg-red-50">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-
-        <div className="grid gap-6 lg:grid-cols-2">
-          {/* Assignment Saya */}
-          <Card className="border-0 shadow-xl p-6">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base font-bold">
-                <Users className="h-5 w-5" />
-                Assignment Diberikan
-              </CardTitle>
-              <CardDescription className="text-base font-semibold">
-                {assignments.length} assignment dengan{" "}
-                {assignments.reduce((sum, a) => sum + a.total_mahasiswa, 0)}{" "}
-                mahasiswa
-              </CardDescription>
-              {assignments.length > 0 && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => navigate("/dosen/jadwal")}
-                  className="ml-auto font-semibold"
-                >
-                  <Eye className="h-4 w-4 mr-1" />
-                  Kelola Jadwal
-                </Button>
-              )}
-            </CardHeader>
-            <CardContent>
-              {assignments.length === 0 ? (
-                <div className="text-center py-8">
-                  <Users className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                  <p className="text-base font-medium">
-                    Belum ada assignment yang diberikan
-                  </p>
-                  <p className="text-sm text-gray-500 mt-1">
-                    Hubungi admin untuk penugasan assignment
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {assignments.map((assignment, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
-                      onClick={() => navigate("/dosen/jadwal")}
-                    >
-                      <div className="shrink-0">
-                        <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                          <BookOpen className="h-5 w-5 text-blue-600" />
-                        </div>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <h4 className="font-medium text-base">
-                            {assignment.mata_kuliah.nama_mk}
-                          </h4>
-                          <Badge variant="secondary" className="text-sm">
-                            {assignment.mata_kuliah.kode_mk}
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-gray-600 mt-1">
-                          {assignment.kelas.nama_kelas} •{" "}
-                          {assignment.kelas.tahun_ajaran}
-                        </p>
-                        <div className="flex items-center gap-4 mt-2">
-                          <span className="text-sm text-blue-600 font-bold">
-                            <Users className="h-3 w-3 mr-1" />
-                            {assignment.total_mahasiswa} mahasiswa
-                          </span>
-                          <span className="text-sm text-green-600 font-bold">
-                            <Calendar className="h-3 w-3 mr-1" />
-                            {assignment.total_jadwal} jadwal
-                          </span>
-                          <span className="text-sm text-gray-500">
-                            {assignment.kelas.semester_ajaran} semester
-                          </span>
-                        </div>
-                      </div>
-                      <ArrowRight className="h-4 w-4 text-gray-400" />
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Jadwal Mengajar */}
-          <Card className="border-0 shadow-xl p-6">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base font-bold">
-                <Calendar className="h-5 w-5" />
-                Jadwal Mengajar
-              </CardTitle>
-              <CardDescription className="text-base font-semibold">
-                Praktikum 7 hari ke depan
-              </CardDescription>
-              {upcomingPracticum.length > 0 && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => navigate("/dosen/jadwal")}
-                  className="ml-auto"
-                >
-                  <Eye className="h-4 w-4 mr-1" />
-                  Lihat Semua
-                </Button>
-              )}
-            </CardHeader>
-            <CardContent>
-              {upcomingPracticum.length === 0 ? (
-                <div className="text-center py-8">
-                  <Calendar className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                  <p className="text-base font-medium">
-                    Tidak ada jadwal minggu ini
-                  </p>
-                  <p className="text-sm text-gray-500 mt-1">
-                    Jadwal praktikum akan muncul di sini
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {upcomingPracticum.map((jadwal) => (
-                    <div
-                      key={jadwal.id}
-                      className="flex gap-3 p-3 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
-                    >
-                      <div className="shrink-0">
-                        <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                          <Calendar className="h-5 w-5 text-purple-600" />
-                        </div>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-medium text-base truncate">
-                          {jadwal.mata_kuliah_nama}
-                        </h4>
-                        <p className="text-sm text-gray-500 mt-1">
-                          {jadwal.kelas_nama} • {jadwal.topik}
-                        </p>
-                        <div className="flex items-center gap-3 mt-2">
-                          <span className="text-sm text-purple-600 font-bold">
-                            <Clock className="h-3 w-3 mr-1" />
-                            {dayNames[jadwal.hari.toLowerCase()] || jadwal.hari}
-                            , {formatDate(jadwal.tanggal_praktikum)}
-                          </span>
-                          <span className="text-sm text-purple-600 font-bold">
-                            {formatTime(jadwal.jam_mulai)} -{" "}
-                            {formatTime(jadwal.jam_selesai)}
-                          </span>
-                        </div>
-                        <p className="text-sm text-gray-500">
-                          📍 {jadwal.lab_nama}
-                        </p>
-                      </div>
-                      <ArrowRight className="h-4 w-4 text-gray-400" />
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="grid gap-6 lg:grid-cols-2">
-          {/* Menunggu Penilaian */}
-          <Card className="border-0 shadow-xl p-6">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base font-bold">
-                <AlertTriangle className="h-5 w-5" />
-                Menunggu Penilaian
-              </CardTitle>
-              <CardDescription className="text-base font-semibold">
-                {stats?.pendingGrading || 0} tugas perlu dinilai
-              </CardDescription>
-              {pendingGrading.length > 0 && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => navigate("/dosen/penilaian")}
-                  className="ml-auto"
-                >
-                  <Eye className="h-4 w-4 mr-1" />
-                  Lihat Semua
-                </Button>
-              )}
-            </CardHeader>
-            <CardContent>
-              {pendingGrading.length === 0 ? (
-                <div className="text-center py-8">
-                  <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-3" />
-                  <p className="text-base font-medium">
-                    Semua tugas sudah dinilai
-                  </p>
-                  <p className="text-sm text-gray-500 mt-1">Kerja bagus! 🎉</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {pendingGrading.map((item) => (
-                    <div
-                      key={item.id}
-                      className="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
-                      onClick={() =>
-                        navigate(`/dosen/penilaian?task=${item.id}`)
-                      }
-                    >
-                      <div className="shrink-0">
-                        <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-                          <Edit className="h-5 w-5 text-orange-600" />
-                        </div>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-medium text-base truncate">
-                          {item.mahasiswa_nama}
-                        </h4>
-                        <p className="text-sm text-gray-500 mt-0.5">
-                          NIM: {item.mahasiswa_nim}
-                        </p>
-                        <p className="text-sm text-gray-500 mt-0.5">
-                          {item.mata_kuliah_nama} • {item.kuis_judul}
-                        </p>
-                        <div className="flex items-center gap-3 mt-2">
-                          <span className="text-sm text-orange-600 font-bold">
-                            Attempt #{item.attempt_number}
-                          </span>
-                          <span className="text-sm text-gray-400">
-                            📅 {formatDate(item.submitted_at)}
-                          </span>
-                        </div>
-                      </div>
-                      <ArrowRight className="h-4 w-4 text-gray-400" />
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Tugas Aktif */}
-          <Card className="border-0 shadow-xl p-6">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base font-bold">
-                <Target className="h-5 w-5" />
-                Tugas Aktif
-              </CardTitle>
-              <CardDescription className="text-base font-semibold">
-                {stats?.activeKuis || 0} kuis sedang berjalan
-              </CardDescription>
-              {activeKuis.length > 0 && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => navigate("/dosen/kuis")}
-                  className="ml-auto"
-                >
-                  <Eye className="h-4 w-4 mr-1" />
-                  Kelola
-                </Button>
-              )}
-            </CardHeader>
-            <CardContent>
-              {activeKuis.length === 0 ? (
-                <div className="text-center py-8">
-                  <XCircle className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                  <p className="text-base font-medium">Tidak ada tugas aktif</p>
-                  <p className="text-sm text-gray-500 mt-1">
-                    Buat tugas baru untuk memulai kembali
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {activeKuis.map((kuis) => (
-                    <div
-                      key={kuis.id}
-                      className="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
-                      onClick={() => navigate(`/dosen/kuis/${kuis.id}`)}
-                    >
-                      <div className="shrink-0">
-                        <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                          <Eye className="h-5 w-5 text-purple-600" />
-                        </div>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-medium text-base truncate">
-                          {kuis.judul}
-                        </h4>
-                        <p className="text-sm text-gray-500 mt-1">
-                          {kuis.kelas_nama}
-                        </p>
-                        <div className="flex items-center gap-4 mt-2">
-                          <span className="text-sm text-purple-600 font-bold">
-                            ⏰ {formatDate(kuis.tanggal_mulai)} -{" "}
-                            {formatDate(kuis.tanggal_selesai)}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-3 mt-1">
-                          <span className="text-sm text-blue-600 font-bold">
-                            ✅ {kuis.submitted_count}/{kuis.total_attempts}
-                          </span>
-                          <span className="text-sm text-gray-400">
-                            Dikumpulkan
-                          </span>
-                        </div>
-                      </div>
-                      <ArrowRight className="h-4 w-4 text-gray-400" />
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
         </div>
       </div>
 
@@ -1148,6 +1222,6 @@ export function DashboardPage() {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 }

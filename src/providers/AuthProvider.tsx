@@ -187,7 +187,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
           } else {
             // Check if user just logged out (don't auto-login in this case)
             if (logoutFlag) {
-              logger.auth("User just logged out - skipping offline session restore");
+              logger.auth(
+                "User just logged out - skipping offline session restore",
+              );
               updateAuthState(null, null);
             } else {
               // Try to restore from offline session
@@ -396,7 +398,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
         ]);
 
         console.log("✅ Background cleanup completed");
-        console.log("✅ Offline session cleared, credentials preserved for next offline login");
+        console.log(
+          "✅ Offline session cleared, credentials preserved for next offline login",
+        );
       } catch (error) {
         console.warn("⚠️ Background cleanup failed:", error);
       }

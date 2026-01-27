@@ -279,37 +279,57 @@ export function DashboardPage() {
   }
 
   return (
-    <div className="p-8">
-      <div className="max-w-7xl mx-auto space-y-8">
-        {/* Header */}
-        <div>
-          <h1 className="text-4xl font-extrabold text-gray-900">
-            Dashboard Laboran
-          </h1>
-          <p className="text-lg font-semibold mt-1">
-            Selamat datang, {user?.full_name || user?.email}
-          </p>
+    <div className="min-h-screen bg-linear-to-br from-blue-50 via-cyan-50 to-teal-50 dark:from-slate-950 dark:via-slate-900 dark:to-teal-950">
+      <div className="p-8">
+        <div className="max-w-7xl mx-auto space-y-8">
+          {/* Header */}
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-linear-to-br from-blue-500 to-cyan-600 rounded-2xl shadow-lg shadow-blue-500/30">
+              <FlaskConical className="h-8 w-8 text-white" />
+            </div>
+            <div>
+              <h1 className="text-5xl font-extrabold text-transparent bg-clip-text bg-linear-to-r from-blue-600 to-cyan-600 dark:from-blue-400 dark:to-cyan-400">
+                Dashboard Laboran
+              </h1>
+              <p className="text-lg font-bold text-gray-700 dark:text-gray-300 mt-1">
+                Selamat datang,{" "}
+                <span className="text-blue-600 dark:text-blue-400">
+                  {user?.full_name || user?.email}
+                </span>
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Error Alert */}
         {error && (
-          <Alert variant="destructive">
+          <Alert
+            variant="destructive"
+            className="border-red-200 bg-red-50 shadow-lg"
+          >
             <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
+            <AlertDescription className="font-semibold">
+              {error}
+            </AlertDescription>
           </Alert>
         )}
 
         {/* Main Content Grid */}
         <div className="grid gap-6 lg:grid-cols-2">
           {/* Pending Approvals */}
-          <Card className="lg:col-span-2 border-0 shadow-xl p-6">
-            <CardHeader className="flex flex-row items-center justify-between">
+          <Card className="lg:col-span-2 group hover:shadow-2xl transition-all duration-300 border-0 shadow-xl bg-linear-to-br from-blue-50 to-cyan-50 dark:from-blue-950/40 dark:to-cyan-950/40 backdrop-blur-sm overflow-hidden relative">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-linear-to-br from-blue-400/20 to-cyan-400/20 rounded-full blur-3xl -mr-16 -mt-16" />
+            <CardHeader className="flex flex-row items-center justify-between relative">
               <div>
-                <CardTitle className="flex items-center gap-2 text-base font-bold">
-                  <ClipboardCheck className="h-5 w-5" />
-                  Persetujuan Peminjaman
-                </CardTitle>
-                <CardDescription className="text-base font-semibold">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="p-2.5 bg-linear-to-br from-blue-500 to-cyan-600 rounded-xl shadow-lg shadow-blue-500/30">
+                    <ClipboardCheck className="h-5 w-5 text-white" />
+                  </div>
+                  <CardTitle className="text-xl font-bold text-blue-900 dark:text-blue-100">
+                    Persetujuan Peminjaman
+                  </CardTitle>
+                </div>
+                <CardDescription className="text-base font-semibold text-gray-700 dark:text-gray-400">
                   {stats?.pendingApprovals || 0} peminjaman yang menunggu
                   approval
                 </CardDescription>
@@ -319,18 +339,24 @@ export function DashboardPage() {
                   variant="ghost"
                   size="sm"
                   onClick={() => navigate("/laboran/persetujuan")}
+                  className="hover:bg-blue-100 font-semibold"
                 >
                   Lihat Semua
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               )}
             </CardHeader>
-            <CardContent>
+            <CardContent className="relative">
               {pendingApprovals.length === 0 ? (
-                <div className="text-center py-8">
-                  <ClipboardCheck className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                  <p className="text-sm text-gray-600">
+                <div className="text-center py-12">
+                  <div className="inline-flex p-4 bg-blue-50 rounded-full mb-4">
+                    <ClipboardCheck className="h-12 w-12 text-blue-400" />
+                  </div>
+                  <p className="text-lg font-bold text-gray-900 mb-2">
                     Tidak ada peminjaman yang menunggu approval
+                  </p>
+                  <p className="text-base font-medium text-gray-600">
+                    Semua peminjaman telah diproses
                   </p>
                 </div>
               ) : (
@@ -338,36 +364,39 @@ export function DashboardPage() {
                   {pendingApprovals.map((approval) => (
                     <div
                       key={approval.id}
-                      className="flex gap-3 p-4 border rounded-lg hover:bg-gray-50 transition-colors"
+                      className="flex gap-3 p-4 border-2 border-blue-100 rounded-xl hover:bg-blue-50 hover:border-blue-300 transition-all duration-300 shadow-sm hover:shadow-md"
                     >
                       <div className="shrink-0">
-                        <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                          <Package className="h-5 w-5 text-blue-600" />
+                        <div className="w-12 h-12 bg-linear-to-br from-blue-500 to-cyan-600 rounded-xl shadow-lg flex items-center justify-center">
+                          <Package className="h-5 w-5 text-white" />
                         </div>
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <h4 className="font-medium text-sm">
+                          <h4 className="font-bold text-sm text-gray-900">
                             {approval.inventaris_nama}
                           </h4>
-                          <Badge variant="secondary" className="text-xs">
+                          <Badge
+                            variant="secondary"
+                            className="text-xs bg-blue-100 text-blue-700"
+                          >
                             {approval.inventaris_kode}
                           </Badge>
                         </div>
-                        <div className="flex items-center gap-1 text-xs text-gray-600 mt-1">
+                        <div className="flex items-center gap-1 text-xs font-semibold text-gray-600 mt-1">
                           <User className="h-3 w-3" />
                           {approval.peminjam_nama} ({approval.peminjam_nim})
                         </div>
-                        <p className="text-xs text-gray-500 mt-1">
+                        <p className="text-xs font-semibold text-gray-600 mt-1">
                           📍 {approval.laboratorium_nama} • Jumlah:{" "}
                           {approval.jumlah_pinjam}
                         </p>
-                        <p className="text-xs text-gray-500 mt-1">
+                        <p className="text-xs font-semibold text-gray-500 mt-1">
                           🗓️ {formatDate(approval.tanggal_pinjam)} -{" "}
                           {formatDate(approval.tanggal_kembali_rencana)}
                         </p>
                         {approval.keperluan && (
-                          <p className="text-xs text-gray-600 mt-1 italic">
+                          <p className="text-xs font-semibold text-gray-600 mt-1 italic">
                             "{approval.keperluan}"
                           </p>
                         )}
@@ -377,7 +406,7 @@ export function DashboardPage() {
                           size="sm"
                           onClick={() => handleApprove(approval.id)}
                           disabled={actionLoading}
-                          className="bg-green-600 hover:bg-green-700"
+                          className="bg-linear-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-lg hover:shadow-xl font-semibold"
                         >
                           <CheckCircle className="h-4 w-4 mr-1" />
                           Setujui
@@ -387,7 +416,7 @@ export function DashboardPage() {
                           variant="outline"
                           onClick={() => handleRejectClick(approval.id)}
                           disabled={actionLoading}
-                          className="text-red-600 border-red-600 hover:bg-red-50"
+                          className="text-red-600 border-red-600 border-2 hover:bg-red-50 font-semibold"
                         >
                           <XCircle className="h-4 w-4 mr-1" />
                           Tolak
@@ -401,14 +430,19 @@ export function DashboardPage() {
           </Card>
 
           {/* Inventory Alerts */}
-          <Card className="border-0 shadow-xl p-6">
-            <CardHeader className="flex flex-row items-center justify-between">
+          <Card className="group hover:shadow-2xl transition-all duration-300 border-0 shadow-xl bg-linear-to-br from-rose-50 to-red-50 dark:from-rose-950/40 dark:to-red-950/40 backdrop-blur-sm overflow-hidden relative">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-linear-to-br from-rose-400/20 to-red-400/20 rounded-full blur-3xl -mr-16 -mt-16" />
+            <CardHeader className="flex flex-row items-center justify-between relative">
               <div>
-                <CardTitle className="flex items-center gap-2">
-                  <AlertTriangle className="h-5 w-5" />
-                  Peringatan Stok
-                </CardTitle>
-                <CardDescription>
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="p-2.5 bg-linear-to-br from-rose-500 to-red-600 rounded-xl shadow-lg shadow-rose-500/30">
+                    <AlertTriangle className="h-5 w-5 text-white" />
+                  </div>
+                  <CardTitle className="text-xl font-bold text-rose-900 dark:text-rose-100">
+                    Peringatan Stok
+                  </CardTitle>
+                </div>
+                <CardDescription className="text-base font-semibold text-gray-700 dark:text-gray-400">
                   {stats?.lowStockAlerts || 0} alat dengan stok rendah (&lt; 5)
                 </CardDescription>
               </div>
@@ -417,18 +451,24 @@ export function DashboardPage() {
                   variant="ghost"
                   size="sm"
                   onClick={() => navigate("/laboran/inventaris")}
+                  className="hover:bg-rose-100 font-semibold"
                 >
                   Lihat Semua
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               )}
             </CardHeader>
-            <CardContent>
+            <CardContent className="relative">
               {inventoryAlerts.length === 0 ? (
-                <div className="text-center py-8">
-                  <Package className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                  <p className="text-sm text-gray-600">
+                <div className="text-center py-12">
+                  <div className="inline-flex p-4 bg-green-50 rounded-full mb-4">
+                    <Package className="h-12 w-12 text-green-500" />
+                  </div>
+                  <p className="text-lg font-bold text-gray-900 mb-2">
                     Semua stok alat mencukupi
+                  </p>
+                  <p className="text-base font-medium text-gray-600">
+                    Tidak ada peringatan stok
                   </p>
                 </div>
               ) : (
@@ -436,26 +476,29 @@ export function DashboardPage() {
                   {inventoryAlerts.map((alert) => (
                     <div
                       key={alert.id}
-                      className="flex gap-3 p-3 border rounded-lg hover:bg-gray-50 transition-colors"
+                      className="flex gap-3 p-4 border-2 border-rose-100 rounded-xl hover:bg-rose-50 hover:border-rose-300 transition-all duration-300 shadow-sm hover:shadow-md"
                     >
                       <div className="shrink-0">
-                        <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
-                          <AlertTriangle className="h-5 w-5 text-red-600" />
+                        <div className="w-12 h-12 bg-linear-to-br from-rose-500 to-red-600 rounded-xl shadow-lg flex items-center justify-center">
+                          <AlertTriangle className="h-5 w-5 text-white" />
                         </div>
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <h4 className="font-medium text-sm truncate">
+                          <h4 className="font-bold text-sm truncate text-gray-900">
                             {alert.nama_barang}
                           </h4>
-                          <Badge variant="secondary" className="text-xs">
+                          <Badge
+                            variant="secondary"
+                            className="text-xs bg-rose-100 text-rose-700"
+                          >
                             {alert.kode_barang}
                           </Badge>
                         </div>
-                        <p className="text-xs text-gray-500 mt-0.5">
+                        <p className="text-xs font-semibold text-gray-600 mt-0.5">
                           {alert.kategori}
                         </p>
-                        <p className="text-xs text-gray-500 mt-1">
+                        <p className="text-xs font-semibold text-gray-600 mt-1">
                           📍 {alert.laboratorium_nama}
                         </p>
                         <div className="flex items-center gap-2 mt-2">
@@ -465,7 +508,7 @@ export function DashboardPage() {
                           >
                             {getConditionLabel(alert.kondisi)}
                           </Badge>
-                          <span className="text-xs font-medium text-red-600">
+                          <span className="text-xs font-bold text-red-600">
                             Tersedia: {alert.jumlah_tersedia}/{alert.jumlah}
                           </span>
                         </div>
@@ -478,14 +521,19 @@ export function DashboardPage() {
           </Card>
 
           {/* Lab Schedule Today */}
-          <Card className="border-0 shadow-xl p-6">
-            <CardHeader className="flex flex-row items-center justify-between">
+          <Card className="group hover:shadow-2xl transition-all duration-300 border-0 shadow-xl bg-linear-to-br from-teal-50 to-cyan-50 dark:from-teal-950/40 dark:to-cyan-950/40 backdrop-blur-sm overflow-hidden relative">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-linear-to-br from-teal-400/20 to-cyan-400/20 rounded-full blur-3xl -mr-16 -mt-16" />
+            <CardHeader className="flex flex-row items-center justify-between relative">
               <div>
-                <CardTitle className="flex items-center gap-2">
-                  <Clock className="h-5 w-5" />
-                  Jadwal Lab Hari Ini
-                </CardTitle>
-                <CardDescription>
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="p-2.5 bg-linear-to-br from-teal-500 to-cyan-600 rounded-xl shadow-lg shadow-teal-500/30">
+                    <Clock className="h-5 w-5 text-white" />
+                  </div>
+                  <CardTitle className="text-xl font-bold text-teal-900 dark:text-teal-100">
+                    Jadwal Lab Hari Ini
+                  </CardTitle>
+                </div>
+                <CardDescription className="text-base font-semibold text-gray-700 dark:text-gray-400">
                   Praktikum yang berlangsung hari ini
                 </CardDescription>
               </div>
@@ -494,18 +542,24 @@ export function DashboardPage() {
                   variant="ghost"
                   size="sm"
                   onClick={() => navigate("/laboran/laboratorium")}
+                  className="hover:bg-teal-100 font-semibold"
                 >
                   Lihat Semua
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               )}
             </CardHeader>
-            <CardContent>
+            <CardContent className="relative">
               {labSchedule.length === 0 ? (
-                <div className="text-center py-8">
-                  <FlaskConical className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                  <p className="text-sm text-gray-600">
+                <div className="text-center py-12">
+                  <div className="inline-flex p-4 bg-teal-50 rounded-full mb-4">
+                    <FlaskConical className="h-12 w-12 text-teal-400" />
+                  </div>
+                  <p className="text-lg font-bold text-gray-900 mb-2">
                     Tidak ada jadwal lab hari ini
+                  </p>
+                  <p className="text-base font-medium text-gray-600">
+                    Tidak ada praktikum yang dijadwalkan
                   </p>
                 </div>
               ) : (
@@ -513,30 +567,30 @@ export function DashboardPage() {
                   {labSchedule.map((schedule) => (
                     <div
                       key={schedule.id}
-                      className="flex gap-3 p-3 border rounded-lg hover:bg-gray-50 transition-colors"
+                      className="flex gap-3 p-4 border-2 border-teal-100 rounded-xl hover:bg-teal-50 hover:border-teal-300 transition-all duration-300 shadow-sm hover:shadow-md"
                     >
                       <div className="shrink-0">
-                        <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                          <FlaskConical className="h-5 w-5 text-purple-600" />
+                        <div className="w-12 h-12 bg-linear-to-br from-teal-500 to-cyan-600 rounded-xl shadow-lg flex items-center justify-center">
+                          <FlaskConical className="h-5 w-5 text-white" />
                         </div>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-medium text-sm truncate">
+                        <h4 className="font-bold text-sm truncate text-gray-900">
                           {schedule.mata_kuliah_nama}
                         </h4>
-                        <p className="text-xs text-gray-500 mt-0.5">
+                        <p className="text-xs font-semibold text-gray-600 mt-0.5">
                           {schedule.kelas_nama} • {schedule.dosen_nama}
                         </p>
-                        <div className="flex items-center gap-2 mt-1 text-xs text-gray-600">
+                        <div className="flex items-center gap-2 mt-1 text-xs font-bold text-gray-700">
                           <Clock className="h-3 w-3" />
                           {formatTime(schedule.jam_mulai)} -{" "}
                           {formatTime(schedule.jam_selesai)}
                         </div>
-                        <p className="text-xs text-gray-500 mt-1">
+                        <p className="text-xs font-semibold text-gray-600 mt-1">
                           📍 {schedule.laboratorium_nama}
                         </p>
                         {schedule.topik && (
-                          <p className="text-xs text-gray-600 mt-1 italic">
+                          <p className="text-xs font-semibold text-gray-600 mt-1 italic">
                             "{schedule.topik}"
                           </p>
                         )}

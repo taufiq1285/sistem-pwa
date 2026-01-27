@@ -4,7 +4,17 @@
  */
 
 import { useState, useEffect } from "react";
-import { Plus, List, Calendar as CalendarIcon, Loader2 } from "lucide-react";
+import {
+  Plus,
+  List,
+  Calendar as CalendarIcon,
+  Loader2,
+  MapPin,
+  Clock,
+  Users,
+  BookOpen,
+  Filter,
+} from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -740,285 +750,387 @@ export default function JadwalPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Jadwal Praktikum"
-        description="Kelola jadwal praktikum laboratorium"
-        action={
-          <Button onClick={() => setIsCreateOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
+    <div className="min-h-screen bg-linear-to-br from-indigo-50 via-blue-50 to-purple-50 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950 p-8">
+      <div className="max-w-7xl mx-auto space-y-8">
+        {/* Enhanced Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex-1">
+            <div className="flex items-center gap-4 mb-3">
+              <div className="p-3 bg-linear-to-br from-indigo-500 to-purple-600 rounded-2xl shadow-lg shadow-indigo-500/30">
+                <CalendarIcon className="h-8 w-8 text-white" />
+              </div>
+              <div>
+                <h1 className="text-5xl font-extrabold text-transparent bg-clip-text bg-linear-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400">
+                  Jadwal Praktikum
+                </h1>
+                <p className="text-lg font-bold text-gray-700 dark:text-gray-300 mt-1">
+                  Kelola jadwal praktikum laboratorium
+                </p>
+              </div>
+            </div>
+            <p className="text-base font-semibold text-gray-500 dark:text-gray-400 ml-1">
+              Atur dan pantau semua jadwal praktikum dengan mudah
+            </p>
+          </div>
+          <Button
+            onClick={() => setIsCreateOpen(true)}
+            className="bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg shadow-indigo-500/30 font-semibold px-6"
+            size="lg"
+          >
+            <Plus className="mr-2 h-5 w-5" />
             Tambah Jadwal
           </Button>
-        }
-      />
+        </div>
 
-      {/* Filters */}
-      <Card className="border-0 shadow-xl p-6">
-        <CardContent>
-          <div className="flex flex-wrap gap-4">
-            <Select value={filterLab} onValueChange={setFilterLab}>
-              <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="Filter Laboratorium" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Semua Lab</SelectItem>
-                {laboratoriumList.map((lab) => (
-                  <SelectItem key={lab.id} value={lab.id}>
-                    {lab.nama_lab}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        {/* Enhanced Filters */}
+        <Card className="border-0 shadow-xl bg-linear-to-br from-white to-blue-50/50 dark:from-slate-900 dark:to-blue-950/30 backdrop-blur-sm">
+          <CardContent className="p-6">
+            <div className="flex flex-wrap items-center gap-4">
+              <div className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
+                <CalendarIcon className="h-4 w-4 text-indigo-600" />
+                Filter:
+              </div>
+              <Select value={filterLab} onValueChange={setFilterLab}>
+                <SelectTrigger className="w-[220px] border-2">
+                  <SelectValue placeholder="Filter Laboratorium" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Semua Lab</SelectItem>
+                  {laboratoriumList.map((lab) => (
+                    <SelectItem key={lab.id} value={lab.id}>
+                      {lab.nama_lab}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-            <Select value={filterHari} onValueChange={setFilterHari}>
-              <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="Filter Hari" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Semua Hari</SelectItem>
-                {HARI_OPTIONS.map((hari) => (
-                  <SelectItem key={hari.value} value={hari.value}>
-                    {hari.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              <Select value={filterHari} onValueChange={setFilterHari}>
+                <SelectTrigger className="w-[220px] border-2">
+                  <SelectValue placeholder="Filter Hari" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Semua Hari</SelectItem>
+                  {HARI_OPTIONS.map((hari) => (
+                    <SelectItem key={hari.value} value={hari.value}>
+                      {hari.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-            {(filterKelas || filterLab || filterHari) && (
-              <Button variant="outline" onClick={handleClearFilters}>
-                Clear
-              </Button>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* View Tabs */}
-      <Tabs value={currentView} onValueChange={(v) => setCurrentView(v as any)}>
-        <TabsList>
-          <TabsTrigger value="calendar" className="gap-2">
-            <CalendarIcon className="h-4 w-4" />
-            Calendar View
-          </TabsTrigger>
-          <TabsTrigger value="list" className="gap-2">
-            <List className="h-4 w-4" />
-            List View
-          </TabsTrigger>
-        </TabsList>
-
-        {/* Calendar View */}
-        <TabsContent value="calendar" className="mt-6">
-          {calendarEvents.length === 0 ? (
-            <EmptyState
-              title="Tidak ada jadwal"
-              description="Belum ada jadwal praktikum untuk bulan ini. Tambahkan jadwal baru untuk memulai."
-              action={{
-                label: "Tambah Jadwal",
-                onClick: () => setIsCreateOpen(true),
-              }}
-            />
-          ) : (
-            <Calendar
-              events={calendarEvents}
-              onEventClick={handleEventClick}
-              initialDate={currentDate}
-            />
-          )}
-        </TabsContent>
-
-        {/* List View */}
-        <TabsContent value="list" className="mt-6">
-          <Card className="border-0 shadow-xl p-6">
-            <CardContent>
-              {jadwalList.length === 0 ? (
-                <EmptyState
-                  title="Tidak ada jadwal"
-                  description="Belum ada jadwal praktikum. Tambahkan jadwal baru untuk memulai."
-                  action={{
-                    label: "Tambah Jadwal",
-                    onClick: () => setIsCreateOpen(true),
-                  }}
-                />
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Tanggal</TableHead>
-                      <TableHead>Waktu</TableHead>
-                      <TableHead>Kelas</TableHead>
-                      <TableHead>Laboratorium</TableHead>
-                      <TableHead>Topik</TableHead>
-                      <TableHead className="text-right">Aksi</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {jadwalList.map((jadwal) => {
-                      // ✅ PERBAIKAN DITERAPKAN: Ganti 'jadwal.kelas' menjadi 'jadwal.kelas_id'
-                      const kelas = kelasList.find(
-                        (k) => k.id === jadwal.kelas_id,
-                      ); // ✅ Diubah sesuai instruksi Anda
-                      return (
-                        <TableRow key={jadwal.id}>
-                          <TableCell className="font-medium">
-                            {jadwal.tanggal_praktikum
-                              ? format(
-                                  new Date(jadwal.tanggal_praktikum),
-                                  "PPP",
-                                  { locale: id },
-                                )
-                              : "-"}
-                          </TableCell>
-                          <TableCell>
-                            {jadwal.jam_mulai} - {jadwal.jam_selesai}
-                          </TableCell>
-                          <TableCell>
-                            <div className="font-medium">
-                              {kelas?.nama_kelas || "-"}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            {jadwal.laboratorium?.nama_lab || "-"}
-                          </TableCell>
-                          <TableCell>
-                            {jadwal.topik ? (
-                              <span className="text-sm">{jadwal.topik}</span>
-                            ) : (
-                              <span className="text-sm text-muted-foreground">
-                                -
-                              </span>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex justify-end gap-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleEdit(jadwal)}
-                              >
-                                Edit
-                              </Button>
-                              <Button
-                                variant="destructive"
-                                size="sm"
-                                onClick={() => handleDelete(jadwal)}
-                              >
-                                Hapus
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
+              {(filterKelas || filterLab || filterHari) && (
+                <Button
+                  variant="outline"
+                  onClick={handleClearFilters}
+                  className="border-2 hover:bg-gray-100 font-semibold"
+                >
+                  Clear Filter
+                </Button>
               )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+            </div>
+          </CardContent>
+        </Card>
 
-      {/* Create Modal */}
-      <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-6">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-bold">
-              Tambah Jadwal Praktikum
-            </DialogTitle>
-            <DialogDescription className="text-base font-semibold">
-              Lengkapi form berikut untuk menambahkan jadwal baru
-            </DialogDescription>
-          </DialogHeader>
+        {/* View Tabs */}
+        <Tabs
+          value={currentView}
+          onValueChange={(v) => setCurrentView(v as any)}
+        >
+          <TabsList>
+            <TabsTrigger value="calendar" className="gap-2">
+              <CalendarIcon className="h-4 w-4" />
+              Calendar View
+            </TabsTrigger>
+            <TabsTrigger value="list" className="gap-2">
+              <List className="h-4 w-4" />
+              List View
+            </TabsTrigger>
+          </TabsList>
 
-          <Form {...createForm}>
-            <form
-              onSubmit={createForm.handleSubmit(handleCreate)}
-              className="space-y-4"
-            >
-              {renderFormFields(createForm)}
+          {/* Calendar View */}
+          <TabsContent value="calendar" className="mt-6">
+            {calendarEvents.length === 0 ? (
+              <Card className="border-0 shadow-xl bg-linear-to-br from-gray-50 to-blue-50/30 dark:from-slate-900 dark:to-blue-950/20">
+                <CardContent className="p-12">
+                  <EmptyState
+                    title="Tidak ada jadwal"
+                    description="Belum ada jadwal praktikum untuk bulan ini. Tambahkan jadwal baru untuk memulai."
+                    action={{
+                      label: "Tambah Jadwal",
+                      onClick: () => setIsCreateOpen(true),
+                    }}
+                  />
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className="border-0 shadow-xl bg-linear-to-br from-white via-blue-50/30 to-indigo-50/30 dark:from-slate-900 dark:via-blue-950/20 dark:to-indigo-950/20 backdrop-blur-sm">
+                <CardContent className="p-6">
+                  <Calendar
+                    events={calendarEvents}
+                    onEventClick={handleEventClick}
+                    initialDate={currentDate}
+                  />
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
 
-              <DialogFooter>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsCreateOpen(false)}
-                  disabled={isCreating}
+          {/* List View */}
+          <TabsContent value="list" className="mt-6">
+            {jadwalList.length === 0 ? (
+              <Card className="border-0 shadow-xl bg-linear-to-br from-gray-50 to-blue-50/30 dark:from-slate-900 dark:to-blue-950/20">
+                <CardContent className="p-12">
+                  <EmptyState
+                    title="Tidak ada jadwal"
+                    description="Belum ada jadwal praktikum. Tambahkan jadwal baru untuk memulai."
+                    action={{
+                      label: "Tambah Jadwal",
+                      onClick: () => setIsCreateOpen(true),
+                    }}
+                  />
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid gap-4">
+                {jadwalList.map((jadwal) => {
+                  const kelas = kelasList.find((k) => k.id === jadwal.kelas_id);
+                  const mataKuliah = mataKuliahList.find(
+                    (mk) => mk.id === kelas?.mata_kuliah_id,
+                  );
+
+                  return (
+                    <Card
+                      key={jadwal.id}
+                      className="group hover:shadow-2xl transition-all duration-300 border-2 border-indigo-100 dark:border-indigo-900 shadow-xl bg-linear-to-br from-white via-blue-50/30 to-indigo-50/30 dark:from-slate-900 dark:via-blue-950/20 dark:to-indigo-950/20 backdrop-blur-sm overflow-hidden relative"
+                    >
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-linear-to-br from-indigo-400/10 to-purple-400/10 rounded-full blur-3xl -mr-16 -mt-16" />
+                      <CardContent className="relative p-6">
+                        <div className="flex items-start gap-6">
+                          {/* Date Badge */}
+                          <div className="shrink-0">
+                            <div className="w-20 h-20 bg-linear-to-br from-indigo-500 to-purple-600 rounded-2xl shadow-lg shadow-indigo-500/30 flex flex-col items-center justify-center text-white">
+                              <div className="text-2xl font-bold">
+                                {jadwal.tanggal_praktikum
+                                  ? format(
+                                      new Date(jadwal.tanggal_praktikum),
+                                      "dd",
+                                    )
+                                  : "-"}
+                              </div>
+                              <div className="text-xs font-medium uppercase">
+                                {jadwal.tanggal_praktikum
+                                  ? format(
+                                      new Date(jadwal.tanggal_praktikum),
+                                      "MMM",
+                                      { locale: id },
+                                    )
+                                  : "-"}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Content */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-4 mb-3">
+                              <div className="flex-1">
+                                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                                  {mataKuliah?.nama_mk || "Mata Kuliah"}
+                                </h3>
+                                <div className="flex flex-wrap items-center gap-3 text-sm">
+                                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-100 text-blue-700 rounded-full font-semibold">
+                                    <BookOpen className="h-3.5 w-3.5" />
+                                    {kelas?.kode_kelas} - {kelas?.nama_kelas}
+                                  </span>
+                                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-100 text-purple-700 rounded-full font-semibold">
+                                    <Users className="h-3.5 w-3.5" />
+                                    {kelas?.tahun_ajaran}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Details */}
+                            <div className="space-y-2 mb-3">
+                              {jadwal.topik && (
+                                <div className="flex items-start gap-2">
+                                  <div className="w-1 h-1 bg-indigo-500 rounded-full mt-2"></div>
+                                  <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                                    <span className="text-indigo-600 dark:text-indigo-400">
+                                      Topik:
+                                    </span>{" "}
+                                    {jadwal.topik}
+                                  </p>
+                                </div>
+                              )}
+                              <div className="flex items-center gap-2 text-sm">
+                                <Clock className="h-4 w-4 text-green-600" />
+                                <span className="font-bold text-green-700 dark:text-green-400">
+                                  {jadwal.jam_mulai} - {jadwal.jam_selesai}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2 text-sm">
+                                <MapPin className="h-4 w-4 text-orange-600" />
+                                <span className="font-bold text-orange-700 dark:text-orange-400">
+                                  {jadwal.laboratorium?.nama_lab || "-"}
+                                </span>
+                              </div>
+                            </div>
+
+                            {jadwal.catatan && (
+                              <div className="mt-3 p-3 bg-gray-50 dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700">
+                                <p className="text-xs font-semibold text-gray-600 dark:text-gray-400">
+                                  📝 {jadwal.catatan}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Actions */}
+                          <div className="flex flex-col gap-2 shrink-0">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleEdit(jadwal)}
+                              className="border-2 hover:bg-indigo-50 font-semibold"
+                            >
+                              Edit
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => handleDelete(jadwal)}
+                              className="font-semibold"
+                            >
+                              Hapus
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
+
+        {/* Create Modal */}
+        <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0">
+            <div className="bg-linear-to-r from-indigo-600 to-purple-600 p-6 text-white">
+              <DialogTitle className="text-2xl font-bold">
+                Tambah Jadwal Praktikum
+              </DialogTitle>
+              <DialogDescription className="text-base font-semibold text-indigo-100 mt-1">
+                Lengkapi form berikut untuk menambahkan jadwal baru
+              </DialogDescription>
+            </div>
+
+            <div className="p-6">
+              <Form {...createForm}>
+                <form
+                  onSubmit={createForm.handleSubmit(handleCreate)}
+                  className="space-y-4"
                 >
-                  Batal
-                </Button>
-                <Button type="submit" disabled={isCreating}>
-                  {isCreating && (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  )}
-                  Simpan
-                </Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
+                  {renderFormFields(createForm)}
 
-      {/* Edit Modal */}
-      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-6">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-bold">
-              Edit Jadwal Praktikum
-            </DialogTitle>
-            <DialogDescription className="text-base font-semibold">
-              Perbarui informasi jadwal praktikum
-            </DialogDescription>
-          </DialogHeader>
+                  <DialogFooter className="mt-6 gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setIsCreateOpen(false)}
+                      disabled={isCreating}
+                      className="border-2 font-semibold"
+                    >
+                      Batal
+                    </Button>
+                    <Button
+                      type="submit"
+                      disabled={isCreating}
+                      className="bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold"
+                    >
+                      {isCreating && (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      )}
+                      Simpan Jadwal
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </Form>
+            </div>
+          </DialogContent>
+        </Dialog>
 
-          <Form {...editForm}>
-            <form
-              onSubmit={editForm.handleSubmit(handleUpdate)}
-              className="space-y-4"
-            >
-              {renderFormFields(editForm)}
+        {/* Edit Modal */}
+        <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0">
+            <div className="bg-linear-to-r from-indigo-600 to-purple-600 p-6 text-white">
+              <DialogTitle className="text-2xl font-bold">
+                Edit Jadwal Praktikum
+              </DialogTitle>
+              <DialogDescription className="text-base font-semibold text-indigo-100 mt-1">
+                Perbarui informasi jadwal praktikum
+              </DialogDescription>
+            </div>
 
-              <DialogFooter>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsEditOpen(false)}
-                  disabled={isUpdating}
+            <div className="p-6">
+              <Form {...editForm}>
+                <form
+                  onSubmit={editForm.handleSubmit(handleUpdate)}
+                  className="space-y-4"
                 >
-                  Batal
-                </Button>
-                <Button type="submit" disabled={isUpdating}>
-                  {isUpdating && (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  )}
-                  Perbarui
-                </Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
+                  {renderFormFields(editForm)}
 
-      {/* Delete Confirmation */}
-      <ConfirmDialog
-        open={isDeleteOpen}
-        onOpenChange={setIsDeleteOpen}
-        title="Hapus Jadwal"
-        description={`Apakah Anda yakin ingin menghapus jadwal ini? Tindakan ini tidak dapat dibatalkan.`}
-        confirmLabel="Hapus"
-        cancelLabel="Batal"
-        onConfirm={handleConfirmDelete}
-        variant="danger"
-        isLoading={isDeleting}
-      />
+                  <DialogFooter className="mt-6 gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setIsEditOpen(false)}
+                      disabled={isUpdating}
+                      className="border-2 font-semibold"
+                    >
+                      Batal
+                    </Button>
+                    <Button
+                      type="submit"
+                      disabled={isUpdating}
+                      className="bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold"
+                    >
+                      {isUpdating && (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      )}
+                      Perbarui Jadwal
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </Form>
+            </div>
+          </DialogContent>
+        </Dialog>
 
-      {/* Event Detail Dialog */}
-      <EventDialog
-        event={selectedEvent}
-        open={isEventDialogOpen}
-        onOpenChange={setIsEventDialogOpen}
-        onEdit={handleEventEdit}
-        onDelete={handleEventDelete}
-        showActions={true}
-      />
+        {/* Delete Confirmation */}
+        <ConfirmDialog
+          open={isDeleteOpen}
+          onOpenChange={setIsDeleteOpen}
+          title="Hapus Jadwal"
+          description={`Apakah Anda yakin ingin menghapus jadwal ini? Tindakan ini tidak dapat dibatalkan.`}
+          confirmLabel="Hapus"
+          cancelLabel="Batal"
+          onConfirm={handleConfirmDelete}
+          variant="danger"
+          isLoading={isDeleting}
+        />
+
+        {/* Event Detail Dialog */}
+        <EventDialog
+          event={selectedEvent}
+          open={isEventDialogOpen}
+          onOpenChange={setIsEventDialogOpen}
+          onEdit={handleEventEdit}
+          onDelete={handleEventDelete}
+          showActions={true}
+        />
+      </div>
     </div>
   );
 }
