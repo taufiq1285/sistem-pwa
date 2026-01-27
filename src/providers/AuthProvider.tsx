@@ -18,6 +18,7 @@ import * as authApi from "@/lib/supabase/auth";
 import {
   offlineLogin,
   storeOfflineCredentials,
+  clearOfflineCredentials,
   storeOfflineSession,
   storeUserData,
   clearOfflineSession,
@@ -374,11 +375,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
           });
         }
 
-        // 2. Clear offline session in background (with timeout)
-        // This only clears the current session, NOT credentials
-        const offlineSessionPromise = clearOfflineSession().catch((error) => {
-          console.warn("⚠️ Clear offline session error:", error);
-        });
+        // 2. Clear offline session AND credentials in background
+        // This ensures password is required after logout
+        const offlineCleanupPromise = Promise.all([
+          clearOfflineSession().catch((error) => {
+            console.warn("⚠️ Clear offline session error:", error);
+          }),
+          clearOfflineCredentials().catch((error) => {
+            console.warn("⚠️ Clear offline credentials error:", error);
+          }),
+        ]);
 
         // 3. Clear session storage only (keep localStorage & IndexedDB for offline functionality)
         // Keep offline credentials and user data intact for next offline login
@@ -393,13 +399,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
         // Wait for both with a timeout (max 2 seconds total)
         await Promise.race([
-          Promise.all([offlineSessionPromise, cacheCleanupPromise]),
+          Promise.all([offlineCleanupPromise, cacheCleanupPromise]),
           new Promise((resolve) => setTimeout(resolve, 2000)),
         ]);
 
         console.log("✅ Background cleanup completed");
         console.log(
-          "✅ Offline session cleared, credentials preserved for next offline login",
+          "✅ Offline session and credentials cleared - password required on next login",
         );
       } catch (error) {
         console.warn("⚠️ Background cleanup failed:", error);
