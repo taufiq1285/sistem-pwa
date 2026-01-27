@@ -61,7 +61,7 @@ export function useTableExport<T>() {
       // Cleanup
       URL.revokeObjectURL(url);
     },
-    []
+    [],
   );
 
   const exportToJSON = useCallback(
@@ -81,7 +81,7 @@ export function useTableExport<T>() {
 
       URL.revokeObjectURL(url);
     },
-    []
+    [],
   );
 
   return {

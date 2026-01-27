@@ -25,14 +25,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { TableBody } from "@/components/ui/table";
 import { TableSkeleton } from "@/components/shared/DataTable/TableSkeleton";
 import {
   EnhancedTable,
@@ -45,6 +38,18 @@ import {
   EnhancedEmptyState,
   EmptySearchResults,
 } from "@/components/shared/DataTable/EnhancedEmptyState";
+import { useRowSelection } from "@/components/shared/DataTable/useRowSelection";
+import { useTableExport } from "@/components/shared/DataTable/useTableExport";
+import { ColumnVisibilityDropdown } from "@/components/shared/DataTable/ColumnVisibility";
+import {
+  BulkActionsBar,
+  BulkActions,
+} from "@/components/shared/DataTable/BulkActionsBar";
+import {
+  RowSelectionHeader,
+  RowSelectionCell,
+} from "@/components/shared/DataTable/RowSelectionColumn";
+import { Download } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -114,6 +119,53 @@ export default function EquipmentsPage() {
     keterangan: "",
   });
 
+  // Phase 2: Column visibility
+  const [columnVisibility, setColumnVisibility] = useState({
+    select: true,
+    code: true,
+    name: true,
+    category: true,
+    brand: true,
+    stock: true,
+    condition: true,
+    actions: true,
+  });
+
+  // Phase 2: Export functionality
+  const { exportToCSV } = useTableExport<InventarisListItem>();
+
+  const handleExport = () => {
+    exportToCSV({
+      columns: [
+        { key: "kode_barang", header: "Code" },
+        { key: "nama_barang", header: "Name" },
+        { key: "kategori", header: "Category" },
+        { key: "merk", header: "Brand" },
+        { key: "jumlah", header: "Total Stock" },
+        { key: "jumlah_tersedia", header: "Available" },
+        { key: "kondisi", header: "Condition" },
+        { key: "keterangan", header: "Notes" },
+      ],
+      data: filteredInventaris,
+      filename: "equipment-inventory",
+    });
+  };
+
+  const handleBulkDelete = async (items: InventarisListItem[]) => {
+    try {
+      for (const item of items) {
+        await deleteInventaris(item.id);
+      }
+      toast.success(`Successfully deleted ${items.length} equipment(s)`);
+      await loadData();
+    } catch (error: any) {
+      toast.error(
+        "Failed to delete equipment: " + (error.message || "Unknown error"),
+      );
+      console.error(error);
+    }
+  };
+
   useEffect(() => {
     loadData();
   }, []);
@@ -138,6 +190,12 @@ export default function EquipmentsPage() {
       item.nama_barang.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.kode_barang.toLowerCase().includes(searchQuery.toLowerCase()),
   );
+
+  // Phase 2: Row selection - must be at top level, not inside conditional render
+  const rowSelection = useRowSelection({
+    data: filteredInventaris,
+    getKey: (item) => item.id,
+  });
 
   const stats = {
     total: inventaris.length,
@@ -371,8 +429,9 @@ export default function EquipmentsPage() {
           {loading ? (
             <TableSkeleton
               rows={5}
-              columns={6}
+              columns={7}
               columnWidths={[
+                "50px",
                 "120px",
                 "200px",
                 "120px",
@@ -396,84 +455,218 @@ export default function EquipmentsPage() {
               />
             )
           ) : (
-            <EnhancedTable>
-              <EnhancedTableHeader>
-                <EnhancedTableRow>
-                  <EnhancedTableHead>Code</EnhancedTableHead>
-                  <EnhancedTableHead>Name</EnhancedTableHead>
-                  <EnhancedTableHead>Category</EnhancedTableHead>
-                  <EnhancedTableHead>Stock</EnhancedTableHead>
-                  <EnhancedTableHead>Condition</EnhancedTableHead>
-                  <EnhancedTableHead>Actions</EnhancedTableHead>
-                </EnhancedTableRow>
-              </EnhancedTableHeader>
-              <TableBody>
-                {filteredInventaris.map((item) => (
-                  <EnhancedTableRow key={item.id}>
-                    <EnhancedTableCell className="font-mono text-xs">
-                      {item.kode_barang}
-                    </EnhancedTableCell>
-                    <EnhancedTableCell className="font-medium">
-                      {item.nama_barang}
-                    </EnhancedTableCell>
-                    <EnhancedTableCell>
-                      {item.kategori || "-"}
-                    </EnhancedTableCell>
-                    <EnhancedTableCell>
-                      <span
-                        className={
-                          item.jumlah_tersedia < item.jumlah
-                            ? "text-orange-600 font-semibold"
-                            : ""
-                        }
-                      >
-                        {item.jumlah_tersedia}
-                      </span>
-                      <span className="text-muted-foreground mx-1">/</span>
-                      <span className="text-muted-foreground">
-                        {item.jumlah}
-                      </span>
-                    </EnhancedTableCell>
-                    <EnhancedTableCell>
-                      <Badge
-                        variant={
-                          item.kondisi === "baik"
-                            ? "default"
-                            : item.kondisi === "rusak_ringan"
-                              ? "secondary"
-                              : "destructive"
-                        }
-                      >
-                        {item.kondisi === "rusak_ringan"
-                          ? "Minor Damage"
-                          : item.kondisi === "rusak_berat"
-                            ? "Major Damage"
-                            : item.kondisi}
-                      </Badge>
-                    </EnhancedTableCell>
-                    <EnhancedTableCell>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleEdit(item)}
-                        >
-                          <Edit2 className="h-4 w-4 mr-1" />
-                          Edit
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(item)}
-                        >
-                          <Trash2 className="h-4 w-4 text-red-600" />
-                        </Button>
-                      </div>
-                    </EnhancedTableCell>
+            <>
+              <BulkActionsBar
+                selectedCount={rowSelection.selectedCount}
+                onClearSelection={rowSelection.clearSelection}
+                isAllSelected={rowSelection.isAllSelected}
+                isSomeSelected={rowSelection.isSomeSelected}
+                onSelectAll={rowSelection.toggleAll}
+                actions={[
+                  BulkActions.delete(
+                    () => handleBulkDelete(rowSelection.selectedItems),
+                    rowSelection.selectedCount,
+                  ),
+                ]}
+              />
+
+              <div className="flex items-center justify-between mb-4">
+                <div className="text-sm text-muted-foreground">
+                  {filteredInventaris.length} equipment(s)
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleExport}
+                    className="font-semibold"
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Export CSV
+                  </Button>
+                  <ColumnVisibilityDropdown
+                    columns={[
+                      {
+                        id: "select",
+                        label: "Select",
+                        visible: columnVisibility.select,
+                      },
+                      {
+                        id: "code",
+                        label: "Code",
+                        visible: columnVisibility.code,
+                      },
+                      {
+                        id: "name",
+                        label: "Name",
+                        visible: columnVisibility.name,
+                      },
+                      {
+                        id: "category",
+                        label: "Category",
+                        visible: columnVisibility.category,
+                      },
+                      {
+                        id: "brand",
+                        label: "Brand",
+                        visible: columnVisibility.brand,
+                      },
+                      {
+                        id: "stock",
+                        label: "Stock",
+                        visible: columnVisibility.stock,
+                      },
+                      {
+                        id: "condition",
+                        label: "Condition",
+                        visible: columnVisibility.condition,
+                      },
+                      {
+                        id: "actions",
+                        label: "Actions",
+                        visible: columnVisibility.actions,
+                      },
+                    ]}
+                    onColumnToggle={(columnId) => {
+                      setColumnVisibility((prev) => ({
+                        ...prev,
+                        [columnId]: !prev[columnId as keyof typeof prev],
+                      }));
+                    }}
+                  />
+                </div>
+              </div>
+
+              <EnhancedTable>
+                <EnhancedTableHeader>
+                  <EnhancedTableRow>
+                    {columnVisibility.select && (
+                      <EnhancedTableHead className="w-[50px]">
+                        <RowSelectionHeader
+                          checked={rowSelection.isAllSelected}
+                          indeterminate={rowSelection.isSomeSelected}
+                          onCheckedChange={rowSelection.toggleAll}
+                        />
+                      </EnhancedTableHead>
+                    )}
+                    {columnVisibility.code && (
+                      <EnhancedTableHead>Code</EnhancedTableHead>
+                    )}
+                    {columnVisibility.name && (
+                      <EnhancedTableHead>Name</EnhancedTableHead>
+                    )}
+                    {columnVisibility.category && (
+                      <EnhancedTableHead>Category</EnhancedTableHead>
+                    )}
+                    {columnVisibility.brand && (
+                      <EnhancedTableHead>Brand</EnhancedTableHead>
+                    )}
+                    {columnVisibility.stock && (
+                      <EnhancedTableHead>Stock</EnhancedTableHead>
+                    )}
+                    {columnVisibility.condition && (
+                      <EnhancedTableHead>Condition</EnhancedTableHead>
+                    )}
+                    {columnVisibility.actions && (
+                      <EnhancedTableHead>Actions</EnhancedTableHead>
+                    )}
                   </EnhancedTableRow>
-                ))}
-              </TableBody>
-            </EnhancedTable>
+                </EnhancedTableHeader>
+                <TableBody>
+                  {filteredInventaris.map((item) => (
+                    <EnhancedTableRow key={item.id}>
+                      {columnVisibility.select && (
+                        <EnhancedTableCell>
+                          <RowSelectionCell
+                            checked={rowSelection.isSelected(item.id)}
+                            onCheckedChange={() =>
+                              rowSelection.toggleRow(item.id)
+                            }
+                          />
+                        </EnhancedTableCell>
+                      )}
+                      {columnVisibility.code && (
+                        <EnhancedTableCell className="font-mono text-xs">
+                          {item.kode_barang}
+                        </EnhancedTableCell>
+                      )}
+                      {columnVisibility.name && (
+                        <EnhancedTableCell className="font-medium">
+                          {item.nama_barang}
+                        </EnhancedTableCell>
+                      )}
+                      {columnVisibility.category && (
+                        <EnhancedTableCell>
+                          {item.kategori || "-"}
+                        </EnhancedTableCell>
+                      )}
+                      {columnVisibility.brand && (
+                        <EnhancedTableCell>
+                          {item.merk || "-"}
+                        </EnhancedTableCell>
+                      )}
+                      {columnVisibility.stock && (
+                        <EnhancedTableCell>
+                          <span
+                            className={
+                              item.jumlah_tersedia < item.jumlah
+                                ? "text-orange-600 font-semibold"
+                                : ""
+                            }
+                          >
+                            {item.jumlah_tersedia}
+                          </span>
+                          <span className="text-muted-foreground mx-1">/</span>
+                          <span className="text-muted-foreground">
+                            {item.jumlah}
+                          </span>
+                        </EnhancedTableCell>
+                      )}
+                      {columnVisibility.condition && (
+                        <EnhancedTableCell>
+                          <Badge
+                            variant={
+                              item.kondisi === "baik"
+                                ? "default"
+                                : item.kondisi === "rusak_ringan"
+                                  ? "secondary"
+                                  : "destructive"
+                            }
+                          >
+                            {item.kondisi === "rusak_ringan"
+                              ? "Minor Damage"
+                              : item.kondisi === "rusak_berat"
+                                ? "Major Damage"
+                                : item.kondisi}
+                          </Badge>
+                        </EnhancedTableCell>
+                      )}
+                      {columnVisibility.actions && (
+                        <EnhancedTableCell>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleEdit(item)}
+                            >
+                              <Edit2 className="h-4 w-4 mr-1" />
+                              Edit
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDelete(item)}
+                            >
+                              <Trash2 className="h-4 w-4 text-red-600" />
+                            </Button>
+                          </div>
+                        </EnhancedTableCell>
+                      )}
+                    </EnhancedTableRow>
+                  ))}
+                </TableBody>
+              </EnhancedTable>
+            </>
           )}
         </CardContent>
       </Card>

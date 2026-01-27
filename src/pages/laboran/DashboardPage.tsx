@@ -36,11 +36,15 @@ import {
   AlertTriangle,
   Clock,
   CheckCircle,
+  CheckCircle2,
   XCircle,
   AlertCircle,
   ArrowRight,
   User,
   FlaskConical,
+  TrendingUp,
+  Sparkles,
+  Shield,
 } from "lucide-react";
 import { networkDetector } from "@/lib/offline/network-detector";
 import { cacheAPI, invalidateCache } from "@/lib/offline/api-cache";
@@ -314,6 +318,126 @@ export function DashboardPage() {
           </Alert>
         )}
 
+        {/* Quick Stats Cards */}
+        <div className="grid gap-4 md:grid-cols-4">
+          <Card className="border-0 shadow-lg bg-linear-to-br from-blue-500 to-cyan-600 text-white overflow-hidden relative">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl -mr-8 -mt-8" />
+            <CardContent className="p-6 relative">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-blue-100 text-sm font-semibold mb-1">
+                    Total Lab
+                  </p>
+                  <p className="text-4xl font-extrabold">
+                    {stats?.totalLab || 0}
+                  </p>
+                </div>
+                <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
+                  <FlaskConical className="h-7 w-7" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-0 shadow-lg bg-linear-to-br from-emerald-500 to-green-600 text-white overflow-hidden relative">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl -mr-8 -mt-8" />
+            <CardContent className="p-6 relative">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-emerald-100 text-sm font-semibold mb-1">
+                    Total Alat
+                  </p>
+                  <p className="text-4xl font-extrabold">
+                    {stats?.totalInventaris || 0}
+                  </p>
+                </div>
+                <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
+                  <Package className="h-7 w-7" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-0 shadow-lg bg-linear-to-br from-orange-500 to-amber-600 text-white overflow-hidden relative">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl -mr-8 -mt-8" />
+            <CardContent className="p-6 relative">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-orange-100 text-sm font-semibold mb-1">
+                    Pending Approval
+                  </p>
+                  <p className="text-4xl font-extrabold">
+                    {stats?.pendingApprovals || 0}
+                  </p>
+                </div>
+                <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
+                  <ClipboardCheck className="h-7 w-7" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-0 shadow-lg bg-linear-to-br from-rose-500 to-red-600 text-white overflow-hidden relative">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl -mr-8 -mt-8" />
+            <CardContent className="p-6 relative">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-rose-100 text-sm font-semibold mb-1">
+                    Stok Rendah
+                  </p>
+                  <p className="text-4xl font-extrabold">
+                    {stats?.lowStockAlerts || 0}
+                  </p>
+                </div>
+                <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
+                  <AlertTriangle className="h-7 w-7" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Welcome Banner */}
+        {(pendingApprovals.length > 0 || inventoryAlerts.length > 0) && (
+          <Card className="border-0 shadow-xl bg-linear-to-r from-blue-500 via-cyan-500 to-teal-500 text-white overflow-hidden relative">
+            <div className="absolute inset-0 bg-grid-white/10" />
+            <CardContent className="p-8 relative">
+              <div className="flex items-center gap-6">
+                <div className="w-20 h-20 bg-white/20 rounded-3xl flex items-center justify-center backdrop-blur-sm">
+                  <Shield className="h-10 w-10" />
+                </div>
+                <div className="flex-1">
+                  <h2 className="text-3xl font-extrabold mb-2">
+                    Tetap Siap! 🛡️
+                  </h2>
+                  <p className="text-lg font-semibold text-blue-100">
+                    {pendingApprovals.length > 0 && (
+                      <>
+                        Ada{" "}
+                        <span className="font-extrabold text-white">
+                          {pendingApprovals.length} peminjaman
+                        </span>{" "}
+                        yang menunggu approval.{" "}
+                      </>
+                    )}
+                    {inventoryAlerts.length > 0 && (
+                      <>
+                        <span className="font-extrabold text-white">
+                          {inventoryAlerts.length} alat
+                        </span>{" "}
+                        dengan stok rendah perlu diperhatikan.
+                      </>
+                    )}
+                  </p>
+                </div>
+                <div className="hidden md:block">
+                  <FlaskConical className="h-24 w-24 text-white/20" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Main Content Grid */}
         <div className="grid gap-6 lg:grid-cols-2">
           {/* Pending Approvals */}
@@ -364,10 +488,10 @@ export function DashboardPage() {
                   {pendingApprovals.map((approval) => (
                     <div
                       key={approval.id}
-                      className="flex gap-3 p-4 border-2 border-blue-100 rounded-xl hover:bg-blue-50 hover:border-blue-300 transition-all duration-300 shadow-sm hover:shadow-md"
+                      className="flex gap-3 p-4 border-2 border-blue-100 rounded-xl hover:bg-blue-50 hover:border-blue-300 transition-all duration-300 shadow-sm hover:shadow-md group"
                     >
                       <div className="shrink-0">
-                        <div className="w-12 h-12 bg-linear-to-br from-blue-500 to-cyan-600 rounded-xl shadow-lg flex items-center justify-center">
+                        <div className="w-12 h-12 bg-linear-to-br from-blue-500 to-cyan-600 rounded-xl shadow-lg flex items-center justify-center group-hover:scale-110 transition-transform">
                           <Package className="h-5 w-5 text-white" />
                         </div>
                       </div>
@@ -378,7 +502,7 @@ export function DashboardPage() {
                           </h4>
                           <Badge
                             variant="secondary"
-                            className="text-xs bg-blue-100 text-blue-700"
+                            className="text-xs bg-blue-100 text-blue-700 font-semibold"
                           >
                             {approval.inventaris_kode}
                           </Badge>
@@ -476,10 +600,10 @@ export function DashboardPage() {
                   {inventoryAlerts.map((alert) => (
                     <div
                       key={alert.id}
-                      className="flex gap-3 p-4 border-2 border-rose-100 rounded-xl hover:bg-rose-50 hover:border-rose-300 transition-all duration-300 shadow-sm hover:shadow-md"
+                      className="flex gap-3 p-4 border-2 border-rose-100 rounded-xl hover:bg-rose-50 hover:border-rose-300 transition-all duration-300 shadow-sm hover:shadow-md group"
                     >
                       <div className="shrink-0">
-                        <div className="w-12 h-12 bg-linear-to-br from-rose-500 to-red-600 rounded-xl shadow-lg flex items-center justify-center">
+                        <div className="w-12 h-12 bg-linear-to-br from-rose-500 to-red-600 rounded-xl shadow-lg flex items-center justify-center group-hover:scale-110 transition-transform">
                           <AlertTriangle className="h-5 w-5 text-white" />
                         </div>
                       </div>
@@ -490,7 +614,7 @@ export function DashboardPage() {
                           </h4>
                           <Badge
                             variant="secondary"
-                            className="text-xs bg-rose-100 text-rose-700"
+                            className="text-xs bg-rose-100 text-rose-700 font-semibold"
                           >
                             {alert.kode_barang}
                           </Badge>
@@ -504,7 +628,7 @@ export function DashboardPage() {
                         <div className="flex items-center gap-2 mt-2">
                           <Badge
                             variant={getConditionVariant(alert.kondisi)}
-                            className="text-xs"
+                            className="text-xs font-semibold"
                           >
                             {getConditionLabel(alert.kondisi)}
                           </Badge>
@@ -567,10 +691,10 @@ export function DashboardPage() {
                   {labSchedule.map((schedule) => (
                     <div
                       key={schedule.id}
-                      className="flex gap-3 p-4 border-2 border-teal-100 rounded-xl hover:bg-teal-50 hover:border-teal-300 transition-all duration-300 shadow-sm hover:shadow-md"
+                      className="flex gap-3 p-4 border-2 border-teal-100 rounded-xl hover:bg-teal-50 hover:border-teal-300 transition-all duration-300 shadow-sm hover:shadow-md group"
                     >
                       <div className="shrink-0">
-                        <div className="w-12 h-12 bg-linear-to-br from-teal-500 to-cyan-600 rounded-xl shadow-lg flex items-center justify-center">
+                        <div className="w-12 h-12 bg-linear-to-br from-teal-500 to-cyan-600 rounded-xl shadow-lg flex items-center justify-center group-hover:scale-110 transition-transform">
                           <FlaskConical className="h-5 w-5 text-white" />
                         </div>
                       </div>
@@ -595,6 +719,7 @@ export function DashboardPage() {
                           </p>
                         )}
                       </div>
+                      <CheckCircle2 className="h-5 w-5 text-teal-500 opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>
                   ))}
                 </div>

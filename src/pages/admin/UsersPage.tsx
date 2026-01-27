@@ -26,13 +26,28 @@ import {
 } from "@/components/ui/card";
 import { TableBody } from "@/components/ui/table";
 import { TableSkeleton } from "@/components/shared/DataTable/TableSkeleton";
-import { EnhancedTable, EnhancedTableHeader, EnhancedTableRow, EnhancedTableHead, EnhancedTableCell } from "@/components/shared/DataTable/EnhancedTable";
-import { EnhancedEmptyState, EmptySearchResults } from "@/components/shared/DataTable/EnhancedEmptyState";
+import {
+  EnhancedTable,
+  EnhancedTableHeader,
+  EnhancedTableRow,
+  EnhancedTableHead,
+  EnhancedTableCell,
+} from "@/components/shared/DataTable/EnhancedTable";
+import {
+  EnhancedEmptyState,
+  EmptySearchResults,
+} from "@/components/shared/DataTable/EnhancedEmptyState";
 import { useRowSelection } from "@/components/shared/DataTable/useRowSelection";
 import { useTableExport } from "@/components/shared/DataTable/useTableExport";
 import { ColumnVisibilityDropdown } from "@/components/shared/DataTable/ColumnVisibility";
-import { BulkActionsBar, BulkActions } from "@/components/shared/DataTable/BulkActionsBar";
-import { RowSelectionHeader, RowSelectionCell } from "@/components/shared/DataTable/RowSelectionColumn";
+import {
+  BulkActionsBar,
+  BulkActions,
+} from "@/components/shared/DataTable/BulkActionsBar";
+import {
+  RowSelectionHeader,
+  RowSelectionCell,
+} from "@/components/shared/DataTable/RowSelectionColumn";
 import { Download } from "lucide-react";
 import {
   Select,
@@ -304,6 +319,24 @@ export default function UsersPage() {
   const mahasiswaUsers = getUsersByRole("mahasiswa");
   const laboranUsers = getUsersByRole("laboran");
 
+  // Phase 2: Row selection for each role group - must be at top level
+  const adminRowSelection = useRowSelection({
+    data: adminUsers,
+    getKey: (u) => u.id,
+  });
+  const dosenRowSelection = useRowSelection({
+    data: dosenUsers,
+    getKey: (u) => u.id,
+  });
+  const mahasiswaRowSelection = useRowSelection({
+    data: mahasiswaUsers,
+    getKey: (u) => u.id,
+  });
+  const laboranRowSelection = useRowSelection({
+    data: laboranUsers,
+    getKey: (u) => u.id,
+  });
+
   // Handle export for current role users
   const handleExport = (roleUsers: SystemUser[], roleName: string) => {
     exportToCSV({
@@ -337,9 +370,7 @@ export default function UsersPage() {
     if (!confirm(`Delete ${selectedUsers.length} users?`)) return;
 
     try {
-      await Promise.all(
-        selectedUsers.map((user) => deleteUser(user.id))
-      );
+      await Promise.all(selectedUsers.map((user) => deleteUser(user.id)));
       toast.success(`Successfully deleted ${selectedUsers.length} users`);
       await loadUsers(true);
     } catch (error: any) {
@@ -348,12 +379,19 @@ export default function UsersPage() {
   };
 
   // Handle bulk activate/deactivate
-  const handleBulkToggleStatus = async (selectedUsers: SystemUser[], newStatus: boolean) => {
+  const handleBulkToggleStatus = async (
+    selectedUsers: SystemUser[],
+    newStatus: boolean,
+  ) => {
     try {
       await Promise.all(
-        selectedUsers.map((user) => updateUser(user.id, { is_active: newStatus }))
+        selectedUsers.map((user) =>
+          updateUser(user.id, { is_active: newStatus }),
+        ),
       );
-      toast.success(`Successfully ${newStatus ? "activated" : "deactivated"} ${selectedUsers.length} users`);
+      toast.success(
+        `Successfully ${newStatus ? "activated" : "deactivated"} ${selectedUsers.length} users`,
+      );
       await loadUsers(true);
     } catch (error: any) {
       toast.error("Failed to update users: " + error.message);
@@ -364,13 +402,9 @@ export default function UsersPage() {
   const renderUserTable = (
     roleUsers: SystemUser[],
     emptyMessage: string,
-    roleName: string
+    roleName: string,
+    rowSelection: ReturnType<typeof useRowSelection<SystemUser>>,
   ) => {
-    // Row selection
-    const rowSelection = useRowSelection({
-      data: roleUsers,
-      getKey: (u) => u.id,
-    });
     if (loading) {
       return (
         <TableSkeleton
@@ -383,11 +417,7 @@ export default function UsersPage() {
 
     if (roleUsers.length === 0) {
       if (searchQuery) {
-        return (
-          <EmptySearchResults
-            onClear={() => setSearchQuery("")}
-          />
-        );
+        return <EmptySearchResults onClear={() => setSearchQuery("")} />;
       }
       return (
         <EnhancedEmptyState
@@ -412,9 +442,16 @@ export default function UsersPage() {
           isSomeSelected={rowSelection.isSomeSelected}
           onSelectAll={() => rowSelection.toggleAll()}
           actions={[
-            BulkActions.delete(() => handleBulkDelete(rowSelection.selectedItems), rowSelection.selectedCount),
-            BulkActions.activate(() => handleBulkToggleStatus(rowSelection.selectedItems, true)),
-            BulkActions.deactivate(() => handleBulkToggleStatus(rowSelection.selectedItems, false)),
+            BulkActions.delete(
+              () => handleBulkDelete(rowSelection.selectedItems),
+              rowSelection.selectedCount,
+            ),
+            BulkActions.activate(() =>
+              handleBulkToggleStatus(rowSelection.selectedItems, true),
+            ),
+            BulkActions.deactivate(() =>
+              handleBulkToggleStatus(rowSelection.selectedItems, false),
+            ),
           ]}
         />
 
@@ -434,10 +471,22 @@ export default function UsersPage() {
               columns={[
                 { id: "select", label: "Select", visible: true },
                 { id: "name", label: "Name", visible: columnVisibility.name },
-                { id: "email", label: "Email", visible: columnVisibility.email },
+                {
+                  id: "email",
+                  label: "Email",
+                  visible: columnVisibility.email,
+                },
                 { id: "id", label: "ID", visible: columnVisibility.id },
-                { id: "status", label: "Status", visible: columnVisibility.status },
-                { id: "actions", label: "Actions", visible: columnVisibility.actions },
+                {
+                  id: "status",
+                  label: "Status",
+                  visible: columnVisibility.status,
+                },
+                {
+                  id: "actions",
+                  label: "Actions",
+                  visible: columnVisibility.actions,
+                },
               ]}
               onColumnToggle={(columnId) => {
                 setColumnVisibility((prev) => ({
@@ -461,11 +510,19 @@ export default function UsersPage() {
                   />
                 </EnhancedTableHead>
               )}
-              {columnVisibility.name && <EnhancedTableHead>Nama</EnhancedTableHead>}
-              {columnVisibility.email && <EnhancedTableHead>Email</EnhancedTableHead>}
+              {columnVisibility.name && (
+                <EnhancedTableHead>Nama</EnhancedTableHead>
+              )}
+              {columnVisibility.email && (
+                <EnhancedTableHead>Email</EnhancedTableHead>
+              )}
               {columnVisibility.id && <EnhancedTableHead>ID</EnhancedTableHead>}
-              {columnVisibility.status && <EnhancedTableHead>Status</EnhancedTableHead>}
-              {columnVisibility.actions && <EnhancedTableHead>Aksi</EnhancedTableHead>}
+              {columnVisibility.status && (
+                <EnhancedTableHead>Status</EnhancedTableHead>
+              )}
+              {columnVisibility.actions && (
+                <EnhancedTableHead>Aksi</EnhancedTableHead>
+              )}
             </EnhancedTableRow>
           </EnhancedTableHeader>
           <TableBody>
@@ -480,9 +537,13 @@ export default function UsersPage() {
                   </EnhancedTableCell>
                 )}
                 {columnVisibility.name && (
-                  <EnhancedTableCell className="font-medium">{u.full_name}</EnhancedTableCell>
+                  <EnhancedTableCell className="font-medium">
+                    {u.full_name}
+                  </EnhancedTableCell>
                 )}
-                {columnVisibility.email && <EnhancedTableCell>{u.email}</EnhancedTableCell>}
+                {columnVisibility.email && (
+                  <EnhancedTableCell>{u.email}</EnhancedTableCell>
+                )}
                 {columnVisibility.id && (
                   <EnhancedTableCell className="font-mono text-xs">
                     {u.nim || u.nip || u.nidn || "-"}
@@ -711,7 +772,9 @@ export default function UsersPage() {
               {renderUserTable(
                 searchFilteredUsers,
                 "Tidak ada user yang ditemukan",
-                "all"
+                "all",
+                // Use first available rowSelection for "all" tab
+                adminRowSelection,
               )}
             </CardContent>
           </Card>
@@ -730,7 +793,12 @@ export default function UsersPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {renderUserTable(adminUsers, "Tidak ada admin yang ditemukan", "admin")}
+              {renderUserTable(
+                adminUsers,
+                "Tidak ada admin yang ditemukan",
+                "admin",
+                adminRowSelection,
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -746,7 +814,12 @@ export default function UsersPage() {
               <CardDescription>Kelola akun dosen</CardDescription>
             </CardHeader>
             <CardContent>
-              {renderUserTable(dosenUsers, "Tidak ada dosen yang ditemukan", "dosen")}
+              {renderUserTable(
+                dosenUsers,
+                "Tidak ada dosen yang ditemukan",
+                "dosen",
+                dosenRowSelection,
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -765,7 +838,8 @@ export default function UsersPage() {
               {renderUserTable(
                 mahasiswaUsers,
                 "Tidak ada mahasiswa yang ditemukan",
-                "mahasiswa"
+                "mahasiswa",
+                mahasiswaRowSelection,
               )}
             </CardContent>
           </Card>
@@ -785,7 +859,8 @@ export default function UsersPage() {
               {renderUserTable(
                 laboranUsers,
                 "Tidak ada laboran yang ditemukan",
-                "laboran"
+                "laboran",
+                laboranRowSelection,
               )}
             </CardContent>
           </Card>

@@ -9,7 +9,16 @@
  */
 
 import { useState, useEffect } from "react";
-import { Plus, Edit2, Trash2, Filter, RefreshCw, Loader2 } from "lucide-react";
+import {
+  Plus,
+  Edit2,
+  Trash2,
+  Filter,
+  RefreshCw,
+  Loader2,
+  Download,
+  GraduationCap,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -29,15 +38,30 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { TableBody } from "@/components/ui/table";
+import { TableSkeleton } from "@/components/shared/DataTable/TableSkeleton";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Checkbox } from "@/components/ui/checkbox";
+  EnhancedTable,
+  EnhancedTableHeader,
+  EnhancedTableRow,
+  EnhancedTableHead,
+  EnhancedTableCell,
+} from "@/components/shared/DataTable/EnhancedTable";
+import {
+  EnhancedEmptyState,
+  EmptySearchResults,
+} from "@/components/shared/DataTable/EnhancedEmptyState";
+import { useRowSelection } from "@/components/shared/DataTable/useRowSelection";
+import { useTableExport } from "@/components/shared/DataTable/useTableExport";
+import { ColumnVisibilityDropdown } from "@/components/shared/DataTable/ColumnVisibility";
+import {
+  BulkActionsBar,
+  BulkActions,
+} from "@/components/shared/DataTable/BulkActionsBar";
+import {
+  RowSelectionHeader,
+  RowSelectionCell,
+} from "@/components/shared/DataTable/RowSelectionColumn";
 
 import { UpdateSemesterDialog } from "@/components/admin/UpdateSemesterDialog";
 
@@ -77,6 +101,21 @@ export default function AdminMahasiswaPage() {
 
   // UI state
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
+
+  // Phase 2: Column visibility
+  const [columnVisibility, setColumnVisibility] = useState({
+    select: true,
+    nama: true,
+    nim: true,
+    angkatan: true,
+    semester: true,
+    program: true,
+    email: true,
+    actions: true,
+  });
+
+  // Phase 2: Export functionality
+  const { exportToCSV } = useTableExport<Mahasiswa>();
 
   useEffect(() => {
     loadMahasiswa();
@@ -181,6 +220,41 @@ export default function AdminMahasiswaPage() {
 
     return match;
   });
+
+  // Phase 2: Row selection - must be at top level, not inside conditional render
+  const rowSelection = useRowSelection({
+    data: filteredList,
+    getKey: (m) => m.id,
+  });
+
+  // Phase 2: Export handler
+  const handleExport = () => {
+    exportToCSV({
+      columns: [
+        { key: "nim", header: "NIM" },
+        {
+          key: "users",
+          header: "Nama",
+          formatter: (val) => val?.full_name || "",
+        },
+        { key: "angkatan", header: "Angkatan" },
+        { key: "semester", header: "Semester" },
+        { key: "program_studi", header: "Program Studi" },
+        { key: "users", header: "Email", formatter: (val) => val?.email || "" },
+      ],
+      data: filteredList,
+      filename: `mahasiswa-${new Date().toISOString().split("T")[0]}`,
+    });
+    toast.success(`Exported ${filteredList.length} mahasiswa to CSV`);
+  };
+
+  // Phase 2: Bulk update semester handler
+  const handleBulkUpdateSemester = async (selectedMahasiswa: Mahasiswa[]) => {
+    // TODO: Implement bulk update API call
+    toast.success(
+      `Bulk update semester for ${selectedMahasiswa.length} mahasiswa`,
+    );
+  };
 
   const programList = [...new Set(mahasiswaList.map((m) => m.program_studi))];
   const angkatanList = [...new Set(mahasiswaList.map((m) => m.angkatan))].sort(
@@ -287,100 +361,226 @@ export default function AdminMahasiswaPage() {
       {/* Table */}
       <Card className="border-0 shadow-xl">
         <CardHeader className="p-6">
-          <div className="flex justify-between items-center">
-            <div>
-              <CardTitle className="text-xl font-bold">
-                Daftar Mahasiswa
-              </CardTitle>
-              <CardDescription className="text-base font-semibold mt-1">
-                {selectedRows.size > 0 && `${selectedRows.size} dipilih`}
-              </CardDescription>
-            </div>
-            {selectedRows.size > 0 && (
-              <Button
-                variant="secondary"
-                size="sm"
-                className="font-semibold bg-linear-to-r from-blue-500 to-indigo-600 text-white border-0"
-              >
-                Update Semester Bulk
-              </Button>
-            )}
-          </div>
+          <CardTitle className="text-xl font-bold">Daftar Mahasiswa</CardTitle>
+          <CardDescription className="text-base font-semibold mt-1">
+            Kelola data mahasiswa dan update semester
+          </CardDescription>
         </CardHeader>
 
         <CardContent>
           {isLoading ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            </div>
+            <TableSkeleton
+              rows={5}
+              columns={8}
+              columnWidths={[
+                "50px",
+                "200px",
+                "120px",
+                "100px",
+                "80px",
+                "180px",
+                "200px",
+                "100px",
+              ]}
+            />
           ) : filteredList.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              Tidak ada mahasiswa yang sesuai dengan filter
-            </div>
+            search || filterAngkatan || filterSemester || filterProgram ? (
+              <EmptySearchResults
+                onClear={() => {
+                  setSearch("");
+                  setFilterAngkatan("");
+                  setFilterSemester("");
+                  setFilterProgram("");
+                }}
+              />
+            ) : (
+              <EnhancedEmptyState
+                icon={GraduationCap}
+                title="Belum ada data mahasiswa"
+                description="Mulai dengan menambahkan data mahasiswa ke dalam sistem."
+              />
+            )
           ) : (
-            <div className="border rounded-lg overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-10 font-semibold">
-                      <Checkbox
-                        checked={
-                          selectedRows.size === filteredList.length &&
-                          filteredList.length > 0
-                        }
-                        onCheckedChange={handleToggleAllRows}
-                      />
-                    </TableHead>
-                    <TableHead className="font-semibold">Nama</TableHead>
-                    <TableHead className="font-semibold">NIM</TableHead>
-                    <TableHead className="font-semibold">Angkatan</TableHead>
-                    <TableHead className="font-semibold">Semester</TableHead>
-                    <TableHead className="font-semibold">
-                      Program Studi
-                    </TableHead>
-                    <TableHead className="font-semibold">Email</TableHead>
-                    <TableHead className="text-right font-semibold">
-                      Aksi
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
+            <>
+              {/* Bulk Actions Bar */}
+              <BulkActionsBar
+                selectedCount={rowSelection.selectedCount}
+                onClearSelection={rowSelection.clearSelection}
+                isAllSelected={rowSelection.isAllSelected}
+                isSomeSelected={rowSelection.isSomeSelected}
+                onSelectAll={rowSelection.toggleAll}
+                actions={[
+                  {
+                    label: "Update Semester",
+                    icon: Edit2,
+                    onClick: () =>
+                      handleBulkUpdateSemester(rowSelection.selectedItems),
+                    variant: "outline",
+                  },
+                ]}
+              />
+
+              {/* Toolbar with Export and Column Visibility */}
+              <div className="flex items-center justify-between mb-4">
+                <div className="text-sm text-muted-foreground">
+                  {filteredList.length} mahasiswa
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleExport}
+                    className="font-semibold"
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Export CSV
+                  </Button>
+                  <ColumnVisibilityDropdown
+                    columns={[
+                      {
+                        id: "select",
+                        label: "Select",
+                        visible: columnVisibility.select,
+                      },
+                      {
+                        id: "nama",
+                        label: "Nama",
+                        visible: columnVisibility.nama,
+                      },
+                      {
+                        id: "nim",
+                        label: "NIM",
+                        visible: columnVisibility.nim,
+                      },
+                      {
+                        id: "angkatan",
+                        label: "Angkatan",
+                        visible: columnVisibility.angkatan,
+                      },
+                      {
+                        id: "semester",
+                        label: "Semester",
+                        visible: columnVisibility.semester,
+                      },
+                      {
+                        id: "program",
+                        label: "Program Studi",
+                        visible: columnVisibility.program,
+                      },
+                      {
+                        id: "email",
+                        label: "Email",
+                        visible: columnVisibility.email,
+                      },
+                      {
+                        id: "actions",
+                        label: "Aksi",
+                        visible: columnVisibility.actions,
+                      },
+                    ]}
+                    onColumnToggle={(columnId) => {
+                      setColumnVisibility((prev) => ({
+                        ...prev,
+                        [columnId]: !prev[columnId as keyof typeof prev],
+                      }));
+                    }}
+                  />
+                </div>
+              </div>
+
+              <EnhancedTable>
+                <EnhancedTableHeader>
+                  <EnhancedTableRow>
+                    {columnVisibility.select && (
+                      <EnhancedTableHead className="w-[50px]">
+                        <RowSelectionHeader
+                          checked={rowSelection.isAllSelected}
+                          indeterminate={rowSelection.isSomeSelected}
+                          onCheckedChange={rowSelection.toggleAll}
+                        />
+                      </EnhancedTableHead>
+                    )}
+                    {columnVisibility.nama && (
+                      <EnhancedTableHead>Nama</EnhancedTableHead>
+                    )}
+                    {columnVisibility.nim && (
+                      <EnhancedTableHead>NIM</EnhancedTableHead>
+                    )}
+                    {columnVisibility.angkatan && (
+                      <EnhancedTableHead>Angkatan</EnhancedTableHead>
+                    )}
+                    {columnVisibility.semester && (
+                      <EnhancedTableHead>Semester</EnhancedTableHead>
+                    )}
+                    {columnVisibility.program && (
+                      <EnhancedTableHead>Program Studi</EnhancedTableHead>
+                    )}
+                    {columnVisibility.email && (
+                      <EnhancedTableHead>Email</EnhancedTableHead>
+                    )}
+                    {columnVisibility.actions && (
+                      <EnhancedTableHead>Aksi</EnhancedTableHead>
+                    )}
+                  </EnhancedTableRow>
+                </EnhancedTableHeader>
                 <TableBody>
                   {filteredList.map((mhs) => (
-                    <TableRow key={mhs.id}>
-                      <TableCell>
-                        <Checkbox
-                          checked={selectedRows.has(mhs.id)}
-                          onCheckedChange={() => handleToggleRow(mhs.id)}
-                        />
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        {mhs.users?.full_name}
-                      </TableCell>
-                      <TableCell>{mhs.nim}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{mhs.angkatan}</Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge>{mhs.semester}</Badge>
-                      </TableCell>
-                      <TableCell>{mhs.program_studi}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {mhs.users?.email}
-                      </TableCell>
-                      <TableCell className="text-right space-x-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleOpenUpdateDialog(mhs)}
-                        >
-                          <Edit2 className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
+                    <EnhancedTableRow key={mhs.id}>
+                      {columnVisibility.select && (
+                        <EnhancedTableCell>
+                          <RowSelectionCell
+                            checked={rowSelection.isSelected(mhs.id)}
+                            onCheckedChange={() =>
+                              rowSelection.toggleRow(mhs.id)
+                            }
+                          />
+                        </EnhancedTableCell>
+                      )}
+                      {columnVisibility.nama && (
+                        <EnhancedTableCell className="font-medium">
+                          {mhs.users?.full_name}
+                        </EnhancedTableCell>
+                      )}
+                      {columnVisibility.nim && (
+                        <EnhancedTableCell>{mhs.nim}</EnhancedTableCell>
+                      )}
+                      {columnVisibility.angkatan && (
+                        <EnhancedTableCell>
+                          <Badge variant="outline">{mhs.angkatan}</Badge>
+                        </EnhancedTableCell>
+                      )}
+                      {columnVisibility.semester && (
+                        <EnhancedTableCell>
+                          <Badge>{mhs.semester}</Badge>
+                        </EnhancedTableCell>
+                      )}
+                      {columnVisibility.program && (
+                        <EnhancedTableCell>
+                          {mhs.program_studi}
+                        </EnhancedTableCell>
+                      )}
+                      {columnVisibility.email && (
+                        <EnhancedTableCell className="text-sm text-muted-foreground">
+                          {mhs.users?.email}
+                        </EnhancedTableCell>
+                      )}
+                      {columnVisibility.actions && (
+                        <EnhancedTableCell>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleOpenUpdateDialog(mhs)}
+                          >
+                            <Edit2 className="h-4 w-4 mr-1" />
+                            Edit
+                          </Button>
+                        </EnhancedTableCell>
+                      )}
+                    </EnhancedTableRow>
                   ))}
                 </TableBody>
-              </Table>
-            </div>
+              </EnhancedTable>
+            </>
           )}
         </CardContent>
       </Card>

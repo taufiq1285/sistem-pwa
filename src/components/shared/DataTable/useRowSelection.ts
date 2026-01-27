@@ -16,9 +16,8 @@ export function useRowSelection<T>({
   getKey,
   initialSelected = new Set(),
 }: RowSelectionOptions<T>) {
-  const [selectedIds, setSelectedIds] = useState<Set<string | number>>(
-    initialSelected
-  );
+  const [selectedIds, setSelectedIds] =
+    useState<Set<string | number>>(initialSelected);
 
   // Toggle single row selection
   const toggleRow = useCallback(
@@ -34,7 +33,7 @@ export function useRowSelection<T>({
         return newSet;
       });
     },
-    [getKey]
+    [getKey],
   );
 
   // Toggle all rows selection
@@ -56,16 +55,19 @@ export function useRowSelection<T>({
   }, []);
 
   // Select specific rows
-  const selectRows = useCallback((items: T[]) => {
-    setSelectedIds(new Set(items.map(getKey)));
-  }, [getKey]);
+  const selectRows = useCallback(
+    (items: T[]) => {
+      setSelectedIds(new Set(items.map(getKey)));
+    },
+    [getKey],
+  );
 
   // Check if a row is selected
   const isSelected = useCallback(
     (item: T) => {
       return selectedIds.has(getKey(item));
     },
-    [selectedIds, getKey]
+    [selectedIds, getKey],
   );
 
   // Check if all rows are selected

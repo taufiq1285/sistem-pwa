@@ -18,15 +18,13 @@ export { TableBody };
 
 interface EnhancedTableProps {
   children: React.ReactNode;
-  className?: string
+  className?: string;
 }
 
 export function EnhancedTable({ children, className }: EnhancedTableProps) {
   return (
     <div className="rounded-lg border bg-card shadow-sm overflow-hidden">
-      <Table>
-        {children}
-      </Table>
+      <Table>{children}</Table>
     </div>
   );
 }
@@ -35,9 +33,7 @@ export function EnhancedTableHeader({
   className,
   ...props
 }: React.HTMLAttributes<HTMLTableSectionElement>) {
-  return (
-    <TableHeader className={cn("bg-muted/50", className)} {...props} />
-  );
+  return <TableHeader className={cn("bg-muted/50", className)} {...props} />;
 }
 
 export function EnhancedTableRow({
@@ -48,7 +44,7 @@ export function EnhancedTableRow({
     <TableRow
       className={cn(
         "hover:bg-muted/50 transition-colors border-b border-border/50",
-        className
+        className,
       )}
       {...props}
     />
@@ -63,7 +59,7 @@ export function EnhancedTableHead({
     <TableHead
       className={cn(
         "font-semibold text-foreground px-4 py-3 text-sm whitespace-nowrap",
-        className
+        className,
       )}
       {...props}
     />
@@ -76,12 +72,8 @@ export function EnhancedTableCell({
 }: React.TdHTMLAttributes<HTMLTableCellElement>) {
   return (
     <TableCell
-      className={cn(
-        "px-4 py-3 text-sm align-middle",
-        className
-      )}
+      className={cn("px-4 py-3 text-sm align-middle", className)}
       {...props}
     />
   );
 }
-

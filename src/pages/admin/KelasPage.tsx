@@ -53,13 +53,25 @@ import {
 } from "@/components/ui/dialog";
 import { TableBody } from "@/components/ui/table";
 import { TableSkeleton } from "@/components/shared/DataTable/TableSkeleton";
-import { EnhancedTable, EnhancedTableHeader, EnhancedTableRow, EnhancedTableHead, EnhancedTableCell } from "@/components/shared/DataTable/EnhancedTable";
+import {
+  EnhancedTable,
+  EnhancedTableHeader,
+  EnhancedTableRow,
+  EnhancedTableHead,
+  EnhancedTableCell,
+} from "@/components/shared/DataTable/EnhancedTable";
 import { EnhancedEmptyState } from "@/components/shared/DataTable/EnhancedEmptyState";
 import { useRowSelection } from "@/components/shared/DataTable/useRowSelection";
 import { useTableExport } from "@/components/shared/DataTable/useTableExport";
 import { ColumnVisibilityDropdown } from "@/components/shared/DataTable/ColumnVisibility";
-import { BulkActionsBar, BulkActions } from "@/components/shared/DataTable/BulkActionsBar";
-import { RowSelectionHeader, RowSelectionCell } from "@/components/shared/DataTable/RowSelectionColumn";
+import {
+  BulkActionsBar,
+  BulkActions,
+} from "@/components/shared/DataTable/BulkActionsBar";
+import {
+  RowSelectionHeader,
+  RowSelectionCell,
+} from "@/components/shared/DataTable/RowSelectionColumn";
 import { Download } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -132,6 +144,12 @@ export default function KelasPage() {
 
     loadData();
   }, []);
+
+  // Phase 2: Row selection - must be at top level, not inside conditional render
+  const rowSelection = useRowSelection({
+    data: kelasList,
+    getKey: (k) => k.id,
+  });
 
   // ✅ Cleanup subscription saat component unmount atau dialog ditutup
   useEffect(() => {
@@ -297,16 +315,16 @@ export default function KelasPage() {
   // Phase 2: Handle bulk toggle status
   const handleBulkToggleStatus = async (
     selectedKelas: Kelas[],
-    newStatus: boolean
+    newStatus: boolean,
   ) => {
     try {
       await Promise.all(
         selectedKelas.map((kelas) =>
-          updateKelas(kelas.id, { is_active: newStatus })
-        )
+          updateKelas(kelas.id, { is_active: newStatus }),
+        ),
       );
       toast.success(
-        `Berhasil ${newStatus ? "mengaktifkan" : "menonaktifkan"} ${selectedKelas.length} kelas`
+        `Berhasil ${newStatus ? "mengaktifkan" : "menonaktifkan"} ${selectedKelas.length} kelas`,
       );
       await invalidateCache("admin_all_kelas");
       await loadKelas(true);
@@ -496,7 +514,11 @@ export default function KelasPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <TableSkeleton rows={5} columns={4} columnWidths={["200px", "180px", "100px", "200px"]} />
+            <TableSkeleton
+              rows={5}
+              columns={4}
+              columnWidths={["200px", "180px", "100px", "200px"]}
+            />
           </CardContent>
         </Card>
       </div>
@@ -552,142 +574,166 @@ export default function KelasPage() {
             />
           ) : (
             <>
-              {/* Phase 2: Row Selection */}
-              {(() => {
-                const rowSelection = useRowSelection({
-                  data: kelasList,
-                  getKey: (k) => k.id,
-                });
+              {/* Bulk Actions Bar */}
+              <BulkActionsBar
+                selectedCount={rowSelection.selectedCount}
+                onClearSelection={rowSelection.clearSelection}
+                isAllSelected={rowSelection.isAllSelected}
+                isSomeSelected={rowSelection.isSomeSelected}
+                onSelectAll={() => rowSelection.toggleAll()}
+                actions={[
+                  BulkActions.delete(
+                    () => handleBulkDelete(rowSelection.selectedItems),
+                    rowSelection.selectedCount,
+                  ),
+                  BulkActions.activate(() =>
+                    handleBulkToggleStatus(rowSelection.selectedItems, true),
+                  ),
+                  BulkActions.deactivate(() =>
+                    handleBulkToggleStatus(rowSelection.selectedItems, false),
+                  ),
+                ]}
+              />
 
-                return (
-                  <>
-                    {/* Bulk Actions Bar */}
-                    <BulkActionsBar
-                      selectedCount={rowSelection.selectedCount}
-                      onClearSelection={rowSelection.clearSelection}
-                      isAllSelected={rowSelection.isAllSelected}
-                      isSomeSelected={rowSelection.isSomeSelected}
-                      onSelectAll={() => rowSelection.toggleAll()}
-                      actions={[
-                        BulkActions.delete(() => handleBulkDelete(rowSelection.selectedItems), rowSelection.selectedCount),
-                        BulkActions.activate(() => handleBulkToggleStatus(rowSelection.selectedItems, true)),
-                        BulkActions.deactivate(() => handleBulkToggleStatus(rowSelection.selectedItems, false)),
-                      ]}
-                    />
+              {/* Toolbar with Export and Column Visibility */}
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleExport}
+                    className="font-semibold"
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Export CSV
+                  </Button>
+                  <ColumnVisibilityDropdown
+                    columns={[
+                      { id: "select", label: "Select", visible: true },
+                      {
+                        id: "nama",
+                        label: "Nama Kelas",
+                        visible: columnVisibility.nama,
+                      },
+                      {
+                        id: "semester",
+                        label: "Semester/Tahun",
+                        visible: columnVisibility.semester,
+                      },
+                      {
+                        id: "status",
+                        label: "Status",
+                        visible: columnVisibility.status,
+                      },
+                      {
+                        id: "actions",
+                        label: "Aksi",
+                        visible: columnVisibility.actions,
+                      },
+                    ]}
+                    onColumnToggle={(columnId) => {
+                      setColumnVisibility((prev) => ({
+                        ...prev,
+                        [columnId]: !prev[columnId as keyof typeof prev],
+                      }));
+                    }}
+                  />
+                </div>
+              </div>
 
-                    {/* Toolbar with Export and Column Visibility */}
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={handleExport}
-                          className="font-semibold"
-                        >
-                          <Download className="h-4 w-4 mr-2" />
-                          Export CSV
-                        </Button>
-                        <ColumnVisibilityDropdown
-                          columns={[
-                            { id: "select", label: "Select", visible: true },
-                            { id: "nama", label: "Nama Kelas", visible: columnVisibility.nama },
-                            { id: "semester", label: "Semester/Tahun", visible: columnVisibility.semester },
-                            { id: "status", label: "Status", visible: columnVisibility.status },
-                            { id: "actions", label: "Aksi", visible: columnVisibility.actions },
-                          ]}
-                          onColumnToggle={(columnId) => {
-                            setColumnVisibility((prev) => ({
-                              ...prev,
-                              [columnId]: !prev[columnId as keyof typeof prev],
-                            }));
-                          }}
+              <EnhancedTable>
+                <EnhancedTableHeader>
+                  <EnhancedTableRow>
+                    {columnVisibility.select && (
+                      <EnhancedTableHead className="w-[50px]">
+                        <RowSelectionHeader
+                          checked={rowSelection.isAllSelected}
+                          indeterminate={rowSelection.isSomeSelected}
+                          onCheckedChange={() => rowSelection.toggleAll()}
                         />
-                      </div>
-                    </div>
-
-                    <EnhancedTable>
-                      <EnhancedTableHeader>
-                        <EnhancedTableRow>
-                          {columnVisibility.select && (
-                            <EnhancedTableHead className="w-[50px]">
-                              <RowSelectionHeader
-                                checked={rowSelection.isAllSelected}
-                                indeterminate={rowSelection.isSomeSelected}
-                                onCheckedChange={() => rowSelection.toggleAll()}
-                              />
-                            </EnhancedTableHead>
-                          )}
-                          {columnVisibility.nama && <EnhancedTableHead>Nama Kelas</EnhancedTableHead>}
-                          {columnVisibility.semester && <EnhancedTableHead>Semester/Tahun</EnhancedTableHead>}
-                          {columnVisibility.status && <EnhancedTableHead>Status</EnhancedTableHead>}
-                          {columnVisibility.actions && <EnhancedTableHead className="text-right">Aksi</EnhancedTableHead>}
-                        </EnhancedTableRow>
-                      </EnhancedTableHeader>
-                      <TableBody>
-                        {kelasList.map((kelas) => (
-                          <EnhancedTableRow key={kelas.id}>
-                            {columnVisibility.select && (
-                              <EnhancedTableCell>
-                                <RowSelectionCell
-                                  checked={rowSelection.isSelected(kelas)}
-                                  onCheckedChange={() => rowSelection.toggleRow(kelas)}
-                                />
-                              </EnhancedTableCell>
-                            )}
-                            {columnVisibility.nama && (
-                              <EnhancedTableCell className="font-medium">
-                                {kelas.nama_kelas}
-                              </EnhancedTableCell>
-                            )}
-                            {columnVisibility.semester && (
-                              <EnhancedTableCell>
-                                Semester {kelas.semester_ajaran} • {kelas.tahun_ajaran}
-                              </EnhancedTableCell>
-                            )}
-                            {columnVisibility.status && (
-                              <EnhancedTableCell>
-                                <Badge
-                                  variant={kelas.is_active ? "default" : "secondary"}
-                                >
-                                  {kelas.is_active ? "Aktif" : "Tidak Aktif"}
-                                </Badge>
-                              </EnhancedTableCell>
-                            )}
-                            {columnVisibility.actions && (
-                              <EnhancedTableCell className="text-right">
-                                <div className="flex justify-end gap-2">
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => handleManageStudents(kelas)}
-                                  >
-                                    <Users className="h-4 w-4 mr-1" />
-                                    Kelola
-                                  </Button>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => handleEdit(kelas)}
-                                  >
-                                    <Edit className="h-4 w-4" />
-                                  </Button>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => handleDelete(kelas)}
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              </EnhancedTableCell>
-                            )}
-                          </EnhancedTableRow>
-                        ))}
-                      </TableBody>
-                    </EnhancedTable>
-                  </>
-                );
-              })()}
+                      </EnhancedTableHead>
+                    )}
+                    {columnVisibility.nama && (
+                      <EnhancedTableHead>Nama Kelas</EnhancedTableHead>
+                    )}
+                    {columnVisibility.semester && (
+                      <EnhancedTableHead>Semester/Tahun</EnhancedTableHead>
+                    )}
+                    {columnVisibility.status && (
+                      <EnhancedTableHead>Status</EnhancedTableHead>
+                    )}
+                    {columnVisibility.actions && (
+                      <EnhancedTableHead className="text-right">
+                        Aksi
+                      </EnhancedTableHead>
+                    )}
+                  </EnhancedTableRow>
+                </EnhancedTableHeader>
+                <TableBody>
+                  {kelasList.map((kelas) => (
+                    <EnhancedTableRow key={kelas.id}>
+                      {columnVisibility.select && (
+                        <EnhancedTableCell>
+                          <RowSelectionCell
+                            checked={rowSelection.isSelected(kelas)}
+                            onCheckedChange={() =>
+                              rowSelection.toggleRow(kelas)
+                            }
+                          />
+                        </EnhancedTableCell>
+                      )}
+                      {columnVisibility.nama && (
+                        <EnhancedTableCell className="font-medium">
+                          {kelas.nama_kelas}
+                        </EnhancedTableCell>
+                      )}
+                      {columnVisibility.semester && (
+                        <EnhancedTableCell>
+                          Semester {kelas.semester_ajaran} •{" "}
+                          {kelas.tahun_ajaran}
+                        </EnhancedTableCell>
+                      )}
+                      {columnVisibility.status && (
+                        <EnhancedTableCell>
+                          <Badge
+                            variant={kelas.is_active ? "default" : "secondary"}
+                          >
+                            {kelas.is_active ? "Aktif" : "Tidak Aktif"}
+                          </Badge>
+                        </EnhancedTableCell>
+                      )}
+                      {columnVisibility.actions && (
+                        <EnhancedTableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleManageStudents(kelas)}
+                            >
+                              <Users className="h-4 w-4 mr-1" />
+                              Kelola
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleEdit(kelas)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleDelete(kelas)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </EnhancedTableCell>
+                      )}
+                    </EnhancedTableRow>
+                  ))}
+                </TableBody>
+              </EnhancedTable>
             </>
           )}
         </CardContent>
@@ -834,7 +880,9 @@ export default function KelasPage() {
                     <EnhancedTableHead>Angkatan</EnhancedTableHead>
                     <EnhancedTableHead>Email</EnhancedTableHead>
                     <EnhancedTableHead>Status</EnhancedTableHead>
-                    <EnhancedTableHead className="text-right">Aksi</EnhancedTableHead>
+                    <EnhancedTableHead className="text-right">
+                      Aksi
+                    </EnhancedTableHead>
                   </EnhancedTableRow>
                 </EnhancedTableHeader>
                 <TableBody>
