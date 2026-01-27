@@ -37,7 +37,9 @@
       "Bash(npm run test:*)",
       "Bash(npx vitest:*)",
       "Bash(npm run preview:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
     ]
   }
 }

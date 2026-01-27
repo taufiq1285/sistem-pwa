@@ -375,15 +375,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
           });
         }
 
-        // 2. Clear offline session AND credentials in background
-        // This ensures password is required after logout
+        // 2. Clear offline session ONLY (keep credentials for future offline login)
+        // This allows users to login offline again after logout
         const offlineCleanupPromise = Promise.all([
           clearOfflineSession().catch((error) => {
             console.warn("⚠️ Clear offline session error:", error);
           }),
-          clearOfflineCredentials().catch((error) => {
-            console.warn("⚠️ Clear offline credentials error:", error);
-          }),
+          // NOTE: We DON'T clear credentials here, so users can login offline again
         ]);
 
         // 3. Clear session storage only (keep localStorage & IndexedDB for offline functionality)
@@ -405,7 +403,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
         console.log("✅ Background cleanup completed");
         console.log(
-          "✅ Offline session and credentials cleared - password required on next login",
+          "✅ Offline session cleared (credentials kept for offline login)",
         );
       } catch (error) {
         console.warn("⚠️ Background cleanup failed:", error);
