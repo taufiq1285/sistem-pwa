@@ -137,14 +137,14 @@ export default function EquipmentsPage() {
   const handleExport = () => {
     exportToCSV({
       columns: [
-        { key: "kode_barang", header: "Code" },
-        { key: "nama_barang", header: "Name" },
-        { key: "kategori", header: "Category" },
-        { key: "merk", header: "Brand" },
-        { key: "jumlah", header: "Total Stock" },
-        { key: "jumlah_tersedia", header: "Available" },
-        { key: "kondisi", header: "Condition" },
-        { key: "keterangan", header: "Notes" },
+        { key: "kode_barang", label: "Code" },
+        { key: "nama_barang", label: "Name" },
+        { key: "kategori", label: "Category" },
+        { key: "merk", label: "Brand" },
+        { key: "jumlah", label: "Total Stock" },
+        { key: "jumlah_tersedia", label: "Available" },
+        { key: "kondisi", label: "Condition" },
+        { key: "keterangan", label: "Notes" },
       ],
       data: filteredInventaris,
       filename: "equipment-inventory",
@@ -578,10 +578,8 @@ export default function EquipmentsPage() {
                       {columnVisibility.select && (
                         <EnhancedTableCell>
                           <RowSelectionCell
-                            checked={rowSelection.isSelected(item.id)}
-                            onCheckedChange={() =>
-                              rowSelection.toggleRow(item.id)
-                            }
+                            checked={rowSelection.isSelected(item)}
+                            onCheckedChange={() => rowSelection.toggleRow(item)}
                           />
                         </EnhancedTableCell>
                       )}

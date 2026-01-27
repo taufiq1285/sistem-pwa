@@ -11,7 +11,7 @@
  */
 
 import { useState, useEffect } from "react";
-import { Loader2, Search, BookOpen } from "lucide-react";
+import { Loader2, Search, BookOpen, FileText, Library } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MateriList } from "@/components/features/materi/MateriCard";
 import { MateriViewer } from "@/components/features/materi/MateriViewer";
 import { useAuth } from "@/lib/hooks/useAuth";
@@ -318,36 +319,71 @@ export default function MahasiswaMateriPage() {
         </Select>
       </div>
 
-      {/* Info Cards */}
+      {/* Info Cards - Gradient */}
       {materiList.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-card border rounded-lg p-4">
-            <p className="text-sm text-muted-foreground">Total Materi</p>
-            <p className="text-4xl font-extrabold">{materiList.length}</p>
-          </div>
-          <div className="bg-card border rounded-lg p-4">
-            <p className="text-sm text-muted-foreground">Mata Kuliah</p>
-            <p className="text-4xl font-extrabold">{uniqueMataKuliah.length}</p>
-          </div>
-          <div className="bg-card border rounded-lg p-4">
-            <p className="text-sm text-muted-foreground">Kelas Terdaftar</p>
-            <p className="text-4xl font-extrabold">{uniqueKelas.length}</p>
-          </div>
-          <div className="bg-card border rounded-lg p-4">
-            <p className="text-sm text-muted-foreground">Materi Minggu Ini</p>
-            <p className="text-4xl font-extrabold">
-              {
-                materiList.filter((m) => {
-                  const now = new Date();
-                  const weeksSinceStart = Math.ceil(
-                    (now.getTime() - new Date("2024-01-01").getTime()) /
-                      (7 * 24 * 60 * 60 * 1000),
-                  );
-                  return m.minggu_ke === weeksSinceStart;
-                }).length
-              }
-            </p>
-          </div>
+        <div className="grid gap-4 md:grid-cols-4 mb-6">
+          <Card className="border-0 shadow-lg bg-linear-to-r from-blue-500 to-blue-600 text-white">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-base font-bold text-white">
+                Total Materi
+              </CardTitle>
+              <FileText className="h-5 w-5 text-white" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-4xl font-extrabold">{materiList.length}</div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-0 shadow-lg bg-linear-to-r from-purple-500 to-purple-600 text-white">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-base font-bold text-white">
+                Mata Kuliah
+              </CardTitle>
+              <BookOpen className="h-5 w-5 text-white" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-4xl font-extrabold">
+                {uniqueMataKuliah.length}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-0 shadow-lg bg-linear-to-r from-green-500 to-green-600 text-white">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-base font-bold text-white">
+                Kelas Terdaftar
+              </CardTitle>
+              <Library className="h-5 w-5 text-white" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-4xl font-extrabold">
+                {uniqueKelas.length}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-0 shadow-lg bg-linear-to-r from-orange-500 to-orange-600 text-white">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-base font-bold text-white">
+                Materi Minggu Ini
+              </CardTitle>
+              <Search className="h-5 w-5 text-white" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-4xl font-extrabold">
+                {
+                  materiList.filter((m) => {
+                    const now = new Date();
+                    const weeksSinceStart = Math.ceil(
+                      (now.getTime() - new Date("2024-01-01").getTime()) /
+                        (7 * 24 * 60 * 60 * 1000),
+                    );
+                    return m.minggu_ke === weeksSinceStart;
+                  }).length
+                }
+              </div>
+            </CardContent>
+          </Card>
         </div>
       )}
 

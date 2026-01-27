@@ -18,6 +18,10 @@ import {
   Loader2,
   Download,
   GraduationCap,
+  Search,
+  Users,
+  UserCheck,
+  BookOpen,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -231,16 +235,16 @@ export default function AdminMahasiswaPage() {
   const handleExport = () => {
     exportToCSV({
       columns: [
-        { key: "nim", header: "NIM" },
+        { key: "nim", label: "NIM" },
         {
           key: "users",
-          header: "Nama",
+          label: "Nama",
           formatter: (val) => val?.full_name || "",
         },
-        { key: "angkatan", header: "Angkatan" },
-        { key: "semester", header: "Semester" },
-        { key: "program_studi", header: "Program Studi" },
-        { key: "users", header: "Email", formatter: (val) => val?.email || "" },
+        { key: "angkatan", label: "Angkatan" },
+        { key: "semester", label: "Semester" },
+        { key: "program_studi", label: "Program Studi" },
+        { key: "users", label: "Email", formatter: (val) => val?.email || "" },
       ],
       data: filteredList,
       filename: `mahasiswa-${new Date().toISOString().split("T")[0]}`,
@@ -261,6 +265,14 @@ export default function AdminMahasiswaPage() {
     (a, b) => b - a,
   );
 
+  // Statistics
+  const stats = {
+    total: mahasiswaList.length,
+    active: mahasiswaList.filter((m) => m.semester > 0).length,
+    programs: programList.length,
+    angkatan: angkatanList.length,
+  };
+
   // ============================================================================
   // RENDER
   // ============================================================================
@@ -268,11 +280,11 @@ export default function AdminMahasiswaPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex items-center justify-between">
         <div>
           <h1 className="text-4xl font-extrabold">Manajemen Mahasiswa</h1>
           <p className="text-lg font-semibold text-muted-foreground mt-2">
-            Total {filteredList.length} mahasiswa
+            Kelola data mahasiswa, update semester, dan tracking akademik
           </p>
         </div>
         <Button
@@ -285,6 +297,57 @@ export default function AdminMahasiswaPage() {
         </Button>
       </div>
 
+      {/* Statistics Cards */}
+      <div className="grid gap-4 md:grid-cols-4">
+        <Card className="border-0 shadow-lg bg-linear-to-r from-blue-500 to-blue-600 text-white">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-base font-bold text-white">
+              Total Mahasiswa
+            </CardTitle>
+            <Users className="h-5 w-5 text-white" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-4xl font-extrabold">{stats.total}</div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-0 shadow-lg bg-linear-to-r from-green-500 to-green-600 text-white">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-base font-bold text-white">
+              Mahasiswa Aktif
+            </CardTitle>
+            <UserCheck className="h-5 w-5 text-white" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-4xl font-extrabold">{stats.active}</div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-0 shadow-lg bg-linear-to-r from-purple-500 to-purple-600 text-white">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-base font-bold text-white">
+              Program Studi
+            </CardTitle>
+            <BookOpen className="h-5 w-5 text-white" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-4xl font-extrabold">{stats.programs}</div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-0 shadow-lg bg-linear-to-r from-orange-500 to-orange-600 text-white">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-base font-bold text-white">
+              Angkatan
+            </CardTitle>
+            <GraduationCap className="h-5 w-5 text-white" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-4xl font-extrabold">{stats.angkatan}</div>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Filters */}
       <Card className="border-0 shadow-xl">
         <CardHeader className="pb-3 p-6">
@@ -292,11 +355,13 @@ export default function AdminMahasiswaPage() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
-            <div>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Cari nama, NIM, atau email..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
+                className="pl-9"
               />
             </div>
 
@@ -529,10 +594,8 @@ export default function AdminMahasiswaPage() {
                       {columnVisibility.select && (
                         <EnhancedTableCell>
                           <RowSelectionCell
-                            checked={rowSelection.isSelected(mhs.id)}
-                            onCheckedChange={() =>
-                              rowSelection.toggleRow(mhs.id)
-                            }
+                            checked={rowSelection.isSelected(mhs)}
+                            onCheckedChange={() => rowSelection.toggleRow(mhs)}
                           />
                         </EnhancedTableCell>
                       )}

@@ -172,72 +172,63 @@ export default function PresensiPage() {
         </p>
       </div>
 
-      {/* Summary Stats */}
+      {/* Summary Stats - Gradient */}
       <div className="grid gap-4 md:grid-cols-5">
-        <Card className="border-0 shadow-xl p-6">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">
+        <Card className="border-0 shadow-xl bg-linear-to-r from-gray-500 to-gray-600 text-white">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-bold text-white">
               Total Pertemuan
             </CardTitle>
+            <Calendar className="h-5 w-5 text-white" />
           </CardHeader>
           <CardContent>
             <div className="text-4xl font-extrabold">{stats.total}</div>
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-xl p-6">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Hadir</CardTitle>
+        <Card className="border-0 shadow-xl bg-linear-to-r from-green-500 to-green-600 text-white">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-bold text-white">
+              Hadir
+            </CardTitle>
+            <CheckCircle2 className="h-5 w-5 text-white" />
           </CardHeader>
           <CardContent>
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="h-5 w-5 text-green-600" />
-              <div className="text-4xl font-extrabold text-green-600">
-                {stats.hadir}
-              </div>
-            </div>
+            <div className="text-4xl font-extrabold">{stats.hadir}</div>
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-xl p-6">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Izin</CardTitle>
+        <Card className="border-0 shadow-xl bg-linear-to-r from-blue-500 to-blue-600 text-white">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-bold text-white">Izin</CardTitle>
+            <Clock className="h-5 w-5 text-white" />
           </CardHeader>
           <CardContent>
-            <div className="flex items-center gap-2">
-              <Clock className="h-5 w-5 text-blue-600" />
-              <div className="text-4xl font-extrabold text-blue-600">
-                {stats.izin}
-              </div>
-            </div>
+            <div className="text-4xl font-extrabold">{stats.izin}</div>
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-xl p-6">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Sakit</CardTitle>
+        <Card className="border-0 shadow-xl bg-linear-to-r from-yellow-500 to-yellow-600 text-white">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-bold text-white">
+              Sakit
+            </CardTitle>
+            <AlertCircle className="h-5 w-5 text-white" />
           </CardHeader>
           <CardContent>
-            <div className="flex items-center gap-2">
-              <AlertCircle className="h-5 w-5 text-yellow-600" />
-              <div className="text-4xl font-extrabold text-yellow-600">
-                {stats.sakit}
-              </div>
-            </div>
+            <div className="text-4xl font-extrabold">{stats.sakit}</div>
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-xl p-6">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Alpha</CardTitle>
+        <Card className="border-0 shadow-xl bg-linear-to-r from-red-500 to-red-600 text-white">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-bold text-white">
+              Alpha
+            </CardTitle>
+            <XCircle className="h-5 w-5 text-white" />
           </CardHeader>
           <CardContent>
-            <div className="flex items-center gap-2">
-              <XCircle className="h-5 w-5 text-red-600" />
-              <div className="text-4xl font-extrabold text-red-600">
-                {stats.alpha}
-              </div>
-            </div>
+            <div className="text-4xl font-extrabold">{stats.alpha}</div>
           </CardContent>
         </Card>
       </div>
