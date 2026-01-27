@@ -17,8 +17,10 @@ import {
   MapPin,
   Info, // ✅ NEW: Info icon for banner
   Loader2,
+  BookOpen,
+  AlertCircle,
 } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert"; // ✅ NEW: Alert component
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -137,6 +139,65 @@ export default function JadwalPage() {
           {/* ❌ REMOVED: Daftar Kelas Button */}
         </div>
 
+        {/* Statistics Cards */}
+        {myKelas.length > 0 && (
+          <div className="grid gap-4 md:grid-cols-4">
+            <Card className="border-0 shadow-lg bg-linear-to-r from-blue-500 to-blue-600 text-white">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-base font-bold text-white">
+                  Total Kelas
+                </CardTitle>
+                <BookOpen className="h-5 w-5 text-white" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-4xl font-extrabold">{myKelas.length}</div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-0 shadow-lg bg-linear-to-r from-green-500 to-green-600 text-white">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-base font-bold text-white">
+                  Hari Ini
+                </CardTitle>
+                <Calendar className="h-5 w-5 text-white" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-4xl font-extrabold">
+                  {todayJadwal.length}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-0 shadow-lg bg-linear-to-r from-purple-500 to-purple-600 text-white">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-base font-bold text-white">
+                  Minggu Ini
+                </CardTitle>
+                <Clock className="h-5 w-5 text-white" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-4xl font-extrabold">
+                  {upcomingDates.length}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-0 shadow-lg bg-linear-to-r from-orange-500 to-orange-600 text-white">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-base font-bold text-white">
+                  Total Jadwal
+                </CardTitle>
+                <AlertCircle className="h-5 w-5 text-white" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-4xl font-extrabold">
+                  {allJadwal.length}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
         {/* ✅ NEW: Info Banner */}
         <Alert className="border-blue-200 bg-blue-50">
           <Info className="h-4 w-4 text-blue-600" />
@@ -201,7 +262,7 @@ export default function JadwalPage() {
                     >
                       <CardContent className="p-4">
                         <div className="flex gap-4">
-                          <div className="flex-shrink-0">
+                          <div className="shrink-0">
                             <div className="w-16 h-16 bg-green-100 rounded-lg flex flex-col items-center justify-center">
                               <Clock className="h-5 w-5 text-green-600 mb-1" />
                               <span className="text-xs font-medium text-green-700">
@@ -266,7 +327,7 @@ export default function JadwalPage() {
                         <Card key={jadwal.id}>
                           <CardContent className="p-4">
                             <div className="flex gap-4">
-                              <div className="flex-shrink-0">
+                              <div className="shrink-0">
                                 <div className="w-16 h-16 bg-blue-100 rounded-lg flex flex-col items-center justify-center">
                                   <Clock className="h-5 w-5 text-blue-600 mb-1" />
                                   <span className="text-xs font-medium text-blue-700">
@@ -345,7 +406,7 @@ export default function JadwalPage() {
                           >
                             <CardContent className="p-4">
                               <div className="flex gap-4">
-                                <div className="flex-shrink-0">
+                                <div className="shrink-0">
                                   <div
                                     className={`w-16 h-16 rounded-lg flex flex-col items-center justify-center ${
                                       isToday ? "bg-green-100" : "bg-blue-100"

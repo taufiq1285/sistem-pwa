@@ -305,6 +305,31 @@ export default function MahasiswaNilaiPageEnhanced() {
   const filteredNilai = getFilteredNilai();
   const nilaiKumulatif = getNilaiKumulatifPerMK();
 
+  // Calculate statistics
+  const calculateStats = () => {
+    const avgNilai =
+      filteredNilai.length > 0
+        ? filteredNilai.reduce((sum, n) => sum + (n.nilai_akhir || 0), 0) /
+          filteredNilai.length
+        : 0;
+
+    const gradeCounts = {
+      A: filteredNilai.filter((n) => n.nilai_huruf?.startsWith("A")).length,
+      B: filteredNilai.filter((n) => n.nilai_huruf?.startsWith("B")).length,
+      C: filteredNilai.filter((n) => n.nilai_huruf?.startsWith("C")).length,
+      D: filteredNilai.filter((n) => n.nilai_huruf?.startsWith("D")).length,
+      E: filteredNilai.filter((n) => n.nilai_huruf?.startsWith("E")).length,
+    };
+
+    return {
+      total: filteredNilai.length,
+      avgNilai,
+      gradeCounts,
+    };
+  };
+
+  const stats = calculateStats();
+
   return (
     <div className="container mx-auto py-6 space-y-6">
       {/* Header */}
@@ -320,6 +345,65 @@ export default function MahasiswaNilaiPageEnhanced() {
           Download Transkrip
         </Button>
       </div>
+
+      {/* Statistics Cards */}
+      {nilaiList.length > 0 && (
+        <div className="grid gap-4 md:grid-cols-4">
+          <Card className="border-0 shadow-lg bg-linear-to-r from-blue-500 to-blue-600 text-white">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-base font-bold text-white">
+                Total Nilai
+              </CardTitle>
+              <FileText className="h-5 w-5 text-white" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-4xl font-extrabold">{stats.total}</div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-0 shadow-lg bg-linear-to-r from-green-500 to-green-600 text-white">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-base font-bold text-white">
+                Rata-rata
+              </CardTitle>
+              <TrendingUp className="h-5 w-5 text-white" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-4xl font-extrabold">
+                {stats.avgNilai.toFixed(2)}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-0 shadow-lg bg-linear-to-r from-emerald-500 to-emerald-600 text-white">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-base font-bold text-white">
+                Grade A & B
+              </CardTitle>
+              <Award className="h-5 w-5 text-white" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-4xl font-extrabold">
+                {stats.gradeCounts.A + stats.gradeCounts.B}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-0 shadow-lg bg-linear-to-r from-orange-500 to-orange-600 text-white">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-base font-bold text-white">
+                Permintaan
+              </CardTitle>
+              <History className="h-5 w-5 text-white" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-4xl font-extrabold">
+                {permintaanList.length}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Filters */}
       <div className="grid gap-4 md:grid-cols-2">
