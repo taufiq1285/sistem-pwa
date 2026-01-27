@@ -26,13 +26,28 @@ import {
 } from "@/components/ui/card";
 import { TableBody } from "@/components/ui/table";
 import { TableSkeleton } from "@/components/shared/DataTable/TableSkeleton";
-import { EnhancedTable, EnhancedTableHeader, EnhancedTableRow, EnhancedTableHead, EnhancedTableCell } from "@/components/shared/DataTable/EnhancedTable";
-import { EnhancedEmptyState, EmptySearchResults } from "@/components/shared/DataTable/EnhancedEmptyState";
+import {
+  EnhancedTable,
+  EnhancedTableHeader,
+  EnhancedTableRow,
+  EnhancedTableHead,
+  EnhancedTableCell,
+} from "@/components/shared/DataTable/EnhancedTable";
+import {
+  EnhancedEmptyState,
+  EmptySearchResults,
+} from "@/components/shared/DataTable/EnhancedEmptyState";
 import { useRowSelection } from "@/components/shared/DataTable/useRowSelection";
 import { useTableExport } from "@/components/shared/DataTable/useTableExport";
 import { ColumnVisibilityDropdown } from "@/components/shared/DataTable/ColumnVisibility";
-import { BulkActionsBar, BulkActions } from "@/components/shared/DataTable/BulkActionsBar";
-import { RowSelectionHeader, RowSelectionCell } from "@/components/shared/DataTable/RowSelectionColumn";
+import {
+  BulkActionsBar,
+  BulkActions,
+} from "@/components/shared/DataTable/BulkActionsBar";
+import {
+  RowSelectionHeader,
+  RowSelectionCell,
+} from "@/components/shared/DataTable/RowSelectionColumn";
 import { Download } from "lucide-react";
 import {
   Dialog,
@@ -91,6 +106,12 @@ export default function LaboratoriesPage() {
 
   // Phase 2: Export functionality
   const { exportToCSV } = useTableExport<Laboratorium>();
+
+  // Phase 2: Row selection - must be at top level, not inside conditional render
+  const rowSelection = useRowSelection({
+    data: laboratories,
+    getKey: (l) => l.id,
+  });
 
   useEffect(() => {
     loadLaboratories(false);
@@ -240,39 +261,21 @@ export default function LaboratoriesPage() {
   // Phase 2: Handle bulk toggle status
   const handleBulkToggleStatus = async (
     selectedLabs: Laboratorium[],
-    newStatus: boolean
+    newStatus: boolean,
   ) => {
     try {
       await Promise.all(
         selectedLabs.map((lab) =>
-          updateLaboratorium(lab.id, { is_active: newStatus })
-        )
+          updateLaboratorium(lab.id, { is_active: newStatus }),
+        ),
       );
-      toast.success(`Successfully ${newStatus ? "activated" : "deactivated"} ${selectedLabs.length} laboratories`);
+      toast.success(
+        `Successfully ${newStatus ? "activated" : "deactivated"} ${selectedLabs.length} laboratories`,
+      );
       await invalidateCache("admin_laboratories_");
       await loadLaboratories(true);
     } catch (error: any) {
       toast.error("Failed to update laboratories: " + error.message);
-    }
-  };
-
-  const confirmDelete = async () => {
-    if (!deletingLab) return;
-    try {
-      await deleteLaboratorium(deletingLab.id);
-      toast.success(
-        `Laboratory "${deletingLab.nama_lab}" deleted successfully`,
-      );
-      setIsDeleteDialogOpen(false);
-      setDeletingLab(null);
-      // Invalidate cache and reload
-      await invalidateCache("admin_laboratories_");
-      await loadLaboratories(true);
-    } catch (error: any) {
-      toast.error(
-        "Failed to delete laboratory: " + (error.message || "Unknown error"),
-      );
-      console.error(error);
     }
   };
 
@@ -363,8 +366,16 @@ export default function LaboratoriesPage() {
           {loading ? (
             <TableSkeleton
               rows={5}
-              columns={6}
-              columnWidths={["120px", "200px", "150px", "80px", "100px", "160px"]}
+              columns={7}
+              columnWidths={[
+                "50px",
+                "120px",
+                "200px",
+                "150px",
+                "80px",
+                "100px",
+                "160px",
+              ]}
             />
           ) : laboratories.length === 0 ? (
             searchQuery ? (
@@ -381,61 +392,183 @@ export default function LaboratoriesPage() {
               />
             )
           ) : (
-            <EnhancedTable>
-              <EnhancedTableHeader>
-                <EnhancedTableRow>
-                  <EnhancedTableHead>Code</EnhancedTableHead>
-                  <EnhancedTableHead>Name</EnhancedTableHead>
-                  <EnhancedTableHead>Location</EnhancedTableHead>
-                  <EnhancedTableHead>Capacity</EnhancedTableHead>
-                  <EnhancedTableHead>Status</EnhancedTableHead>
-                  <EnhancedTableHead>Actions</EnhancedTableHead>
-                </EnhancedTableRow>
-              </EnhancedTableHeader>
-              <TableBody>
-                {laboratories.map((lab) => (
-                  <EnhancedTableRow key={lab.id}>
-                    <EnhancedTableCell className="font-mono text-xs">
-                      {lab.kode_lab}
-                    </EnhancedTableCell>
-                    <EnhancedTableCell className="font-medium">
-                      {lab.nama_lab}
-                    </EnhancedTableCell>
-                    <EnhancedTableCell>
-                      <div className="flex items-center gap-1 text-muted-foreground">
-                        <MapPin className="h-3 w-3" />
-                        {lab.lokasi || "-"}
-                      </div>
-                    </EnhancedTableCell>
-                    <EnhancedTableCell>{lab.kapasitas}</EnhancedTableCell>
-                    <EnhancedTableCell>
-                      <Badge variant={lab.is_active ? "default" : "secondary"}>
-                        {lab.is_active ? "Active" : "Inactive"}
-                      </Badge>
-                    </EnhancedTableCell>
-                    <EnhancedTableCell>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleEdit(lab)}
-                        >
-                          <Edit className="h-4 w-4 mr-1" />
-                          Edit
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(lab)}
-                        >
-                          <Trash2 className="h-4 w-4 text-red-600" />
-                        </Button>
-                      </div>
-                    </EnhancedTableCell>
+            <>
+              {/* Bulk Actions Bar */}
+              <BulkActionsBar
+                selectedCount={rowSelection.selectedCount}
+                onClearSelection={rowSelection.clearSelection}
+                isAllSelected={rowSelection.isAllSelected}
+                isSomeSelected={rowSelection.isSomeSelected}
+                onSelectAll={() => rowSelection.toggleAll()}
+                actions={[
+                  BulkActions.delete(
+                    () => handleBulkDelete(rowSelection.selectedItems),
+                    rowSelection.selectedCount,
+                  ),
+                  BulkActions.activate(() =>
+                    handleBulkToggleStatus(rowSelection.selectedItems, true),
+                  ),
+                  BulkActions.deactivate(() =>
+                    handleBulkToggleStatus(rowSelection.selectedItems, false),
+                  ),
+                ]}
+              />
+
+              {/* Toolbar with Export and Column Visibility */}
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleExport}
+                    className="font-semibold"
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Export CSV
+                  </Button>
+                  <ColumnVisibilityDropdown
+                    columns={[
+                      { id: "select", label: "Select", visible: true },
+                      {
+                        id: "code",
+                        label: "Code",
+                        visible: columnVisibility.code,
+                      },
+                      {
+                        id: "name",
+                        label: "Name",
+                        visible: columnVisibility.name,
+                      },
+                      {
+                        id: "location",
+                        label: "Location",
+                        visible: columnVisibility.location,
+                      },
+                      {
+                        id: "capacity",
+                        label: "Capacity",
+                        visible: columnVisibility.capacity,
+                      },
+                      {
+                        id: "status",
+                        label: "Status",
+                        visible: columnVisibility.status,
+                      },
+                      {
+                        id: "actions",
+                        label: "Actions",
+                        visible: columnVisibility.actions,
+                      },
+                    ]}
+                    onColumnToggle={(columnId) => {
+                      setColumnVisibility((prev) => ({
+                        ...prev,
+                        [columnId]: !prev[columnId as keyof typeof prev],
+                      }));
+                    }}
+                  />
+                </div>
+              </div>
+
+              <EnhancedTable>
+                <EnhancedTableHeader>
+                  <EnhancedTableRow>
+                    {columnVisibility.select && (
+                      <EnhancedTableHead className="w-[50px]">
+                        <RowSelectionHeader
+                          checked={rowSelection.isAllSelected}
+                          indeterminate={rowSelection.isSomeSelected}
+                          onCheckedChange={() => rowSelection.toggleAll()}
+                        />
+                      </EnhancedTableHead>
+                    )}
+                    {columnVisibility.code && (
+                      <EnhancedTableHead>Code</EnhancedTableHead>
+                    )}
+                    {columnVisibility.name && (
+                      <EnhancedTableHead>Name</EnhancedTableHead>
+                    )}
+                    {columnVisibility.location && (
+                      <EnhancedTableHead>Location</EnhancedTableHead>
+                    )}
+                    {columnVisibility.capacity && (
+                      <EnhancedTableHead>Capacity</EnhancedTableHead>
+                    )}
+                    {columnVisibility.status && (
+                      <EnhancedTableHead>Status</EnhancedTableHead>
+                    )}
+                    {columnVisibility.actions && (
+                      <EnhancedTableHead>Actions</EnhancedTableHead>
+                    )}
                   </EnhancedTableRow>
-                ))}
-              </TableBody>
-            </EnhancedTable>
+                </EnhancedTableHeader>
+                <TableBody>
+                  {laboratories.map((lab) => (
+                    <EnhancedTableRow key={lab.id}>
+                      {columnVisibility.select && (
+                        <EnhancedTableCell>
+                          <RowSelectionCell
+                            checked={rowSelection.isSelected(lab)}
+                            onCheckedChange={() => rowSelection.toggleRow(lab)}
+                          />
+                        </EnhancedTableCell>
+                      )}
+                      {columnVisibility.code && (
+                        <EnhancedTableCell className="font-mono text-xs">
+                          {lab.kode_lab}
+                        </EnhancedTableCell>
+                      )}
+                      {columnVisibility.name && (
+                        <EnhancedTableCell className="font-medium">
+                          {lab.nama_lab}
+                        </EnhancedTableCell>
+                      )}
+                      {columnVisibility.location && (
+                        <EnhancedTableCell>
+                          <div className="flex items-center gap-1 text-muted-foreground">
+                            <MapPin className="h-3 w-3" />
+                            {lab.lokasi || "-"}
+                          </div>
+                        </EnhancedTableCell>
+                      )}
+                      {columnVisibility.capacity && (
+                        <EnhancedTableCell>{lab.kapasitas}</EnhancedTableCell>
+                      )}
+                      {columnVisibility.status && (
+                        <EnhancedTableCell>
+                          <Badge
+                            variant={lab.is_active ? "default" : "secondary"}
+                          >
+                            {lab.is_active ? "Active" : "Inactive"}
+                          </Badge>
+                        </EnhancedTableCell>
+                      )}
+                      {columnVisibility.actions && (
+                        <EnhancedTableCell>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleEdit(lab)}
+                            >
+                              <Edit className="h-4 w-4 mr-1" />
+                              Edit
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDelete(lab)}
+                            >
+                              <Trash2 className="h-4 w-4 text-red-600" />
+                            </Button>
+                          </div>
+                        </EnhancedTableCell>
+                      )}
+                    </EnhancedTableRow>
+                  ))}
+                </TableBody>
+              </EnhancedTable>
+            </>
           )}
         </CardContent>
       </Card>

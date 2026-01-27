@@ -217,7 +217,10 @@ describe("NetworkDetector", () => {
 
   describe("Ping", () => {
     beforeEach(() => {
-      detector = new NetworkDetector({ enablePeriodicCheck: false });
+      detector = new NetworkDetector({
+        enablePeriodicCheck: false,
+        pingUrl: "/api/ping",
+      });
     });
 
     it("should return true when ping succeeds", async () => {
@@ -229,8 +232,9 @@ describe("NetworkDetector", () => {
       expect(mockFetch).toHaveBeenCalledWith(
         "/api/ping",
         expect.objectContaining({
-          method: "HEAD",
+          method: "GET",
           cache: "no-cache",
+          mode: "cors",
         }),
       );
     });

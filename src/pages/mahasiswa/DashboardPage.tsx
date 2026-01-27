@@ -1,6 +1,17 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/hooks/useAuth";
-import { BookOpen, Calendar, Clock, MapPin, Info } from "lucide-react";
+import {
+  BookOpen,
+  Calendar,
+  Clock,
+  MapPin,
+  Info,
+  TrendingUp,
+  CheckCircle2,
+  AlertCircle,
+  Sparkles,
+  Trophy,
+} from "lucide-react";
 import {
   Card,
   CardContent,
@@ -9,7 +20,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription } from "@/components/ui/alert"; // ✅ NEW: Alert component
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { networkDetector } from "@/lib/offline/network-detector";
 import { cacheAPI } from "@/lib/offline/api-cache";
 import {
@@ -167,6 +178,121 @@ export function DashboardPage() {
           </Alert>
         )}
 
+        {/* Quick Stats Cards */}
+        <div className="grid gap-4 md:grid-cols-4">
+          <Card className="border-0 shadow-lg bg-linear-to-br from-emerald-500 to-green-600 text-white overflow-hidden relative">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl -mr-8 -mt-8" />
+            <CardContent className="p-6 relative">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-emerald-100 text-sm font-semibold mb-1">
+                    Total Kelas
+                  </p>
+                  <p className="text-4xl font-extrabold">
+                    {stats?.totalKelasPraktikum || 0}
+                  </p>
+                </div>
+                <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
+                  <BookOpen className="h-7 w-7" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-0 shadow-lg bg-linear-to-br from-blue-500 to-cyan-600 text-white overflow-hidden relative">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl -mr-8 -mt-8" />
+            <CardContent className="p-6 relative">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-blue-100 text-sm font-semibold mb-1">
+                    Praktikum Hari Ini
+                  </p>
+                  <p className="text-4xl font-extrabold">
+                    {stats?.jadwalHariIni || 0}
+                  </p>
+                </div>
+                <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
+                  <Calendar className="h-7 w-7" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-0 shadow-lg bg-linear-to-br from-purple-500 to-violet-600 text-white overflow-hidden relative">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl -mr-8 -mt-8" />
+            <CardContent className="p-6 relative">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-purple-100 text-sm font-semibold mb-1">
+                    Minggu Ini
+                  </p>
+                  <p className="text-4xl font-extrabold">
+                    {myJadwal.length || 0}
+                  </p>
+                </div>
+                <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
+                  <Clock className="h-7 w-7" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-0 shadow-lg bg-linear-to-br from-orange-500 to-amber-600 text-white overflow-hidden relative">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl -mr-8 -mt-8" />
+            <CardContent className="p-6 relative">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-orange-100 text-sm font-semibold mb-1">
+                    Progress
+                  </p>
+                  <p className="text-4xl font-extrabold">
+                    {stats?.totalKelasPraktikum
+                      ? Math.round(
+                          ((stats?.totalKelasPraktikum || 0) /
+                            (stats?.totalKelasPraktikum || 1)) *
+                            100,
+                        )
+                      : 0}
+                    %
+                  </p>
+                </div>
+                <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
+                  <TrendingUp className="h-7 w-7" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Welcome Banner */}
+        {myKelas.length > 0 && (
+          <Card className="border-0 shadow-xl bg-linear-to-r from-emerald-500 via-teal-500 to-cyan-500 text-white overflow-hidden relative">
+            <div className="absolute inset-0 bg-grid-white/10" />
+            <CardContent className="p-8 relative">
+              <div className="flex items-center gap-6">
+                <div className="w-20 h-20 bg-white/20 rounded-3xl flex items-center justify-center backdrop-blur-sm">
+                  <Sparkles className="h-10 w-10" />
+                </div>
+                <div className="flex-1">
+                  <h2 className="text-3xl font-extrabold mb-2">
+                    Semangat Belajar! 🚀
+                  </h2>
+                  <p className="text-lg font-semibold text-emerald-100">
+                    Kamu terdaftar di{" "}
+                    <span className="font-extrabold text-white">
+                      {stats?.totalKelasPraktikum}
+                    </span>{" "}
+                    kelas praktikum. Jangan lupa cek jadwal hari ini ya!
+                  </p>
+                </div>
+                <div className="hidden md:block">
+                  <Trophy className="h-24 w-24 text-white/20" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         <div className="grid gap-6 lg:grid-cols-2">
           {/* My Classes */}
           <Card className="group hover:shadow-2xl transition-all duration-300 border-0 shadow-xl bg-linear-to-br from-emerald-50 to-green-50 dark:from-emerald-950/40 dark:to-green-950/40 backdrop-blur-sm overflow-hidden relative">
@@ -206,10 +332,10 @@ export function DashboardPage() {
                   {myKelas.map((kelas) => (
                     <div
                       key={kelas.id}
-                      className="flex items-center gap-3 p-4 border-2 border-emerald-100 rounded-xl hover:bg-emerald-50 hover:border-emerald-300 transition-all duration-300 shadow-sm hover:shadow-md"
+                      className="flex items-center gap-3 p-4 border-2 border-emerald-100 rounded-xl hover:bg-emerald-50 hover:border-emerald-300 transition-all duration-300 shadow-sm hover:shadow-md group"
                     >
                       <div className="shrink-0">
-                        <div className="w-12 h-12 bg-linear-to-br from-emerald-500 to-green-600 rounded-xl shadow-lg flex items-center justify-center">
+                        <div className="w-12 h-12 bg-linear-to-br from-emerald-500 to-green-600 rounded-xl shadow-lg flex items-center justify-center group-hover:scale-110 transition-transform">
                           <BookOpen className="h-5 w-5 text-white" />
                         </div>
                       </div>
@@ -220,7 +346,7 @@ export function DashboardPage() {
                           </h4>
                           <Badge
                             variant="secondary"
-                            className="text-xs bg-emerald-100 text-emerald-700"
+                            className="text-xs bg-emerald-100 text-emerald-700 font-semibold"
                           >
                             {kelas.mata_kuliah_kode}
                           </Badge>
@@ -232,6 +358,7 @@ export function DashboardPage() {
                           {kelas.sks} SKS • {kelas.tahun_ajaran}
                         </p>
                       </div>
+                      <CheckCircle2 className="h-5 w-5 text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>
                   ))}
                 </div>
@@ -281,10 +408,10 @@ export function DashboardPage() {
                   {myJadwal.map((jadwal) => (
                     <div
                       key={jadwal.id}
-                      className="flex gap-3 p-4 border-2 border-teal-100 rounded-xl hover:bg-teal-50 hover:border-teal-300 transition-all duration-300 shadow-sm hover:shadow-md"
+                      className="flex gap-3 p-4 border-2 border-teal-100 rounded-xl hover:bg-teal-50 hover:border-teal-300 transition-all duration-300 shadow-sm hover:shadow-md group"
                     >
                       <div className="shrink-0">
-                        <div className="w-12 h-12 bg-linear-to-br from-teal-500 to-cyan-600 rounded-xl shadow-lg flex items-center justify-center">
+                        <div className="w-12 h-12 bg-linear-to-br from-teal-500 to-cyan-600 rounded-xl shadow-lg flex items-center justify-center group-hover:scale-110 transition-transform">
                           <Calendar className="h-5 w-5 text-white" />
                         </div>
                       </div>
@@ -308,6 +435,7 @@ export function DashboardPage() {
                           {jadwal.lab_nama}
                         </div>
                       </div>
+                      <AlertCircle className="h-5 w-5 text-teal-500 opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>
                   ))}
                 </div>

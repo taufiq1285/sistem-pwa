@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { supabase } from "@/lib/supabase/client";
@@ -36,7 +36,8 @@ import {
   CheckCircle,
   XCircle,
   AlertTriangle,
-  Package,
+  Award,
+  Sparkles,
 } from "lucide-react";
 import {
   getDosenStats,
@@ -722,6 +723,122 @@ export function DashboardPage() {
               </Alert>
             )}
 
+            {/* Quick Stats Cards */}
+            <div className="grid gap-4 md:grid-cols-4">
+              <Card className="border-0 shadow-lg bg-linear-to-br from-indigo-500 to-purple-600 text-white overflow-hidden relative">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl -mr-8 -mt-8" />
+                <CardContent className="p-6 relative">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-indigo-100 text-sm font-semibold mb-1">
+                        Total Assignment
+                      </p>
+                      <p className="text-4xl font-extrabold">
+                        {assignments.length}
+                      </p>
+                    </div>
+                    <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
+                      <Users className="h-7 w-7" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-0 shadow-lg bg-linear-to-br from-blue-500 to-cyan-600 text-white overflow-hidden relative">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl -mr-8 -mt-8" />
+                <CardContent className="p-6 relative">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-blue-100 text-sm font-semibold mb-1">
+                        Jadwal Minggu Ini
+                      </p>
+                      <p className="text-4xl font-extrabold">
+                        {upcomingPracticum.length}
+                      </p>
+                    </div>
+                    <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
+                      <Calendar className="h-7 w-7" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-0 shadow-lg bg-linear-to-br from-orange-500 to-amber-600 text-white overflow-hidden relative">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl -mr-8 -mt-8" />
+                <CardContent className="p-6 relative">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-orange-100 text-sm font-semibold mb-1">
+                        Perlu Dinilai
+                      </p>
+                      <p className="text-4xl font-extrabold">
+                        {pendingGrading.length}
+                      </p>
+                    </div>
+                    <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
+                      <Edit className="h-7 w-7" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-0 shadow-lg bg-linear-to-br from-emerald-500 to-teal-600 text-white overflow-hidden relative">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl -mr-8 -mt-8" />
+                <CardContent className="p-6 relative">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-emerald-100 text-sm font-semibold mb-1">
+                        Kuis Aktif
+                      </p>
+                      <p className="text-4xl font-extrabold">
+                        {activeKuis.length}
+                      </p>
+                    </div>
+                    <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
+                      <Target className="h-7 w-7" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Welcome Banner */}
+            {assignments.length > 0 && (
+              <Card className="border-0 shadow-xl bg-linear-to-r from-indigo-500 via-purple-500 to-pink-500 text-white overflow-hidden relative">
+                <div className="absolute inset-0 bg-grid-white/10" />
+                <CardContent className="p-8 relative">
+                  <div className="flex items-center gap-6">
+                    <div className="w-20 h-20 bg-white/20 rounded-3xl flex items-center justify-center backdrop-blur-sm">
+                      <Sparkles className="h-10 w-10" />
+                    </div>
+                    <div className="flex-1">
+                      <h2 className="text-3xl font-extrabold mb-2">
+                        Selamat Mengajar! 👨‍🏫
+                      </h2>
+                      <p className="text-lg font-semibold text-indigo-100">
+                        Kamu memiliki{" "}
+                        <span className="font-extrabold text-white">
+                          {assignments.length} assignment
+                        </span>{" "}
+                        dengan{" "}
+                        <span className="font-extrabold text-white">
+                          {assignments.reduce(
+                            (sum, a) => sum + a.total_mahasiswa,
+                            0,
+                          )}{" "}
+                          mahasiswa
+                        </span>
+                        . Semua berjalan lancar!
+                      </p>
+                    </div>
+                    <div className="hidden md:block">
+                      <Award className="h-24 w-24 text-white/20" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             <div className="grid gap-6 lg:grid-cols-2">
               {/* Assignment Saya */}
               <Card className="group hover:shadow-2xl transition-all duration-300 border-0 shadow-xl bg-linear-to-br from-blue-50 to-indigo-50 dark:from-blue-950/40 dark:to-indigo-950/40 backdrop-blur-sm overflow-hidden relative">
@@ -777,11 +894,11 @@ export function DashboardPage() {
                       {assignments.map((assignment, index) => (
                         <div
                           key={index}
-                          className="flex items-center gap-3 p-4 border-2 border-blue-100 rounded-xl hover:bg-blue-50 hover:border-blue-300 transition-all duration-300 cursor-pointer shadow-sm hover:shadow-md"
+                          className="flex items-center gap-3 p-4 border-2 border-blue-100 rounded-xl hover:bg-blue-50 hover:border-blue-300 transition-all duration-300 cursor-pointer shadow-sm hover:shadow-md group"
                           onClick={() => navigate("/dosen/jadwal")}
                         >
                           <div className="shrink-0">
-                            <div className="w-12 h-12 bg-linear-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg flex items-center justify-center">
+                            <div className="w-12 h-12 bg-linear-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg flex items-center justify-center group-hover:scale-110 transition-transform">
                               <BookOpen className="h-5 w-5 text-white" />
                             </div>
                           </div>
@@ -792,7 +909,7 @@ export function DashboardPage() {
                               </h4>
                               <Badge
                                 variant="secondary"
-                                className="text-sm bg-blue-100 text-blue-700"
+                                className="text-sm bg-blue-100 text-blue-700 font-semibold"
                               >
                                 {assignment.mata_kuliah.kode_mk}
                               </Badge>
@@ -815,7 +932,7 @@ export function DashboardPage() {
                               </span>
                             </div>
                           </div>
-                          <ArrowRight className="h-5 w-5 text-blue-600" />
+                          <ArrowRight className="h-5 w-5 text-blue-600 group-hover:translate-x-1 transition-transform" />
                         </div>
                       ))}
                     </div>
@@ -872,10 +989,10 @@ export function DashboardPage() {
                       {upcomingPracticum.map((jadwal) => (
                         <div
                           key={jadwal.id}
-                          className="flex gap-3 p-4 border-2 border-purple-100 rounded-xl hover:bg-purple-50 hover:border-purple-300 transition-all duration-300 cursor-pointer shadow-sm hover:shadow-md"
+                          className="flex gap-3 p-4 border-2 border-purple-100 rounded-xl hover:bg-purple-50 hover:border-purple-300 transition-all duration-300 cursor-pointer shadow-sm hover:shadow-md group"
                         >
                           <div className="shrink-0">
-                            <div className="w-12 h-12 bg-linear-to-br from-purple-500 to-violet-600 rounded-xl shadow-lg flex items-center justify-center">
+                            <div className="w-12 h-12 bg-linear-to-br from-purple-500 to-violet-600 rounded-xl shadow-lg flex items-center justify-center group-hover:scale-110 transition-transform">
                               <Calendar className="h-5 w-5 text-white" />
                             </div>
                           </div>
@@ -902,7 +1019,7 @@ export function DashboardPage() {
                               📍 {jadwal.lab_nama}
                             </p>
                           </div>
-                          <ArrowRight className="h-5 w-5 text-purple-600" />
+                          <ArrowRight className="h-5 w-5 text-purple-600 group-hover:translate-x-1 transition-transform" />
                         </div>
                       ))}
                     </div>
@@ -961,13 +1078,13 @@ export function DashboardPage() {
                       {pendingGrading.map((item) => (
                         <div
                           key={item.id}
-                          className="flex items-center gap-3 p-4 border-2 border-orange-100 rounded-xl hover:bg-orange-50 hover:border-orange-300 transition-all duration-300 cursor-pointer shadow-sm hover:shadow-md"
+                          className="flex items-center gap-3 p-4 border-2 border-orange-100 rounded-xl hover:bg-orange-50 hover:border-orange-300 transition-all duration-300 cursor-pointer shadow-sm hover:shadow-md group"
                           onClick={() =>
                             navigate(`/dosen/penilaian?task=${item.id}`)
                           }
                         >
                           <div className="shrink-0">
-                            <div className="w-10 h-10 bg-linear-to-br from-orange-500 to-amber-600 rounded-xl shadow-lg flex items-center justify-center">
+                            <div className="w-10 h-10 bg-linear-to-br from-orange-500 to-amber-600 rounded-xl shadow-lg flex items-center justify-center group-hover:scale-110 transition-transform">
                               <Edit className="h-5 w-5 text-white" />
                             </div>
                           </div>
@@ -990,7 +1107,7 @@ export function DashboardPage() {
                               </span>
                             </div>
                           </div>
-                          <ArrowRight className="h-5 w-5 text-orange-600" />
+                          <ArrowRight className="h-5 w-5 text-orange-600 group-hover:translate-x-1 transition-transform" />
                         </div>
                       ))}
                     </div>
@@ -1047,11 +1164,11 @@ export function DashboardPage() {
                       {activeKuis.map((kuis) => (
                         <div
                           key={kuis.id}
-                          className="flex items-center gap-3 p-4 border-2 border-indigo-100 rounded-xl hover:bg-indigo-50 hover:border-indigo-300 transition-all duration-300 cursor-pointer shadow-sm hover:shadow-md"
+                          className="flex items-center gap-3 p-4 border-2 border-indigo-100 rounded-xl hover:bg-indigo-50 hover:border-indigo-300 transition-all duration-300 cursor-pointer shadow-sm hover:shadow-md group"
                           onClick={() => navigate(`/dosen/kuis/${kuis.id}`)}
                         >
                           <div className="shrink-0">
-                            <div className="w-10 h-10 bg-linear-to-br from-indigo-500 to-blue-600 rounded-xl shadow-lg flex items-center justify-center">
+                            <div className="w-10 h-10 bg-linear-to-br from-indigo-500 to-blue-600 rounded-xl shadow-lg flex items-center justify-center group-hover:scale-110 transition-transform">
                               <Eye className="h-5 w-5 text-white" />
                             </div>
                           </div>
@@ -1077,7 +1194,7 @@ export function DashboardPage() {
                               </span>
                             </div>
                           </div>
-                          <ArrowRight className="h-5 w-5 text-indigo-600" />
+                          <ArrowRight className="h-5 w-5 text-indigo-600 group-hover:translate-x-1 transition-transform" />
                         </div>
                       ))}
                     </div>

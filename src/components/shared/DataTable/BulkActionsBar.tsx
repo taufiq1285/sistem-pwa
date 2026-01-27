@@ -42,7 +42,7 @@ export function BulkActionsBar({
     <div
       className={cn(
         "flex items-center justify-between p-4 mb-4 rounded-lg border bg-muted/50 shadow-sm",
-        className
+        className,
       )}
     >
       <div className="flex items-center gap-4">
