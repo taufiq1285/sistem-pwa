@@ -12,7 +12,16 @@
  */
 
 import { useState, useEffect, useCallback } from "react";
-import { Plus, Upload, Loader2, Search } from "lucide-react";
+import {
+  Plus,
+  Upload,
+  Loader2,
+  Search,
+  BookOpen,
+  FileText,
+  Download,
+  TrendingUp,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -297,146 +306,215 @@ export default function DosenMateriPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center space-y-4">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
-          <p className="text-muted-foreground">Memuat materi...</p>
+      <div className="min-h-screen bg-linear-to-br from-indigo-50 via-blue-50 to-purple-50 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950 p-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex items-center justify-center min-h-[400px]">
+            <div className="text-center space-y-4">
+              <Loader2 className="h-12 w-12 animate-spin mx-auto text-indigo-600" />
+              <p className="text-lg font-semibold text-gray-700 dark:text-gray-300">
+                Memuat materi...
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto py-6 max-w-7xl">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-bold">Materi Pembelajaran</h1>
-          <p className="text-muted-foreground mt-1">
-            Kelola materi pembelajaran untuk kelas Anda
-          </p>
+    <div className="min-h-screen bg-linear-to-br from-indigo-50 via-blue-50 to-purple-50 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950 p-8">
+      <div className="max-w-7xl mx-auto space-y-8">
+        {/* Enhanced Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex-1">
+            <div className="flex items-center gap-4 mb-3">
+              <div className="p-3 bg-linear-to-br from-indigo-500 to-purple-600 rounded-2xl shadow-lg shadow-indigo-500/30">
+                <BookOpen className="h-8 w-8 text-white" />
+              </div>
+              <div>
+                <h1 className="text-5xl font-extrabold text-transparent bg-clip-text bg-linear-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400">
+                  Materi Pembelajaran
+                </h1>
+                <p className="text-lg font-bold text-gray-700 dark:text-gray-300 mt-1">
+                  Kelola materi pembelajaran untuk kelas Anda
+                </p>
+              </div>
+            </div>
+            <p className="text-base font-semibold text-gray-500 dark:text-gray-400 ml-1">
+              Upload dan atur materi pembelajaran dengan mudah
+            </p>
+          </div>
+          <Button
+            onClick={() => setShowUploadDialog(true)}
+            className="bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg shadow-indigo-500/30 font-semibold px-6"
+            size="lg"
+          >
+            <Plus className="mr-2 h-5 w-5" />
+            Upload Materi
+          </Button>
         </div>
-        <Button onClick={() => setShowUploadDialog(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Upload Materi
-        </Button>
-      </div>
 
-      {/* Filters */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="md:col-span-2">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Cari materi..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
+        {/* Enhanced Stats */}
+        <div className="grid gap-6 md:grid-cols-4">
+          <div className="group hover:shadow-2xl transition-all duration-300 border-0 shadow-xl bg-linear-to-br from-blue-50 to-indigo-50 dark:from-blue-950/40 dark:to-indigo-950/40 backdrop-blur-sm rounded-2xl p-6 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-linear-to-br from-blue-400/10 to-indigo-400/10 rounded-full blur-2xl -mr-12 -mt-12" />
+            <div className="flex items-center justify-between relative">
+              <div>
+                <p className="text-sm font-bold text-gray-600 dark:text-gray-400 mb-2">
+                  Total Materi
+                </p>
+                <p className="text-4xl font-black text-gray-900 dark:text-white">
+                  {materiList.length}
+                </p>
+              </div>
+              <div className="p-3 bg-linear-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg shadow-blue-500/30">
+                <FileText className="h-6 w-6 text-white" />
+              </div>
+            </div>
+          </div>
+
+          <div className="group hover:shadow-2xl transition-all duration-300 border-0 shadow-xl bg-linear-to-br from-green-50 to-emerald-50 dark:from-green-950/40 dark:to-emerald-950/40 backdrop-blur-sm rounded-2xl p-6 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-linear-to-br from-green-400/10 to-emerald-400/10 rounded-full blur-2xl -mr-12 -mt-12" />
+            <div className="flex items-center justify-between relative">
+              <div>
+                <p className="text-sm font-bold text-gray-600 dark:text-gray-400 mb-2">
+                  Published
+                </p>
+                <p className="text-4xl font-black text-green-600">
+                  {materiList.filter((m) => (m as any).is_active).length}
+                </p>
+              </div>
+              <div className="p-3 bg-linear-to-br from-green-500 to-emerald-600 rounded-xl shadow-lg shadow-green-500/30">
+                <Upload className="h-6 w-6 text-white" />
+              </div>
+            </div>
+          </div>
+
+          <div className="group hover:shadow-2xl transition-all duration-300 border-0 shadow-xl bg-linear-to-br from-orange-50 to-amber-50 dark:from-orange-950/40 dark:to-amber-950/40 backdrop-blur-sm rounded-2xl p-6 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-linear-to-br from-orange-400/10 to-amber-400/10 rounded-full blur-2xl -mr-12 -mt-12" />
+            <div className="flex items-center justify-between relative">
+              <div>
+                <p className="text-sm font-bold text-gray-600 dark:text-gray-400 mb-2">
+                  Draft
+                </p>
+                <p className="text-4xl font-black text-orange-600">
+                  {materiList.filter((m) => !(m as any).is_active).length}
+                </p>
+              </div>
+              <div className="p-3 bg-linear-to-br from-orange-500 to-amber-600 rounded-xl shadow-lg shadow-orange-500/30">
+                <FileText className="h-6 w-6 text-white" />
+              </div>
+            </div>
+          </div>
+
+          <div className="group hover:shadow-2xl transition-all duration-300 border-0 shadow-xl bg-linear-to-br from-purple-50 to-violet-50 dark:from-purple-950/40 dark:to-violet-950/40 backdrop-blur-sm rounded-2xl p-6 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-linear-to-br from-purple-400/10 to-violet-400/10 rounded-full blur-2xl -mr-12 -mt-12" />
+            <div className="flex items-center justify-between relative">
+              <div>
+                <p className="text-sm font-bold text-gray-600 dark:text-gray-400 mb-2">
+                  Total Downloads
+                </p>
+                <p className="text-4xl font-black text-purple-600">
+                  {materiList.reduce(
+                    (sum, m) => sum + ((m as any).download_count || 0),
+                    0,
+                  )}
+                </p>
+              </div>
+              <div className="p-3 bg-linear-to-br from-purple-500 to-violet-600 rounded-xl shadow-lg shadow-purple-500/30">
+                <Download className="h-6 w-6 text-white" />
+              </div>
+            </div>
           </div>
         </div>
 
-        <Select value={selectedKelas} onValueChange={setSelectedKelas}>
-          <SelectTrigger>
-            <SelectValue placeholder="Semua Kelas" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Semua Kelas</SelectItem>
-            {kelasList.map((kelas) => (
-              <SelectItem key={kelas.id} value={kelas.id}>
-                {kelas.nama_kelas}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {/* Enhanced Filters */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="md:col-span-2">
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <Input
+                placeholder="Cari materi..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-12 h-12 border-2 text-base font-semibold"
+              />
+            </div>
+          </div>
 
-        <Select value={selectedMinggu} onValueChange={setSelectedMinggu}>
-          <SelectTrigger>
-            <SelectValue placeholder="Semua Minggu" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Semua Minggu</SelectItem>
-            {Array.from({ length: 16 }, (_, i) => i + 1).map((minggu) => (
-              <SelectItem key={minggu} value={minggu.toString()}>
-                Minggu {minggu}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          <Select value={selectedKelas} onValueChange={setSelectedKelas}>
+            <SelectTrigger className="h-12 border-2 font-semibold">
+              <SelectValue placeholder="Semua Kelas" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Semua Kelas</SelectItem>
+              {kelasList.map((kelas) => (
+                <SelectItem key={kelas.id} value={kelas.id}>
+                  {kelas.nama_kelas}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={selectedMinggu} onValueChange={setSelectedMinggu}>
+            <SelectTrigger className="h-12 border-2 font-semibold">
+              <SelectValue placeholder="Semua Minggu" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Semua Minggu</SelectItem>
+              {Array.from({ length: 16 }, (_, i) => i + 1).map((minggu) => (
+                <SelectItem key={minggu} value={minggu.toString()}>
+                  Minggu {minggu}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Materi List */}
+        <MateriList
+          materiList={filteredMateri}
+          showActions={true}
+          showDosenActions={true}
+          onView={handleView}
+          onDownload={handleDownload}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          emptyMessage="Belum ada materi. Upload materi pertama Anda!"
+        />
+
+        {/* Enhanced Upload Dialog */}
+        <UploadDialog
+          open={showUploadDialog}
+          onClose={() => setShowUploadDialog(false)}
+          onUpload={handleUpload}
+          kelasList={kelasList}
+          uploading={uploading}
+          uploadProgress={uploadProgress}
+        />
+
+        {/* Enhanced Edit Dialog */}
+        <EditDialog
+          open={showEditDialog}
+          onClose={() => {
+            setShowEditDialog(false);
+            setEditingMateri(null);
+          }}
+          onUpdate={handleUpdateMateri}
+          materi={editingMateri}
+        />
+
+        {/* Viewer */}
+        <MateriViewer
+          materi={viewingMateri}
+          open={showViewer}
+          onClose={() => {
+            setShowViewer(false);
+            setViewingMateri(null);
+          }}
+          onDownload={() => viewingMateri && handleDownload(viewingMateri)}
+        />
       </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-card border rounded-lg p-4">
-          <p className="text-sm text-muted-foreground">Total Materi</p>
-          <p className="text-2xl font-bold">{materiList.length}</p>
-        </div>
-        <div className="bg-card border rounded-lg p-4">
-          <p className="text-sm text-muted-foreground">Published</p>
-          <p className="text-2xl font-bold">
-            {materiList.filter((m) => (m as any).is_active).length}
-          </p>
-        </div>
-        <div className="bg-card border rounded-lg p-4">
-          <p className="text-sm text-muted-foreground">Draft</p>
-          <p className="text-2xl font-bold">
-            {materiList.filter((m) => !(m as any).is_active).length}
-          </p>
-        </div>
-        <div className="bg-card border rounded-lg p-4">
-          <p className="text-sm text-muted-foreground">Total Downloads</p>
-          <p className="text-2xl font-bold">
-            {materiList.reduce(
-              (sum, m) => sum + ((m as any).download_count || 0),
-              0,
-            )}
-          </p>
-        </div>
-      </div>
-
-      {/* Materi List */}
-      <MateriList
-        materiList={filteredMateri}
-        showActions={true}
-        showDosenActions={true}
-        onView={handleView}
-        onDownload={handleDownload}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-        emptyMessage="Belum ada materi. Upload materi pertama Anda!"
-      />
-
-      {/* Upload Dialog */}
-      <UploadDialog
-        open={showUploadDialog}
-        onClose={() => setShowUploadDialog(false)}
-        onUpload={handleUpload}
-        kelasList={kelasList}
-        uploading={uploading}
-        uploadProgress={uploadProgress}
-      />
-
-      {/* Edit Dialog */}
-      <EditDialog
-        open={showEditDialog}
-        onClose={() => {
-          setShowEditDialog(false);
-          setEditingMateri(null);
-        }}
-        onUpdate={handleUpdateMateri}
-        materi={editingMateri}
-      />
-
-      {/* Viewer */}
-      <MateriViewer
-        materi={viewingMateri}
-        open={showViewer}
-        onClose={() => {
-          setShowViewer(false);
-          setViewingMateri(null);
-        }}
-        onDownload={() => viewingMateri && handleDownload(viewingMateri)}
-      />
     </div>
   );
 }
@@ -489,15 +567,17 @@ function UploadDialog({
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Upload Materi</DialogTitle>
-          <DialogDescription>
+      <DialogContent className="max-w-md p-0">
+        <div className="bg-linear-to-r from-indigo-600 to-purple-600 p-6 text-white">
+          <DialogTitle className="text-2xl font-bold">
+            Upload Materi Pembelajaran
+          </DialogTitle>
+          <DialogDescription className="text-base font-semibold text-indigo-100 mt-1">
             Upload materi pembelajaran untuk kelas Anda
           </DialogDescription>
-        </DialogHeader>
+        </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="p-6 space-y-5">
           <div>
             <Label htmlFor="kelas_id">Kelas *</Label>
             <Select value={selectedKelasId} onValueChange={setSelectedKelasId}>
@@ -585,13 +665,13 @@ function UploadDialog({
 
           {uploading && (
             <div>
-              <div className="flex items-center justify-between text-sm mb-2">
+              <div className="flex items-center justify-between text-base font-bold mb-2">
                 <span>Uploading...</span>
-                <span>{uploadProgress}%</span>
+                <span className="text-indigo-600">{uploadProgress}%</span>
               </div>
-              <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+              <div className="h-3 bg-gray-200 rounded-full overflow-hidden border-2">
                 <div
-                  className="h-full bg-primary transition-all"
+                  className="h-full bg-linear-to-r from-indigo-600 to-purple-600 transition-all"
                   style={{ width: `${uploadProgress}%` }}
                 />
               </div>
@@ -599,7 +679,11 @@ function UploadDialog({
           )}
 
           <div className="flex gap-2">
-            <Button type="submit" disabled={uploading} className="flex-1">
+            <Button
+              type="submit"
+              disabled={uploading}
+              className="flex-1 bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold py-6"
+            >
               {uploading ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -608,7 +692,7 @@ function UploadDialog({
               ) : (
                 <>
                   <Upload className="h-4 w-4 mr-2" />
-                  Upload
+                  Upload Materi
                 </>
               )}
             </Button>
@@ -617,6 +701,7 @@ function UploadDialog({
               variant="outline"
               onClick={onClose}
               disabled={uploading}
+              className="border-2 font-semibold"
             >
               Batal
             </Button>
@@ -658,13 +743,17 @@ function EditDialog({ open, onClose, onUpdate, materi }: EditDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Edit Materi</DialogTitle>
-          <DialogDescription>Update informasi materi</DialogDescription>
-        </DialogHeader>
+      <DialogContent className="max-w-md p-0">
+        <div className="bg-linear-to-r from-indigo-600 to-purple-600 p-6 text-white">
+          <DialogTitle className="text-2xl font-bold">
+            Edit Materi Pembelajaran
+          </DialogTitle>
+          <DialogDescription className="text-base font-semibold text-indigo-100 mt-1">
+            Update informasi materi
+          </DialogDescription>
+        </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="p-6 space-y-5">
           <div>
             <Label htmlFor="edit_judul">Judul Materi *</Label>
             <Input
@@ -708,10 +797,18 @@ function EditDialog({ open, onClose, onUpdate, materi }: EditDialogProps) {
           </div>
 
           <div className="flex gap-2">
-            <Button type="submit" className="flex-1">
-              Update
+            <Button
+              type="submit"
+              className="flex-1 bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold py-6"
+            >
+              Update Materi
             </Button>
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              className="border-2 font-semibold"
+            >
               Batal
             </Button>
           </div>

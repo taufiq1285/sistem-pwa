@@ -194,13 +194,15 @@ export default function KuisListPage() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto py-6 max-w-7xl">
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="text-center space-y-4">
-            <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
-            <p className="text-muted-foreground">
-              Memuat daftar tugas praktikum...
-            </p>
+      <div className="min-h-screen bg-linear-to-br from-indigo-50 via-blue-50 to-purple-50 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950 p-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex items-center justify-center min-h-[400px]">
+            <div className="text-center space-y-4">
+              <Loader2 className="h-12 w-12 animate-spin mx-auto text-indigo-600" />
+              <p className="text-lg font-semibold text-gray-700 dark:text-gray-300">
+                Memuat daftar tugas praktikum...
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -213,13 +215,19 @@ export default function KuisListPage() {
 
   if (error) {
     return (
-      <div className="container mx-auto py-6 max-w-7xl">
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-        <div className="mt-4">
-          <Button onClick={() => loadQuizzes(true)}>Coba Lagi</Button>
+      <div className="min-h-screen bg-linear-to-br from-indigo-50 via-blue-50 to-purple-50 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950 p-8">
+        <div className="max-w-7xl mx-auto">
+          <Alert variant="destructive" className="border-2 shadow-xl">
+            <AlertCircle className="h-5 w-5" />
+            <AlertDescription className="text-base font-semibold">
+              {error}
+            </AlertDescription>
+          </Alert>
+          <div className="mt-6">
+            <Button onClick={() => loadQuizzes(true)} className="font-semibold">
+              Coba Lagi
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -230,177 +238,198 @@ export default function KuisListPage() {
   // ============================================================================
 
   return (
-    <div className="container mx-auto py-6 max-w-7xl">
-      {/* Hero Header */}
-      <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-700 p-8 mb-6 text-white">
-        {/* Decorative Elements */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-32 translate-x-32 blur-3xl" />
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-purple-400/20 rounded-full translate-y-24 -translate-x-24 blur-2xl" />
+    <div className="min-h-screen bg-linear-to-br from-indigo-50 via-blue-50 to-purple-50 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950 p-8">
+      <div className="max-w-7xl mx-auto space-y-8">
+        {/* Enhanced Hero Header */}
+        <div className="relative overflow-hidden rounded-2xl shadow-2xl bg-linear-to-r from-blue-600 via-purple-600 to-indigo-700 p-10 text-white">
+          {/* Decorative Elements */}
+          <div className="absolute top-0 right-0 w-80 h-80 bg-white/10 rounded-full -translate-y-40 translate-x-40 blur-3xl" />
+          <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-400/20 rounded-full translate-y-32 -translate-x-32 blur-3xl" />
 
-        <div className="relative flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold flex items-center gap-3">
-              📋 Daftar Tugas Praktikum
-            </h1>
-            <p className="text-blue-100 mt-2 max-w-xl">
-              Kelola tugas praktikum untuk mahasiswa. Fitur ini bersifat
-              opsional - buat hanya jika diperlukan untuk praktikum tertentu.
-            </p>
-            <div className="flex gap-3 mt-4">
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-white/20 backdrop-blur-sm">
-                📝 Pre-Test
-              </span>
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-white/20 backdrop-blur-sm">
-                📊 Post-Test
-              </span>
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-white/20 backdrop-blur-sm">
-                📄 Laporan
-              </span>
+          <div className="relative flex items-center justify-between">
+            <div className="flex-1">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="p-4 bg-white/20 backdrop-blur-sm rounded-2xl shadow-xl">
+                  📋
+                </div>
+                <h1 className="text-5xl font-extrabold">
+                  Daftar Tugas Praktikum
+                </h1>
+              </div>
+              <p className="text-xl font-semibold text-blue-100 mt-3 max-w-2xl">
+                Kelola tugas praktikum untuk mahasiswa. Fitur ini bersifat
+                opsional - buat hanya jika diperlukan untuk praktikum tertentu.
+              </p>
+              <div className="flex flex-wrap gap-3 mt-6">
+                <span className="inline-flex items-center px-4 py-2 rounded-full text-base font-bold bg-white/20 backdrop-blur-sm border-2 border-white/30 shadow-lg">
+                  📝 Pre-Test
+                </span>
+                <span className="inline-flex items-center px-4 py-2 rounded-full text-base font-bold bg-white/20 backdrop-blur-sm border-2 border-white/30 shadow-lg">
+                  📊 Post-Test
+                </span>
+                <span className="inline-flex items-center px-4 py-2 rounded-full text-base font-bold bg-white/20 backdrop-blur-sm border-2 border-white/30 shadow-lg">
+                  📄 Laporan
+                </span>
+              </div>
             </div>
-          </div>
 
-          <Button
-            onClick={handleCreateQuiz}
-            size="lg"
-            className="gap-2 bg-white text-blue-700 hover:bg-blue-50 shadow-lg"
-          >
-            <Plus className="h-5 w-5" />
-            Buat Tugas Baru
-          </Button>
+            <Button
+              onClick={handleCreateQuiz}
+              size="lg"
+              className="gap-3 bg-white text-blue-700 hover:bg-blue-50 shadow-xl font-bold text-lg px-8 py-6"
+            >
+              <Plus className="h-6 w-6" />
+              Buat Tugas Baru
+            </Button>
+          </div>
         </div>
-      </div>
 
-      {/* Filters & Controls */}
-      <Card className="p-4 mb-6">
-        <div className="flex flex-col lg:flex-row gap-4">
-          {/* Search */}
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Cari tugas praktikum..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
-          </div>
+        {/* Enhanced Filters & Controls */}
+        <Card className="border-0 shadow-xl bg-linear-to-br from-white via-blue-50/30 to-indigo-50/30 dark:from-slate-900 dark:via-blue-950/20 dark:to-indigo-950/20 backdrop-blur-sm p-6">
+          <div className="flex flex-col lg:flex-row gap-4">
+            {/* Search - Enhanced */}
+            <div className="relative flex-1">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <Input
+                placeholder="Cari tugas praktikum..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-12 h-12 border-2 text-base font-semibold"
+              />
+            </div>
 
-          {/* Status Filter */}
-          <Select
-            value={statusFilter}
-            onValueChange={(v) => setStatusFilter(v as StatusFilter)}
-          >
-            <SelectTrigger className="w-full lg:w-[180px]">
-              <Filter className="h-4 w-4 mr-2" />
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Semua ({statusCounts.all})</SelectItem>
-              <SelectItem value="draft">
-                Draft ({statusCounts.draft})
-              </SelectItem>
-              <SelectItem value="active">
-                Aktif ({statusCounts.active})
-              </SelectItem>
-              <SelectItem value="ended">
-                Diarsipkan ({statusCounts.ended})
-              </SelectItem>
-            </SelectContent>
-          </Select>
-
-          {/* Kelas Filter */}
-          {kelasOptions.length > 0 && (
-            <Select value={kelasFilter} onValueChange={setKelasFilter}>
-              <SelectTrigger className="w-full lg:w-[250px]">
-                <SelectValue placeholder="Filter Mata Kuliah" />
+            {/* Status Filter - Enhanced */}
+            <Select
+              value={statusFilter}
+              onValueChange={(v) => setStatusFilter(v as StatusFilter)}
+            >
+              <SelectTrigger className="w-full lg:w-[200px] h-12 border-2 font-semibold">
+                <Filter className="h-4 w-4 mr-2" />
+                <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Semua Mata Kuliah</SelectItem>
-                {kelasOptions.map((kelas: any) => (
-                  <SelectItem
-                    key={kelas.kelas_id || kelas.id}
-                    value={kelas.kelas_id || kelas.id}
-                  >
-                    {kelas.mata_kuliah?.kode_mk} - {kelas.mata_kuliah?.nama_mk}{" "}
-                    ({kelas.nama_kelas})
-                  </SelectItem>
-                ))}
+                <SelectItem value="all">Semua ({statusCounts.all})</SelectItem>
+                <SelectItem value="draft">
+                  Draft ({statusCounts.draft})
+                </SelectItem>
+                <SelectItem value="active">
+                  Aktif ({statusCounts.active})
+                </SelectItem>
+                <SelectItem value="ended">
+                  Diarsipkan ({statusCounts.ended})
+                </SelectItem>
               </SelectContent>
             </Select>
-          )}
 
-          {/* View Mode Toggle */}
-          <Tabs
-            value={viewMode}
-            onValueChange={(v) => setViewMode(v as ViewMode)}
-          >
-            <TabsList>
-              <TabsTrigger value="grid" className="gap-2">
-                <Grid3x3 className="h-4 w-4" />
-                Grid
-              </TabsTrigger>
-              <TabsTrigger value="list" className="gap-2">
-                <List className="h-4 w-4" />
-                List
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
-        </div>
-      </Card>
+            {/* Kelas Filter - Enhanced */}
+            {kelasOptions.length > 0 && (
+              <Select value={kelasFilter} onValueChange={setKelasFilter}>
+                <SelectTrigger className="w-full lg:w-[280px] h-12 border-2 font-semibold">
+                  <SelectValue placeholder="Filter Mata Kuliah" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Semua Mata Kuliah</SelectItem>
+                  {kelasOptions.map((kelas: any) => (
+                    <SelectItem
+                      key={kelas.kelas_id || kelas.id}
+                      value={kelas.kelas_id || kelas.id}
+                    >
+                      {kelas.mata_kuliah?.kode_mk} -{" "}
+                      {kelas.mata_kuliah?.nama_mk} ({kelas.nama_kelas})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
 
-      {/* Task List/Grid */}
-      {filteredQuizzes.length === 0 ? (
-        <Card className="p-12">
-          <div className="text-center space-y-4">
-            <div className="mx-auto w-16 h-16 bg-muted rounded-full flex items-center justify-center">
-              <AlertCircle className="h-8 w-8 text-muted-foreground" />
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold">
-                Tidak ada tugas praktikum
-              </h3>
-              <p className="text-muted-foreground">
-                {searchQuery || statusFilter !== "all" || kelasFilter !== "all"
-                  ? "Tidak ada tugas yang sesuai dengan filter"
-                  : "Belum ada tugas praktikum yang dibuat"}
-              </p>
-            </div>
-            {!searchQuery &&
-              statusFilter === "all" &&
-              kelasFilter === "all" && (
-                <Button onClick={handleCreateQuiz} className="gap-2">
-                  <Plus className="h-4 w-4" />
-                  Buat Tugas Pertama
-                </Button>
-              )}
+            {/* View Mode Toggle - Enhanced */}
+            <Tabs
+              value={viewMode}
+              onValueChange={(v) => setViewMode(v as ViewMode)}
+            >
+              <TabsList className="border-2 shadow-lg">
+                <TabsTrigger value="grid" className="gap-2 font-semibold">
+                  <Grid3x3 className="h-4 w-4" />
+                  Grid
+                </TabsTrigger>
+                <TabsTrigger value="list" className="gap-2 font-semibold">
+                  <List className="h-4 w-4" />
+                  List
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
           </div>
         </Card>
-      ) : (
-        <div
-          className={cn(
-            viewMode === "grid"
-              ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
-              : "space-y-4",
-          )}
-        >
-          {filteredQuizzes.map((quiz) => (
-            <QuizCard
-              key={quiz.id}
-              quiz={quiz}
-              onUpdate={loadQuizzes}
-              onDelete={loadQuizzes}
-              compact={viewMode === "list"}
-            />
-          ))}
-        </div>
-      )}
 
-      {/* Results Count */}
-      {filteredQuizzes.length > 0 && (
-        <div className="mt-6 text-center text-sm text-muted-foreground">
-          Menampilkan {filteredQuizzes.length} dari {quizzes.length} tugas
-          praktikum
-        </div>
-      )}
+        {/* Enhanced Task List/Grid */}
+        {filteredQuizzes.length === 0 ? (
+          <Card className="border-0 shadow-xl bg-linear-to-br from-gray-50 to-blue-50/30 dark:from-slate-900 dark:to-blue-950/20 p-16">
+            <div className="text-center space-y-6">
+              <div className="mx-auto w-24 h-24 bg-linear-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center shadow-xl">
+                <AlertCircle className="h-12 w-12 text-blue-400" />
+              </div>
+              <div>
+                <h3 className="text-2xl font-extrabold text-gray-900 dark:text-white mb-3">
+                  Tidak ada tugas praktikum
+                </h3>
+                <p className="text-lg font-semibold text-gray-700 dark:text-gray-300">
+                  {searchQuery ||
+                  statusFilter !== "all" ||
+                  kelasFilter !== "all"
+                    ? "Tidak ada tugas yang sesuai dengan filter"
+                    : "Belum ada tugas praktikum yang dibuat"}
+                </p>
+              </div>
+              {!searchQuery &&
+                statusFilter === "all" &&
+                kelasFilter === "all" && (
+                  <Button
+                    onClick={handleCreateQuiz}
+                    className="gap-2 bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold px-8 py-6 shadow-xl text-lg"
+                  >
+                    <Plus className="h-5 w-5" />
+                    Buat Tugas Pertama
+                  </Button>
+                )}
+            </div>
+          </Card>
+        ) : (
+          <div
+            className={cn(
+              viewMode === "grid"
+                ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                : "space-y-6",
+            )}
+          >
+            {filteredQuizzes.map((quiz) => (
+              <QuizCard
+                key={quiz.id}
+                quiz={quiz}
+                onUpdate={loadQuizzes}
+                onDelete={loadQuizzes}
+                compact={viewMode === "list"}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Results Count - Enhanced */}
+        {filteredQuizzes.length > 0 && (
+          <div className="mt-8 text-center p-4 bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm rounded-xl border-2 border-gray-200 dark:border-slate-700 shadow-lg">
+            <p className="text-base font-semibold text-gray-700 dark:text-gray-300">
+              Menampilkan{" "}
+              <span className="text-indigo-600 dark:text-indigo-400 font-black">
+                {filteredQuizzes.length}
+              </span>{" "}
+              dari{" "}
+              <span className="text-purple-600 dark:text-purple-400 font-black">
+                {quizzes.length}
+              </span>{" "}
+              tugas praktikum
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

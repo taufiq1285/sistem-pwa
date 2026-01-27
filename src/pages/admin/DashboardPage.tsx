@@ -27,7 +27,6 @@ import {
   Megaphone,
   Settings,
   BarChart3,
-  LogOut,
   Activity,
   Clock,
   CheckCircle,
@@ -75,7 +74,6 @@ import {
   type RecentUser,
   type RecentAnnouncement,
 } from "@/lib/api/admin.api";
-import { logout } from "@/lib/supabase/auth";
 import { cacheAPI } from "@/lib/offline/api-cache";
 
 // ============================================================================
@@ -241,16 +239,6 @@ export function DashboardPage() {
     }
   };
 
-  // Logout handler
-  const handleLogout = async () => {
-    try {
-      await logout();
-      navigate("/login");
-    } catch (error) {
-      console.error("Logout failed:", error);
-    }
-  };
-
   // Format date
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -352,13 +340,6 @@ export function DashboardPage() {
                   <TrendingUp className="h-4 w-4 mr-2" />
                 )}
                 {refreshing ? "Memperbarui..." : "Refresh Data"}
-              </Button>
-              <Button
-                onClick={handleLogout}
-                className="bg-linear-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white font-semibold shadow-lg shadow-red-500/30 transition-all duration-200"
-              >
-                <LogOut className="h-4 w-4 mr-2" />
-                Logout
               </Button>
             </div>
           </div>

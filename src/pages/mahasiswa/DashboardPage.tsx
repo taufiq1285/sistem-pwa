@@ -134,19 +134,33 @@ export function DashboardPage() {
   }
 
   return (
-    <div className="p-8">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div>
-          <h1 className="text-4xl font-extrabold">Dashboard Mahasiswa</h1>
-          <p className="text-gray-500 mt-1">Selamat datang, {user?.email}</p>
+    <div className="min-h-screen bg-linear-to-br from-emerald-50 via-green-50 to-teal-50 dark:from-slate-950 dark:via-slate-900 dark:to-teal-950">
+      <div className="p-8">
+        <div className="max-w-7xl mx-auto space-y-6">
+          {/* Header */}
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-linear-to-br from-emerald-500 to-teal-600 rounded-2xl shadow-lg shadow-emerald-500/30">
+              <BookOpen className="h-8 w-8 text-white" />
+            </div>
+            <div>
+              <h1 className="text-5xl font-extrabold text-transparent bg-clip-text bg-linear-to-r from-emerald-600 to-teal-600 dark:from-emerald-400 dark:to-teal-400">
+                Dashboard Mahasiswa
+              </h1>
+              <p className="text-lg font-bold text-gray-700 dark:text-gray-300 mt-1">
+                Selamat datang,{" "}
+                <span className="text-emerald-600 dark:text-emerald-400">
+                  {user?.full_name || user?.email}
+                </span>
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Info Alert (Only if no classes) */}
         {myKelas.length === 0 && (
-          <Alert className="border-blue-200 bg-blue-50">
+          <Alert className="border-blue-200 bg-blue-50 shadow-lg">
             <Info className="h-4 w-4 text-blue-600" />
-            <AlertDescription className="text-blue-800">
+            <AlertDescription className="text-blue-800 font-semibold">
               Anda belum terdaftar di kelas praktikum manapun. Hubungi dosen
               pengampu atau koordinator program studi untuk pendaftaran kelas.
             </AlertDescription>
@@ -155,24 +169,34 @@ export function DashboardPage() {
 
         <div className="grid gap-6 lg:grid-cols-2">
           {/* My Classes */}
-          <Card className="border-0 shadow-xl p-6">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BookOpen className="h-5 w-5" />
-                Kelas Saya
-              </CardTitle>
-              <CardDescription>
-                {stats?.totalKelasPraktikum || 0} kelas praktikum yang diikuti
-              </CardDescription>
+          <Card className="group hover:shadow-2xl transition-all duration-300 border-0 shadow-xl bg-linear-to-br from-emerald-50 to-green-50 dark:from-emerald-950/40 dark:to-green-950/40 backdrop-blur-sm overflow-hidden relative">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-linear-to-br from-emerald-400/20 to-green-400/20 rounded-full blur-3xl -mr-16 -mt-16" />
+            <CardHeader className="relative">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="p-2.5 bg-linear-to-br from-emerald-500 to-green-600 rounded-xl shadow-lg shadow-emerald-500/30">
+                  <BookOpen className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl font-bold text-emerald-900 dark:text-emerald-100">
+                    Kelas Saya
+                  </CardTitle>
+                  <CardDescription className="text-base font-semibold text-gray-700 dark:text-gray-400 mt-1">
+                    {stats?.totalKelasPraktikum || 0} kelas praktikum yang
+                    diikuti
+                  </CardDescription>
+                </div>
+              </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="relative">
               {myKelas.length === 0 ? (
-                <div className="text-center py-8">
-                  <BookOpen className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                  <p className="text-sm text-gray-600 mb-2">
+                <div className="text-center py-12">
+                  <div className="inline-flex p-4 bg-emerald-50 rounded-full mb-4">
+                    <BookOpen className="h-12 w-12 text-emerald-400" />
+                  </div>
+                  <p className="text-lg font-bold text-gray-900 mb-2">
                     Belum ada kelas yang diikuti
                   </p>
-                  <p className="text-xs text-gray-500 max-w-sm mx-auto">
+                  <p className="text-base font-medium text-gray-600 max-w-sm mx-auto">
                     Pendaftaran kelas dilakukan oleh dosen atau admin. Silakan
                     hubungi dosen pengampu untuk informasi lebih lanjut.
                   </p>
@@ -182,26 +206,29 @@ export function DashboardPage() {
                   {myKelas.map((kelas) => (
                     <div
                       key={kelas.id}
-                      className="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50 transition-colors"
+                      className="flex items-center gap-3 p-4 border-2 border-emerald-100 rounded-xl hover:bg-emerald-50 hover:border-emerald-300 transition-all duration-300 shadow-sm hover:shadow-md"
                     >
-                      <div className="flex-shrink-0">
-                        <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                          <BookOpen className="h-5 w-5 text-blue-600" />
+                      <div className="shrink-0">
+                        <div className="w-12 h-12 bg-linear-to-br from-emerald-500 to-green-600 rounded-xl shadow-lg flex items-center justify-center">
+                          <BookOpen className="h-5 w-5 text-white" />
                         </div>
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <h4 className="font-medium text-sm">
+                          <h4 className="font-bold text-sm text-gray-900">
                             {kelas.mata_kuliah_nama}
                           </h4>
-                          <Badge variant="secondary" className="text-xs">
+                          <Badge
+                            variant="secondary"
+                            className="text-xs bg-emerald-100 text-emerald-700"
+                          >
                             {kelas.mata_kuliah_kode}
                           </Badge>
                         </div>
-                        <p className="text-xs text-gray-600 mt-1">
+                        <p className="text-xs font-semibold text-gray-600 mt-1">
                           {kelas.nama_kelas}
                         </p>
-                        <p className="text-xs text-gray-500 mt-1">
+                        <p className="text-xs font-semibold text-gray-500 mt-1">
                           {kelas.sks} SKS • {kelas.tahun_ajaran}
                         </p>
                       </div>
@@ -213,27 +240,37 @@ export function DashboardPage() {
           </Card>
 
           {/* Upcoming Schedule */}
-          <Card className="border-0 shadow-xl p-6">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="h-5 w-5" />
-                Jadwal Praktikum
-              </CardTitle>
-              <CardDescription>
-                {stats?.jadwalHariIni || 0} praktikum hari ini • 7 hari ke depan
-              </CardDescription>
+          <Card className="group hover:shadow-2xl transition-all duration-300 border-0 shadow-xl bg-linear-to-br from-teal-50 to-cyan-50 dark:from-teal-950/40 dark:to-cyan-950/40 backdrop-blur-sm overflow-hidden relative">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-linear-to-br from-teal-400/20 to-cyan-400/20 rounded-full blur-3xl -mr-16 -mt-16" />
+            <CardHeader className="relative">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="p-2.5 bg-linear-to-br from-teal-500 to-cyan-600 rounded-xl shadow-lg shadow-teal-500/30">
+                  <Calendar className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl font-bold text-teal-900 dark:text-teal-100">
+                    Jadwal Praktikum
+                  </CardTitle>
+                  <CardDescription className="text-base font-semibold text-gray-700 dark:text-gray-400 mt-1">
+                    {stats?.jadwalHariIni || 0} praktikum hari ini • 7 hari ke
+                    depan
+                  </CardDescription>
+                </div>
+              </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="relative">
               {myJadwal.length === 0 ? (
-                <div className="text-center py-8">
-                  <Calendar className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                  <p className="text-sm text-gray-600">
+                <div className="text-center py-12">
+                  <div className="inline-flex p-4 bg-teal-50 rounded-full mb-4">
+                    <Calendar className="h-12 w-12 text-teal-400" />
+                  </div>
+                  <p className="text-lg font-bold text-gray-900 mb-2">
                     {myKelas.length === 0
                       ? "Belum ada jadwal praktikum"
                       : "Tidak ada jadwal minggu ini"}
                   </p>
                   {myKelas.length === 0 && (
-                    <p className="text-xs text-gray-500 mt-2 max-w-sm mx-auto">
+                    <p className="text-base font-medium text-gray-600 max-w-sm mx-auto">
                       Jadwal akan muncul setelah Anda terdaftar di kelas
                       praktikum
                     </p>
@@ -244,29 +281,29 @@ export function DashboardPage() {
                   {myJadwal.map((jadwal) => (
                     <div
                       key={jadwal.id}
-                      className="flex gap-3 p-3 border rounded-lg hover:bg-gray-50 transition-colors"
+                      className="flex gap-3 p-4 border-2 border-teal-100 rounded-xl hover:bg-teal-50 hover:border-teal-300 transition-all duration-300 shadow-sm hover:shadow-md"
                     >
-                      <div className="flex-shrink-0">
-                        <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                          <Calendar className="h-5 w-5 text-green-600" />
+                      <div className="shrink-0">
+                        <div className="w-12 h-12 bg-linear-to-br from-teal-500 to-cyan-600 rounded-xl shadow-lg flex items-center justify-center">
+                          <Calendar className="h-5 w-5 text-white" />
                         </div>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-medium text-sm truncate">
+                        <h4 className="font-bold text-sm truncate text-gray-900">
                           {jadwal.mata_kuliah_nama}
                         </h4>
-                        <p className="text-xs text-gray-500 mt-0.5">
+                        <p className="text-xs font-semibold text-gray-600 mt-0.5">
                           {jadwal.kelas_nama}{" "}
                           {jadwal.topik && `• ${jadwal.topik}`}
                         </p>
-                        <div className="flex items-center gap-2 mt-1 text-xs text-gray-600">
+                        <div className="flex items-center gap-2 mt-1 text-xs font-bold text-gray-700">
                           <Clock className="h-3 w-3" />
                           {dayNames[jadwal.hari] || jadwal.hari},{" "}
                           {formatDate(jadwal.tanggal_praktikum)},{" "}
                           {formatTime(jadwal.jam_mulai)}-
                           {formatTime(jadwal.jam_selesai)}
                         </div>
-                        <div className="flex items-center gap-1 mt-1 text-xs text-gray-500">
+                        <div className="flex items-center gap-1 mt-1 text-xs font-semibold text-gray-600">
                           <MapPin className="h-3 w-3" />
                           {jadwal.lab_nama}
                         </div>
