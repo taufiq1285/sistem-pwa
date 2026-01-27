@@ -34,8 +34,17 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { TableSkeleton } from "@/components/shared/DataTable/TableSkeleton";
-import { EnhancedTable, EnhancedTableHeader, EnhancedTableRow, EnhancedTableHead, EnhancedTableCell } from "@/components/shared/DataTable/EnhancedTable";
-import { EnhancedEmptyState, EmptySearchResults } from "@/components/shared/DataTable/EnhancedEmptyState";
+import {
+  EnhancedTable,
+  EnhancedTableHeader,
+  EnhancedTableRow,
+  EnhancedTableHead,
+  EnhancedTableCell,
+} from "@/components/shared/DataTable/EnhancedTable";
+import {
+  EnhancedEmptyState,
+  EmptySearchResults,
+} from "@/components/shared/DataTable/EnhancedEmptyState";
 import {
   Dialog,
   DialogContent,
@@ -363,7 +372,14 @@ export default function EquipmentsPage() {
             <TableSkeleton
               rows={5}
               columns={6}
-              columnWidths={["120px", "200px", "120px", "100px", "120px", "160px"]}
+              columnWidths={[
+                "120px",
+                "200px",
+                "120px",
+                "100px",
+                "120px",
+                "160px",
+              ]}
             />
           ) : filteredInventaris.length === 0 ? (
             searchQuery ? (
@@ -400,7 +416,9 @@ export default function EquipmentsPage() {
                     <EnhancedTableCell className="font-medium">
                       {item.nama_barang}
                     </EnhancedTableCell>
-                    <EnhancedTableCell>{item.kategori || "-"}</EnhancedTableCell>
+                    <EnhancedTableCell>
+                      {item.kategori || "-"}
+                    </EnhancedTableCell>
                     <EnhancedTableCell>
                       <span
                         className={
@@ -412,7 +430,9 @@ export default function EquipmentsPage() {
                         {item.jumlah_tersedia}
                       </span>
                       <span className="text-muted-foreground mx-1">/</span>
-                      <span className="text-muted-foreground">{item.jumlah}</span>
+                      <span className="text-muted-foreground">
+                        {item.jumlah}
+                      </span>
                     </EnhancedTableCell>
                     <EnhancedTableCell>
                       <Badge
@@ -453,7 +473,7 @@ export default function EquipmentsPage() {
                   </EnhancedTableRow>
                 ))}
               </TableBody>
-            </Table>
+            </EnhancedTable>
           )}
         </CardContent>
       </Card>
