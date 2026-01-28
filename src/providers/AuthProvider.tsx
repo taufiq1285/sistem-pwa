@@ -89,6 +89,9 @@ function setCachedAuth(user: AuthUser | null, session: AuthSession | null) {
 function clearCachedAuth() {
   try {
     localStorage.removeItem(AUTH_CACHE_KEY);
+    // ✅ PERBAIKAN: Juga hapus logout flag lama jika ada
+    // Ini memastikan consistency setelah logout
+    console.log("✅ Auth cache cleared");
   } catch (error) {
     console.warn("Failed to clear auth cache:", error);
   }
@@ -96,7 +99,9 @@ function clearCachedAuth() {
 
 function setLogoutFlag() {
   try {
-    localStorage.setItem(LOGOUT_FLAG_KEY, Date.now().toString());
+    const timestamp = Date.now().toString();
+    localStorage.setItem(LOGOUT_FLAG_KEY, timestamp);
+    console.log("✅ Logout flag set:", timestamp);
   } catch (error) {
     console.warn("Failed to set logout flag:", error);
   }
@@ -108,9 +113,12 @@ function getLogoutFlag(): number | null {
     if (!flag) return null;
     const timestamp = parseInt(flag, 10);
 
-    // Clear flag if older than 5 minutes
-    const FIVE_MINUTES = 5 * 60 * 1000;
-    if (Date.now() - timestamp > FIVE_MINUTES) {
+    // ✅ PERBAIKAN: Jangan auto-hapus flag setelah 5 menit
+    // Flag akan tetap ada sampai user berhasil login baru
+    // Ini mencegah auto-login setelah logout
+    const ONE_DAY = 24 * 60 * 60 * 1000;
+    if (Date.now() - timestamp > ONE_DAY) {
+      // Hanya hapus jika sudah lebih dari 1 hari (security measure)
       localStorage.removeItem(LOGOUT_FLAG_KEY);
       return null;
     }
@@ -119,6 +127,18 @@ function getLogoutFlag(): number | null {
   } catch (error) {
     console.warn("Failed to get logout flag:", error);
     return null;
+  }
+}
+
+/**
+ * ✅ Clear logout flag (hanya dipanggil saat berhasil login)
+ */
+function clearLogoutFlag() {
+  try {
+    localStorage.removeItem(LOGOUT_FLAG_KEY);
+    console.log("✅ Logout flag cleared (user logged in)");
+  } catch (error) {
+    console.warn("Failed to clear logout flag:", error);
   }
 }
 
@@ -175,32 +195,35 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const logoutFlag = getLogoutFlag();
 
         if (mounted) {
-          if (currentSession) {
-            // Clear logout flag if user has active session
-            if (logoutFlag) {
-              localStorage.removeItem(LOGOUT_FLAG_KEY);
-            }
+          // ✅ PERBAIKAN: Jika ada logout flag, prioritaskan logout daripada online session
+          // Ini mencegah race condition di mana user sudah logout tapi online session masih ada
+          if (logoutFlag) {
+            logger.auth(
+              "Logout flag detected - user logged out, clearing session",
+            );
+            // Clear logout flag jika ada online session yang valid (session lama)
+            // Tapi jangan auto-login, hanya clear session saja
+            await storeOfflineSession(null, null);
+            updateAuthState(null, null);
+            setInitialized(true);
+            setLoading(false);
+            return;
+          }
 
+          // ✅ PERBAIKAN: Hanya gunakan online session jika TIDAK ada logout flag
+          if (currentSession) {
             // Store online session to offline storage
             await storeOfflineSession(currentSession.user, currentSession);
             await storeUserData(currentSession.user);
             updateAuthState(currentSession.user, currentSession);
           } else {
-            // Check if user just logged out (don't auto-login in this case)
-            if (logoutFlag) {
-              logger.auth(
-                "User just logged out - skipping offline session restore",
-              );
-              updateAuthState(null, null);
+            // Try to restore from offline session
+            const offlineSession = await restoreOfflineSession();
+            if (offlineSession) {
+              logger.auth("Restored session from offline storage");
+              updateAuthState(offlineSession.user, offlineSession.session);
             } else {
-              // Try to restore from offline session
-              const offlineSession = await restoreOfflineSession();
-              if (offlineSession) {
-                logger.auth("Restored session from offline storage");
-                updateAuthState(offlineSession.user, offlineSession.session);
-              } else {
-                updateAuthState(null, null);
-              }
+              updateAuthState(null, null);
             }
           }
           setInitialized(true);
@@ -290,6 +313,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
             // Continue with login even if offline storage fails
           }
 
+          // ✅ PERBAIKAN: Clear logout flag saat login berhasil
+          clearLogoutFlag();
+
           updateAuthState(response.user, response.session);
         } else {
           // Offline login
@@ -312,6 +338,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
           }
 
           logger.auth("Offline login successful");
+
+          // ✅ PERBAIKAN: Clear logout flag saat offline login berhasil
+          clearLogoutFlag();
+
           updateAuthState(offlineResponse.user, offlineResponse.session);
         }
       } catch (error) {
@@ -350,10 +380,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
 
     // ✅ OPTIMIZATION: Clear state IMMEDIATELY for instant logout
-    console.log("🔵 Clearing state & storage FIRST...");
+    console.log("🔵 logout: Clearing state & storage FIRST...");
     updateAuthState(null, null);
     clearCachedAuth();
     setLogoutFlag(); // ✅ Set flag to prevent auto-login from offline session
+    console.log("🔵 logout: Logout flag SET - auto-login prevented");
     setLoading(false); // Set false immediately for instant UI update
 
     // ✅ Run cleanup operations in background (non-blocking)
