@@ -217,6 +217,10 @@ export async function getKuis(filters?: KuisFilters): Promise<Kuis[]> {
         column: "tanggal_mulai",
         ascending: false,
       },
+      // ✅ Enable caching for better offline support
+      enableCache: true,
+      cacheTTL: 5 * 60 * 1000, // 5 minutes
+      staleWhileRevalidate: true,
     };
 
     const data =
@@ -262,6 +266,10 @@ export async function getKuisById(id: string): Promise<Kuis> {
         ),
         soal:soal(*)
       `,
+      // ✅ Enable caching for better offline support
+      enableCache: true,
+      cacheTTL: 10 * 60 * 1000, // 10 minutes (single item changes less frequently)
+      staleWhileRevalidate: true,
     });
   } catch (error) {
     const apiError = handleError(error);

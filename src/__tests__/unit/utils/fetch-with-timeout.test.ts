@@ -105,7 +105,7 @@ describe("fetch-with-timeout", () => {
 
       vi.advanceTimersByTime(100);
 
-      await expect(result).rejects.toThrow("Aborted");
+      await expect(result).rejects.toThrow("Request timeout after 100ms");
 
       vi.restoreAllMocks();
     });

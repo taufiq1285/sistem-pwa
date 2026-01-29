@@ -812,5 +812,169 @@ describe("Error Logger", () => {
       const logs = errorLogger.getErrorLogs();
       expect(logs).toHaveLength(50); // Max queue size
     });
+
+    it("should handle memory pressure gracefully", () => {
+      const hugeSizeData = {
+        data: "x".repeat(500000), // 500KB string
+        array: new Array(1000).fill("test"),
+      };
+
+      expect(() => {
+        for (let i = 0; i < 5; i++) {
+          logError(`Memory test ${i}`, hugeSizeData);
+        }
+      }).not.toThrow();
+    });
+
+    it("should handle invalid Error objects", () => {
+      expect(() => {
+        logError(null as any);
+      }).not.toThrow();
+
+      expect(() => {
+        logError(undefined as any);
+      }).not.toThrow();
+
+      expect(() => {
+        logError(123 as any);
+      }).not.toThrow();
+
+      expect(() => {
+        logError({} as any);
+      }).not.toThrow();
+
+      // Verify logs were created even with invalid inputs
+      const logs = errorLogger.getErrorLogs();
+      expect(logs.length).toBeGreaterThan(0);
+    });
+
+    it("should handle malformed React ErrorInfo", () => {
+      const malformedErrorInfo = {
+        componentStack: undefined,
+      } as any;
+
+      expect(() => {
+        logReactError(new Error("Test"), malformedErrorInfo);
+      }).not.toThrow();
+    });
+
+    it("should handle concurrent logging operations", async () => {
+      const promises = Array.from({ length: 20 }, (_, i) =>
+        Promise.resolve().then(() => logError(`Concurrent error ${i}`)),
+      );
+
+      await Promise.all(promises);
+
+      const logs = errorLogger.getErrorLogs();
+      expect(logs.length).toBeGreaterThan(0);
+      expect(logs.length).toBeLessThanOrEqual(50); // Queue limit
+    });
+
+    it("should handle localStorage quota exceeded", () => {
+      vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+        throw new Error("QuotaExceededError");
+      });
+
+      expect(() => {
+        setErrorUser("test-user", { data: "large" });
+        logError("Quota test error");
+      }).not.toThrow();
+    });
+
+    it("should handle missing window.navigator", () => {
+      const originalNavigator = window.navigator;
+      Object.defineProperty(window, "navigator", {
+        value: undefined,
+        writable: true,
+      });
+
+      expect(() => {
+        logError("Navigator missing test");
+      }).not.toThrow();
+
+      Object.defineProperty(window, "navigator", {
+        value: originalNavigator,
+        writable: true,
+      });
+    });
+
+    it("should handle missing fetch API", async () => {
+      const originalFetch = global.fetch;
+      global.fetch = undefined as any;
+
+      errorLogger.init({
+        enabled: true,
+        dsn: "https://example.com/errors",
+      });
+
+      expect(() => {
+        logError("No fetch API test");
+      }).not.toThrow();
+
+      global.fetch = originalFetch;
+    });
+
+    it("should handle malformed configuration objects", () => {
+      expect(() => {
+        errorLogger.init({} as any);
+        errorLogger.init(null as any);
+        errorLogger.init("invalid" as any);
+      }).not.toThrow();
+    });
+
+    it("should handle invalid sample rates", () => {
+      // Sample rate > 1 should be treated as 1
+      errorLogger.init({ enabled: true, sampleRate: 2.5 });
+      logError("High sample rate test");
+      expect(errorLogger.getQueueSize()).toBe(1);
+
+      // Negative sample rate should be treated as 0
+      errorLogger.clearErrorLogs();
+      errorLogger.init({ enabled: true, sampleRate: -0.5 });
+      logError("Negative sample rate test");
+      expect(errorLogger.getQueueSize()).toBe(0);
+    });
+
+    it("should handle beforeSend function errors", () => {
+      const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+      errorLogger.init({
+        enabled: true,
+        beforeSend: () => {
+          throw new Error("beforeSend error");
+        },
+      });
+
+      expect(() => {
+        logError("BeforeSend test error");
+      }).not.toThrow();
+
+      expect(consoleSpy).toHaveBeenCalled();
+    });
+
+    it("should handle queue size edge cases", () => {
+      // Reset configuration to completely clean state
+      errorLogger.init({
+        enabled: true,
+        beforeSend: undefined, // Explicitly clear beforeSend
+        sampleRate: 1.0, // Ensure all logs go through
+      });
+      errorLogger.clearErrorLogs();
+
+      // Fill exactly to the limit
+      for (let i = 0; i < 50; i++) {
+        logError(`Boundary test ${i}`);
+      }
+
+      expect(errorLogger.getQueueSize()).toBe(50);
+
+      // Add one more to trigger overflow
+      logError("Overflow test");
+
+      expect(errorLogger.getQueueSize()).toBe(50); // Should still be at limit
+
+      const logs = errorLogger.getErrorLogs();
+      expect(logs[logs.length - 1].message).toBe("Overflow test"); // Latest should be kept
+    });
   });
 });

@@ -3,7 +3,7 @@ import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App.tsx";
 import { logger } from "@/lib/utils/logger";
-import { registerServiceWorker } from "@/lib/pwa/register-sw";
+import { registerServiceWorker, skipWaiting } from "@/lib/pwa/register-sw";
 
 // Render app
 createRoot(document.getElementById("root")!).render(
@@ -28,15 +28,24 @@ if (isDevelopment) {
 registerServiceWorker({
   swPath: "/sw.js", // Default path from vite-plugin-pwa
   scope: "/",
-  checkUpdateInterval: 60 * 60 * 1000, // Check every hour
+  checkUpdateInterval: 5 * 60 * 1000, // ✅ Check every 5 minutes (lebih cepat untuk ujian)
   enableAutoUpdate: true,
 
   // Called when Service Worker is successfully registered
-  onSuccess: (registration) => {
+  onSuccess: async (registration) => {
     logger.info("✅ Service Worker registered successfully", {
       scope: registration.scope,
       active: registration.active?.state,
     });
+
+    // ✅ IMMEDIATE UPDATE CHECK: Cek update segera setelah registrasi
+    // Ini memastikan user dapat update terbaru saat pertama buka aplikasi
+    try {
+      await registration.update();
+      logger.info("🔄 Initial update check completed");
+    } catch (error) {
+      logger.warn("⚠️ Initial update check failed:", error);
+    }
   },
 
   // Called when a new Service Worker version is available
@@ -66,6 +75,12 @@ registerServiceWorker({
  * Show update available notification to user
  */
 function showUpdateAvailableNotification() {
+  // Remove existing notification if any
+  const existing = document.getElementById("pwa-update-notification");
+  if (existing) {
+    existing.remove();
+  }
+
   // Create notification element
   const notification = document.createElement("div");
   notification.id = "pwa-update-notification";
@@ -125,10 +140,14 @@ function showUpdateAvailableNotification() {
   document.body.appendChild(notification);
 
   // Handle update button click
-  document.getElementById("pwa-update-btn")?.addEventListener("click", () => {
-    // Reload to activate new Service Worker
-    window.location.reload();
-  });
+  document
+    .getElementById("pwa-update-btn")
+    ?.addEventListener("click", async () => {
+      // ✅ PERBAIKAN: Skip waiting dulu untuk mengaktifkan service worker baru
+      logger.info("🔄 Activating new service worker...");
+      await skipWaiting();
+      // skipWaiting akan otomatis reload halaman setelah service worker aktif
+    });
 
   // Handle dismiss button click
   document.getElementById("pwa-dismiss-btn")?.addEventListener("click", () => {
@@ -147,4 +166,39 @@ if ("ononline" in window && "onoffline" in window) {
   logger.info("✅ Online/Offline events supported");
 } else {
   logger.warn("⚠️ Online/Offline events not supported");
+}
+
+// ============================================================================
+// UPDATE CHECK ON FOCUS/RESUME
+// ============================================================================
+
+// ✅ Cek update setiap kali aplikasi dibuka/difocus kembali
+// Ini berguna untuk PWA yang sering dibuka-tutup
+if ("serviceWorker" in navigator) {
+  window.addEventListener("focus", async () => {
+    try {
+      const registration = await navigator.serviceWorker.getRegistration();
+      if (registration) {
+        logger.info("🔄 Checking for updates (app focused)...");
+        await registration.update();
+      }
+    } catch (error) {
+      logger.warn("⚠️ Update check on focus failed:", error);
+    }
+  });
+
+  // ✅ Juga cek saat visibility berubah (tab aktif lagi)
+  document.addEventListener("visibilitychange", async () => {
+    if (document.visibilityState === "visible") {
+      try {
+        const registration = await navigator.serviceWorker.getRegistration();
+        if (registration) {
+          logger.info("🔄 Checking for updates (tab visible)...");
+          await registration.update();
+        }
+      } catch (error) {
+        logger.warn("⚠️ Update check on visible failed:", error);
+      }
+    }
+  });
 }

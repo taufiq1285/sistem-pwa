@@ -39,7 +39,21 @@
       "Bash(npm run preview:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(npm test)",
+      "Bash(npm run coverage:*)",
+      "Bash(awk:*)",
+      "Bash(tee:*)",
+      "Bash(cmd /c \"npm run test:run 2>&1\")",
+      "Bash(cd:*)",
+      "Bash(npm run test:run:*)",
+      "Bash(node_modules/.bin/vitest run:*)",
+      "Bash(powershell -Command \"npm run test:run -- src/__tests__/unit/api/unified-assignment.api.test.ts --reporter=verbose 2>&1\")",
+      "Bash(npm ls:*)",
+      "Bash(test:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(npm cache clean:*)",
+      "Bash(npx vercel:*)"
     ]
   }
 }

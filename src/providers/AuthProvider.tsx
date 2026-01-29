@@ -201,9 +201,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
             logger.auth(
               "Logout flag detected - user logged out, clearing session",
             );
-            // Clear logout flag jika ada online session yang valid (session lama)
-            // Tapi jangan auto-login, hanya clear session saja
-            await storeOfflineSession(null, null);
+            // Clear offline session tapi jangan auto-login
+            await clearOfflineSession();
             updateAuthState(null, null);
             setInitialized(true);
             setLoading(false);

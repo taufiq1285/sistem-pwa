@@ -1,9 +1,11 @@
 /**
  * Base API Layer
  * Core API utilities for all API modules - CRUD operations with error handling
+ * ✅ Enhanced with offline caching support using cacheAPI
  */
 
 import { supabase } from "@/lib/supabase/client";
+import { cacheAPI } from "@/lib/offline/api-cache";
 import type {
   ApiResponse,
   PaginatedResponse,
@@ -27,6 +29,12 @@ import {
  */
 interface BaseQueryOptions extends SupabaseQueryOptions {
   throwOnEmpty?: boolean;
+  /** Enable caching for this query (default: false) */
+  enableCache?: boolean;
+  /** Cache TTL in milliseconds (default: 5 minutes) */
+  cacheTTL?: number;
+  /** Use stale-while-revalidate (default: true if caching enabled) */
+  staleWhileRevalidate?: boolean;
 }
 
 /**
@@ -65,59 +73,76 @@ export async function query<T = any>(
   table: string,
   options: BaseQueryOptions = {},
 ): Promise<T[]> {
-  // Check if offline - return empty array instead of throwing error
-  if (typeof navigator !== "undefined" && !navigator.onLine) {
-    return [] as T[];
+  // Generate cache key from query parameters
+  const cacheKey = `query_${table}_${JSON.stringify(options)}`;
+
+  // Define the fetch function
+  const fetchQuery = async (): Promise<T[]> => {
+    // Check if offline - return empty array instead of throwing error
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      return [] as T[];
+    }
+
+    try {
+      let queryBuilder = supabase
+        // PERBAIKAN: 'as any' diperlukan di sini untuk generic API
+
+        .from(table as any)
+        .select(options.select || "*");
+
+      // Apply ordering
+      if (options.order) {
+        queryBuilder = queryBuilder.order(options.order.column, {
+          ascending: options.order.ascending ?? true,
+        });
+      }
+
+      // Apply limit
+      if (options.limit) {
+        queryBuilder = queryBuilder.limit(options.limit);
+      }
+
+      // Apply offset
+      if (options.offset) {
+        queryBuilder = queryBuilder.range(
+          options.offset,
+          options.offset + (options.limit || 10) - 1,
+        );
+      }
+
+      const { data, error } = options.single
+        ? await queryBuilder.single()
+        : await queryBuilder;
+
+      if (error) {
+        throw handleError(error);
+      }
+
+      if (
+        options.throwOnEmpty &&
+        (!data || (Array.isArray(data) && data.length === 0))
+      ) {
+        throw new NotFoundError(`No records found in ${table}`);
+      }
+
+      return (Array.isArray(data) ? data : [data]) as T[];
+    } catch (error) {
+      const apiError = handleError(error);
+      logError(apiError, `query:${table}`);
+      throw apiError;
+    }
+  };
+
+  // Use cache if enabled
+  if (options.enableCache) {
+    return cacheAPI(cacheKey, fetchQuery, {
+      ttl: options.cacheTTL || 5 * 60 * 1000, // 5 minutes default
+      staleWhileRevalidate: options.staleWhileRevalidate !== false, // default true
+    });
   }
 
-  try {
-    let queryBuilder = supabase
-      // PERBAIKAN: 'as any' diperlukan di sini untuk generic API
-
-      .from(table as any)
-      .select(options.select || "*");
-
-    // Apply ordering
-    if (options.order) {
-      queryBuilder = queryBuilder.order(options.order.column, {
-        ascending: options.order.ascending ?? true,
-      });
-    }
-
-    // Apply limit
-    if (options.limit) {
-      queryBuilder = queryBuilder.limit(options.limit);
-    }
-
-    // Apply offset
-    if (options.offset) {
-      queryBuilder = queryBuilder.range(
-        options.offset,
-        options.offset + (options.limit || 10) - 1,
-      );
-    }
-
-    const { data, error } = options.single
-      ? await queryBuilder.single()
-      : await queryBuilder;
-
-    if (error) {
-      throw handleError(error);
-    }
-
-    if (
-      options.throwOnEmpty &&
-      (!data || (Array.isArray(data) && data.length === 0))
-    ) {
-      throw new NotFoundError(`No records found in ${table}`);
-    }
-
-    return (Array.isArray(data) ? data : [data]) as T[];
-  } catch (error) {
-    const apiError = handleError(error);
-    logError(apiError, `query:${table}`);
-    throw apiError;
-  }
+  // Direct fetch without cache
+  return fetchQuery();
 }
 
 /**
@@ -133,91 +158,108 @@ export async function queryWithFilters<T = any>(
   filters: FilterOptions[],
   options: BaseQueryOptions = {},
 ): Promise<T[]> {
-  // Check if offline - return empty array instead of throwing error
-  if (typeof navigator !== "undefined" && !navigator.onLine) {
-    return [] as T[];
-  }
+  // Generate cache key from query parameters
+  const cacheKey = `query_filtered_${table}_${JSON.stringify({ filters, options })}`;
 
-  try {
-    let queryBuilder = supabase
-      // PERBAIKAN: 'as any' diperlukan di sini untuk generic API
+  // Define the fetch function
+  const fetchQuery = async (): Promise<T[]> => {
+    // Check if offline - return empty array instead of throwing error
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      return [] as T[];
+    }
 
-      .from(table as any)
-      .select(options.select || "*");
+    try {
+      let queryBuilder = supabase
+        // PERBAIKAN: 'as any' diperlukan di sini untuk generic API
 
-    // Apply filters
-    filters.forEach((filter) => {
-      const operator = filter.operator || "eq";
-      switch (operator) {
-        case "eq":
-          queryBuilder = queryBuilder.eq(filter.column, filter.value);
-          break;
-        case "neq":
-          queryBuilder = queryBuilder.neq(filter.column, filter.value);
-          break;
-        case "gt":
-          queryBuilder = queryBuilder.gt(filter.column, filter.value);
-          break;
-        case "gte":
-          queryBuilder = queryBuilder.gte(filter.column, filter.value);
-          break;
-        case "lt":
-          queryBuilder = queryBuilder.lt(filter.column, filter.value);
-          break;
-        case "lte":
-          queryBuilder = queryBuilder.lte(filter.column, filter.value);
-          break;
-        case "like":
-          queryBuilder = queryBuilder.like(filter.column, filter.value);
-          break;
-        case "ilike":
-          queryBuilder = queryBuilder.ilike(filter.column, filter.value);
-          break;
-        case "in":
-          queryBuilder = queryBuilder.in(filter.column, filter.value);
-          break;
-        case "is":
-          queryBuilder = queryBuilder.is(filter.column, filter.value);
-          break;
-      }
-    });
+        .from(table as any)
+        .select(options.select || "*");
 
-    // Apply ordering
-    if (options.order) {
-      queryBuilder = queryBuilder.order(options.order.column, {
-        ascending: options.order.ascending ?? true,
+      // Apply filters
+      filters.forEach((filter) => {
+        const operator = filter.operator || "eq";
+        switch (operator) {
+          case "eq":
+            queryBuilder = queryBuilder.eq(filter.column, filter.value);
+            break;
+          case "neq":
+            queryBuilder = queryBuilder.neq(filter.column, filter.value);
+            break;
+          case "gt":
+            queryBuilder = queryBuilder.gt(filter.column, filter.value);
+            break;
+          case "gte":
+            queryBuilder = queryBuilder.gte(filter.column, filter.value);
+            break;
+          case "lt":
+            queryBuilder = queryBuilder.lt(filter.column, filter.value);
+            break;
+          case "lte":
+            queryBuilder = queryBuilder.lte(filter.column, filter.value);
+            break;
+          case "like":
+            queryBuilder = queryBuilder.like(filter.column, filter.value);
+            break;
+          case "ilike":
+            queryBuilder = queryBuilder.ilike(filter.column, filter.value);
+            break;
+          case "in":
+            queryBuilder = queryBuilder.in(filter.column, filter.value);
+            break;
+          case "is":
+            queryBuilder = queryBuilder.is(filter.column, filter.value);
+            break;
+        }
       });
+
+      // Apply ordering
+      if (options.order) {
+        queryBuilder = queryBuilder.order(options.order.column, {
+          ascending: options.order.ascending ?? true,
+        });
+      }
+
+      // Apply limit
+      if (options.limit) {
+        queryBuilder = queryBuilder.limit(options.limit);
+      }
+
+      // Apply offset
+      if (options.offset) {
+        queryBuilder = queryBuilder.range(
+          options.offset,
+          options.offset + (options.limit || 10) - 1,
+        );
+      }
+
+      const { data, error } = await queryBuilder;
+
+      if (error) {
+        throw handleError(error);
+      }
+
+      if (options.throwOnEmpty && (!data || data.length === 0)) {
+        throw new NotFoundError(`No records found in ${table}`);
+      }
+
+      return (data || []) as T[];
+    } catch (error) {
+      const apiError = handleError(error);
+      logError(apiError, `queryWithFilters:${table}`);
+      throw apiError;
     }
+  };
 
-    // Apply limit
-    if (options.limit) {
-      queryBuilder = queryBuilder.limit(options.limit);
-    }
-
-    // Apply offset
-    if (options.offset) {
-      queryBuilder = queryBuilder.range(
-        options.offset,
-        options.offset + (options.limit || 10) - 1,
-      );
-    }
-
-    const { data, error } = await queryBuilder;
-
-    if (error) {
-      throw handleError(error);
-    }
-
-    if (options.throwOnEmpty && (!data || data.length === 0)) {
-      throw new NotFoundError(`No records found in ${table}`);
-    }
-
-    return (data || []) as T[];
-  } catch (error) {
-    const apiError = handleError(error);
-    logError(apiError, `queryWithFilters:${table}`);
-    throw apiError;
+  // Use cache if enabled
+  if (options.enableCache) {
+    return cacheAPI(cacheKey, fetchQuery, {
+      ttl: options.cacheTTL || 5 * 60 * 1000, // 5 minutes default
+      staleWhileRevalidate: options.staleWhileRevalidate !== false, // default true
+    });
   }
+
+  // Direct fetch without cache
+  return fetchQuery();
 }
 
 /**

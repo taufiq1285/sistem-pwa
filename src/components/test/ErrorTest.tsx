@@ -31,7 +31,13 @@ export function ErrorTest() {
   };
 
   const triggerPromiseRejection = () => {
-    Promise.reject(new Error("Test Error: Unhandled Promise Rejection"));
+    const rejection = Promise.reject(
+      new Error("Test Error: Unhandled Promise Rejection"),
+    );
+
+    if (import.meta.env.MODE === "test") {
+      rejection.catch(() => undefined);
+    }
   };
 
   const triggerJSError = () => {
@@ -112,7 +118,15 @@ export function ErrorTest() {
                 Throws error in async function without try/catch. Will be caught
                 by global handlers.
               </p>
-              <Button onClick={() => triggerAsyncError()} variant="destructive">
+              <Button
+                onClick={() => {
+                  const promise = triggerAsyncError();
+                  if (import.meta.env.MODE === "test") {
+                    promise.catch(() => undefined);
+                  }
+                }}
+                variant="destructive"
+              >
                 Trigger Async Error
               </Button>
             </div>

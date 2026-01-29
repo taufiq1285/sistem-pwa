@@ -37,13 +37,15 @@ export function NetworkStatus({
 
   const getStatusColor = () => {
     if (isOffline) return "text-red-600";
-    if (quality?.downlink && quality.downlink < 1) return "text-yellow-600";
+    if (typeof quality?.downlink === "number" && quality.downlink < 1)
+      return "text-yellow-600";
     return "text-green-600";
   };
 
   const getStatusBadge = () => {
     if (isOffline) return "destructive";
-    if (quality?.downlink && quality.downlink < 1) return "warning";
+    if (typeof quality?.downlink === "number" && quality.downlink < 1)
+      return "warning";
     return "success";
   };
 
@@ -72,7 +74,7 @@ export function NetworkStatus({
             <Activity className="h-4 w-4 text-muted-foreground" />
             <div>
               <div className="text-xs font-medium">
-                {quality.downlink
+                {typeof quality.downlink === "number"
                   ? `${quality.downlink.toFixed(1)} Mbps`
                   : "N/A"}
               </div>

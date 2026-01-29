@@ -83,8 +83,14 @@ class ErrorLogger {
       stack: error.stack,
       componentStack: errorInfo.componentStack || undefined,
       timestamp: new Date().toISOString(),
-      userAgent: navigator.userAgent,
-      url: window.location.href,
+      userAgent:
+        typeof navigator !== "undefined"
+          ? navigator?.userAgent || "Unknown"
+          : "Unknown",
+      url:
+        typeof window !== "undefined"
+          ? window.location?.href || "Unknown"
+          : "Unknown",
       metadata: {
         ...metadata,
         errorType: "React Error Boundary",
@@ -105,8 +111,14 @@ class ErrorLogger {
       message: err?.message || "Unknown JavaScript error",
       stack: err?.stack,
       timestamp: new Date().toISOString(),
-      userAgent: navigator.userAgent,
-      url: window.location.href,
+      userAgent:
+        typeof navigator !== "undefined"
+          ? navigator?.userAgent || "Unknown"
+          : "Unknown",
+      url:
+        typeof window !== "undefined"
+          ? window.location?.href || "Unknown"
+          : "Unknown",
       metadata: {
         ...metadata,
         errorType: "JavaScript Error",
@@ -127,8 +139,14 @@ class ErrorLogger {
         (reason != null ? String(reason) : "Unhandled Promise Rejection"),
       stack: reason?.stack,
       timestamp: new Date().toISOString(),
-      userAgent: navigator.userAgent,
-      url: window.location.href,
+      userAgent:
+        typeof navigator !== "undefined"
+          ? navigator?.userAgent || "Unknown"
+          : "Unknown",
+      url:
+        typeof window !== "undefined"
+          ? window.location?.href || "Unknown"
+          : "Unknown",
       metadata: {
         ...metadata,
         errorType: "Unhandled Promise Rejection",
@@ -143,14 +161,23 @@ class ErrorLogger {
    * Log custom errors
    */
   logError(error: Error | string, metadata?: Record<string, any>) {
-    const err = typeof error === "string" ? new Error(error) : error;
+    const err =
+      typeof error === "string"
+        ? new Error(error)
+        : error || new Error("Unknown error");
 
     const errorLog: ErrorLog = {
-      message: err.message,
+      message: err.message || "Unknown error",
       stack: err.stack,
       timestamp: new Date().toISOString(),
-      userAgent: navigator.userAgent,
-      url: window.location.href,
+      userAgent:
+        typeof navigator !== "undefined"
+          ? navigator?.userAgent || "Unknown"
+          : "Unknown",
+      url:
+        typeof window !== "undefined"
+          ? window.location?.href || "Unknown"
+          : "Unknown",
       metadata: {
         ...metadata,
         errorType: "Custom Error",
@@ -166,9 +193,14 @@ class ErrorLogger {
   private sendLog(log: ErrorLog) {
     // Apply beforeSend hook
     if (this.config.beforeSend) {
-      const processedLog = this.config.beforeSend(log);
-      if (!processedLog) return; // beforeSend returned null, skip logging
-      log = processedLog;
+      try {
+        const processedLog = this.config.beforeSend(log);
+        if (!processedLog) return; // beforeSend returned null, skip logging
+        log = processedLog;
+      } catch (error) {
+        console.warn("Error in beforeSend hook:", error);
+        // Continue with original log if beforeSend fails
+      }
     }
 
     // Check sample rate
@@ -219,6 +251,13 @@ class ErrorLogger {
    */
   getErrorLogs(): ErrorLog[] {
     return [...this.queue];
+  }
+
+  /**
+   * Get current queue size
+   */
+  getQueueSize(): number {
+    return this.queue.length;
   }
 
   /**

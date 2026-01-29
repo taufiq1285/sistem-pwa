@@ -52,7 +52,11 @@ export function LoadingSpinner({
         className,
       )}
     >
-      <Loader2 className={cn("animate-spin text-primary", sizeMap[size])} />
+      <Loader2
+        className={cn("animate-spin text-primary", sizeMap[size])}
+        role="presentation"
+        aria-hidden="true"
+      />
       {text && (
         <p className={cn("text-muted-foreground", textSizeMap[size])}>{text}</p>
       )}

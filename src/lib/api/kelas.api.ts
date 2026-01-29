@@ -103,6 +103,10 @@ export async function getKelas(filters?: KelasFilters): Promise<Kelas[]> {
         column: "nama_kelas",
         ascending: true,
       },
+      // ✅ Enable caching for better offline support
+      enableCache: true,
+      cacheTTL: 5 * 60 * 1000, // 5 minutes
+      staleWhileRevalidate: true,
     };
 
     const results = await queryWithFilters<Kelas>(
@@ -154,6 +158,10 @@ export async function getKelasById(id: string): Promise<Kelas> {
           )
         )
       `,
+      // ✅ Enable caching for better offline support
+      enableCache: true,
+      cacheTTL: 10 * 60 * 1000, // 10 minutes
+      staleWhileRevalidate: true,
     };
 
     return await getById<Kelas>("kelas", id, options);

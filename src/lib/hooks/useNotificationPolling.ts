@@ -69,8 +69,14 @@ export function useNotificationPolling(
     // Fetch function with error handling
     const fetchNotifications = async () => {
       try {
-        // Skip if tab is not visible (save resources)
+        // ✅ Skip if tab is not visible (save resources)
         if (!isTabVisibleRef.current) {
+          return;
+        }
+
+        // ✅ Skip if offline - prevent unnecessary network errors
+        if (typeof navigator !== "undefined" && !navigator.onLine) {
+          console.log("⏸️ Offline - skipping notification poll");
           return;
         }
 
@@ -95,8 +101,15 @@ export function useNotificationPolling(
 
         lastCountRef.current = unreadCount;
       } catch (error) {
-        // Silent error - don't break the app
-        console.warn("⚠️ Notification polling error (non-critical):", error);
+        // ✅ Silent error - don't break the app, especially in offline mode
+        const isOffline = typeof navigator !== "undefined" && !navigator.onLine;
+        if (isOffline) {
+          console.log(
+            "⏸️ Offline - notification polling paused (will retry when online)",
+          );
+        } else {
+          console.warn("⚠️ Notification polling error (non-critical):", error);
+        }
 
         // Call error callback if provided
         if (onError) {

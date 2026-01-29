@@ -8,6 +8,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { useAuth } from "./useAuth";
+import { cacheAPI } from "@/lib/offline/api-cache";
+import type { CacheEntry } from "@/lib/offline/api-cache";
 
 export interface ConflictData {
   id: string;
@@ -65,17 +67,32 @@ export function useConflicts(): UseConflictsReturn {
       return;
     }
 
+    // ✅ Check if offline - skip fetch but keep cached data
+    const isOffline = typeof navigator !== "undefined" && !navigator.onLine;
+
     try {
       setLoading(true);
       setError(null);
 
-      const { data, error: fetchError } = await supabase
-        .from("conflict_log")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
+      // ✅ Use cacheAPI for offline support
+      const data = await cacheAPI(
+        `conflicts_${user.id}`,
+        async () => {
+          const { data, error: fetchError } = await supabase
+            .from("conflict_log")
+            .select("*")
+            .eq("user_id", user.id)
+            .order("created_at", { ascending: false });
 
-      if (fetchError) throw fetchError;
+          if (fetchError) throw fetchError;
+
+          return data;
+        },
+        {
+          ttl: 5 * 60 * 1000, // 5 minutes cache
+          staleWhileRevalidate: true,
+        },
+      );
 
       // Transform database rows to ConflictData interface
       const transformedData: ConflictData[] = (data || []).map((row: any) => ({
@@ -98,9 +115,21 @@ export function useConflicts(): UseConflictsReturn {
       }));
 
       setConflicts(transformedData);
+
+      if (isOffline) {
+        console.log("ℹ️ Offline mode - showing cached conflicts");
+      }
     } catch (err) {
       console.error("Error fetching conflicts:", err);
-      setError(err as Error);
+
+      // ✅ Don't set error in offline mode - it's expected
+      if (isOffline) {
+        console.log(
+          "ℹ️ Offline mode - conflict fetch failed (using cached data if available)",
+        );
+      } else {
+        setError(err as Error);
+      }
     } finally {
       setLoading(false);
     }

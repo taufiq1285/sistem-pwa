@@ -2,7 +2,7 @@
 import path from "path";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
-import { defineConfig } from "vite";
+import { defineConfig } from "vitest/config";
 import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig({
@@ -197,12 +197,9 @@ export default defineConfig({
     chunkSizeWarningLimit: 1500,
     rollupOptions: {
       output: {
-        manualChunks(id) {
-          // Simplified chunking to avoid circular dependencies
-          if (id.includes("node_modules")) {
-            // Group all vendors together to avoid circular dependency issues
-            return "vendor";
-          }
+        manualChunks: {
+          vendor: ["react", "react-dom", "react-router-dom"],
+          supabase: ["@supabase/supabase-js"],
         },
         chunkFileNames: "assets/js/[name]-[hash].js",
         entryFileNames: "assets/js/[name]-[hash].js",
@@ -234,6 +231,49 @@ export default defineConfig({
       provider: "v8",
       reporter: ["text", "json", "html"],
       reportsDirectory: "./coverage",
+      include: ["src/**/*.{ts,tsx}", "!src/**/*.d.ts"],
+      exclude: [
+        // UI/Presentation Layer (tested via E2E)
+        "src/pages/**",
+        "src/components/ui/**",
+        "src/layouts/**",
+        "src/routes/**",
+        // Config and setup files
+        "src/main.tsx",
+        "src/vite-env.d.ts",
+        "src/App.tsx",
+        // Static exports and constants
+        "src/**/index.ts",
+        "src/lib/constants/**",
+        // External library wrappers
+        "src/lib/supabase/client.ts",
+        "src/lib/utils/logger.ts",
+        // Development utilities
+        "src/__tests__/**",
+        "**/*.test.{ts,tsx}",
+        "**/*.spec.{ts,tsx}",
+      ],
+      thresholds: {
+        global: {
+          statements: 85,
+          branches: 80,
+          functions: 85,
+          lines: 85,
+        },
+        // Higher standards for critical business logic
+        "src/lib/api/**": {
+          statements: 90,
+          branches: 85,
+          functions: 90,
+          lines: 90,
+        },
+        "src/lib/utils/**": {
+          statements: 95,
+          branches: 90,
+          functions: 95,
+          lines: 95,
+        },
+      },
     },
   },
 });

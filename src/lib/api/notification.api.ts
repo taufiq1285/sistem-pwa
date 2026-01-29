@@ -12,6 +12,7 @@
 
 import { supabase } from "@/lib/supabase/client";
 import { handleError } from "@/lib/utils/errors";
+import { cacheAPI } from "@/lib/offline/api-cache";
 import type {
   Notification,
   CreateNotificationData,
@@ -30,37 +31,44 @@ import type {
 export async function getNotifications(
   filters: NotificationFilters = {},
 ): Promise<Notification[]> {
-  try {
-    let query = supabase
-      .from("notifications")
-      .select("*")
-      .order("created_at", { ascending: false });
+  // Create cache key from filters
+  const cacheKey = `notifications_${JSON.stringify(filters)}`;
 
-    if (filters.user_id) {
-      query = query.eq("user_id", filters.user_id);
-    }
+  return cacheAPI(
+    cacheKey,
+    async () => {
+      let query = supabase
+        .from("notifications")
+        .select("*")
+        .order("created_at", { ascending: false });
 
-    if (filters.type) {
-      query = query.eq("type", filters.type);
-    }
+      if (filters.user_id) {
+        query = query.eq("user_id", filters.user_id);
+      }
 
-    if (filters.is_read !== undefined) {
-      query = query.eq("is_read", filters.is_read);
-    }
+      if (filters.type) {
+        query = query.eq("type", filters.type);
+      }
 
-    if (filters.limit) {
-      query = query.limit(filters.limit);
-    }
+      if (filters.is_read !== undefined) {
+        query = query.eq("is_read", filters.is_read);
+      }
 
-    const { data, error } = await query;
+      if (filters.limit) {
+        query = query.limit(filters.limit);
+      }
 
-    if (error) throw handleError(error);
+      const { data, error } = await query;
 
-    return (data || []) as Notification[];
-  } catch (error) {
-    console.error("getNotifications error:", error);
-    throw handleError(error);
-  }
+      if (error) throw handleError(error);
+
+      return (data || []) as Notification[];
+    },
+    {
+      ttl: 2 * 60 * 1000, // 2 minutes cache
+      staleWhileRevalidate: true, // Return stale data while fetching fresh
+    },
+  );
 }
 
 /**

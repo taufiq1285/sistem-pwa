@@ -4,7 +4,7 @@
  * Comprehensive test suite for OfflineProvider
  * Tests initialization, context providing, and IndexedDB integration
  *
- * @vitest-environment jsdom
+ * @vitest-environment happy-dom
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
