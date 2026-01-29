@@ -53,11 +53,11 @@ export function useSessionTimeout({
     }
 
     // Set logout timeout
-    timeoutRef.current = setTimeout(async () => {
+    timeoutRef.current = setTimeout(() => {
       console.log("Session timeout - auto logout");
       toast.error("Sesi Anda telah berakhir karena tidak ada aktivitas");
-      await logout();
-      window.location.href = "/login";
+      logout();
+      window.location.assign("/login");
     }, timeoutMs);
   }, [user, timeoutMinutes, warningMinutes, enableWarningDialog, logout]);
 

@@ -4,7 +4,7 @@
  * Comprehensive test suite with >90% coverage
  * Tests sync queue management and processing
  *
- * @vitest-environment jsdom
+ * @vitest-environment happy-dom
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";

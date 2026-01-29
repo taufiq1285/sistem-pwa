@@ -15,7 +15,7 @@ import { ErrorFallback } from "./ErrorFallback";
 
 interface ErrorBoundaryProps {
   children: ReactNode;
-  fallback?: ReactNode;
+  fallback?: ReactNode | ((resetError: () => void) => ReactNode);
   onError?: (error: Error, errorInfo: ErrorInfo) => void;
   resetKeys?: Array<string | number>;
 }
@@ -90,6 +90,9 @@ export class ErrorBoundary extends Component<
     if (hasError) {
       // Render custom fallback if provided
       if (fallback) {
+        if (typeof fallback === "function") {
+          return fallback(this.resetErrorBoundary);
+        }
         return fallback;
       }
 

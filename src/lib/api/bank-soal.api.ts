@@ -10,6 +10,7 @@
  */
 
 import { supabase } from "@/lib/supabase/client";
+import { cacheAPI } from "@/lib/offline/api-cache";
 import type {
   BankSoal,
   CreateBankSoalData,
@@ -34,86 +35,107 @@ import type {
 export async function getBankSoal(
   filters?: BankSoalFilters,
 ): Promise<BankSoal[]> {
-  let query = supabase
-    .from("bank_soal")
-    .select(
-      `
-      *,
-      mata_kuliah:mata_kuliah_id (
-        nama_mk,
-        kode_mk
-      )
-    `,
-    )
-    .order(filters?.sortBy || "created_at", {
-      ascending: filters?.sortOrder === "asc",
-    });
+  // Create cache key from filters
+  const cacheKey = `bank_soal_${JSON.stringify(filters)}`;
 
-  // Apply filters
-  if (filters?.dosen_id) {
-    query = query.eq("dosen_id", filters.dosen_id);
-  }
+  return cacheAPI(
+    cacheKey,
+    async () => {
+      let query = supabase
+        .from("bank_soal")
+        .select(
+          `
+          *,
+          mata_kuliah:mata_kuliah_id (
+            nama_mk,
+            kode_mk
+          )
+        `,
+        )
+        .order(filters?.sortBy || "created_at", {
+          ascending: filters?.sortOrder === "asc",
+        });
 
-  if (filters?.mata_kuliah_id) {
-    query = query.eq("mata_kuliah_id", filters.mata_kuliah_id);
-  }
+      // Apply filters
+      if (filters?.dosen_id) {
+        query = query.eq("dosen_id", filters.dosen_id);
+      }
 
-  if (filters?.tipe_soal) {
-    query = query.eq("tipe_soal", filters.tipe_soal);
-  }
+      if (filters?.mata_kuliah_id) {
+        query = query.eq("mata_kuliah_id", filters.mata_kuliah_id);
+      }
 
-  if (filters?.tags && filters.tags.length > 0) {
-    query = query.contains("tags", filters.tags);
-  }
+      if (filters?.tipe_soal) {
+        query = query.eq("tipe_soal", filters.tipe_soal);
+      }
 
-  if (filters?.search) {
-    query = query.ilike("pertanyaan", `%${filters.search}%`);
-  }
+      if (filters?.tags && filters.tags.length > 0) {
+        query = query.contains("tags", filters.tags);
+      }
 
-  if (filters?.is_public !== undefined) {
-    query = query.eq("is_public", filters.is_public);
-  }
+      if (filters?.search) {
+        query = query.ilike("pertanyaan", `%${filters.search}%`);
+      }
 
-  const { data, error } = await query;
+      if (filters?.is_public !== undefined) {
+        query = query.eq("is_public", filters.is_public);
+      }
 
-  if (error) throw error;
-  return (data || []).map((item) => ({
-    ...item,
-    tipe_soal: item.tipe_soal as TipeSoal,
-    opsi_jawaban: item.opsi_jawaban as unknown as OpsiJawaban[] | null,
-    is_public: item.is_public || false,
-    usage_count: item.usage_count || 0,
-  }));
+      const { data, error } = await query;
+
+      if (error) throw error;
+      return (data || []).map((item) => ({
+        ...item,
+        tipe_soal: item.tipe_soal as TipeSoal,
+        opsi_jawaban: item.opsi_jawaban as unknown as OpsiJawaban[] | null,
+        is_public: item.is_public || false,
+        usage_count: item.usage_count || 0,
+      }));
+    },
+    {
+      ttl: 5 * 60 * 1000, // 5 minutes cache
+      staleWhileRevalidate: true,
+    },
+  );
 }
 
 /**
  * Get single question from bank by ID
  */
 export async function getBankSoalById(id: string): Promise<BankSoal> {
-  const { data, error } = await supabase
-    .from("bank_soal")
-    .select(
-      `
-      *,
-      mata_kuliah:mata_kuliah_id (
-        nama_mk,
-        kode_mk
-      )
-    `,
-    )
-    .eq("id", id)
-    .single();
+  return cacheAPI(
+    `bank_soal_${id}`,
+    async () => {
+      const { data, error } = await supabase
+        .from("bank_soal")
+        .select(
+          `
+          *,
+          mata_kuliah:mata_kuliah_id (
+            nama_mk,
+            kode_mk
+          )
+        `,
+        )
+        .eq("id", id)
+        .single();
 
-  if (error) throw error;
-  if (!data) throw new Error("Question not found");
+      if (error) throw error;
+      if (!data) throw new Error("Question not found");
 
-  return {
-    ...data,
-    tipe_soal: data.tipe_soal as TipeSoal,
-    opsi_jawaban: data.opsi_jawaban as unknown as OpsiJawaban[] | null,
-    is_public: data.is_public || false,
-    usage_count: data.usage_count || 0,
-  };
+      return {
+        ...data,
+        tipe_soal: data.tipe_soal as TipeSoal,
+        opsi_jawaban: data.opsi_jawaban as unknown as OpsiJawaban[] | null,
+        is_public: data.is_public || false,
+        usage_count: data.usage_count || 0,
+      };
+    },
+    {
+      ttl: 10 * 60 * 1000, // 10 minutes
+      staleWhileRevalidate: true,
+    },
+  );
 }
 
 /**

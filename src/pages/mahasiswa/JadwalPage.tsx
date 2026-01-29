@@ -406,7 +406,7 @@ export default function JadwalPage() {
                           >
                             <CardContent className="p-4">
                               <div className="flex gap-4">
-                                <div className="shrink-0">
+                                <div className="/* shrink-0 */">
                                   <div
                                     className={`w-16 h-16 rounded-lg flex flex-col items-center justify-center ${
                                       isToday ? "bg-green-100" : "bg-blue-100"

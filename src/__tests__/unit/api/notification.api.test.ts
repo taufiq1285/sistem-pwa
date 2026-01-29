@@ -95,10 +95,17 @@ vi.mock("@/lib/utils/errors", () => ({
   logError: vi.fn(),
 }));
 
+// Mock cacheAPI to bypass caching in tests
+vi.mock("@/lib/offline/api-cache", () => ({
+  cacheAPI: vi.fn((key, fetcher) => fetcher()),
+  clearAllCache: vi.fn(),
+  invalidateCache: vi.fn(),
+  invalidateCachePattern: vi.fn(),
+}));
+
 describe("Notification API - Auto-Notification System", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.useRealTimers();
   });
 
   afterEach(() => {

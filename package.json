@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b tsconfig.app.json tsconfig.node.json && vite build",
     "build:skip-type": "vite build",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
@@ -18,7 +18,7 @@
     "test:run": "vitest run",
     "coverage": "vitest run --coverage",
     "clean": "rm -rf dist node_modules/.vite",
-    "validate": "npm run type-check && npm run lint && npm run format:check"
+    "validate": "tsc --noEmit && eslint . && prettier --check \"src/**/*.{ts,tsx,js,jsx,json,css,md}\""
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -58,6 +58,7 @@
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.3.1",
     "tailwindcss": "^4.1.14",
+    "ts-api-utils": "^2.4.0",
     "zod": "^4.1.12"
   },
   "devDependencies": {
@@ -69,8 +70,9 @@
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
     "@vitejs/plugin-react": "^5.0.4",
-    "@vitest/coverage-v8": "^3.2.4",
-    "@vitest/ui": "^3.2.4",
+    "@vitest/coverage-v8": "^4.0.18",
+    "@vitest/ui": "^4.0.18",
+    "baseline-browser-mapping": "^2.9.19",
     "dotenv": "^17.2.3",
     "eslint": "^9.37.0",
     "eslint-plugin-react": "^7.37.5",
@@ -88,7 +90,7 @@
     "typescript-eslint": "^8.46.0",
     "vite": "^7.1.7",
     "vite-plugin-pwa": "^1.2.0",
-    "vitest": "^3.2.4",
+    "vitest": "^4.0.18",
     "workbox-window": "^7.4.0"
   }
 }

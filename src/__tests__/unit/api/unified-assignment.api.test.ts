@@ -828,32 +828,30 @@ describe("Unified Assignment API - Master-Detail Management", () => {
         },
       ];
 
-      const fromMock = vi.fn();
+      // Create mock functions that return thenable chains
+      const mockSelect = vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            eq: vi
+              .fn()
+              .mockResolvedValue({ data: mockJadwalToDelete, error: null }),
+          }),
+        }),
+      });
+
+      const mockDelete = vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            eq: vi.fn().mockResolvedValue({ error: null }),
+          }),
+        }),
+      });
+
       (supabase.from as any).mockImplementation((table: string) => {
         if (table === "jadwal_praktikum") {
-          return {
-            select: vi.fn().mockReturnValue({
-              eq: vi.fn().mockReturnValue({
-                eq: vi.fn().mockReturnValue({
-                  eq: vi.fn().mockResolvedValue({
-                    data: mockJadwalToDelete,
-                    error: null,
-                  }),
-                }),
-              }),
-            }),
-            delete: vi.fn().mockReturnValue({
-              eq: vi.fn().mockReturnValue({
-                eq: vi.fn().mockReturnValue({
-                  eq: vi.fn().mockResolvedValue({
-                    error: null,
-                  }),
-                }),
-              }),
-            }),
-          };
+          return { select: mockSelect, delete: mockDelete };
         }
-        return fromMock();
+        return createMockQuery();
       });
 
       const result = await deleteAssignmentCascade(
@@ -1502,33 +1500,30 @@ describe("Unified Assignment API - Master-Detail Management", () => {
         {}, // Invalid entry (no tanggal_praktikum)
       ];
 
-      // Create thenable mock query
-      const createThenableQuery = (data: any[]) => ({
-        then: (resolve: any) => resolve({ data, error: null }),
-        catch: () => ({ data, error: null }),
-        eq: vi.fn().mockReturnThis(),
-        order: vi.fn().mockReturnThis(),
-      });
-
+      // Create mock functions that return thenable chains
       let callCount = 0;
       (supabase.from as any).mockImplementation((table: string) => {
         if (table === "jadwal_praktikum") {
           callCount++;
-          if (callCount === 1) {
-            return {
-              select: vi
-                .fn()
-                .mockReturnValue(createThenableQuery(mockMasterData)),
-            };
-          } else {
-            return {
-              select: vi
-                .fn()
-                .mockReturnValue(createThenableQuery(mockJadwalWithInvalid)),
-            };
-          }
+          const dataToReturn =
+            callCount === 1 ? mockMasterData : mockJadwalWithInvalid;
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                order: vi
+                  .fn()
+                  .mockResolvedValue({ data: dataToReturn, error: null }),
+              }),
+            }),
+          };
         }
-        return { select: vi.fn().mockReturnValue(createThenableQuery([])) };
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              order: vi.fn().mockResolvedValue({ data: [], error: null }),
+            }),
+          }),
+        };
       });
 
       const result = await getUnifiedAssignments();

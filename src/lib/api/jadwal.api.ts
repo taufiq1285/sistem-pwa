@@ -114,6 +114,10 @@ export async function getJadwal(filters?: JadwalFilters): Promise<Jadwal[]> {
         column: "tanggal_praktikum",
         ascending: true,
       },
+      // ✅ Enable caching for better offline support
+      enableCache: true,
+      cacheTTL: 5 * 60 * 1000, // 5 minutes
+      staleWhileRevalidate: true,
     };
 
     // ✅ PERBAIKAN FINAL: Ganti 'jadwalpraktikum' menjadi 'jadwal_praktikum'
@@ -151,6 +155,10 @@ export async function getJadwalById(id: string): Promise<Jadwal> {
         *,
         laboratorium:laboratorium_id (*)
       `,
+      // ✅ Enable caching for better offline support
+      enableCache: true,
+      cacheTTL: 10 * 60 * 1000, // 10 minutes
+      staleWhileRevalidate: true,
     });
   } catch (error) {
     const apiError = handleError(error);

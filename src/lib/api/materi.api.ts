@@ -123,6 +123,10 @@ export async function getMateri(filters?: MateriFilters): Promise<Materi[]> {
         column: "created_at",
         ascending: false,
       },
+      // ✅ Enable caching for better offline support
+      enableCache: true,
+      cacheTTL: 5 * 60 * 1000, // 5 minutes
+      staleWhileRevalidate: true,
     };
 
     const data =
@@ -173,6 +177,10 @@ export async function getMateriById(id: string): Promise<Materi> {
           gelar_belakang
         )
       `,
+      // ✅ Enable caching for better offline support
+      enableCache: true,
+      cacheTTL: 10 * 60 * 1000, // 10 minutes
+      staleWhileRevalidate: true,
     });
   } catch (error) {
     const apiError = handleError(error);

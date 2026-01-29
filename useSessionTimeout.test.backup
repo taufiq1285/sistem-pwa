@@ -1,0 +1,585 @@
+/**
+ * useSessionTimeout Hook Unit Tests
+ * Comprehensive testing of session timeout and auto-logout functionality
+ */
+
+/**
+ * @vitest-environment jsdom
+ */
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { renderHook, act } from "@testing-library/react";
+import { useSessionTimeout } from "../../../lib/hooks/useSessionTimeout";
+
+// Global window mocking
+Object.defineProperty(global, "window", {
+  value: {
+    location: { href: "" },
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+  },
+  writable: true,
+});
+
+// Mock dependencies
+vi.mock("sonner", () => ({
+  toast: {
+    warning: vi.fn(),
+    error: vi.fn(),
+    success: vi.fn(),
+    info: vi.fn(),
+  },
+}));
+
+vi.mock("../../../lib/hooks/useAuth", () => ({
+  useAuth: vi.fn(),
+}));
+
+const mockLogout = vi.fn();
+let originalLocation: Location;
+
+describe("useSessionTimeout Hook", () => {
+  },
+}));
+
+const mockUseAuth = vi.mocked(
+  await import("../../../lib/hooks/useAuth"),
+).useAuth;
+const mockToast = vi.mocked(await import("sonner")).toast;
+
+describe("useSessionTimeout Hook", () => {
+  let mockLogout: ReturnType<typeof vi.fn>;
+  let originalLocation: Location;
+  let mockWindowAddEventListener: ReturnType<typeof vi.fn>;
+  let mockWindowRemoveEventListener: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+
+    mockLogout = vi.fn().mockResolvedValue(undefined);
+
+    // Mock useAuth
+    mockUseAuth.mockReturnValue({
+      user: { id: "test-user", name: "Test User" } as any,
+      logout: mockLogout,
+    });
+
+    // Mock window location
+    originalLocation = window.location;
+    delete (window as any).location;
+    window.location = { href: "" } as any;
+
+    // Mock window event listeners
+    mockWindowAddEventListener = vi.fn();
+    mockWindowRemoveEventListener = vi.fn();
+    window.addEventListener = mockWindowAddEventListener;
+    window.removeEventListener = mockWindowRemoveEventListener;
+
+    // Clear all mocks
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    window.location = originalLocation;
+    vi.resetAllMocks();
+  });
+
+  describe("Initialization", () => {
+    it("should setup timeout with default values", () => {
+      renderHook(() => useSessionTimeout());
+
+      // Should add event listeners for activity detection
+      const expectedEvents = [
+        "mousedown",
+        "keydown",
+        "scroll",
+        "touchstart",
+        "click",
+        "mousemove",
+      ];
+      expectedEvents.forEach((event) => {
+        expect(mockWindowAddEventListener).toHaveBeenCalledWith(
+          event,
+          expect.any(Function),
+          { passive: true },
+        );
+      });
+    });
+
+    it("should not setup timeout when user is not logged in", () => {
+      mockUseAuth.mockReturnValue({
+        user: null,
+        logout: mockLogout,
+      });
+
+      renderHook(() => useSessionTimeout());
+
+      // Should not add event listeners when no user
+      expect(mockWindowAddEventListener).not.toHaveBeenCalled();
+    });
+
+    it("should accept custom timeout configuration", () => {
+      const config = {
+        timeoutMinutes: 30,
+        warningMinutes: 5,
+        enableWarningDialog: false,
+      };
+
+      renderHook(() => useSessionTimeout(config));
+
+      // Should still setup event listeners with custom config
+      expect(mockWindowAddEventListener).toHaveBeenCalled();
+    });
+  });
+
+  describe("Session timeout behavior", () => {
+    it("should show warning before timeout", async () => {
+      const timeoutMinutes = 5;
+      const warningMinutes = 2;
+
+      renderHook(() =>
+        useSessionTimeout({
+          timeoutMinutes,
+          warningMinutes,
+          enableWarningDialog: true,
+        }),
+      );
+
+      // Fast-forward to warning time (3 minutes)
+      act(() => {
+        vi.advanceTimersByTime((timeoutMinutes - warningMinutes) * 60 * 1000);
+      });
+
+      expect(mockToast.warning).toHaveBeenCalledWith(
+        `Session akan berakhir dalam ${warningMinutes} menit. Lakukan aktivitas untuk melanjutkan.`,
+        {
+          duration: warningMinutes * 60 * 1000,
+          dismissible: true,
+        },
+      );
+    });
+
+    it("should auto logout after timeout", async () => {
+      const timeoutMinutes = 5;
+
+      renderHook(() => useSessionTimeout({ timeoutMinutes }));
+
+      // Fast-forward to timeout
+      await act(async () => {
+        vi.advanceTimersByTime(timeoutMinutes * 60 * 1000);
+      });
+
+      expect(mockToast.error).toHaveBeenCalledWith(
+        "Sesi Anda telah berakhir karena tidak ada aktivitas",
+      );
+      expect(mockLogout).toHaveBeenCalled();
+      expect(window.location.href).toBe("/login");
+    });
+
+    it("should not show warning when disabled", async () => {
+      const timeoutMinutes = 5;
+      const warningMinutes = 2;
+
+      renderHook(() =>
+        useSessionTimeout({
+          timeoutMinutes,
+          warningMinutes,
+          enableWarningDialog: false,
+        }),
+      );
+
+      // Fast-forward to warning time
+      act(() => {
+        vi.advanceTimersByTime((timeoutMinutes - warningMinutes) * 60 * 1000);
+      });
+
+      expect(mockToast.warning).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("Activity detection", () => {
+    it("should reset timeout on user activity", async () => {
+      const timeoutMinutes = 5;
+
+      renderHook(() => useSessionTimeout({ timeoutMinutes }));
+
+      // Get the activity handler from addEventListener calls
+      const activityHandler = mockWindowAddEventListener.mock.calls.find(
+        ([event]) => event === "mousedown",
+      )?.[1];
+
+      expect(activityHandler).toBeDefined();
+
+      // Advance time partway through timeout
+      act(() => {
+        vi.advanceTimersByTime(2 * 60 * 1000); // 2 minutes
+      });
+
+      // Trigger activity
+      act(() => {
+        activityHandler();
+      });
+
+      // Advance to original timeout time
+      act(() => {
+        vi.advanceTimersByTime(3 * 60 * 1000); // 3 more minutes = 5 total
+      });
+
+      // Should not have logged out because activity reset the timer
+      expect(mockLogout).not.toHaveBeenCalled();
+
+      // Now advance full timeout from activity
+      await act(async () => {
+        vi.advanceTimersByTime(5 * 60 * 1000);
+      });
+
+      expect(mockLogout).toHaveBeenCalled();
+    });
+
+    it("should throttle activity events", () => {
+      renderHook(() => useSessionTimeout());
+
+      const activityHandler = mockWindowAddEventListener.mock.calls.find(
+        ([event]) => event === "mousedown",
+      )?.[1];
+
+      // Trigger multiple activities quickly
+      act(() => {
+        activityHandler();
+        vi.advanceTimersByTime(1000); // 1 second
+        activityHandler(); // This should be ignored due to throttling
+        vi.advanceTimersByTime(1000); // 1 second
+        activityHandler(); // This should be ignored due to throttling
+      });
+
+      // The exact behavior depends on implementation, but rapid calls should be throttled
+      expect(activityHandler).toBeDefined();
+    });
+
+    it("should handle all monitored activity events", () => {
+      renderHook(() => useSessionTimeout());
+
+      const expectedEvents = [
+        "mousedown",
+        "keydown",
+        "scroll",
+        "touchstart",
+        "click",
+        "mousemove",
+      ];
+
+      expectedEvents.forEach((event) => {
+        expect(mockWindowAddEventListener).toHaveBeenCalledWith(
+          event,
+          expect.any(Function),
+          { passive: true },
+        );
+      });
+    });
+  });
+
+  describe("Cleanup", () => {
+    it("should remove event listeners on unmount", () => {
+      const { unmount } = renderHook(() => useSessionTimeout());
+
+      unmount();
+
+      const expectedEvents = [
+        "mousedown",
+        "keydown",
+        "scroll",
+        "touchstart",
+        "click",
+        "mousemove",
+      ];
+
+      expectedEvents.forEach((event) => {
+        expect(mockWindowRemoveEventListener).toHaveBeenCalledWith(
+          event,
+          expect.any(Function),
+        );
+      });
+    });
+
+    it("should clear timeouts when user logs out", () => {
+      const { rerender } = renderHook(() => useSessionTimeout());
+
+      // User logs out
+      mockUseAuth.mockReturnValue({
+        user: null,
+        logout: mockLogout,
+      });
+
+      rerender();
+
+      // Should remove event listeners
+      const expectedEvents = [
+        "mousedown",
+        "keydown",
+        "scroll",
+        "touchstart",
+        "click",
+        "mousemove",
+      ];
+
+      expectedEvents.forEach((event) => {
+        expect(mockWindowRemoveEventListener).toHaveBeenCalledWith(
+          event,
+          expect.any(Function),
+        );
+      });
+    });
+
+    it("should clear timeouts on component unmount", () => {
+      const { unmount } = renderHook(() =>
+        useSessionTimeout({ timeoutMinutes: 5 }),
+      );
+
+      // Advance time but unmount before timeout
+      act(() => {
+        vi.advanceTimersByTime(2 * 60 * 1000);
+      });
+
+      unmount();
+
+      // Continue time after unmount
+      act(() => {
+        vi.advanceTimersByTime(10 * 60 * 1000);
+      });
+
+      // Should not have triggered logout after unmount
+      expect(mockLogout).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("Warning behavior", () => {
+    it("should only show warning once per session", async () => {
+      const timeoutMinutes = 5;
+      const warningMinutes = 2;
+
+      renderHook(() =>
+        useSessionTimeout({
+          timeoutMinutes,
+          warningMinutes,
+          enableWarningDialog: true,
+        }),
+      );
+
+      // Trigger warning
+      act(() => {
+        vi.advanceTimersByTime((timeoutMinutes - warningMinutes) * 60 * 1000);
+      });
+
+      expect(mockToast.warning).toHaveBeenCalledTimes(1);
+
+      // Continue time but don't complete timeout
+      act(() => {
+        vi.advanceTimersByTime(1 * 60 * 1000);
+      });
+
+      // Should not show warning again
+      expect(mockToast.warning).toHaveBeenCalledTimes(1);
+    });
+
+    it("should reset warning flag when activity detected", () => {
+      const timeoutMinutes = 5;
+      const warningMinutes = 2;
+
+      renderHook(() =>
+        useSessionTimeout({
+          timeoutMinutes,
+          warningMinutes,
+          enableWarningDialog: true,
+        }),
+      );
+
+      // Trigger warning
+      act(() => {
+        vi.advanceTimersByTime((timeoutMinutes - warningMinutes) * 60 * 1000);
+      });
+
+      expect(mockToast.warning).toHaveBeenCalledTimes(1);
+
+      // Trigger activity to reset
+      const activityHandler = mockWindowAddEventListener.mock.calls.find(
+        ([event]) => event === "mousedown",
+      )?.[1];
+
+      act(() => {
+        vi.advanceTimersByTime(6 * 1000); // Wait for throttle
+        activityHandler();
+      });
+
+      // Trigger warning again
+      act(() => {
+        vi.advanceTimersByTime((timeoutMinutes - warningMinutes) * 60 * 1000);
+      });
+
+      // Should show warning again since session was reset
+      expect(mockToast.warning).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe("Edge cases", () => {
+    it("should handle logout errors gracefully", async () => {
+      mockLogout.mockRejectedValue(new Error("Logout failed"));
+
+      const consoleSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+
+      renderHook(() => useSessionTimeout({ timeoutMinutes: 1 }));
+
+      await act(async () => {
+        vi.advanceTimersByTime(1 * 60 * 1000);
+      });
+
+      expect(mockLogout).toHaveBeenCalled();
+      expect(window.location.href).toBe("/login");
+
+      consoleSpy.mockRestore();
+    });
+
+    it("should handle very short timeouts", async () => {
+      const timeoutMinutes = 0.1; // 6 seconds
+
+      renderHook(() =>
+        useSessionTimeout({
+          timeoutMinutes,
+          warningMinutes: 0.05, // 3 seconds
+          enableWarningDialog: true,
+        }),
+      );
+
+      // Trigger warning
+      act(() => {
+        vi.advanceTimersByTime(3000);
+      });
+
+      expect(mockToast.warning).toHaveBeenCalled();
+
+      // Complete timeout
+      await act(async () => {
+        vi.advanceTimersByTime(3000);
+      });
+
+      expect(mockLogout).toHaveBeenCalled();
+    });
+
+    it("should handle zero warning time", async () => {
+      renderHook(() =>
+        useSessionTimeout({
+          timeoutMinutes: 1,
+          warningMinutes: 0,
+          enableWarningDialog: true,
+        }),
+      );
+
+      // Should still work with zero warning time
+      await act(async () => {
+        vi.advanceTimersByTime(1 * 60 * 1000);
+      });
+
+      expect(mockLogout).toHaveBeenCalled();
+    });
+
+    it("should handle missing window object gracefully", () => {
+      const originalWindow = global.window;
+
+      // Remove window temporarily
+      delete (global as any).window;
+
+      expect(() => {
+        renderHook(() => useSessionTimeout());
+      }).not.toThrow();
+
+      global.window = originalWindow;
+    });
+  });
+
+  describe("Real-world scenarios", () => {
+    it("should handle shared computer scenario", async () => {
+      const timeoutMinutes = 2;
+      const warningMinutes = 0.5;
+
+      renderHook(() =>
+        useSessionTimeout({
+          timeoutMinutes,
+          warningMinutes,
+          enableWarningDialog: true,
+        }),
+      );
+
+      // User is idle for 1.5 minutes - should show warning
+      act(() => {
+        vi.advanceTimersByTime(1.5 * 60 * 1000);
+      });
+
+      expect(mockToast.warning).toHaveBeenCalled();
+
+      // User returns and moves mouse
+      const activityHandler = mockWindowAddEventListener.mock.calls.find(
+        ([event]) => event === "mousemove",
+      )?.[1];
+
+      act(() => {
+        vi.advanceTimersByTime(6 * 1000); // Wait for throttle
+        activityHandler();
+      });
+
+      // Should reset timeout - advance original timeout time
+      act(() => {
+        vi.advanceTimersByTime(2 * 60 * 1000);
+      });
+
+      expect(mockLogout).not.toHaveBeenCalled();
+    });
+
+    it("should handle user typing scenario", () => {
+      renderHook(() => useSessionTimeout({ timeoutMinutes: 5 }));
+
+      const keydownHandler = mockWindowAddEventListener.mock.calls.find(
+        ([event]) => event === "keydown",
+      )?.[1];
+
+      // Simulate user typing every minute
+      for (let i = 0; i < 10; i++) {
+        act(() => {
+          vi.advanceTimersByTime(1 * 60 * 1000);
+          vi.advanceTimersByTime(6 * 1000); // Wait for throttle
+          keydownHandler(); // User types
+        });
+      }
+
+      // Should never timeout because user is active
+      expect(mockLogout).not.toHaveBeenCalled();
+    });
+
+    it("should handle mobile scroll scenario", () => {
+      renderHook(() => useSessionTimeout({ timeoutMinutes: 3 }));
+
+      const scrollHandler = mockWindowAddEventListener.mock.calls.find(
+        ([event]) => event === "scroll",
+      )?.[1];
+
+      const touchHandler = mockWindowAddEventListener.mock.calls.find(
+        ([event]) => event === "touchstart",
+      )?.[1];
+
+      // User scrolls and touches on mobile
+      act(() => {
+        vi.advanceTimersByTime(2 * 60 * 1000);
+        vi.advanceTimersByTime(6 * 1000); // Wait for throttle
+        scrollHandler();
+        touchHandler();
+      });
+
+      // Continue for original timeout period
+      act(() => {
+        vi.advanceTimersByTime(3 * 60 * 1000);
+      });
+
+      expect(mockLogout).not.toHaveBeenCalled();
+    });
+  });
+});

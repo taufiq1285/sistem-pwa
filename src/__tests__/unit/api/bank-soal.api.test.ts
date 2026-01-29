@@ -88,6 +88,14 @@ vi.mock("@/lib/supabase/client", () => ({
   },
 }));
 
+// Mock cacheAPI to bypass caching in tests
+vi.mock("@/lib/offline/api-cache", () => ({
+  cacheAPI: vi.fn((key, fetcher) => fetcher()),
+  clearAllCache: vi.fn(),
+  invalidateCache: vi.fn(),
+  invalidateCachePattern: vi.fn(),
+}));
+
 describe("Bank Soal API - Question Bank Management", () => {
   beforeEach(() => {
     vi.clearAllMocks();

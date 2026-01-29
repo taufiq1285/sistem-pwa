@@ -4,7 +4,7 @@
  * Comprehensive test suite with >90% coverage
  * Tests network detection, quality checks, and event emitters
  *
- * @vitest-environment jsdom
+ * @vitest-environment happy-dom
  */
 
 import {

@@ -12,7 +12,7 @@ import { indexedDBManager } from "./indexeddb";
 // TYPES
 // ============================================================================
 
-interface CacheEntry<T> {
+export interface CacheEntry<T> {
   key: string;
   data: T;
   timestamp: number;
