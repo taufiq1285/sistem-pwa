@@ -283,7 +283,7 @@ export function FileUpload({
       <div className="border rounded-lg p-4 bg-muted/30">
         <div className="flex items-center gap-4">
           {/* File Icon */}
-          <div className="flex-shrink-0 p-3 bg-white rounded-lg border shadow-sm">
+          <div className="shrink-0ite rounded-lg border shadow-sm">
             {getFileIcon(value.type)}
           </div>
 
@@ -300,7 +300,7 @@ export function FileUpload({
           </div>
 
           {/* Actions */}
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex items-center gap-2 shrink-0">
             {showDownload && (
               <Button
                 variant="outline"

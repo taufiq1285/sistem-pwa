@@ -71,7 +71,7 @@ export async function getSoalForAttempt(kuisId: string): Promise<Soal[]> {
                 tipe_soal: tipe as TipeSoal,
                 poin: soal.poin,
                 urutan: soal.urutan,
-                pilihan_jawaban: soal.pilihan_jawaban,
+                opsi_jawaban: soal.pilihan_jawaban || soal.opsi_jawaban,
                 jawaban_benar: soal.jawaban_benar,
                 pembahasan: soal.pembahasan,
                 media_url: soal.media_url,
@@ -90,7 +90,7 @@ export async function getSoalForAttempt(kuisId: string): Promise<Soal[]> {
                 tipe_soal: tipe as TipeSoal,
                 poin: soal.poin,
                 urutan: soal.urutan,
-                pilihan_jawaban: soal.pilihan_jawaban,
+                opsi_jawaban: soal.pilihan_jawaban || soal.opsi_jawaban,
                 jawaban_benar: soal.jawaban_benar,
                 pembahasan: soal.pembahasan,
                 media_url: soal.media_url,
@@ -107,7 +107,7 @@ export async function getSoalForAttempt(kuisId: string): Promise<Soal[]> {
               tipe_soal: tipe as TipeSoal,
               poin: soal.poin,
               urutan: soal.urutan,
-              pilihan_jawaban: soal.pilihan_jawaban,
+              opsi_jawaban: soal.pilihan_jawaban || soal.opsi_jawaban,
               jawaban_benar:
                 cfg.jawaban_benar !== undefined
                   ? cfg.jawaban_benar
@@ -136,7 +136,8 @@ export async function getSoalForAttempt(kuisId: string): Promise<Soal[]> {
       tipe_soal: (soal.tipe || soal.tipe_soal) as TipeSoal,
       poin: soal.poin,
       urutan: soal.urutan,
-      pilihan_jawaban: soal.pilihan_jawaban,
+      // ✅ FIX: Map pilihan_jawaban (DB) → opsi_jawaban (TypeScript)
+      opsi_jawaban: soal.pilihan_jawaban || soal.opsi_jawaban,
       jawaban_benar: soal.jawaban_benar,
       pembahasan: soal.pembahasan,
       media_url: soal.media_url,
@@ -182,7 +183,7 @@ export async function getSoalForResult(kuisId: string): Promise<Soal[]> {
       tipe_soal: (soal.tipe || soal.tipe_soal) as TipeSoal,
       poin: soal.poin,
       urutan: soal.urutan,
-      pilihan_jawaban: soal.pilihan_jawaban,
+      opsi_jawaban: soal.pilihan_jawaban || soal.opsi_jawaban,
       jawaban_benar: soal.jawaban_benar,
       pembahasan: soal.pembahasan,
       media_url: soal.media_url,

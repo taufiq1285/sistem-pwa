@@ -758,7 +758,8 @@ export async function getActiveKuis(limit?: number): Promise<KuisWithStats[]> {
       `,
       )
       .eq("dosen_id", dosenId)
-      .eq("status", "published")
+      // ✅ FIXED: Tampilkan draft DAN published, kecuali archived
+      .in("status", ["draft", "published"])
       .order("created_at", { ascending: false });
 
     if (limit) {

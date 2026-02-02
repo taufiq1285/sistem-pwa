@@ -59,8 +59,19 @@ export default function KuisBuilderPage() {
     }
   }
 
-  const handleSave = () => {
-    navigate("/dosen/kuis");
+  const handleSave = (quiz?: any) => {
+    console.log("🎯 [KuisBuilderPage] Quiz saved:", quiz?.id);
+
+    // ✅ Wait a moment for cache invalidation to complete, then navigate
+    // This ensures the list page loads fresh data instead of stale cache
+    setTimeout(() => {
+      console.log("🔄 [KuisBuilderPage] Navigating back to list...");
+      navigate("/dosen/kuis");
+    }, 500); // 500ms delay to ensure cache is cleared
+
+    toast.success(isEditing ? "Tugas praktikum berhasil diperbarui!" : "Tugas praktikum berhasil disimpan!", {
+      duration: 3000,
+    });
   };
 
   const handleCancel = () => {
@@ -77,7 +88,7 @@ export default function KuisBuilderPage() {
   if (isEditing && isLoading) {
     return (
       <div className="container mx-auto py-6 max-w-5xl">
-        <div className="flex items-center justify-center min-h-[400px]">
+        <div className="flex items-center justify-center min-h-100">
           <div className="text-center space-y-4">
             <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
             <p className="text-muted-foreground">

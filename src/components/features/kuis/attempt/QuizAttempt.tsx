@@ -78,6 +78,9 @@ import { cn } from "@/lib/utils";
 // Hooks
 import { useNetworkStatus } from "@/lib/hooks/useNetworkStatus";
 
+// Supabase
+import { supabase } from "@/lib/supabase/client";
+
 // ============================================================================
 // TYPES
 // ============================================================================
@@ -148,6 +151,14 @@ export function QuizAttempt({
   // ============================================================================
 
   const currentQuestion = questions[currentQuestionIndex];
+
+  // 🔍 DEBUG: Log current question state
+  console.log("🐛 [QuizAttempt] currentQuestionIndex:", currentQuestionIndex);
+  console.log("🐛 [QuizAttempt] questions.length:", questions.length);
+  console.log("🐛 [QuizAttempt] currentQuestion:", currentQuestion);
+  console.log("🐛 [QuizAttempt] currentQuestion?.pertanyaan:", currentQuestion?.pertanyaan);
+  console.log("🐛 [QuizAttempt] currentQuestion?.tipe_soal:", currentQuestion?.tipe_soal);
+
   const currentAnswer = currentQuestion
     ? answers[currentQuestion.id] || ""
     : "";
@@ -273,14 +284,61 @@ export function QuizAttempt({
       } else {
         // Start new attempt
         console.log("🔵 Starting new attempt for kuis:", kuisId);
-        attemptData = await startAttempt({
-          kuis_id: kuisId,
-          mahasiswa_id: mahasiswaId,
-        });
+        try {
+          attemptData = await startAttempt({
+            kuis_id: kuisId,
+            mahasiswa_id: mahasiswaId,
+          });
 
-        // Cache attempt for offline use
-        await cacheAttemptOffline(attemptData);
-        toast.success("Tugas praktikum dimulai!");
+          // Cache attempt for offline use
+          await cacheAttemptOffline(attemptData);
+          toast.success("Tugas praktikum dimulai!");
+        } catch (startError: any) {
+          // ✅ FIX: Handle max attempts reached error
+          const errorMessage = startError?.message || "";
+
+          if (
+            errorMessage.includes("mencapai batas maksimal") ||
+            errorMessage.includes("max attempts") ||
+            errorMessage.includes("percobaan")
+          ) {
+            // Max attempts reached - try to find existing submitted attempt
+            console.log("⚠️ Max attempts reached, checking for existing attempts...");
+
+            try {
+              // Fetch attempts for this quiz and mahasiswa
+              const { data: attempts } = await supabase
+                .from("attempt_kuis")
+                .select("*")
+                .eq("kuis_id", kuisId)
+                .eq("mahasiswa_id", mahasiswaId)
+                .in("status", ["submitted", "graded"])
+                .order("submitted_at", { ascending: false })
+                .limit(1);
+
+              if (attempts && attempts.length > 0) {
+                const existingAttempt = attempts[0];
+                console.log("✅ Found existing attempt, redirecting to results:", existingAttempt.id);
+                toast.info("Anda sudah menyelesaikan tugas ini. Mengarahkan ke hasil...");
+                navigate(`/mahasiswa/kuis/${kuisId}/result/${existingAttempt.id}`);
+                return;
+              }
+
+              // No submitted attempt found but can't start new one
+              setError("Anda sudah mencapai batas maksimal percobaan, namun tidak ada hasil yang ditemukan.");
+              setIsLoading(false);
+              return;
+            } catch (fetchError) {
+              console.error("Error fetching existing attempts:", fetchError);
+              setError("Gagal memeriksa status percobaan. Silakan kembali ke daftar tugas.");
+              setIsLoading(false);
+              return;
+            }
+          }
+
+          // Other errors - rethrow
+          throw startError;
+        }
       }
 
       // ✅ Restore offline answers for THIS attempt (covers refresh/resume)
@@ -517,19 +575,24 @@ export function QuizAttempt({
       // Get remaining time
       const sisaWaktu = getRemainingTime();
 
-      // Submit attempt
-      await submitQuiz({
+      // ✅ FIX: Capture returned attempt (contains the id)
+      const submittedAttempt = await submitQuiz({
         attempt_id: attempt.id,
         sisa_waktu: sisaWaktu,
       });
+
+      // Debug log
+      console.log("🐛 [QuizAttempt] Submit successful, attempt ID:", submittedAttempt?.id);
 
       // Clear timer data
       clearTimerData(attempt.id);
 
       toast.success("Tugas praktikum berhasil disubmit");
 
-      // Redirect to results
-      navigate(`/mahasiswa/kuis/${kuisId}/result/${attempt.id}`);
+      // Redirect to results - use returned attempt id
+      const resultAttemptId = submittedAttempt?.id || attempt.id;
+      console.log("🐛 [QuizAttempt] Navigating to:", `/mahasiswa/kuis/${kuisId}/result/${resultAttemptId}`);
+      navigate(`/mahasiswa/kuis/${kuisId}/result/${resultAttemptId}`);
     } catch (err: any) {
       const errorMessage = err?.message || "Terjadi kesalahan";
       toast.error("Gagal submit tugas praktikum", {
@@ -557,7 +620,7 @@ export function QuizAttempt({
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
+      <div className="flex items-center justify-center min-h-100">
         <div className="text-center space-y-4">
           <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
           <p className="text-muted-foreground">Memuat tugas praktikum...</p>

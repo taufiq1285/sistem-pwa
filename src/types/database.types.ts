@@ -759,6 +759,7 @@ export type Database = {
           randomize_questions: boolean | null;
           show_results_immediately: boolean | null;
           status: Database["public"]["Enums"]["quiz_status"] | null;
+          tipe_kuis: Database["public"]["Enums"]["kuis_type"] | null;
           tanggal_mulai: string;
           tanggal_selesai: string;
           updated_at: string | null;
@@ -782,6 +783,7 @@ export type Database = {
           randomize_questions?: boolean | null;
           show_results_immediately?: boolean | null;
           status?: Database["public"]["Enums"]["quiz_status"] | null;
+          tipe_kuis?: Database["public"]["Enums"]["kuis_type"] | null;
           tanggal_mulai: string;
           tanggal_selesai: string;
           updated_at?: string | null;
@@ -805,6 +807,7 @@ export type Database = {
           randomize_questions?: boolean | null;
           show_results_immediately?: boolean | null;
           status?: Database["public"]["Enums"]["quiz_status"] | null;
+          tipe_kuis?: Database["public"]["Enums"]["kuis_type"] | null;
           tanggal_mulai?: string;
           tanggal_selesai?: string;
           updated_at?: string | null;
@@ -1898,8 +1901,15 @@ export type Database = {
         | "multiple_choice"
         | "true_false"
         | "essay"
-        | "short_answer";
+        | "short_answer"
+        | "pilihan_ganda"
+        | "benar_salah"
+        | "file_upload"
+        | "jawaban_singkat"
+        | "menjodohkan"
+        | "isian_singkat";
       quiz_status: "draft" | "published" | "archived";
+      kuis_type: "essay" | "pilihan_ganda" | "campuran";
       sync_status: "pending" | "syncing" | "synced" | "failed" | "conflict";
       user_role: "admin" | "dosen" | "mahasiswa" | "laboran";
     };
@@ -2057,7 +2067,7 @@ export const Constants = {
         "maintenance",
       ],
       gender_type: ["L", "P"],
-      question_type: ["multiple_choice", "true_false", "essay", "short_answer"],
+      question_type: ["multiple_choice", "true_false", "essay", "short_answer", "pilihan_ganda", "benar_salah", "file_upload", "jawaban_singkat", "menjodohkan", "isian_singkat"],
       quiz_status: ["draft", "published", "archived"],
       sync_status: ["pending", "syncing", "synced", "failed", "conflict"],
       user_role: ["admin", "dosen", "mahasiswa", "laboran"],
