@@ -35,6 +35,12 @@ import { supabase } from "@/lib/supabase/client";
 import { handleError, logError } from "@/lib/utils/errors";
 import { conflictResolver } from "@/lib/offline/conflict-resolver";
 import {
+  invalidateCache,
+  invalidateCachePattern,
+  invalidateCachePatternSync,
+  clearAllCacheSync,
+} from "@/lib/offline/api-cache";
+import {
   requirePermission,
   requirePermissionAndOwnership,
   getCurrentDosenId,
@@ -160,8 +166,17 @@ export interface AttemptWithStudent extends AttemptKuis {
 // KUIS (QUIZ) OPERATIONS
 // ============================================================================
 
-export async function getKuis(filters?: KuisFilters): Promise<Kuis[]> {
+type GetKuisOptions = {
+  forceRefresh?: boolean;
+};
+
+export async function getKuis(
+  filters?: KuisFilters,
+  options: GetKuisOptions = {},
+): Promise<Kuis[]> {
   try {
+    console.log("🔍 [getKuis] Called with filters:", filters, "options:", options);
+
     const filterConditions = [];
 
     if (filters?.kelas_id) {
@@ -195,7 +210,9 @@ export async function getKuis(filters?: KuisFilters): Promise<Kuis[]> {
       });
     }
 
-    const options = {
+    console.log("🔍 [getKuis] Filter conditions:", filterConditions);
+
+    const queryOptions = {
       select: `
         *,
         kelas:kelas_id (
@@ -218,27 +235,35 @@ export async function getKuis(filters?: KuisFilters): Promise<Kuis[]> {
         ascending: false,
       },
       // ✅ Enable caching for better offline support
-      enableCache: true,
+      // IMPORTANT: When forceRefresh is true, disable caching at query level too
+      enableCache: !options.forceRefresh,
       cacheTTL: 5 * 60 * 1000, // 5 minutes
-      staleWhileRevalidate: true,
+      staleWhileRevalidate: !options.forceRefresh, // Disable SWR on force refresh
     };
+
+    console.log("🔍 [getKuis] Query options:", { ...queryOptions, select: "(select query)" });
 
     const data =
       filterConditions.length > 0
-        ? await queryWithFilters<Kuis>("kuis", filterConditions, options)
-        : await query<Kuis>("kuis", options);
+        ? await queryWithFilters<Kuis>("kuis", filterConditions, queryOptions)
+        : await query<Kuis>("kuis", queryOptions);
+
+    console.log("✅ [getKuis] Data returned:", data.length, "quizzes");
 
     if (filters?.search) {
       const searchLower = filters.search.toLowerCase();
-      return data.filter(
+      const filtered = data.filter(
         (k) =>
           k.judul.toLowerCase().includes(searchLower) ||
           k.deskripsi?.toLowerCase().includes(searchLower),
       );
+      console.log("🔍 [getKuis] After search filter:", filtered.length, "quizzes");
+      return filtered;
     }
 
     return data;
   } catch (error) {
+    console.error("❌ [getKuis] Error:", error);
     const apiError = handleError(error);
     logError(apiError, "getKuis");
     throw apiError;
@@ -296,6 +321,7 @@ async function createKuisImpl(data: CreateKuisData): Promise<Kuis> {
     // ✅ AUTO-SET DATES: If not provided, set sensible defaults
     const dataWithDefaults = {
       ...data,
+      status: data.status || "draft", // Default to draft if not provided
       tanggal_mulai: data.tanggal_mulai || new Date().toISOString(),
       tanggal_selesai:
         data.tanggal_selesai ||
@@ -309,60 +335,81 @@ async function createKuisImpl(data: CreateKuisData): Promise<Kuis> {
     const result = await insert<Kuis>("kuis", dataWithDefaults);
     console.log("✅ API createKuis success:", result);
 
-    // ✅ AUTO-NOTIFICATION: Notify all mahasiswa in kelas when dosen creates new tugas
-    try {
-      // Get all mahasiswa in the kelas
-      const { data: enrollment, error: enrollError } = await supabase
-        .from("kelas_mahasiswa")
-        .select(
-          `
-          mahasiswa:mahasiswa_id (
-            id,
-            user_id
-          )
-        `,
-        )
-        .eq("kelas_id", data.kelas_id);
+    // ✅ CACHE INVALIDATION STRATEGY:
+    // Use SYNC clearAllCache to ensure ALL cache is cleared before dispatching event
+    // This prevents race condition where UI loads data from stale cache
+    console.log("🧹 [createKuis] Starting SYNC clear all cache...");
+    const deletedCount = await clearAllCacheSync();
+    console.log(`✅ [createKuis] Cache cleared: ${deletedCount} entries deleted`);
 
-      if (!enrollError && enrollment && enrollment.length > 0) {
-        // Get dosen info
-        const { data: dosen, error: dosenError } = await supabase
-          .from("dosen")
+    // ✅ IMMEDIATE REFRESH: Trigger custom event to notify KuisListPage immediately
+    // This happens AFTER all cache is cleared, ensuring fresh data is loaded
+    console.log("📡 [createKuis] Dispatching kuis:changed event...");
+    window.dispatchEvent(new CustomEvent('kuis:changed', {
+      detail: { action: 'created', kuis: result, dosenId: data.dosen_id }
+    }));
+    console.log("📢 [createKuis] Event dispatched: kuis:changed (created)");
+
+    // ✅ AUTO-NOTIFICATION: Notify all mahasiswa in kelas when dosen creates new tugas
+    // Fire-and-forget: don't await, run in background to avoid blocking
+    Promise.resolve().then(async () => {
+      try {
+        console.log("[NOTIFICATION] Starting notification process...");
+        // Get all mahasiswa in the kelas
+        const { data: enrollment, error: enrollError } = await supabase
+          .from("kelas_mahasiswa")
           .select(
             `
-            id,
-            user:user_id (
-              full_name
+            mahasiswa:mahasiswa_id (
+              id,
+              user_id
             )
           `,
           )
-          .eq("id", data.dosen_id)
-          .single();
+          .eq("kelas_id", data.kelas_id);
 
-        if (!dosenError && dosen) {
-          const mahasiswaUserIds = enrollment
-            .map((e: any) => e.mahasiswa?.user_id)
-            .filter(Boolean);
-          const dosenNama = (dosen as any).user?.full_name || "Dosen";
+        if (!enrollError && enrollment && enrollment.length > 0) {
+          // Get dosen info
+          const { data: dosen, error: dosenError } = await supabase
+            .from("dosen")
+            .select(
+              `
+              id,
+              user:user_id (
+                full_name
+              )
+            `,
+            )
+            .eq("id", data.dosen_id)
+            .single();
 
-          if (mahasiswaUserIds.length > 0) {
-            await notifyMahasiswaTugasBaru(
-              mahasiswaUserIds,
-              dosenNama,
-              data.judul,
-              result.id,
-              data.kelas_id,
-            );
-            console.log(
-              `[NOTIFICATION] ${mahasiswaUserIds.length} mahasiswa notified: New tugas "${data.judul}"`,
-            );
+          if (!dosenError && dosen) {
+            const mahasiswaUserIds = enrollment
+              .map((e: any) => e.mahasiswa?.user_id)
+              .filter(Boolean);
+            const dosenNama = (dosen as any).user?.full_name || "Dosen";
+
+            if (mahasiswaUserIds.length > 0) {
+              await notifyMahasiswaTugasBaru(
+                mahasiswaUserIds,
+                dosenNama,
+                data.judul,
+                result.id,
+                data.kelas_id,
+              );
+              console.log(
+                `[NOTIFICATION] ${mahasiswaUserIds.length} mahasiswa notified: New tugas "${data.judul}"`,
+              );
+            }
           }
         }
+      } catch (notifError) {
+        // Don't fail the creation if notification fails
+        console.error("[NOTIFICATION] Failed to notify mahasiswa:", notifError);
       }
-    } catch (notifError) {
-      // Don't fail the creation if notification fails
-      console.error("[NOTIFICATION] Failed to notify mahasiswa:", notifError);
-    }
+    }).catch((err) => {
+      console.error("[NOTIFICATION] Unhandled error:", err);
+    });
 
     return result;
   } catch (error) {
@@ -382,7 +429,27 @@ async function updateKuisImpl(
   data: Partial<CreateKuisData>,
 ): Promise<Kuis> {
   try {
-    return await update<Kuis>("kuis", id, data);
+    const updated = await update<Kuis>("kuis", id, data);
+
+    // ✅ CACHE INVALIDATION STRATEGY:
+    // Use SYNC clearAllCache to ensure ALL cache is cleared before dispatching event
+    // This prevents race condition where UI loads data from stale cache
+    console.log("🧹 [updateKuis] Starting SYNC clear all cache...");
+    const deletedCount = await clearAllCacheSync();
+    console.log(`✅ [updateKuis] Cache cleared: ${deletedCount} entries deleted`);
+
+    // ✅ IMMEDIATE REFRESH: Trigger custom event to notify KuisListPage immediately
+    // This happens AFTER all cache is cleared, ensuring fresh data is loaded
+    try {
+      window.dispatchEvent(new CustomEvent('kuis:changed', {
+        detail: { action: 'updated', kuis: updated, dosenId: updated.dosen_id }
+      }));
+      console.log("📢 Event dispatched: kuis:changed (updated)");
+    } catch (eventError) {
+      console.warn("⚠️ Failed to dispatch kuis:changed event:", eventError);
+    }
+
+    return updated;
   } catch (error) {
     const apiError = handleError(error);
     logError(apiError, `updateKuis:${id}`);
@@ -401,7 +468,25 @@ export const updateKuis = requirePermissionAndOwnership(
 // Internal implementation (unwrapped)
 async function deleteKuisImpl(id: string): Promise<boolean> {
   try {
-    return await remove("kuis", id);
+    const result = await remove("kuis", id);
+
+    // ✅ CACHE INVALIDATION STRATEGY:
+    // Use SYNC clearAllCache to ensure ALL cache is cleared before dispatching event
+    console.log("🧹 [deleteKuis] Starting SYNC clear all cache...");
+    const deletedCount = await clearAllCacheSync();
+    console.log(`✅ [deleteKuis] Cache cleared: ${deletedCount} entries deleted`);
+
+    // ✅ IMMEDIATE REFRESH: Trigger custom event to notify KuisListPage immediately
+    try {
+      window.dispatchEvent(new CustomEvent('kuis:changed', {
+        detail: { action: 'deleted', kuisId: id }
+      }));
+      console.log("📢 Event dispatched: kuis:changed (deleted)");
+    } catch (eventError) {
+      console.warn("⚠️ Failed to dispatch kuis:changed event:", eventError);
+    }
+
+    return result;
   } catch (error) {
     const apiError = handleError(error);
     logError(apiError, `deleteKuis:${id}`);
@@ -580,7 +665,42 @@ async function createSoalImpl(data: CreateSoalData): Promise<Soal> {
       dbData.pembahasan = data.penjelasan;
     }
 
-    return await insert<Soal>("soal", dbData);
+    const result = await insert<Soal>("soal", dbData);
+
+    // ✅ CACHE INVALIDATION STRATEGY:
+    // Get the kuis to find dosen_id for event dispatch
+    // Use SYNC clearAllCache to ensure ALL cache is cleared before dispatching event
+    let dosenId: string | null = null;
+    try {
+      const { data: kuis } = await supabase
+        .from("kuis")
+        .select("id, dosen_id")
+        .eq("id", data.kuis_id)
+        .single();
+
+      dosenId = kuis?.dosen_id || null;
+    } catch (fetchError) {
+      console.warn("⚠️ Failed to fetch kuis for event dispatch:", fetchError);
+    }
+
+    // ✅ CRITICAL FIX: Use SYNC clearAllCache to ensure cache is cleared BEFORE dispatching event
+    console.log("🧹 [createSoal] Starting SYNC clear all cache...");
+    const deletedCount = await clearAllCacheSync();
+    console.log(`✅ [createSoal] Cache cleared: ${deletedCount} entries deleted`);
+
+    // ✅ IMMEDIATE REFRESH: Dispatch kuis:changed event so KuisListPage refreshes
+    if (dosenId) {
+      try {
+        window.dispatchEvent(new CustomEvent('kuis:changed', {
+          detail: { action: 'soal_created', kuisId: data.kuis_id, dosenId }
+        }));
+        console.log("📢 Event dispatched: kuis:changed (soal_created)");
+      } catch (eventError) {
+        console.warn("⚠️ Failed to dispatch kuis:changed event:", eventError);
+      }
+    }
+
+    return result;
   } catch (error) {
     const apiError = handleError(error);
     logError(apiError, "createSoal");
@@ -609,7 +729,52 @@ async function updateSoalImpl(
       dbData.jawaban_benar = data.jawaban_benar;
     if (data.penjelasan !== undefined) dbData.pembahasan = data.penjelasan;
 
-    return await update<Soal>("soal", id, dbData);
+    const result = await update<Soal>("soal", id, dbData);
+
+    // ✅ CACHE INVALIDATION STRATEGY:
+    // Get the soal/kuis to find dosen_id for event dispatch
+    // Use SYNC clearAllCache to ensure ALL cache is cleared before dispatching event
+    let dosenId: string | null = null;
+    let kuisId: string | null = null;
+    try {
+      const { data: soalData } = await supabase
+        .from("soal")
+        .select("kuis_id")
+        .eq("id", id)
+        .single();
+
+      if (soalData?.kuis_id) {
+        kuisId = soalData.kuis_id;
+        const { data: kuis } = await supabase
+          .from("kuis")
+          .select("id, dosen_id")
+          .eq("id", soalData.kuis_id)
+          .single();
+
+        dosenId = kuis?.dosen_id || null;
+      }
+    } catch (fetchError) {
+      console.warn("⚠️ Failed to fetch soal/kuis for event dispatch:", fetchError);
+    }
+
+    // ✅ CRITICAL FIX: Use SYNC clearAllCache to ensure cache is cleared BEFORE dispatching event
+    console.log("🧹 [updateSoal] Starting SYNC clear all cache...");
+    const deletedCount = await clearAllCacheSync();
+    console.log(`✅ [updateSoal] Cache cleared: ${deletedCount} entries deleted`);
+
+    // ✅ IMMEDIATE REFRESH: Dispatch kuis:changed event so KuisListPage refreshes
+    if (dosenId) {
+      try {
+        window.dispatchEvent(new CustomEvent('kuis:changed', {
+          detail: { action: 'soal_updated', kuisId: kuisId || result.kuis_id, dosenId }
+        }));
+        console.log("📢 Event dispatched: kuis:changed (soal_updated)");
+      } catch (eventError) {
+        console.warn("⚠️ Failed to dispatch kuis:changed event:", eventError);
+      }
+    }
+
+    return result;
   } catch (error) {
     const apiError = handleError(error);
     logError(apiError, `updateSoal:${id}`);
@@ -623,7 +788,55 @@ export const updateSoal = requirePermission("manage:soal", updateSoalImpl);
 // Internal implementation (unwrapped)
 async function deleteSoalImpl(id: string): Promise<boolean> {
   try {
-    return await remove("soal", id);
+    // Get the soal first to find kuis_id for event dispatch
+    let kuisId: string | null = null;
+    let dosenId: string | null = null;
+
+    try {
+      const { data: soalData } = await supabase
+        .from("soal")
+        .select("kuis_id")
+        .eq("id", id)
+        .single();
+
+      if (soalData?.kuis_id) {
+        kuisId = soalData.kuis_id;
+
+        const { data: kuis } = await supabase
+          .from("kuis")
+          .select("id, dosen_id")
+          .eq("id", soalData.kuis_id)
+          .single();
+
+        if (kuis?.dosen_id) {
+          dosenId = kuis.dosen_id;
+        }
+      }
+    } catch (fetchError) {
+      console.warn("⚠️ Failed to fetch soal/kuis for event dispatch:", fetchError);
+    }
+
+    const result = await remove("soal", id);
+
+    // ✅ CACHE INVALIDATION STRATEGY:
+    // Use SYNC clearAllCache to ensure ALL cache is cleared before dispatching event
+    console.log("🧹 [deleteSoal] Starting SYNC clear all cache...");
+    const deletedCount = await clearAllCacheSync();
+    console.log(`✅ [deleteSoal] Cache cleared: ${deletedCount} entries deleted`);
+
+    // ✅ IMMEDIATE REFRESH: Dispatch kuis:changed event so KuisListPage refreshes
+    if (kuisId && dosenId) {
+      try {
+        window.dispatchEvent(new CustomEvent('kuis:changed', {
+          detail: { action: 'soal_deleted', kuisId, dosenId }
+        }));
+        console.log("📢 Event dispatched: kuis:changed (soal_deleted)");
+      } catch (eventError) {
+        console.warn("⚠️ Failed to dispatch kuis:changed event:", eventError);
+      }
+    }
+
+    return result;
   } catch (error) {
     const apiError = handleError(error);
     logError(apiError, `deleteSoal:${id}`);
@@ -1072,8 +1285,11 @@ export async function getUpcomingQuizzes(
     // ✅ STEP 1: Get enrolled kelas IDs (client-side filtering approach)
     const enrolledKelasIds = await getEnrolledKelasIds(mahasiswaId);
 
+    console.log("🔍 [getUpcomingQuizzes] enrolledKelasIds:", enrolledKelasIds);
+
     if (enrolledKelasIds.length === 0) {
       // No enrolled classes = no quizzes
+      console.warn("⚠️ [getUpcomingQuizzes] No enrolled classes found");
       return [];
     }
 
@@ -1105,13 +1321,21 @@ export async function getUpcomingQuizzes(
       .gte("tanggal_selesai", now)
       .order("tanggal_mulai", { ascending: true });
 
-    if (error) throw error;
+    if (error) {
+      console.error("❌ [getUpcomingQuizzes] Query error:", error);
+      throw error;
+    }
+
+    console.log("🔍 [getUpcomingQuizzes] Raw quizzes from DB:", quizzes?.length || 0);
+
     if (!quizzes) return [];
 
     // ✅ STEP 3: Filter client-side by enrolled kelas
     const enrolledQuizzes = quizzes.filter((quiz) =>
       enrolledKelasIds.includes(quiz.kelas_id),
     );
+
+    console.log("🔍 [getUpcomingQuizzes] Enrolled quizzes:", enrolledQuizzes.length);
 
     const upcomingQuizzes: UpcomingQuiz[] = await Promise.all(
       enrolledQuizzes.map(async (quiz) => {
@@ -1123,7 +1347,21 @@ export async function getUpcomingQuizzes(
         const totalSoal = quiz.soal?.length || 0;
         const attemptsUsed = attempts.length;
         const maxAttempts = quiz.max_attempts ?? 1;
-        const canAttempt = attemptsUsed < maxAttempts;
+
+        // ✅ FIXED: Check if attempt was actually SUBMITTED (not just exists)
+        const hasSubmittedAttempt = attempts.some(
+          (a) =>
+            a.submitted_at !== null ||
+            (a as any).status === "submitted" ||
+            (a as any).status === "graded"
+        );
+
+        // ✅ FIXED: Can attempt if:
+        // 1. No submitted attempt yet (can resume or start new)
+        // 2. Previous attempt was submitted AND still have attempts remaining
+        const canAttempt = hasSubmittedAttempt
+          ? attemptsUsed < maxAttempts // Can start new attempt only if previous was submitted
+          : true; // Can always resume/continue if attempt is still in_progress
 
         let status: "upcoming" | "ongoing" | "completed" | "missed";
         const startDate = new Date(quiz.tanggal_mulai);
@@ -1133,9 +1371,11 @@ export async function getUpcomingQuizzes(
         if (nowDate < startDate) {
           status = "upcoming";
         } else if (nowDate > endDate) {
-          status = attemptsUsed > 0 ? "completed" : "missed";
+          // After deadline: only "completed" if actually submitted
+          status = hasSubmittedAttempt ? "completed" : "missed";
         } else {
-          status = "ongoing";
+          // During quiz period: "completed" only if submitted, otherwise "ongoing"
+          status = hasSubmittedAttempt ? "completed" : "ongoing";
         }
 
         const bestScore =

@@ -7,7 +7,7 @@
  * Note: Table name remains "kuis" but UI displays "Tugas Praktikum"
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Plus,
@@ -17,6 +17,9 @@ import {
   List,
   Loader2,
   AlertCircle,
+  RefreshCw,
+  Database,
+  Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,7 +39,8 @@ import { getKuis } from "@/lib/api/kuis.api";
 import type { Kuis, KuisFilters, UI_LABELS } from "@/types/kuis.types";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { cacheAPI, invalidateCache } from "@/lib/offline/api-cache";
+import { cacheAPI, invalidateCache, clearAllCacheSync } from "@/lib/offline/api-cache";
+import { supabase } from "@/lib/supabase/client";
 
 // ============================================================================
 // TYPES
@@ -65,6 +69,9 @@ export default function KuisListPage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [kelasFilter, setKelasFilter] = useState<string>("all");
 
+  // Debounce ref to prevent multiple rapid loads
+  const loadTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // ============================================================================
   // EFFECTS
   // ============================================================================
@@ -74,6 +81,100 @@ export default function KuisListPage() {
    */
   useEffect(() => {
     loadQuizzes();
+
+    // Debounced load function to prevent multiple rapid calls
+    const debouncedLoad = (forceRefresh = false) => {
+      // Clear existing timeout
+      if (loadTimeoutRef.current) {
+        clearTimeout(loadTimeoutRef.current);
+      }
+
+      // Set new timeout (300ms debounce)
+      loadTimeoutRef.current = setTimeout(() => {
+        console.log("[Dosen KuisList] 🔄 Debounced load executing...");
+        loadQuizzes(forceRefresh);
+      }, 300);
+    };
+
+    // Set up realtime subscription for kuis changes
+    let subscription: any = null;
+
+    if (user?.dosen?.id) {
+      subscription = supabase
+        .channel("dosen-kuis-changes")
+        .on(
+          "postgres_changes",
+          {
+            event: "*", // INSERT, UPDATE, DELETE
+            schema: "public",
+            table: "kuis",
+          },
+          (payload) => {
+            console.log("[Dosen KuisList] Raw payload received:", payload);
+
+            // Only refresh if this kuis belongs to current dosen
+            const oldData = payload.old as any;
+            const newData = payload.new as any;
+
+            if ((oldData && oldData.dosen_id === user.dosen.id) ||
+                (newData && newData.dosen_id === user.dosen.id)) {
+              console.log("[Dosen KuisList] Kuis changed for current dosen, debounced refresh...");
+              debouncedLoad(true);
+            } else {
+              console.log("[Dosen KuisList] Kuis changed but not for current dosen, ignoring");
+            }
+          },
+        )
+        .subscribe();
+
+      console.log("[Dosen KuisList] ✅ Realtime subscription active for dosen:", user.dosen.id);
+    }
+
+    // ✅ CUSTOM EVENT LISTENER: Listen for immediate kuis changes from API calls
+    // This ensures instant UI update when createKuis/updateKuis/deleteKuis is called
+    const handleKuisChanged = (event: any) => {
+      const { action, kuis, dosenId } = event.detail;
+      console.log("[Dosen KuisList] 📢 Custom event received:", { action, kuisId: kuis?.id, dosenId });
+
+      // Only refresh if this kuis belongs to current dosen
+      if (dosenId === user?.dosen?.id) {
+        console.log("[Dosen KuisList] 🔄 Refreshing after custom event (debounced)...");
+        debouncedLoad(true); // Force refresh with debounce
+      }
+    };
+
+    // ✅ CACHE UPDATE LISTENER: Listen for background cache updates
+    // When stale-while-revalidate completes, reload the data
+    const handleCacheUpdated = (event: any) => {
+      const { key } = event.detail;
+      const cacheKey = `dosen_kuis_${user?.dosen?.id || "all"}`;
+
+      // Only reload if this cache key is relevant
+      if (key === cacheKey) {
+        console.log("[Dosen KuisList] 📢 Cache updated event received:", key);
+        console.log("[Dosen KuisList] 🔄 Reloading data with fresh cache (debounced)...");
+        debouncedLoad(true); // Force refresh with debounce
+      }
+    };
+
+    // Add event listeners
+    window.addEventListener('kuis:changed', handleKuisChanged);
+    window.addEventListener('cache:updated', handleCacheUpdated);
+
+    // Cleanup subscription and event listeners on unmount
+    return () => {
+      // Clear debounce timeout
+      if (loadTimeoutRef.current) {
+        clearTimeout(loadTimeoutRef.current);
+      }
+
+      if (subscription) {
+        console.log("[Dosen KuisList] Cleaning up subscription");
+        subscription.unsubscribe();
+      }
+      window.removeEventListener('kuis:changed', handleKuisChanged);
+      window.removeEventListener('cache:updated', handleCacheUpdated);
+    };
   }, [user]);
 
   /**
@@ -105,7 +206,7 @@ export default function KuisListPage() {
       // Use cacheAPI with stale-while-revalidate for offline support
       const data = await cacheAPI(
         `dosen_kuis_${user?.dosen?.id || "all"}`,
-        () => getKuis(filters),
+        () => getKuis(filters, { forceRefresh }),
         {
           ttl: 5 * 60 * 1000, // 5 minutes
           forceRefresh,
@@ -113,8 +214,25 @@ export default function KuisListPage() {
         },
       );
 
-      setQuizzes(data);
+      // ✅ DETAILED LOGGING: Log each quiz with ID and title to identify duplicates
       console.log("[Dosen KuisList] Data loaded:", data.length, "quizzes");
+      data.forEach((quiz, index) => {
+        console.log(`[Dosen KuisList] Quiz ${index + 1}:`, {
+          id: quiz.id,
+          judul: quiz.judul,
+          status: quiz.status,
+          created_at: quiz.created_at,
+        });
+      });
+
+      // Check for potential duplicates (same title)
+      const titles = data.map(q => q.judul);
+      const duplicates = titles.filter((title, index) => titles.indexOf(title) !== index);
+      if (duplicates.length > 0) {
+        console.warn("[Dosen KuisList] ⚠️ Potential duplicate quiz titles detected:", duplicates);
+      }
+
+      setQuizzes(data);
     } catch (err: any) {
       setError(err.message || "Gagal memuat daftar tugas praktikum");
       toast.error("Gagal memuat daftar tugas praktikum", {
@@ -168,6 +286,79 @@ export default function KuisListPage() {
     navigate("/dosen/kuis/create");
   };
 
+  /**
+   * Clear cache and refresh
+   */
+  const handleClearCache = async () => {
+    try {
+      toast.info("Membersihkan cache...", { duration: 2000 });
+
+      // Clear all cache using SYNC version (waits for completion)
+      const deletedCount = await clearAllCacheSync();
+      console.log(`[Clear Cache] Deleted ${deletedCount} cache entries`);
+
+      toast.success(`Cache berhasil dibersihkan! (${deletedCount} entries)`, { duration: 2000 });
+
+      // Force refresh
+      await loadQuizzes(true);
+    } catch (err) {
+      console.error("Error clearing cache:", err);
+      toast.error("Gagal membersihkan cache");
+    }
+  };
+
+  /**
+   * Debug: Check database directly
+   */
+  const handleDebugDatabase = async () => {
+    if (!user?.dosen?.id) {
+      toast.error("Dosen ID tidak ditemukan");
+      return;
+    }
+
+    try {
+      toast.info("Memeriksa database...", { duration: 3000 });
+
+      // Direct database query bypassing cache
+      const { data, error } = await supabase
+        .from("kuis")
+        .select("*")
+        .eq("dosen_id", user.dosen.id);
+
+      console.log("🐛 [DEBUG] Direct database query result:", data);
+      console.log("🐛 [DEBUG] Error:", error);
+      console.log("🐛 [DEBUG] Dosen ID:", user.dosen.id);
+      console.log("🐛 [DEBUG] Count:", data?.length || 0);
+
+      // Also check with status filter
+      const { data: activeData, error: activeError } = await supabase
+        .from("kuis")
+        .select("*")
+        .eq("dosen_id", user.dosen.id)
+        .neq("status", "archived");
+
+      console.log("🐛 [DEBUG] Active (not archived) count:", activeData?.length || 0);
+
+      // Check archived
+      const { data: archivedData } = await supabase
+        .from("kuis")
+        .select("*")
+        .eq("dosen_id", user.dosen.id)
+        .eq("status", "archived");
+
+      console.log("🐛 [DEBUG] Archived count:", archivedData?.length || 0);
+
+      if (error) {
+        toast.error(`Database error: ${error.message}`);
+      } else {
+        toast.success(`Database: ${data?.length || 0} total, ${activeData?.length || 0} active, ${archivedData?.length || 0} archived. Lihat console untuk detail.`, { duration: 5000 });
+      }
+    } catch (err) {
+      console.error("Debug error:", err);
+      toast.error("Gagal memeriksa database");
+    }
+  };
+
   // ============================================================================
   // COMPUTED VALUES
   // ============================================================================
@@ -196,7 +387,7 @@ export default function KuisListPage() {
     return (
       <div className="min-h-screen bg-linear-to-br from-indigo-50 via-blue-50 to-purple-50 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950 p-8">
         <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-center min-h-[400px]">
+          <div className="flex items-center justify-center min-h-100">
             <div className="text-center space-y-4">
               <Loader2 className="h-12 w-12 animate-spin mx-auto text-indigo-600" />
               <p className="text-lg font-semibold text-gray-700 dark:text-gray-300">
@@ -273,14 +464,36 @@ export default function KuisListPage() {
               </div>
             </div>
 
-            <Button
-              onClick={handleCreateQuiz}
-              size="lg"
-              className="gap-3 bg-white text-blue-700 hover:bg-blue-50 shadow-xl font-bold text-lg px-8 py-6"
-            >
-              <Plus className="h-6 w-6" />
-              Buat Tugas Baru
-            </Button>
+            <div className="flex gap-3">
+              <Button
+                onClick={handleCreateQuiz}
+                size="lg"
+                className="gap-3 bg-white text-blue-700 hover:bg-blue-50 shadow-xl font-bold text-lg px-8 py-6"
+              >
+                <Plus className="h-6 w-6" />
+                Buat Tugas Baru
+              </Button>
+              <Button
+                onClick={handleClearCache}
+                size="lg"
+                variant="outline"
+                className="gap-2 bg-white/10 backdrop-blur-sm border-2 border-white/30 text-white hover:bg-white/20 font-semibold px-6 py-6"
+                title="Bersihkan cache dan reload data"
+              >
+                <Trash2 className="h-5 w-5" />
+                <span className="hidden sm:inline">Clear Cache</span>
+              </Button>
+              <Button
+                onClick={handleDebugDatabase}
+                size="lg"
+                variant="outline"
+                className="gap-2 bg-white/10 backdrop-blur-sm border-2 border-white/30 text-white hover:bg-white/20 font-semibold px-6 py-6"
+                title="Cek database langsung (debug)"
+              >
+                <Database className="h-5 w-5" />
+                <span className="hidden sm:inline">Debug DB</span>
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -303,7 +516,7 @@ export default function KuisListPage() {
               value={statusFilter}
               onValueChange={(v) => setStatusFilter(v as StatusFilter)}
             >
-              <SelectTrigger className="w-full lg:w-[200px] h-12 border-2 font-semibold">
+              <SelectTrigger className="w-full lg:w-50 h-12 border-2 font-semibold">
                 <Filter className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
@@ -324,20 +537,26 @@ export default function KuisListPage() {
             {/* Kelas Filter - Enhanced */}
             {kelasOptions.length > 0 && (
               <Select value={kelasFilter} onValueChange={setKelasFilter}>
-                <SelectTrigger className="w-full lg:w-[280px] h-12 border-2 font-semibold">
+                <SelectTrigger className="w-full lg:w-70 h-12 border-2 font-semibold">
                   <SelectValue placeholder="Filter Mata Kuliah" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Semua Mata Kuliah</SelectItem>
-                  {kelasOptions.map((kelas: any) => (
-                    <SelectItem
-                      key={kelas.kelas_id || kelas.id}
-                      value={kelas.kelas_id || kelas.id}
-                    >
-                      {kelas.mata_kuliah?.kode_mk} -{" "}
-                      {kelas.mata_kuliah?.nama_mk} ({kelas.nama_kelas})
-                    </SelectItem>
-                  ))}
+                  {kelasOptions.map((kelas: any, index: number) => {
+                    const kelasValue = String(
+                      kelas.kelas_id ??
+                        kelas.id ??
+                        kelas.mata_kuliah?.id ??
+                        index,
+                    );
+
+                    return (
+                      <SelectItem key={kelasValue} value={kelasValue}>
+                        {kelas.mata_kuliah?.kode_mk} -{" "}
+                        {kelas.mata_kuliah?.nama_mk} ({kelas.nama_kelas})
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
             )}

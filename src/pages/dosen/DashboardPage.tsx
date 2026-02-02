@@ -148,7 +148,9 @@ export function DashboardPage() {
               console.log("Kuis changed, refreshing dashboard...", payload);
               setHasDataChanges(true);
               setIsRefreshing(true);
-              fetchDashboardData().finally(() => {
+              // Force refresh on DELETE to ensure cache is cleared
+              const shouldForceRefresh = payload.eventType === "DELETE";
+              fetchDashboardData(shouldForceRefresh).finally(() => {
                 setIsRefreshing(false);
                 setLastRefresh(new Date());
               });
@@ -511,7 +513,7 @@ export function DashboardPage() {
             forceRefresh,
             staleWhileRevalidate: true,
           }),
-          cacheAPI(`dosen_kuis_${user?.id}`, () => getActiveKuis(5), {
+          cacheAPI(`dosen_kuis_${user?.id}`, () => getActiveKuis(20), {
             ttl: 5 * 60 * 1000,
             forceRefresh,
             staleWhileRevalidate: true,
@@ -1173,9 +1175,21 @@ export function DashboardPage() {
                             </div>
                           </div>
                           <div className="flex-1 min-w-0">
-                            <h4 className="font-bold text-base truncate text-gray-900">
-                              {kuis.judul}
-                            </h4>
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-bold text-base truncate text-gray-900">
+                                {kuis.judul}
+                              </h4>
+                              <Badge
+                                variant="outline"
+                                className={
+                                  kuis.status === "published"
+                                    ? "bg-green-100 text-green-700 border-green-300 font-bold"
+                                    : "bg-yellow-100 text-yellow-700 border-yellow-300 font-bold"
+                                }
+                              >
+                                {kuis.status === "published" ? "✅ Published" : "📝 Draft"}
+                              </Badge>
+                            </div>
                             <p className="text-sm font-semibold text-gray-700 mt-1">
                               {kuis.kelas_nama}
                             </p>

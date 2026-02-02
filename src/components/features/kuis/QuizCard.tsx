@@ -118,6 +118,13 @@ export function QuizCard({
   const quizStatus = quiz.status || "draft";
   const isPublished = quizStatus === "published";
 
+  // ✅ DETERMINE QUIZ TYPE for visual differentiation
+  const quizType = (quiz as any).tipe_kuis || "campuran"; // Default to mixed
+
+  // ✅ Mapping: essay = laporan praktikum, selain itu = Tes CBT
+  const isLaporan = quizType === "essay";
+  const isCBT = !isLaporan; // Everything else (pilihan_ganda, campuran) is CBT-style
+
   let statusLabel = "Draft";
   let statusVariant: "default" | "secondary" | "destructive" | "outline" =
     "secondary";
@@ -128,11 +135,34 @@ export function QuizCard({
   } else if (isPublished) {
     statusLabel = "Aktif";
     statusVariant = "default";
-  } // Get stats
+  }
+
+  // Get stats
   const totalQuestions = (quiz as any).total_soal || 0;
   const totalAttempts = (quiz as any).total_attempts || 0;
   const totalPoints = (quiz as any).total_poin || 0;
   const duration = (quiz as any).durasi || (quiz as any).durasi_menit || 0;
+
+  // ✅ VISUAL DIFFERENTIATION: Different styles for CBT vs Laporan
+  const typeConfig = isLaporan
+    ? {
+        // 📄 LAPORAN PRAKTIKUM - Orange/Amber theme
+        borderColor: "border-l-orange-500",
+        headerBg: "bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-950/20 dark:to-amber-950/20",
+        typeLabel: "Laporan Praktikum",
+        typeIcon: "📄",
+        typeBadgeColor: "bg-orange-100 text-orange-800 border-orange-300 dark:bg-orange-900/30 dark:text-orange-300",
+        typeBorder: "border-orange-200 dark:border-orange-800",
+      }
+    : {
+        // ✅ TES CBT - Blue theme (ALL non-laporan types)
+        borderColor: "border-l-blue-500",
+        headerBg: "bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20",
+        typeLabel: "Tes CBT",
+        typeIcon: "✅",
+        typeBadgeColor: "bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900/30 dark:text-blue-300",
+        typeBorder: "border-blue-200 dark:border-blue-800",
+      };
 
   // ============================================================================
   // HANDLERS
@@ -241,14 +271,16 @@ export function QuizCard({
         className={cn(
           "hover:shadow-lg transition-all duration-200 border-l-4",
           compact && "border-dashed",
-          isPublished ? "border-l-green-500" : "border-l-yellow-500",
+          // ✅ Type-based border color (overrides status border for clarity)
+          typeConfig.borderColor,
         )}
       >
-        <CardHeader className={cn("pb-3", compact && "pb-2")}>
+        <CardHeader className={cn("pb-3", compact && "pb-2", typeConfig.headerBg)}>
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
-              {/* Status & Type Badges */}
+              {/* ✅ ENHANCED: Type Badge - More prominent for clarity */}
               <div className="flex items-center gap-2 mb-2 flex-wrap">
+                {/* Status Badge */}
                 <Badge
                   variant={statusVariant}
                   className={cn(
@@ -266,25 +298,17 @@ export function QuizCard({
                       : statusLabel}
                 </Badge>
 
-                {(quiz as any).tipe_kuis && (
-                  <Badge
-                    variant="outline"
-                    className={cn(
-                      "font-medium",
-                      (quiz as any).tipe_kuis === "pre-test" &&
-                        "bg-blue-50 text-blue-700 border-blue-200",
-                      (quiz as any).tipe_kuis === "post-test" &&
-                        "bg-purple-50 text-purple-700 border-purple-200",
-                      (quiz as any).tipe_kuis === "laporan" &&
-                        "bg-orange-50 text-orange-700 border-orange-200",
-                    )}
-                  >
-                    {(quiz as any).tipe_kuis === "pre-test" && "📝 "}
-                    {(quiz as any).tipe_kuis === "post-test" && "📊 "}
-                    {(quiz as any).tipe_kuis === "laporan" && "📄 "}
-                    {(quiz as any).tipe_kuis}
-                  </Badge>
-                )}
+                {/* ✅ TYPE BADGE - LARGER AND MORE PROMINENT */}
+                <Badge
+                  variant="outline"
+                  className={cn(
+                    "font-bold text-sm px-3 py-1 border-2",
+                    typeConfig.typeBadgeColor,
+                    typeConfig.typeBorder,
+                  )}
+                >
+                  {typeConfig.typeLabel}
+                </Badge>
 
                 {isPublished && (
                   <Badge
@@ -397,22 +421,31 @@ export function QuizCard({
               compact ? "grid-cols-2" : "grid-cols-2 md:grid-cols-4",
             )}
           >
-            {/* Questions Count */}
+            {/* Questions Count OR File Upload */}
             <div className="flex items-center gap-2">
-              <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
-                <FileText className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              <div className={cn(
+                "p-2 rounded-lg",
+                isLaporan ? "bg-amber-100 dark:bg-amber-900" : "bg-blue-100 dark:bg-blue-900"
+              )}>
+                <FileText className={cn(
+                  "h-4 w-4",
+                  isLaporan ? "text-amber-600 dark:text-amber-400" : "text-blue-600 dark:text-blue-400"
+                )} />
               </div>
               <div className="min-w-0">
-                <p className="text-xs text-muted-foreground">Soal</p>
+                <p className="text-xs text-muted-foreground">{isLaporan ? "Instruksi" : "Soal"}</p>
                 <p className="text-sm font-semibold truncate">
-                  {totalQuestions} soal
+                  {isLaporan ? "Upload File" : `${totalQuestions} soal`}
                 </p>
               </div>
             </div>
 
             {/* Duration */}
             <div className="flex items-center gap-2">
-              <div className="p-2 bg-orange-100 dark:bg-orange-900 rounded-lg">
+              <div className={cn(
+                "p-2 rounded-lg",
+                isLaporan ? "bg-orange-100 dark:bg-orange-900" : "bg-orange-100 dark:bg-orange-900"
+              )}>
                 <Clock className="h-4 w-4 text-orange-600 dark:text-orange-400" />
               </div>
               <div className="min-w-0">
@@ -426,7 +459,10 @@ export function QuizCard({
             {/* Attempts */}
             {!compact && (
               <div className="flex items-center gap-2">
-                <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
+                <div className={cn(
+                  "p-2 rounded-lg",
+                  isLaporan ? "bg-green-100 dark:bg-green-900" : "bg-green-100 dark:bg-green-900"
+                )}>
                   <Users className="h-4 w-4 text-green-600 dark:text-green-400" />
                 </div>
                 <div className="min-w-0">
@@ -441,7 +477,10 @@ export function QuizCard({
             {/* Total Points */}
             {!compact && (
               <div className="flex items-center gap-2">
-                <div className="p-2 bg-purple-100 dark:bg-purple-900 rounded-lg">
+                <div className={cn(
+                  "p-2 rounded-lg",
+                  isLaporan ? "bg-purple-100 dark:bg-purple-900" : "bg-purple-100 dark:bg-purple-900"
+                )}>
                   <CheckCircle2 className="h-4 w-4 text-purple-600 dark:text-purple-400" />
                 </div>
                 <div className="min-w-0">

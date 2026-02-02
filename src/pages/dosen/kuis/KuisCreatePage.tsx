@@ -18,6 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { QuizBuilder } from "@/components/features/kuis/builder/QuizBuilder";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { supabase } from "@/lib/supabase/client";
+import { toast } from "sonner";
 
 type TaskType = "tes" | "laporan" | null;
 
@@ -93,8 +94,19 @@ export default function KuisCreatePage() {
     );
   }
 
-  const handleSave = () => {
-    navigate("/dosen/kuis");
+  const handleSave = (quiz?: any) => {
+    console.log("🎯 [KuisCreatePage] Quiz saved:", quiz?.id);
+
+    // ✅ Wait a moment for cache invalidation to complete, then navigate
+    // This ensures the list page loads fresh data instead of stale cache
+    setTimeout(() => {
+      console.log("🔄 [KuisCreatePage] Navigating back to list...");
+      navigate("/dosen/kuis");
+    }, 500); // 500ms delay to ensure cache is cleared
+
+    toast.success("Tugas praktikum berhasil disimpan!", {
+      duration: 3000,
+    });
   };
 
   const handleCancel = () => {
@@ -117,7 +129,7 @@ export default function KuisCreatePage() {
 
         {/* Choice Card */}
         <Card className="overflow-hidden">
-          <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 p-6 text-white text-center">
+          <div className="bg-linear-to-r from-blue-600 via-purple-600 to-indigo-600 p-6 text-white text-center">
             <div className="text-5xl mb-4">📋</div>
             <h1 className="text-2xl font-bold mb-2">Buat Tugas Praktikum</h1>
             <p className="text-white/90">
@@ -220,7 +232,7 @@ export default function KuisCreatePage() {
 
         {/* Hero Section - Different based on type */}
         {selectedType === "laporan" ? (
-          <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 p-6 text-white shadow-lg">
+          <div className="relative overflow-hidden rounded-xl bg-linear-to-r from-green-600 via-emerald-600 to-teal-600 p-6 text-white shadow-lg">
             <div className="absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-white/10 blur-2xl" />
             <div className="absolute bottom-0 left-0 -mb-4 -ml-4 h-32 w-32 rounded-full bg-white/10 blur-2xl" />
             <div className="relative">
@@ -253,7 +265,7 @@ export default function KuisCreatePage() {
             </div>
           </div>
         ) : (
-          <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 p-6 text-white shadow-lg">
+          <div className="relative overflow-hidden rounded-xl bg-linear-to-rm-blue-600 via-indigo-600 to-purple-600 p-6 text-white shadow-lg">
             <div className="absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-white/10 blur-2xl" />
             <div className="absolute bottom-0 left-0 -mb-4 -ml-4 h-32 w-32 rounded-full bg-white/10 blur-2xl" />
             <div className="relative">

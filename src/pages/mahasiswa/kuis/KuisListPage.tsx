@@ -23,6 +23,7 @@ import {
   XCircle,
   Timer,
   Upload,
+  RefreshCw,
 } from "lucide-react";
 
 // UI Components
@@ -45,6 +46,7 @@ import { getUpcomingQuizzes } from "@/lib/api/kuis.api";
 import type { UpcomingQuiz } from "@/types/kuis.types";
 import { toast } from "sonner";
 import { cacheAPI } from "@/lib/offline/api-cache";
+import { supabase } from "@/lib/supabase/client";
 
 // Utils
 import { cn } from "@/lib/utils";
@@ -81,6 +83,35 @@ export default function KuisListPage() {
 
   useEffect(() => {
     if (user?.mahasiswa?.id) loadQuizzes();
+
+    // Set up realtime subscription for kuis changes
+    let subscription: any = null;
+
+    if (user?.mahasiswa?.id) {
+      subscription = supabase
+        .channel("mahasiswa-kuis-changes")
+        .on(
+          "postgres_changes",
+          {
+            event: "*", // INSERT, UPDATE, DELETE
+            schema: "public",
+            table: "kuis",
+          },
+          (payload) => {
+            console.log("[KuisList] Kuis changed, refreshing...", payload);
+            // Force refresh to ensure we get the latest data
+            loadQuizzes(true);
+          },
+        )
+        .subscribe();
+    }
+
+    // Cleanup subscription on unmount
+    return () => {
+      if (subscription) {
+        subscription.unsubscribe();
+      }
+    };
   }, [user?.mahasiswa?.id]);
 
   useEffect(() => {
@@ -149,8 +180,12 @@ export default function KuisListPage() {
 
   const handleStartQuiz = (quizId: string) =>
     navigate(`/mahasiswa/kuis/${quizId}/attempt`);
-  const handleViewResults = (quizId: string) =>
-    navigate(`/mahasiswa/kuis/${quizId}/result`);
+  const handleViewResults = (quizId: string) => {
+    // ⚠️ TODO: Need to get the attempt_id first
+    // Route requires both kuisId AND attemptId: /mahasiswa/kuis/:kuisId/result/:attemptId
+    // For now, navigate to attempt page which will redirect to result if already submitted
+    navigate(`/mahasiswa/kuis/${quizId}/attempt`);
+  };
   const handleStatusChange = (status: QuizStatus) => {
     setStatusFilter(status);
     setSearchParams({ status });
@@ -423,7 +458,7 @@ export default function KuisListPage() {
   if (isLoading) {
     return (
       <div className="container mx-auto py-6 max-w-7xl">
-        <div className="flex items-center justify-center min-h-[400px]">
+        <div className="flex items-center justify-center min-h-100">
           <div className="text-center space-y-4">
             <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
             <p className="text-muted-foreground">
@@ -458,22 +493,35 @@ export default function KuisListPage() {
         <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-32 translate-x-32 blur-3xl" />
         <div className="absolute bottom-0 left-0 w-48 h-48 bg-teal-400/20 rounded-full translate-y-24 -translate-x-24 blur-2xl" />
 
-        <div className="relative">
-          <h1 className="text-3xl font-bold flex items-center gap-3">
-            📋 Tugas Praktikum
-          </h1>
-          <p className="text-emerald-100 mt-2 max-w-xl">
-            Kerjakan tugas praktikum sesuai jadwal yang tersedia. Perhatikan
-            batas waktu pengerjaan!
-          </p>
-          <div className="flex gap-3 mt-4">
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-white/20 backdrop-blur-sm border border-white/30">
-              🧪 TES - Pilihan Ganda
-            </span>
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-white/20 backdrop-blur-sm border border-white/30">
-              📄 LAPORAN - Upload File
-            </span>
+        <div className="relative flex items-start justify-between">
+          <div>
+            <h1 className="text-3xl font-bold flex items-center gap-3">
+              📋 Tugas Praktikum
+            </h1>
+            <p className="text-emerald-100 mt-2 max-w-xl">
+              Kerjakan tugas praktikum sesuai jadwal yang tersedia. Perhatikan
+              batas waktu pengerjaan!
+            </p>
+            <div className="flex gap-3 mt-4">
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-white/20 backdrop-blur-sm border border-white/30">
+                🧪 TES - Pilihan Ganda
+              </span>
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-white/20 backdrop-blur-sm border border-white/30">
+                📄 LAPORAN - Upload File
+              </span>
+            </div>
           </div>
+
+          {/* Refresh Button */}
+          <Button
+            onClick={() => loadQuizzes(true)}
+            variant="secondary"
+            className="bg-white/20 hover:bg-white/30 text-white border-white/30 backdrop-blur-sm"
+            title="Refresh daftar tugas"
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
         </div>
       </div>
 

@@ -189,7 +189,7 @@ export function FileUploadQuestion({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-orange-50 to-amber-50 rounded-lg border border-orange-100">
+      <div className="flex items-center gap-3 p-4 bg-linear-to-r from-orange-50 to-amber-50 rounded-lg border border-orange-100">
         <div className="p-2 bg-white rounded-lg shadow-sm">
           <Upload className="h-5 w-5 text-orange-600" />
         </div>

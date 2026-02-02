@@ -21,7 +21,6 @@ import type {
 import type {
   TipeSoal,
   Soal,
-  CreateSoalData,
   OpsiJawaban,
 } from "@/types/kuis.types";
 
@@ -281,27 +280,37 @@ function calculateSimilarity(str1: string, str2: string): number {
 
 /**
  * Save existing quiz question to bank (with duplicate check)
+ *
+ * IMPORTANT: Maps column names from soal table to bank_soal table:
+ * - soal.tipe → bank_soal.tipe_soal
+ * - soal.pilihan_jawaban → bank_soal.opsi_jawaban
+ * - soal.pembahasan → bank_soal.penjelasan
  */
 export async function saveSoalToBank(
-  soal: Soal,
+  soal: Soal | any,
   dosenId: string,
   tags?: string[],
 ): Promise<{ bankSoal: BankSoal; duplicates: BankSoal[] }> {
+  // Handle both: objects from database (with 'tipe') and objects with 'tipe_soal'
+  const tipeSoal = (soal as any).tipe || soal.tipe_soal;
+  const opsiJawaban = (soal as any).pilihan_jawaban || soal.opsi_jawaban;
+  const penjelasan = (soal as any).pembahasan || soal.penjelasan;
+
   // Check for duplicates first
   const duplicates = await checkDuplicateBankSoal(
     soal.pertanyaan,
     dosenId,
-    soal.tipe_soal,
+    tipeSoal,
   );
 
   const bankData: CreateBankSoalData = {
     dosen_id: dosenId,
     pertanyaan: soal.pertanyaan,
-    tipe_soal: soal.tipe_soal,
+    tipe_soal: tipeSoal,
     poin: soal.poin,
-    opsi_jawaban: soal.opsi_jawaban || undefined,
+    opsi_jawaban: opsiJawaban || undefined,
     jawaban_benar: soal.jawaban_benar || undefined,
-    penjelasan: soal.penjelasan || undefined,
+    penjelasan: penjelasan || undefined,
     tags: tags || [],
   };
 

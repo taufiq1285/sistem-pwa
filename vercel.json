@@ -1,6 +1,14 @@
 {
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
   "cleanUrls": true,
   "trailingSlash": false,
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ],
   "headers": [
     {
       "source": "/(.*)",
@@ -20,7 +28,7 @@
       ]
     },
     {
-      "source": "/manifest.json",
+      "source": "/manifest.webmanifest",
       "headers": [
         {
           "key": "Cache-Control",
@@ -42,12 +50,51 @@
         {
           "key": "Service-Worker-Allowed",
           "value": "/"
+        },
+        {
+          "key": "Content-Type",
+          "value": "application/javascript"
+        }
+      ]
+    },
+    {
+      "source": "/registerSW.js",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/javascript"
         }
       ]
     },
     {
       "source": "/icons/(.*)",
       "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/assets/css/(.*)\\.css",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "text/css; charset=utf-8"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/assets/js/(.*)\\.js",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/javascript; charset=utf-8"
+        },
         {
           "key": "Cache-Control",
           "value": "public, max-age=31536000, immutable"

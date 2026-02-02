@@ -252,6 +252,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const { data: authListener } = authApi.onAuthStateChange(
       (newSession: AuthSession | null) => {
         if (mounted) {
+          // ✅ FIX: Check logout flag before restoring session from Supabase
+          // This prevents auto-login after logout when Supabase still has session in memory
+          const logoutFlag = getLogoutFlag();
+          if (logoutFlag && newSession) {
+            logger.auth(
+              "onAuthStateChange: Logout flag detected, ignoring Supabase session restoration",
+            );
+            // Keep auth state as null (no session)
+            updateAuthState(null, null);
+            setLoading(false);
+            return;
+          }
+
           if (newSession) {
             // Store new session to offline storage
             storeOfflineSession(newSession.user, newSession).catch((error) => {
@@ -442,11 +455,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     console.log("✅ logout: COMPLETE (instant!)");
 
-    // ✅ Redirect to landing page immediately without waiting
+    // ✅ Redirect to login page immediately without waiting
     // Check if window is available (for test environments)
     if (typeof window !== "undefined") {
       logoutTimeoutRef.current = setTimeout(() => {
-        window.location.href = "/";
+        window.location.href = "/login";
       }, 100) as unknown as number;
     }
   }, [updateAuthState]);

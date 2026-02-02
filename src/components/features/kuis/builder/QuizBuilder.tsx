@@ -63,6 +63,7 @@ import {
 import { getKelas, createKelas } from "@/lib/api/kelas.api";
 import { getMataKuliah } from "@/lib/api/mata-kuliah.api";
 import { saveSoalToBank } from "@/lib/api/bank-soal.api";
+import { supabase } from "@/lib/supabase/client";
 import type { Kuis, Soal } from "@/types/kuis.types";
 import type { Kelas } from "@/types/kelas.types";
 import type { MataKuliah } from "@/types/mata-kuliah.types";
@@ -96,6 +97,20 @@ export function QuizBuilder({
   onCancel: _onCancel,
 }: QuizBuilderProps) {
   const isEditing = !!quiz;
+
+  // ✅ AUTO-DETECT MODE from quiz.tipe_kuis when editing
+  // If mode props are not explicitly set, infer from tipe_kuis
+  const effectiveCbtMode = cbtMode || (!laporanMode && quiz?.tipe_kuis === "pilihan_ganda");
+  const effectiveLaporanMode = laporanMode || (!cbtMode && quiz?.tipe_kuis === "essay");
+
+  console.log("🔍 [QuizBuilder] Mode detection:", {
+    isEditing,
+    quizTipe: quiz?.tipe_kuis,
+    propsCbtMode: cbtMode,
+    propsLaporanMode: laporanMode,
+    effectiveCbtMode,
+    effectiveLaporanMode,
+  });
   const [currentQuiz, setCurrentQuiz] = useState<Kuis | null>(quiz || null);
   const [questions, setQuestions] = useState<Soal[]>(quiz?.soal || []);
   const [editorState, setEditorState] = useState<EditorState>({
@@ -121,6 +136,31 @@ export function QuizBuilder({
     return `${year}-${month}-${day}T${hours}:${minutes}`;
   };
 
+  // ✅ FIX: Set selectedMataKuliah from quiz data when editing
+  useEffect(() => {
+    if (quiz?.kelas_id && !selectedMataKuliah) {
+      // Get mata_kuliah_id from the quiz's kelas
+      const findMataKuliahFromKelas = async () => {
+        try {
+          // Load all kelas to find the mata_kuliah_id
+          const { data: kelasData } = await supabase
+            .from("kelas")
+            .select("mata_kuliah_id")
+            .eq("id", quiz.kelas_id)
+            .single();
+
+          if (kelasData?.mata_kuliah_id) {
+            setSelectedMataKuliah(kelasData.mata_kuliah_id);
+            console.log("✅ [QuizBuilder] Auto-selected mata kuliah:", kelasData.mata_kuliah_id);
+          }
+        } catch (error) {
+          console.warn("⚠️ [QuizBuilder] Failed to get mata kuliah from kelas:", error);
+        }
+      };
+      findMataKuliahFromKelas();
+    }
+  }, [quiz?.kelas_id, selectedMataKuliah]);
+
   const {
     register,
     formState: { errors },
@@ -134,9 +174,9 @@ export function QuizBuilder({
           dosen_id: quiz.dosen_id,
           judul: quiz.judul,
           deskripsi: quiz.deskripsi || "",
-          durasi_menit: quiz.durasi_menit || (laporanMode ? 10080 : 60),
+          durasi_menit: quiz.durasi_menit || (effectiveLaporanMode ? 10080 : 60),
           passing_score: quiz.passing_score ?? null,
-          max_attempts: 1, // Fixed: always 1 attempt
+          max_attempts: quiz.max_attempts ?? (effectiveCbtMode ? 1 : 3),
           randomize_questions: quiz.randomize_questions ?? false,
           randomize_options: quiz.randomize_options ?? false,
           show_results_immediately: quiz.show_results_immediately ?? true,
@@ -148,9 +188,10 @@ export function QuizBuilder({
           judul: "",
           deskripsi: "",
           // Laporan: 1 minggu (10080 menit), CBT: 60 menit
-          durasi_menit: laporanMode ? 10080 : 60,
+          durasi_menit: effectiveLaporanMode ? 10080 : 60,
           passing_score: 70,
-          max_attempts: 1,
+          // ✅ UKOM Standards: CBT = 1 attempt (no retry), Laporan = 3 attempts (can resubmit)
+          max_attempts: effectiveCbtMode ? 1 : 3,
           randomize_questions: false,
           randomize_options: false,
           show_results_immediately: true,
@@ -202,11 +243,8 @@ export function QuizBuilder({
 
       setKelasList(data);
 
-      // Auto-select if only one kelas available
-      if (data.length === 1 && !isEditing) {
-        setValue("kelas_id", data[0].id);
-        console.log("🎯 Auto-selected kelas:", data[0].nama_kelas);
-      }
+      // Don't auto-select kelas - let user choose explicitly
+      // This ensures the dosen reviews the class list before selecting
 
       // Show warning if no kelas found
       if (data.length === 0) {
@@ -249,15 +287,24 @@ export function QuizBuilder({
       return;
     }
     // Skip durasi validation for laporan (no time limit needed)
-    if (!laporanMode && (!formData.durasi_menit || formData.durasi_menit < 5)) {
+    if (!effectiveLaporanMode && (!formData.durasi_menit || formData.durasi_menit < 5)) {
       toast.error("Durasi minimal 5 menit");
       return;
     }
 
     setIsSavingQuiz(true);
     try {
+      // ✅ Determine tipe_kuis based on effective mode
+      let tipeKuisValue: "essay" | "pilihan_ganda" | "campuran" = "campuran";
+      if (effectiveLaporanMode) {
+        tipeKuisValue = "essay"; // Laporan Praktikum
+      } else if (effectiveCbtMode) {
+        tipeKuisValue = "pilihan_ganda"; // Tes CBT
+      }
+
       const dataToSave = {
         ...formData,
+        tipe_kuis: tipeKuisValue, // ✅ Set tipe_kuis based on mode
         status: "draft" as const, // Always start as draft
       };
 
@@ -296,6 +343,7 @@ export function QuizBuilder({
     console.log("🔵 handlePublishQuiz called");
     console.log("🔵 currentQuiz:", currentQuiz);
     console.log("🔵 questions.length:", questions.length);
+    console.log("🔵 effectiveLaporanMode:", effectiveLaporanMode);
 
     if (!currentQuiz) {
       console.log("❌ No currentQuiz");
@@ -303,15 +351,19 @@ export function QuizBuilder({
       return;
     }
 
-    if (questions.length === 0) {
-      console.log("❌ No questions");
+    // ✅ UPDATED: Laporan Praktikum BOLEH publish tanpa soal
+    // CBT butuh minimal 1 soal
+    if (!effectiveLaporanMode && questions.length === 0) {
+      console.log("❌ No questions for CBT");
       toast.error("Tambahkan minimal 1 soal sebelum publish");
       return;
     }
 
-    const confirmed = confirm(
-      "Yakin ingin publish tugas ini? Mahasiswa akan bisa mengerjakan tugas ini.",
-    );
+    const confirmMsg = effectiveLaporanMode
+      ? "Yakin ingin publish laporan ini? Mahasiswa akan bisa mengupload file laporan."
+      : "Yakin ingin publish tes ini? Mahasiswa akan bisa mengerjakan soal tes.";
+
+    const confirmed = confirm(confirmMsg);
     console.log("🔵 User confirmed:", confirmed);
 
     if (!confirmed) {
@@ -331,6 +383,40 @@ export function QuizBuilder({
     } catch (error) {
       console.error("❌ Error publishing quiz:", error);
       toast.error("Gagal publish tugas", {
+        description: (error as Error).message,
+      });
+    } finally {
+      setIsPublishing(false);
+    }
+  };
+
+  // ✅ NEW: Unpublish quiz - untuk mengedit soal pada tugas yang sudah published
+  const handleUnpublishQuiz = async () => {
+    if (!currentQuiz) {
+      toast.error("Tugas belum disimpan");
+      return;
+    }
+
+    const confirmed = confirm(
+      "Unpublish tugas ini?\n\n" +
+      "Mahasiswa TIDAK akan bisa melihat atau mengerjakan tugas ini sementara.\n\n" +
+      "Anda bisa mengedit soal setelah unpublish, lalu publish kembali."
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setIsPublishing(true);
+    try {
+      const updated = await updateKuis(currentQuiz.id, { status: "draft" });
+      setCurrentQuiz(updated);
+      toast.success(
+        "Tugas berhasil unpublish! Mahasiswa sementara tidak bisa mengakses tugas ini."
+      );
+    } catch (error) {
+      console.error("❌ Error unpublishing quiz:", error);
+      toast.error("Gagal unpublish tugas", {
         description: (error as Error).message,
       });
     } finally {
@@ -419,8 +505,8 @@ export function QuizBuilder({
         question={editorState.question}
         urutan={(editorState.index || 0) + 1}
         defaultPoin={1}
-        cbtMode={cbtMode}
-        laporanMode={laporanMode}
+        cbtMode={effectiveCbtMode}
+        laporanMode={effectiveLaporanMode}
         onSave={handleSaveQuestion}
         onCancel={() => setEditorState({ isOpen: false })}
       />
@@ -435,19 +521,19 @@ export function QuizBuilder({
       {/* Simple Status Header - Different based on mode */}
       <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg border">
         <div className="flex items-center gap-3">
-          <div className="text-2xl">{laporanMode ? "📄" : "🖥️"}</div>
+          <div className="text-2xl">{effectiveLaporanMode ? "📄" : "🖥️"}</div>
           <div>
             <h2 className="font-semibold text-lg">
               {isEditing
-                ? laporanMode
+                ? effectiveLaporanMode
                   ? "Edit Tugas Laporan"
                   : "Edit Tes CBT"
-                : laporanMode
+                : effectiveLaporanMode
                   ? "Buat Tugas Laporan"
                   : "Buat Tes CBT"}
             </h2>
             <p className="text-sm text-muted-foreground">
-              {laporanMode
+              {effectiveLaporanMode
                 ? "Tugas Praktikum - Essay / Upload File"
                 : "Computer Based Test - Pilihan Ganda"}
             </p>
@@ -479,7 +565,7 @@ export function QuizBuilder({
       <Card>
         <CardHeader className="pb-4">
           <CardTitle className="text-lg flex items-center gap-2">
-            {laporanMode ? "📄 Informasi Laporan" : "📝 Informasi Tes"}
+            {effectiveLaporanMode ? "📄 Informasi Laporan" : "📝 Informasi Tes"}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -487,13 +573,13 @@ export function QuizBuilder({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2 space-y-2">
                 <Label htmlFor="judul">
-                  {laporanMode ? "Judul Laporan" : "Judul Tes"} *
+                  {effectiveLaporanMode ? "Judul Laporan" : "Judul Tes"} *
                 </Label>
                 <Input
                   id="judul"
                   {...register("judul")}
                   placeholder={
-                    laporanMode
+                    effectiveLaporanMode
                       ? "Contoh: Laporan Praktikum Anatomi - Modul 1"
                       : "Contoh: Pre-Test Praktikum Anatomi"
                   }
@@ -509,10 +595,18 @@ export function QuizBuilder({
               {/* Dropdown Mata Kuliah */}
               <div className="md:col-span-2 space-y-2">
                 <Label htmlFor="mata_kuliah">Pilih Mata Kuliah *</Label>
+                {isEditing && (
+                  <p className="text-xs text-muted-foreground">
+                    ⚠️ Mengubah mata kuliah akan mereset pilihan kelas
+                  </p>
+                )}
                 <Select
                   value={selectedMataKuliah}
-                  onValueChange={setSelectedMataKuliah}
-                  disabled={isEditing}
+                  onValueChange={(value) => {
+                    setSelectedMataKuliah(value);
+                    // Reset kelas selection when mata kuliah changes
+                    setValue("kelas_id", "");
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Pilih mata kuliah..." />
@@ -538,7 +632,7 @@ export function QuizBuilder({
                 <Select
                   value={formData.kelas_id || ""}
                   onValueChange={(value) => setValue("kelas_id", value)}
-                  disabled={!selectedMataKuliah || isLoadingKelas || isEditing}
+                  disabled={!selectedMataKuliah || isLoadingKelas}
                 >
                   <SelectTrigger
                     className={cn(errors.kelas_id && "border-destructive")}
@@ -632,7 +726,7 @@ export function QuizBuilder({
               </div>
 
               {/* HIDDEN: Durasi tidak ditampilkan untuk laporan (no time limit) */}
-              {!laporanMode && (
+              {!effectiveLaporanMode && (
                 <div className="space-y-2">
                   <Label htmlFor="durasi_menit">Durasi (menit) *</Label>
                   <Input
@@ -646,12 +740,27 @@ export function QuizBuilder({
               )}
 
               {/* Info note */}
-              <div className="md:col-span-2">
+              <div className="md:col-span-2 space-y-3">
+                {currentQuiz?.status === "published" && (
+                  <Alert className="bg-orange-50 border-orange-300">
+                    <AlertCircle className="h-4 w-4 text-orange-600" />
+                    <AlertDescription className="text-orange-900">
+                      <p className="font-semibold mb-1">
+                        ⚠️ Tugas sudah dipublish
+                      </p>
+                      <ul className="text-sm space-y-1 list-disc list-inside">
+                        <li>Informasi tugas masih bisa diedit</li>
+                        <li>Soal TIDAK bisa diedit/dihapus</li>
+                        <li>Untuk edit soal, unpublish terlebih dahulu</li>
+                      </ul>
+                    </AlertDescription>
+                  </Alert>
+                )}
                 {currentQuiz && (
                   <Alert className="bg-green-50 border-green-200">
                     <CheckCircle className="h-4 w-4 text-green-600" />
                     <AlertDescription className="text-green-900">
-                      {laporanMode
+                      {effectiveLaporanMode
                         ? "✓ Laporan tersimpan. Tambahkan soal essay/upload jika diperlukan."
                         : "✓ Tes tersimpan. Tambahkan soal pilihan ganda."}
                     </AlertDescription>
@@ -668,7 +777,7 @@ export function QuizBuilder({
                   ? "Menyimpan..."
                   : currentQuiz
                     ? "Perbarui"
-                    : laporanMode
+                    : effectiveLaporanMode
                       ? "Simpan Laporan"
                       : "Simpan Tes"}
               </Button>
@@ -678,7 +787,7 @@ export function QuizBuilder({
       </Card>
 
       {/* Soal Card - Show after quiz saved (not for laporan mode) */}
-      {currentQuiz && !laporanMode && (
+      {currentQuiz && !effectiveLaporanMode && (
         <Card>
           <CardHeader className="pb-4">
             <div className="flex items-center justify-between">
@@ -698,16 +807,29 @@ export function QuizBuilder({
                   variant="outline"
                   onClick={() => setShowBankDialog(true)}
                   size="sm"
+                  disabled={currentQuiz.status === "published"}
                 >
                   <BookOpen className="h-4 w-4 mr-2" />
                   Bank Soal
                 </Button>
-                <Button onClick={handleAddQuestion} size="sm">
+                <Button
+                  onClick={handleAddQuestion}
+                  size="sm"
+                  disabled={currentQuiz.status === "published"}
+                >
                   <Plus className="h-4 w-4 mr-2" />
                   Buat Soal
                 </Button>
               </div>
             </div>
+            {currentQuiz.status === "published" && (
+              <Alert className="mt-3 bg-orange-50 border-orange-200">
+                <AlertCircle className="h-4 w-4 text-orange-600" />
+                <AlertDescription className="text-orange-900 text-xs">
+                  Soal tidak dapat diubah saat tugas aktif. Unpublish terlebih dahulu untuk mengedit soal.
+                </AlertDescription>
+              </Alert>
+            )}
           </CardHeader>
           <CardContent>
             {questions.length === 0 ? (
@@ -723,7 +845,10 @@ export function QuizBuilder({
                 {questions.map((q, i) => (
                   <div
                     key={q.id}
-                    className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30"
+                    className={cn(
+                      "flex items-center gap-3 p-3 rounded-lg border bg-muted/30",
+                      currentQuiz.status === "published" && "opacity-75",
+                    )}
                   >
                     <Badge variant="outline" className="shrink-0">
                       #{i + 1}
@@ -744,6 +869,7 @@ export function QuizBuilder({
                         variant="ghost"
                         size="sm"
                         onClick={() => handleEditQuestion(q, i)}
+                        disabled={currentQuiz.status === "published"}
                       >
                         Edit
                       </Button>
@@ -752,6 +878,7 @@ export function QuizBuilder({
                         size="sm"
                         onClick={() => handleDeleteQuestion(q.id)}
                         className="text-destructive hover:text-destructive"
+                        disabled={currentQuiz.status === "published"}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -790,7 +917,7 @@ export function QuizBuilder({
                     <span className="text-muted-foreground">
                       {questions.length > 0
                         ? "Klik Publish untuk mengaktifkan tes"
-                        : laporanMode
+                        : effectiveLaporanMode
                           ? "Klik Publish untuk mengaktifkan tugas laporan"
                           : "Tambahkan soal terlebih dahulu"}
                     </span>
@@ -800,7 +927,7 @@ export function QuizBuilder({
               <div className="flex gap-2">
                 {/* FIXED: Laporan tidak perlu soal, bisa langsung publish */}
                 {quizStatus === "draft" &&
-                  (laporanMode || questions.length > 0) && (
+                  (effectiveLaporanMode || questions.length > 0) && (
                     <Button
                       onClick={handlePublishQuiz}
                       disabled={isPublishing}
@@ -810,6 +937,17 @@ export function QuizBuilder({
                       {isPublishing ? "Publishing..." : "Publish"}
                     </Button>
                   )}
+                {/* Unpublish button - only show when published */}
+                {quizStatus === "published" && (
+                  <Button
+                    onClick={handleUnpublishQuiz}
+                    disabled={isPublishing}
+                    variant="outline"
+                    className="border-orange-300 text-orange-700 hover:bg-orange-50"
+                  >
+                    {isPublishing ? "Unpublishing..." : "Unpublish"}
+                  </Button>
+                )}
                 <Button
                   variant="outline"
                   onClick={() => {

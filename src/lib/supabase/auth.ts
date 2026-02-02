@@ -207,6 +207,7 @@ export async function register(data: RegisterData): Promise<AuthResponse> {
 
 /**
  * Logout current user
+ * ✅ Clears ALL session data including localStorage
  */
 export async function logout(): Promise<AuthResponse> {
   try {
@@ -220,7 +221,46 @@ export async function logout(): Promise<AuthResponse> {
     // Clear user role cache
     clearUserRoleCache();
 
-    logger.auth("logout: Success");
+    // ✅ EXPLICIT CLEANUP: Clear ALL Supabase storage from localStorage
+    // This ensures no session tokens remain after logout
+    try {
+      const keysToRemove: string[] = [];
+
+      // Get all localStorage keys
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('sb-')) {
+          keysToRemove.push(key);
+        }
+      }
+
+      // Remove all Supabase keys
+      keysToRemove.forEach(key => {
+        localStorage.removeItem(key);
+        logger.debug("logout: Removed from localStorage:", key);
+      });
+
+      // Also clear sessionStorage
+      for (let i = 0; i < sessionStorage.length; i++) {
+        const key = sessionStorage.key(i);
+        if (key && key.startsWith('sb-')) {
+          sessionStorage.removeItem(key);
+          logger.debug("logout: Removed from sessionStorage:", key);
+        }
+      }
+
+      logger.auth("logout: Cleared Supabase storage", {
+        localStorageCount: keysToRemove.length
+      });
+    } catch (storageError) {
+      logger.warn("logout: Failed to clear storage", storageError);
+      // Don't throw - logout still succeeded
+    }
+
+    // ✅ NOTE: Redirect is handled by AuthProvider, not here
+    // This allows the UI to control the logout flow
+
+    logger.auth("logout: Success ✅");
     return {
       success: true,
       message: "Logged out successfully",

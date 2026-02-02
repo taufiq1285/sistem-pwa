@@ -139,7 +139,7 @@ export interface Kuis {
 
   // Quiz Settings - EXACT DATABASE FIELD NAMES
   passing_score?: number | null; // ✅ NOT "passing_grade" (default: 70)
-  max_attempts?: number | null; // ✅ (default: 1)
+  max_attempts?: number | null; // ✅ UKOM Standards: CBT/pilihan_ganda = 1 (no retry), Laporan/essay = 3 (can resubmit)
   randomize_questions?: boolean | null; // ✅ NOT "shuffle_soal" (default: false)
   randomize_options?: boolean | null; // ✅ NOT "shuffle_jawaban" (default: false)
   show_results_immediately?: boolean | null; // ✅ NOT "show_hasil" (default: true)
@@ -147,6 +147,9 @@ export interface Kuis {
 
   // Status - EXACT DATABASE FIELD NAMES
   status?: QuizStatus | null; // ✅ enum: draft/published/archived (default: draft)
+
+  // ✅ NEW: Type of quiz (essay = laporan, pilihan_ganda = tes CBT, campuran = mixed)
+  tipe_kuis?: "essay" | "pilihan_ganda" | "campuran" | null;
 
   // Offline & Versioning
   is_offline_capable?: boolean | null; // (default: false)
@@ -381,6 +384,7 @@ export interface CreateKuisData {
   randomize_options?: boolean | null; // ✅ NOT shuffle_jawaban - NULLABLE
   show_results_immediately?: boolean | null; // ✅ NOT show_hasil - NULLABLE
   status?: QuizStatus | null; // ✅ NEW FIELD - NULLABLE
+  tipe_kuis?: "essay" | "pilihan_ganda" | "campuran" | null; // ✅ NEW: Quiz type
 }
 
 export interface UpdateKuisData extends Partial<CreateKuisData> {

@@ -159,7 +159,14 @@ export interface AttemptWithStudent extends AttemptKuis {
 // KUIS (QUIZ) OPERATIONS
 // ============================================================================
 
-export async function getKuis(filters?: KuisFilters): Promise<Kuis[]> {
+type GetKuisOptions = {
+  forceRefresh?: boolean;
+};
+
+export async function getKuis(
+  filters?: KuisFilters,
+  options: GetKuisOptions = {},
+): Promise<Kuis[]> {
   try {
     const filterConditions = [];
 
@@ -194,7 +201,7 @@ export async function getKuis(filters?: KuisFilters): Promise<Kuis[]> {
       });
     }
 
-    const options = {
+    const queryOptions = {
       select: `
         *,
         kelas:kelas_id (
@@ -216,19 +223,23 @@ export async function getKuis(filters?: KuisFilters): Promise<Kuis[]> {
         column: "tanggal_mulai",
         ascending: false,
       },
+      // ✅ Enable caching for better offline support
+      enableCache: !options.forceRefresh,
+      cacheTTL: 5 * 60 * 1000, // 5 minutes
+      staleWhileRevalidate: true,
     };
 
     const data =
       filterConditions.length > 0
-        ? await queryWithFilters<Kuis>("kuis", filterConditions, options)
-        : await query<Kuis>("kuis", options);
+        ? await queryWithFilters<Kuis>("kuis", filterConditions, queryOptions)
+        : await query<Kuis>("kuis", queryOptions);
 
     if (filters?.search) {
       const searchLower = filters.search.toLowerCase();
       return data.filter(
         (k) =>
           k.judul.toLowerCase().includes(searchLower) ||
-          k.deskripsi?.toLowerCase().includes(searchLower)
+          k.deskripsi?.toLowerCase().includes(searchLower),
       );
     }
 

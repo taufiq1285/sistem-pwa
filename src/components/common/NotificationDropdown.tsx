@@ -224,9 +224,11 @@ export function NotificationDropdown() {
       setOpen(false);
     } else if (
       notification.type === "tugas_graded" &&
-      notification.data?.attempt_id
+      notification.data?.attempt_id &&
+      notification.data?.kuis_id
     ) {
-      navigate(`/mahasiswa/kuis/result/${notification.data.attempt_id}`);
+      // ✅ FIX: Include kuisId in the URL (route requires both params)
+      navigate(`/mahasiswa/kuis/${notification.data.kuis_id}/result/${notification.data.attempt_id}`);
       setOpen(false);
     } else if (notification.type === "perbaikan_nilai_request") {
       // Dosen receives request → navigate to penilaian page
@@ -294,7 +296,7 @@ export function NotificationDropdown() {
           <EmptyState />
         ) : (
           <>
-            <ScrollArea className="h-[400px]">
+            <ScrollArea className="h-100">
               <div className="px-2">
                 {notifications.map((notification, index) => (
                   <div key={notification.id}>

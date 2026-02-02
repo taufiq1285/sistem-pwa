@@ -5,7 +5,7 @@
  */
 
 import { supabase } from "@/lib/supabase/client";
-import { cacheAPI } from "@/lib/offline/api-cache";
+import { cacheAPI, invalidateCachePattern } from "@/lib/offline/api-cache";
 import type {
   ApiResponse,
   PaginatedResponse,
@@ -161,10 +161,13 @@ export async function queryWithFilters<T = any>(
   // Generate cache key from query parameters
   const cacheKey = `query_filtered_${table}_${JSON.stringify({ filters, options })}`;
 
+  console.log(`🔍 [queryWithFilters] Table: ${table}, Filters:`, filters);
+
   // Define the fetch function
   const fetchQuery = async (): Promise<T[]> => {
     // Check if offline - return empty array instead of throwing error
     if (typeof navigator !== "undefined" && !navigator.onLine) {
+      console.log(`⚠️ [queryWithFilters] Offline, returning empty array`);
       return [] as T[];
     }
 
@@ -178,6 +181,7 @@ export async function queryWithFilters<T = any>(
       // Apply filters
       filters.forEach((filter) => {
         const operator = filter.operator || "eq";
+        console.log(`  → Filter: ${filter.column} ${operator} ${filter.value}`);
         switch (operator) {
           case "eq":
             queryBuilder = queryBuilder.eq(filter.column, filter.value);
@@ -234,6 +238,8 @@ export async function queryWithFilters<T = any>(
 
       const { data, error } = await queryBuilder;
 
+      console.log(`✅ [queryWithFilters] Result: ${data?.length || 0} rows, Error:`, error);
+
       if (error) {
         throw handleError(error);
       }
@@ -244,6 +250,7 @@ export async function queryWithFilters<T = any>(
 
       return (data || []) as T[];
     } catch (error) {
+      console.error(`❌ [queryWithFilters] Error:`, error);
       const apiError = handleError(error);
       logError(apiError, `queryWithFilters:${table}`);
       throw apiError;
@@ -657,6 +664,39 @@ export async function remove(table: string, id: string): Promise<boolean> {
       console.error(`❌ Soft delete failed for ${table}:${id}:`, updateError);
       throw handleError(updateError);
     }
+
+    // ✅ IMMEDIATE REFRESH: Trigger custom event for kuis table deletion
+    // This ensures KuisListPage updates immediately without waiting for cache invalidation
+    if (table === "kuis") {
+      try {
+        // Try to get dosen_id from the record before soft delete
+        const { data: record } = await supabase
+          .from(table as any)
+          .select("dosen_id")
+          .eq("id", id)
+          .single();
+
+        if (record?.dosen_id) {
+          window.dispatchEvent(new CustomEvent('kuis:changed', {
+            detail: { action: 'deleted', kuisId: id, dosenId: record.dosen_id }
+          }));
+          console.log(`📢 Event dispatched: kuis:changed (deleted) for dosen: ${record.dosen_id}`);
+        }
+      } catch (eventError) {
+        console.warn(`⚠️ Failed to dispatch kuis:changed event:`, eventError);
+      }
+    }
+
+    // ✅ CACHE INVALIDATION: Non-blocking fire-and-forget cache invalidation
+    // This ensures the UI reflects the deletion immediately
+    Promise.resolve().then(async () => {
+      try {
+        await invalidateCachePattern(`*${table}*`);
+        console.log(`🧹 Cache invalidated for table: ${table}`);
+      } catch (cacheError) {
+        console.warn(`⚠️ Failed to invalidate cache for ${table}:`, cacheError);
+      }
+    });
 
     return true;
   } catch (error) {
