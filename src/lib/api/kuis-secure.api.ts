@@ -206,30 +206,24 @@ export async function getKuisForAttempt(kuisId: string): Promise<Kuis> {
   try {
     console.log("🔒 [Secure API] Fetching kuis for attempt");
 
-    // Get kuis data
+    // ✅ SIMPLIFIED: Get kuis data WITHOUT complex joins (RLS issue)
     const { data: kuisData, error: kuisError } = await supabase
       .from("kuis")
-      .select(
-        `
-        *,
-        kelas:kelas_id (
-          nama_kelas,
-          mata_kuliah:mata_kuliah_id (
-            nama_mk,
-            kode_mk
-          )
-        ),
-        dosen:dosen_id (
-          users:user_id (
-            full_name
-          )
-        )
-      `,
-      )
+      .select("*")
       .eq("id", kuisId)
       .single();
 
-    if (kuisError) throw kuisError;
+    if (kuisError) {
+      console.error("❌ [Secure API] Kuis fetch error:", kuisError);
+      throw kuisError;
+    }
+
+    if (!kuisData) {
+      console.error("❌ [Secure API] Kuis not found:", kuisId);
+      throw new Error("Kuis tidak ditemukan");
+    }
+
+    console.log("✅ [Secure API] Kuis data loaded:", kuisData.id);
 
     // Get soal WITHOUT jawaban_benar
     const soal = await getSoalForAttempt(kuisId);
@@ -237,6 +231,14 @@ export async function getKuisForAttempt(kuisId: string): Promise<Kuis> {
     const result = {
       ...kuisData,
       soal,
+      // Add empty relations to avoid undefined errors
+      kelas: kuisData.kelas_id ? {
+        nama_kelas: "Unknown",
+        mata_kuliah: { nama_mk: "Unknown", kode_mk: "Unknown" }
+      } : null,
+      dosen: kuisData.dosen_id ? {
+        users: { full_name: "Dosen" }
+      } : null,
     } as Kuis;
 
     console.log("✅ [Secure API] Kuis loaded securely for attempt");

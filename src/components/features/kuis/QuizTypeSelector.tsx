@@ -66,9 +66,9 @@ const QUIZ_TYPE_OPTIONS: QuizTypeOption[] = [
     type: TIPE_KUIS.ESSAY,
     label: TIPE_KUIS_LABELS.essay,
     description:
-      "Tugas dengan soal essay (laporan praktikum). Dosen menilai secara manual.",
+      "Tugas dengan soal essay atau upload laporan praktikum. Dosen menilai secara manual.",
     icon: FileText,
-    questionTypes: ["Essay (jawaban panjang)"],
+    questionTypes: ["Essay (jawaban panjang)", "File Upload (Laporan)"],
     color: "purple",
   },
   {
@@ -208,7 +208,8 @@ export function isQuestionTypeAllowed(
   }
 
   if (quizType === TIPE_KUIS.ESSAY) {
-    return questionType === "essay";
+    // ✅ FIX: Allow both essay and file_upload for ESSAY type (laporan)
+    return questionType === "essay" || questionType === "file_upload";
   }
 
   return false;

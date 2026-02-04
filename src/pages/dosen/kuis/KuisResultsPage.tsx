@@ -92,6 +92,54 @@ export default function KuisResultsPage() {
   const [activeTab, setActiveTab] = useState("overview");
 
   // ============================================================================
+  // HELPERS
+  // ============================================================================
+
+  /**
+   * Check if quiz is CBT (auto-graded: pilihan_ganda, benar_salah, jawaban_singkat)
+   */
+  const isAutoGradedQuiz = (quizData: Kuis | null): boolean => {
+    if (!quizData?.soal || quizData.soal.length === 0) return false;
+
+    // ✅ DEBUG: Log soal types for troubleshooting
+    console.log("🔍 [isAutoGradedQuiz] Checking quiz:", {
+      judul: quizData.judul,
+      soal_count: quizData.soal.length,
+      soal_types: quizData.soal.map((s: any) => ({
+        tipe_soal: s.tipe_soal,
+        tipe: s.tipe,
+      })),
+    });
+
+    // ✅ FIX: Check both database field "tipe" and TypeScript "tipe_soal"
+    const result = quizData.soal.every((s: any) => {
+      const tipe = s.tipe_soal || s.tipe; // Support both field names
+      return tipe === "pilihan_ganda";
+    });
+
+    console.log("✅ [isAutoGradedQuiz] Result:", result);
+    return result;
+  };
+
+  /**
+   * Calculate duration between two dates
+   */
+  const calculateDuration = (start: string, end: string): string => {
+    const startTime = new Date(start).getTime();
+    const endTime = new Date(end).getTime();
+    const durationMs = endTime - startTime;
+    const minutes = Math.floor(durationMs / 1000 / 60);
+
+    if (minutes < 60) {
+      return `${minutes} menit`;
+    }
+
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+    return `${hours}j ${remainingMinutes}m`;
+  };
+
+  // ============================================================================
   // EFFECTS
   // ============================================================================
 
@@ -305,11 +353,12 @@ export default function KuisResultsPage() {
         </div>
       </div>
 
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        {laporanMode ? (
-          // LAPORAN MODE: Show submission status
-          <>
+      {/* Statistics Cards - Hide for CBT mode */}
+      {!isAutoGradedQuiz(quiz) && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          {laporanMode ? (
+            // LAPORAN MODE: Show submission status
+            <>
             {/* Total Submissions */}
             <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -472,21 +521,157 @@ export default function KuisResultsPage() {
           </>
         )}
       </div>
+      )}
 
-      {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="attempts">
-            {laporanMode ? "Submissions" : "Percobaan"} ({attempts.length})
-          </TabsTrigger>
-          {!laporanMode && (
-            <TabsTrigger value="analysis">Analisis Soal</TabsTrigger>
-          )}
-        </TabsList>
+      {/* For CBT mode: Show attempts table directly (no tabs) */}
+      {isAutoGradedQuiz(quiz) && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>Daftar Percobaan</CardTitle>
+              <div className="relative w-64">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Cari mahasiswa..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {filteredAttempts.length === 0 ? (
+              <div className="text-center py-12">
+                <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground">
+                  {searchQuery
+                    ? "Tidak ada hasil yang sesuai"
+                    : "Belum ada mahasiswa yang mengerjakan tugas ini"}
+                </p>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Mahasiswa</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Skor</TableHead>
+                    <TableHead className="text-right">Waktu</TableHead>
+                    <TableHead className="text-center">Aksi</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredAttempts.map((attempt) => {
+                    const isPassed =
+                      (attempt.total_poin || 0) >=
+                      ((quiz as any).passing_grade || 60);
 
-        {/* Overview Tab */}
-        <TabsContent value="overview" className="space-y-4">
+                    return (
+                      <TableRow key={attempt.id}>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <Avatar>
+                              <AvatarFallback>
+                                {attempt.mahasiswa?.user?.full_name
+                                  .split(" ")
+                                  .map((n) => n[0])
+                                  .join("")
+                                  .toUpperCase() || "M"}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <p className="font-medium">
+                                {attempt.mahasiswa?.user?.full_name || "Unknown"}
+                              </p>
+                              <p className="text-sm text-muted-foreground">
+                                {attempt.mahasiswa?.nim || "-"}
+                              </p>
+                            </div>
+                          </div>
+                        </TableCell>
+
+                        <TableCell>
+                          {attempt.status === "graded" ||
+                          (attempt.status === "submitted" && isAutoGradedQuiz(quiz)) ? (
+                            <Badge
+                              variant={isPassed ? "default" : "destructive"}
+                            >
+                              {isPassed ? (
+                                <>
+                                  <CheckCircle2 className="h-3 w-3 mr-1" />
+                                  Lulus
+                                </>
+                              ) : (
+                                <>
+                                  <XCircle className="h-3 w-3 mr-1" />
+                                  Tidak Lulus
+                                </>
+                              )}
+                            </Badge>
+                          ) : (
+                            <Badge variant="secondary">
+                              Sedang Mengerjakan
+                            </Badge>
+                          )}
+                        </TableCell>
+
+                        <TableCell className="text-right">
+                          <span
+                            className={cn(
+                              "font-semibold",
+                              isPassed ? "text-green-600" : "text-red-600"
+                            )}
+                          >
+                            {attempt.total_poin || 0}
+                          </span>
+                          <span className="text-muted-foreground">
+                            {" / "}
+                            {(quiz as any).total_poin || 100}
+                          </span>
+                        </TableCell>
+
+                        <TableCell className="text-right text-sm text-muted-foreground">
+                          {attempt.submitted_at && attempt.started_at
+                            ? calculateDuration(
+                                attempt.started_at,
+                                attempt.submitted_at
+                              )
+                            : "-"}
+                        </TableCell>
+
+                        <TableCell className="text-center">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleViewAttempt(attempt.id)}
+                            title="Lihat Detail"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Tabs - Hide for CBT mode */}
+      {!isAutoGradedQuiz(quiz) && (
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList>
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="attempts">
+              Submissions ({attempts.length})
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Overview Tab */}
+          <TabsContent value="overview" className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle>Informasi Tugas</CardTitle>
@@ -796,6 +981,7 @@ export default function KuisResultsPage() {
           </Card>
         </TabsContent>
       </Tabs>
+      )}
     </div>
   );
 }

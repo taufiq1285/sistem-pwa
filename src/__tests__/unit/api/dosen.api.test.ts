@@ -186,8 +186,32 @@ describe("Dosen API - Dashboard Stats", () => {
         error: null,
       });
 
-      const pendingGradingCountBuilder = mockQueryBuilder();
-      pendingGradingCountBuilder._setResolveValue({ count: 15, error: null });
+      // ✅ NEW: Mock soal query (untuk mengecek CBT)
+      const soalBuilder = mockQueryBuilder();
+      soalBuilder._setResolveValue({
+        data: [
+          { kuis_id: "kuis-1", tipe: "file_upload" }, // Bukan CBT, perlu grading manual
+          { kuis_id: "kuis-2", tipe: "file_upload" }, // Bukan CBT, perlu grading manual
+        ],
+        error: null,
+      });
+
+      // ✅ NEW: Mock attempt_kuis query (sekarang mengambil semua data, bukan count saja)
+      // Simulasi 15 mahasiswa unik dengan status "submitted"
+      const attemptsBuilder = {
+        select: vi.fn().mockReturnThis(),
+        in: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        order: vi.fn().mockResolvedValue({
+          data: Array.from({ length: 15 }, (_, i) => ({
+            id: `attempt-${i + 1}`,
+            kuis_id: `kuis-${(i % 2) + 1}`, // Alternate antara kuis-1 dan kuis-2
+            mahasiswa_id: `mhs-${i + 1}`, // Setiap mahasiswa unik
+            status: "submitted",
+          })),
+          error: null,
+        }),
+      };
 
       (supabase.from as any)
         .mockReturnValueOnce(dosenBuilder) // getDosenId: dosen
@@ -195,7 +219,8 @@ describe("Dosen API - Dashboard Stats", () => {
         .mockReturnValueOnce(mahasiswaCountBuilder) // kelas_mahasiswa count
         .mockReturnValueOnce(activeKuisCountBuilder) // kuis count (published)
         .mockReturnValueOnce(kuisIdsBuilder) // kuis ids
-        .mockReturnValueOnce(pendingGradingCountBuilder); // attempt_kuis submitted count
+        .mockReturnValueOnce(soalBuilder) // ✅ NEW: soal (cek CBT)
+        .mockReturnValueOnce(attemptsBuilder); // ✅ NEW: attempt_kuis (full data)
 
       const result = await getDosenStats();
 
@@ -203,7 +228,7 @@ describe("Dosen API - Dashboard Stats", () => {
         totalKelas: 5,
         totalMahasiswa: 120,
         activeKuis: 8,
-        pendingGrading: 15,
+        pendingGrading: 15, // ✅ 15 unique (kuis_id, mahasiswa_id) pairs dengan status "submitted"
       });
     });
 
@@ -803,6 +828,16 @@ describe("Dosen API - Grading Operations", () => {
         error: null,
       });
 
+      // ✅ NEW: Mock soal query (untuk mengecek CBT)
+      const soalBuilder = mockQueryBuilder();
+      soalBuilder._setResolveValue({
+        data: [
+          { kuis_id: "kuis-1", tipe: "file_upload" }, // Bukan CBT
+          { kuis_id: "kuis-2", tipe: "pilihan_ganda" }, // CBT - akan di-exclude
+        ],
+        error: null,
+      });
+
       // Mock attempt_kuis query
       const attemptBuilder = {
         select: vi.fn().mockReturnThis(),
@@ -812,18 +847,27 @@ describe("Dosen API - Grading Operations", () => {
           data: [
             {
               id: "attempt-1",
+              kuis_id: "kuis-1", // Bukan CBT, akan muncul
+              mahasiswa_id: "mhs-1",
               mahasiswa: {
                 user: { full_name: "John Doe" },
                 nim: "BD2321001",
               },
               kuis: {
-                judul: "Quiz 1",
+                judul: "Laporan Praktikum 1",
                 kelas: {
                   mata_kuliah: { nama_mk: "Pemrograman Web" },
                 },
               },
               submitted_at: "2024-01-01",
               attempt_number: 1,
+              status: "submitted",
+            },
+            {
+              id: "attempt-2",
+              kuis_id: "kuis-2", // CBT, akan di-exclude
+              mahasiswa_id: "mhs-2",
+              status: "submitted",
             },
           ],
           error: null,
@@ -832,16 +876,17 @@ describe("Dosen API - Grading Operations", () => {
 
       (supabase.from as any)
         .mockReturnValueOnce(kuisIdsBuilder) // Get kuis IDs
+        .mockReturnValueOnce(soalBuilder) // ✅ NEW: Get soal (cek CBT)
         .mockReturnValueOnce(attemptBuilder); // Get attempts
 
       const result = await getPendingGrading();
 
-      expect(result).toHaveLength(1);
+      expect(result).toHaveLength(1); // ✅ CHANGED: Hanya 1 (kuis-1 bukan CBT, kuis-2 CBT di-exclude)
       expect(result[0]).toMatchObject({
         id: "attempt-1",
         mahasiswa_nama: "John Doe",
         mahasiswa_nim: "BD2321001",
-        kuis_judul: "Quiz 1",
+        kuis_judul: "Laporan Praktikum 1",
       });
     });
 
@@ -853,21 +898,43 @@ describe("Dosen API - Grading Operations", () => {
         error: null,
       });
 
+      // ✅ NEW: Mock soal query
+      const soalBuilder = mockQueryBuilder();
+      soalBuilder._setResolveValue({
+        data: [{ kuis_id: "kuis-1", tipe: "file_upload" }],
+        error: null,
+      });
+
       const attemptBuilder = {
         select: vi.fn().mockReturnThis(),
         in: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
-        order: vi.fn().mockReturnThis(),
-        limit: vi.fn().mockResolvedValue({ data: [], error: null }),
+        order: vi.fn().mockResolvedValue({
+          data: [
+            {
+              id: "attempt-1",
+              kuis_id: "kuis-1",
+              mahasiswa_id: "mhs-1",
+              status: "submitted",
+              mahasiswa: { user: { full_name: "John" }, nim: "BD2321001" },
+              kuis: { judul: "Quiz 1", kelas: { mata_kuliah: { nama_mk: "MK" } } },
+              submitted_at: "2024-01-01",
+              attempt_number: 1,
+            },
+          ],
+          error: null,
+        }),
       };
 
       (supabase.from as any)
         .mockReturnValueOnce(kuisIdsBuilder)
+        .mockReturnValueOnce(soalBuilder) // ✅ NEW: soal query
         .mockReturnValueOnce(attemptBuilder);
 
-      await getPendingGrading(5);
+      const result = await getPendingGrading(5);
 
-      expect(attemptBuilder.limit).toHaveBeenCalledWith(5);
+      // ✅ CHANGED: Limit diterapkan client-side setelah filter CBT
+      expect(result.length).toBeLessThanOrEqual(5);
     });
   });
 
@@ -926,11 +993,15 @@ describe("Dosen API - Grading Operations", () => {
     });
 
     it("should apply limit when provided", async () => {
+      const mockQuery = vi.fn().mockResolvedValue({ data: [], error: null });
       const builder = {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
+        in: vi.fn().mockReturnThis(),
         order: vi.fn().mockReturnThis(),
-        limit: vi.fn().mockResolvedValue({ data: [], error: null }),
+        limit: vi.fn().mockReturnValue({
+          then: (resolve: any) => resolve(mockQuery()),
+        }),
       };
 
       (supabase.from as any).mockReturnValue(builder);

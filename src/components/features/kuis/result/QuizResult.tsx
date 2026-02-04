@@ -17,7 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScoreCard } from "./ScoreCard";
 import { AnswerReviewList } from "./AnswerReview";
 import type { Kuis, Soal, Jawaban, AttemptKuis } from "@/types/kuis.types";
-import { calculateQuizScore } from "@/lib/utils/quiz-scoring";
+import { calculateQuizScore, isLaporanMode } from "@/lib/utils/quiz-scoring";
 import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
 
@@ -77,6 +77,9 @@ export function QuizResult({
 }: QuizResultProps) {
   const [showAnswers, setShowAnswers] = useState(true);
 
+  // Check if this is laporan mode (all FILE_UPLOAD questions)
+  const laporanMode = isLaporanMode(questions);
+
   // Calculate score
   const score = calculateQuizScore(
     questions,
@@ -125,7 +128,8 @@ export function QuizResult({
               Kembali
             </Button>
           )}
-          {canRetake && onRetake && (
+          {/* Hide retake button for laporan mode */}
+          {!laporanMode && canRetake && onRetake && (
             <Button onClick={onRetake}>
               <RotateCcw className="h-4 w-4 mr-2" />
               Ulangi Tugas
@@ -135,7 +139,7 @@ export function QuizResult({
       </div>
 
       {/* Score Card */}
-      <ScoreCard score={score} quizTitle={quiz.judul} />
+      <ScoreCard score={score} quizTitle={quiz.judul} isLaporanMode={laporanMode} />
 
       {/* Quiz Info */}
       <Card>
@@ -160,7 +164,8 @@ export function QuizResult({
         </CardContent>
       </Card>
 
-      {/* Answer Review */}
+      {/* Answer Review - Hide for laporan mode */}
+      {!laporanMode && (
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -232,6 +237,7 @@ export function QuizResult({
           </CardContent>
         )}
       </Card>
+      )}
     </div>
   );
 }

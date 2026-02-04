@@ -127,17 +127,31 @@ export function gradeAnswer(soal: Soal, jawaban: string): GradingResult {
  * Check if an answer is correct
  */
 export function checkAnswerCorrect(soal: Soal, jawaban: string): boolean {
-  if (!jawaban || !soal.jawaban_benar) return false;
+  if (!jawaban) return false;
 
   const tipeSoal = soal.tipe_soal;
 
   if (tipeSoal === TIPE_SOAL.PILIHAN_GANDA) {
-    // For multiple choice, compare option IDs
-    return jawaban.trim() === soal.jawaban_benar.trim();
+    // ✅ STRATEGY 1: Use jawaban_benar field if exists
+    if (soal.jawaban_benar) {
+      return jawaban.trim() === soal.jawaban_benar.trim();
+    }
+
+    // ✅ STRATEGY 2: Find correct option using is_correct: true
+    if (soal.opsi_jawaban && soal.opsi_jawaban.length > 0) {
+      const correctOption = soal.opsi_jawaban.find((opt) => opt.is_correct === true);
+      if (correctOption) {
+        // Compare by ID or label
+        return jawaban.trim() === correctOption.id || jawaban.trim() === correctOption.label;
+      }
+    }
+
+    return false;
   }
 
   if (tipeSoal === TIPE_SOAL.BENAR_SALAH) {
     // For true/false, compare case-insensitively
+    if (!soal.jawaban_benar) return false;
     return (
       jawaban.trim().toLowerCase() === soal.jawaban_benar.trim().toLowerCase()
     );
@@ -145,6 +159,7 @@ export function checkAnswerCorrect(soal: Soal, jawaban: string): boolean {
 
   if (tipeSoal === TIPE_SOAL.JAWABAN_SINGKAT) {
     // For short answer, compare case-insensitively with trimmed whitespace
+    if (!soal.jawaban_benar) return false;
     return (
       jawaban.trim().toLowerCase() === soal.jawaban_benar.trim().toLowerCase()
     );
@@ -159,13 +174,39 @@ export function checkAnswerCorrect(soal: Soal, jawaban: string): boolean {
 export function getCorrectAnswerLabel(soal: Soal): string {
   const tipeSoal = soal.tipe_soal;
 
-  if (tipeSoal === TIPE_SOAL.PILIHAN_GANDA && soal.opsi_jawaban) {
-    const correctOption = soal.opsi_jawaban.find(
-      (opt) => opt.id === soal.jawaban_benar,
-    );
-    return correctOption
-      ? `${correctOption.label}. ${correctOption.text}`
-      : soal.jawaban_benar || "-";
+  if (tipeSoal === TIPE_SOAL.PILIHAN_GANDA && soal.opsi_jawaban && soal.opsi_jawaban.length > 0) {
+    let correctOption = null;
+
+    // ✅ STRATEGY 1: Use jawaban_benar field if exists
+    if (soal.jawaban_benar) {
+      // Try matching by ID first
+      correctOption = soal.opsi_jawaban.find((opt) => opt.id === soal.jawaban_benar);
+
+      // If not found by ID, try matching by label (A, B, C, D, etc.)
+      if (!correctOption) {
+        correctOption = soal.opsi_jawaban.find((opt) => opt.label === soal.jawaban_benar);
+      }
+    }
+
+    // ✅ STRATEGY 2: Find option with is_correct: true (when jawaban_benar is null)
+    if (!correctOption) {
+      correctOption = soal.opsi_jawaban.find((opt) => opt.is_correct === true);
+    }
+
+    // If found, format as "A. Answer text"
+    if (correctOption) {
+      return `${correctOption.label}. ${correctOption.text}`;
+    }
+
+    // ✅ DEBUG: Log if not found for troubleshooting
+    console.warn("⚠️ [getCorrectAnswerLabel] Correct answer not found in options:", {
+      jawaban_benar: soal.jawaban_benar,
+      opsi_jawaban: soal.opsi_jawaban,
+      pertanyaan: soal.pertanyaan?.substring(0, 50),
+    });
+
+    // Fallback: show jawaban_benar as-is or "-"
+    return soal.jawaban_benar || "-";
   }
 
   if (tipeSoal === TIPE_SOAL.BENAR_SALAH) {
@@ -189,11 +230,28 @@ export function getAnswerLabel(soal: Soal, jawaban: string): string {
 
   const tipeSoal = soal.tipe_soal;
 
-  if (tipeSoal === TIPE_SOAL.PILIHAN_GANDA && soal.opsi_jawaban) {
-    const selectedOption = soal.opsi_jawaban.find((opt) => opt.id === jawaban);
-    return selectedOption
-      ? `${selectedOption.label}. ${selectedOption.text}`
-      : jawaban;
+  if (tipeSoal === TIPE_SOAL.PILIHAN_GANDA && soal.opsi_jawaban && soal.opsi_jawaban.length > 0) {
+    // ✅ FIX: Try multiple matching strategies for robustness
+    let selectedOption = soal.opsi_jawaban.find((opt) => opt.id === jawaban);
+
+    // If not found by ID, try matching by label (A, B, C, D, etc.)
+    if (!selectedOption) {
+      selectedOption = soal.opsi_jawaban.find((opt) => opt.label === jawaban);
+    }
+
+    if (selectedOption) {
+      return `${selectedOption.label}. ${selectedOption.text}`;
+    }
+
+    // ✅ DEBUG: Log if not found for troubleshooting
+    console.warn("⚠️ [getAnswerLabel] Answer not found in options:", {
+      jawaban,
+      opsi_jawaban: soal.opsi_jawaban,
+      pertanyaan: soal.pertanyaan?.substring(0, 50),
+    });
+
+    // Fallback: return jawaban as-is
+    return jawaban;
   }
 
   if (tipeSoal === TIPE_SOAL.BENAR_SALAH) {
@@ -209,6 +267,14 @@ export function getAnswerLabel(soal: Soal, jawaban: string): string {
 // ============================================================================
 // SCORE CALCULATION
 // ============================================================================
+
+/**
+ * Check if quiz is in laporan mode (all questions are FILE_UPLOAD)
+ */
+export function isLaporanMode(questions: Soal[]): boolean {
+  if (questions.length === 0) return false;
+  return questions.every((q) => q.tipe_soal === TIPE_SOAL.FILE_UPLOAD);
+}
 
 /**
  * Calculate total quiz score from graded answers

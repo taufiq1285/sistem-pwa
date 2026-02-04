@@ -225,9 +225,9 @@ async function getDosenId(): Promise<string | null> {
 // DASHBOARD STATS
 // ============================================================================
 
-export async function getDosenStats(): Promise<DosenStats> {
+export async function getDosenStats(forceRefresh = false): Promise<DosenStats> {
   return cacheAPI(
-    "dosen_stats",
+    `dosen_stats_${forceRefresh ? 'nocache' : 'default'}`,
     async () => {
       try {
         const dosenId = await getDosenId();
@@ -263,27 +263,78 @@ export async function getDosenStats(): Promise<DosenStats> {
           totalMahasiswa = count || 0;
         }
 
+        // ✅ FIX: Count both draft and published kuis (exclude archived)
         const { count: activeKuis } = await supabase
           .from("kuis")
           .select("*", { count: "exact", head: true })
           .eq("dosen_id", dosenId)
-          .eq("status", "published");
+          .in("status", ["draft", "published"]);
 
+        // ✅ FIX: Exclude archived kuis from pending grading count
         const { data: kuisData } = await supabase
           .from("kuis")
           .select("id")
-          .eq("dosen_id", dosenId);
+          .eq("dosen_id", dosenId)
+          .in("status", ["draft", "published"]); // Exclude archived
 
         const kuisIds = kuisData?.map((k) => k.id) || [];
 
+        // ✅ NEW: Get questions for each kuis to determine if it's a CBT (all pilihan_ganda)
+        // CBT quizzes are auto-graded and should NOT be counted in pendingGrading
+        const { data: soalData } = await supabase
+          .from("soal")
+          .select("kuis_id, tipe")
+          .in("kuis_id", kuisIds);
+
+        // Create a map of kuis_id -> array of soal types
+        const kuisSoalTypes = new Map<string, string[]>();
+        (soalData || []).forEach((soal) => {
+          if (!kuisSoalTypes.has(soal.kuis_id)) {
+            kuisSoalTypes.set(soal.kuis_id, []);
+          }
+          kuisSoalTypes.get(soal.kuis_id)?.push(soal.tipe);
+        });
+
+        // Determine which kuis are CBT (all pilihan_ganda) and need to be excluded
+        const cbtKuisIds = new Set<string>();
+        kuisSoalTypes.forEach((tipes, kuisId) => {
+          const allPilihanGanda = tipes.length > 0 && tipes.every((t) => t === "pilihan_ganda");
+          if (allPilihanGanda) {
+            cbtKuisIds.add(kuisId);
+          }
+        });
+
+        // ✅ FIX: Get submitted attempts and exclude CBT quizzes
         let pendingGrading = 0;
         if (kuisIds.length > 0) {
-          const { count } = await supabase
+          const { data: submittedAttempts } = await supabase
             .from("attempt_kuis" as any)
-            .select("*", { count: "exact", head: true })
+            .select("id, kuis_id, mahasiswa_id, status")
             .in("kuis_id", kuisIds)
-            .eq("status", "submitted");
-          pendingGrading = count || 0;
+            .in("status", ["submitted", "graded"])
+            .order("submitted_at", { ascending: false });
+
+          // Filter to only include unique (kuis_id, mahasiswa_id) pairs
+          // where the latest attempt is "submitted" and not a CBT quiz
+          const uniquePairs = new Map<string, any>();
+          ((submittedAttempts as any) || []).forEach((attempt: any) => {
+            const key = `${attempt.kuis_id}_${attempt.mahasiswa_id}`;
+
+            // Skip if this is a CBT quiz (auto-graded)
+            if (cbtKuisIds.has(attempt.kuis_id)) {
+              return;
+            }
+
+            // Only keep the latest attempt for each (kuis, mahasiswa) pair
+            if (!uniquePairs.has(key)) {
+              uniquePairs.set(key, attempt);
+            }
+          });
+
+          // Count only pairs where the latest attempt status is "submitted"
+          pendingGrading = Array.from(uniquePairs.values()).filter(
+            (attempt) => attempt.status === "submitted"
+          ).length;
         }
 
         return {
@@ -304,6 +355,7 @@ export async function getDosenStats(): Promise<DosenStats> {
     },
     {
       ttl: 5 * 60 * 1000, // Cache for 5 minutes
+      forceRefresh, // ✅ FIX: Allow force refresh to bypass cache
       staleWhileRevalidate: true, // Return stale data while fetching fresh
     },
   );
@@ -317,13 +369,14 @@ export async function getMyKelas(limit?: number): Promise<KelasWithStats[]> {
   try {
     console.log("🔍 DEBUG getMyKelas: Getting ALL available kelas");
 
-    // 🎯 QUERY: Get ALL active kelas (kelas berdiri sendiri, tidak terikat mata kuliah)
+    // 🎯 QUERY: Get ALL active kelas (universal, can be used by any dosen)
     const { data: allKelas, error: kelasError } = await supabase
       .from("kelas")
       .select(
         "id, kode_kelas, nama_kelas, tahun_ajaran, semester_ajaran, mata_kuliah_id, is_active",
       )
-      .eq("is_active", true);
+      .eq("is_active", true)
+      .order("nama_kelas", { ascending: true }); // Sort by name for better UX
 
     if (kelasError) {
       console.error("❌ DEBUG: kelasError =", kelasError);
@@ -633,23 +686,26 @@ export async function getUpcomingPracticum(
 
 type GradingData = {
   id: string;
+  kuis_id: string;
+  mahasiswa_id: string;
   submitted_at: string;
   attempt_number: number;
+  status: string;
   mahasiswa: {
     nim: string;
     user: {
       full_name: string;
-    } | null;
-  } | null;
+    };
+  };
   kuis: {
     judul: string;
     kelas: {
       mata_kuliah: {
         nama_mk: string;
-      } | null;
-    } | null;
-  } | null;
-};
+      };
+    };
+  };
+} | null;
 
 export async function getPendingGrading(
   limit?: number,
@@ -660,32 +716,67 @@ export async function getPendingGrading(
       return [];
     }
 
+    // ✅ FIX: Exclude archived kuis from pending grading
     const { data: kuisIds } = await supabase
       .from("kuis")
       .select("id")
-      .eq("dosen_id", dosenId);
+      .eq("dosen_id", dosenId)
+      .in("status", ["draft", "published"]); // Exclude archived
 
     if (!kuisIds || kuisIds.length === 0) {
       return [];
     }
 
-    let query = supabase
+    // ✅ NEW: Get questions for each kuis to determine if it's a CBT (all pilihan_ganda)
+    // CBT quizzes are auto-graded and should NOT appear in "Perlu Dinilai"
+    const { data: soalData } = await supabase
+      .from("soal")
+      .select("kuis_id, tipe")
+      .in(
+        "kuis_id",
+        kuisIds.map((k) => k.id),
+      );
+
+    // Create a map of kuis_id -> array of soal types
+    const kuisSoalTypes = new Map<string, string[]>();
+    (soalData || []).forEach((soal) => {
+      if (!kuisSoalTypes.has(soal.kuis_id)) {
+        kuisSoalTypes.set(soal.kuis_id, []);
+      }
+      kuisSoalTypes.get(soal.kuis_id)?.push(soal.tipe);
+    });
+
+    // Determine which kuis are CBT (all pilihan_ganda) and need to be excluded
+    const cbtKuisIds = new Set<string>();
+    kuisSoalTypes.forEach((tipes, kuisId) => {
+      const allPilihanGanda = tipes.length > 0 && tipes.every((t) => t === "pilihan_ganda");
+      if (allPilihanGanda) {
+        cbtKuisIds.add(kuisId);
+        console.log("[getPendingGrading] Excluding CBT quiz:", kuisId, "(all questions are pilihan_ganda)");
+      }
+    });
+
+    // ✅ FIX: Get all submitted attempts first
+    const { data: submittedAttempts, error: submittedError } = await supabase
       .from("attempt_kuis" as any)
       .select(
         `
         id,
+        kuis_id,
+        mahasiswa_id,
         submitted_at,
         attempt_number,
-        mahasiswa (
+        status,
+        mahasiswa:mahasiswa_id (
           nim,
-          users (
+          user:user_id (
             full_name
           )
         ),
-        kuis (
+        kuis:kuis_id (
           judul,
-          kelas (
-            mata_kuliah (
+          kelas:kelas_id (
+            mata_kuliah:mata_kuliah_id (
               nama_mk
             )
           )
@@ -696,17 +787,50 @@ export async function getPendingGrading(
         "kuis_id",
         kuisIds.map((k) => k.id),
       )
-      .eq("status", "submitted")
-      .order("submitted_at", { ascending: true });
+      .in("status", ["submitted", "graded"])
+      .order("submitted_at", { ascending: false });
 
-    if (limit) {
-      query = query.limit(limit);
-    }
+    if (submittedError) throw submittedError;
 
-    const { data, error } = await query;
-    if (error) throw error;
+    // ✅ FIX: Filter to only show attempts that need grading
+    // For each unique (kuis_id, mahasiswa_id) pair, only show if the latest attempt is "submitted"
+    const uniquePairs = new Map<string, GradingData>();
 
-    return ((data as unknown as GradingData[]) || []).map((item) => ({
+    const allAttempts = ((submittedAttempts as unknown as GradingData[]) || []);
+    console.log("[getPendingGrading] Total submitted/graded attempts:", allAttempts.length);
+
+    allAttempts.forEach((attempt) => {
+      const key = `${attempt.kuis_id}_${attempt.mahasiswa_id}`;
+
+      // ✅ NEW: Skip if this is a CBT quiz (auto-graded)
+      if (cbtKuisIds.has(attempt.kuis_id)) {
+        console.log("[getPendingGrading] Skipping CBT quiz attempt:", key, "quiz:", attempt.kuis?.judul);
+        return;
+      }
+
+      // Only keep the latest attempt for each (kuis, mahasiswa) pair
+      if (!uniquePairs.has(key)) {
+        uniquePairs.set(key, attempt);
+        console.log("[getPendingGrading] Added unique pair:", key, "status:", attempt.status, "student:", attempt.mahasiswa?.user?.full_name);
+      }
+    });
+
+    console.log("[getPendingGrading] Unique pairs count:", uniquePairs.size);
+
+    // Filter to only include pairs where the latest attempt status is "submitted" (not "graded")
+    const pendingAttempts = Array.from(uniquePairs.values()).filter(
+      (attempt) => attempt.status === "submitted"
+    );
+
+    console.log("[getPendingGrading] Pending attempts (submitted only):", pendingAttempts.length);
+    pendingAttempts.forEach(attempt => {
+      console.log("  -", attempt.mahasiswa?.user?.full_name, "|", attempt.kuis?.judul, "| status:", attempt.status);
+    });
+
+    // Apply limit if specified
+    const limitedAttempts = limit ? pendingAttempts.slice(0, limit) : pendingAttempts;
+
+    return limitedAttempts.map((item) => ({
       id: item.id,
       mahasiswa_nama: item.mahasiswa?.user?.full_name || "-",
       mahasiswa_nim: item.mahasiswa?.nim || "-",

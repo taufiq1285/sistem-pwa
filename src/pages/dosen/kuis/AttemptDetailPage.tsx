@@ -613,11 +613,21 @@ export default function AttemptDetailPage() {
                             </Button>
                           </div>
                         </div>
+                      ) : jawaban.jawaban_mahasiswa ? (
+                        // Student typed the answer instead of uploading file
+                        <div className="bg-white p-4 rounded border">
+                          <Label className="text-sm text-gray-600 mb-2 block">
+                            Jawaban Mahasiswa (Diketik):
+                          </Label>
+                          <p className="text-gray-900 whitespace-pre-wrap">
+                            {jawaban.jawaban_mahasiswa}
+                          </p>
+                        </div>
                       ) : (
                         <Alert variant="destructive">
                           <AlertCircle className="h-4 w-4" />
                           <AlertDescription>
-                            Mahasiswa tidak mengupload file
+                            Mahasiswa tidak mengirim jawaban
                           </AlertDescription>
                         </Alert>
                       )}

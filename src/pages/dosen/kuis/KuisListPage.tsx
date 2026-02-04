@@ -18,8 +18,6 @@ import {
   Loader2,
   AlertCircle,
   RefreshCw,
-  Database,
-  Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,7 +37,7 @@ import { getKuis } from "@/lib/api/kuis.api";
 import type { Kuis, KuisFilters, UI_LABELS } from "@/types/kuis.types";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { cacheAPI, invalidateCache, clearAllCacheSync } from "@/lib/offline/api-cache";
+import { cacheAPI, invalidateCache } from "@/lib/offline/api-cache";
 import { supabase } from "@/lib/supabase/client";
 
 // ============================================================================
@@ -178,6 +176,20 @@ export default function KuisListPage() {
   }, [user]);
 
   /**
+   * ✅ Force refresh on mount after creating kuis
+   * This ensures fresh data is loaded instead of stale cache
+   */
+  useEffect(() => {
+    const refreshTimer = setTimeout(() => {
+      // Force refresh on mount to get fresh data
+      console.log("[Dosen KuisList] 🔁 Auto-refreshing on mount to ensure fresh data...");
+      loadQuizzes(true);
+    }, 800); // Wait for cache invalidation to complete
+
+    return () => clearTimeout(refreshTimer);
+  }, [user?.dosen?.id]);
+
+  /**
    * Apply filters when data or filters change
    */
   useEffect(() => {
@@ -203,16 +215,25 @@ export default function KuisListPage() {
         filters.dosen_id = user.dosen.id;
       }
 
-      // Use cacheAPI with stale-while-revalidate for offline support
-      const data = await cacheAPI(
-        `dosen_kuis_${user?.dosen?.id || "all"}`,
-        () => getKuis(filters, { forceRefresh }),
-        {
-          ttl: 5 * 60 * 1000, // 5 minutes
-          forceRefresh,
-          staleWhileRevalidate: true,
-        },
-      );
+      // ✅ FIX: When forceRefresh, bypass cacheAPI completely to get FRESH data
+      // This prevents stale cache after creating/updating/deleting kuis
+      let data: Kuis[];
+      if (forceRefresh) {
+        console.log("[Dosen KuisList] 🔁 Force refresh - bypassing cacheAPI...");
+        // Bypass cache, call API directly
+        data = await getKuis(filters, { forceRefresh: true });
+      } else {
+        // Use cacheAPI with stale-while-revalidate for offline support
+        data = await cacheAPI(
+          `dosen_kuis_${user?.dosen?.id || "all"}`,
+          () => getKuis(filters, { forceRefresh }),
+          {
+            ttl: 5 * 60 * 1000, // 5 minutes
+            forceRefresh,
+            staleWhileRevalidate: true,
+          },
+        );
+      }
 
       // ✅ DETAILED LOGGING: Log each quiz with ID and title to identify duplicates
       console.log("[Dosen KuisList] Data loaded:", data.length, "quizzes");
@@ -284,79 +305,6 @@ export default function KuisListPage() {
    */
   const handleCreateQuiz = () => {
     navigate("/dosen/kuis/create");
-  };
-
-  /**
-   * Clear cache and refresh
-   */
-  const handleClearCache = async () => {
-    try {
-      toast.info("Membersihkan cache...", { duration: 2000 });
-
-      // Clear all cache using SYNC version (waits for completion)
-      const deletedCount = await clearAllCacheSync();
-      console.log(`[Clear Cache] Deleted ${deletedCount} cache entries`);
-
-      toast.success(`Cache berhasil dibersihkan! (${deletedCount} entries)`, { duration: 2000 });
-
-      // Force refresh
-      await loadQuizzes(true);
-    } catch (err) {
-      console.error("Error clearing cache:", err);
-      toast.error("Gagal membersihkan cache");
-    }
-  };
-
-  /**
-   * Debug: Check database directly
-   */
-  const handleDebugDatabase = async () => {
-    if (!user?.dosen?.id) {
-      toast.error("Dosen ID tidak ditemukan");
-      return;
-    }
-
-    try {
-      toast.info("Memeriksa database...", { duration: 3000 });
-
-      // Direct database query bypassing cache
-      const { data, error } = await supabase
-        .from("kuis")
-        .select("*")
-        .eq("dosen_id", user.dosen.id);
-
-      console.log("🐛 [DEBUG] Direct database query result:", data);
-      console.log("🐛 [DEBUG] Error:", error);
-      console.log("🐛 [DEBUG] Dosen ID:", user.dosen.id);
-      console.log("🐛 [DEBUG] Count:", data?.length || 0);
-
-      // Also check with status filter
-      const { data: activeData, error: activeError } = await supabase
-        .from("kuis")
-        .select("*")
-        .eq("dosen_id", user.dosen.id)
-        .neq("status", "archived");
-
-      console.log("🐛 [DEBUG] Active (not archived) count:", activeData?.length || 0);
-
-      // Check archived
-      const { data: archivedData } = await supabase
-        .from("kuis")
-        .select("*")
-        .eq("dosen_id", user.dosen.id)
-        .eq("status", "archived");
-
-      console.log("🐛 [DEBUG] Archived count:", archivedData?.length || 0);
-
-      if (error) {
-        toast.error(`Database error: ${error.message}`);
-      } else {
-        toast.success(`Database: ${data?.length || 0} total, ${activeData?.length || 0} active, ${archivedData?.length || 0} archived. Lihat console untuk detail.`, { duration: 5000 });
-      }
-    } catch (err) {
-      console.error("Debug error:", err);
-      toast.error("Gagal memeriksa database");
-    }
   };
 
   // ============================================================================
@@ -472,26 +420,6 @@ export default function KuisListPage() {
               >
                 <Plus className="h-6 w-6" />
                 Buat Tugas Baru
-              </Button>
-              <Button
-                onClick={handleClearCache}
-                size="lg"
-                variant="outline"
-                className="gap-2 bg-white/10 backdrop-blur-sm border-2 border-white/30 text-white hover:bg-white/20 font-semibold px-6 py-6"
-                title="Bersihkan cache dan reload data"
-              >
-                <Trash2 className="h-5 w-5" />
-                <span className="hidden sm:inline">Clear Cache</span>
-              </Button>
-              <Button
-                onClick={handleDebugDatabase}
-                size="lg"
-                variant="outline"
-                className="gap-2 bg-white/10 backdrop-blur-sm border-2 border-white/30 text-white hover:bg-white/20 font-semibold px-6 py-6"
-                title="Cek database langsung (debug)"
-              >
-                <Database className="h-5 w-5" />
-                <span className="hidden sm:inline">Debug DB</span>
               </Button>
             </div>
           </div>

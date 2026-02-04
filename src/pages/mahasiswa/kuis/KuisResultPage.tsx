@@ -98,8 +98,14 @@ export default function KuisResultPage() {
       // Load attempt with all related data
       const attemptData = await getAttemptByIdForMahasiswa(attemptId);
 
-      // Block results access before submission
-      if ((attemptData as any).status === "in_progress") {
+      // ✅ FIX: For laporan mode (FILE_UPLOAD), allow viewing results even if status is "in_progress"
+      // This is because laporan doesn't have auto-grading, so students should see their submission immediately
+      const isLaporanMode = (attemptData.kuis as Kuis)?.soal?.every(
+        (s: any) => s.tipe_soal === "file_upload"
+      );
+
+      // Block results access before submission (unless it's laporan mode)
+      if ((attemptData as any).status === "in_progress" && !isLaporanMode) {
         setError(
           "Tugas praktikum belum disubmit. Silakan kembali dan submit dulu.",
         );

@@ -356,7 +356,7 @@ export default function KuisListPage() {
             <div className="flex items-center justify-between p-3 bg-orange-50 border border-orange-200 rounded-lg text-sm">
               <span className="text-orange-700 font-medium">Status</span>
               <span className="font-semibold text-orange-800">
-                {quiz.attempts_used > 0 ? "✓ Sudah Dikirim" : "Belum Dikirim"}
+                {quiz.status === "completed" ? "✓ Sudah Dikirim" : "Belum Dikirim"}
               </span>
             </div>
           )}
@@ -391,38 +391,49 @@ export default function KuisListPage() {
           )}
 
           <div className="flex gap-2">
-            {canStart && (
-              <Button
-                onClick={() => handleStartQuiz(quiz.id)}
-                className={cn(
-                  "flex-1 gap-2",
-                  isLaporan
-                    ? "bg-orange-600 hover:bg-orange-700"
-                    : "bg-blue-600 hover:bg-blue-700",
-                )}
-              >
-                {isLaporan ? (
-                  <>
-                    <Upload className="h-4 w-4" />
-                    {quiz.attempts_used > 0 ? "Kirim Ulang" : "Kirim Laporan"}
-                  </>
-                ) : (
-                  <>
+            {/* LAPORAN: If completed (submitted), show "Lihat Hasil", otherwise show "Kirim Laporan" */}
+            {isLaporan ? (
+              quiz.status === "completed" ? (
+                <Button
+                  variant="outline"
+                  onClick={() => handleViewResults(quiz.id)}
+                  className="flex-1 gap-2"
+                >
+                  <Eye className="h-4 w-4" />
+                  Lihat Hasil
+                </Button>
+              ) : canStart ? (
+                <Button
+                  onClick={() => handleStartQuiz(quiz.id)}
+                  className="flex-1 gap-2 bg-orange-600 hover:bg-orange-700"
+                >
+                  <Upload className="h-4 w-4" />
+                  Kirim Laporan
+                </Button>
+              ) : null
+            ) : (
+              <>
+                {/* TES/TUGAS: Original logic */}
+                {canStart && (
+                  <Button
+                    onClick={() => handleStartQuiz(quiz.id)}
+                    className="flex-1 gap-2 bg-blue-600 hover:bg-blue-700"
+                  >
                     <Play className="h-4 w-4" />
                     {quiz.attempts_used > 0 ? "Lanjutkan Tes" : "Mulai Tes"}
-                  </>
+                  </Button>
                 )}
-              </Button>
-            )}
-            {isCompleted && quiz.attempts_used > 0 && (
-              <Button
-                variant="outline"
-                onClick={() => handleViewResults(quiz.id)}
-                className="flex-1 gap-2"
-              >
-                <Eye className="h-4 w-4" />
-                Lihat Hasil
-              </Button>
+                {isCompleted && quiz.attempts_used > 0 && (
+                  <Button
+                    variant="outline"
+                    onClick={() => handleViewResults(quiz.id)}
+                    className="flex-1 gap-2"
+                  >
+                    <Eye className="h-4 w-4" />
+                    Lihat Hasil
+                  </Button>
+                )}
+              </>
             )}
             {quiz.status === "upcoming" && (
               <Button
