@@ -144,7 +144,13 @@ export function QuestionEditor({
 
   // Basic question data
   const [pertanyaan, setPertanyaan] = useState(question?.pertanyaan || "");
-  const [poin, setPoin] = useState(question?.poin || defaultPoin);
+  // ✅ FIX: Default poin 100 untuk FILE_UPLOAD (karena DB constraint poin > 0)
+  const [poin, setPoin] = useState(
+    question?.poin ||
+      (question?.tipe_soal === TIPE_SOAL.FILE_UPLOAD || getDefaultType() === TIPE_SOAL.FILE_UPLOAD
+        ? 100
+        : defaultPoin)
+  );
   const [penjelasan, setPenjelasan] = useState(question?.penjelasan || "");
 
   // Multiple choice state
@@ -252,7 +258,10 @@ export function QuestionEditor({
     if (pertanyaan.trim().length < 10) {
       errors.push("Pertanyaan minimal 10 karakter");
     }
-    if (poin < 1) {
+
+    // ✅ Poin wajib untuk PILIHAN_GANDA dan ESSAY
+    // FILE_UPLOAD pakai default 100 (bisa diubah saat penilaian)
+    if (questionType !== TIPE_SOAL.FILE_UPLOAD && poin < 1) {
       errors.push("Poin minimal 1");
     }
 
@@ -466,7 +475,9 @@ export function QuestionEditor({
           <div className="space-y-2">
             <Label htmlFor="poin">
               Poin
-              <span className="text-destructive ml-1">*</span>
+              {questionType !== TIPE_SOAL.FILE_UPLOAD && (
+                <span className="text-destructive ml-1">*</span>
+              )}
             </Label>
             <Input
               id="poin"
@@ -475,8 +486,15 @@ export function QuestionEditor({
               max={100}
               value={poin}
               onChange={(e) => setPoin(Number(e.target.value))}
-              className={cn(showErrors && poin < 1 && "border-destructive")}
+              className={cn(
+                showErrors && questionType !== TIPE_SOAL.FILE_UPLOAD && poin < 1 && "border-destructive"
+              )}
             />
+            {questionType === TIPE_SOAL.FILE_UPLOAD && (
+              <p className="text-xs text-muted-foreground">
+                💡 Poin default 100. Dosen bisa menyesuaikan nilai saat penilaian laporan.
+              </p>
+            )}
           </div>
         </div>
 
@@ -606,8 +624,8 @@ export function QuestionEditor({
           </p>
         </div>
 
-        {/* Save to Bank Soal - Only for new questions */}
-        {!isEditing && kuisId !== "bank" && (
+        {/* Save to Bank Soal - Only for new questions and PILIHAN_GANDA type */}
+        {!isEditing && kuisId !== "bank" && questionType === TIPE_SOAL.PILIHAN_GANDA && (
           <div className="flex items-start gap-3 p-4 rounded-lg border bg-muted/50">
             <Checkbox
               id="saveToBank"

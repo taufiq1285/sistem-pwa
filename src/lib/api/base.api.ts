@@ -676,11 +676,12 @@ export async function remove(table: string, id: string): Promise<boolean> {
           .eq("id", id)
           .single();
 
-        if (record?.dosen_id) {
+        const dosenId = (record as any)?.dosen_id;
+        if (dosenId) {
           window.dispatchEvent(new CustomEvent('kuis:changed', {
-            detail: { action: 'deleted', kuisId: id, dosenId: record.dosen_id }
+            detail: { action: 'deleted', kuisId: id, dosenId }
           }));
-          console.log(`📢 Event dispatched: kuis:changed (deleted) for dosen: ${record.dosen_id}`);
+          console.log(`📢 Event dispatched: kuis:changed (deleted) for dosen: ${dosenId}`);
         }
       } catch (eventError) {
         console.warn(`⚠️ Failed to dispatch kuis:changed event:`, eventError);

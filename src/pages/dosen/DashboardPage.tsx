@@ -489,7 +489,7 @@ export function DashboardPage() {
       // Use cacheAPI with stale-while-revalidate for offline support
       const [statsData, kelasData, practicumData, gradingData, kuisData] =
         await Promise.all([
-          cacheAPI(`dosen_stats_${user?.id}`, () => getDosenStats(), {
+          cacheAPI(`dosen_stats_${user?.id}`, () => getDosenStats(forceRefresh), {
             ttl: 10 * 60 * 1000, // 10 minutes
             forceRefresh,
             staleWhileRevalidate: true,
@@ -697,7 +697,8 @@ export function DashboardPage() {
                   onClick={() => {
                     setIsRefreshing(true);
                     setHasDataChanges(false); // Clear change indicator on manual refresh
-                    fetchDashboardData().finally(() => {
+                    // ✅ FIX: Force refresh to clear cache after cleanup
+                    fetchDashboardData(true).finally(() => {
                       setIsRefreshing(false);
                       setLastRefresh(new Date());
                     });

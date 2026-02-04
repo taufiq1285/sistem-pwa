@@ -422,6 +422,11 @@ export interface SubmitAnswerData {
   attempt_id: string;
   soal_id: string;
   jawaban: string;
+  // Optional file metadata for FILE_UPLOAD questions
+  file_url?: string;
+  file_name?: string;
+  file_size?: number;
+  file_type?: string;
 }
 
 export interface SubmitQuizData {

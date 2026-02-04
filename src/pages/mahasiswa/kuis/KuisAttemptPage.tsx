@@ -81,11 +81,26 @@ export default function KuisAttemptPage() {
       debugLog("✅ Tugas sudah dipublish, mahasiswa bisa mengakses");
       setCanAttempt(true);
     } catch (err: any) {
-      setError(err.message || "Gagal memuat tugas praktikum");
+      // Provide helpful error message
+      const errorMessage = err.message || "Gagal memuat tugas praktikum";
+      const isNotFoundError = err.code === "PGRST116" || err.status === 404;
+
+      setError(
+        isNotFoundError
+          ? "Tugas praktikum tidak ditemukan. Mungkin tugas telah dihapus atau Anda tidak memiliki akses."
+          : errorMessage
+      );
       setCanAttempt(false);
-      toast.error("Gagal memuat tugas praktikum", {
-        description: err.message,
-      });
+
+      if (isNotFoundError) {
+        toast.error("Tugas Tidak Ditemukan", {
+          description: "Silakan kembali ke daftar tugas dan coba lagi.",
+        });
+      } else {
+        toast.error("Gagal memuat tugas praktikum", {
+          description: errorMessage,
+        });
+      }
     } finally {
       setIsLoading(false);
     }

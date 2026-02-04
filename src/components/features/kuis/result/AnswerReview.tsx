@@ -10,7 +10,7 @@
  * - Points earned
  */
 
-import { CheckCircle2, XCircle, Circle, AlertCircle } from "lucide-react";
+import { CheckCircle2, XCircle, Circle, AlertCircle, FileText, ExternalLink } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -64,7 +64,7 @@ export function AnswerReview({
   showCorrectAnswer = true,
   className,
 }: AnswerReviewProps) {
-  const isAnswered = !!jawaban?.jawaban;
+  const isAnswered = !!(jawaban?.jawaban || jawaban?.jawaban_mahasiswa);
   const isCorrect = jawaban?.is_correct ?? false;
   const poinDiperoleh = jawaban?.poin_diperoleh ?? 0;
   const needsManualGrading = soal.tipe_soal !== TIPE_SOAL.PILIHAN_GANDA;
@@ -127,7 +127,28 @@ export function AnswerReview({
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>Tidak dijawab</AlertDescription>
             </Alert>
+          ) : soal.tipe_soal === TIPE_SOAL.FILE_UPLOAD ? (
+            // FILE_UPLOAD: Show file link or typed text
+            <div className="p-4 rounded-lg border-2 border-blue-300 bg-blue-50 dark:bg-blue-950">
+              {(jawaban.jawaban || jawaban.jawaban_mahasiswa)?.startsWith("http") ? (
+                // File upload - show link
+                <a
+                  href={jawaban.jawaban || jawaban.jawaban_mahasiswa}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-blue-600 hover:text-blue-800 dark:text-blue-400"
+                >
+                  <FileText className="h-5 w-5" />
+                  <span className="underline">Lihat File Laporan</span>
+                  <ExternalLink className="h-4 w-4" />
+                </a>
+              ) : (
+                // Typed text - show content
+                <p className="whitespace-pre-wrap">{jawaban.jawaban || jawaban.jawaban_mahasiswa}</p>
+              )}
+            </div>
           ) : (
+            // Other types - show answer with coloring
             <div
               className={cn(
                 "p-4 rounded-lg border-2",
@@ -137,7 +158,7 @@ export function AnswerReview({
               )}
             >
               <p className="whitespace-pre-wrap">
-                {getAnswerLabel(soal, jawaban.jawaban || "")}
+                {getAnswerLabel(soal, (jawaban.jawaban || jawaban.jawaban_mahasiswa) || "")}
               </p>
             </div>
           )}

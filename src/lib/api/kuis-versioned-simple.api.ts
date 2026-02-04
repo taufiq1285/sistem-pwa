@@ -14,6 +14,7 @@ import type {
   SubmitAnswerData,
 } from "@/types/kuis.types";
 import { supabase } from "@/lib/supabase/client";
+import { clearAllCacheSync } from "@/lib/offline/api-cache";
 
 /**
  * Submit answer - simplified without version checking
@@ -37,14 +38,31 @@ export async function submitAnswerSafe(
     if (!existing) {
       console.log("[KuisAPI] Creating new answer");
 
+      // Build insert data with optional file metadata
+      const insertData: any = {
+        attempt_id: data.attempt_id,
+        soal_id: data.soal_id,
+        jawaban_mahasiswa: data.jawaban,
+        is_auto_saved: true,
+      };
+
+      // Add file metadata if provided (for FILE_UPLOAD questions)
+      if (data.file_url) {
+        insertData.file_url = data.file_url;
+      }
+      if (data.file_name) {
+        insertData.file_name = data.file_name;
+      }
+      if (data.file_size !== undefined) {
+        insertData.file_size = data.file_size;
+      }
+      if (data.file_type) {
+        insertData.file_type = data.file_type;
+      }
+
       const { data: newAnswer, error } = await supabase
         .from("jawaban")
-        .insert({
-          attempt_id: data.attempt_id,
-          soal_id: data.soal_id,
-          jawaban_mahasiswa: data.jawaban,
-          is_auto_saved: true,
-        })
+        .insert(insertData)
         .select()
         .single();
 
@@ -59,13 +77,30 @@ export async function submitAnswerSafe(
     // Answer exists - update it
     console.log("[KuisAPI] Updating existing answer:", existing.id);
 
+    // Build update data with optional file metadata
+    const updateData: any = {
+      jawaban_mahasiswa: data.jawaban,
+      updated_at: new Date().toISOString(),
+      is_auto_saved: true,
+    };
+
+    // Add file metadata if provided (for FILE_UPLOAD questions)
+    if (data.file_url) {
+      updateData.file_url = data.file_url;
+    }
+    if (data.file_name) {
+      updateData.file_name = data.file_name;
+    }
+    if (data.file_size !== undefined) {
+      updateData.file_size = data.file_size;
+    }
+    if (data.file_type) {
+      updateData.file_type = data.file_type;
+    }
+
     const { data: updatedAnswer, error: updateError } = await supabase
       .from("jawaban")
-      .update({
-        jawaban_mahasiswa: data.jawaban,
-        updated_at: new Date().toISOString(),
-        is_auto_saved: true,
-      })
+      .update(updateData)
       .eq("id", existing.id)
       .select()
       .single();
@@ -161,11 +196,17 @@ export async function submitQuizSafe(
 }
 
 /**
- * Submit all answers
+ * Submit all answers with optional file metadata
  */
 export async function submitAllAnswersWithVersion(
   attemptId: string,
   answers: Record<string, string>,
+  fileUploads?: Record<string, {
+    url: string;
+    name: string;
+    size: number;
+    type: string;
+  }>,
 ): Promise<{
   success: number;
   failed: number;
@@ -192,10 +233,17 @@ export async function submitAllAnswersWithVersion(
   // Process all answers in parallel
   const promises = soalIds.map(async (soalId) => {
     try {
+      const fileUpload = fileUploads?.[soalId];
+
       await submitAnswerSafe({
         attempt_id: attemptId,
         soal_id: soalId,
         jawaban: answers[soalId],
+        // Include file metadata if available
+        file_url: fileUpload?.url,
+        file_name: fileUpload?.name,
+        file_size: fileUpload?.size,
+        file_type: fileUpload?.type,
       });
 
       success++;
@@ -223,6 +271,7 @@ export async function submitAllAnswersWithVersion(
 
 /**
  * Grade answer with simple update
+ * ✅ FIX: Also update attempt status to "graded" and total_poin after grading
  */
 export async function gradeAnswerWithVersion(
   answerId: string,
@@ -231,6 +280,8 @@ export async function gradeAnswerWithVersion(
   feedback?: string,
 ): Promise<Jawaban> {
   try {
+    // ✅ FIX: Don't include version field - it doesn't exist in the schema
+    // Just update the grading fields directly
     const { data: gradedAnswer, error } = await supabase
       .from("jawaban")
       .update({
@@ -246,6 +297,72 @@ export async function gradeAnswerWithVersion(
     if (error) {
       console.error("[KuisAPI] Grade error:", error);
       throw new Error(error.message);
+    }
+
+    console.log("[KuisAPI] Grade success:", gradedAnswer);
+
+    // ✅ FIX: Update attempt status to "graded" and total_poin after grading
+    const attemptId = (gradedAnswer as any).attempt_id;
+    if (attemptId) {
+      console.log("[KuisAPI] Updating attempt:", attemptId, "with poin:", poinDiperoleh);
+
+      // ✅ FIX: Don't use .select() to avoid potential RLS issues
+      // Just check if update succeeded by counting affected rows
+      const { data: attemptData, error: attemptError, count } = await supabase
+        .from("attempt_kuis")
+        .update({
+          status: "graded",
+          total_poin: poinDiperoleh,
+        })
+        .eq("id", attemptId)
+        .select();
+
+      if (attemptError) {
+        console.error("[KuisAPI] Failed to update attempt status:", attemptError);
+        throw new Error(`Gagal mengupdate status attempt: ${attemptError.message}`);
+      }
+
+      console.log("[KuisAPI] Attempt updated successfully, rows affected:", count);
+      console.log("[KuisAPI] Updated data:", attemptData);
+
+      // ✅ VERIFICATION: Verify the update actually worked by querying the attempt
+      if (count && count > 0) {
+        const { data: verifyAttempt, error: verifyError } = await supabase
+          .from("attempt_kuis")
+          .select("id, status")
+          .eq("id", attemptId)
+          .single();
+
+        if (!verifyError && verifyAttempt) {
+          console.log("[KuisAPI] ✅ VERIFICATION: Attempt status in DB =", verifyAttempt.status);
+          if (verifyAttempt.status !== "graded") {
+            console.error("[KuisAPI] ❌ CRITICAL: Update reported success but status not changed in DB!");
+          }
+        } else if (verifyError) {
+          console.error("[KuisAPI] ❌ VERIFICATION FAILED:", verifyError);
+        }
+      }
+
+      // ✅ FIX: Clear all cache to ensure UI gets fresh data after grading
+      // This prevents the status from showing "Menunggu Penilaian" after grading
+      console.log("[KuisAPI] Clearing cache after grading...");
+      const deletedCount = await clearAllCacheSync();
+      console.log(`[KuisAPI] Cache cleared: ${deletedCount} entries deleted`);
+
+      // ✅ FIX: Also invalidate dosen_grading cache specifically
+      // This ensures dashboard "Perlu Dinilai" count is updated
+      try {
+        const dosenId = await supabase.auth.getUser().then(res => res.data.user?.id);
+        if (dosenId) {
+          const { invalidateCache } = await import("@/lib/offline/api-cache");
+          await invalidateCache(`dosen_grading_${dosenId}`);
+          console.log("[KuisAPI] Invalidated dosen_grading cache for:", dosenId);
+        }
+      } catch (err) {
+        console.warn("[KuisAPI] Failed to invalidate dosen_grading cache:", err);
+      }
+    } else {
+      console.warn("[KuisAPI] No attempt_id found in graded answer");
     }
 
     return gradedAnswer as Jawaban;

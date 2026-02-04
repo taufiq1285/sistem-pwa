@@ -940,39 +940,57 @@ export async function getAttempts(
 /**
  * Get all attempts for a specific quiz with student information
  * Used by dosen to view results
+ * ✅ FIX: Use direct Supabase query to properly join with kuis for RLS
+ * ✅ FIX: Added forceRefresh option to bypass cache when needed (e.g., after grading)
  */
 export async function getAttemptsByKuis(
   kuisId: string,
+  forceRefresh: boolean = false,
 ): Promise<AttemptWithStudent[]> {
   try {
-    const attempts = await queryWithFilters<AttemptWithStudent>(
-      "attempt_kuis",
-      [
-        {
-          column: "kuis_id",
-          operator: "eq" as const,
-          value: kuisId,
-        },
-      ],
-      {
-        select: `
+    // ✅ FIX: Use direct Supabase query with proper joins for RLS
+    // Join through kuis to verify dosen ownership (required by RLS policy)
+
+    // ✅ When forceRefresh is true, invalidate cache pattern to ensure fresh data
+    if (forceRefresh) {
+      await invalidateCachePatternSync("attempt_kuis");
+      await invalidateCachePatternSync("jawaban");
+    }
+
+    const { data: attempts, error } = await supabase
+      .from("attempt_kuis")
+      .select(`
         *,
         mahasiswa:mahasiswa_id (
           nim,
-          users:user_id (
+          user:user_id (
             full_name
           )
         ),
         jawaban:jawaban(*)
-      `,
-        order: {
-          column: "started_at",
-          ascending: false,
-        },
-      },
-    );
+      `)
+      .eq("kuis_id", kuisId)
+      .order("started_at", { ascending: false });
 
-    return attempts;
+    if (error) {
+      console.error("[KuisAPI] getAttemptsByKuis error:", error);
+      throw new Error(error.message);
+    }
+
+    console.log("[KuisAPI] getAttemptsByKuis success:", attempts?.length || 0, "attempts");
+
+    // Log mahasiswa data untuk debugging
+    (attempts || []).forEach((attempt: any, index: number) => {
+      console.log(`[KuisAPI] Attempt ${index + 1} mahasiswa:`, {
+        id: attempt.mahasiswa_id,
+        nim: attempt.mahasiswa?.nim,
+        full_name: attempt.mahasiswa?.user?.full_name,
+      });
+    });
+
+    // ✅ Use unknown first to bypass TypeScript type checking
+    // The Supabase query returns all fields including total_poin, started_at, submitted_at
+    return (attempts || []) as unknown as AttemptWithStudent[];
   } catch (error) {
     const apiError = handleError(error);
     logError(apiError, `getAttemptsByKuis:${kuisId}`);

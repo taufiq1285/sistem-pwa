@@ -460,8 +460,9 @@ export function QuizBuilder({
         });
         setQuestions((prev) => [...prev, savedQuestion]);
 
-        // Auto-save to Bank Soal if checkbox was checked
-        if (shouldSaveToBank) {
+        // Auto-save to Bank Soal if checkbox was checked (only for PILIHAN_GANDA)
+        // Bank Soal hanya untuk CBT (pilihan ganda), tidak untuk laporan
+        if (shouldSaveToBank && savedQuestion.tipe_soal === "pilihan_ganda") {
           try {
             await saveSoalToBank(savedQuestion, dosenId);
             toast.success("Soal berhasil dibuat dan disimpan ke Bank Soal");
@@ -786,32 +787,37 @@ export function QuizBuilder({
         </CardContent>
       </Card>
 
-      {/* Soal Card - Show after quiz saved (not for laporan mode) */}
-      {currentQuiz && !effectiveLaporanMode && (
+      {/* Soal Card - Show after quiz saved (for both CBT and Laporan) */}
+      {currentQuiz && (
         <Card>
           <CardHeader className="pb-4">
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="text-lg flex items-center gap-2">
-                  📋 Soal Pilihan Ganda
+                  {effectiveLaporanMode ? "📄 Soal Laporan" : "📋 Soal Pilihan Ganda"}
                   <Badge variant="secondary" className="ml-2">
                     {questions.length} soal
                   </Badge>
                 </CardTitle>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Buat soal manual atau ambil dari Bank Soal
+                  {effectiveLaporanMode
+                    ? "Buat soal essay atau upload file laporan"
+                    : "Buat soal manual atau ambil dari Bank Soal"}
                 </p>
               </div>
               <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setShowBankDialog(true)}
-                  size="sm"
-                  disabled={currentQuiz.status === "published"}
-                >
-                  <BookOpen className="h-4 w-4 mr-2" />
-                  Bank Soal
-                </Button>
+                {/* Bank Soal button - Hanya untuk CBT, disembunyikan untuk Laporan */}
+                {!effectiveLaporanMode && (
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowBankDialog(true)}
+                    size="sm"
+                    disabled={currentQuiz.status === "published"}
+                  >
+                    <BookOpen className="h-4 w-4 mr-2" />
+                    Bank Soal
+                  </Button>
+                )}
                 <Button
                   onClick={handleAddQuestion}
                   size="sm"
@@ -837,7 +843,9 @@ export function QuizBuilder({
                 <FileText className="h-10 w-10 mx-auto mb-3 opacity-50" />
                 <p>Belum ada soal</p>
                 <p className="text-sm">
-                  Buat soal baru atau ambil dari Bank Soal
+                  {effectiveLaporanMode
+                    ? "Klik 'Buat Soal' untuk membuat soal essay atau upload file laporan"
+                    : "Klik 'Buat Soal' untuk membuat soal baru atau ambil dari Bank Soal"}
                 </p>
               </div>
             ) : (

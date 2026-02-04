@@ -14,7 +14,7 @@ import type { UploadedFile } from "@/components/features/kuis/FileUpload";
 // ============================================================================
 
 const BUCKET_NAME = "laporan";
-const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // ✅ Reduced to 10MB for faster upload
 const ALLOWED_MIME_TYPES = [
   "application/pdf",
   "application/msword",
@@ -54,7 +54,7 @@ function validateFile(file: File): void {
   // Check file size
   if (file.size > MAX_FILE_SIZE) {
     throw new Error(
-      `Ukuran file terlalu besar. Maksimal 20MB, file Anda: ${(file.size / 1024 / 1024).toFixed(2)}MB`,
+      `Ukuran file terlalu besar. Maksimal 10MB, file Anda: ${(file.size / 1024 / 1024).toFixed(2)}MB. Kompres file PDF/Word Anda terlebih dahulu.`,
     );
   }
 
@@ -101,13 +101,28 @@ export async function uploadLaporan(
     type: file.type,
   });
 
-  // Upload to Supabase Storage
-  const { data, error } = await supabase.storage
+  console.log("⏳ Starting upload...");
+
+  // Upload to Supabase Storage with timeout to prevent indefinite hanging
+  const UPLOAD_TIMEOUT = 120000; // 2 minutes timeout
+
+  const uploadPromise = supabase.storage
     .from(BUCKET_NAME)
     .upload(filePath, file, {
       cacheControl: "3600",
       upsert: false, // Don't overwrite existing files
     });
+
+  const timeoutPromise = new Promise((_, reject) => {
+    setTimeout(() => {
+      reject(new Error("Upload timeout. File terlalu besar atau koneksi terlalu lambat. Coba kecilkan ukuran file atau periksa koneksi internet Anda."));
+    }, UPLOAD_TIMEOUT);
+  });
+
+  const { data, error } = await Promise.race([
+    uploadPromise,
+    timeoutPromise,
+  ]) as any;
 
   if (error) {
     console.error("❌ Upload error:", error);
@@ -115,6 +130,7 @@ export async function uploadLaporan(
   }
 
   console.log("✅ Upload success:", data);
+  console.log(`⏱️ Upload completed for ${fileName} (${(file.size / 1024).toFixed(2)} KB)`);
 
   // Get public URL (or signed URL for private bucket)
   const { data: urlData } = supabase.storage
