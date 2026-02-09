@@ -110,7 +110,7 @@ interface EditFormData {
   jam_selesai: string;
   topik: string;
   catatan: string;
-  status: "approved" | "pending" | "rejected" | "cancelled";
+  status: "pending" | "approved" | "rejected" | "cancelled"; // ✅ WORKFLOW: pending → approved/rejected → cancelled
   laboratorium_id: string;
   dosen_id?: string;
   kelas_id?: string;
@@ -311,9 +311,7 @@ export default function AssignmentManagementPage() {
       jam_selesai: jadwal.jam_selesai,
       topik: jadwal.topik || "",
       catatan: jadwal.catatan || "",
-      status:
-        (jadwal.status as "approved" | "pending" | "rejected" | "cancelled") ||
-        "pending",
+      status: (jadwal.status as "pending" | "approved" | "rejected" | "cancelled") || "pending", // ✅ WORKFLOW: Default to pending
       laboratorium_id: jadwal.laboratorium_id,
       dosen_id: jadwal.dosen_id,
       kelas_id: jadwal.kelas_id,
@@ -437,6 +435,8 @@ export default function AssignmentManagementPage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
+      case "pending":
+        return "bg-yellow-100 text-yellow-800";
       case "approved":
         return "bg-green-100 text-green-800";
       case "rejected":
@@ -444,12 +444,14 @@ export default function AssignmentManagementPage() {
       case "cancelled":
         return "bg-gray-100 text-gray-800";
       default:
-        return "bg-yellow-100 text-yellow-800";
+        return "bg-gray-100 text-gray-800";
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
+      case "pending":
+        return <Clock className="h-4 w-4" />;
       case "approved":
         return <CheckCircle className="h-4 w-4" />;
       case "rejected":
@@ -512,15 +514,21 @@ export default function AssignmentManagementPage() {
         </Card>
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">Cancelled/Rejected</CardTitle>
+            <CardTitle className="text-base">Rejected</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600">
-              {
-                filteredJadwal.filter((j) =>
-                  ["cancelled", "rejected"].includes(j.status),
-                ).length
-              }
+              {filteredJadwal.filter((j) => j.status === "rejected").length}
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Cancelled</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-gray-600">
+              {filteredJadwal.filter((j) => j.status === "cancelled").length}
             </div>
           </CardContent>
         </Card>
@@ -539,8 +547,8 @@ export default function AssignmentManagementPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Semua Status</SelectItem>
-                <SelectItem value="approved">Approved</SelectItem>
                 <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="approved">Approved</SelectItem>
                 <SelectItem value="rejected">Rejected</SelectItem>
                 <SelectItem value="cancelled">Cancelled</SelectItem>
               </SelectContent>

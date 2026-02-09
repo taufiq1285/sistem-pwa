@@ -350,12 +350,10 @@ export function JadwalApprovalPage() {
 
   const stats = {
     pending:
-      pendingBookings.length +
-      jadwalList.filter((j) => j.status === "pending").length, // ✅ Include both room bookings + jadwal praktikum
+      pendingBookings.length + jadwalList.filter((j) => j.status === "pending").length, // ✅ Include both bookings + jadwal
     approved: jadwalList.filter((j) => j.status === "approved").length,
-    cancelled: jadwalList.filter(
-      (j) => j.status === "cancelled" || j.status === "rejected",
-    ).length,
+    cancelled: jadwalList.filter((j) => j.status === "cancelled").length,
+    rejected: jadwalList.filter((j) => j.status === "rejected").length,
   };
 
   // ============================================================================
@@ -408,12 +406,29 @@ export function JadwalApprovalPage() {
         <Card className="border-0 shadow-xl p-6">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">
-              Dibatalkan
+              Ditolak
             </CardTitle>
             <XCircle className="h-4 w-4 text-red-500" />
           </CardHeader>
           <CardContent>
             <div className="text-4xl font-extrabold text-red-600">
+              {stats.rejected}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Jadwal yang ditolak
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-0 shadow-xl p-6">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">
+              Dibatalkan
+            </CardTitle>
+            <AlertCircle className="h-4 w-4 text-gray-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-4xl font-extrabold text-gray-600">
               {stats.cancelled}
             </div>
             <p className="text-xs text-muted-foreground">
@@ -436,7 +451,7 @@ export function JadwalApprovalPage() {
           </TabsTrigger>
           <TabsTrigger value="cancelled" className="gap-2">
             <History className="h-4 w-4" />
-            Riwayat ({stats.cancelled})
+            Riwayat ({stats.cancelled + stats.rejected})
           </TabsTrigger>
         </TabsList>
 
@@ -581,8 +596,7 @@ export function JadwalApprovalPage() {
             <CardContent>
               {loading ? (
                 <LoadingSpinner />
-              ) : jadwalList.filter((j) => j.status === "pending").length ===
-                0 ? (
+              ) : jadwalList.filter((j) => j.status === "pending").length === 0 ? (
                 <EmptyState
                   icon={Clock}
                   title="Tidak ada jadwal pending"

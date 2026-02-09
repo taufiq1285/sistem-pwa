@@ -44,6 +44,7 @@ export const ROUTES = {
     MAHASISWA: "/dosen/mahasiswa",
     MATERI: "/dosen/materi",
     PENILAIAN: "/dosen/penilaian",
+    LOGBOOK_REVIEW: "/dosen/logbook-review",
   },
 
   // Mahasiswa routes
@@ -62,6 +63,7 @@ export const ROUTES = {
     PENGUMUMAN: "/mahasiswa/pengumuman",
     PROFILE: "/mahasiswa/profile",
     OFFLINE_SYNC: "/mahasiswa/offline-sync",
+    LOGBOOK: "/mahasiswa/logbook",
   },
 
   // Laboran routes

@@ -494,7 +494,7 @@ async function createJadwalImpl(data: CreateJadwalData): Promise<Jadwal> {
       topik: data.topik,
       catatan: data.catatan,
       is_active: true,
-      status: "pending" as const, // ✅ FIX: Default pending, needs laboran approval
+      status: "pending" as const, // ✅ WORKFLOW: Start as pending, needs laboran approval
     };
 
     console.log("🔍 DEBUG: Insert data:", insertData);
@@ -705,7 +705,7 @@ async function rejectJadwalImpl(id: string, reason?: string): Promise<Jadwal> {
     console.log("❌ Rejecting jadwal:", id, "reason:", reason);
 
     const updated = await update<Jadwal>("jadwal_praktikum", id, {
-      status: "rejected",
+      status: "rejected", // ✅ WORKFLOW: Laboran rejects the booking
       cancellation_reason: reason || "Ditolak oleh laboran",
     });
 

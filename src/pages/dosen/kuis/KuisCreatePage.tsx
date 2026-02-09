@@ -265,7 +265,7 @@ export default function KuisCreatePage() {
             </div>
           </div>
         ) : (
-          <div className="relative overflow-hidden rounded-xl bg-linear-to-rm-blue-600 via-indigo-600 to-purple-600 p-6 text-white shadow-lg">
+          <div className="relative overflow-hidden rounded-xl bg-linear-to-r from-blue-600 via-indigo-600 to-purple-600 p-6 text-white shadow-lg">
             <div className="absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-white/10 blur-2xl" />
             <div className="absolute bottom-0 left-0 -mb-4 -ml-4 h-32 w-32 rounded-full bg-white/10 blur-2xl" />
             <div className="relative">

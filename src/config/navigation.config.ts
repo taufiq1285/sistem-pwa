@@ -24,6 +24,7 @@ import {
   BookOpen,
   UserCheck,
   Bell,
+  NotebookPen,
   type LucideIcon,
 } from "lucide-react";
 import type { UserRole } from "@/types/auth.types";
@@ -59,6 +60,12 @@ const mahasiswaNavigation: NavigationItem[] = [
     href: "/mahasiswa/jadwal",
     icon: Calendar,
     description: "Jadwal praktikum kebidanan",
+  },
+  {
+    label: "Logbook Digital",
+    href: "/mahasiswa/logbook",
+    icon: NotebookPen,
+    description: "Catatan pengalaman praktikum",
   },
   {
     label: "Tugas Praktikum",
@@ -119,6 +126,12 @@ const dosenNavigation: NavigationItem[] = [
     href: "/dosen/bank-soal",
     icon: BookOpen,
     description: "Bank soal yang dapat digunakan kembali",
+  },
+  {
+    label: "Review Logbook",
+    href: "/dosen/logbook-review",
+    icon: NotebookPen,
+    description: "Review dan nilai logbook mahasiswa",
   },
   {
     label: "Peminjaman",
