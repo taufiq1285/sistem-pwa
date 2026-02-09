@@ -359,168 +359,168 @@ export default function KuisResultsPage() {
           {laporanMode ? (
             // LAPORAN MODE: Show submission status
             <>
-            {/* Total Submissions */}
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Total Submission
-                </CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {statistics.totalAttempts}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {statistics.completedAttempts} mahasiswa
-                </p>
-              </CardContent>
-            </Card>
+              {/* Total Submissions */}
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    Total Submission
+                  </CardTitle>
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {statistics.totalAttempts}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {statistics.completedAttempts} mahasiswa
+                  </p>
+                </CardContent>
+              </Card>
 
-            {/* Sudah Upload */}
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Sudah Upload
-                </CardTitle>
-                <CheckCircle2 className="h-4 w-4 text-green-600" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-green-600">
-                  {statistics.completedAttempts}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Laporan diterima
-                </p>
-              </CardContent>
-            </Card>
+              {/* Sudah Upload */}
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    Sudah Upload
+                  </CardTitle>
+                  <CheckCircle2 className="h-4 w-4 text-green-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-green-600">
+                    {statistics.completedAttempts}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Laporan diterima
+                  </p>
+                </CardContent>
+              </Card>
 
-            {/* Belum Upload */}
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Belum Upload
-                </CardTitle>
-                <AlertCircle className="h-4 w-4 text-yellow-600" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-yellow-600">
-                  {statistics.totalAttempts - statistics.completedAttempts}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Menunggu submission
-                </p>
-              </CardContent>
-            </Card>
+              {/* Belum Upload */}
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    Belum Upload
+                  </CardTitle>
+                  <AlertCircle className="h-4 w-4 text-yellow-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-yellow-600">
+                    {statistics.totalAttempts - statistics.completedAttempts}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Menunggu submission
+                  </p>
+                </CardContent>
+              </Card>
 
-            {/* Completion Rate */}
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Tingkat Penyelesaian
-                </CardTitle>
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {statistics.totalAttempts > 0
-                    ? (
-                        (statistics.completedAttempts /
-                          statistics.totalAttempts) *
-                        100
-                      ).toFixed(0)
-                    : 0}
-                  %
-                </div>
-                <Progress
-                  value={
-                    statistics.totalAttempts > 0
-                      ? (statistics.completedAttempts /
-                          statistics.totalAttempts) *
-                        100
-                      : 0
-                  }
-                  className="mt-2"
-                />
-              </CardContent>
-            </Card>
-          </>
-        ) : (
-          // CBT MODE: Show score statistics
-          <>
-            {/* Total Students */}
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Total Peserta
-                </CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {statistics.totalAttempts}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {statistics.completedAttempts} sudah mengerjakan
-                </p>
-              </CardContent>
-            </Card>
+              {/* Completion Rate */}
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    Tingkat Penyelesaian
+                  </CardTitle>
+                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {statistics.totalAttempts > 0
+                      ? (
+                          (statistics.completedAttempts /
+                            statistics.totalAttempts) *
+                          100
+                        ).toFixed(0)
+                      : 0}
+                    %
+                  </div>
+                  <Progress
+                    value={
+                      statistics.totalAttempts > 0
+                        ? (statistics.completedAttempts /
+                            statistics.totalAttempts) *
+                          100
+                        : 0
+                    }
+                    className="mt-2"
+                  />
+                </CardContent>
+              </Card>
+            </>
+          ) : (
+            // CBT MODE: Show score statistics
+            <>
+              {/* Total Students */}
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    Total Peserta
+                  </CardTitle>
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {statistics.totalAttempts}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {statistics.completedAttempts} sudah mengerjakan
+                  </p>
+                </CardContent>
+              </Card>
 
-            {/* Average Score */}
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Rata-rata Skor
-                </CardTitle>
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {statistics.averageScore.toFixed(1)}
-                </div>
-                <p className="text-xs text-muted-foreground mb-2">
-                  dari 100 poin
-                </p>
-                <Progress value={statistics.averageScore} className="mt-1" />
-              </CardContent>
-            </Card>
+              {/* Average Score */}
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    Rata-rata Skor
+                  </CardTitle>
+                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {statistics.averageScore.toFixed(1)}
+                  </div>
+                  <p className="text-xs text-muted-foreground mb-2">
+                    dari 100 poin
+                  </p>
+                  <Progress value={statistics.averageScore} className="mt-1" />
+                </CardContent>
+              </Card>
 
-            {/* Highest Score */}
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Skor Tertinggi
-                </CardTitle>
-                <Award className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-green-600">
-                  {statistics.highestScore}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Terendah: {statistics.lowestScore}
-                </p>
-              </CardContent>
-            </Card>
+              {/* Highest Score */}
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    Skor Tertinggi
+                  </CardTitle>
+                  <Award className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-green-600">
+                    {statistics.highestScore}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Terendah: {statistics.lowestScore}
+                  </p>
+                </CardContent>
+              </Card>
 
-            {/* Pass Rate */}
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Tingkat Kelulusan
-                </CardTitle>
-                <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {statistics.passRate.toFixed(0)}%
-                </div>
-                <Progress value={statistics.passRate} className="mt-2" />
-              </CardContent>
-            </Card>
-          </>
-        )}
-      </div>
+              {/* Pass Rate */}
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    Tingkat Kelulusan
+                  </CardTitle>
+                  <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {statistics.passRate.toFixed(0)}%
+                  </div>
+                  <Progress value={statistics.passRate} className="mt-2" />
+                </CardContent>
+              </Card>
+            </>
+          )}
+        </div>
       )}
 
       {/* For CBT mode: Show attempts table directly (no tabs) */}
@@ -582,7 +582,8 @@ export default function KuisResultsPage() {
                             </Avatar>
                             <div>
                               <p className="font-medium">
-                                {attempt.mahasiswa?.user?.full_name || "Unknown"}
+                                {attempt.mahasiswa?.user?.full_name ||
+                                  "Unknown"}
                               </p>
                               <p className="text-sm text-muted-foreground">
                                 {attempt.mahasiswa?.nim || "-"}
@@ -593,7 +594,8 @@ export default function KuisResultsPage() {
 
                         <TableCell>
                           {attempt.status === "graded" ||
-                          (attempt.status === "submitted" && isAutoGradedQuiz(quiz)) ? (
+                          (attempt.status === "submitted" &&
+                            isAutoGradedQuiz(quiz)) ? (
                             <Badge
                               variant={isPassed ? "default" : "destructive"}
                             >
@@ -620,7 +622,7 @@ export default function KuisResultsPage() {
                           <span
                             className={cn(
                               "font-semibold",
-                              isPassed ? "text-green-600" : "text-red-600"
+                              isPassed ? "text-green-600" : "text-red-600",
                             )}
                           >
                             {attempt.total_poin || 0}
@@ -635,7 +637,7 @@ export default function KuisResultsPage() {
                           {attempt.submitted_at && attempt.started_at
                             ? calculateDuration(
                                 attempt.started_at,
-                                attempt.submitted_at
+                                attempt.submitted_at,
                               )
                             : "-"}
                         </TableCell>
@@ -672,315 +674,318 @@ export default function KuisResultsPage() {
 
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Informasi Tugas</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {laporanMode ? (
-                // LAPORAN MODE: Show submission info
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-sm font-medium">Tipe Tugas</Label>
-                    <p className="text-2xl font-bold">Laporan Praktikum</p>
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium">
-                      Total Mahasiswa
-                    </Label>
-                    <p className="text-2xl font-bold">
-                      {statistics.totalAttempts}
-                    </p>
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium">Sudah Submit</Label>
-                    <p className="text-2xl font-bold text-green-600">
-                      {statistics.completedAttempts}
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                // CBT MODE: Show score info
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-sm font-medium">Total Soal</Label>
-                    <p className="text-2xl font-bold">
-                      {(quiz as any).total_soal || 0}
-                    </p>
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium">Total Poin</Label>
-                    <p className="text-2xl font-bold">
-                      {(quiz as any).total_poin || 100}
-                    </p>
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium">Durasi</Label>
-                    <p className="text-2xl font-bold">
-                      {(quiz as any).durasi || (quiz as any).durasi_menit || 0}{" "}
-                      menit
-                    </p>
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium">
-                      Waktu Rata-rata
-                    </Label>
-                    <p className="text-2xl font-bold">
-                      {statistics.averageTime.toFixed(0)} menit
-                    </p>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Score Distribution - Only for CBT */}
-          {!laporanMode && (
             <Card>
               <CardHeader>
-                <CardTitle>Distribusi Skor</CardTitle>
+                <CardTitle>Informasi Tugas</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {getScoreDistribution(attempts).map((range) => (
-                    <div key={range.label}>
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium">
-                          {range.label}
-                        </span>
-                        <span className="text-sm text-muted-foreground">
-                          {range.count} mahasiswa
-                        </span>
-                      </div>
-                      <Progress
-                        value={
-                          attempts.length > 0
-                            ? (range.count / attempts.length) * 100
-                            : 0
-                        }
-                        className="h-2"
-                      />
+              <CardContent className="space-y-4">
+                {laporanMode ? (
+                  // LAPORAN MODE: Show submission info
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-sm font-medium">Tipe Tugas</Label>
+                      <p className="text-2xl font-bold">Laporan Praktikum</p>
                     </div>
-                  ))}
-                </div>
+                    <div>
+                      <Label className="text-sm font-medium">
+                        Total Mahasiswa
+                      </Label>
+                      <p className="text-2xl font-bold">
+                        {statistics.totalAttempts}
+                      </p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium">
+                        Sudah Submit
+                      </Label>
+                      <p className="text-2xl font-bold text-green-600">
+                        {statistics.completedAttempts}
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  // CBT MODE: Show score info
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-sm font-medium">Total Soal</Label>
+                      <p className="text-2xl font-bold">
+                        {(quiz as any).total_soal || 0}
+                      </p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium">Total Poin</Label>
+                      <p className="text-2xl font-bold">
+                        {(quiz as any).total_poin || 100}
+                      </p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium">Durasi</Label>
+                      <p className="text-2xl font-bold">
+                        {(quiz as any).durasi ||
+                          (quiz as any).durasi_menit ||
+                          0}{" "}
+                        menit
+                      </p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium">
+                        Waktu Rata-rata
+                      </Label>
+                      <p className="text-2xl font-bold">
+                        {statistics.averageTime.toFixed(0)} menit
+                      </p>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
-          )}
-        </TabsContent>
 
-        {/* Attempts Tab */}
-        <TabsContent value="attempts" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>Daftar Percobaan</CardTitle>
-                <div className="relative w-64">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Cari mahasiswa..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {filteredAttempts.length === 0 ? (
-                <div className="text-center py-12">
-                  <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground">
-                    {searchQuery
-                      ? "Tidak ada hasil yang sesuai"
-                      : "Belum ada mahasiswa yang mengerjakan tugas ini"}
-                  </p>
-                </div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Mahasiswa</TableHead>
-                      <TableHead>Status</TableHead>
-                      {!laporanMode && (
-                        <>
-                          <TableHead className="text-right">Skor</TableHead>
-                          <TableHead className="text-right">Waktu</TableHead>
-                        </>
-                      )}
-                      {laporanMode && <TableHead>Waktu Submit</TableHead>}
-                      <TableHead className="text-center">Aksi</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredAttempts.map((attempt) => {
-                      // FIXED: Changed nilai to total_poin
-                      const isPassed =
-                        (attempt.total_poin || 0) >=
-                        ((quiz as any).passing_grade || 60);
+            {/* Score Distribution - Only for CBT */}
+            {!laporanMode && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Distribusi Skor</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {getScoreDistribution(attempts).map((range) => (
+                      <div key={range.label}>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium">
+                            {range.label}
+                          </span>
+                          <span className="text-sm text-muted-foreground">
+                            {range.count} mahasiswa
+                          </span>
+                        </div>
+                        <Progress
+                          value={
+                            attempts.length > 0
+                              ? (range.count / attempts.length) * 100
+                              : 0
+                          }
+                          className="h-2"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
 
-                      return (
-                        <TableRow key={attempt.id}>
-                          <TableCell>
-                            <div className="flex items-center gap-3">
-                              <Avatar>
-                                <AvatarFallback>
-                                  {attempt.mahasiswa?.user?.full_name
-                                    .split(" ")
-                                    .map((n) => n[0])
-                                    .join("")
-                                    .toUpperCase() || "M"}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div>
-                                <p className="font-medium">
-                                  {attempt.mahasiswa?.user?.full_name ||
-                                    "Unknown"}
-                                </p>
-                                <p className="text-sm text-muted-foreground">
-                                  {attempt.mahasiswa?.nim || "-"}
-                                </p>
+          {/* Attempts Tab */}
+          <TabsContent value="attempts" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle>Daftar Percobaan</CardTitle>
+                  <div className="relative w-64">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Cari mahasiswa..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {filteredAttempts.length === 0 ? (
+                  <div className="text-center py-12">
+                    <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground">
+                      {searchQuery
+                        ? "Tidak ada hasil yang sesuai"
+                        : "Belum ada mahasiswa yang mengerjakan tugas ini"}
+                    </p>
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Mahasiswa</TableHead>
+                        <TableHead>Status</TableHead>
+                        {!laporanMode && (
+                          <>
+                            <TableHead className="text-right">Skor</TableHead>
+                            <TableHead className="text-right">Waktu</TableHead>
+                          </>
+                        )}
+                        {laporanMode && <TableHead>Waktu Submit</TableHead>}
+                        <TableHead className="text-center">Aksi</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredAttempts.map((attempt) => {
+                        // FIXED: Changed nilai to total_poin
+                        const isPassed =
+                          (attempt.total_poin || 0) >=
+                          ((quiz as any).passing_grade || 60);
+
+                        return (
+                          <TableRow key={attempt.id}>
+                            <TableCell>
+                              <div className="flex items-center gap-3">
+                                <Avatar>
+                                  <AvatarFallback>
+                                    {attempt.mahasiswa?.user?.full_name
+                                      .split(" ")
+                                      .map((n) => n[0])
+                                      .join("")
+                                      .toUpperCase() || "M"}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div>
+                                  <p className="font-medium">
+                                    {attempt.mahasiswa?.user?.full_name ||
+                                      "Unknown"}
+                                  </p>
+                                  <p className="text-sm text-muted-foreground">
+                                    {attempt.mahasiswa?.nim || "-"}
+                                  </p>
+                                </div>
                               </div>
-                            </div>
-                          </TableCell>
+                            </TableCell>
 
-                          <TableCell>
-                            {laporanMode ? (
-                              // LAPORAN MODE: Show upload status
-                              attempt.status === "submitted" ||
-                              attempt.status === "graded" ? (
-                                <Badge variant="default">
-                                  <CheckCircle2 className="h-3 w-3 mr-1" />
-                                  Sudah Upload
-                                </Badge>
-                              ) : (
-                                <Badge variant="secondary">
-                                  <Clock className="h-3 w-3 mr-1" />
-                                  Belum Upload
-                                </Badge>
-                              )
-                            ) : (
-                              // CBT MODE: Show pass/fail status
-                              <>
-                                {attempt.status === "graded" ? (
-                                  <Badge
-                                    variant={
-                                      isPassed ? "default" : "destructive"
-                                    }
-                                  >
-                                    {isPassed ? (
-                                      <>
-                                        <CheckCircle2 className="h-3 w-3 mr-1" />
-                                        Lulus
-                                      </>
-                                    ) : (
-                                      <>
-                                        <XCircle className="h-3 w-3 mr-1" />
-                                        Tidak Lulus
-                                      </>
-                                    )}
-                                  </Badge>
-                                ) : attempt.status === "submitted" ? (
-                                  <Badge variant="secondary">
-                                    <Clock className="h-3 w-3 mr-1" />
-                                    Menunggu Penilaian
+                            <TableCell>
+                              {laporanMode ? (
+                                // LAPORAN MODE: Show upload status
+                                attempt.status === "submitted" ||
+                                attempt.status === "graded" ? (
+                                  <Badge variant="default">
+                                    <CheckCircle2 className="h-3 w-3 mr-1" />
+                                    Sudah Upload
                                   </Badge>
                                 ) : (
-                                  <Badge variant="outline">
+                                  <Badge variant="secondary">
                                     <Clock className="h-3 w-3 mr-1" />
-                                    Sedang Dikerjakan
+                                    Belum Upload
                                   </Badge>
-                                )}
+                                )
+                              ) : (
+                                // CBT MODE: Show pass/fail status
+                                <>
+                                  {attempt.status === "graded" ? (
+                                    <Badge
+                                      variant={
+                                        isPassed ? "default" : "destructive"
+                                      }
+                                    >
+                                      {isPassed ? (
+                                        <>
+                                          <CheckCircle2 className="h-3 w-3 mr-1" />
+                                          Lulus
+                                        </>
+                                      ) : (
+                                        <>
+                                          <XCircle className="h-3 w-3 mr-1" />
+                                          Tidak Lulus
+                                        </>
+                                      )}
+                                    </Badge>
+                                  ) : attempt.status === "submitted" ? (
+                                    <Badge variant="secondary">
+                                      <Clock className="h-3 w-3 mr-1" />
+                                      Menunggu Penilaian
+                                    </Badge>
+                                  ) : (
+                                    <Badge variant="outline">
+                                      <Clock className="h-3 w-3 mr-1" />
+                                      Sedang Dikerjakan
+                                    </Badge>
+                                  )}
+                                </>
+                              )}
+                            </TableCell>
+
+                            {!laporanMode && (
+                              <>
+                                <TableCell className="text-right">
+                                  <span
+                                    className={cn(
+                                      "font-semibold",
+                                      isPassed
+                                        ? "text-green-600"
+                                        : "text-red-600",
+                                    )}
+                                  >
+                                    {/* FIXED: Changed nilai to total_poin */}
+                                    {attempt.total_poin || 0}
+                                  </span>
+                                  <span className="text-muted-foreground">
+                                    {" / "}
+                                    {(quiz as any).total_poin || 100}
+                                  </span>
+                                </TableCell>
+
+                                <TableCell className="text-right text-sm text-muted-foreground">
+                                  {/* FIXED: Changed property names */}
+                                  {attempt.submitted_at && attempt.started_at
+                                    ? calculateDuration(
+                                        attempt.started_at,
+                                        attempt.submitted_at,
+                                      )
+                                    : "-"}
+                                </TableCell>
                               </>
                             )}
-                          </TableCell>
 
-                          {!laporanMode && (
-                            <>
-                              <TableCell className="text-right">
-                                <span
-                                  className={cn(
-                                    "font-semibold",
-                                    isPassed
-                                      ? "text-green-600"
-                                      : "text-red-600",
-                                  )}
-                                >
-                                  {/* FIXED: Changed nilai to total_poin */}
-                                  {attempt.total_poin || 0}
-                                </span>
-                                <span className="text-muted-foreground">
-                                  {" / "}
-                                  {(quiz as any).total_poin || 100}
-                                </span>
-                              </TableCell>
-
-                              <TableCell className="text-right text-sm text-muted-foreground">
-                                {/* FIXED: Changed property names */}
-                                {attempt.submitted_at && attempt.started_at
-                                  ? calculateDuration(
-                                      attempt.started_at,
+                            {laporanMode && (
+                              <TableCell className="text-sm text-muted-foreground">
+                                {attempt.submitted_at
+                                  ? new Date(
                                       attempt.submitted_at,
-                                    )
-                                  : "-"}
-                              </TableCell>
-                            </>
-                          )}
-
-                          {laporanMode && (
-                            <TableCell className="text-sm text-muted-foreground">
-                              {attempt.submitted_at
-                                ? new Date(attempt.submitted_at).toLocaleString(
-                                    "id-ID",
-                                    {
+                                    ).toLocaleString("id-ID", {
                                       day: "2-digit",
                                       month: "short",
                                       year: "numeric",
                                       hour: "2-digit",
                                       minute: "2-digit",
-                                    },
-                                  )
-                                : "-"}
+                                    })
+                                  : "-"}
+                              </TableCell>
+                            )}
+
+                            <TableCell className="text-center">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleViewAttempt(attempt.id)}
+                                title={
+                                  laporanMode
+                                    ? "Lihat & Nilai Laporan"
+                                    : "Lihat Detail"
+                                }
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
                             </TableCell>
-                          )}
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-                          <TableCell className="text-center">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleViewAttempt(attempt.id)}
-                              title={
-                                laporanMode
-                                  ? "Lihat & Nilai Laporan"
-                                  : "Lihat Detail"
-                              }
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Analysis Tab */}
-        <TabsContent value="analysis">
-          <Card>
-            <CardHeader>
-              <CardTitle>Analisis Per Soal</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground text-center py-12">
-                Fitur analisis per soal akan segera tersedia
-              </p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+          {/* Analysis Tab */}
+          <TabsContent value="analysis">
+            <Card>
+              <CardHeader>
+                <CardTitle>Analisis Per Soal</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground text-center py-12">
+                  Fitur analisis per soal akan segera tersedia
+                </p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       )}
     </div>
   );

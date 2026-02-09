@@ -201,12 +201,15 @@ export async function submitQuizSafe(
 export async function submitAllAnswersWithVersion(
   attemptId: string,
   answers: Record<string, string>,
-  fileUploads?: Record<string, {
-    url: string;
-    name: string;
-    size: number;
-    type: string;
-  }>,
+  fileUploads?: Record<
+    string,
+    {
+      url: string;
+      name: string;
+      size: number;
+      type: string;
+    }
+  >,
 ): Promise<{
   success: number;
   failed: number;
@@ -304,11 +307,20 @@ export async function gradeAnswerWithVersion(
     // ✅ FIX: Update attempt status to "graded" and total_poin after grading
     const attemptId = (gradedAnswer as any).attempt_id;
     if (attemptId) {
-      console.log("[KuisAPI] Updating attempt:", attemptId, "with poin:", poinDiperoleh);
+      console.log(
+        "[KuisAPI] Updating attempt:",
+        attemptId,
+        "with poin:",
+        poinDiperoleh,
+      );
 
       // ✅ FIX: Don't use .select() to avoid potential RLS issues
       // Just check if update succeeded by counting affected rows
-      const { data: attemptData, error: attemptError, count } = await supabase
+      const {
+        data: attemptData,
+        error: attemptError,
+        count,
+      } = await supabase
         .from("attempt_kuis")
         .update({
           status: "graded",
@@ -318,11 +330,19 @@ export async function gradeAnswerWithVersion(
         .select();
 
       if (attemptError) {
-        console.error("[KuisAPI] Failed to update attempt status:", attemptError);
-        throw new Error(`Gagal mengupdate status attempt: ${attemptError.message}`);
+        console.error(
+          "[KuisAPI] Failed to update attempt status:",
+          attemptError,
+        );
+        throw new Error(
+          `Gagal mengupdate status attempt: ${attemptError.message}`,
+        );
       }
 
-      console.log("[KuisAPI] Attempt updated successfully, rows affected:", count);
+      console.log(
+        "[KuisAPI] Attempt updated successfully, rows affected:",
+        count,
+      );
       console.log("[KuisAPI] Updated data:", attemptData);
 
       // ✅ VERIFICATION: Verify the update actually worked by querying the attempt
@@ -334,9 +354,14 @@ export async function gradeAnswerWithVersion(
           .single();
 
         if (!verifyError && verifyAttempt) {
-          console.log("[KuisAPI] ✅ VERIFICATION: Attempt status in DB =", verifyAttempt.status);
+          console.log(
+            "[KuisAPI] ✅ VERIFICATION: Attempt status in DB =",
+            verifyAttempt.status,
+          );
           if (verifyAttempt.status !== "graded") {
-            console.error("[KuisAPI] ❌ CRITICAL: Update reported success but status not changed in DB!");
+            console.error(
+              "[KuisAPI] ❌ CRITICAL: Update reported success but status not changed in DB!",
+            );
           }
         } else if (verifyError) {
           console.error("[KuisAPI] ❌ VERIFICATION FAILED:", verifyError);
@@ -352,14 +377,22 @@ export async function gradeAnswerWithVersion(
       // ✅ FIX: Also invalidate dosen_grading cache specifically
       // This ensures dashboard "Perlu Dinilai" count is updated
       try {
-        const dosenId = await supabase.auth.getUser().then(res => res.data.user?.id);
+        const dosenId = await supabase.auth
+          .getUser()
+          .then((res) => res.data.user?.id);
         if (dosenId) {
           const { invalidateCache } = await import("@/lib/offline/api-cache");
           await invalidateCache(`dosen_grading_${dosenId}`);
-          console.log("[KuisAPI] Invalidated dosen_grading cache for:", dosenId);
+          console.log(
+            "[KuisAPI] Invalidated dosen_grading cache for:",
+            dosenId,
+          );
         }
       } catch (err) {
-        console.warn("[KuisAPI] Failed to invalidate dosen_grading cache:", err);
+        console.warn(
+          "[KuisAPI] Failed to invalidate dosen_grading cache:",
+          err,
+        );
       }
     } else {
       console.warn("[KuisAPI] No attempt_id found in graded answer");

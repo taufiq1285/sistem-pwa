@@ -917,7 +917,10 @@ describe("Dosen API - Grading Operations", () => {
               mahasiswa_id: "mhs-1",
               status: "submitted",
               mahasiswa: { user: { full_name: "John" }, nim: "BD2321001" },
-              kuis: { judul: "Quiz 1", kelas: { mata_kuliah: { nama_mk: "MK" } } },
+              kuis: {
+                judul: "Quiz 1",
+                kelas: { mata_kuliah: { nama_mk: "MK" } },
+              },
               submitted_at: "2024-01-01",
               attempt_number: 1,
             },

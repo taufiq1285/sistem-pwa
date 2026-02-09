@@ -228,7 +228,9 @@ export function NotificationDropdown() {
       notification.data?.kuis_id
     ) {
       // ✅ FIX: Include kuisId in the URL (route requires both params)
-      navigate(`/mahasiswa/kuis/${notification.data.kuis_id}/result/${notification.data.attempt_id}`);
+      navigate(
+        `/mahasiswa/kuis/${notification.data.kuis_id}/result/${notification.data.attempt_id}`,
+      );
       setOpen(false);
     } else if (notification.type === "perbaikan_nilai_request") {
       // Dosen receives request → navigate to penilaian page

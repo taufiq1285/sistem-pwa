@@ -115,14 +115,18 @@ export async function uploadLaporan(
 
   const timeoutPromise = new Promise((_, reject) => {
     setTimeout(() => {
-      reject(new Error("Upload timeout. File terlalu besar atau koneksi terlalu lambat. Coba kecilkan ukuran file atau periksa koneksi internet Anda."));
+      reject(
+        new Error(
+          "Upload timeout. File terlalu besar atau koneksi terlalu lambat. Coba kecilkan ukuran file atau periksa koneksi internet Anda.",
+        ),
+      );
     }, UPLOAD_TIMEOUT);
   });
 
-  const { data, error } = await Promise.race([
+  const { data, error } = (await Promise.race([
     uploadPromise,
     timeoutPromise,
-  ]) as any;
+  ])) as any;
 
   if (error) {
     console.error("❌ Upload error:", error);
@@ -130,7 +134,9 @@ export async function uploadLaporan(
   }
 
   console.log("✅ Upload success:", data);
-  console.log(`⏱️ Upload completed for ${fileName} (${(file.size / 1024).toFixed(2)} KB)`);
+  console.log(
+    `⏱️ Upload completed for ${fileName} (${(file.size / 1024).toFixed(2)} KB)`,
+  );
 
   // Get public URL (or signed URL for private bucket)
   const { data: urlData } = supabase.storage

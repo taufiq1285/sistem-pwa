@@ -229,13 +229,13 @@ export async function logout(): Promise<AuthResponse> {
       // Get all localStorage keys
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
-        if (key && key.startsWith('sb-')) {
+        if (key && key.startsWith("sb-")) {
           keysToRemove.push(key);
         }
       }
 
       // Remove all Supabase keys
-      keysToRemove.forEach(key => {
+      keysToRemove.forEach((key) => {
         localStorage.removeItem(key);
         logger.debug("logout: Removed from localStorage:", key);
       });
@@ -243,14 +243,14 @@ export async function logout(): Promise<AuthResponse> {
       // Also clear sessionStorage
       for (let i = 0; i < sessionStorage.length; i++) {
         const key = sessionStorage.key(i);
-        if (key && key.startsWith('sb-')) {
+        if (key && key.startsWith("sb-")) {
           sessionStorage.removeItem(key);
           logger.debug("logout: Removed from sessionStorage:", key);
         }
       }
 
       logger.auth("logout: Cleared Supabase storage", {
-        localStorageCount: keysToRemove.length
+        localStorageCount: keysToRemove.length,
       });
     } catch (storageError) {
       logger.warn("logout: Failed to clear storage", storageError);

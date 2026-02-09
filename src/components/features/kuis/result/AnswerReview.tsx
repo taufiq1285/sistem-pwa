@@ -10,7 +10,14 @@
  * - Points earned
  */
 
-import { CheckCircle2, XCircle, Circle, AlertCircle, FileText, ExternalLink } from "lucide-react";
+import {
+  CheckCircle2,
+  XCircle,
+  Circle,
+  AlertCircle,
+  FileText,
+  ExternalLink,
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -130,7 +137,9 @@ export function AnswerReview({
           ) : soal.tipe_soal === TIPE_SOAL.FILE_UPLOAD ? (
             // FILE_UPLOAD: Show file link or typed text
             <div className="p-4 rounded-lg border-2 border-blue-300 bg-blue-50 dark:bg-blue-950">
-              {(jawaban.jawaban || jawaban.jawaban_mahasiswa)?.startsWith("http") ? (
+              {(jawaban.jawaban || jawaban.jawaban_mahasiswa)?.startsWith(
+                "http",
+              ) ? (
                 // File upload - show link
                 <a
                   href={jawaban.jawaban || jawaban.jawaban_mahasiswa}
@@ -144,7 +153,9 @@ export function AnswerReview({
                 </a>
               ) : (
                 // Typed text - show content
-                <p className="whitespace-pre-wrap">{jawaban.jawaban || jawaban.jawaban_mahasiswa}</p>
+                <p className="whitespace-pre-wrap">
+                  {jawaban.jawaban || jawaban.jawaban_mahasiswa}
+                </p>
               )}
             </div>
           ) : (
@@ -158,7 +169,10 @@ export function AnswerReview({
               )}
             >
               <p className="whitespace-pre-wrap">
-                {getAnswerLabel(soal, (jawaban.jawaban || jawaban.jawaban_mahasiswa) || "")}
+                {getAnswerLabel(
+                  soal,
+                  jawaban.jawaban || jawaban.jawaban_mahasiswa || "",
+                )}
               </p>
             </div>
           )}

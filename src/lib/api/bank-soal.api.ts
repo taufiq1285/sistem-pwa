@@ -18,11 +18,7 @@ import type {
   BankSoalFilters,
   BankSoalStats,
 } from "@/types/bank-soal.types";
-import type {
-  TipeSoal,
-  Soal,
-  OpsiJawaban,
-} from "@/types/kuis.types";
+import type { TipeSoal, Soal, OpsiJawaban } from "@/types/kuis.types";
 
 // ============================================================================
 // GET OPERATIONS

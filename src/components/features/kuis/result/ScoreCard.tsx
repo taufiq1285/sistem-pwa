@@ -129,7 +129,10 @@ export function ScoreCard({
                   <div>
                     <div className="text-5xl font-bold text-blue-600 dark:text-blue-400">
                       {score.total_poin}
-                      <span className="text-2xl text-muted-foreground"> / {score.max_poin}</span>
+                      <span className="text-2xl text-muted-foreground">
+                        {" "}
+                        / {score.max_poin}
+                      </span>
                     </div>
                     <p className="text-sm text-muted-foreground mt-2">
                       Poin Diperoleh

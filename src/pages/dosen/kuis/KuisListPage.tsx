@@ -114,29 +114,44 @@ export default function KuisListPage() {
             const oldData = payload.old as any;
             const newData = payload.new as any;
 
-            if ((oldData && oldData.dosen_id === user.dosen.id) ||
-                (newData && newData.dosen_id === user.dosen.id)) {
-              console.log("[Dosen KuisList] Kuis changed for current dosen, debounced refresh...");
+            if (
+              (oldData && oldData.dosen_id === user.dosen.id) ||
+              (newData && newData.dosen_id === user.dosen.id)
+            ) {
+              console.log(
+                "[Dosen KuisList] Kuis changed for current dosen, debounced refresh...",
+              );
               debouncedLoad(true);
             } else {
-              console.log("[Dosen KuisList] Kuis changed but not for current dosen, ignoring");
+              console.log(
+                "[Dosen KuisList] Kuis changed but not for current dosen, ignoring",
+              );
             }
           },
         )
         .subscribe();
 
-      console.log("[Dosen KuisList] ✅ Realtime subscription active for dosen:", user.dosen.id);
+      console.log(
+        "[Dosen KuisList] ✅ Realtime subscription active for dosen:",
+        user.dosen.id,
+      );
     }
 
     // ✅ CUSTOM EVENT LISTENER: Listen for immediate kuis changes from API calls
     // This ensures instant UI update when createKuis/updateKuis/deleteKuis is called
     const handleKuisChanged = (event: any) => {
       const { action, kuis, dosenId } = event.detail;
-      console.log("[Dosen KuisList] 📢 Custom event received:", { action, kuisId: kuis?.id, dosenId });
+      console.log("[Dosen KuisList] 📢 Custom event received:", {
+        action,
+        kuisId: kuis?.id,
+        dosenId,
+      });
 
       // Only refresh if this kuis belongs to current dosen
       if (dosenId === user?.dosen?.id) {
-        console.log("[Dosen KuisList] 🔄 Refreshing after custom event (debounced)...");
+        console.log(
+          "[Dosen KuisList] 🔄 Refreshing after custom event (debounced)...",
+        );
         debouncedLoad(true); // Force refresh with debounce
       }
     };
@@ -150,14 +165,16 @@ export default function KuisListPage() {
       // Only reload if this cache key is relevant
       if (key === cacheKey) {
         console.log("[Dosen KuisList] 📢 Cache updated event received:", key);
-        console.log("[Dosen KuisList] 🔄 Reloading data with fresh cache (debounced)...");
+        console.log(
+          "[Dosen KuisList] 🔄 Reloading data with fresh cache (debounced)...",
+        );
         debouncedLoad(true); // Force refresh with debounce
       }
     };
 
     // Add event listeners
-    window.addEventListener('kuis:changed', handleKuisChanged);
-    window.addEventListener('cache:updated', handleCacheUpdated);
+    window.addEventListener("kuis:changed", handleKuisChanged);
+    window.addEventListener("cache:updated", handleCacheUpdated);
 
     // Cleanup subscription and event listeners on unmount
     return () => {
@@ -170,8 +187,8 @@ export default function KuisListPage() {
         console.log("[Dosen KuisList] Cleaning up subscription");
         subscription.unsubscribe();
       }
-      window.removeEventListener('kuis:changed', handleKuisChanged);
-      window.removeEventListener('cache:updated', handleCacheUpdated);
+      window.removeEventListener("kuis:changed", handleKuisChanged);
+      window.removeEventListener("cache:updated", handleCacheUpdated);
     };
   }, [user]);
 
@@ -182,7 +199,9 @@ export default function KuisListPage() {
   useEffect(() => {
     const refreshTimer = setTimeout(() => {
       // Force refresh on mount to get fresh data
-      console.log("[Dosen KuisList] 🔁 Auto-refreshing on mount to ensure fresh data...");
+      console.log(
+        "[Dosen KuisList] 🔁 Auto-refreshing on mount to ensure fresh data...",
+      );
       loadQuizzes(true);
     }, 800); // Wait for cache invalidation to complete
 
@@ -219,7 +238,9 @@ export default function KuisListPage() {
       // This prevents stale cache after creating/updating/deleting kuis
       let data: Kuis[];
       if (forceRefresh) {
-        console.log("[Dosen KuisList] 🔁 Force refresh - bypassing cacheAPI...");
+        console.log(
+          "[Dosen KuisList] 🔁 Force refresh - bypassing cacheAPI...",
+        );
         // Bypass cache, call API directly
         data = await getKuis(filters, { forceRefresh: true });
       } else {
@@ -247,10 +268,15 @@ export default function KuisListPage() {
       });
 
       // Check for potential duplicates (same title)
-      const titles = data.map(q => q.judul);
-      const duplicates = titles.filter((title, index) => titles.indexOf(title) !== index);
+      const titles = data.map((q) => q.judul);
+      const duplicates = titles.filter(
+        (title, index) => titles.indexOf(title) !== index,
+      );
       if (duplicates.length > 0) {
-        console.warn("[Dosen KuisList] ⚠️ Potential duplicate quiz titles detected:", duplicates);
+        console.warn(
+          "[Dosen KuisList] ⚠️ Potential duplicate quiz titles detected:",
+          duplicates,
+        );
       }
 
       setQuizzes(data);

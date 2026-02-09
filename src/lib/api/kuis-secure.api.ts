@@ -232,13 +232,17 @@ export async function getKuisForAttempt(kuisId: string): Promise<Kuis> {
       ...kuisData,
       soal,
       // Add empty relations to avoid undefined errors
-      kelas: kuisData.kelas_id ? {
-        nama_kelas: "Unknown",
-        mata_kuliah: { nama_mk: "Unknown", kode_mk: "Unknown" }
-      } : null,
-      dosen: kuisData.dosen_id ? {
-        users: { full_name: "Dosen" }
-      } : null,
+      kelas: kuisData.kelas_id
+        ? {
+            nama_kelas: "Unknown",
+            mata_kuliah: { nama_mk: "Unknown", kode_mk: "Unknown" },
+          }
+        : null,
+      dosen: kuisData.dosen_id
+        ? {
+            users: { full_name: "Dosen" },
+          }
+        : null,
     } as Kuis;
 
     console.log("✅ [Secure API] Kuis loaded securely for attempt");

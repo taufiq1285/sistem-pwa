@@ -53,7 +53,9 @@ export async function cacheAPI<T>(
   try {
     await indexedDBManager.initialize();
 
-    console.log(`[API Cache] cacheAPI called: key=${key}, forceRefresh=${forceRefresh}, staleWhileRevalidate=${staleWhileRevalidate}`);
+    console.log(
+      `[API Cache] cacheAPI called: key=${key}, forceRefresh=${forceRefresh}, staleWhileRevalidate=${staleWhileRevalidate}`,
+    );
 
     // Check cache first (unless force refresh)
     if (!forceRefresh) {
@@ -162,12 +164,17 @@ async function fetchAndCache<T>(
     // ✅ Dispatch event to notify UI that cache has been updated
     // Components can listen for this event to re-render with fresh data
     try {
-      window.dispatchEvent(new CustomEvent('cache:updated', {
-        detail: { key, data }
-      }));
+      window.dispatchEvent(
+        new CustomEvent("cache:updated", {
+          detail: { key, data },
+        }),
+      );
       console.log(`[API Cache] Event dispatched: cache:updated (${key})`);
     } catch (eventError) {
-      console.warn(`[API Cache] Failed to dispatch cache:updated event:`, eventError);
+      console.warn(
+        `[API Cache] Failed to dispatch cache:updated event:`,
+        eventError,
+      );
     }
   } catch (error) {
     console.error(`[API Cache] Background update failed: ${key}`, error);
@@ -215,7 +222,9 @@ async function invalidateCachePatternImpl(pattern: string): Promise<number> {
     // ✅ CRITICAL: Wait for transaction to complete, not just cursor
     // Transaction.oncomplete fires after all operations are committed to database
     transaction.oncomplete = () => {
-      console.log(`[API Cache] Transaction committed successfully, deleted ${deletedCount} entries`);
+      console.log(
+        `[API Cache] Transaction committed successfully, deleted ${deletedCount} entries`,
+      );
       resolve(deletedCount);
     };
 
@@ -253,7 +262,9 @@ async function invalidateCachePatternImpl(pattern: string): Promise<number> {
       } else {
         // Cursor done - mark as complete
         cursorComplete = true;
-        console.log(`[API Cache] Cursor completed, waiting for transaction commit... (${deletedCount} entries marked for deletion)`);
+        console.log(
+          `[API Cache] Cursor completed, waiting for transaction commit... (${deletedCount} entries marked for deletion)`,
+        );
         // Don't resolve here - wait for transaction.oncomplete
       }
     };
@@ -269,15 +280,22 @@ async function invalidateCachePatternImpl(pattern: string): Promise<number> {
  *
  * @returns Promise that resolves when cache invalidation is complete
  */
-export async function invalidateCachePatternSync(pattern: string): Promise<number> {
+export async function invalidateCachePatternSync(
+  pattern: string,
+): Promise<number> {
   console.log(`[API Cache] Starting SYNC cache invalidation: ${pattern}`);
 
   try {
     const deletedCount = await invalidateCachePatternImpl(pattern);
-    console.log(`[API Cache] SYNC invalidation completed: ${pattern} (${deletedCount} entries deleted)`);
+    console.log(
+      `[API Cache] SYNC invalidation completed: ${pattern} (${deletedCount} entries deleted)`,
+    );
     return deletedCount;
   } catch (error) {
-    console.error(`[API Cache] SYNC invalidation failed for ${pattern}:`, error);
+    console.error(
+      `[API Cache] SYNC invalidation failed for ${pattern}:`,
+      error,
+    );
     return 0;
   }
 }
@@ -291,7 +309,9 @@ export async function invalidateCachePatternSync(pattern: string): Promise<numbe
  * Use this for non-urgent cleanup where immediate freshness is not critical.
  */
 export async function invalidateCachePattern(pattern: string): Promise<void> {
-  console.log(`[API Cache] Starting non-blocking cache invalidation: ${pattern}`);
+  console.log(
+    `[API Cache] Starting non-blocking cache invalidation: ${pattern}`,
+  );
 
   // Use setTimeout to run this completely in the background
   // This ensures the caller can continue immediately without waiting
@@ -300,12 +320,17 @@ export async function invalidateCachePattern(pattern: string): Promise<void> {
       await invalidateCachePatternImpl(pattern);
       console.log(`[API Cache] Background invalidation completed: ${pattern}`);
     } catch (error) {
-      console.error(`[API Cache] Background: Failed to invalidate pattern ${pattern}:`, error);
+      console.error(
+        `[API Cache] Background: Failed to invalidate pattern ${pattern}:`,
+        error,
+      );
     }
   }, 0);
 
   // Return immediately - don't wait for the background process
-  console.log(`[API Cache] invalidateCachePattern returned immediately (running in background)`);
+  console.log(
+    `[API Cache] invalidateCachePattern returned immediately (running in background)`,
+  );
 }
 
 /**
@@ -337,7 +362,9 @@ export async function clearAllCacheSync(): Promise<number> {
       let clearedCount = 0;
 
       transaction.oncomplete = () => {
-        console.log(`[API Cache] SYNC clear all completed, cleared ${clearedCount} entries`);
+        console.log(
+          `[API Cache] SYNC clear all completed, cleared ${clearedCount} entries`,
+        );
         resolve(clearedCount);
       };
 
@@ -424,17 +451,24 @@ export async function clearAllCache(): Promise<void> {
           cursor.continue();
         } else {
           // Cursor done
-          console.log(`[API Cache] Background: Completed, cleared ${clearedCount} entries`);
+          console.log(
+            `[API Cache] Background: Completed, cleared ${clearedCount} entries`,
+          );
         }
       };
 
       // Transaction will auto-commit
     } catch (error) {
-      console.error("[API Cache] Background: Failed to clear all cache:", error);
+      console.error(
+        "[API Cache] Background: Failed to clear all cache:",
+        error,
+      );
     }
   }, 0);
 
-  console.log("[API Cache] clearAllCache returned immediately (running in background)");
+  console.log(
+    "[API Cache] clearAllCache returned immediately (running in background)",
+  );
 }
 
 /**

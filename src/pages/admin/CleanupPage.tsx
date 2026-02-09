@@ -16,7 +16,12 @@ export default function CleanupPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<{
     success: boolean;
-    deleted: { jawaban: number; attempt_kuis: number; soal: number; kuis: number };
+    deleted: {
+      jawaban: number;
+      attempt_kuis: number;
+      soal: number;
+      kuis: number;
+    };
     mode?: "all" | "tugas-praktikum";
     error?: string;
   } | null>(null);
@@ -43,7 +48,7 @@ export default function CleanupPage() {
   const handleCleanupAll = async () => {
     // Konfirmasi dengan password/pin
     const confirmation = prompt(
-      '⚠️ PERINGATAN: Ini akan menghapus SEMUA data kuis (essay & pilihan_ganda)!\n\nKetik "HAPUS SEMUA" untuk melanjutkan:'
+      '⚠️ PERINGATAN: Ini akan menghapus SEMUA data kuis (essay & pilihan_ganda)!\n\nKetik "HAPUS SEMUA" untuk melanjutkan:',
     );
 
     if (confirmation !== "HAPUS SEMUA") {
@@ -54,14 +59,14 @@ export default function CleanupPage() {
     // Double confirmation
     const doubleConfirm = confirm(
       "⚠️ KONFIRMASI TERAKHIR:\n\n" +
-      "Anda akan MENGHAPUS PERMANEN:\n" +
-      "- SEMUA kuis (essay & pilihan_ganda)\n" +
-      "- Semua soal\n" +
-      "- Semua attempt mahasiswa\n" +
-      "- Semua jawaban mahasiswa\n" +
-      "- Semua nilai yang sudah diberikan\n\n" +
-      "Data TIDAK BISA dikembalikan!\n\n" +
-      "Lanjutkan?"
+        "Anda akan MENGHAPUS PERMANEN:\n" +
+        "- SEMUA kuis (essay & pilihan_ganda)\n" +
+        "- Semua soal\n" +
+        "- Semua attempt mahasiswa\n" +
+        "- Semua jawaban mahasiswa\n" +
+        "- Semua nilai yang sudah diberikan\n\n" +
+        "Data TIDAK BISA dikembalikan!\n\n" +
+        "Lanjutkan?",
     );
 
     if (!doubleConfirm) {
@@ -79,12 +84,12 @@ export default function CleanupPage() {
       if (cleanupResult.success) {
         alert(
           `✅ Cleanup berhasil!\n\n` +
-          `Dihapus:\n` +
-          `- ${cleanupResult.deleted.kuis} kuis\n` +
-          `- ${cleanupResult.deleted.soal} soal\n` +
-          `- ${cleanupResult.deleted.attempt_kuis} attempt\n` +
-          `- ${cleanupResult.deleted.jawaban} jawaban\n\n` +
-          `Cache juga sudah dibersihkan.`
+            `Dihapus:\n` +
+            `- ${cleanupResult.deleted.kuis} kuis\n` +
+            `- ${cleanupResult.deleted.soal} soal\n` +
+            `- ${cleanupResult.deleted.attempt_kuis} attempt\n` +
+            `- ${cleanupResult.deleted.jawaban} jawaban\n\n` +
+            `Cache juga sudah dibersihkan.`,
         );
 
         // Refresh current counts
@@ -103,7 +108,7 @@ export default function CleanupPage() {
   const handleCleanupTugasPraktikum = async () => {
     // Konfirmasi
     const confirmation = prompt(
-      '⚠️ PERINGATAN: Ini akan menghapus HANYA tugas praktikum (essay)!\n\nKetik "HAPUS TUGAS" untuk melanjutkan:'
+      '⚠️ PERINGATAN: Ini akan menghapus HANYA tugas praktikum (essay)!\n\nKetik "HAPUS TUGAS" untuk melanjutkan:',
     );
 
     if (confirmation !== "HAPUS TUGAS") {
@@ -114,15 +119,15 @@ export default function CleanupPage() {
     // Double confirmation
     const doubleConfirm = confirm(
       "⚠️ KONFIRMASI TERAKHIR:\n\n" +
-      "Anda akan MENGHAPUS PERMANEN:\n" +
-      "- Hanya kuis ESSAY (tugas praktikum)\n" +
-      "- Semua soal essay\n" +
-      "- Semua attempt ke tugas praktikum\n" +
-      "- Semua jawaban tugas praktikum\n" +
-      "- Semua nilai tugas praktikum\n\n" +
-      "Kuis PILIHAN GANDA TIDAK akan dihapus.\n\n" +
-      "Data TIDAK BISA dikembalikan!\n\n" +
-      "Lanjutkan?"
+        "Anda akan MENGHAPUS PERMANEN:\n" +
+        "- Hanya kuis ESSAY (tugas praktikum)\n" +
+        "- Semua soal essay\n" +
+        "- Semua attempt ke tugas praktikum\n" +
+        "- Semua jawaban tugas praktikum\n" +
+        "- Semua nilai tugas praktikum\n\n" +
+        "Kuis PILIHAN GANDA TIDAK akan dihapus.\n\n" +
+        "Data TIDAK BISA dikembalikan!\n\n" +
+        "Lanjutkan?",
     );
 
     if (!doubleConfirm) {
@@ -140,13 +145,13 @@ export default function CleanupPage() {
       if (cleanupResult.success) {
         alert(
           `✅ Cleanup berhasil!\n\n` +
-          `Dihapus:\n` +
-          `- ${cleanupResult.deleted.kuis} kuis essay\n` +
-          `- ${cleanupResult.deleted.soal} soal essay\n` +
-          `- ${cleanupResult.deleted.attempt_kuis} attempt\n` +
-          `- ${cleanupResult.deleted.jawaban} jawaban\n\n` +
-          `Kuis pilihan_ganda TIDAK dihapus.\n` +
-          `Cache juga sudah dibersihkan.`
+            `Dihapus:\n` +
+            `- ${cleanupResult.deleted.kuis} kuis essay\n` +
+            `- ${cleanupResult.deleted.soal} soal essay\n` +
+            `- ${cleanupResult.deleted.attempt_kuis} attempt\n` +
+            `- ${cleanupResult.deleted.jawaban} jawaban\n\n` +
+            `Kuis pilihan_ganda TIDAK dihapus.\n` +
+            `Cache juga sudah dibersihkan.`,
         );
 
         // Refresh current counts
@@ -171,8 +176,8 @@ export default function CleanupPage() {
             ⚠️ Cleanup Database - Hapus Data Kuis
           </h1>
           <p className="text-red-700">
-            Halaman ini akan menghapus PERMANEN data kuis dari database.
-            Gunakan dengan hati-hati!
+            Halaman ini akan menghapus PERMANEN data kuis dari database. Gunakan
+            dengan hati-hati!
           </p>
         </div>
 
@@ -187,13 +192,17 @@ export default function CleanupPage() {
                   <div className="text-2xl font-bold text-orange-800">
                     {currentCounts.kuis_essay}
                   </div>
-                  <div className="text-sm text-orange-600">Kuis Essay (Tugas Praktikum)</div>
+                  <div className="text-sm text-orange-600">
+                    Kuis Essay (Tugas Praktikum)
+                  </div>
                 </div>
                 <div className="bg-blue-50 p-4 rounded border border-blue-200">
                   <div className="text-2xl font-bold text-blue-800">
                     {currentCounts.kuis_pilihan_ganda}
                   </div>
-                  <div className="text-sm text-blue-600">Kuis Pilihan Ganda</div>
+                  <div className="text-sm text-blue-600">
+                    Kuis Pilihan Ganda
+                  </div>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -212,7 +221,9 @@ export default function CleanupPage() {
               </div>
             </>
           ) : (
-            <p className="text-gray-500">Klik tombol "Cek Data" untuk melihat jumlah data saat ini</p>
+            <p className="text-gray-500">
+              Klik tombol "Cek Data" untuk melihat jumlah data saat ini
+            </p>
           )}
 
           <button
@@ -232,9 +243,7 @@ export default function CleanupPage() {
 
           <div className="space-y-4">
             <div className="bg-orange-50 border-l-4 border-orange-500 p-4">
-              <p className="text-orange-800 font-medium">
-                Yang akan dihapus:
-              </p>
+              <p className="text-orange-800 font-medium">Yang akan dihapus:</p>
               <ul className="list-disc list-inside text-orange-700 text-sm mt-2">
                 <li>Hanya kuis ESSAY (tugas praktikum)</li>
                 <li>Semua soal essay</li>
@@ -265,9 +274,7 @@ export default function CleanupPage() {
 
           <div className="space-y-4">
             <div className="bg-red-50 border-l-4 border-red-500 p-4">
-              <p className="text-red-800 font-medium">
-                Yang akan dihapus:
-              </p>
+              <p className="text-red-800 font-medium">Yang akan dihapus:</p>
               <ul className="list-disc list-inside text-red-700 text-sm mt-2">
                 <li>SEMUA kuis (essay & pilihan_ganda)</li>
                 <li>Semua soal</li>
@@ -291,7 +298,9 @@ export default function CleanupPage() {
         {result && (
           <div
             className={`border rounded-lg p-6 shadow-sm ${
-              result.success ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"
+              result.success
+                ? "bg-green-50 border-green-200"
+                : "bg-red-50 border-red-200"
             }`}
           >
             <h2
@@ -318,7 +327,8 @@ export default function CleanupPage() {
                   <strong>{result.deleted.jawaban}</strong> jawaban dihapus
                 </p>
                 <p className="text-green-700 text-sm mt-4">
-                  ✨ Cache juga sudah dibersihkan. Refresh halaman untuk melihat perubahan.
+                  ✨ Cache juga sudah dibersihkan. Refresh halaman untuk melihat
+                  perubahan.
                 </p>
               </div>
             )}
@@ -331,11 +341,19 @@ export default function CleanupPage() {
 
         {/* Info */}
         <div className="bg-gray-100 border rounded-lg p-4 text-sm text-gray-600">
-          <p className="font-medium mb-1">💡 <strong>Tips:</strong></p>
+          <p className="font-medium mb-1">
+            💡 <strong>Tips:</strong>
+          </p>
           <ul className="list-disc list-inside space-y-1">
-            <li>Pilih "Hapus Tugas Praktikum Saja" untuk hanya membersihkan data tugas praktikum (essay)</li>
+            <li>
+              Pilih "Hapus Tugas Praktikum Saja" untuk hanya membersihkan data
+              tugas praktikum (essay)
+            </li>
             <li>Kuis pilihan ganda akan tetap ada jika memilih opsi di atas</li>
-            <li>Gunakan "Hapus SEMUA Data Kuis" hanya untuk benar-benar membersihkan semua data</li>
+            <li>
+              Gunakan "Hapus SEMUA Data Kuis" hanya untuk benar-benar
+              membersihkan semua data
+            </li>
             <li>Data yang dihapus TIDAK BISA dikembalikan</li>
           </ul>
         </div>

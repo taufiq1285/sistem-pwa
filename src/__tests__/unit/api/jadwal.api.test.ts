@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { format, addDays } from "date-fns";
+import { format } from "date-fns";
 import {
   getJadwal,
   getJadwalById,
@@ -65,13 +65,14 @@ describe("Jadwal API", () => {
 
   describe("getJadwal", () => {
     it("should fetch all jadwal without filters", async () => {
-      vi.mocked(baseApi.query).mockResolvedValue([mockJadwal]);
+      vi.mocked(baseApi.queryWithFilters).mockResolvedValue([mockJadwal]);
 
       const result = await getJadwal();
 
       expect(result).toEqual([mockJadwal]);
-      expect(baseApi.query).toHaveBeenCalledWith(
+      expect(baseApi.queryWithFilters).toHaveBeenCalledWith(
         "jadwal_praktikum",
+        [], // Empty array when no filters
         expect.objectContaining({
           select: expect.stringContaining("laboratorium:laboratorium_id"),
           order: { column: "tanggal_praktikum", ascending: true },
@@ -79,17 +80,15 @@ describe("Jadwal API", () => {
       );
     });
 
-    it("should fetch jadwal with kelas filter", async () => {
+    it("should fetch jadwal with kelas_id filter", async () => {
       vi.mocked(baseApi.queryWithFilters).mockResolvedValue([mockJadwal]);
 
-      const result = await getJadwal({ kelas: "A" });
+      const result = await getJadwal({ kelas_id: "kelas-1" });
 
       expect(result).toEqual([mockJadwal]);
       expect(baseApi.queryWithFilters).toHaveBeenCalledWith(
         "jadwal_praktikum",
-        expect.arrayContaining([
-          { column: "kelas", operator: "eq", value: "A" },
-        ]),
+        [{ column: "kelas_id", operator: "eq", value: "kelas-1" }],
         expect.any(Object),
       );
     });
@@ -102,9 +101,7 @@ describe("Jadwal API", () => {
       expect(result).toEqual([mockJadwal]);
       expect(baseApi.queryWithFilters).toHaveBeenCalledWith(
         "jadwal_praktikum",
-        expect.arrayContaining([
-          { column: "laboratorium_id", operator: "eq", value: "lab-1" },
-        ]),
+        [{ column: "laboratorium_id", operator: "eq", value: "lab-1" }],
         expect.any(Object),
       );
     });
@@ -117,9 +114,7 @@ describe("Jadwal API", () => {
       expect(result).toEqual([mockJadwal]);
       expect(baseApi.queryWithFilters).toHaveBeenCalledWith(
         "jadwal_praktikum",
-        expect.arrayContaining([
-          { column: "hari", operator: "eq", value: "senin" },
-        ]),
+        [{ column: "hari", operator: "eq", value: "senin" }],
         expect.any(Object),
       );
     });
@@ -143,7 +138,7 @@ describe("Jadwal API", () => {
       vi.mocked(baseApi.queryWithFilters).mockResolvedValue([mockJadwal]);
 
       const result = await getJadwal({
-        kelas: "A",
+        kelas_id: "kelas-1",
         laboratorium_id: "lab-1",
         hari: "senin",
         is_active: true,
@@ -152,19 +147,19 @@ describe("Jadwal API", () => {
       expect(result).toEqual([mockJadwal]);
       expect(baseApi.queryWithFilters).toHaveBeenCalledWith(
         "jadwal_praktikum",
-        expect.arrayContaining([
-          { column: "kelas", operator: "eq", value: "A" },
+        [
+          { column: "kelas_id", operator: "eq", value: "kelas-1" },
           { column: "laboratorium_id", operator: "eq", value: "lab-1" },
           { column: "hari", operator: "eq", value: "senin" },
           { column: "is_active", operator: "eq", value: true },
-        ]),
+        ],
         expect.any(Object),
       );
     });
 
     it("should handle errors gracefully", async () => {
       const error = new Error("Database error");
-      vi.mocked(baseApi.query).mockRejectedValue(error);
+      vi.mocked(baseApi.queryWithFilters).mockRejectedValue(error);
 
       await expect(getJadwal()).rejects.toThrow();
     });
@@ -256,6 +251,7 @@ describe("Jadwal API", () => {
             value: format(endDate, "yyyy-MM-dd"),
           },
           { column: "is_active", operator: "eq", value: true },
+          { column: "status", operator: "eq", value: "approved" },
         ]),
         expect.any(Object),
       );
@@ -362,6 +358,7 @@ describe("Jadwal API", () => {
           { column: "laboratorium_id", operator: "eq", value: "lab-1" },
           { column: "tanggal_praktikum", operator: "eq", value: "2025-01-15" },
           { column: "is_active", operator: "eq", value: true },
+          { column: "status", operator: "eq", value: "approved" },
         ]),
       );
     });
@@ -615,7 +612,7 @@ describe("Jadwal API", () => {
 
   describe("Edge Cases", () => {
     it("should handle empty jadwal array", async () => {
-      vi.mocked(baseApi.query).mockResolvedValue([]);
+      vi.mocked(baseApi.queryWithFilters).mockResolvedValue([]);
 
       const result = await getJadwal();
 
@@ -736,12 +733,13 @@ describe("Jadwal API", () => {
     });
 
     it("should sort jadwal by tanggal_praktikum ascending", async () => {
-      vi.mocked(baseApi.query).mockResolvedValue([mockJadwal]);
+      vi.mocked(baseApi.queryWithFilters).mockResolvedValue([mockJadwal]);
 
       await getJadwal();
 
-      expect(baseApi.query).toHaveBeenCalledWith(
+      expect(baseApi.queryWithFilters).toHaveBeenCalledWith(
         "jadwal_praktikum",
+        expect.any(Array),
         expect.objectContaining({
           order: { column: "tanggal_praktikum", ascending: true },
         }),
@@ -749,12 +747,15 @@ describe("Jadwal API", () => {
     });
 
     it("should include laboratorium relation in queries", async () => {
-      vi.mocked(baseApi.query).mockResolvedValue([mockJadwalWithLab]);
+      vi.mocked(baseApi.queryWithFilters).mockResolvedValue([
+        mockJadwalWithLab,
+      ]);
 
       await getJadwal();
 
-      expect(baseApi.query).toHaveBeenCalledWith(
+      expect(baseApi.queryWithFilters).toHaveBeenCalledWith(
         "jadwal_praktikum",
+        expect.any(Array),
         expect.objectContaining({
           select: expect.stringContaining("laboratorium:laboratorium_id"),
         }),

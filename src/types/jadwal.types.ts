@@ -9,6 +9,14 @@
 
 export interface Jadwal {
   id: string;
+  dosen_id?: string | null; // ✅ NEW: Dosen who created this schedule
+  dosen?: {
+    // ✅ NEW: Dosen info (joined from dosen table)
+    id: string;
+    user?: {
+      full_name: string;
+    };
+  };
   kelas?:
     | string
     | null
