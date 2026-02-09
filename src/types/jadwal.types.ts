@@ -35,7 +35,7 @@ export interface Jadwal {
   deskripsi?: string | null;
   catatan?: string | null;
   is_active?: boolean;
-  status?: "pending" | "approved" | "rejected" | "cancelled";
+  status?: "pending" | "approved" | "rejected" | "cancelled"; // ✅ WORKFLOW: pending → approved/rejected → cancelled
   cancelled_by?: string | null;
   cancelled_at?: string | null;
   cancellation_reason?: string | null;
@@ -233,7 +233,7 @@ export interface BookingFilters {
   dosen_id?: string;
   tanggal_mulai?: string;
   tanggal_selesai?: string;
-  status?: "pending" | "approved" | "rejected" | "cancelled";
+  status?: "pending" | "approved" | "rejected" | "cancelled"; // ✅ WORKFLOW: pending → approved/rejected → cancelled
 }
 
 // ========================================

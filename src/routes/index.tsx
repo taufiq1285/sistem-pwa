@@ -64,10 +64,12 @@ import DosenPeminjamanPage from "@/pages/dosen/PeminjamanPage";
 import DosenKehadiranPage from "@/pages/dosen/KehadiranPage";
 import DosenPengumumanPage from "@/pages/dosen/PengumumanPage";
 import DosenProfilePage from "@/pages/dosen/ProfilePage";
+import DosenLogbookReviewPage from "@/pages/dosen/LogbookReviewPage";
 
 // Mahasiswa Pages
 import { DashboardPage as MahasiswaDashboard } from "@/pages/mahasiswa/DashboardPage";
 import MahasiswaJadwalPage from "@/pages/mahasiswa/JadwalPage";
+import MahasiswaLogbookPage from "@/pages/mahasiswa/LogbookPage";
 
 // Mahasiswa Kuis Pages - NEW! ✅
 import KuisAttemptPage from "@/pages/mahasiswa/kuis/KuisAttemptPage";
@@ -484,6 +486,24 @@ export function AppRouter() {
         }
       />
 
+      {/* ================================================================== */}
+      {/* DOSEN LOGBOOK REVIEW ROUTES - DIGITAL LOGBOOK REVIEW ✅ */}
+      {/* ================================================================== */}
+
+      {/* Logbook Review - Review and grade student logbooks */}
+      <Route
+        path="/dosen/logbook-review"
+        element={
+          <ProtectedRoute>
+            <RoleGuard allowedRoles={["dosen"]}>
+              <AppLayout>
+                <DosenLogbookReviewPage />
+              </AppLayout>
+            </RoleGuard>
+          </ProtectedRoute>
+        }
+      />
+
       {/* Dosen - Peminjaman */}
       <Route
         path="/dosen/peminjaman"
@@ -578,6 +598,24 @@ export function AppRouter() {
             <RoleGuard allowedRoles={["mahasiswa"]}>
               <AppLayout>
                 <MahasiswaJadwalPage />
+              </AppLayout>
+            </RoleGuard>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* ================================================================== */}
+      {/* MAHASISWA LOGBOOK ROUTES - DIGITAL LOGBOOK ✅ */}
+      {/* ================================================================== */}
+
+      {/* Logbook - Create and view practical learning logs */}
+      <Route
+        path="/mahasiswa/logbook"
+        element={
+          <ProtectedRoute>
+            <RoleGuard allowedRoles={["mahasiswa"]}>
+              <AppLayout>
+                <MahasiswaLogbookPage />
               </AppLayout>
             </RoleGuard>
           </ProtectedRoute>

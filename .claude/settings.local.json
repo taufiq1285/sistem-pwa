@@ -54,7 +54,9 @@
       "Bash(npm uninstall:*)",
       "Bash(npm cache clean:*)",
       "Bash(npx vercel:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(npm run test:unit:*)",
+      "Bash(npm run)"
     ]
   }
 }
