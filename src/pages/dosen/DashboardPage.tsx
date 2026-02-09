@@ -489,11 +489,15 @@ export function DashboardPage() {
       // Use cacheAPI with stale-while-revalidate for offline support
       const [statsData, kelasData, practicumData, gradingData, kuisData] =
         await Promise.all([
-          cacheAPI(`dosen_stats_${user?.id}`, () => getDosenStats(forceRefresh), {
-            ttl: 10 * 60 * 1000, // 10 minutes
-            forceRefresh,
-            staleWhileRevalidate: true,
-          }),
+          cacheAPI(
+            `dosen_stats_${user?.id}`,
+            () => getDosenStats(forceRefresh),
+            {
+              ttl: 10 * 60 * 1000, // 10 minutes
+              forceRefresh,
+              staleWhileRevalidate: true,
+            },
+          ),
           cacheAPI(`dosen_kelas_${user?.id}`, () => getMyKelas(5), {
             ttl: 10 * 60 * 1000,
             forceRefresh,
@@ -1188,7 +1192,9 @@ export function DashboardPage() {
                                     : "bg-yellow-100 text-yellow-700 border-yellow-300 font-bold"
                                 }
                               >
-                                {kuis.status === "published" ? "✅ Published" : "📝 Draft"}
+                                {kuis.status === "published"
+                                  ? "✅ Published"
+                                  : "📝 Draft"}
                               </Badge>
                             </div>
                             <p className="text-sm font-semibold text-gray-700 mt-1">

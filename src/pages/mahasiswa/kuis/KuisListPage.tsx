@@ -356,7 +356,9 @@ export default function KuisListPage() {
             <div className="flex items-center justify-between p-3 bg-orange-50 border border-orange-200 rounded-lg text-sm">
               <span className="text-orange-700 font-medium">Status</span>
               <span className="font-semibold text-orange-800">
-                {quiz.status === "completed" ? "✓ Sudah Dikirim" : "Belum Dikirim"}
+                {quiz.status === "completed"
+                  ? "✓ Sudah Dikirim"
+                  : "Belum Dikirim"}
               </span>
             </div>
           )}

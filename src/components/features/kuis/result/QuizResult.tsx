@@ -139,7 +139,11 @@ export function QuizResult({
       </div>
 
       {/* Score Card */}
-      <ScoreCard score={score} quizTitle={quiz.judul} isLaporanMode={laporanMode} />
+      <ScoreCard
+        score={score}
+        quizTitle={quiz.judul}
+        isLaporanMode={laporanMode}
+      />
 
       {/* Quiz Info */}
       <Card>
@@ -166,77 +170,77 @@ export function QuizResult({
 
       {/* Answer Review - Hide for laporan mode */}
       {!laporanMode && (
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-lg">Review Jawaban</CardTitle>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowAnswers(!showAnswers)}
-            >
-              {showAnswers ? (
-                <>
-                  <EyeOff className="h-4 w-4 mr-2" />
-                  Sembunyikan
-                </>
-              ) : (
-                <>
-                  <Eye className="h-4 w-4 mr-2" />
-                  Tampilkan
-                </>
-              )}
-            </Button>
-          </div>
-        </CardHeader>
-        {showAnswers && (
-          <CardContent>
-            <Tabs defaultValue="all" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="all">
-                  Semua ({questions.length})
-                </TabsTrigger>
-                <TabsTrigger value="correct">
-                  Benar ({score.correct_count})
-                </TabsTrigger>
-                <TabsTrigger value="incorrect">
-                  Salah ({score.incorrect_count + score.unanswered_count})
-                </TabsTrigger>
-              </TabsList>
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg">Review Jawaban</CardTitle>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowAnswers(!showAnswers)}
+              >
+                {showAnswers ? (
+                  <>
+                    <EyeOff className="h-4 w-4 mr-2" />
+                    Sembunyikan
+                  </>
+                ) : (
+                  <>
+                    <Eye className="h-4 w-4 mr-2" />
+                    Tampilkan
+                  </>
+                )}
+              </Button>
+            </div>
+          </CardHeader>
+          {showAnswers && (
+            <CardContent>
+              <Tabs defaultValue="all" className="w-full">
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="all">
+                    Semua ({questions.length})
+                  </TabsTrigger>
+                  <TabsTrigger value="correct">
+                    Benar ({score.correct_count})
+                  </TabsTrigger>
+                  <TabsTrigger value="incorrect">
+                    Salah ({score.incorrect_count + score.unanswered_count})
+                  </TabsTrigger>
+                </TabsList>
 
-              <TabsContent value="all" className="mt-6">
-                <AnswerReviewList
-                  questions={questions}
-                  answers={answers}
-                  showCorrectAnswers={true}
-                />
-              </TabsContent>
+                <TabsContent value="all" className="mt-6">
+                  <AnswerReviewList
+                    questions={questions}
+                    answers={answers}
+                    showCorrectAnswers={true}
+                  />
+                </TabsContent>
 
-              <TabsContent value="correct" className="mt-6">
-                <AnswerReviewList
-                  questions={questions.filter((q) => {
-                    const ans = answers.find((a) => a.soal_id === q.id);
-                    return ans?.is_correct === true;
-                  })}
-                  answers={answers}
-                  showCorrectAnswers={true}
-                />
-              </TabsContent>
+                <TabsContent value="correct" className="mt-6">
+                  <AnswerReviewList
+                    questions={questions.filter((q) => {
+                      const ans = answers.find((a) => a.soal_id === q.id);
+                      return ans?.is_correct === true;
+                    })}
+                    answers={answers}
+                    showCorrectAnswers={true}
+                  />
+                </TabsContent>
 
-              <TabsContent value="incorrect" className="mt-6">
-                <AnswerReviewList
-                  questions={questions.filter((q) => {
-                    const ans = answers.find((a) => a.soal_id === q.id);
-                    return !ans || ans.is_correct !== true;
-                  })}
-                  answers={answers}
-                  showCorrectAnswers={true}
-                />
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        )}
-      </Card>
+                <TabsContent value="incorrect" className="mt-6">
+                  <AnswerReviewList
+                    questions={questions.filter((q) => {
+                      const ans = answers.find((a) => a.soal_id === q.id);
+                      return !ans || ans.is_correct !== true;
+                    })}
+                    answers={answers}
+                    showCorrectAnswers={true}
+                  />
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+          )}
+        </Card>
       )}
     </div>
   );

@@ -47,33 +47,16 @@ export async function getJadwal(filters?: JadwalFilters): Promise<Jadwal[]> {
       console.log("📋 getJadwal called with filters:", filters);
     const filterConditions = [];
 
-    // 🆕 CRITICAL FIX: Filter by current dosen user_id for data isolation
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (user?.id) {
-      // Find the dosen record associated with this user
-      const { data: dosenData } = await supabase
-        .from("dosen")
-        .select("id")
-        .eq("user_id", user.id)
-        .single();
+    // ✅ NEW LOGIC: Tampilkan SEMUA jadwal aktif (riwayat praktikum lengkap)
+    // Dosen bisa lihat semua praktikum yang akan terjadi untuk transparency
+    // Tapi hanya bisa edit jadwal yang dia buat sendiri (berdasarkan dosen_id)
 
-      if (dosenData?.id) {
-        filterConditions.push({
-          column: "dosen_id",
-          operator: "eq" as const,
-          value: dosenData.id,
-        });
-      }
-    }
-
-    // Apply filters
-    if (filters?.kelas) {
+    // Apply filters only
+    if (filters?.kelas_id) {
       filterConditions.push({
-        column: "kelas",
+        column: "kelas_id",
         operator: "eq" as const,
-        value: filters.kelas,
+        value: filters.kelas_id,
       });
     }
 
@@ -108,6 +91,18 @@ export async function getJadwal(filters?: JadwalFilters): Promise<Jadwal[]> {
           nama_lab,
           kode_lab,
           kapasitas
+        ),
+        kelas:kelas_id (
+          nama_kelas,
+          mata_kuliah (
+            nama_mk
+          )
+        ),
+        dosen:dosen_id (
+          id,
+          user:user_id (
+            full_name
+          )
         )
       `,
       order: {
@@ -120,19 +115,15 @@ export async function getJadwal(filters?: JadwalFilters): Promise<Jadwal[]> {
       staleWhileRevalidate: true,
     };
 
-    // ✅ PERBAIKAN FINAL: Ganti 'jadwalpraktikum' menjadi 'jadwal_praktikum'
-    const data =
-      filterConditions.length > 0
-        ? await queryWithFilters<Jadwal>(
-            "jadwal_praktikum",
-            filterConditions,
-            options,
-          )
-        : await query<Jadwal>("jadwal_praktikum", options);
+    // ✅ Query semua jadwal aktif dengan info dosen pembuat
+    const data = await queryWithFilters<Jadwal>(
+      "jadwal_praktikum",
+      filterConditions,
+      options,
+    );
 
     if (DEBUG_JADWAL_LOGS) {
-      console.log(`📋 getJadwal returning ${data?.length || 0} items:`, data);
-      console.log(`📋 getJadwal filterConditions:`, filterConditions);
+      console.log(`📋 getJadwal returning ${data?.length || 0} items`);
     }
     return data;
   } catch (error) {
@@ -207,16 +198,23 @@ function parseTimeString(timeStr: string, referenceDate: Date): Date {
  * Get calendar events for a date range
  * @param startDate - Start date
  * @param endDate - End date
+ * @param additionalFilters - Optional filters for kelas_id, laboratorium_id, hari
  * @returns Array of calendar events
  */
 export async function getCalendarEvents(
   startDate: Date,
   endDate: Date,
+  additionalFilters?: {
+    kelas_id?: string;
+    laboratorium_id?: string;
+    hari?: string;
+  },
 ): Promise<CalendarEvent[]> {
   try {
     console.log("🚨 getCalendarEvents CALLED - DATES:", {
       start: format(startDate, "yyyy-MM-dd"),
       end: format(endDate, "yyyy-MM-dd"),
+      additionalFilters,
     });
 
     // 🆕 CRITICAL FIX: Filter by current dosen user_id for data isolation
@@ -248,53 +246,38 @@ export async function getCalendarEvents(
       },
     ];
 
-    // Get dosen's kelas IDs if user is logged in as dosen
-    let kelasIdsFilter: string[] | null = null;
-    console.log("🔍 Checking user:", user?.id);
-
-    if (user?.id) {
-      const { data: dosenData, error: dosenError } = await supabase
-        .from("dosen")
-        .select("id")
-        .eq("user_id", user.id)
-        .single();
-
-      console.log("🔍 Dosen query result:", { dosenData, dosenError });
-
-      if (dosenData?.id) {
-        const { data: kelasData, error: kelasError } = await supabase
-          .from("kelas")
-          .select("id, nama_kelas")
-          .eq("dosen_id", dosenData.id);
-
-        console.log("🔍 Kelas query result:", { kelasData, kelasError });
-
-        kelasIdsFilter = kelasData?.map((k: any) => k.id) || [];
-        console.log("✅ Filtering by kelas_ids:", kelasIdsFilter);
-      } else {
-        console.log("⚠️ No dosen found for this user - will show all jadwal");
-      }
-    } else {
-      console.log("⚠️ No user logged in - will show all jadwal");
+    // ✅ NEW: Apply additional filters from UI
+    if (additionalFilters?.kelas_id) {
+      filterConditions.push({
+        column: "kelas_id",
+        operator: "eq" as const,
+        value: additionalFilters.kelas_id,
+      });
     }
 
-    // ✅ PERBAIKAN FINAL: Ganti 'jadwalpraktikum' menjadi 'jadwal_praktikum'
-    let jadwalList: Jadwal[];
+    if (additionalFilters?.laboratorium_id) {
+      filterConditions.push({
+        column: "laboratorium_id",
+        operator: "eq" as const,
+        value: additionalFilters.laboratorium_id,
+      });
+    }
 
-    if (kelasIdsFilter && kelasIdsFilter.length > 0) {
-      // Filter by kelas_ids if dosen
-      jadwalList = await queryWithFilters<Jadwal>(
-        "jadwal_praktikum",
-        [
-          ...filterConditions,
-          {
-            column: "kelas_id",
-            operator: "in" as const,
-            value: kelasIdsFilter,
-          },
-        ],
-        {
-          select: `
+    if (additionalFilters?.hari) {
+      filterConditions.push({
+        column: "hari",
+        operator: "eq" as const,
+        value: additionalFilters.hari,
+      });
+    }
+
+    // ✅ NEW LOGIC: Tampilkan SEMUA jadwal aktif dalam date range
+    // Tambahkan info dosen pembuat untuk indikator visual di UI
+    const jadwalList = await queryWithFilters<Jadwal>(
+      "jadwal_praktikum",
+      filterConditions,
+      {
+        select: `
           *,
           kelas:kelas_id (
             nama_kelas,
@@ -306,33 +289,16 @@ export async function getCalendarEvents(
             nama_lab,
             kode_lab,
             kapasitas
-          )
-        `,
-        },
-      );
-    } else {
-      // No filter (admin or not logged in)
-      jadwalList = await queryWithFilters<Jadwal>(
-        "jadwal_praktikum",
-        filterConditions,
-        {
-          select: `
-          *,
-          kelas:kelas_id (
-            nama_kelas,
-            mata_kuliah (
-              nama_mk
-            )
           ),
-          laboratorium:laboratorium_id (
-            nama_lab,
-            kode_lab,
-            kapasitas
+          dosen:dosen_id (
+            id,
+            user:user_id (
+              full_name
+            )
           )
         `,
-        },
-      );
-    }
+      },
+    );
 
     // 🔍 DEBUG: Log hasil query
     console.log("🔍 Query result:", {
@@ -527,8 +493,8 @@ async function createJadwalImpl(data: CreateJadwalData): Promise<Jadwal> {
       jam_selesai: data.jam_selesai,
       topik: data.topik,
       catatan: data.catatan,
-      is_active: true, // HYBRID: Auto-approved (laboran can cancel later if needed)
-      status: "approved" as const, // ✅ FIX: Set status to approved for auto-approval
+      is_active: true,
+      status: "pending" as const, // ✅ FIX: Default pending, needs laboran approval
     };
 
     console.log("🔍 DEBUG: Insert data:", insertData);
@@ -694,6 +660,68 @@ export const deleteJadwal = requirePermissionAndOwnership(
   { table: "jadwal_praktikum", ownerField: "dosen_id" },
   0,
   deleteJadwalImpl,
+);
+
+// ============================================================================
+// APPROVAL OPERATIONS (For Laboran)
+// ============================================================================
+
+/**
+ * Approve jadwal praktikum
+ * @param id - Jadwal ID
+ * @returns Updated jadwal
+ */
+async function approveJadwalImpl(id: string): Promise<Jadwal> {
+  try {
+    console.log("✅ Approving jadwal:", id);
+
+    const updated = await update<Jadwal>("jadwal_praktikum", id, {
+      status: "approved",
+    });
+
+    console.log("✅ Jadwal approved successfully:", id);
+    return updated;
+  } catch (error) {
+    const apiError = handleError(error);
+    logError(apiError, `approveJadwal:${id}`);
+    throw apiError;
+  }
+}
+
+// 🔒 PROTECTED: Requires manage:jadwal permission (for laboran)
+export const approveJadwal = requirePermission(
+  "manage:jadwal",
+  approveJadwalImpl,
+);
+
+/**
+ * Reject jadwal praktikum
+ * @param id - Jadwal ID
+ * @param reason - Rejection reason
+ * @returns Updated jadwal
+ */
+async function rejectJadwalImpl(id: string, reason?: string): Promise<Jadwal> {
+  try {
+    console.log("❌ Rejecting jadwal:", id, "reason:", reason);
+
+    const updated = await update<Jadwal>("jadwal_praktikum", id, {
+      status: "rejected",
+      cancellation_reason: reason || "Ditolak oleh laboran",
+    });
+
+    console.log("❌ Jadwal rejected successfully:", id);
+    return updated;
+  } catch (error) {
+    const apiError = handleError(error);
+    logError(apiError, `rejectJadwal:${id}`);
+    throw apiError;
+  }
+}
+
+// 🔒 PROTECTED: Requires manage:jadwal permission (for laboran)
+export const rejectJadwal = requirePermission(
+  "manage:jadwal",
+  rejectJadwalImpl,
 );
 
 // ============================================================================

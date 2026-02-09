@@ -139,10 +139,15 @@ export function checkAnswerCorrect(soal: Soal, jawaban: string): boolean {
 
     // ✅ STRATEGY 2: Find correct option using is_correct: true
     if (soal.opsi_jawaban && soal.opsi_jawaban.length > 0) {
-      const correctOption = soal.opsi_jawaban.find((opt) => opt.is_correct === true);
+      const correctOption = soal.opsi_jawaban.find(
+        (opt) => opt.is_correct === true,
+      );
       if (correctOption) {
         // Compare by ID or label
-        return jawaban.trim() === correctOption.id || jawaban.trim() === correctOption.label;
+        return (
+          jawaban.trim() === correctOption.id ||
+          jawaban.trim() === correctOption.label
+        );
       }
     }
 
@@ -174,17 +179,25 @@ export function checkAnswerCorrect(soal: Soal, jawaban: string): boolean {
 export function getCorrectAnswerLabel(soal: Soal): string {
   const tipeSoal = soal.tipe_soal;
 
-  if (tipeSoal === TIPE_SOAL.PILIHAN_GANDA && soal.opsi_jawaban && soal.opsi_jawaban.length > 0) {
+  if (
+    tipeSoal === TIPE_SOAL.PILIHAN_GANDA &&
+    soal.opsi_jawaban &&
+    soal.opsi_jawaban.length > 0
+  ) {
     let correctOption = null;
 
     // ✅ STRATEGY 1: Use jawaban_benar field if exists
     if (soal.jawaban_benar) {
       // Try matching by ID first
-      correctOption = soal.opsi_jawaban.find((opt) => opt.id === soal.jawaban_benar);
+      correctOption = soal.opsi_jawaban.find(
+        (opt) => opt.id === soal.jawaban_benar,
+      );
 
       // If not found by ID, try matching by label (A, B, C, D, etc.)
       if (!correctOption) {
-        correctOption = soal.opsi_jawaban.find((opt) => opt.label === soal.jawaban_benar);
+        correctOption = soal.opsi_jawaban.find(
+          (opt) => opt.label === soal.jawaban_benar,
+        );
       }
     }
 
@@ -199,11 +212,14 @@ export function getCorrectAnswerLabel(soal: Soal): string {
     }
 
     // ✅ DEBUG: Log if not found for troubleshooting
-    console.warn("⚠️ [getCorrectAnswerLabel] Correct answer not found in options:", {
-      jawaban_benar: soal.jawaban_benar,
-      opsi_jawaban: soal.opsi_jawaban,
-      pertanyaan: soal.pertanyaan?.substring(0, 50),
-    });
+    console.warn(
+      "⚠️ [getCorrectAnswerLabel] Correct answer not found in options:",
+      {
+        jawaban_benar: soal.jawaban_benar,
+        opsi_jawaban: soal.opsi_jawaban,
+        pertanyaan: soal.pertanyaan?.substring(0, 50),
+      },
+    );
 
     // Fallback: show jawaban_benar as-is or "-"
     return soal.jawaban_benar || "-";
@@ -230,7 +246,11 @@ export function getAnswerLabel(soal: Soal, jawaban: string): string {
 
   const tipeSoal = soal.tipe_soal;
 
-  if (tipeSoal === TIPE_SOAL.PILIHAN_GANDA && soal.opsi_jawaban && soal.opsi_jawaban.length > 0) {
+  if (
+    tipeSoal === TIPE_SOAL.PILIHAN_GANDA &&
+    soal.opsi_jawaban &&
+    soal.opsi_jawaban.length > 0
+  ) {
     // ✅ FIX: Try multiple matching strategies for robustness
     let selectedOption = soal.opsi_jawaban.find((opt) => opt.id === jawaban);
 

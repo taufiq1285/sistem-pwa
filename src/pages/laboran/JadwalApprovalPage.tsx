@@ -56,6 +56,8 @@ import { Label } from "@/components/ui/label";
 // API & Types
 import {
   getAllJadwalForLaboran,
+  approveJadwal,
+  rejectJadwal,
   cancelJadwal,
   reactivateJadwal,
 } from "@/lib/api/jadwal.api";
@@ -218,6 +220,74 @@ export function JadwalApprovalPage() {
   };
 
   // ============================================================================
+  // JADWAL APPROVAL HANDLERS (For Laboran to approve/reject praktikum)
+  // ============================================================================
+
+  const handleApproveJadwalClick = (jadwal: Jadwal) => {
+    setSelectedJadwal(jadwal);
+    // Direct approve without dialog for faster action
+    handleApproveJadwalConfirm(jadwal);
+  };
+
+  const handleApproveJadwalConfirm = async (jadwal: Jadwal) => {
+    try {
+      setSubmitting(true);
+      await approveJadwal(jadwal.id);
+
+      // Get kelas name safely (handle string | object type)
+      const kelasName =
+        typeof jadwal.kelas === "object" && jadwal.kelas !== null
+          ? jadwal.kelas.nama_kelas || "Kelas"
+          : "Kelas";
+
+      toast.success(
+        `Jadwal praktikum "${jadwal.topik || kelasName}"` +
+          ` berhasil disetujui`,
+      );
+      loadJadwalData();
+      loadPendingBookings(); // Refresh pending count
+    } catch (error: any) {
+      console.error("Error approving jadwal:", error);
+      toast.error(error.message || "Gagal menyetujui jadwal");
+    } finally {
+      setSubmitting(false);
+      setSelectedJadwal(null);
+    }
+  };
+
+  const handleRejectJadwalClick = (jadwal: Jadwal) => {
+    setSelectedJadwal(jadwal);
+    setCancellationReason(""); // Reuse cancellationReason for jadwal rejection
+    // Direct reject with dialog for reason input
+    setShowRejectDialog(true);
+  };
+
+  const handleRejectJadwalConfirm = async () => {
+    if (!selectedJadwal) return;
+
+    if (!cancellationReason.trim()) {
+      toast.error("Alasan penolakan harus diisi");
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      await rejectJadwal(selectedJadwal.id, cancellationReason.trim());
+      toast.success(`Jadwal praktikum berhasil ditolak`);
+      setShowRejectDialog(false);
+      setSelectedJadwal(null);
+      setCancellationReason("");
+      loadJadwalData();
+      loadPendingBookings(); // Refresh pending count
+    } catch (error: any) {
+      console.error("Error rejecting jadwal:", error);
+      toast.error(error.message || "Gagal menolak jadwal");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // ============================================================================
   // CANCEL/REACTIVATE HANDLERS
   // ============================================================================
 
@@ -279,9 +349,13 @@ export function JadwalApprovalPage() {
   // ============================================================================
 
   const stats = {
-    pending: pendingBookings.length,
+    pending:
+      pendingBookings.length +
+      jadwalList.filter((j) => j.status === "pending").length, // ✅ Include both room bookings + jadwal praktikum
     approved: jadwalList.filter((j) => j.status === "approved").length,
-    cancelled: jadwalList.filter((j) => j.status === "cancelled").length,
+    cancelled: jadwalList.filter(
+      (j) => j.status === "cancelled" || j.status === "rejected",
+    ).length,
   };
 
   // ============================================================================
@@ -482,6 +556,123 @@ export function JadwalApprovalPage() {
                         </TableCell>
                       </TableRow>
                     ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* ✅ NEW: Jadwal Praktikum Pending */}
+          <Card className="border-0 shadow-xl p-6 mt-6">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle>Jadwal Praktikum Menunggu Persetujuan</CardTitle>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={loadJadwalData}
+                  className="gap-2"
+                >
+                  <RefreshCw className="h-4 w-4" />
+                  Refresh
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <LoadingSpinner />
+              ) : jadwalList.filter((j) => j.status === "pending").length ===
+                0 ? (
+                <EmptyState
+                  icon={Clock}
+                  title="Tidak ada jadwal pending"
+                  description="Semua jadwal praktikum sudah diproses"
+                />
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Tanggal</TableHead>
+                      <TableHead>Hari</TableHead>
+                      <TableHead>Waktu</TableHead>
+                      <TableHead>Mata Kuliah / Kelas</TableHead>
+                      <TableHead>Laboratorium</TableHead>
+                      <TableHead>Dosen Pembuat</TableHead>
+                      <TableHead>Topik</TableHead>
+                      <TableHead>Aksi</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {jadwalList
+                      .filter((j) => j.status === "pending")
+                      .map((jadwal) => (
+                        <TableRow key={jadwal.id}>
+                          <TableCell>
+                            {jadwal.tanggal_praktikum
+                              ? format(
+                                  new Date(jadwal.tanggal_praktikum),
+                                  "dd MMM yyyy",
+                                  {
+                                    locale: localeId,
+                                  },
+                                )
+                              : "-"}
+                          </TableCell>
+                          <TableCell className="capitalize">
+                            {jadwal.hari || "-"}
+                          </TableCell>
+                          <TableCell>
+                            {jadwal.jam_mulai} - {jadwal.jam_selesai}
+                          </TableCell>
+                          <TableCell>
+                            <div>
+                              <div className="font-medium">
+                                {(jadwal.kelas as any)?.mata_kuliah?.nama_mk ||
+                                  "Praktikum"}
+                              </div>
+                              <div className="text-sm text-gray-500">
+                                {(jadwal.kelas as any)?.nama_kelas || "-"}
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {(jadwal.laboratorium as any)?.nama_lab || "-"}
+                          </TableCell>
+                          <TableCell>
+                            {(jadwal.dosen as any)?.user?.full_name || "-"}
+                          </TableCell>
+                          <TableCell
+                            className="max-w-xs truncate"
+                            title={jadwal.topik || "-"}
+                          >
+                            {jadwal.topik || "-"}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-green-600 border-green-600 hover:bg-green-50"
+                                onClick={() => handleApproveJadwalClick(jadwal)}
+                                disabled={submitting}
+                              >
+                                <CheckCircle2 className="h-4 w-4 mr-1" />
+                                Setujui
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-red-600 border-red-600 hover:bg-red-50"
+                                onClick={() => handleRejectJadwalClick(jadwal)}
+                                disabled={submitting}
+                              >
+                                <XCircle className="h-4 w-4 mr-1" />
+                                Tolak
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
                   </TableBody>
                 </Table>
               )}

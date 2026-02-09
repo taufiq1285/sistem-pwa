@@ -148,19 +148,23 @@ export function QuizCard({
     ? {
         // 📄 LAPORAN PRAKTIKUM - Orange/Amber theme
         borderColor: "border-l-orange-500",
-        headerBg: "bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-950/20 dark:to-amber-950/20",
+        headerBg:
+          "bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-950/20 dark:to-amber-950/20",
         typeLabel: "Laporan Praktikum",
         typeIcon: "📄",
-        typeBadgeColor: "bg-orange-100 text-orange-800 border-orange-300 dark:bg-orange-900/30 dark:text-orange-300",
+        typeBadgeColor:
+          "bg-orange-100 text-orange-800 border-orange-300 dark:bg-orange-900/30 dark:text-orange-300",
         typeBorder: "border-orange-200 dark:border-orange-800",
       }
     : {
         // ✅ TES CBT - Blue theme (ALL non-laporan types)
         borderColor: "border-l-blue-500",
-        headerBg: "bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20",
+        headerBg:
+          "bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20",
         typeLabel: "Tes CBT",
         typeIcon: "✅",
-        typeBadgeColor: "bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900/30 dark:text-blue-300",
+        typeBadgeColor:
+          "bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900/30 dark:text-blue-300",
         typeBorder: "border-blue-200 dark:border-blue-800",
       };
 
@@ -275,7 +279,9 @@ export function QuizCard({
           typeConfig.borderColor,
         )}
       >
-        <CardHeader className={cn("pb-3", compact && "pb-2", typeConfig.headerBg)}>
+        <CardHeader
+          className={cn("pb-3", compact && "pb-2", typeConfig.headerBg)}
+        >
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
               {/* ✅ ENHANCED: Type Badge - More prominent for clarity */}
@@ -423,17 +429,27 @@ export function QuizCard({
           >
             {/* Questions Count OR File Upload */}
             <div className="flex items-center gap-2">
-              <div className={cn(
-                "p-2 rounded-lg",
-                isLaporan ? "bg-amber-100 dark:bg-amber-900" : "bg-blue-100 dark:bg-blue-900"
-              )}>
-                <FileText className={cn(
-                  "h-4 w-4",
-                  isLaporan ? "text-amber-600 dark:text-amber-400" : "text-blue-600 dark:text-blue-400"
-                )} />
+              <div
+                className={cn(
+                  "p-2 rounded-lg",
+                  isLaporan
+                    ? "bg-amber-100 dark:bg-amber-900"
+                    : "bg-blue-100 dark:bg-blue-900",
+                )}
+              >
+                <FileText
+                  className={cn(
+                    "h-4 w-4",
+                    isLaporan
+                      ? "text-amber-600 dark:text-amber-400"
+                      : "text-blue-600 dark:text-blue-400",
+                  )}
+                />
               </div>
               <div className="min-w-0">
-                <p className="text-xs text-muted-foreground">{isLaporan ? "Instruksi" : "Soal"}</p>
+                <p className="text-xs text-muted-foreground">
+                  {isLaporan ? "Instruksi" : "Soal"}
+                </p>
                 <p className="text-sm font-semibold truncate">
                   {isLaporan ? "Upload File" : `${totalQuestions} soal`}
                 </p>
@@ -442,10 +458,14 @@ export function QuizCard({
 
             {/* Duration */}
             <div className="flex items-center gap-2">
-              <div className={cn(
-                "p-2 rounded-lg",
-                isLaporan ? "bg-orange-100 dark:bg-orange-900" : "bg-orange-100 dark:bg-orange-900"
-              )}>
+              <div
+                className={cn(
+                  "p-2 rounded-lg",
+                  isLaporan
+                    ? "bg-orange-100 dark:bg-orange-900"
+                    : "bg-orange-100 dark:bg-orange-900",
+                )}
+              >
                 <Clock className="h-4 w-4 text-orange-600 dark:text-orange-400" />
               </div>
               <div className="min-w-0">
@@ -459,10 +479,14 @@ export function QuizCard({
             {/* Attempts */}
             {!compact && (
               <div className="flex items-center gap-2">
-                <div className={cn(
-                  "p-2 rounded-lg",
-                  isLaporan ? "bg-green-100 dark:bg-green-900" : "bg-green-100 dark:bg-green-900"
-                )}>
+                <div
+                  className={cn(
+                    "p-2 rounded-lg",
+                    isLaporan
+                      ? "bg-green-100 dark:bg-green-900"
+                      : "bg-green-100 dark:bg-green-900",
+                  )}
+                >
                   <Users className="h-4 w-4 text-green-600 dark:text-green-400" />
                 </div>
                 <div className="min-w-0">
@@ -477,10 +501,14 @@ export function QuizCard({
             {/* Total Points */}
             {!compact && (
               <div className="flex items-center gap-2">
-                <div className={cn(
-                  "p-2 rounded-lg",
-                  isLaporan ? "bg-purple-100 dark:bg-purple-900" : "bg-purple-100 dark:bg-purple-900"
-                )}>
+                <div
+                  className={cn(
+                    "p-2 rounded-lg",
+                    isLaporan
+                      ? "bg-purple-100 dark:bg-purple-900"
+                      : "bg-purple-100 dark:bg-purple-900",
+                  )}
+                >
                   <CheckCircle2 className="h-4 w-4 text-purple-600 dark:text-purple-400" />
                 </div>
                 <div className="min-w-0">

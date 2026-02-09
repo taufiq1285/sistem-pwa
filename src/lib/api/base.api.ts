@@ -238,7 +238,10 @@ export async function queryWithFilters<T = any>(
 
       const { data, error } = await queryBuilder;
 
-      console.log(`✅ [queryWithFilters] Result: ${data?.length || 0} rows, Error:`, error);
+      console.log(
+        `✅ [queryWithFilters] Result: ${data?.length || 0} rows, Error:`,
+        error,
+      );
 
       if (error) {
         throw handleError(error);
@@ -678,10 +681,14 @@ export async function remove(table: string, id: string): Promise<boolean> {
 
         const dosenId = (record as any)?.dosen_id;
         if (dosenId) {
-          window.dispatchEvent(new CustomEvent('kuis:changed', {
-            detail: { action: 'deleted', kuisId: id, dosenId }
-          }));
-          console.log(`📢 Event dispatched: kuis:changed (deleted) for dosen: ${dosenId}`);
+          window.dispatchEvent(
+            new CustomEvent("kuis:changed", {
+              detail: { action: "deleted", kuisId: id, dosenId },
+            }),
+          );
+          console.log(
+            `📢 Event dispatched: kuis:changed (deleted) for dosen: ${dosenId}`,
+          );
         }
       } catch (eventError) {
         console.warn(`⚠️ Failed to dispatch kuis:changed event:`, eventError);

@@ -100,8 +100,10 @@ export function QuizBuilder({
 
   // ✅ AUTO-DETECT MODE from quiz.tipe_kuis when editing
   // If mode props are not explicitly set, infer from tipe_kuis
-  const effectiveCbtMode = cbtMode || (!laporanMode && quiz?.tipe_kuis === "pilihan_ganda");
-  const effectiveLaporanMode = laporanMode || (!cbtMode && quiz?.tipe_kuis === "essay");
+  const effectiveCbtMode =
+    cbtMode || (!laporanMode && quiz?.tipe_kuis === "pilihan_ganda");
+  const effectiveLaporanMode =
+    laporanMode || (!cbtMode && quiz?.tipe_kuis === "essay");
 
   console.log("🔍 [QuizBuilder] Mode detection:", {
     isEditing,
@@ -151,10 +153,16 @@ export function QuizBuilder({
 
           if (kelasData?.mata_kuliah_id) {
             setSelectedMataKuliah(kelasData.mata_kuliah_id);
-            console.log("✅ [QuizBuilder] Auto-selected mata kuliah:", kelasData.mata_kuliah_id);
+            console.log(
+              "✅ [QuizBuilder] Auto-selected mata kuliah:",
+              kelasData.mata_kuliah_id,
+            );
           }
         } catch (error) {
-          console.warn("⚠️ [QuizBuilder] Failed to get mata kuliah from kelas:", error);
+          console.warn(
+            "⚠️ [QuizBuilder] Failed to get mata kuliah from kelas:",
+            error,
+          );
         }
       };
       findMataKuliahFromKelas();
@@ -174,7 +182,8 @@ export function QuizBuilder({
           dosen_id: quiz.dosen_id,
           judul: quiz.judul,
           deskripsi: quiz.deskripsi || "",
-          durasi_menit: quiz.durasi_menit || (effectiveLaporanMode ? 10080 : 60),
+          durasi_menit:
+            quiz.durasi_menit || (effectiveLaporanMode ? 10080 : 60),
           passing_score: quiz.passing_score ?? null,
           max_attempts: quiz.max_attempts ?? (effectiveCbtMode ? 1 : 3),
           randomize_questions: quiz.randomize_questions ?? false,
@@ -287,7 +296,10 @@ export function QuizBuilder({
       return;
     }
     // Skip durasi validation for laporan (no time limit needed)
-    if (!effectiveLaporanMode && (!formData.durasi_menit || formData.durasi_menit < 5)) {
+    if (
+      !effectiveLaporanMode &&
+      (!formData.durasi_menit || formData.durasi_menit < 5)
+    ) {
       toast.error("Durasi minimal 5 menit");
       return;
     }
@@ -399,8 +411,8 @@ export function QuizBuilder({
 
     const confirmed = confirm(
       "Unpublish tugas ini?\n\n" +
-      "Mahasiswa TIDAK akan bisa melihat atau mengerjakan tugas ini sementara.\n\n" +
-      "Anda bisa mengedit soal setelah unpublish, lalu publish kembali."
+        "Mahasiswa TIDAK akan bisa melihat atau mengerjakan tugas ini sementara.\n\n" +
+        "Anda bisa mengedit soal setelah unpublish, lalu publish kembali.",
     );
 
     if (!confirmed) {
@@ -412,7 +424,7 @@ export function QuizBuilder({
       const updated = await updateKuis(currentQuiz.id, { status: "draft" });
       setCurrentQuiz(updated);
       toast.success(
-        "Tugas berhasil unpublish! Mahasiswa sementara tidak bisa mengakses tugas ini."
+        "Tugas berhasil unpublish! Mahasiswa sementara tidak bisa mengakses tugas ini.",
       );
     } catch (error) {
       console.error("❌ Error unpublishing quiz:", error);
@@ -794,7 +806,9 @@ export function QuizBuilder({
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="text-lg flex items-center gap-2">
-                  {effectiveLaporanMode ? "📄 Soal Laporan" : "📋 Soal Pilihan Ganda"}
+                  {effectiveLaporanMode
+                    ? "📄 Soal Laporan"
+                    : "📋 Soal Pilihan Ganda"}
                   <Badge variant="secondary" className="ml-2">
                     {questions.length} soal
                   </Badge>
@@ -832,7 +846,8 @@ export function QuizBuilder({
               <Alert className="mt-3 bg-orange-50 border-orange-200">
                 <AlertCircle className="h-4 w-4 text-orange-600" />
                 <AlertDescription className="text-orange-900 text-xs">
-                  Soal tidak dapat diubah saat tugas aktif. Unpublish terlebih dahulu untuk mengedit soal.
+                  Soal tidak dapat diubah saat tugas aktif. Unpublish terlebih
+                  dahulu untuk mengedit soal.
                 </AlertDescription>
               </Alert>
             )}

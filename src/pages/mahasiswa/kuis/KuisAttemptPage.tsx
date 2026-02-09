@@ -88,7 +88,7 @@ export default function KuisAttemptPage() {
       setError(
         isNotFoundError
           ? "Tugas praktikum tidak ditemukan. Mungkin tugas telah dihapus atau Anda tidak memiliki akses."
-          : errorMessage
+          : errorMessage,
       );
       setCanAttempt(false);
 

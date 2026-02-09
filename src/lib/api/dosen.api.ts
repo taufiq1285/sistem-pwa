@@ -227,7 +227,7 @@ async function getDosenId(): Promise<string | null> {
 
 export async function getDosenStats(forceRefresh = false): Promise<DosenStats> {
   return cacheAPI(
-    `dosen_stats_${forceRefresh ? 'nocache' : 'default'}`,
+    `dosen_stats_${forceRefresh ? "nocache" : "default"}`,
     async () => {
       try {
         const dosenId = await getDosenId();
@@ -298,7 +298,8 @@ export async function getDosenStats(forceRefresh = false): Promise<DosenStats> {
         // Determine which kuis are CBT (all pilihan_ganda) and need to be excluded
         const cbtKuisIds = new Set<string>();
         kuisSoalTypes.forEach((tipes, kuisId) => {
-          const allPilihanGanda = tipes.length > 0 && tipes.every((t) => t === "pilihan_ganda");
+          const allPilihanGanda =
+            tipes.length > 0 && tipes.every((t) => t === "pilihan_ganda");
           if (allPilihanGanda) {
             cbtKuisIds.add(kuisId);
           }
@@ -333,7 +334,7 @@ export async function getDosenStats(forceRefresh = false): Promise<DosenStats> {
 
           // Count only pairs where the latest attempt status is "submitted"
           pendingGrading = Array.from(uniquePairs.values()).filter(
-            (attempt) => attempt.status === "submitted"
+            (attempt) => attempt.status === "submitted",
           ).length;
         }
 
@@ -749,10 +750,15 @@ export async function getPendingGrading(
     // Determine which kuis are CBT (all pilihan_ganda) and need to be excluded
     const cbtKuisIds = new Set<string>();
     kuisSoalTypes.forEach((tipes, kuisId) => {
-      const allPilihanGanda = tipes.length > 0 && tipes.every((t) => t === "pilihan_ganda");
+      const allPilihanGanda =
+        tipes.length > 0 && tipes.every((t) => t === "pilihan_ganda");
       if (allPilihanGanda) {
         cbtKuisIds.add(kuisId);
-        console.log("[getPendingGrading] Excluding CBT quiz:", kuisId, "(all questions are pilihan_ganda)");
+        console.log(
+          "[getPendingGrading] Excluding CBT quiz:",
+          kuisId,
+          "(all questions are pilihan_ganda)",
+        );
       }
     });
 
@@ -796,22 +802,37 @@ export async function getPendingGrading(
     // For each unique (kuis_id, mahasiswa_id) pair, only show if the latest attempt is "submitted"
     const uniquePairs = new Map<string, GradingData>();
 
-    const allAttempts = ((submittedAttempts as unknown as GradingData[]) || []);
-    console.log("[getPendingGrading] Total submitted/graded attempts:", allAttempts.length);
+    const allAttempts = (submittedAttempts as unknown as GradingData[]) || [];
+    console.log(
+      "[getPendingGrading] Total submitted/graded attempts:",
+      allAttempts.length,
+    );
 
     allAttempts.forEach((attempt) => {
       const key = `${attempt.kuis_id}_${attempt.mahasiswa_id}`;
 
       // ✅ NEW: Skip if this is a CBT quiz (auto-graded)
       if (cbtKuisIds.has(attempt.kuis_id)) {
-        console.log("[getPendingGrading] Skipping CBT quiz attempt:", key, "quiz:", attempt.kuis?.judul);
+        console.log(
+          "[getPendingGrading] Skipping CBT quiz attempt:",
+          key,
+          "quiz:",
+          attempt.kuis?.judul,
+        );
         return;
       }
 
       // Only keep the latest attempt for each (kuis, mahasiswa) pair
       if (!uniquePairs.has(key)) {
         uniquePairs.set(key, attempt);
-        console.log("[getPendingGrading] Added unique pair:", key, "status:", attempt.status, "student:", attempt.mahasiswa?.user?.full_name);
+        console.log(
+          "[getPendingGrading] Added unique pair:",
+          key,
+          "status:",
+          attempt.status,
+          "student:",
+          attempt.mahasiswa?.user?.full_name,
+        );
       }
     });
 
@@ -819,16 +840,28 @@ export async function getPendingGrading(
 
     // Filter to only include pairs where the latest attempt status is "submitted" (not "graded")
     const pendingAttempts = Array.from(uniquePairs.values()).filter(
-      (attempt) => attempt.status === "submitted"
+      (attempt) => attempt.status === "submitted",
     );
 
-    console.log("[getPendingGrading] Pending attempts (submitted only):", pendingAttempts.length);
-    pendingAttempts.forEach(attempt => {
-      console.log("  -", attempt.mahasiswa?.user?.full_name, "|", attempt.kuis?.judul, "| status:", attempt.status);
+    console.log(
+      "[getPendingGrading] Pending attempts (submitted only):",
+      pendingAttempts.length,
+    );
+    pendingAttempts.forEach((attempt) => {
+      console.log(
+        "  -",
+        attempt.mahasiswa?.user?.full_name,
+        "|",
+        attempt.kuis?.judul,
+        "| status:",
+        attempt.status,
+      );
     });
 
     // Apply limit if specified
-    const limitedAttempts = limit ? pendingAttempts.slice(0, limit) : pendingAttempts;
+    const limitedAttempts = limit
+      ? pendingAttempts.slice(0, limit)
+      : pendingAttempts;
 
     return limitedAttempts.map((item) => ({
       id: item.id,

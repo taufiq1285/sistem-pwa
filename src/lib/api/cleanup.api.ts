@@ -255,21 +255,27 @@ export async function verifyKuisDataCounts(): Promise<{
   kuis_essay: number;
   kuis_pilihan_ganda: number;
 }> {
-  const [jawabanResult, attemptResult, soalResult, kuisResult, essayResult, pgResult] =
-    await Promise.all([
-      supabase.from("jawaban").select("*", { count: "exact", head: true }),
-      supabase.from("attempt_kuis").select("*", { count: "exact", head: true }),
-      supabase.from("soal").select("*", { count: "exact", head: true }),
-      supabase.from("kuis").select("*", { count: "exact", head: true }),
-      supabase
-        .from("kuis")
-        .select("*", { count: "exact", head: true })
-        .eq("tipe_kuis", "essay"),
-      supabase
-        .from("kuis")
-        .select("*", { count: "exact", head: true })
-        .eq("tipe_kuis", "pilihan_ganda"),
-    ]);
+  const [
+    jawabanResult,
+    attemptResult,
+    soalResult,
+    kuisResult,
+    essayResult,
+    pgResult,
+  ] = await Promise.all([
+    supabase.from("jawaban").select("*", { count: "exact", head: true }),
+    supabase.from("attempt_kuis").select("*", { count: "exact", head: true }),
+    supabase.from("soal").select("*", { count: "exact", head: true }),
+    supabase.from("kuis").select("*", { count: "exact", head: true }),
+    supabase
+      .from("kuis")
+      .select("*", { count: "exact", head: true })
+      .eq("tipe_kuis", "essay"),
+    supabase
+      .from("kuis")
+      .select("*", { count: "exact", head: true })
+      .eq("tipe_kuis", "pilihan_ganda"),
+  ]);
 
   return {
     jawaban: jawabanResult.count || 0,

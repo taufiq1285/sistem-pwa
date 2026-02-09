@@ -47,9 +47,11 @@ const baseKuisSchema = z.object({
   kelas_id: z.string().uuid("Kelas ID tidak valid"),
 
   // ✅ NEW: Tipe kuis (essay = laporan, pilihan_ganda = tes CBT, campuran = mixed)
-  tipe_kuis: z.enum(["essay", "pilihan_ganda", "campuran"] as const, {
-    message: "Tipe kuis tidak valid",
-  }).optional(),
+  tipe_kuis: z
+    .enum(["essay", "pilihan_ganda", "campuran"] as const, {
+      message: "Tipe kuis tidak valid",
+    })
+    .optional(),
 
   // UPDATED: Durasi always required (no default to avoid optional type)
   // Untuk CBT: 60 menit, untuk laporan: 10080 menit (1 minggu)

@@ -175,7 +175,12 @@ export async function getKuis(
   options: GetKuisOptions = {},
 ): Promise<Kuis[]> {
   try {
-    console.log("🔍 [getKuis] Called with filters:", filters, "options:", options);
+    console.log(
+      "🔍 [getKuis] Called with filters:",
+      filters,
+      "options:",
+      options,
+    );
 
     const filterConditions = [];
 
@@ -241,7 +246,10 @@ export async function getKuis(
       staleWhileRevalidate: !options.forceRefresh, // Disable SWR on force refresh
     };
 
-    console.log("🔍 [getKuis] Query options:", { ...queryOptions, select: "(select query)" });
+    console.log("🔍 [getKuis] Query options:", {
+      ...queryOptions,
+      select: "(select query)",
+    });
 
     const data =
       filterConditions.length > 0
@@ -257,7 +265,11 @@ export async function getKuis(
           k.judul.toLowerCase().includes(searchLower) ||
           k.deskripsi?.toLowerCase().includes(searchLower),
       );
-      console.log("🔍 [getKuis] After search filter:", filtered.length, "quizzes");
+      console.log(
+        "🔍 [getKuis] After search filter:",
+        filtered.length,
+        "quizzes",
+      );
       return filtered;
     }
 
@@ -340,76 +352,85 @@ async function createKuisImpl(data: CreateKuisData): Promise<Kuis> {
     // This prevents race condition where UI loads data from stale cache
     console.log("🧹 [createKuis] Starting SYNC clear all cache...");
     const deletedCount = await clearAllCacheSync();
-    console.log(`✅ [createKuis] Cache cleared: ${deletedCount} entries deleted`);
+    console.log(
+      `✅ [createKuis] Cache cleared: ${deletedCount} entries deleted`,
+    );
 
     // ✅ IMMEDIATE REFRESH: Trigger custom event to notify KuisListPage immediately
     // This happens AFTER all cache is cleared, ensuring fresh data is loaded
     console.log("📡 [createKuis] Dispatching kuis:changed event...");
-    window.dispatchEvent(new CustomEvent('kuis:changed', {
-      detail: { action: 'created', kuis: result, dosenId: data.dosen_id }
-    }));
+    window.dispatchEvent(
+      new CustomEvent("kuis:changed", {
+        detail: { action: "created", kuis: result, dosenId: data.dosen_id },
+      }),
+    );
     console.log("📢 [createKuis] Event dispatched: kuis:changed (created)");
 
     // ✅ AUTO-NOTIFICATION: Notify all mahasiswa in kelas when dosen creates new tugas
     // Fire-and-forget: don't await, run in background to avoid blocking
-    Promise.resolve().then(async () => {
-      try {
-        console.log("[NOTIFICATION] Starting notification process...");
-        // Get all mahasiswa in the kelas
-        const { data: enrollment, error: enrollError } = await supabase
-          .from("kelas_mahasiswa")
-          .select(
-            `
+    Promise.resolve()
+      .then(async () => {
+        try {
+          console.log("[NOTIFICATION] Starting notification process...");
+          // Get all mahasiswa in the kelas
+          const { data: enrollment, error: enrollError } = await supabase
+            .from("kelas_mahasiswa")
+            .select(
+              `
             mahasiswa:mahasiswa_id (
               id,
               user_id
             )
           `,
-          )
-          .eq("kelas_id", data.kelas_id);
+            )
+            .eq("kelas_id", data.kelas_id);
 
-        if (!enrollError && enrollment && enrollment.length > 0) {
-          // Get dosen info
-          const { data: dosen, error: dosenError } = await supabase
-            .from("dosen")
-            .select(
-              `
+          if (!enrollError && enrollment && enrollment.length > 0) {
+            // Get dosen info
+            const { data: dosen, error: dosenError } = await supabase
+              .from("dosen")
+              .select(
+                `
               id,
               user:user_id (
                 full_name
               )
             `,
-            )
-            .eq("id", data.dosen_id)
-            .single();
+              )
+              .eq("id", data.dosen_id)
+              .single();
 
-          if (!dosenError && dosen) {
-            const mahasiswaUserIds = enrollment
-              .map((e: any) => e.mahasiswa?.user_id)
-              .filter(Boolean);
-            const dosenNama = (dosen as any).user?.full_name || "Dosen";
+            if (!dosenError && dosen) {
+              const mahasiswaUserIds = enrollment
+                .map((e: any) => e.mahasiswa?.user_id)
+                .filter(Boolean);
+              const dosenNama = (dosen as any).user?.full_name || "Dosen";
 
-            if (mahasiswaUserIds.length > 0) {
-              await notifyMahasiswaTugasBaru(
-                mahasiswaUserIds,
-                dosenNama,
-                data.judul,
-                result.id,
-                data.kelas_id,
-              );
-              console.log(
-                `[NOTIFICATION] ${mahasiswaUserIds.length} mahasiswa notified: New tugas "${data.judul}"`,
-              );
+              if (mahasiswaUserIds.length > 0) {
+                await notifyMahasiswaTugasBaru(
+                  mahasiswaUserIds,
+                  dosenNama,
+                  data.judul,
+                  result.id,
+                  data.kelas_id,
+                );
+                console.log(
+                  `[NOTIFICATION] ${mahasiswaUserIds.length} mahasiswa notified: New tugas "${data.judul}"`,
+                );
+              }
             }
           }
+        } catch (notifError) {
+          // Don't fail the creation if notification fails
+          console.error(
+            "[NOTIFICATION] Failed to notify mahasiswa:",
+            notifError,
+          );
         }
-      } catch (notifError) {
-        // Don't fail the creation if notification fails
-        console.error("[NOTIFICATION] Failed to notify mahasiswa:", notifError);
-      }
-    }).catch((err) => {
-      console.error("[NOTIFICATION] Unhandled error:", err);
-    });
+      })
+      .catch((err) => {
+        console.error("[NOTIFICATION] Unhandled error:", err);
+      });
 
     return result;
   } catch (error) {
@@ -436,14 +457,22 @@ async function updateKuisImpl(
     // This prevents race condition where UI loads data from stale cache
     console.log("🧹 [updateKuis] Starting SYNC clear all cache...");
     const deletedCount = await clearAllCacheSync();
-    console.log(`✅ [updateKuis] Cache cleared: ${deletedCount} entries deleted`);
+    console.log(
+      `✅ [updateKuis] Cache cleared: ${deletedCount} entries deleted`,
+    );
 
     // ✅ IMMEDIATE REFRESH: Trigger custom event to notify KuisListPage immediately
     // This happens AFTER all cache is cleared, ensuring fresh data is loaded
     try {
-      window.dispatchEvent(new CustomEvent('kuis:changed', {
-        detail: { action: 'updated', kuis: updated, dosenId: updated.dosen_id }
-      }));
+      window.dispatchEvent(
+        new CustomEvent("kuis:changed", {
+          detail: {
+            action: "updated",
+            kuis: updated,
+            dosenId: updated.dosen_id,
+          },
+        }),
+      );
       console.log("📢 Event dispatched: kuis:changed (updated)");
     } catch (eventError) {
       console.warn("⚠️ Failed to dispatch kuis:changed event:", eventError);
@@ -474,13 +503,17 @@ async function deleteKuisImpl(id: string): Promise<boolean> {
     // Use SYNC clearAllCache to ensure ALL cache is cleared before dispatching event
     console.log("🧹 [deleteKuis] Starting SYNC clear all cache...");
     const deletedCount = await clearAllCacheSync();
-    console.log(`✅ [deleteKuis] Cache cleared: ${deletedCount} entries deleted`);
+    console.log(
+      `✅ [deleteKuis] Cache cleared: ${deletedCount} entries deleted`,
+    );
 
     // ✅ IMMEDIATE REFRESH: Trigger custom event to notify KuisListPage immediately
     try {
-      window.dispatchEvent(new CustomEvent('kuis:changed', {
-        detail: { action: 'deleted', kuisId: id }
-      }));
+      window.dispatchEvent(
+        new CustomEvent("kuis:changed", {
+          detail: { action: "deleted", kuisId: id },
+        }),
+      );
       console.log("📢 Event dispatched: kuis:changed (deleted)");
     } catch (eventError) {
       console.warn("⚠️ Failed to dispatch kuis:changed event:", eventError);
@@ -686,14 +719,18 @@ async function createSoalImpl(data: CreateSoalData): Promise<Soal> {
     // ✅ CRITICAL FIX: Use SYNC clearAllCache to ensure cache is cleared BEFORE dispatching event
     console.log("🧹 [createSoal] Starting SYNC clear all cache...");
     const deletedCount = await clearAllCacheSync();
-    console.log(`✅ [createSoal] Cache cleared: ${deletedCount} entries deleted`);
+    console.log(
+      `✅ [createSoal] Cache cleared: ${deletedCount} entries deleted`,
+    );
 
     // ✅ IMMEDIATE REFRESH: Dispatch kuis:changed event so KuisListPage refreshes
     if (dosenId) {
       try {
-        window.dispatchEvent(new CustomEvent('kuis:changed', {
-          detail: { action: 'soal_created', kuisId: data.kuis_id, dosenId }
-        }));
+        window.dispatchEvent(
+          new CustomEvent("kuis:changed", {
+            detail: { action: "soal_created", kuisId: data.kuis_id, dosenId },
+          }),
+        );
         console.log("📢 Event dispatched: kuis:changed (soal_created)");
       } catch (eventError) {
         console.warn("⚠️ Failed to dispatch kuis:changed event:", eventError);
@@ -754,20 +791,31 @@ async function updateSoalImpl(
         dosenId = kuis?.dosen_id || null;
       }
     } catch (fetchError) {
-      console.warn("⚠️ Failed to fetch soal/kuis for event dispatch:", fetchError);
+      console.warn(
+        "⚠️ Failed to fetch soal/kuis for event dispatch:",
+        fetchError,
+      );
     }
 
     // ✅ CRITICAL FIX: Use SYNC clearAllCache to ensure cache is cleared BEFORE dispatching event
     console.log("🧹 [updateSoal] Starting SYNC clear all cache...");
     const deletedCount = await clearAllCacheSync();
-    console.log(`✅ [updateSoal] Cache cleared: ${deletedCount} entries deleted`);
+    console.log(
+      `✅ [updateSoal] Cache cleared: ${deletedCount} entries deleted`,
+    );
 
     // ✅ IMMEDIATE REFRESH: Dispatch kuis:changed event so KuisListPage refreshes
     if (dosenId) {
       try {
-        window.dispatchEvent(new CustomEvent('kuis:changed', {
-          detail: { action: 'soal_updated', kuisId: kuisId || result.kuis_id, dosenId }
-        }));
+        window.dispatchEvent(
+          new CustomEvent("kuis:changed", {
+            detail: {
+              action: "soal_updated",
+              kuisId: kuisId || result.kuis_id,
+              dosenId,
+            },
+          }),
+        );
         console.log("📢 Event dispatched: kuis:changed (soal_updated)");
       } catch (eventError) {
         console.warn("⚠️ Failed to dispatch kuis:changed event:", eventError);
@@ -813,7 +861,10 @@ async function deleteSoalImpl(id: string): Promise<boolean> {
         }
       }
     } catch (fetchError) {
-      console.warn("⚠️ Failed to fetch soal/kuis for event dispatch:", fetchError);
+      console.warn(
+        "⚠️ Failed to fetch soal/kuis for event dispatch:",
+        fetchError,
+      );
     }
 
     const result = await remove("soal", id);
@@ -822,14 +873,18 @@ async function deleteSoalImpl(id: string): Promise<boolean> {
     // Use SYNC clearAllCache to ensure ALL cache is cleared before dispatching event
     console.log("🧹 [deleteSoal] Starting SYNC clear all cache...");
     const deletedCount = await clearAllCacheSync();
-    console.log(`✅ [deleteSoal] Cache cleared: ${deletedCount} entries deleted`);
+    console.log(
+      `✅ [deleteSoal] Cache cleared: ${deletedCount} entries deleted`,
+    );
 
     // ✅ IMMEDIATE REFRESH: Dispatch kuis:changed event so KuisListPage refreshes
     if (kuisId && dosenId) {
       try {
-        window.dispatchEvent(new CustomEvent('kuis:changed', {
-          detail: { action: 'soal_deleted', kuisId, dosenId }
-        }));
+        window.dispatchEvent(
+          new CustomEvent("kuis:changed", {
+            detail: { action: "soal_deleted", kuisId, dosenId },
+          }),
+        );
         console.log("📢 Event dispatched: kuis:changed (soal_deleted)");
       } catch (eventError) {
         console.warn("⚠️ Failed to dispatch kuis:changed event:", eventError);
@@ -959,7 +1014,8 @@ export async function getAttemptsByKuis(
 
     const { data: attempts, error } = await supabase
       .from("attempt_kuis")
-      .select(`
+      .select(
+        `
         *,
         mahasiswa:mahasiswa_id (
           nim,
@@ -968,7 +1024,8 @@ export async function getAttemptsByKuis(
           )
         ),
         jawaban:jawaban(*)
-      `)
+      `,
+      )
       .eq("kuis_id", kuisId)
       .order("started_at", { ascending: false });
 
@@ -977,7 +1034,11 @@ export async function getAttemptsByKuis(
       throw new Error(error.message);
     }
 
-    console.log("[KuisAPI] getAttemptsByKuis success:", attempts?.length || 0, "attempts");
+    console.log(
+      "[KuisAPI] getAttemptsByKuis success:",
+      attempts?.length || 0,
+      "attempts",
+    );
 
     // Log mahasiswa data untuk debugging
     (attempts || []).forEach((attempt: any, index: number) => {
@@ -1344,7 +1405,10 @@ export async function getUpcomingQuizzes(
       throw error;
     }
 
-    console.log("🔍 [getUpcomingQuizzes] Raw quizzes from DB:", quizzes?.length || 0);
+    console.log(
+      "🔍 [getUpcomingQuizzes] Raw quizzes from DB:",
+      quizzes?.length || 0,
+    );
 
     if (!quizzes) return [];
 
@@ -1353,7 +1417,10 @@ export async function getUpcomingQuizzes(
       enrolledKelasIds.includes(quiz.kelas_id),
     );
 
-    console.log("🔍 [getUpcomingQuizzes] Enrolled quizzes:", enrolledQuizzes.length);
+    console.log(
+      "🔍 [getUpcomingQuizzes] Enrolled quizzes:",
+      enrolledQuizzes.length,
+    );
 
     const upcomingQuizzes: UpcomingQuiz[] = await Promise.all(
       enrolledQuizzes.map(async (quiz) => {
@@ -1371,7 +1438,7 @@ export async function getUpcomingQuizzes(
           (a) =>
             a.submitted_at !== null ||
             (a as any).status === "submitted" ||
-            (a as any).status === "graded"
+            (a as any).status === "graded",
         );
 
         // ✅ FIXED: Can attempt if:

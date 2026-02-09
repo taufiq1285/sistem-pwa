@@ -68,7 +68,12 @@ import { getSoalForAttempt } from "@/lib/api/kuis-secure.api";
 // ✅ FIX: Import submitAllAnswersWithVersion to save all answers on submit
 import { submitAllAnswersWithVersion } from "@/lib/api/kuis-versioned-simple.api";
 import { createLaporanUploader } from "@/lib/api/laporan-storage.api";
-import type { Kuis, Soal, AttemptKuis, SubmitAnswerData } from "@/types/kuis.types";
+import type {
+  Kuis,
+  Soal,
+  AttemptKuis,
+  SubmitAnswerData,
+} from "@/types/kuis.types";
 import { TIPE_SOAL } from "@/types/kuis.types";
 
 // Toast
@@ -162,8 +167,14 @@ export function QuizAttempt({
   console.log("🐛 [QuizAttempt] currentQuestionIndex:", currentQuestionIndex);
   console.log("🐛 [QuizAttempt] questions.length:", questions.length);
   console.log("🐛 [QuizAttempt] currentQuestion:", currentQuestion);
-  console.log("🐛 [QuizAttempt] currentQuestion?.pertanyaan:", currentQuestion?.pertanyaan);
-  console.log("🐛 [QuizAttempt] currentQuestion?.tipe_soal:", currentQuestion?.tipe_soal);
+  console.log(
+    "🐛 [QuizAttempt] currentQuestion?.pertanyaan:",
+    currentQuestion?.pertanyaan,
+  );
+  console.log(
+    "🐛 [QuizAttempt] currentQuestion?.tipe_soal:",
+    currentQuestion?.tipe_soal,
+  );
 
   const currentAnswer = currentQuestion
     ? answers[currentQuestion.id] || ""
@@ -280,17 +291,21 @@ export function QuizAttempt({
             }
 
             // Keep jawaban_benar for FILE_UPLOAD type (it's settings, not answers)
-            mapped.jawaban_benar = (mapped.tipe_soal === "file_upload")
-              ? jawaban_benar
-              : undefined;
+            mapped.jawaban_benar =
+              mapped.tipe_soal === "file_upload" ? jawaban_benar : undefined;
 
             return mapped as Soal;
           });
 
-          console.log(`✅ Loaded ${questionsData.length} soal from soal table (jawaban_benar removed)`);
+          console.log(
+            `✅ Loaded ${questionsData.length} soal from soal table (jawaban_benar removed)`,
+          );
         } catch (err2) {
           // Last resort: try offline cache
-          console.warn("⚠️ Direct soal query failed, trying offline cache:", err2);
+          console.warn(
+            "⚠️ Direct soal query failed, trying offline cache:",
+            err2,
+          );
           questionsData = await getSoalByKuisOffline(kuisId);
         }
       }
@@ -341,8 +356,11 @@ export function QuizAttempt({
 
         // ✅ LAPORAN MODE: Check if already submitted, prevent retake
         // Check if this is laporan mode (all questions are FILE_UPLOAD)
-        const isThisLaporanMode = orderedQuestions.length > 0 &&
-          orderedQuestions.every((q: Soal) => q.tipe_soal === TIPE_SOAL.FILE_UPLOAD);
+        const isThisLaporanMode =
+          orderedQuestions.length > 0 &&
+          orderedQuestions.every(
+            (q: Soal) => q.tipe_soal === TIPE_SOAL.FILE_UPLOAD,
+          );
 
         if (isThisLaporanMode) {
           console.log("🔵 LAPORAN MODE: Checking for existing attempts...");
@@ -359,10 +377,17 @@ export function QuizAttempt({
 
           if (existingAttempts && existingAttempts.length > 0) {
             const existingAttempt = existingAttempts[0];
-            console.log("✅ LAPORAN MODE: Found existing attempt:", existingAttempt.id, "status:", existingAttempt.status);
+            console.log(
+              "✅ LAPORAN MODE: Found existing attempt:",
+              existingAttempt.id,
+              "status:",
+              existingAttempt.status,
+            );
 
             // Redirect to result page
-            toast.info("Anda sudah mengirim laporan ini. Mengarahkan ke hasil...");
+            toast.info(
+              "Anda sudah mengirim laporan ini. Mengarahkan ke hasil...",
+            );
             navigate(`/mahasiswa/kuis/${kuisId}/result/${existingAttempt.id}`);
             setIsLoading(false);
             return; // Stop here, already redirected
@@ -388,7 +413,9 @@ export function QuizAttempt({
             errorMessage.includes("percobaan")
           ) {
             // Max attempts reached - try to find existing submitted attempt
-            console.log("⚠️ Max attempts reached, checking for existing attempts...");
+            console.log(
+              "⚠️ Max attempts reached, checking for existing attempts...",
+            );
 
             try {
               // Fetch attempts for this quiz and mahasiswa
@@ -403,19 +430,30 @@ export function QuizAttempt({
 
               if (attempts && attempts.length > 0) {
                 const existingAttempt = attempts[0];
-                console.log("✅ Found existing attempt, redirecting to results:", existingAttempt.id);
-                toast.info("Anda sudah menyelesaikan tugas ini. Mengarahkan ke hasil...");
-                navigate(`/mahasiswa/kuis/${kuisId}/result/${existingAttempt.id}`);
+                console.log(
+                  "✅ Found existing attempt, redirecting to results:",
+                  existingAttempt.id,
+                );
+                toast.info(
+                  "Anda sudah menyelesaikan tugas ini. Mengarahkan ke hasil...",
+                );
+                navigate(
+                  `/mahasiswa/kuis/${kuisId}/result/${existingAttempt.id}`,
+                );
                 return;
               }
 
               // No submitted attempt found but can't start new one
-              setError("Anda sudah mencapai batas maksimal percobaan, namun tidak ada hasil yang ditemukan.");
+              setError(
+                "Anda sudah mencapai batas maksimal percobaan, namun tidak ada hasil yang ditemukan.",
+              );
               setIsLoading(false);
               return;
             } catch (fetchError) {
               console.error("Error fetching existing attempts:", fetchError);
-              setError("Gagal memeriksa status percobaan. Silakan kembali ke daftar tugas.");
+              setError(
+                "Gagal memeriksa status percobaan. Silakan kembali ke daftar tugas.",
+              );
               setIsLoading(false);
               return;
             }
@@ -681,7 +719,11 @@ export function QuizAttempt({
       console.log("🐛 [QuizAttempt] File uploads:", fileUploads);
 
       // ✅ FIX: Pass fileUploads to store file metadata (file_url, file_name, etc.)
-      const saveResult = await submitAllAnswersWithVersion(attempt.id, answers, fileUploads);
+      const saveResult = await submitAllAnswersWithVersion(
+        attempt.id,
+        answers,
+        fileUploads,
+      );
 
       console.log("🐛 [QuizAttempt] Save result:", {
         success: saveResult.success,
@@ -690,7 +732,10 @@ export function QuizAttempt({
       });
 
       if (saveResult.failed > 0) {
-        console.warn("⚠️ [QuizAttempt] Some answers failed to save:", saveResult.results);
+        console.warn(
+          "⚠️ [QuizAttempt] Some answers failed to save:",
+          saveResult.results,
+        );
       }
 
       // Get remaining time
@@ -706,8 +751,14 @@ export function QuizAttempt({
 
       // Debug log
       console.log("✅ [QuizAttempt] Submit successful!");
-      console.log("🐛 [QuizAttempt] Submitted attempt ID:", submittedAttempt?.id);
-      console.log("🐛 [QuizAttempt] Submitted attempt status:", (submittedAttempt as any)?.status);
+      console.log(
+        "🐛 [QuizAttempt] Submitted attempt ID:",
+        submittedAttempt?.id,
+      );
+      console.log(
+        "🐛 [QuizAttempt] Submitted attempt status:",
+        (submittedAttempt as any)?.status,
+      );
 
       // Clear timer data
       clearTimerData(attempt.id);
@@ -716,7 +767,10 @@ export function QuizAttempt({
 
       // Redirect to results - use returned attempt id
       const resultAttemptId = submittedAttempt?.id || attempt.id;
-      console.log("🐛 [QuizAttempt] Navigating to:", `/mahasiswa/kuis/${kuisId}/result/${resultAttemptId}`);
+      console.log(
+        "🐛 [QuizAttempt] Navigating to:",
+        `/mahasiswa/kuis/${kuisId}/result/${resultAttemptId}`,
+      );
       navigate(`/mahasiswa/kuis/${kuisId}/result/${resultAttemptId}`);
     } catch (err: any) {
       console.error("❌ [QuizAttempt] Submit error:", err);
@@ -1051,9 +1105,9 @@ Contoh:
                         className="resize-none"
                       />
                       <p className="text-sm text-muted-foreground">
-                        💡 Tip: Anda bisa mengetik laporan lengkap dengan
-                        format yang terstruktur. Gunakan bullet points atau
-                        paragraf sesuai kebutuhan.
+                        💡 Tip: Anda bisa mengetik laporan lengkap dengan format
+                        yang terstruktur. Gunakan bullet points atau paragraf
+                        sesuai kebutuhan.
                       </p>
                     </div>
                   )}
@@ -1092,7 +1146,11 @@ Contoh:
           {isLaporanMode && (
             <div className="flex items-center justify-between">
               <div></div>
-              <Button onClick={handleOpenSubmitDialog} className="gap-2" size="lg">
+              <Button
+                onClick={handleOpenSubmitDialog}
+                className="gap-2"
+                size="lg"
+              >
                 <Send className="h-4 w-4" />
                 Submit Laporan
               </Button>

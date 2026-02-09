@@ -69,9 +69,14 @@ export default function KuisBuilderPage() {
       navigate("/dosen/kuis");
     }, 500); // 500ms delay to ensure cache is cleared
 
-    toast.success(isEditing ? "Tugas praktikum berhasil diperbarui!" : "Tugas praktikum berhasil disimpan!", {
-      duration: 3000,
-    });
+    toast.success(
+      isEditing
+        ? "Tugas praktikum berhasil diperbarui!"
+        : "Tugas praktikum berhasil disimpan!",
+      {
+        duration: 3000,
+      },
+    );
   };
 
   const handleCancel = () => {

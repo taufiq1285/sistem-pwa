@@ -44,6 +44,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useAuth } from "@/lib/hooks/useAuth";
 // Removed: Command imports (now using simple Select)
 import {
   Dialog,
@@ -163,6 +164,10 @@ type JadwalFormData = z.infer<typeof jadwalSchema>;
 // ============================================================================
 
 export default function JadwalPage() {
+  // ✅ NEW: Get current dosen for ownership check
+  const { user } = useAuth();
+  const currentDosenId = user?.dosen?.id;
+
   // State
   const [jadwalList, setJadwalList] = useState<Jadwal[]>([]);
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
@@ -215,17 +220,19 @@ export default function JadwalPage() {
       const data = await getJadwal(filters);
       setJadwalList(data);
 
+      // ✅ FIX: Kirim filter yang sama ke Calendar Events agar konsisten
       const monthStart = startOfMonth(currentDate);
       const monthEnd = endOfMonth(currentDate);
       const calendarStart = startOfWeek(monthStart, { weekStartsOn: 1 });
       const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
 
-      const events = await getCalendarEvents(calendarStart, calendarEnd);
-      console.log("=== DEBUG CALENDAR ===");
-      console.log(
-        "Jadwal List (filtered by is_active=true):",
-        jadwalList.length,
+      const events = await getCalendarEvents(
+        calendarStart,
+        calendarEnd,
+        filters,
       );
+      console.log("=== DEBUG CALENDAR ===");
+      console.log("Jadwal List (filtered):", jadwalList.length);
       console.log("Calendar Events:", events.length);
       console.log(
         "Calendar Events data:",
@@ -898,17 +905,38 @@ export default function JadwalPage() {
                     (mk) => mk.id === kelas?.mata_kuliah_id,
                   );
 
+                  // ✅ NEW: Check if this jadwal belongs to current dosen
+                  const isOwner = jadwal.dosen_id === currentDosenId;
+                  const creatorName =
+                    (jadwal as any).dosen?.user?.full_name || "Unknown";
+
                   return (
                     <Card
                       key={jadwal.id}
-                      className="group hover:shadow-2xl transition-all duration-300 border-2 border-indigo-100 dark:border-indigo-900 shadow-xl bg-linear-to-br from-white via-blue-50/30 to-indigo-50/30 dark:from-slate-900 dark:via-blue-950/20 dark:to-indigo-950/20 backdrop-blur-sm overflow-hidden relative"
+                      className={`group hover:shadow-2xl transition-all duration-300 border-2 shadow-xl bg-linear-to-br from-white via-blue-50/30 to-indigo-50/30 dark:from-slate-900 dark:via-blue-950/20 dark:to-indigo-950/20 backdrop-blur-sm overflow-hidden relative ${
+                        isOwner
+                          ? "border-indigo-200 dark:border-indigo-800"
+                          : "border-gray-200 dark:border-gray-800"
+                      }`}
                     >
-                      <div className="absolute top-0 right-0 w-32 h-32 bg-linear-to-br from-indigo-400/10 to-purple-400/10 rounded-full blur-3xl -mr-16 -mt-16" />
+                      <div
+                        className={`absolute top-0 right-0 w-32 h-32 bg-linear-to-br ${
+                          isOwner
+                            ? "from-indigo-400/20 to-purple-400/20"
+                            : "from-gray-300/10 to-gray-400/10"
+                        } rounded-full blur-3xl -mr-16 -mt-16`}
+                      />
                       <CardContent className="relative p-6">
                         <div className="flex items-start gap-6">
                           {/* Date Badge */}
                           <div className="shrink-0">
-                            <div className="w-20 h-20 bg-linear-to-br from-indigo-500 to-purple-600 rounded-2xl shadow-lg shadow-indigo-500/30 flex flex-col items-center justify-center text-white">
+                            <div
+                              className={`w-20 h-20 rounded-2xl shadow-lg flex flex-col items-center justify-center text-white ${
+                                isOwner
+                                  ? "bg-linear-to-br from-indigo-500 to-purple-600 shadow-indigo-500/30"
+                                  : "bg-linear-to-br from-gray-400 to-gray-500 shadow-gray-400/30"
+                              }`}
+                            >
                               <div className="text-2xl font-bold">
                                 {jadwal.tanggal_praktikum
                                   ? format(
@@ -944,6 +972,16 @@ export default function JadwalPage() {
                                   <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-100 text-purple-700 rounded-full font-semibold">
                                     <Users className="h-3.5 w-3.5" />
                                     {kelas?.tahun_ajaran}
+                                  </span>
+                                  {/* ✅ NEW: Creator Badge */}
+                                  <span
+                                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-semibold ${
+                                      isOwner
+                                        ? "bg-green-100 text-green-700"
+                                        : "bg-gray-100 text-gray-600"
+                                    }`}
+                                  >
+                                    {isOwner ? "👤 Anda" : `👤 ${creatorName}`}
                                   </span>
                                 </div>
                               </div>
@@ -986,24 +1024,26 @@ export default function JadwalPage() {
                           </div>
 
                           {/* Actions */}
-                          <div className="flex flex-col gap-2 shrink-0">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleEdit(jadwal)}
-                              className="border-2 hover:bg-indigo-50 font-semibold"
-                            >
-                              Edit
-                            </Button>
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => handleDelete(jadwal)}
-                              className="font-semibold"
-                            >
-                              Hapus
-                            </Button>
-                          </div>
+                          {isOwner ? (
+                            <div className="flex flex-col gap-2 shrink-0">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleEdit(jadwal)}
+                                className="border-2 hover:bg-indigo-50 font-semibold"
+                              >
+                                Edit
+                              </Button>
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => handleDelete(jadwal)}
+                                className="font-semibold"
+                              >
+                                Hapus
+                              </Button>
+                            </div>
+                          ) : null}
                         </div>
                       </CardContent>
                     </Card>

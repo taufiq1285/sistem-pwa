@@ -194,18 +194,38 @@ export default defineConfig({
   },
   build: {
     minify: "esbuild",
-    chunkSizeWarningLimit: 1500,
+    chunkSizeWarningLimit: 2000, // Increased for large app
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ["react", "react-dom", "react-router-dom"],
-          supabase: ["@supabase/supabase-js"],
+        // @ts-expect-error - manualChunks is valid in Rollup but TypeScript types may not recognize it
+        manualChunks(id) {
+          // Vendor chunks
+          if (id.includes("node_modules")) {
+            if (id.includes("react") || id.includes("react-dom")) {
+              return "vendor-react";
+            }
+            if (id.includes("@supabase")) {
+              return "vendor-supabase";
+            }
+            if (id.includes("react-router")) {
+              return "vendor-router";
+            }
+            return "vendor";
+          }
+          // API chunks
+          if (id.includes("/src/lib/api/")) {
+            return "api";
+          }
+          // UI chunks
+          if (id.includes("/src/components/")) {
+            return "components";
+          }
         },
         chunkFileNames: "assets/js/[name]-[hash].js",
         entryFileNames: "assets/js/[name]-[hash].js",
         assetFileNames: "assets/[ext]/[name]-[hash].[ext]",
       },
-    },
+    } as any, // Type assertion to suppress warning
 
     sourcemap: false,
     target: "esnext",

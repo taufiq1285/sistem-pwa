@@ -147,9 +147,10 @@ export function QuestionEditor({
   // ✅ FIX: Default poin 100 untuk FILE_UPLOAD (karena DB constraint poin > 0)
   const [poin, setPoin] = useState(
     question?.poin ||
-      (question?.tipe_soal === TIPE_SOAL.FILE_UPLOAD || getDefaultType() === TIPE_SOAL.FILE_UPLOAD
+      (question?.tipe_soal === TIPE_SOAL.FILE_UPLOAD ||
+      getDefaultType() === TIPE_SOAL.FILE_UPLOAD
         ? 100
-        : defaultPoin)
+        : defaultPoin),
   );
   const [penjelasan, setPenjelasan] = useState(question?.penjelasan || "");
 
@@ -487,12 +488,16 @@ export function QuestionEditor({
               value={poin}
               onChange={(e) => setPoin(Number(e.target.value))}
               className={cn(
-                showErrors && questionType !== TIPE_SOAL.FILE_UPLOAD && poin < 1 && "border-destructive"
+                showErrors &&
+                  questionType !== TIPE_SOAL.FILE_UPLOAD &&
+                  poin < 1 &&
+                  "border-destructive",
               )}
             />
             {questionType === TIPE_SOAL.FILE_UPLOAD && (
               <p className="text-xs text-muted-foreground">
-                💡 Poin default 100. Dosen bisa menyesuaikan nilai saat penilaian laporan.
+                💡 Poin default 100. Dosen bisa menyesuaikan nilai saat
+                penilaian laporan.
               </p>
             )}
           </div>
@@ -625,30 +630,32 @@ export function QuestionEditor({
         </div>
 
         {/* Save to Bank Soal - Only for new questions and PILIHAN_GANDA type */}
-        {!isEditing && kuisId !== "bank" && questionType === TIPE_SOAL.PILIHAN_GANDA && (
-          <div className="flex items-start gap-3 p-4 rounded-lg border bg-muted/50">
-            <Checkbox
-              id="saveToBank"
-              checked={saveToBank}
-              onCheckedChange={(checked) => setSaveToBank(checked as boolean)}
-              className="mt-0.5"
-            />
-            <div className="flex-1 space-y-1">
-              <Label
-                htmlFor="saveToBank"
-                className="text-sm font-medium cursor-pointer flex items-center gap-2"
-              >
-                <Database className="h-4 w-4" />
-                Simpan ke Bank Soal
-              </Label>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                Soal akan disimpan ke Bank Soal agar dapat digunakan kembali
-                untuk kuis lain di masa depan. Sangat disarankan untuk soal-soal
-                fundamental yang sering dipakai.
-              </p>
+        {!isEditing &&
+          kuisId !== "bank" &&
+          questionType === TIPE_SOAL.PILIHAN_GANDA && (
+            <div className="flex items-start gap-3 p-4 rounded-lg border bg-muted/50">
+              <Checkbox
+                id="saveToBank"
+                checked={saveToBank}
+                onCheckedChange={(checked) => setSaveToBank(checked as boolean)}
+                className="mt-0.5"
+              />
+              <div className="flex-1 space-y-1">
+                <Label
+                  htmlFor="saveToBank"
+                  className="text-sm font-medium cursor-pointer flex items-center gap-2"
+                >
+                  <Database className="h-4 w-4" />
+                  Simpan ke Bank Soal
+                </Label>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Soal akan disimpan ke Bank Soal agar dapat digunakan kembali
+                  untuk kuis lain di masa depan. Sangat disarankan untuk
+                  soal-soal fundamental yang sering dipakai.
+                </p>
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
         {/* Validation Errors */}
         {showErrors && !validation.isValid && (
