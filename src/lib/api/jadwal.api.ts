@@ -222,6 +222,17 @@ export async function getCalendarEvents(
       data: { user },
     } = await supabase.auth.getUser();
 
+    // Get current dosen ID
+    let currentDosenId = null;
+    if (user?.id) {
+      const { data: dosenData } = await supabase
+        .from("dosen")
+        .select("id")
+        .eq("user_id", user.id)
+        .single();
+      currentDosenId = dosenData?.id;
+    }
+
     // Build filter conditions
     const filterConditions = [
       {
@@ -239,12 +250,18 @@ export async function getCalendarEvents(
         operator: "eq" as const,
         value: true, // ✅ HANYA jadwal aktif
       },
-      {
-        column: "status",
-        operator: "eq" as const,
-        value: "approved", // ✅ HANYA jadwal yang disetujui
-      },
+      // ✅ FIX: Show both approved and pending jadwal for the dosen
+      // Dosen should see their own jadwal regardless of approval status
     ];
+
+    // ✅ NEW: Filter by current dosen (only show own jadwal)
+    if (currentDosenId) {
+      filterConditions.push({
+        column: "dosen_id",
+        operator: "eq" as const,
+        value: currentDosenId,
+      });
+    }
 
     // ✅ NEW: Apply additional filters from UI
     if (additionalFilters?.kelas_id) {
