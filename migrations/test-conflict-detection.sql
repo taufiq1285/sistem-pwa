@@ -12,14 +12,33 @@ WHERE topik LIKE '%Test Conflict%' OR topik LIKE '%Testing%';
 -- ==========================================
 -- Jalankan query ini untuk mendapatkan ID yang valid, lalu UPDATE di query STEP 3
 
--- Cek Dosen
-SELECT id, nama, nidn FROM dosen ORDER BY created_at DESC LIMIT 5;
+-- Cek Dosen (dengan relasi ke users)
+SELECT
+  d.id,
+  u.full_name,
+  d.nidn
+FROM dosen d
+LEFT JOIN users u ON d.user_id = u.id
+ORDER BY d.created_at DESC
+LIMIT 5;
 
 -- Cek Kelas
-SELECT id, nama, kode FROM kelas ORDER BY created_at DESC LIMIT 5;
+SELECT
+  id,
+  nama_kelas,
+  kode_kelas
+FROM kelas
+ORDER BY created_at DESC
+LIMIT 5;
 
 -- Cek Laboratorium
-SELECT id, nama, kode FROM laboratorium ORDER BY created_at DESC LIMIT 5;
+SELECT
+  id,
+  nama_lab,
+  kode_lab
+FROM laboratorium
+ORDER BY created_at DESC
+LIMIT 5;
 
 -- ==========================================
 -- STEP 3: Insert Test Data
