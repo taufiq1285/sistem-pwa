@@ -139,6 +139,16 @@ export function JadwalApprovalPage() {
     try {
       setLoading(true);
 
+      // ✅ DEBUG: Log params
+      console.log("🔍 DEBUG loadJadwalData:", {
+        statusFilter,
+        labFilter,
+        params: {
+          status: statusFilter === "all" ? undefined : statusFilter,
+          laboratorium_id: labFilter === "all" ? undefined : labFilter,
+        },
+      });
+
       const [jadwalData, labData] = await Promise.all([
         getAllJadwalForLaboran({
           status: statusFilter === "all" ? undefined : statusFilter,
@@ -146,6 +156,11 @@ export function JadwalApprovalPage() {
         }),
         getLaboratoriumList({ is_active: true }),
       ]);
+
+      console.log("✅ DEBUG loadJadwalData result:", {
+        jadwalCount: jadwalData.length,
+        jadwalData,
+      });
 
       setJadwalList(jadwalData);
       setLabList(labData as any);
