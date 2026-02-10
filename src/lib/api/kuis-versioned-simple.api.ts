@@ -5,7 +5,8 @@
  * Uses direct Supabase operations instead
  */
 
-import { getAttemptById, getJawabanByAttempt } from "./kuis.api";
+// ✅ FIXED: Use dynamic import to avoid circular dependency
+// kuis.api.ts dynamically imports this file, so we can't statically import it back
 import { notifyDosenTugasSubmitted } from "./notification.api";
 import type {
   AttemptKuis,
