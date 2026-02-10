@@ -87,6 +87,7 @@ export default defineConfig({
         ],
       },
       workbox: {
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5 MB - increase limit for large bundle
         globPatterns: ["**/*.{js,css,html,ico,png,svg,json}"],
         // Navigate fallback for SPA routing
         navigateFallback: "/index.html",
@@ -194,39 +195,37 @@ export default defineConfig({
   },
   build: {
     minify: "esbuild",
-    chunkSizeWarningLimit: 2000, // Increased for large app
+    chunkSizeWarningLimit: 3000, // Increased for large app
     rollupOptions: {
       output: {
-        // @ts-expect-error - manualChunks is valid in Rollup but TypeScript types may not recognize it
-        manualChunks(id) {
-          // Vendor chunks
-          if (id.includes("node_modules")) {
-            if (id.includes("react") || id.includes("react-dom")) {
-              return "vendor-react";
-            }
-            if (id.includes("@supabase")) {
-              return "vendor-supabase";
-            }
-            if (id.includes("react-router")) {
-              return "vendor-router";
-            }
-            return "vendor";
-          }
-          // API chunks
-          if (id.includes("/src/lib/api/")) {
-            return "api";
-          }
-          // UI chunks
-          if (id.includes("/src/components/")) {
-            return "components";
-          }
+        // Manual chunk splitting for better caching and smaller bundles
+        manualChunks: {
+          // React and related libraries
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          // Supabase
+          'supabase-vendor': ['@supabase/supabase-js'],
+          // UI libraries
+          'ui-vendor': [
+            '@radix-ui/react-dialog',
+            '@radix-ui/react-select',
+            '@radix-ui/react-tabs',
+            '@radix-ui/react-scroll-area',
+            'lucide-react',
+          ],
+          // Form libraries
+          'form-vendor': [
+            'react-hook-form',
+            '@hookform/resolvers',
+            'zod',
+          ],
+          // Date utilities
+          'date-vendor': ['date-fns'],
         },
         chunkFileNames: "assets/js/[name]-[hash].js",
         entryFileNames: "assets/js/[name]-[hash].js",
         assetFileNames: "assets/[ext]/[name]-[hash].[ext]",
       },
-    } as any, // Type assertion to suppress warning
-
+    },
     sourcemap: false,
     target: "esnext",
     cssCodeSplit: true,
