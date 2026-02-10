@@ -980,8 +980,8 @@ export async function checkJadwalConflictByDate(
   try {
     const dateStr = format(tanggalPraktikum, "yyyy-MM-dd");
 
-    // ✅ PERBAIKAN FINAL: Ganti 'jadwalpraktikum' menjadi 'jadwal_praktikum'
-    // ✅ HYBRID APPROVAL: Exclude cancelled jadwal from conflict check
+    // ✅ PERBAIKAN: Cek SEMUA jadwal aktif (pending + approved), bukan hanya approved
+    // Ini mencegah double booking saat lab sudah dibooking oleh dosen lain
     const existingJadwal = await queryWithFilters<Jadwal>("jadwal_praktikum", [
       {
         column: "laboratorium_id",
@@ -998,10 +998,11 @@ export async function checkJadwalConflictByDate(
         operator: "eq" as const,
         value: true,
       },
+      // ✅ FIX: Cek BOTH pending AND approved jadwal untuk mencegah double booking
       {
         column: "status",
-        operator: "eq" as const,
-        value: "approved",
+        operator: "in" as const,
+        value: ["pending", "approved"], // Cek kedua status
       },
     ]);
 
