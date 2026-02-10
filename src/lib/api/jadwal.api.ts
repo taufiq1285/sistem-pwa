@@ -484,7 +484,13 @@ async function createJadwalImpl(data: CreateJadwalData): Promise<Jadwal> {
       dosenId = dosenData?.id;
     }
 
+    // ✅ FIX: Validate dosenId must exist
+    if (!dosenId) {
+      throw new Error("Dosen ID tidak ditemukan. Pastikan Anda login sebagai dosen.");
+    }
+
     const insertData: Partial<Jadwal> = {
+      dosen_id: dosenId, // ✅ FIX: Set dosen_id saat create jadwal
       kelas_id: data.kelas_id,
       laboratorium_id: data.laboratorium_id,
       tanggal_praktikum: format(tanggalPraktikum, "yyyy-MM-dd"),
