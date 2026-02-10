@@ -73,7 +73,7 @@ import type { Jadwal, Laboratorium } from "@/types/jadwal.types";
 // COMPONENT
 // ============================================================================
 
-export function JadwalApprovalPage() {
+export default function JadwalApprovalPage() {
   const [loading, setLoading] = useState(true);
 
   // Data states
