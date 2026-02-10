@@ -51,7 +51,48 @@ export async function getJadwal(filters?: JadwalFilters): Promise<Jadwal[]> {
     // Dosen bisa lihat semua praktikum yang akan terjadi untuk transparency
     // Tapi hanya bisa edit jadwal yang dia buat sendiri (berdasarkan dosen_id)
 
-    // Apply filters only
+    // ✅ FIX: Get current dosen and filter by dosen_id
+    // Dosen should ONLY see their own jadwal
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    let currentDosenId = null;
+    if (user?.id) {
+      const { data: dosenData } = await supabase
+        .from("dosen")
+        .select("id")
+        .eq("user_id", user.id)
+        .single();
+      currentDosenId = dosenData?.id;
+    }
+
+    if (currentDosenId) {
+      filterConditions.push({
+        column: "dosen_id",
+        operator: "eq" as const,
+        value: currentDosenId,
+      });
+    }
+
+    // ✅ FIX: Only show active jadwal (exclude deleted)
+    // Show jadwal where is_active = true OR is_active = NULL (for backward compatibility)
+    if (filters?.is_active !== undefined) {
+      filterConditions.push({
+        column: "is_active",
+        operator: "eq" as const,
+        value: filters.is_active,
+      });
+    } else {
+      // Default: show only active jadwal (not deleted)
+      filterConditions.push({
+        column: "is_active",
+        operator: "eq" as const,
+        value: true,
+      });
+    }
+
+    // Apply additional filters only
     if (filters?.kelas_id) {
       filterConditions.push({
         column: "kelas_id",
@@ -73,14 +114,6 @@ export async function getJadwal(filters?: JadwalFilters): Promise<Jadwal[]> {
         column: "hari",
         operator: "eq" as const,
         value: filters.hari,
-      });
-    }
-
-    if (filters?.is_active !== undefined) {
-      filterConditions.push({
-        column: "is_active",
-        operator: "eq" as const,
-        value: filters.is_active,
       });
     }
 
