@@ -33,6 +33,7 @@ import { PageHeader } from "@/components/common/PageHeader";
 import { LoadingSpinner } from "@/components/common/LoadingSpinner";
 import { EmptyState } from "@/components/common/EmptyState";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
+import { StatusBadge } from "@/components/common/StatusBadge";
 import { Calendar } from "@/components/shared/Calendar/Calendar";
 import { EventDialog } from "@/components/shared/Calendar/EventDialog";
 import { Button } from "@/components/ui/button";
@@ -402,7 +403,10 @@ export default function JadwalPage() {
       const result = await createJadwal(createData);
       console.log("✅ DEBUG: createJadwal success:", result);
 
-      toast.success("Jadwal berhasil ditambahkan");
+      // ✅ IMPROVED: Beri feedback jelas tentang status pending
+      toast.success("Jadwal berhasil dibuat!", {
+        description: "Status: Menunggu approval dari Laboran. Anda akan diberitahu setelah jadwal disetujui.",
+      });
       setIsCreateOpen(false);
       createForm.reset();
       fetchJadwal();
@@ -986,6 +990,11 @@ export default function JadwalPage() {
                                   >
                                     {isOwner ? "👤 Anda" : `👤 ${creatorName}`}
                                   </span>
+                                  {/* ✅ NEW: Status Badge */}
+                                  <StatusBadge
+                                    status={jadwal.status || "pending"}
+                                    size="sm"
+                                  />
                                 </div>
                               </div>
                             </div>
@@ -1156,7 +1165,11 @@ export default function JadwalPage() {
           open={isDeleteOpen}
           onOpenChange={setIsDeleteOpen}
           title="Hapus Jadwal"
-          description={`Apakah Anda yakin ingin menghapus jadwal ini? Tindakan ini tidak dapat dibatalkan.`}
+          description={
+            selectedJadwal
+              ? `Apakah Anda yakin ingin menghapus jadwal praktikum ini?\n\nStatus: ${selectedJadwal.status === "pending" ? "⏳ Menunggu Approval" : selectedJadwal.status === "approved" ? "✅ Approved" : selectedJadwal.status}\n\nTindakan ini tidak dapat dibatalkan.`
+              : "Apakah Anda yakin ingin menghapus jadwal ini? Tindakan ini tidak dapat dibatalkan."
+          }
           confirmLabel="Hapus"
           cancelLabel="Batal"
           onConfirm={handleConfirmDelete}

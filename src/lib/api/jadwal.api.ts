@@ -436,6 +436,7 @@ export async function getCalendarEvents(
             mata_kuliah_nama: mataKuliahNama || undefined,
             laboratorium_id: j.laboratorium_id,
             topik: j.topik ?? undefined,
+            status: j.status || "pending", // ✅ NEW: Include status in metadata
           },
         };
 
