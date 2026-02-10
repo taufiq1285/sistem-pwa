@@ -955,6 +955,19 @@ async function getAllJadwalForLaboranImpl(filters?: {
             nama_lab,
             kode_lab
           ),
+          dosen:dosen_id (
+            id,
+            user_id,
+            nidn,
+            gelar_depan,
+            gelar_belakang
+          ),
+          dosen_user:dosen_id (
+            user:user_id (
+              full_name,
+              email
+            )
+          ),
           cancelled_by_user:cancelled_by (
             full_name,
             email
