@@ -65,8 +65,7 @@ import {
 } from "@/lib/api/kuis.api";
 // ✅ SECURITY FIX: Import secure API untuk hide jawaban_benar
 import { getSoalForAttempt } from "@/lib/api/kuis-secure.api";
-// ✅ FIX: Import submitAllAnswersWithVersion to save all answers on submit
-import { submitAllAnswersWithVersion } from "@/lib/api/kuis-versioned-simple.api";
+// ✅ FIX: Dynamic import untuk menghindari circular dependency warning
 import { createLaporanUploader } from "@/lib/api/laporan-storage.api";
 import type {
   Kuis,
@@ -717,6 +716,9 @@ export function QuizAttempt({
       console.log("🐛 [QuizAttempt] Saving all answers before submit...");
       console.log("🐛 [QuizAttempt] Answers to save:", answers);
       console.log("🐛 [QuizAttempt] File uploads:", fileUploads);
+
+      // ✅ FIX: Dynamic import untuk menghindari circular dependency
+      const { submitAllAnswersWithVersion } = await import("@/lib/api/kuis-versioned-simple.api");
 
       // ✅ FIX: Pass fileUploads to store file metadata (file_url, file_name, etc.)
       const saveResult = await submitAllAnswersWithVersion(
