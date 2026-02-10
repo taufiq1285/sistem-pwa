@@ -605,6 +605,7 @@ export async function remove(table: string, id: string): Promise<boolean> {
       "laboratorium",
       "inventaris",
       "mata_kuliah",
+      "jadwal_praktikum", // ✅ FIX: Add jadwal_praktikum for soft delete
     ];
 
     // Tables that should use hard delete
