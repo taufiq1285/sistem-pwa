@@ -67,6 +67,13 @@ export async function getJadwal(filters?: JadwalFilters): Promise<Jadwal[]> {
       currentDosenId = dosenData?.id;
     }
 
+    // ✅ DEBUG: Log current dosen for troubleshooting
+    console.log("🔍 DEBUG getJadwal:", {
+      userId: user?.id,
+      currentDosenId,
+      willFilterByDosenId: !!currentDosenId,
+    });
+
     if (currentDosenId) {
       filterConditions.push({
         column: "dosen_id",
@@ -870,7 +877,7 @@ export const reactivateJadwal = requirePermission(
  * @returns List of all jadwal with cancellation details
  */
 async function getAllJadwalForLaboranImpl(filters?: {
-  status?: "approved" | "cancelled" | "all";
+  status?: "all" | "pending" | "approved" | "cancelled";
   laboratorium_id?: string;
   start_date?: Date;
   end_date?: Date;
@@ -881,6 +888,13 @@ async function getAllJadwalForLaboranImpl(filters?: {
       operator: "eq" | "gte" | "lte";
       value: unknown;
     }> = [];
+
+    // ✅ FIX: Only show active jadwal (exclude soft deleted)
+    queryFilters.push({
+      column: "is_active",
+      operator: "eq" as const,
+      value: true,
+    });
 
     // Filter by status
     if (filters?.status && filters.status !== "all") {

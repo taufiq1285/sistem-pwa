@@ -87,7 +87,7 @@ export function JadwalApprovalPage() {
 
   // Filters
   const [statusFilter, setStatusFilter] = useState<
-    "all" | "approved" | "cancelled"
+    "all" | "pending" | "approved" | "cancelled"
   >("all");
   const [labFilter, setLabFilter] = useState<string>("all");
 
