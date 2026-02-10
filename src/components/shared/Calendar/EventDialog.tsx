@@ -24,6 +24,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { StatusBadge } from "@/components/common/StatusBadge";
 import type { CalendarEvent } from "@/types/jadwal.types";
 
 // ============================================================================
@@ -114,9 +115,14 @@ export function EventDialog({
         <DialogHeader>
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 space-y-2">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <TypeIcon className="h-5 w-5 text-muted-foreground" />
                 <Badge variant={typeConfig.color}>{typeConfig.label}</Badge>
+                {/* ✅ NEW: Status Badge */}
+                <StatusBadge
+                  status={event.metadata?.status || "pending"}
+                  size="sm"
+                />
               </div>
               <DialogTitle className="text-xl">{event.title}</DialogTitle>
             </div>
