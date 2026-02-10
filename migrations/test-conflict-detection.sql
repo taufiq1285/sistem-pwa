@@ -12,10 +12,10 @@ WHERE topik LIKE '%Test Conflict%' OR topik LIKE '%Testing%';
 -- ==========================================
 -- Jalankan query ini untuk mendapatkan ID yang valid, lalu UPDATE di query STEP 3
 
--- Cek Dosen (dengan relasi ke users)
+ Cek Dosen (dengan relasi ke users)
 SELECT
   d.id,
-  u.full_name,
+  u.fu--ll_name,
   d.nidn
 FROM dosen d
 LEFT JOIN users u ON d.user_id = u.id

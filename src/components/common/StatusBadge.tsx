@@ -3,8 +3,8 @@
  * Menampilkan status jadwal dengan warna yang sesuai
  */
 
-import { LucideIcon } from "lucide-react";
 import { CheckCircle2, Clock, XCircle, AlertCircle } from "lucide-react";
+import type { LucideProps } from "lucide-react";
 
 export type JadwalStatus = "pending" | "approved" | "rejected" | "cancelled";
 
@@ -51,7 +51,7 @@ export function StatusBadge({
   };
 
   const config = statusConfig[status] || statusConfig.pending;
-  const Icon = config.icon as LucideIcon;
+  const Icon = config.icon as React.ComponentType<LucideProps>;
 
   const sizeClasses = {
     sm: "px-2.5 py-1 text-xs",
