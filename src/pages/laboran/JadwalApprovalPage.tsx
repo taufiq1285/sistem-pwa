@@ -62,6 +62,12 @@ import {
   reactivateJadwal,
 } from "@/lib/api/jadwal.api";
 import { getLaboratoriumList } from "@/lib/api/laboran.api";
+import {
+  getPendingRoomBookings,
+  approveRoomBooking,
+  rejectRoomBooking,
+  type RoomBookingRequest,
+} from "@/lib/api/peminjaman-extensions";
 import type { Jadwal, Laboratorium } from "@/types/jadwal.types";
 
 // ============================================================================
@@ -70,8 +76,12 @@ import type { Jadwal, Laboratorium } from "@/types/jadwal.types";
 
 export function JadwalApprovalPage() {
   const [loading, setLoading] = useState(true);
+  const [pendingLoading, setPendingLoading] = useState(false);
 
   // Data states
+  const [pendingBookings, setPendingBookings] = useState<RoomBookingRequest[]>(
+    [],
+  );
   const [jadwalList, setJadwalList] = useState<Jadwal[]>([]);
   const [labList, setLabList] = useState<Laboratorium[]>([]);
 
@@ -84,10 +94,12 @@ export function JadwalApprovalPage() {
   // Dialog states
   const [showApproveDialog, setShowApproveDialog] = useState(false);
   const [showRejectDialog, setShowRejectDialog] = useState(false);
-  const [selectedJadwal, setSelectedJadwal] = useState<Jadwal | null>(null);
+  const [selectedBooking, setSelectedBooking] =
+    useState<RoomBookingRequest | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
 
   const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [selectedJadwal, setSelectedJadwal] = useState<Jadwal | null>(null);
   const [cancellationReason, setCancellationReason] = useState("");
 
   const [showReactivateDialog, setShowReactivateDialog] = useState(false);
@@ -98,6 +110,7 @@ export function JadwalApprovalPage() {
   // ============================================================================
 
   useEffect(() => {
+    loadPendingBookings();
     loadJadwalData();
   }, []);
 
@@ -108,6 +121,19 @@ export function JadwalApprovalPage() {
   // ============================================================================
   // DATA LOADING
   // ============================================================================
+
+  const loadPendingBookings = async () => {
+    try {
+      setPendingLoading(true);
+      const data = await getPendingRoomBookings(50);
+      setPendingBookings(data);
+    } catch (error: any) {
+      console.error("Error loading pending bookings:", error);
+      toast.error(error.message || "Gagal memuat permintaan booking");
+    } finally {
+      setPendingLoading(false);
+    }
+  };
 
   const loadJadwalData = async () => {
     try {
@@ -147,7 +173,65 @@ export function JadwalApprovalPage() {
   };
 
   const refreshAll = () => {
+    loadPendingBookings();
     loadJadwalData();
+  };
+
+  // ============================================================================
+  // APPROVAL HANDLERS
+  // ============================================================================
+
+  const handleApproveClick = (booking: RoomBookingRequest) => {
+    setSelectedBooking(booking);
+    setShowApproveDialog(true);
+  };
+
+  const handleApproveConfirm = async () => {
+    if (!selectedBooking) return;
+
+    try {
+      setSubmitting(true);
+      await approveRoomBooking(selectedBooking.id);
+      toast.success("Booking ruangan berhasil disetujui");
+      setShowApproveDialog(false);
+      setSelectedBooking(null);
+      refreshAll();
+    } catch (error: any) {
+      console.error("Error approving booking:", error);
+      toast.error(error.message || "Gagal menyetujui booking");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleRejectClick = (booking: RoomBookingRequest) => {
+    setSelectedBooking(booking);
+    setRejectionReason("");
+    setShowRejectDialog(true);
+  };
+
+  const handleRejectConfirm = async () => {
+    if (!selectedBooking) return;
+
+    if (!rejectionReason.trim()) {
+      toast.error("Alasan penolakan harus diisi");
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      await rejectRoomBooking(selectedBooking.id, rejectionReason.trim());
+      toast.success("Booking ruangan berhasil ditolak");
+      setShowRejectDialog(false);
+      setSelectedBooking(null);
+      setRejectionReason("");
+      refreshAll();
+    } catch (error: any) {
+      console.error("Error rejecting booking:", error);
+      toast.error(error.message || "Gagal menolak booking");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   // ============================================================================
@@ -280,7 +364,8 @@ export function JadwalApprovalPage() {
   // ============================================================================
 
   const stats = {
-    pending: jadwalList.filter((j) => j.status === "pending").length,
+    pending:
+      pendingBookings.length + jadwalList.filter((j) => j.status === "pending").length, // ✅ Include both bookings + jadwal
     approved: jadwalList.filter((j) => j.status === "approved").length,
     cancelled: jadwalList.filter((j) => j.status === "cancelled").length,
     rejected: jadwalList.filter((j) => j.status === "rejected").length,
