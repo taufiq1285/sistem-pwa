@@ -889,6 +889,12 @@ async function getAllJadwalForLaboranImpl(filters?: {
       value: unknown;
     }> = [];
 
+    // ✅ DEBUG: Log incoming filters
+    console.log("🔍 DEBUG getAllJadwalForLaboran:", {
+      filters,
+      willFilterByStatus: filters?.status && filters.status !== "all",
+    });
+
     // ✅ FIX: Only show active jadwal (exclude soft deleted)
     queryFilters.push({
       column: "is_active",
@@ -957,6 +963,17 @@ async function getAllJadwalForLaboranImpl(filters?: {
         order: { column: "tanggal_praktikum", ascending: false },
       },
     );
+
+    // ✅ DEBUG: Log hasil query
+    console.log("✅ DEBUG getAllJadwalForLaboran result:", {
+      totalJadwal: jadwalList.length,
+      statusBreakdown: {
+        pending: jadwalList.filter((j) => j.status === "pending").length,
+        approved: jadwalList.filter((j) => j.status === "approved").length,
+        rejected: jadwalList.filter((j) => j.status === "rejected").length,
+        cancelled: jadwalList.filter((j) => j.status === "cancelled").length,
+      },
+    });
 
     return jadwalList;
   } catch (error) {
