@@ -57,7 +57,8 @@
       "Bash(git checkout:*)",
       "Bash(npm run test:unit:*)",
       "Bash(npm run)",
-      "Bash(npx madge:*)"
+      "Bash(npx madge:*)",
+      "Bash(git revert:*)"
     ]
   }
 }

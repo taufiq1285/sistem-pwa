@@ -668,7 +668,7 @@ export function JadwalApprovalPage() {
                             {(jadwal.laboratorium as any)?.nama_lab || "-"}
                           </TableCell>
                           <TableCell>
-                            {(jadwal.dosen as any)?.user?.full_name || "-"}
+                            {(jadwal.dosen_user as any)?.user_id?.full_name || "-"}
                           </TableCell>
                           <TableCell
                             className="max-w-xs truncate"
