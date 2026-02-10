@@ -212,7 +212,10 @@ export default function JadwalPage() {
     try {
       setLoading(true);
 
-      const filters: Record<string, string | boolean> = { is_active: true };
+      const filters: Record<string, string | boolean> = {};
+      // ✅ FIX: Don't filter by is_active by default
+      // This ensures all jadwal are visible regardless of is_active status
+      // is_active filter is handled by the API layer
       if (filterKelas) filters.kelas_id = filterKelas;
       if (filterLab) filters.laboratorium_id = filterLab;
       if (filterHari) filters.hari = filterHari;
