@@ -57,6 +57,10 @@ import {
   rejectPeminjaman,
   type PendingApproval,
 } from "@/lib/api/laboran.api";
+import {
+  notifyDosenPeminjamanDisetujui,
+  notifyDosenPeminjamanDitolak,
+} from "@/lib/api/notification.api";
 
 export default function PersetujuanPage() {
   // State for equipment borrowing
@@ -65,11 +69,12 @@ export default function PersetujuanPage() {
   );
   const [loadingEquipment, setLoadingEquipment] = useState(true);
 
-  // Dialog states
+  // Dialog states - store full request details for notifications
   const [approveDialog, setApproveDialog] = useState<{
     open: boolean;
     id: string;
     name: string;
+    request?: PendingApproval;
   }>({
     open: false,
     id: "",
@@ -80,6 +85,7 @@ export default function PersetujuanPage() {
     open: boolean;
     id: string;
     name: string;
+    request?: PendingApproval;
   }>({
     open: false,
     id: "",
@@ -112,8 +118,13 @@ export default function PersetujuanPage() {
   };
 
   // Approve handlers
-  const openApproveDialog = (id: string, name: string) => {
-    setApproveDialog({ open: true, id, name });
+  const openApproveDialog = (request: PendingApproval) => {
+    setApproveDialog({
+      open: true,
+      id: request.id,
+      name: request.inventaris_nama,
+      request,
+    });
   };
 
   const handleApprove = async () => {
@@ -121,6 +132,20 @@ export default function PersetujuanPage() {
       setProcessing(true);
       await approvePeminjaman(approveDialog.id);
       toast.success("Peminjaman alat berhasil disetujui");
+
+      // Notify dosen (best-effort, non-blocking)
+      if (approveDialog.request?.dosen_user_id) {
+        notifyDosenPeminjamanDisetujui(
+          approveDialog.request.dosen_user_id,
+          approveDialog.request.inventaris_nama,
+          approveDialog.request.jumlah_pinjam,
+          approveDialog.request.tanggal_pinjam,
+          approveDialog.request.tanggal_kembali_rencana,
+        ).catch((err) => {
+          console.error("Failed to notify dosen:", err);
+        });
+      }
+
       await loadEquipmentRequests();
       setApproveDialog({ open: false, id: "", name: "" });
     } catch (error) {
@@ -132,8 +157,13 @@ export default function PersetujuanPage() {
   };
 
   // Reject handlers
-  const openRejectDialog = (id: string, name: string) => {
-    setRejectDialog({ open: true, id, name });
+  const openRejectDialog = (request: PendingApproval) => {
+    setRejectDialog({
+      open: true,
+      id: request.id,
+      name: request.inventaris_nama,
+      request,
+    });
     setRejectionReason("");
   };
 
@@ -147,6 +177,18 @@ export default function PersetujuanPage() {
       setProcessing(true);
       await rejectPeminjaman(rejectDialog.id, rejectionReason);
       toast.success("Peminjaman alat berhasil ditolak");
+
+      // Notify dosen (best-effort, non-blocking)
+      if (rejectDialog.request?.dosen_user_id) {
+        notifyDosenPeminjamanDitolak(
+          rejectDialog.request.dosen_user_id,
+          rejectDialog.request.inventaris_nama,
+          rejectionReason,
+        ).catch((err) => {
+          console.error("Failed to notify dosen:", err);
+        });
+      }
+
       await loadEquipmentRequests();
       setRejectDialog({ open: false, id: "", name: "" });
       setRejectionReason("");
@@ -315,12 +357,7 @@ export default function PersetujuanPage() {
                               size="sm"
                               variant="outline"
                               className="text-green-600 border-green-600 hover:bg-green-50"
-                              onClick={() =>
-                                openApproveDialog(
-                                  request.id,
-                                  request.inventaris_nama,
-                                )
-                              }
+                              onClick={() => openApproveDialog(request)}
                             >
                               <CheckCircle className="h-4 w-4 mr-1" />
                               Setujui
@@ -329,12 +366,7 @@ export default function PersetujuanPage() {
                               size="sm"
                               variant="outline"
                               className="text-red-600 border-red-600 hover:bg-red-50"
-                              onClick={() =>
-                                openRejectDialog(
-                                  request.id,
-                                  request.inventaris_nama,
-                                )
-                              }
+                              onClick={() => openRejectDialog(request)}
                             >
                               <XCircle className="h-4 w-4 mr-1" />
                               Tolak

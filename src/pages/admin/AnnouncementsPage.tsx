@@ -35,6 +35,7 @@ import {
   createAnnouncement,
   type AnnouncementStats,
 } from "@/lib/api/announcements.api";
+import { notifyUsersAnnouncement } from "@/lib/api/notification.api";
 import type { Pengumuman, CreatePengumumanData } from "@/types/common.types";
 import { formatDate } from "@/lib/utils/format";
 import { useAuth } from "@/lib/hooks/useAuth";
@@ -58,9 +59,9 @@ export default function AnnouncementsPage() {
     konten: "",
     tipe: "info",
     prioritas: "normal",
-    target_role: [],
-    tanggal_mulai: "",
-    tanggal_selesai: "",
+    target_role: [], // Default: all roles if empty
+    tanggal_mulai: "", // Default: now
+    tanggal_selesai: "", // Default: no expiry
     penulis_id: user?.id || "",
   });
 
@@ -133,7 +134,7 @@ export default function AnnouncementsPage() {
       konten: "",
       tipe: "info",
       prioritas: "normal",
-      target_role: [],
+      target_role: [], // Kosong = semua role
       tanggal_mulai: "",
       tanggal_selesai: "",
       penulis_id: user?.id || "",
@@ -143,8 +144,14 @@ export default function AnnouncementsPage() {
 
   const handleCreate = async () => {
     try {
-      if (!addFormData.judul || !addFormData.konten) {
-        toast.error("Please fill in all required fields");
+      // Validasi sederhana
+      if (!addFormData.judul?.trim()) {
+        toast.error("Judul pengumuman wajib diisi");
+        return;
+      }
+
+      if (!addFormData.konten?.trim()) {
+        toast.error("Konten pengumuman wajib diisi");
         return;
       }
 
@@ -153,19 +160,64 @@ export default function AnnouncementsPage() {
         return;
       }
 
-      await createAnnouncement({
-        ...addFormData,
+      // Set default values if not provided
+      const announcementData: CreatePengumumanData = {
+        judul: addFormData.judul.trim(),
+        konten: addFormData.konten.trim(),
+        tipe: addFormData.tipe || "info",
+        prioritas: addFormData.prioritas || "normal",
+        target_role:
+          addFormData.target_role && addFormData.target_role.length > 0
+            ? addFormData.target_role
+            : undefined, // Empty means all roles
+        tanggal_mulai: addFormData.tanggal_mulai || undefined,
+        tanggal_selesai: addFormData.tanggal_selesai || undefined,
         penulis_id: user.id,
-      });
-      toast.success("Announcement created successfully");
+      };
+
+      console.log("📝 [ADMIN] Creating announcement:", announcementData);
+
+      await createAnnouncement(announcementData);
+      toast.success("✅ Pengumuman berhasil dibuat!");
+
+      // Notify target roles (best-effort, non-blocking)
+      const targetRoles = announcementData.target_role || [
+        "admin",
+        "dosen",
+        "mahasiswa",
+        "laboran",
+      ];
+
+      console.log("🔔 [ADMIN] Sending notifications to:", targetRoles);
+
+      try {
+        await notifyUsersAnnouncement(
+          targetRoles,
+          announcementData.judul,
+          announcementData.tipe,
+          announcementData.prioritas,
+        );
+        toast.success(
+          `🔔 Notifikasi dikirim ke ${targetRoles.length} role(s)!`,
+        );
+      } catch (notifErr: any) {
+        console.error("❌ [ADMIN] Failed to send notifications:", notifErr);
+        toast.error(
+          `⚠️ Pengumuman dibuat, tapi notifikasi gagal: ${notifErr.message || "Unknown error"}`,
+          { duration: 5000 },
+        );
+        // Jangan throw error - announcement sudah sukses dibuat
+      }
+
       setIsAddDialogOpen(false);
+
       // Invalidate cache and reload
       await invalidateCache("admin_announcements");
       await invalidateCache("admin_announcement_stats");
       await loadAnnouncements(true);
     } catch (error: any) {
       toast.error(
-        "Failed to create announcement: " + (error.message || "Unknown error"),
+        "Gagal membuat pengumuman: " + (error.message || "Unknown error"),
       );
       console.error(error);
     }
@@ -318,44 +370,54 @@ export default function AnnouncementsPage() {
 
       {/* Add Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-6">
+        <DialogContent className="max-w-lg p-6">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold">
-              Create New Announcement
+              Buat Pengumuman Baru
             </DialogTitle>
-            <DialogDescription className="text-base font-semibold">
-              Create a new system announcement
+            <DialogDescription className="text-sm">
+              Buat pengumuman sistem untuk semua user atau role tertentu
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="new_judul">Title *</Label>
+
+          <div className="space-y-4 py-4">
+            {/* Judul */}
+            <div className="space-y-2">
+              <Label htmlFor="new_judul">
+                Judul <span className="text-red-500">*</span>
+              </Label>
               <Input
                 id="new_judul"
                 value={addFormData.judul}
                 onChange={(e) =>
                   setAddFormData({ ...addFormData, judul: e.target.value })
                 }
-                placeholder="Important announcement"
+                placeholder="Contoh: Maintenance sistem terjadwal"
+                className="font-medium"
               />
             </div>
 
-            <div>
-              <Label htmlFor="new_konten">Content *</Label>
+            {/* Konten */}
+            <div className="space-y-2">
+              <Label htmlFor="new_konten">
+                Isi Pengumuman <span className="text-red-500">*</span>
+              </Label>
               <Textarea
                 id="new_konten"
                 value={addFormData.konten}
                 onChange={(e) =>
                   setAddFormData({ ...addFormData, konten: e.target.value })
                 }
-                placeholder="Announcement details..."
-                rows={5}
+                placeholder="Jelaskan detail pengumuman..."
+                rows={4}
+                className="resize-none"
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="new_tipe">Type</Label>
+            {/* Type & Priority - satu baris */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="new_tipe">Tipe</Label>
                 <Select
                   value={addFormData.tipe}
                   onValueChange={(value: any) =>
@@ -366,16 +428,16 @@ export default function AnnouncementsPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="info">Info</SelectItem>
-                    <SelectItem value="warning">Warning</SelectItem>
-                    <SelectItem value="urgent">Urgent</SelectItem>
-                    <SelectItem value="maintenance">Maintenance</SelectItem>
+                    <SelectItem value="info">ℹ️ Info</SelectItem>
+                    <SelectItem value="warning">⚠️ Warning</SelectItem>
+                    <SelectItem value="urgent">🔴 Urgent</SelectItem>
+                    <SelectItem value="maintenance">🔧 Maintenance</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
-              <div>
-                <Label htmlFor="new_prioritas">Priority</Label>
+              <div className="space-y-2">
+                <Label htmlFor="new_prioritas">Prioritas</Label>
                 <Select
                   value={addFormData.prioritas}
                   onValueChange={(value: any) =>
@@ -386,93 +448,118 @@ export default function AnnouncementsPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="low">Low</SelectItem>
-                    <SelectItem value="normal">Normal</SelectItem>
-                    <SelectItem value="high">High</SelectItem>
+                    <SelectItem value="low">🟢 Low</SelectItem>
+                    <SelectItem value="normal">🟡 Normal</SelectItem>
+                    <SelectItem value="high">🔴 High</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="new_tanggal_mulai">Start Date</Label>
-                <Input
-                  id="new_tanggal_mulai"
-                  type="datetime-local"
-                  value={addFormData.tanggal_mulai}
-                  onChange={(e) =>
-                    setAddFormData({
-                      ...addFormData,
-                      tanggal_mulai: e.target.value,
-                    })
-                  }
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="new_tanggal_selesai">End Date</Label>
-                <Input
-                  id="new_tanggal_selesai"
-                  type="datetime-local"
-                  value={addFormData.tanggal_selesai}
-                  onChange={(e) =>
-                    setAddFormData({
-                      ...addFormData,
-                      tanggal_selesai: e.target.value,
-                    })
-                  }
-                />
-              </div>
-            </div>
-
-            <div>
-              <Label>Target Roles (leave empty for all)</Label>
-              <div className="grid grid-cols-2 gap-2 mt-2">
-                {["admin", "dosen", "mahasiswa", "laboran"].map((role) => (
-                  <div key={role} className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id={`role_${role}`}
-                      checked={addFormData.target_role?.includes(role)}
-                      onChange={(e) => {
-                        const currentRoles = addFormData.target_role || [];
-                        if (e.target.checked) {
-                          setAddFormData({
-                            ...addFormData,
-                            target_role: [...currentRoles, role],
-                          });
-                        } else {
-                          setAddFormData({
-                            ...addFormData,
-                            target_role: currentRoles.filter((r) => r !== role),
-                          });
-                        }
-                      }}
-                    />
-                    <Label htmlFor={`role_${role}`} className="capitalize">
-                      {role}
-                    </Label>
-                  </div>
+            {/* Target Roles - lebih simple */}
+            <div className="space-y-2">
+              <Label>
+                Kirim ke Role{" "}
+                <span className="text-muted-foreground">
+                  (kosongkan untuk semua)
+                </span>
+              </Label>
+              <div className="flex flex-wrap gap-3">
+                {[
+                  { value: "admin", label: "Admin", emoji: "👨‍💼" },
+                  { value: "dosen", label: "Dosen", emoji: "👨‍🏫" },
+                  { value: "mahasiswa", label: "Mahasiswa", emoji: "👨‍🎓" },
+                  { value: "laboran", label: "Laboran", emoji: "🔧" },
+                ].map((role) => (
+                  <button
+                    key={role.value}
+                    type="button"
+                    onClick={() => {
+                      const currentRoles = addFormData.target_role || [];
+                      if (currentRoles.includes(role.value)) {
+                        setAddFormData({
+                          ...addFormData,
+                          target_role: currentRoles.filter(
+                            (r) => r !== role.value,
+                          ),
+                        });
+                      } else {
+                        setAddFormData({
+                          ...addFormData,
+                          target_role: [...currentRoles, role.value],
+                        });
+                      }
+                    }}
+                    className={`
+                      px-3 py-2 rounded-lg border-2 text-sm font-medium transition-all
+                      ${
+                        addFormData.target_role?.includes(role.value)
+                          ? "border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300"
+                          : "border-gray-200 hover:border-gray-300 dark:border-gray-700"
+                      }
+                    `}
+                  >
+                    {role.emoji} {role.label}
+                  </button>
                 ))}
               </div>
             </div>
 
-            <div className="flex justify-end gap-2">
-              <Button
-                variant="outline"
-                onClick={() => setIsAddDialogOpen(false)}
-                className="font-semibold border-2"
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleCreate}
-                className="font-semibold bg-linear-to-r from-blue-500 to-indigo-600"
-              >
-                Create Announcement
-              </Button>
-            </div>
+            {/* Tanggal opsional */}
+            <details className="group">
+              <summary className="cursor-pointer text-sm text-muted-foreground hover:text-foreground">
+                ⏱️ Opsi Tanggal (opsional)
+              </summary>
+              <div className="grid grid-cols-2 gap-3 mt-3">
+                <div className="space-y-1">
+                  <Label className="text-xs">Tanggal Mulai</Label>
+                  <Input
+                    type="datetime-local"
+                    value={addFormData.tanggal_mulai}
+                    onChange={(e) =>
+                      setAddFormData({
+                        ...addFormData,
+                        tanggal_mulai: e.target.value,
+                      })
+                    }
+                    className="h-9"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Tanggal Selesai</Label>
+                  <Input
+                    type="datetime-local"
+                    value={addFormData.tanggal_selesai}
+                    onChange={(e) =>
+                      setAddFormData({
+                        ...addFormData,
+                        tanggal_selesai: e.target.value,
+                      })
+                    }
+                    className="h-9"
+                  />
+                </div>
+              </div>
+            </details>
+          </div>
+
+          {/* Buttons */}
+          <div className="flex justify-end gap-2 pt-2">
+            <Button
+              variant="outline"
+              onClick={() => setIsAddDialogOpen(false)}
+              type="button"
+            >
+              Batal
+            </Button>
+            <Button
+              onClick={handleCreate}
+              className="bg-blue-600 hover:bg-blue-700"
+              type="button"
+            >
+              <Megaphone className="h-4 w-4 mr-2" />
+              Buat Pengumuman
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

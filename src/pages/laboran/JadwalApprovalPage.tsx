@@ -409,9 +409,9 @@ export default function JadwalApprovalPage() {
                       {jadwalList
                         .filter((j) => j.status === "pending")
                         .map((jadwal) => {
-                          const kelas = j.kelas as any;
-                          const lab = j.laboratorium as any;
-                          const dosen = j.dosen_user as any;
+                          const kelas = jadwal.kelas as any;
+                          const lab = jadwal.laboratorium as any;
+                          const dosen = jadwal.dosen_user as any;
 
                           return (
                             <TableRow key={jadwal.id}>
@@ -421,7 +421,7 @@ export default function JadwalApprovalPage() {
                                     ? format(
                                         new Date(jadwal.tanggal_praktikum),
                                         "dd MMM yyyy",
-                                        { locale: localeId }
+                                        { locale: localeId },
                                       )
                                     : "-"}
                                 </div>
@@ -460,7 +460,9 @@ export default function JadwalApprovalPage() {
                                 <div className="flex justify-end gap-2">
                                   <Button
                                     size="sm"
-                                    onClick={() => handleApproveJadwalClick(jadwal)}
+                                    onClick={() =>
+                                      handleApproveJadwalClick(jadwal)
+                                    }
                                     className="bg-green-600 hover:bg-green-700"
                                   >
                                     Setujui
@@ -468,7 +470,9 @@ export default function JadwalApprovalPage() {
                                   <Button
                                     size="sm"
                                     variant="destructive"
-                                    onClick={() => handleRejectJadwalClick(jadwal)}
+                                    onClick={() =>
+                                      handleRejectJadwalClick(jadwal)
+                                    }
                                   >
                                     Tolak
                                   </Button>
@@ -520,9 +524,9 @@ export default function JadwalApprovalPage() {
                       {jadwalList
                         .filter((j) => j.status === "approved")
                         .map((jadwal) => {
-                          const kelas = j.kelas as any;
-                          const lab = j.laboratorium as any;
-                          const dosen = j.dosen_user as any;
+                          const kelas = jadwal.kelas as any;
+                          const lab = jadwal.laboratorium as any;
+                          const dosen = jadwal.dosen_user as any;
 
                           return (
                             <TableRow key={jadwal.id}>
@@ -532,7 +536,7 @@ export default function JadwalApprovalPage() {
                                     ? format(
                                         new Date(jadwal.tanggal_praktikum),
                                         "dd MMM yyyy",
-                                        { locale: localeId }
+                                        { locale: localeId },
                                       )
                                     : "-"}
                                 </div>
@@ -592,7 +596,7 @@ export default function JadwalApprovalPage() {
           {loading ? (
             <LoadingSpinner />
           ) : jadwalList.filter(
-              (j) => j.status === "cancelled" || j.status === "rejected"
+              (j) => j.status === "cancelled" || j.status === "rejected",
             ).length === 0 ? (
             <Card className="border-0 shadow-xl bg-linear-to-br from-gray-50 to-red-50/30 dark:from-slate-900 dark:to-red-950/20">
               <CardContent className="p-12">
@@ -625,12 +629,12 @@ export default function JadwalApprovalPage() {
                       {jadwalList
                         .filter(
                           (j) =>
-                            j.status === "cancelled" || j.status === "rejected"
+                            j.status === "cancelled" || j.status === "rejected",
                         )
                         .map((jadwal) => {
-                          const kelas = j.kelas as any;
-                          const lab = j.laboratorium as any;
-                          const dosen = j.dosen_user as any;
+                          const kelas = jadwal.kelas as any;
+                          const lab = jadwal.laboratorium as any;
+                          const dosen = jadwal.dosen_user as any;
 
                           return (
                             <TableRow key={jadwal.id}>
@@ -640,7 +644,7 @@ export default function JadwalApprovalPage() {
                                     ? format(
                                         new Date(jadwal.tanggal_praktikum),
                                         "dd MMM yyyy",
-                                        { locale: localeId }
+                                        { locale: localeId },
                                       )
                                     : "-"}
                                 </div>
@@ -648,12 +652,12 @@ export default function JadwalApprovalPage() {
                               <TableCell>
                                 <Badge
                                   variant={
-                                    j.status === "rejected"
+                                    jadwal.status === "rejected"
                                       ? "destructive"
                                       : "secondary"
                                   }
                                 >
-                                  {j.status === "rejected"
+                                  {jadwal.status === "rejected"
                                     ? "Ditolak"
                                     : "Dibatalkan"}
                                 </Badge>
@@ -697,7 +701,9 @@ export default function JadwalApprovalPage() {
                                   <Button
                                     size="sm"
                                     variant="outline"
-                                    onClick={() => handleReactivateClick(jadwal)}
+                                    onClick={() =>
+                                      handleReactivateClick(jadwal)
+                                    }
                                   >
                                     <RotateCcw className="h-4 w-4 mr-2" />
                                     Aktifkan
@@ -822,7 +828,10 @@ export default function JadwalApprovalPage() {
       </Dialog>
 
       {/* Reactivate Dialog */}
-      <Dialog open={showReactivateDialog} onOpenChange={setShowReactivateDialog}>
+      <Dialog
+        open={showReactivateDialog}
+        onOpenChange={setShowReactivateDialog}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Aktifkan Kembali Jadwal</DialogTitle>

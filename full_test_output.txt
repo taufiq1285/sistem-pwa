@@ -1,0 +1,979 @@
+
+> vite-project@0.0.0 test
+> vitest --run --passWithNoTests
+
+
+[1m[46m RUN [49m[22m [36mv4.0.18 [39m[90mF:/tes 9/sistem-praktikum-pwa[39m
+
+ [31m❯[39m src/__tests__/unit/api/logbook.api.test.ts [2m([22m[2m13 tests[22m[2m | [22m[31m8 failed[39m[2m)[22m[32m 118[2mms[22m[39m
+[31m       [31m×[31m should create logbook entry successfully[39m[32m 19[2mms[22m[39m
+       [32m✓[39m should validate user is authenticated[32m 8[2mms[22m[39m
+       [32m✓[39m should update own draft logbook[32m 3[2mms[22m[39m
+[31m       [31m×[31m should prevent updating submitted logbook[39m[32m 15[2mms[22m[39m
+       [32m✓[39m should prevent updating other mahasiswa's logbook[32m 2[2mms[22m[39m
+       [32m✓[39m should submit logbook for review[32m 6[2mms[22m[39m
+[31m       [31m×[31m should validate required fields before submit[39m[32m 5[2mms[22m[39m
+[31m       [31m×[31m should prevent submitting submitted logbook[39m[32m 3[2mms[22m[39m
+[31m       [31m×[31m should delete own draft logbook[39m[32m 11[2mms[22m[39m
+[31m       [31m×[31m should prevent deleting submitted logbook[39m[32m 16[2mms[22m[39m
+       [32m✓[39m should prevent deleting other mahasiswa's logbook[32m 8[2mms[22m[39m
+[31m       [31m×[31m should handle very long content in fields[39m[32m 16[2mms[22m[39m
+[31m       [31m×[31m should handle special characters in content[39m[32m 2[2mms[22m[39m
+ [32m✓[39m src/__tests__/unit/hooks/useSync.test.ts [2m([22m[2m34 tests[22m[2m)[22m[33m 2990[2mms[22m[39m
+[90mstdout[2m | src/lib/api/__tests__/jadwal-conflict.test.ts[2m > [22m[2mConflict Detection - Jadwal Praktikum[2m > [22m[2mSkenario 1: Exact Overlap (Bentrok Total)[2m > [22m[2mshould reject booking when time range exactly matches existing jadwal
+[22m[39m🔴 API Error (checkJadwalConflictByDate)
+
+[90mstderr[2m | src/lib/api/__tests__/jadwal-conflict.test.ts[2m > [22m[2mConflict Detection - Jadwal Praktikum[2m > [22m[2mSkenario 1: Exact Overlap (Bentrok Total)[2m > [22m[2mshould reject booking when time range exactly matches existing jadwal
+[22m[39m  Message: Invalid time value
+  Code: UNKNOWN
+
+[90mstdout[2m | src/__tests__/unit/api/jadwal.api.test.ts[2m > [22m[2mJadwal API[2m > [22m[2mgetJadwal[2m > [22m[2mshould fetch all jadwal without filters
+[22m[39m🔍 DEBUG getJadwal: { userId: [90mundefined[39m, currentDosenId: [1mnull[22m, willFilterByDosenId: [33mfalse[39m }
+
+[90mstdout[2m | src/lib/api/__tests__/jadwal-conflict.test.ts[2m > [22m[2mConflict Detection - Jadwal Praktikum[2m > [22m[2mSkenario 2: Partial Overlap (Bentrok Sebagian)[2m > [22m[2mshould reject booking when time range overlaps partially
+[22m[39m🔴 API Error (checkJadwalConflictByDate)
+
+[90mstderr[2m | src/lib/api/__tests__/jadwal-conflict.test.ts[2m > [22m[2mConflict Detection - Jadwal Praktikum[2m > [22m[2mSkenario 2: Partial Overlap (Bentrok Sebagian)[2m > [22m[2mshould reject booking when time range overlaps partially
+[22m[39m  Message: Invalid time value
+  Code: UNKNOWN
+
+[90mstdout[2m | src/lib/api/__tests__/jadwal-conflict.test.ts[2m > [22m[2mConflict Detection - Jadwal Praktikum[2m > [22m[2mSkenario 2: Partial Overlap (Bentrok Sebagian)[2m > [22m[2mshould reject booking when time range overlaps partially
+[22m[39m🔴 API Error (checkJadwalConflictByDate)
+
+[90mstderr[2m | src/lib/api/__tests__/jadwal-conflict.test.ts[2m > [22m[2mConflict Detection - Jadwal Praktikum[2m > [22m[2mSkenario 2: Partial Overlap (Bentrok Sebagian)[2m > [22m[2mshould reject booking when time range overlaps partially
+[22m[39m  Message: Invalid time value
+  Code: UNKNOWN
+
+[90mstdout[2m | src/lib/api/__tests__/jadwal-conflict.test.ts[2m > [22m[2mConflict Detection - Jadwal Praktikum[2m > [22m[2mSkenario 3: Contained Within (Dalam Range)[2m > [22m[2mshould reject booking when new booking is within existing range
+[22m[39m🔴 API Error (checkJadwalConflictByDate)
+
+[90mstderr[2m | src/lib/api/__tests__/jadwal-conflict.test.ts[2m > [22m[2mConflict Detection - Jadwal Praktikum[2m > [22m[2mSkenario 3: Contained Within (Dalam Range)[2m > [22m[2mshould reject booking when new booking is within existing range
+[22m[39m  Message: Invalid time value
+  Code: UNKNOWN
+
+[90mstdout[2m | src/lib/api/__tests__/jadwal-conflict.test.ts[2m > [22m[2mConflict Detection - Jadwal Praktikum[2m > [22m[2mSkenario 4: No Overlap (Tidak Bentrok)[2m > [22m[2mshould allow booking when time range does not overlap
+[22m[39m🔴 API Error (checkJadwalConflictByDate)
+
+[90mstderr[2m | src/lib/api/__tests__/jadwal-conflict.test.ts[2m > [22m[2mConflict Detection - Jadwal Praktikum[2m > [22m[2mSkenario 4: No Overlap (Tidak Bentrok)[2m > [22m[2mshould allow booking when time range does not overlap
+[22m[39m  Message: Invalid time value
+  Code: UNKNOWN
+
+[90mstdout[2m | src/lib/api/__tests__/jadwal-conflict.test.ts[2m > [22m[2mConflict Detection - Jadwal Praktikum[2m > [22m[2mSkenario 4: No Overlap (Tidak Bentrok)[2m > [22m[2mshould allow booking when time range does not overlap
+[22m[39m🔴 API Error (checkJadwalConflictByDate)
+
+[90mstderr[2m | src/lib/api/__tests__/jadwal-conflict.test.ts[2m > [22m[2mConflict Detection - Jadwal Praktikum[2m > [22m[2mSkenario 4: No Overlap (Tidak Bentrok)[2m > [22m[2mshould allow booking when time range does not overlap
+[22m[39m  Message: Invalid time value
+  Code: UNKNOWN
+
+[90mstdout[2m | src/lib/api/__tests__/jadwal-conflict.test.ts[2m > [22m[2mConflict Detection - Jadwal Praktikum[2m > [22m[2mSkenario 5: Different Lab (Lab Berbeda)[2m > [22m[2mshould allow booking when different lab is used
+[22m[39m🔴 API Error (checkJadwalConflictByDate)
+
+[90mstderr[2m | src/lib/api/__tests__/jadwal-conflict.test.ts[2m > [22m[2mConflict Detection - Jadwal Praktikum[2m > [22m[2mSkenario 5: Different Lab (Lab Berbeda)[2m > [22m[2mshould allow booking when different lab is used
+[22m[39m  Message: Invalid time value
+  Code: UNKNOWN
+
+[90mstdout[2m | src/lib/api/__tests__/jadwal-conflict.test.ts[2m > [22m[2mConflict Detection - Jadwal Praktikum[2m > [22m[2mSkenario 6: Different Date (Tanggal Berbeda)[2m > [22m[2mshould allow booking when different date is used
+[22m[39m🔴 API Error (checkJadwalConflictByDate)
+
+[90mstderr[2m | src/lib/api/__tests__/jadwal-conflict.test.ts[2m > [22m[2mConflict Detection - Jadwal Praktikum[2m > [22m[2mSkenario 6: Different Date (Tanggal Berbeda)[2m > [22m[2mshould allow booking when different date is used
+[22m[39m  Message: Invalid time value
+  Code: UNKNOWN
+
+[90mstdout[2m | src/lib/api/__tests__/jadwal-conflict.test.ts[2m > [22m[2mConflict Detection - Jadwal Praktikum[2m > [22m[2mSkenario 7: Status Checking (Approved vs Pending)[2m > [22m[2mshould check BOTH pending and approved status
+[22m[39m🔴 API Error (checkJadwalConflictByDate)
+
+[90mstderr[2m | src/lib/api/__tests__/jadwal-conflict.test.ts[2m > [22m[2mConflict Detection - Jadwal Praktikum[2m > [22m[2mSkenario 7: Status Checking (Approved vs Pending)[2m > [22m[2mshould check BOTH pending and approved status
+[22m[39m  Message: Invalid time value
+  Code: UNKNOWN
+
+[90mstdout[2m | src/lib/api/__tests__/jadwal-conflict.test.ts[2m > [22m[2mConflict Detection - Jadwal Praktikum[2m > [22m[2mSkenario 7: Status Checking (Approved vs Pending)[2m > [22m[2mshould check BOTH pending and approved status
+[22m[39m🔴 API Error (checkJadwalConflictByDate)
+
+[90mstderr[2m | src/lib/api/__tests__/jadwal-conflict.test.ts[2m > [22m[2mConflict Detection - Jadwal Praktikum[2m > [22m[2mSkenario 7: Status Checking (Approved vs Pending)[2m > [22m[2mshould check BOTH pending and approved status
+[22m[39m  Message: Invalid time value
+  Code: UNKNOWN
+
+[90mstdout[2m | src/lib/api/__tests__/jadwal-conflict.test.ts[2m > [22m[2mConflict Detection - Jadwal Praktikum[2m > [22m[2mSkenario 8: Inactive Jadwal (Sudah Dihapus)[2m > [22m[2mshould ignore inactive jadwal (is_active = false)
+[22m[39m🔴 API Error (checkJadwalConflictByDate)
+
+[90mstderr[2m | src/lib/api/__tests__/jadwal-conflict.test.ts[2m > [22m[2mConflict Detection - Jadwal Praktikum[2m > [22m[2mSkenario 8: Inactive Jadwal (Sudah Dihapus)[2m > [22m[2mshould ignore inactive jadwal (is_active = false)
+[22m[39m  Message: Invalid time value
+  Code: UNKNOWN
+
+ [31m❯[39m src/lib/api/__tests__/jadwal-conflict.test.ts [2m([22m[2m8 tests[22m[2m | [22m[31m4 failed[39m[2m)[22m[32m 64[2mms[22m[39m
+[31m       [31m×[31m should reject booking when time range exactly matches existing jadwal[39m[32m 37[2mms[22m[39m
+[31m       [31m×[31m should reject booking when time range overlaps partially[39m[32m 4[2mms[22m[39m
+[31m       [31m×[31m should reject booking when new booking is within existing range[39m[32m 3[2mms[22m[39m
+       [32m✓[39m should allow booking when time range does not overlap[32m 3[2mms[22m[39m
+       [32m✓[39m should allow booking when different lab is used[32m 3[2mms[22m[39m
+       [32m✓[39m should allow booking when different date is used[32m 1[2mms[22m[39m
+[31m       [31m×[31m should check BOTH pending and approved status[39m[32m 4[2mms[22m[39m
+       [32m✓[39m should ignore inactive jadwal (is_active = false)[32m 2[2mms[22m[39m
+[90mstdout[2m | src/__tests__/unit/api/jadwal.api.test.ts[2m > [22m[2mJadwal API[2m > [22m[2mgetJadwal[2m > [22m[2mshould fetch jadwal with kelas_id filter
+[22m[39m🔍 DEBUG getJadwal: { userId: [90mundefined[39m, currentDosenId: [1mnull[22m, willFilterByDosenId: [33mfalse[39m }
+
+[90mstdout[2m | src/__tests__/unit/api/jadwal.api.test.ts[2m > [22m[2mJadwal API[2m > [22m[2mgetJadwal[2m > [22m[2mshould fetch jadwal with laboratorium filter
+[22m[39m🔍 DEBUG getJadwal: { userId: [90mundefined[39m, currentDosenId: [1mnull[22m, willFilterByDosenId: [33mfalse[39m }
+
+[90mstdout[2m | src/__tests__/unit/api/jadwal.api.test.ts[2m > [22m[2mJadwal API[2m > [22m[2mgetJadwal[2m > [22m[2mshould fetch jadwal with hari filter
+[22m[39m🔍 DEBUG getJadwal: { userId: [90mundefined[39m, currentDosenId: [1mnull[22m, willFilterByDosenId: [33mfalse[39m }
+
+[90mstdout[2m | src/__tests__/unit/api/jadwal.api.test.ts[2m > [22m[2mJadwal API[2m > [22m[2mgetJadwal[2m > [22m[2mshould fetch jadwal with is_active filter
+[22m[39m🔍 DEBUG getJadwal: { userId: [90mundefined[39m, currentDosenId: [1mnull[22m, willFilterByDosenId: [33mfalse[39m }
+
+[90mstdout[2m | src/__tests__/unit/api/jadwal.api.test.ts[2m > [22m[2mJadwal API[2m > [22m[2mgetJadwal[2m > [22m[2mshould fetch jadwal with multiple filters
+[22m[39m🔍 DEBUG getJadwal: { userId: [90mundefined[39m, currentDosenId: [1mnull[22m, willFilterByDosenId: [33mfalse[39m }
+
+[90mstdout[2m | src/__tests__/unit/api/jadwal.api.test.ts[2m > [22m[2mJadwal API[2m > [22m[2mgetJadwal[2m > [22m[2mshould handle errors gracefully
+[22m[39m🔍 DEBUG getJadwal: { userId: [90mundefined[39m, currentDosenId: [1mnull[22m, willFilterByDosenId: [33mfalse[39m }
+
+[90mstdout[2m | src/__tests__/unit/api/jadwal.api.test.ts[2m > [22m[2mJadwal API[2m > [22m[2mgetJadwalByLab[2m > [22m[2mshould fetch active jadwal for specific lab
+[22m[39m🔍 DEBUG getJadwal: { userId: [90mundefined[39m, currentDosenId: [1mnull[22m, willFilterByDosenId: [33mfalse[39m }
+
+[90mstdout[2m | src/__tests__/unit/api/jadwal.api.test.ts[2m > [22m[2mJadwal API[2m > [22m[2mgetJadwalByLab[2m > [22m[2mshould handle errors gracefully
+[22m[39m🔍 DEBUG getJadwal: { userId: [90mundefined[39m, currentDosenId: [1mnull[22m, willFilterByDosenId: [33mfalse[39m }
+
+[90mstdout[2m | src/__tests__/unit/api/jadwal.api.test.ts[2m > [22m[2mJadwal API[2m > [22m[2mgetCalendarEvents[2m > [22m[2mshould handle errors gracefully
+[22m[39m🚨 getCalendarEvents CALLED - DATES: {
+  start: [32m'2025-01-01'[39m,
+  end: [32m'2025-01-31'[39m,
+  additionalFilters: [90mundefined[39m
+}
+
+[90mstdout[2m | src/__tests__/unit/api/jadwal.api.test.ts[2m > [22m[2mJadwal API[2m > [22m[2mcheckJadwalConflict (Legacy)[2m > [22m[2mshould check conflicts by hari
+[22m[39m🔍 DEBUG getJadwal: { userId: [90mundefined[39m, currentDosenId: [1mnull[22m, willFilterByDosenId: [33mfalse[39m }
+
+[90mstdout[2m | src/__tests__/unit/api/jadwal.api.test.ts[2m > [22m[2mJadwal API[2m > [22m[2mcheckJadwalConflict (Legacy)[2m > [22m[2mshould return true when time overlaps on same hari
+[22m[39m🔍 DEBUG getJadwal: { userId: [90mundefined[39m, currentDosenId: [1mnull[22m, willFilterByDosenId: [33mfalse[39m }
+
+[90mstdout[2m | src/__tests__/unit/api/jadwal.api.test.ts[2m > [22m[2mJadwal API[2m > [22m[2mcheckJadwalConflict (Legacy)[2m > [22m[2mshould handle errors gracefully
+[22m[39m🔍 DEBUG getJadwal: { userId: [90mundefined[39m, currentDosenId: [1mnull[22m, willFilterByDosenId: [33mfalse[39m }
+
+[90mstdout[2m | src/__tests__/unit/api/jadwal.api.test.ts[2m > [22m[2mJadwal API[2m > [22m[2mEdge Cases[2m > [22m[2mshould handle empty jadwal array
+[22m[39m🔍 DEBUG getJadwal: { userId: [90mundefined[39m, currentDosenId: [1mnull[22m, willFilterByDosenId: [33mfalse[39m }
+
+[90mstdout[2m | src/__tests__/unit/api/jadwal.api.test.ts[2m > [22m[2mJadwal API[2m > [22m[2mBusiness Logic Validation[2m > [22m[2mshould only return active jadwal when filtering
+[22m[39m🔍 DEBUG getJadwal: { userId: [90mundefined[39m, currentDosenId: [1mnull[22m, willFilterByDosenId: [33mfalse[39m }
+
+[90mstdout[2m | src/__tests__/unit/api/jadwal.api.test.ts[2m > [22m[2mJadwal API[2m > [22m[2mBusiness Logic Validation[2m > [22m[2mshould sort jadwal by tanggal_praktikum ascending
+[22m[39m🔍 DEBUG getJadwal: { userId: [90mundefined[39m, currentDosenId: [1mnull[22m, willFilterByDosenId: [33mfalse[39m }
+
+[90mstdout[2m | src/__tests__/unit/api/jadwal.api.test.ts[2m > [22m[2mJadwal API[2m > [22m[2mBusiness Logic Validation[2m > [22m[2mshould include laboratorium relation in queries
+[22m[39m🔍 DEBUG getJadwal: { userId: [90mundefined[39m, currentDosenId: [1mnull[22m, willFilterByDosenId: [33mfalse[39m }
+
+ [31m❯[39m src/__tests__/unit/api/jadwal.api.test.ts [2m([22m[2m38 tests[22m[2m | [22m[31m7 failed[39m[2m)[22m[32m 260[2mms[22m[39m
+[31m       [31m×[31m should fetch all jadwal without filters[39m[32m 54[2mms[22m[39m
+[31m       [31m×[31m should fetch jadwal with kelas_id filter[39m[32m 26[2mms[22m[39m
+[31m       [31m×[31m should fetch jadwal with laboratorium filter[39m[32m 10[2mms[22m[39m
+[31m       [31m×[31m should fetch jadwal with hari filter[39m[32m 9[2mms[22m[39m
+       [32m✓[39m should fetch jadwal with is_active filter[32m 8[2mms[22m[39m
+[31m       [31m×[31m should fetch jadwal with multiple filters[39m[32m 5[2mms[22m[39m
+       [32m✓[39m should handle errors gracefully[32m 25[2mms[22m[39m
+       [32m✓[39m should fetch jadwal by ID[32m 2[2mms[22m[39m
+       [32m✓[39m should handle errors when jadwal not found[32m 3[2mms[22m[39m
+       [32m✓[39m should fetch active jadwal for specific lab[32m 2[2mms[22m[39m
+       [32m✓[39m should handle errors gracefully[32m 3[2mms[22m[39m
+[31m       [31m×[31m should convert jadwal to calendar events[39m[32m 25[2mms[22m[39m
+       [32m✓[39m should skip jadwal with null tanggal_praktikum[32m 2[2mms[22m[39m
+       [32m✓[39m should handle invalid time parsing[32m 1[2mms[22m[39m
+       [32m✓[39m should handle errors gracefully[32m 3[2mms[22m[39m
+[31m       [31m×[31m should return false when no conflict exists[39m[32m 8[2mms[22m[39m
+       [32m✓[39m should return true when time overlaps[32m 1[2mms[22m[39m
+       [32m✓[39m should return false when times do not overlap[32m 1[2mms[22m[39m
+       [32m✓[39m should exclude specified ID when checking conflicts[32m 1[2mms[22m[39m
+       [32m✓[39m should handle errors gracefully[32m 1[2mms[22m[39m
+       [32m✓[39m should check conflicts by hari[32m 2[2mms[22m[39m
+       [32m✓[39m should return true when time overlaps on same hari[32m 1[2mms[22m[39m
+       [32m✓[39m should handle errors gracefully[32m 12[2mms[22m[39m
+       [32m✓[39m should fetch all active jadwal for mahasiswa without date range[32m 1[2mms[22m[39m
+       [32m✓[39m should fetch jadwal with start date filter[32m 1[2mms[22m[39m
+       [32m✓[39m should fetch jadwal with date range[32m 1[2mms[22m[39m
+       [32m✓[39m should handle errors gracefully[32m 1[2mms[22m[39m
+       [32m✓[39m should fetch today's jadwal for mahasiswa[32m 1[2mms[22m[39m
+       [32m✓[39m should fetch this week's jadwal for mahasiswa[32m 27[2mms[22m[39m
+       [32m✓[39m should fetch this month's jadwal for mahasiswa[32m 1[2mms[22m[39m
+       [32m✓[39m should handle empty jadwal array[32m 1[2mms[22m[39m
+       [32m✓[39m should handle jadwal without laboratorium relation[32m 1[2mms[22m[39m
+       [32m✓[39m should handle multiple jadwal on same date[32m 0[2mms[22m[39m
+       [32m✓[39m should handle time boundary cases[32m 0[2mms[22m[39m
+       [32m✓[39m should handle very long time ranges[32m 0[2mms[22m[39m
+       [32m✓[39m should only return active jadwal when filtering[32m 1[2mms[22m[39m
+       [32m✓[39m should sort jadwal by tanggal_praktikum ascending[32m 3[2mms[22m[39m
+       [32m✓[39m should include laboratorium relation in queries[32m 2[2mms[22m[39m
+[90mstderr[2m | src/__tests__/unit/hooks/useConflicts.test.ts[2m > [22m[2museConflicts Hook[2m > [22m[2mFetching conflicts[2m > [22m[2mshould handle fetch errors
+[22m[39mError fetching conflicts: Error: Database error
+    at F:/tes 9/sistem-praktikum-pwa/src/__tests__/unit/hooks/useConflicts.test.ts:178:26
+    at [90mfile:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:145:11
+    at [90mfile:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:915:26
+    at [90mfile:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1243:20
+    at new Promise (<anonymous>)
+    at runWithTimeout [90m(file:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1209:10[90m)[39m
+    at [90mfile:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1653:37
+    at Traces.$ [90m(file:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4mvitest[24m/dist/chunks/traces.CCmnQaNT.js:142:27[90m)[39m
+    at trace [90m(file:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4mvitest[24m/dist/chunks/test.B8ej_ZHS.js:239:21[90m)[39m
+    at runTest [90m(file:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1653:12[90m)[39m
+
+ [32m✓[39m src/__tests__/unit/hooks/useLocalData.test.ts [2m([22m[2m30 tests[22m[2m)[22m[33m 2600[2mms[22m[39m
+       [33m[2m✓[22m[39m should clear all items [33m 348[2mms[22m[39m
+[90mstderr[2m | src/__tests__/unit/hooks/useConflicts.test.ts[2m > [22m[2museConflicts Hook[2m > [22m[2mConflict resolution[2m > [22m[2mshould handle resolution errors
+[22m[39mError resolving conflict: Error: Update failed
+    at F:/tes 9/sistem-praktikum-pwa/src/__tests__/unit/hooks/useConflicts.test.ts:337:27
+    at [90mfile:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:145:11
+    at [90mfile:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:915:26
+    at [90mfile:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1243:20
+    at new Promise (<anonymous>)
+    at runWithTimeout [90m(file:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1209:10[90m)[39m
+    at [90mfile:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1653:37
+    at Traces.$ [90m(file:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4mvitest[24m/dist/chunks/traces.CCmnQaNT.js:142:27[90m)[39m
+    at trace [90m(file:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4mvitest[24m/dist/chunks/test.B8ej_ZHS.js:239:21[90m)[39m
+    at runTest [90m(file:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1653:12[90m)[39m
+
+[90mstderr[2m | src/__tests__/unit/hooks/useConflicts.test.ts[2m > [22m[2museConflicts Hook[2m > [22m[2mConflict rejection[2m > [22m[2mshould handle rejection errors
+[22m[39mError rejecting conflict: Error: Rejection failed
+    at F:/tes 9/sistem-praktikum-pwa/src/__tests__/unit/hooks/useConflicts.test.ts:408:27
+    at [90mfile:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:145:11
+    at [90mfile:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:915:26
+    at [90mfile:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1243:20
+    at new Promise (<anonymous>)
+    at runWithTimeout [90m(file:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1209:10[90m)[39m
+    at [90mfile:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1653:37
+    at Traces.$ [90m(file:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4mvitest[24m/dist/chunks/traces.CCmnQaNT.js:142:27[90m)[39m
+    at trace [90m(file:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4mvitest[24m/dist/chunks/test.B8ej_ZHS.js:239:21[90m)[39m
+    at runTest [90m(file:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1653:12[90m)[39m
+
+[90mstderr[2m | src/__tests__/unit/hooks/useConflicts.test.ts[2m > [22m[2museConflicts Hook[2m > [22m[2mManual refresh[2m > [22m[2mshould handle refresh errors
+[22m[39mError fetching conflicts: Error: Refresh failed
+    at F:/tes 9/sistem-praktikum-pwa/src/__tests__/unit/hooks/useConflicts.test.ts:536:28
+    at [90mfile:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:915:20
+
+[90mstdout[2m | src/__tests__/unit/hooks/useConflicts.test.ts[2m > [22m[2museConflicts Hook[2m > [22m[2mOffline behavior[2m > [22m[2mshould handle offline state gracefully
+[22m[39mℹ️ Offline mode - showing cached conflicts
+
+[90mstdout[2m | src/__tests__/unit/hooks/useConflicts.test.ts[2m > [22m[2museConflicts Hook[2m > [22m[2mOffline behavior[2m > [22m[2mshould handle cache failures offline
+[22m[39mℹ️ Offline mode - conflict fetch failed (using cached data if available)
+
+[90mstderr[2m | src/__tests__/unit/hooks/useConflicts.test.ts[2m > [22m[2museConflicts Hook[2m > [22m[2mOffline behavior[2m > [22m[2mshould handle cache failures offline
+[22m[39mError fetching conflicts: Error: Cache miss
+    at F:/tes 9/sistem-praktikum-pwa/src/__tests__/unit/hooks/useConflicts.test.ts:571:26
+    at [90mfile:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:145:11
+    at [90mfile:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:915:26
+    at [90mfile:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1243:20
+    at new Promise (<anonymous>)
+    at runWithTimeout [90m(file:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1209:10[90m)[39m
+    at [90mfile:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1653:37
+    at Traces.$ [90m(file:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4mvitest[24m/dist/chunks/traces.CCmnQaNT.js:142:27[90m)[39m
+    at trace [90m(file:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4mvitest[24m/dist/chunks/test.B8ej_ZHS.js:239:21[90m)[39m
+    at runTest [90m(file:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1653:12[90m)[39m
+
+ [32m✓[39m src/__tests__/unit/hooks/useConflicts.test.ts [2m([22m[2m25 tests[22m[2m)[22m[33m 2025[2mms[22m[39m
+[90mstdout[2m | src/__tests__/integration/kuis-attempt-offline.test.tsx[2m > [22m[2mKuis Attempt Offline Integration[2m > [22m[2mshould save answers online
+[22m[39m🐛 [QuizAttempt] currentQuestionIndex: [33m0[39m
+🐛 [QuizAttempt] questions.length: [33m0[39m
+🐛 [QuizAttempt] currentQuestion: [90mundefined[39m
+🐛 [QuizAttempt] currentQuestion?.pertanyaan: [90mundefined[39m
+🐛 [QuizAttempt] currentQuestion?.tipe_soal: [90mundefined[39m
+
+[90mstdout[2m | src/__tests__/integration/kuis-attempt-offline.test.tsx[2m > [22m[2mKuis Attempt Offline Integration[2m > [22m[2mshould save answers online
+[22m[39m✅ Loaded soal securely (jawaban_benar hidden)
+🔵 Starting new attempt for kuis: quiz-1
+
+[90mstdout[2m | src/__tests__/integration/kuis-attempt-offline.test.tsx[2m > [22m[2mKuis Attempt Offline Integration[2m > [22m[2mshould save answers online
+[22m[39m✅ Attempt loaded: attempt-1
+
+[90mstdout[2m | src/__tests__/integration/kuis-attempt-offline.test.tsx[2m > [22m[2mKuis Attempt Offline Integration[2m > [22m[2mshould save answers online
+[22m[39m🐛 [QuizAttempt] currentQuestionIndex: [33m0[39m
+🐛 [QuizAttempt] questions.length: [33m3[39m
+🐛 [QuizAttempt] currentQuestion: {
+  id: [32m'soal-1'[39m,
+  kuis_id: [32m'quiz-1'[39m,
+  pertanyaan: [32m'Question 1'[39m,
+  tipe_soal: [32m'pilihan_ganda'[39m,
+  poin: [33m10[39m,
+  urutan: [33m1[39m,
+  opsi_jawaban: [
+    { id: [32m'opt-1'[39m, label: [32m'A'[39m, text: [32m'Answer A'[39m },
+    { id: [32m'opt-2'[39m, label: [32m'B'[39m, text: [32m'Answer B'[39m }
+  ],
+  jawaban_benar: [32m'opt-1'[39m,
+  created_at: [32m'2026-02-13T01:33:15.234Z'[39m,
+  updated_at: [32m'2026-02-13T01:33:15.234Z'[39m
+}
+🐛 [QuizAttempt] currentQuestion?.pertanyaan: Question 1
+🐛 [QuizAttempt] currentQuestion?.tipe_soal: pilihan_ganda
+
+[90mstdout[2m | src/__tests__/integration/kuis-attempt-offline.test.tsx[2m > [22m[2mKuis Attempt Offline Integration[2m > [22m[2mshould save answers online
+[22m[39m🐛 [QuizAttempt] currentQuestionIndex: [33m0[39m
+🐛 [QuizAttempt] questions.length: [33m3[39m
+🐛 [QuizAttempt] currentQuestion: {
+  id: [32m'soal-1'[39m,
+  kuis_id: [32m'quiz-1'[39m,
+  pertanyaan: [32m'Question 1'[39m,
+  tipe_soal: [32m'pilihan_ganda'[39m,
+  poin: [33m10[39m,
+  urutan: [33m1[39m,
+  opsi_jawaban: [
+    { id: [32m'opt-1'[39m, label: [32m'A'[39m, text: [32m'Answer A'[39m },
+    { id: [32m'opt-2'[39m, label: [32m'B'[39m, text: [32m'Answer B'[39m }
+  ],
+  jawaban_benar: [32m'opt-1'[39m,
+  created_at: [32m'2026-02-13T01:33:15.234Z'[39m,
+  updated_at: [32m'2026-02-13T01:33:15.234Z'[39m
+}
+🐛 [QuizAttempt] currentQuestion?.pertanyaan: Question 1
+🐛 [QuizAttempt] currentQuestion?.tipe_soal: pilihan_ganda
+
+[90mstdout[2m | src/__tests__/integration/kuis-attempt-offline.test.tsx[2m > [22m[2mKuis Attempt Offline Integration[2m > [22m[2mshould save answers online
+[22m[39m✅ Auto-saved (offline): soal-1
+
+[90mstdout[2m | src/__tests__/integration/kuis-attempt-offline.test.tsx[2m > [22m[2mKuis Attempt Offline Integration[2m > [22m[2mshould detect offline status and show alert
+[22m[39m🐛 [QuizAttempt] currentQuestionIndex: [33m0[39m
+🐛 [QuizAttempt] questions.length: [33m0[39m
+🐛 [QuizAttempt] currentQuestion: [90mundefined[39m
+🐛 [QuizAttempt] currentQuestion?.pertanyaan: [90mundefined[39m
+🐛 [QuizAttempt] currentQuestion?.tipe_soal: [90mundefined[39m
+
+[90mstdout[2m | src/__tests__/integration/kuis-attempt-offline.test.tsx[2m > [22m[2mKuis Attempt Offline Integration[2m > [22m[2mshould detect offline status and show alert
+[22m[39m✅ Loaded soal securely (jawaban_benar hidden)
+🔵 Starting new attempt for kuis: quiz-1
+
+[90mstdout[2m | src/__tests__/integration/kuis-attempt-offline.test.tsx[2m > [22m[2mKuis Attempt Offline Integration[2m > [22m[2mshould detect offline status and show alert
+[22m[39m✅ Attempt loaded: attempt-1
+
+[90mstdout[2m | src/__tests__/integration/kuis-attempt-offline.test.tsx[2m > [22m[2mKuis Attempt Offline Integration[2m > [22m[2mshould detect offline status and show alert
+[22m[39m🐛 [QuizAttempt] currentQuestionIndex: [33m0[39m
+🐛 [QuizAttempt] questions.length: [33m3[39m
+🐛 [QuizAttempt] currentQuestion: {
+  id: [32m'soal-1'[39m,
+  kuis_id: [32m'quiz-1'[39m,
+  pertanyaan: [32m'Question 1'[39m,
+  tipe_soal: [32m'pilihan_ganda'[39m,
+  poin: [33m10[39m,
+  urutan: [33m1[39m,
+  opsi_jawaban: [
+    { id: [32m'opt-1'[39m, label: [32m'A'[39m, text: [32m'Answer A'[39m },
+    { id: [32m'opt-2'[39m, label: [32m'B'[39m, text: [32m'Answer B'[39m }
+  ],
+  jawaban_benar: [32m'opt-1'[39m,
+  created_at: [32m'2026-02-13T01:33:15.234Z'[39m,
+  updated_at: [32m'2026-02-13T01:33:15.234Z'[39m
+}
+🐛 [QuizAttempt] currentQuestion?.pertanyaan: Question 1
+🐛 [QuizAttempt] currentQuestion?.tipe_soal: pilihan_ganda
+
+[90mstdout[2m | src/__tests__/integration/kuis-attempt-offline.test.tsx[2m > [22m[2mKuis Attempt Offline Integration[2m > [22m[2mshould detect offline status and show alert
+[22m[39m🐛 [QuizAttempt] currentQuestionIndex: [33m0[39m
+🐛 [QuizAttempt] questions.length: [33m3[39m
+🐛 [QuizAttempt] currentQuestion: {
+  id: [32m'soal-1'[39m,
+  kuis_id: [32m'quiz-1'[39m,
+  pertanyaan: [32m'Question 1'[39m,
+  tipe_soal: [32m'pilihan_ganda'[39m,
+  poin: [33m10[39m,
+  urutan: [33m1[39m,
+  opsi_jawaban: [
+    { id: [32m'opt-1'[39m, label: [32m'A'[39m, text: [32m'Answer A'[39m },
+    { id: [32m'opt-2'[39m, label: [32m'B'[39m, text: [32m'Answer B'[39m }
+  ],
+  jawaban_benar: [32m'opt-1'[39m,
+  created_at: [32m'2026-02-13T01:33:15.234Z'[39m,
+  updated_at: [32m'2026-02-13T01:33:15.234Z'[39m
+}
+🐛 [QuizAttempt] currentQuestion?.pertanyaan: Question 1
+🐛 [QuizAttempt] currentQuestion?.tipe_soal: pilihan_ganda
+
+[90mstdout[2m | src/__tests__/integration/kuis-attempt-offline.test.tsx[2m > [22m[2mKuis Attempt Offline Integration[2m > [22m[2mshould persist data after refresh when offline
+[22m[39m🐛 [QuizAttempt] currentQuestionIndex: [33m0[39m
+🐛 [QuizAttempt] questions.length: [33m0[39m
+🐛 [QuizAttempt] currentQuestion: [90mundefined[39m
+🐛 [QuizAttempt] currentQuestion?.pertanyaan: [90mundefined[39m
+🐛 [QuizAttempt] currentQuestion?.tipe_soal: [90mundefined[39m
+
+[90mstdout[2m | src/__tests__/integration/kuis-attempt-offline.test.tsx[2m > [22m[2mKuis Attempt Offline Integration[2m > [22m[2mshould persist data after refresh when offline
+[22m[39m✅ Loaded soal securely (jawaban_benar hidden)
+🔵 Resuming attempt: attempt-1
+
+[90mstdout[2m | src/__tests__/integration/kuis-attempt-offline.test.tsx[2m > [22m[2mKuis Attempt Offline Integration[2m > [22m[2mshould persist data after refresh when offline
+[22m[39m✅ Attempt loaded: attempt-1
+
+[90mstdout[2m | src/__tests__/integration/kuis-attempt-offline.test.tsx[2m > [22m[2mKuis Attempt Offline Integration[2m > [22m[2mshould persist data after refresh when offline
+[22m[39m🐛 [QuizAttempt] currentQuestionIndex: [33m0[39m
+🐛 [QuizAttempt] questions.length: [33m3[39m
+🐛 [QuizAttempt] currentQuestion: {
+  id: [32m'soal-1'[39m,
+  kuis_id: [32m'quiz-1'[39m,
+  pertanyaan: [32m'Question 1'[39m,
+  tipe_soal: [32m'pilihan_ganda'[39m,
+  poin: [33m10[39m,
+  urutan: [33m1[39m,
+  opsi_jawaban: [
+    { id: [32m'opt-1'[39m, label: [32m'A'[39m, text: [32m'Answer A'[39m },
+    { id: [32m'opt-2'[39m, label: [32m'B'[39m, text: [32m'Answer B'[39m }
+  ],
+  jawaban_benar: [32m'opt-1'[39m,
+  created_at: [32m'2026-02-13T01:33:15.234Z'[39m,
+  updated_at: [32m'2026-02-13T01:33:15.234Z'[39m
+}
+🐛 [QuizAttempt] currentQuestion?.pertanyaan: Question 1
+🐛 [QuizAttempt] currentQuestion?.tipe_soal: pilihan_ganda
+
+[90mstdout[2m | src/__tests__/integration/kuis-attempt-offline.test.tsx[2m > [22m[2mKuis Attempt Offline Integration[2m > [22m[2mshould automatically sync when coming back online
+[22m[39m🐛 [QuizAttempt] currentQuestionIndex: [33m0[39m
+🐛 [QuizAttempt] questions.length: [33m0[39m
+🐛 [QuizAttempt] currentQuestion: [90mundefined[39m
+🐛 [QuizAttempt] currentQuestion?.pertanyaan: [90mundefined[39m
+🐛 [QuizAttempt] currentQuestion?.tipe_soal: [90mundefined[39m
+
+[90mstdout[2m | src/__tests__/integration/kuis-attempt-offline.test.tsx[2m > [22m[2mKuis Attempt Offline Integration[2m > [22m[2mshould automatically sync when coming back online
+[22m[39m✅ Loaded soal securely (jawaban_benar hidden)
+🔵 Starting new attempt for kuis: quiz-1
+
+[90mstdout[2m | src/__tests__/integration/kuis-attempt-offline.test.tsx[2m > [22m[2mKuis Attempt Offline Integration[2m > [22m[2mshould automatically sync when coming back online
+[22m[39m✅ Attempt loaded: attempt-1
+
+[90mstdout[2m | src/__tests__/integration/kuis-attempt-offline.test.tsx[2m > [22m[2mKuis Attempt Offline Integration[2m > [22m[2mshould automatically sync when coming back online
+[22m[39m🐛 [QuizAttempt] currentQuestionIndex: [33m0[39m
+🐛 [QuizAttempt] questions.length: [33m3[39m
+🐛 [QuizAttempt] currentQuestion: {
+  id: [32m'soal-1'[39m,
+  kuis_id: [32m'quiz-1'[39m,
+  pertanyaan: [32m'Question 1'[39m,
+  tipe_soal: [32m'pilihan_ganda'[39m,
+  poin: [33m10[39m,
+  urutan: [33m1[39m,
+  opsi_jawaban: [
+    { id: [32m'opt-1'[39m, label: [32m'A'[39m, text: [32m'Answer A'[39m },
+    { id: [32m'opt-2'[39m, label: [32m'B'[39m, text: [32m'Answer B'[39m }
+  ],
+  jawaban_benar: [32m'opt-1'[39m,
+  created_at: [32m'2026-02-13T01:33:15.234Z'[39m,
+  updated_at: [32m'2026-02-13T01:33:15.234Z'[39m
+}
+🐛 [QuizAttempt] currentQuestion?.pertanyaan: Question 1
+🐛 [QuizAttempt] currentQuestion?.tipe_soal: pilihan_ganda
+
+[90mstdout[2m | src/__tests__/integration/kuis-attempt-offline.test.tsx[2m > [22m[2mKuis Attempt Offline Integration[2m > [22m[2mshould automatically sync when coming back online
+[22m[39m✅ Auto-saved (offline): soal-1
+
+ [32m✓[39m src/__tests__/integration/network-reconnect.test.tsx [2m([22m[2m8 tests[22m[2m)[22m[33m 933[2mms[22m[39m
+[90mstdout[2m | src/__tests__/integration/kuis-attempt-offline.test.tsx[2m > [22m[2mKuis Attempt Offline Integration[2m > [22m[2mshould automatically sync when coming back online
+[22m[39m🐛 [QuizAttempt] currentQuestionIndex: [33m0[39m
+🐛 [QuizAttempt] questions.length: [33m3[39m
+🐛 [QuizAttempt] currentQuestion: {
+  id: [32m'soal-1'[39m,
+  kuis_id: [32m'quiz-1'[39m,
+  pertanyaan: [32m'Question 1'[39m,
+  tipe_soal: [32m'pilihan_ganda'[39m,
+  poin: [33m10[39m,
+  urutan: [33m1[39m,
+  opsi_jawaban: [
+    { id: [32m'opt-1'[39m, label: [32m'A'[39m, text: [32m'Answer A'[39m },
+    { id: [32m'opt-2'[39m, label: [32m'B'[39m, text: [32m'Answer B'[39m }
+  ],
+  jawaban_benar: [32m'opt-1'[39m,
+  created_at: [32m'2026-02-13T01:33:15.234Z'[39m,
+  updated_at: [32m'2026-02-13T01:33:15.234Z'[39m
+}
+🐛 [QuizAttempt] currentQuestion?.pertanyaan: Question 1
+🐛 [QuizAttempt] currentQuestion?.tipe_soal: pilihan_ganda
+
+[90mstdout[2m | src/__tests__/integration/kuis-attempt-offline.test.tsx[2m > [22m[2mKuis Attempt Offline Integration[2m > [22m[2mshould automatically sync when coming back online
+[22m[39m🐛 [QuizAttempt] currentQuestionIndex: [33m0[39m
+🐛 [QuizAttempt] questions.length: [33m3[39m
+🐛 [QuizAttempt] currentQuestion: {
+  id: [32m'soal-1'[39m,
+  kuis_id: [32m'quiz-1'[39m,
+  pertanyaan: [32m'Question 1'[39m,
+  tipe_soal: [32m'pilihan_ganda'[39m,
+  poin: [33m10[39m,
+  urutan: [33m1[39m,
+  opsi_jawaban: [
+    { id: [32m'opt-1'[39m, label: [32m'A'[39m, text: [32m'Answer A'[39m },
+    { id: [32m'opt-2'[39m, label: [32m'B'[39m, text: [32m'Answer B'[39m }
+  ],
+  jawaban_benar: [32m'opt-1'[39m,
+  created_at: [32m'2026-02-13T01:33:15.234Z'[39m,
+  updated_at: [32m'2026-02-13T01:33:15.234Z'[39m
+}
+🐛 [QuizAttempt] currentQuestion?.pertanyaan: Question 1
+🐛 [QuizAttempt] currentQuestion?.tipe_soal: pilihan_ganda
+
+[90mstdout[2m | src/__tests__/integration/kuis-attempt-offline.test.tsx[2m > [22m[2mKuis Attempt Offline Integration[2m > [22m[2mshould automatically sync when coming back online
+[22m[39m✅ Auto-saved (offline): soal-1
+
+ [32m✓[39m src/__tests__/integration/kuis-attempt-offline.test.tsx [2m([22m[2m7 tests[22m[2m | [22m[33m3 skipped[39m[2m)[22m[33m 2898[2mms[22m[39m
+     [33m[2m✓[22m[39m should save answers online [33m 980[2mms[22m[39m
+     [33m[2m✓[22m[39m should automatically sync when coming back online [33m 1508[2mms[22m[39m
+ [32m✓[39m src/__tests__/unit/hooks/useNetworkStatus.test.ts [2m([22m[2m23 tests[22m[2m)[22m[33m 965[2mms[22m[39m
+[90mstdout[2m | src/__tests__/unit/providers/SyncProvider.test.tsx[2m > [22m[2mSyncProvider[2m > [22m[2mInitialization[2m > [22m[2mshould render children immediately
+[22m[39mAuto-syncing 5 pending items...
+
+[90mstdout[2m | src/__tests__/unit/providers/SyncProvider.test.tsx[2m > [22m[2mSyncProvider[2m > [22m[2mInitialization[2m > [22m[2mshould provide sync context to children
+[22m[39mAuto-syncing 5 pending items...
+
+[90mstdout[2m | src/__tests__/unit/providers/SyncProvider.test.tsx[2m > [22m[2mSyncProvider[2m > [22m[2mInitialization[2m > [22m[2mshould provide stats to children
+[22m[39mAuto-syncing 5 pending items...
+
+[90mstdout[2m | src/__tests__/unit/providers/SyncProvider.test.tsx[2m > [22m[2mSyncProvider[2m > [22m[2mAuto-sync[2m > [22m[2mshould trigger auto-sync when coming back online
+[22m[39mAuto-syncing 5 pending items...
+
+[90mstdout[2m | src/__tests__/unit/providers/SyncProvider.test.tsx[2m > [22m[2mSyncProvider[2m > [22m[2mContext[2m > [22m[2mshould provide all sync methods
+[22m[39mAuto-syncing 5 pending items...
+
+[90mstdout[2m | src/__tests__/unit/providers/SyncProvider.test.tsx[2m > [22m[2mSyncProvider[2m > [22m[2mContext[2m > [22m[2mshould share context across multiple children
+[22m[39mAuto-syncing 5 pending items...
+
+[90mstdout[2m | src/__tests__/unit/providers/SyncProvider.test.tsx[2m > [22m[2mSyncProvider[2m > [22m[2mProps[2m > [22m[2mshould respect autoSync prop
+[22m[39mAuto-syncing 5 pending items...
+
+[90mstdout[2m | src/__tests__/unit/providers/SyncProvider.test.tsx[2m > [22m[2mSyncProvider[2m > [22m[2mProps[2m > [22m[2mshould default autoSync to true
+[22m[39mAuto-syncing 5 pending items...
+
+[90mstdout[2m | src/__tests__/unit/providers/SyncProvider.test.tsx[2m > [22m[2mSyncProvider[2m > [22m[2mIntegration[2m > [22m[2mshould work with nested components
+[22m[39mAuto-syncing 5 pending items...
+
+[90mstdout[2m | src/__tests__/unit/providers/SyncProvider.test.tsx[2m > [22m[2mSyncProvider[2m > [22m[2mIntegration[2m > [22m[2mshould handle stats updates
+[22m[39mAuto-syncing 5 pending items...
+
+[90mstdout[2m | src/__tests__/unit/providers/SyncProvider.test.tsx[2m > [22m[2mSyncProvider[2m > [22m[2mIntegration[2m > [22m[2mshould handle processing state changes
+[22m[39mAuto-syncing 5 pending items...
+
+[90mstdout[2m | src/__tests__/unit/providers/SyncProvider.test.tsx[2m > [22m[2mSyncProvider[2m > [22m[2mCleanup[2m > [22m[2mshould cleanup on unmount
+[22m[39mAuto-syncing 5 pending items...
+
+[90mstdout[2m | src/__tests__/unit/providers/SyncProvider.test.tsx[2m > [22m[2mSyncProvider[2m > [22m[2mCleanup[2m > [22m[2mshould not trigger auto-sync after unmount
+[22m[39mAuto-syncing 5 pending items...
+
+ [32m✓[39m src/__tests__/unit/providers/SyncProvider.test.tsx [2m([22m[2m20 tests[22m[2m)[22m[33m 1198[2mms[22m[39m
+[90mstdout[2m | src/__tests__/unit/utils/error-logger.test.ts[2m > [22m[2mError Logger[2m > [22m[2mInitialization[2m > [22m[2mshould setup global error handlers
+[22m[39m📡 External error service configured (not yet implemented)
+✅ Error Logger initialized (production) - Enabled
+
+[90mstdout[2m | src/__tests__/unit/utils/error-logger.test.ts[2m > [22m[2mError Logger[2m > [22m[2mlogReactError[2m > [22m[2mshould log React error boundary errors
+[22m[39m🔴 Error Logged
+
+[90mstdout[2m | src/__tests__/unit/utils/error-logger.test.ts[2m > [22m[2mError Logger[2m > [22m[2mlogReactError[2m > [22m[2mshould include custom metadata
+[22m[39m🔴 Error Logged
+
+[90mstdout[2m | src/__tests__/unit/utils/error-logger.test.ts[2m > [22m[2mError Logger[2m > [22m[2mlogReactError[2m > [22m[2mshould capture error stack trace
+[22m[39m🔴 Error Logged
+
+[90mstdout[2m | src/__tests__/unit/utils/error-logger.test.ts[2m > [22m[2mError Logger[2m > [22m[2mlogReactError[2m > [22m[2mshould handle error without component stack
+[22m[39m🔴 Error Logged
+
+[90mstdout[2m | src/__tests__/unit/utils/error-logger.test.ts[2m > [22m[2mError Logger[2m > [22m[2mlogJSError[2m > [22m[2mshould log JavaScript Error objects
+[22m[39m🔴 Error Logged
+
+[90mstdout[2m | src/__tests__/unit/utils/error-logger.test.ts[2m > [22m[2mError Logger[2m > [22m[2mlogJSError[2m > [22m[2mshould log ErrorEvent objects
+[22m[39m🔴 Error Logged
+
+[90mstdout[2m | src/__tests__/unit/utils/error-logger.test.ts[2m > [22m[2mError Logger[2m > [22m[2mlogJSError[2m > [22m[2mshould handle ErrorEvent without error object
+[22m[39m🔴 Error Logged
+
+[90mstdout[2m | src/__tests__/unit/utils/error-logger.test.ts[2m > [22m[2mError Logger[2m > [22m[2mlogJSError[2m > [22m[2mshould include custom metadata
+[22m[39m🔴 Error Logged
+
+[90mstdout[2m | src/__tests__/unit/utils/error-logger.test.ts[2m > [22m[2mError Logger[2m > [22m[2mlogPromiseRejection[2m > [22m[2mshould log promise rejection with Error object
+[22m[39m🔴 Error Logged
+
+[90mstdout[2m | src/__tests__/unit/utils/error-logger.test.ts[2m > [22m[2mError Logger[2m > [22m[2mlogPromiseRejection[2m > [22m[2mshould log promise rejection with string reason
+[22m[39m🔴 Error Logged
+
+[90mstdout[2m | src/__tests__/unit/utils/error-logger.test.ts[2m > [22m[2mError Logger[2m > [22m[2mlogPromiseRejection[2m > [22m[2mshould log promise rejection with no reason
+[22m[39m🔴 Error Logged
+
+[90mstdout[2m | src/__tests__/unit/utils/error-logger.test.ts[2m > [22m[2mError Logger[2m > [22m[2mlogPromiseRejection[2m > [22m[2mshould include custom metadata
+[22m[39m🔴 Error Logged
+
+[90mstdout[2m | src/__tests__/unit/utils/error-logger.test.ts[2m > [22m[2mError Logger[2m > [22m[2mlogError[2m > [22m[2mshould log Error objects
+[22m[39m🔴 Error Logged
+
+[90mstdout[2m | src/__tests__/unit/utils/error-logger.test.ts[2m > [22m[2mError Logger[2m > [22m[2mlogError[2m > [22m[2mshould log string errors
+[22m[39m🔴 Error Logged
+
+[90mstdout[2m | src/__tests__/unit/utils/error-logger.test.ts[2m > [22m[2mError Logger[2m > [22m[2mlogError[2m > [22m[2mshould include custom metadata
+[22m[39m🔴 Error Logged
+
+[90mstdout[2m | src/__tests__/unit/utils/error-logger.test.ts[2m > [22m[2mError Logger[2m > [22m[2mError Queue Management[2m > [22m[2mshould add errors to queue
+[22m[39m🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+
+[90mstdout[2m | src/__tests__/unit/utils/error-logger.test.ts[2m > [22m[2mError Logger[2m > [22m[2mError Queue Management[2m > [22m[2mshould maintain max queue size of 50
+[22m[39m🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+
+[90mstdout[2m | src/__tests__/unit/utils/error-logger.test.ts[2m > [22m[2mError Logger[2m > [22m[2mError Queue Management[2m > [22m[2mshould store last 10 errors in localStorage
+[22m[39m🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+
+[90mstdout[2m | src/__tests__/unit/utils/error-logger.test.ts[2m > [22m[2mError Logger[2m > [22m[2mError Queue Management[2m > [22m[2mshould clear error logs
+[22m[39m🔴 Error Logged
+🔴 Error Logged
+
+[90mstdout[2m | src/__tests__/unit/utils/error-logger.test.ts[2m > [22m[2mError Logger[2m > [22m[2mError Queue Management[2m > [22m[2mshould handle localStorage errors gracefully
+[22m[39m🔴 Error Logged
+
+[90mstdout[2m | src/__tests__/unit/utils/error-logger.test.ts[2m > [22m[2mError Logger[2m > [22m[2mError Log Structure[2m > [22m[2mshould include timestamp
+[22m[39m🔴 Error Logged
+
+[90mstdout[2m | src/__tests__/unit/utils/error-logger.test.ts[2m > [22m[2mError Logger[2m > [22m[2mError Log Structure[2m > [22m[2mshould include user agent
+[22m[39m🔴 Error Logged
+
+[90mstdout[2m | src/__tests__/unit/utils/error-logger.test.ts[2m > [22m[2mError Logger[2m > [22m[2mError Log Structure[2m > [22m[2mshould include current URL
+[22m[39m🔴 Error Logged
+
+[90mstdout[2m | src/__tests__/unit/utils/error-logger.test.ts[2m > [22m[2mError Logger[2m > [22m[2mError Log Structure[2m > [22m[2mshould include stack trace when available
+[22m[39m🔴 Error Logged
+
+[90mstdout[2m | src/__tests__/unit/utils/error-logger.test.ts[2m > [22m[2mError Logger[2m > [22m[2mbeforeSend Hook[2m > [22m[2mshould apply beforeSend transformation
+[22m[39m📡 External error service configured (not yet implemented)
+✅ Error Logger initialized (production) - Enabled
+🔴 Error Logged
+
+[90mstdout[2m | src/__tests__/unit/utils/error-logger.test.ts[2m > [22m[2mError Logger[2m > [22m[2mbeforeSend Hook[2m > [22m[2mshould skip logging when beforeSend returns null
+[22m[39m📡 External error service configured (not yet implemented)
+✅ Error Logger initialized (production) - Enabled
+
+[90mstdout[2m | src/__tests__/unit/utils/error-logger.test.ts[2m > [22m[2mError Logger[2m > [22m[2mbeforeSend Hook[2m > [22m[2mshould filter sensitive data in beforeSend
+[22m[39m📡 External error service configured (not yet implemented)
+✅ Error Logger initialized (production) - Enabled
+🔴 Error Logged
+
+[90mstdout[2m | src/__tests__/unit/utils/error-logger.test.ts[2m > [22m[2mError Logger[2m > [22m[2mSample Rate[2m > [22m[2mshould log all errors with sampleRate 1.0
+[22m[39m📡 External error service configured (not yet implemented)
+✅ Error Logger initialized (production) - Enabled
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+
+[90mstdout[2m | src/__tests__/unit/utils/error-logger.test.ts[2m > [22m[2mError Logger[2m > [22m[2mSample Rate[2m > [22m[2mshould log no errors with sampleRate 0.0
+[22m[39m📡 External error service configured (not yet implemented)
+✅ Error Logger initialized (production) - Enabled
+
+[90mstdout[2m | src/__tests__/unit/utils/error-logger.test.ts[2m > [22m[2mError Logger[2m > [22m[2mSample Rate[2m > [22m[2mshould sample errors at approximately 50% with sampleRate 0.5
+[22m[39m📡 External error service configured (not yet implemented)
+✅ Error Logger initialized (production) - Enabled
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+
+[90mstdout[2m | src/__tests__/unit/utils/error-logger.test.ts[2m > [22m[2mError Logger[2m > [22m[2mExternal Service Integration[2m > [22m[2mshould send to custom endpoint when DSN provided
+[22m[39m📡 External error service configured (not yet implemented)
+✅ Error Logger initialized (production) - Enabled
+🔴 Error Logged
+
+[90mstdout[2m | src/__tests__/unit/providers/OfflineProvider.test.tsx[2m > [22m[2mOfflineProvider[2m > [22m[2mInitialization[2m > [22m[2mshould initialize IndexedDB on mount
+[22m[39m✅ OfflineProvider: IndexedDB initialized
+
+[90mstdout[2m | src/__tests__/unit/providers/OfflineProvider.test.tsx[2m > [22m[2mOfflineProvider[2m > [22m[2mInitialization[2m > [22m[2mshould render children after IndexedDB is ready
+[22m[39m✅ OfflineProvider: IndexedDB initialized
+
+[90mstdout[2m | src/__tests__/unit/utils/error-logger.test.ts[2m > [22m[2mError Logger[2m > [22m[2mExternal Service Integration[2m > [22m[2mshould handle fetch errors gracefully
+[22m[39m📡 External error service configured (not yet implemented)
+✅ Error Logger initialized (production) - Enabled
+🔴 Error Logged
+
+[90mstdout[2m | src/__tests__/unit/utils/error-logger.test.ts[2m > [22m[2mError Logger[2m > [22m[2mExternal Service Integration[2m > [22m[2mshould not send to external service when disabled
+[22m[39m✅ Error Logger initialized (production) - Disabled
+🔴 Error Logged
+
+[90mstdout[2m | src/__tests__/unit/utils/error-logger.test.ts[2m > [22m[2mError Logger[2m > [22m[2mExternal Service Integration[2m > [22m[2mshould not send to external service without DSN
+[22m[39m✅ Error Logger initialized (production) - Enabled
+🔴 Error Logged
+
+[90mstdout[2m | src/__tests__/unit/utils/error-logger.test.ts[2m > [22m[2mError Logger[2m > [22m[2mIntegration Scenarios[2m > [22m[2mshould handle complete error logging lifecycle
+[22m[39m✅ Error Logger initialized (production) - Enabled
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+
+[90mstdout[2m | src/__tests__/unit/utils/error-logger.test.ts[2m > [22m[2mError Logger[2m > [22m[2mIntegration Scenarios[2m > [22m[2mshould handle error logging with transformations
+[22m[39m✅ Error Logger initialized (production) - Enabled
+🔴 Error Logged
+
+[90mstdout[2m | src/__tests__/unit/utils/error-logger.test.ts[2m > [22m[2mError Logger[2m > [22m[2mEdge Cases[2m > [22m[2mshould handle errors with circular references in metadata
+[22m[39m🔴 Error Logged
+
+[90mstdout[2m | src/__tests__/unit/utils/error-logger.test.ts[2m > [22m[2mError Logger[2m > [22m[2mEdge Cases[2m > [22m[2mshould handle very long error messages
+[22m[39m🔴 Error Logged
+
+[90mstdout[2m | src/__tests__/unit/utils/error-logger.test.ts[2m > [22m[2mError Logger[2m > [22m[2mEdge Cases[2m > [22m[2mshould handle errors without stack traces
+[22m[39m🔴 Error Logged
+
+[90mstdout[2m | src/__tests__/unit/utils/error-logger.test.ts[2m > [22m[2mError Logger[2m > [22m[2mEdge Cases[2m > [22m[2mshould handle undefined metadata values
+[22m[39m🔴 Error Logged
+
+[90mstdout[2m | src/__tests__/unit/providers/OfflineProvider.test.tsx[2m > [22m[2mOfflineProvider[2m > [22m[2mContext[2m > [22m[2mshould provide offline context to children
+[22m[39m✅ OfflineProvider: IndexedDB initialized
+
+[90mstdout[2m | src/__tests__/unit/providers/OfflineProvider.test.tsx[2m > [22m[2mOfflineProvider[2m > [22m[2mContext[2m > [22m[2mshould provide all offline methods
+[22m[39m✅ OfflineProvider: IndexedDB initialized
+
+[90mstdout[2m | src/__tests__/unit/providers/OfflineProvider.test.tsx[2m > [22m[2mOfflineProvider[2m > [22m[2mContext[2m > [22m[2mshould provide quality metrics
+[22m[39m✅ OfflineProvider: IndexedDB initialized
+
+[90mstdout[2m | src/__tests__/unit/utils/error-logger.test.ts[2m > [22m[2mError Logger[2m > [22m[2mEdge Cases[2m > [22m[2mshould handle rapid error logging
+[22m[39m🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+
+[90mstdout[2m | src/__tests__/unit/providers/OfflineProvider.test.tsx[2m > [22m[2mOfflineProvider[2m > [22m[2mCleanup[2m > [22m[2mshould cleanup on unmount
+[22m[39m✅ OfflineProvider: IndexedDB initialized
+
+[90mstdout[2m | src/__tests__/unit/utils/error-logger.test.ts[2m > [22m[2mError Logger[2m > [22m[2mEdge Cases[2m > [22m[2mshould handle memory pressure gracefully
+[22m[39m🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+
+[90mstdout[2m | src/__tests__/unit/utils/error-logger.test.ts[2m > [22m[2mError Logger[2m > [22m[2mEdge Cases[2m > [22m[2mshould handle invalid Error objects
+[22m[39m🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+
+[90mstdout[2m | src/__tests__/unit/utils/error-logger.test.ts[2m > [22m[2mError Logger[2m > [22m[2mEdge Cases[2m > [22m[2mshould handle malformed React ErrorInfo
+[22m[39m🔴 Error Logged
+
+[90mstdout[2m | src/__tests__/unit/utils/error-logger.test.ts[2m > [22m[2mError Logger[2m > [22m[2mEdge Cases[2m > [22m[2mshould handle concurrent logging operations
+[22m[39m🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+🔴 Error Logged
+
+[90mstdout[2m | src/__tests__/unit/utils/error-logger.test.ts[2m > [22m[2mError Logger[2m > [22m[2mEdge Cases[2m > [22m[2mshould handle localStorage quota exceeded
+[22m[39m🔴 Error Logged
+
+[90mstdout[2m | src/__tests__/unit/utils/error-logger.test.ts[2m > [22m[2mError Logger[2m > [22m[2mEdge Cases[2m > [22m[2mshould handle missing window.navigator
+[22m[39m🔴 Error Logged
+
+[90mstdout[2m | src/__tests__/unit/utils/error-logger.test.ts[2m > [22m[2mError Logger[2m > [22m[2mEdge Cases[2m > [22m[2mshould handle missing fetch API
+[22m[39m📡 External error service configured (not yet implemented)
+✅ Error Logger initialized (production) - Enabled
+🔴 Error Logged
+
+[90mstderr[2m | src/__tests__/unit/utils/error-logger.test.ts[2m > [22m[2mError Logger[2m > [22m[2mEdge Cases[2m > [22m[2mshould handle missing fetch API
+[22m[39mFailed to send error log to custom endpoint TypeError: fetch is not a function
+    at ErrorLogger.sendToCustomEndpoint (F:/tes 9/sistem-praktikum-pwa/src/lib/utils/error-logger.ts:332:13)
+    at ErrorLogger.sendToExternalService (F:/tes 9/sistem-praktikum-pwa/src/lib/utils/error-logger.ts:323:12)
+    at ErrorLogger.sendLog (F:/tes 9/sistem-praktikum-pwa/src/lib/utils/error-logger.ts:226:12)
+    at ErrorLogger.logError (F:/tes 9/sistem-praktikum-pwa/src/lib/utils/error-logger.ts:187:10)
+    at logError (F:/tes 9/sistem-praktikum-pwa/src/lib/utils/error-logger.ts:435:15)
+    at F:/tes 9/sistem-praktikum-pwa/src/__tests__/unit/utils/error-logger.test.ts:911:9
+    at Proxy.assertThrows [90m(file:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4mchai[24m/index.js:2798:5[90m)[39m
+    at Proxy.methodWrapper [90m(file:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4mchai[24m/index.js:1700:25[90m)[39m
+    at Proxy.<anonymous> [90m(file:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4m@vitest/expect[24m/dist/index.js:1149:12[90m)[39m
+    at Proxy.overwritingMethodWrapper [90m(file:///F:/tes%209/sistem-praktikum-pwa/[39mnode_modules/[4mchai[24m/index.js:1750:33[90m)[39m
+
+[90mstdout[2m | src/__tests__/unit/utils/error-logger.test.ts[2m > [22m[2mError Logger[2m > [22m[2mEdge Cases[2m > [22m[2mshould handle malformed configuration objects
+[22m[39m📡 External error service configured (not yet implemented)
+✅ Error Logger initialized (production) - Enabled
+📡 External error service configured (not yet implemented)
+✅ Error Logger initialized (production) - Enabled
+📡 External error service configured (not yet implemented)
+✅ Error Logger initialized (production) - Enabled
+
+[90mstdout[2m | src/__tests__/unit/utils/error-logger.test.ts[2m > [22m[2mError Logger[2m > [22m[2mEdge Cases[2m > [22m[2mshould handle invalid sample rates
+[22m[39m📡 External error service configured (not yet implemented)
+✅ Error Logger initialized (production) - Enabled
+🔴 Error Logged
+📡 External error service configured (not yet implemented)
+✅ Error Logger initialized (production) - Enabled
+
+[90mstderr[2m | src/__tests__/unit/utils/error-logger.test.ts[2m > [22m[2mError Logger[2m > [22m[2mEdge Cases[2m > [22m[2mshould handle invalid sample rates
+[22m

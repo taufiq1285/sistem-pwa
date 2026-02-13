@@ -51,6 +51,7 @@ import {
 } from "@/lib/api/logbook.api";
 import { getJadwal } from "@/lib/api/jadwal.api";
 import { getKelas } from "@/lib/api/kelas.api";
+import { notifyDosenLogbookSubmitted } from "@/lib/api/notification.api";
 import type {
   LogbookEntry,
   CreateLogbookData,
@@ -84,7 +85,9 @@ export default function MahasiswaLogbookPage() {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showViewDialog, setShowViewDialog] = useState(false);
   const [showSubmitDialog, setShowSubmitDialog] = useState(false);
-  const [selectedLogbook, setSelectedLogbook] = useState<LogbookEntry | null>(null);
+  const [selectedLogbook, setSelectedLogbook] = useState<LogbookEntry | null>(
+    null,
+  );
   const [selectedJadwal, setSelectedJadwal] = useState<Jadwal | null>(null);
 
   // Form states
@@ -126,43 +129,22 @@ export default function MahasiswaLogbookPage() {
         .select("kelas_id")
         .eq("mahasiswa_id", user.mahasiswa.id);
 
-      console.log("🔍 [DEBUG] Enrollments:", enrollments);
-
       if (enrollments && enrollments.length > 0) {
         const kelasIds = enrollments.map((e) => e.kelas_id);
-        console.log("🔍 [DEBUG] Kelas IDs:", kelasIds);
 
-        // Get upcoming jadwal for enrolled kelas
-        const jadwalData = await getJadwal({
+        // Get upcoming jadwal for enrolled kelas (ONLY approved jadwal)
+        const allJadwalData = await getJadwal({
           is_active: true,
         });
 
-        console.log("🔍 [DEBUG] All active jadwal:", jadwalData.length, "items");
-        console.log("🔍 [DEBUG] Sample jadwal data:", jadwalData.slice(0, 3).map(j => ({
-          id: j.id,
-          topik: j.topik,
-          kelas_id: j.kelas_id,
-          status: j.status,
-          is_active: j.is_active,
-        })));
+        // Filter: Only show APPROVED jadwal to students
+        const jadwalData = allJadwalData.filter((j) => j.status === "approved");
 
         // Filter jadwal by enrolled kelas
         const myJadwal = jadwalData.filter((jadwal) => {
-          const match = kelasIds.includes(jadwal.kelas_id || "");
-          if (!match && jadwal.kelas_id) {
-            console.log("⚠️ [DEBUG] Skipping jadwal - kelas mismatch:", {
-              jadwal_id: jadwal.id,
-              jadwal_kelas_id: jadwal.kelas_id,
-              enrolled_ids: kelasIds,
-            });
-          }
-          return match;
+          return kelasIds.includes(jadwal.kelas_id || "");
         });
-
-        console.log("🔍 [DEBUG] My jadwal after filter:", myJadwal.length, "items");
         setJadwalList(myJadwal);
-      } else {
-        console.warn("⚠️ [DEBUG] No enrollments found for mahasiswa:", user.mahasiswa.id);
       }
 
       // Load logbook entries
@@ -170,10 +152,10 @@ export default function MahasiswaLogbookPage() {
         mahasiswa_id: user.mahasiswa.id,
       });
 
-      console.log("🔍 [DEBUG] Logbook entries:", logbookData.length, "items");
-
       // Filter out any null entries
-      setLogbookList(logbookData.filter((l): l is LogbookEntry => l != null && 'id' in l));
+      setLogbookList(
+        logbookData.filter((l): l is LogbookEntry => l != null && "id" in l),
+      );
     } catch (error: any) {
       console.error("Error loading data:", error);
       toast.error(error.message || "Gagal memuat data");
@@ -306,6 +288,53 @@ export default function MahasiswaLogbookPage() {
       await submitLogbook(data);
 
       toast.success("Logbook berhasil diserahkan untuk direview");
+
+      // Notify dosen (best-effort, non-blocking)
+      if (selectedLogbook.jadwal?.kelas_id) {
+        try {
+          // Get kelas data to find dosen
+          const { data: kelasData } = await supabase
+            .from("kelas")
+            .select("dosen_id, mata_kuliah_id, nama_kelas")
+            .eq("id", selectedLogbook.jadwal.kelas_id)
+            .single();
+
+          if (kelasData?.dosen_id) {
+            // Get dosen's user_id
+            const { data: dosenData } = await supabase
+              .from("dosen")
+              .select("user_id")
+              .eq("id", kelasData.dosen_id)
+              .single();
+
+            if (dosenData?.user_id) {
+              // Get mata kuliah name
+              const mataKuliahData = kelasData.mata_kuliah_id
+                ? await supabase
+                    .from("mata_kuliah")
+                    .select("nama_mk")
+                    .eq("id", kelasData.mata_kuliah_id)
+                    .single()
+                : null;
+
+              notifyDosenLogbookSubmitted(
+                dosenData.user_id,
+                user?.full_name || "Mahasiswa",
+                kelasData.nama_kelas,
+                mataKuliahData?.data?.nama_mk || "Mata Kuliah",
+                selectedLogbook.jadwal?.tanggal_praktikum ||
+                  new Date().toISOString(),
+                selectedLogbook.id,
+              ).catch((err) => {
+                console.error("Failed to notify dosen:", err);
+              });
+            }
+          }
+        } catch (notifError) {
+          console.error("Failed to send logbook notification:", notifError);
+        }
+      }
+
       setShowSubmitDialog(false);
       loadData();
     } catch (error: any) {
@@ -351,7 +380,10 @@ export default function MahasiswaLogbookPage() {
     const label = LOGBOOK_STATUS_LABELS[status] || status;
 
     return (
-      <Badge variant="outline" className={`border-${color}-500 text-${color}-700`}>
+      <Badge
+        variant="outline"
+        className={`border-${color}-500 text-${color}-700`}
+      >
         {label}
       </Badge>
     );
@@ -381,15 +413,7 @@ export default function MahasiswaLogbookPage() {
   }
 
   function getJadwalWithoutLogbook(): Jadwal[] {
-    const result = jadwalList.filter((j) => !hasLogbook(j.id));
-    console.log("🔍 [DEBUG] getJadwalWithoutLogbook:", {
-      total_jadwal: jadwalList.length,
-      without_logbook: result.length,
-      with_logbook: jadwalList.length - result.length,
-      jadwal_ids: jadwalList.map(j => j.id),
-      logbook_jadwal_ids: logbookList.map(l => l.jadwal_id),
-    });
-    return result;
+    return jadwalList.filter((j) => !hasLogbook(j.id));
   }
 
   // ============================================================================
@@ -454,117 +478,152 @@ export default function MahasiswaLogbookPage() {
             </Card>
           ) : (
             <div className="grid gap-4">
-              {logbookList.filter((l): l is LogbookEntry => l != null).map((logbook) => (
-                <Card key={logbook.id} className="hover:shadow-lg transition-shadow">
-                  <CardContent className="p-6">
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <h3 className="text-lg font-semibold">
-                            {logbook.jadwal?.topik || "Praktikum"}
-                          </h3>
-                          {getStatusBadge(logbook.status)}
+              {logbookList
+                .filter((l): l is LogbookEntry => l != null)
+                .map((logbook) => (
+                  <Card
+                    key={logbook.id}
+                    className="hover:shadow-lg transition-shadow"
+                  >
+                    <CardContent className="p-6">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <h3 className="text-lg font-semibold">
+                              {logbook.jadwal?.topik || "Praktikum"}
+                            </h3>
+                            {getStatusBadge(logbook.status)}
+                          </div>
+                          <p className="text-sm text-gray-500 mb-1">
+                            {logbook.jadwal?.tanggal_praktikum &&
+                              format(
+                                new Date(logbook.jadwal.tanggal_praktikum),
+                                "dd MMMM yyyy",
+                              )}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            Lab: {logbook.jadwal?.laboratorium?.nama_lab || "-"}
+                          </p>
                         </div>
-                        <p className="text-sm text-gray-500 mb-1">
-                          {logbook.tanggal_praktikum &&
-                            format(new Date(logbook.tanggal_praktikum), "dd MMMM yyyy")}
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          Lab: {logbook.jadwal?.laboratorium?.nama_lab || "-"}
-                        </p>
+
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => openViewDialog(logbook)}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+
+                          {logbook.status === "draft" && (
+                            <>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => openEditDialog(logbook)}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleDeleteLogbook(logbook.id)}
+                              >
+                                <Trash2 className="h-4 w-4 text-red-500" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                onClick={() => openSubmitDialog(logbook)}
+                              >
+                                <Send className="h-4 w-4" />
+                              </Button>
+                            </>
+                          )}
+
+                          {(logbook.status === "reviewed" ||
+                            logbook.status === "graded") && (
+                            <div className="text-right">
+                              {logbook.nilai != null && (
+                                <div className="text-2xl font-bold text-green-600">
+                                  {logbook.nilai}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
                       </div>
 
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => openViewDialog(logbook)}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
+                      {/* Preview */}
+                      {logbook.prosedur_dilakukan && (
+                        <div className="text-sm mb-2">
+                          <span className="font-medium">Prosedur:</span>{" "}
+                          <span className="text-gray-600 line-clamp-1">
+                            {logbook.prosedur_dilakukan}
+                          </span>
+                        </div>
+                      )}
 
-                        {logbook.status === "draft" && (
-                          <>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => openEditDialog(logbook)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleDeleteLogbook(logbook.id)}
-                            >
-                              <Trash2 className="h-4 w-4 text-red-500" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              onClick={() => openSubmitDialog(logbook)}
-                            >
-                              <Send className="h-4 w-4" />
-                            </Button>
-                          </>
-                        )}
-
-                        {(logbook.status === "reviewed" || logbook.status === "graded") && (
-                          <div className="text-right">
-                            {logbook.nilai != null && (
-                              <div className="text-2xl font-bold text-green-600">
-                                {logbook.nilai}
-                              </div>
-                            )}
+                      {logbook.skill_dipelajari &&
+                        logbook.skill_dipelajari.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {logbook.skill_dipelajari.map((skill) => (
+                              <Badge
+                                key={skill}
+                                variant="secondary"
+                                className="text-xs"
+                              >
+                                {skill}
+                              </Badge>
+                            ))}
                           </div>
                         )}
-                      </div>
-                    </div>
 
-                    {/* Preview */}
-                    {logbook.prosedur_dilakukan && (
-                      <div className="text-sm mb-2">
-                        <span className="font-medium">Prosedur:</span>{" "}
-                        <span className="text-gray-600 line-clamp-1">
-                          {logbook.prosedur_dilakukan}
-                        </span>
-                      </div>
-                    )}
-
-                    {logbook.skill_dipelajari && logbook.skill_dipelajari.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-2">
-                        {logbook.skill_dipelajari.map((skill) => (
-                          <Badge key={skill} variant="secondary" className="text-xs">
-                            {skill}
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
-
-                    {logbook.dosen_feedback && (
-                      <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                        <p className="text-xs font-medium text-blue-700 mb-1">
-                          Feedback Dosen:
-                        </p>
-                        <p className="text-sm text-blue-600">
-                          {logbook.dosen_feedback}
-                        </p>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
+                      {logbook.dosen_feedback && (
+                        <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                          <p className="text-xs font-medium text-blue-700 mb-1">
+                            Feedback Dosen:
+                          </p>
+                          <p className="text-sm text-blue-600">
+                            {logbook.dosen_feedback}
+                          </p>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
             </div>
           )}
         </TabsContent>
 
         {/* Create Logbook Tab */}
         <TabsContent value="create">
-          {getJadwalWithoutLogbook().length === 0 ? (
+          {jadwalList.length === 0 ? (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-12">
+                <AlertCircle className="h-16 w-16 text-amber-500 mb-4" />
+                <p className="text-gray-700 font-medium mb-2">
+                  Tidak ada jadwal praktikum aktif
+                </p>
+                <p className="text-sm text-gray-500 text-center max-w-md">
+                  Anda belum terdaftar di kelas mana pun atau belum ada jadwal
+                  praktikum yang dijadwalkan untuk kelas Anda.
+                </p>
+                <p className="text-xs text-gray-400 mt-4">
+                  Hubungi dosen atau admin jika Anda merasa ini adalah
+                  kesalahan.
+                </p>
+              </CardContent>
+            </Card>
+          ) : getJadwalWithoutLogbook().length === 0 ? (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-12">
                 <CheckCircle2 className="h-16 w-16 text-green-500 mb-4" />
-                <p className="text-gray-500">
+                <p className="text-gray-700 font-medium mb-2">
                   Semua jadwal praktikum sudah memiliki logbook!
+                </p>
+                <p className="text-sm text-gray-500">
+                  Anda telah membuat logbook untuk semua {jadwalList.length}{" "}
+                  jadwal praktikum.
                 </p>
               </CardContent>
             </Card>
@@ -578,7 +637,8 @@ export default function MahasiswaLogbookPage() {
                 >
                   <CardHeader>
                     <CardTitle className="text-base">
-                      {typeof jadwal.kelas === "object" && jadwal.kelas?.nama_kelas
+                      {typeof jadwal.kelas === "object" &&
+                      jadwal.kelas?.nama_kelas
                         ? jadwal.kelas.nama_kelas
                         : jadwal.kelas_relation?.nama_kelas || "Kelas"}
                     </CardTitle>
@@ -589,7 +649,10 @@ export default function MahasiswaLogbookPage() {
                     </p>
                     <p className="text-xs text-gray-500 mb-2">
                       {jadwal.tanggal_praktikum &&
-                        format(new Date(jadwal.tanggal_praktikum), "dd MMM yyyy")}
+                        format(
+                          new Date(jadwal.tanggal_praktikum),
+                          "dd MMM yyyy",
+                        )}
                     </p>
                     <p className="text-xs text-gray-500">
                       Lab: {jadwal.laboratorium?.nama_lab}
@@ -614,7 +677,10 @@ export default function MahasiswaLogbookPage() {
             <DialogDescription>
               {selectedJadwal?.topik} -{" "}
               {selectedJadwal?.tanggal_praktikum &&
-                format(new Date(selectedJadwal.tanggal_praktikum), "dd MMM yyyy")}
+                format(
+                  new Date(selectedJadwal.tanggal_praktikum),
+                  "dd MMM yyyy",
+                )}
             </DialogDescription>
           </DialogHeader>
 
@@ -629,7 +695,10 @@ export default function MahasiswaLogbookPage() {
                 placeholder="Jelaskan prosedur/praktikum yang Anda lakukan..."
                 value={formData.prosedur_dilakukan}
                 onChange={(e) =>
-                  setFormData({ ...formData, prosedur_dilakukan: e.target.value })
+                  setFormData({
+                    ...formData,
+                    prosedur_dilakukan: e.target.value,
+                  })
                 }
                 rows={3}
               />
@@ -766,7 +835,10 @@ export default function MahasiswaLogbookPage() {
                 id="edit-prosedur"
                 value={formData.prosedur_dilakukan}
                 onChange={(e) =>
-                  setFormData({ ...formData, prosedur_dilakukan: e.target.value })
+                  setFormData({
+                    ...formData,
+                    prosedur_dilakukan: e.target.value,
+                  })
                 }
                 rows={3}
               />
@@ -906,7 +978,10 @@ export default function MahasiswaLogbookPage() {
               ) : (
                 <AlertCircle className="h-4 w-4 text-red-500" />
               )}
-              <span>Skill yang Dipelajari ({selectedLogbook?.skill_dipelajari?.length || 0})</span>
+              <span>
+                Skill yang Dipelajari (
+                {selectedLogbook?.skill_dipelajari?.length || 0})
+              </span>
             </div>
 
             {selectedLogbook?.skill_dipelajari && (
@@ -952,8 +1027,11 @@ export default function MahasiswaLogbookPage() {
             <DialogTitle>Detail Logbook</DialogTitle>
             <DialogDescription>
               {selectedLogbook?.jadwal?.topik} -{" "}
-              {selectedLogbook?.tanggal_praktikum &&
-                format(new Date(selectedLogbook.tanggal_praktikum), "dd MMM yyyy")}
+              {selectedLogbook?.jadwal?.tanggal_praktikum &&
+                format(
+                  new Date(selectedLogbook.jadwal.tanggal_praktikum),
+                  "dd MMM yyyy",
+                )}
             </DialogDescription>
           </DialogHeader>
 
@@ -971,16 +1049,21 @@ export default function MahasiswaLogbookPage() {
             </div>
 
             <div>
-              <p className="text-sm font-medium text-gray-500">Hasil Observasi</p>
+              <p className="text-sm font-medium text-gray-500">
+                Hasil Observasi
+              </p>
               <p className="text-sm mt-1">
                 {selectedLogbook?.hasil_observasi || "-"}
               </p>
             </div>
 
             <div>
-              <p className="text-sm font-medium text-gray-500">Skill yang Dipelajari</p>
+              <p className="text-sm font-medium text-gray-500">
+                Skill yang Dipelajari
+              </p>
               <div className="flex flex-wrap gap-1 mt-1">
-                {selectedLogbook?.skill_dipelajari && selectedLogbook.skill_dipelajari.length > 0 ? (
+                {selectedLogbook?.skill_dipelajari &&
+                selectedLogbook.skill_dipelajari.length > 0 ? (
                   selectedLogbook.skill_dipelajari.map((skill) => (
                     <Badge key={skill} variant="secondary">
                       {skill}
@@ -995,7 +1078,9 @@ export default function MahasiswaLogbookPage() {
             {selectedLogbook?.kendala_dihadapi && (
               <div>
                 <p className="text-sm font-medium text-gray-500">Kendala</p>
-                <p className="text-sm mt-1">{selectedLogbook.kendala_dihadapi}</p>
+                <p className="text-sm mt-1">
+                  {selectedLogbook.kendala_dihadapi}
+                </p>
               </div>
             )}
 
@@ -1016,7 +1101,10 @@ export default function MahasiswaLogbookPage() {
                 </p>
                 <p className="text-xs text-blue-500 mt-2">
                   {selectedLogbook.reviewed_at &&
-                    format(new Date(selectedLogbook.reviewed_at), "dd MMM yyyy, HH:mm")}
+                    format(
+                      new Date(selectedLogbook.reviewed_at),
+                      "dd MMM yyyy, HH:mm",
+                    )}
                 </p>
               </div>
             )}

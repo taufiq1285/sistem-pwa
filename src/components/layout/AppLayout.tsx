@@ -84,15 +84,14 @@ export function AppLayout({ children, className }: AppLayoutProps) {
   //   }
   // };
 
-  // Handle notification click (only for admin, others use dropdown)
+  // Handle notification click - show dropdown for all roles including admin
   const handleNotificationClick = () => {
-    if (role && role === "admin") {
-      navigate(`/${role}/pengumuman`);
-    }
+    // NotificationDropdown handles all clicks now
+    // This is kept as fallback if needed
   };
 
-  // Show notification dropdown for dosen, mahasiswa, laboran (not admin)
-  const showNotificationDropdown = role !== "admin";
+  // Show notification dropdown for ALL roles (including admin)
+  const showNotificationDropdown = true;
 
   // If no user, don't render layout
   if (!user || !role) {

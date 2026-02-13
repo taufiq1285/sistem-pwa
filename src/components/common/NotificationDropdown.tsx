@@ -57,6 +57,29 @@ function getNotificationIcon(type: string) {
       return "📢";
     case "sistem":
       return "⚙️";
+    case "test_notification":
+      return "🧪";
+    // HIGH PRIORITY notification types
+    case "jadwal_baru":
+    case "jadwal_diupdate":
+    case "jadwal_dibatalkan":
+      return "📅";
+    case "peminjaman_baru":
+      return "📦";
+    case "peminjaman_disetujui":
+      return "✅";
+    case "peminjaman_ditolak":
+      return "❌";
+    case "kuis_published":
+      return "📋";
+    case "logbook_submitted":
+      return "📝";
+    case "logbook_approved":
+      return "✅";
+    case "logbook_rejected":
+      return "❌";
+    case "logbook_revision":
+      return "🔄";
     default:
       return "🔔";
   }
@@ -240,6 +263,12 @@ export function NotificationDropdown() {
       // Mahasiswa receives response → navigate to nilai page
       navigate(`/mahasiswa/nilai`);
       setOpen(false);
+    } else if (notification.type === "pengumuman") {
+      // Navigate to notifikasi page based on role
+      if (user?.role) {
+        navigate(`/${user.role}/notifikasi`);
+        setOpen(false);
+      }
     }
   };
 

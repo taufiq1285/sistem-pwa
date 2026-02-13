@@ -14,7 +14,10 @@ import {
   remove,
   withApiResponse,
 } from "./base.api";
-import { notifyMahasiswaTugasBaru } from "./notification.api";
+import {
+  notifyMahasiswaTugasBaru,
+  notifyMahasiswaKuisPublished,
+} from "./notification.api";
 import type {
   Kuis,
   Soal,
@@ -537,9 +540,67 @@ export const deleteKuis = requirePermissionAndOwnership(
 
 export async function publishKuis(id: string): Promise<Kuis> {
   try {
-    return await updateKuis(id, {
+    const result = await updateKuis(id, {
       status: "published",
     } as Partial<CreateKuisData>);
+
+    // Notify mahasiswa after successful publish (best-effort, non-blocking)
+    // Get kuis data for notification
+    getKuisById(id)
+      .then(async (kuis) => {
+        try {
+          // Get dosen name
+          const { data: dosenData } = await supabase
+            .from("dosen")
+            .select("user:user_id(full_name)")
+            .eq("id", kuis.dosen_id)
+            .single();
+
+          const dosenNama = dosenData?.user?.full_name || "Dosen";
+
+          // Get kelas name
+          const { data: kelasData } = await supabase
+            .from("kelas")
+            .select("nama_kelas")
+            .eq("id", kuis.kelas_id)
+            .single();
+
+          const kelasNama = kelasData?.nama_kelas || "Kelas";
+
+          // Get mahasiswa IDs in this kelas
+          const { data: kelasMahasiswa } = await supabase
+            .from("kelas_mahasiswa")
+            .select("mahasiswa_id")
+            .eq("kelas_id", kuis.kelas_id);
+
+          const mahasiswaIds =
+            kelasMahasiswa?.map((km: any) => km.mahasiswa_id) || [];
+
+          if (mahasiswaIds.length > 0) {
+            notifyMahasiswaKuisPublished(
+              mahasiswaIds,
+              dosenNama,
+              kuis.judul,
+              kelasNama,
+              kuis.tanggal_selesai || new Date().toISOString(),
+              kuis.id,
+            ).catch((err) => {
+              console.error("Failed to notify mahasiswa about kuis:", err);
+            });
+          }
+        } catch (notifError) {
+          console.error(
+            "Failed to send kuis published notification:",
+            notifError,
+          );
+          // Don't throw - notification is best-effort
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to fetch kuis for notification:", err);
+      });
+
+    return result;
   } catch (error) {
     const apiError = handleError(error);
     logError(apiError, `publishKuis:${id}`);

@@ -6,14 +6,12 @@
  * - View grades per class OR per mata kuliah (cumulative)
  * - Request grade revisions
  * - Track revision request history
- * - Download transcript
  */
 
 import { useState, useEffect } from "react";
 import {
   Loader2,
   FileText,
-  Download,
   TrendingUp,
   Award,
   Edit,
@@ -340,10 +338,6 @@ export default function MahasiswaNilaiPageEnhanced() {
             Lihat nilai per kelas, per mata kuliah, dan ajukan perbaikan
           </p>
         </div>
-        <Button variant="outline" className="flex items-center gap-2">
-          <Download className="w-4 h-4" />
-          Download Transkrip
-        </Button>
       </div>
 
       {/* Statistics Cards */}

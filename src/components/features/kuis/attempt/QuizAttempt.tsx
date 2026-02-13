@@ -718,7 +718,8 @@ export function QuizAttempt({
       console.log("🐛 [QuizAttempt] File uploads:", fileUploads);
 
       // ✅ FIX: Dynamic import untuk menghindari circular dependency
-      const { submitAllAnswersWithVersion } = await import("@/lib/api/kuis-versioned-simple.api");
+      const { submitAllAnswersWithVersion } =
+        await import("@/lib/api/kuis-versioned-simple.api");
 
       // ✅ FIX: Pass fileUploads to store file metadata (file_url, file_name, etc.)
       const saveResult = await submitAllAnswersWithVersion(

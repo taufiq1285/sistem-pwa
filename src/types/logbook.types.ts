@@ -13,20 +13,12 @@ export interface LogbookEntry {
   jadwal_id: string; // Reference to jadwal_praktikum
   mahasiswa_id: string; // Student who created the logbook
 
-  // Informasi praktikum
-  tanggal_praktikum: string;
-  topik_praktikum?: string | null;
-  laboratorium?: string | null;
-
   // Konten logbook
   prosedur_dilakukan?: string | null; // Prosedur yang dilakukan saat praktikum
   hasil_observasi?: string | null; // Hasil observasi/pemeriksaan
   skill_dipelajari?: string[]; // Skill yang dipelajari (array of strings)
   kendala_dihadapi?: string | null; // Kendala atau kesulitan saat praktikum
   refleksi?: string | null; // Refleksi pembelajaran mahasiswa
-
-  // Media (opsional)
-  foto_dokumentasi?: string[]; // URL foto dokumentasi praktikum
   catatan_tambahan?: string | null;
 
   // Status & Penilaian
@@ -41,10 +33,11 @@ export interface LogbookEntry {
   created_at: string;
   updated_at: string;
 
-  // Relations (joined data)
+  // Relations (joined data from jadwal)
   jadwal?: {
     id: string;
     topik?: string | null;
+    tanggal_praktikum?: string | null;
     laboratorium?: {
       nama_lab: string;
     } | null;

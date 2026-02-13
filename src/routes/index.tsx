@@ -560,6 +560,20 @@ export function AppRouter() {
         }
       />
 
+      {/* Dosen - Pengumuman */}
+      <Route
+        path="/dosen/pengumuman"
+        element={
+          <ProtectedRoute>
+            <RoleGuard allowedRoles={["dosen"]}>
+              <AppLayout>
+                <DosenPengumumanPage />
+              </AppLayout>
+            </RoleGuard>
+          </ProtectedRoute>
+        }
+      />
+
       {/* ================================================================== */}
       {/* MAHASISWA ROUTES */}
       {/* ================================================================== */}

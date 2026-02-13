@@ -6,28 +6,21 @@
  */
 
 import "@testing-library/jest-dom/vitest";
-import { beforeAll, afterAll, vi } from "vitest";
 import "fake-indexeddb/auto";
 
 // Suppress React act() warnings in tests
 const originalError = console.error;
-beforeAll(() => {
-  console.error = (...args) => {
-    if (
-      typeof args[0] === "string" &&
-      ((args[0].includes("Warning: An update to") &&
-        args[0].includes("was not wrapped in act")) ||
-        args[0].includes("IndexedDB initialization failed"))
-    ) {
-      return;
-    }
-    originalError.call(console, ...args);
-  };
-});
-
-afterAll(() => {
-  console.error = originalError;
-});
+console.error = (...args: any[]) => {
+  if (
+    typeof args[0] === "string" &&
+    ((args[0].includes("Warning: An update to") &&
+      args[0].includes("was not wrapped in act")) ||
+      args[0].includes("IndexedDB initialization failed"))
+  ) {
+    return;
+  }
+  originalError.call(console, ...args);
+};
 
 // Mock window.matchMedia for tests
 Object.defineProperty(window, "matchMedia", {

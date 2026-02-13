@@ -311,7 +311,9 @@ export default function AssignmentManagementPage() {
       jam_selesai: jadwal.jam_selesai,
       topik: jadwal.topik || "",
       catatan: jadwal.catatan || "",
-      status: (jadwal.status as "pending" | "approved" | "rejected" | "cancelled") || "pending", // ✅ WORKFLOW: Default to pending
+      status:
+        (jadwal.status as "pending" | "approved" | "rejected" | "cancelled") ||
+        "pending", // ✅ WORKFLOW: Default to pending
       laboratorium_id: jadwal.laboratorium_id,
       dosen_id: jadwal.dosen_id,
       kelas_id: jadwal.kelas_id,

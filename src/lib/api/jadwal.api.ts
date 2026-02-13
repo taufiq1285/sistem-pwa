@@ -274,7 +274,21 @@ export async function getCalendarEvents(
     }
 
     // Build filter conditions
-    const filterConditions = [
+    const filterConditions: Array<{
+      column: string;
+      operator:
+        | "eq"
+        | "neq"
+        | "gt"
+        | "gte"
+        | "lt"
+        | "lte"
+        | "like"
+        | "ilike"
+        | "in"
+        | "is";
+      value: any;
+    }> = [
       {
         column: "tanggal_praktikum",
         operator: "gte" as const,
@@ -544,7 +558,9 @@ async function createJadwalImpl(data: CreateJadwalData): Promise<Jadwal> {
 
     // ✅ FIX: Validate dosenId must exist
     if (!dosenId) {
-      throw new Error("Dosen ID tidak ditemukan. Pastikan Anda login sebagai dosen.");
+      throw new Error(
+        "Dosen ID tidak ditemukan. Pastikan Anda login sebagai dosen.",
+      );
     }
 
     const insertData: Partial<Jadwal> = {

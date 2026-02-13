@@ -17,6 +17,14 @@ export interface Jadwal {
       full_name: string;
     };
   };
+  dosen_user?: {
+    // ✅ NEW: Nested relation for laboran page
+    user_id?: {
+      full_name: string;
+      email: string;
+    };
+  };
+  rejection_reason?: string | null; // ✅ NEW: Reason for rejection
   kelas?:
     | string
     | null

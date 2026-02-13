@@ -462,3 +462,454 @@ export async function notifyDosenRemoval(
     },
   });
 }
+
+// ============================================================================
+// HIGH PRIORITY NOTIFICATIONS: Peminjaman Alat
+// ============================================================================
+
+/**
+ * Notify laboran when dosen creates borrowing request
+ */
+export async function notifyLaboranPeminjamanBaru(
+  laboranUserIds: string[],
+  dosenNama: string,
+  namaBarang: string,
+  jumlahPinjam: number,
+  tanggalPinjam: string,
+  keperluan: string,
+): Promise<Notification[]> {
+  const notifications: CreateNotificationData[] = laboranUserIds.map(
+    (laboranId) => ({
+      user_id: laboranId,
+      title: "Pengajuan Peminjaman Baru",
+      message: `${dosenNama} mengajukan peminjaman ${jumlahPinjam}x "${namaBarang}" untuk ${tanggalPinjam}. Keperluan: ${keperluan}`,
+      type: "peminjaman_baru",
+      data: {
+        dosen: dosenNama,
+        barang: namaBarang,
+        jumlah: jumlahPinjam,
+        tanggal: tanggalPinjam,
+        keperluan: keperluan,
+      },
+    }),
+  );
+
+  return createBulkNotifications(notifications);
+}
+
+/**
+ * Notify dosen when laboran approves borrowing request
+ */
+export async function notifyDosenPeminjamanDisetujui(
+  dosenUserId: string,
+  namaBarang: string,
+  jumlahDisetujui: number,
+  tanggalPinjam: string,
+  tanggalKembali: string,
+): Promise<Notification> {
+  return createNotification({
+    user_id: dosenUserId,
+    title: "Peminjaman Disetujui",
+    message: `Peminjaman ${jumlahDisetujui}x "${namaBarang}" untuk ${tanggalPinjam} telah disetujui. Harap kembalikan pada ${tanggalKembali}.`,
+    type: "peminjaman_disetujui",
+    data: {
+      barang: namaBarang,
+      jumlah: jumlahDisetujui,
+      tanggal_pinjam: tanggalPinjam,
+      tanggal_kembali: tanggalKembali,
+    },
+  });
+}
+
+/**
+ * Notify dosen when laboran rejects borrowing request
+ */
+export async function notifyDosenPeminjamanDitolak(
+  dosenUserId: string,
+  namaBarang: string,
+  alasan: string,
+): Promise<Notification> {
+  return createNotification({
+    user_id: dosenUserId,
+    title: "Peminjaman Ditolak",
+    message: `Peminjaman "${namaBarang}" ditolak. ${alasan ? `Alasan: ${alasan}` : ""}`,
+    type: "peminjaman_ditolak",
+    data: {
+      barang: namaBarang,
+      alasan: alasan,
+    },
+  });
+}
+
+/**
+ * Notify laboran when peminjaman is returned late
+ */
+export async function notifyLaboranPeminjamanTerlambat(
+  laboranUserIds: string[],
+  dosenNama: string,
+  namaBarang: string,
+  tanggalRencana: string,
+  tanggalAktual: string,
+  selisihHari: number,
+): Promise<Notification[]> {
+  const notifications: CreateNotificationData[] = laboranUserIds.map(
+    (laboranId) => ({
+      user_id: laboranId,
+      title: "Peminjaman Terlambat!",
+      message: `${dosenNama} terlambat mengembalikan "${namaBarang}". Rencana: ${tanggalRencana}, Aktual: ${tanggalAktual} (${selisihHari} hari terlambat).`,
+      type: "peminjaman_terlambat",
+      data: {
+        dosen: dosenNama,
+        barang: namaBarang,
+        tanggal_rencana: tanggalRencana,
+        tanggal_aktual: tanggalAktual,
+        selisih_hari: selisihHari,
+      },
+    }),
+  );
+
+  return createBulkNotifications(notifications);
+}
+
+// ============================================================================
+// HIGH PRIORITY NOTIFICATIONS: Jadwal
+// ============================================================================
+
+/**
+ * Notify dosen when admin creates new jadwal
+ */
+export async function notifyDosenJadwalBaru(
+  dosenUserId: string,
+  mataKuliahNama: string,
+  kelasNama: string,
+  tanggalPraktikum: string,
+  laboratorium: string,
+): Promise<Notification> {
+  return createNotification({
+    user_id: dosenUserId,
+    title: "Jadwal Praktikum Baru",
+    message: `Jadwal praktikum "${mataKuliahNama} - ${kelasNama}" telah dibuat untuk ${tanggalPraktikum} di ${laboratorium}.`,
+    type: "jadwal_baru",
+    data: {
+      mata_kuliah: mataKuliahNama,
+      kelas: kelasNama,
+      tanggal: tanggalPraktikum,
+      laboratorium: laboratorium,
+    },
+  });
+}
+
+/**
+ * Notify dosen when admin updates jadwal
+ */
+export async function notifyDosenJadwalDiupdate(
+  dosenUserId: string,
+  mataKuliahNama: string,
+  kelasNama: string,
+  tanggalPraktikum: string,
+  perubahan: string[],
+): Promise<Notification> {
+  return createNotification({
+    user_id: dosenUserId,
+    title: "Jadwal Praktikum Diupdate",
+    message: `Jadwal "${mataKuliahNama} - ${kelasNama}" (${tanggalPraktikum}) telah diupdate. Perubahan: ${perubahan.join(", ")}.`,
+    type: "jadwal_diupdate",
+    data: {
+      mata_kuliah: mataKuliahNama,
+      kelas: kelasNama,
+      tanggal: tanggalPraktikum,
+      perubahan: perubahan,
+    },
+  });
+}
+
+/**
+ * Notify laboran when dosen creates/updates jadwal (for approval)
+ */
+export async function notifyLaboranJadwalBaru(
+  laboranUserIds: string[],
+  dosenNama: string,
+  mataKuliahNama: string,
+  kelasNama: string,
+  tanggalPraktikum: string,
+  laboratorium: string,
+): Promise<Notification[]> {
+  const notifications: CreateNotificationData[] = laboranUserIds.map(
+    (laboranId) => ({
+      user_id: laboranId,
+      title: "Jadwal Baru Menunggu Approval",
+      message: `${dosenNama} membuat jadwal praktikum "${mataKuliahNama} - ${kelasNama}" untuk ${tanggalPraktikum} di ${laboratorium}.`,
+      type: "jadwal_pending_approval",
+      data: {
+        dosen: dosenNama,
+        mata_kuliah: mataKuliahNama,
+        kelas: kelasNama,
+        tanggal: tanggalPraktikum,
+        laboratorium: laboratorium,
+      },
+    }),
+  );
+
+  return createBulkNotifications(notifications);
+}
+
+/**
+ * Notify all mahasiswa in a kelas when jadwal is created/updated/canceled
+ */
+export async function notifyMahasiswaJadwalChange(
+  mahasiswaUserIds: string[],
+  mataKuliahNama: string,
+  kelasNama: string,
+  tanggalPraktikum: string,
+  aksi: "baru" | "diupdate" | "dibatalkan",
+  details?: string,
+): Promise<Notification[]> {
+  const notifications: CreateNotificationData[] = mahasiswaUserIds.map(
+    (mahasiswaId) => ({
+      user_id: mahasiswaId,
+      title: `Jadwal ${aksi.charAt(0).toUpperCase() + aksi.slice(1)}`,
+      message: `Jadwal praktikum "${mataKuliahNama} - ${kelasNama}" (${tanggalPraktikum}) ${aksi}${details ? `. ${details}` : ""}`,
+      type: `jadwal_${aksi}`,
+      data: {
+        mata_kuliah: mataKuliahNama,
+        kelas: kelasNama,
+        tanggal: tanggalPraktikum,
+        aksi: aksi,
+        details: details,
+      },
+    }),
+  );
+
+  return createBulkNotifications(notifications);
+}
+
+// ============================================================================
+// HIGH PRIORITY NOTIFICATIONS: Kuis Published
+// ============================================================================
+
+/**
+ * Notify all mahasiswa in a kelas when dosen publishes kuis
+ */
+export async function notifyMahasiswaKuisPublished(
+  mahasiswaUserIds: string[],
+  dosenNama: string,
+  kuisNama: string,
+  kelasNama: string,
+  deadline: string,
+  kuisId: string,
+): Promise<Notification[]> {
+  const notifications: CreateNotificationData[] = mahasiswaUserIds.map(
+    (mahasiswaId) => ({
+      user_id: mahasiswaId,
+      title: "Kuis Tersedia",
+      message: `${dosenNama} telah mempublish kuis "${kuisNama}" untuk kelas ${kelasNama}. Deadline: ${deadline}`,
+      type: "kuis_published",
+      data: {
+        kuis_id: kuisId,
+        kuis: kuisNama,
+        dosen: dosenNama,
+        kelas: kelasNama,
+        deadline: deadline,
+      },
+    }),
+  );
+
+  return createBulkNotifications(notifications);
+}
+
+// ============================================================================
+// HIGH PRIORITY NOTIFICATIONS: Logbook
+// ============================================================================
+
+/**
+ * Notify dosen when mahasiswa submits logbook
+ */
+export async function notifyDosenLogbookSubmitted(
+  dosenUserId: string,
+  mahasiswaNama: string,
+  kelasNama: string,
+  mataKuliahNama: string,
+  tanggalPraktikum: string,
+  logbookId: string,
+): Promise<Notification> {
+  return createNotification({
+    user_id: dosenUserId,
+    title: "Logbook Dikirim",
+    message: `${mahasiswaNama} telah mengirim logbook untuk praktikum "${mataKuliahNama} - ${kelasNama}" (${tanggalPraktikum})`,
+    type: "logbook_submitted",
+    data: {
+      mahasiswa: mahasiswaNama,
+      kelas: kelasNama,
+      mata_kuliah: mataKuliahNama,
+      tanggal: tanggalPraktikum,
+      logbook_id: logbookId,
+    },
+  });
+}
+
+/**
+ * Notify mahasiswa when dosen approves logbook
+ */
+export async function notifyMahasiswaLogbookApproved(
+  mahasiswaUserId: string,
+  kelasNama: string,
+  mataKuliahNama: string,
+  tanggalPraktikum: string,
+): Promise<Notification> {
+  return createNotification({
+    user_id: mahasiswaUserId,
+    title: "Logbook Disetujui",
+    message: `Logbook praktikum "${mataKuliahNama} - ${kelasNama}" (${tanggalPraktikum}) telah disetujui.`,
+    type: "logbook_approved",
+    data: {
+      kelas: kelasNama,
+      mata_kuliah: mataKuliahNama,
+      tanggal: tanggalPraktikum,
+    },
+  });
+}
+
+/**
+ * Notify mahasiswa when dosen rejects logbook
+ */
+export async function notifyMahasiswaLogbookRejected(
+  mahasiswaUserId: string,
+  kelasNama: string,
+  mataKuliahNama: string,
+  tanggalPraktikum: string,
+  catatan: string,
+): Promise<Notification> {
+  return createNotification({
+    user_id: mahasiswaUserId,
+    title: "Logbook Perlu Diperbaiki",
+    message: `Logbook praktikum "${mataKuliahNama} - ${kelasNama}" (${tanggalPraktikum}) ditolak/perlu perbaiki. ${catatan ? `Catatan: ${catatan}` : ""}`,
+    type: "logbook_rejected",
+    data: {
+      kelas: kelasNama,
+      mata_kuliah: mataKuliahNama,
+      tanggal: tanggalPraktikum,
+      catatan: catatan,
+    },
+  });
+}
+
+/**
+ * Notify mahasiswa when dosen requests logbook revision
+ */
+export async function notifyMahasiswaLogbookRevision(
+  mahasiswaUserId: string,
+  kelasNama: string,
+  mataKuliahNama: string,
+  tanggalPraktikum: string,
+  catatan: string,
+): Promise<Notification> {
+  return createNotification({
+    user_id: mahasiswaUserId,
+    title: "Permintaan Perbaikan Logbook",
+    message: `Logbook praktikum "${mataKuliahNama} - ${kelasNama}" (${tanggalPraktikum}) perlu diperbaiki. ${catatan}`,
+    type: "logbook_revision",
+    data: {
+      kelas: kelasNama,
+      mata_kuliah: mataKuliahNama,
+      tanggal: tanggalPraktikum,
+      catatan: catatan,
+    },
+  });
+}
+
+// ============================================================================
+// HIGH PRIORITY NOTIFICATIONS: Announcement (Admin → All Roles)
+// ============================================================================
+
+/**
+ * Notify target roles when admin creates announcement
+ * @param targetRoles - Array of roles to notify (e.g., ['dosen', 'mahasiswa'])
+ * @param judul - Announcement title
+ * @param tipe - Announcement type (info, warning, urgent, maintenance)
+ * @param prioritas - Priority level (low, normal, high)
+ */
+export async function notifyUsersAnnouncement(
+  targetRoles: string[],
+  judul: string,
+  tipe: string,
+  prioritas: string,
+): Promise<void> {
+  try {
+    console.log("🔔 [ANNOUNCEMENT] Starting notification process...");
+    console.log("🔔 [ANNOUNCEMENT] Target roles:", targetRoles);
+    console.log("🔔 [ANNOUNCEMENT] Judul:", judul);
+
+    // Fetch all user IDs for target roles
+    const { data: users, error: fetchError } = await supabase
+      .from("users")
+      .select("id, email, role")
+      .in("role", targetRoles);
+
+    if (fetchError) {
+      console.error("❌ [ANNOUNCEMENT] Error fetching users:", fetchError);
+      throw fetchError;
+    }
+
+    if (!users || users.length === 0) {
+      console.log(
+        "⚠️ [ANNOUNCEMENT] No users found for target roles:",
+        targetRoles,
+      );
+      return;
+    }
+
+    console.log(
+      `✅ [ANNOUNCEMENT] Found ${users.length} users:`,
+      users.map((u) => `${u.role} (${u.email})`),
+    );
+
+    // Determine icon and message based on priority
+    const priorityEmoji =
+      prioritas === "high" ? "🔴" : prioritas === "normal" ? "📢" : "ℹ️";
+    const typeLabel = tipe.charAt(0).toUpperCase() + tipe.slice(1);
+
+    // Create notification for each user
+    const notifications = users.map((user) => ({
+      user_id: user.id,
+      title: `${priorityEmoji} ${typeLabel}: ${judul}`,
+      message: `Ada pengumuman ${tipe} baru dari admin. Silakan cek halaman Pengumuman.`,
+      type: "pengumuman",
+      data: {
+        source: "admin",
+        announcement_title: judul,
+        announcement_type: tipe,
+        announcement_priority: prioritas,
+      },
+    }));
+
+    console.log(
+      `📝 [ANNOUNCEMENT] Prepared ${notifications.length} notifications`,
+    );
+
+    // Batch insert notifications
+    const { data: insertedData, error: insertError } = await supabase
+      .from("notifications")
+      .insert(notifications)
+      .select();
+
+    if (insertError) {
+      console.error(
+        "❌ [ANNOUNCEMENT] Error inserting notifications:",
+        insertError,
+      );
+      console.error(
+        "❌ [ANNOUNCEMENT] Error details:",
+        JSON.stringify(insertError, null, 2),
+      );
+      throw insertError;
+    }
+
+    console.log(
+      `✅ [ANNOUNCEMENT] Successfully sent ${notifications.length} notifications!`,
+    );
+    console.log("✅ [ANNOUNCEMENT] Inserted data:", insertedData);
+  } catch (error) {
+    console.error("💥 [ANNOUNCEMENT] CRITICAL ERROR:", error);
+    throw error;
+  }
+}
