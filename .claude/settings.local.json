@@ -58,7 +58,11 @@
       "Bash(npm run test:unit:*)",
       "Bash(npm run)",
       "Bash(npx madge:*)",
-      "Bash(git revert:*)"
+      "Bash(git revert:*)",
+      "Bash(findstr:*)",
+      "Bash(git ls-tree:*)",
+      "Bash(xargs:*)",
+      "Bash(set NODE_OPTIONS=--max-old-space-size=4096:*)"
     ]
   }
 }

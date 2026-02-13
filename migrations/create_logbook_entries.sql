@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS public.logbook_entries (
   skill_dipelajari TEXT[], -- Array of skills from SKILL_KEBIDANAN
   kendala_dihadapi TEXT,
   refleksi TEXT,
+  catatan_tambahan TEXT, -- Additional optional notes
 
   -- Dosen feedback fields
   dosen_feedback TEXT,
@@ -288,6 +289,7 @@ COMMENT ON COLUMN public.logbook_entries.hasil_observasi IS 'Observation results
 COMMENT ON COLUMN public.logbook_entries.skill_dipelajari IS 'Array of midwifery skills learned';
 COMMENT ON COLUMN public.logbook_entries.kendala_dihadapi IS 'Challenges encountered during practice';
 COMMENT ON COLUMN public.logbook_entries.refleksi IS 'Student reflection on learning';
+COMMENT ON COLUMN public.logbook_entries.catatan_tambahan IS 'Additional notes from student (optional)';
 COMMENT ON COLUMN public.logbook_entries.dosen_feedback IS 'Feedback from dosen reviewer';
 COMMENT ON COLUMN public.logbook_entries.nilai IS 'Grade given by dosen (0-100)';
 COMMENT ON COLUMN public.logbook_entries.status IS 'Workflow status: draft -> submitted -> reviewed -> graded';

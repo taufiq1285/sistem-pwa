@@ -48,9 +48,12 @@ const DEBUG_LOGBOOK = false;
 /**
  * Get all logbook entries with filters
  */
-export async function getLogbook(filters?: LogbookFilters): Promise<LogbookEntry[]> {
+export async function getLogbook(
+  filters?: LogbookFilters,
+): Promise<LogbookEntry[]> {
   try {
-    if (DEBUG_LOGBOOK) console.log("📖 getLogbook called with filters:", filters);
+    if (DEBUG_LOGBOOK)
+      console.log("📖 getLogbook called with filters:", filters);
 
     const filterConditions = [];
 
@@ -101,6 +104,7 @@ export async function getLogbook(filters?: LogbookFilters): Promise<LogbookEntry
         jadwal:jadwal_id (
           id,
           topik,
+          tanggal_praktikum,
           laboratorium_id,
           laboratorium:laboratorium_id (
             nama_lab
@@ -128,7 +132,8 @@ export async function getLogbook(filters?: LogbookFilters): Promise<LogbookEntry
       options,
     );
 
-    if (DEBUG_LOGBOOK) console.log(`📖 getLogbook returning ${data?.length || 0} items`);
+    if (DEBUG_LOGBOOK)
+      console.log(`📖 getLogbook returning ${data?.length || 0} items`);
     return data;
   } catch (error) {
     const apiError = handleError(error);
@@ -185,7 +190,8 @@ export async function getLogbookStats(
   filters?: Pick<LogbookFilters, "kelas_id" | "dosen_id">,
 ): Promise<LogbookStats> {
   try {
-    if (DEBUG_LOGBOOK) console.log("📊 getLogbookStats called with filters:", filters);
+    if (DEBUG_LOGBOOK)
+      console.log("📊 getLogbookStats called with filters:", filters);
 
     // Get all logbooks with filters
     const allLogbooks = await getLogbook(filters);
@@ -193,12 +199,16 @@ export async function getLogbookStats(
     // Calculate stats
     const total = allLogbooks.length;
     const draft = allLogbooks.filter((l) => l.status === "draft").length;
-    const submitted = allLogbooks.filter((l) => l.status === "submitted").length;
+    const submitted = allLogbooks.filter(
+      (l) => l.status === "submitted",
+    ).length;
     const reviewed = allLogbooks.filter((l) => l.status === "reviewed").length;
     const graded = allLogbooks.filter((l) => l.status === "graded").length;
 
     // Calculate average grade (only include graded entries)
-    const gradedEntries = allLogbooks.filter((l) => l.nilai !== null && l.nilai !== undefined);
+    const gradedEntries = allLogbooks.filter(
+      (l) => l.nilai !== null && l.nilai !== undefined,
+    );
     const averageGrade =
       gradedEntries.length > 0
         ? gradedEntries.reduce((sum, l) => sum + (l.nilai || 0), 0) /
@@ -247,10 +257,10 @@ export async function createLogbook(
       throw new Error("Mahasiswa record not found");
     }
 
-    // Get jadwal info for additional context
+    // Get jadwal info for validation
     const { data: jadwal } = await supabase
       .from("jadwal_praktikum")
-      .select("tanggal_praktikum, topik, laboratorium_id")
+      .select("id, status")
       .eq("id", data.jadwal_id)
       .single();
 
@@ -258,12 +268,14 @@ export async function createLogbook(
       throw new Error("Jadwal praktikum not found");
     }
 
-    // Create logbook entry
+    if (jadwal.status !== "approved") {
+      throw new Error("Cannot create logbook for unapproved jadwal");
+    }
+
+    // Create logbook entry (tanggal_praktikum and topik are in jadwal relation, not in logbook table)
     const newLogbook = await insert<LogbookEntry>("logbook_entries", {
       ...data,
       mahasiswa_id: mahasiswa.id,
-      tanggal_praktikum: jadwal.tanggal_praktikum,
-      topik_praktikum: jadwal.topik,
       status: "draft",
     });
 
@@ -304,7 +316,10 @@ export async function updateLogbook(
     }
 
     // Check permission: only owner can update draft logbook
-    const existingLogbook = await getById<LogbookEntry>("logbook_entries", data.id);
+    const existingLogbook = await getById<LogbookEntry>(
+      "logbook_entries",
+      data.id,
+    );
 
     if (!existingLogbook) {
       throw new Error("Logbook not found");
@@ -342,7 +357,9 @@ export async function updateLogbook(
 /**
  * Submit logbook for review (MAHASISWA only, own logbook)
  */
-export async function submitLogbook(data: SubmitLogbookData): Promise<LogbookEntry> {
+export async function submitLogbook(
+  data: SubmitLogbookData,
+): Promise<LogbookEntry> {
   try {
     // Get current mahasiswa ID
     const {
@@ -365,7 +382,10 @@ export async function submitLogbook(data: SubmitLogbookData): Promise<LogbookEnt
     }
 
     // Check logbook ownership and status
-    const existingLogbook = await getById<LogbookEntry>("logbook_entries", data.id);
+    const existingLogbook = await getById<LogbookEntry>(
+      "logbook_entries",
+      data.id,
+    );
 
     if (!existingLogbook) {
       throw new Error("Logbook not found");
@@ -380,7 +400,11 @@ export async function submitLogbook(data: SubmitLogbookData): Promise<LogbookEnt
     }
 
     // Validate required fields
-    if (!data.prosedur_dilakukan || !data.hasil_observasi || !data.skill_dipelajari) {
+    if (
+      !data.prosedur_dilakukan ||
+      !data.hasil_observasi ||
+      !data.skill_dipelajari
+    ) {
       throw new Error("Please fill in all required fields before submitting");
     }
 
@@ -405,7 +429,9 @@ export async function submitLogbook(data: SubmitLogbookData): Promise<LogbookEnt
 /**
  * Dosen reviews logbook (gives feedback)
  */
-export async function reviewLogbook(data: DosenReviewData): Promise<LogbookEntry> {
+export async function reviewLogbook(
+  data: DosenReviewData,
+): Promise<LogbookEntry> {
   try {
     // Get current dosen ID
     const {
@@ -428,13 +454,19 @@ export async function reviewLogbook(data: DosenReviewData): Promise<LogbookEntry
     }
 
     // Check logbook exists
-    const existingLogbook = await getById<LogbookEntry>("logbook_entries", data.id);
+    const existingLogbook = await getById<LogbookEntry>(
+      "logbook_entries",
+      data.id,
+    );
 
     if (!existingLogbook) {
       throw new Error("Logbook not found");
     }
 
-    if (existingLogbook.status !== "submitted" && existingLogbook.status !== "reviewed") {
+    if (
+      existingLogbook.status !== "submitted" &&
+      existingLogbook.status !== "reviewed"
+    ) {
       throw new Error("Can only review submitted logbooks");
     }
 
@@ -458,7 +490,9 @@ export async function reviewLogbook(data: DosenReviewData): Promise<LogbookEntry
 /**
  * Dosen grades logbook
  */
-export async function gradeLogbook(data: GradeLogbookData): Promise<LogbookEntry> {
+export async function gradeLogbook(
+  data: GradeLogbookData,
+): Promise<LogbookEntry> {
   try {
     // Get current dosen ID
     const {
@@ -486,7 +520,10 @@ export async function gradeLogbook(data: GradeLogbookData): Promise<LogbookEntry
     }
 
     // Check logbook exists
-    const existingLogbook = await getById<LogbookEntry>("logbook_entries", data.id);
+    const existingLogbook = await getById<LogbookEntry>(
+      "logbook_entries",
+      data.id,
+    );
 
     if (!existingLogbook) {
       throw new Error("Logbook not found");
@@ -568,8 +605,7 @@ export const logbookApi = {
   getLogbook: (filters?: LogbookFilters) =>
     withApiResponse(() => getLogbook(filters)),
 
-  getLogbookById: (id: string) =>
-    withApiResponse(() => getLogbookById(id)),
+  getLogbookById: (id: string) => withApiResponse(() => getLogbookById(id)),
 
   getLogbookStats: (filters?: Pick<LogbookFilters, "kelas_id" | "dosen_id">) =>
     withApiResponse(() => getLogbookStats(filters)),
@@ -584,8 +620,7 @@ export const logbookApi = {
   submitLogbook: (data: SubmitLogbookData) =>
     withApiResponse(() => submitLogbook(data)),
 
-  deleteLogbook: (id: string) =>
-    withApiResponse(() => deleteLogbook(id)),
+  deleteLogbook: (id: string) => withApiResponse(() => deleteLogbook(id)),
 
   // Dosen operations
   reviewLogbook: (data: DosenReviewData) =>

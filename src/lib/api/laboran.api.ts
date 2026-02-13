@@ -31,6 +31,8 @@ export interface PendingApproval {
   tanggal_pinjam: string;
   tanggal_kembali_rencana: string;
   created_at: string;
+  dosen_user_id?: string; // For sending notifications to dosen
+  dosen_id?: string; // For tracking which dosen made the request
 }
 
 export interface InventoryAlert {
@@ -227,12 +229,18 @@ export async function getPendingApprovals(
       let peminjamNama = "Unknown";
       let peminjamNim = "-";
 
+      // For notification - get dosen user_id if this is a dosen request
+      let dosenUserId: string | undefined;
+      let dosenId: string | undefined;
+
       if (item.dosen_id) {
         // Peminjam is DOSEN
         const dosen = dosenMap.get(item.dosen_id);
         const user = dosen?.user_id ? usersMap.get(dosen.user_id) : null;
         peminjamNama = user?.full_name || dosen?.nip || "Unknown";
         peminjamNim = dosen?.nip || "-";
+        dosenUserId = dosen?.user_id; // For sending notifications
+        dosenId = item.dosen_id;
       } else if (item.peminjam_id) {
         // Peminjam is MAHASISWA
         const mahasiswa = mahasiswaMap.get(item.peminjam_id);
@@ -255,6 +263,8 @@ export async function getPendingApprovals(
         tanggal_pinjam: item.tanggal_pinjam,
         tanggal_kembali_rencana: item.tanggal_kembali_rencana,
         created_at: item.created_at,
+        dosen_user_id: dosenUserId,
+        dosen_id: dosenId,
       };
     });
   } catch (error) {

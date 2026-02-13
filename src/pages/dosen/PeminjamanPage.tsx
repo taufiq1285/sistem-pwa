@@ -74,6 +74,7 @@ import {
   markBorrowingAsTaken,
 } from "@/lib/api/dosen.api";
 import { cacheAPI, invalidateCache } from "@/lib/offline/api-cache";
+import { notifyLaboranPeminjamanBaru } from "@/lib/api/notification.api";
 
 // ============================================================================
 // TYPES & VALIDATION
@@ -149,6 +150,29 @@ const STATUS_CONFIG: Record<
   ditolak: { label: "Ditolak", variant: "destructive", icon: XCircle },
   overdue: { label: "Terlambat", variant: "destructive", icon: Clock },
 };
+
+// ============================================================================
+// HELPER FUNCTIONS
+// ============================================================================
+
+/**
+ * Fetch all laboran user IDs for notifications
+ * Returns empty array on error (best-effort)
+ */
+async function getLaboranUserIds(): Promise<string[]> {
+  try {
+    const supabase = (await import("@/lib/supabase/client")).supabase;
+    const { data } = await supabase
+      .from("users")
+      .select("id")
+      .eq("role", "laboran");
+
+    return data?.map((u: any) => u.id) || [];
+  } catch (error) {
+    console.error("Failed to fetch laboran IDs:", error);
+    return []; // Return empty array instead of throwing
+  }
+}
 
 // ============================================================================
 // COMPONENT
@@ -335,6 +359,23 @@ export default function PeminjamanPage() {
       });
 
       toast.success("Pengajuan peminjaman berhasil dibuat!");
+
+      // Notify all laboran (best-effort, non-blocking)
+      const laboranIds = await getLaboranUserIds();
+      if (laboranIds.length > 0 && selectedEquipment) {
+        notifyLaboranPeminjamanBaru(
+          laboranIds,
+          "Dosen", // Fallback sender name
+          selectedEquipment.nama_barang,
+          data.jumlah_pinjam,
+          data.tanggal_pinjam,
+          data.keperluan,
+        ).catch((err) => {
+          // Non-blocking: notification failure shouldn't affect the process
+          console.error("Failed to notify laboran:", err);
+        });
+      }
+
       setDialogOpen(false);
       form.reset();
       setSelectedEquipment(null);

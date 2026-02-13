@@ -120,7 +120,13 @@ export function EventDialog({
                 <Badge variant={typeConfig.color}>{typeConfig.label}</Badge>
                 {/* ✅ NEW: Status Badge */}
                 <StatusBadge
-                  status={event.metadata?.status || "pending"}
+                  status={
+                    (event.metadata?.status as
+                      | "pending"
+                      | "approved"
+                      | "rejected"
+                      | "cancelled") || "pending"
+                  }
                   size="sm"
                 />
               </div>

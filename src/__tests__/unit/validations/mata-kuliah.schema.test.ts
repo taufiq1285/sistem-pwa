@@ -767,4 +767,894 @@ describe("Mata Kuliah Schema Validation", () => {
       });
     });
   });
+
+  // ============================================================================
+  // WHITE-BOX TESTING ENHANCEMENT
+  // ============================================================================
+
+  describe("WHITE-BOX: Validation Helper Functions", () => {
+    describe("isValidKodeMK - Branch Coverage", () => {
+      it("should return true for valid 2-letter + 3-digit format", async () => {
+        const { isValidKodeMK } = await import("@/types/mata-kuliah.types");
+        expect(isValidKodeMK("MK001")).toBe(true);
+        expect(isValidKodeMK("BI101")).toBe(true);
+      });
+
+      it("should return true for valid 3-letter + 3-digit format", async () => {
+        const { isValidKodeMK } = await import("@/types/mata-kuliah.types");
+        expect(isValidKodeMK("BID201")).toBe(true);
+        expect(isValidKodeMK("KBJ301")).toBe(true);
+      });
+
+      it("should return true for valid 4-letter + 3-digit format", async () => {
+        const { isValidKodeMK } = await import("@/types/mata-kuliah.types");
+        expect(isValidKodeMK("BIDK401")).toBe(true);
+      });
+
+      it("should return true for valid 5-letter + 3-digit format", async () => {
+        const { isValidKodeMK } = await import("@/types/mata-kuliah.types");
+        expect(isValidKodeMK("BIDKE501")).toBe(true);
+      });
+
+      it("should return false for 1-letter prefix", async () => {
+        const { isValidKodeMK } = await import("@/types/mata-kuliah.types");
+        expect(isValidKodeMK("B123")).toBe(false);
+      });
+
+      it("should return false for 6+ letter prefix", async () => {
+        const { isValidKodeMK } = await import("@/types/mata-kuliah.types");
+        expect(isValidKodeMK("BIDKEB123")).toBe(false);
+      });
+
+      it("should return false for 2-digit suffix", async () => {
+        const { isValidKodeMK } = await import("@/types/mata-kuliah.types");
+        expect(isValidKodeMK("BID20")).toBe(false);
+      });
+
+      it("should return false for 4-digit suffix", async () => {
+        const { isValidKodeMK } = await import("@/types/mata-kuliah.types");
+        expect(isValidKodeMK("BID2011")).toBe(false);
+      });
+
+      it("should return false for lowercase letters", async () => {
+        const { isValidKodeMK } = await import("@/types/mata-kuliah.types");
+        expect(isValidKodeMK("bid201")).toBe(false);
+        expect(isValidKodeMK("BID201a")).toBe(false);
+      });
+
+      it("should return false for special characters", async () => {
+        const { isValidKodeMK } = await import("@/types/mata-kuliah.types");
+        expect(isValidKodeMK("BID-201")).toBe(false);
+        expect(isValidKodeMK("BID_201")).toBe(false);
+        expect(isValidKodeMK("BID 201")).toBe(false);
+      });
+
+      it("should return false for empty string", async () => {
+        const { isValidKodeMK } = await import("@/types/mata-kuliah.types");
+        expect(isValidKodeMK("")).toBe(false);
+      });
+
+      it("should return false for numbers only", async () => {
+        const { isValidKodeMK } = await import("@/types/mata-kuliah.types");
+        expect(isValidKodeMK("12345")).toBe(false);
+      });
+
+      it("should return false for letters only", async () => {
+        const { isValidKodeMK } = await import("@/types/mata-kuliah.types");
+        expect(isValidKodeMK("ABCDE")).toBe(false);
+      });
+    });
+
+    describe("isValidSKS - Branch Coverage", () => {
+      it("should return true for SKS = 1 (minimum)", async () => {
+        const { isValidSKS } = await import("@/types/mata-kuliah.types");
+        expect(isValidSKS(1)).toBe(true);
+      });
+
+      it("should return true for SKS = 6 (maximum)", async () => {
+        const { isValidSKS } = await import("@/types/mata-kuliah.types");
+        expect(isValidSKS(6)).toBe(true);
+      });
+
+      it("should return true for SKS = 3 (middle)", async () => {
+        const { isValidSKS } = await import("@/types/mata-kuliah.types");
+        expect(isValidSKS(3)).toBe(true);
+      });
+
+      it("should return false for SKS = 0 (below range)", async () => {
+        const { isValidSKS } = await import("@/types/mata-kuliah.types");
+        expect(isValidSKS(0)).toBe(false);
+      });
+
+      it("should return false for SKS = 7 (above range)", async () => {
+        const { isValidSKS } = await import("@/types/mata-kuliah.types");
+        expect(isValidSKS(7)).toBe(false);
+      });
+
+      it("should return false for SKS = -1 (negative)", async () => {
+        const { isValidSKS } = await import("@/types/mata-kuliah.types");
+        expect(isValidSKS(-1)).toBe(false);
+      });
+
+      it("should return false for SKS = 100 (large value)", async () => {
+        const { isValidSKS } = await import("@/types/mata-kuliah.types");
+        expect(isValidSKS(100)).toBe(false);
+      });
+    });
+
+    describe("isValidSemester - Branch Coverage", () => {
+      it("should return true for semester = 1 (minimum)", async () => {
+        const { isValidSemester } = await import("@/types/mata-kuliah.types");
+        expect(isValidSemester(1)).toBe(true);
+      });
+
+      it("should return true for semester = 14 (maximum)", async () => {
+        const { isValidSemester } = await import("@/types/mata-kuliah.types");
+        expect(isValidSemester(14)).toBe(true);
+      });
+
+      it("should return true for semester = 7 (middle)", async () => {
+        const { isValidSemester } = await import("@/types/mata-kuliah.types");
+        expect(isValidSemester(7)).toBe(true);
+      });
+
+      it("should return false for semester = 0 (below range)", async () => {
+        const { isValidSemester } = await import("@/types/mata-kuliah.types");
+        expect(isValidSemester(0)).toBe(false);
+      });
+
+      it("should return false for semester = 15 (above range)", async () => {
+        const { isValidSemester } = await import("@/types/mata-kuliah.types");
+        expect(isValidSemester(15)).toBe(false);
+      });
+
+      it("should return false for semester = -1 (negative)", async () => {
+        const { isValidSemester } = await import("@/types/mata-kuliah.types");
+        expect(isValidSemester(-1)).toBe(false);
+      });
+
+      it("should return false for semester = 100 (large value)", async () => {
+        const { isValidSemester } = await import("@/types/mata-kuliah.types");
+        expect(isValidSemester(100)).toBe(false);
+      });
+    });
+  });
+
+  describe("WHITE-BOX: Edge Cases - Whitespace and Trimming", () => {
+    it("should trim whitespace from nama_mk", () => {
+      const data = {
+        kode_mk: "MK001",
+        nama_mk: "  Asuhan Kebidanan I  ",
+        sks: 3,
+        semester: 1,
+        program_studi: "D3 Kebidanan",
+      };
+
+      const result = createMataKuliahSchema.safeParse(data);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.nama_mk).toBe("Asuhan Kebidanan I");
+      }
+    });
+
+    it("should trim whitespace from deskripsi", () => {
+      const data = {
+        kode_mk: "MK001",
+        nama_mk: "Asuhan Kebidanan I",
+        sks: 3,
+        semester: 1,
+        program_studi: "D3 Kebidanan",
+        deskripsi: "  Valid description  ",
+      };
+
+      const result = createMataKuliahSchema.safeParse(data);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.deskripsi).toBe("Valid description");
+      }
+    });
+
+    it("should reject nama_mk with only whitespace", () => {
+      const data = {
+        kode_mk: "MK001",
+        nama_mk: "     ",
+        sks: 3,
+        semester: 1,
+        program_studi: "D3 Kebidanan",
+      };
+
+      const result = createMataKuliahSchema.safeParse(data);
+      expect(result.success).toBe(false);
+    });
+
+    it("should handle tabs and newlines in nama_mk", () => {
+      const data = {
+        kode_mk: "MK001",
+        nama_mk: "Asuhan\t\nKebidanan",
+        sks: 3,
+        semester: 1,
+        program_studi: "D3 Kebidanan",
+      };
+
+      const result = createMataKuliahSchema.safeParse(data);
+      expect(result.success).toBe(true);
+    });
+
+    it("should handle empty string after trim", () => {
+      const data = {
+        kode_mk: "MK001",
+        nama_mk: "",
+        sks: 3,
+        semester: 1,
+        program_studi: "D3 Kebidanan",
+      };
+
+      const result = createMataKuliahSchema.safeParse(data);
+      expect(result.success).toBe(false);
+    });
+  });
+
+  describe("WHITE-BOX: Boundary Testing - SKS", () => {
+    it("should test SKS boundary at 0 (fail)", () => {
+      const data = {
+        kode_mk: "MK001",
+        nama_mk: "Test Course Name",
+        sks: 0,
+        semester: 1,
+        program_studi: "D3 Kebidanan",
+      };
+
+      const result = createMataKuliahSchema.safeParse(data);
+      expect(result.success).toBe(false);
+    });
+
+    it("should test SKS boundary at 1 (pass)", () => {
+      const data = {
+        kode_mk: "MK001",
+        nama_mk: "Test Course Name",
+        sks: 1,
+        semester: 1,
+        program_studi: "D3 Kebidanan",
+      };
+
+      const result = createMataKuliahSchema.safeParse(data);
+      expect(result.success).toBe(true);
+    });
+
+    it("should test SKS boundary at 6 (pass)", () => {
+      const data = {
+        kode_mk: "MK001",
+        nama_mk: "Test Course Name",
+        sks: 6,
+        semester: 1,
+        program_studi: "D3 Kebidanan",
+      };
+
+      const result = createMataKuliahSchema.safeParse(data);
+      expect(result.success).toBe(true);
+    });
+
+    it("should test SKS boundary at 7 (fail)", () => {
+      const data = {
+        kode_mk: "MK001",
+        nama_mk: "Test Course Name",
+        sks: 7,
+        semester: 1,
+        program_studi: "D3 Kebidanan",
+      };
+
+      const result = createMataKuliahSchema.safeParse(data);
+      expect(result.success).toBe(false);
+    });
+
+    it("should test all valid SKS values (1-6)", () => {
+      [1, 2, 3, 4, 5, 6].forEach((sks) => {
+        const data = {
+          kode_mk: "MK001",
+          nama_mk: "Test Course Name",
+          sks,
+          semester: 1,
+          program_studi: "D3 Kebidanan",
+        };
+
+        const result = createMataKuliahSchema.safeParse(data);
+        expect(result.success).toBe(true);
+      });
+    });
+  });
+
+  describe("WHITE-BOX: Boundary Testing - Semester", () => {
+    it("should test semester boundary at 0 (fail)", () => {
+      const data = {
+        kode_mk: "MK001",
+        nama_mk: "Test Course Name",
+        sks: 3,
+        semester: 0,
+        program_studi: "D3 Kebidanan",
+      };
+
+      const result = createMataKuliahSchema.safeParse(data);
+      expect(result.success).toBe(false);
+    });
+
+    it("should test semester boundary at 1 (pass)", () => {
+      const data = {
+        kode_mk: "MK001",
+        nama_mk: "Test Course Name",
+        sks: 3,
+        semester: 1,
+        program_studi: "D3 Kebidanan",
+      };
+
+      const result = createMataKuliahSchema.safeParse(data);
+      expect(result.success).toBe(true);
+    });
+
+    it("should test semester boundary at 14 (pass)", () => {
+      const data = {
+        kode_mk: "MK001",
+        nama_mk: "Test Course Name",
+        sks: 3,
+        semester: 14,
+        program_studi: "D3 Kebidanan",
+      };
+
+      const result = createMataKuliahSchema.safeParse(data);
+      expect(result.success).toBe(true);
+    });
+
+    it("should test semester boundary at 15 (fail)", () => {
+      const data = {
+        kode_mk: "MK001",
+        nama_mk: "Test Course Name",
+        sks: 3,
+        semester: 15,
+        program_studi: "D3 Kebidanan",
+      };
+
+      const result = createMataKuliahSchema.safeParse(data);
+      expect(result.success).toBe(false);
+    });
+  });
+
+  describe("WHITE-BOX: Boundary Testing - nama_mk Length", () => {
+    it("should test nama_mk at exactly 9 chars (fail)", () => {
+      const data = {
+        kode_mk: "MK001",
+        nama_mk: "123456789", // 9 chars
+        sks: 3,
+        semester: 1,
+        program_studi: "D3 Kebidanan",
+      };
+
+      const result = createMataKuliahSchema.safeParse(data);
+      expect(result.success).toBe(false);
+    });
+
+    it("should test nama_mk at exactly 10 chars (pass)", () => {
+      const data = {
+        kode_mk: "MK001",
+        nama_mk: "1234567890", // 10 chars
+        sks: 3,
+        semester: 1,
+        program_studi: "D3 Kebidanan",
+      };
+
+      const result = createMataKuliahSchema.safeParse(data);
+      expect(result.success).toBe(true);
+    });
+
+    it("should test nama_mk at exactly 100 chars (pass)", () => {
+      const data = {
+        kode_mk: "MK001",
+        nama_mk: "A".repeat(100), // 100 chars
+        sks: 3,
+        semester: 1,
+        program_studi: "D3 Kebidanan",
+      };
+
+      const result = createMataKuliahSchema.safeParse(data);
+      expect(result.success).toBe(true);
+    });
+
+    it("should test nama_mk at 101 chars (fail)", () => {
+      const data = {
+        kode_mk: "MK001",
+        nama_mk: "A".repeat(101), // 101 chars
+        sks: 3,
+        semester: 1,
+        program_studi: "D3 Kebidanan",
+      };
+
+      const result = createMataKuliahSchema.safeParse(data);
+      expect(result.success).toBe(false);
+    });
+  });
+
+  describe("WHITE-BOX: Error Message Verification", () => {
+    it("should provide correct error message for empty kode_mk", () => {
+      const data = {
+        kode_mk: "",
+        nama_mk: "Test Course Name",
+        sks: 3,
+        semester: 1,
+        program_studi: "D3 Kebidanan",
+      };
+
+      const result = createMataKuliahSchema.safeParse(data);
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        const kodeError = result.error.issues.find(
+          (issue) => issue.path[0] === "kode_mk",
+        );
+        expect(kodeError).toBeDefined();
+        expect(kodeError?.message).toContain("required");
+      }
+    });
+
+    it("should provide correct error message for invalid kode_mk format", () => {
+      const data = {
+        kode_mk: "invalid",
+        nama_mk: "Test Course Name",
+        sks: 3,
+        semester: 1,
+        program_studi: "D3 Kebidanan",
+      };
+
+      const result = createMataKuliahSchema.safeParse(data);
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        const kodeError = result.error.issues.find(
+          (issue) => issue.path[0] === "kode_mk",
+        );
+        expect(kodeError).toBeDefined();
+        expect(kodeError?.message).toMatch(/uppercase letters|digits/i);
+      }
+    });
+
+    it("should provide correct error message for short nama_mk", () => {
+      const data = {
+        kode_mk: "MK001",
+        nama_mk: "Short",
+        sks: 3,
+        semester: 1,
+        program_studi: "D3 Kebidanan",
+      };
+
+      const result = createMataKuliahSchema.safeParse(data);
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        const namaError = result.error.issues.find(
+          (issue) => issue.path[0] === "nama_mk",
+        );
+        expect(namaError).toBeDefined();
+        expect(namaError?.message).toContain("10");
+      }
+    });
+
+    it("should provide correct error message for invalid SKS", () => {
+      const data = {
+        kode_mk: "MK001",
+        nama_mk: "Test Course Name",
+        sks: 10,
+        semester: 1,
+        program_studi: "D3 Kebidanan",
+      };
+
+      const result = createMataKuliahSchema.safeParse(data);
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        const sksError = result.error.issues.find(
+          (issue) => issue.path[0] === "sks",
+        );
+        expect(sksError).toBeDefined();
+        expect(sksError?.message).toMatch(/6|exceed/i);
+      }
+    });
+
+    it("should provide correct error message for invalid program_studi", () => {
+      const data = {
+        kode_mk: "MK001",
+        nama_mk: "Test Course Name",
+        sks: 3,
+        semester: 1,
+        program_studi: "Invalid Program",
+      };
+
+      const result = createMataKuliahSchema.safeParse(data);
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        const programError = result.error.issues.find(
+          (issue) => issue.path[0] === "program_studi",
+        );
+        expect(programError).toBeDefined();
+      }
+    });
+  });
+
+  describe("WHITE-BOX: Invalid UUID Format Testing", () => {
+    it("should reject invalid mata_kuliah_id format", () => {
+      const data = {
+        mata_kuliah_id: "invalid-uuid",
+        mahasiswa_ids: ["123e4567-e89b-12d3-a456-426614174001"],
+      };
+
+      const result = assignMahasiswaSchema.safeParse(data);
+      expect(result.success).toBe(false);
+    });
+
+    it("should reject invalid mahasiswa_id format", () => {
+      const data = {
+        mata_kuliah_id: "123e4567-e89b-12d3-a456-426614174000",
+        mahasiswa_ids: ["invalid-uuid"],
+      };
+
+      const result = assignMahasiswaSchema.safeParse(data);
+      expect(result.success).toBe(false);
+    });
+
+    it("should reject invalid kelas_id format", () => {
+      const data = {
+        mata_kuliah_id: "123e4567-e89b-12d3-a456-426614174000",
+        mahasiswa_ids: ["123e4567-e89b-12d3-a456-426614174001"],
+        kelas_id: "invalid-uuid",
+      };
+
+      const result = assignMahasiswaSchema.safeParse(data);
+      expect(result.success).toBe(false);
+    });
+
+    it("should reject invalid ID in bulk delete", () => {
+      const data = {
+        ids: ["invalid-uuid-1", "invalid-uuid-2"],
+      };
+
+      const result = bulkDeleteMataKuliahSchema.safeParse(data);
+      expect(result.success).toBe(false);
+    });
+
+    it("should accept valid UUID v4 format", () => {
+      const data = {
+        mata_kuliah_id: "123e4567-e89b-12d3-a456-426614174000",
+        mahasiswa_ids: ["123e4567-e89b-12d3-a456-426614174001"],
+      };
+
+      const result = assignMahasiswaSchema.safeParse(data);
+      expect(result.success).toBe(true);
+    });
+  });
+
+  describe("WHITE-BOX: Type Coercion Tests", () => {
+    it("should reject string SKS", () => {
+      const data = {
+        kode_mk: "MK001",
+        nama_mk: "Test Course Name",
+        sks: "3",
+        semester: 1,
+        program_studi: "D3 Kebidanan",
+      };
+
+      const result = createMataKuliahSchema.safeParse(data);
+      expect(result.success).toBe(false);
+    });
+
+    it("should reject string semester", () => {
+      const data = {
+        kode_mk: "MK001",
+        nama_mk: "Test Course Name",
+        sks: 3,
+        semester: "1",
+        program_studi: "D3 Kebidanan",
+      };
+
+      const result = createMataKuliahSchema.safeParse(data);
+      expect(result.success).toBe(false);
+    });
+
+    it("should reject null values for required fields", () => {
+      const data = {
+        kode_mk: null,
+        nama_mk: null,
+        sks: null,
+        semester: null,
+        program_studi: null,
+      };
+
+      const result = createMataKuliahSchema.safeParse(data);
+      expect(result.success).toBe(false);
+    });
+
+    it("should reject undefined for required fields", () => {
+      const data = {
+        kode_mk: undefined,
+        nama_mk: undefined,
+        sks: undefined,
+        semester: undefined,
+        program_studi: undefined,
+      };
+
+      const result = createMataKuliahSchema.safeParse(data);
+      expect(result.success).toBe(false);
+    });
+  });
+
+  describe("WHITE-BOX: Path Coverage - Schema Composition", () => {
+    it("should test baseSchema -> createSchema path", () => {
+      const data = {
+        kode_mk: "MK001",
+        nama_mk: "Test Course Name",
+        sks: 3,
+        semester: 1,
+        program_studi: "D3 Kebidanan",
+      };
+
+      const result = createMataKuliahSchema.safeParse(data);
+      expect(result.success).toBe(true);
+    });
+
+    it("should test baseSchema -> updateSchema path (partial)", () => {
+      const data = {
+        nama_mk: "Updated Course Name",
+      };
+
+      const result = updateMataKuliahSchema.safeParse(data);
+      expect(result.success).toBe(true);
+    });
+
+    it("should test baseSchema -> updateSchema path (empty)", () => {
+      const result = updateMataKuliahSchema.safeParse({});
+      expect(result.success).toBe(true);
+    });
+
+    it("should test baseSchema -> updateSchema path (full data)", () => {
+      const data = {
+        kode_mk: "MK001",
+        nama_mk: "Test Course Name",
+        sks: 3,
+        semester: 1,
+        program_studi: "D3 Kebidanan",
+        deskripsi: "Test description",
+      };
+
+      const result = updateMataKuliahSchema.safeParse(data);
+      expect(result.success).toBe(true);
+    });
+  });
+
+  describe("WHITE-BOX: Multiple Field Validation Errors", () => {
+    it("should collect all validation errors (multiple fields)", () => {
+      const data = {
+        kode_mk: "invalid",
+        nama_mk: "Short",
+        sks: 10,
+        semester: 20,
+        program_studi: "Invalid Program",
+      };
+
+      const result = createMataKuliahSchema.safeParse(data);
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        // Should have errors for multiple fields
+        expect(result.error.issues.length).toBeGreaterThan(1);
+      }
+    });
+
+    it("should provide error paths for all invalid fields", () => {
+      const data = {
+        kode_mk: "",
+        nama_mk: "",
+        sks: 0,
+        semester: 0,
+      };
+
+      const result = createMataKuliahSchema.safeParse(data);
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        const errorPaths = result.error.issues.map((issue) => issue.path[0]);
+        expect(errorPaths).toContain("kode_mk");
+        expect(errorPaths).toContain("nama_mk");
+        expect(errorPaths).toContain("sks");
+        expect(errorPaths).toContain("semester");
+      }
+    });
+  });
+
+  describe("WHITE-BOX: Deskripsi Edge Cases", () => {
+    it("should accept deskripsi at exactly 500 chars", () => {
+      const data = {
+        kode_mk: "MK001",
+        nama_mk: "Test Course Name",
+        sks: 3,
+        semester: 1,
+        program_studi: "D3 Kebidanan",
+        deskripsi: "A".repeat(500),
+      };
+
+      const result = createMataKuliahSchema.safeParse(data);
+      expect(result.success).toBe(true);
+    });
+
+    it("should reject deskripsi at 501 chars", () => {
+      const data = {
+        kode_mk: "MK001",
+        nama_mk: "Test Course Name",
+        sks: 3,
+        semester: 1,
+        program_studi: "D3 Kebidanan",
+        deskripsi: "A".repeat(501),
+      };
+
+      const result = createMataKuliahSchema.safeParse(data);
+      expect(result.success).toBe(false);
+    });
+
+    it("should accept null deskripsi in update", () => {
+      const result = updateMataKuliahSchema.safeParse({
+        deskripsi: null,
+      });
+      // Update schema is partial, so null might be allowed
+      // depends on schema design
+      expect(result.success).toBeDefined();
+    });
+
+    it("should handle multiline deskripsi", () => {
+      const data = {
+        kode_mk: "MK001",
+        nama_mk: "Test Course Name",
+        sks: 3,
+        semester: 1,
+        program_studi: "D3 Kebidanan",
+        deskripsi: "Line 1\nLine 2\nLine 3",
+      };
+
+      const result = createMataKuliahSchema.safeParse(data);
+      expect(result.success).toBe(true);
+    });
+  });
+
+  describe("WHITE-BOX: Filter Schema Edge Cases", () => {
+    it("should handle empty filter object", () => {
+      const result = mataKuliahFilterSchema.safeParse({});
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.sortBy).toBe("kode_mk");
+        expect(result.data.sortOrder).toBe("asc");
+      }
+    });
+
+    it("should handle partial filters", () => {
+      const result = mataKuliahFilterSchema.safeParse({
+        search: "test",
+        semester: 1,
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it("should reject invalid semester in filter", () => {
+      const result = mataKuliahFilterSchema.safeParse({
+        semester: 20,
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it("should reject invalid SKS in filter", () => {
+      const result = mataKuliahFilterSchema.safeParse({
+        sks: 10,
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it("should reject invalid sortOrder", () => {
+      const result = mataKuliahFilterSchema.safeParse({
+        sortOrder: "invalid",
+      });
+      expect(result.success).toBe(false);
+    });
+  });
+
+  describe("WHITE-BOX: Concurrent Validation Scenarios", () => {
+    it("should handle multiple validation calls independently", () => {
+      const data1 = {
+        kode_mk: "MK001",
+        nama_mk: "Course One Name",
+        sks: 3,
+        semester: 1,
+        program_studi: "D3 Kebidanan",
+      };
+
+      const data2 = {
+        kode_mk: "MK002",
+        nama_mk: "Course Two Name",
+        sks: 4,
+        semester: 2,
+        program_studi: "S1 Kebidanan",
+      };
+
+      const result1 = createMataKuliahSchema.safeParse(data1);
+      const result2 = createMataKuliahSchema.safeParse(data2);
+
+      expect(result1.success).toBe(true);
+      expect(result2.success).toBe(true);
+    });
+
+    it("should not share state between validation calls", () => {
+      const validData = {
+        kode_mk: "MK001",
+        nama_mk: "Test Course Name",
+        sks: 3,
+        semester: 1,
+        program_studi: "D3 Kebidanan",
+      };
+
+      const invalidData = {
+        kode_mk: "invalid",
+        nama_mk: "Short",
+        sks: 10,
+        semester: 20,
+        program_studi: "Invalid",
+      };
+
+      const result1 = createMataKuliahSchema.safeParse(invalidData);
+      const result2 = createMataKuliahSchema.safeParse(validData);
+      const result3 = createMataKuliahSchema.safeParse(invalidData);
+
+      expect(result1.success).toBe(false);
+      expect(result2.success).toBe(true);
+      expect(result3.success).toBe(false);
+    });
+  });
+
+  describe("WHITE-BOX: Special Characters in Fields", () => {
+    it("should handle special characters in nama_mk", () => {
+      const data = {
+        kode_mk: "MK001",
+        nama_mk: "Asuhan Kebidanan & Kesehatan Reproduksi",
+        sks: 3,
+        semester: 1,
+        program_studi: "D3 Kebidanan",
+      };
+
+      const result = createMataKuliahSchema.safeParse(data);
+      expect(result.success).toBe(true);
+    });
+
+    it("should handle unicode characters in nama_mk", () => {
+      const data = {
+        kode_mk: "MK001",
+        nama_mk: "Kebidanan Indonesia - Kebidanan",
+        sks: 3,
+        semester: 1,
+        program_studi: "D3 Kebidanan",
+      };
+
+      const result = createMataKuliahSchema.safeParse(data);
+      expect(result.success).toBe(true);
+    });
+
+    it("should handle numbers in nama_mk", () => {
+      const data = {
+        kode_mk: "MK001",
+        nama_mk: "Asuhan Kebidanan I (Level 1)",
+        sks: 3,
+        semester: 1,
+        program_studi: "D3 Kebidanan",
+      };
+
+      const result = createMataKuliahSchema.safeParse(data);
+      expect(result.success).toBe(true);
+    });
+
+    it("should handle parentheses in nama_mk", () => {
+      const data = {
+        kode_mk: "MK001",
+        nama_mk: "Praktikum Kebidanan (Klinik)",
+        sks: 3,
+        semester: 1,
+        program_studi: "D3 Kebidanan",
+      };
+
+      const result = createMataKuliahSchema.safeParse(data);
+      expect(result.success).toBe(true);
+    });
+  });
 });

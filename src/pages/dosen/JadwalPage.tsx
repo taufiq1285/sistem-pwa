@@ -92,6 +92,10 @@ import {
   deleteJadwal,
 } from "@/lib/api/jadwal.api";
 import { query } from "@/lib/api/base.api";
+import {
+  notifyLaboranJadwalBaru,
+  notifyMahasiswaJadwalChange,
+} from "@/lib/api/notification.api";
 import type {
   Jadwal,
   CreateJadwalData,
@@ -307,6 +311,36 @@ export default function JadwalPage() {
     }
   };
 
+  // Helper: Get mahasiswa user IDs by kelas ID
+  const getMahasiswaIds = async (kelasId: string): Promise<string[]> => {
+    try {
+      const supabase = (await import("@/lib/supabase/client")).supabase;
+      const { data } = await supabase
+        .from("kelas_mahasiswa")
+        .select("mahasiswa_id")
+        .eq("kelas_id", kelasId);
+      return data?.map((km: any) => km.mahasiswa_id) || [];
+    } catch (error) {
+      console.error("Failed to fetch mahasiswa IDs:", error);
+      return [];
+    }
+  };
+
+  // Helper: Get all laboran user IDs
+  const getLaboranUserIds = async (): Promise<string[]> => {
+    try {
+      const supabase = (await import("@/lib/supabase/client")).supabase;
+      const { data } = await supabase
+        .from("users")
+        .select("id")
+        .eq("role", "laboran");
+      return data?.map((u: any) => u.id) || [];
+    } catch (error) {
+      console.error("Failed to fetch laboran IDs:", error);
+      return [];
+    }
+  };
+
   useEffect(() => {
     fetchLaboratorium();
     fetchMataKuliah();
@@ -405,8 +439,44 @@ export default function JadwalPage() {
 
       // ✅ IMPROVED: Beri feedback jelas tentang status pending
       toast.success("Jadwal berhasil dibuat!", {
-        description: "Status: Menunggu approval dari Laboran. Anda akan diberitahu setelah jadwal disetujui.",
+        description:
+          "Status: Menunggu approval dari Laboran. Anda akan diberitahu setelah jadwal disetujui.",
       });
+
+      // Notify laboran (best-effort, non-blocking)
+      const laboranIds = await getLaboranUserIds();
+      if (laboranIds.length > 0 && mataKuliahList) {
+        const mataKuliah = mataKuliahList.find(
+          (mk) => mk.id === selectedKelas.mata_kuliah_id,
+        );
+        const lab = laboratoriumList.find((l) => l.id === data.laboratorium_id);
+
+        notifyLaboranJadwalBaru(
+          laboranIds,
+          user?.full_name || "Dosen",
+          mataKuliah?.nama_mk || "Mata Kuliah",
+          selectedKelas.nama_kelas,
+          data.tanggal_praktikum,
+          lab?.nama_lab || "Lab",
+        ).catch((err) => {
+          console.error("Failed to notify laboran:", err);
+        });
+
+        // Notify mahasiswa in the kelas (best-effort, non-blocking)
+        const mahasiswaIds = await getMahasiswaIds(kelasId);
+        if (mahasiswaIds.length > 0) {
+          notifyMahasiswaJadwalChange(
+            mahasiswaIds,
+            mataKuliah?.nama_mk || "Mata Kuliah",
+            selectedKelas.nama_kelas,
+            data.tanggal_praktikum,
+            "baru",
+          ).catch((err) => {
+            console.error("Failed to notify mahasiswa:", err);
+          });
+        }
+      }
+
       setIsCreateOpen(false);
       createForm.reset();
       fetchJadwal();
@@ -488,6 +558,45 @@ export default function JadwalPage() {
       await updateJadwal(selectedJadwal.id, updateData);
 
       toast.success("Jadwal berhasil diperbarui");
+
+      // Notify laboran and mahasiswa about the update (best-effort, non-blocking)
+      const kelas = kelasList.find((k) => k.id === selectedKelas?.kelas_id);
+      const mataKuliah = kelas
+        ? mataKuliahList.find((mk) => mk.id === kelas.mata_kuliah_id)
+        : null;
+      const lab = laboratoriumList.find((l) => l.id === data.laboratorium_id);
+
+      if (kelas && mataKuliah) {
+        // Notify laboran
+        const laboranIds = await getLaboranUserIds();
+        if (laboranIds.length > 0) {
+          notifyLaboranJadwalBaru(
+            laboranIds,
+            user?.full_name || "Dosen",
+            mataKuliah.nama_mk,
+            kelas.nama_kelas,
+            data.tanggal_praktikum,
+            lab?.nama_lab || "Lab",
+          ).catch((err) => {
+            console.error("Failed to notify laboran:", err);
+          });
+        }
+
+        // Notify mahasiswa
+        const mahasiswaIds = await getMahasiswaIds(kelas.id);
+        if (mahasiswaIds.length > 0) {
+          notifyMahasiswaJadwalChange(
+            mahasiswaIds,
+            mataKuliah.nama_mk,
+            kelas.nama_kelas,
+            data.tanggal_praktikum,
+            "diupdate",
+          ).catch((err) => {
+            console.error("Failed to notify mahasiswa:", err);
+          });
+        }
+      }
+
       setIsEditOpen(false);
       editForm.reset();
       setSelectedJadwal(null);
@@ -514,6 +623,29 @@ export default function JadwalPage() {
       await deleteJadwal(selectedJadwal.id);
 
       toast.success("Jadwal berhasil dihapus");
+
+      // Notify mahasiswa about the cancellation (best-effort, non-blocking)
+      const kelas = kelasList.find((k) => k.id === selectedJadwal.kelas_id);
+      const mataKuliah = kelas
+        ? mataKuliahList.find((mk) => mk.id === kelas.mata_kuliah_id)
+        : null;
+
+      if (kelas && mataKuliah) {
+        const mahasiswaIds = await getMahasiswaIds(kelas.id);
+        if (mahasiswaIds.length > 0) {
+          notifyMahasiswaJadwalChange(
+            mahasiswaIds,
+            mataKuliah.nama_mk,
+            kelas.nama_kelas,
+            selectedJadwal.tanggal_praktikum ||
+              new Date().toISOString().split("T")[0],
+            "dibatalkan",
+          ).catch((err) => {
+            console.error("Failed to notify mahasiswa:", err);
+          });
+        }
+      }
+
       setIsDeleteOpen(false);
       setSelectedJadwal(null);
       fetchJadwal();
