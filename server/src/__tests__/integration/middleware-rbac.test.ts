@@ -552,7 +552,7 @@ describe("RBAC Middleware Integration Tests", () => {
 
       try {
         await createKuis({ judul: "Test" });
-        expect.fail("Should have thrown PermissionError");
+        throw new Error("Should have thrown PermissionError");
       } catch (error) {
         expect(error).toBeInstanceOf(PermissionError);
         expect((error as PermissionError).permission).toBe("manage:kuis");
@@ -577,7 +577,7 @@ describe("RBAC Middleware Integration Tests", () => {
 
       try {
         await updateKuisByOwner("kuis-123", { judul: "Hacked" });
-        expect.fail("Should have thrown OwnershipError");
+        throw new Error("Should have thrown OwnershipError");
       } catch (error) {
         expect(error).toBeInstanceOf(OwnershipError);
         expect((error as OwnershipError).resourceType).toBe("kuis");

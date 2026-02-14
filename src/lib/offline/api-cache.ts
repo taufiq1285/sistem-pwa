@@ -62,7 +62,7 @@ export async function cacheAPI<T>(
       const cached = await getCachedData<T>(key);
 
       if (cached) {
-        const isExpired = Date.now() > cached.expiresAt;
+        const isExpired = Date.now() >= cached.expiresAt;
 
         if (!isExpired) {
           console.log(`[API Cache] HIT: ${key}`);

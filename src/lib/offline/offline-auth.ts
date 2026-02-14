@@ -128,7 +128,7 @@ export async function verifyOfflineCredentials(
     }
 
     // Check if credentials expired
-    if (Date.now() > stored.expiresAt) {
+    if (Date.now() >= stored.expiresAt) {
       console.log("❌ Offline credentials expired");
       await clearOfflineCredentials();
       return false;
@@ -222,7 +222,7 @@ export async function restoreOfflineSession(): Promise<{
     }
 
     // Check if session expired
-    if (Date.now() > stored.expiresAt) {
+    if (Date.now() >= stored.expiresAt) {
       console.log("❌ Offline session expired");
       await clearOfflineSession();
       return null;
