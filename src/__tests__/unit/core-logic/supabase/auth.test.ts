@@ -52,7 +52,9 @@ const sessionStorageMock = (() => {
 })();
 
 Object.defineProperty(globalThis, "localStorage", { value: localStorageMock });
-Object.defineProperty(globalThis, "sessionStorage", { value: sessionStorageMock });
+Object.defineProperty(globalThis, "sessionStorage", {
+  value: sessionStorageMock,
+});
 
 // Mock dependencies
 vi.mock("../../../../lib/supabase/client", () => ({
@@ -271,7 +273,7 @@ describe("Supabase Auth Helper", () => {
       const result = await register(mockRegisterData);
 
       expect(result.success).toBe(false);
-      expect(result.error).toContain("already registered");
+      expect(result.error).toContain("Email sudah terdaftar");
     });
 
     it("should handle profile creation failure with rollback", async () => {
@@ -599,9 +601,7 @@ describe("Supabase Auth Helper", () => {
       const mockCallback = vi.fn();
       const mockUnsubscribe = vi.fn();
 
-      (supabase.auth.onAuthStateChange as any).mockReturnValue(
-        mockUnsubscribe,
-      );
+      (supabase.auth.onAuthStateChange as any).mockReturnValue(mockUnsubscribe);
 
       const unsubscribe = onAuthStateChange(mockCallback);
 
@@ -613,9 +613,7 @@ describe("Supabase Auth Helper", () => {
       const mockCallback = vi.fn();
       const mockUnsubscribe = vi.fn();
 
-      (supabase.auth.onAuthStateChange as any).mockReturnValue(
-        mockUnsubscribe,
-      );
+      (supabase.auth.onAuthStateChange as any).mockReturnValue(mockUnsubscribe);
 
       const unsubscribe = onAuthStateChange(mockCallback);
       unsubscribe();

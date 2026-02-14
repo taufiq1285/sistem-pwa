@@ -31,6 +31,7 @@ src/__tests__/unit/
 **Location:** `src/__tests__/unit/core-logic/`
 
 These tests require **100% white-box coverage** including:
+
 - ✅ Statement Coverage
 - ✅ Branch Coverage
 - ✅ Condition Coverage
@@ -39,6 +40,7 @@ These tests require **100% white-box coverage** including:
 - ✅ Loop Coverage
 
 **Files in this category:**
+
 - **API Layer** (32 files): Authentication, data management, business rules
 - **Custom Hooks** (12 files): State management, side effects, sync logic
 - **Utilities** (20+ files): Algorithms, transformations, calculations
@@ -54,6 +56,7 @@ These tests require **100% white-box coverage** including:
 ### 🟡 MEDIUM Priority (Gray Area)
 
 **Services** (3 files):
+
 - External service integrations
 - Third-party library wrappers
 - Database operations (infrastructure, not business logic)
@@ -78,34 +81,37 @@ These are **NOT core business logic**:
 
 ## 📊 Test Distribution
 
-| Category | Files | Priority | Coverage Target | Testing Type |
-|----------|--------|------------|------------------|---------------|
-| **API** | 32 | 🔴 HIGH | 100% | White-Box |
-| **Hooks** | 12 | 🔴 HIGH | 100% | White-Box |
-| **Utils** | 20+ | 🔴 HIGH | 100% | White-Box |
-| **Validations** | 6 | 🔴 HIGH | 100% | White-Box |
-| **Offline** | 7 | 🔴 HIGH | 100% | White-Box |
-| **Lib** | 7 | 🔴 HIGH | 100% | White-Box |
-| **Middleware** | 1 | 🔴 HIGH | 100% | White-Box |
-| **Components** | 6 | 🟢 LOW | 70% | Snapshot |
-| **Providers** | 5 | 🟢 LOW | 70% | Snapshot |
-| **Services** | 3 | 🟡 MEDIUM | 80% | Integration |
+| Category        | Files | Priority  | Coverage Target | Testing Type |
+| --------------- | ----- | --------- | --------------- | ------------ |
+| **API**         | 32    | 🔴 HIGH   | 100%            | White-Box    |
+| **Hooks**       | 12    | 🔴 HIGH   | 100%            | White-Box    |
+| **Utils**       | 20+   | 🔴 HIGH   | 100%            | White-Box    |
+| **Validations** | 6     | 🔴 HIGH   | 100%            | White-Box    |
+| **Offline**     | 7     | 🔴 HIGH   | 100%            | White-Box    |
+| **Lib**         | 7     | 🔴 HIGH   | 100%            | White-Box    |
+| **Middleware**  | 1     | 🔴 HIGH   | 100%            | White-Box    |
+| **Components**  | 6     | 🟢 LOW    | 70%             | Snapshot     |
+| **Providers**   | 5     | 🟢 LOW    | 70%             | Snapshot     |
+| **Services**    | 3     | 🟡 MEDIUM | 80%             | Integration  |
 
 ---
 
 ## 🚀 Running Tests
 
 ### Run All Tests
+
 ```bash
 npm run test
 ```
 
 ### Run Only Core Logic Tests (Recommended for Development)
+
 ```bash
 npm run test -- src/__tests__/unit/core-logic
 ```
 
 ### Run Specific Category
+
 ```bash
 # API tests
 npm run test -- src/__tests__/unit/core-logic/api
@@ -118,6 +124,7 @@ npm run test -- src/__tests__/unit/core-logic/utils
 ```
 
 ### Run with Coverage
+
 ```bash
 npm run test:coverage
 ```
@@ -163,6 +170,7 @@ npm run test:coverage
 See `testing/white-box/MISSING_TESTS_WHITEBOX_ANALYSIS.md` for detailed progress on core logic testing.
 
 **Current Status:**
+
 - ✅ 17/85 core modules completed (20%)
 - ✅ 2,027+ tests written
 - ✅ 100% coverage achieved for completed modules

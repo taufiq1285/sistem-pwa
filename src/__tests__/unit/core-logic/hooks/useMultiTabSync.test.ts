@@ -52,16 +52,18 @@ describe("useMultiTabSync", () => {
     mockLogout.mockResolvedValue(undefined);
 
     // Capture storage event listeners
-    addEventListenerSpy = vi.spyOn(window, "addEventListener").mockImplementation(
-      (event: string, handler: any) => {
+    addEventListenerSpy = vi
+      .spyOn(window, "addEventListener")
+      .mockImplementation((event: string, handler: any) => {
         if (event === "storage") {
           storageEventListeners.push(handler);
         }
         return undefined;
-      },
-    );
+      });
 
-    removeEventListenerSpy = vi.spyOn(window, "removeEventListener").mockReturnValue(undefined);
+    removeEventListenerSpy = vi
+      .spyOn(window, "removeEventListener")
+      .mockReturnValue(undefined);
 
     // Clear localStorage
     localStorage.clear();
@@ -275,7 +277,9 @@ describe("useMultiTabSync", () => {
     });
 
     it("should handle logout event gracefully with invalid JSON", async () => {
-      const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const consoleWarnSpy = vi
+        .spyOn(console, "warn")
+        .mockImplementation(() => {});
 
       renderHook(() => useMultiTabSync());
 
@@ -367,7 +371,9 @@ describe("useMultiTabSync", () => {
     });
 
     it("should handle login event with invalid JSON", async () => {
-      const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const consoleWarnSpy = vi
+        .spyOn(console, "warn")
+        .mockImplementation(() => {});
 
       renderHook(() => useMultiTabSync());
 
@@ -527,7 +533,9 @@ describe("useMultiTabSync", () => {
 
   describe("SECTION 9: Console Logging", () => {
     it("should log when detecting logout from another tab", async () => {
-      const consoleLogSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+      const consoleLogSpy = vi
+        .spyOn(console, "log")
+        .mockImplementation(() => {});
 
       renderHook(() => useMultiTabSync());
 
@@ -548,7 +556,9 @@ describe("useMultiTabSync", () => {
     });
 
     it("should log when detecting different user login", async () => {
-      const consoleLogSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+      const consoleLogSpy = vi
+        .spyOn(console, "log")
+        .mockImplementation(() => {});
 
       renderHook(() => useMultiTabSync());
 
@@ -571,7 +581,9 @@ describe("useMultiTabSync", () => {
     });
 
     it("should warn on error handling storage event", async () => {
-      const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const consoleWarnSpy = vi
+        .spyOn(console, "warn")
+        .mockImplementation(() => {});
 
       renderHook(() => useMultiTabSync());
 
@@ -787,7 +799,9 @@ describe("useMultiTabSync", () => {
     });
 
     it("Path 6: User present -> attach listener -> receive invalid JSON -> warn", async () => {
-      const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const consoleWarnSpy = vi
+        .spyOn(console, "warn")
+        .mockImplementation(() => {});
 
       renderHook(() => useMultiTabSync());
 
@@ -900,7 +914,9 @@ describe("useMultiTabSync", () => {
     });
 
     it("Scenario 4: Network issues cause corrupted storage event", async () => {
-      const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const consoleWarnSpy = vi
+        .spyOn(console, "warn")
+        .mockImplementation(() => {});
 
       renderHook(() => useMultiTabSync());
 
@@ -919,7 +935,9 @@ describe("useMultiTabSync", () => {
 
   describe("SECTION 15: Error Recovery", () => {
     it("should recover from JSON parse error and continue listening", async () => {
-      const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const consoleWarnSpy = vi
+        .spyOn(console, "warn")
+        .mockImplementation(() => {});
 
       renderHook(() => useMultiTabSync());
 

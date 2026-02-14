@@ -3,10 +3,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import {
-  loginSchema,
-  registerSchema,
-} from "@/lib/validations/auth.schema";
+import { loginSchema, registerSchema } from "@/lib/validations/auth.schema";
 
 describe("Validations", () => {
   describe("email validation", () => {

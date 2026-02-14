@@ -75,6 +75,7 @@ import {
 } from "@/lib/api/dosen.api";
 import { cacheAPI, invalidateCache } from "@/lib/offline/api-cache";
 import { notifyLaboranPeminjamanBaru } from "@/lib/api/notification.api";
+import { supabase } from "@/lib/supabase/client";
 
 // ============================================================================
 // TYPES & VALIDATION
@@ -161,7 +162,6 @@ const STATUS_CONFIG: Record<
  */
 async function getLaboranUserIds(): Promise<string[]> {
   try {
-    const supabase = (await import("@/lib/supabase/client")).supabase;
     const { data } = await supabase
       .from("users")
       .select("id")

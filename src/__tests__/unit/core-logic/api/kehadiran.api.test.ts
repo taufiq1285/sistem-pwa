@@ -31,7 +31,9 @@ vi.mock("../../../../lib/utils/logger");
 vi.mock("../../../../lib/utils/errors");
 vi.mock("../../../../lib/middleware", () => ({
   requirePermission: vi.fn((permission, fn) => fn),
-  requirePermissionAndOwnership: vi.fn((permission, ownership, level, fn) => fn),
+  requirePermissionAndOwnership: vi.fn(
+    (permission, ownership, level, fn) => fn,
+  ),
   getCurrentUserWithRole: vi.fn(),
 }));
 
@@ -797,7 +799,12 @@ describe("Kehadiran API", () => {
     });
 
     it("should create attendance with all status types", async () => {
-      const statuses: Array<"hadir" | "izin" | "sakit" | "alpha"> = ["hadir", "izin", "sakit", "alpha"];
+      const statuses: Array<"hadir" | "izin" | "sakit" | "alpha"> = [
+        "hadir",
+        "izin",
+        "sakit",
+        "alpha",
+      ];
 
       for (const status of statuses) {
         const mockData: CreateKehadiranData = {
@@ -840,12 +847,17 @@ describe("Kehadiran API", () => {
       };
 
       await expect(
-        updateKehadiran("kehadiran-1", updateData)
+        updateKehadiran("kehadiran-1", updateData),
       ).resolves.not.toThrow();
     });
 
     it("TC008: should update attendance status to all types", async () => {
-      const statuses: Array<"hadir" | "izin" | "sakit" | "alpha"> = ["hadir", "izin", "sakit", "alpha"];
+      const statuses: Array<"hadir" | "izin" | "sakit" | "alpha"> = [
+        "hadir",
+        "izin",
+        "sakit",
+        "alpha",
+      ];
 
       for (const status of statuses) {
         vi.mocked(supabase.from).mockReturnValue({
@@ -858,7 +870,7 @@ describe("Kehadiran API", () => {
         } as any);
 
         await expect(
-          updateKehadiran("kehadiran-1", { status })
+          updateKehadiran("kehadiran-1", { status }),
         ).resolves.not.toThrow();
       }
     });
@@ -874,7 +886,7 @@ describe("Kehadiran API", () => {
       } as any);
 
       await expect(
-        updateKehadiran("kehadiran-1", { keterangan: "Sakit demam" })
+        updateKehadiran("kehadiran-1", { keterangan: "Sakit demam" }),
       ).resolves.not.toThrow();
     });
 
@@ -890,7 +902,7 @@ describe("Kehadiran API", () => {
       } as any);
 
       await expect(
-        updateKehadiran("kehadiran-1", { status: "hadir" })
+        updateKehadiran("kehadiran-1", { status: "hadir" }),
       ).rejects.toThrow();
     });
 
@@ -911,7 +923,7 @@ describe("Kehadiran API", () => {
       expect(updateMock).toHaveBeenCalledWith(
         expect.objectContaining({
           updated_at: expect.any(String),
-        })
+        }),
       );
     });
   });
@@ -981,14 +993,10 @@ describe("Kehadiran API", () => {
       const mockBulkData: BulkKehadiranData = {
         jadwal_id: "jadwal-1",
         tanggal: "2025-01-15",
-        kehadiran: [
-          { mahasiswa_id: "mhs-1", status: "izin" },
-        ],
+        kehadiran: [{ mahasiswa_id: "mhs-1", status: "izin" }],
       };
 
-      const existingRecords = [
-        { id: "kehadiran-1", mahasiswa_id: "mhs-1" },
-      ];
+      const existingRecords = [{ id: "kehadiran-1", mahasiswa_id: "mhs-1" }];
 
       // Mock checking existing records
       vi.mocked(supabase.from)
@@ -1043,9 +1051,7 @@ describe("Kehadiran API", () => {
         ],
       };
 
-      const existingRecords = [
-        { id: "kehadiran-1", mahasiswa_id: "mhs-1" },
-      ];
+      const existingRecords = [{ id: "kehadiran-1", mahasiswa_id: "mhs-1" }];
 
       // Mock checking existing records
       vi.mocked(supabase.from).mockReturnValue({
@@ -1168,7 +1174,7 @@ describe("Kehadiran API", () => {
       } as any);
 
       await expect(
-        getKehadiranForExport("kelas-1", "2025-01-15")
+        getKehadiranForExport("kelas-1", "2025-01-15"),
       ).rejects.toThrow();
     });
   });
@@ -1244,12 +1250,7 @@ describe("Kehadiran API", () => {
         select: selectMock,
       } as any);
 
-      await getKehadiranHistory(
-        "kelas-1",
-        "2025-01-01",
-        "2025-01-31",
-        30
-      );
+      await getKehadiranHistory("kelas-1", "2025-01-01", "2025-01-31", 30);
 
       expect(gteMock).toHaveBeenCalledWith("tanggal", "2025-01-01");
       expect(lteMock).toHaveBeenCalledWith("tanggal", "2025-01-31");
@@ -1273,7 +1274,12 @@ describe("Kehadiran API", () => {
         }),
       } as any);
 
-      const result = await getKehadiranHistory("kelas-1", undefined, undefined, 10);
+      const result = await getKehadiranHistory(
+        "kelas-1",
+        undefined,
+        undefined,
+        10,
+      );
 
       expect(result.length).toBeLessThanOrEqual(10);
     });
@@ -1296,11 +1302,31 @@ describe("Kehadiran API", () => {
 
     it("should calculate stats correctly for each date", async () => {
       const mockRecords = [
-        { tanggal: "2025-01-15", status: "hadir", kelas: { id: "kelas-1", nama_kelas: "Kelas A" } },
-        { tanggal: "2025-01-15", status: "hadir", kelas: { id: "kelas-1", nama_kelas: "Kelas A" } },
-        { tanggal: "2025-01-15", status: "izin", kelas: { id: "kelas-1", nama_kelas: "Kelas A" } },
-        { tanggal: "2025-01-15", status: "sakit", kelas: { id: "kelas-1", nama_kelas: "Kelas A" } },
-        { tanggal: "2025-01-15", status: "alpha", kelas: { id: "kelas-1", nama_kelas: "Kelas A" } },
+        {
+          tanggal: "2025-01-15",
+          status: "hadir",
+          kelas: { id: "kelas-1", nama_kelas: "Kelas A" },
+        },
+        {
+          tanggal: "2025-01-15",
+          status: "hadir",
+          kelas: { id: "kelas-1", nama_kelas: "Kelas A" },
+        },
+        {
+          tanggal: "2025-01-15",
+          status: "izin",
+          kelas: { id: "kelas-1", nama_kelas: "Kelas A" },
+        },
+        {
+          tanggal: "2025-01-15",
+          status: "sakit",
+          kelas: { id: "kelas-1", nama_kelas: "Kelas A" },
+        },
+        {
+          tanggal: "2025-01-15",
+          status: "alpha",
+          kelas: { id: "kelas-1", nama_kelas: "Kelas A" },
+        },
       ];
 
       vi.mocked(supabase.from).mockReturnValue({
@@ -1413,14 +1439,10 @@ describe("Kehadiran API", () => {
       const mockBulkData: BulkKehadiranData = {
         jadwal_id: "jadwal-1",
         tanggal: "2025-01-15",
-        kehadiran: [
-          { mahasiswa_id: "mhs-1", status: "hadir" },
-        ],
+        kehadiran: [{ mahasiswa_id: "mhs-1", status: "hadir" }],
       };
 
-      const existingRecords = [
-        { id: "kehadiran-1", mahasiswa_id: "mhs-1" },
-      ];
+      const existingRecords = [{ id: "kehadiran-1", mahasiswa_id: "mhs-1" }];
 
       vi.mocked(supabase.from)
         .mockReturnValueOnce({
@@ -1486,7 +1508,7 @@ describe("Kehadiran API", () => {
           jadwal_id: "jadwal-1",
           mahasiswa_id: "mhs-1",
           status: "hadir",
-        })
+        }),
       ).rejects.toThrow();
     });
 
@@ -1517,10 +1539,12 @@ describe("Kehadiran API", () => {
       const mockBulkData: BulkKehadiranData = {
         jadwal_id: "jadwal-1",
         tanggal: "2025-01-15",
-        kehadiran: Array(100).fill(null).map((_, i) => ({
-          mahasiswa_id: `mhs-${i}`,
-          status: "hadir" as const,
-        })),
+        kehadiran: Array(100)
+          .fill(null)
+          .map((_, i) => ({
+            mahasiswa_id: `mhs-${i}`,
+            status: "hadir" as const,
+          })),
       };
 
       vi.mocked(supabase.from).mockReturnValue({

@@ -1,0 +1,4 @@
+
+> vite-project@0.0.0 test:run
+> vitest run --reporter=json
+

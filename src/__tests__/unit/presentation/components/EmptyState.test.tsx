@@ -8,7 +8,7 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { Search, Plus, AlertCircle } from "lucide-react";
 import { EmptyState } from "../../../../components/common/EmptyState";
 
-describe("EmptyState Component", () => {
+describe.sequential("EmptyState Component", () => {
   const mockAction = vi.fn();
 
   afterEach(() => {

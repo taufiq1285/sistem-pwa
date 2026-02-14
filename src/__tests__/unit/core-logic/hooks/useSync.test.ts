@@ -12,10 +12,7 @@ import { renderHook, waitFor, act } from "@testing-library/react";
 import { useSync } from "@/lib/hooks/useSync";
 import { queueManager } from "@/lib/offline/queue-manager";
 import type { SyncQueueItem, SyncStatus } from "../../../types/offline.types";
-import type {
-  QueueStats,
-  QueueEvent,
-} from "@/lib/offline/queue-manager";
+import type { QueueStats, QueueEvent } from "@/lib/offline/queue-manager";
 
 // ============================================================================
 // MOCK SETUP

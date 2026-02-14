@@ -830,7 +830,9 @@ describe("Users API - White-Box Testing", () => {
 
       await updateUser("user-1", { full_name: "Updated Name" });
 
-      expect(builder.update).toHaveBeenCalledWith({ full_name: "Updated Name" });
+      expect(builder.update).toHaveBeenCalledWith({
+        full_name: "Updated Name",
+      });
       expect(builder.eq).toHaveBeenCalledWith("id", "user-1");
     });
 
@@ -841,7 +843,9 @@ describe("Users API - White-Box Testing", () => {
 
       await updateUser("user-1", { email: "newemail@test.com" });
 
-      expect(builder.update).toHaveBeenCalledWith({ email: "newemail@test.com" });
+      expect(builder.update).toHaveBeenCalledWith({
+        email: "newemail@test.com",
+      });
     });
 
     it("TC003: should update user is_active status", async () => {
@@ -1604,7 +1608,14 @@ describe("Users API - White-Box Testing", () => {
           id: `user-${i}`,
           email: `user${i}@test.com`,
           full_name: `User ${i}`,
-          role: i % 4 === 0 ? "admin" : i % 4 === 1 ? "dosen" : i % 4 === 2 ? "mahasiswa" : "laboran",
+          role:
+            i % 4 === 0
+              ? "admin"
+              : i % 4 === 1
+                ? "dosen"
+                : i % 4 === 2
+                  ? "mahasiswa"
+                  : "laboran",
           is_active: i % 2 === 0,
           created_at: "2024-01-01",
         }));

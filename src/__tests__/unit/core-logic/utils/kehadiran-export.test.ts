@@ -55,7 +55,9 @@ describe("kehadiran-export", () => {
     mockCreateObjectURL = vi
       .spyOn(URL, "createObjectURL")
       .mockReturnValue("blob:mock-url");
-    mockRevokeObjectURL = vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => {});
+    mockRevokeObjectURL = vi
+      .spyOn(URL, "revokeObjectURL")
+      .mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -300,7 +302,7 @@ describe("kehadiran-export", () => {
           nim: "123",
           nama_mahasiswa: 'Doe, "Johnny" Jr.',
           status: "Hadir",
-          keterangan: "Note: important, see \"doc\"",
+          keterangan: 'Note: important, see "doc"',
         },
       ];
 
@@ -686,11 +688,7 @@ describe("kehadiran-export", () => {
     });
 
     it("should preserve alphanumeric characters", () => {
-      const filename = formatExportFilename(
-        "CS101",
-        "Room123",
-        "2024-01-15",
-      );
+      const filename = formatExportFilename("CS101", "Room123", "2024-01-15");
 
       expect(filename).toContain("CS101");
       expect(filename).toContain("Room123");
@@ -704,7 +702,9 @@ describe("kehadiran-export", () => {
       );
 
       // Should only keep alphanumeric and underscores
-      expect(filename).toMatch(/^kehadiran_[A-Za-z0-9_]+_[A-Za-z0-9_]+_\d{8}\.csv$/);
+      expect(filename).toMatch(
+        /^kehadiran_[A-Za-z0-9_]+_[A-Za-z0-9_]+_\d{8}\.csv$/,
+      );
     });
   });
 
@@ -928,7 +928,9 @@ describe("kehadiran-export", () => {
       );
 
       // Should remove all special characters
-      expect(filename).toMatch(/^kehadiran_[A-Za-z0-9_]+_[A-Za-z0-9_]+_\d{8}\.csv$/);
+      expect(filename).toMatch(
+        /^kehadiran_[A-Za-z0-9_]+_[A-Za-z0-9_]+_\d{8}\.csv$/,
+      );
 
       // Should not contain problematic characters
       expect(filename).not.toContain("(");
@@ -1082,10 +1084,7 @@ describe("kehadiran-export", () => {
       exportKehadiranToCSV(data, filename);
 
       // Verify filename was used
-      expect(mockLink.setAttribute).toHaveBeenCalledWith(
-        "download",
-        filename,
-      );
+      expect(mockLink.setAttribute).toHaveBeenCalledWith("download", filename);
 
       // Verify CSV was created
       expect(mockCreateObjectURL).toHaveBeenCalled();

@@ -8,11 +8,27 @@ export type NotificationType =
   | "tugas_submitted" // Mahasiswa submits tugas
   | "tugas_graded" // Dosen grades tugas
   | "kuis_baru" // Dosen creates new kuis
+  | "kuis_published" // Kuis published to mahasiswa
   | "dosen_changed" // Dosen reassignment by admin
   | "perbaikan_nilai_request" // Mahasiswa requests grade revision
   | "perbaikan_nilai_response" // Dosen approves/rejects grade revision
   | "pengumuman" // General announcement
   | "sistem" // System notification
+  // Peminjaman notifications
+  | "peminjaman_baru" // New peminjaman created
+  | "peminjaman_disetujui" // Peminjaman approved
+  | "peminjaman_ditolak" // Peminjaman rejected
+  | "peminjaman_terlambat" // Peminjaman returned late
+  // Jadwal notifications
+  | "jadwal_baru" // New jadwal created
+  | "jadwal_diupdate" // Jadwal updated
+  | "jadwal_pending_approval" // Jadwal waiting for laboran approval
+  | "jadwal_dibatalkan" // Jadwal cancelled
+  // Logbook notifications
+  | "logbook_submitted" // Logbook submitted by mahasiswa
+  | "logbook_approved" // Logbook approved by dosen
+  | "logbook_rejected" // Logbook rejected by dosen
+  | "logbook_revision" // Logbook needs revision
   | "other";
 
 export interface Notification {

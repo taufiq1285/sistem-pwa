@@ -5,28 +5,14 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
-// Create mock storage object
-const mockSupabaseStorage = {
-  upload: vi.fn(),
-  download: vi.fn(),
-  remove: vi.fn(),
-  list: vi.fn(),
-  getPublicUrl: vi.fn(),
-};
-
-// Create mock from function
-const mockSupabaseFrom = vi.fn(() => mockSupabaseStorage);
-
 // Mock Supabase client
-vi.mock("@/lib/supabase/client", () => {
-  return {
-    supabase: {
-      storage: {
-        from: mockSupabaseFrom,
-      },
+vi.mock("@/lib/supabase/client", () => ({
+  supabase: {
+    storage: {
+      from: vi.fn(),
     },
-  };
-});
+  },
+}));
 
 // Import AFTER mock
 import {
@@ -44,17 +30,21 @@ import { supabase } from "@/lib/supabase/client";
 describe("Supabase Storage Service", () => {
   let mockFile: File;
   let mockPath: string;
+  let mockStorage: any;
 
   beforeEach(() => {
     vi.clearAllMocks();
 
-    // Reset all mock functions
-    mockSupabaseStorage.upload.mockReset();
-    mockSupabaseStorage.download.mockReset();
-    mockSupabaseStorage.remove.mockReset();
-    mockSupabaseStorage.list.mockReset();
-    mockSupabaseStorage.getPublicUrl.mockReset();
-    mockSupabaseFrom.mockClear();
+    // Setup default storage mock
+    mockStorage = {
+      upload: vi.fn(),
+      download: vi.fn(),
+      remove: vi.fn(),
+      list: vi.fn(),
+      getPublicUrl: vi.fn(),
+    };
+
+    (supabase.storage.from as any).mockReturnValue(mockStorage);
 
     mockFile = new File(["test content"], "test.pdf", {
       type: "application/pdf",
@@ -68,12 +58,12 @@ describe("Supabase Storage Service", () => {
 
   describe("uploadFile", () => {
     it("should upload file successfully and return URL", async () => {
-      mockSupabaseStorage.upload.mockResolvedValue({
+      mockStorage.upload.mockResolvedValue({
         data: { path: mockPath },
         error: null,
       });
 
-      mockSupabaseStorage.getPublicUrl.mockReturnValue({
+      mockStorage.getPublicUrl.mockReturnValue({
         data: { publicUrl: "https://example.com/test.pdf" },
       });
 
@@ -83,8 +73,10 @@ describe("Supabase Storage Service", () => {
         mockFile,
       );
 
-      expect(mockSupabaseFrom).toHaveBeenCalledWith(STORAGE_BUCKETS.MATERI);
-      expect(mockSupabaseStorage.upload).toHaveBeenCalledWith(
+      expect(supabase.storage.from).toHaveBeenCalledWith(
+        STORAGE_BUCKETS.MATERI,
+      );
+      expect(mockStorage.upload).toHaveBeenCalledWith(
         mockPath,
         mockFile,
         expect.objectContaining({
@@ -99,7 +91,7 @@ describe("Supabase Storage Service", () => {
 
     it("should handle upload error", async () => {
       const uploadError = { message: "Upload failed" };
-      mockSupabaseStorage.upload.mockResolvedValue({
+      mockStorage.upload.mockResolvedValue({
         data: null,
         error: uploadError,
       });
@@ -108,12 +100,12 @@ describe("Supabase Storage Service", () => {
         uploadFile(STORAGE_BUCKETS.MATERI, mockPath, mockFile),
       ).rejects.toThrow("Upload failed");
 
-      expect(mockSupabaseStorage.upload).toHaveBeenCalled();
+      expect(mockStorage.upload).toHaveBeenCalled();
     });
 
     it("should handle MIME type error", async () => {
       const mimeError = { message: "mime type not supported" };
-      mockSupabaseStorage.upload.mockResolvedValue({
+      mockStorage.upload.mockResolvedValue({
         data: null,
         error: mimeError,
       });
@@ -127,21 +119,23 @@ describe("Supabase Storage Service", () => {
   describe("downloadFile", () => {
     it("should download file successfully", async () => {
       const mockData = new Blob(["test content"], { type: "application/pdf" });
-      mockSupabaseStorage.download.mockResolvedValue({
+      mockStorage.download.mockResolvedValue({
         data: mockData,
         error: null,
       });
 
       const result = await downloadFile(STORAGE_BUCKETS.MATERI, mockPath);
 
-      expect(mockSupabaseFrom).toHaveBeenCalledWith(STORAGE_BUCKETS.MATERI);
-      expect(mockSupabaseStorage.download).toHaveBeenCalledWith(mockPath);
+      expect(supabase.storage.from).toHaveBeenCalledWith(
+        STORAGE_BUCKETS.MATERI,
+      );
+      expect(mockStorage.download).toHaveBeenCalledWith(mockPath);
       expect(result).toBe(mockData);
     });
 
     it("should handle download error", async () => {
       const downloadError = { message: "Download failed" };
-      mockSupabaseStorage.download.mockResolvedValue({
+      mockStorage.download.mockResolvedValue({
         data: null,
         error: downloadError,
       });
@@ -154,7 +148,7 @@ describe("Supabase Storage Service", () => {
 
   describe("deleteFile", () => {
     it("should delete file successfully", async () => {
-      mockSupabaseStorage.remove.mockResolvedValue({
+      mockStorage.remove.mockResolvedValue({
         data: {},
         error: null,
       });
@@ -163,13 +157,15 @@ describe("Supabase Storage Service", () => {
         deleteFile(STORAGE_BUCKETS.MATERI, mockPath),
       ).resolves.toBeUndefined();
 
-      expect(mockSupabaseFrom).toHaveBeenCalledWith(STORAGE_BUCKETS.MATERI);
-      expect(mockSupabaseStorage.remove).toHaveBeenCalledWith([mockPath]);
+      expect(supabase.storage.from).toHaveBeenCalledWith(
+        STORAGE_BUCKETS.MATERI,
+      );
+      expect(mockStorage.remove).toHaveBeenCalledWith([mockPath]);
     });
 
     it("should handle delete error", async () => {
       const deleteError = { message: "Delete failed" };
-      mockSupabaseStorage.remove.mockResolvedValue({
+      mockStorage.remove.mockResolvedValue({
         data: null,
         error: deleteError,
       });
@@ -193,12 +189,12 @@ describe("Supabase Storage Service", () => {
         },
       };
 
-      mockSupabaseStorage.list.mockResolvedValue({
+      mockStorage.list.mockResolvedValue({
         data: [mockInfo],
         error: null,
       });
 
-      mockSupabaseStorage.getPublicUrl.mockReturnValue({
+      mockStorage.getPublicUrl.mockReturnValue({
         data: { publicUrl: "https://example.com/test.pdf" },
       });
 
@@ -211,7 +207,7 @@ describe("Supabase Storage Service", () => {
     });
 
     it("should handle file not found", async () => {
-      mockSupabaseStorage.list.mockResolvedValue({
+      mockStorage.list.mockResolvedValue({
         data: [],
         error: null,
       });
@@ -241,12 +237,12 @@ describe("Supabase Storage Service", () => {
         },
       ];
 
-      mockSupabaseStorage.list.mockResolvedValue({
+      mockStorage.list.mockResolvedValue({
         data: mockFiles,
         error: null,
       });
 
-      mockSupabaseStorage.getPublicUrl.mockReturnValue({
+      mockStorage.getPublicUrl.mockReturnValue({
         data: { publicUrl: "https://example.com/file.pdf" },
       });
 
@@ -259,7 +255,7 @@ describe("Supabase Storage Service", () => {
 
     it("should handle list error", async () => {
       const listError = { message: "List failed" };
-      mockSupabaseStorage.list.mockResolvedValue({
+      mockStorage.list.mockResolvedValue({
         data: null,
         error: listError,
       });

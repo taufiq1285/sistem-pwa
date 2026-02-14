@@ -102,6 +102,7 @@ import type {
   CalendarEvent,
 } from "@/types/jadwal.types";
 import { HARI_OPTIONS, JAM_PRAKTIKUM } from "@/types/jadwal.types";
+import { supabase } from "@/lib/supabase/client";
 
 // ============================================================================
 // TYPES
@@ -314,7 +315,6 @@ export default function JadwalPage() {
   // Helper: Get mahasiswa user IDs by kelas ID
   const getMahasiswaIds = async (kelasId: string): Promise<string[]> => {
     try {
-      const supabase = (await import("@/lib/supabase/client")).supabase;
       const { data } = await supabase
         .from("kelas_mahasiswa")
         .select("mahasiswa_id")
@@ -329,7 +329,6 @@ export default function JadwalPage() {
   // Helper: Get all laboran user IDs
   const getLaboranUserIds = async (): Promise<string[]> => {
     try {
-      const supabase = (await import("@/lib/supabase/client")).supabase;
       const { data } = await supabase
         .from("users")
         .select("id")
@@ -456,7 +455,9 @@ export default function JadwalPage() {
           user?.full_name || "Dosen",
           mataKuliah?.nama_mk || "Mata Kuliah",
           selectedKelas.nama_kelas,
-          data.tanggal_praktikum,
+          data.tanggal_praktikum instanceof Date
+            ? data.tanggal_praktikum.toISOString()
+            : data.tanggal_praktikum,
           lab?.nama_lab || "Lab",
         ).catch((err) => {
           console.error("Failed to notify laboran:", err);
@@ -469,7 +470,9 @@ export default function JadwalPage() {
             mahasiswaIds,
             mataKuliah?.nama_mk || "Mata Kuliah",
             selectedKelas.nama_kelas,
-            data.tanggal_praktikum,
+            data.tanggal_praktikum instanceof Date
+              ? data.tanggal_praktikum.toISOString()
+              : data.tanggal_praktikum,
             "baru",
           ).catch((err) => {
             console.error("Failed to notify mahasiswa:", err);
@@ -560,7 +563,7 @@ export default function JadwalPage() {
       toast.success("Jadwal berhasil diperbarui");
 
       // Notify laboran and mahasiswa about the update (best-effort, non-blocking)
-      const kelas = kelasList.find((k) => k.id === selectedKelas?.kelas_id);
+      const kelas = kelasList.find((k) => k.id === selectedKelas?.id);
       const mataKuliah = kelas
         ? mataKuliahList.find((mk) => mk.id === kelas.mata_kuliah_id)
         : null;
@@ -575,7 +578,9 @@ export default function JadwalPage() {
             user?.full_name || "Dosen",
             mataKuliah.nama_mk,
             kelas.nama_kelas,
-            data.tanggal_praktikum,
+            data.tanggal_praktikum instanceof Date
+              ? data.tanggal_praktikum.toISOString()
+              : data.tanggal_praktikum,
             lab?.nama_lab || "Lab",
           ).catch((err) => {
             console.error("Failed to notify laboran:", err);
@@ -589,7 +594,9 @@ export default function JadwalPage() {
             mahasiswaIds,
             mataKuliah.nama_mk,
             kelas.nama_kelas,
-            data.tanggal_praktikum,
+            data.tanggal_praktikum instanceof Date
+              ? data.tanggal_praktikum.toISOString()
+              : data.tanggal_praktikum,
             "diupdate",
           ).catch((err) => {
             console.error("Failed to notify mahasiswa:", err);

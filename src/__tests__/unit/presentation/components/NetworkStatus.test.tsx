@@ -8,12 +8,12 @@ import { render, screen } from "@testing-library/react";
 import { NetworkStatus } from "../../../../components/common/NetworkStatus";
 
 // Mock useNetworkStatus hook
-vi.mock("../../../../../lib/hooks/useNetworkStatus", () => ({
+vi.mock("../../../../lib/hooks/useNetworkStatus", () => ({
   useNetworkStatus: vi.fn(),
 }));
 
 const mockUseNetworkStatus = vi.mocked(
-  await import("../../../../../lib/hooks/useNetworkStatus"),
+  await import("../../../../lib/hooks/useNetworkStatus"),
 ).useNetworkStatus;
 
 describe("NetworkStatus Component", () => {

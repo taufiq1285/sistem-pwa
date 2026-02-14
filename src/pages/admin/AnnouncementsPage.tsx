@@ -181,12 +181,14 @@ export default function AnnouncementsPage() {
       toast.success("✅ Pengumuman berhasil dibuat!");
 
       // Notify target roles (best-effort, non-blocking)
-      const targetRoles = announcementData.target_role || [
-        "admin",
-        "dosen",
-        "mahasiswa",
-        "laboran",
-      ];
+      const targetRoles: ("mahasiswa" | "dosen" | "admin" | "laboran")[] = (
+        announcementData.target_role || [
+          "admin",
+          "dosen",
+          "mahasiswa",
+          "laboran",
+        ]
+      ) as ("mahasiswa" | "dosen" | "admin" | "laboran")[];
 
       console.log("🔔 [ADMIN] Sending notifications to:", targetRoles);
 

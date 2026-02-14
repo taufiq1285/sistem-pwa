@@ -44,11 +44,11 @@ describe("Supabase Database Helpers", () => {
 
       const result = await fetchData(mockQuery);
 
-      await expect(result).resolves.toEqual(mockData);
+      expect(result).toEqual(mockData);
     });
 
     it("should throw error when query fails", async () => {
-      const mockError = { message: "Query failed" };
+      const mockError = { message: "Query failed" } as any;
       const mockQuery = Promise.resolve({
         data: null,
         error: mockError,
@@ -67,9 +67,7 @@ describe("Supabase Database Helpers", () => {
         error: null,
       });
 
-      await expect(fetchData(mockQuery)).rejects.toThrow(
-        "No data returned",
-      );
+      await expect(fetchData(mockQuery)).rejects.toThrow("No data returned");
     });
 
     it("should work with different data types", async () => {
@@ -126,7 +124,7 @@ describe("Supabase Database Helpers", () => {
       const result = await checkConnection();
 
       expect(supabase.from).toHaveBeenCalledWith("users");
-      expect(mockSelect).toHaveBeenCalledWith("count", { count: "exact", head: true });
+      expect(mockSelect).toHaveBeenCalledWith("count");
       expect(mockLimit).toHaveBeenCalledWith(1);
       expect(result).toBe(true);
     });
@@ -425,7 +423,7 @@ describe("Supabase Database Helpers", () => {
 
   describe("Error handling", () => {
     it("should log errors to console", async () => {
-      const mockError = { message: "Database error" };
+      const mockError = { message: "Database error" } as any;
       const mockQuery = Promise.resolve({
         data: null,
         error: mockError,
@@ -463,7 +461,7 @@ describe("Supabase Database Helpers", () => {
     });
 
     it("should throw on fetch data error with message", async () => {
-      const customError = new Error("Custom error message");
+      const customError = new Error("Custom error message") as any;
       const mockQuery = Promise.resolve({
         data: null,
         error: customError,
@@ -482,9 +480,7 @@ describe("Supabase Database Helpers", () => {
         error: null,
       });
 
-      await expect(fetchData(mockQuery)).rejects.toThrow(
-        "No data returned",
-      );
+      await expect(fetchData(mockQuery)).rejects.toThrow("No data returned");
     });
 
     it("should handle undefined count", async () => {

@@ -290,13 +290,29 @@ describe("Mata Kuliah API - Get Operations", () => {
     it("should fetch mata kuliah with kelas and dosen relations", async () => {
       vi.mocked(getById).mockResolvedValue(mockMataKuliah);
       vi.mocked(query).mockResolvedValue([
-        { id: "k1", kode_kelas: "KBD-A", nama_kelas: "Kelas A", mata_kuliah_id: "mk-1", dosen_id: "d1" },
-        { id: "k2", kode_kelas: "KBD-B", nama_kelas: "Kelas B", mata_kuliah_id: "mk-1", dosen_id: "d2" },
-        { id: "k3", kode_kelas: "KBD-C", nama_kelas: "Kelas C", mata_kuliah_id: "mk-2", dosen_id: "d3" },
+        {
+          id: "k1",
+          kode_kelas: "KBD-A",
+          nama_kelas: "Kelas A",
+          mata_kuliah_id: "mk-1",
+          dosen_id: "d1",
+        },
+        {
+          id: "k2",
+          kode_kelas: "KBD-B",
+          nama_kelas: "Kelas B",
+          mata_kuliah_id: "mk-1",
+          dosen_id: "d2",
+        },
+        {
+          id: "k3",
+          kode_kelas: "KBD-C",
+          nama_kelas: "Kelas C",
+          mata_kuliah_id: "mk-2",
+          dosen_id: "d3",
+        },
       ]);
-      vi.mocked(count)
-        .mockResolvedValueOnce(25)
-        .mockResolvedValueOnce(30);
+      vi.mocked(count).mockResolvedValueOnce(25).mockResolvedValueOnce(30);
       vi.mocked(queryWithFilters).mockResolvedValue([
         { id: "d1", nip: "123", full_name: "Dr. Siti" },
         { id: "d2", nip: "456", full_name: "Dr. Budi" },
@@ -693,7 +709,9 @@ describe("Mata Kuliah API - Helper Functions", () => {
     });
 
     it("should handle errors gracefully", async () => {
-      vi.mocked(queryWithFilters).mockRejectedValue(new Error("Database error"));
+      vi.mocked(queryWithFilters).mockRejectedValue(
+        new Error("Database error"),
+      );
 
       const result = await checkKodeMKExists("KBD101");
 
@@ -852,9 +870,9 @@ describe("Mata Kuliah API - White-Box Testing: Branch Coverage", () => {
     it("Branch: kelasCount > 0, detach = false, cascade = false", async () => {
       vi.mocked(count).mockResolvedValue(5);
 
-      await expect(
-        deleteMataKuliah("mk-1", { detach: false }),
-      ).rejects.toThrow("Cannot delete");
+      await expect(deleteMataKuliah("mk-1", { detach: false })).rejects.toThrow(
+        "Cannot delete",
+      );
     });
   });
 

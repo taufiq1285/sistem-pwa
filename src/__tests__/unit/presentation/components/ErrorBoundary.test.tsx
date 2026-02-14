@@ -6,15 +6,15 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import { Component, useState } from "react";
-import { ErrorBoundary } from "../../../components/common/ErrorBoundary";
+import { ErrorBoundary } from "../../../../components/common/ErrorBoundary";
 
 // Mock error logger
-vi.mock("../../../lib/utils/error-logger", () => ({
+vi.mock("../../../../lib/utils/error-logger", () => ({
   logReactError: vi.fn(),
 }));
 
 // Mock ErrorFallback component
-vi.mock("../../../../../components/common/ErrorFallback", () => ({
+vi.mock("../../../../components/common/ErrorFallback", () => ({
   ErrorFallback: ({
     error,
     resetError,
@@ -33,7 +33,7 @@ vi.mock("../../../../../components/common/ErrorFallback", () => ({
 }));
 
 const mockLogReactError = vi.mocked(
-  await import("../../../../../lib/utils/error-logger"),
+  await import("../../../../lib/utils/error-logger"),
 ).logReactError;
 
 // Test components

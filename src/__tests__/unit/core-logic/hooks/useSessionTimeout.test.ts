@@ -194,7 +194,11 @@ describe("useSessionTimeout Hook", () => {
       expect(clearTimeoutSpy).toHaveBeenCalledTimes(0); // No existing timers on first mount
 
       // Rerender with different timeout to trigger resetTimeout
-      rerender({ timeoutMinutes: 20, warningMinutes: 3, enableWarningDialog: true });
+      rerender({
+        timeoutMinutes: 20,
+        warningMinutes: 3,
+        enableWarningDialog: true,
+      });
 
       // Should clear both old timers and set new ones
       expect(clearTimeoutSpy).toHaveBeenCalledTimes(2); // 2 clears from resetTimeout
@@ -337,7 +341,11 @@ describe("useSessionTimeout Hook", () => {
       );
 
       // Trigger resetTimeout by rerendering with different props
-      rerender({ timeoutMinutes: 20, warningMinutes: 3, enableWarningDialog: true });
+      rerender({
+        timeoutMinutes: 20,
+        warningMinutes: 3,
+        enableWarningDialog: true,
+      });
 
       // Should clear existing timeoutRef.current
       expect(clearTimeoutSpy).toHaveBeenCalled();
@@ -353,7 +361,11 @@ describe("useSessionTimeout Hook", () => {
       );
 
       // Trigger resetTimeout by rerendering with different props
-      rerender({ timeoutMinutes: 20, warningMinutes: 3, enableWarningDialog: true });
+      rerender({
+        timeoutMinutes: 20,
+        warningMinutes: 3,
+        enableWarningDialog: true,
+      });
 
       // Should clear existing warningTimeoutRef.current
       expect(clearTimeoutSpy).toHaveBeenCalled();
@@ -855,7 +867,9 @@ describe("useSessionTimeout Hook", () => {
         vi.advanceTimersByTime(5 * 60 * 1000);
       });
 
-      expect(consoleLogSpy).toHaveBeenCalledWith("Session timeout - auto logout");
+      expect(consoleLogSpy).toHaveBeenCalledWith(
+        "Session timeout - auto logout",
+      );
     });
 
     it("should execute: toast.error('Sesi Anda telah berakhir...')", () => {
@@ -1795,7 +1809,9 @@ describe("useSessionTimeout Hook", () => {
 
   describe.skip("Error Handling", () => {
     it("should handle logout function throwing error", async () => {
-      const mockErrorLogout = vi.fn().mockRejectedValue(new Error("Logout failed"));
+      const mockErrorLogout = vi
+        .fn()
+        .mockRejectedValue(new Error("Logout failed"));
 
       mockUseAuth.mockReturnValue({
         user: mockUser,

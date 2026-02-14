@@ -265,9 +265,7 @@ describe("useLocalStorage Hook", () => {
     });
 
     it("should update localStorage on each setValue call", () => {
-      const { result } = renderHook(() =>
-        useLocalStorage("count-key", 0),
-      );
+      const { result } = renderHook(() => useLocalStorage("count-key", 0));
 
       act(() => {
         result.current[1](1);
@@ -297,7 +295,7 @@ describe("useLocalStorage Hook", () => {
       expect(result.current[0]).toBe("fallback-value");
       expect(consoleSpy).toHaveBeenCalledWith(
         'Error reading localStorage key "error-key":',
-        expect.anything()
+        expect.anything(),
       );
 
       consoleSpy.mockRestore();
@@ -394,7 +392,7 @@ describe("useLocalStorage Hook", () => {
       expect(result.current[0]).toBe("new-value");
       expect(consoleSpy).toHaveBeenCalledWith(
         'Error setting localStorage key "quota-key":',
-        expect.any(Error)
+        expect.any(Error),
       );
 
       consoleSpy.mockRestore();
@@ -487,7 +485,7 @@ describe("useLocalStorage Hook", () => {
       vi.mocked(localStorage.setItem).mockImplementation(() => {
         throw new DOMException(
           "Failed to execute 'setItem' on 'Storage': Setting the value exceeded the quota.",
-          "QuotaExceededError"
+          "QuotaExceededError",
         );
       });
 
@@ -576,7 +574,7 @@ describe("useLocalStorage Hook", () => {
       vi.mocked(localStorage.setItem).mockImplementation(() => {
         throw new DOMException(
           "The quota has been exceeded",
-          "QuotaExceededError"
+          "QuotaExceededError",
         );
       });
 
@@ -621,10 +619,7 @@ describe("useLocalStorage Hook", () => {
 
     it("should handle NotSupportedError (Safari private mode)", () => {
       vi.mocked(localStorage.setItem).mockImplementation(() => {
-        throw new DOMException(
-          "Storage is not available",
-          "NotSupportedError"
-        );
+        throw new DOMException("Storage is not available", "NotSupportedError");
       });
 
       const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
@@ -731,9 +726,7 @@ describe("useLocalStorage Hook", () => {
     it("should branch: JSON.parse success path", () => {
       mockLocalStorage["valid-json"] = JSON.stringify({ data: "valid" });
 
-      const { result } = renderHook(() =>
-        useLocalStorage("valid-json", {}),
-      );
+      const { result } = renderHook(() => useLocalStorage("valid-json", {}));
 
       expect(result.current[0]).toEqual({ data: "valid" });
     });
@@ -764,7 +757,7 @@ describe("useLocalStorage Hook", () => {
 
       expect(localStorage.setItem).toHaveBeenCalledWith(
         "stringify",
-        JSON.stringify(obj)
+        JSON.stringify(obj),
       );
     });
 
@@ -918,7 +911,7 @@ describe("useLocalStorage Hook", () => {
 
       expect(consoleSpy).toHaveBeenCalledWith(
         'Error reading localStorage key "stmt-warn-get":',
-        expect.anything()
+        expect.anything(),
       );
 
       consoleSpy.mockRestore();
@@ -941,7 +934,7 @@ describe("useLocalStorage Hook", () => {
 
       expect(consoleSpy).toHaveBeenCalledWith(
         'Error setting localStorage key "stmt-warn-set":',
-        expect.any(Error)
+        expect.any(Error),
       );
 
       consoleSpy.mockRestore();
@@ -1131,9 +1124,7 @@ describe("useLocalStorage Hook", () => {
     });
 
     it("should handle authentication tokens", () => {
-      const { result } = renderHook(() =>
-        useLocalStorage("auth-token", null),
-      );
+      const { result } = renderHook(() => useLocalStorage("auth-token", null));
 
       const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9";
 
@@ -1258,9 +1249,7 @@ describe("useLocalStorage Hook", () => {
     it("should handle emoji in values", () => {
       const emojiValue = "Hello 👋 World 🌍";
 
-      const { result } = renderHook(() =>
-        useLocalStorage("emoji-key", ""),
-      );
+      const { result } = renderHook(() => useLocalStorage("emoji-key", ""));
 
       act(() => {
         result.current[1](emojiValue);
@@ -1272,9 +1261,7 @@ describe("useLocalStorage Hook", () => {
     it("should handle Unicode characters", () => {
       const unicodeValue = "日本語 中文 한글 العربية";
 
-      const { result } = renderHook(() =>
-        useLocalStorage("unicode-key", ""),
-      );
+      const { result } = renderHook(() => useLocalStorage("unicode-key", ""));
 
       act(() => {
         result.current[1](unicodeValue);
@@ -1286,9 +1273,7 @@ describe("useLocalStorage Hook", () => {
     it("should handle very long strings", () => {
       const longString = "A".repeat(100000);
 
-      const { result } = renderHook(() =>
-        useLocalStorage("long-string", ""),
-      );
+      const { result } = renderHook(() => useLocalStorage("long-string", ""));
 
       act(() => {
         result.current[1](longString);
@@ -1303,9 +1288,7 @@ describe("useLocalStorage Hook", () => {
   // ===========================================================================
   describe("Performance testing", () => {
     it("should handle rapid sequential updates efficiently", () => {
-      const { result } = renderHook(() =>
-        useLocalStorage("rapid-key", 0),
-      );
+      const { result } = renderHook(() => useLocalStorage("rapid-key", 0));
 
       const startTime = Date.now();
 
@@ -1327,9 +1310,7 @@ describe("useLocalStorage Hook", () => {
         value: `item-${i}`,
       }));
 
-      const { result } = renderHook(() =>
-        useLocalStorage("perf-large", []),
-      );
+      const { result } = renderHook(() => useLocalStorage("perf-large", []));
 
       const startTime = Date.now();
 

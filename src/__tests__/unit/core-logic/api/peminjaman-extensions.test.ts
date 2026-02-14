@@ -45,13 +45,13 @@ const mockQueryBuilder = (defaultResponse: any = { data: [], error: null }) => {
     range: vi.fn().mockReturnThis(),
     single: vi.fn().mockReturnThis(),
   };
-  
+
   // Make the builder thenable by returning a Promise
   const promise = Promise.resolve(defaultResponse);
   builder.then = promise.then.bind(promise);
   builder.catch = promise.catch.bind(promise);
   builder.finally = promise.finally.bind(promise);
-  
+
   return builder;
 };
 
@@ -95,11 +95,11 @@ describe("Peminjaman Extensions API", () => {
             },
             peminjam: {
               nim: "12345678",
-              user: { full_name: "John Doe" }
+              user: { full_name: "John Doe" },
             },
             dosen: {
               nip: "198001011",
-              user: { full_name: "Dr. Smith" }
+              user: { full_name: "Dr. Smith" },
             },
           },
         ],
@@ -137,7 +137,10 @@ describe("Peminjaman Extensions API", () => {
 
       await getAllPeminjaman({ laboratorium_id: "lab-1" });
 
-      expect(builder.eq).toHaveBeenCalledWith("inventaris.laboratorium.id", "lab-1");
+      expect(builder.eq).toHaveBeenCalledWith(
+        "inventaris.laboratorium.id",
+        "lab-1",
+      );
     });
 
     it("should apply limit parameter correctly", async () => {
@@ -228,7 +231,7 @@ describe("Peminjaman Extensions API", () => {
             inventaris: {
               kode_barang: "ALT001",
               nama_barang: "Item",
-              laboratorium: { nama_lab: "Lab" }
+              laboratorium: { nama_lab: "Lab" },
             },
             peminjam: null,
             dosen: null,
@@ -258,7 +261,7 @@ describe("Peminjaman Extensions API", () => {
             inventaris: {
               kode_barang: "ALT001",
               nama_barang: "Item",
-              laboratorium: { nama_lab: "Lab" }
+              laboratorium: { nama_lab: "Lab" },
             },
             peminjam: { nim: "123", user: { full_name: "User" } },
             dosen: null,
@@ -276,7 +279,13 @@ describe("Peminjaman Extensions API", () => {
     });
 
     it("should map all status types correctly", async () => {
-      const statuses = ["pending", "approved", "rejected", "returned", "overdue"];
+      const statuses = [
+        "pending",
+        "approved",
+        "rejected",
+        "returned",
+        "overdue",
+      ];
 
       for (const status of statuses) {
         const builder = mockQueryBuilder();
@@ -290,7 +299,7 @@ describe("Peminjaman Extensions API", () => {
               inventaris: {
                 kode_barang: "A",
                 nama_barang: "Item",
-                laboratorium: { nama_lab: "Lab" }
+                laboratorium: { nama_lab: "Lab" },
               },
               peminjam: { nim: "123", user: { full_name: "User" } },
               dosen: null,
@@ -313,7 +322,9 @@ describe("Peminjaman Extensions API", () => {
 
       await getAllPeminjaman();
 
-      expect(builder.order).toHaveBeenCalledWith("created_at", { ascending: false });
+      expect(builder.order).toHaveBeenCalledWith("created_at", {
+        ascending: false,
+      });
     });
   });
 
@@ -332,10 +343,10 @@ describe("Peminjaman Extensions API", () => {
       vi.mocked(supabase.from).mockReturnValue(builder);
 
       await expect(getAllPeminjaman()).rejects.toThrow();
-      expect(logger.error).toHaveBeenCalledWith(
-        "Failed to fetch peminjaman",
-        { params: undefined, error: dbError }
-      );
+      expect(logger.error).toHaveBeenCalledWith("Failed to fetch peminjaman", {
+        params: undefined,
+        error: dbError,
+      });
       expect(handleSupabaseError).toHaveBeenCalledWith(dbError);
     });
   });
@@ -401,7 +412,9 @@ describe("Peminjaman Extensions API", () => {
       const updateCall = builder.update.mock.calls[0][0];
       const returnedTime = new Date(updateCall.tanggal_kembali_aktual);
 
-      expect(returnedTime.getTime()).toBeGreaterThanOrEqual(beforeTime.getTime());
+      expect(returnedTime.getTime()).toBeGreaterThanOrEqual(
+        beforeTime.getTime(),
+      );
       expect(returnedTime.getTime()).toBeLessThanOrEqual(afterTime.getTime());
     });
 
@@ -416,7 +429,9 @@ describe("Peminjaman Extensions API", () => {
       const updateCall = builder.update.mock.calls[0][0];
       const updatedTime = new Date(updateCall.updated_at);
 
-      expect(updatedTime.getTime()).toBeGreaterThanOrEqual(beforeTime.getTime());
+      expect(updatedTime.getTime()).toBeGreaterThanOrEqual(
+        beforeTime.getTime(),
+      );
       expect(updatedTime.getTime()).toBeLessThanOrEqual(afterTime.getTime());
     });
 
@@ -449,13 +464,15 @@ describe("Peminjaman Extensions API", () => {
       const dbError = new Error("Update failed");
       builder.update.mockReturnThis();
       // First .eq() returns builder, second .eq() returns promise with error
-      builder.eq.mockReturnValueOnce(builder).mockResolvedValue({ error: dbError });
+      builder.eq
+        .mockReturnValueOnce(builder)
+        .mockResolvedValue({ error: dbError });
       vi.mocked(supabase.from).mockReturnValue(builder);
 
       await expect(markAsReturned("pinjam-1", "baik")).rejects.toThrow();
       expect(logger.error).toHaveBeenCalledWith(
         "Failed to mark peminjaman as returned",
-        { peminjamanId: "pinjam-1", error: dbError }
+        { peminjamanId: "pinjam-1", error: dbError },
       );
       expect(handleSupabaseError).toHaveBeenCalledWith(dbError);
     });
@@ -503,7 +520,12 @@ describe("Peminjaman Extensions API", () => {
       const labBuilder = mockQueryBuilder();
       labBuilder.in.mockResolvedValue({
         data: [
-          { id: "lab-1", kode_lab: "LAB1", nama_lab: "Lab Fisika", kapasitas: 30 },
+          {
+            id: "lab-1",
+            kode_lab: "LAB1",
+            nama_lab: "Lab Fisika",
+            kapasitas: 30,
+          },
         ],
         error: null,
       });
@@ -595,7 +617,9 @@ describe("Peminjaman Extensions API", () => {
 
       const labBuilder = mockQueryBuilder();
       labBuilder.in.mockResolvedValue({
-        data: [{ id: "lab-1", kode_lab: "LAB1", nama_lab: "Lab", kapasitas: 30 }],
+        data: [
+          { id: "lab-1", kode_lab: "LAB1", nama_lab: "Lab", kapasitas: 30 },
+        ],
         error: null,
       });
 
@@ -701,7 +725,9 @@ describe("Peminjaman Extensions API", () => {
 
       const labBuilder = mockQueryBuilder();
       labBuilder.in.mockResolvedValue({
-        data: [{ id: "lab-1", kode_lab: "LAB1", nama_lab: "Lab", kapasitas: 30 }],
+        data: [
+          { id: "lab-1", kode_lab: "LAB1", nama_lab: "Lab", kapasitas: 30 },
+        ],
         error: null,
       });
 
@@ -747,7 +773,9 @@ describe("Peminjaman Extensions API", () => {
 
       const labBuilder = mockQueryBuilder();
       labBuilder.in.mockResolvedValue({
-        data: [{ id: "lab-1", kode_lab: "LAB1", nama_lab: "Lab", kapasitas: 30 }],
+        data: [
+          { id: "lab-1", kode_lab: "LAB1", nama_lab: "Lab", kapasitas: 30 },
+        ],
         error: null,
       });
 
@@ -805,7 +833,9 @@ describe("Peminjaman Extensions API", () => {
 
       await getPendingRoomBookings();
 
-      expect(jadwalBuilder.order).toHaveBeenCalledWith("created_at", { ascending: false });
+      expect(jadwalBuilder.order).toHaveBeenCalledWith("created_at", {
+        ascending: false,
+      });
     });
 
     it("should only fetch pending bookings (is_active = false)", async () => {
@@ -932,7 +962,7 @@ describe("Peminjaman Extensions API", () => {
       await expect(getPendingRoomBookings()).rejects.toThrow();
       expect(logger.error).toHaveBeenCalledWith(
         "Failed to fetch pending room bookings",
-        { limit: 50, error: dbError }
+        { limit: 50, error: dbError },
       );
       expect(handleSupabaseError).toHaveBeenCalledWith(dbError);
     });
@@ -949,7 +979,7 @@ describe("Peminjaman Extensions API", () => {
       await approveRoomBooking("jadwal-1");
 
       expect(builder.update).toHaveBeenCalledWith(
-        expect.objectContaining({ is_active: true })
+        expect.objectContaining({ is_active: true }),
       );
       expect(builder.eq).toHaveBeenCalledWith("id", "jadwal-1");
       expect(builder.eq).toHaveBeenCalledWith("is_active", false);
@@ -966,7 +996,9 @@ describe("Peminjaman Extensions API", () => {
       const updateCall = builder.update.mock.calls[0][0];
       const updatedTime = new Date(updateCall.updated_at);
 
-      expect(updatedTime.getTime()).toBeGreaterThanOrEqual(beforeTime.getTime());
+      expect(updatedTime.getTime()).toBeGreaterThanOrEqual(
+        beforeTime.getTime(),
+      );
       expect(updatedTime.getTime()).toBeLessThanOrEqual(afterTime.getTime());
     });
 
@@ -989,13 +1021,15 @@ describe("Peminjaman Extensions API", () => {
       const dbError = new Error("Update failed");
       builder.update.mockReturnThis();
       // First .eq() returns builder, second .eq() returns promise with error
-      builder.eq.mockReturnValueOnce(builder).mockResolvedValue({ error: dbError });
+      builder.eq
+        .mockReturnValueOnce(builder)
+        .mockResolvedValue({ error: dbError });
       vi.mocked(supabase.from).mockReturnValue(builder);
 
       await expect(approveRoomBooking("jadwal-1")).rejects.toThrow();
       expect(logger.error).toHaveBeenCalledWith(
         "Failed to approve room booking",
-        { jadwalId: "jadwal-1", error: dbError }
+        { jadwalId: "jadwal-1", error: dbError },
       );
       expect(handleSupabaseError).toHaveBeenCalledWith(dbError);
     });
@@ -1042,7 +1076,7 @@ describe("Peminjaman Extensions API", () => {
 
       expect(logger.info).toHaveBeenCalledWith(
         "Rejection reason:",
-        "Lab not available on that date"
+        "Lab not available on that date",
       );
     });
   });
@@ -1056,13 +1090,15 @@ describe("Peminjaman Extensions API", () => {
       const dbError = new Error("Delete failed");
       builder.delete.mockReturnThis();
       // First .eq() returns builder, second .eq() returns promise with error
-      builder.eq.mockReturnValueOnce(builder).mockResolvedValue({ error: dbError });
+      builder.eq
+        .mockReturnValueOnce(builder)
+        .mockResolvedValue({ error: dbError });
       vi.mocked(supabase.from).mockReturnValue(builder);
 
       await expect(rejectRoomBooking("jadwal-1", "Reason")).rejects.toThrow();
       expect(logger.error).toHaveBeenCalledWith(
         "Failed to reject room booking",
-        { jadwalId: "jadwal-1", reason: "Reason", error: dbError }
+        { jadwalId: "jadwal-1", reason: "Reason", error: dbError },
       );
       expect(handleSupabaseError).toHaveBeenCalledWith(dbError);
     });
@@ -1086,7 +1122,10 @@ describe("Peminjaman Extensions API", () => {
         });
 
         expect(builder.eq).toHaveBeenCalledWith("status", "approved");
-        expect(builder.eq).toHaveBeenCalledWith("inventaris.laboratorium.id", "lab-1");
+        expect(builder.eq).toHaveBeenCalledWith(
+          "inventaris.laboratorium.id",
+          "lab-1",
+        );
         expect(builder.limit).toHaveBeenCalledWith(10);
         expect(builder.range).toHaveBeenCalledWith(20, 29);
       });
@@ -1179,7 +1218,12 @@ describe("Peminjaman Extensions API", () => {
 
     describe("markAsReturned branches", () => {
       it("should branch: all kondisiKembali types", async () => {
-        const conditions = ["baik", "rusak_ringan", "rusak_berat", "maintenance"] as const;
+        const conditions = [
+          "baik",
+          "rusak_ringan",
+          "rusak_berat",
+          "maintenance",
+        ] as const;
 
         for (const condition of conditions) {
           const builder = mockQueryBuilder({ error: null });
@@ -1226,7 +1270,9 @@ describe("Peminjaman Extensions API", () => {
         });
 
         const labBuilder = mockQueryBuilder({
-          data: [{ id: "lab-1", kode_lab: "LAB1", nama_lab: "Lab", kapasitas: 30 }],
+          data: [
+            { id: "lab-1", kode_lab: "LAB1", nama_lab: "Lab", kapasitas: 30 },
+          ],
           error: null,
         });
 
@@ -1257,7 +1303,7 @@ describe("Peminjaman Extensions API", () => {
         // laboratorium_id is null, so only jadwal query will be made
         // (kelas_id exists but will result in empty kelas data from default builder)
         const kelasBuilder = mockQueryBuilder(); // Returns empty by default
-        
+
         vi.mocked(supabase.from)
           .mockReturnValueOnce(jadwalBuilder)
           .mockReturnValueOnce(kelasBuilder);
@@ -1349,7 +1395,7 @@ describe("Peminjaman Extensions API", () => {
             status: "returned",
             kondisi_kembali: "baik",
             keterangan_kembali: "Test keterangan",
-          })
+          }),
         );
       });
     });
@@ -1464,11 +1510,11 @@ describe("Peminjaman Extensions API", () => {
             },
             peminjam: {
               nim: "12345678",
-              user: { full_name: "John Doe" }
+              user: { full_name: "John Doe" },
             },
             dosen: {
               nip: "198001011",
-              user: { full_name: "Dr. Smith" }
+              user: { full_name: "Dr. Smith" },
             },
           },
         ],
@@ -1671,19 +1717,21 @@ describe("Peminjaman Extensions API", () => {
   // ===========================================================================
   describe("Performance Testing", () => {
     it("should handle large peminjaman dataset efficiently", async () => {
-      const largeData = Array(500).fill(null).map((_, i) => ({
-        id: `pinjam-${i}`,
-        inventaris_id: `inv-${i}`,
-        peminjam_id: `mhs-${i}`,
-        status: "approved",
-        inventaris: {
-          kode_barang: `ALT${i}`,
-          nama_barang: `Item ${i}`,
-          laboratorium: { nama_lab: `Lab ${i % 10}` },
-        },
-        peminjam: { nim: `123${i}`, user: { full_name: `User ${i}` } },
-        dosen: null,
-      }));
+      const largeData = Array(500)
+        .fill(null)
+        .map((_, i) => ({
+          id: `pinjam-${i}`,
+          inventaris_id: `inv-${i}`,
+          peminjam_id: `mhs-${i}`,
+          status: "approved",
+          inventaris: {
+            kode_barang: `ALT${i}`,
+            nama_barang: `Item ${i}`,
+            laboratorium: { nama_lab: `Lab ${i % 10}` },
+          },
+          peminjam: { nim: `123${i}`, user: { full_name: `User ${i}` } },
+          dosen: null,
+        }));
 
       const builder = mockQueryBuilder();
       builder.order.mockResolvedValue({
@@ -1704,64 +1752,76 @@ describe("Peminjaman Extensions API", () => {
     it("should handle multiple room bookings efficiently", async () => {
       const jadwalBuilder = mockQueryBuilder();
       jadwalBuilder.limit.mockResolvedValue({
-        data: Array(100).fill(null).map((_, i) => ({
-          id: `jadwal-${i}`,
-          kelas_id: `kelas-${i % 20}`,
-          laboratorium_id: `lab-${i % 5}`,
-          hari: "Senin",
-          jam_mulai: "08:00",
-          jam_selesai: "10:00",
-        })),
+        data: Array(100)
+          .fill(null)
+          .map((_, i) => ({
+            id: `jadwal-${i}`,
+            kelas_id: `kelas-${i % 20}`,
+            laboratorium_id: `lab-${i % 5}`,
+            hari: "Senin",
+            jam_mulai: "08:00",
+            jam_selesai: "10:00",
+          })),
         error: null,
       });
 
       const kelasBuilder = mockQueryBuilder();
       kelasBuilder.in.mockResolvedValue({
-        data: Array(20).fill(null).map((_, i) => ({
-          id: `kelas-${i}`,
-          nama_kelas: `Kelas ${i}`,
-          mata_kuliah_id: `mk-${i}`,
-          dosen_id: `dosen-${i}`,
-        })),
+        data: Array(20)
+          .fill(null)
+          .map((_, i) => ({
+            id: `kelas-${i}`,
+            nama_kelas: `Kelas ${i}`,
+            mata_kuliah_id: `mk-${i}`,
+            dosen_id: `dosen-${i}`,
+          })),
         error: null,
       });
 
       const labBuilder = mockQueryBuilder();
       labBuilder.in.mockResolvedValue({
-        data: Array(5).fill(null).map((_, i) => ({
-          id: `lab-${i}`,
-          kode_lab: `LAB${i}`,
-          nama_lab: `Lab ${i}`,
-          kapasitas: 30,
-        })),
+        data: Array(5)
+          .fill(null)
+          .map((_, i) => ({
+            id: `lab-${i}`,
+            kode_lab: `LAB${i}`,
+            nama_lab: `Lab ${i}`,
+            kapasitas: 30,
+          })),
         error: null,
       });
 
       const mkBuilder = mockQueryBuilder();
       mkBuilder.in.mockResolvedValue({
-        data: Array(20).fill(null).map((_, i) => ({
-          id: `mk-${i}`,
-          nama_mk: `Mata Kuliah ${i}`,
-        })),
+        data: Array(20)
+          .fill(null)
+          .map((_, i) => ({
+            id: `mk-${i}`,
+            nama_mk: `Mata Kuliah ${i}`,
+          })),
         error: null,
       });
 
       const dosenBuilder = mockQueryBuilder();
       dosenBuilder.in.mockResolvedValue({
-        data: Array(20).fill(null).map((_, i) => ({
-          id: `dosen-${i}`,
-          nip: `123${i}`,
-          user_id: `user-${i}`,
-        })),
+        data: Array(20)
+          .fill(null)
+          .map((_, i) => ({
+            id: `dosen-${i}`,
+            nip: `123${i}`,
+            user_id: `user-${i}`,
+          })),
         error: null,
       });
 
       const userBuilder = mockQueryBuilder();
       userBuilder.in.mockResolvedValue({
-        data: Array(20).fill(null).map((_, i) => ({
-          id: `user-${i}`,
-          full_name: `Dosen ${i}`,
-        })),
+        data: Array(20)
+          .fill(null)
+          .map((_, i) => ({
+            id: `user-${i}`,
+            full_name: `Dosen ${i}`,
+          })),
         error: null,
       });
 

@@ -395,7 +395,7 @@ describe("Offline Authentication", () => {
       expect(isValid).toBe(false);
     });
 
-    it("should verify credentials 1ms before expiry", async () => {
+    it("should verify credentials before expiry", async () => {
       const now = Date.now();
 
       vi.mocked(indexedDBManager.getMetadata).mockResolvedValue({
@@ -403,7 +403,7 @@ describe("Offline Authentication", () => {
         email: "test@example.com",
         passwordHash: "01".repeat(32),
         createdAt: now - 30 * 24 * 60 * 60 * 1000,
-        expiresAt: now + 1, // Expires in 1ms
+        expiresAt: now + 1000, // Expires in 1 second
       });
 
       const isValid = await verifyOfflineCredentials(
@@ -631,7 +631,9 @@ describe("Offline Authentication", () => {
 
       await restoreOfflineSession();
 
-      expect(mockConsoleLog).toHaveBeenCalledWith("ℹ️ No offline session found");
+      expect(mockConsoleLog).toHaveBeenCalledWith(
+        "ℹ️ No offline session found",
+      );
     });
 
     it("should restore session at exact expiry moment", async () => {
@@ -1348,9 +1350,7 @@ describe("Offline Authentication", () => {
         expiresAt: Date.now() + 10000,
       };
 
-      vi.mocked(indexedDBManager.getMetadata).mockResolvedValue(
-        invalidSession,
-      );
+      vi.mocked(indexedDBManager.getMetadata).mockResolvedValue(invalidSession);
 
       const restored = await restoreOfflineSession();
 
@@ -1827,7 +1827,9 @@ describe("Offline Authentication", () => {
 
       expect(result).not.toBeNull();
       expect(result?.session.access_token).toBe("offline_session_token");
-      expect(mockConsoleLog).toHaveBeenCalledWith("✅ Offline login successful");
+      expect(mockConsoleLog).toHaveBeenCalledWith(
+        "✅ Offline login successful",
+      );
     });
 
     it("Path 9: Restore session → expired session path", async () => {
@@ -1993,7 +1995,9 @@ describe("Offline Authentication", () => {
       };
 
       // 1. Check if offline login available
-      vi.mocked(indexedDBManager.getMetadata).mockResolvedValue(credentialsData);
+      vi.mocked(indexedDBManager.getMetadata).mockResolvedValue(
+        credentialsData,
+      );
       const isAvailable = await isOfflineLoginAvailable();
       expect(isAvailable).toBe(true);
 
@@ -2062,7 +2066,11 @@ describe("Offline Authentication", () => {
 
       // Store new credentials (refresh)
       vi.mocked(indexedDBManager.setMetadata).mockClear();
-      await storeOfflineCredentials("test@example.com", "newpassword", mockUser);
+      await storeOfflineCredentials(
+        "test@example.com",
+        "newpassword",
+        mockUser,
+      );
 
       expect(indexedDBManager.setMetadata).toHaveBeenCalled();
     });

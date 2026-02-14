@@ -21,7 +21,11 @@ import {
   submitLogbook,
   deleteLogbook,
 } from "@/lib/api/logbook.api";
-import type { CreateLogbookData, UpdateLogbookData, SubmitLogbookData } from "@/types/logbook.types";
+import type {
+  CreateLogbookData,
+  UpdateLogbookData,
+  SubmitLogbookData,
+} from "@/types/logbook.types";
 
 // Mock supabase client
 vi.mock("@/lib/supabase/client", () => ({
@@ -48,7 +52,9 @@ vi.mock("@/lib/api/base.api", () => ({
 // Mock permission middleware
 vi.mock("@/lib/middleware/permission.middleware", () => ({
   requirePermission: vi.fn((permission, fn) => fn),
-  requirePermissionAndOwnership: vi.fn((permission, ownership, level, fn) => fn),
+  requirePermissionAndOwnership: vi.fn(
+    (permission, ownership, level, fn) => fn,
+  ),
   getCurrentUserWithRole: vi.fn(),
 }));
 
@@ -73,13 +79,19 @@ describe("Logbook API", () => {
     (supabase.from as any).mockReturnValue({
       select: vi.fn().mockReturnValue({
         eq: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue({ data: { id: mockMahasiswaId }, error: null }),
+          single: vi
+            .fn()
+            .mockResolvedValue({ data: { id: mockMahasiswaId }, error: null }),
         }),
       }),
       eq: vi.fn().mockReturnValue({
-        single: vi.fn().mockResolvedValue({ data: { id: mockMahasiswaId }, error: null }),
+        single: vi
+          .fn()
+          .mockResolvedValue({ data: { id: mockMahasiswaId }, error: null }),
       }),
-      single: vi.fn().mockResolvedValue({ data: { id: mockMahasiswaId }, error: null }),
+      single: vi
+        .fn()
+        .mockResolvedValue({ data: { id: mockMahasiswaId }, error: null }),
     });
   });
 
@@ -92,7 +104,12 @@ describe("Logbook API", () => {
           return {
             select: vi.fn().mockReturnValue({
               eq: vi.fn().mockReturnValue({
-                single: vi.fn().mockResolvedValue({ data: { id: mockMahasiswaId }, error: null }),
+                single: vi
+                  .fn()
+                  .mockResolvedValue({
+                    data: { id: mockMahasiswaId },
+                    error: null,
+                  }),
               }),
             }),
           };
@@ -151,7 +168,7 @@ describe("Logbook API", () => {
       };
 
       await expect(createLogbook(createData)).rejects.toThrow(
-        "User not authenticated"
+        "User not authenticated",
       );
     });
   });
@@ -169,7 +186,9 @@ describe("Logbook API", () => {
       (supabase.from as any).mockReturnValueOnce({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({ data: { id: mockMahasiswaId } }),
+            single: vi
+              .fn()
+              .mockResolvedValue({ data: { id: mockMahasiswaId } }),
           }),
         }),
       });
@@ -200,7 +219,7 @@ describe("Logbook API", () => {
       };
 
       await expect(updateLogbook(updateData)).rejects.toThrow(
-        "Can only update logbook with draft status"
+        "Can only update logbook with draft status",
       );
     });
 
@@ -209,7 +228,9 @@ describe("Logbook API", () => {
       (supabase.from as any).mockReturnValueOnce({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({ data: { id: mockMahasiswaId } }),
+            single: vi
+              .fn()
+              .mockResolvedValue({ data: { id: mockMahasiswaId } }),
           }),
         }),
       });
@@ -228,7 +249,7 @@ describe("Logbook API", () => {
       };
 
       await expect(updateLogbook(updateData)).rejects.toThrow(
-        "You can only update your own logbook"
+        "You can only update your own logbook",
       );
     });
   });
@@ -239,7 +260,9 @@ describe("Logbook API", () => {
       (supabase.from as any).mockReturnValueOnce({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({ data: { id: mockMahasiswaId } }),
+            single: vi
+              .fn()
+              .mockResolvedValue({ data: { id: mockMahasiswaId } }),
           }),
         }),
       });
@@ -271,7 +294,7 @@ describe("Logbook API", () => {
         expect.objectContaining({
           status: "submitted",
           submitted_at: expect.any(String),
-        })
+        }),
       );
     });
 
@@ -283,7 +306,7 @@ describe("Logbook API", () => {
       };
 
       await expect(submitLogbook(incompleteData)).rejects.toThrow(
-        "Please fill in all required fields before submitting"
+        "Please fill in all required fields before submitting",
       );
     });
 
@@ -303,7 +326,7 @@ describe("Logbook API", () => {
       };
 
       await expect(submitLogbook(submitData)).rejects.toThrow(
-        "Can only submit logbook with draft status"
+        "Can only submit logbook with draft status",
       );
     });
   });
@@ -314,7 +337,9 @@ describe("Logbook API", () => {
       (supabase.from as any).mockReturnValueOnce({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({ data: { id: mockMahasiswaId } }),
+            single: vi
+              .fn()
+              .mockResolvedValue({ data: { id: mockMahasiswaId } }),
           }),
         }),
       });
@@ -343,7 +368,7 @@ describe("Logbook API", () => {
       });
 
       await expect(deleteLogbook(mockLogbookId)).rejects.toThrow(
-        "Can only delete logbook with draft status"
+        "Can only delete logbook with draft status",
       );
     });
 
@@ -352,7 +377,9 @@ describe("Logbook API", () => {
       (supabase.from as any).mockReturnValueOnce({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({ data: { id: mockMahasiswaId } }),
+            single: vi
+              .fn()
+              .mockResolvedValue({ data: { id: mockMahasiswaId } }),
           }),
         }),
       });
@@ -366,7 +393,7 @@ describe("Logbook API", () => {
       });
 
       await expect(deleteLogbook(mockLogbookId)).rejects.toThrow(
-        "You can only delete your own logbook"
+        "You can only delete your own logbook",
       );
     });
   });
