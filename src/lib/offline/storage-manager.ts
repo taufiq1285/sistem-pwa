@@ -54,7 +54,7 @@ export async function getItem<T>(
 
     // Otherwise, try localStorage
     const item = localStorage.getItem(key);
-    if (!item) return undefined;
+    if (item === null) return undefined;
 
     try {
       return JSON.parse(item) as T;
@@ -78,8 +78,16 @@ export async function getItem<T>(
  */
 export async function setItem<T>(key: string, value: T): Promise<void> {
   try {
-    const serialized =
-      typeof value === "string" ? value : JSON.stringify(value);
+    let serialized: string;
+    if (typeof value === "string") {
+      serialized = value;
+    } else if (value === undefined) {
+      serialized = "undefined";
+    } else if (value === null) {
+      serialized = "null";
+    } else {
+      serialized = JSON.stringify(value);
+    }
     localStorage.setItem(key, serialized);
   } catch (error) {
     logger.error(`Failed to set item ${key}:`, error);

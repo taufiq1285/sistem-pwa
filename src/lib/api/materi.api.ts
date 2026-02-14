@@ -342,6 +342,11 @@ export async function downloadMateri(id: string): Promise<void> {
     const bucketIndex = urlParts.findIndex((part) =>
       part.includes(STORAGE_BUCKETS.MATERI),
     );
+
+    if (bucketIndex === -1) {
+      throw new Error("File path tidak valid");
+    }
+
     const filePath = urlParts.slice(bucketIndex + 1).join("/");
 
     if (!filePath) {

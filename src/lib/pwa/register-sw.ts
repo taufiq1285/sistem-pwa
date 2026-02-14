@@ -21,6 +21,13 @@ import { logger } from "@/lib/utils/logger";
 let isReloading = false;
 
 /**
+ * Reset the reloading flag (for testing purposes)
+ */
+export function _resetReloadingFlag(): void {
+  isReloading = false;
+}
+
+/**
  * Service Worker registration configuration
  */
 export interface SWConfig {
@@ -236,7 +243,7 @@ function setupUpdateCheck(
  * Track installing service worker
  */
 function trackInstalling(worker: ServiceWorker): void {
-  worker.addEventListener("statechange", () => {
+  const stateChangeHandler = () => {
     logger.info("[SW] Service worker state changed:", worker.state);
 
     if (worker.state === "installed") {
@@ -250,7 +257,9 @@ function trackInstalling(worker: ServiceWorker): void {
     if (worker.state === "redundant") {
       logger.info("[SW] Service worker redundant");
     }
-  });
+  };
+
+  worker.addEventListener("statechange", stateChangeHandler);
 }
 
 // ============================================================================

@@ -62,7 +62,12 @@
       "Bash(findstr:*)",
       "Bash(git ls-tree:*)",
       "Bash(xargs:*)",
-      "Bash(set NODE_OPTIONS=--max-old-space-size=4096:*)"
+      "Bash(set NODE_OPTIONS=--max-old-space-size=4096:*)",
+      "Bash(git mv:*)",
+      "Bash(do git mv:*)",
+      "Bash(do sed:*)",
+      "Bash(do echo:*)",
+      "Bash(wc:*)"
     ]
   }
 }
