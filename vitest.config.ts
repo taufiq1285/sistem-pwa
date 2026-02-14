@@ -16,6 +16,16 @@ export default defineConfig({
     setupFiles: ['./src/__tests__/setup.ts'],
     exclude: ['src/__tests__/unit/components/PageHeader.test.tsx'],
     include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
+    // Performance optimization for research
+    pool: 'threads',
+    poolOptions: {
+      threads: {
+        singleThread: false,
+        useAtomics: true,
+        maxThreads: 4,
+        minThreads: 2,
+      },
+    },
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html', 'lcov'],

@@ -262,7 +262,7 @@ export async function createLogbook(
       .from("jadwal_praktikum")
       .select("id, status")
       .eq("id", data.jadwal_id)
-      .single();
+      .single<{ status?: string }>();
 
     if (!jadwal) {
       throw new Error("Jadwal praktikum not found");

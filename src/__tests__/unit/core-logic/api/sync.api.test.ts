@@ -4,10 +4,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import {
-  getSyncManagementStats,
-  forceSyncNow,
-} from "@/lib/api/sync.api";
+import { getSyncManagementStats, forceSyncNow } from "@/lib/api/sync.api";
 
 vi.mock("../../../../lib/offline/sync-manager", () => ({
   syncManager: {
@@ -947,7 +944,9 @@ describe("Sync API", () => {
         vi.mocked(syncManager.getQueueStats).mockResolvedValue(mockQueueStats);
         vi.mocked(syncManager.getSyncStats).mockReturnValue({
           ...mockSyncStats,
-          syncHistory: [{ timestamp: Date.now(), duration: 100, success: true }],
+          syncHistory: [
+            { timestamp: Date.now(), duration: 100, success: true },
+          ],
         });
 
         const result = await getSyncManagementStats();

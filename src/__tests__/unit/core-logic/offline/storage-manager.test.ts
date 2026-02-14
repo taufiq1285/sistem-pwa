@@ -477,10 +477,7 @@ describe("Storage Manager", () => {
     it("should store null value", async () => {
       await setItem("null-key", null);
 
-      expect(localStorageMock.setItem).toHaveBeenCalledWith(
-        "null-key",
-        "null",
-      );
+      expect(localStorageMock.setItem).toHaveBeenCalledWith("null-key", "null");
     });
 
     it("should store undefined as string", async () => {
@@ -630,7 +627,9 @@ describe("Storage Manager", () => {
       // Should not throw error when removing non-existent key
       await removeItem("non-existent-key");
 
-      expect(localStorageMock.removeItem).toHaveBeenCalledWith("non-existent-key");
+      expect(localStorageMock.removeItem).toHaveBeenCalledWith(
+        "non-existent-key",
+      );
     });
 
     it("should handle empty string key", async () => {

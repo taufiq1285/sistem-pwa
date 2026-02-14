@@ -13,7 +13,10 @@ const mockRevokeObjectURL = vi.fn();
 
 // Create a proper Blob constructor mock
 class MockBlob {
-  constructor(public parts: BlobPart[], public options?: BlobPropertyBag) {
+  constructor(
+    public parts: BlobPart[],
+    public options?: BlobPropertyBag,
+  ) {
     // Mock blob implementation
   }
 
@@ -69,7 +72,9 @@ describe("usePdfBlobUrl Hook", () => {
 
     // Setup default URL mocks - generate unique URL each time
     let urlCounter = 0;
-    mockCreateObjectURL.mockImplementation(() => `blob:test-pdf-url-${urlCounter++}`);
+    mockCreateObjectURL.mockImplementation(
+      () => `blob:test-pdf-url-${urlCounter++}`,
+    );
   });
 
   afterEach(() => {
@@ -78,9 +83,7 @@ describe("usePdfBlobUrl Hook", () => {
 
   describe("PDF loading", () => {
     it("should fetch PDF and create blob URL", async () => {
-      const { result } = renderHook(() =>
-        usePdfBlobUrl(mockMateri, true),
-      );
+      const { result } = renderHook(() => usePdfBlobUrl(mockMateri, true));
 
       // Initially loading
       expect(result.current.loading).toBe(true);
@@ -110,9 +113,7 @@ describe("usePdfBlobUrl Hook", () => {
     });
 
     it("should not fetch when enabled is false", async () => {
-      const { result } = renderHook(() =>
-        usePdfBlobUrl(mockMateri, false),
-      );
+      const { result } = renderHook(() => usePdfBlobUrl(mockMateri, false));
 
       expect(result.current.blobUrl).toBeNull();
       expect(result.current.loading).toBe(false);
@@ -126,9 +127,7 @@ describe("usePdfBlobUrl Hook", () => {
         tipe_file: "image/jpeg",
       };
 
-      const { result } = renderHook(() =>
-        usePdfBlobUrl(nonPdfMateri, true),
-      );
+      const { result } = renderHook(() => usePdfBlobUrl(nonPdfMateri, true));
 
       expect(result.current.blobUrl).toBeNull();
       expect(result.current.loading).toBe(false);
@@ -176,9 +175,7 @@ describe("usePdfBlobUrl Hook", () => {
         statusText: "Not Found",
       });
 
-      const { result } = renderHook(() =>
-        usePdfBlobUrl(mockMateri, true),
-      );
+      const { result } = renderHook(() => usePdfBlobUrl(mockMateri, true));
 
       await waitFor(() => {
         expect(result.current.loading).toBe(false);
@@ -191,13 +188,9 @@ describe("usePdfBlobUrl Hook", () => {
     });
 
     it("should handle network error", async () => {
-      (global.fetch as any).mockRejectedValue(
-        new Error("Network error"),
-      );
+      (global.fetch as any).mockRejectedValue(new Error("Network error"));
 
-      const { result } = renderHook(() =>
-        usePdfBlobUrl(mockMateri, true),
-      );
+      const { result } = renderHook(() => usePdfBlobUrl(mockMateri, true));
 
       await waitFor(() => {
         expect(result.current.loading).toBe(false);
@@ -218,9 +211,7 @@ describe("usePdfBlobUrl Hook", () => {
         },
       });
 
-      const { result } = renderHook(() =>
-        usePdfBlobUrl(mockMateri, true),
-      );
+      const { result } = renderHook(() => usePdfBlobUrl(mockMateri, true));
 
       await waitFor(() => {
         expect(result.current.loading).toBe(false);
@@ -303,9 +294,7 @@ describe("usePdfBlobUrl Hook", () => {
         },
       });
 
-      const { result } = renderHook(() =>
-        usePdfBlobUrl(mockMateri, true),
-      );
+      const { result } = renderHook(() => usePdfBlobUrl(mockMateri, true));
 
       await waitFor(() => {
         expect(result.current.loading).toBe(false);
@@ -326,9 +315,7 @@ describe("usePdfBlobUrl Hook", () => {
           new Blob(["pdf content"], { type: "application/json" }),
       });
 
-      const { result } = renderHook(() =>
-        usePdfBlobUrl(mockMateri, true),
-      );
+      const { result } = renderHook(() => usePdfBlobUrl(mockMateri, true));
 
       await waitFor(() => {
         expect(result.current.loading).toBe(false);
@@ -439,9 +426,7 @@ describe("usePdfBlobUrl Hook", () => {
         return fetchPromise;
       });
 
-      const { result } = renderHook(() =>
-        usePdfBlobUrl(mockMateri, true),
-      );
+      const { result } = renderHook(() => usePdfBlobUrl(mockMateri, true));
 
       // Should be loading immediately
       expect(result.current.loading).toBe(true);
@@ -460,9 +445,7 @@ describe("usePdfBlobUrl Hook", () => {
         statusText: "Not Found",
       });
 
-      const { result } = renderHook(() =>
-        usePdfBlobUrl(mockMateri, true),
-      );
+      const { result } = renderHook(() => usePdfBlobUrl(mockMateri, true));
 
       await waitFor(() => {
         expect(result.current.loading).toBe(false);

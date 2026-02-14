@@ -262,7 +262,7 @@ export function handleSupabaseError(error: any): BaseApiError {
   // Supabase error structure
   if (error?.code) {
     const code = error.code;
-    const message = error.message || "Database error";
+    const message = error.message || "Database operation failed";
     const details = {
       hint: error.hint,
       details: error.details,

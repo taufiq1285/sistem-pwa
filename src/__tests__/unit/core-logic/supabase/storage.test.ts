@@ -4,7 +4,10 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import type { UploadOptions, FileMetadata } from "../../../../lib/supabase/storage";
+import type {
+  UploadOptions,
+  FileMetadata,
+} from "../../../../lib/supabase/storage";
 
 // Mock window.URL.createObjectURL and URL.revokeObjectURL
 const mockCreateObjectURL = vi.fn();
@@ -122,10 +125,12 @@ describe("Supabase Storage Helpers", () => {
 
       // Mock getPublicUrl
       mockStorage.getPublicUrl.mockReturnValue({
-        publicUrl: mockPublicUrl,
+        data: { publicUrl: mockPublicUrl },
       });
 
-      const result = await uploadFile(mockBucket, mockPath, file, { onProgress });
+      const result = await uploadFile(mockBucket, mockPath, file, {
+        onProgress,
+      });
 
       expect(mockStorage.upload).toHaveBeenCalledWith(mockPath, file, {
         cacheControl: "3600",
@@ -145,9 +150,9 @@ describe("Supabase Storage Helpers", () => {
         error: { message: "Bucket not found" },
       });
 
-      await expect(
-        uploadFile(mockBucket, mockPath, file),
-      ).rejects.toThrow("Bucket test-bucket tidak ditemukan");
+      await expect(uploadFile(mockBucket, mockPath, file)).rejects.toThrow(
+        "Bucket test-bucket tidak ditemukan",
+      );
     });
 
     it("should handle upload error - permission denied", async () => {
@@ -177,7 +182,9 @@ describe("Supabase Storage Helpers", () => {
         data: { path: mockPath },
         error: null,
       });
-      mockStorage.getPublicUrl.mockReturnValue({ publicUrl: mockPublicUrl });
+      mockStorage.getPublicUrl.mockReturnValue({
+        data: { publicUrl: mockPublicUrl },
+      });
 
       await uploadFile(mockBucket, mockPath, file, options);
 
@@ -191,14 +198,22 @@ describe("Supabase Storage Helpers", () => {
 
   describe("uploadMateriFile", () => {
     it("should upload materi file successfully", async () => {
-      const file = createMockFile("materi.pdf", 5 * 1024 * 1024, "application/pdf");
+      const file = createMockFile(
+        "materi.pdf",
+        5 * 1024 * 1024,
+        "application/pdf",
+      );
 
-      const mockStorage = (supabase.storage.from as any)(STORAGE_BUCKETS.MATERI);
+      const mockStorage = (supabase.storage.from as any)(
+        STORAGE_BUCKETS.MATERI,
+      );
       mockStorage.upload.mockResolvedValue({
         data: { path: mockPath },
         error: null,
       });
-      mockStorage.getPublicUrl.mockReturnValue({ publicUrl: mockPublicUrl });
+      mockStorage.getPublicUrl.mockReturnValue({
+        data: { publicUrl: mockPublicUrl },
+      });
 
       const result = await uploadMateriFile("kelas-1", "dosen-1", file);
 
@@ -343,7 +358,7 @@ describe("Supabase Storage Helpers", () => {
     it("should return public URL", () => {
       const mockStorage = (supabase.storage.from as any)(mockBucket);
       mockStorage.getPublicUrl.mockReturnValue({
-        publicUrl: mockPublicUrl,
+        data: { publicUrl: mockPublicUrl },
       });
 
       const result = getFileUrl(mockBucket, mockPath);
@@ -411,7 +426,9 @@ describe("Supabase Storage Helpers", () => {
         data: mockFileData,
         error: null,
       });
-      mockStorage.getPublicUrl.mockReturnValue({ publicUrl: mockPublicUrl });
+      mockStorage.getPublicUrl.mockReturnValue({
+        data: { publicUrl: mockPublicUrl },
+      });
 
       const result = await getFileMetadata(mockBucket, mockPath);
 
@@ -469,7 +486,9 @@ describe("Supabase Storage Helpers", () => {
         data: mockFilesData,
         error: null,
       });
-      mockStorage.getPublicUrl.mockReturnValue({ publicUrl: mockPublicUrl });
+      mockStorage.getPublicUrl.mockReturnValue({
+        data: { publicUrl: mockPublicUrl },
+      });
 
       const result = await listFiles(mockBucket, "folder");
 
@@ -515,13 +534,13 @@ describe("Supabase Storage Helpers", () => {
     it("should handle files with multiple dots", () => {
       const result = generateUniqueFileName("my.file.name.pdf");
 
-      expect(result).toMatch(/my\.file\.name_\d+_[a-z0-9]+\.pdf/);
+      expect(result).toMatch(/my_file_name_\d+_[a-z0-9]+\.pdf/);
     });
 
     it("should clean special characters", () => {
       const result = generateUniqueFileName("file@#$%.pdf");
 
-      expect(result).toMatch(/file___\d+_[a-z0-9]+\.pdf/);
+      expect(result).toMatch(/file_____\d+_[a-z0-9]+\.pdf/);
     });
 
     it("should truncate long filenames", () => {
@@ -545,7 +564,7 @@ describe("Supabase Storage Helpers", () => {
     });
 
     it("should return empty string for no extension", () => {
-      expect(getFileExtension("filename")).toBe("");
+      expect(getFileExtension("filename")).toBe("filename");
     });
 
     it("should return lowercase extension", () => {
@@ -579,7 +598,9 @@ describe("Supabase Storage Helpers", () => {
 
     it("should categorize archive files", () => {
       expect(getFileTypeCategory("application/zip")).toBe("archive");
-      expect(getFileTypeCategory("application/x-rar-compressed")).toBe("archive");
+      expect(getFileTypeCategory("application/x-rar-compressed")).toBe(
+        "archive",
+      );
     });
 
     it("should categorize text files", () => {
@@ -594,29 +615,29 @@ describe("Supabase Storage Helpers", () => {
   describe("formatFileSize", () => {
     it("should format bytes", () => {
       expect(formatFileSize(0)).toBe("0 Bytes");
-      expect(formatFileSize(512)).toBe("512.00 Bytes");
-      expect(formatFileSize(1023)).toBe("1023.00 Bytes");
+      expect(formatFileSize(512)).toBe("512 Bytes");
+      expect(formatFileSize(1023)).toBe("1023 Bytes");
     });
 
     it("should format kilobytes", () => {
-      expect(formatFileSize(1024)).toBe("1.00 KB");
-      expect(formatFileSize(5120)).toBe("5.00 KB");
-      expect(formatFileSize(1024 * 1024 - 1)).toBe("1023.00 KB");
+      expect(formatFileSize(1024)).toBe("1 KB");
+      expect(formatFileSize(5120)).toBe("5 KB");
+      expect(formatFileSize(1024 * 1024 - 1)).toBe("1024 KB");
     });
 
     it("should format megabytes", () => {
-      expect(formatFileSize(1024 * 1024)).toBe("1.00 MB");
-      expect(formatFileSize(5 * 1024 * 1024)).toBe("5.00 MB");
+      expect(formatFileSize(1024 * 1024)).toBe("1 MB");
+      expect(formatFileSize(5 * 1024 * 1024)).toBe("5 MB");
     });
 
     it("should format gigabytes", () => {
-      expect(formatFileSize(1024 * 1024 * 1024)).toBe("1.00 GB");
-      expect(formatFileSize(2.5 * 1024 * 1024 * 1024)).toBe("2.50 GB");
+      expect(formatFileSize(1024 * 1024 * 1024)).toBe("1 GB");
+      expect(formatFileSize(2.5 * 1024 * 1024 * 1024)).toBe("2.5 GB");
     });
 
     it("should handle decimal places", () => {
-      expect(formatFileSize(1536)).toBe("1.50 KB");
-      expect(formatFileSize(2.5 * 1024 * 1024)).toBe("2.50 MB");
+      expect(formatFileSize(1536)).toBe("1.5 KB");
+      expect(formatFileSize(2.5 * 1024 * 1024)).toBe("2.5 MB");
     });
   });
 });

@@ -23,7 +23,10 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
-import { useNotificationPolling, useAutoNotifications } from "@/lib/hooks/useNotificationPolling";
+import {
+  useNotificationPolling,
+  useAutoNotifications,
+} from "@/lib/hooks/useNotificationPolling";
 import type { Notification } from "@/types/notification.types";
 
 // ============================================================================
@@ -500,7 +503,9 @@ describe("useNotificationPolling", () => {
 
       // Initial fetch should be skipped
       expect(mockGetNotifications).not.toHaveBeenCalled();
-      expect(console.log).toHaveBeenCalledWith("⏸️ Offline - skipping notification poll");
+      expect(console.log).toHaveBeenCalledWith(
+        "⏸️ Offline - skipping notification poll",
+      );
     });
 
     it("should resume polling when back online", async () => {
@@ -537,7 +542,9 @@ describe("useNotificationPolling", () => {
 
       await advanceTimersAndFlush(10000);
 
-      expect(console.log).toHaveBeenCalledWith("⏸️ Offline - skipping notification poll");
+      expect(console.log).toHaveBeenCalledWith(
+        "⏸️ Offline - skipping notification poll",
+      );
     });
   });
 
@@ -844,7 +851,9 @@ describe("useNotificationPolling", () => {
       await advanceTimersAndFlush(10000);
 
       // When offline, polling is skipped before API call
-      expect(console.log).toHaveBeenCalledWith("⏸️ Offline - skipping notification poll");
+      expect(console.log).toHaveBeenCalledWith(
+        "⏸️ Offline - skipping notification poll",
+      );
     });
 
     it("should call error callback with error object", async () => {
@@ -895,7 +904,9 @@ describe("useNotificationPolling", () => {
 
       unmount();
 
-      expect(console.log).toHaveBeenCalledWith("🔔 Notification polling stopped");
+      expect(console.log).toHaveBeenCalledWith(
+        "🔔 Notification polling stopped",
+      );
 
       // Advance timers - should not fetch anymore
       await advanceTimersAndFlush(20000);
@@ -931,7 +942,9 @@ describe("useNotificationPolling", () => {
 
       unmount();
 
-      expect(console.log).toHaveBeenCalledWith("🔔 Notification polling stopped");
+      expect(console.log).toHaveBeenCalledWith(
+        "🔔 Notification polling stopped",
+      );
     });
   });
 
@@ -985,7 +998,9 @@ describe("useNotificationPolling", () => {
 
   describe("SECTION 12: Path Coverage - All Execution Paths", () => {
     it("Path 1: Enabled + Authenticated + Visible + Online → Poll successfully", async () => {
-      renderHook(() => useNotificationPolling({ enabled: true, interval: 10000 }));
+      renderHook(() =>
+        useNotificationPolling({ enabled: true, interval: 10000 }),
+      );
 
       await advanceTimersAndFlush(0);
 
@@ -1047,7 +1062,9 @@ describe("useNotificationPolling", () => {
       await advanceTimersAndFlush(10000);
 
       expect(mockGetNotifications).not.toHaveBeenCalled();
-      expect(console.log).toHaveBeenCalledWith("⏸️ Offline - skipping notification poll");
+      expect(console.log).toHaveBeenCalledWith(
+        "⏸️ Offline - skipping notification poll",
+      );
     });
 
     it("Path 7: New Notifications → Call callback", async () => {
@@ -1121,7 +1138,9 @@ describe("useNotificationPolling", () => {
         "visibilitychange",
         expect.any(Function),
       );
-      expect(console.log).toHaveBeenCalledWith("🔔 Notification polling stopped");
+      expect(console.log).toHaveBeenCalledWith(
+        "🔔 Notification polling stopped",
+      );
     });
   });
 
@@ -1268,7 +1287,9 @@ describe("useNotificationPolling", () => {
 
       // No polling while offline
       expect(mockGetNotifications).toHaveBeenCalledTimes(1);
-      expect(console.log).toHaveBeenCalledWith("⏸️ Offline - skipping notification poll");
+      expect(console.log).toHaveBeenCalledWith(
+        "⏸️ Offline - skipping notification poll",
+      );
 
       // Network comes back
       Object.defineProperty(window.navigator, "onLine", {
@@ -1436,7 +1457,9 @@ describe("useAutoNotifications", () => {
 
   it("should be a wrapper around useNotificationPolling with defaults", () => {
     const { result: autoResult } = renderHook(() => useAutoNotifications());
-    const { result: pollingResult } = renderHook(() => useNotificationPolling());
+    const { result: pollingResult } = renderHook(() =>
+      useNotificationPolling(),
+    );
 
     expect(autoResult.current.interval).toBe(pollingResult.current.interval);
     expect(autoResult.current.isPolling).toBe(pollingResult.current.isPolling);

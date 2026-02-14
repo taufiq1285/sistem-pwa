@@ -100,7 +100,10 @@ describe("Announcements API", () => {
     describe("getAllAnnouncements() - Success Paths", () => {
       it("should fetch all announcements successfully", async () => {
         const builder = mockQueryBuilder();
-        builder.order.mockResolvedValue({ data: mockAnnouncementsList, error: null });
+        builder.order.mockResolvedValue({
+          data: mockAnnouncementsList,
+          error: null,
+        });
         vi.mocked(supabase.from).mockReturnValue(builder as any);
 
         const result = await getAllAnnouncements();
@@ -111,7 +114,10 @@ describe("Announcements API", () => {
 
       it("should include penulis information from users relation", async () => {
         const builder = mockQueryBuilder();
-        builder.order.mockResolvedValue({ data: [mockAnnouncement], error: null });
+        builder.order.mockResolvedValue({
+          data: [mockAnnouncement],
+          error: null,
+        });
         vi.mocked(supabase.from).mockReturnValue(builder as any);
 
         const result = await getAllAnnouncements();
@@ -129,7 +135,10 @@ describe("Announcements API", () => {
           users: null,
         };
         const builder = mockQueryBuilder();
-        builder.order.mockResolvedValue({ data: [announcementWithoutUser], error: null });
+        builder.order.mockResolvedValue({
+          data: [announcementWithoutUser],
+          error: null,
+        });
         vi.mocked(supabase.from).mockReturnValue(builder as any);
 
         const result = await getAllAnnouncements();
@@ -139,12 +148,17 @@ describe("Announcements API", () => {
 
       it("should order by created_at descending", async () => {
         const builder = mockQueryBuilder();
-        builder.order.mockResolvedValue({ data: mockAnnouncementsList, error: null });
+        builder.order.mockResolvedValue({
+          data: mockAnnouncementsList,
+          error: null,
+        });
         vi.mocked(supabase.from).mockReturnValue(builder as any);
 
         await getAllAnnouncements();
 
-        expect(builder.order).toHaveBeenCalledWith("created_at", { ascending: false });
+        expect(builder.order).toHaveBeenCalledWith("created_at", {
+          ascending: false,
+        });
       });
 
       it("should return empty array when no announcements", async () => {
@@ -169,7 +183,10 @@ describe("Announcements API", () => {
 
       it("should include all announcement fields", async () => {
         const builder = mockQueryBuilder();
-        builder.order.mockResolvedValue({ data: [mockAnnouncement], error: null });
+        builder.order.mockResolvedValue({
+          data: [mockAnnouncement],
+          error: null,
+        });
         vi.mocked(supabase.from).mockReturnValue(builder as any);
 
         const result = await getAllAnnouncements();
@@ -193,13 +210,13 @@ describe("Announcements API", () => {
         await getAllAnnouncements();
 
         expect(builder.select).toHaveBeenCalledWith(
-          expect.stringContaining("id")
+          expect.stringContaining("id"),
         );
         expect(builder.select).toHaveBeenCalledWith(
-          expect.stringContaining("judul")
+          expect.stringContaining("judul"),
         );
         expect(builder.select).toHaveBeenCalledWith(
-          expect.stringContaining("users")
+          expect.stringContaining("users"),
         );
       });
     });
@@ -239,7 +256,7 @@ describe("Announcements API", () => {
 
         expect(consoleErrorSpy).toHaveBeenCalledWith(
           "Error fetching announcements:",
-          expect.any(Error)
+          expect.any(Error),
         );
         consoleErrorSpy.mockRestore();
       });
@@ -294,7 +311,10 @@ describe("Announcements API", () => {
           judul: "A".repeat(255),
         };
         const builder = mockQueryBuilder();
-        builder.order.mockResolvedValue({ data: [longTitleAnnouncement], error: null });
+        builder.order.mockResolvedValue({
+          data: [longTitleAnnouncement],
+          error: null,
+        });
         vi.mocked(supabase.from).mockReturnValue(builder as any);
 
         const result = await getAllAnnouncements();
@@ -308,7 +328,10 @@ describe("Announcements API", () => {
           konten: "<script>alert('test')</script> & \" ' \\n \\t",
         };
         const builder = mockQueryBuilder();
-        builder.order.mockResolvedValue({ data: [specialCharAnnouncement], error: null });
+        builder.order.mockResolvedValue({
+          data: [specialCharAnnouncement],
+          error: null,
+        });
         vi.mocked(supabase.from).mockReturnValue(builder as any);
 
         const result = await getAllAnnouncements();
@@ -318,7 +341,10 @@ describe("Announcements API", () => {
 
       it("should handle null attachment_url", async () => {
         const builder = mockQueryBuilder();
-        builder.order.mockResolvedValue({ data: [mockAnnouncement], error: null });
+        builder.order.mockResolvedValue({
+          data: [mockAnnouncement],
+          error: null,
+        });
         vi.mocked(supabase.from).mockReturnValue(builder as any);
 
         const result = await getAllAnnouncements();
@@ -332,7 +358,10 @@ describe("Announcements API", () => {
           attachment_url: "https://example.com/file.pdf",
         };
         const builder = mockQueryBuilder();
-        builder.order.mockResolvedValue({ data: [announcementWithAttachment], error: null });
+        builder.order.mockResolvedValue({
+          data: [announcementWithAttachment],
+          error: null,
+        });
         vi.mocked(supabase.from).mockReturnValue(builder as any);
 
         const result = await getAllAnnouncements();
@@ -391,7 +420,10 @@ describe("Announcements API", () => {
     describe("getAnnouncementStats() - Success Paths", () => {
       it("should calculate total announcements correctly", async () => {
         const builder = mockQueryBuilder();
-        builder.order.mockResolvedValue({ data: mockAnnouncementsList, error: null });
+        builder.order.mockResolvedValue({
+          data: mockAnnouncementsList,
+          error: null,
+        });
         vi.mocked(supabase.from).mockReturnValue(builder as any);
 
         const stats = await getAnnouncementStats();
@@ -401,7 +433,10 @@ describe("Announcements API", () => {
 
       it("should calculate active announcements (not expired)", async () => {
         const builder = mockQueryBuilder();
-        builder.order.mockResolvedValue({ data: mockAnnouncementsList, error: null });
+        builder.order.mockResolvedValue({
+          data: mockAnnouncementsList,
+          error: null,
+        });
         vi.mocked(supabase.from).mockReturnValue(builder as any);
 
         const stats = await getAnnouncementStats();
@@ -436,7 +471,10 @@ describe("Announcements API", () => {
           },
         ];
         const builder = mockQueryBuilder();
-        builder.order.mockResolvedValue({ data: activeAnnouncement, error: null });
+        builder.order.mockResolvedValue({
+          data: activeAnnouncement,
+          error: null,
+        });
         vi.mocked(supabase.from).mockReturnValue(builder as any);
 
         const stats = await getAnnouncementStats();
@@ -452,7 +490,10 @@ describe("Announcements API", () => {
           },
         ];
         const builder = mockQueryBuilder();
-        builder.order.mockResolvedValue({ data: expiredAnnouncement, error: null });
+        builder.order.mockResolvedValue({
+          data: expiredAnnouncement,
+          error: null,
+        });
         vi.mocked(supabase.from).mockReturnValue(builder as any);
 
         const stats = await getAnnouncementStats();
@@ -462,7 +503,10 @@ describe("Announcements API", () => {
 
       it("should calculate high priority announcements", async () => {
         const builder = mockQueryBuilder();
-        builder.order.mockResolvedValue({ data: mockAnnouncementsList, error: null });
+        builder.order.mockResolvedValue({
+          data: mockAnnouncementsList,
+          error: null,
+        });
         vi.mocked(supabase.from).mockReturnValue(builder as any);
 
         const stats = await getAnnouncementStats();
@@ -477,7 +521,10 @@ describe("Announcements API", () => {
           { ...mockAnnouncement, prioritas: "normal" },
         ];
         const builder = mockQueryBuilder();
-        builder.order.mockResolvedValue({ data: highPriorityList, error: null });
+        builder.order.mockResolvedValue({
+          data: highPriorityList,
+          error: null,
+        });
         vi.mocked(supabase.from).mockReturnValue(builder as any);
 
         const stats = await getAnnouncementStats();
@@ -495,7 +542,10 @@ describe("Announcements API", () => {
           },
         ];
         const builder = mockQueryBuilder();
-        builder.order.mockResolvedValue({ data: scheduledAnnouncement, error: null });
+        builder.order.mockResolvedValue({
+          data: scheduledAnnouncement,
+          error: null,
+        });
         vi.mocked(supabase.from).mockReturnValue(builder as any);
 
         const stats = await getAnnouncementStats();
@@ -511,7 +561,10 @@ describe("Announcements API", () => {
           },
         ];
         const builder = mockQueryBuilder();
-        builder.order.mockResolvedValue({ data: pastAnnouncement, error: null });
+        builder.order.mockResolvedValue({
+          data: pastAnnouncement,
+          error: null,
+        });
         vi.mocked(supabase.from).mockReturnValue(builder as any);
 
         const stats = await getAnnouncementStats();
@@ -537,7 +590,10 @@ describe("Announcements API", () => {
 
       it("should return all stats properties", async () => {
         const builder = mockQueryBuilder();
-        builder.order.mockResolvedValue({ data: mockAnnouncementsList, error: null });
+        builder.order.mockResolvedValue({
+          data: mockAnnouncementsList,
+          error: null,
+        });
         vi.mocked(supabase.from).mockReturnValue(builder as any);
 
         const stats = await getAnnouncementStats();
@@ -596,7 +652,7 @@ describe("Announcements API", () => {
 
         expect(consoleErrorSpy).toHaveBeenCalledWith(
           "Error fetching announcement stats:",
-          expect.any(Error)
+          expect.any(Error),
         );
         consoleErrorSpy.mockRestore();
       });
@@ -768,7 +824,7 @@ describe("Announcements API", () => {
             judul: "Test",
             konten: "Content",
             penulis_id: "user-1",
-          } as any)
+          } as any),
         ).resolves.toBeUndefined();
       });
     });
@@ -786,7 +842,7 @@ describe("Announcements API", () => {
             judul: "Test",
             konten: "Content",
             penulis_id: "user-1",
-          } as any)
+          } as any),
         ).rejects.toThrow("Insert failed");
       });
 
@@ -800,7 +856,7 @@ describe("Announcements API", () => {
             judul: "Test",
             konten: "Content",
             penulis_id: "user-1",
-          } as any)
+          } as any),
         ).rejects.toThrow("Connection failed");
       });
 
@@ -819,12 +875,12 @@ describe("Announcements API", () => {
             judul: "Test",
             konten: "Content",
             penulis_id: "user-1",
-          } as any)
+          } as any),
         ).rejects.toThrow();
 
         expect(consoleErrorSpy).toHaveBeenCalledWith(
           "Error creating announcement:",
-          expect.any(Error)
+          expect.any(Error),
         );
         consoleErrorSpy.mockRestore();
       });
@@ -841,7 +897,7 @@ describe("Announcements API", () => {
             judul: "Test",
             konten: "Content",
             penulis_id: "user-1",
-          } as any)
+          } as any),
         ).rejects.toThrow();
       });
 
@@ -857,7 +913,7 @@ describe("Announcements API", () => {
             judul: "Test",
             konten: "Content",
             penulis_id: "user-1",
-          } as any)
+          } as any),
         ).rejects.toThrow();
       });
     });
@@ -969,7 +1025,9 @@ describe("Announcements API", () => {
         });
         vi.mocked(supabase.from).mockReturnValue(builder as any);
 
-        await expect(deleteAnnouncement("ann-1")).rejects.toThrow("Delete failed");
+        await expect(deleteAnnouncement("ann-1")).rejects.toThrow(
+          "Delete failed",
+        );
       });
 
       it("should throw error on database connection failure", async () => {
@@ -977,7 +1035,9 @@ describe("Announcements API", () => {
         builder.eq.mockRejectedValue(new Error("Connection failed"));
         vi.mocked(supabase.from).mockReturnValue(builder as any);
 
-        await expect(deleteAnnouncement("ann-1")).rejects.toThrow("Connection failed");
+        await expect(deleteAnnouncement("ann-1")).rejects.toThrow(
+          "Connection failed",
+        );
       });
 
       it("should handle not found error", async () => {
@@ -1004,7 +1064,7 @@ describe("Announcements API", () => {
 
         expect(consoleErrorSpy).toHaveBeenCalledWith(
           "Error deleting announcement:",
-          expect.any(Error)
+          expect.any(Error),
         );
         consoleErrorSpy.mockRestore();
       });
@@ -1086,7 +1146,10 @@ describe("Announcements API", () => {
     describe("users Data Branch", () => {
       it("Branch: users data exists (add penulis)", async () => {
         const builder = mockQueryBuilder();
-        builder.order.mockResolvedValue({ data: [mockAnnouncement], error: null });
+        builder.order.mockResolvedValue({
+          data: [mockAnnouncement],
+          error: null,
+        });
         vi.mocked(supabase.from).mockReturnValue(builder as any);
 
         const result = await getAllAnnouncements();
@@ -1101,7 +1164,10 @@ describe("Announcements API", () => {
           users: null,
         };
         const builder = mockQueryBuilder();
-        builder.order.mockResolvedValue({ data: [announcementWithoutUser], error: null });
+        builder.order.mockResolvedValue({
+          data: [announcementWithoutUser],
+          error: null,
+        });
         vi.mocked(supabase.from).mockReturnValue(builder as any);
 
         const result = await getAllAnnouncements();
@@ -1195,7 +1261,10 @@ describe("Announcements API", () => {
     describe("Error Handling Branches", () => {
       it("Branch: Query succeeds (return data)", async () => {
         const builder = mockQueryBuilder();
-        builder.order.mockResolvedValue({ data: mockAnnouncementsList, error: null });
+        builder.order.mockResolvedValue({
+          data: mockAnnouncementsList,
+          error: null,
+        });
         vi.mocked(supabase.from).mockReturnValue(builder as any);
 
         const result = await getAllAnnouncements();
@@ -1237,7 +1306,10 @@ describe("Announcements API", () => {
     describe("getAllAnnouncements Paths", () => {
       it("Path 1: Success path (query → order → map users → return)", async () => {
         const builder = mockQueryBuilder();
-        builder.order.mockResolvedValue({ data: [mockAnnouncement], error: null });
+        builder.order.mockResolvedValue({
+          data: [mockAnnouncement],
+          error: null,
+        });
         vi.mocked(supabase.from).mockReturnValue(builder as any);
 
         const result = await getAllAnnouncements();
@@ -1254,7 +1326,10 @@ describe("Announcements API", () => {
           users: null,
         };
         const builder = mockQueryBuilder();
-        builder.order.mockResolvedValue({ data: [announcementWithoutUser], error: null });
+        builder.order.mockResolvedValue({
+          data: [announcementWithoutUser],
+          error: null,
+        });
         vi.mocked(supabase.from).mockReturnValue(builder as any);
 
         const result = await getAllAnnouncements();
@@ -1277,7 +1352,10 @@ describe("Announcements API", () => {
     describe("getAnnouncementStats Paths", () => {
       it("Path 4: Success path (getAllAnnouncements → calculate → return stats)", async () => {
         const builder = mockQueryBuilder();
-        builder.order.mockResolvedValue({ data: mockAnnouncementsList, error: null });
+        builder.order.mockResolvedValue({
+          data: mockAnnouncementsList,
+          error: null,
+        });
         vi.mocked(supabase.from).mockReturnValue(builder as any);
 
         const stats = await getAnnouncementStats();
@@ -1334,7 +1412,7 @@ describe("Announcements API", () => {
             judul: "Test",
             konten: "Content",
             penulis_id: "user-1",
-          } as any)
+          } as any),
         ).rejects.toThrow();
       });
     });
@@ -1371,7 +1449,10 @@ describe("Announcements API", () => {
     describe("users Existence Conditions", () => {
       it("Condition: users is truthy (add penulis)", async () => {
         const builder = mockQueryBuilder();
-        builder.order.mockResolvedValue({ data: [mockAnnouncement], error: null });
+        builder.order.mockResolvedValue({
+          data: [mockAnnouncement],
+          error: null,
+        });
         vi.mocked(supabase.from).mockReturnValue(builder as any);
 
         const result = await getAllAnnouncements();
@@ -1385,7 +1466,10 @@ describe("Announcements API", () => {
           users: null,
         };
         const builder = mockQueryBuilder();
-        builder.order.mockResolvedValue({ data: [announcementWithoutUser], error: null });
+        builder.order.mockResolvedValue({
+          data: [announcementWithoutUser],
+          error: null,
+        });
         vi.mocked(supabase.from).mockReturnValue(builder as any);
 
         const result = await getAllAnnouncements();
@@ -1543,7 +1627,10 @@ describe("Announcements API", () => {
 
       it("Loop: Single announcement (1 iteration)", async () => {
         const builder = mockQueryBuilder();
-        builder.order.mockResolvedValue({ data: [mockAnnouncement], error: null });
+        builder.order.mockResolvedValue({
+          data: [mockAnnouncement],
+          error: null,
+        });
         vi.mocked(supabase.from).mockReturnValue(builder as any);
 
         const result = await getAllAnnouncements();
@@ -1667,7 +1754,10 @@ describe("Announcements API", () => {
         attachment_url: null,
       };
       const builder = mockQueryBuilder();
-      builder.order.mockResolvedValue({ data: [minimalAnnouncement], error: null });
+      builder.order.mockResolvedValue({
+        data: [minimalAnnouncement],
+        error: null,
+      });
       vi.mocked(supabase.from).mockReturnValue(builder as any);
 
       const result = await getAllAnnouncements();
@@ -1682,7 +1772,10 @@ describe("Announcements API", () => {
         konten: "A".repeat(10000),
       };
       const builder = mockQueryBuilder();
-      builder.order.mockResolvedValue({ data: [longContentAnnouncement], error: null });
+      builder.order.mockResolvedValue({
+        data: [longContentAnnouncement],
+        error: null,
+      });
       vi.mocked(supabase.from).mockReturnValue(builder as any);
 
       const result = await getAllAnnouncements();
@@ -1698,7 +1791,10 @@ describe("Announcements API", () => {
         tanggal_selesai: now.toISOString(),
       };
       const builder = mockQueryBuilder();
-      builder.order.mockResolvedValue({ data: [boundaryAnnouncement], error: null });
+      builder.order.mockResolvedValue({
+        data: [boundaryAnnouncement],
+        error: null,
+      });
       vi.mocked(supabase.from).mockReturnValue(builder as any);
 
       const stats = await getAnnouncementStats();
@@ -1709,7 +1805,10 @@ describe("Announcements API", () => {
 
     it("should handle concurrent read operations", async () => {
       const builder = mockQueryBuilder();
-      builder.order.mockResolvedValue({ data: mockAnnouncementsList, error: null });
+      builder.order.mockResolvedValue({
+        data: mockAnnouncementsList,
+        error: null,
+      });
       vi.mocked(supabase.from).mockReturnValue(builder as any);
 
       const results = await Promise.all([
@@ -1730,7 +1829,10 @@ describe("Announcements API", () => {
         konten: "内容 🎉 ✓ ©",
       };
       const builder = mockQueryBuilder();
-      builder.order.mockResolvedValue({ data: [unicodeAnnouncement], error: null });
+      builder.order.mockResolvedValue({
+        data: [unicodeAnnouncement],
+        error: null,
+      });
       vi.mocked(supabase.from).mockReturnValue(builder as any);
 
       const result = await getAllAnnouncements();
@@ -1745,7 +1847,10 @@ describe("Announcements API", () => {
         konten: "<h1>Title</h1><p>Paragraph</p>",
       };
       const builder = mockQueryBuilder();
-      builder.order.mockResolvedValue({ data: [htmlAnnouncement], error: null });
+      builder.order.mockResolvedValue({
+        data: [htmlAnnouncement],
+        error: null,
+      });
       vi.mocked(supabase.from).mockReturnValue(builder as any);
 
       const result = await getAllAnnouncements();
@@ -1762,7 +1867,10 @@ describe("Announcements API", () => {
         },
       };
       const builder = mockQueryBuilder();
-      builder.order.mockResolvedValue({ data: [announcementWithIncompleteUser], error: null });
+      builder.order.mockResolvedValue({
+        data: [announcementWithIncompleteUser],
+        error: null,
+      });
       vi.mocked(supabase.from).mockReturnValue(builder as any);
 
       const result = await getAllAnnouncements();
@@ -1823,7 +1931,10 @@ describe("Announcements API", () => {
   describe("11. Performance Testing", () => {
     it("should complete getAllAnnouncements within reasonable time", async () => {
       const builder = mockQueryBuilder();
-      builder.order.mockResolvedValue({ data: mockAnnouncementsList, error: null });
+      builder.order.mockResolvedValue({
+        data: mockAnnouncementsList,
+        error: null,
+      });
       vi.mocked(supabase.from).mockReturnValue(builder as any);
 
       const start = Date.now();
@@ -1835,7 +1946,10 @@ describe("Announcements API", () => {
 
     it("should complete getAnnouncementStats within reasonable time", async () => {
       const builder = mockQueryBuilder();
-      builder.order.mockResolvedValue({ data: mockAnnouncementsList, error: null });
+      builder.order.mockResolvedValue({
+        data: mockAnnouncementsList,
+        error: null,
+      });
       vi.mocked(supabase.from).mockReturnValue(builder as any);
 
       const start = Date.now();

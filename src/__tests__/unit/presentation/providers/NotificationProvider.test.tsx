@@ -8,19 +8,19 @@ import { render, screen, fireEvent, act } from "@testing-library/react";
 import {
   NotificationProvider,
   useNotifications,
-} from "../../../providers/NotificationProvider";
+} from "../../../../providers/NotificationProvider";
 
 // Mock dependencies
-vi.mock("../../../lib/hooks/useNotification", () => ({
+vi.mock("../../../../lib/hooks/useNotification", () => ({
   useNotification: vi.fn(),
 }));
 
-vi.mock("../../../components/ui/sonner", () => ({
+vi.mock("../../../../components/ui/sonner", () => ({
   Toaster: () => <div data-testid="toaster" />,
 }));
 
 const mockUseNotification = vi.mocked(
-  await import("../../../../../lib/hooks/useNotification"),
+  await import("../../../../lib/hooks/useNotification"),
 ).useNotification;
 
 describe("NotificationProvider", () => {

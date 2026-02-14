@@ -289,7 +289,7 @@ describe("Error Handling Utilities", () => {
       const error = mapStatusToError(418, "I'm a teapot");
 
       expect(error).toBeInstanceOf(BaseApiError);
-      expect(error.code).toBe("UNKNOWN");
+      expect(error.code).toBe("BAD_REQUEST");
     });
 
     it("should include details in error", () => {
@@ -538,8 +538,7 @@ describe("Error Handling Utilities", () => {
       logError(networkError, "API Call");
 
       expect(mockConsoleWarn).toHaveBeenCalledWith(
-        expect.stringContaining("Offline"),
-        expect.stringContaining("(API Call)"),
+        expect.stringContaining("Offline (API Call)"),
       );
     });
 

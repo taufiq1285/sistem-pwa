@@ -167,7 +167,7 @@ describe("register-sw", () => {
 
   describe("Update Detection - updatefound Event", () => {
     it("should detect update via updatefound event", async () => {
-      let updateFoundHandler: Function | null = null;
+      let updateFoundHandler: (() => void) | null = null;
 
       const registrationWithListener = {
         ...mockRegistration,
@@ -195,7 +195,7 @@ describe("register-sw", () => {
         addEventListener: vi.fn(),
       };
 
-      let updateFoundHandler: Function | null = null;
+      let updateFoundHandler: (() => void) | null = null;
 
       const registrationWithListener = {
         ...mockRegistration,
@@ -227,7 +227,7 @@ describe("register-sw", () => {
     });
 
     it("should handle updatefound with no new worker", async () => {
-      let updateFoundHandler: Function | null = null;
+      let updateFoundHandler: (() => void) | null = null;
 
       const registrationWithListener = {
         ...mockRegistration,
@@ -265,7 +265,7 @@ describe("register-sw", () => {
 
       mockServiceWorker.controller = { postMessage: vi.fn() }; // Controller exists
 
-      let updateFoundHandler: Function | null = null;
+      let updateFoundHandler: (() => void) | null = null;
 
       const registrationWithListener = {
         ...mockRegistration,
@@ -303,7 +303,7 @@ describe("register-sw", () => {
 
       mockServiceWorker.controller = null; // No controller
 
-      let updateFoundHandler: Function | null = null;
+      let updateFoundHandler: (() => void) | null = null;
 
       const registrationWithListener = {
         ...mockRegistration,
@@ -339,7 +339,7 @@ describe("register-sw", () => {
         }),
       };
 
-      let updateFoundHandler: Function | null = null;
+      let updateFoundHandler: (() => void) | null = null;
 
       const registrationWithListener = {
         ...mockRegistration,
@@ -646,7 +646,7 @@ describe("register-sw", () => {
     });
 
     it("should handle SYNC_STARTED message", async () => {
-      let messageHandler: Function | null = null;
+      let messageHandler: ((event: { data: unknown }) => void) | null = null;
 
       mockServiceWorker.addEventListener = vi.fn((event, handler) => {
         if (event === "message") {
@@ -670,7 +670,7 @@ describe("register-sw", () => {
     });
 
     it("should handle SYNC_COMPLETED message", async () => {
-      let messageHandler: Function | null = null;
+      let messageHandler: ((event: { data: unknown }) => void) | null = null;
 
       mockServiceWorker.addEventListener = vi.fn((event, handler) => {
         if (event === "message") {
@@ -694,7 +694,7 @@ describe("register-sw", () => {
     });
 
     it("should handle SYNC_FAILED message", async () => {
-      let messageHandler: Function | null = null;
+      let messageHandler: ((event: { data: unknown }) => void) | null = null;
 
       mockServiceWorker.addEventListener = vi.fn((event, handler) => {
         if (event === "message") {
@@ -718,7 +718,7 @@ describe("register-sw", () => {
     });
 
     it("should handle unknown message type", async () => {
-      let messageHandler: Function | null = null;
+      let messageHandler: ((event: { data: unknown }) => void) | null = null;
 
       mockServiceWorker.addEventListener = vi.fn((event, handler) => {
         if (event === "message") {
@@ -879,7 +879,7 @@ describe("register-sw", () => {
         postMessage: vi.fn(),
       };
 
-      let controllerChangeHandler: Function | null = null;
+      let controllerChangeHandler: (() => void) | null = null;
 
       mockServiceWorker.addEventListener = vi.fn((event, handler, options) => {
         if (event === "controllerchange") {
@@ -917,7 +917,7 @@ describe("register-sw", () => {
         postMessage: vi.fn(),
       };
 
-      let controllerChangeHandler: Function | null = null;
+      let controllerChangeHandler: (() => void) | null = null;
 
       mockServiceWorker.addEventListener = vi.fn((event, handler) => {
         if (event === "controllerchange") {
@@ -1573,7 +1573,7 @@ describe("register-sw", () => {
     });
 
     it("branch: if (!newWorker) in updatefound - return early", async () => {
-      let updateFoundHandler: Function | null = null;
+      let updateFoundHandler: (() => void) | null = null;
 
       const registrationWithListener = {
         ...mockRegistration,
@@ -1612,7 +1612,7 @@ describe("register-sw", () => {
         postMessage: vi.fn(),
       };
 
-      let controllerChangeHandler: Function | null = null;
+      let controllerChangeHandler: (() => void) | null = null;
 
       mockServiceWorker.addEventListener = vi.fn((event, handler) => {
         if (event === "controllerchange") {
@@ -1827,7 +1827,7 @@ describe("register-sw", () => {
     });
 
     it("should handle background sync notification", async () => {
-      let messageHandler: Function | null = null;
+      let messageHandler: ((event: { data: unknown }) => void) | null = null;
 
       mockServiceWorker.addEventListener = vi.fn((event, handler) => {
         if (event === "message") {

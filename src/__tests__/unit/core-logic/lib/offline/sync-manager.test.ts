@@ -12,10 +12,7 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { SyncManager } from "@/lib/offline/sync-manager";
-import type {
-  SyncEvent,
-  SyncResult,
-} from "@/lib/offline/sync-manager";
+import type { SyncEvent, SyncResult } from "@/lib/offline/sync-manager";
 
 // ============================================================================
 // MOCKS

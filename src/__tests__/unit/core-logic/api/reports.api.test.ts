@@ -163,7 +163,7 @@ describe("Reports API", () => {
       await expect(getBorrowingStats()).rejects.toThrow();
       expect(logger.error).toHaveBeenCalledWith(
         "Failed to fetch borrowing stats",
-        { error: dbError }
+        { error: dbError },
       );
       expect(handleSupabaseError).toHaveBeenCalledWith(dbError);
     });
@@ -280,8 +280,8 @@ describe("Reports API", () => {
       builder.select.mockResolvedValue({
         data: [
           { jumlah: 10, jumlah_tersedia: 10, kategori: "A" }, // 0 borrowed
-          { jumlah: 10, jumlah_tersedia: 5, kategori: "A" },  // 5 borrowed
-          { jumlah: 10, jumlah_tersedia: 0, kategori: "A" },  // 10 borrowed
+          { jumlah: 10, jumlah_tersedia: 5, kategori: "A" }, // 5 borrowed
+          { jumlah: 10, jumlah_tersedia: 0, kategori: "A" }, // 10 borrowed
         ],
         error: null,
       });
@@ -309,7 +309,7 @@ describe("Reports API", () => {
       await expect(getEquipmentStats()).rejects.toThrow();
       expect(logger.error).toHaveBeenCalledWith(
         "Failed to fetch equipment stats",
-        { error: dbError }
+        { error: dbError },
       );
     });
   });
@@ -365,11 +365,7 @@ describe("Reports API", () => {
     it("should sum capacity correctly with zero values", async () => {
       const builder = mockQueryBuilder();
       builder.eq.mockResolvedValue({
-        data: [
-          { kapasitas: 30 },
-          { kapasitas: 0 },
-          { kapasitas: 40 },
-        ],
+        data: [{ kapasitas: 30 }, { kapasitas: 0 }, { kapasitas: 40 }],
         error: null,
       });
       builder.select.mockReturnThis();
@@ -395,7 +391,7 @@ describe("Reports API", () => {
       await expect(getLabUsageStats()).rejects.toThrow();
       expect(logger.error).toHaveBeenCalledWith(
         "Failed to fetch lab usage stats",
-        { error: dbError }
+        { error: dbError },
       );
     });
   });
@@ -457,22 +453,38 @@ describe("Reports API", () => {
           {
             inventaris_id: "inv-1",
             jumlah_pinjam: 1,
-            inventaris: { kode_barang: "A", nama_barang: "Item 1", kategori: "A" },
+            inventaris: {
+              kode_barang: "A",
+              nama_barang: "Item 1",
+              kategori: "A",
+            },
           },
           {
             inventaris_id: "inv-1",
             jumlah_pinjam: 1,
-            inventaris: { kode_barang: "A", nama_barang: "Item 1", kategori: "A" },
+            inventaris: {
+              kode_barang: "A",
+              nama_barang: "Item 1",
+              kategori: "A",
+            },
           },
           {
             inventaris_id: "inv-1",
             jumlah_pinjam: 1,
-            inventaris: { kode_barang: "A", nama_barang: "Item 1", kategori: "A" },
+            inventaris: {
+              kode_barang: "A",
+              nama_barang: "Item 1",
+              kategori: "A",
+            },
           },
           {
             inventaris_id: "inv-2",
             jumlah_pinjam: 10,
-            inventaris: { kode_barang: "B", nama_barang: "Item 2", kategori: "B" },
+            inventaris: {
+              kode_barang: "B",
+              nama_barang: "Item 2",
+              kategori: "B",
+            },
           },
         ],
         error: null,
@@ -489,9 +501,33 @@ describe("Reports API", () => {
       const builder = mockQueryBuilder();
       builder.in.mockResolvedValue({
         data: [
-          { inventaris_id: "inv-1", jumlah_pinjam: 1, inventaris: { kode_barang: "A", nama_barang: "Item 1", kategori: "A" } },
-          { inventaris_id: "inv-2", jumlah_pinjam: 1, inventaris: { kode_barang: "B", nama_barang: "Item 2", kategori: "B" } },
-          { inventaris_id: "inv-3", jumlah_pinjam: 1, inventaris: { kode_barang: "C", nama_barang: "Item 3", kategori: "C" } },
+          {
+            inventaris_id: "inv-1",
+            jumlah_pinjam: 1,
+            inventaris: {
+              kode_barang: "A",
+              nama_barang: "Item 1",
+              kategori: "A",
+            },
+          },
+          {
+            inventaris_id: "inv-2",
+            jumlah_pinjam: 1,
+            inventaris: {
+              kode_barang: "B",
+              nama_barang: "Item 2",
+              kategori: "B",
+            },
+          },
+          {
+            inventaris_id: "inv-3",
+            jumlah_pinjam: 1,
+            inventaris: {
+              kode_barang: "C",
+              nama_barang: "Item 3",
+              kategori: "C",
+            },
+          },
         ],
         error: null,
       });
@@ -549,7 +585,11 @@ describe("Reports API", () => {
           {
             inventaris_id: "inv-1",
             jumlah_pinjam: 0,
-            inventaris: { kode_barang: "A", nama_barang: "Item 1", kategori: "A" },
+            inventaris: {
+              kode_barang: "A",
+              nama_barang: "Item 1",
+              kategori: "A",
+            },
           },
         ],
         error: null,
@@ -578,7 +618,7 @@ describe("Reports API", () => {
       await expect(getTopBorrowedItems(10)).rejects.toThrow();
       expect(logger.error).toHaveBeenCalledWith(
         "Failed to fetch top borrowed items",
-        { limit: 10, error: dbError }
+        { limit: 10, error: dbError },
       );
     });
   });
@@ -591,9 +631,21 @@ describe("Reports API", () => {
       const builder = mockQueryBuilder();
       builder.gte.mockResolvedValue({
         data: [
-          { created_at: "2024-01-01T10:00:00Z", status: "approved", tanggal_pinjam: null },
-          { created_at: "2024-01-01T11:00:00Z", status: "rejected", tanggal_pinjam: null },
-          { created_at: "2024-01-02T10:00:00Z", status: "approved", tanggal_pinjam: null },
+          {
+            created_at: "2024-01-01T10:00:00Z",
+            status: "approved",
+            tanggal_pinjam: null,
+          },
+          {
+            created_at: "2024-01-01T11:00:00Z",
+            status: "rejected",
+            tanggal_pinjam: null,
+          },
+          {
+            created_at: "2024-01-02T10:00:00Z",
+            status: "approved",
+            tanggal_pinjam: null,
+          },
         ],
         error: null,
       });
@@ -614,7 +666,11 @@ describe("Reports API", () => {
       const builder = mockQueryBuilder();
       builder.gte.mockResolvedValue({
         data: [
-          { created_at: null, status: "approved", tanggal_pinjam: "2024-01-01" },
+          {
+            created_at: null,
+            status: "approved",
+            tanggal_pinjam: "2024-01-01",
+          },
         ],
         error: null,
       });
@@ -630,8 +686,16 @@ describe("Reports API", () => {
       const builder = mockQueryBuilder();
       builder.gte.mockResolvedValue({
         data: [
-          { created_at: "2024-01-01", status: "approved", tanggal_pinjam: null },
-          { created_at: "2024-01-01", status: "returned", tanggal_pinjam: null },
+          {
+            created_at: "2024-01-01",
+            status: "approved",
+            tanggal_pinjam: null,
+          },
+          {
+            created_at: "2024-01-01",
+            status: "returned",
+            tanggal_pinjam: null,
+          },
           { created_at: "2024-01-01", status: "pending", tanggal_pinjam: null },
         ],
         error: null,
@@ -647,9 +711,21 @@ describe("Reports API", () => {
       const builder = mockQueryBuilder();
       builder.gte.mockResolvedValue({
         data: [
-          { created_at: "2024-01-01", status: "rejected", tanggal_pinjam: null },
-          { created_at: "2024-01-01", status: "rejected", tanggal_pinjam: null },
-          { created_at: "2024-01-01", status: "approved", tanggal_pinjam: null },
+          {
+            created_at: "2024-01-01",
+            status: "rejected",
+            tanggal_pinjam: null,
+          },
+          {
+            created_at: "2024-01-01",
+            status: "rejected",
+            tanggal_pinjam: null,
+          },
+          {
+            created_at: "2024-01-01",
+            status: "approved",
+            tanggal_pinjam: null,
+          },
         ],
         error: null,
       });
@@ -664,9 +740,21 @@ describe("Reports API", () => {
       const builder = mockQueryBuilder();
       builder.gte.mockResolvedValue({
         data: [
-          { created_at: "2024-01-03", status: "approved", tanggal_pinjam: null },
-          { created_at: "2024-01-01", status: "approved", tanggal_pinjam: null },
-          { created_at: "2024-01-02", status: "approved", tanggal_pinjam: null },
+          {
+            created_at: "2024-01-03",
+            status: "approved",
+            tanggal_pinjam: null,
+          },
+          {
+            created_at: "2024-01-01",
+            status: "approved",
+            tanggal_pinjam: null,
+          },
+          {
+            created_at: "2024-01-02",
+            status: "approved",
+            tanggal_pinjam: null,
+          },
         ],
         error: null,
       });
@@ -708,7 +796,9 @@ describe("Reports API", () => {
       // Verify date is approximately 7 days ago
       const dateArg = new Date(callArgs[1]);
       const now = new Date();
-      const daysDiff = Math.floor((now.getTime() - dateArg.getTime()) / (1000 * 60 * 60 * 24));
+      const daysDiff = Math.floor(
+        (now.getTime() - dateArg.getTime()) / (1000 * 60 * 60 * 24),
+      );
       expect(daysDiff).toBeGreaterThanOrEqual(6);
       expect(daysDiff).toBeLessThanOrEqual(8);
     });
@@ -730,7 +820,7 @@ describe("Reports API", () => {
       await expect(getBorrowingTrends(30)).rejects.toThrow();
       expect(logger.error).toHaveBeenCalledWith(
         "Failed to fetch borrowing trends",
-        { days: 30, error: dbError }
+        { days: 30, error: dbError },
       );
     });
   });
@@ -953,7 +1043,7 @@ describe("Reports API", () => {
       await expect(getLabUtilization()).rejects.toThrow();
       expect(logger.error).toHaveBeenCalledWith(
         "Failed to fetch lab utilization",
-        { error: dbError }
+        { error: dbError },
       );
     });
   });
@@ -1170,7 +1260,7 @@ describe("Reports API", () => {
       await expect(getRecentActivities(20)).rejects.toThrow();
       expect(logger.error).toHaveBeenCalledWith(
         "Failed to fetch recent activities",
-        { limit: 20, error: dbError }
+        { limit: 20, error: dbError },
       );
     });
   });
@@ -1200,7 +1290,13 @@ describe("Reports API", () => {
       });
 
       it("should branch: each status type filter", async () => {
-        const statuses = ["pending", "approved", "rejected", "returned", "overdue"];
+        const statuses = [
+          "pending",
+          "approved",
+          "rejected",
+          "returned",
+          "overdue",
+        ];
         for (const status of statuses) {
           const builder = mockQueryBuilder();
           builder.select.mockResolvedValue({
@@ -1219,9 +1315,9 @@ describe("Reports API", () => {
         const builder = mockQueryBuilder();
         builder.select.mockResolvedValue({
           data: [
-            { jumlah: 10, jumlah_tersedia: 0, kategori: "A" },  // out of stock
-            { jumlah: 10, jumlah_tersedia: 4, kategori: "B" },  // low stock
-            { jumlah: 10, jumlah_tersedia: 5, kategori: "C" },  // not low stock
+            { jumlah: 10, jumlah_tersedia: 0, kategori: "A" }, // out of stock
+            { jumlah: 10, jumlah_tersedia: 4, kategori: "B" }, // low stock
+            { jumlah: 10, jumlah_tersedia: 5, kategori: "C" }, // not low stock
           ],
           error: null,
         });
@@ -1252,7 +1348,15 @@ describe("Reports API", () => {
         const builder = mockQueryBuilder();
         builder.in.mockResolvedValue({
           data: [
-            { inventaris_id: "1", jumlah_pinjam: 5, inventaris: { kode_barang: "A", nama_barang: "Item", kategori: "A" } },
+            {
+              inventaris_id: "1",
+              jumlah_pinjam: 5,
+              inventaris: {
+                kode_barang: "A",
+                nama_barang: "Item",
+                kategori: "A",
+              },
+            },
             { inventaris_id: "2", jumlah_pinjam: 5, inventaris: null },
           ],
           error: null,
@@ -1269,7 +1373,13 @@ describe("Reports API", () => {
         // Branch 1: use created_at
         const builder1 = mockQueryBuilder();
         builder1.gte.mockResolvedValue({
-          data: [{ created_at: "2024-01-01T10:00:00Z", status: "approved", tanggal_pinjam: null }],
+          data: [
+            {
+              created_at: "2024-01-01T10:00:00Z",
+              status: "approved",
+              tanggal_pinjam: null,
+            },
+          ],
           error: null,
         });
         vi.mocked(supabase.from).mockReturnValue(builder1 as any);
@@ -1279,7 +1389,13 @@ describe("Reports API", () => {
         // Branch 2: use tanggal_pinjam
         const builder2 = mockQueryBuilder();
         builder2.gte.mockResolvedValue({
-          data: [{ created_at: null, status: "approved", tanggal_pinjam: "2024-01-02" }],
+          data: [
+            {
+              created_at: null,
+              status: "approved",
+              tanggal_pinjam: "2024-01-02",
+            },
+          ],
           error: null,
         });
         vi.mocked(supabase.from).mockReturnValue(builder2 as any);
@@ -1291,10 +1407,26 @@ describe("Reports API", () => {
         const builder = mockQueryBuilder();
         builder.gte.mockResolvedValue({
           data: [
-            { created_at: "2024-01-01", status: "approved", tanggal_pinjam: null },
-            { created_at: "2024-01-01", status: "returned", tanggal_pinjam: null },
-            { created_at: "2024-01-01", status: "rejected", tanggal_pinjam: null },
-            { created_at: "2024-01-01", status: "pending", tanggal_pinjam: null },
+            {
+              created_at: "2024-01-01",
+              status: "approved",
+              tanggal_pinjam: null,
+            },
+            {
+              created_at: "2024-01-01",
+              status: "returned",
+              tanggal_pinjam: null,
+            },
+            {
+              created_at: "2024-01-01",
+              status: "rejected",
+              tanggal_pinjam: null,
+            },
+            {
+              created_at: "2024-01-01",
+              status: "pending",
+              tanggal_pinjam: null,
+            },
           ],
           error: null,
         });
@@ -1311,9 +1443,24 @@ describe("Reports API", () => {
         const builder = mockQueryBuilder();
         builder.eq.mockResolvedValue({
           data: [
-            { laboratorium_id: "1", jam_mulai: "08:00", jam_selesai: "10:00", laboratorium: {} },
-            { laboratorium_id: "2", jam_mulai: null, jam_selesai: null, laboratorium: {} },
-            { laboratorium_id: "3", jam_mulai: "", jam_selesai: "", laboratorium: {} },
+            {
+              laboratorium_id: "1",
+              jam_mulai: "08:00",
+              jam_selesai: "10:00",
+              laboratorium: {},
+            },
+            {
+              laboratorium_id: "2",
+              jam_mulai: null,
+              jam_selesai: null,
+              laboratorium: {},
+            },
+            {
+              laboratorium_id: "3",
+              jam_mulai: "",
+              jam_selesai: "",
+              laboratorium: {},
+            },
           ],
           error: null,
         });
@@ -1328,24 +1475,38 @@ describe("Reports API", () => {
     describe("getRecentActivities branches", () => {
       it("should branch: activity type detection", async () => {
         const testCases = [
-          { status: "returned", tanggal_kembali_aktual: "2024-01-02", expected: "return" },
-          { status: "approved", approved_at: "2024-01-01", expected: "approval" },
-          { status: "rejected", approved_at: "2024-01-01", expected: "rejection" },
+          {
+            status: "returned",
+            tanggal_kembali_aktual: "2024-01-02",
+            expected: "return",
+          },
+          {
+            status: "approved",
+            approved_at: "2024-01-01",
+            expected: "approval",
+          },
+          {
+            status: "rejected",
+            approved_at: "2024-01-01",
+            expected: "rejection",
+          },
           { status: "pending", expected: "borrowing" },
         ];
 
         for (const testCase of testCases) {
           const builder = mockQueryBuilder();
           builder.limit.mockResolvedValue({
-            data: [{
-              id: "1",
-              status: testCase.status,
-              created_at: "2024-01-01",
-              tanggal_kembali_aktual: testCase.tanggal_kembali_aktual || null,
-              approved_at: testCase.approved_at || null,
-              dosen_id: null,
-              inventaris: {},
-            }],
+            data: [
+              {
+                id: "1",
+                status: testCase.status,
+                created_at: "2024-01-01",
+                tanggal_kembali_aktual: testCase.tanggal_kembali_aktual || null,
+                approved_at: testCase.approved_at || null,
+                dosen_id: null,
+                inventaris: {},
+              },
+            ],
             error: null,
           });
           builder.order.mockReturnThis();
@@ -1399,8 +1560,24 @@ describe("Reports API", () => {
         const builder = mockQueryBuilder();
         builder.in.mockResolvedValue({
           data: [
-            { inventaris_id: "1", jumlah_pinjam: 5, inventaris: { kode_barang: "A", nama_barang: "I1", kategori: "A" } },
-            { inventaris_id: "1", jumlah_pinjam: 3, inventaris: { kode_barang: "A", nama_barang: "I1", kategori: "A" } },
+            {
+              inventaris_id: "1",
+              jumlah_pinjam: 5,
+              inventaris: {
+                kode_barang: "A",
+                nama_barang: "I1",
+                kategori: "A",
+              },
+            },
+            {
+              inventaris_id: "1",
+              jumlah_pinjam: 3,
+              inventaris: {
+                kode_barang: "A",
+                nama_barang: "I1",
+                kategori: "A",
+              },
+            },
           ],
           error: null,
         });
@@ -1415,9 +1592,33 @@ describe("Reports API", () => {
         const builder = mockQueryBuilder();
         builder.in.mockResolvedValue({
           data: [
-            { inventaris_id: "1", jumlah_pinjam: 1, inventaris: { kode_barang: "A", nama_barang: "I1", kategori: "A" } },
-            { inventaris_id: "1", jumlah_pinjam: 1, inventaris: { kode_barang: "A", nama_barang: "I1", kategori: "A" } },
-            { inventaris_id: "2", jumlah_pinjam: 1, inventaris: { kode_barang: "B", nama_barang: "I2", kategori: "B" } },
+            {
+              inventaris_id: "1",
+              jumlah_pinjam: 1,
+              inventaris: {
+                kode_barang: "A",
+                nama_barang: "I1",
+                kategori: "A",
+              },
+            },
+            {
+              inventaris_id: "1",
+              jumlah_pinjam: 1,
+              inventaris: {
+                kode_barang: "A",
+                nama_barang: "I1",
+                kategori: "A",
+              },
+            },
+            {
+              inventaris_id: "2",
+              jumlah_pinjam: 1,
+              inventaris: {
+                kode_barang: "B",
+                nama_barang: "I2",
+                kategori: "B",
+              },
+            },
           ],
           error: null,
         });
@@ -1433,9 +1634,21 @@ describe("Reports API", () => {
         const builder = mockQueryBuilder();
         builder.gte.mockResolvedValue({
           data: [
-            { created_at: "2024-01-01T10:00:00Z", status: "approved", tanggal_pinjam: null },
-            { created_at: "2024-01-01T11:00:00Z", status: "approved", tanggal_pinjam: null },
-            { created_at: "2024-01-01T12:00:00Z", status: "rejected", tanggal_pinjam: null },
+            {
+              created_at: "2024-01-01T10:00:00Z",
+              status: "approved",
+              tanggal_pinjam: null,
+            },
+            {
+              created_at: "2024-01-01T11:00:00Z",
+              status: "approved",
+              tanggal_pinjam: null,
+            },
+            {
+              created_at: "2024-01-01T12:00:00Z",
+              status: "rejected",
+              tanggal_pinjam: null,
+            },
           ],
           error: null,
         });
@@ -1453,9 +1666,24 @@ describe("Reports API", () => {
         const builder = mockQueryBuilder();
         builder.eq.mockResolvedValue({
           data: [
-            { laboratorium_id: "1", jam_mulai: "08:00", jam_selesai: "10:00", laboratorium: { kode_lab: "A", nama_lab: "Lab A" } },
-            { laboratorium_id: "1", jam_mulai: "14:00", jam_selesai: "16:00", laboratorium: { kode_lab: "A", nama_lab: "Lab A" } },
-            { laboratorium_id: "2", jam_mulai: "09:00", jam_selesai: "11:00", laboratorium: { kode_lab: "B", nama_lab: "Lab B" } },
+            {
+              laboratorium_id: "1",
+              jam_mulai: "08:00",
+              jam_selesai: "10:00",
+              laboratorium: { kode_lab: "A", nama_lab: "Lab A" },
+            },
+            {
+              laboratorium_id: "1",
+              jam_mulai: "14:00",
+              jam_selesai: "16:00",
+              laboratorium: { kode_lab: "A", nama_lab: "Lab A" },
+            },
+            {
+              laboratorium_id: "2",
+              jam_mulai: "09:00",
+              jam_selesai: "11:00",
+              laboratorium: { kode_lab: "B", nama_lab: "Lab B" },
+            },
           ],
           error: null,
         });
@@ -1491,8 +1719,8 @@ describe("Reports API", () => {
       const builder = mockQueryBuilder();
       builder.select.mockResolvedValue({
         data: [
-          { jumlah: 10, jumlah_tersedia: 3, kategori: "A" },  // low stock
-          { jumlah: 10, jumlah_tersedia: 0, kategori: "B" },  // out of stock
+          { jumlah: 10, jumlah_tersedia: 3, kategori: "A" }, // low stock
+          { jumlah: 10, jumlah_tersedia: 0, kategori: "B" }, // out of stock
           { jumlah: 10, jumlah_tersedia: 10, kategori: "C" }, // available
         ],
         error: null,
@@ -1510,8 +1738,24 @@ describe("Reports API", () => {
       const builder = mockQueryBuilder();
       builder.in.mockResolvedValue({
         data: [
-          { inventaris_id: "1", jumlah_pinjam: 5, inventaris: { kode_barang: "A", nama_barang: "Item", kategori: "A" } },
-          { inventaris_id: "1", jumlah_pinjam: 3, inventaris: { kode_barang: "A", nama_barang: "Item", kategori: "A" } },
+          {
+            inventaris_id: "1",
+            jumlah_pinjam: 5,
+            inventaris: {
+              kode_barang: "A",
+              nama_barang: "Item",
+              kategori: "A",
+            },
+          },
+          {
+            inventaris_id: "1",
+            jumlah_pinjam: 3,
+            inventaris: {
+              kode_barang: "A",
+              nama_barang: "Item",
+              kategori: "A",
+            },
+          },
         ],
         error: null,
       });
@@ -1525,8 +1769,16 @@ describe("Reports API", () => {
       const builder = mockQueryBuilder();
       builder.gte.mockResolvedValue({
         data: [
-          { created_at: "2024-01-01T10:00:00Z", status: "approved", tanggal_pinjam: null },
-          { created_at: "2024-01-01T11:00:00Z", status: "rejected", tanggal_pinjam: null },
+          {
+            created_at: "2024-01-01T10:00:00Z",
+            status: "approved",
+            tanggal_pinjam: null,
+          },
+          {
+            created_at: "2024-01-01T11:00:00Z",
+            status: "rejected",
+            tanggal_pinjam: null,
+          },
         ],
         error: null,
       });
@@ -1542,7 +1794,12 @@ describe("Reports API", () => {
       const builder = mockQueryBuilder();
       builder.eq.mockResolvedValue({
         data: [
-          { laboratorium_id: "1", jam_mulai: "08:00", jam_selesai: "10:00", laboratorium: { kode_lab: "A", nama_lab: "Lab" } },
+          {
+            laboratorium_id: "1",
+            jam_mulai: "08:00",
+            jam_selesai: "10:00",
+            laboratorium: { kode_lab: "A", nama_lab: "Lab" },
+          },
         ],
         error: null,
       });
@@ -1560,9 +1817,7 @@ describe("Reports API", () => {
     it("should handle very large jumlah_pinjam values", async () => {
       const builder = mockQueryBuilder();
       builder.select.mockResolvedValue({
-        data: [
-          { status: "approved", jumlah_pinjam: 1000000 },
-        ],
+        data: [{ status: "approved", jumlah_pinjam: 1000000 }],
         error: null,
       });
       vi.mocked(supabase.from).mockReturnValue(builder as any);
@@ -1587,7 +1842,12 @@ describe("Reports API", () => {
       const builder = mockQueryBuilder();
       builder.eq.mockResolvedValue({
         data: [
-          { laboratorium_id: "1", jam_mulai: "00:00", jam_selesai: "01:00", laboratorium: {} },
+          {
+            laboratorium_id: "1",
+            jam_mulai: "00:00",
+            jam_selesai: "01:00",
+            laboratorium: {},
+          },
         ],
         error: null,
       });
@@ -1600,7 +1860,12 @@ describe("Reports API", () => {
       const builder = mockQueryBuilder();
       builder.eq.mockResolvedValue({
         data: [
-          { laboratorium_id: "1", jam_mulai: "22:00", jam_selesai: "23:00", laboratorium: {} },
+          {
+            laboratorium_id: "1",
+            jam_mulai: "22:00",
+            jam_selesai: "23:00",
+            laboratorium: {},
+          },
         ],
         error: null,
       });
@@ -1621,7 +1886,15 @@ describe("Reports API", () => {
       const builder = mockQueryBuilder();
       builder.in.mockResolvedValue({
         data: [
-          { inventaris_id: "1", jumlah_pinjam: 1, inventaris: { kode_barang: "A", nama_barang: "Item", kategori: "A" } },
+          {
+            inventaris_id: "1",
+            jumlah_pinjam: 1,
+            inventaris: {
+              kode_barang: "A",
+              nama_barang: "Item",
+              kategori: "A",
+            },
+          },
         ],
         error: null,
       });
@@ -1648,10 +1921,14 @@ describe("Reports API", () => {
   // ===========================================================================
   describe("Performance Testing", () => {
     it("should handle large datasets in getBorrowingStats efficiently", async () => {
-      const largeData = Array(1000).fill(null).map((_, i) => ({
-        status: ["pending", "approved", "rejected", "returned", "overdue"][i % 5],
-        jumlah_pinjam: i,
-      }));
+      const largeData = Array(1000)
+        .fill(null)
+        .map((_, i) => ({
+          status: ["pending", "approved", "rejected", "returned", "overdue"][
+            i % 5
+          ],
+          jumlah_pinjam: i,
+        }));
 
       const builder = mockQueryBuilder();
       builder.select.mockResolvedValue({ data: largeData, error: null });
@@ -1666,11 +1943,13 @@ describe("Reports API", () => {
     });
 
     it("should handle large datasets in getEquipmentStats efficiently", async () => {
-      const largeData = Array(500).fill(null).map((_, i) => ({
-        jumlah: 10,
-        jumlah_tersedia: i % 5,
-        kategori: `Category${i % 10}`,
-      }));
+      const largeData = Array(500)
+        .fill(null)
+        .map((_, i) => ({
+          jumlah: 10,
+          jumlah_tersedia: i % 5,
+          kategori: `Category${i % 10}`,
+        }));
 
       const builder = mockQueryBuilder();
       builder.select.mockResolvedValue({ data: largeData, error: null });
@@ -1685,15 +1964,17 @@ describe("Reports API", () => {
     });
 
     it("should handle aggregation of large datasets in getTopBorrowedItems", async () => {
-      const largeData = Array(500).fill(null).map((_, i) => ({
-        inventaris_id: `inv-${i % 50}`, // 50 unique items
-        jumlah_pinjam: i,
-        inventaris: {
-          kode_barang: `CODE${i % 50}`,
-          nama_barang: `Item ${i % 50}`,
-          kategori: `Cat${i % 5}`,
-        },
-      }));
+      const largeData = Array(500)
+        .fill(null)
+        .map((_, i) => ({
+          inventaris_id: `inv-${i % 50}`, // 50 unique items
+          jumlah_pinjam: i,
+          inventaris: {
+            kode_barang: `CODE${i % 50}`,
+            nama_barang: `Item ${i % 50}`,
+            kategori: `Cat${i % 5}`,
+          },
+        }));
 
       const builder = mockQueryBuilder();
       builder.in.mockResolvedValue({ data: largeData, error: null });
@@ -1708,11 +1989,15 @@ describe("Reports API", () => {
     });
 
     it("should handle date grouping efficiently in getBorrowingTrends", async () => {
-      const largeData = Array(365).fill(null).map((_, i) => ({
-        created_at: new Date(Date.now() - i * 24 * 60 * 60 * 1000).toISOString(),
-        status: ["approved", "rejected", "pending"][i % 3],
-        tanggal_pinjam: null,
-      }));
+      const largeData = Array(365)
+        .fill(null)
+        .map((_, i) => ({
+          created_at: new Date(
+            Date.now() - i * 24 * 60 * 60 * 1000,
+          ).toISOString(),
+          status: ["approved", "rejected", "pending"][i % 3],
+          tanggal_pinjam: null,
+        }));
 
       const builder = mockQueryBuilder();
       builder.gte.mockResolvedValue({ data: largeData, error: null });

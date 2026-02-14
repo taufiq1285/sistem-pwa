@@ -20,6 +20,7 @@ export interface LogbookEntry {
   kendala_dihadapi?: string | null; // Kendala atau kesulitan saat praktikum
   refleksi?: string | null; // Refleksi pembelajaran mahasiswa
   catatan_tambahan?: string | null;
+  foto_dokumentasi?: string[]; // Foto dokumentasi praktikum
 
   // Status & Penilaian
   status: "draft" | "submitted" | "reviewed" | "graded";
@@ -38,6 +39,7 @@ export interface LogbookEntry {
     id: string;
     topik?: string | null;
     tanggal_praktikum?: string | null;
+    kelas_id?: string | null; // Kelas ID from jadwal
     laboratorium?: {
       nama_lab: string;
     } | null;

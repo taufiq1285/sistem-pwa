@@ -44,7 +44,9 @@ describe("PageHeader Component", () => {
     });
 
     it("should apply custom className", () => {
-      const { container } = renderWithRouter(<PageHeader title="Title" className="custom-class" />);
+      const { container } = renderWithRouter(
+        <PageHeader title="Title" className="custom-class" />,
+      );
 
       const rootContainer = container.querySelector(".custom-class");
       expect(rootContainer).toBeInTheDocument();

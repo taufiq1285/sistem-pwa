@@ -866,7 +866,7 @@ describe("API Cache", () => {
 
       // Call clearAllCacheSync and trigger oncomplete
       const resultPromise = clearAllCacheSync();
-      
+
       // Simulate transaction completion after handlers are set
       await vi.waitFor(() => mockTransaction.oncomplete !== null);
       mockTransaction.oncomplete?.();
@@ -1331,7 +1331,9 @@ describe("API Cache", () => {
       const result = await cacheAPI("test-key", fetcher);
 
       // Verify flow
-      expect(indexedDBManager.getMetadata).toHaveBeenCalledWith("cache_test-key");
+      expect(indexedDBManager.getMetadata).toHaveBeenCalledWith(
+        "cache_test-key",
+      );
       expect(fetcher).not.toHaveBeenCalled();
       expect(result).toEqual(cachedData);
     });

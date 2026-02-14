@@ -1291,7 +1291,10 @@ describe("Kelas API - White-Box Testing", () => {
       const countBuilder = { select: countSelect };
 
       const existingBuilder = mockQueryBuilder();
-      existingBuilder.maybeSingle.mockResolvedValue({ data: null, error: null });
+      existingBuilder.maybeSingle.mockResolvedValue({
+        data: null,
+        error: null,
+      });
 
       const semesterBuilder = mockQueryBuilder();
       semesterBuilder.single.mockResolvedValue({
@@ -1353,7 +1356,10 @@ describe("Kelas API - White-Box Testing", () => {
       const countBuilder = { select: countSelect };
 
       const existingBuilder = mockQueryBuilder();
-      existingBuilder.maybeSingle.mockResolvedValue({ data: null, error: null });
+      existingBuilder.maybeSingle.mockResolvedValue({
+        data: null,
+        error: null,
+      });
 
       const semesterBuilder = mockQueryBuilder();
       semesterBuilder.single.mockResolvedValue({
@@ -1393,7 +1399,10 @@ describe("Kelas API - White-Box Testing", () => {
       const countBuilder = { select: countSelect };
 
       const existingBuilder = mockQueryBuilder();
-      existingBuilder.maybeSingle.mockResolvedValue({ data: null, error: null });
+      existingBuilder.maybeSingle.mockResolvedValue({
+        data: null,
+        error: null,
+      });
 
       const semesterBuilder = mockQueryBuilder();
       semesterBuilder.single.mockResolvedValue({
@@ -1433,7 +1442,10 @@ describe("Kelas API - White-Box Testing", () => {
       const countBuilder = { select: countSelect };
 
       const existingBuilder = mockQueryBuilder();
-      existingBuilder.maybeSingle.mockResolvedValue({ data: null, error: null });
+      existingBuilder.maybeSingle.mockResolvedValue({
+        data: null,
+        error: null,
+      });
 
       const semesterBuilder = mockQueryBuilder();
       semesterBuilder.single.mockResolvedValue({
@@ -1513,7 +1525,10 @@ describe("Kelas API - White-Box Testing", () => {
       const countBuilder = { select: countSelect };
 
       const existingBuilder = mockQueryBuilder();
-      existingBuilder.maybeSingle.mockResolvedValue({ data: null, error: null });
+      existingBuilder.maybeSingle.mockResolvedValue({
+        data: null,
+        error: null,
+      });
 
       const semesterBuilder = mockQueryBuilder();
       semesterBuilder.single.mockResolvedValue({
@@ -1949,7 +1964,10 @@ describe("Kelas API - White-Box Testing", () => {
         const countBuilder = { select: countSelect };
 
         const existingBuilder = mockQueryBuilder();
-        existingBuilder.maybeSingle.mockResolvedValue({ data: null, error: null });
+        existingBuilder.maybeSingle.mockResolvedValue({
+          data: null,
+          error: null,
+        });
 
         const semesterBuilder = mockQueryBuilder();
         semesterBuilder.single.mockResolvedValue({

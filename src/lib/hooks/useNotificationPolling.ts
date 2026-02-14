@@ -55,6 +55,7 @@ export function useNotificationPolling(
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lastCountRef = useRef<number>(0);
   const isTabVisibleRef = useRef<boolean>(true);
+  const isInitialRef = useRef<boolean>(true);
 
   useEffect(() => {
     // Don't start if not enabled or not authenticated
@@ -88,7 +89,7 @@ export function useNotificationPolling(
         // Check if new notifications arrived
         const unreadCount = notifications.filter((n) => !n.is_read).length;
 
-        if (unreadCount > lastCountRef.current) {
+        if (unreadCount > lastCountRef.current && !isInitialRef.current) {
           console.log(
             `🔔 New notifications detected: ${unreadCount - lastCountRef.current} new`,
           );
@@ -100,6 +101,7 @@ export function useNotificationPolling(
         }
 
         lastCountRef.current = unreadCount;
+        isInitialRef.current = false;
       } catch (error) {
         // ✅ Silent error - don't break the app, especially in offline mode
         const isOffline = typeof navigator !== "undefined" && !navigator.onLine;

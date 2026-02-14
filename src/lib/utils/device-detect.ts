@@ -44,8 +44,8 @@ export function isStandalone(): boolean {
   // Check display-mode
   const isDisplayStandalone =
     (window.navigator as any).standalone ||
-    window.matchMedia("(display-mode: standalone)").matches ||
-    window.matchMedia("(display-mode: minimal-ui)").matches;
+    window.matchMedia("(display-mode: minimal-ui)").matches ||
+    window.matchMedia("(display-mode: standalone)").matches;
 
   return isDisplayStandalone;
 }
@@ -88,7 +88,7 @@ export function getBrowser(): BrowserType {
   if (userAgent.includes("chrome") && !userAgent.includes("edg")) {
     return "chrome";
   }
-  if (userAgent.includes("safari") && !userAgent.includes("chrome")) {
+  if (userAgent.includes("safari")) {
     return "safari";
   }
   if (userAgent.includes("firefox")) {

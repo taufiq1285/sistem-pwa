@@ -86,7 +86,9 @@ export default function DosenLogbookReviewPage() {
   const [showReviewDialog, setShowReviewDialog] = useState(false);
   const [showGradeDialog, setShowGradeDialog] = useState(false);
   const [showViewDialog, setShowViewDialog] = useState(false);
-  const [selectedLogbook, setSelectedLogbook] = useState<LogbookEntry | null>(null);
+  const [selectedLogbook, setSelectedLogbook] = useState<LogbookEntry | null>(
+    null,
+  );
 
   // Form states
   const [feedback, setFeedback] = useState("");
@@ -269,15 +271,18 @@ export default function DosenLogbookReviewPage() {
     const label = LOGBOOK_STATUS_LABELS[status] || status;
 
     return (
-      <Badge variant="outline" className={`border-${color}-500 text-${color}-700`}>
+      <Badge
+        variant="outline"
+        className={`border-${color}-500 text-${color}-700`}
+      >
         {label}
       </Badge>
     );
   }
 
   function getFilteredLogbooks(): LogbookEntry[] {
-    let filtered = logbookList.filter((l): l is LogbookEntry =>
-      l != null && 'id' in l && 'status' in l
+    let filtered = logbookList.filter(
+      (l): l is LogbookEntry => l != null && "id" in l && "status" in l,
     );
 
     // Filter by kelas
@@ -365,7 +370,9 @@ export default function DosenLogbookReviewPage() {
 
           <Card>
             <CardContent className="p-4">
-              <p className="text-2xl font-bold text-green-600">{stats.graded}</p>
+              <p className="text-2xl font-bold text-green-600">
+                {stats.graded}
+              </p>
               <p className="text-xs text-gray-500">Sudah Dinilai</p>
             </CardContent>
           </Card>
@@ -433,7 +440,9 @@ export default function DosenLogbookReviewPage() {
             <CardContent className="flex flex-col items-center justify-center py-12">
               <FileText className="h-16 w-16 text-gray-400 mb-4" />
               <p className="text-gray-500">
-                {searchQuery || selectedKelas !== "all" || selectedStatus !== "submitted"
+                {searchQuery ||
+                selectedKelas !== "all" ||
+                selectedStatus !== "submitted"
                   ? "Tidak ada logbook yang sesuai dengan filter"
                   : "Belum ada logbook yang perlu direview"}
               </p>
@@ -461,9 +470,12 @@ export default function DosenLogbookReviewPage() {
                     </p>
 
                     <div className="flex gap-4 text-xs text-gray-500">
-                      {logbook.tanggal_praktikum && (
+                      {logbook.jadwal?.tanggal_praktikum && (
                         <span>
-                          {format(new Date(logbook.tanggal_praktikum), "dd MMM yyyy")}
+                          {format(
+                            new Date(logbook.jadwal.tanggal_praktikum),
+                            "dd MMM yyyy",
+                          )}
                         </span>
                       )}
                       {logbook.jadwal?.laboratorium && (
@@ -474,7 +486,10 @@ export default function DosenLogbookReviewPage() {
                     {logbook.submitted_at && (
                       <p className="text-xs text-gray-400 mt-1">
                         Diserahkan:{" "}
-                        {format(new Date(logbook.submitted_at), "dd MMM yyyy, HH:mm")}
+                        {format(
+                          new Date(logbook.submitted_at),
+                          "dd MMM yyyy, HH:mm",
+                        )}
                       </p>
                     )}
                   </div>
@@ -498,7 +513,8 @@ export default function DosenLogbookReviewPage() {
                       </Button>
                     )}
 
-                    {(logbook.status === "reviewed" || logbook.status === "graded") && (
+                    {(logbook.status === "reviewed" ||
+                      logbook.status === "graded") && (
                       <Button
                         size="sm"
                         onClick={() => openGradeDialog(logbook)}
@@ -520,15 +536,20 @@ export default function DosenLogbookReviewPage() {
                   </div>
                 )}
 
-                {logbook.skill_dipelajari && logbook.skill_dipelajari.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mt-2">
-                    {logbook.skill_dipelajari.map((skill) => (
-                      <Badge key={skill} variant="secondary" className="text-xs">
-                        {skill}
-                      </Badge>
-                    ))}
-                  </div>
-                )}
+                {logbook.skill_dipelajari &&
+                  logbook.skill_dipelajari.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {logbook.skill_dipelajari.map((skill) => (
+                        <Badge
+                          key={skill}
+                          variant="secondary"
+                          className="text-xs"
+                        >
+                          {skill}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
 
                 {logbook.dosen_feedback && (
                   <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
@@ -575,8 +596,11 @@ export default function DosenLogbookReviewPage() {
               </p>
               <p className="text-xs text-gray-500">
                 {selectedLogbook?.jadwal?.topik} -{" "}
-                {selectedLogbook?.tanggal_praktikum &&
-                  format(new Date(selectedLogbook.tanggal_praktikum), "dd MMM yyyy")}
+                {selectedLogbook?.jadwal?.tanggal_praktikum &&
+                  format(
+                    new Date(selectedLogbook.jadwal.tanggal_praktikum),
+                    "dd MMM yyyy",
+                  )}
               </p>
             </div>
 
@@ -590,7 +614,9 @@ export default function DosenLogbookReviewPage() {
               </div>
 
               <div>
-                <p className="text-sm font-medium text-gray-500">Hasil Observasi:</p>
+                <p className="text-sm font-medium text-gray-500">
+                  Hasil Observasi:
+                </p>
                 <p className="text-sm bg-white p-2 rounded border">
                   {selectedLogbook?.hasil_observasi || "-"}
                 </p>
@@ -677,7 +703,8 @@ export default function DosenLogbookReviewPage() {
             <div className="space-y-4 py-4">
               <div className="p-3 bg-gray-50 rounded-lg">
                 <p className="text-sm font-medium">
-                  Mahasiswa: {selectedLogbook?.mahasiswa?.user?.full_name || "-"}
+                  Mahasiswa:{" "}
+                  {selectedLogbook?.mahasiswa?.user?.full_name || "-"}
                 </p>
                 <p className="text-xs text-gray-500">
                   {selectedLogbook?.jadwal?.topik || "Praktikum"}
@@ -689,30 +716,30 @@ export default function DosenLogbookReviewPage() {
                 )}
               </div>
 
-            <div>
-              <Label htmlFor="nilai">Nilai (0-100)</Label>
-              <Input
-                id="nilai"
-                type="number"
-                min={0}
-                max={100}
-                value={nilai}
-                onChange={(e) => setNilai(Number(e.target.value))}
-                className="text-2xl font-bold"
-              />
-            </div>
+              <div>
+                <Label htmlFor="nilai">Nilai (0-100)</Label>
+                <Input
+                  id="nilai"
+                  type="number"
+                  min={0}
+                  max={100}
+                  value={nilai}
+                  onChange={(e) => setNilai(Number(e.target.value))}
+                  className="text-2xl font-bold"
+                />
+              </div>
 
-            {/* Grade Guide */}
-            <div className="text-xs text-gray-500 space-y-1">
-              <p>Panduan penilaian:</p>
-              <ul className="list-disc list-inside ml-4 space-y-1">
-                <li>90-100: Sangat Baik</li>
-                <li>80-89: Baik</li>
-                <li>70-79: Cukup</li>
-                <li>60-69: Kurang</li>
-                <li>&lt;60: Kurang Sekali</li>
-              </ul>
-            </div>
+              {/* Grade Guide */}
+              <div className="text-xs text-gray-500 space-y-1">
+                <p>Panduan penilaian:</p>
+                <ul className="list-disc list-inside ml-4 space-y-1">
+                  <li>90-100: Sangat Baik</li>
+                  <li>80-89: Baik</li>
+                  <li>70-79: Cukup</li>
+                  <li>60-69: Kurang</li>
+                  <li>&lt;60: Kurang Sekali</li>
+                </ul>
+              </div>
             </div>
           )}
 
@@ -768,8 +795,11 @@ export default function DosenLogbookReviewPage() {
               <div>
                 <p className="font-medium">Tanggal</p>
                 <p>
-                  {selectedLogbook?.tanggal_praktikum &&
-                    format(new Date(selectedLogbook.tanggal_praktikum), "dd MMM yyyy")}
+                  {selectedLogbook?.jadwal?.tanggal_praktikum &&
+                    format(
+                      new Date(selectedLogbook.jadwal.tanggal_praktikum),
+                      "dd MMM yyyy",
+                    )}
                 </p>
               </div>
               <div>
@@ -789,7 +819,9 @@ export default function DosenLogbookReviewPage() {
               </div>
 
               <div>
-                <p className="text-sm font-medium text-gray-500">Hasil Observasi</p>
+                <p className="text-sm font-medium text-gray-500">
+                  Hasil Observasi
+                </p>
                 <p className="text-sm bg-white p-2 rounded border">
                   {selectedLogbook?.hasil_observasi || "-"}
                 </p>
@@ -839,16 +871,17 @@ export default function DosenLogbookReviewPage() {
               </>
             )}
 
-            {selectedLogbook?.nilai !== null && selectedLogbook?.nilai !== undefined && (
-              <>
-                <hr />
-                <div className="p-3 bg-green-50 rounded-lg border border-green-200">
-                  <p className="text-sm font-medium text-green-700">
-                    Nilai: {selectedLogbook.nilai}
-                  </p>
-                </div>
-              </>
-            )}
+            {selectedLogbook?.nilai !== null &&
+              selectedLogbook?.nilai !== undefined && (
+                <>
+                  <hr />
+                  <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+                    <p className="text-sm font-medium text-green-700">
+                      Nilai: {selectedLogbook.nilai}
+                    </p>
+                  </div>
+                </>
+              )}
           </div>
 
           <DialogFooter>

@@ -82,7 +82,7 @@ export const jadwalSchema = z
     (data) => {
       const [startHour, startMin] = data.jam_mulai.split(":").map(Number);
       const [endHour, endMin] = data.jam_selesai.split(":").map(Number);
-      
+
       const startMinutes = startHour * 60 + startMin;
       const endMinutes = endHour * 60 + endMin;
 
@@ -91,7 +91,7 @@ export const jadwalSchema = z
     {
       message: "Jam selesai harus lebih besar dari jam mulai",
       path: ["jam_selesai"],
-    }
+    },
   )
   .refine(
     (data) => {

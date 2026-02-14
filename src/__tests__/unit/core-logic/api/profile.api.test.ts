@@ -116,10 +116,12 @@ describe("Profile API", () => {
 
   describe("Mahasiswa Profile", () => {
     it("should get mahasiswa profile by user ID", async () => {
-      (supabase.from as any).mockReturnValue(createQueryMock({
-        data: mockMahasiswaProfile,
-        error: null,
-      }));
+      (supabase.from as any).mockReturnValue(
+        createQueryMock({
+          data: mockMahasiswaProfile,
+          error: null,
+        }),
+      );
 
       const result = await getMahasiswaProfile(mockUserId);
 
@@ -129,10 +131,12 @@ describe("Profile API", () => {
 
     it("should return null when mahasiswa profile not found", async () => {
       // No error, but data is null
-      (supabase.from as any).mockReturnValue(createQueryMock({
-        data: null,
-        error: null,
-      }));
+      (supabase.from as any).mockReturnValue(
+        createQueryMock({
+          data: null,
+          error: null,
+        }),
+      );
 
       const result = await getMahasiswaProfile(mockUserId);
 
@@ -140,36 +144,42 @@ describe("Profile API", () => {
     });
 
     it("should update mahasiswa profile", async () => {
-      (supabase.from as any).mockReturnValue(createQueryMock({
-        data: { ...mockMahasiswaProfile, program_studi: "Teknik Elektro" },
-        error: null,
-      }));
+      (supabase.from as any).mockReturnValue(
+        createQueryMock({
+          data: { ...mockMahasiswaProfile, program_studi: "Teknik Elektro" },
+          error: null,
+        }),
+      );
 
       const updateData = { program_studi: "Teknik Elektro", semester: 7 };
 
       await expect(
-        updateMahasiswaProfile(mockMahasiswaId, updateData)
+        updateMahasiswaProfile(mockMahasiswaId, updateData),
       ).resolves.not.toThrow();
 
       expect(supabase.from).toHaveBeenCalledWith("mahasiswa");
     });
 
     it("should throw error when update fails", async () => {
-      (supabase.from as any).mockReturnValue(createQueryMock({
-        error: { message: "Update failed" },
-      }));
+      (supabase.from as any).mockReturnValue(
+        createQueryMock({
+          error: { message: "Update failed" },
+        }),
+      );
 
       const updateData = { program_studi: "Teknik Elektro" };
 
       await expect(
-        updateMahasiswaProfile(mockMahasiswaId, updateData)
+        updateMahasiswaProfile(mockMahasiswaId, updateData),
       ).rejects.toThrow("Update failed");
     });
 
     it("should update user profile", async () => {
-      (supabase.from as any).mockReturnValue(createQueryMock({
-        error: null,
-      }));
+      (supabase.from as any).mockReturnValue(
+        createQueryMock({
+          error: null,
+        }),
+      );
 
       const updateData = {
         full_name: "John Updated",
@@ -177,7 +187,7 @@ describe("Profile API", () => {
       };
 
       await expect(
-        updateUserProfile(mockUserId, updateData)
+        updateUserProfile(mockUserId, updateData),
       ).resolves.not.toThrow();
 
       expect(supabase.from).toHaveBeenCalledWith("users");
@@ -191,10 +201,12 @@ describe("Profile API", () => {
 
   describe("Dosen Profile", () => {
     it("should get dosen profile by user ID", async () => {
-      (supabase.from as any).mockReturnValue(createQueryMock({
-        data: mockDosenProfile,
-        error: null,
-      }));
+      (supabase.from as any).mockReturnValue(
+        createQueryMock({
+          data: mockDosenProfile,
+          error: null,
+        }),
+      );
 
       const result = await getDosenProfile(mockUserId);
 
@@ -204,10 +216,12 @@ describe("Profile API", () => {
 
     it("should return null when dosen profile not found", async () => {
       // No error, but data is null
-      (supabase.from as any).mockReturnValue(createQueryMock({
-        data: null,
-        error: null,
-      }));
+      (supabase.from as any).mockReturnValue(
+        createQueryMock({
+          data: null,
+          error: null,
+        }),
+      );
 
       const result = await getDosenProfile(mockUserId);
 
@@ -215,9 +229,11 @@ describe("Profile API", () => {
     });
 
     it("should update dosen profile", async () => {
-      (supabase.from as any).mockReturnValue(createQueryMock({
-        error: null,
-      }));
+      (supabase.from as any).mockReturnValue(
+        createQueryMock({
+          error: null,
+        }),
+      );
 
       const updateData = {
         nama_dosen: "Dr. Smith Jr.",
@@ -225,22 +241,24 @@ describe("Profile API", () => {
       };
 
       await expect(
-        updateDosenProfile(mockDosenId, updateData)
+        updateDosenProfile(mockDosenId, updateData),
       ).resolves.not.toThrow();
 
       expect(supabase.from).toHaveBeenCalledWith("dosen");
     });
 
     it("should throw error when dosen update fails", async () => {
-      (supabase.from as any).mockReturnValue(createQueryMock({
-        error: { message: "Database error" },
-      }));
+      (supabase.from as any).mockReturnValue(
+        createQueryMock({
+          error: { message: "Database error" },
+        }),
+      );
 
       const updateData = { nama_dosen: "Dr. Smith Jr." };
 
-      await expect(
-        updateDosenProfile(mockDosenId, updateData)
-      ).rejects.toThrow("Database error");
+      await expect(updateDosenProfile(mockDosenId, updateData)).rejects.toThrow(
+        "Database error",
+      );
     });
   });
 
@@ -250,10 +268,12 @@ describe("Profile API", () => {
 
   describe("Laboran Profile", () => {
     it("should get laboran profile by user ID", async () => {
-      (supabase.from as any).mockReturnValue(createQueryMock({
-        data: mockLaboranProfile,
-        error: null,
-      }));
+      (supabase.from as any).mockReturnValue(
+        createQueryMock({
+          data: mockLaboranProfile,
+          error: null,
+        }),
+      );
 
       const result = await getLaboranProfile(mockUserId);
 
@@ -263,10 +283,12 @@ describe("Profile API", () => {
 
     it("should return null when laboran profile not found", async () => {
       // No error, but data is null
-      (supabase.from as any).mockReturnValue(createQueryMock({
-        data: null,
-        error: null,
-      }));
+      (supabase.from as any).mockReturnValue(
+        createQueryMock({
+          data: null,
+          error: null,
+        }),
+      );
 
       const result = await getLaboranProfile(mockUserId);
 
@@ -274,9 +296,11 @@ describe("Profile API", () => {
     });
 
     it("should update laboran profile", async () => {
-      (supabase.from as any).mockReturnValue(createQueryMock({
-        error: null,
-      }));
+      (supabase.from as any).mockReturnValue(
+        createQueryMock({
+          error: null,
+        }),
+      );
 
       const updateData = {
         shift: "Siang",
@@ -284,21 +308,23 @@ describe("Profile API", () => {
       };
 
       await expect(
-        updateLaboranProfile(mockLaboranId, updateData)
+        updateLaboranProfile(mockLaboranId, updateData),
       ).resolves.not.toThrow();
 
       expect(supabase.from).toHaveBeenCalledWith("laboran");
     });
 
     it("should throw error when laboran update fails", async () => {
-      (supabase.from as any).mockReturnValue(createQueryMock({
-        error: { message: "Connection lost" },
-      }));
+      (supabase.from as any).mockReturnValue(
+        createQueryMock({
+          error: { message: "Connection lost" },
+        }),
+      );
 
       const updateData = { shift: "Siang" };
 
       await expect(
-        updateLaboranProfile(mockLaboranId, updateData)
+        updateLaboranProfile(mockLaboranId, updateData),
       ).rejects.toThrow("Connection lost");
     });
   });
@@ -315,10 +341,12 @@ describe("Profile API", () => {
     };
 
     it("should get admin profile by user ID", async () => {
-      (supabase.from as any).mockReturnValue(createQueryMock({
-        data: mockAdminProfile,
-        error: null,
-      }));
+      (supabase.from as any).mockReturnValue(
+        createQueryMock({
+          data: mockAdminProfile,
+          error: null,
+        }),
+      );
 
       const result = await getAdminProfile(mockUserId);
 
@@ -327,10 +355,12 @@ describe("Profile API", () => {
     });
 
     it("should return null when admin profile not found", async () => {
-      (supabase.from as any).mockReturnValue(createQueryMock({
-        data: null,
-        error: null, // No error but no data
-      }));
+      (supabase.from as any).mockReturnValue(
+        createQueryMock({
+          data: null,
+          error: null, // No error but no data
+        }),
+      );
 
       const result = await getAdminProfile(mockUserId);
 
@@ -338,37 +368,43 @@ describe("Profile API", () => {
     });
 
     it("should update admin profile", async () => {
-      (supabase.from as any).mockReturnValue(createQueryMock({
-        error: null,
-      }));
+      (supabase.from as any).mockReturnValue(
+        createQueryMock({
+          error: null,
+        }),
+      );
 
       const updateData = {
         full_name: "Admin Updated",
       };
 
       await expect(
-        updateAdminProfile(mockUserId, updateData)
+        updateAdminProfile(mockUserId, updateData),
       ).resolves.not.toThrow();
 
       expect(supabase.from).toHaveBeenCalledWith("users");
     });
 
     it("should throw error when admin update fails", async () => {
-      (supabase.from as any).mockReturnValue(createQueryMock({
-        error: { message: "Permission denied" },
-      }));
+      (supabase.from as any).mockReturnValue(
+        createQueryMock({
+          error: { message: "Permission denied" },
+        }),
+      );
 
       const updateData = { full_name: "Admin Updated" };
 
-      await expect(
-        updateAdminProfile(mockUserId, updateData)
-      ).rejects.toThrow("Permission denied");
+      await expect(updateAdminProfile(mockUserId, updateData)).rejects.toThrow(
+        "Permission denied",
+      );
     });
 
     it("should only update full_name for admin (not phone)", async () => {
-      (supabase.from as any).mockReturnValue(createQueryMock({
-        error: null,
-      }));
+      (supabase.from as any).mockReturnValue(
+        createQueryMock({
+          error: null,
+        }),
+      );
 
       const updateData = {
         full_name: "Super Admin",
@@ -376,7 +412,7 @@ describe("Profile API", () => {
       };
 
       await expect(
-        updateAdminProfile(mockUserId, updateData)
+        updateAdminProfile(mockUserId, updateData),
       ).resolves.not.toThrow();
 
       // Admin profile update only uses full_name, not email
@@ -401,10 +437,12 @@ describe("Profile API", () => {
         address: undefined, // Optional field
       };
 
-      (supabase.from as any).mockReturnValue(createQueryMock({
-        data: partialProfile,
-        error: null,
-      }));
+      (supabase.from as any).mockReturnValue(
+        createQueryMock({
+          data: partialProfile,
+          error: null,
+        }),
+      );
 
       const result = await getMahasiswaProfile(mockUserId);
 
@@ -425,10 +463,12 @@ describe("Profile API", () => {
         office_room: undefined,
       };
 
-      (supabase.from as any).mockReturnValue(createQueryMock({
-        data: partialProfile,
-        error: null,
-      }));
+      (supabase.from as any).mockReturnValue(
+        createQueryMock({
+          data: partialProfile,
+          error: null,
+        }),
+      );
 
       const result = await getDosenProfile(mockUserId);
 
@@ -444,10 +484,12 @@ describe("Profile API", () => {
         nama_laboran: undefined,
       };
 
-      (supabase.from as any).mockReturnValue(createQueryMock({
-        data: partialProfile,
-        error: null,
-      }));
+      (supabase.from as any).mockReturnValue(
+        createQueryMock({
+          data: partialProfile,
+          error: null,
+        }),
+      );
 
       const result = await getLaboranProfile(mockUserId);
 
@@ -455,9 +497,11 @@ describe("Profile API", () => {
     });
 
     it("should handle partial updates for mahasiswa", async () => {
-      (supabase.from as any).mockReturnValue(createQueryMock({
-        error: null,
-      }));
+      (supabase.from as any).mockReturnValue(
+        createQueryMock({
+          error: null,
+        }),
+      );
 
       // Update only specific fields
       const partialUpdate = {
@@ -465,23 +509,25 @@ describe("Profile API", () => {
       };
 
       await expect(
-        updateMahasiswaProfile(mockMahasiswaId, partialUpdate)
+        updateMahasiswaProfile(mockMahasiswaId, partialUpdate),
       ).resolves.not.toThrow();
 
       expect(supabase.from).toHaveBeenCalledWith("mahasiswa");
     });
 
     it("should handle partial updates for dosen", async () => {
-      (supabase.from as any).mockReturnValue(createQueryMock({
-        error: null,
-      }));
+      (supabase.from as any).mockReturnValue(
+        createQueryMock({
+          error: null,
+        }),
+      );
 
       const partialUpdate = {
         office_room: "B-456", // Update only office room
       };
 
       await expect(
-        updateDosenProfile(mockDosenId, partialUpdate)
+        updateDosenProfile(mockDosenId, partialUpdate),
       ).resolves.not.toThrow();
 
       expect(supabase.from).toHaveBeenCalledWith("dosen");

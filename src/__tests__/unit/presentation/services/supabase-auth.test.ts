@@ -52,7 +52,9 @@ const sessionStorageMock = (() => {
 })();
 
 Object.defineProperty(globalThis, "localStorage", { value: localStorageMock });
-Object.defineProperty(globalThis, "sessionStorage", { value: sessionStorageMock });
+Object.defineProperty(globalThis, "sessionStorage", {
+  value: sessionStorageMock,
+});
 
 // Mock dependencies
 vi.mock("../../../../lib/supabase/client", () => ({
@@ -180,7 +182,7 @@ describe("Supabase Auth Service", () => {
       const mockSelect2 = vi.fn().mockReturnValue({ eq: mockEq2 });
 
       (supabase.from as any)
-        .mockReturnValueOnce({ select: mockSelect })  // For users table
+        .mockReturnValueOnce({ select: mockSelect }) // For users table
         .mockReturnValueOnce({ select: mockSelect2 }); // For mahasiswa table
 
       const result = await login(mockCredentials);
@@ -249,7 +251,7 @@ describe("Supabase Auth Service", () => {
       const mockInsert2 = vi.fn().mockResolvedValue({ error: null });
 
       (supabase.from as any)
-        .mockReturnValueOnce({ insert: mockInsert1 })  // For users table
+        .mockReturnValueOnce({ insert: mockInsert1 }) // For users table
         .mockReturnValueOnce({ insert: mockInsert2 }); // For mahasiswa table
 
       (supabase.auth.signUp as any).mockResolvedValue({
@@ -289,7 +291,9 @@ describe("Supabase Auth Service", () => {
       const result = await register(mockRegisterData);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe("Email sudah terdaftar. Silakan gunakan email lain atau login.");
+      expect(result.error).toBe(
+        "Email sudah terdaftar. Silakan gunakan email lain atau login.",
+      );
     });
   });
 
@@ -325,7 +329,7 @@ describe("Supabase Auth Service", () => {
       const mockSelect2 = vi.fn().mockReturnValue({ eq: mockEq2 });
 
       (supabase.from as any)
-        .mockReturnValueOnce({ select: mockSelect })  // For users table
+        .mockReturnValueOnce({ select: mockSelect }) // For users table
         .mockReturnValueOnce({ select: mockSelect2 }); // For mahasiswa table
 
       const result = await getCurrentUser();

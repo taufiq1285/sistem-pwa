@@ -11,9 +11,7 @@
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { supabase } from "@/lib/supabase/client";
-import {
-  verifyKuisDataCounts,
-} from "@/lib/api/cleanup.api";
+import { verifyKuisDataCounts } from "@/lib/api/cleanup.api";
 
 // Create proper chainable query mock
 const createQueryMock = (resolveValue: any = { count: 0 }) => {
@@ -61,12 +59,16 @@ describe("Cleanup API", () => {
         callIndex++;
 
         // First 4 calls: jawaban, attempt_kuis, soal, kuis (all)
-        if (callIndex === 1) return createQueryMock({ count: mockCounts.jawaban });
-        if (callIndex === 2) return createQueryMock({ count: mockCounts.attempt_kuis });
+        if (callIndex === 1)
+          return createQueryMock({ count: mockCounts.jawaban });
+        if (callIndex === 2)
+          return createQueryMock({ count: mockCounts.attempt_kuis });
         if (callIndex === 3) return createQueryMock({ count: mockCounts.soal });
         if (callIndex === 4) return createQueryMock({ count: mockCounts.kuis });
-        if (callIndex === 5) return createQueryMock({ count: mockCounts.kuis_essay });
-        if (callIndex === 6) return createQueryMock({ count: mockCounts.kuis_pilihan_ganda });
+        if (callIndex === 5)
+          return createQueryMock({ count: mockCounts.kuis_essay });
+        if (callIndex === 6)
+          return createQueryMock({ count: mockCounts.kuis_pilihan_ganda });
 
         return createQueryMock({ count: 0 });
       });
@@ -108,7 +110,9 @@ describe("Cleanup API", () => {
     });
 
     it("should handle undefined counts gracefully", async () => {
-      (supabase.from as any).mockReturnValue(createQueryMock({ count: undefined }));
+      (supabase.from as any).mockReturnValue(
+        createQueryMock({ count: undefined }),
+      );
 
       const result = await verifyKuisDataCounts();
 

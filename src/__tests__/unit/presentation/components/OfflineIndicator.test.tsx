@@ -7,12 +7,12 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 
 // Mock the OfflineIndicator component
-vi.mock("../../../../../lib/hooks/useNetworkStatus", () => ({
+vi.mock("../../../../lib/hooks/useNetworkStatus", () => ({
   useNetworkStatus: vi.fn(),
 }));
 
 const mockUseNetworkStatus = vi.mocked(
-  await import("../../../../../lib/hooks/useNetworkStatus"),
+  await import("../../../../lib/hooks/useNetworkStatus"),
 ).useNetworkStatus;
 
 // Create a simple OfflineIndicator component for testing

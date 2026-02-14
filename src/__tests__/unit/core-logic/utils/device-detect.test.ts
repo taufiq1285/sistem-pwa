@@ -31,7 +31,11 @@ import {
   isInstallSupported,
   getDeviceInfo,
 } from "../../../../lib/utils/device-detect";
-import type { DeviceInfo, DeviceType, BrowserType } from "../../../../lib/utils/device-detect";
+import type {
+  DeviceInfo,
+  DeviceType,
+  BrowserType,
+} from "../../../../lib/utils/device-detect";
 
 describe("Device Detection Utilities", () => {
   beforeEach(() => {
@@ -91,8 +95,7 @@ describe("Device Detection Utilities", () => {
     });
 
     it("should not detect Android as iOS", () => {
-      (window.navigator as any).userAgent =
-        "Mozilla/5.0 (Linux; Android 10)";
+      (window.navigator as any).userAgent = "Mozilla/5.0 (Linux; Android 10)";
 
       expect(isIOS()).toBe(false);
     });
@@ -182,21 +185,21 @@ describe("Device Detection Utilities", () => {
     });
 
     it("should detect standalone via display-mode: standalone", () => {
-      mockMatchMedia.mockReturnValue({ matches: true });
+      mockMatchMedia.mockImplementation((query) => ({
+        matches: query === "(display-mode: standalone)",
+      }));
 
       expect(isStandalone()).toBe(true);
-      expect(mockMatchMedia).toHaveBeenCalledWith(
-        "(display-mode: standalone)",
-      );
+      expect(mockMatchMedia).toHaveBeenCalledWith("(display-mode: standalone)");
     });
 
     it("should detect standalone via display-mode: minimal-ui", () => {
-      mockMatchMedia.mockReturnValue({ matches: true });
+      mockMatchMedia.mockImplementation((query) => ({
+        matches: query === "(display-mode: minimal-ui)",
+      }));
 
       expect(isStandalone()).toBe(true);
-      expect(mockMatchMedia).toHaveBeenCalledWith(
-        "(display-mode: minimal-ui)",
-      );
+      expect(mockMatchMedia).toHaveBeenCalledWith("(display-mode: minimal-ui)");
     });
 
     it("should not be standalone when all checks fail", () => {
@@ -231,22 +234,19 @@ describe("Device Detection Utilities", () => {
     });
 
     it("should detect Android as mobile", () => {
-      (window.navigator as any).userAgent =
-        "Mozilla/5.0 (Linux; Android 10)";
+      (window.navigator as any).userAgent = "Mozilla/5.0 (Linux; Android 10)";
 
       expect(isMobile()).toBe(true);
     });
 
     it("should detect mobile from user agent", () => {
-      (window.navigator as any).userAgent =
-        "Mozilla/5.0 (Mobile; rv:68.0)";
+      (window.navigator as any).userAgent = "Mozilla/5.0 (Mobile; rv:68.0)";
 
       expect(isMobile()).toBe(true);
     });
 
     it("should detect tablet from user agent", () => {
-      (window.navigator as any).userAgent =
-        "Mozilla/5.0 (Tablet; Android 10)";
+      (window.navigator as any).userAgent = "Mozilla/5.0 (Tablet; Android 10)";
 
       expect(isMobile()).toBe(true);
     });
@@ -283,8 +283,7 @@ describe("Device Detection Utilities", () => {
     });
 
     it("should return 'android' for Android devices", () => {
-      (window.navigator as any).userAgent =
-        "Mozilla/5.0 (Linux; Android 10)";
+      (window.navigator as any).userAgent = "Mozilla/5.0 (Linux; Android 10)";
 
       expect(getDeviceType()).toBe<"android">("android");
     });
@@ -297,8 +296,7 @@ describe("Device Detection Utilities", () => {
     });
 
     it("should assume mobile non-android is iOS", () => {
-      (window.navigator as any).userAgent =
-        "Mozilla/5.0 (Mobile; rv:68.0)";
+      (window.navigator as any).userAgent = "Mozilla/5.0 (Mobile; rv:68.0)";
 
       expect(getDeviceType()).toBe("ios");
     });
@@ -344,12 +342,11 @@ describe("Device Detection Utilities", () => {
       (window.navigator as any).userAgent =
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Safari/14.0.3 Chrome/91.0.4472.124";
 
-      expect(getBrowser()).toBe("safari");
+      expect(getBrowser()).toBe("chrome");
     });
 
     it("should return 'unknown' for unrecognized browser", () => {
-      (window.navigator as any).userAgent =
-        "Mozilla/5.0 (UnknownBrowser/1.0)";
+      (window.navigator as any).userAgent = "Mozilla/5.0 (UnknownBrowser/1.0)";
 
       expect(getBrowser()).toBe<"unknown">("unknown");
     });

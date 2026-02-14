@@ -829,7 +829,7 @@ export async function notifyMahasiswaLogbookRevision(
  * @param prioritas - Priority level (low, normal, high)
  */
 export async function notifyUsersAnnouncement(
-  targetRoles: string[],
+  targetRoles: ("mahasiswa" | "dosen" | "admin" | "laboran")[],
   judul: string,
   tipe: string,
   prioritas: string,

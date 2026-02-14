@@ -9,7 +9,10 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { render, screen, waitFor, act, cleanup } from "@testing-library/react";
-import { SyncProvider, useSyncContext } from "../../../../providers/SyncProvider";
+import {
+  SyncProvider,
+  useSyncContext,
+} from "../../../../providers/SyncProvider";
 
 // ✅ FIX: Import mocked hooks to avoid dynamic require() errors
 import { useSync } from "../../../../lib/hooks/useSync";
