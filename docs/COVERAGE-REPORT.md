@@ -1,9 +1,66 @@
 # Test Coverage Report
 ## Sistem Praktikum PWA
 
-**Generated**: 2026-01-28
+**Generated**: 2026-02-26
 **Test Runner**: Vitest with @vitest/coverage-v8
 **Command**: `npm run coverage`
+
+---
+
+## HASIL AKTUAL — `npm run coverage` (2026-02-26)
+
+### Ringkasan Eksekusi Test
+
+| Metrik | Hasil |
+|--------|-------|
+| **Test Files** | 121 passed |
+| **Total Tests** | 4308 passed |
+| **Duration** | 153.09s |
+| **Status** | ❌ Coverage threshold gagal (tests tetap pass) |
+
+### Overall Coverage Summary
+
+| Metrik | Covered | Total | % Aktual | Target | Status |
+|--------|---------|-------|----------|--------|--------|
+| **Statements** | - | - | 5.12% | 70% | ❌ Below threshold |
+| **Branches** | - | - | 63.77% | 60% | ✅ PASS |
+| **Functions** | - | - | 35.48% | 70% | ❌ Below threshold |
+| **Lines** | - | - | 5.12% | 70% | ❌ Below threshold |
+
+> **Catatan Penting:** Coverage global rendah karena semua file proyek ikut dihitung (termasuk banyak halaman/UI yang tidak ditest unit).
+> Namun pada hasil aktual saat ini, bukan hanya lines/statements yang rendah, **functions global juga masih di bawah threshold**.
+
+### Coverage Per Modul (dari `coverage-final.json`)
+
+| Modul | Statements | Branches | Functions | Keterangan |
+|-------|-----------|---------|----------|------------|
+| `src/lib/hooks` | 20.5% | 81.7% | 25.5% | 🟡 Branch kuat, function/statements masih rendah |
+| `src/lib/utils` (folder) | 19.9% | 83.5% | 78.9% | 🟢 Utility branch/function baik |
+| `src/lib/utils.ts` | 29.4% | 0.0% | 0.0% | 🟠 File agregator/minim eksekusi |
+| `src/context` | 6.8% | 0.0% | 0.0% | ⚪ Hampir tidak ter-cover |
+| `src/lib/validations` | 20.9% | 81.2% | 65.4% | 🟡 Branch bagus, function perlu naik |
+| `src/lib/offline` | 16.8% | 81.2% | 74.1% | 🟡 Branch/function lumayan |
+| `src/providers` | 17.8% | 70.1% | 57.1% | 🟠 Perlu peningkatan function coverage |
+| `src/lib/supabase` | 5.7% | 72.4% | 61.7% | 🟠 Statements sangat rendah |
+| `src/lib/pwa` | 15.4% | 82.4% | 74.5% | 🟡 Branch/function cukup baik |
+| `src/lib/middleware` | 15.0% | 75.6% | 66.7% | 🟡 Mendekati target function |
+| `src/lib/api` | 14.9% | 69.4% | 47.5% | 🟠 API layer perlu ditingkatkan |
+| `src/lib/errors` | 11.6% | 75.0% | 31.6% | 🟠 Branch oke, function rendah |
+| `src/components` | 4.0% | 35.3% | 11.4% | 🔴 UI hampir tidak ditest unit |
+| `src/pages` | 0.0% | 0.0% | 0.0% | ⚪ Tidak di-unit-test |
+| `src/routes` | 0.0% | 0.0% | 0.0% | ⚪ Tidak di-unit-test |
+| `src/types` | 0.0% | 0.0% | 0.0% | ⚪ Type definitions |
+
+### Kesimpulan Coverage
+
+```
+✅ PASS:  Branch Coverage   (63.77% ≥ 60%)
+❌ FAIL:  Function Coverage (35.48% < 70%)
+❌ FAIL:  Statement Coverage (5.12% < 70%)
+❌ FAIL:  Line Coverage      (5.12% < 70%)
+```
+
+**Saran untuk skripsi**: Jelaskan bahwa seluruh test lulus, tetapi threshold coverage global gagal karena scope file yang dihitung sangat luas. Fokuskan pembahasan pada modul core yang benar-benar menjadi target unit test + rencana perbaikan coverage bertahap.
 
 ---
 

@@ -33,7 +33,11 @@ describe("useAutoSave", () => {
   });
 
   afterEach(() => {
-    vi.runOnlyPendingTimers();
+    try {
+      vi.runOnlyPendingTimers();
+    } catch {
+      // Ignore when a test switches to real timers
+    }
     vi.useRealTimers();
   });
 
@@ -558,9 +562,6 @@ describe("useAutoSave", () => {
 
   describe("Concurrent save prevention", () => {
     it("should prevent concurrent saves", async () => {
-      // Use real timers for this test since we're testing async promise behavior
-      vi.useRealTimers();
-
       let resolveFirstSave: () => void;
       const onSave = vi.fn(
         () =>
@@ -582,10 +583,11 @@ describe("useAutoSave", () => {
         result.current.updateData({ value: 1 });
       });
 
-      // Wait for debounce + a bit more for save to start
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      // Trigger debounce using fake timers so save starts deterministically
+      act(() => {
+        vi.advanceTimersByTime(50);
+      });
 
-      // Status should be saving
       expect(result.current.status).toBe("saving");
 
       // Try to save again while first is in progress
@@ -601,13 +603,12 @@ describe("useAutoSave", () => {
         resolveFirstSave!();
       });
 
-      // Wait for state to update
-      await waitFor(() => {
-        expect(result.current.status).toBe("saved");
+      // Flush state update after promise resolution
+      await act(async () => {
+        await Promise.resolve();
       });
 
-      // Restore fake timers
-      vi.useFakeTimers();
+      expect(result.current.status).toBe("saved");
     }, 10000);
   });
 });

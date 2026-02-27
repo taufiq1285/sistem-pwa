@@ -59,17 +59,18 @@ export function Header({
   return (
     <header
       className={cn(
-        "sticky top-0 z-40 w-full border-b border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl shadow-md",
+        "sticky top-0 z-40 w-full border-b border-slate-200/80 dark:border-slate-700/80 bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl shadow-md supports-[backdrop-filter]:bg-white/70 dark:supports-[backdrop-filter]:bg-slate-900/70",
         className,
       )}
     >
-      <div className="flex h-16 items-center justify-between px-4 md:px-6">
+      <div className="relative flex min-h-16 items-center justify-between gap-2 px-3 sm:px-4 md:px-6">
++        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent via-blue-400/40 to-transparent" />
         {/* Left: Mobile menu button */}
         <div className="flex items-center gap-4">
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+            className="md:hidden hover:bg-slate-200 dark:hover:bg-slate-700 transition-all duration-200 hover:scale-105 active:scale-95"
             onClick={onMenuClick}
             title="Toggle menu"
           >
@@ -93,7 +94,7 @@ export function Header({
             <Button
               variant="ghost"
               size="icon"
-              className="relative hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors"
+              className="relative hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-all duration-200 hover:scale-105 active:scale-95"
               onClick={onNotificationClick}
               title="Notifications"
             >
@@ -117,7 +118,7 @@ export function Header({
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
-                className="relative h-10 w-10 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                className="relative h-10 w-10 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-all duration-200 hover:scale-105 active:scale-95"
                 title="User menu"
               >
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-linear-to-br from-blue-500 to-indigo-600 text-white text-base font-bold shadow-lg shadow-blue-500/30 ring-2 ring-white dark:ring-slate-700">

@@ -87,7 +87,9 @@ export function useNotificationPolling(
         });
 
         // Check if new notifications arrived
-        const unreadCount = notifications.filter((n) => !n.is_read).length;
+        const unreadCount = (notifications ?? []).filter(
+          (n) => !n.is_read,
+        ).length;
 
         if (unreadCount > lastCountRef.current && !isInitialRef.current) {
           console.log(

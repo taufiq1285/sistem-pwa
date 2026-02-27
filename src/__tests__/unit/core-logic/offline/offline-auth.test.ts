@@ -1912,18 +1912,25 @@ describe("Offline Authentication", () => {
     });
 
     it("should handle credentials expiring 1ms in future", async () => {
+      // Freeze time so Date.now() doesn't advance during async operations
+      // (initialize + getMetadata), which would cause the 1ms buffer to expire.
+      vi.useFakeTimers();
+      const frozenNow = Date.now();
+
       vi.mocked(indexedDBManager.getMetadata).mockResolvedValue({
         id: mockUser.id,
         email: "test@example.com",
         passwordHash: "01".repeat(32),
-        createdAt: Date.now() - 30 * 24 * 60 * 60 * 1000,
-        expiresAt: Date.now() + 1,
+        createdAt: frozenNow - 30 * 24 * 60 * 60 * 1000,
+        expiresAt: frozenNow + 1,
       });
 
       const result = await verifyOfflineCredentials(
         "test@example.com",
         "password",
       );
+
+      vi.useRealTimers();
 
       expect(result).toBe(true);
     });

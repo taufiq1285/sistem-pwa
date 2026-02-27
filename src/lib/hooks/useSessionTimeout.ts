@@ -41,13 +41,17 @@ export function useSessionTimeout({
       warningTimeoutRef.current = setTimeout(() => {
         if (!warningShownRef.current) {
           warningShownRef.current = true;
-          toast.warning(
-            `Session akan berakhir dalam ${warningMinutes} menit. Lakukan aktivitas untuk melanjutkan.`,
-            {
-              duration: warningMinutes * 60 * 1000,
-              dismissible: true,
-            },
-          );
+          try {
+            toast.warning(
+              `Session akan berakhir dalam ${warningMinutes} menit. Lakukan aktivitas untuk melanjutkan.`,
+              {
+                duration: warningMinutes * 60 * 1000,
+                dismissible: true,
+              },
+            );
+          } catch (error) {
+            console.warn("Failed to show session warning toast:", error);
+          }
         }
       }, warningMs);
     }
@@ -55,9 +59,24 @@ export function useSessionTimeout({
     // Set logout timeout
     timeoutRef.current = setTimeout(() => {
       console.log("Session timeout - auto logout");
-      toast.error("Sesi Anda telah berakhir karena tidak ada aktivitas");
-      logout();
-      window.location.assign("/login");
+
+      try {
+        toast.error("Sesi Anda telah berakhir karena tidak ada aktivitas");
+      } catch (error) {
+        console.warn("Failed to show session timeout toast:", error);
+      }
+
+      try {
+        logout();
+      } catch (error) {
+        console.warn("Failed to logout on session timeout:", error);
+      }
+
+      try {
+        window.location.assign("/login");
+      } catch (error) {
+        console.warn("Failed to redirect to login on session timeout:", error);
+      }
     }, timeoutMs);
   }, [user, timeoutMinutes, warningMinutes, enableWarningDialog, logout]);
 

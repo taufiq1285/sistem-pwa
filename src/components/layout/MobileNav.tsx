@@ -69,7 +69,7 @@ export function MobileNav({
       {/* Drawer */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 w-72 bg-background transform transition-transform duration-300 ease-in-out md:hidden",
+          "fixed inset-y-0 left-0 z-50 w-[88vw] max-w-xs bg-background transform transition-transform duration-300 ease-in-out md:hidden shadow-xl",
           isOpen ? "translate-x-0" : "-translate-x-full",
           className,
         )}

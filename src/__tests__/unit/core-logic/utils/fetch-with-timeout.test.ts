@@ -22,6 +22,7 @@ describe("fetch-with-timeout", () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.useRealTimers();
   });
 
   describe("TIMEOUT_DEFAULTS", () => {

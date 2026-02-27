@@ -160,19 +160,19 @@ export function HomePage() {
   ];
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-blue-50 via-white to-pink-50 overflow-hidden">
+    <div className="relative isolate min-h-screen bg-linear-to-br from-blue-50 via-white to-pink-50 overflow-x-hidden">
       {/* Floating Background Elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div
-          className="absolute -top-40 -right-40 w-96 h-96 bg-blue-400/20 rounded-full blur-3xl animate-pulse"
+          className="absolute -top-40 -right-40 w-96 h-96 bg-blue-400/20 rounded-full blur-3xl animate-pulse bg-drift-slow"
           style={{ animationDuration: "8s" }}
         />
         <div
-          className="absolute -bottom-40 -left-40 w-96 h-96 bg-pink-400/20 rounded-full blur-3xl animate-pulse"
+          className="absolute -bottom-40 -left-40 w-96 h-96 bg-pink-400/20 rounded-full blur-3xl animate-pulse bg-drift-slower"
           style={{ animationDuration: "10s", animationDelay: "2s" }}
         />
         <div
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-200 h-200 bg-purple-400/10 rounded-full blur-3xl animate-pulse"
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-200 h-200 bg-purple-400/10 rounded-full blur-3xl animate-pulse bg-drift-slower"
           style={{ animationDuration: "12s", animationDelay: "4s" }}
         />
       </div>
@@ -187,26 +187,33 @@ export function HomePage() {
       >
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <Link to="/" className="flex items-center space-x-2 group">
-              <div className="relative">
-                <Stethoscope className="h-8 w-8 text-blue-600 group-hover:scale-110 transition-transform duration-200" />
-                <Sparkles className="h-4 w-4 text-pink-500 absolute -top-1 -right-1 animate-pulse" />
+            <Link to="/" className="flex items-center space-x-2 group min-w-0">
+              <div className="relative shrink-0">
+                <Stethoscope className="h-7 w-7 sm:h-8 sm:w-8 text-blue-600 group-hover:scale-110 transition-transform duration-200" />
+                <Sparkles className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-pink-500 absolute -top-1 -right-1 animate-pulse" />
               </div>
-              <span className="text-xl font-bold bg-linear-to-r from-blue-600 to-pink-600 bg-clip-text text-transparent">
+              <span className="hidden sm:inline text-lg lg:text-xl font-bold bg-linear-to-r from-blue-600 to-pink-600 bg-clip-text text-transparent truncate">
                 Akademi Kebidanan Mega Buana
               </span>
+              <span className="sm:hidden text-sm font-bold bg-linear-to-r from-blue-600 to-pink-600 bg-clip-text text-transparent">
+                AKBID MB
+              </span>
             </Link>
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-2 sm:space-x-3">
               <Link to="/login">
                 <Button
                   variant="ghost"
-                  className="hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200"
+                  size="sm"
+                  className="h-9 px-3 sm:h-10 sm:px-4 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-200"
                 >
                   Masuk
                 </Button>
               </Link>
               <Link to="/register">
-                <Button className="bg-linear-to-r from-blue-600 to-pink-600 hover:from-blue-700 hover:to-pink-700 shadow-lg hover:shadow-xl transition-all duration-200">
+                <Button
+                  size="sm"
+                  className="h-9 px-3 sm:h-10 sm:px-4 bg-linear-to-r from-blue-600 to-pink-600 hover:from-blue-700 hover:to-pink-700 shadow-lg hover:shadow-xl transition-all duration-200"
+                >
                   Daftar
                 </Button>
               </Link>
@@ -216,37 +223,39 @@ export function HomePage() {
       </nav>
 
       {/* Hero Section */}
-      <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-32 relative">
+      <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-28 relative">
+        <div className="pointer-events-none absolute inset-x-4 top-6 bottom-6 rounded-4xl bg-linear-to-br from-white/50 via-white/20 to-transparent opacity-70 blur-3xl" />
         <div
-          className={`text-center max-w-5xl mx-auto transition-all duration-1000 ${
+          className={`relative text-center max-w-5xl mx-auto transition-all duration-1000 ${
             isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
           }`}
         >
++          <div className="pointer-events-none absolute inset-0 -z-10 rounded-4xl border border-white/40 bg-white/20 backdrop-blur-sm" />
           {/* Badge */}
-          <div className="inline-flex items-center space-x-2 bg-linear-to-r from-pink-100 to-blue-100 text-pink-700 px-6 py-3 rounded-full text-sm font-medium mb-8 shadow-lg hover:shadow-xl transition-all duration-300 animate-bounce">
+          <div className="inline-flex max-w-full items-center space-x-2 bg-linear-to-r from-pink-100 to-blue-100 text-pink-700 px-4 py-2 sm:px-6 sm:py-3 rounded-full text-xs sm:text-sm font-medium mb-6 sm:mb-8 shadow-lg hover:shadow-xl transition-all duration-300">
             <Baby className="h-4 w-4" />
             <span>Akademi Kebidanan Mega Buana</span>
             <HeartPulse className="h-4 w-4 animate-pulse" />
           </div>
 
           {/* Main Heading */}
-          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black mb-8 leading-tight">
+          <h1 className="text-3xl sm:text-5xl lg:text-7xl font-black mb-6 sm:mb-8 leading-tight">
             <span className="bg-linear-to-r from-gray-900 via-blue-600 to-pink-600 bg-clip-text text-transparent">
               Sistem Informasi
             </span>
             <br />
-            <span className="bg-linear-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent relative">
-              Praktikum
-              <Sparkles className="h-12 w-12 text-yellow-500 absolute -top-4 -right-8 animate-spin-slow" />
-            </span>
-            <br />
-            <span className="text-4xl sm:text-5xl lg:text-6xl bg-linear-to-r from-pink-600 to-rose-600 bg-clip-text text-transparent">
+              <span className="bg-linear-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent relative">
+                Praktikum
+                <Sparkles className="hidden sm:block h-12 w-12 text-yellow-500 absolute -top-4 -right-8 animate-spin-slow" />
+              </span>
+<br />
+            <span className="text-2xl sm:text-5xl lg:text-6xl bg-linear-to-r from-pink-600 to-rose-600 bg-clip-text text-transparent">
               Akademi Kebidanan Mega Buana
             </span>
           </h1>
 
           {/* Description */}
-          <p className="text-xl sm:text-2xl text-gray-700 mb-12 max-w-3xl mx-auto leading-relaxed">
+          <p className="text-base sm:text-xl lg:text-2xl text-gray-700 mb-8 sm:mb-12 max-w-3xl mx-auto leading-relaxed px-2 sm:px-0">
             Sistem informasi praktikum kebidanan dengan fitur lengkap, akses
             offline, dan pengalaman pengguna yang modern
             <span className="inline-block animate-pulse">✨</span>
@@ -280,7 +289,7 @@ export function HomePage() {
             {highlights.map((item, index) => (
               <div
                 key={index}
-                className="text-center p-6 rounded-2xl bg-white/80 backdrop-blur-lg shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 group"
+                className="interactive-card text-center p-6 rounded-2xl border border-white/50 bg-white/80 backdrop-blur-lg shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-[1.03] group"
               >
                 <div className="inline-flex items-center justify-center p-3 bg-linear-to-br from-blue-500 to-pink-500 rounded-xl mb-3 text-white group-hover:scale-110 transition-transform duration-200">
                   {item.icon}
@@ -298,7 +307,8 @@ export function HomePage() {
       </section>
 
       {/* Features Section */}
-      <section className="py-24 bg-linear-to-b from-white via-blue-50/30 to-white">
+      <section className="relative py-24 bg-linear-to-b from-white via-blue-50/30 to-white">
++        <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-linear-to-b from-blue-200/20 to-transparent" />
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <div className="inline-flex items-center space-x-2 bg-blue-100 text-blue-700 px-4 py-2 rounded-full text-sm font-semibold mb-4">

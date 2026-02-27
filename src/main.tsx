@@ -4,12 +4,23 @@ import "./index.css";
 import App from "./App.tsx";
 import { logger } from "@/lib/utils/logger";
 import { registerServiceWorker, skipWaiting } from "@/lib/pwa/register-sw";
+import { startSupabaseWarmup } from "@/lib/supabase/warmup";
 
 // Render app
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <App />
   </StrictMode>,
+);
+
+// Start lightweight Supabase warm-up (safe, non-intrusive)
+const stopSupabaseWarmup = startSupabaseWarmup();
+window.addEventListener(
+  "beforeunload",
+  () => {
+    stopSupabaseWarmup();
+  },
+  { once: true },
 );
 
 // ============================================================================

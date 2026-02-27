@@ -3,7 +3,7 @@
  * Comprehensive white-box testing for system announcements management
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
   getAllAnnouncements,
   getAnnouncementStats,
@@ -88,8 +88,15 @@ const mockQueryBuilder = () => ({
 // ============================================================================
 
 describe("Announcements API", () => {
+  const originalConsoleError = console.error;
+
   beforeEach(() => {
     vi.clearAllMocks();
+    console.error = vi.fn();
+  });
+
+  afterEach(() => {
+    console.error = originalConsoleError;
   });
 
   // ==========================================================================

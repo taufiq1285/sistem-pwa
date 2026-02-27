@@ -99,7 +99,7 @@ export function AppLayout({ children, className }: AppLayoutProps) {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
+    <div className="flex h-dvh min-h-dvh overflow-hidden bg-background">
       {/* Desktop Sidebar - Hidden on mobile */}
       <div className="hidden md:block">
         <Sidebar

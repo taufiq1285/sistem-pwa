@@ -104,12 +104,10 @@ describe("Logbook API", () => {
           return {
             select: vi.fn().mockReturnValue({
               eq: vi.fn().mockReturnValue({
-                single: vi
-                  .fn()
-                  .mockResolvedValue({
-                    data: { id: mockMahasiswaId },
-                    error: null,
-                  }),
+                single: vi.fn().mockResolvedValue({
+                  data: { id: mockMahasiswaId },
+                  error: null,
+                }),
               }),
             }),
           };
