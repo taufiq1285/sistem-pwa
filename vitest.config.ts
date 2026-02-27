@@ -16,14 +16,11 @@ export default defineConfig({
     setupFiles: ['./src/__tests__/setup.ts'],
     exclude: ['src/__tests__/unit/components/PageHeader.test.tsx'],
     include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
-    // Performance optimization for research
-    pool: 'threads',
+    slowTestThreshold: 1000,
+    pool: 'forks',
     poolOptions: {
-      threads: {
-        singleThread: false,
-        useAtomics: true,
-        maxThreads: 4,
-        minThreads: 2,
+      forks: {
+        execArgv: ['--max-old-space-size=4096'],
       },
     },
     coverage: {

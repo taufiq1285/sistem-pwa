@@ -67,7 +67,8 @@
       "Bash(do git mv:*)",
       "Bash(do sed:*)",
       "Bash(do echo:*)",
-      "Bash(wc:*)"
+      "Bash(wc:*)",
+      "Bash(npx:*)"
     ]
   }
 }

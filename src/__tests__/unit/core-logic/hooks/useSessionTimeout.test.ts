@@ -4,7 +4,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { useSessionTimeout } from "@/lib/hooks/useSessionTimeout";
-import type { AuthUser } from "../../../types/auth.types";
+import type { AuthUser } from "@/types/auth.types";
 
 // Mock dependencies
 vi.mock("sonner", () => ({
@@ -137,7 +137,7 @@ describe("useSessionTimeout Hook", () => {
   // SECTION 1: Timer Coverage - setTimeout/clearTimeout
   // ==========================================
 
-  describe.skip("Timer Coverage - setTimeout/clearTimeout", () => {
+  describe("Timer Coverage - setTimeout/clearTimeout", () => {
     it("should set warning timer and logout timer on mount", () => {
       renderHook(() =>
         useSessionTimeout({
@@ -181,7 +181,7 @@ describe("useSessionTimeout Hook", () => {
     });
 
     it("should clear existing timers before setting new ones (resetTimeout)", () => {
-      const { rerender } = renderHook(() =>
+      renderHook(() =>
         useSessionTimeout({
           timeoutMinutes: 15,
           warningMinutes: 2,
@@ -189,19 +189,25 @@ describe("useSessionTimeout Hook", () => {
         }),
       );
 
-      // Initial mount: 2 timers set (no clears on first mount)
-      expect(setTimeoutSpy).toHaveBeenCalledTimes(2);
-      expect(clearTimeoutSpy).toHaveBeenCalledTimes(0); // No existing timers on first mount
+      // Ambil handler activity untuk memicu resetTimeout pada timer yang sudah ada
+      const addEventListenerCalls = mockWindowAddEventListener.mock.calls;
+      const mousedownHandler = addEventListenerCalls.find(
+        (call: any[]) => call[0] === "mousedown",
+      )?.[1];
 
-      // Rerender with different timeout to trigger resetTimeout
-      rerender({
-        timeoutMinutes: 20,
-        warningMinutes: 3,
-        enableWarningDialog: true,
+      expect(mousedownHandler).toBeDefined();
+
+      // Bersihkan hitungan setelah mount awal
+      clearTimeoutSpy.mockClear();
+
+      // Lewati throttle 5 detik lalu trigger activity
+      act(() => {
+        vi.advanceTimersByTime(5000);
+        mousedownHandler();
       });
 
-      // Should clear both old timers and set new ones
-      expect(clearTimeoutSpy).toHaveBeenCalledTimes(2); // 2 clears from resetTimeout
+      // resetTimeout harus membersihkan timeout lama
+      expect(clearTimeoutSpy).toHaveBeenCalledTimes(2);
     });
 
     it("should clear timeout and warning timeout on unmount", () => {
@@ -330,9 +336,9 @@ describe("useSessionTimeout Hook", () => {
   // SECTION 2: Branch Coverage
   // ==========================================
 
-  describe.skip("Branch Coverage - resetTimeout Function", () => {
+  describe("Branch Coverage - resetTimeout Function", () => {
     it("should branch: if (timeoutRef.current) clearTimeout - existing timeout", () => {
-      const { rerender } = renderHook(() =>
+      renderHook(() =>
         useSessionTimeout({
           timeoutMinutes: 15,
           warningMinutes: 2,
@@ -340,19 +346,24 @@ describe("useSessionTimeout Hook", () => {
         }),
       );
 
-      // Trigger resetTimeout by rerendering with different props
-      rerender({
-        timeoutMinutes: 20,
-        warningMinutes: 3,
-        enableWarningDialog: true,
+      const addEventListenerCalls = mockWindowAddEventListener.mock.calls;
+      const mousedownHandler = addEventListenerCalls.find(
+        (call: any[]) => call[0] === "mousedown",
+      )?.[1];
+
+      clearTimeoutSpy.mockClear();
+
+      act(() => {
+        vi.advanceTimersByTime(5000);
+        mousedownHandler();
       });
 
-      // Should clear existing timeoutRef.current
+      // Timeout utama minimal harus pernah di-clear
       expect(clearTimeoutSpy).toHaveBeenCalled();
     });
 
     it("should branch: if (warningTimeoutRef.current) clearTimeout - existing warning timeout", () => {
-      const { rerender } = renderHook(() =>
+      renderHook(() =>
         useSessionTimeout({
           timeoutMinutes: 15,
           warningMinutes: 2,
@@ -360,14 +371,19 @@ describe("useSessionTimeout Hook", () => {
         }),
       );
 
-      // Trigger resetTimeout by rerendering with different props
-      rerender({
-        timeoutMinutes: 20,
-        warningMinutes: 3,
-        enableWarningDialog: true,
+      const addEventListenerCalls = mockWindowAddEventListener.mock.calls;
+      const mousedownHandler = addEventListenerCalls.find(
+        (call: any[]) => call[0] === "mousedown",
+      )?.[1];
+
+      clearTimeoutSpy.mockClear();
+
+      act(() => {
+        vi.advanceTimersByTime(5000);
+        mousedownHandler();
       });
 
-      // Should clear existing warningTimeoutRef.current
+      // Warning timeout juga ikut dibersihkan
       expect(clearTimeoutSpy).toHaveBeenCalled();
     });
 
@@ -1736,7 +1752,7 @@ describe("useSessionTimeout Hook", () => {
   // SECTION 11: Performance Testing
   // ==========================================
 
-  describe.skip("Performance Testing", () => {
+  describe("Performance Testing", () => {
     it("should handle rapid timer resets efficiently", () => {
       renderHook(() =>
         useSessionTimeout({
@@ -1750,9 +1766,8 @@ describe("useSessionTimeout Hook", () => {
         (call: any[]) => call[0] === "mousemove",
       )?.[1];
 
-      const startTime = performance.now();
-
       // Simulate 100 activity events with 5 second gaps
+      clearTimeoutSpy.mockClear();
       for (let i = 0; i < 100; i++) {
         act(() => {
           vi.advanceTimersByTime(5000);
@@ -1760,11 +1775,10 @@ describe("useSessionTimeout Hook", () => {
         });
       }
 
-      const endTime = performance.now();
-      const duration = endTime - startTime;
-
-      // Should complete efficiently (< 1000ms for 100 resets)
-      expect(duration).toBeLessThan(1000);
+      // Dengan fake timers, performa wall-time tidak representatif.
+      // Validasi efisiensi secara fungsional: loop selesai dan reset timeout terjadi berulang.
+      expect(clearTimeoutSpy).toHaveBeenCalled();
+      expect(clearTimeoutSpy.mock.calls.length).toBeGreaterThan(50);
     });
 
     it("should not cause memory leaks with multiple mount/unmount cycles", () => {
@@ -1807,7 +1821,7 @@ describe("useSessionTimeout Hook", () => {
   // SECTION 12: Error Handling
   // ==========================================
 
-  describe.skip("Error Handling", () => {
+  describe("Error Handling", () => {
     it("should handle logout function throwing error", async () => {
       const mockErrorLogout = vi
         .fn()
@@ -1878,7 +1892,7 @@ describe("useSessionTimeout Hook", () => {
       expect(mockAssign).toHaveBeenCalledWith("/login");
     });
 
-    it.skip("should handle toast functions throwing errors", async () => {
+    it("should handle toast functions throwing errors", async () => {
       // SKIPPED: Hook does not currently handle toast errors
       // TODO: Add try-catch in hook implementation if this is needed
 

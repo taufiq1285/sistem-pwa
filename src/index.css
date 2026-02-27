@@ -116,6 +116,11 @@
   }
   body {
     @apply bg-background text-foreground;
+    background-image:
+      radial-gradient(circle at 15% 20%, rgba(59, 130, 246, 0.06), transparent 35%),
+      radial-gradient(circle at 85% 10%, rgba(236, 72, 153, 0.05), transparent 30%),
+      radial-gradient(circle at 50% 90%, rgba(16, 185, 129, 0.04), transparent 32%);
+    background-attachment: fixed;
   }
 }
 
@@ -157,5 +162,47 @@
   to {
     transform: translateY(0);
     opacity: 1;
+  }
+}
+
+@keyframes bgDrift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(0, -12px, 0) scale(1.03);
+  }
+}
+
+.bg-drift-slow {
+  animation: bgDrift 10s ease-in-out infinite;
+}
+
+.bg-drift-slower {
+  animation: bgDrift 14s ease-in-out infinite;
+}
+
+.interactive-card {
+  transition:
+    transform 220ms ease,
+    box-shadow 220ms ease,
+    border-color 220ms ease;
+}
+
+.interactive-card:hover,
+.interactive-card:focus-within {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 36px rgba(15, 23, 42, 0.12);
+  border-color: rgba(59, 130, 246, 0.22);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bg-drift-slow,
+  .bg-drift-slower,
+  .interactive-card {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
   }
 }

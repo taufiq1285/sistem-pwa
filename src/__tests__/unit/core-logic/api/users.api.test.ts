@@ -100,7 +100,11 @@ const mockDosenData = [
 // HELPER FUNCTIONS
 // ============================================================================
 
-const mockQueryBuilder = () => {
+const mockQueryBuilder = (defaultResolves?: {
+  select?: any;
+  delete?: any;
+  eq?: any;
+}) => {
   const builder: any = {
     select: vi.fn().mockReturnThis(),
     insert: vi.fn().mockReturnThis(),
@@ -111,6 +115,16 @@ const mockQueryBuilder = () => {
     order: vi.fn().mockReturnThis(),
     single: vi.fn(),
   };
+  // Allow overriding default behavior for specific operations
+  if (defaultResolves?.select) {
+    builder.select.mockResolvedValue(defaultResolves.select);
+  }
+  if (defaultResolves?.delete) {
+    builder.delete.mockResolvedValue(defaultResolves.delete);
+  }
+  if (defaultResolves?.eq) {
+    builder.eq.mockResolvedValue(defaultResolves.eq);
+  }
   return builder;
 };
 
@@ -594,6 +608,9 @@ describe("Users API - CRUD Operations", () => {
 
   describe("deleteUser - CASCADE DELETE", () => {
     beforeEach(() => {
+      // Clear all mocks first to prevent interference from other tests
+      vi.clearAllMocks();
+
       // Mock auth.getUser for current user check
       vi.mocked(supabase.auth.getUser).mockResolvedValue({
         data: {
@@ -635,12 +652,19 @@ describe("Users API - CRUD Operations", () => {
         error: null,
       });
 
-      // Delete from mahasiswa table
+      // Delete from mahasiswa table - eq() must resolve for delete operations
       const deleteMhsBuilder = mockQueryBuilder();
-      deleteMhsBuilder.eq.mockResolvedValue({ error: null });
+      deleteMhsBuilder.delete.mockReturnThis();
+      deleteMhsBuilder.eq.mockReturnThis();
+      // Set up the chain: .delete().eq() should resolve
+      deleteMhsBuilder.eq.mockImplementation(() =>
+        Promise.resolve({ error: null }),
+      );
 
       // Delete from users table - need to return builder for chaining .delete().eq().select()
       const deleteUserBuilder = mockQueryBuilder();
+      deleteUserBuilder.delete.mockReturnThis();
+      deleteUserBuilder.eq.mockReturnThis();
       const finalResult = { data: [{ id: "user-3" }], error: null, count: 1 };
       deleteUserBuilder.select.mockResolvedValue(finalResult);
 
@@ -664,9 +688,15 @@ describe("Users API - CRUD Operations", () => {
       });
 
       const deleteDosenBuilder = mockQueryBuilder();
-      deleteDosenBuilder.eq.mockResolvedValue({ error: null });
+      deleteDosenBuilder.delete.mockReturnThis();
+      deleteDosenBuilder.eq.mockReturnThis();
+      deleteDosenBuilder.eq.mockImplementation(() =>
+        Promise.resolve({ error: null }),
+      );
 
       const deleteUserBuilder = mockQueryBuilder();
+      deleteUserBuilder.delete.mockReturnThis();
+      deleteUserBuilder.eq.mockReturnThis();
       deleteUserBuilder.select.mockResolvedValue({
         data: [{ id: "user-2" }],
         error: null,
@@ -692,9 +722,15 @@ describe("Users API - CRUD Operations", () => {
       });
 
       const deleteLaboranBuilder = mockQueryBuilder();
-      deleteLaboranBuilder.eq.mockResolvedValue({ error: null });
+      deleteLaboranBuilder.delete.mockReturnThis();
+      deleteLaboranBuilder.eq.mockReturnThis();
+      deleteLaboranBuilder.eq.mockImplementation(() =>
+        Promise.resolve({ error: null }),
+      );
 
       const deleteUserBuilder = mockQueryBuilder();
+      deleteUserBuilder.delete.mockReturnThis();
+      deleteUserBuilder.eq.mockReturnThis();
       deleteUserBuilder.select.mockResolvedValue({
         data: [{ id: "user-4" }],
         error: null,
@@ -1128,6 +1164,8 @@ describe("Users API - White-Box Testing", () => {
       });
 
       const deleteUserBuilder = mockQueryBuilder();
+      deleteUserBuilder.delete.mockReturnThis();
+      deleteUserBuilder.eq.mockReturnThis();
       deleteUserBuilder.select.mockResolvedValue({
         data: [{ id: "user-1" }],
         error: null,
@@ -1324,6 +1362,8 @@ describe("Users API - White-Box Testing", () => {
       });
 
       const deleteUserBuilder = mockQueryBuilder();
+      deleteUserBuilder.delete.mockReturnThis();
+      deleteUserBuilder.eq.mockReturnThis();
       deleteUserBuilder.select.mockResolvedValue({
         data: [{ id: "user-1" }],
         error: null,
@@ -1348,9 +1388,15 @@ describe("Users API - White-Box Testing", () => {
       });
 
       const deleteMhsBuilder = mockQueryBuilder();
-      deleteMhsBuilder.eq.mockResolvedValue({ error: null });
+      deleteMhsBuilder.delete.mockReturnThis();
+      deleteMhsBuilder.eq.mockReturnThis();
+      deleteMhsBuilder.eq.mockImplementation(() =>
+        Promise.resolve({ error: null }),
+      );
 
       const deleteUserBuilder = mockQueryBuilder();
+      deleteUserBuilder.delete.mockReturnThis();
+      deleteUserBuilder.eq.mockReturnThis();
       deleteUserBuilder.select.mockResolvedValue({
         data: [{ id: "user-3" }],
         error: null,

@@ -129,7 +129,7 @@ export function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="p-8">
+      <div className="p-4 sm:p-6 lg:p-8">
         <div className="max-w-7xl mx-auto">
           <div className="animate-pulse space-y-6">
             <div className="h-8 bg-gray-200 rounded w-1/4"></div>
@@ -146,18 +146,18 @@ export function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-linear-to-br from-emerald-50 via-green-50 to-teal-50 dark:from-slate-950 dark:via-slate-900 dark:to-teal-950">
-      <div className="p-8">
+      <div className="p-4 sm:p-6 lg:p-8">
         <div className="max-w-7xl mx-auto space-y-6">
           {/* Header */}
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-linear-to-br from-emerald-500 to-teal-600 rounded-2xl shadow-lg shadow-emerald-500/30">
-              <BookOpen className="h-8 w-8 text-white" />
+          <div className="flex items-start sm:items-center gap-3 sm:gap-4">
+            <div className="p-2.5 sm:p-3 bg-linear-to-br from-emerald-500 to-teal-600 rounded-2xl shadow-lg shadow-emerald-500/30 shrink-0">
+              <BookOpen className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
             </div>
-            <div>
-              <h1 className="text-5xl font-extrabold text-transparent bg-clip-text bg-linear-to-r from-emerald-600 to-teal-600 dark:from-emerald-400 dark:to-teal-400">
+            <div className="min-w-0">
+              <h1 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold text-transparent bg-clip-text bg-linear-to-r from-emerald-600 to-teal-600 dark:from-emerald-400 dark:to-teal-400 leading-tight">
                 Dashboard Mahasiswa
               </h1>
-              <p className="text-lg font-bold text-gray-700 dark:text-gray-300 mt-1">
+              <p className="text-sm sm:text-base lg:text-lg font-bold text-gray-700 dark:text-gray-300 mt-1">
                 Selamat datang,{" "}
                 <span className="text-emerald-600 dark:text-emerald-400">
                   {user?.full_name || user?.email}
@@ -180,7 +180,7 @@ export function DashboardPage() {
 
         {/* Quick Stats Cards */}
         <div className="grid gap-4 md:grid-cols-4">
-          <Card className="border-0 shadow-lg bg-linear-to-br from-emerald-500 to-green-600 text-white overflow-hidden relative">
+          <Card className="interactive-card border border-white/20 shadow-lg bg-linear-to-br from-emerald-500 to-green-600 text-white overflow-hidden relative">
             <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl -mr-8 -mt-8" />
             <CardContent className="p-6 relative">
               <div className="flex items-center justify-between">
@@ -199,7 +199,7 @@ export function DashboardPage() {
             </CardContent>
           </Card>
 
-          <Card className="border-0 shadow-lg bg-linear-to-br from-blue-500 to-cyan-600 text-white overflow-hidden relative">
+          <Card className="interactive-card border border-white/20 shadow-lg bg-linear-to-br from-blue-500 to-cyan-600 text-white overflow-hidden relative">
             <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl -mr-8 -mt-8" />
             <CardContent className="p-6 relative">
               <div className="flex items-center justify-between">
@@ -218,7 +218,7 @@ export function DashboardPage() {
             </CardContent>
           </Card>
 
-          <Card className="border-0 shadow-lg bg-linear-to-br from-purple-500 to-violet-600 text-white overflow-hidden relative">
+          <Card className="interactive-card border border-white/20 shadow-lg bg-linear-to-br from-purple-500 to-violet-600 text-white overflow-hidden relative">
             <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl -mr-8 -mt-8" />
             <CardContent className="p-6 relative">
               <div className="flex items-center justify-between">
@@ -237,7 +237,7 @@ export function DashboardPage() {
             </CardContent>
           </Card>
 
-          <Card className="border-0 shadow-lg bg-linear-to-br from-orange-500 to-amber-600 text-white overflow-hidden relative">
+          <Card className="interactive-card border border-white/20 shadow-lg bg-linear-to-br from-orange-500 to-amber-600 text-white overflow-hidden relative">
             <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl -mr-8 -mt-8" />
             <CardContent className="p-6 relative">
               <div className="flex items-center justify-between">
@@ -266,18 +266,18 @@ export function DashboardPage() {
 
         {/* Welcome Banner */}
         {myKelas.length > 0 && (
-          <Card className="border-0 shadow-xl bg-linear-to-r from-emerald-500 via-teal-500 to-cyan-500 text-white overflow-hidden relative">
+          <Card className="interactive-card border-0 shadow-xl bg-linear-to-r from-emerald-500 via-teal-500 to-cyan-500 text-white overflow-hidden relative">
             <div className="absolute inset-0 bg-grid-white/10" />
-            <CardContent className="p-8 relative">
-              <div className="flex items-center gap-6">
-                <div className="w-20 h-20 bg-white/20 rounded-3xl flex items-center justify-center backdrop-blur-sm">
-                  <Sparkles className="h-10 w-10" />
+            <CardContent className="p-5 sm:p-8 relative">
+              <div className="flex items-center gap-4 sm:gap-6">
+                <div className="w-14 h-14 sm:w-20 sm:h-20 bg-white/20 rounded-2xl sm:rounded-3xl flex items-center justify-center backdrop-blur-sm shrink-0">
+                  <Sparkles className="h-7 w-7 sm:h-10 sm:w-10" />
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-3xl font-extrabold mb-2">
+                  <h2 className="text-xl sm:text-3xl font-extrabold mb-1.5 sm:mb-2">
                     Semangat Belajar! 🚀
                   </h2>
-                  <p className="text-lg font-semibold text-emerald-100">
+                  <p className="text-sm sm:text-lg font-semibold text-emerald-100 leading-relaxed">
                     Kamu terdaftar di{" "}
                     <span className="font-extrabold text-white">
                       {stats?.totalKelasPraktikum}
@@ -332,7 +332,7 @@ export function DashboardPage() {
                   {myKelas.map((kelas) => (
                     <div
                       key={kelas.id}
-                      className="flex items-center gap-3 p-4 border-2 border-emerald-100 rounded-xl hover:bg-emerald-50 hover:border-emerald-300 transition-all duration-300 shadow-sm hover:shadow-md group"
+                      className="interactive-card flex items-center gap-3 p-4 border-2 border-emerald-100 rounded-xl hover:bg-emerald-50 hover:border-emerald-300 transition-all duration-300 shadow-sm hover:shadow-md group"
                     >
                       <div className="shrink-0">
                         <div className="w-12 h-12 bg-linear-to-br from-emerald-500 to-green-600 rounded-xl shadow-lg flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -408,7 +408,7 @@ export function DashboardPage() {
                   {myJadwal.map((jadwal) => (
                     <div
                       key={jadwal.id}
-                      className="flex gap-3 p-4 border-2 border-teal-100 rounded-xl hover:bg-teal-50 hover:border-teal-300 transition-all duration-300 shadow-sm hover:shadow-md group"
+                      className="interactive-card flex gap-3 p-4 border-2 border-teal-100 rounded-xl hover:bg-teal-50 hover:border-teal-300 transition-all duration-300 shadow-sm hover:shadow-md group"
                     >
                       <div className="shrink-0">
                         <div className="w-12 h-12 bg-linear-to-br from-teal-500 to-cyan-600 rounded-xl shadow-lg flex items-center justify-center group-hover:scale-110 transition-transform">

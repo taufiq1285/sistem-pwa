@@ -8,6 +8,26 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import * as registerSW from "@/lib/pwa/register-sw";
 
+// Mock window.location for localhost
+const mockLocation = {
+  hostname: "localhost",
+  protocol: "http:",
+  href: "http://localhost/",
+  origin: "http://localhost",
+  pathname: "/",
+  search: "",
+  hash: "",
+  port: "",
+  host: "localhost",
+  reload: vi.fn(),
+};
+
+Object.defineProperty(window, "location", {
+  value: mockLocation,
+  writable: true,
+  configurable: true,
+});
+
 // Mock navigator.serviceWorker
 const mockServiceWorker = {
   register: vi.fn(),
@@ -28,8 +48,8 @@ const mockRegistration = {
   waiting: null as any,
   active: { state: "activated" } as any,
   scope: "/",
-  update: vi.fn(),
-  unregister: vi.fn(),
+  update: vi.fn().mockResolvedValue(undefined),
+  unregister: vi.fn().mockResolvedValue(true),
   addEventListener: vi.fn(),
   removeEventListener: vi.fn(),
 };
@@ -59,6 +79,9 @@ Object.defineProperty(document, "readyState", {
 describe("register-sw", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Reset mock implementations that need to return Promises
+    mockRegistration.update.mockResolvedValue(undefined);
+    mockRegistration.unregister.mockResolvedValue(true);
     mockServiceWorker.controller = null;
     // Reset the reloading flag to prevent test interference
     registerSW._resetReloadingFlag?.();
@@ -148,6 +171,7 @@ describe("register-sw", () => {
       await registerSW.registerServiceWorker({ onUpdate });
 
       expect(mockServiceWorker.register).toHaveBeenCalled();
+      expect(onUpdate).toHaveBeenCalledWith(registrationWithWaiting);
     });
 
     it("should call onSuccess when registration succeeds", async () => {
@@ -158,6 +182,7 @@ describe("register-sw", () => {
       await registerSW.registerServiceWorker({ onSuccess });
 
       expect(mockServiceWorker.register).toHaveBeenCalled();
+      expect(onSuccess).toHaveBeenCalledWith(mockRegistration);
     });
   });
 
@@ -253,12 +278,12 @@ describe("register-sw", () => {
     });
 
     it("should call onUpdate when new worker installed and controller exists", async () => {
+      let stateChangeHandler: (() => void) | null = null;
       const newWorker = {
-        state: "installed",
+        state: "installing",
         addEventListener: vi.fn((event, handler) => {
           if (event === "statechange") {
-            // Trigger statechange immediately
-            handler();
+            stateChangeHandler = handler;
           }
         }),
       };
@@ -288,15 +313,23 @@ describe("register-sw", () => {
         await updateFoundHandler();
       }
 
+      // Simulate state change to installed
+      if (stateChangeHandler) {
+        newWorker.state = "installed";
+        await stateChangeHandler();
+      }
+
       expect(newWorker.addEventListener).toHaveBeenCalled();
+      expect(onUpdate).toHaveBeenCalledWith(registrationWithListener);
     });
 
     it("should not call onUpdate when no controller exists", async () => {
+      let stateChangeHandler: (() => void) | null = null;
       const newWorker = {
-        state: "installed",
+        state: "installing",
         addEventListener: vi.fn((event, handler) => {
           if (event === "statechange") {
-            handler();
+            stateChangeHandler = handler;
           }
         }),
       };
@@ -326,15 +359,24 @@ describe("register-sw", () => {
         await updateFoundHandler();
       }
 
+      // Simulate state change to installed
+      if (stateChangeHandler) {
+        newWorker.state = "installed";
+        await stateChangeHandler();
+      }
+
       expect(newWorker.addEventListener).toHaveBeenCalled();
+      // onUpdate should NOT be called because there's no controller
+      expect(onUpdate).not.toHaveBeenCalled();
     });
 
     it("should handle worker state change to activated", async () => {
+      let stateChangeHandler: (() => void) | null = null;
       const newWorker = {
-        state: "activated",
+        state: "installing",
         addEventListener: vi.fn((event, handler) => {
           if (event === "statechange") {
-            handler();
+            stateChangeHandler = handler;
           }
         }),
       };
@@ -353,14 +395,23 @@ describe("register-sw", () => {
 
       mockServiceWorker.register.mockResolvedValue(registrationWithListener);
 
-      await registerSW.registerServiceWorker();
+      const onUpdate = vi.fn();
+      await registerSW.registerServiceWorker({ onUpdate });
 
       // Simulate updatefound
       if (updateFoundHandler) {
         await updateFoundHandler();
       }
 
+      // Simulate state change to activated
+      if (stateChangeHandler) {
+        newWorker.state = "activated";
+        await stateChangeHandler();
+      }
+
       expect(newWorker.addEventListener).toHaveBeenCalled();
+      // onUpdate should NOT be called for activated state (only for installed state with controller)
+      expect(onUpdate).not.toHaveBeenCalled();
     });
   });
 
