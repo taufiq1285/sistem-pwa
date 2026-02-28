@@ -92,7 +92,8 @@ jobs:
               -H "Authorization: Bearer $API_KEY" \
               -H "Accept: application/json" \
               "$BASE_URL/rest/v1/$TABLE?select=id&limit=1" \
-              || echo "000")
+              2>/dev/null) || true
+            [ -z "$CODE" ] && CODE="000"
 
             echo "Table '$TABLE' => HTTP $CODE"
 
