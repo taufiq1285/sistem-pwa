@@ -45,8 +45,10 @@ jobs:
             exit 1
           fi
 
-          # Hilangkan trailing slash untuk hindari URL double slash
-          BASE_URL="${BASE_URL%/}"
+          # Trim whitespace dan trailing slash
+          BASE_URL="${BASE_URL#"${BASE_URL%%[![:space:]]*}"}"  # trim leading
+          BASE_URL="${BASE_URL%"${BASE_URL##*[![:space:]]}"}"  # trim trailing
+          BASE_URL="${BASE_URL%/}"                              # hapus trailing slash
 
           echo "BASE_URL=$BASE_URL" >> $GITHUB_ENV
           echo "SERVICE_KEY=$SERVICE_KEY" >> $GITHUB_ENV
