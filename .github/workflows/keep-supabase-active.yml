@@ -1,60 +1,88 @@
 name: Keep Supabase Project Active
 
 on:
-  # Jalankan setiap 2 hari (lebih aman, jauh sebelum batas 7 hari Supabase)
+  # Jalankan setiap 3 hari (jauh sebelum batas 7 hari Supabase free tier)
   schedule:
-    - cron: '0 0 */2 * *'  # Setiap 2 hari pada jam 00:00 UTC
+    - cron: '0 6 */3 * *'  # Setiap 3 hari pada jam 06:00 UTC
 
-  # Bisa juga dijalankan manual dari GitHub Actions tab
+  # Bisa dijalankan manual dari GitHub Actions tab
   workflow_dispatch:
+
+# Izin untuk push commit ke repo (mencegah GitHub menonaktifkan workflow)
+permissions:
+  contents: write
 
 jobs:
   ping-supabase:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Ping Supabase Database
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Ping Supabase REST API
+        id: ping
         run: |
-          echo "🔄 Pinging Supabase to keep project active..."
-          echo "URL: ${{ secrets.VITE_SUPABASE_URL }}"
+          echo "Pinging Supabase to keep project active..."
 
-          # Method 1: Ping REST API endpoint
-          echo "📡 Attempting REST API ping..."
-          response=$(curl -s -o /dev/null -w "%{http_code}" \
-            -H "apikey: ${{ secrets.VITE_SUPABASE_ANON_KEY }}" \
-            -H "Authorization: Bearer ${{ secrets.VITE_SUPABASE_ANON_KEY }}" \
-            "${{ secrets.VITE_SUPABASE_URL }}/rest/v1/" || echo "000")
-
-          echo "REST API Response: $response"
-
-          # Method 2: Ping health check endpoint
-          echo "🏥 Attempting health check ping..."
-          health_response=$(curl -s -o /dev/null -w "%{http_code}" \
-            "${{ secrets.VITE_SUPABASE_URL }}/rest/v1/health" || echo "000")
-
-          echo "Health Check Response: $health_response"
-
-          # Method 3: Simple connection test
-          echo "🌐 Attempting simple connection..."
-          simple_response=$(curl -s -o /dev/null -w "%{http_code}" \
-            "${{ secrets.VITE_SUPABASE_URL }}" || echo "000")
-
-          echo "Simple Connection Response: $simple_response"
-
-          # Check if any method succeeded (any response other than 000 means connection worked)
-          if [ "$response" != "000" ] || [ "$health_response" != "000" ] || [ "$simple_response" != "000" ]; then
-            echo "✅ Success! Supabase project is active and responding."
-            echo "At least one ping method succeeded - project will stay active."
-          else
-            echo "❌ All ping methods failed. Please check:"
-            echo "  1. VITE_SUPABASE_URL is set correctly in secrets"
-            echo "  2. VITE_SUPABASE_ANON_KEY is set correctly in secrets"
-            echo "  3. Supabase project is not paused manually"
+          if [ -z "${{ secrets.VITE_SUPABASE_URL }}" ] || [ -z "${{ secrets.VITE_SUPABASE_ANON_KEY }}" ]; then
+            echo "ERROR: VITE_SUPABASE_URL atau VITE_SUPABASE_ANON_KEY belum di-set di GitHub Secrets."
+            echo "Buka: Settings > Secrets and variables > Actions > New repository secret"
             exit 1
           fi
 
-      - name: Log Activity
+          # Ping ke tabel 'users' dengan limit 1 (query ringan, valid di Supabase)
+          response=$(curl -s -o /dev/null -w "%{http_code}" \
+            --max-time 30 \
+            -H "apikey: ${{ secrets.VITE_SUPABASE_ANON_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.VITE_SUPABASE_ANON_KEY }}" \
+            -H "Accept: application/json" \
+            "${{ secrets.VITE_SUPABASE_URL }}/rest/v1/users?select=id&limit=1" \
+            || echo "000")
+
+          echo "Response code: $response"
+
+          # 200 = OK, 401 = Unauthorized (tapi project masih aktif), 406 = Not Acceptable (project aktif)
+          # Yang penting bukan 000 (tidak bisa konek sama sekali)
+          if [ "$response" = "000" ]; then
+            echo "GAGAL: Tidak bisa terhubung ke Supabase. Cek VITE_SUPABASE_URL di secrets."
+            exit 1
+          fi
+
+          echo "Berhasil! Supabase aktif (HTTP $response)"
+          echo "response_code=$response" >> $GITHUB_OUTPUT
+
+      - name: Update keep-alive timestamp
         run: |
-          echo "📅 Last ping: $(date)"
-          echo "⏰ Next scheduled ping: in 2 days"
-          echo "✨ Workflow completed successfully!"
+          TIMESTAMP=$(date -u '+%Y-%m-%d %H:%M:%S UTC')
+          RESPONSE="${{ steps.ping.outputs.response_code }}"
+
+          cat > .github/keep-alive.txt << EOF
+          Last ping : $TIMESTAMP
+          HTTP response : $RESPONSE
+          Status       : Active
+          EOF
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .github/keep-alive.txt
+
+          # Hanya commit jika ada perubahan (cegah empty commit)
+          if git diff --staged --quiet; then
+            echo "Tidak ada perubahan, skip commit."
+          else
+            git commit -m "chore: keep-alive ping $TIMESTAMP [skip ci]"
+            git push
+            echo "Timestamp diperbarui dan di-push."
+          fi
+
+      - name: Summary
+        run: |
+          echo "================================"
+          echo " Supabase Keep-Alive Summary"
+          echo "================================"
+          echo " Waktu ping : $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+          echo " HTTP Status : ${{ steps.ping.outputs.response_code }}"
+          echo " Jadwal     : Setiap 3 hari"
+          echo " Batas jeda : 7 hari (Supabase free)"
+          echo "================================"
