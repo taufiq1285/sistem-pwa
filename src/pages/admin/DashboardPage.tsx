@@ -292,9 +292,9 @@ export function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-slate-100 via-blue-50 to-indigo-50 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950">
+    <div className="role-page-shell min-h-screen bg-linear-to-br from-slate-100 via-blue-50 to-indigo-50 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950">
       {/* Header with Logout */}
-      <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200 dark:border-slate-700 shadow-lg sticky top-0 z-50">
+      <div className="role-page-content bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200 dark:border-slate-700 shadow-lg sticky top-0 z-50">
         <div className="px-6 py-5">
           <div className="flex items-center justify-between">
             <div>
@@ -346,11 +346,11 @@ export function DashboardPage() {
         </div>
       </div>
 
-      <div className="p-8 space-y-8">
+      <div className="role-page-content p-4 sm:p-6 lg:p-8 space-y-8">
         {/* Statistics Cards */}
         <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
           {/* Total Users Card */}
-          <Card className="group hover:shadow-2xl hover:scale-105 transition-all duration-300 border-0 shadow-lg bg-linear-to-br from-blue-50 to-indigo-50 dark:from-blue-950/40 dark:to-indigo-950/40 backdrop-blur-sm overflow-hidden relative">
+          <Card className="interactive-card group hover:shadow-2xl hover:scale-[1.03] transition-all duration-300 border-0 shadow-lg bg-linear-to-br from-blue-50 to-indigo-50 dark:from-blue-950/40 dark:to-indigo-950/40 backdrop-blur-sm overflow-hidden relative">
             <div className="absolute top-0 right-0 w-32 h-32 bg-linear-to-br from-blue-400/20 to-indigo-400/20 rounded-full blur-3xl -mr-16 -mt-16 group-hover:from-blue-400/30 group-hover:to-indigo-400/30 transition-all duration-300" />
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 relative">
               <CardTitle className="text-base font-bold text-blue-900 dark:text-blue-100">
@@ -374,7 +374,7 @@ export function DashboardPage() {
           </Card>
 
           {/* Mahasiswa Card */}
-          <Card className="group hover:shadow-2xl hover:scale-105 transition-all duration-300 border-0 shadow-lg bg-linear-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/40 dark:to-teal-950/40 backdrop-blur-sm overflow-hidden relative">
+          <Card className="interactive-card group hover:shadow-2xl hover:scale-[1.03] transition-all duration-300 border-0 shadow-lg bg-linear-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/40 dark:to-teal-950/40 backdrop-blur-sm overflow-hidden relative">
             <div className="absolute top-0 right-0 w-32 h-32 bg-linear-to-br from-emerald-400/20 to-teal-400/20 rounded-full blur-3xl -mr-16 -mt-16 group-hover:from-emerald-400/30 group-hover:to-teal-400/30 transition-all duration-300" />
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 relative">
               <CardTitle className="text-base font-bold text-emerald-900 dark:text-emerald-100">

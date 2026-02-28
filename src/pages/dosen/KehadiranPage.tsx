@@ -512,22 +512,23 @@ export default function DosenKehadiranPage() {
   // ============================================================================
 
   return (
-    <div className="container mx-auto py-6 max-w-7xl space-y-6">
-      {/* Hero Header */}
-      <div className="relative overflow-hidden rounded-xl bg-linear-to-r from-pink-500 via-rose-500 to-purple-600 p-8 text-white">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-32 translate-x-32 blur-3xl" />
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-rose-400/20 rounded-full translate-y-24 -translate-x-24 blur-2xl" />
+    <div className="role-page-shell">
+      <div className="role-page-content space-y-6">
+        {/* Hero Header */}
+        <div className="relative overflow-hidden rounded-xl bg-linear-to-r from-indigo-500 via-blue-500 to-purple-600 p-5 sm:p-6 md:p-8 text-white">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-32 translate-x-32 blur-3xl" />
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-400/20 rounded-full translate-y-24 -translate-x-24 blur-2xl" />
 
-        <div className="relative">
-          <h1 className="text-4xl font-extrabold flex items-center gap-3">
-            📋 Kehadiran Praktikum
-          </h1>
-          <p className="text-lg font-semibold mt-2 max-w-xl">
-            Input kehadiran mahasiswa praktikum. Pilih mata kuliah, kelas, dan
-            tanggal kehadiran.
-          </p>
+          <div className="relative">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold flex items-center gap-3">
+              📋 Kehadiran Praktikum
+            </h1>
+            <p className="text-sm sm:text-base md:text-lg font-semibold mt-2 max-w-xl">
+              Input kehadiran mahasiswa praktikum. Pilih mata kuliah, kelas, dan
+              tanggal kehadiran.
+            </p>
+          </div>
         </div>
-      </div>
 
       {/* Filter Card */}
       {(tahunAjaranOptions.length > 0 || semesterOptions.length > 0) && (
@@ -611,7 +612,7 @@ export default function DosenKehadiranPage() {
       )}
 
       {/* Step Selection Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {/* Step 1: Mata Kuliah */}
         <Card
           className={cn(
@@ -898,17 +899,14 @@ export default function DosenKehadiranPage() {
                       <Table>
                         <TableHeader>
                           <TableRow>
-                            <TableHead className="w-[100px]">NIM</TableHead>
+                            <TableHead className="w-25">NIM</TableHead>
                             <TableHead>Nama Mahasiswa</TableHead>
-                            <TableHead className="w-[150px]">Status</TableHead>
+                            <TableHead className="w-37.5">Status</TableHead>
                             <TableHead>Keterangan</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
                           {attendanceRecords.map((record) => {
-                            const statusOption = STATUS_OPTIONS.find(
-                              (s) => s.value === record.status,
-                            );
                             return (
                               <TableRow key={record.mahasiswa_id}>
                                 <TableCell className="font-mono text-sm">
@@ -927,19 +925,13 @@ export default function DosenKehadiranPage() {
                                       )
                                     }
                                   >
-                                    <SelectTrigger className="w-[140px]">
+                                    <SelectTrigger className="w-35">
                                       <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
                                       {STATUS_OPTIONS.map((option) => (
-                                        <SelectItem
-                                          key={option.value}
-                                          value={option.value}
-                                        >
-                                          <div className="flex items-center gap-2">
-                                            <span>{option.icon}</span>
-                                            <span>{option.label}</span>
-                                          </div>
+                                        <SelectItem key={option.value} value={option.value}>
+                                          {option.icon} {option.label}
                                         </SelectItem>
                                       ))}
                                     </SelectContent>
@@ -1033,6 +1025,7 @@ export default function DosenKehadiranPage() {
           </CardContent>
         </Card>
       )}
+      </div>
     </div>
   );
 }

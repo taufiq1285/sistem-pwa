@@ -117,9 +117,9 @@
   body {
     @apply bg-background text-foreground;
     background-image:
-      radial-gradient(circle at 15% 20%, rgba(59, 130, 246, 0.06), transparent 35%),
-      radial-gradient(circle at 85% 10%, rgba(236, 72, 153, 0.05), transparent 30%),
-      radial-gradient(circle at 50% 90%, rgba(16, 185, 129, 0.04), transparent 32%);
+      radial-gradient(circle at 15% 20%, rgba(59, 130, 246, 0.04), transparent 35%),
+      radial-gradient(circle at 85% 10%, rgba(236, 72, 153, 0.03), transparent 30%),
+      radial-gradient(circle at 50% 90%, rgba(16, 185, 129, 0.03), transparent 32%);
     background-attachment: fixed;
   }
 }
@@ -193,8 +193,31 @@
 .interactive-card:hover,
 .interactive-card:focus-within {
   transform: translateY(-2px);
-  box-shadow: 0 14px 36px rgba(15, 23, 42, 0.12);
-  border-color: rgba(59, 130, 246, 0.22);
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.09);
+  border-color: rgba(59, 130, 246, 0.16);
+}
+
+.role-page-shell {
+  position: relative;
+  min-height: 100vh;
+  isolation: isolate;
+}
+
+.role-page-shell::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(circle at 12% 16%, rgba(59, 130, 246, 0.05), transparent 34%),
+    radial-gradient(circle at 90% 8%, rgba(99, 102, 241, 0.05), transparent 30%),
+    radial-gradient(circle at 50% 92%, rgba(16, 185, 129, 0.04), transparent 36%);
+}
+
+.role-page-content {
+  position: relative;
+  z-index: 1;
 }
 
 @media (prefers-reduced-motion: reduce) {

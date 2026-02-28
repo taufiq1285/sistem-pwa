@@ -1,79 +1,136 @@
 name: Keep Supabase Project Active
 
 on:
-  # Jalankan setiap 3 hari (jauh sebelum batas 7 hari Supabase free tier)
+  # Jalankan sering agar jauh dari ambang idle Supabase free
   schedule:
-    - cron: '0 6 */3 * *'  # Setiap 3 hari pada jam 06:00 UTC
-
-  # Bisa dijalankan manual dari GitHub Actions tab
+    - cron: '0 */6 * * *' # tiap 6 jam
   workflow_dispatch:
 
-# Izin untuk push commit ke repo (mencegah GitHub menonaktifkan workflow)
 permissions:
   contents: write
+
+concurrency:
+  group: keep-supabase-active
+  cancel-in-progress: true
 
 jobs:
   ping-supabase:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Ping Supabase REST API
+      - name: Validate required secrets
+        run: |
+          if [ -z "${{ secrets.VITE_SUPABASE_URL }}" ]; then
+            echo "ERROR: VITE_SUPABASE_URL belum di-set di GitHub Secrets."
+            exit 1
+          fi
+
+          if [ -z "${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" ] && [ -z "${{ secrets.VITE_SUPABASE_ANON_KEY }}" ]; then
+            echo "ERROR: Set minimal 1 key: SUPABASE_SERVICE_ROLE_KEY atau VITE_SUPABASE_ANON_KEY"
+            exit 1
+          fi
+
+      - name: Ping Supabase database activity
         id: ping
         run: |
-          echo "Pinging Supabase to keep project active..."
+          BASE_URL="${{ secrets.VITE_SUPABASE_URL }}"
 
-          if [ -z "${{ secrets.VITE_SUPABASE_URL }}" ] || [ -z "${{ secrets.VITE_SUPABASE_ANON_KEY }}" ]; then
-            echo "ERROR: VITE_SUPABASE_URL atau VITE_SUPABASE_ANON_KEY belum di-set di GitHub Secrets."
-            echo "Buka: Settings > Secrets and variables > Actions > New repository secret"
+          if [ -n "${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" ]; then
+            API_KEY="${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}"
+            KEY_TYPE="service_role"
+          else
+            API_KEY="${{ secrets.VITE_SUPABASE_ANON_KEY }}"
+            KEY_TYPE="anon"
+          fi
+
+          echo "Using key type: $KEY_TYPE"
+
+          # Berdasarkan hasil RLS terbaru:
+          # - mata_kuliah punya SELECT policy paling longgar (qual=true)
+          # - jadwal_praktikum juga kandidat kuat untuk aktivitas akademik inti
+          # - tabel kuis/attempt/jawaban/soal sering bergantung auth.uid()/role
+          TABLES=(
+            "mata_kuliah"
+            "jadwal_praktikum"
+            "kelas"
+            "kuis"
+            "attempt_kuis"
+            "soal"
+            "jawaban"
+          )
+
+          SUCCESS_CODE=""
+          SUCCESS_TABLE=""
+          LAST_ERROR_CODE=""
+
+          for TABLE in "${TABLES[@]}"; do
+            CODE=$(curl -s -o /tmp/resp.json -w "%{http_code}" \
+              --max-time 40 \
+              -H "apikey: $API_KEY" \
+              -H "Authorization: Bearer $API_KEY" \
+              -H "Accept: application/json" \
+              "$BASE_URL/rest/v1/$TABLE?select=id&limit=1" \
+              || echo "000")
+
+            echo "Table '$TABLE' => HTTP $CODE"
+
+            # Sukses query data (aktivitas DB nyata)
+            if [ "$CODE" = "200" ] || [ "$CODE" = "206" ]; then
+              SUCCESS_CODE="$CODE"
+              SUCCESS_TABLE="$TABLE"
+              break
+            fi
+
+            # Jangan fail cepat untuk 401/403/404; lanjut ke tabel lain
+            LAST_ERROR_CODE="$CODE"
+          done
+
+          if [ -z "$SUCCESS_TABLE" ]; then
+            echo "GAGAL: Tidak ada query tabel yang sukses (200/206)."
+            echo "Last observed HTTP code: $LAST_ERROR_CODE"
+            echo "Tip: cek nama tabel via SQL: SELECT tablename FROM pg_tables WHERE schemaname='public' ORDER BY tablename;"
             exit 1
           fi
 
-          # Ping ke tabel 'users' dengan limit 1 (query ringan, valid di Supabase)
-          response=$(curl -s -o /dev/null -w "%{http_code}" \
-            --max-time 30 \
-            -H "apikey: ${{ secrets.VITE_SUPABASE_ANON_KEY }}" \
-            -H "Authorization: Bearer ${{ secrets.VITE_SUPABASE_ANON_KEY }}" \
-            -H "Accept: application/json" \
-            "${{ secrets.VITE_SUPABASE_URL }}/rest/v1/users?select=id&limit=1" \
-            || echo "000")
+          echo "SUKSES: Aktivitas DB tercatat dari tabel '$SUCCESS_TABLE' (HTTP $SUCCESS_CODE)"
+          echo "response_code=$SUCCESS_CODE" >> $GITHUB_OUTPUT
+          echo "table_name=$SUCCESS_TABLE" >> $GITHUB_OUTPUT
+          echo "key_type=$KEY_TYPE" >> $GITHUB_OUTPUT
 
-          echo "Response code: $response"
-
-          # 200 = OK, 401 = Unauthorized (tapi project masih aktif), 406 = Not Acceptable (project aktif)
-          # Yang penting bukan 000 (tidak bisa konek sama sekali)
-          if [ "$response" = "000" ]; then
-            echo "GAGAL: Tidak bisa terhubung ke Supabase. Cek VITE_SUPABASE_URL di secrets."
-            exit 1
-          fi
-
-          echo "Berhasil! Supabase aktif (HTTP $response)"
-          echo "response_code=$response" >> $GITHUB_OUTPUT
-
-      - name: Update keep-alive timestamp
+      - name: Monthly heartbeat commit (prevent workflow auto-disable)
         run: |
+          DAY_UTC=$(date -u '+%d')
+
+          # Commit hanya tanggal 1 setiap bulan untuk minim noise
+          if [ "$DAY_UTC" != "01" ]; then
+            echo "Bukan tanggal 1 UTC, skip heartbeat commit."
+            exit 0
+          fi
+
           TIMESTAMP=$(date -u '+%Y-%m-%d %H:%M:%S UTC')
-          RESPONSE="${{ steps.ping.outputs.response_code }}"
 
           cat > .github/keep-alive.txt << EOF
-          Last ping : $TIMESTAMP
-          HTTP response : $RESPONSE
-          Status       : Active
+          Last ping      : $TIMESTAMP
+          Table success  : ${{ steps.ping.outputs.table_name }}
+          HTTP response  : ${{ steps.ping.outputs.response_code }}
+          Key type       : ${{ steps.ping.outputs.key_type }}
+          Status         : Active
           EOF
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add .github/keep-alive.txt
 
-          # Hanya commit jika ada perubahan (cegah empty commit)
           if git diff --staged --quiet; then
-            echo "Tidak ada perubahan, skip commit."
+            echo "Tidak ada perubahan heartbeat, skip commit."
           else
-            git commit -m "chore: keep-alive ping $TIMESTAMP [skip ci]"
+            git commit -m "chore: monthly keep-alive heartbeat $TIMESTAMP [skip ci]"
             git push
-            echo "Timestamp diperbarui dan di-push."
+            echo "Heartbeat bulanan berhasil di-push."
           fi
 
       - name: Summary
@@ -81,8 +138,10 @@ jobs:
           echo "================================"
           echo " Supabase Keep-Alive Summary"
           echo "================================"
-          echo " Waktu ping : $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
-          echo " HTTP Status : ${{ steps.ping.outputs.response_code }}"
-          echo " Jadwal     : Setiap 3 hari"
-          echo " Batas jeda : 7 hari (Supabase free)"
+          echo " Waktu ping  : $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+          echo " Key type    : ${{ steps.ping.outputs.key_type }}"
+          echo " Tabel sukses: ${{ steps.ping.outputs.table_name }}"
+          echo " HTTP status : ${{ steps.ping.outputs.response_code }}"
+          echo " Jadwal      : Tiap 6 jam"
+          echo " Query       : select=id&limit=1"
           echo "================================"

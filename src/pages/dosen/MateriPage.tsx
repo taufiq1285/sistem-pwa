@@ -306,8 +306,8 @@ export default function DosenMateriPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-linear-to-br from-indigo-50 via-blue-50 to-purple-50 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950 p-8">
-        <div className="max-w-7xl mx-auto">
+      <div className="role-page-shell">
+        <div className="role-page-content">
           <div className="flex items-center justify-center min-h-[400px]">
             <div className="text-center space-y-4">
               <Loader2 className="h-12 w-12 animate-spin mx-auto text-indigo-600" />
@@ -322,31 +322,31 @@ export default function DosenMateriPage() {
   }
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-indigo-50 via-blue-50 to-purple-50 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950 p-8">
-      <div className="max-w-7xl mx-auto space-y-8">
+    <div className="role-page-shell">
+      <div className="role-page-content space-y-8">
         {/* Enhanced Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex-1">
-            <div className="flex items-center gap-4 mb-3">
+            <div className="flex items-start sm:items-center gap-3 sm:gap-4 mb-3">
               <div className="p-3 bg-linear-to-br from-indigo-500 to-purple-600 rounded-2xl shadow-lg shadow-indigo-500/30">
                 <BookOpen className="h-8 w-8 text-white" />
               </div>
               <div>
-                <h1 className="text-5xl font-extrabold text-transparent bg-clip-text bg-linear-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400">
+                <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-linear-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400">
                   Materi Pembelajaran
                 </h1>
-                <p className="text-lg font-bold text-gray-700 dark:text-gray-300 mt-1">
+                <p className="text-sm sm:text-base md:text-lg font-bold text-gray-700 dark:text-gray-300 mt-1">
                   Kelola materi pembelajaran untuk kelas Anda
                 </p>
               </div>
             </div>
-            <p className="text-base font-semibold text-gray-500 dark:text-gray-400 ml-1">
+            <p className="text-sm sm:text-base font-semibold text-gray-500 dark:text-gray-400 ml-1">
               Upload dan atur materi pembelajaran dengan mudah
             </p>
           </div>
           <Button
             onClick={() => setShowUploadDialog(true)}
-            className="bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg shadow-indigo-500/30 font-semibold px-6"
+            className="w-full sm:w-auto bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg shadow-indigo-500/30 font-semibold px-6"
             size="lg"
           >
             <Plus className="mr-2 h-5 w-5" />
@@ -355,7 +355,7 @@ export default function DosenMateriPage() {
         </div>
 
         {/* Enhanced Stats */}
-        <div className="grid gap-6 md:grid-cols-4">
+        <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
           <div className="group hover:shadow-2xl transition-all duration-300 border-0 shadow-xl bg-linear-to-br from-blue-50 to-indigo-50 dark:from-blue-950/40 dark:to-indigo-950/40 backdrop-blur-sm rounded-2xl p-6 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-24 h-24 bg-linear-to-br from-blue-400/10 to-indigo-400/10 rounded-full blur-2xl -mr-12 -mt-12" />
             <div className="flex items-center justify-between relative">

@@ -283,8 +283,8 @@ export function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-blue-50 via-cyan-50 to-teal-50 dark:from-slate-950 dark:via-slate-900 dark:to-teal-950">
-      <div className="p-8">
+    <div className="role-page-shell min-h-screen bg-linear-to-br from-blue-50 via-cyan-50 to-teal-50 dark:from-slate-950 dark:via-slate-900 dark:to-teal-950">
+      <div className="role-page-content p-4 sm:p-6 lg:p-8">
         <div className="max-w-7xl mx-auto space-y-8">
           {/* Header */}
           <div className="flex items-center gap-4">
@@ -320,7 +320,7 @@ export function DashboardPage() {
 
         {/* Quick Stats Cards */}
         <div className="grid gap-4 md:grid-cols-4">
-          <Card className="border-0 shadow-lg bg-linear-to-br from-blue-500 to-cyan-600 text-white overflow-hidden relative">
+          <Card className="interactive-card border-0 shadow-lg bg-linear-to-br from-blue-500 to-cyan-600 text-white overflow-hidden relative">
             <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl -mr-8 -mt-8" />
             <CardContent className="p-6 relative">
               <div className="flex items-center justify-between">
@@ -339,7 +339,7 @@ export function DashboardPage() {
             </CardContent>
           </Card>
 
-          <Card className="border-0 shadow-lg bg-linear-to-br from-emerald-500 to-green-600 text-white overflow-hidden relative">
+          <Card className="interactive-card border-0 shadow-lg bg-linear-to-br from-emerald-500 to-green-600 text-white overflow-hidden relative">
             <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl -mr-8 -mt-8" />
             <CardContent className="p-6 relative">
               <div className="flex items-center justify-between">
@@ -358,7 +358,7 @@ export function DashboardPage() {
             </CardContent>
           </Card>
 
-          <Card className="border-0 shadow-lg bg-linear-to-br from-orange-500 to-amber-600 text-white overflow-hidden relative">
+          <Card className="interactive-card border-0 shadow-lg bg-linear-to-br from-orange-500 to-amber-600 text-white overflow-hidden relative">
             <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl -mr-8 -mt-8" />
             <CardContent className="p-6 relative">
               <div className="flex items-center justify-between">
@@ -377,7 +377,7 @@ export function DashboardPage() {
             </CardContent>
           </Card>
 
-          <Card className="border-0 shadow-lg bg-linear-to-br from-rose-500 to-red-600 text-white overflow-hidden relative">
+          <Card className="interactive-card border-0 shadow-lg bg-linear-to-br from-rose-500 to-red-600 text-white overflow-hidden relative">
             <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl -mr-8 -mt-8" />
             <CardContent className="p-6 relative">
               <div className="flex items-center justify-between">

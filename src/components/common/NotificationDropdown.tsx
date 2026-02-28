@@ -106,8 +106,8 @@ function NotificationItem({
 
   return (
     <div
-      className={`flex gap-3 py-3 px-2 hover:bg-accent rounded-md cursor-pointer transition-colors ${
-        !notification.is_read ? "bg-blue-50 dark:bg-blue-950/20" : ""
+      className={`flex gap-3 rounded-md px-2 py-3 transition-colors hover:bg-accent cursor-pointer ${
+        !notification.is_read ? "bg-blue-50/80 dark:bg-blue-950/20" : ""
       }`}
       onClick={handleClick}
     >
@@ -278,7 +278,7 @@ export function NotificationDropdown() {
         <Button
           variant="ghost"
           size="icon"
-          className="relative"
+          className="relative hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-all duration-200 hover:scale-105 active:scale-95"
           title="Notifikasi"
         >
           <Bell className="h-5 w-5" />
@@ -293,10 +293,13 @@ export function NotificationDropdown() {
         </Button>
       </PopoverTrigger>
 
-      <PopoverContent className="w-96 p-0" align="end">
+      <PopoverContent
+        className="w-[min(92vw,24rem)] rounded-xl border border-border/70 bg-white/95 p-0 shadow-xl backdrop-blur-md"
+        align="end"
+      >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b">
-          <h3 className="font-semibold text-sm">Notifikasi</h3>
+        <div className="flex items-center justify-between border-b px-3 py-3 sm:px-4">
+          <h3 className="text-sm font-semibold">Notifikasi</h3>
           <div className="flex items-center gap-2">
             {unreadCount > 0 && (
               <>
@@ -327,8 +330,8 @@ export function NotificationDropdown() {
           <EmptyState />
         ) : (
           <>
-            <ScrollArea className="h-100">
-              <div className="px-2">
+            <ScrollArea className="h-96 sm:h-104">
+              <div className="px-2 py-1">
                 {notifications.map((notification, index) => (
                   <div key={notification.id}>
                     <NotificationItem

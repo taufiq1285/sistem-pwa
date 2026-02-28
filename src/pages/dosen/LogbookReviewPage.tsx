@@ -326,12 +326,12 @@ export default function DosenLogbookReviewPage() {
   const filteredLogbooks = getFilteredLogbooks();
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="role-page-shell role-page-content space-y-6">
       {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center gap-3 mb-2">
-          <FileText className="h-8 w-8 text-blue-600" />
-          <h1 className="text-3xl font-bold">Review Logbook Mahasiswa</h1>
+      <div className="mb-6 sm:mb-8">
+        <div className="mb-2 flex items-center gap-3">
+          <FileText className="h-7 w-7 text-blue-600 sm:h-8 sm:w-8" />
+          <h1 className="text-2xl font-bold sm:text-3xl">Review Logbook Mahasiswa</h1>
         </div>
         <p className="text-gray-600">
           Review dan beri nilai pada logbook praktikum mahasiswa
@@ -340,7 +340,7 @@ export default function DosenLogbookReviewPage() {
 
       {/* Stats Cards */}
       {stats && (
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+        <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
           <Card>
             <CardContent className="p-4">
               <p className="text-2xl font-bold text-blue-600">
@@ -389,16 +389,16 @@ export default function DosenLogbookReviewPage() {
       )}
 
       {/* Filters */}
-      <Card className="mb-6">
-        <CardContent className="p-4">
-          <div className="flex flex-wrap gap-4">
-            <div className="flex items-center gap-2">
+      <Card className="interactive-card mb-6 border-0 shadow-lg">
+        <CardContent className="p-4 sm:p-5">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="flex items-center gap-2 sm:col-span-2 lg:col-span-1">
               <Filter className="h-4 w-4 text-gray-500" />
               <span className="text-sm font-medium">Filter:</span>
             </div>
 
             <Select value={selectedKelas} onValueChange={setSelectedKelas}>
-              <SelectTrigger className="w-[200px]">
+              <SelectTrigger className="w-full sm:w-55">
                 <SelectValue placeholder="Pilih Kelas" />
               </SelectTrigger>
               <SelectContent>
@@ -412,7 +412,7 @@ export default function DosenLogbookReviewPage() {
             </Select>
 
             <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-full sm:w-50">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
@@ -427,7 +427,7 @@ export default function DosenLogbookReviewPage() {
               placeholder="Cari nama mahasiswa..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-[250px]"
+              className="w-full"
             />
           </div>
         </CardContent>
@@ -452,10 +452,10 @@ export default function DosenLogbookReviewPage() {
           filteredLogbooks.map((logbook) => (
             <Card
               key={logbook.id}
-              className="hover:shadow-lg transition-shadow"
+              className="interactive-card border-0 shadow-lg"
             >
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between mb-4">
+              <CardContent className="p-4 sm:p-6">
+                <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
                       <GraduationCap className="h-5 w-5 text-blue-600" />
@@ -469,7 +469,7 @@ export default function DosenLogbookReviewPage() {
                       {logbook.jadwal?.topik || "Praktikum"}
                     </p>
 
-                    <div className="flex gap-4 text-xs text-gray-500">
+                    <div className="flex flex-wrap gap-3 text-xs text-gray-500">
                       {logbook.jadwal?.tanggal_praktikum && (
                         <span>
                           {format(
@@ -494,7 +494,7 @@ export default function DosenLogbookReviewPage() {
                     )}
                   </div>
 
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap justify-end gap-2">
                     <Button
                       size="sm"
                       variant="outline"
@@ -791,7 +791,7 @@ export default function DosenLogbookReviewPage() {
               <p className="text-sm">{selectedLogbook?.jadwal?.topik}</p>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
+            <div className="grid grid-cols-1 gap-4 text-sm text-gray-600 sm:grid-cols-2">
               <div>
                 <p className="font-medium">Tanggal</p>
                 <p>
