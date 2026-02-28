@@ -22,28 +22,46 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Validate required secrets
+      - name: Validate and normalize secrets
         run: |
-          if [ -z "${{ secrets.VITE_SUPABASE_URL }}" ]; then
-            echo "ERROR: VITE_SUPABASE_URL belum di-set di GitHub Secrets."
+          BASE_URL="${{ secrets.VITE_SUPABASE_URL }}"
+          if [ -z "$BASE_URL" ]; then
+            BASE_URL="${{ secrets.SUPABASE_URL }}"
+          fi
+
+          SERVICE_KEY="${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}"
+          ANON_KEY="${{ secrets.VITE_SUPABASE_ANON_KEY }}"
+          if [ -z "$ANON_KEY" ]; then
+            ANON_KEY="${{ secrets.SUPABASE_ANON_KEY }}"
+          fi
+
+          if [ -z "$BASE_URL" ]; then
+            echo "ERROR: Secret URL belum ada. Gunakan VITE_SUPABASE_URL atau SUPABASE_URL"
             exit 1
           fi
 
-          if [ -z "${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" ] && [ -z "${{ secrets.VITE_SUPABASE_ANON_KEY }}" ]; then
-            echo "ERROR: Set minimal 1 key: SUPABASE_SERVICE_ROLE_KEY atau VITE_SUPABASE_ANON_KEY"
+          if [ -z "$SERVICE_KEY" ] && [ -z "$ANON_KEY" ]; then
+            echo "ERROR: Secret key belum ada. Gunakan SUPABASE_SERVICE_ROLE_KEY atau VITE_SUPABASE_ANON_KEY/SUPABASE_ANON_KEY"
             exit 1
           fi
+
+          # Hilangkan trailing slash untuk hindari URL double slash
+          BASE_URL="${BASE_URL%/}"
+
+          echo "BASE_URL=$BASE_URL" >> $GITHUB_ENV
+          echo "SERVICE_KEY=$SERVICE_KEY" >> $GITHUB_ENV
+          echo "ANON_KEY=$ANON_KEY" >> $GITHUB_ENV
 
       - name: Ping Supabase database activity
         id: ping
         run: |
-          BASE_URL="${{ secrets.VITE_SUPABASE_URL }}"
+          BASE_URL="$BASE_URL"
 
-          if [ -n "${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" ]; then
-            API_KEY="${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}"
+          if [ -n "$SERVICE_KEY" ]; then
+            API_KEY="$SERVICE_KEY"
             KEY_TYPE="service_role"
           else
-            API_KEY="${{ secrets.VITE_SUPABASE_ANON_KEY }}"
+            API_KEY="$ANON_KEY"
             KEY_TYPE="anon"
           fi
 
