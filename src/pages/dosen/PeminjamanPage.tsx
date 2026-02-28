@@ -565,18 +565,18 @@ export default function PeminjamanPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="role-page-shell role-page-content space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-4xl font-extrabold">Peminjaman Alat</h1>
-        <p className="text-lg font-semibold">
+        <h1 className="text-2xl font-extrabold sm:text-3xl">Peminjaman Alat</h1>
+        <p className="text-sm font-medium text-muted-foreground sm:text-base">
           Kelola peminjaman peralatan laboratorium
         </p>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-5">
-        <Card className="border-0 shadow-lg bg-linear-to-br from-blue-50 to-indigo-50">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <Card className="interactive-card border-0 shadow-lg bg-linear-to-br from-blue-50 to-indigo-50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-bold">Total</CardTitle>
             <Package className="h-4 w-4 text-blue-600" />
@@ -588,7 +588,7 @@ export default function PeminjamanPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="interactive-card border-0 shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-bold">Menunggu</CardTitle>
             <Clock className="h-4 w-4 text-yellow-600" />
@@ -598,7 +598,7 @@ export default function PeminjamanPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="interactive-card border-0 shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-bold">Disetujui</CardTitle>
             <CheckCircle className="h-4 w-4 text-green-600" />
@@ -608,7 +608,7 @@ export default function PeminjamanPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="interactive-card border-0 shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-bold">Dikembalikan</CardTitle>
             <RotateCcw className="h-4 w-4 text-blue-600" />
@@ -618,7 +618,7 @@ export default function PeminjamanPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="interactive-card border-0 shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-bold">Ditolak</CardTitle>
             <XCircle className="h-4 w-4 text-red-600" />
@@ -638,7 +638,7 @@ export default function PeminjamanPage() {
 
         {/* Tab 1: Riwayat Peminjaman */}
         <TabsContent value="history" className="space-y-4">
-          <div className="flex gap-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -649,7 +649,7 @@ export default function PeminjamanPage() {
               />
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-full sm:w-47.5">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -663,7 +663,7 @@ export default function PeminjamanPage() {
             </Select>
           </div>
 
-          <Card>
+          <Card className="interactive-card border-0 shadow-lg">
             <CardHeader>
               <CardTitle>Daftar Peminjaman</CardTitle>
             </CardHeader>
@@ -677,7 +677,8 @@ export default function PeminjamanPage() {
                   <p className="text-orange-600">Tidak ada data</p>
                 </div>
               ) : (
-                <Table>
+                <div className="overflow-x-auto rounded-xl border border-border/70">
+                  <Table className="min-w-190">
                   <TableHeader>
                     <TableRow>
                       <TableHead>Kode</TableHead>
@@ -771,7 +772,8 @@ export default function PeminjamanPage() {
                       );
                     })}
                   </TableBody>
-                </Table>
+                  </Table>
+                </div>
               )}
             </CardContent>
           </Card>
@@ -779,7 +781,7 @@ export default function PeminjamanPage() {
 
         {/* Tab 2: Ajukan Peminjaman */}
         <TabsContent value="request" className="space-y-4">
-          <Card className="border-2 border-dashed">
+          <Card className="interactive-card border-2 border-dashed border-border/70 shadow-md">
             <CardContent className="flex flex-col items-center justify-center py-16">
               <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
                 <Plus className="h-8 w-8 text-blue-600" />
@@ -807,7 +809,7 @@ export default function PeminjamanPage() {
 
       {/* Request Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="w-[95vw] max-w-125 sm:max-w-125">
           <DialogHeader>
             <DialogTitle>Ajukan Peminjaman Alat</DialogTitle>
             <DialogDescription>
@@ -959,7 +961,7 @@ export default function PeminjamanPage() {
 
       {/* Return Dialog */}
       <Dialog open={returnDialogOpen} onOpenChange={setReturnDialogOpen}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="w-[95vw] max-w-125 sm:max-w-125">
           <DialogHeader>
             <DialogTitle>Kembalikan Alat</DialogTitle>
             <DialogDescription>
@@ -1063,7 +1065,7 @@ export default function PeminjamanPage() {
 
       {/* Mark as Taken Dialog */}
       <Dialog open={takenDialogOpen} onOpenChange={setTakenDialogOpen}>
-        <DialogContent className="sm:max-w-[400px]">
+        <DialogContent className="w-[95vw] max-w-100 sm:max-w-100">
           <DialogHeader>
             <DialogTitle>Konfirmasi Pengambilan Alat</DialogTitle>
             <DialogDescription>
@@ -1111,7 +1113,7 @@ export default function PeminjamanPage() {
 
       {/* Edit Dialog */}
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="w-[95vw] max-w-125 sm:max-w-125">
           <DialogHeader>
             <DialogTitle>Edit Peminjaman Alat</DialogTitle>
             <DialogDescription>

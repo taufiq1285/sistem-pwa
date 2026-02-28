@@ -10,7 +10,7 @@
  */
 
 import { supabase } from "@/lib/supabase/client";
-import { cacheAPI } from "@/lib/offline/api-cache";
+import { cacheAPI, invalidateCachePatternSync } from "@/lib/offline/api-cache";
 import type {
   BankSoal,
   CreateBankSoalData,
@@ -370,6 +370,9 @@ export async function deleteBankSoal(id: string): Promise<void> {
   const { error } = await supabase.from("bank_soal").delete().eq("id", id);
 
   if (error) throw error;
+
+  // Clear cached bank_soal queries so UI does not show stale data after delete
+  await invalidateCachePatternSync("*bank_soal_*");
 }
 
 /**
@@ -379,6 +382,9 @@ export async function bulkDeleteBankSoal(ids: string[]): Promise<void> {
   const { error } = await supabase.from("bank_soal").delete().in("id", ids);
 
   if (error) throw error;
+
+  // Clear cached bank_soal queries so UI reflects bulk delete immediately
+  await invalidateCachePatternSync("*bank_soal_*");
 }
 
 // ============================================================================

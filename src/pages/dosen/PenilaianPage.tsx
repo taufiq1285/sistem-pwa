@@ -711,39 +711,41 @@ export default function DosenPenilaianPage() {
 
   if (loading && kelasList.length === 0) {
     return (
-      <div className="flex items-center justify-center h-96">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      <div className="role-page-shell">
+        <div className="role-page-content flex items-center justify-center h-96">
+          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-indigo-50 via-blue-50 to-purple-50 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950 p-8">
-      <div className="max-w-7xl mx-auto space-y-8">
+    <div className="role-page-shell">
+      <div className="role-page-content space-y-8">
         {/* Enhanced Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex-1">
-            <div className="flex items-center gap-4 mb-3">
+            <div className="flex items-start sm:items-center gap-3 sm:gap-4 mb-3">
               <div className="p-3 bg-linear-to-br from-indigo-500 to-purple-600 rounded-2xl shadow-lg shadow-indigo-500/30">
                 <ClipboardCheck className="h-8 w-8 text-white" />
               </div>
               <div>
-                <h1 className="text-5xl font-extrabold text-transparent bg-clip-text bg-linear-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400">
+                <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-linear-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400">
                   Penilaian Mahasiswa
                 </h1>
-                <p className="text-lg font-bold text-gray-700 dark:text-gray-300 mt-1">
+                <p className="text-sm sm:text-base md:text-lg font-bold text-gray-700 dark:text-gray-300 mt-1">
                   {selectedKelas
                     ? "Input nilai mahasiswa dengan visual indicators untuk kemudahan tracking"
                     : "Pilih mata kuliah dan kelas untuk memulai penilaian"}
                 </p>
               </div>
             </div>
-            <p className="text-base font-semibold text-gray-500 dark:text-gray-400 ml-1">
+            <p className="text-sm sm:text-base font-semibold text-gray-500 dark:text-gray-400 ml-1">
               Kelola nilai mahasiswa dengan mudah dan akurat
             </p>
           </div>
           {selectedKelas && (
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto">
               <Button
                 variant="outline"
                 onClick={handleOpenBobotDialog}

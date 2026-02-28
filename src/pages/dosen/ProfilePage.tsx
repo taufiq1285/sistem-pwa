@@ -146,8 +146,8 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="p-8">
-        <div className="max-w-4xl mx-auto">
+      <div className="role-page-shell">
+        <div className="role-page-content max-w-4xl">
           <div className="animate-pulse space-y-6">
             <div className="h-8 bg-gray-200 rounded w-1/4"></div>
             <div className="h-96 bg-gray-200 rounded"></div>
@@ -158,11 +158,12 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="p-8">
-      <div className="max-w-4xl mx-auto space-y-6">
+    <div className="role-page-shell">
+      <div className="role-page-content max-w-4xl space-y-6">
         <PageHeader
           title="Profil Saya"
           description="Kelola informasi profil Anda"
+          className="mb-2"
         />
 
         {error && (
@@ -180,7 +181,7 @@ export default function ProfilePage() {
         )}
 
         {/* User Information Card */}
-        <Card>
+        <Card className="interactive-card border border-border/60 shadow-sm">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <User className="h-5 w-5" />
@@ -234,7 +235,7 @@ export default function ProfilePage() {
         </Card>
 
         {/* Academic Information Card */}
-        <Card>
+        <Card className="interactive-card border border-border/60 shadow-sm">
           <CardHeader>
             <CardTitle>Informasi Akademik</CardTitle>
             <CardDescription>Gelar dan informasi akademik Anda</CardDescription>
@@ -305,7 +306,7 @@ export default function ProfilePage() {
         </Card>
 
         {/* Action Buttons */}
-        <div className="flex justify-end gap-3">
+        <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
           <Button
             variant="outline"
             onClick={() => fetchProfile(false)}

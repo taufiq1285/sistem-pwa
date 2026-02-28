@@ -59,12 +59,12 @@ export function Header({
   return (
     <header
       className={cn(
-        "sticky top-0 z-40 w-full border-b border-slate-200/80 dark:border-slate-700/80 bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl shadow-md supports-[backdrop-filter]:bg-white/70 dark:supports-[backdrop-filter]:bg-slate-900/70",
+        "sticky top-0 z-40 w-full border-b border-slate-200/80 dark:border-slate-700/80 bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl shadow-md supports-backdrop-filter:bg-white/70 dark:supports-backdrop-filter:bg-slate-900/70",
         className,
       )}
     >
       <div className="relative flex min-h-16 items-center justify-between gap-2 px-3 sm:px-4 md:px-6">
-+        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent via-blue-400/40 to-transparent" />
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent via-blue-400/40 to-transparent" />
         {/* Left: Mobile menu button */}
         <div className="flex items-center gap-4">
           <Button

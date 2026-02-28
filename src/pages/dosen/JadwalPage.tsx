@@ -903,31 +903,31 @@ export default function JadwalPage() {
   }
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-indigo-50 via-blue-50 to-purple-50 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950 p-8">
-      <div className="max-w-7xl mx-auto space-y-8">
+    <div className="role-page-shell">
+      <div className="role-page-content space-y-8">
         {/* Enhanced Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex-1">
-            <div className="flex items-center gap-4 mb-3">
+            <div className="flex items-start sm:items-center gap-3 sm:gap-4 mb-3">
               <div className="p-3 bg-linear-to-br from-indigo-500 to-purple-600 rounded-2xl shadow-lg shadow-indigo-500/30">
                 <CalendarIcon className="h-8 w-8 text-white" />
               </div>
               <div>
-                <h1 className="text-5xl font-extrabold text-transparent bg-clip-text bg-linear-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400">
+                <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-linear-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400">
                   Jadwal Praktikum
                 </h1>
-                <p className="text-lg font-bold text-gray-700 dark:text-gray-300 mt-1">
+                <p className="text-sm sm:text-base md:text-lg font-bold text-gray-700 dark:text-gray-300 mt-1">
                   Kelola jadwal praktikum laboratorium
                 </p>
               </div>
             </div>
-            <p className="text-base font-semibold text-gray-500 dark:text-gray-400 ml-1">
+            <p className="text-sm sm:text-base font-semibold text-gray-500 dark:text-gray-400 ml-1">
               Atur dan pantau semua jadwal praktikum dengan mudah
             </p>
           </div>
           <Button
             onClick={() => setIsCreateOpen(true)}
-            className="bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg shadow-indigo-500/30 font-semibold px-6"
+            className="w-full sm:w-auto bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg shadow-indigo-500/30 font-semibold px-6"
             size="lg"
           >
             <Plus className="mr-2 h-5 w-5" />
@@ -938,13 +938,13 @@ export default function JadwalPage() {
         {/* Enhanced Filters */}
         <Card className="border-0 shadow-xl bg-linear-to-br from-white to-blue-50/50 dark:from-slate-900 dark:to-blue-950/30 backdrop-blur-sm">
           <CardContent className="p-6">
-            <div className="flex flex-wrap items-center gap-4">
+            <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3 sm:gap-4">
               <div className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
                 <CalendarIcon className="h-4 w-4 text-indigo-600" />
                 Filter:
               </div>
               <Select value={filterLab} onValueChange={setFilterLab}>
-                <SelectTrigger className="w-[220px] border-2">
+                <SelectTrigger className="w-full sm:w-[220px] border-2">
                   <SelectValue placeholder="Filter Laboratorium" />
                 </SelectTrigger>
                 <SelectContent>
@@ -958,7 +958,7 @@ export default function JadwalPage() {
               </Select>
 
               <Select value={filterHari} onValueChange={setFilterHari}>
-                <SelectTrigger className="w-[220px] border-2">
+                <SelectTrigger className="w-full sm:w-[220px] border-2">
                   <SelectValue placeholder="Filter Hari" />
                 </SelectTrigger>
                 <SelectContent>

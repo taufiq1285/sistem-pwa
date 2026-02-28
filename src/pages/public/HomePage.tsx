@@ -230,7 +230,7 @@ export function HomePage() {
             isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
           }`}
         >
-+          <div className="pointer-events-none absolute inset-0 -z-10 rounded-4xl border border-white/40 bg-white/20 backdrop-blur-sm" />
+          <div className="pointer-events-none absolute inset-0 -z-10 rounded-4xl border border-white/40 bg-white/20 backdrop-blur-sm" />
           {/* Badge */}
           <div className="inline-flex max-w-full items-center space-x-2 bg-linear-to-r from-pink-100 to-blue-100 text-pink-700 px-4 py-2 sm:px-6 sm:py-3 rounded-full text-xs sm:text-sm font-medium mb-6 sm:mb-8 shadow-lg hover:shadow-xl transition-all duration-300">
             <Baby className="h-4 w-4" />
@@ -308,7 +308,7 @@ export function HomePage() {
 
       {/* Features Section */}
       <section className="relative py-24 bg-linear-to-b from-white via-blue-50/30 to-white">
-+        <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-linear-to-b from-blue-200/20 to-transparent" />
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-linear-to-b from-blue-200/20 to-transparent" />
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <div className="inline-flex items-center space-x-2 bg-blue-100 text-blue-700 px-4 py-2 rounded-full text-sm font-semibold mb-4">
@@ -327,7 +327,7 @@ export function HomePage() {
             {features.map((feature, index) => (
               <Card
                 key={index}
-                className="border-2 border-gray-100 hover:shadow-2xl transition-all duration-500 hover:scale-105 group overflow-hidden relative"
+                className="interactive-card border-2 border-gray-100 hover:shadow-2xl transition-all duration-500 hover:scale-[1.03] group overflow-hidden relative"
               >
                 <div
                   className={`absolute inset-0 bg-linear-to-br ${feature.color} opacity-0 group-hover:opacity-5 transition-opacity duration-300`}
