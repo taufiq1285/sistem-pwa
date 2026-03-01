@@ -22,6 +22,7 @@ import {
   createBankSoal,
   updateBankSoal,
   deleteBankSoal,
+  bulkDeleteBankSoal,
   addQuestionsFromBank,
   copyQuizQuestionsToBank,
   saveSoalToBank,
@@ -94,6 +95,7 @@ vi.mock("@/lib/offline/api-cache", () => ({
   clearAllCache: vi.fn(),
   invalidateCache: vi.fn(),
   invalidateCachePattern: vi.fn(),
+  invalidateCachePatternSync: vi.fn().mockResolvedValue(undefined),
 }));
 
 describe("Bank Soal API - Question Bank Management", () => {
@@ -249,6 +251,51 @@ describe("Bank Soal API - Question Bank Management", () => {
   // ==============================================================================
   // CREATE OPERATIONS
   // ==============================================================================
+
+  describe("getBankSoalById", () => {
+    it("should get question by id", async () => {
+      const question: any = {
+        id: "q-1",
+        dosen_id: "dosen-1",
+        pertanyaan: "By ID",
+        tipe_soal: "essay",
+        poin: 5,
+        opsi_jawaban: null,
+        jawaban_benar: null,
+        mata_kuliah_id: "mk-1",
+        is_public: false,
+        usage_count: 2,
+        created_at: "2025-01-21T10:00:00Z",
+        updated_at: "2025-01-21T10:00:00Z",
+      };
+
+      (supabase.from as any).mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({ data: question, error: null }),
+          }),
+        }),
+      });
+
+      const result = await getBankSoalById("q-1");
+      expect(result.id).toBe("q-1");
+      expect(result.usage_count).toBe(2);
+    });
+
+    it("should throw when question not found", async () => {
+      (supabase.from as any).mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({ data: null, error: null }),
+          }),
+        }),
+      });
+
+      await expect(getBankSoalById("missing")).rejects.toThrow(
+        "Question not found",
+      );
+    });
+  });
 
   describe("createBankSoal", () => {
     it("should create new question di bank", async () => {
@@ -720,6 +767,123 @@ describe("Bank Soal API - Question Bank Management", () => {
       expect(result).toHaveLength(1);
       expect(result[0].dosen_id).toBe(dosenId);
       expect(result[0].tags).toEqual(tags);
+    });
+
+    it("should throw when quiz has no questions", async () => {
+      (supabase.from as any).mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            order: vi.fn().mockResolvedValue({ data: [], error: null }),
+          }),
+        }),
+      });
+
+      await expect(
+        copyQuizQuestionsToBank("kuis-empty", "dosen-1", ["tag"]),
+      ).rejects.toThrow("No questions found in quiz");
+    });
+  });
+
+  describe("additional branch coverage", () => {
+    it("should apply additional filters in getBankSoal", async () => {
+      const mockContains = vi.fn().mockReturnValue({
+        eq: vi.fn().mockResolvedValue({ data: [], error: null }),
+      });
+
+      const query = {
+        eq: vi.fn().mockReturnThis(),
+        contains: mockContains,
+      } as any;
+
+      (supabase.from as any).mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          order: vi.fn().mockReturnValue(query),
+        }),
+      });
+
+      await getBankSoal({
+        mata_kuliah_id: "mk-1",
+        tags: ["exam"],
+        is_public: true,
+      });
+
+      expect(query.eq).toHaveBeenCalledWith("mata_kuliah_id", "mk-1");
+      expect(mockContains).toHaveBeenCalledWith("tags", ["exam"]);
+    });
+
+    it("should throw when addQuestionsFromBank gets empty source", async () => {
+      (supabase.from as any).mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          in: vi.fn().mockResolvedValue({ data: [], error: null }),
+        }),
+      });
+
+      await expect(
+        addQuestionsFromBank("kuis-1", ["missing-id"]),
+      ).rejects.toThrow("No questions found in bank");
+    });
+
+    it("should bulk delete questions", async () => {
+      const mockDelete = vi.fn().mockReturnValue({
+        in: vi.fn().mockResolvedValue({ error: null }),
+      });
+
+      (supabase.from as any).mockReturnValue({
+        delete: mockDelete,
+      });
+
+      await expect(bulkDeleteBankSoal(["b1", "b2"])).resolves.not.toThrow();
+      expect(mockDelete).toHaveBeenCalled();
+    });
+
+    it("should save soal to bank with mapping from soal schema", async () => {
+      const sourceSoal: any = {
+        id: "s1",
+        pertanyaan: "Soal asli",
+        tipe: "essay",
+        poin: 20,
+        pilihan_jawaban: null,
+        jawaban_benar: "jawaban",
+        pembahasan: "penjelasan",
+      };
+
+      const duplicateQuery = {
+        eq: vi.fn().mockReturnThis(),
+        then: (resolve: any) => resolve({ data: [], error: null }),
+      } as any;
+
+      const createQuery = {
+        insert: vi.fn().mockReturnValue({
+          select: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({
+              data: {
+                id: "bank-new",
+                dosen_id: "dosen-1",
+                pertanyaan: "Soal asli",
+                tipe_soal: "essay",
+                poin: 20,
+                opsi_jawaban: null,
+                jawaban_benar: "jawaban",
+                penjelasan: "penjelasan",
+                is_public: false,
+                usage_count: 0,
+                created_at: "2025-01-21T10:00:00Z",
+                updated_at: "2025-01-21T10:00:00Z",
+              },
+              error: null,
+            }),
+          }),
+        }),
+      } as any;
+
+      (supabase.from as any)
+        .mockReturnValueOnce({ select: vi.fn().mockReturnValue(duplicateQuery) })
+        .mockReturnValueOnce(createQuery);
+
+      const result = await saveSoalToBank(sourceSoal, "dosen-1", ["copied"]);
+
+      expect(result.duplicates).toEqual([]);
+      expect(result.bankSoal.id).toBe("bank-new");
     });
   });
 

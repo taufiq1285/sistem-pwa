@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(supabase projects list)",
+      "Bash(supabase db dump --linked -f scripts/sql/FULL_SCHEMA_BACKUP.sql)",
+      "Bash(pg_dump --version)",
+      "Bash(supabase gen types typescript --linked)",
+      "Bash(supabase db dump --linked --schema public)",
+      "Read(//c/Users/ACER/.config/supabase/**)",
+      "Read(//c/Users/ACER/AppData/Roaming/**)"
+    ]
+  }
+}

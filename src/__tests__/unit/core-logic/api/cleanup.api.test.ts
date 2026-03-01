@@ -1,165 +1,582 @@
 /**
  * Unit Tests for Cleanup API (Vitest)
  *
- * Purpose: Test cleanup functions for removing kuis/praktikum data
- * Coverage:
- * - verifyKuisDataCounts() - verify data counts
- * - Error handling and edge cases
- *
- * @vitest/environments happy-dom
+ * Fokus:
+ * - [`verifyKuisDataCounts()`](src/lib/api/cleanup.api.ts:250)
+ * - [`cleanupAllKuisData()`](src/lib/api/cleanup.api.ts:15)
+ * - [`cleanupTugasPraktikumOnly()`](src/lib/api/cleanup.api.ts:115)
  */
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { supabase } from "@/lib/supabase/client";
-import { verifyKuisDataCounts } from "@/lib/api/cleanup.api";
+import { clearAllCacheSync } from "@/lib/offline/api-cache";
+import {
+  verifyKuisDataCounts,
+  cleanupAllKuisData,
+  cleanupTugasPraktikumOnly,
+} from "@/lib/api/cleanup.api";
 
-// Create proper chainable query mock
-const createQueryMock = (resolveValue: any = { count: 0 }) => {
-  const buildChain = () => {
-    const chainObj: any = {
-      select: () => buildChain(),
-      eq: () => chainObj,
-      head: () => chainObj,
-      count: resolveValue.count,
-    };
-
-    return chainObj;
-  };
-
-  return buildChain();
-};
-
-// Mock supabase client
+// Mock dependencies
 vi.mock("@/lib/supabase/client", () => ({
   supabase: {
-    from: vi.fn(() => createQueryMock()),
+    from: vi.fn(),
   },
 }));
+
+vi.mock("@/lib/offline/api-cache", () => ({
+  clearAllCacheSync: vi.fn(),
+}));
+
+const mockCountQuery = (count: number | null | undefined) => ({ count, error: null });
 
 describe("Cleanup API", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.spyOn(console, "log").mockImplementation(() => {});
     vi.spyOn(console, "error").mockImplementation(() => {});
+
+    vi.mocked(clearAllCacheSync).mockResolvedValue(0);
   });
 
   describe("verifyKuisDataCounts()", () => {
-    it("should return correct counts for all tables", async () => {
-      const mockCounts = {
+    it("mengembalikan jumlah count untuk semua tabel", async () => {
+      let callIndex = 0;
+      vi.mocked(supabase.from).mockImplementation(() => {
+        callIndex += 1;
+
+        const counts = [100, 50, 200, 25, 10, 15];
+        const count = counts[callIndex - 1] ?? 0;
+
+        return {
+          select: () => ({
+            ...mockCountQuery(count),
+            eq: () => Promise.resolve(mockCountQuery(count)),
+          }),
+        } as any;
+      });
+
+      const result = await verifyKuisDataCounts();
+
+      expect(result).toEqual({
         jawaban: 100,
         attempt_kuis: 50,
         soal: 200,
         kuis: 25,
         kuis_essay: 10,
         kuis_pilihan_ganda: 15,
+      });
+      expect(supabase.from).toHaveBeenCalledTimes(6);
+    });
+
+    it("fallback ke 0 saat count null/undefined", async () => {
+      vi.mocked(supabase.from).mockReturnValue({
+        select: () => ({
+          ...mockCountQuery(undefined),
+          eq: () => Promise.resolve(mockCountQuery(null)),
+        }),
+      } as any);
+
+      const result = await verifyKuisDataCounts();
+
+      expect(result.jawaban).toBe(0);
+      expect(result.attempt_kuis).toBe(0);
+      expect(result.soal).toBe(0);
+      expect(result.kuis).toBe(0);
+      expect(result.kuis_essay).toBe(0);
+      expect(result.kuis_pilihan_ganda).toBe(0);
+    });
+  });
+
+  describe("cleanupAllKuisData()", () => {
+    it("hapus data berurutan lalu clear cache", async () => {
+      const countsByTable: Record<string, number> = {
+        jawaban: 8,
+        attempt_kuis: 4,
+        soal: 12,
+        kuis: 3,
       };
 
-      let callIndex = 0;
-      (supabase.from as any).mockImplementation(() => {
-        callIndex++;
+      vi.mocked(clearAllCacheSync).mockResolvedValue(7);
 
-        // First 4 calls: jawaban, attempt_kuis, soal, kuis (all)
-        if (callIndex === 1)
-          return createQueryMock({ count: mockCounts.jawaban });
-        if (callIndex === 2)
-          return createQueryMock({ count: mockCounts.attempt_kuis });
-        if (callIndex === 3) return createQueryMock({ count: mockCounts.soal });
-        if (callIndex === 4) return createQueryMock({ count: mockCounts.kuis });
-        if (callIndex === 5)
-          return createQueryMock({ count: mockCounts.kuis_essay });
-        if (callIndex === 6)
-          return createQueryMock({ count: mockCounts.kuis_pilihan_ganda });
+      vi.mocked(supabase.from).mockImplementation((table: string) => {
+        const count = countsByTable[table] ?? 0;
 
-        return createQueryMock({ count: 0 });
+        return {
+          delete: () => ({
+            neq: () => Promise.resolve({ count, error: null }),
+          }),
+        } as any;
       });
 
-      const result = await verifyKuisDataCounts();
+      const result = await cleanupAllKuisData();
 
-      expect(result.jawaban).toBe(100);
-      expect(result.attempt_kuis).toBe(50);
-      expect(result.soal).toBe(200);
-      expect(result.kuis).toBe(25);
-      expect(result.kuis_essay).toBe(10);
-      expect(result.kuis_pilihan_ganda).toBe(15);
+      expect(result.success).toBe(true);
+      expect(result.deleted).toEqual({
+        jawaban: 8,
+        attempt_kuis: 4,
+        soal: 12,
+        kuis: 3,
+      });
+      expect(clearAllCacheSync).toHaveBeenCalledTimes(1);
     });
 
-    it("should return zero counts when tables are empty", async () => {
-      (supabase.from as any).mockReturnValue(createQueryMock({ count: 0 }));
-
-      const result = await verifyKuisDataCounts();
-
-      expect(result.jawaban).toBe(0);
-      expect(result.attempt_kuis).toBe(0);
-      expect(result.soal).toBe(0);
-      expect(result.kuis).toBe(0);
-      expect(result.kuis_essay).toBe(0);
-      expect(result.kuis_pilihan_ganda).toBe(0);
-    });
-
-    it("should handle null counts gracefully", async () => {
-      (supabase.from as any).mockReturnValue(createQueryMock({ count: null }));
-
-      const result = await verifyKuisDataCounts();
-
-      expect(result.jawaban).toBe(0);
-      expect(result.attempt_kuis).toBe(0);
-      expect(result.soal).toBe(0);
-      expect(result.kuis).toBe(0);
-      expect(result.kuis_essay).toBe(0);
-      expect(result.kuis_pilihan_ganda).toBe(0);
-    });
-
-    it("should handle undefined counts gracefully", async () => {
-      (supabase.from as any).mockReturnValue(
-        createQueryMock({ count: undefined }),
-      );
-
-      const result = await verifyKuisDataCounts();
-
-      expect(result.jawaban).toBe(0);
-      expect(result.attempt_kuis).toBe(0);
-      expect(result.soal).toBe(0);
-      expect(result.kuis).toBe(0);
-    });
-
-    it("should query all tables in correct order", async () => {
-      (supabase.from as any).mockReturnValue(createQueryMock({ count: 10 }));
-
-      await verifyKuisDataCounts();
-
-      // Should call from() 6 times in this order
-      expect(supabase.from).toHaveBeenCalledTimes(6);
-      const calls = (supabase.from as any).mock.calls;
-      expect(calls[0][0]).toBe("jawaban");
-      expect(calls[1][0]).toBe("attempt_kuis");
-      expect(calls[2][0]).toBe("soal");
-      expect(calls[3][0]).toBe("kuis");
-      expect(calls[4][0]).toBe("kuis");
-      expect(calls[5][0]).toBe("kuis");
-    });
-
-    it("should query essay kuis with eq filter", async () => {
-      let callIndex = 0;
-      (supabase.from as any).mockImplementation(() => {
-        callIndex++;
-        const mock = createQueryMock({ count: 10 });
-        if (callIndex === 5) {
-          // 5th call should be kuis with eq("tipe_kuis", "essay")
+    it("return success false saat delete error", async () => {
+      vi.mocked(supabase.from).mockImplementation((table: string) => {
+        if (table === "jawaban") {
           return {
-            select: vi.fn().mockReturnValue({
-              eq: vi.fn().mockReturnValue({
-                head: vi.fn().mockReturnValue({ count: 10 }),
-              }),
+            delete: () => ({
+              neq: () => Promise.resolve({ count: 0, error: { message: "permission denied" } }),
             }),
-          };
+          } as any;
         }
-        return mock;
+
+        return {
+          delete: () => ({
+            neq: () => Promise.resolve({ count: 0, error: null }),
+          }),
+        } as any;
       });
 
-      await verifyKuisDataCounts();
+      const result = await cleanupAllKuisData();
 
-      // Verify eq is called for essay filter
-      expect(supabase.from).toHaveBeenCalledTimes(6);
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("Gagal menghapus jawaban");
+      expect(result.deleted).toEqual({
+        jawaban: 0,
+        attempt_kuis: 0,
+        soal: 0,
+        kuis: 0,
+      });
+    });
+
+    it("mengabaikan error contains no rows dan tetap sukses", async () => {
+      const responses: Record<string, { count: number; error: any }> = {
+        jawaban: { count: 0, error: { message: "contains no rows" } },
+        attempt_kuis: { count: 0, error: { message: "contains no rows" } },
+        soal: { count: 0, error: { message: "contains no rows" } },
+        kuis: { count: 0, error: { message: "contains no rows" } },
+      };
+
+      vi.mocked(supabase.from).mockImplementation((table: string) => ({
+        delete: () => ({
+          neq: () => Promise.resolve(responses[table]),
+        }),
+      }) as any);
+
+      const result = await cleanupAllKuisData();
+
+      expect(result.success).toBe(true);
+      expect(result.deleted).toEqual({
+        jawaban: 0,
+        attempt_kuis: 0,
+        soal: 0,
+        kuis: 0,
+      });
+      expect(clearAllCacheSync).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("cleanupTugasPraktikumOnly()", () => {
+    it("return sukses + 0 jika tidak ada kuis essay", async () => {
+      vi.mocked(supabase.from).mockImplementation((table: string) => {
+        if (table === "kuis") {
+          return {
+            select: () => ({
+              eq: () => Promise.resolve({ data: [], error: null }),
+            }),
+          } as any;
+        }
+
+        return {
+          select: () => ({ in: () => Promise.resolve({ data: [], error: null }) }),
+          delete: () => ({ in: () => Promise.resolve({ count: 0, error: null }) }),
+        } as any;
+      });
+
+      const result = await cleanupTugasPraktikumOnly();
+
+      expect(result.success).toBe(true);
+      expect(result.deleted).toEqual({
+        jawaban: 0,
+        attempt_kuis: 0,
+        soal: 0,
+        kuis: 0,
+      });
+      expect(clearAllCacheSync).not.toHaveBeenCalled();
+    });
+
+    it("hapus kuis essay + data turunannya", async () => {
+      vi.mocked(clearAllCacheSync).mockResolvedValue(5);
+
+      let kuisCallCount = 0;
+
+      vi.mocked(supabase.from).mockImplementation((table: string) => {
+        if (table === "kuis") {
+          kuisCallCount += 1;
+
+          // call #1: fetch essay ids
+          if (kuisCallCount === 1) {
+            return {
+              select: () => ({
+                eq: () => Promise.resolve({ data: [{ id: "k1" }, { id: "k2" }], error: null }),
+              }),
+            } as any;
+          }
+
+          // call #2: delete kuis essay
+          return {
+            delete: () => ({
+              eq: () => Promise.resolve({ count: 2, error: null }),
+            }),
+          } as any;
+        }
+
+        if (table === "attempt_kuis") {
+          return {
+            select: () => ({
+              in: () => Promise.resolve({ data: [{ id: "a1" }, { id: "a2" }], error: null }),
+            }),
+            delete: () => ({
+              in: () => Promise.resolve({ count: 2, error: null }),
+            }),
+          } as any;
+        }
+
+        if (table === "jawaban") {
+          return {
+            delete: () => ({
+              in: () => Promise.resolve({ count: 9, error: null }),
+            }),
+          } as any;
+        }
+
+        if (table === "soal") {
+          return {
+            delete: () => ({
+              in: () => Promise.resolve({ count: 6, error: null }),
+            }),
+          } as any;
+        }
+
+        return {
+          select: () => ({ in: () => Promise.resolve({ data: [], error: null }) }),
+          delete: () => ({ in: () => Promise.resolve({ count: 0, error: null }) }),
+        } as any;
+      });
+
+      const result = await cleanupTugasPraktikumOnly();
+
+      expect(result.success).toBe(true);
+      expect(result.deleted).toEqual({
+        jawaban: 9,
+        attempt_kuis: 2,
+        soal: 6,
+        kuis: 2,
+      });
+      expect(clearAllCacheSync).toHaveBeenCalledTimes(1);
+    });
+
+    it("return gagal saat fetch kuis essay error", async () => {
+      vi.mocked(supabase.from).mockImplementation((table: string) => {
+        if (table === "kuis") {
+          return {
+            select: () => ({
+              eq: () => Promise.resolve({ data: null, error: { message: "fetch failed" } }),
+            }),
+          } as any;
+        }
+
+        return {
+          select: () => ({ in: () => Promise.resolve({ data: [], error: null }) }),
+          delete: () => ({ in: () => Promise.resolve({ count: 0, error: null }) }),
+        } as any;
+      });
+
+      const result = await cleanupTugasPraktikumOnly();
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("Gagal mengambil data kuis essay");
+    });
+
+    it("tetap sukses saat delete turunan mengandung contains no rows", async () => {
+      let kuisCallCount = 0;
+
+      vi.mocked(supabase.from).mockImplementation((table: string) => {
+        if (table === "kuis") {
+          kuisCallCount += 1;
+          if (kuisCallCount === 1) {
+            return {
+              select: () => ({
+                eq: () => Promise.resolve({ data: [{ id: "k1" }], error: null }),
+              }),
+            } as any;
+          }
+
+          return {
+            delete: () => ({
+              eq: () => Promise.resolve({ count: 0, error: { message: "contains no rows" } }),
+            }),
+          } as any;
+        }
+
+        if (table === "attempt_kuis") {
+          return {
+            select: () => ({
+              in: () => Promise.resolve({ data: [{ id: "a1" }], error: null }),
+            }),
+            delete: () => ({
+              in: () => Promise.resolve({ count: 0, error: { message: "contains no rows" } }),
+            }),
+          } as any;
+        }
+
+        if (table === "jawaban") {
+          return {
+            delete: () => ({
+              in: () => Promise.resolve({ count: 0, error: { message: "contains no rows" } }),
+            }),
+          } as any;
+        }
+
+        if (table === "soal") {
+          return {
+            delete: () => ({
+              in: () => Promise.resolve({ count: 0, error: { message: "contains no rows" } }),
+            }),
+          } as any;
+        }
+
+        return {
+          select: () => ({ in: () => Promise.resolve({ data: [], error: null }) }),
+          delete: () => ({ in: () => Promise.resolve({ count: 0, error: null }) }),
+        } as any;
+      });
+
+      const result = await cleanupTugasPraktikumOnly();
+
+      expect(result.success).toBe(true);
+      expect(result.deleted).toEqual({
+        jawaban: 0,
+        attempt_kuis: 0,
+        soal: 0,
+        kuis: 0,
+      });
+      expect(clearAllCacheSync).toHaveBeenCalledTimes(1);
+    });
+
+    it("return gagal saat delete attempt_kuis error (line 188)", async () => {
+      let kuisCallCount = 0;
+
+      vi.mocked(supabase.from).mockImplementation((table: string) => {
+        if (table === "kuis") {
+          kuisCallCount += 1;
+          if (kuisCallCount === 1) {
+            return {
+              select: () => ({
+                eq: () => Promise.resolve({ data: [{ id: "k1" }], error: null }),
+              }),
+            } as any;
+          }
+          return {
+            delete: () => ({ eq: () => Promise.resolve({ count: 0, error: null }) }),
+          } as any;
+        }
+
+        if (table === "attempt_kuis") {
+          return {
+            select: () => ({
+              in: () => Promise.resolve({ data: [{ id: "a1" }], error: null }),
+            }),
+            delete: () => ({
+              in: () => Promise.resolve({ count: 0, error: { message: "attempt delete failed" } }),
+            }),
+          } as any;
+        }
+
+        if (table === "jawaban") {
+          return {
+            delete: () => ({
+              in: () => Promise.resolve({ count: 0, error: null }),
+            }),
+          } as any;
+        }
+
+        return {
+          select: () => ({ in: () => Promise.resolve({ data: [], error: null }) }),
+          delete: () => ({ in: () => Promise.resolve({ count: 0, error: null }) }),
+        } as any;
+      });
+
+      const result = await cleanupTugasPraktikumOnly();
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("Gagal menghapus attempt_kuis");
+    });
+
+    it("return gagal saat delete soal error (line 200)", async () => {
+      let kuisCallCount = 0;
+
+      vi.mocked(supabase.from).mockImplementation((table: string) => {
+        if (table === "kuis") {
+          kuisCallCount += 1;
+          if (kuisCallCount === 1) {
+            return {
+              select: () => ({
+                eq: () => Promise.resolve({ data: [{ id: "k1" }], error: null }),
+              }),
+            } as any;
+          }
+          return {
+            delete: () => ({ eq: () => Promise.resolve({ count: 0, error: null }) }),
+          } as any;
+        }
+
+        if (table === "attempt_kuis") {
+          return {
+            select: () => ({
+              in: () => Promise.resolve({ data: [], error: null }),
+            }),
+            delete: () => ({
+              in: () => Promise.resolve({ count: 0, error: null }),
+            }),
+          } as any;
+        }
+
+        if (table === "soal") {
+          return {
+            delete: () => ({
+              in: () => Promise.resolve({ count: 0, error: { message: "soal delete failed" } }),
+            }),
+          } as any;
+        }
+
+        return {
+          select: () => ({ in: () => Promise.resolve({ data: [], error: null }) }),
+          delete: () => ({ in: () => Promise.resolve({ count: 0, error: null }) }),
+        } as any;
+      });
+
+      const result = await cleanupTugasPraktikumOnly();
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("Gagal menghapus soal");
+    });
+
+    it("return gagal saat delete kuis essay error (line 212)", async () => {
+      let kuisCallCount = 0;
+
+      vi.mocked(supabase.from).mockImplementation((table: string) => {
+        if (table === "kuis") {
+          kuisCallCount += 1;
+          if (kuisCallCount === 1) {
+            return {
+              select: () => ({
+                eq: () => Promise.resolve({ data: [{ id: "k1" }], error: null }),
+              }),
+            } as any;
+          }
+          // delete kuis essay - error
+          return {
+            delete: () => ({ eq: () => Promise.resolve({ count: 0, error: { message: "kuis essay delete failed" } }) }),
+          } as any;
+        }
+
+        if (table === "attempt_kuis") {
+          return {
+            select: () => ({ in: () => Promise.resolve({ data: [], error: null }) }),
+            delete: () => ({ in: () => Promise.resolve({ count: 0, error: null }) }),
+          } as any;
+        }
+
+        if (table === "soal") {
+          return {
+            delete: () => ({ in: () => Promise.resolve({ count: 0, error: null }) }),
+          } as any;
+        }
+
+        return {
+          select: () => ({ in: () => Promise.resolve({ data: [], error: null }) }),
+          delete: () => ({ in: () => Promise.resolve({ count: 0, error: null }) }),
+        } as any;
+      });
+
+      const result = await cleanupTugasPraktikumOnly();
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("Gagal menghapus kuis essay");
+    });
+  });
+
+  describe("cleanupAllKuisData() - error branches per table", () => {
+    it("return gagal saat delete attempt_kuis error (line 52-53)", async () => {
+      vi.mocked(supabase.from).mockImplementation((table: string) => {
+        if (table === "jawaban") {
+          return {
+            delete: () => ({
+              neq: () => Promise.resolve({ count: 0, error: null }),
+            }),
+          } as any;
+        }
+
+        if (table === "attempt_kuis") {
+          return {
+            delete: () => ({
+              neq: () => Promise.resolve({ count: 0, error: { message: "attempt error" } }),
+            }),
+          } as any;
+        }
+
+        return {
+          delete: () => ({ neq: () => Promise.resolve({ count: 0, error: null }) }),
+        } as any;
+      });
+
+      const result = await cleanupAllKuisData();
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("Gagal menghapus attempt_kuis");
+    });
+
+    it("return gagal saat delete soal error (line 64-65)", async () => {
+      vi.mocked(supabase.from).mockImplementation((table: string) => {
+        if (table === "soal") {
+          return {
+            delete: () => ({
+              neq: () => Promise.resolve({ count: 0, error: { message: "soal error" } }),
+            }),
+          } as any;
+        }
+
+        return {
+          delete: () => ({ neq: () => Promise.resolve({ count: 0, error: null }) }),
+        } as any;
+      });
+
+      const result = await cleanupAllKuisData();
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("Gagal menghapus soal");
+    });
+
+    it("return gagal saat delete kuis error (line 76-77)", async () => {
+      vi.mocked(supabase.from).mockImplementation((table: string) => {
+        if (table === "kuis") {
+          return {
+            delete: () => ({
+              neq: () => Promise.resolve({ count: 0, error: { message: "kuis error" } }),
+            }),
+          } as any;
+        }
+
+        return {
+          delete: () => ({ neq: () => Promise.resolve({ count: 0, error: null }) }),
+        } as any;
+      });
+
+      const result = await cleanupAllKuisData();
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("Gagal menghapus kuis");
     });
   });
 });

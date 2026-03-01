@@ -25,7 +25,7 @@ import {
   clearAllOfflineAuthData,
 } from "@/lib/offline/offline-auth";
 import { indexedDBManager } from "@/lib/offline/indexeddb";
-import type { AuthUser, AuthSession } from "../../../types/auth.types";
+import type { AuthUser, AuthSession } from "@/types/auth.types";
 
 // Mock IndexedDB manager
 vi.mock("../../../../lib/offline/indexeddb", () => ({
@@ -655,6 +655,7 @@ describe("Offline Authentication", () => {
 
     it("should restore session 1ms before expiry", async () => {
       const now = Date.now();
+      const dateNowSpy = vi.spyOn(Date, "now").mockReturnValue(now);
 
       vi.mocked(indexedDBManager.getMetadata).mockResolvedValue({
         id: mockUser.id,
@@ -668,6 +669,7 @@ describe("Offline Authentication", () => {
 
       // Should be valid
       expect(restored).not.toBeNull();
+      dateNowSpy.mockRestore();
     });
   });
 

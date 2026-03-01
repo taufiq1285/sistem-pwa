@@ -16,14 +16,55 @@ import {
   getJadwalHariIni,
   getJadwalMingguIni,
   getJadwalBulanIni,
+  createJadwal,
+  updateJadwal,
+  deleteJadwal,
+  approveJadwal,
+  rejectJadwal,
+  cancelJadwal,
+  reactivateJadwal,
+  getAllJadwalForLaboran,
+  jadwalApi,
 } from "@/lib/api/jadwal.api";
 import * as baseApi from "@/lib/api/base.api";
-import type { Jadwal } from "../../../types/jadwal.types";
+import { supabase } from "@/lib/supabase/client";
+import type { Jadwal } from "@/types/jadwal.types";
 
-// Mock base API
-vi.mock("../../../../lib/api/base.api");
-vi.mock("../../../../lib/utils/errors");
-vi.mock("../../../../lib/middleware");
+vi.mock("../../../../lib/api/base.api", () => ({
+  query: vi.fn(),
+  queryWithFilters: vi.fn(),
+  getById: vi.fn(),
+  insert: vi.fn(),
+  update: vi.fn(),
+  remove: vi.fn(),
+  withApiResponse: vi.fn(async (callback) => callback()),
+}));
+
+vi.mock("../../../../lib/utils/errors", () => ({
+  handleError: vi.fn((error) => error),
+  logError: vi.fn(),
+}));
+
+vi.mock("../../../../lib/middleware", () => ({
+  requirePermission: vi.fn((_, fn) => fn),
+  requirePermissionAndOwnership: vi.fn((_, __, ___, fn) => fn),
+}));
+
+vi.mock("../../../../lib/supabase/client", () => ({
+  supabase: {
+    auth: {
+      getUser: vi.fn(),
+    },
+    from: vi.fn(),
+    rpc: vi.fn(),
+  },
+}));
+
+vi.mock("../../../../lib/utils/logger", () => ({
+  logger: {
+    info: vi.fn(),
+  },
+}));
 
 describe("Jadwal API", () => {
   const mockJadwal: Jadwal = {
@@ -57,6 +98,13 @@ describe("Jadwal API", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(baseApi.withApiResponse).mockImplementation(async (callback: any) =>
+      callback(),
+    );
+    vi.mocked(supabase.auth.getUser).mockResolvedValue({
+      data: { user: null },
+      error: null,
+    } as any);
   });
 
   afterEach(() => {
@@ -724,6 +772,539 @@ describe("Jadwal API", () => {
       );
 
       expect(result).toEqual([mockJadwalWithLab]);
+    });
+  });
+
+  describe("Extended branch coverage", () => {
+    it("should fetch calendar events with dosen and additional filters", async () => {
+      vi.mocked(supabase.auth.getUser).mockResolvedValue({
+        data: { user: { id: "user-1" } },
+        error: null,
+      } as any);
+
+      vi.mocked(supabase.from).mockImplementation((table: string) => {
+        if (table === "dosen") {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: { id: "dosen-1" },
+                  error: null,
+                }),
+              }),
+            }),
+          } as any;
+        }
+
+        return {} as any;
+      });
+
+      vi.mocked(baseApi.queryWithFilters).mockResolvedValue([
+        {
+          ...mockJadwalWithLab,
+          kelas: {
+            nama_kelas: "A",
+            mata_kuliah: {
+              nama_mk: "Asuhan Kebidanan",
+            },
+          } as any,
+        },
+      ]);
+
+      const result = await getCalendarEvents(
+        new Date("2025-01-01"),
+        new Date("2025-01-31"),
+        {
+          kelas_id: "kelas-1",
+          laboratorium_id: "lab-1",
+          hari: "rabu",
+        },
+      );
+
+      expect(result).toHaveLength(1);
+      expect(result[0].title).toBe("Asuhan Kebidanan - A - Lab Kebidanan 1");
+      expect(baseApi.queryWithFilters).toHaveBeenCalledWith(
+        "jadwal_praktikum",
+        expect.arrayContaining([
+          { column: "dosen_id", operator: "eq", value: "dosen-1" },
+          { column: "kelas_id", operator: "eq", value: "kelas-1" },
+          { column: "laboratorium_id", operator: "eq", value: "lab-1" },
+          { column: "hari", operator: "eq", value: "rabu" },
+        ]),
+        expect.any(Object),
+      );
+    });
+
+    it("should approve, reject, cancel, and reactivate jadwal", async () => {
+      vi.mocked(baseApi.update)
+        .mockResolvedValueOnce({ ...mockJadwal, status: "approved" } as any)
+        .mockResolvedValueOnce({
+          ...mockJadwal,
+          status: "rejected",
+          cancellation_reason: "Bentrok",
+        } as any);
+      vi.mocked(supabase.rpc)
+        .mockResolvedValueOnce({ error: null } as any)
+        .mockResolvedValueOnce({ error: null } as any);
+
+      await expect(approveJadwal("jadwal-1")).resolves.toMatchObject({
+        status: "approved",
+      });
+      await expect(rejectJadwal("jadwal-1", "Bentrok")).resolves.toMatchObject({
+        status: "rejected",
+      });
+      await expect(cancelJadwal("jadwal-1", "Libur")).resolves.toBeUndefined();
+      await expect(reactivateJadwal("jadwal-1")).resolves.toBeUndefined();
+    });
+
+    it("should throw when reactivate jadwal rpc fails", async () => {
+      vi.mocked(supabase.rpc).mockResolvedValue({
+        error: { message: "reactivate-error" },
+      } as any);
+
+      await expect(reactivateJadwal("jadwal-1")).rejects.toThrow(
+        "reactivate-error",
+      );
+    });
+
+    it("should fetch all jadwal for laboran with filters", async () => {
+      vi.mocked(baseApi.queryWithFilters).mockResolvedValue([mockJadwalWithLab]);
+
+      const result = await getAllJadwalForLaboran({
+        status: "approved",
+        laboratorium_id: "lab-1",
+        start_date: new Date("2025-01-01"),
+        end_date: new Date("2025-01-31"),
+      });
+
+      expect(result).toEqual([mockJadwalWithLab]);
+      expect(baseApi.queryWithFilters).toHaveBeenCalledWith(
+        "jadwal_praktikum",
+        expect.arrayContaining([
+          { column: "is_active", operator: "eq", value: true },
+          { column: "status", operator: "eq", value: "approved" },
+          { column: "laboratorium_id", operator: "eq", value: "lab-1" },
+          {
+            column: "tanggal_praktikum",
+            operator: "gte",
+            value: "2025-01-01",
+          },
+          {
+            column: "tanggal_praktikum",
+            operator: "lte",
+            value: "2025-01-31",
+          },
+        ]),
+        expect.objectContaining({
+          order: { column: "tanggal_praktikum", ascending: false },
+        }),
+      );
+    });
+
+    it("should handle conflict legacy exclude id branch", async () => {
+      vi.mocked(baseApi.queryWithFilters).mockResolvedValue([
+        {
+          ...mockJadwal,
+          id: "jadwal-1",
+          hari: "senin",
+          jam_mulai: "09:00",
+          jam_selesai: "11:00",
+        },
+      ]);
+
+      const result = await checkJadwalConflict(
+        "lab-1",
+        "senin",
+        "08:00",
+        "10:00",
+        "jadwal-1",
+      );
+
+      expect(result).toBe(false);
+    });
+
+    it("should wrap jadwalApi helpers through withApiResponse", async () => {
+      vi.mocked(baseApi.queryWithFilters).mockImplementation(
+        async (_table: string, filters: any[]) => {
+          const hasTanggalEq = filters?.some(
+            (f: any) => f?.column === "tanggal_praktikum" && f?.operator === "eq",
+          );
+
+          if (hasTanggalEq) {
+            return [] as any;
+          }
+
+          return [mockJadwalWithLab] as any;
+        },
+      );
+      vi.mocked(baseApi.getById).mockResolvedValue(mockJadwalWithLab);
+      vi.mocked(baseApi.insert).mockResolvedValue(mockJadwalWithLab);
+      vi.mocked(baseApi.update).mockResolvedValue(mockJadwalWithLab);
+      vi.mocked(baseApi.remove).mockResolvedValue(true as any);
+
+      vi.mocked(supabase.from).mockImplementation((table: string) => {
+        if (table === "dosen") {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: { id: "dosen-1" },
+                  error: null,
+                }),
+              }),
+            }),
+          } as any;
+        }
+
+        return {} as any;
+      });
+
+      vi.mocked(supabase.auth.getUser).mockResolvedValue({
+        data: { user: { id: "user-1" } },
+        error: null,
+      } as any);
+
+      const futureDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+      await jadwalApi.getAll();
+      await jadwalApi.getById("jadwal-1");
+      await jadwalApi.getByLab("lab-1");
+      await jadwalApi.getCalendarEvents(
+        new Date("2025-01-01"),
+        new Date("2025-01-31"),
+      );
+      await jadwalApi.create({
+        kelas_id: "kelas-1",
+        laboratorium_id: "lab-1",
+        tanggal_praktikum: futureDate,
+        jam_mulai: "08:00",
+        jam_selesai: "10:00",
+        topik: "Topik",
+        catatan: "Catatan",
+      } as any);
+      await jadwalApi.update("jadwal-1", { topik: "Topik baru" } as any);
+      await jadwalApi.delete("jadwal-1");
+      await jadwalApi.checkConflictByDate(
+        "lab-1",
+        new Date("2025-01-15"),
+        "08:00",
+        "10:00",
+        "jadwal-2",
+      );
+      await jadwalApi.checkConflict(
+        "lab-1",
+        "senin",
+        "08:00",
+        "10:00",
+        "jadwal-2",
+      );
+      await jadwalApi.getMahasiswaJadwal("user-1");
+      await jadwalApi.getJadwalHariIni("user-1");
+      await jadwalApi.getJadwalMingguIni("user-1");
+      await jadwalApi.getJadwalBulanIni("user-1");
+
+      expect(baseApi.withApiResponse).toHaveBeenCalledTimes(13);
+    });
+    it("should handle updateJadwal date parsing, conflict, and error paths", async () => {
+      vi.mocked(baseApi.getById)
+        .mockResolvedValueOnce({
+          ...mockJadwal,
+          tanggal_praktikum: undefined,
+        } as any)
+        .mockResolvedValueOnce({
+          ...mockJadwal,
+          tanggal_praktikum: "2025-01-15",
+        } as any);
+
+      vi.mocked(baseApi.queryWithFilters)
+        .mockResolvedValueOnce([
+          {
+            ...mockJadwal,
+            id: "jadwal-konflik",
+            tanggal_praktikum: format(new Date(), "yyyy-MM-dd"),
+          },
+        ] as any)
+        .mockResolvedValueOnce([] as any);
+
+      await expect(
+        updateJadwal("jadwal-1", {
+          laboratorium_id: "lab-1",
+          jam_mulai: "09:00",
+          jam_selesai: "11:00",
+        } as any),
+      ).rejects.toThrow("Jadwal bentrok! Lab sudah terpakai pada waktu tersebut");
+
+      vi.mocked(baseApi.update).mockRejectedValueOnce(new Error("update-gagal"));
+
+      await expect(
+        updateJadwal("jadwal-1", {
+          tanggal_praktikum: "2026-03-10",
+          jam_mulai: "09:00",
+          jam_selesai: "11:00",
+        } as any),
+      ).rejects.toThrow("update-gagal");
+    });
+
+    it("should handle deleteJadwal error path", async () => {
+      vi.mocked(baseApi.remove).mockRejectedValueOnce(new Error("delete-gagal"));
+
+      await expect(deleteJadwal("jadwal-1")).rejects.toThrow("delete-gagal");
+    });
+
+    it("should handle approval workflow error paths", async () => {
+      vi.mocked(baseApi.update)
+        .mockRejectedValueOnce(new Error("approve-gagal"))
+        .mockRejectedValueOnce(new Error("reject-gagal"));
+      vi.mocked(supabase.rpc)
+        .mockResolvedValueOnce({ error: {} } as any)
+        .mockResolvedValueOnce({ error: {} } as any);
+
+      await expect(approveJadwal("jadwal-1")).rejects.toThrow("approve-gagal");
+      await expect(rejectJadwal("jadwal-1")).rejects.toThrow("reject-gagal");
+      await expect(cancelJadwal("jadwal-1", "Libur")).rejects.toThrow(
+        "Gagal membatalkan jadwal. Hanya laboran yang dapat membatalkan jadwal.",
+      );
+      await expect(reactivateJadwal("jadwal-1")).rejects.toThrow(
+        "Gagal mengaktifkan kembali jadwal. Hanya laboran yang dapat mengaktifkan kembali jadwal.",
+      );
+    });
+
+    it("should handle getAllJadwalForLaboran error path", async () => {
+      vi.mocked(baseApi.queryWithFilters).mockRejectedValueOnce(
+        new Error("laboran-list-gagal"),
+      );
+
+      await expect(getAllJadwalForLaboran()).rejects.toThrow(
+        "laboran-list-gagal",
+      );
+    });
+
+    it("should update jadwal with Date object tanggal_praktikum", async () => {
+      const futureDate = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
+
+      vi.mocked(baseApi.getById).mockResolvedValueOnce({
+        ...mockJadwal,
+        tanggal_praktikum: "2025-01-15",
+      } as any);
+      vi.mocked(baseApi.queryWithFilters).mockResolvedValueOnce([] as any);
+      vi.mocked(baseApi.update).mockResolvedValueOnce({
+        ...mockJadwal,
+        tanggal_praktikum: format(futureDate, "yyyy-MM-dd"),
+      } as any);
+
+      const result = await updateJadwal("jadwal-1", {
+        tanggal_praktikum: futureDate,
+      } as any);
+
+      expect(result.tanggal_praktikum).toBe(format(futureDate, "yyyy-MM-dd"));
+      expect(baseApi.update).toHaveBeenCalledWith(
+        "jadwal_praktikum",
+        "jadwal-1",
+        expect.objectContaining({
+          tanggal_praktikum: format(futureDate, "yyyy-MM-dd"),
+        }),
+      );
+    });
+
+    it("should reject update jadwal when tanggal_praktikum is in the past", async () => {
+      vi.mocked(baseApi.getById).mockResolvedValueOnce(mockJadwalWithLab as any);
+
+      const pastDate = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+      await expect(
+        updateJadwal("jadwal-1", {
+          tanggal_praktikum: pastDate,
+        } as any),
+      ).rejects.toThrow("Tanggal praktikum tidak boleh di masa lalu");
+    });
+  });
+
+  describe("Create Jadwal Uncovered Branches", () => {
+    it("should parse create tanggal_praktikum from string and insert", async () => {
+      const futureDate = new Date(Date.now() + 10 * 24 * 60 * 60 * 1000);
+      const futureDateStr = format(futureDate, "yyyy-MM-dd");
+
+      vi.mocked(baseApi.queryWithFilters).mockResolvedValueOnce([] as any);
+      vi.mocked(supabase.auth.getUser).mockResolvedValueOnce({
+        data: { user: { id: "user-1" } },
+        error: null,
+      } as any);
+      vi.mocked(supabase.from).mockImplementationOnce((table: string) => {
+        if (table === "dosen") {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: { id: "dosen-1" },
+                  error: null,
+                }),
+              }),
+            }),
+          } as any;
+        }
+        return {} as any;
+      });
+      vi.mocked(baseApi.insert).mockResolvedValueOnce({
+        ...mockJadwal,
+        dosen_id: "dosen-1",
+        tanggal_praktikum: futureDateStr,
+      } as any);
+
+      const result = await createJadwal({
+        kelas_id: "kelas-1",
+        laboratorium_id: "lab-1",
+        tanggal_praktikum: futureDateStr as any,
+        jam_mulai: "08:00",
+        jam_selesai: "10:00",
+        topik: "Topik",
+        catatan: "Catatan",
+      } as any);
+
+      expect(result).toBeTruthy();
+      expect(baseApi.insert).toHaveBeenCalledWith(
+        "jadwal_praktikum",
+        expect.objectContaining({
+          tanggal_praktikum: futureDateStr,
+        }),
+      );
+    });
+
+    it("should throw for past date on createJadwal", async () => {
+      const pastDateStr = format(
+        new Date(Date.now() - 24 * 60 * 60 * 1000),
+        "yyyy-MM-dd",
+      );
+
+      await expect(
+        createJadwal({
+          kelas_id: "kelas-1",
+          laboratorium_id: "lab-1",
+          tanggal_praktikum: pastDateStr as any,
+          jam_mulai: "08:00",
+          jam_selesai: "10:00",
+          topik: "Topik",
+          catatan: "Catatan",
+        } as any),
+      ).rejects.toThrow("Tanggal praktikum tidak boleh di masa lalu");
+    });
+
+    it("should throw conflict error on createJadwal", async () => {
+      const futureDate = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000);
+
+      vi.mocked(baseApi.queryWithFilters).mockResolvedValueOnce([
+        {
+          ...mockJadwal,
+          id: "jadwal-konflik",
+          tanggal_praktikum: format(futureDate, "yyyy-MM-dd"),
+          jam_mulai: "08:30",
+          jam_selesai: "09:30",
+          is_active: true,
+        },
+      ] as any);
+
+      await expect(
+        createJadwal({
+          kelas_id: "kelas-1",
+          laboratorium_id: "lab-1",
+          tanggal_praktikum: futureDate,
+          jam_mulai: "08:00",
+          jam_selesai: "10:00",
+          topik: "Topik",
+          catatan: "Catatan",
+        } as any),
+      ).rejects.toThrow("Jadwal bentrok! Lab sudah terpakai");
+    });
+
+    it("should throw when dosen id is not found on createJadwal", async () => {
+      const futureDate = new Date(Date.now() + 6 * 24 * 60 * 60 * 1000);
+
+      vi.mocked(baseApi.queryWithFilters).mockResolvedValueOnce([] as any);
+      vi.mocked(supabase.auth.getUser).mockResolvedValueOnce({
+        data: { user: { id: "user-tanpa-dosen" } },
+        error: null,
+      } as any);
+      vi.mocked(supabase.from).mockImplementationOnce(() => {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({
+                data: null,
+                error: null,
+              }),
+            }),
+          }),
+        } as any;
+      });
+
+      await expect(
+        createJadwal({
+          kelas_id: "kelas-1",
+          laboratorium_id: "lab-1",
+          tanggal_praktikum: futureDate,
+          jam_mulai: "08:00",
+          jam_selesai: "10:00",
+          topik: "Topik",
+          catatan: "Catatan",
+        } as any),
+      ).rejects.toThrow(
+        "Dosen ID tidak ditemukan. Pastikan Anda login sebagai dosen.",
+      );
+    });
+
+    it("should enter createJadwal catch path when insert fails", async () => {
+      const futureDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+      vi.mocked(baseApi.queryWithFilters).mockResolvedValueOnce([] as any);
+      vi.mocked(supabase.auth.getUser).mockResolvedValueOnce({
+        data: { user: { id: "user-1" } },
+        error: null,
+      } as any);
+      vi.mocked(supabase.from).mockImplementationOnce(() => {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({
+                data: { id: "dosen-1" },
+                error: null,
+              }),
+            }),
+          }),
+        } as any;
+      });
+      vi.mocked(baseApi.insert).mockRejectedValueOnce(new Error("insert-gagal"));
+
+      await expect(
+        createJadwal({
+          kelas_id: "kelas-1",
+          laboratorium_id: "lab-1",
+          tanggal_praktikum: futureDate,
+          jam_mulai: "08:00",
+          jam_selesai: "10:00",
+          topik: "Topik",
+          catatan: "Catatan",
+        } as any),
+      ).rejects.toThrow("insert-gagal");
+    });
+
+    it("should hit parse catch branch in getCalendarEvents item parsing", async () => {
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+      vi.mocked(baseApi.queryWithFilters).mockResolvedValueOnce([
+        {
+          ...mockJadwal,
+          id: "jadwal-bad-parse",
+          tanggal_praktikum: null,
+        },
+      ] as any);
+
+      const events = await getCalendarEvents(
+        new Date("2025-01-01"),
+        new Date("2025-01-31"),
+      );
+
+      expect(events).toEqual([]);
+      expect(warnSpy).toHaveBeenCalled();
+      warnSpy.mockRestore();
     });
   });
 

@@ -1,491 +1,347 @@
 /**
  * Auth API Unit Tests - CORE LOGIC
- * Tests for authentication functionality
+ * Target: src/lib/api/auth.api.ts
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import {
-  login,
-  register,
-  logout,
-  getSession,
-  getCurrentUser,
-} from "@/lib/supabase/auth";
-import { supabase } from "@/lib/supabase/client";
-import type { LoginCredentials, RegisterData } from "@/types/auth.types";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import * as authApi from "@/lib/api/auth.api";
+import * as supabaseAuth from "@/lib/supabase/auth";
+import { logger } from "@/lib/utils/logger";
 
-// Mock Supabase client
-const createMockQuery = () => {
-  const mockQuery = {
-    select: vi.fn().mockReturnThis(),
-    insert: vi.fn().mockReturnThis(),
-    update: vi.fn().mockReturnThis(),
-    delete: vi.fn().mockReturnThis(),
-    eq: vi.fn().mockReturnThis(),
-    neq: vi.fn().mockReturnThis(),
-    gt: vi.fn().mockReturnThis(),
-    gte: vi.fn().mockReturnThis(),
-    lt: vi.fn().mockReturnThis(),
-    lte: vi.fn().mockReturnThis(),
-    like: vi.fn().mockReturnThis(),
-    ilike: vi.fn().mockReturnThis(),
-    is: vi.fn().mockReturnThis(),
-    in: vi.fn().mockReturnThis(),
-    contains: vi.fn().mockReturnThis(),
-    containedBy: vi.fn().mockReturnThis(),
-    range: vi.fn().mockReturnThis(),
-    overlaps: vi.fn().mockReturnThis(),
-    order: vi.fn().mockReturnThis(),
-    limit: vi.fn().mockReturnThis(),
-    single: vi.fn(),
-    maybeSingle: vi.fn(),
-    csv: vi.fn(),
-    abortSignal: vi.fn().mockReturnThis(),
-    // Add rpc method for functions
-    rpc: vi.fn(),
-  };
-  return mockQuery;
-};
-
-vi.mock("@/lib/supabase/client", () => ({
-  supabase: {
-    from: vi.fn(() => createMockQuery()),
-    rpc: vi.fn(),
-    storage: {
-      from: vi.fn(() => ({
-        upload: vi.fn(),
-        download: vi.fn(),
-        getPublicUrl: vi.fn(() => ({ data: { publicUrl: "" } })),
-        createSignedUrl: vi.fn(() => ({ data: { signedUrl: "" } })),
-        remove: vi.fn(),
-        list: vi.fn(),
-      })),
-    },
-    auth: {
-      signInWithPassword: vi.fn(),
-      signUp: vi.fn(),
-      signOut: vi.fn(),
-      getSession: vi.fn(),
-      getUser: vi.fn(),
-    },
-  },
+vi.mock("@/lib/supabase/auth", () => ({
+  login: vi.fn(),
+  register: vi.fn(),
+  logout: vi.fn(),
+  getSession: vi.fn(),
+  refreshSession: vi.fn(),
+  resetPassword: vi.fn(),
+  updatePassword: vi.fn(),
+  getCurrentUser: vi.fn(),
+  isAuthenticated: vi.fn(),
+  onAuthStateChange: vi.fn(),
 }));
 
-// Mock logger
 vi.mock("@/lib/utils/logger", () => ({
   logger: {
-    auth: vi.fn(),
     debug: vi.fn(),
     error: vi.fn(),
-    warn: vi.fn(),
   },
 }));
 
-describe("Auth API - CORE LOGIC", () => {
+describe("auth.api - CORE LOGIC", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  describe("login", () => {
-    it("should login successfully with valid credentials", async () => {
-      const credentials: LoginCredentials = {
+  describe("delegation & error handling", () => {
+    it("login: delegate ke supabaseAuth.login", async () => {
+      const credentials = {
         email: "test@example.com",
-        password: "password123",
+        password: "Strong123",
       };
+      const expected = { success: true };
 
-      const mockUser = {
-        id: "user-123",
-        email: "test@example.com",
-      };
+      vi.mocked(supabaseAuth.login).mockResolvedValue(expected as any);
 
-      const mockSession = {
-        access_token: "token-123",
-        refresh_token: "refresh-123",
-        expires_at: 1234567890,
-      };
+      const result = await authApi.login(credentials as any);
 
-      // Mock successful login
-      vi.mocked(supabase.auth.signInWithPassword).mockResolvedValue({
-        data: {
-          user: mockUser,
-          session: mockSession,
-        },
-        error: null,
-      } as any);
+      expect(result).toEqual(expected);
+      expect(supabaseAuth.login).toHaveBeenCalledWith(credentials);
+      expect(logger.debug).toHaveBeenCalled();
+    });
 
-      // Mock getUserProfile
-      const mockProfile = {
-        id: "user-123",
-        email: "test@example.com",
-        full_name: "Test User",
+    it("login: throw ulang saat supabaseAuth.login gagal", async () => {
+      const err = new Error("login failed");
+      vi.mocked(supabaseAuth.login).mockRejectedValue(err);
+
+      await expect(
+        authApi.login({ email: "x@y.com", password: "123" } as any),
+      ).rejects.toThrow("login failed");
+
+      expect(logger.error).toHaveBeenCalled();
+    });
+
+    it("register: delegate ke supabaseAuth.register", async () => {
+      const payload = {
+        email: "mhs@example.com",
+        password: "Strong123",
+        full_name: "Mahasiswa Uji",
         role: "mahasiswa",
-        is_active: true,
       };
+      const expected = { success: true };
 
-      vi.mocked(supabase.from).mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            abortSignal: vi.fn().mockReturnValue({
-              single: vi.fn().mockResolvedValue({
-                data: mockProfile,
-                error: null,
-              }),
-            }),
-          }),
-        }),
-      } as any);
+      vi.mocked(supabaseAuth.register).mockResolvedValue(expected as any);
 
-      const result = await login(credentials);
+      const result = await authApi.register(payload as any);
 
-      expect(result.success).toBe(true);
-      expect(result.user).toBeDefined();
-      expect(result.session).toBeDefined();
-      expect(supabase.auth.signInWithPassword).toHaveBeenCalledWith({
-        email: credentials.email,
-        password: credentials.password,
-      });
+      expect(result).toEqual(expected);
+      expect(supabaseAuth.register).toHaveBeenCalledWith(payload);
+      expect(logger.debug).toHaveBeenCalled();
     });
 
-    it("should return error with invalid credentials", async () => {
-      const credentials: LoginCredentials = {
-        email: "wrong@example.com",
-        password: "wrongpassword",
-      };
+    it("register: throw ulang saat gagal", async () => {
+      const err = new Error("register failed");
+      vi.mocked(supabaseAuth.register).mockRejectedValue(err);
 
-      // Mock failed login
-      vi.mocked(supabase.auth.signInWithPassword).mockResolvedValue({
-        data: { user: null, session: null },
-        error: {
-          message: "Invalid login credentials",
-          name: "AuthError",
-          status: 400,
-        },
-      } as any);
-
-      const result = await login(credentials);
-
-      expect(result.success).toBe(false);
-      expect(result.error).toBeDefined();
-      expect(result.error).toContain("Invalid login credentials");
+      await expect(authApi.register({} as any)).rejects.toThrow("register failed");
+      expect(logger.error).toHaveBeenCalled();
     });
 
-    it("should handle network errors during login", async () => {
-      const credentials: LoginCredentials = {
-        email: "test@example.com",
-        password: "password123",
-      };
+    it("logout: delegate ke supabaseAuth.logout", async () => {
+      const expected = { success: true };
+      vi.mocked(supabaseAuth.logout).mockResolvedValue(expected as any);
 
-      // Mock network error
-      vi.mocked(supabase.auth.signInWithPassword).mockRejectedValue(
-        new Error("Network error"),
+      const result = await authApi.logout();
+
+      expect(result).toEqual(expected);
+      expect(supabaseAuth.logout).toHaveBeenCalledTimes(1);
+      expect(logger.debug).toHaveBeenCalled();
+    });
+
+    it("logout: throw ulang saat gagal", async () => {
+      const err = new Error("logout failed");
+      vi.mocked(supabaseAuth.logout).mockRejectedValue(err);
+
+      await expect(authApi.logout()).rejects.toThrow("logout failed");
+      expect(logger.error).toHaveBeenCalled();
+    });
+
+    it("getSession: return null jika terjadi error", async () => {
+      vi.mocked(supabaseAuth.getSession).mockRejectedValue(
+        new Error("session error"),
       );
 
-      const result = await login(credentials);
+      const result = await authApi.getSession();
 
-      expect(result.success).toBe(false);
-      expect(result.error).toBe("Network error");
-    });
-  });
-
-  describe("register", () => {
-    it("should register new mahasiswa successfully", async () => {
-      const registerData: RegisterData = {
-        email: "mahasiswa@example.com",
-        password: "password123",
-        full_name: "Test Mahasiswa",
-        role: "mahasiswa",
-        nim: "BD2321001",
-        program_studi: "Kebidanan",
-        angkatan: 2023,
-        semester: 1,
-      };
-
-      const mockAuthData = {
-        user: { id: "user-123", email: "mahasiswa@example.com" },
-        session: { access_token: "token-123" },
-      };
-
-      // Mock successful signup
-      vi.mocked(supabase.auth.signUp).mockResolvedValue({
-        data: mockAuthData,
-        error: null,
-      } as any);
-
-      // Mock user profile creation
-      vi.mocked(supabase.from).mockReturnValue({
-        insert: vi.fn().mockResolvedValue({ error: null }),
-      } as any);
-
-      const result = await register(registerData);
-
-      expect(result.success).toBe(true);
-      expect(result.message).toContain("Registrasi berhasil");
-      expect(supabase.auth.signUp).toHaveBeenCalledWith({
-        email: registerData.email,
-        password: registerData.password,
-        options: expect.objectContaining({
-          data: expect.objectContaining({
-            full_name: registerData.full_name,
-            role: "mahasiswa",
-            nim: registerData.nim,
-          }),
-        }),
-      });
+      expect(result).toBeNull();
+      expect(logger.error).toHaveBeenCalled();
     });
 
-    it("should register new dosen successfully", async () => {
-      const registerData: RegisterData = {
-        email: "dosen@example.com",
-        password: "password123",
-        full_name: "Test Dosen",
-        role: "dosen",
-        nidn: "1234567890",
-        nip: "198001012020011001",
-        gelar_depan: "Dr.",
-        gelar_belakang: "M.Keb",
-      };
+    it("refreshSession: return data saat sukses", async () => {
+      const expected = { access_token: "abc" };
+      vi.mocked(supabaseAuth.refreshSession).mockResolvedValue(expected as any);
 
-      const mockAuthData = {
-        user: { id: "user-456", email: "dosen@example.com" },
-        session: { access_token: "token-456" },
-      };
+      const result = await authApi.refreshSession();
 
-      vi.mocked(supabase.auth.signUp).mockResolvedValue({
-        data: mockAuthData,
-        error: null,
-      } as any);
-
-      vi.mocked(supabase.from).mockReturnValue({
-        insert: vi.fn().mockResolvedValue({ error: null }),
-      } as any);
-
-      const result = await register(registerData);
-
-      expect(result.success).toBe(true);
-      expect(supabase.auth.signUp).toHaveBeenCalledWith({
-        email: registerData.email,
-        password: registerData.password,
-        options: expect.objectContaining({
-          data: expect.objectContaining({
-            role: "dosen",
-            nidn: registerData.nidn,
-          }),
-        }),
-      });
+      expect(result).toEqual(expected);
+      expect(supabaseAuth.refreshSession).toHaveBeenCalledTimes(1);
     });
 
-    it("should return error when email already exists", async () => {
-      const registerData: RegisterData = {
-        email: "existing@example.com",
-        password: "password123",
-        full_name: "Test User",
-        role: "mahasiswa",
-        nim: "BD2321001",
-        program_studi: "Kebidanan",
-        angkatan: 2023,
-        semester: 1,
-      };
+    it("refreshSession: return null saat error", async () => {
+      vi.mocked(supabaseAuth.refreshSession).mockRejectedValue(
+        new Error("refresh error"),
+      );
 
-      // Mock email already exists error
-      vi.mocked(supabase.auth.signUp).mockResolvedValue({
-        data: { user: null, session: null },
-        error: {
-          message: "User already registered",
-          name: "AuthError",
-          status: 400,
+      const result = await authApi.refreshSession();
+
+      expect(result).toBeNull();
+      expect(logger.error).toHaveBeenCalled();
+    });
+
+    it("resetPassword: delegate dan throw ulang saat error", async () => {
+      const successResp = { success: true };
+      vi.mocked(supabaseAuth.resetPassword).mockResolvedValue(successResp as any);
+
+      await expect(authApi.resetPassword("u@test.com")).resolves.toEqual(successResp);
+
+      const err = new Error("reset error");
+      vi.mocked(supabaseAuth.resetPassword).mockRejectedValue(err);
+
+      await expect(authApi.resetPassword("u@test.com")).rejects.toThrow("reset error");
+      expect(logger.error).toHaveBeenCalled();
+    });
+
+    it("updatePassword: delegate dan throw ulang saat error", async () => {
+      const successResp = { success: true };
+      vi.mocked(supabaseAuth.updatePassword).mockResolvedValue(successResp as any);
+
+      await expect(authApi.updatePassword("NewStrong123")).resolves.toEqual(successResp);
+
+      const err = new Error("update error");
+      vi.mocked(supabaseAuth.updatePassword).mockRejectedValue(err);
+
+      await expect(authApi.updatePassword("NewStrong123")).rejects.toThrow("update error");
+      expect(logger.error).toHaveBeenCalled();
+    });
+
+    it("getCurrentUser: return null saat error", async () => {
+      vi.mocked(supabaseAuth.getCurrentUser).mockRejectedValue(
+        new Error("user error"),
+      );
+
+      const result = await authApi.getCurrentUser();
+
+      expect(result).toBeNull();
+      expect(logger.error).toHaveBeenCalled();
+    });
+
+    it("isAuthenticated: return false saat error", async () => {
+      vi.mocked(supabaseAuth.isAuthenticated).mockRejectedValue(
+        new Error("auth check error"),
+      );
+
+      const result = await authApi.isAuthenticated();
+
+      expect(result).toBe(false);
+      expect(logger.error).toHaveBeenCalled();
+    });
+
+    it("onAuthStateChange: delegate callback dan return subscription handler", () => {
+      const callback = vi.fn();
+      const unsubscribe = vi.fn();
+      const mockedSubscription = {
+        data: {
+          subscription: {
+            unsubscribe,
+          },
         },
-      } as any);
-
-      const result = await register(registerData);
-
-      expect(result.success).toBe(false);
-      expect(result.error).toContain("Email sudah terdaftar");
-    });
-
-    it("should handle profile creation failure with rollback", async () => {
-      const registerData: RegisterData = {
-        email: "test@example.com",
-        password: "password123",
-        full_name: "Test User",
-        role: "mahasiswa",
-        nim: "BD2321001",
-        program_studi: "Kebidanan",
-        angkatan: 2023,
-        semester: 1,
       };
 
-      const mockAuthData = {
-        user: { id: "user-123", email: "test@example.com" },
-        session: { access_token: "token-123" },
-      };
+      vi.mocked(supabaseAuth.onAuthStateChange).mockReturnValue(
+        mockedSubscription as any,
+      );
 
-      vi.mocked(supabase.auth.signUp).mockResolvedValue({
-        data: mockAuthData,
-        error: null,
-      } as any);
+      const result = authApi.onAuthStateChange(callback as any);
 
-      // Mock profile creation failure
-      vi.mocked(supabase.from).mockReturnValue({
-        insert: vi.fn().mockResolvedValue({
-          error: { message: "Duplicate NIM", code: "23505" },
-        }),
-      } as any);
-
-      // Mock signOut for rollback
-      vi.mocked(supabase.auth.signOut).mockResolvedValue({
-        error: null,
-      } as any);
-
-      // Mock fetch for rollback function
-      global.fetch = vi.fn().mockResolvedValue({
-        json: () => Promise.resolve({ success: true }),
-      } as any);
-
-      const result = await register(registerData);
-
-      expect(result.success).toBe(false);
-      expect(result.error).toBeDefined();
+      expect(supabaseAuth.onAuthStateChange).toHaveBeenCalledWith(callback);
+      expect(result).toEqual(mockedSubscription);
     });
   });
 
-  describe("logout", () => {
-    it("should logout successfully", async () => {
-      vi.mocked(supabase.auth.signOut).mockResolvedValue({
-        error: null,
-      } as any);
-
-      const result = await logout();
-
-      expect(result.success).toBe(true);
-      expect(result.message).toBe("Logged out successfully");
-      expect(supabase.auth.signOut).toHaveBeenCalled();
+  describe("helper functions", () => {
+    it("isValidEmail: valid & invalid", () => {
+      expect(authApi.isValidEmail("user@example.com")).toBe(true);
+      expect(authApi.isValidEmail("invalid-email")).toBe(false);
+      expect(authApi.isValidEmail("user@domain")).toBe(false);
     });
 
-    it("should handle logout errors", async () => {
-      vi.mocked(supabase.auth.signOut).mockResolvedValue({
-        error: { message: "Logout failed", name: "AuthError", status: 500 },
-      } as any);
+    it("isValidPassword: mengembalikan error lengkap jika lemah", () => {
+      const weak = authApi.isValidPassword("abc");
 
-      const result = await logout();
-
-      expect(result.success).toBe(false);
-      expect(result.error).toBe("Logout failed");
+      expect(weak.isValid).toBe(false);
+      expect(weak.errors).toContain("Password minimal 6 karakter");
+      expect(weak.errors).toContain(
+        "Password harus mengandung minimal 1 huruf besar",
+      );
+      expect(weak.errors).toContain("Password harus mengandung minimal 1 angka");
     });
-  });
 
-  describe("getSession", () => {
-    it("should return current session when logged in", async () => {
-      const mockSession = {
-        user: { id: "user-123", email: "test@example.com" },
-        access_token: "token-123",
-        refresh_token: "refresh-123",
-        expires_at: 1234567890,
+    it("isValidPassword: valid untuk password kuat", () => {
+      const strong = authApi.isValidPassword("Strong123");
+      expect(strong.isValid).toBe(true);
+      expect(strong.errors).toEqual([]);
+    });
+
+    it("formatUserDisplayName: dosen dengan gelar depan dan belakang", () => {
+      const user = {
+        full_name: "Budi Santoso",
+        role: "dosen",
+        dosen: {
+          gelar_depan: "Dr.",
+          gelar_belakang: "M.Kom",
+        },
       };
 
-      vi.mocked(supabase.auth.getSession).mockResolvedValue({
-        data: { session: mockSession },
-        error: null,
-      } as any);
+      expect(authApi.formatUserDisplayName(user as any)).toBe(
+        "Dr. Budi Santoso, M.Kom",
+      );
+    });
 
-      // Mock getUserProfile
-      const mockProfile = {
-        id: "user-123",
-        email: "test@example.com",
-        full_name: "Test User",
+    it("formatUserDisplayName: non-dosen tetap full_name", () => {
+      const user = {
+        full_name: "Siti Aminah",
         role: "mahasiswa",
-        is_active: true,
       };
 
-      vi.mocked(supabase.from).mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            abortSignal: vi.fn().mockReturnValue({
-              single: vi.fn().mockResolvedValue({
-                data: mockProfile,
-                error: null,
-              }),
-            }),
-          }),
-        }),
-      } as any);
-
-      const result = await getSession();
-
-      expect(result).not.toBeNull();
-      expect(result?.user).toBeDefined();
-      expect(result?.access_token).toBe("token-123");
+      expect(authApi.formatUserDisplayName(user as any)).toBe("Siti Aminah");
     });
 
-    it("should return null when not logged in", async () => {
-      vi.mocked(supabase.auth.getSession).mockResolvedValue({
-        data: { session: null },
-        error: null,
-      } as any);
-
-      const result = await getSession();
-
-      expect(result).toBeNull();
-    });
-
-    it("should handle session errors", async () => {
-      vi.mocked(supabase.auth.getSession).mockResolvedValue({
-        data: { session: null },
-        error: { message: "Session error", name: "AuthError", status: 500 },
-      } as any);
-
-      const result = await getSession();
-
-      expect(result).toBeNull();
-    });
-  });
-
-  describe("getCurrentUser", () => {
-    it("should return current user when authenticated", async () => {
-      const mockUser = { id: "user-123", email: "test@example.com" };
-
-      vi.mocked(supabase.auth.getUser).mockResolvedValue({
-        data: { user: mockUser },
-        error: null,
-      } as any);
-
-      // Mock getUserProfile
-      const mockProfile = {
-        id: "user-123",
-        email: "test@example.com",
-        full_name: "Test User",
+    it("getUserIdentifier: pilih identitas sesuai role", () => {
+      const mahasiswa = {
         role: "mahasiswa",
-        is_active: true,
+        email: "mhs@example.com",
+        mahasiswa: { nim: "BD2321001" },
+      };
+      const dosen = {
+        role: "dosen",
+        email: "dsn@example.com",
+        dosen: { nip: "198001012020011001", nidn: "0123456789" },
+      };
+      const laboran = {
+        role: "laboran",
+        email: "lab@example.com",
+        laboran: { nip: "197901012010011001" },
+      };
+      const admin = {
+        role: "admin",
+        email: "admin@example.com",
       };
 
-      vi.mocked(supabase.from).mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            abortSignal: vi.fn().mockReturnValue({
-              single: vi.fn().mockResolvedValue({
-                data: mockProfile,
-                error: null,
-              }),
-            }),
-          }),
-        }),
-      } as any);
-
-      const result = await getCurrentUser();
-
-      expect(result).not.toBeNull();
-      expect(result?.id).toBe("user-123");
-      expect(result?.role).toBe("mahasiswa");
+      expect(authApi.getUserIdentifier(mahasiswa as any)).toBe("BD2321001");
+      expect(authApi.getUserIdentifier(dosen as any)).toBe("198001012020011001");
+      expect(authApi.getUserIdentifier(laboran as any)).toBe("197901012010011001");
+      expect(authApi.getUserIdentifier(admin as any)).toBe("admin@example.com");
     });
 
-    it("should return null when not authenticated", async () => {
-      vi.mocked(supabase.auth.getUser).mockResolvedValue({
-        data: { user: null },
-        error: null,
-      } as any);
+    it("getUserIdentifier: default case (unknown role) returns email (line 233)", () => {
+      const unknown = {
+        role: "guest",
+        email: "guest@example.com",
+      };
+      expect(authApi.getUserIdentifier(unknown as any)).toBe("guest@example.com");
+    });
 
-      const result = await getCurrentUser();
+    it("getUserIdentifier: dosen fallback ke nidn lalu email", () => {
+      const dosenWithNidnOnly = {
+        role: "dosen",
+        email: "nidn@example.com",
+        dosen: { nip: "", nidn: "99887766" },
+      };
+      const dosenWithoutIdentifiers = {
+        role: "dosen",
+        email: "fallback@example.com",
+        dosen: { nip: "", nidn: "" },
+      };
 
-      expect(result).toBeNull();
+      expect(authApi.getUserIdentifier(dosenWithNidnOnly as any)).toBe("99887766");
+      expect(authApi.getUserIdentifier(dosenWithoutIdentifiers as any)).toBe(
+        "fallback@example.com",
+      );
+    });
+
+    it("getUserIdentifier: mahasiswa dan laboran fallback ke email", () => {
+      const mahasiswa = {
+        role: "mahasiswa",
+        email: "mhs-fallback@example.com",
+        mahasiswa: { nim: "" },
+      };
+      const laboran = {
+        role: "laboran",
+        email: "lab-fallback@example.com",
+        laboran: { nip: "" },
+      };
+
+      expect(authApi.getUserIdentifier(mahasiswa as any)).toBe(
+        "mhs-fallback@example.com",
+      );
+      expect(authApi.getUserIdentifier(laboran as any)).toBe(
+        "lab-fallback@example.com",
+      );
+    });
+
+    it("isValidPassword: password tanpa huruf kecil (lines 184-185)", () => {
+      // Password yang punya uppercase & angka tapi tidak ada lowercase
+      const result = authApi.isValidPassword("ABCDEF1");
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toContain("Password harus mengandung minimal 1 huruf kecil");
+    });
+
+    it("isValidPassword: password dengan huruf kecil tidak cover lowercase branch = valid huruf kecil", () => {
+      // Password punya lowercase, uppercase, angka - tapi pendek → tidak kena line 184
+      const result = authApi.isValidPassword("Abc1");
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toContain("Password minimal 6 karakter");
+      expect(result.errors).not.toContain("Password harus mengandung minimal 1 huruf kecil");
     });
   });
 });

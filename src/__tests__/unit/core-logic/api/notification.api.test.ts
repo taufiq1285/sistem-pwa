@@ -33,6 +33,20 @@ import {
   notifyMahasiswaDosenChanged,
   notifyDosenNewAssignment,
   notifyDosenRemoval,
+  notifyLaboranPeminjamanBaru,
+  notifyDosenPeminjamanDisetujui,
+  notifyDosenPeminjamanDitolak,
+  notifyLaboranPeminjamanTerlambat,
+  notifyDosenJadwalBaru,
+  notifyDosenJadwalDiupdate,
+  notifyLaboranJadwalBaru,
+  notifyMahasiswaJadwalChange,
+  notifyMahasiswaKuisPublished,
+  notifyDosenLogbookSubmitted,
+  notifyMahasiswaLogbookApproved,
+  notifyMahasiswaLogbookRejected,
+  notifyMahasiswaLogbookRevision,
+  notifyUsersAnnouncement,
 } from "@/lib/api/notification.api";
 import type {
   Notification,
@@ -1240,6 +1254,221 @@ describe("Notification API - Auto-Notification System", () => {
         "kuis-1",
       );
       expect(mhsNotif?.data.nilai).toBe(85);
+    });
+  });
+  describe("Extended Notification Helpers", () => {
+    it("should create borrowing, schedule, kuis, and logbook notifications", async () => {
+      const originalFrom = (supabase.from as any).getMockImplementation();
+      let sequence = 0;
+
+      (supabase.from as any).mockImplementation(() => ({
+        insert: vi.fn((payload: any) => ({
+          select: vi.fn(() => {
+            if (Array.isArray(payload)) {
+              const rows = payload.map((row: any, idx: number) => ({
+                id: `bulk-${sequence + idx + 1}`,
+                type: row.type,
+                data: row.data,
+              }));
+              sequence += payload.length;
+              return Promise.resolve({ data: rows, error: null });
+            }
+
+            sequence += 1;
+            return {
+              single: vi.fn().mockResolvedValue({
+                data: {
+                  id: `notif-${sequence}`,
+                  type: payload.type,
+                  data: payload.data,
+                },
+                error: null,
+              }),
+            };
+          }),
+        })),
+      }));
+
+      const baru = await notifyLaboranPeminjamanBaru(
+        ["lab-1", "lab-2"],
+        "Dr. Budi",
+        "Mikroskop",
+        2,
+        "2025-01-20",
+        "Praktikum",
+      );
+      const disetujui = await notifyDosenPeminjamanDisetujui(
+        "dosen-1",
+        "Mikroskop",
+        2,
+        "2025-01-20",
+        "2025-01-22",
+      );
+      const ditolak = await notifyDosenPeminjamanDitolak(
+        "dosen-1",
+        "Mikroskop",
+        "Stok habis",
+      );
+      const terlambat = await notifyLaboranPeminjamanTerlambat(
+        ["lab-1"],
+        "Dr. Budi",
+        "Mikroskop",
+        "2025-01-21",
+        "2025-01-24",
+        3,
+      );
+      const jadwalBaru = await notifyDosenJadwalBaru(
+        "dosen-1",
+        "Biologi",
+        "A",
+        "2025-01-23",
+        "Lab A",
+      );
+      const jadwalUpdate = await notifyDosenJadwalDiupdate(
+        "dosen-1",
+        "Biologi",
+        "A",
+        "2025-01-23",
+        ["jam", "lab"],
+      );
+      const laboranJadwal = await notifyLaboranJadwalBaru(
+        ["lab-1", "lab-2"],
+        "Dr. Budi",
+        "Biologi",
+        "A",
+        "2025-01-23",
+        "Lab A",
+      );
+      const mahasiswaJadwal = await notifyMahasiswaJadwalChange(
+        ["mhs-1"],
+        "Biologi",
+        "A",
+        "2025-01-23",
+        "diupdate",
+        "Jam berubah",
+      );
+      const kuisPublished = await notifyMahasiswaKuisPublished(
+        ["mhs-1", "mhs-2"],
+        "Dr. Budi",
+        "Kuis 1",
+        "Kelas A",
+        "2025-01-30",
+        "kuis-1",
+      );
+      const logbookSubmitted = await notifyDosenLogbookSubmitted(
+        "dosen-1",
+        "Ahmad",
+        "A",
+        "Biologi",
+        "2025-01-23",
+        "log-1",
+      );
+      const logbookApproved = await notifyMahasiswaLogbookApproved(
+        "mhs-1",
+        "A",
+        "Biologi",
+        "2025-01-23",
+      );
+      const logbookRejected = await notifyMahasiswaLogbookRejected(
+        "mhs-1",
+        "A",
+        "Biologi",
+        "2025-01-23",
+        "Perbaiki foto",
+      );
+      const logbookRevision = await notifyMahasiswaLogbookRevision(
+        "mhs-1",
+        "A",
+        "Biologi",
+        "2025-01-23",
+        "Tambah detail",
+      );
+
+      expect(baru).toHaveLength(2);
+      expect(disetujui?.data.tanggal_kembali).toBe("2025-01-22");
+      expect(ditolak?.data.alasan).toBe("Stok habis");
+      expect(terlambat).toHaveLength(1);
+      expect(jadwalBaru?.type).toBe("jadwal_baru");
+      expect(jadwalUpdate?.data.perubahan).toEqual(["jam", "lab"]);
+      expect(laboranJadwal).toHaveLength(2);
+      expect(mahasiswaJadwal).toHaveLength(1);
+      expect(kuisPublished).toHaveLength(2);
+      expect(logbookSubmitted?.data.logbook_id).toBe("log-1");
+      expect(logbookApproved?.type).toBe("logbook_approved");
+      expect(logbookRejected?.data.catatan).toBe("Perbaiki foto");
+      expect(logbookRevision?.data.catatan).toBe("Tambah detail");
+
+      (supabase.from as any).mockImplementation(originalFrom);
+    });
+
+    it("should send announcement notifications to matching roles", async () => {
+      const consoleLogSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+      const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+      let callCount = 0;
+      (supabase.from as any).mockImplementation((table: string) => {
+        if (table !== "users" && table !== "notifications") {
+          return {} as any;
+        }
+
+        callCount += 1;
+        if (callCount === 1) {
+          return {
+            select: vi.fn().mockReturnValue({
+              in: vi.fn().mockResolvedValue({
+                data: [
+                  { id: "user-1", email: "dosen@example.com", role: "dosen" },
+                  { id: "user-2", email: "mhs@example.com", role: "mahasiswa" },
+                ],
+                error: null,
+              }),
+            }),
+          } as any;
+        }
+
+        return {
+          insert: vi.fn().mockReturnValue({
+            select: vi.fn().mockResolvedValue({
+              data: [{ id: "notif-1" }, { id: "notif-2" }],
+              error: null,
+            }),
+          }),
+        } as any;
+      });
+
+      await expect(
+        notifyUsersAnnouncement(["dosen", "mahasiswa"], "Maintenance", "warning", "high"),
+      ).resolves.not.toThrow();
+
+      expect(consoleLogSpy).toHaveBeenCalled();
+      expect(consoleErrorSpy).not.toHaveBeenCalled();
+
+      consoleLogSpy.mockRestore();
+      consoleErrorSpy.mockRestore();
+    });
+
+    it("should return early when announcement has no matching users", async () => {
+      const consoleLogSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+
+      (supabase.from as any).mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          in: vi.fn().mockResolvedValue({
+            data: [],
+            error: null,
+          }),
+        }),
+      });
+
+      await expect(
+        notifyUsersAnnouncement(["laboran"], "Info", "info", "low"),
+      ).resolves.not.toThrow();
+
+      expect(consoleLogSpy).toHaveBeenCalledWith(
+        expect.stringContaining("No users found for target roles:"),
+        ["laboran"],
+      );
+
+      consoleLogSpy.mockRestore();
     });
   });
 });
