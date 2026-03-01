@@ -1232,6 +1232,595 @@ describe("Assignment API", () => {
     });
   });
 
+  describe("additional branch coverage", () => {
+    it("should apply non-status filters in getAllAssignments", async () => {
+      const mockJadwalChain = createMockQueryChain([], null);
+
+      (supabase.from as any).mockImplementation((table: string) => {
+        if (table === "users") {
+          const mockChain = { eq: vi.fn(), single: vi.fn() };
+          mockChain.eq.mockReturnValue(mockChain);
+          mockChain.single.mockResolvedValue({
+            data: { role: "admin" },
+            error: null,
+          });
+          return { select: vi.fn().mockReturnValue(mockChain) };
+        }
+
+        if (table === "jadwal_praktikum") {
+          return mockJadwalChain;
+        }
+
+        return createMockQueryChain([]);
+      });
+
+      await getAllAssignments({
+        hari: "senin" as any,
+        laboratorium_id: "lab-1",
+      });
+
+      expect(mockJadwalChain.eq).toHaveBeenCalledWith("hari", "senin");
+      expect(mockJadwalChain.eq).toHaveBeenCalledWith("laboratorium_id", "lab-1");
+    });
+
+    it("should filter getAllAssignments by dosen, kelas, tahun, semester and search", async () => {
+      const mockRawData = [
+        {
+          id: "jadwal-1",
+          hari: "senin",
+          jam_mulai: "08:00",
+          jam_selesai: "10:00",
+          status: "approved",
+          is_active: true,
+          dosen_id: null,
+          mata_kuliah_id: null,
+          laboratorium: null,
+          kelas: {
+            id: "kelas-1",
+            nama_kelas: "Kelas A",
+            kode_kelas: "KA",
+            tahun_ajaran: "2024/2025",
+            semester_ajaran: 1,
+            dosen: {
+              id: "dosen-1",
+              nip: "123",
+              users: { id: "user-1", full_name: "Dr. Budi", email: "budi@example.com" },
+            },
+            mata_kuliah: {
+              id: "mk-1",
+              nama_mk: "Algoritma",
+              kode_mk: "ALG-1",
+              sks: 3,
+            },
+          },
+          mata_kuliah: null,
+          dosen: null,
+          created_at: "2025-01-21T00:00:00Z",
+          updated_at: "2025-01-21T00:00:00Z",
+        },
+        {
+          id: "jadwal-2",
+          hari: "selasa",
+          jam_mulai: "10:00",
+          jam_selesai: "12:00",
+          status: "approved",
+          is_active: true,
+          dosen_id: "dosen-2",
+          mata_kuliah_id: "mk-2",
+          laboratorium: null,
+          kelas: {
+            id: "kelas-2",
+            nama_kelas: "Kelas B",
+            kode_kelas: "KB",
+            tahun_ajaran: "2023/2024",
+            semester_ajaran: 2,
+            dosen: {
+              id: "dosen-2",
+              nip: "456",
+              users: { id: "user-2", full_name: "Dr. Siti", email: "siti@example.com" },
+            },
+            mata_kuliah: {
+              id: "mk-2",
+              nama_mk: "Basis Data",
+              kode_mk: "BD-1",
+              sks: 2,
+            },
+          },
+          mata_kuliah: {
+            id: "mk-2",
+            nama_mk: "Basis Data",
+            kode_mk: "BD-1",
+            sks: 2,
+          },
+          dosen: {
+            id: "dosen-2",
+            nip: "456",
+            users: { id: "user-2", full_name: "Dr. Siti", email: "siti@example.com" },
+          },
+          created_at: "2025-01-22T00:00:00Z",
+          updated_at: "2025-01-22T00:00:00Z",
+        },
+      ];
+
+      (supabase.from as any).mockImplementation((table: string) => {
+        if (table === "users") {
+          const mockChain = { eq: vi.fn(), single: vi.fn() };
+          mockChain.eq.mockReturnValue(mockChain);
+          mockChain.single.mockResolvedValue({
+            data: { role: "admin" },
+            error: null,
+          });
+          return { select: vi.fn().mockReturnValue(mockChain) };
+        }
+
+        if (table === "jadwal_praktikum") {
+          return createMockQueryChain(mockRawData, null);
+        }
+
+        if (table === "kelas_mahasiswa") {
+          return createMockQueryChain([{ kelas_id: "kelas-1" }], null);
+        }
+
+        return createMockQueryChain([]);
+      });
+
+      const result = await getAllAssignments({
+        dosen_id: "dosen-1",
+        mata_kuliah_id: "mk-1",
+        kelas_id: "kelas-1",
+        tahun_ajaran: "2024/2025",
+        semester_ajaran: 1,
+        search: "algoritma",
+      });
+
+      expect(result).toHaveLength(1);
+      expect(result[0].dosen_name).toBe("Dr. Budi");
+      expect(result[0].mahasiswa_count).toBe(1);
+    });
+
+    it("should keep assignment with placeholder values when dosen and mata kuliah are missing", async () => {
+      const mockRawData = [
+        {
+          id: "jadwal-admin",
+          hari: "rabu",
+          jam_mulai: "13:00",
+          jam_selesai: "15:00",
+          status: "draft",
+          is_active: false,
+          dosen_id: null,
+          mata_kuliah_id: null,
+          laboratorium: null,
+          kelas: {
+            id: "kelas-admin",
+            nama_kelas: "Kelas Admin",
+            kode_kelas: "ADM",
+            tahun_ajaran: "2024/2025",
+            semester_ajaran: 2,
+            dosen: null,
+            mata_kuliah: null,
+          },
+          mata_kuliah: null,
+          dosen: null,
+          created_at: "2025-01-23T00:00:00Z",
+          updated_at: "2025-01-23T00:00:00Z",
+        },
+      ];
+
+      (supabase.from as any).mockImplementation((table: string) => {
+        if (table === "users") {
+          const mockChain = { eq: vi.fn(), single: vi.fn() };
+          mockChain.eq.mockReturnValue(mockChain);
+          mockChain.single.mockResolvedValue({
+            data: { role: "admin" },
+            error: null,
+          });
+          return { select: vi.fn().mockReturnValue(mockChain) };
+        }
+
+        if (table === "jadwal_praktikum") {
+          return createMockQueryChain(mockRawData, null);
+        }
+
+        if (table === "kelas_mahasiswa") {
+          return createMockQueryChain([], null);
+        }
+
+        return createMockQueryChain([]);
+      });
+
+      const result = await getAllAssignments();
+
+      expect(result).toHaveLength(1);
+      expect(result[0].dosen_name).toBe("Belum ada dosen");
+      expect(result[0].mata_kuliah_nama).toBe("Belum ada mata kuliah");
+      expect(result[0].mata_kuliah_kode).toBe("-");
+    });
+
+    it("should apply filters in getAcademicAssignments including status and search", async () => {
+      const mockKelasData = [
+        {
+          id: "kelas-1",
+          nama_kelas: "Kelas A",
+          kode_kelas: "KA",
+          tahun_ajaran: "2024/2025",
+          semester_ajaran: 1,
+          is_active: true,
+          dosen_id: "dosen-1",
+          mata_kuliah_id: "mk-1",
+          created_at: "2025-01-21T00:00:00Z",
+          updated_at: "2025-01-21T00:00:00Z",
+          mata_kuliah: { id: "mk-1", nama_mk: "Algoritma", kode_mk: "ALG-1", sks: 3 },
+          dosen: {
+            id: "dosen-1",
+            nip: "123",
+            users: { id: "user-1", full_name: "Dr. Budi", email: "budi@example.com" },
+          },
+        },
+        {
+          id: "kelas-2",
+          nama_kelas: "Kelas B",
+          kode_kelas: "KB",
+          tahun_ajaran: "2024/2025",
+          semester_ajaran: 2,
+          is_active: false,
+          dosen_id: "dosen-2",
+          mata_kuliah_id: "mk-2",
+          created_at: "2025-01-21T00:00:00Z",
+          updated_at: "2025-01-21T00:00:00Z",
+          mata_kuliah: { id: "mk-2", nama_mk: "Basis Data", kode_mk: "BD-1", sks: 2 },
+          dosen: {
+            id: "dosen-2",
+            nip: "456",
+            users: { id: "user-2", full_name: "Dr. Siti", email: "siti@example.com" },
+          },
+        },
+      ];
+
+      const mockKelasChain = createMockQueryChain(mockKelasData, null);
+
+      (supabase.from as any).mockImplementation((table: string) => {
+        if (table === "users") {
+          const mockChain = { eq: vi.fn(), single: vi.fn() };
+          mockChain.eq.mockReturnValue(mockChain);
+          mockChain.single.mockResolvedValue({
+            data: { role: "admin" },
+            error: null,
+          });
+          return { select: vi.fn().mockReturnValue(mockChain) };
+        }
+
+        if (table === "kelas") {
+          return mockKelasChain;
+        }
+
+        return createMockQueryChain([]);
+      });
+
+      const result = await getAcademicAssignments({
+        dosen_id: "dosen-1",
+        mata_kuliah_id: "mk-1",
+        kelas_id: "kelas-1",
+        tahun_ajaran: "2024/2025",
+        semester_ajaran: 1,
+        status: "active",
+        search: "alg",
+      });
+
+      expect(mockKelasChain.eq).toHaveBeenCalledWith("dosen_id", "dosen-1");
+      expect(mockKelasChain.eq).toHaveBeenCalledWith("mata_kuliah_id", "mk-1");
+      expect(mockKelasChain.eq).toHaveBeenCalledWith("kelas_id", "kelas-1");
+      expect(mockKelasChain.eq).toHaveBeenCalledWith("is_active", true);
+      expect(result).toHaveLength(1);
+      expect(result[0].kelas_kode).toBe("KA");
+    });
+
+    it("should handle update, clear, and toggle errors", async () => {
+      const makeErrorChain = (message: string) => createMockQueryChain(null, { message });
+
+      (supabase.from as any).mockImplementation((table: string) => {
+        if (table === "users") {
+          const mockChain = { eq: vi.fn(), single: vi.fn() };
+          mockChain.eq.mockReturnValue(mockChain);
+          mockChain.single.mockResolvedValue({ data: { role: "admin" }, error: null });
+          return { select: vi.fn().mockReturnValue(mockChain) };
+        }
+
+        if (table === "kelas") {
+          return makeErrorChain("write failed");
+        }
+
+        return createMockQueryChain([]);
+      });
+
+      await expect(updateAcademicAssignment("kelas-1", { catatan: "x" })).resolves.toEqual({
+        success: false,
+        error: "write failed",
+      });
+      await expect(clearAcademicAssignment("kelas-1")).resolves.toEqual({
+        success: false,
+        error: "write failed",
+      });
+      await expect(toggleKelasStatus("kelas-1", true)).resolves.toEqual({
+        success: false,
+        error: "write failed",
+      });
+    });
+  });
+
+  // ==============================================================================
+  // ERROR HANDLERS - getAllDosen, getAllMataKuliah, getAllKelasForFilter, getAcademicAssignments
+  // ==============================================================================
+
+  describe("getAllDosen error handling", () => {
+    it("should throw when supabase returns error (lines 475-477)", async () => {
+      (supabase.from as any).mockImplementation((table: string) => {
+        if (table === "users") {
+          const mockChain = { eq: vi.fn(), single: vi.fn() };
+          mockChain.eq.mockReturnValue(mockChain);
+          mockChain.single.mockResolvedValue({ data: { role: "admin" }, error: null });
+          return { select: vi.fn().mockReturnValue(mockChain) };
+        }
+        if (table === "dosen") {
+          return createMockQueryChain(null, { message: "dosen fetch error" });
+        }
+        return createMockQueryChain([]);
+      });
+
+      await expect(getAllDosen()).rejects.toThrow("Failed to fetch dosen: dosen fetch error");
+    });
+  });
+
+  describe("getAllMataKuliah error handling", () => {
+    it("should throw when supabase returns error (lines 502-504)", async () => {
+      (supabase.from as any).mockImplementation((table: string) => {
+        if (table === "users") {
+          const mockChain = { eq: vi.fn(), single: vi.fn() };
+          mockChain.eq.mockReturnValue(mockChain);
+          mockChain.single.mockResolvedValue({ data: { role: "admin" }, error: null });
+          return { select: vi.fn().mockReturnValue(mockChain) };
+        }
+        if (table === "mata_kuliah") {
+          return createMockQueryChain(null, { message: "mk fetch error" });
+        }
+        return createMockQueryChain([]);
+      });
+
+      await expect(getAllMataKuliah()).rejects.toThrow("Failed to fetch mata kuliah: mk fetch error");
+    });
+  });
+
+  describe("getAllKelasForFilter error handling", () => {
+    it("should throw when supabase returns error (lines 529-531)", async () => {
+      (supabase.from as any).mockImplementation((table: string) => {
+        if (table === "users") {
+          const mockChain = { eq: vi.fn(), single: vi.fn() };
+          mockChain.eq.mockReturnValue(mockChain);
+          mockChain.single.mockResolvedValue({ data: { role: "admin" }, error: null });
+          return { select: vi.fn().mockReturnValue(mockChain) };
+        }
+        if (table === "kelas") {
+          return createMockQueryChain(null, { message: "kelas fetch error" });
+        }
+        return createMockQueryChain([]);
+      });
+
+      await expect(getAllKelasForFilter()).rejects.toThrow("Failed to fetch kelas: kelas fetch error");
+    });
+  });
+
+  describe("getAcademicAssignments error handling", () => {
+    it("should throw when supabase returns error (lines 616-618)", async () => {
+      (supabase.from as any).mockImplementation((table: string) => {
+        if (table === "users") {
+          const mockChain = { eq: vi.fn(), single: vi.fn() };
+          mockChain.eq.mockReturnValue(mockChain);
+          mockChain.single.mockResolvedValue({ data: { role: "admin" }, error: null });
+          return { select: vi.fn().mockReturnValue(mockChain) };
+        }
+        if (table === "kelas") {
+          return createMockQueryChain(null, { message: "academic fetch error" });
+        }
+        return createMockQueryChain([]);
+      });
+
+      await expect(getAcademicAssignments()).rejects.toThrow("Failed to fetch academic assignments: academic fetch error");
+    });
+
+    it("should filter by kelas_kode when searching (lines 776-778)", async () => {
+      const mockKelasData = [
+        {
+          id: "kelas-1",
+          nama_kelas: "Kelas A",
+          kode_kelas: "KA-001",
+          tahun_ajaran: "2024/2025",
+          semester_ajaran: 1,
+          is_active: true,
+          dosen_id: "dosen-1",
+          mata_kuliah_id: "mk-1",
+          created_at: "2025-01-21T00:00:00Z",
+          updated_at: "2025-01-21T00:00:00Z",
+          mata_kuliah: { id: "mk-1", nama_mk: "Algoritma", kode_mk: "ALG-1", sks: 3 },
+          dosen: {
+            id: "dosen-1",
+            nip: "123",
+            users: { id: "user-1", full_name: "Dr. Budi", email: "budi@example.com" },
+          },
+        },
+        {
+          id: "kelas-2",
+          nama_kelas: "Kelas B",
+          kode_kelas: "KB-002",
+          tahun_ajaran: "2024/2025",
+          semester_ajaran: 1,
+          is_active: true,
+          dosen_id: "dosen-2",
+          mata_kuliah_id: "mk-2",
+          created_at: "2025-01-21T00:00:00Z",
+          updated_at: "2025-01-21T00:00:00Z",
+          mata_kuliah: { id: "mk-2", nama_mk: "Basis Data", kode_mk: "BD-1", sks: 2 },
+          dosen: {
+            id: "dosen-2",
+            nip: "456",
+            users: { id: "user-2", full_name: "Dr. Siti", email: "siti@example.com" },
+          },
+        },
+      ];
+
+      (supabase.from as any).mockImplementation((table: string) => {
+        if (table === "users") {
+          const mockChain = { eq: vi.fn(), single: vi.fn() };
+          mockChain.eq.mockReturnValue(mockChain);
+          mockChain.single.mockResolvedValue({ data: { role: "admin" }, error: null });
+          return { select: vi.fn().mockReturnValue(mockChain) };
+        }
+        if (table === "kelas") {
+          return createMockQueryChain(mockKelasData, null);
+        }
+        return createMockQueryChain([]);
+      });
+
+      // Search by kode_kelas - should match "KA-001"
+      const result = await getAcademicAssignments({ search: "ka-001" });
+
+      expect(result).toHaveLength(1);
+      expect(result[0].kelas_kode).toBe("KA-001");
+    });
+  });
+
+  describe("getAssignmentStats kelas.dosen_id branch", () => {
+    it("should count dosen from kelas.dosen_id when jadwal.dosen_id is null (lines 395-396)", async () => {
+      const mockDosenData = [{ id: "dosen-1" }, { id: "dosen-2" }];
+      // jadwal tanpa dosen_id, tapi kelas punya dosen_id
+      const mockJadwalData = [
+        { dosen_id: null, kelas: { dosen_id: "dosen-1" } },
+        { dosen_id: null, kelas: { dosen_id: "dosen-2" } },
+      ];
+      const mockKelasData = [{ id: "kelas-1" }];
+
+      (supabase.from as any).mockImplementation((table: string) => {
+        if (table === "users") {
+          const mockChain = { eq: vi.fn(), single: vi.fn() };
+          mockChain.eq.mockReturnValue(mockChain);
+          mockChain.single.mockResolvedValue({ data: { role: "admin" }, error: null });
+          return { select: vi.fn().mockReturnValue(mockChain) };
+        }
+        if (table === "dosen") {
+          return { select: vi.fn().mockResolvedValue({ data: mockDosenData, error: null }) };
+        }
+        if (table === "jadwal_praktikum") {
+          return createMockQueryChain(mockJadwalData, null);
+        }
+        if (table === "kelas") {
+          return createMockQueryChain(mockKelasData, null);
+        }
+        return createMockQueryChain([]);
+      });
+
+      const result = await getAssignmentStats();
+
+      // dosen_dengan_jadwal should be 2 (from kelas.dosen_id)
+      expect(result.dosen_dengan_jadwal).toBe(2);
+    });
+  });
+
+  describe("CRUD catch block coverage", () => {
+    it("should handle thrown exception in createAcademicAssignment (lines 866-868)", async () => {
+      (supabase.from as any).mockImplementation((table: string) => {
+        if (table === "users") {
+          const mockChain = { eq: vi.fn(), single: vi.fn() };
+          mockChain.eq.mockReturnValue(mockChain);
+          mockChain.single.mockResolvedValue({ data: { role: "admin" }, error: null });
+          return { select: vi.fn().mockReturnValue(mockChain) };
+        }
+        if (table === "kelas") {
+          return {
+            update: vi.fn().mockReturnValue({
+              eq: vi.fn().mockRejectedValue(new Error("unexpected crash")),
+            }),
+          };
+        }
+        return createMockQueryChain([]);
+      });
+
+      const result = await createAcademicAssignment({
+        dosen_id: "d1",
+        mata_kuliah_id: "mk1",
+        kelas_id: "k1",
+      });
+
+      expect(result).toEqual({ success: false, error: "unexpected crash" });
+    });
+
+    it("should handle thrown exception in updateAcademicAssignment (lines 909-911)", async () => {
+      (supabase.from as any).mockImplementation((table: string) => {
+        if (table === "users") {
+          const mockChain = { eq: vi.fn(), single: vi.fn() };
+          mockChain.eq.mockReturnValue(mockChain);
+          mockChain.single.mockResolvedValue({ data: { role: "admin" }, error: null });
+          return { select: vi.fn().mockReturnValue(mockChain) };
+        }
+        if (table === "kelas") {
+          return {
+            update: vi.fn().mockReturnValue({
+              eq: vi.fn().mockRejectedValue(new Error("update crash")),
+            }),
+          };
+        }
+        return createMockQueryChain([]);
+      });
+
+      const result = await updateAcademicAssignment("kelas-1", { dosen_id: "d1" });
+
+      expect(result).toEqual({ success: false, error: "update crash" });
+    });
+
+    it("should handle thrown exception in clearAcademicAssignment (lines 943-945)", async () => {
+      (supabase.from as any).mockImplementation((table: string) => {
+        if (table === "users") {
+          const mockChain = { eq: vi.fn(), single: vi.fn() };
+          mockChain.eq.mockReturnValue(mockChain);
+          mockChain.single.mockResolvedValue({ data: { role: "admin" }, error: null });
+          return { select: vi.fn().mockReturnValue(mockChain) };
+        }
+        if (table === "kelas") {
+          return {
+            update: vi.fn().mockReturnValue({
+              eq: vi.fn().mockRejectedValue(new Error("clear crash")),
+            }),
+          };
+        }
+        return createMockQueryChain([]);
+      });
+
+      const result = await clearAcademicAssignment("kelas-1");
+
+      expect(result).toEqual({ success: false, error: "clear crash" });
+    });
+
+    it("should handle thrown exception in toggleKelasStatus (lines 976-978)", async () => {
+      (supabase.from as any).mockImplementation((table: string) => {
+        if (table === "users") {
+          const mockChain = { eq: vi.fn(), single: vi.fn() };
+          mockChain.eq.mockReturnValue(mockChain);
+          mockChain.single.mockResolvedValue({ data: { role: "admin" }, error: null });
+          return { select: vi.fn().mockReturnValue(mockChain) };
+        }
+        if (table === "kelas") {
+          return {
+            update: vi.fn().mockReturnValue({
+              eq: vi.fn().mockRejectedValue(new Error("toggle crash")),
+            }),
+          };
+        }
+        return createMockQueryChain([]);
+      });
+
+      const result = await toggleKelasStatus("kelas-1", true);
+
+      expect(result).toEqual({ success: false, error: "toggle crash" });
+    });
+  });
+
   // ==============================================================================
   // ERROR HANDLING
   // ==============================================================================

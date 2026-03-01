@@ -68,7 +68,12 @@
       "Bash(do sed:*)",
       "Bash(do echo:*)",
       "Bash(wc:*)",
-      "Bash(npx:*)"
+      "Bash(npx:*)",
+      "Bash(git pull --rebase origin main)",
+      "Bash(git stash)",
+      "Bash(git stash pop)",
+      "Bash(python -c \"import sys,json; data=json.load\\(sys.stdin\\); keys=list\\(data.keys\\(\\)\\)[:10]; [print\\(k\\) for k in keys]\")",
+      "Bash(supabase --version)"
     ]
   }
 }

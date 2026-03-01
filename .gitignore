@@ -72,3 +72,7 @@ Update/
 vite-project@*/
 
 .env*.local
+
+# Supabase backup artifacts (sensitive)
+backups/supabase/
+

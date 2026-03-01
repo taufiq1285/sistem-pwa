@@ -2,16 +2,24 @@
  * Format Utilities Unit Tests
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import {
   formatDate,
+  formatTime,
+  formatDateTime,
   formatNumber,
   formatCurrency,
   formatPercentage,
   formatFileSize,
+  formatDuration,
+  formatRelativeTime,
+  formatPhoneNumber,
 } from "@/lib/utils/format";
 
 describe("Format Utilities", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
   describe("date formatting", () => {
     it("should format date correctly", () => {
       const date = new Date("2024-01-15T10:30:00Z");
@@ -62,8 +70,50 @@ describe("Format Utilities", () => {
     });
   });
 
-  // Placeholder test
-  it("should have format utilities tests defined", () => {
-    expect(true).toBe(true);
+  describe("time and combined formatting", () => {
+    it("should format time and date-time from string input", () => {
+      const input = "2024-01-15T10:30:00";
+
+      expect(formatTime(input)).toBe("10:30");
+      expect(formatDateTime(input)).toContain("2024");
+      expect(formatDateTime(null)).toBe("");
+    });
+  });
+
+  describe("duration formatting", () => {
+    it("should format durations for hours, minutes, and seconds", () => {
+      expect(formatDuration(3665)).toBe("1 jam 1 menit");
+      expect(formatDuration(125)).toBe("2 menit 5 detik");
+      expect(formatDuration(45)).toBe("45 detik");
+      expect(formatDuration(null)).toBe("0 detik");
+    });
+  });
+
+  describe("relative time formatting", () => {
+    it("should format recent, minute, hour, day, and older dates", () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date("2024-01-10T12:00:00Z"));
+
+      expect(formatRelativeTime("2024-01-10T11:59:45Z")).toBe("Baru saja");
+      expect(formatRelativeTime("2024-01-10T11:30:00Z")).toBe(
+        "30 menit yang lalu",
+      );
+      expect(formatRelativeTime("2024-01-10T10:00:00Z")).toBe(
+        "2 jam yang lalu",
+      );
+      expect(formatRelativeTime("2024-01-08T12:00:00Z")).toBe(
+        "2 hari yang lalu",
+      );
+      expect(formatRelativeTime("2024-01-01T12:00:00Z")).toContain("2024");
+      expect(formatRelativeTime(undefined)).toBe("");
+    });
+  });
+
+  describe("phone formatting", () => {
+    it("should format Indonesian phone numbers and preserve unsupported values", () => {
+      expect(formatPhoneNumber("081234567890")).toBe("0812-3456-7890");
+      expect(formatPhoneNumber("0812-345-678")).toBe("0812-345-678");
+      expect(formatPhoneNumber(null)).toBe("");
+    });
   });
 });

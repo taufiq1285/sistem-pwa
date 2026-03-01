@@ -35,7 +35,7 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
 /**
  * Hook to access notification context
  */
-export function useNotifications(): NotificationContextValue {
+export function useNotifications(p0: never): NotificationContextValue {
   const context = useContext(NotificationContext);
 
   if (!context) {

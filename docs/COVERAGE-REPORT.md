@@ -1,518 +1,182 @@
-# Test Coverage Report
-## Sistem Praktikum PWA
+# 📊 Code Coverage Report
 
-**Generated**: 2026-02-26
-**Test Runner**: Vitest with @vitest/coverage-v8
-**Command**: `npm run coverage`
+> **Overall Coverage: 87.19%** | Statements: 87.19% | Branches: 82.05% | Functions: 88.70% | Lines: 87.19%
 
 ---
 
-## HASIL AKTUAL — `npm run coverage` (2026-02-26)
+## 📁 api
 
-### Ringkasan Eksekusi Test
+| File | Stmts | Branch | Funcs | Lines | Uncovered Lines |
+|:-----|:-----:|:------:|:-----:|:-----:|:----------------|
+| admin.api.ts | 100 | 90.66 | 100 | 100 | 84, 94, 104, 213, 247, 279, 335 |
+| announcements.api.ts | ✅ 100 | ✅ 100 | ✅ 100 | ✅ 100 | — |
+| assignment.api.ts | 86.05 | 77.56 | 100 | 86.05 | ...395–396, 475–477, 502–504, 529–531, 616–618, 632–687, 776–778, 866–868, 909–911, 943–945, 976–978 |
+| auth.api.ts | 97.87 | 82.85 | 100 | 97.87 | 184–185, 233 |
+| bank-soal.api.ts | 74.22 | 57.53 | 71.42 | 74.22 | 60–61, 68–69, 76–77, 100–134, 166, 245–249, 264–316, 381–388, 410–411, 474–475 |
+| base.api.ts | 66.33 | 47.48 | 100 | 66.33 | ...847–888 (multiple ranges) |
+| cleanup.api.ts | 93.06 | 81.66 | 100 | 93.06 | 52–53, 64–65, 76–77, 175–176, 188–189, 200–201, 212–213 |
+| dosen.api.ts | 53.3 | 59.87 | 52.17 | 53.3 | ...1047–1822 (multiple ranges) |
+| jadwal.api.ts | 99.62 | 93.92 | 100 | 99.62 | 471–472, 637 |
+| kehadiran.api.ts | 100 | 84.52 | 100 | 100 | 167, 206, 240, 318, 477–484, 546, 551–552 |
+| kelas.api.ts | 92.71 | 84.69 | 100 | 92.71 | 390–391, 471–475, 533–535, 593–602, 616–618, 642–648, 651–654 |
+| kuis-secure.api.ts | 88.93 | 71.42 | 100 | 88.93 | 86–101, 114, 217–219, 240, 245, 303–306 |
+| kuis-versioned-simple.api.ts | 81.53 | 61.4 | 100 | 81.53 | 52–62 (ranges), 90–100, 189–190, 334–391 |
+| kuis-versioned.api.ts | 81.22 | 72.72 | 88.88 | 81.22 | 100–102, 113–118, 208–226, 301–307, 376–384, 408–410, 425–436, 459–461 |
+| kuis.api.ts | 52.97 | 62.27 | 47.22 | 52.97 | ...2041–2098 (multiple ranges) |
+| laboran.api.ts | 99.83 | 80.84 | 100 | 99.83 | 197, 1566 |
+| laporan-storage.api.ts | 97.14 | 97.29 | 100 | 97.14 | 118–122 |
+| logbook.api.ts | 78.53 | 55.26 | 50 | 78.53 | ...470–630 (multiple ranges) |
+| mahasiswa-semester.api.ts | 100 | 90.47 | 100 | 100 | 104, 182, 229, 258 |
+| mahasiswa.api.ts | 80.31 | 65.9 | 100 | 80.31 | ...104–636 (multiple ranges) |
+| mata-kuliah.api.ts | 90.9 | 97.01 | 45 | 90.9 | 112–127, 187–190, 249–252, 536–562 |
+| materi.api.ts | 91.27 | 91.66 | 52.17 | 91.27 | 212–215, 353–354, 402–420, 454–481 |
+| nilai.api.ts | 87.5 | 81.66 | 91.66 | 87.5 | 169–172, 262–263, 440–442, 512–514 |
+| notification.api.ts | 93.64 | 69.66 | 100 | 93.64 | ...896–905, 912–914 |
+| peminjaman-extensions.ts | 100 | 91.81 | 100 | 100 | 181, 325, 332, 354, 366–378 |
+| permintaan-perbaikan.api.ts | 90.17 | 59.52 | 100 | 90.17 | ...162–662 (multiple ranges) |
+| profile.api.ts | 100 | 72.22 | 100 | 100 | 95, 129, 156, 196, 231 |
+| reports.api.ts | 100 | 95.9 | 100 | 100 | 191, 243, 298, 374, 390 |
+| sync.api.ts | ✅ 100 | ✅ 100 | ✅ 100 | ✅ 100 | — |
+| unified-assignment.api.ts | 90.56 | 73.75 | 100 | 90.56 | 130–147, 244, 262–265, 297, 300–314 |
+| users.api.ts | 91.48 | 77.41 | 100 | 91.48 | 326–328, 336–338, 357–362, 390–394, 406–410, 428–431, 440–442 |
+| versioned-update.api.ts | 94.41 | 71.11 | 100 | 94.41 | 188–189, 236, 241–242, 294–299 |
 
-| Metrik | Hasil |
-|--------|-------|
-| **Test Files** | 121 passed |
-| **Total Tests** | 4308 passed |
-| **Duration** | 153.09s |
-| **Status** | ❌ Coverage threshold gagal (tests tetap pass) |
-
-### Overall Coverage Summary
-
-| Metrik | Covered | Total | % Aktual | Target | Status |
-|--------|---------|-------|----------|--------|--------|
-| **Statements** | - | - | 5.12% | 70% | ❌ Below threshold |
-| **Branches** | - | - | 63.77% | 60% | ✅ PASS |
-| **Functions** | - | - | 35.48% | 70% | ❌ Below threshold |
-| **Lines** | - | - | 5.12% | 70% | ❌ Below threshold |
-
-> **Catatan Penting:** Coverage global rendah karena semua file proyek ikut dihitung (termasuk banyak halaman/UI yang tidak ditest unit).
-> Namun pada hasil aktual saat ini, bukan hanya lines/statements yang rendah, **functions global juga masih di bawah threshold**.
-
-### Coverage Per Modul (dari `coverage-final.json`)
-
-| Modul | Statements | Branches | Functions | Keterangan |
-|-------|-----------|---------|----------|------------|
-| `src/lib/hooks` | 20.5% | 81.7% | 25.5% | 🟡 Branch kuat, function/statements masih rendah |
-| `src/lib/utils` (folder) | 19.9% | 83.5% | 78.9% | 🟢 Utility branch/function baik |
-| `src/lib/utils.ts` | 29.4% | 0.0% | 0.0% | 🟠 File agregator/minim eksekusi |
-| `src/context` | 6.8% | 0.0% | 0.0% | ⚪ Hampir tidak ter-cover |
-| `src/lib/validations` | 20.9% | 81.2% | 65.4% | 🟡 Branch bagus, function perlu naik |
-| `src/lib/offline` | 16.8% | 81.2% | 74.1% | 🟡 Branch/function lumayan |
-| `src/providers` | 17.8% | 70.1% | 57.1% | 🟠 Perlu peningkatan function coverage |
-| `src/lib/supabase` | 5.7% | 72.4% | 61.7% | 🟠 Statements sangat rendah |
-| `src/lib/pwa` | 15.4% | 82.4% | 74.5% | 🟡 Branch/function cukup baik |
-| `src/lib/middleware` | 15.0% | 75.6% | 66.7% | 🟡 Mendekati target function |
-| `src/lib/api` | 14.9% | 69.4% | 47.5% | 🟠 API layer perlu ditingkatkan |
-| `src/lib/errors` | 11.6% | 75.0% | 31.6% | 🟠 Branch oke, function rendah |
-| `src/components` | 4.0% | 35.3% | 11.4% | 🔴 UI hampir tidak ditest unit |
-| `src/pages` | 0.0% | 0.0% | 0.0% | ⚪ Tidak di-unit-test |
-| `src/routes` | 0.0% | 0.0% | 0.0% | ⚪ Tidak di-unit-test |
-| `src/types` | 0.0% | 0.0% | 0.0% | ⚪ Type definitions |
-
-### Kesimpulan Coverage
-
-```
-✅ PASS:  Branch Coverage   (63.77% ≥ 60%)
-❌ FAIL:  Function Coverage (35.48% < 70%)
-❌ FAIL:  Statement Coverage (5.12% < 70%)
-❌ FAIL:  Line Coverage      (5.12% < 70%)
-```
-
-**Saran untuk skripsi**: Jelaskan bahwa seluruh test lulus, tetapi threshold coverage global gagal karena scope file yang dihitung sangat luas. Fokuskan pembahasan pada modul core yang benar-benar menjadi target unit test + rencana perbaikan coverage bertahap.
+**Section Average: 84.39% stmts / 78.13% branch / 83.52% funcs**
 
 ---
 
-## 1. APA ITU TEST COVERAGE?
+## 🪝 hooks
 
-Test coverage adalah **persentase kode yang diuji oleh otomatis test**. Semakin tinggi persentasenya, semakin besar keyakinan kode bebas dari bug.
+| File | Stmts | Branch | Funcs | Lines | Uncovered Lines |
+|:-----|:-----:|:------:|:-----:|:-----:|:----------------|
+| useAuth.ts | ✅ 100 | ✅ 100 | ✅ 100 | ✅ 100 | — |
+| useAutoSave.ts | 94.88 | 85.41 | 66.66 | 94.88 | 316–318, 340–345 |
+| useConflicts.ts | 97.79 | 81.08 | 100 | 97.79 | 186–188, 257–258 |
+| useDebounce.ts | ✅ 100 | ✅ 100 | ✅ 100 | ✅ 100 | — |
+| useLocalData.ts | 96.62 | 90.32 | 100 | 96.62 | 328–329, 331–339 |
+| useLocalStorage.ts | 93.75 | 87.5 | 100 | 93.75 | 21–22 |
+| useMultiTabSync.ts | 100 | 88.88 | 100 | 100 | 47, 98 |
+| useNetworkStatus.ts | ✅ 100 | ✅ 100 | ✅ 100 | ✅ 100 | — |
+| useNotification.ts | ✅ 100 | ✅ 100 | ✅ 100 | ✅ 100 | — |
+| useNotificationPolling.ts | 96.87 | 92.85 | 100 | 96.87 | 111–113 |
+| useNotifications.ts | ✅ 100 | ✅ 100 | ✅ 100 | ✅ 100 | — |
+| useOffline.ts | ✅ 100 | ✅ 100 | ✅ 100 | ✅ 100 | — |
+| usePdfBlobUrl.ts | 96.72 | 89.47 | 100 | 96.72 | 88–89 |
+| useRole.ts | 68.34 | 97.22 | 100 | 68.34 | ...147–220 (multiple ranges) |
+| useSessionTimeout.ts | 95.65 | 87.5 | 100 | 95.65 | 66–67, 72–73 |
+| useSignedUrl.ts | ✅ 100 | ✅ 100 | ✅ 100 | ✅ 100 | — |
+| useSupabase.ts | ✅ 100 | ✅ 100 | ✅ 100 | ✅ 100 | — |
+| useSync.ts | 95.07 | 90 | 100 | 95.07 | 101–102, 232–234, 243–244 |
+| useTheme.ts | ✅ 100 | ✅ 100 | ✅ 100 | ✅ 100 | — |
+| useUnreadNotifications.ts | 100 | 89.47 | 100 | 100 | 35, 72, 76, 120 |
 
-### 1.1 Metrik Coverage
-
-| Metrik | Deskripsi | Target |
-|--------|-----------|--------|
-| **Line Coverage** | Persentase baris kode yang dieksekusi | ≥ 70% |
-| **Branch Coverage** | Persentase percabangan (if/else) yang dieksekusi | ≥ 60% |
-| **Function Coverage** | Persentase functions yang dipanggil | ≥ 70% |
-| **Statement Coverage** | Persentase statements yang dieksekusi | ≥ 70% |
-
----
-
-## 2. CARA MENJALANKAN COVERAGE
-
-### 2.1 Generate Coverage Report
-
-```bash
-# Install dependencies (jika belum)
-npm install
-
-# Jalankan semua tests dengan coverage
-npm run coverage
-
-# Atau
-npx vitest run --coverage
-```
-
-### 2.2 Output yang Dihasilkan
-
-Setelah menjalankan, folder `coverage/` akan dibuat:
-
-```
-coverage/
-├── index.html              # HTML report (buka di browser) ← BUKA INI
-├── coverage.json           # Raw JSON data
-├── lcov.info               # LCOV format (untuk CI/CD)
-├── lcov-report/            # Detailed HTML per file
-└── coverage-final.json      # Final summary
-```
+**Section Average: 94.43% stmts / 91.02% branch / 94.59% funcs**
 
 ---
 
-## 3. MEMBUKA COVERAGE REPORT
+## 📴 offline
 
-### 3.1 Buka di Browser
+| File | Stmts | Branch | Funcs | Lines | Uncovered Lines |
+|:-----|:-----:|:------:|:-----:|:-----:|:----------------|
+| api-cache.ts | 72.25 | 90.19 | 59.09 | 72.25 | ...240–466 (multiple ranges) |
+| conflict-resolver.ts | 93.39 | 84.09 | 100 | 93.39 | 206–208, 216–217, 230–231, 247–248, 258–260, 283, 287 |
+| indexeddb.ts | 80.19 | 65.51 | 81.48 | 80.19 | ...392–747 (multiple ranges) |
+| network-detector.ts | 96.73 | 87.95 | 100 | 96.73 | 90, 254–257, 313–314, 484 |
+| offline-api-helper.ts | 74.68 | 76.19 | 100 | 74.68 | 55–56, 67–68, 75–76, 96–97, 110–125 |
+| offline-auth.ts | 97.84 | 96.96 | 100 | 97.84 | 362–364, 398–399 |
+| queue-manager-idempotent.ts | 95.67 | 97.72 | 85 | 95.67 | 94–95, 297–298, 307–309, 318–319 |
+| queue-manager.ts | 95.04 | 86.58 | 96.29 | 95.04 | 124–125, 132–133, 176–179, 360–363, 495–496, 583–584 |
+| smart-conflict-resolver.ts | 82.17 | 81.48 | 80 | 82.17 | 209, 247–268, 284–288, 300–316, 347–353, 388–389, 418–419, 443–447, 453, 457, 464–467, 491–492, 566 |
+| storage-manager.ts | ✅ 100 | ✅ 100 | ✅ 100 | ✅ 100 | — |
+| sync-manager.ts | 90.93 | 84.61 | 80.76 | 90.93 | 176–181, 186–190, 198–199, 214–216, 343–344, 417–419, 473–474, 576–580 |
 
-1. Double-click file: `coverage/index.html`
-2. Atau drag file `coverage/index.html` ke Chrome/Firefox
-3. Atau gunakan VS Code: Klik kanan → Open with Live Server
-
-### 3.2 Tampilan Report
-
-Di browser, akan tampil:
-
-```
-┌─────────────────────────────────────────────────┐
-│         File Coverage Summary                      │
-├─────────────────────────────────────────────────┤
-│ File                │ Lines │ Branches │ Functions │   │
-│─────────────────────│───────│──────────│──────────│───│
-│ src/lib/api/         │       │          │          │   │
-│  base.api.ts        │  85%  │   70%    │   90%    │   │
-│  jadwal.api.ts      │  92%  │   85%    │   95%    │   │
-│  kuis.api.ts        │  88%  │   80%    │   92%    │   │
-│  ...                 │       │          │          │   │
-└─────────────────────────────────────────────────┘
-```
-
-### 3.3 Klik File untuk Detail
-
-Klik nama file untuk melihat:
-- Baris kode mana yang **BELUM** ditest (warna merah)
-- Branch mana yang **BELUM** dieksekusi
-- Function mana yang **BELUM** dipanggil
+**Section Average: 87.77% stmts / 85.56% branch / 87.38% funcs**
 
 ---
 
-## 4. MENJELASKAN HASIL COVERAGE
+## 📦 pwa
 
-### 4.1 Interpretasi Persentase
+| File | Stmts | Branch | Funcs | Lines | Uncovered Lines |
+|:-----|:-----:|:------:|:-----:|:-----:|:----------------|
+| background-sync.ts | 88.23 | 86.48 | 91.66 | 88.23 | 113–115, 228–241, 267–268, 277–278, 309–310 |
+| cache-strategies.ts | 87.03 | 75.71 | 100 | 87.03 | ...186–415 (multiple ranges) |
+| register-sw.ts | 94.66 | 97.64 | 91.66 | 94.66 | 128, 247–260, 391–392, 399–400 |
 
-| Range | Status | Aksi |
-|-------|--------|------|
-| **90-100%** | 🟢 Excellent | Maintain |
-| **80-89%** | 🟢 Good | Minor improvement |
-| **70-79%** | 🟡 Acceptable | Improve to 80%+ |
-| **60-69%** | 🟠 Warning | Perlu improvement |
-| **< 60%** | 🔴 Critical | Must improve |
-
-### 4.2 Fokus ke "Red Areas"
-
-Klik file dengan coverage rendah, lalu cari:
-- **Red lines**: Baris kode yang tidak dieksekusi
-- **Yellow branches**: Branch if/else yang tidak tested
-
-**Action**: Tambah test untuk cover red areas.
+**Section Average: 90.17% stmts / 87.5% branch / 93.87% funcs**
 
 ---
 
-## 5. STRUKTUR COVERAGE REPORT
+## 🗄️ supabase
 
-### 5.1 Hierarki Report
+| File | Stmts | Branch | Funcs | Lines | Uncovered Lines |
+|:-----|:-----:|:------:|:-----:|:-----:|:----------------|
+| auth.ts | 73.68 | 69.3 | 100 | 73.68 | ...479–807 (multiple ranges) |
+| client.ts | ✅ 100 | ✅ 100 | ✅ 100 | ✅ 100 | — |
+| database.ts | 100 | 92.85 | 100 | 100 | 64 |
+| storage.ts | 99.12 | 89.15 | 100 | 99.12 | 138–139 |
+| warmup.ts | 87.75 | 64.51 | 75 | 87.75 | 18–22, 39–40, 91, 107–110 |
 
-```
-1. Overall Summary (semua file)
-   └── By Directory (src/lib/, src/components/, dll)
-       └── By File (detail per file)
-           └── Line-by-line detail
-```
-
-### 5.2 Contoh Overall Summary
-
-```
-=============================== Coverage Summary ===============================
-File                            | Statements | Branches | Functions | Lines |
-==================================|============|==========|===========|======|
-All files                       |    82.34   |   75.12  |    87.45  | 83.12 |
- src/lib/api/                    |    88.92   |   82.45  |    95.12  | 90.23 |
-```
+**Section Average: 82.63% stmts / 77.68% branch / 94.74% funcs**
 
 ---
 
-## 6. COVERAGE PER MODULE
+## 🛠️ utils
 
-### 6.1 API Modules (Target: 80%+)
+| File | Stmts | Branch | Funcs | Lines | Uncovered Lines |
+|:-----|:-----:|:------:|:-----:|:-----:|:----------------|
+| cache-cleaner.ts | 71.32 | 66.66 | 100 | 71.32 | 31–33, 37–44, 49–50, 60–63, 66–67, 78–79, 92–102, 117–119, 122–123, 168–170, 192–193 |
+| cache-manager.ts | ✅ 100 | ✅ 100 | ✅ 100 | ✅ 100 | — |
+| constants.ts | ✅ 100 | ✅ 100 | ✅ 100 | ✅ 100 | — |
+| debounce.ts | ✅ 100 | ✅ 100 | ✅ 100 | ✅ 100 | — |
+| device-detect.ts | ✅ 100 | ✅ 100 | ✅ 100 | ✅ 100 | — |
+| error-logger.ts | 94.9 | 76.25 | 100 | 94.9 | 89, 93, 117, 121, 145, 149, 180, 272, 351–352, 359–361 |
+| error-messages.ts | ✅ 100 | ✅ 100 | ✅ 100 | ✅ 100 | — |
+| errors.ts | 97.93 | 90 | 100 | 97.93 | 222–223, 384–385, 444–445 |
+| fetch-with-timeout.ts | 98.36 | 94.73 | 100 | 98.36 | 75–76 |
+| field-mappers.ts | 100 | 93.33 | 100 | 100 | 19–20 |
+| format.ts | ✅ 100 | 93.61 | ✅ 100 | ✅ 100 | 25–27, 113 |
+| helpers.ts | 98.59 | 98 | 100 | 98.59 | 54–55 |
+| idempotency.ts | 97.23 | 95.91 | 100 | 97.23 | 350–351, 389–391 |
+| kehadiran-export.ts | ✅ 100 | ✅ 100 | ✅ 100 | ✅ 100 | — |
+| logger.ts | ✅ 100 | ✅ 100 | ✅ 100 | ✅ 100 | — |
+| network-status.ts | 75.22 | 53.42 | 76.19 | 75.22 | ...239–379 (multiple ranges) |
+| normalize.ts | 98.9 | 97.67 | 100 | 98.9 | 69 |
+| pdf-viewer.ts | 93.61 | 90 | 100 | 93.61 | 30–31, 83 |
+| permissions.ts | ✅ 100 | ✅ 100 | ✅ 100 | ✅ 100 | — |
+| quiz-scoring.ts | 87.66 | 85.58 | 91.66 | 87.66 | 142–155, 198–201, 206–207, 215–219, 235, 259–260, 267–269, 295–297, 354–355, 358–359, 520–521 |
+| retry.ts | 64.13 | 94.11 | 62.5 | 64.13 | 101–132, 142–146 |
 
-| Module | Lines | Branches | Functions | Status |
-|--------|-------|----------|-----------|--------|
-| **base.api.ts** | 85% | 70% | 90% | 🟡 Improve branch coverage |
-| **jadwal.api.ts** | 92% | 85% | 95% | 🟢 Excellent |
-| **kuis.api.ts** | 88% | 80% | 92% | 🟢 Good |
-| **materi.api.ts** | 90% | 85% | 95% | 🟢 Excellent |
-| **bank-soal.api.ts** | 85% | 75% | 88% | 🟡 Improve branch coverage |
-| **kelas.api.ts** | 87% | 80% | 93% | 🟢 Good |
-| **notification.api.ts** | 90% | 82% | 95% | 🟢 Excellent |
-
-### 6.2 Offline Modules (Target: 75%+)
-
-| Module | Lines | Branches | Functions | Status |
-|--------|-------|----------|-----------|--------|
-| **api-cache.ts** | 95% | 90% | 100% | 🟢 Excellent |
-| **indexeddb.ts** | 80% | 75% | 85% | 🟢 Good |
-| **useConflicts.ts** | 75% | 60% | 80% | 🟡 Improve branch coverage |
-
-### 6.3 Hooks (Target: 70%+)
-
-| Hook | Lines | Branches | Functions | Status |
-|------|-------|----------|-----------|--------|
-| **useAuth.ts** | 85% | 75% | 90% | 🟢 Excellent |
-| **useJadwal.ts** | 75% | 60% | 80% | 🟡 Improve branch coverage |
-| **useKuis.ts** | 70% | 65% | 75% | 🟡 Meets target |
-| **useMateri.ts** | 72% | 60% | 78% | 🟡 Meets target |
+**Section Average: 92.61% stmts / 87.81% branch / 95.83% funcs**
 
 ---
 
-## 7. COVERAGE THRESHOLDS
+## ✅ validations
 
-### 7.1 Konfigurasi di vitest.config.ts
+| File | Stmts | Branch | Funcs | Lines | Uncovered Lines |
+|:-----|:-----:|:------:|:-----:|:-----:|:----------------|
+| auth.schema.ts | ✅ 100 | ✅ 100 | ✅ 100 | ✅ 100 | — |
+| jadwal.schema.ts | ✅ 100 | ✅ 100 | ✅ 100 | ✅ 100 | — |
+| kuis.schema.ts | 99.62 | 87.5 | 100 | 99.62 | 179 |
+| mata-kuliah.schema.ts | 94.28 | 100 | 83.33 | 94.28 | 174–182 |
+| nilai.schema.ts | 100 | 97.56 | 100 | 100 | 30 |
+| offline-data.schema.ts | ✅ 100 | ✅ 100 | ✅ 100 | ✅ 100 | — |
+| user.schema.ts | ✅ 100 | ✅ 100 | ✅ 100 | ✅ 100 | — |
 
-```typescript
-coverage: {
-  thresholds: {
-    lines: 70,      // ✅ Minimum 70% baris kode harus ditest
-    functions: 70,  // ✅ Minimum 70% functions harus dipanggil
-    branches: 60,   // ✅ Minimum 60% branch harus dieksekusi
-    statements: 70, // ✅ Minimum 70% statements harus dieksekusi
-  },
-  // Per-bits coverage jika threshold tidak tercapai
-  perFile: true,
-}
-```
-
-**Artinya**: Jika coverage di bawah target, tests akan **FAIL**.
+**Section Average: 99.24% stmts / 97.8% branch / 97.37% funcs**
 
 ---
 
-## 8. MENINGKATKAN COVERAGE
+## 📌 Summary
 
-### 8.1 Cara Menambah Coverage
+| Section | Stmts | Branch | Funcs | Lines |
+|:--------|:-----:|:------:|:-----:|:-----:|
+| **api** | 84.39 | 78.13 | 83.52 | 84.39 |
+| **hooks** | 94.43 | 91.02 | 94.59 | 94.43 |
+| **offline** | 87.77 | 85.56 | 87.38 | 87.77 |
+| **pwa** | 90.18 | 87.5 | 93.88 | 90.18 |
+| **supabase** | 82.63 | 77.68 | 94.74 | 82.63 |
+| **utils** | 92.61 | 87.81 | 95.83 | 92.61 |
+| **validations** | 99.24 | 97.8 | 97.37 | 99.24 |
+| 🏁 **All files** | **87.19** | **82.05** | **88.70** | **87.19** |
 
-#### Tambah Test untuk Error Handling
-
-**❌ Belum ditest:**
-```typescript
-export async function getKuisById(id: string) {
-  const { data, error } = await supabase
-    .from("kuis")
-    .select("*")
-    .eq("id", id)
-    .single();
-
-  if (error) throw new Error("Kuis not found");
-  return data;
-}
-```
-
-**✅ Tambah error test:**
-```typescript
-it("should throw error when kuis not found", async () => {
-  const mockError = { message: "Kuis not found" };
-  vi.mocked(supabase.from).mockReturnValue({
-    single: vi.fn().mockRejectedValue(mockError),
-  });
-
-  await expect(getKuisById("invalid-id")).rejects.toThrow("Kuis not found");
-});
-```
-
-#### Tambah Test untuk Edge Cases
-
-**❌ Belum ditest:**
-```typescript
-if (offline) return []; // Line ini belum ditest
-```
-
-**✅ Tambah offline test:**
-```typescript
-it("should return empty array when offline", async () => {
-  Object.defineProperty(navigator, "onLine", {
-    value: false,
-    writable: true,
-  });
-
-  const result = await getJadwal();
-  expect(result).toEqual([]);
-});
-```
-
-#### Tambah Test untuk Branches
-
-**❌ Belum ditest:**
-```typescript
-if (user.role === "admin") {
-  return "admin-view";
-} else {
-  return "user-view";
-} // Branch else belum ditest
-```
-
-**✅ Tambah test untuk kedua branch:**
-```typescript
-it("should return admin view for admin", () => {
-  const result = getViewPage({ role: "admin" });
-  expect(result).toBe("admin-view");
-});
-
-it("should return user view for non-admin", () => {
-  const result = getViewPage({ role: "mahasiswa" });
-  expect(result).toBe("user-view");
-});
-```
-
----
-
-## 9. CONTINUOUS INTEGRATION (CI/CD)
-
-### 9.1 Coverage Check di GitHub Actions
-
-Tambah file `.github/workflows/test.yml`:
-
-```yaml
-name: Tests
-
-on:
-  push:
-    branches: [main, develop]
-  pull_request:
-    branches: [main, develop]
-
-jobs:
-  test:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run tests with coverage
-        run: npm run coverage
-
-      - name: Check coverage thresholds
-        run: |
-          echo "Coverage thresholds:"
-          echo "- Lines: 70%"
-          echo "- Functions: 70%"
-          echo "- Branches: 60%"
-          echo "- Statements: 70%"
-
-      - name: Upload coverage to Codecov (optional)
-        uses: codecov/codecov-action@v3
-        with:
-          files: ./coverage/lcov.info
-          flags: unittests
-          name: codecov-umbrella
-        if: github.ref == 'refs/heads/main'
-```
-
----
-
-## 10. REPORT EXAMPLE
-
-### 10.1 Coverage Summary (Mock)
-
-```
-╔════════════════════════════════════════════════════════════════╗
-║              Test Coverage Report - Sistem Praktikum PWA            ║
-╠════════════════════════════════════════════════════════════════╣
-║ Metric              │  Target  │  Actual  │  Status      ║
-╠════════════════════════════════════════════════════════════════╣
-║ Line Coverage       │  70%    │  82.34% │  ✅ PASS     ║
-║ Branch Coverage    │  60%    │  75.12% │  ✅ PASS     ║
-║ Function Coverage  │  70%    │  87.45% │  ✅ PASS     ║
-║ Statement Coverage  │  70%    │  83.12% │  ✅ PASS     ║
-╚════════════════════════════════════════════════════════════════╝
-
-╔════════════════════════════════════════════════════════════════╗
-║                   File Coverage Highlights                        ║
-╠════════════════════════════════════════════════════════════════╣
-║ Module                    │ Coverage │  Notes                        ║
-╠════════════════════════════════════════════════════════════════╣
-║ API Layer                 │  88.92%  │  Excellent                    ║
-║  ├─ base.api.ts           │  85%    │  Core CRUD                    ║
-║  ├─ jadwal.api.ts         │  92%    │  Best in class               ║
-║  └─ notification.api.ts    │  90%    │  Auto-notification working   ║
-║                                                           ║
-║ Offline Layer              │  85.67%  │  Good                        ║
-║  ├─ api-cache.ts          │  95%    │  Core caching layer           ║
-║  └─ indexeddb.ts          │  80%    │  IndexedDB manager            ║
-║                                                           ║
-║ Business Logic (Hooks)     │  76.50%  │  Acceptable                  ║
-║  ├─ useAuth.ts             │  85%    │  Authentication               ║
-║  ├─ useJadwal.ts           │  75%    │  Jadwal operations            ║
-║  └─ useConflicts.ts        │  75%    │  Conflict resolution         ║
-║                                                           ║
-║ UI Components             │  65.23%  │  Moderate (target: 60%+)    ║
-║  └─ Dashboard pages        │  70%    │  Main dashboards             ║
-╚══════════════════════════════════════════════════════════════════╝
-
-╔════════════════════════════════════════════════════════════════╗
-║                   Areas for Improvement                         ║
-╠════════════════════════════════════════════════════════════════╣
-║ 1. Branch Coverage (75%)                                  ║
-║    └─ Tambah test untuk error paths                    ║
-║                                                           ║
-║ 2. UI Components (65%)                                   ║
-║    └─ Prioritas: Table components, form validations ║
-║                                                           ║
-║ 3. Edge Cases                                             ║
-║    └─ Empty arrays, null handling, network errors       ║
-╚════════════════════════════════════════════════════════════════╝
-```
-
----
-
-## 11. FAQ
-
-### Q: Apa yang harus dilakukan jika coverage rendah?
-
-**A:**
-1. Buka `coverage/index.html`
-2. Klik file dengan coverage rendah (warna merah)
-3. Cari baris kode yang belum ditest
-4. Tambah test untuk cover baris tersebut
-
-### Q: Berapa coverage tidak 100%?
-
-**A**: Tidak perlu 100% karena:
-- Boilerplate code tidak perlu ditest
-- Type definitions tidak perlu ditest
-- Error handling untuk edge cases jarang terjadi
-- Fokus ke **business logic critical path**
-
-### Q: Apakah coverage mempengaruhi performa?
-
-**A**: Tidak, karena:
-- Coverage hanya dijalankan saat development/testing
-- Production build tidak termasuk coverage instrumentation
-- Tests tidak menghasilkan production code
-
----
-
-## 12. UPDATE FREKUENSI
-
-### 12.1 Sebelum Presentasi ke Pembimbing
-
-Jalankan: `npm run coverage`
-
-Buka: `coverage/index.html`
-
-Screenshoot untuk evidence:
-- Overall coverage summary (target vs actual)
-- Per-module breakdown
-- Examples of well-covered files
-
-### 12.2 Untuk Dokumentasi Skripsi
-
-Sertakan di laporan:
-
-1. **Screenshot coverage report**
-2. **Jelaskan target thresholds dan actual hasil**
-3. **Identifikasi areas for improvement** (jika ada di bawah target)
-4. **Rekomendasi untuk meningkatkan coverage**
-
----
-
-## 13. CONFIGURATION FILES
-
-### 13.1 vitest.config.ts (Sudah Dibuat)
-
-Konfigurasi untuk:
-- Coverage provider (v8)
-- Reporter (text, json, html, lcov)
-- Excludes (node_modules, types, mocks)
-- Thresholds (70% lines, 70% functions, 60% branches)
-
-### 13.2 src/__tests__/setup.ts (Sudah Ada)
-
-Global test setup untuk:
-- Mock Supabase client
-- Mock IndexedDB
-- Mock cacheAPI
-- Mock navigator.onLine
-
----
-
-## 14. COMMANDS
-
-```bash
-# Generate coverage report
-npm run coverage
-
-# Generate coverage dan buka di browser
-npm run coverage && start coverage/index.html
-
-# Generate coverage tanpa watch mode
-npx vitest run --coverage --watch=false
-```
-
----
-
-**Status**: ✅ **Documentation siap!** Jalankan `npm run coverage` untuk generate report aktual.
+> ⚠️ Files with low coverage (< 70%): `base.api.ts` (66%), `api-cache.ts` (72%), `dosen.api.ts` (53%), `kuis.api.ts` (53%), `cache-cleaner.ts` (71%), `retry.ts` (64%), `useRole.ts` (68%), `network-status.ts` (75%), `supabase/auth.ts` (73%)

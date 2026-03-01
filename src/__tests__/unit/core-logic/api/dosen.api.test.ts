@@ -1013,5 +1013,85 @@ describe("Dosen API - Grading Operations", () => {
 
       expect(builder.limit).toHaveBeenCalledWith(10);
     });
+
+    it("should return empty array when active kuis query fails", async () => {
+      const builder = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        in: vi.fn().mockReturnThis(),
+        order: vi.fn().mockResolvedValue({
+          data: null,
+          error: new Error("kuis query failed"),
+        }),
+      };
+
+      (supabase.from as any).mockReturnValue(builder);
+
+      const result = await getActiveKuis();
+
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe("getMyBorrowing", () => {
+    it("should apply status filter and map borrowing data", async () => {
+      const builder = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        order: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockReturnThis(),
+        then: vi.fn((onFulfilled) =>
+          Promise.resolve({
+            data: [
+              {
+                id: "pem-1",
+                jumlah_pinjam: 1,
+                keperluan: "Praktikum",
+                tanggal_pinjam: "2024-01-01",
+                tanggal_kembali_rencana: "2024-01-02",
+                tanggal_kembali_aktual: null,
+                status: "approved",
+                created_at: "2024-01-01T00:00:00Z",
+                inventaris: {
+                  nama_barang: "Osiloskop",
+                  kode_barang: "INV-9",
+                  laboratorium: { nama_lab: "Lab Elektro" },
+                },
+              },
+            ],
+            error: null,
+          }).then(onFulfilled),
+        ),
+      };
+
+      (supabase.from as any).mockReturnValue(builder);
+
+      const result = await dosenApi.getMyBorrowing("approved");
+
+      expect(builder.eq).toHaveBeenCalledWith("status", "approved");
+      expect(result[0]).toMatchObject({
+        id: "pem-1",
+        inventaris_nama: "Osiloskop",
+        laboratorium_nama: "Lab Elektro",
+        status: "approved",
+      });
+    });
+
+    it("should return empty array when borrowing query fails", async () => {
+      const builder = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        order: vi.fn().mockResolvedValue({
+          data: null,
+          error: new Error("borrowing failed"),
+        }),
+      };
+
+      (supabase.from as any).mockReturnValue(builder);
+
+      const result = await dosenApi.getMyBorrowing();
+
+      expect(result).toEqual([]);
+    });
   });
 });
