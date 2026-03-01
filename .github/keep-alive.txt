@@ -1,3 +1,5 @@
-Last ping : 2026-02-28 02:05:18 UTC
-HTTP response : 000000
-Status       : Active
+Last ping      : 2026-03-01 01:15:52 UTC
+Table success  : mata_kuliah
+HTTP response  : 200
+Key type       : anon
+Status         : Active
