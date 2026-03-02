@@ -877,7 +877,9 @@ describe("Bank Soal API - Question Bank Management", () => {
       } as any;
 
       (supabase.from as any)
-        .mockReturnValueOnce({ select: vi.fn().mockReturnValue(duplicateQuery) })
+        .mockReturnValueOnce({
+          select: vi.fn().mockReturnValue(duplicateQuery),
+        })
         .mockReturnValueOnce(createQuery);
 
       const result = await saveSoalToBank(sourceSoal, "dosen-1", ["copied"]);

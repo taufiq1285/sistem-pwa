@@ -274,7 +274,9 @@ describe("kuis-secure.api", () => {
       };
     });
 
-    await expect(getSoalForAttempt("k-fail")).rejects.toThrow("secure fetch failed");
+    await expect(getSoalForAttempt("k-fail")).rejects.toThrow(
+      "secure fetch failed",
+    );
     expect(handleError).toHaveBeenCalledWith(rawError);
     expect(logError).toHaveBeenCalled();
   });
@@ -294,7 +296,9 @@ describe("kuis-secure.api", () => {
       throw new Error(`Unexpected table: ${table}`);
     });
 
-    await expect(getKuisForAttempt("missing")).rejects.toThrow("Kuis tidak ditemukan");
+    await expect(getKuisForAttempt("missing")).rejects.toThrow(
+      "Kuis tidak ditemukan",
+    );
     expect(logError).toHaveBeenCalled();
   });
 

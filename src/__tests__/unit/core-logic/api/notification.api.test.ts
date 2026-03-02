@@ -1402,8 +1402,12 @@ describe("Notification API - Auto-Notification System", () => {
     });
 
     it("should send announcement notifications to matching roles", async () => {
-      const consoleLogSpy = vi.spyOn(console, "log").mockImplementation(() => {});
-      const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      const consoleLogSpy = vi
+        .spyOn(console, "log")
+        .mockImplementation(() => {});
+      const consoleErrorSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
 
       let callCount = 0;
       (supabase.from as any).mockImplementation((table: string) => {
@@ -1437,7 +1441,12 @@ describe("Notification API - Auto-Notification System", () => {
       });
 
       await expect(
-        notifyUsersAnnouncement(["dosen", "mahasiswa"], "Maintenance", "warning", "high"),
+        notifyUsersAnnouncement(
+          ["dosen", "mahasiswa"],
+          "Maintenance",
+          "warning",
+          "high",
+        ),
       ).resolves.not.toThrow();
 
       expect(consoleLogSpy).toHaveBeenCalled();
@@ -1448,7 +1457,9 @@ describe("Notification API - Auto-Notification System", () => {
     });
 
     it("should return early when announcement has no matching users", async () => {
-      const consoleLogSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+      const consoleLogSpy = vi
+        .spyOn(console, "log")
+        .mockImplementation(() => {});
 
       (supabase.from as any).mockReturnValue({
         select: vi.fn().mockReturnValue({

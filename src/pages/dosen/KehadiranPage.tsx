@@ -530,501 +530,507 @@ export default function DosenKehadiranPage() {
           </div>
         </div>
 
-      {/* Filter Card */}
-      {(tahunAjaranOptions.length > 0 || semesterOptions.length > 0) && (
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
+        {/* Filter Card */}
+        {(tahunAjaranOptions.length > 0 || semesterOptions.length > 0) && (
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Filter className="h-5 w-5 text-muted-foreground" />
+                  <CardTitle className="text-base">Filter Kelas</CardTitle>
+                </div>
+                {(tahunAjaranFilter !== "__all__" ||
+                  semesterFilter !== "__all__") && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setTahunAjaranFilter("__all__");
+                      setSemesterFilter("__all__");
+                    }}
+                    className="gap-1"
+                  >
+                    <X className="h-3 w-3" />
+                    Reset Filter
+                  </Button>
+                )}
+              </div>
+              <CardDescription>
+                Filter kelas berdasarkan tahun ajaran dan semester
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Tahun Ajaran Filter */}
+                <div>
+                  <label className="text-sm font-medium mb-2 block">
+                    Tahun Ajaran
+                  </label>
+                  <Select
+                    value={tahunAjaranFilter}
+                    onValueChange={setTahunAjaranFilter}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Semua Tahun Ajaran" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__all__">
+                        Semua Tahun Ajaran
+                      </SelectItem>
+                      {tahunAjaranOptions.map((ta) => (
+                        <SelectItem key={ta} value={ta}>
+                          {ta}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Semester Filter */}
+                <div>
+                  <label className="text-sm font-medium mb-2 block">
+                    Semester
+                  </label>
+                  <Select
+                    value={semesterFilter}
+                    onValueChange={setSemesterFilter}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Semua Semester" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__all__">Semua Semester</SelectItem>
+                      {semesterOptions.map((sem) => (
+                        <SelectItem key={sem} value={sem.toString()}>
+                          Semester {sem}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Step Selection Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {/* Step 1: Mata Kuliah */}
+          <Card
+            className={cn(
+              "border-2 transition-all",
+              selectedMataKuliah
+                ? "border-green-300 bg-green-50/50"
+                : "border-gray-200",
+            )}
+          >
+            <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
-                <Filter className="h-5 w-5 text-muted-foreground" />
-                <CardTitle className="text-base">Filter Kelas</CardTitle>
-              </div>
-              {(tahunAjaranFilter !== "__all__" ||
-                semesterFilter !== "__all__") && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setTahunAjaranFilter("__all__");
-                    setSemesterFilter("__all__");
-                  }}
-                  className="gap-1"
-                >
-                  <X className="h-3 w-3" />
-                  Reset Filter
-                </Button>
-              )}
-            </div>
-            <CardDescription>
-              Filter kelas berdasarkan tahun ajaran dan semester
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Tahun Ajaran Filter */}
-              <div>
-                <label className="text-sm font-medium mb-2 block">
-                  Tahun Ajaran
-                </label>
-                <Select
-                  value={tahunAjaranFilter}
-                  onValueChange={setTahunAjaranFilter}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Semua Tahun Ajaran" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__all__">Semua Tahun Ajaran</SelectItem>
-                    {tahunAjaranOptions.map((ta) => (
-                      <SelectItem key={ta} value={ta}>
-                        {ta}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Semester Filter */}
-              <div>
-                <label className="text-sm font-medium mb-2 block">
-                  Semester
-                </label>
-                <Select
-                  value={semesterFilter}
-                  onValueChange={setSemesterFilter}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Semua Semester" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__all__">Semua Semester</SelectItem>
-                    {semesterOptions.map((sem) => (
-                      <SelectItem key={sem} value={sem.toString()}>
-                        Semester {sem}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Step Selection Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {/* Step 1: Mata Kuliah */}
-        <Card
-          className={cn(
-            "border-2 transition-all",
-            selectedMataKuliah
-              ? "border-green-300 bg-green-50/50"
-              : "border-gray-200",
-          )}
-        >
-          <CardHeader className="pb-3">
-            <div className="flex items-center gap-2">
-              <div
-                className={cn(
-                  "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold",
-                  selectedMataKuliah
-                    ? "bg-green-600 text-white"
-                    : "bg-gray-200 text-gray-600",
-                )}
-              >
-                1
-              </div>
-              <CardTitle className="text-base">Mata Kuliah</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <Select
-              value={selectedMataKuliah}
-              onValueChange={setSelectedMataKuliah}
-            >
-              <SelectTrigger
-                className={cn(selectedMataKuliah && "border-green-500")}
-              >
-                <SelectValue placeholder="Pilih mata kuliah..." />
-              </SelectTrigger>
-              <SelectContent>
-                {mataKuliahList.map((mk) => (
-                  <SelectItem key={mk.id} value={mk.id}>
-                    <div className="flex flex-col">
-                      <span className="font-semibold">{mk.kode_mk}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {mk.nama_mk}
-                      </span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {selectedMataKuliah && (
-              <div className="mt-2 flex items-center gap-1 text-xs text-green-700">
-                <CheckCircle2 className="h-3 w-3" />
-                <span>Mata kuliah dipilih</span>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Step 2: Kelas */}
-        <Card
-          className={cn(
-            "border-2 transition-all",
-            !selectedMataKuliah && "opacity-50",
-            selectedKelas
-              ? "border-green-300 bg-green-50/50"
-              : "border-gray-200",
-          )}
-        >
-          <CardHeader className="pb-3">
-            <div className="flex items-center gap-2">
-              <div
-                className={cn(
-                  "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold",
-                  selectedKelas
-                    ? "bg-green-600 text-white"
-                    : "bg-gray-200 text-gray-600",
-                )}
-              >
-                2
-              </div>
-              <CardTitle className="text-base">Kelas</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <Select
-              value={selectedKelas}
-              onValueChange={setSelectedKelas}
-              disabled={!selectedMataKuliah}
-            >
-              <SelectTrigger
-                className={cn(selectedKelas && "border-green-500")}
-              >
-                <SelectValue
-                  placeholder={
+                <div
+                  className={cn(
+                    "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold",
                     selectedMataKuliah
-                      ? "Pilih kelas..."
-                      : "Pilih mata kuliah dulu"
-                  }
-                />
-              </SelectTrigger>
-              <SelectContent>
-                {kelasList.map((kelas) => (
-                  <SelectItem key={kelas.id} value={kelas.id}>
-                    {kelas.nama_kelas} ({kelas.kode_kelas})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {selectedKelas && (
-              <div className="mt-2 flex items-center gap-1 text-xs text-green-700">
-                <CheckCircle2 className="h-3 w-3" />
-                <span>Kelas dipilih</span>
+                      ? "bg-green-600 text-white"
+                      : "bg-gray-200 text-gray-600",
+                  )}
+                >
+                  1
+                </div>
+                <CardTitle className="text-base">Mata Kuliah</CardTitle>
               </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Step 3: Tanggal */}
-        <Card
-          className={cn(
-            "border-2 transition-all",
-            !selectedKelas && "opacity-50",
-            selectedTanggal
-              ? "border-green-300 bg-green-50/50"
-              : "border-gray-200",
-          )}
-        >
-          <CardHeader className="pb-3">
-            <div className="flex items-center gap-2">
-              <div
-                className={cn(
-                  "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold",
-                  selectedTanggal
-                    ? "bg-green-600 text-white"
-                    : "bg-gray-200 text-gray-600",
-                )}
+            </CardHeader>
+            <CardContent>
+              <Select
+                value={selectedMataKuliah}
+                onValueChange={setSelectedMataKuliah}
               >
-                3
-              </div>
-              <CardTitle className="text-base">Tanggal Kehadiran</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <Input
-              type="date"
-              value={selectedTanggal}
-              onChange={(e) => setSelectedTanggal(e.target.value)}
-              disabled={!selectedKelas}
-              className={cn(selectedTanggal && "border-green-500")}
-            />
-            {selectedTanggal && (
-              <div className="mt-2 flex items-center gap-1 text-xs text-green-700">
-                <CheckCircle2 className="h-3 w-3" />
-                <span>Tanggal: {formatDate(selectedTanggal)}</span>
-              </div>
+                <SelectTrigger
+                  className={cn(selectedMataKuliah && "border-green-500")}
+                >
+                  <SelectValue placeholder="Pilih mata kuliah..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {mataKuliahList.map((mk) => (
+                    <SelectItem key={mk.id} value={mk.id}>
+                      <div className="flex flex-col">
+                        <span className="font-semibold">{mk.kode_mk}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {mk.nama_mk}
+                        </span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {selectedMataKuliah && (
+                <div className="mt-2 flex items-center gap-1 text-xs text-green-700">
+                  <CheckCircle2 className="h-3 w-3" />
+                  <span>Mata kuliah dipilih</span>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Step 2: Kelas */}
+          <Card
+            className={cn(
+              "border-2 transition-all",
+              !selectedMataKuliah && "opacity-50",
+              selectedKelas
+                ? "border-green-300 bg-green-50/50"
+                : "border-gray-200",
             )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Statistics Cards */}
-      {selectedKelas && attendanceRecords.length > 0 && (
-        <div className="grid gap-4 md:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Hadir</CardTitle>
-              <div className="text-2xl">✓</div>
+          >
+            <CardHeader className="pb-3">
+              <div className="flex items-center gap-2">
+                <div
+                  className={cn(
+                    "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold",
+                    selectedKelas
+                      ? "bg-green-600 text-white"
+                      : "bg-gray-200 text-gray-600",
+                  )}
+                >
+                  2
+                </div>
+                <CardTitle className="text-base">Kelas</CardTitle>
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">
-                {stats.hadir}
-              </div>
-              <p className="text-xs text-muted-foreground">mahasiswa</p>
+              <Select
+                value={selectedKelas}
+                onValueChange={setSelectedKelas}
+                disabled={!selectedMataKuliah}
+              >
+                <SelectTrigger
+                  className={cn(selectedKelas && "border-green-500")}
+                >
+                  <SelectValue
+                    placeholder={
+                      selectedMataKuliah
+                        ? "Pilih kelas..."
+                        : "Pilih mata kuliah dulu"
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {kelasList.map((kelas) => (
+                    <SelectItem key={kelas.id} value={kelas.id}>
+                      {kelas.nama_kelas} ({kelas.kode_kelas})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {selectedKelas && (
+                <div className="mt-2 flex items-center gap-1 text-xs text-green-700">
+                  <CheckCircle2 className="h-3 w-3" />
+                  <span>Kelas dipilih</span>
+                </div>
+              )}
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Izin</CardTitle>
-              <div className="text-2xl">📝</div>
+          {/* Step 3: Tanggal */}
+          <Card
+            className={cn(
+              "border-2 transition-all",
+              !selectedKelas && "opacity-50",
+              selectedTanggal
+                ? "border-green-300 bg-green-50/50"
+                : "border-gray-200",
+            )}
+          >
+            <CardHeader className="pb-3">
+              <div className="flex items-center gap-2">
+                <div
+                  className={cn(
+                    "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold",
+                    selectedTanggal
+                      ? "bg-green-600 text-white"
+                      : "bg-gray-200 text-gray-600",
+                  )}
+                >
+                  3
+                </div>
+                <CardTitle className="text-base">Tanggal Kehadiran</CardTitle>
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-blue-600">
-                {stats.izin}
-              </div>
-              <p className="text-xs text-muted-foreground">mahasiswa</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Sakit</CardTitle>
-              <div className="text-2xl">🏥</div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-yellow-600">
-                {stats.sakit}
-              </div>
-              <p className="text-xs text-muted-foreground">mahasiswa</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Alpha</CardTitle>
-              <div className="text-2xl">✗</div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-red-600">
-                {stats.alpha}
-              </div>
-              <p className="text-xs text-muted-foreground">mahasiswa</p>
+              <Input
+                type="date"
+                value={selectedTanggal}
+                onChange={(e) => setSelectedTanggal(e.target.value)}
+                disabled={!selectedKelas}
+                className={cn(selectedTanggal && "border-green-500")}
+              />
+              {selectedTanggal && (
+                <div className="mt-2 flex items-center gap-1 text-xs text-green-700">
+                  <CheckCircle2 className="h-3 w-3" />
+                  <span>Tanggal: {formatDate(selectedTanggal)}</span>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
-      )}
 
-      {/* Tabs for Input and History */}
-      {selectedKelas && (
-        <Tabs
-          value={activeTab}
-          onValueChange={(v) => setActiveTab(v as "input" | "history")}
-        >
-          <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-6">
-            <TabsTrigger value="input" className="gap-2">
-              <Calendar className="h-4 w-4" />
-              Input Kehadiran
-            </TabsTrigger>
-            <TabsTrigger value="history" className="gap-2">
-              <History className="h-4 w-4" />
-              Riwayat
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="input" className="space-y-6">
-            {/* Attendance Input Table */}
+        {/* Statistics Cards */}
+        {selectedKelas && attendanceRecords.length > 0 && (
+          <div className="grid gap-4 md:grid-cols-4">
             <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>Input Kehadiran</CardTitle>
-                    <CardDescription>
-                      {attendanceRecords.length} mahasiswa •{" "}
-                      {formatDate(selectedTanggal)}
-                    </CardDescription>
-                  </div>
-                  <div className="flex gap-2 items-center">
-                    {hasUnsavedChanges && (
-                      <Badge
-                        variant="outline"
-                        className="border-yellow-500 text-yellow-700"
-                      >
-                        <Clock className="h-3 w-3 mr-1" />
-                        Belum disimpan
-                      </Badge>
-                    )}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleExportAttendance}
-                      disabled={loading || attendanceRecords.length === 0}
-                      className="gap-2"
-                    >
-                      <Download className="h-4 w-4" />
-                      Export CSV
-                    </Button>
-                  </div>
-                </div>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Hadir</CardTitle>
+                <div className="text-2xl">✓</div>
               </CardHeader>
               <CardContent>
-                {loading ? (
-                  <div className="text-center py-8">
-                    <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-2" />
-                    <p className="text-muted-foreground">Memuat data...</p>
-                  </div>
-                ) : attendanceRecords.length === 0 ? (
-                  <Alert>
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>
-                      Tidak ada mahasiswa dalam kelas ini atau belum ada data.
-                    </AlertDescription>
-                  </Alert>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="rounded-md border overflow-x-auto">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead className="w-25">NIM</TableHead>
-                            <TableHead>Nama Mahasiswa</TableHead>
-                            <TableHead className="w-37.5">Status</TableHead>
-                            <TableHead>Keterangan</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {attendanceRecords.map((record) => {
-                            return (
-                              <TableRow key={record.mahasiswa_id}>
-                                <TableCell className="font-mono text-sm">
-                                  {record.nim}
-                                </TableCell>
-                                <TableCell className="font-medium">
-                                  {record.nama}
-                                </TableCell>
-                                <TableCell>
-                                  <Select
-                                    value={record.status}
-                                    onValueChange={(value) =>
-                                      handleStatusChange(
-                                        record.mahasiswa_id,
-                                        value as KehadiranStatus,
-                                      )
-                                    }
-                                  >
-                                    <SelectTrigger className="w-35">
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {STATUS_OPTIONS.map((option) => (
-                                        <SelectItem key={option.value} value={option.value}>
-                                          {option.icon} {option.label}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                </TableCell>
-                                <TableCell>
-                                  <Input
-                                    placeholder="Catatan (opsional)..."
-                                    value={record.keterangan}
-                                    onChange={(e) =>
-                                      handleKeteranganChange(
-                                        record.mahasiswa_id,
-                                        e.target.value,
-                                      )
-                                    }
-                                    className="w-full"
-                                  />
-                                </TableCell>
-                              </TableRow>
-                            );
-                          })}
-                        </TableBody>
-                      </Table>
-                    </div>
-
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        variant="outline"
-                        onClick={() => {
-                          setAttendanceRecords([]);
-                          setHasUnsavedChanges(false);
-                        }}
-                      >
-                        Reset
-                      </Button>
-                      <Button
-                        onClick={handleSaveAttendance}
-                        disabled={isSavingAttendance || !hasUnsavedChanges}
-                        size="lg"
-                        className="gap-2"
-                      >
-                        {isSavingAttendance ? (
-                          <>
-                            <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
-                            Menyimpan...
-                          </>
-                        ) : (
-                          <>
-                            <Save className="h-4 w-4" />
-                            Simpan Kehadiran
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-                )}
+                <div className="text-2xl font-bold text-green-600">
+                  {stats.hadir}
+                </div>
+                <p className="text-xs text-muted-foreground">mahasiswa</p>
               </CardContent>
             </Card>
-          </TabsContent>
 
-          <TabsContent value="history">
-            <KehadiranHistory
-              kelasId={selectedKelas}
-              kelasNama={
-                kelasList.find((k) => k.id === selectedKelas)?.nama_kelas || ""
-              }
-              onSelectDate={(date) => {
-                setSelectedTanggal(date);
-                setActiveTab("input");
-                loadMahasiswaForKehadiran(selectedKelas);
-              }}
-            />
-          </TabsContent>
-        </Tabs>
-      )}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Izin</CardTitle>
+                <div className="text-2xl">📝</div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-blue-600">
+                  {stats.izin}
+                </div>
+                <p className="text-xs text-muted-foreground">mahasiswa</p>
+              </CardContent>
+            </Card>
 
-      {/* Empty State */}
-      {!selectedKelas && (
-        <Card className="border-2 border-dashed">
-          <CardContent className="flex flex-col items-center justify-center py-16">
-            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-              <Users className="h-8 w-8 text-gray-400" />
-            </div>
-            <h3 className="text-lg font-semibold mb-2">
-              Pilih Mata Kuliah dan Kelas
-            </h3>
-            <p className="text-muted-foreground text-center max-w-md">
-              Ikuti langkah di atas untuk mulai input kehadiran mahasiswa
-              praktikum.
-            </p>
-          </CardContent>
-        </Card>
-      )}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Sakit</CardTitle>
+                <div className="text-2xl">🏥</div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-yellow-600">
+                  {stats.sakit}
+                </div>
+                <p className="text-xs text-muted-foreground">mahasiswa</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Alpha</CardTitle>
+                <div className="text-2xl">✗</div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-red-600">
+                  {stats.alpha}
+                </div>
+                <p className="text-xs text-muted-foreground">mahasiswa</p>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Tabs for Input and History */}
+        {selectedKelas && (
+          <Tabs
+            value={activeTab}
+            onValueChange={(v) => setActiveTab(v as "input" | "history")}
+          >
+            <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-6">
+              <TabsTrigger value="input" className="gap-2">
+                <Calendar className="h-4 w-4" />
+                Input Kehadiran
+              </TabsTrigger>
+              <TabsTrigger value="history" className="gap-2">
+                <History className="h-4 w-4" />
+                Riwayat
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="input" className="space-y-6">
+              {/* Attendance Input Table */}
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle>Input Kehadiran</CardTitle>
+                      <CardDescription>
+                        {attendanceRecords.length} mahasiswa •{" "}
+                        {formatDate(selectedTanggal)}
+                      </CardDescription>
+                    </div>
+                    <div className="flex gap-2 items-center">
+                      {hasUnsavedChanges && (
+                        <Badge
+                          variant="outline"
+                          className="border-yellow-500 text-yellow-700"
+                        >
+                          <Clock className="h-3 w-3 mr-1" />
+                          Belum disimpan
+                        </Badge>
+                      )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleExportAttendance}
+                        disabled={loading || attendanceRecords.length === 0}
+                        className="gap-2"
+                      >
+                        <Download className="h-4 w-4" />
+                        Export CSV
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {loading ? (
+                    <div className="text-center py-8">
+                      <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-2" />
+                      <p className="text-muted-foreground">Memuat data...</p>
+                    </div>
+                  ) : attendanceRecords.length === 0 ? (
+                    <Alert>
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>
+                        Tidak ada mahasiswa dalam kelas ini atau belum ada data.
+                      </AlertDescription>
+                    </Alert>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="rounded-md border overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead className="w-25">NIM</TableHead>
+                              <TableHead>Nama Mahasiswa</TableHead>
+                              <TableHead className="w-37.5">Status</TableHead>
+                              <TableHead>Keterangan</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {attendanceRecords.map((record) => {
+                              return (
+                                <TableRow key={record.mahasiswa_id}>
+                                  <TableCell className="font-mono text-sm">
+                                    {record.nim}
+                                  </TableCell>
+                                  <TableCell className="font-medium">
+                                    {record.nama}
+                                  </TableCell>
+                                  <TableCell>
+                                    <Select
+                                      value={record.status}
+                                      onValueChange={(value) =>
+                                        handleStatusChange(
+                                          record.mahasiswa_id,
+                                          value as KehadiranStatus,
+                                        )
+                                      }
+                                    >
+                                      <SelectTrigger className="w-35">
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {STATUS_OPTIONS.map((option) => (
+                                          <SelectItem
+                                            key={option.value}
+                                            value={option.value}
+                                          >
+                                            {option.icon} {option.label}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                  </TableCell>
+                                  <TableCell>
+                                    <Input
+                                      placeholder="Catatan (opsional)..."
+                                      value={record.keterangan}
+                                      onChange={(e) =>
+                                        handleKeteranganChange(
+                                          record.mahasiswa_id,
+                                          e.target.value,
+                                        )
+                                      }
+                                      className="w-full"
+                                    />
+                                  </TableCell>
+                                </TableRow>
+                              );
+                            })}
+                          </TableBody>
+                        </Table>
+                      </div>
+
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            setAttendanceRecords([]);
+                            setHasUnsavedChanges(false);
+                          }}
+                        >
+                          Reset
+                        </Button>
+                        <Button
+                          onClick={handleSaveAttendance}
+                          disabled={isSavingAttendance || !hasUnsavedChanges}
+                          size="lg"
+                          className="gap-2"
+                        >
+                          {isSavingAttendance ? (
+                            <>
+                              <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
+                              Menyimpan...
+                            </>
+                          ) : (
+                            <>
+                              <Save className="h-4 w-4" />
+                              Simpan Kehadiran
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="history">
+              <KehadiranHistory
+                kelasId={selectedKelas}
+                kelasNama={
+                  kelasList.find((k) => k.id === selectedKelas)?.nama_kelas ||
+                  ""
+                }
+                onSelectDate={(date) => {
+                  setSelectedTanggal(date);
+                  setActiveTab("input");
+                  loadMahasiswaForKehadiran(selectedKelas);
+                }}
+              />
+            </TabsContent>
+          </Tabs>
+        )}
+
+        {/* Empty State */}
+        {!selectedKelas && (
+          <Card className="border-2 border-dashed">
+            <CardContent className="flex flex-col items-center justify-center py-16">
+              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                <Users className="h-8 w-8 text-gray-400" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">
+                Pilih Mata Kuliah dan Kelas
+              </h3>
+              <p className="text-muted-foreground text-center max-w-md">
+                Ikuti langkah di atas untuk mulai input kehadiran mahasiswa
+                praktikum.
+              </p>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );

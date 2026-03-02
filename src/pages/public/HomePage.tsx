@@ -244,11 +244,11 @@ export function HomePage() {
               Sistem Informasi
             </span>
             <br />
-              <span className="bg-linear-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent relative">
-                Praktikum
-                <Sparkles className="hidden sm:block h-12 w-12 text-yellow-500 absolute -top-4 -right-8 animate-spin-slow" />
-              </span>
-<br />
+            <span className="bg-linear-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent relative">
+              Praktikum
+              <Sparkles className="hidden sm:block h-12 w-12 text-yellow-500 absolute -top-4 -right-8 animate-spin-slow" />
+            </span>
+            <br />
             <span className="text-2xl sm:text-5xl lg:text-6xl bg-linear-to-r from-pink-600 to-rose-600 bg-clip-text text-transparent">
               Akademi Kebidanan Mega Buana
             </span>

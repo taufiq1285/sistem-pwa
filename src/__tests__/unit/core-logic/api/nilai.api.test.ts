@@ -434,7 +434,9 @@ describe("Nilai API - Statistics", () => {
     it("should throw when count query fails", async () => {
       const countBuilder = {
         select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockResolvedValue({ count: null, error: new Error("count fail") }),
+        eq: vi
+          .fn()
+          .mockResolvedValue({ count: null, error: new Error("count fail") }),
       };
 
       (supabase.from as any).mockReturnValueOnce(countBuilder);
@@ -449,7 +451,10 @@ describe("Nilai API - Statistics", () => {
       };
 
       const nilaiBuilder = mockQueryBuilder();
-      nilaiBuilder._setResolveValue({ data: null, error: new Error("nilai fail") });
+      nilaiBuilder._setResolveValue({
+        data: null,
+        error: new Error("nilai fail"),
+      });
 
       (supabase.from as any)
         .mockReturnValueOnce(countBuilder)
@@ -602,7 +607,9 @@ describe("Nilai API - Statistics", () => {
     it("should throw when enrollment query fails", async () => {
       const enrollmentBuilder = {
         select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockResolvedValue({ data: null, error: new Error("enroll fail") }),
+        eq: vi
+          .fn()
+          .mockResolvedValue({ data: null, error: new Error("enroll fail") }),
       };
 
       (supabase.from as any).mockReturnValue(enrollmentBuilder);
@@ -631,7 +638,9 @@ describe("Nilai API - Statistics", () => {
       const nilaiBuilder = {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
-        in: vi.fn().mockResolvedValue({ data: null, error: new Error("nilai fail") }),
+        in: vi
+          .fn()
+          .mockResolvedValue({ data: null, error: new Error("nilai fail") }),
       };
 
       (supabase.from as any)
@@ -663,7 +672,10 @@ describe("Nilai API - Statistics", () => {
 
       expect(baseApi.insert).toHaveBeenCalledWith(
         "nilai",
-        expect.objectContaining({ nilai_akhir: expect.any(Number), nilai_huruf: "A" }),
+        expect.objectContaining({
+          nilai_akhir: expect.any(Number),
+          nilai_huruf: "A",
+        }),
       );
       expect(result.nilai_huruf).toBe("A");
     });
@@ -672,7 +684,9 @@ describe("Nilai API - Statistics", () => {
       const fromBuilder = {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
-        maybeSingle: vi.fn().mockResolvedValue({ data: mockNilai, error: null }),
+        maybeSingle: vi
+          .fn()
+          .mockResolvedValue({ data: mockNilai, error: null }),
         upsert: vi.fn().mockReturnValue({
           select: vi.fn().mockReturnValue({
             single: vi.fn().mockResolvedValue({ data: mockNilai, error: null }),
@@ -690,14 +704,21 @@ describe("Nilai API - Statistics", () => {
     });
 
     it("should create via updateNilai when no existing nilai", async () => {
-      const freshNilai = { ...mockNilai, id: "nilai-new", nilai_akhir: 70, nilai_huruf: "B" };
+      const freshNilai = {
+        ...mockNilai,
+        id: "nilai-new",
+        nilai_akhir: 70,
+        nilai_huruf: "B",
+      };
       const fromBuilder = {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
         maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
         upsert: vi.fn().mockReturnValue({
           select: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({ data: freshNilai, error: null }),
+            single: vi
+              .fn()
+              .mockResolvedValue({ data: freshNilai, error: null }),
           }),
         }),
       };
@@ -714,7 +735,9 @@ describe("Nilai API - Statistics", () => {
       const firstFetchBuilder = {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
-        maybeSingle: vi.fn().mockResolvedValue({ data: mockNilai, error: null }),
+        maybeSingle: vi
+          .fn()
+          .mockResolvedValue({ data: mockNilai, error: null }),
       };
       const firstUpsertBuilder = {
         upsert: vi.fn().mockReturnValue({
@@ -726,7 +749,9 @@ describe("Nilai API - Statistics", () => {
       const secondFetchBuilder = {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
-        maybeSingle: vi.fn().mockResolvedValue({ data: null, error: new Error("fail") }),
+        maybeSingle: vi
+          .fn()
+          .mockResolvedValue({ data: null, error: new Error("fail") }),
       };
 
       (supabase.from as any)
@@ -764,7 +789,9 @@ describe("Nilai API - Statistics", () => {
       const nilaiFetchBuilder = {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
-        maybeSingle: vi.fn().mockResolvedValue({ data: mockNilai, error: null }),
+        maybeSingle: vi
+          .fn()
+          .mockResolvedValue({ data: mockNilai, error: null }),
       };
 
       const nilaiUpsertBuilder = {

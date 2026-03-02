@@ -7,7 +7,15 @@
       "Bash(supabase gen types typescript --linked)",
       "Bash(supabase db dump --linked --schema public)",
       "Read(//c/Users/ACER/.config/supabase/**)",
-      "Read(//c/Users/ACER/AppData/Roaming/**)"
+      "Read(//c/Users/ACER/AppData/Roaming/**)",
+      "Bash(sed 's/\\\\.ts$//')",
+      "Bash(sed 's/\\\\.test\\\\.ts$//')",
+      "Bash(sed 's/\\\\.test\\\\.ts.*$//')",
+      "Bash(sed 's/\\\\.tsx$//')",
+      "Bash(sed 's/\\\\.test\\\\.tsx$//')",
+      "Bash(sed 's/\\\\.\\(tsx|ts\\)$//')",
+      "Bash(sed 's/\\\\.test\\\\.tsx\\\\?$//')",
+      "Read(//f/sistem-praktikum/sistem-praktikum-pwa/**)"
     ]
   }
 }

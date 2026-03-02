@@ -98,8 +98,8 @@ describe("Jadwal API", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(baseApi.withApiResponse).mockImplementation(async (callback: any) =>
-      callback(),
+    vi.mocked(baseApi.withApiResponse).mockImplementation(
+      async (callback: any) => callback(),
     );
     vi.mocked(supabase.auth.getUser).mockResolvedValue({
       data: { user: null },
@@ -868,7 +868,9 @@ describe("Jadwal API", () => {
     });
 
     it("should fetch all jadwal for laboran with filters", async () => {
-      vi.mocked(baseApi.queryWithFilters).mockResolvedValue([mockJadwalWithLab]);
+      vi.mocked(baseApi.queryWithFilters).mockResolvedValue([
+        mockJadwalWithLab,
+      ]);
 
       const result = await getAllJadwalForLaboran({
         status: "approved",
@@ -927,7 +929,8 @@ describe("Jadwal API", () => {
       vi.mocked(baseApi.queryWithFilters).mockImplementation(
         async (_table: string, filters: any[]) => {
           const hasTanggalEq = filters?.some(
-            (f: any) => f?.column === "tanggal_praktikum" && f?.operator === "eq",
+            (f: any) =>
+              f?.column === "tanggal_praktikum" && f?.operator === "eq",
           );
 
           if (hasTanggalEq) {
@@ -1032,9 +1035,13 @@ describe("Jadwal API", () => {
           jam_mulai: "09:00",
           jam_selesai: "11:00",
         } as any),
-      ).rejects.toThrow("Jadwal bentrok! Lab sudah terpakai pada waktu tersebut");
+      ).rejects.toThrow(
+        "Jadwal bentrok! Lab sudah terpakai pada waktu tersebut",
+      );
 
-      vi.mocked(baseApi.update).mockRejectedValueOnce(new Error("update-gagal"));
+      vi.mocked(baseApi.update).mockRejectedValueOnce(
+        new Error("update-gagal"),
+      );
 
       await expect(
         updateJadwal("jadwal-1", {
@@ -1046,7 +1053,9 @@ describe("Jadwal API", () => {
     });
 
     it("should handle deleteJadwal error path", async () => {
-      vi.mocked(baseApi.remove).mockRejectedValueOnce(new Error("delete-gagal"));
+      vi.mocked(baseApi.remove).mockRejectedValueOnce(
+        new Error("delete-gagal"),
+      );
 
       await expect(deleteJadwal("jadwal-1")).rejects.toThrow("delete-gagal");
     });
@@ -1107,7 +1116,9 @@ describe("Jadwal API", () => {
     });
 
     it("should reject update jadwal when tanggal_praktikum is in the past", async () => {
-      vi.mocked(baseApi.getById).mockResolvedValueOnce(mockJadwalWithLab as any);
+      vi.mocked(baseApi.getById).mockResolvedValueOnce(
+        mockJadwalWithLab as any,
+      );
 
       const pastDate = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
@@ -1271,7 +1282,9 @@ describe("Jadwal API", () => {
           }),
         } as any;
       });
-      vi.mocked(baseApi.insert).mockRejectedValueOnce(new Error("insert-gagal"));
+      vi.mocked(baseApi.insert).mockRejectedValueOnce(
+        new Error("insert-gagal"),
+      );
 
       await expect(
         createJadwal({

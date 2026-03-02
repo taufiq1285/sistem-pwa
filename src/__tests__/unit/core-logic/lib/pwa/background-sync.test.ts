@@ -11,13 +11,15 @@ const originalSyncManager = (window as any).SyncManager;
 
 function setBackgroundSyncSupported(supported: boolean) {
   if (supported) {
-    (globalThis as any).ServiceWorkerRegistration = function ServiceWorkerRegistration() {};
+    (globalThis as any).ServiceWorkerRegistration =
+      function ServiceWorkerRegistration() {};
     (globalThis as any).ServiceWorkerRegistration.prototype = {
       sync: {},
     };
     (window as any).SyncManager = function SyncManager() {};
   } else {
-    (globalThis as any).ServiceWorkerRegistration = function ServiceWorkerRegistration() {};
+    (globalThis as any).ServiceWorkerRegistration =
+      function ServiceWorkerRegistration() {};
     (globalThis as any).ServiceWorkerRegistration.prototype = {};
     try {
       delete (window as any).SyncManager;
@@ -69,7 +71,9 @@ describe("background-sync - CORE LOGIC", () => {
     it("return false saat tidak didukung", async () => {
       setBackgroundSyncSupported(false);
 
-      const result = await bgSync.registerBackgroundSync(bgSync.SYNC_TAGS.QUIZ_ANSWERS);
+      const result = await bgSync.registerBackgroundSync(
+        bgSync.SYNC_TAGS.QUIZ_ANSWERS,
+      );
       expect(result).toBe(false);
     });
 
@@ -78,12 +82,16 @@ describe("background-sync - CORE LOGIC", () => {
       const registerSpy = vi.fn().mockResolvedValue(undefined);
       mockServiceWorkerReady({ register: registerSpy });
 
-      const result = await bgSync.registerBackgroundSync(bgSync.SYNC_TAGS.OFFLINE_DATA);
+      const result = await bgSync.registerBackgroundSync(
+        bgSync.SYNC_TAGS.OFFLINE_DATA,
+      );
 
       expect(result).toBe(true);
       expect(registerSpy).toHaveBeenCalledWith(bgSync.SYNC_TAGS.OFFLINE_DATA);
 
-      const saved = JSON.parse(localStorage.getItem("last_sync_registration") || "{}");
+      const saved = JSON.parse(
+        localStorage.getItem("last_sync_registration") || "{}",
+      );
       expect(saved.tag).toBe(bgSync.SYNC_TAGS.OFFLINE_DATA);
       expect(typeof saved.timestamp).toBe("string");
     });
@@ -94,7 +102,9 @@ describe("background-sync - CORE LOGIC", () => {
         register: vi.fn().mockRejectedValue(new Error("register failed")),
       });
 
-      const result = await bgSync.registerBackgroundSync(bgSync.SYNC_TAGS.PERIODIC);
+      const result = await bgSync.registerBackgroundSync(
+        bgSync.SYNC_TAGS.PERIODIC,
+      );
       expect(result).toBe(false);
     });
   });
@@ -110,22 +120,33 @@ describe("background-sync - CORE LOGIC", () => {
       setBackgroundSyncSupported(true);
       const getTagsSpy = vi
         .fn()
-        .mockResolvedValue([bgSync.SYNC_TAGS.QUIZ_ANSWERS, bgSync.SYNC_TAGS.OFFLINE_DATA]);
+        .mockResolvedValue([
+          bgSync.SYNC_TAGS.QUIZ_ANSWERS,
+          bgSync.SYNC_TAGS.OFFLINE_DATA,
+        ]);
       mockServiceWorkerReady({ getTags: getTagsSpy });
 
       const tags = await bgSync.getPendingSyncTags();
 
-      expect(tags).toEqual([bgSync.SYNC_TAGS.QUIZ_ANSWERS, bgSync.SYNC_TAGS.OFFLINE_DATA]);
+      expect(tags).toEqual([
+        bgSync.SYNC_TAGS.QUIZ_ANSWERS,
+        bgSync.SYNC_TAGS.OFFLINE_DATA,
+      ]);
       expect(getTagsSpy).toHaveBeenCalledTimes(1);
     });
 
     it("getBackgroundSyncStatus: parsing localStorage valid", async () => {
       setBackgroundSyncSupported(true);
-      mockServiceWorkerReady({ getTags: vi.fn().mockResolvedValue([bgSync.SYNC_TAGS.PERIODIC]) });
+      mockServiceWorkerReady({
+        getTags: vi.fn().mockResolvedValue([bgSync.SYNC_TAGS.PERIODIC]),
+      });
 
       localStorage.setItem(
         "last_sync_registration",
-        JSON.stringify({ tag: bgSync.SYNC_TAGS.PERIODIC, timestamp: "2026-01-01T00:00:00.000Z" }),
+        JSON.stringify({
+          tag: bgSync.SYNC_TAGS.PERIODIC,
+          timestamp: "2026-01-01T00:00:00.000Z",
+        }),
       );
 
       const status = await bgSync.getBackgroundSyncStatus();
@@ -158,7 +179,9 @@ describe("background-sync - CORE LOGIC", () => {
 
     it("fallbackManualSync: throw saat syncFunction gagal", async () => {
       const fn = vi.fn().mockRejectedValue(new Error("manual failed"));
-      await expect(bgSync.fallbackManualSync(fn)).rejects.toThrow("manual failed");
+      await expect(bgSync.fallbackManualSync(fn)).rejects.toThrow(
+        "manual failed",
+      );
     });
 
     it("smartSync: method background saat register berhasil", async () => {
@@ -169,7 +192,10 @@ describe("background-sync - CORE LOGIC", () => {
         register: vi.fn().mockResolvedValue(undefined),
       });
 
-      const result = await bgSync.smartSync(bgSync.SYNC_TAGS.QUIZ_ANSWERS, manualFn);
+      const result = await bgSync.smartSync(
+        bgSync.SYNC_TAGS.QUIZ_ANSWERS,
+        manualFn,
+      );
 
       expect(result).toEqual({ method: "background", success: true });
       expect(manualFn).not.toHaveBeenCalled();
@@ -183,7 +209,10 @@ describe("background-sync - CORE LOGIC", () => {
         register: vi.fn().mockRejectedValue(new Error("register failed")),
       });
 
-      const result = await bgSync.smartSync(bgSync.SYNC_TAGS.OFFLINE_DATA, manualFn);
+      const result = await bgSync.smartSync(
+        bgSync.SYNC_TAGS.OFFLINE_DATA,
+        manualFn,
+      );
 
       expect(result).toEqual({ method: "manual", success: true });
       expect(manualFn).toHaveBeenCalledTimes(1);
@@ -193,7 +222,10 @@ describe("background-sync - CORE LOGIC", () => {
       setBackgroundSyncSupported(false);
       const manualFn = vi.fn().mockRejectedValue(new Error("sync failed"));
 
-      const result = await bgSync.smartSync(bgSync.SYNC_TAGS.PERIODIC, manualFn);
+      const result = await bgSync.smartSync(
+        bgSync.SYNC_TAGS.PERIODIC,
+        manualFn,
+      );
 
       expect(result).toEqual({ method: "manual", success: false });
     });
@@ -205,7 +237,9 @@ describe("background-sync - CORE LOGIC", () => {
       const addSpy = vi.spyOn(window, "addEventListener");
       const removeSpy = vi.spyOn(window, "removeEventListener");
 
-      const cleanup = bgSync.setupOnlineSync(vi.fn().mockResolvedValue(undefined));
+      const cleanup = bgSync.setupOnlineSync(
+        vi.fn().mockResolvedValue(undefined),
+      );
 
       expect(addSpy).toHaveBeenCalledWith("online", expect.any(Function));
       cleanup();
@@ -217,7 +251,9 @@ describe("background-sync - CORE LOGIC", () => {
       mockServiceWorkerReady({});
 
       const addSpy = vi.spyOn(window, "addEventListener");
-      const cleanup = bgSync.setupOnlineSync(vi.fn().mockResolvedValue(undefined));
+      const cleanup = bgSync.setupOnlineSync(
+        vi.fn().mockResolvedValue(undefined),
+      );
 
       expect(addSpy).not.toHaveBeenCalled();
       expect(() => cleanup()).not.toThrow();
@@ -241,12 +277,12 @@ describe("background-sync - CORE LOGIC", () => {
         getTags: vi.fn().mockResolvedValue([bgSync.SYNC_TAGS.QUIZ_ANSWERS]),
       });
 
-      await expect(bgSync.hasPendingSync(bgSync.SYNC_TAGS.QUIZ_ANSWERS)).resolves.toBe(
-        true,
-      );
-      await expect(bgSync.hasPendingSync(bgSync.SYNC_TAGS.OFFLINE_DATA)).resolves.toBe(
-        false,
-      );
+      await expect(
+        bgSync.hasPendingSync(bgSync.SYNC_TAGS.QUIZ_ANSWERS),
+      ).resolves.toBe(true);
+      await expect(
+        bgSync.hasPendingSync(bgSync.SYNC_TAGS.OFFLINE_DATA),
+      ).resolves.toBe(false);
     });
   });
 
@@ -255,7 +291,9 @@ describe("background-sync - CORE LOGIC", () => {
       bgSync.clearSyncLogs();
       expect(bgSync.getSyncLogs()).toEqual([]);
 
-      bgSync.logSyncEvent("registered", bgSync.SYNC_TAGS.QUIZ_ANSWERS, { a: 1 });
+      bgSync.logSyncEvent("registered", bgSync.SYNC_TAGS.QUIZ_ANSWERS, {
+        a: 1,
+      });
       bgSync.logSyncEvent("completed", bgSync.SYNC_TAGS.QUIZ_ANSWERS);
 
       const logs = bgSync.getSyncLogs();
