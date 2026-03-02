@@ -204,9 +204,9 @@ describe("Logbook API", () => {
         return { select: vi.fn(), eq: vi.fn(), single: vi.fn() };
       });
 
-      await expect(createLogbook({ jadwal_id: mockJadwalId } as any)).rejects.toThrow(
-        "Jadwal praktikum not found",
-      );
+      await expect(
+        createLogbook({ jadwal_id: mockJadwalId } as any),
+      ).rejects.toThrow("Jadwal praktikum not found");
     });
 
     it("should reject when jadwal praktikum is not approved", async () => {
@@ -240,9 +240,9 @@ describe("Logbook API", () => {
         return { select: vi.fn(), eq: vi.fn(), single: vi.fn() };
       });
 
-      await expect(createLogbook({ jadwal_id: mockJadwalId } as any)).rejects.toThrow(
-        "Cannot create logbook for unapproved jadwal",
-      );
+      await expect(
+        createLogbook({ jadwal_id: mockJadwalId } as any),
+      ).rejects.toThrow("Cannot create logbook for unapproved jadwal");
     });
   });
 
@@ -474,7 +474,10 @@ describe("Logbook API", () => {
   describe("query and dosen workflows", () => {
     it("should get logbook by id", async () => {
       const { getById } = await import("@/lib/api/base.api");
-      (getById as any).mockResolvedValue({ id: mockLogbookId, status: "draft" });
+      (getById as any).mockResolvedValue({
+        id: mockLogbookId,
+        status: "draft",
+      });
 
       const result = await getLogbookById(mockLogbookId);
 
@@ -561,7 +564,9 @@ describe("Logbook API", () => {
           return {
             select: vi.fn().mockReturnValue({
               eq: vi.fn().mockReturnValue({
-                single: vi.fn().mockResolvedValue({ data: { id: "dosen-1" }, error: null }),
+                single: vi
+                  .fn()
+                  .mockResolvedValue({ data: { id: "dosen-1" }, error: null }),
               }),
             }),
           };
@@ -569,7 +574,10 @@ describe("Logbook API", () => {
         return {
           select: vi.fn().mockReturnValue({
             eq: vi.fn().mockReturnValue({
-              single: vi.fn().mockResolvedValue({ data: { id: mockMahasiswaId }, error: null }),
+              single: vi.fn().mockResolvedValue({
+                data: { id: mockMahasiswaId },
+                error: null,
+              }),
             }),
           }),
         };
@@ -580,9 +588,15 @@ describe("Logbook API", () => {
         id: mockLogbookId,
         status: "submitted",
       });
-      (update as any).mockResolvedValue({ id: mockLogbookId, status: "reviewed" });
+      (update as any).mockResolvedValue({
+        id: mockLogbookId,
+        status: "reviewed",
+      });
 
-      const result = await reviewLogbook({ id: mockLogbookId, feedback: "Bagus" });
+      const result = await reviewLogbook({
+        id: mockLogbookId,
+        feedback: "Bagus",
+      });
 
       expect(update).toHaveBeenCalledWith(
         "logbook_entries",
@@ -602,7 +616,9 @@ describe("Logbook API", () => {
           return {
             select: vi.fn().mockReturnValue({
               eq: vi.fn().mockReturnValue({
-                single: vi.fn().mockResolvedValue({ data: { id: "dosen-1" }, error: null }),
+                single: vi
+                  .fn()
+                  .mockResolvedValue({ data: { id: "dosen-1" }, error: null }),
               }),
             }),
           };
@@ -610,7 +626,10 @@ describe("Logbook API", () => {
         return {
           select: vi.fn().mockReturnValue({
             eq: vi.fn().mockReturnValue({
-              single: vi.fn().mockResolvedValue({ data: { id: mockMahasiswaId }, error: null }),
+              single: vi.fn().mockResolvedValue({
+                data: { id: mockMahasiswaId },
+                error: null,
+              }),
             }),
           }),
         };
@@ -622,9 +641,9 @@ describe("Logbook API", () => {
         status: "draft",
       });
 
-      await expect(reviewLogbook({ id: mockLogbookId, feedback: "Bagus" })).rejects.toThrow(
-        "Can only review submitted logbooks",
-      );
+      await expect(
+        reviewLogbook({ id: mockLogbookId, feedback: "Bagus" }),
+      ).rejects.toThrow("Can only review submitted logbooks");
     });
 
     it("should reject invalid grade range", async () => {
@@ -633,7 +652,9 @@ describe("Logbook API", () => {
           return {
             select: vi.fn().mockReturnValue({
               eq: vi.fn().mockReturnValue({
-                single: vi.fn().mockResolvedValue({ data: { id: "dosen-1" }, error: null }),
+                single: vi
+                  .fn()
+                  .mockResolvedValue({ data: { id: "dosen-1" }, error: null }),
               }),
             }),
           };
@@ -641,15 +662,18 @@ describe("Logbook API", () => {
         return {
           select: vi.fn().mockReturnValue({
             eq: vi.fn().mockReturnValue({
-              single: vi.fn().mockResolvedValue({ data: { id: mockMahasiswaId }, error: null }),
+              single: vi.fn().mockResolvedValue({
+                data: { id: mockMahasiswaId },
+                error: null,
+              }),
             }),
           }),
         };
       });
 
-      await expect(gradeLogbook({ id: mockLogbookId, nilai: 120 } as any)).rejects.toThrow(
-        "Grade must be between 0 and 100",
-      );
+      await expect(
+        gradeLogbook({ id: mockLogbookId, nilai: 120 } as any),
+      ).rejects.toThrow("Grade must be between 0 and 100");
     });
 
     it("should expose wrapper API through withApiResponse", async () => {
@@ -669,7 +693,10 @@ describe("Logbook API", () => {
         status: "draft",
       });
       (insert as any).mockResolvedValue({ id: mockLogbookId });
-      (update as any).mockResolvedValue({ id: mockLogbookId, status: "reviewed" });
+      (update as any).mockResolvedValue({
+        id: mockLogbookId,
+        status: "reviewed",
+      });
       (remove as any).mockResolvedValue(undefined);
 
       await logbookApi.getLogbook();
@@ -684,7 +711,10 @@ describe("Logbook API", () => {
         skill_dipelajari: ["ok"],
       } as any);
       await logbookApi.deleteLogbook(mockLogbookId);
-      await logbookApi.reviewLogbook({ id: mockLogbookId, feedback: "ok" } as any);
+      await logbookApi.reviewLogbook({
+        id: mockLogbookId,
+        feedback: "ok",
+      } as any);
       await logbookApi.gradeLogbook({ id: mockLogbookId, nilai: 90 } as any);
 
       expect(withApiResponse).toHaveBeenCalled();

@@ -1260,7 +1260,10 @@ describe("Assignment API", () => {
       });
 
       expect(mockJadwalChain.eq).toHaveBeenCalledWith("hari", "senin");
-      expect(mockJadwalChain.eq).toHaveBeenCalledWith("laboratorium_id", "lab-1");
+      expect(mockJadwalChain.eq).toHaveBeenCalledWith(
+        "laboratorium_id",
+        "lab-1",
+      );
     });
 
     it("should filter getAllAssignments by dosen, kelas, tahun, semester and search", async () => {
@@ -1284,7 +1287,11 @@ describe("Assignment API", () => {
             dosen: {
               id: "dosen-1",
               nip: "123",
-              users: { id: "user-1", full_name: "Dr. Budi", email: "budi@example.com" },
+              users: {
+                id: "user-1",
+                full_name: "Dr. Budi",
+                email: "budi@example.com",
+              },
             },
             mata_kuliah: {
               id: "mk-1",
@@ -1317,7 +1324,11 @@ describe("Assignment API", () => {
             dosen: {
               id: "dosen-2",
               nip: "456",
-              users: { id: "user-2", full_name: "Dr. Siti", email: "siti@example.com" },
+              users: {
+                id: "user-2",
+                full_name: "Dr. Siti",
+                email: "siti@example.com",
+              },
             },
             mata_kuliah: {
               id: "mk-2",
@@ -1335,7 +1346,11 @@ describe("Assignment API", () => {
           dosen: {
             id: "dosen-2",
             nip: "456",
-            users: { id: "user-2", full_name: "Dr. Siti", email: "siti@example.com" },
+            users: {
+              id: "user-2",
+              full_name: "Dr. Siti",
+              email: "siti@example.com",
+            },
           },
           created_at: "2025-01-22T00:00:00Z",
           updated_at: "2025-01-22T00:00:00Z",
@@ -1449,11 +1464,20 @@ describe("Assignment API", () => {
           mata_kuliah_id: "mk-1",
           created_at: "2025-01-21T00:00:00Z",
           updated_at: "2025-01-21T00:00:00Z",
-          mata_kuliah: { id: "mk-1", nama_mk: "Algoritma", kode_mk: "ALG-1", sks: 3 },
+          mata_kuliah: {
+            id: "mk-1",
+            nama_mk: "Algoritma",
+            kode_mk: "ALG-1",
+            sks: 3,
+          },
           dosen: {
             id: "dosen-1",
             nip: "123",
-            users: { id: "user-1", full_name: "Dr. Budi", email: "budi@example.com" },
+            users: {
+              id: "user-1",
+              full_name: "Dr. Budi",
+              email: "budi@example.com",
+            },
           },
         },
         {
@@ -1467,11 +1491,20 @@ describe("Assignment API", () => {
           mata_kuliah_id: "mk-2",
           created_at: "2025-01-21T00:00:00Z",
           updated_at: "2025-01-21T00:00:00Z",
-          mata_kuliah: { id: "mk-2", nama_mk: "Basis Data", kode_mk: "BD-1", sks: 2 },
+          mata_kuliah: {
+            id: "mk-2",
+            nama_mk: "Basis Data",
+            kode_mk: "BD-1",
+            sks: 2,
+          },
           dosen: {
             id: "dosen-2",
             nip: "456",
-            users: { id: "user-2", full_name: "Dr. Siti", email: "siti@example.com" },
+            users: {
+              id: "user-2",
+              full_name: "Dr. Siti",
+              email: "siti@example.com",
+            },
           },
         },
       ];
@@ -1515,13 +1548,17 @@ describe("Assignment API", () => {
     });
 
     it("should handle update, clear, and toggle errors", async () => {
-      const makeErrorChain = (message: string) => createMockQueryChain(null, { message });
+      const makeErrorChain = (message: string) =>
+        createMockQueryChain(null, { message });
 
       (supabase.from as any).mockImplementation((table: string) => {
         if (table === "users") {
           const mockChain = { eq: vi.fn(), single: vi.fn() };
           mockChain.eq.mockReturnValue(mockChain);
-          mockChain.single.mockResolvedValue({ data: { role: "admin" }, error: null });
+          mockChain.single.mockResolvedValue({
+            data: { role: "admin" },
+            error: null,
+          });
           return { select: vi.fn().mockReturnValue(mockChain) };
         }
 
@@ -1532,7 +1569,9 @@ describe("Assignment API", () => {
         return createMockQueryChain([]);
       });
 
-      await expect(updateAcademicAssignment("kelas-1", { catatan: "x" })).resolves.toEqual({
+      await expect(
+        updateAcademicAssignment("kelas-1", { catatan: "x" }),
+      ).resolves.toEqual({
         success: false,
         error: "write failed",
       });
@@ -1557,7 +1596,10 @@ describe("Assignment API", () => {
         if (table === "users") {
           const mockChain = { eq: vi.fn(), single: vi.fn() };
           mockChain.eq.mockReturnValue(mockChain);
-          mockChain.single.mockResolvedValue({ data: { role: "admin" }, error: null });
+          mockChain.single.mockResolvedValue({
+            data: { role: "admin" },
+            error: null,
+          });
           return { select: vi.fn().mockReturnValue(mockChain) };
         }
         if (table === "dosen") {
@@ -1566,7 +1608,9 @@ describe("Assignment API", () => {
         return createMockQueryChain([]);
       });
 
-      await expect(getAllDosen()).rejects.toThrow("Failed to fetch dosen: dosen fetch error");
+      await expect(getAllDosen()).rejects.toThrow(
+        "Failed to fetch dosen: dosen fetch error",
+      );
     });
   });
 
@@ -1576,7 +1620,10 @@ describe("Assignment API", () => {
         if (table === "users") {
           const mockChain = { eq: vi.fn(), single: vi.fn() };
           mockChain.eq.mockReturnValue(mockChain);
-          mockChain.single.mockResolvedValue({ data: { role: "admin" }, error: null });
+          mockChain.single.mockResolvedValue({
+            data: { role: "admin" },
+            error: null,
+          });
           return { select: vi.fn().mockReturnValue(mockChain) };
         }
         if (table === "mata_kuliah") {
@@ -1585,7 +1632,9 @@ describe("Assignment API", () => {
         return createMockQueryChain([]);
       });
 
-      await expect(getAllMataKuliah()).rejects.toThrow("Failed to fetch mata kuliah: mk fetch error");
+      await expect(getAllMataKuliah()).rejects.toThrow(
+        "Failed to fetch mata kuliah: mk fetch error",
+      );
     });
   });
 
@@ -1595,7 +1644,10 @@ describe("Assignment API", () => {
         if (table === "users") {
           const mockChain = { eq: vi.fn(), single: vi.fn() };
           mockChain.eq.mockReturnValue(mockChain);
-          mockChain.single.mockResolvedValue({ data: { role: "admin" }, error: null });
+          mockChain.single.mockResolvedValue({
+            data: { role: "admin" },
+            error: null,
+          });
           return { select: vi.fn().mockReturnValue(mockChain) };
         }
         if (table === "kelas") {
@@ -1604,7 +1656,9 @@ describe("Assignment API", () => {
         return createMockQueryChain([]);
       });
 
-      await expect(getAllKelasForFilter()).rejects.toThrow("Failed to fetch kelas: kelas fetch error");
+      await expect(getAllKelasForFilter()).rejects.toThrow(
+        "Failed to fetch kelas: kelas fetch error",
+      );
     });
   });
 
@@ -1614,16 +1668,23 @@ describe("Assignment API", () => {
         if (table === "users") {
           const mockChain = { eq: vi.fn(), single: vi.fn() };
           mockChain.eq.mockReturnValue(mockChain);
-          mockChain.single.mockResolvedValue({ data: { role: "admin" }, error: null });
+          mockChain.single.mockResolvedValue({
+            data: { role: "admin" },
+            error: null,
+          });
           return { select: vi.fn().mockReturnValue(mockChain) };
         }
         if (table === "kelas") {
-          return createMockQueryChain(null, { message: "academic fetch error" });
+          return createMockQueryChain(null, {
+            message: "academic fetch error",
+          });
         }
         return createMockQueryChain([]);
       });
 
-      await expect(getAcademicAssignments()).rejects.toThrow("Failed to fetch academic assignments: academic fetch error");
+      await expect(getAcademicAssignments()).rejects.toThrow(
+        "Failed to fetch academic assignments: academic fetch error",
+      );
     });
 
     it("should filter by kelas_kode when searching (lines 776-778)", async () => {
@@ -1639,11 +1700,20 @@ describe("Assignment API", () => {
           mata_kuliah_id: "mk-1",
           created_at: "2025-01-21T00:00:00Z",
           updated_at: "2025-01-21T00:00:00Z",
-          mata_kuliah: { id: "mk-1", nama_mk: "Algoritma", kode_mk: "ALG-1", sks: 3 },
+          mata_kuliah: {
+            id: "mk-1",
+            nama_mk: "Algoritma",
+            kode_mk: "ALG-1",
+            sks: 3,
+          },
           dosen: {
             id: "dosen-1",
             nip: "123",
-            users: { id: "user-1", full_name: "Dr. Budi", email: "budi@example.com" },
+            users: {
+              id: "user-1",
+              full_name: "Dr. Budi",
+              email: "budi@example.com",
+            },
           },
         },
         {
@@ -1657,11 +1727,20 @@ describe("Assignment API", () => {
           mata_kuliah_id: "mk-2",
           created_at: "2025-01-21T00:00:00Z",
           updated_at: "2025-01-21T00:00:00Z",
-          mata_kuliah: { id: "mk-2", nama_mk: "Basis Data", kode_mk: "BD-1", sks: 2 },
+          mata_kuliah: {
+            id: "mk-2",
+            nama_mk: "Basis Data",
+            kode_mk: "BD-1",
+            sks: 2,
+          },
           dosen: {
             id: "dosen-2",
             nip: "456",
-            users: { id: "user-2", full_name: "Dr. Siti", email: "siti@example.com" },
+            users: {
+              id: "user-2",
+              full_name: "Dr. Siti",
+              email: "siti@example.com",
+            },
           },
         },
       ];
@@ -1670,7 +1749,10 @@ describe("Assignment API", () => {
         if (table === "users") {
           const mockChain = { eq: vi.fn(), single: vi.fn() };
           mockChain.eq.mockReturnValue(mockChain);
-          mockChain.single.mockResolvedValue({ data: { role: "admin" }, error: null });
+          mockChain.single.mockResolvedValue({
+            data: { role: "admin" },
+            error: null,
+          });
           return { select: vi.fn().mockReturnValue(mockChain) };
         }
         if (table === "kelas") {
@@ -1701,11 +1783,18 @@ describe("Assignment API", () => {
         if (table === "users") {
           const mockChain = { eq: vi.fn(), single: vi.fn() };
           mockChain.eq.mockReturnValue(mockChain);
-          mockChain.single.mockResolvedValue({ data: { role: "admin" }, error: null });
+          mockChain.single.mockResolvedValue({
+            data: { role: "admin" },
+            error: null,
+          });
           return { select: vi.fn().mockReturnValue(mockChain) };
         }
         if (table === "dosen") {
-          return { select: vi.fn().mockResolvedValue({ data: mockDosenData, error: null }) };
+          return {
+            select: vi
+              .fn()
+              .mockResolvedValue({ data: mockDosenData, error: null }),
+          };
         }
         if (table === "jadwal_praktikum") {
           return createMockQueryChain(mockJadwalData, null);
@@ -1729,7 +1818,10 @@ describe("Assignment API", () => {
         if (table === "users") {
           const mockChain = { eq: vi.fn(), single: vi.fn() };
           mockChain.eq.mockReturnValue(mockChain);
-          mockChain.single.mockResolvedValue({ data: { role: "admin" }, error: null });
+          mockChain.single.mockResolvedValue({
+            data: { role: "admin" },
+            error: null,
+          });
           return { select: vi.fn().mockReturnValue(mockChain) };
         }
         if (table === "kelas") {
@@ -1756,7 +1848,10 @@ describe("Assignment API", () => {
         if (table === "users") {
           const mockChain = { eq: vi.fn(), single: vi.fn() };
           mockChain.eq.mockReturnValue(mockChain);
-          mockChain.single.mockResolvedValue({ data: { role: "admin" }, error: null });
+          mockChain.single.mockResolvedValue({
+            data: { role: "admin" },
+            error: null,
+          });
           return { select: vi.fn().mockReturnValue(mockChain) };
         }
         if (table === "kelas") {
@@ -1769,7 +1864,9 @@ describe("Assignment API", () => {
         return createMockQueryChain([]);
       });
 
-      const result = await updateAcademicAssignment("kelas-1", { dosen_id: "d1" });
+      const result = await updateAcademicAssignment("kelas-1", {
+        dosen_id: "d1",
+      });
 
       expect(result).toEqual({ success: false, error: "update crash" });
     });
@@ -1779,7 +1876,10 @@ describe("Assignment API", () => {
         if (table === "users") {
           const mockChain = { eq: vi.fn(), single: vi.fn() };
           mockChain.eq.mockReturnValue(mockChain);
-          mockChain.single.mockResolvedValue({ data: { role: "admin" }, error: null });
+          mockChain.single.mockResolvedValue({
+            data: { role: "admin" },
+            error: null,
+          });
           return { select: vi.fn().mockReturnValue(mockChain) };
         }
         if (table === "kelas") {
@@ -1802,7 +1902,10 @@ describe("Assignment API", () => {
         if (table === "users") {
           const mockChain = { eq: vi.fn(), single: vi.fn() };
           mockChain.eq.mockReturnValue(mockChain);
-          mockChain.single.mockResolvedValue({ data: { role: "admin" }, error: null });
+          mockChain.single.mockResolvedValue({
+            data: { role: "admin" },
+            error: null,
+          });
           return { select: vi.fn().mockReturnValue(mockChain) };
         }
         if (table === "kelas") {

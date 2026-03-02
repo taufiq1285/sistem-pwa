@@ -331,7 +331,9 @@ export default function DosenLogbookReviewPage() {
       <div className="mb-6 sm:mb-8">
         <div className="mb-2 flex items-center gap-3">
           <FileText className="h-7 w-7 text-blue-600 sm:h-8 sm:w-8" />
-          <h1 className="text-2xl font-bold sm:text-3xl">Review Logbook Mahasiswa</h1>
+          <h1 className="text-2xl font-bold sm:text-3xl">
+            Review Logbook Mahasiswa
+          </h1>
         </div>
         <p className="text-gray-600">
           Review dan beri nilai pada logbook praktikum mahasiswa

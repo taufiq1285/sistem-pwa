@@ -679,99 +679,99 @@ export default function PeminjamanPage() {
               ) : (
                 <div className="overflow-x-auto rounded-xl border border-border/70">
                   <Table className="min-w-190">
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Kode</TableHead>
-                      <TableHead>Nama</TableHead>
-                      <TableHead>Lab</TableHead>
-                      <TableHead>Jumlah</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Aksi</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredBorrowings.map((b) => {
-                      const cfg =
-                        STATUS_CONFIG[b.status as BorrowingStatus] ||
-                        STATUS_CONFIG.menunggu;
-                      const Icon = cfg.icon;
-                      const isPending =
-                        b.status === "menunggu" || b.status === "pending";
-                      const isApproved =
-                        b.status === "disetujui" || b.status === "approved";
-                      const isInUse =
-                        b.status === "dipinjam" || b.status === "in_use";
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Kode</TableHead>
+                        <TableHead>Nama</TableHead>
+                        <TableHead>Lab</TableHead>
+                        <TableHead>Jumlah</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Aksi</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredBorrowings.map((b) => {
+                        const cfg =
+                          STATUS_CONFIG[b.status as BorrowingStatus] ||
+                          STATUS_CONFIG.menunggu;
+                        const Icon = cfg.icon;
+                        const isPending =
+                          b.status === "menunggu" || b.status === "pending";
+                        const isApproved =
+                          b.status === "disetujui" || b.status === "approved";
+                        const isInUse =
+                          b.status === "dipinjam" || b.status === "in_use";
 
-                      return (
-                        <TableRow key={b.id}>
-                          <TableCell className="font-mono">
-                            {b.inventaris_kode}
-                          </TableCell>
-                          <TableCell>{b.inventaris_nama}</TableCell>
-                          <TableCell>{b.laboratorium_nama}</TableCell>
-                          <TableCell>{b.jumlah_pinjam}</TableCell>
-                          <TableCell>
-                            <Badge variant={cfg.variant}>
-                              <Icon className="h-3 w-3 mr-1" />
-                              {cfg.label}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            {isPending && (
-                              <div className="flex gap-2">
+                        return (
+                          <TableRow key={b.id}>
+                            <TableCell className="font-mono">
+                              {b.inventaris_kode}
+                            </TableCell>
+                            <TableCell>{b.inventaris_nama}</TableCell>
+                            <TableCell>{b.laboratorium_nama}</TableCell>
+                            <TableCell>{b.jumlah_pinjam}</TableCell>
+                            <TableCell>
+                              <Badge variant={cfg.variant}>
+                                <Icon className="h-3 w-3 mr-1" />
+                                {cfg.label}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              {isPending && (
+                                <div className="flex gap-2">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleEdit(b)}
+                                    className="h-8 gap-1"
+                                  >
+                                    <Edit className="h-3 w-3" />
+                                    Edit
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="destructive"
+                                    onClick={() => handleCancelRequest(b)}
+                                    className="h-8 gap-1"
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                    Batal
+                                  </Button>
+                                </div>
+                              )}
+                              {isApproved && (
+                                <Button
+                                  size="sm"
+                                  variant="default"
+                                  onClick={() => {
+                                    setSelectedTakenId(b.id);
+                                    setTakenDialogOpen(true);
+                                  }}
+                                  className="h-8 gap-1"
+                                >
+                                  <Download className="h-3 w-3" />
+                                  Ambil Alat
+                                </Button>
+                              )}
+                              {isInUse && (
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  onClick={() => handleEdit(b)}
+                                  onClick={() => {
+                                    returnForm.setValue("peminjaman_id", b.id);
+                                    setReturnDialogOpen(true);
+                                  }}
                                   className="h-8 gap-1"
                                 >
-                                  <Edit className="h-3 w-3" />
-                                  Edit
+                                  <RotateCcw className="h-3 w-3" />
+                                  Kembalikan
                                 </Button>
-                                <Button
-                                  size="sm"
-                                  variant="destructive"
-                                  onClick={() => handleCancelRequest(b)}
-                                  className="h-8 gap-1"
-                                >
-                                  <Trash2 className="h-3 w-3" />
-                                  Batal
-                                </Button>
-                              </div>
-                            )}
-                            {isApproved && (
-                              <Button
-                                size="sm"
-                                variant="default"
-                                onClick={() => {
-                                  setSelectedTakenId(b.id);
-                                  setTakenDialogOpen(true);
-                                }}
-                                className="h-8 gap-1"
-                              >
-                                <Download className="h-3 w-3" />
-                                Ambil Alat
-                              </Button>
-                            )}
-                            {isInUse && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => {
-                                  returnForm.setValue("peminjaman_id", b.id);
-                                  setReturnDialogOpen(true);
-                                }}
-                                className="h-8 gap-1"
-                              >
-                                <RotateCcw className="h-3 w-3" />
-                                Kembalikan
-                              </Button>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
                   </Table>
                 </div>
               )}

@@ -813,10 +813,10 @@ describe("Kuis Versioned API - Optimistic Locking", () => {
 
   describe("batch operations and utilities", () => {
     it("submitAllAnswersWithVersion merekap success, conflict, dan failure", async () => {
-      const { getJawabanByAttempt: mockGetJawaban } = await import("@/lib/api/kuis.api");
-      const { updateWithAutoResolve: mockUpdateWithAutoResolve } = await import(
-        "@/lib/api/kuis-versioned.api"
-      );
+      const { getJawabanByAttempt: mockGetJawaban } =
+        await import("@/lib/api/kuis.api");
+      const { updateWithAutoResolve: mockUpdateWithAutoResolve } =
+        await import("@/lib/api/kuis-versioned.api");
 
       vi.mocked(mockGetJawaban).mockResolvedValue([
         { id: "j1", soal_id: "s1", _version: 1 },
@@ -889,9 +889,8 @@ describe("Kuis Versioned API - Optimistic Locking", () => {
     });
 
     it("gradeAnswerWithVersion memakai conflict log saat answer tersedia", async () => {
-      const { updateWithConflictLog: mockUpdateWithConflictLog } = await import(
-        "@/lib/api/kuis-versioned.api"
-      );
+      const { updateWithConflictLog: mockUpdateWithConflictLog } =
+        await import("@/lib/api/kuis-versioned.api");
       vi.mocked(supabase.from).mockReturnValueOnce({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
@@ -933,14 +932,16 @@ describe("Kuis Versioned API - Optimistic Locking", () => {
     });
 
     it("hasAnswerConflicts return false jika tidak ada answer", async () => {
-      const { getJawabanByAttempt: mockGetJawaban } = await import("@/lib/api/kuis.api");
+      const { getJawabanByAttempt: mockGetJawaban } =
+        await import("@/lib/api/kuis.api");
       vi.mocked(mockGetJawaban).mockResolvedValue([] as any);
 
       await expect(hasAnswerConflicts("att-empty")).resolves.toBe(false);
     });
 
     it("getAttemptConflictsCount return jumlah data conflict", async () => {
-      const { getJawabanByAttempt: mockGetJawaban } = await import("@/lib/api/kuis.api");
+      const { getJawabanByAttempt: mockGetJawaban } =
+        await import("@/lib/api/kuis.api");
       vi.mocked(mockGetJawaban).mockResolvedValue([
         { id: "j1", soal_id: "s1" },
         { id: "j2", soal_id: "s2" },
@@ -949,7 +950,10 @@ describe("Kuis Versioned API - Optimistic Locking", () => {
       vi.mocked(supabase.from).mockReturnValueOnce({
         select: vi.fn().mockReturnThis(),
         or: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockResolvedValue({ data: [{ id: "c1" }, { id: "c2" }], error: null }),
+        eq: vi.fn().mockResolvedValue({
+          data: [{ id: "c1" }, { id: "c2" }],
+          error: null,
+        }),
       } as any);
 
       await expect(getAttemptConflictsCount("att-1")).resolves.toBe(2);
@@ -1038,7 +1042,9 @@ describe("Kuis Versioned API - Optimistic Locking", () => {
 
       vi.mocked(getAttemptById).mockResolvedValue(mockAttemptWithVersion);
       vi.mocked(getVersion).mockReturnValue(1);
-      vi.mocked(updateWithAutoResolve).mockRejectedValueOnce(new Error("versioned failed"));
+      vi.mocked(updateWithAutoResolve).mockRejectedValueOnce(
+        new Error("versioned failed"),
+      );
       vi.mocked(mockSubmitQuiz).mockResolvedValueOnce({
         ...mockAttemptWithVersion,
         status: "submitted",

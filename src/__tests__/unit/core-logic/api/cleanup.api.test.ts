@@ -27,7 +27,10 @@ vi.mock("@/lib/offline/api-cache", () => ({
   clearAllCacheSync: vi.fn(),
 }));
 
-const mockCountQuery = (count: number | null | undefined) => ({ count, error: null });
+const mockCountQuery = (count: number | null | undefined) => ({
+  count,
+  error: null,
+});
 
 describe("Cleanup API", () => {
   beforeEach(() => {
@@ -125,7 +128,11 @@ describe("Cleanup API", () => {
         if (table === "jawaban") {
           return {
             delete: () => ({
-              neq: () => Promise.resolve({ count: 0, error: { message: "permission denied" } }),
+              neq: () =>
+                Promise.resolve({
+                  count: 0,
+                  error: { message: "permission denied" },
+                }),
             }),
           } as any;
         }
@@ -157,11 +164,14 @@ describe("Cleanup API", () => {
         kuis: { count: 0, error: { message: "contains no rows" } },
       };
 
-      vi.mocked(supabase.from).mockImplementation((table: string) => ({
-        delete: () => ({
-          neq: () => Promise.resolve(responses[table]),
-        }),
-      }) as any);
+      vi.mocked(supabase.from).mockImplementation(
+        (table: string) =>
+          ({
+            delete: () => ({
+              neq: () => Promise.resolve(responses[table]),
+            }),
+          }) as any,
+      );
 
       const result = await cleanupAllKuisData();
 
@@ -188,8 +198,12 @@ describe("Cleanup API", () => {
         }
 
         return {
-          select: () => ({ in: () => Promise.resolve({ data: [], error: null }) }),
-          delete: () => ({ in: () => Promise.resolve({ count: 0, error: null }) }),
+          select: () => ({
+            in: () => Promise.resolve({ data: [], error: null }),
+          }),
+          delete: () => ({
+            in: () => Promise.resolve({ count: 0, error: null }),
+          }),
         } as any;
       });
 
@@ -218,7 +232,11 @@ describe("Cleanup API", () => {
           if (kuisCallCount === 1) {
             return {
               select: () => ({
-                eq: () => Promise.resolve({ data: [{ id: "k1" }, { id: "k2" }], error: null }),
+                eq: () =>
+                  Promise.resolve({
+                    data: [{ id: "k1" }, { id: "k2" }],
+                    error: null,
+                  }),
               }),
             } as any;
           }
@@ -234,7 +252,11 @@ describe("Cleanup API", () => {
         if (table === "attempt_kuis") {
           return {
             select: () => ({
-              in: () => Promise.resolve({ data: [{ id: "a1" }, { id: "a2" }], error: null }),
+              in: () =>
+                Promise.resolve({
+                  data: [{ id: "a1" }, { id: "a2" }],
+                  error: null,
+                }),
             }),
             delete: () => ({
               in: () => Promise.resolve({ count: 2, error: null }),
@@ -259,8 +281,12 @@ describe("Cleanup API", () => {
         }
 
         return {
-          select: () => ({ in: () => Promise.resolve({ data: [], error: null }) }),
-          delete: () => ({ in: () => Promise.resolve({ count: 0, error: null }) }),
+          select: () => ({
+            in: () => Promise.resolve({ data: [], error: null }),
+          }),
+          delete: () => ({
+            in: () => Promise.resolve({ count: 0, error: null }),
+          }),
         } as any;
       });
 
@@ -281,14 +307,22 @@ describe("Cleanup API", () => {
         if (table === "kuis") {
           return {
             select: () => ({
-              eq: () => Promise.resolve({ data: null, error: { message: "fetch failed" } }),
+              eq: () =>
+                Promise.resolve({
+                  data: null,
+                  error: { message: "fetch failed" },
+                }),
             }),
           } as any;
         }
 
         return {
-          select: () => ({ in: () => Promise.resolve({ data: [], error: null }) }),
-          delete: () => ({ in: () => Promise.resolve({ count: 0, error: null }) }),
+          select: () => ({
+            in: () => Promise.resolve({ data: [], error: null }),
+          }),
+          delete: () => ({
+            in: () => Promise.resolve({ count: 0, error: null }),
+          }),
         } as any;
       });
 
@@ -307,14 +341,19 @@ describe("Cleanup API", () => {
           if (kuisCallCount === 1) {
             return {
               select: () => ({
-                eq: () => Promise.resolve({ data: [{ id: "k1" }], error: null }),
+                eq: () =>
+                  Promise.resolve({ data: [{ id: "k1" }], error: null }),
               }),
             } as any;
           }
 
           return {
             delete: () => ({
-              eq: () => Promise.resolve({ count: 0, error: { message: "contains no rows" } }),
+              eq: () =>
+                Promise.resolve({
+                  count: 0,
+                  error: { message: "contains no rows" },
+                }),
             }),
           } as any;
         }
@@ -325,7 +364,11 @@ describe("Cleanup API", () => {
               in: () => Promise.resolve({ data: [{ id: "a1" }], error: null }),
             }),
             delete: () => ({
-              in: () => Promise.resolve({ count: 0, error: { message: "contains no rows" } }),
+              in: () =>
+                Promise.resolve({
+                  count: 0,
+                  error: { message: "contains no rows" },
+                }),
             }),
           } as any;
         }
@@ -333,7 +376,11 @@ describe("Cleanup API", () => {
         if (table === "jawaban") {
           return {
             delete: () => ({
-              in: () => Promise.resolve({ count: 0, error: { message: "contains no rows" } }),
+              in: () =>
+                Promise.resolve({
+                  count: 0,
+                  error: { message: "contains no rows" },
+                }),
             }),
           } as any;
         }
@@ -341,14 +388,22 @@ describe("Cleanup API", () => {
         if (table === "soal") {
           return {
             delete: () => ({
-              in: () => Promise.resolve({ count: 0, error: { message: "contains no rows" } }),
+              in: () =>
+                Promise.resolve({
+                  count: 0,
+                  error: { message: "contains no rows" },
+                }),
             }),
           } as any;
         }
 
         return {
-          select: () => ({ in: () => Promise.resolve({ data: [], error: null }) }),
-          delete: () => ({ in: () => Promise.resolve({ count: 0, error: null }) }),
+          select: () => ({
+            in: () => Promise.resolve({ data: [], error: null }),
+          }),
+          delete: () => ({
+            in: () => Promise.resolve({ count: 0, error: null }),
+          }),
         } as any;
       });
 
@@ -373,12 +428,15 @@ describe("Cleanup API", () => {
           if (kuisCallCount === 1) {
             return {
               select: () => ({
-                eq: () => Promise.resolve({ data: [{ id: "k1" }], error: null }),
+                eq: () =>
+                  Promise.resolve({ data: [{ id: "k1" }], error: null }),
               }),
             } as any;
           }
           return {
-            delete: () => ({ eq: () => Promise.resolve({ count: 0, error: null }) }),
+            delete: () => ({
+              eq: () => Promise.resolve({ count: 0, error: null }),
+            }),
           } as any;
         }
 
@@ -388,7 +446,11 @@ describe("Cleanup API", () => {
               in: () => Promise.resolve({ data: [{ id: "a1" }], error: null }),
             }),
             delete: () => ({
-              in: () => Promise.resolve({ count: 0, error: { message: "attempt delete failed" } }),
+              in: () =>
+                Promise.resolve({
+                  count: 0,
+                  error: { message: "attempt delete failed" },
+                }),
             }),
           } as any;
         }
@@ -402,8 +464,12 @@ describe("Cleanup API", () => {
         }
 
         return {
-          select: () => ({ in: () => Promise.resolve({ data: [], error: null }) }),
-          delete: () => ({ in: () => Promise.resolve({ count: 0, error: null }) }),
+          select: () => ({
+            in: () => Promise.resolve({ data: [], error: null }),
+          }),
+          delete: () => ({
+            in: () => Promise.resolve({ count: 0, error: null }),
+          }),
         } as any;
       });
 
@@ -422,12 +488,15 @@ describe("Cleanup API", () => {
           if (kuisCallCount === 1) {
             return {
               select: () => ({
-                eq: () => Promise.resolve({ data: [{ id: "k1" }], error: null }),
+                eq: () =>
+                  Promise.resolve({ data: [{ id: "k1" }], error: null }),
               }),
             } as any;
           }
           return {
-            delete: () => ({ eq: () => Promise.resolve({ count: 0, error: null }) }),
+            delete: () => ({
+              eq: () => Promise.resolve({ count: 0, error: null }),
+            }),
           } as any;
         }
 
@@ -445,14 +514,22 @@ describe("Cleanup API", () => {
         if (table === "soal") {
           return {
             delete: () => ({
-              in: () => Promise.resolve({ count: 0, error: { message: "soal delete failed" } }),
+              in: () =>
+                Promise.resolve({
+                  count: 0,
+                  error: { message: "soal delete failed" },
+                }),
             }),
           } as any;
         }
 
         return {
-          select: () => ({ in: () => Promise.resolve({ data: [], error: null }) }),
-          delete: () => ({ in: () => Promise.resolve({ count: 0, error: null }) }),
+          select: () => ({
+            in: () => Promise.resolve({ data: [], error: null }),
+          }),
+          delete: () => ({
+            in: () => Promise.resolve({ count: 0, error: null }),
+          }),
         } as any;
       });
 
@@ -471,32 +548,49 @@ describe("Cleanup API", () => {
           if (kuisCallCount === 1) {
             return {
               select: () => ({
-                eq: () => Promise.resolve({ data: [{ id: "k1" }], error: null }),
+                eq: () =>
+                  Promise.resolve({ data: [{ id: "k1" }], error: null }),
               }),
             } as any;
           }
           // delete kuis essay - error
           return {
-            delete: () => ({ eq: () => Promise.resolve({ count: 0, error: { message: "kuis essay delete failed" } }) }),
+            delete: () => ({
+              eq: () =>
+                Promise.resolve({
+                  count: 0,
+                  error: { message: "kuis essay delete failed" },
+                }),
+            }),
           } as any;
         }
 
         if (table === "attempt_kuis") {
           return {
-            select: () => ({ in: () => Promise.resolve({ data: [], error: null }) }),
-            delete: () => ({ in: () => Promise.resolve({ count: 0, error: null }) }),
+            select: () => ({
+              in: () => Promise.resolve({ data: [], error: null }),
+            }),
+            delete: () => ({
+              in: () => Promise.resolve({ count: 0, error: null }),
+            }),
           } as any;
         }
 
         if (table === "soal") {
           return {
-            delete: () => ({ in: () => Promise.resolve({ count: 0, error: null }) }),
+            delete: () => ({
+              in: () => Promise.resolve({ count: 0, error: null }),
+            }),
           } as any;
         }
 
         return {
-          select: () => ({ in: () => Promise.resolve({ data: [], error: null }) }),
-          delete: () => ({ in: () => Promise.resolve({ count: 0, error: null }) }),
+          select: () => ({
+            in: () => Promise.resolve({ data: [], error: null }),
+          }),
+          delete: () => ({
+            in: () => Promise.resolve({ count: 0, error: null }),
+          }),
         } as any;
       });
 
@@ -521,13 +615,19 @@ describe("Cleanup API", () => {
         if (table === "attempt_kuis") {
           return {
             delete: () => ({
-              neq: () => Promise.resolve({ count: 0, error: { message: "attempt error" } }),
+              neq: () =>
+                Promise.resolve({
+                  count: 0,
+                  error: { message: "attempt error" },
+                }),
             }),
           } as any;
         }
 
         return {
-          delete: () => ({ neq: () => Promise.resolve({ count: 0, error: null }) }),
+          delete: () => ({
+            neq: () => Promise.resolve({ count: 0, error: null }),
+          }),
         } as any;
       });
 
@@ -542,13 +642,16 @@ describe("Cleanup API", () => {
         if (table === "soal") {
           return {
             delete: () => ({
-              neq: () => Promise.resolve({ count: 0, error: { message: "soal error" } }),
+              neq: () =>
+                Promise.resolve({ count: 0, error: { message: "soal error" } }),
             }),
           } as any;
         }
 
         return {
-          delete: () => ({ neq: () => Promise.resolve({ count: 0, error: null }) }),
+          delete: () => ({
+            neq: () => Promise.resolve({ count: 0, error: null }),
+          }),
         } as any;
       });
 
@@ -563,13 +666,16 @@ describe("Cleanup API", () => {
         if (table === "kuis") {
           return {
             delete: () => ({
-              neq: () => Promise.resolve({ count: 0, error: { message: "kuis error" } }),
+              neq: () =>
+                Promise.resolve({ count: 0, error: { message: "kuis error" } }),
             }),
           } as any;
         }
 
         return {
-          delete: () => ({ neq: () => Promise.resolve({ count: 0, error: null }) }),
+          delete: () => ({
+            neq: () => Promise.resolve({ count: 0, error: null }),
+          }),
         } as any;
       });
 

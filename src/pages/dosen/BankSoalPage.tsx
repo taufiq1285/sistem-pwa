@@ -276,7 +276,9 @@ export default function BankSoalPage() {
                   <Target className="h-5 w-5 text-green-600" />
                   <div className="text-3xl sm:text-4xl font-bold text-green-900">
                     {stats.pilihan_ganda_count > 0
-                      ? Math.round(stats.total_usage / stats.pilihan_ganda_count)
+                      ? Math.round(
+                          stats.total_usage / stats.pilihan_ganda_count,
+                        )
                       : 0}
                   </div>
                 </div>
@@ -328,7 +330,10 @@ export default function BankSoalPage() {
             </Card>
           ) : (
             questions.map((q) => (
-              <Card key={q.id} className="interactive-card border-0 shadow-xl p-4 sm:p-6">
+              <Card
+                key={q.id}
+                className="interactive-card border-0 shadow-xl p-4 sm:p-6"
+              >
                 <CardContent>
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div className="flex-1">
@@ -352,7 +357,9 @@ export default function BankSoalPage() {
                           </Badge>
                         )}
                       </div>
-                      <p className="text-sm sm:text-base font-medium">{q.pertanyaan}</p>
+                      <p className="text-sm sm:text-base font-medium">
+                        {q.pertanyaan}
+                      </p>
                       {q.tags && q.tags.length > 0 && (
                         <div className="mt-2 flex flex-wrap gap-1">
                           {q.tags.map((tag) => (

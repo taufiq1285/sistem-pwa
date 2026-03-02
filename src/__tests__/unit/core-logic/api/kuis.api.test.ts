@@ -84,7 +84,9 @@ vi.mock("@/lib/offline/api-cache", () => ({
 describe("kuis.api - CORE LOGIC", () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    (withApiResponse as any).mockImplementation(async (fn: () => Promise<unknown>) => fn());
+    (withApiResponse as any).mockImplementation(
+      async (fn: () => Promise<unknown>) => fn(),
+    );
     vi.mocked(handleError).mockImplementation((e) => e as any);
   });
 
@@ -146,7 +148,10 @@ describe("kuis.api - CORE LOGIC", () => {
 
   describe("getKuisById & getKuisByKelas", () => {
     it("getKuisById mengambil data via base.getById", async () => {
-      vi.mocked(getById).mockResolvedValue({ id: "k100", judul: "Kuis 100" } as any);
+      vi.mocked(getById).mockResolvedValue({
+        id: "k100",
+        judul: "Kuis 100",
+      } as any);
 
       const result = await kuisApi.getKuisById("k100");
 
@@ -187,7 +192,9 @@ describe("kuis.api - CORE LOGIC", () => {
     });
 
     it("cacheQuizOffline: update saat cache sudah ada", async () => {
-      vi.mocked(indexedDBManager.getById).mockResolvedValue({ id: "k-off" } as any);
+      vi.mocked(indexedDBManager.getById).mockResolvedValue({
+        id: "k-off",
+      } as any);
 
       await kuisApi.cacheQuizOffline({ id: "k-off", judul: "Offline" } as any);
 
@@ -204,8 +211,12 @@ describe("kuis.api - CORE LOGIC", () => {
         .mockResolvedValueOnce({ data: { id: "a1" } } as any);
 
       await expect(kuisApi.getCachedQuiz("k1")).resolves.toEqual({ id: "k1" });
-      await expect(kuisApi.getCachedQuestions("k1")).resolves.toEqual([{ id: "s1" }]);
-      await expect(kuisApi.getCachedAttempt("a1")).resolves.toEqual({ id: "a1" });
+      await expect(kuisApi.getCachedQuestions("k1")).resolves.toEqual([
+        { id: "s1" },
+      ]);
+      await expect(kuisApi.getCachedAttempt("a1")).resolves.toEqual({
+        id: "a1",
+      });
     });
 
     it("saveAnswerOffline menyimpan jawaban dengan key attempt_soal", async () => {
@@ -264,10 +275,16 @@ describe("kuis.api - CORE LOGIC", () => {
       vi.mocked(indexedDBManager.getAll).mockResolvedValue([
         { attempt_id: "att-1", soal_id: "s1", jawaban: "A" },
       ] as any);
-      vi.mocked(indexedDBManager.getById).mockResolvedValue({ id: "att-1_s1" } as any);
-      vi.mocked(submitAnswerWithVersion).mockResolvedValue({ success: true } as any);
+      vi.mocked(indexedDBManager.getById).mockResolvedValue({
+        id: "att-1_s1",
+      } as any);
+      vi.mocked(submitAnswerWithVersion).mockResolvedValue({
+        success: true,
+      } as any);
 
-      await expect(kuisApi.syncOfflineAnswers("att-1")).resolves.toBeUndefined();
+      await expect(
+        kuisApi.syncOfflineAnswers("att-1"),
+      ).resolves.toBeUndefined();
 
       expect(submitAnswerWithVersion).toHaveBeenCalledWith({
         attempt_id: "att-1",
@@ -283,12 +300,17 @@ describe("kuis.api - CORE LOGIC", () => {
     it("syncOfflineAnswers: no-op jika tidak ada data offline", async () => {
       vi.mocked(indexedDBManager.getAll).mockResolvedValue([] as any);
 
-      await expect(kuisApi.syncOfflineAnswers("att-empty")).resolves.toBeUndefined();
+      await expect(
+        kuisApi.syncOfflineAnswers("att-empty"),
+      ).resolves.toBeUndefined();
       expect(submitAnswerWithVersion).not.toHaveBeenCalled();
     });
 
     it("getKuisByIdOffline memakai API lalu cache saat online", async () => {
-      vi.mocked(getById).mockResolvedValueOnce({ id: "k-online", judul: "Online" } as any);
+      vi.mocked(getById).mockResolvedValueOnce({
+        id: "k-online",
+        judul: "Online",
+      } as any);
       vi.mocked(indexedDBManager.getById).mockResolvedValueOnce(null as any);
 
       const result = await kuisApi.getKuisByIdOffline("k-online");
@@ -330,7 +352,9 @@ describe("kuis.api - CORE LOGIC", () => {
 
   describe("attempt and validation branches", () => {
     it("getAttempts menggunakan query saat tanpa filter", async () => {
-      vi.mocked(query).mockResolvedValue([{ id: "a1", status: "graded" }] as any);
+      vi.mocked(query).mockResolvedValue([
+        { id: "a1", status: "graded" },
+      ] as any);
 
       const result = await kuisApi.getAttempts();
 
@@ -344,9 +368,15 @@ describe("kuis.api - CORE LOGIC", () => {
     });
 
     it("getAttempts menggunakan queryWithFilters saat ada filter", async () => {
-      vi.mocked(queryWithFilters).mockResolvedValue([{ id: "a2", status: "submitted" }] as any);
+      vi.mocked(queryWithFilters).mockResolvedValue([
+        { id: "a2", status: "submitted" },
+      ] as any);
 
-      const result = await kuisApi.getAttempts({ kuis_id: "k1", mahasiswa_id: "m1", status: "submitted" });
+      const result = await kuisApi.getAttempts({
+        kuis_id: "k1",
+        mahasiswa_id: "m1",
+        status: "submitted",
+      });
 
       expect(queryWithFilters).toHaveBeenCalledWith(
         "attempt_kuis",
@@ -372,13 +402,17 @@ describe("kuis.api - CORE LOGIC", () => {
       expect(getById).toHaveBeenCalledWith(
         "attempt_kuis",
         "att-1",
-        expect.objectContaining({ select: expect.stringContaining("jawaban:jawaban") }),
+        expect.objectContaining({
+          select: expect.stringContaining("jawaban:jawaban"),
+        }),
       );
     });
 
     it("canAttemptQuiz mengembalikan fallback false saat ownership gagal", async () => {
       const permission = await import("@/lib/middleware/permission.middleware");
-      vi.mocked(permission.getCurrentMahasiswaId).mockResolvedValue("mhs-login");
+      vi.mocked(permission.getCurrentMahasiswaId).mockResolvedValue(
+        "mhs-login",
+      );
 
       const result = await kuisApi.canAttemptQuiz("kuis-1", "mhs-lain");
 
@@ -403,7 +437,9 @@ describe("kuis.api - CORE LOGIC", () => {
       const enrollBuilder = {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
-        limit: vi.fn().mockResolvedValue({ data: [{ id: "en1" }], error: null }),
+        limit: vi
+          .fn()
+          .mockResolvedValue({ data: [{ id: "en1" }], error: null }),
       };
       const { supabase } = await import("@/lib/supabase/client");
       (supabase.from as any)
@@ -414,7 +450,10 @@ describe("kuis.api - CORE LOGIC", () => {
         { id: "att-existing", status: "in_progress" },
       ] as any);
 
-      const result = await kuisApi.startAttempt({ kuis_id: "k1", mahasiswa_id: "mhs-1" } as any);
+      const result = await kuisApi.startAttempt({
+        kuis_id: "k1",
+        mahasiswa_id: "mhs-1",
+      } as any);
 
       expect(result.id).toBe("att-existing");
       expect(insert).not.toHaveBeenCalled();
@@ -435,7 +474,9 @@ describe("kuis.api - CORE LOGIC", () => {
       const enrollBuilder = {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
-        limit: vi.fn().mockResolvedValue({ data: [{ id: "en1" }], error: null }),
+        limit: vi
+          .fn()
+          .mockResolvedValue({ data: [{ id: "en1" }], error: null }),
       };
       const { supabase } = await import("@/lib/supabase/client");
       (supabase.from as any)
@@ -444,10 +485,15 @@ describe("kuis.api - CORE LOGIC", () => {
 
       vi.mocked(queryWithFilters)
         .mockResolvedValueOnce([] as any)
-        .mockResolvedValueOnce([{ id: "att-after-conflict", status: "in_progress" }] as any);
+        .mockResolvedValueOnce([
+          { id: "att-after-conflict", status: "in_progress" },
+        ] as any);
       vi.mocked(insert).mockRejectedValueOnce({ code: "23505" } as any);
 
-      const result = await kuisApi.startAttempt({ kuis_id: "k1", mahasiswa_id: "mhs-1" } as any);
+      const result = await kuisApi.startAttempt({
+        kuis_id: "k1",
+        mahasiswa_id: "mhs-1",
+      } as any);
 
       expect(result.id).toBe("att-after-conflict");
       expect(insert).toHaveBeenCalledTimes(1);
@@ -466,7 +512,9 @@ describe("kuis.api - CORE LOGIC", () => {
       (supabase.from as any).mockReturnValueOnce(attemptsBuilder);
 
       vi.mocked(handleError).mockImplementation((e: any) => e);
-      await expect(kuisApi.getAttemptsByKuis("k1")).rejects.toThrow("rls denied");
+      await expect(kuisApi.getAttemptsByKuis("k1")).rejects.toThrow(
+        "rls denied",
+      );
     });
   });
 
@@ -490,7 +538,9 @@ describe("kuis.api - CORE LOGIC", () => {
     });
 
     it("getCachedQuiz/getCachedQuestions/getCachedAttempt mengembalikan null saat indexeddb gagal", async () => {
-      vi.mocked(indexedDBManager.getById).mockRejectedValue(new Error("idb fail"));
+      vi.mocked(indexedDBManager.getById).mockRejectedValue(
+        new Error("idb fail"),
+      );
 
       await expect(kuisApi.getCachedQuiz("k1")).resolves.toBeNull();
       await expect(kuisApi.getCachedQuestions("k1")).resolves.toBeNull();
@@ -498,7 +548,9 @@ describe("kuis.api - CORE LOGIC", () => {
     });
 
     it("getOfflineAnswers mengembalikan object kosong saat indexeddb gagal", async () => {
-      vi.mocked(indexedDBManager.getAll).mockRejectedValue(new Error("idb fail"));
+      vi.mocked(indexedDBManager.getAll).mockRejectedValue(
+        new Error("idb fail"),
+      );
 
       await expect(kuisApi.getOfflineAnswers("att-err")).resolves.toEqual({});
     });
@@ -577,7 +629,10 @@ describe("kuis.api - CORE LOGIC", () => {
       };
       (enrollBuilder.eq as any)
         .mockReturnValueOnce(enrollBuilder)
-        .mockResolvedValueOnce({ data: [{ kelas_id: "kelas-1" }], error: null });
+        .mockResolvedValueOnce({
+          data: [{ kelas_id: "kelas-1" }],
+          error: null,
+        });
       const { supabase } = await import("@/lib/supabase/client");
       (supabase.from as any)
         .mockReturnValueOnce(enrollBuilder)
@@ -633,11 +688,16 @@ describe("kuis.api - CORE LOGIC", () => {
       const enrollForKuisBuilder = {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
-        limit: vi.fn().mockResolvedValue({ data: [{ id: "en2" }], error: null }),
+        limit: vi
+          .fn()
+          .mockResolvedValue({ data: [{ id: "en2" }], error: null }),
       };
       (enrollBuilder.eq as any)
         .mockReturnValueOnce(enrollBuilder)
-        .mockResolvedValueOnce({ data: [{ kelas_id: "kelas-1" }], error: null });
+        .mockResolvedValueOnce({
+          data: [{ kelas_id: "kelas-1" }],
+          error: null,
+        });
 
       const { supabase } = await import("@/lib/supabase/client");
       (supabase.from as any)

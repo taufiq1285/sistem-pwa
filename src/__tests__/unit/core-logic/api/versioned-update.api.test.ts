@@ -182,7 +182,11 @@ describe("versioned-update.api - CORE LOGIC", () => {
       });
       mocks.singleMock
         .mockResolvedValueOnce({
-          data: { id: "id-5", judul: "Remote", updated_at: "2025-01-01T00:00:00Z" },
+          data: {
+            id: "id-5",
+            judul: "Remote",
+            updated_at: "2025-01-01T00:00:00Z",
+          },
           error: null,
         })
         .mockResolvedValueOnce({
@@ -224,7 +228,11 @@ describe("versioned-update.api - CORE LOGIC", () => {
       });
       mocks.singleMock
         .mockResolvedValueOnce({
-          data: { id: "id-6", judul: "Remote", updated_at: "2025-01-01T00:00:00Z" },
+          data: {
+            id: "id-6",
+            judul: "Remote",
+            updated_at: "2025-01-01T00:00:00Z",
+          },
           error: null,
         })
         .mockResolvedValueOnce({
@@ -293,7 +301,11 @@ describe("versioned-update.api - CORE LOGIC", () => {
   describe("checkVersionConflict", () => {
     it("mengembalikan info conflict dari RPC", async () => {
       mocks.rpcMock.mockResolvedValue({
-        data: { has_conflict: true, current_version: 10, message: "beda versi" },
+        data: {
+          has_conflict: true,
+          current_version: 10,
+          message: "beda versi",
+        },
         error: null,
       });
 

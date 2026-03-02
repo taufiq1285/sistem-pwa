@@ -116,8 +116,4 @@ describe("useRole Hook", () => {
     });
   });
 
-  // Placeholder test
-  it("should have useRole hook tests defined", () => {
-    expect(true).toBe(true);
-  });
 });

@@ -154,8 +154,4 @@ describe("Retry Utilities", () => {
     });
   });
 
-  // Placeholder test
-  it("should have retry utilities tests defined", () => {
-    expect(true).toBe(true);
-  });
 });

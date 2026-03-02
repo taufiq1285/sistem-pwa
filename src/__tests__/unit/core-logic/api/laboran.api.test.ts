@@ -412,7 +412,7 @@ describe("Laboran API", () => {
       );
     });
   });
- 
+
   describe("getInventoryAlerts", () => {
     it("should return low stock items", async () => {
       const mockInventaris = [
@@ -504,7 +504,7 @@ describe("Laboran API", () => {
       );
     });
   });
- 
+
   describe("approvePeminjaman", () => {
     it("should approve peminjaman and decrease stock", async () => {
       const mockUser = { id: "user-123" };
@@ -711,7 +711,7 @@ describe("Laboran API", () => {
 
       expect(updateMock).toHaveBeenCalled();
     });
- 
+
     it("should fail when user not authenticated", async () => {
       vi.mocked(supabase.auth.getUser).mockResolvedValue({
         data: { user: null },
@@ -840,7 +840,7 @@ describe("Laboran API", () => {
         expect(eqKategoriMock).toHaveBeenCalledWith("kategori", "Elektronik");
       });
     });
- 
+
     describe("createInventaris", () => {
       it("should create new inventaris", async () => {
         const mockData = {
@@ -1040,7 +1040,10 @@ describe("Laboran API", () => {
           }),
         } as any);
 
-        await laboranAPI.getLaboratoriumList({ is_active: true, search: "bio" });
+        await laboranAPI.getLaboratoriumList({
+          is_active: true,
+          search: "bio",
+        });
 
         expect(orMock).toHaveBeenCalledWith(
           expect.stringContaining("nama_lab.ilike.%bio%"),
@@ -1103,7 +1106,7 @@ describe("Laboran API", () => {
         );
       });
     });
- 
+
     describe("createLaboratorium", () => {
       it("should create new laboratorium", async () => {
         vi.mocked(supabase.from).mockReturnValue({
@@ -1399,7 +1402,7 @@ describe("Laboran API", () => {
       await expect(
         laboranAPI.markBorrowingReturned("pem-1", "baik", "ok", 0),
       ).resolves.not.toThrow();
- 
+
       expect(inventarisUpdate).toHaveBeenCalledWith({ jumlah_tersedia: 7 });
     });
 
@@ -1530,9 +1533,9 @@ describe("Laboran API", () => {
         }),
       } as any);
 
-      await expect(laboranAPI.getLabScheduleByLabId("lab-1", 5)).rejects.toThrow(
-        "lab-schedule-error",
-      );
+      await expect(
+        laboranAPI.getLabScheduleByLabId("lab-1", 5),
+      ).rejects.toThrow("lab-schedule-error");
     });
 
     it("should throw when lab equipment query fails", async () => {
@@ -1552,7 +1555,7 @@ describe("Laboran API", () => {
       );
     });
   });
- 
+
   describe("Extended branch coverage", () => {
     it("should process approval for approved action", async () => {
       vi.mocked(supabase.auth.getUser).mockResolvedValue({
@@ -2034,7 +2037,7 @@ describe("Laboran API", () => {
         }),
       );
     });
- 
+
     it("should throw when approval history query fails", async () => {
       vi.mocked(supabase.from).mockReturnValue({
         select: vi.fn().mockReturnValue({
@@ -2808,7 +2811,7 @@ describe("Laboran API", () => {
       expect(result[0].laboratorium_nama).toBe("Lab Multimedia");
       expect(result[0].is_overdue).toBe(false);
     });
- 
+
     it("should map active borrowings dosen fallback without user and without inventaris relation", async () => {
       vi.mocked(supabase.from).mockImplementation((table: string) => {
         if (table === "peminjaman") {
@@ -3143,7 +3146,7 @@ describe("Laboran API", () => {
       expect(result).toHaveLength(1);
       expect(result[0].peminjam_nama).toBe("Unknown");
     });
- 
+
     it("should throw when mark returned cannot find approved peminjaman", async () => {
       vi.mocked(supabase.from).mockImplementation((table: string) => {
         if (table === "peminjaman") {
@@ -3151,7 +3154,9 @@ describe("Laboran API", () => {
             select: vi.fn().mockReturnValue({
               eq: vi.fn().mockReturnValue({
                 eq: vi.fn().mockReturnValue({
-                  single: vi.fn().mockResolvedValue({ data: null, error: null }),
+                  single: vi
+                    .fn()
+                    .mockResolvedValue({ data: null, error: null }),
                 }),
               }),
             }),

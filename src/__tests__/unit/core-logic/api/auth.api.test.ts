@@ -83,7 +83,9 @@ describe("auth.api - CORE LOGIC", () => {
       const err = new Error("register failed");
       vi.mocked(supabaseAuth.register).mockRejectedValue(err);
 
-      await expect(authApi.register({} as any)).rejects.toThrow("register failed");
+      await expect(authApi.register({} as any)).rejects.toThrow(
+        "register failed",
+      );
       expect(logger.error).toHaveBeenCalled();
     });
 
@@ -140,27 +142,39 @@ describe("auth.api - CORE LOGIC", () => {
 
     it("resetPassword: delegate dan throw ulang saat error", async () => {
       const successResp = { success: true };
-      vi.mocked(supabaseAuth.resetPassword).mockResolvedValue(successResp as any);
+      vi.mocked(supabaseAuth.resetPassword).mockResolvedValue(
+        successResp as any,
+      );
 
-      await expect(authApi.resetPassword("u@test.com")).resolves.toEqual(successResp);
+      await expect(authApi.resetPassword("u@test.com")).resolves.toEqual(
+        successResp,
+      );
 
       const err = new Error("reset error");
       vi.mocked(supabaseAuth.resetPassword).mockRejectedValue(err);
 
-      await expect(authApi.resetPassword("u@test.com")).rejects.toThrow("reset error");
+      await expect(authApi.resetPassword("u@test.com")).rejects.toThrow(
+        "reset error",
+      );
       expect(logger.error).toHaveBeenCalled();
     });
 
     it("updatePassword: delegate dan throw ulang saat error", async () => {
       const successResp = { success: true };
-      vi.mocked(supabaseAuth.updatePassword).mockResolvedValue(successResp as any);
+      vi.mocked(supabaseAuth.updatePassword).mockResolvedValue(
+        successResp as any,
+      );
 
-      await expect(authApi.updatePassword("NewStrong123")).resolves.toEqual(successResp);
+      await expect(authApi.updatePassword("NewStrong123")).resolves.toEqual(
+        successResp,
+      );
 
       const err = new Error("update error");
       vi.mocked(supabaseAuth.updatePassword).mockRejectedValue(err);
 
-      await expect(authApi.updatePassword("NewStrong123")).rejects.toThrow("update error");
+      await expect(authApi.updatePassword("NewStrong123")).rejects.toThrow(
+        "update error",
+      );
       expect(logger.error).toHaveBeenCalled();
     });
 
@@ -223,7 +237,9 @@ describe("auth.api - CORE LOGIC", () => {
       expect(weak.errors).toContain(
         "Password harus mengandung minimal 1 huruf besar",
       );
-      expect(weak.errors).toContain("Password harus mengandung minimal 1 angka");
+      expect(weak.errors).toContain(
+        "Password harus mengandung minimal 1 angka",
+      );
     });
 
     it("isValidPassword: valid untuk password kuat", () => {
@@ -278,8 +294,12 @@ describe("auth.api - CORE LOGIC", () => {
       };
 
       expect(authApi.getUserIdentifier(mahasiswa as any)).toBe("BD2321001");
-      expect(authApi.getUserIdentifier(dosen as any)).toBe("198001012020011001");
-      expect(authApi.getUserIdentifier(laboran as any)).toBe("197901012010011001");
+      expect(authApi.getUserIdentifier(dosen as any)).toBe(
+        "198001012020011001",
+      );
+      expect(authApi.getUserIdentifier(laboran as any)).toBe(
+        "197901012010011001",
+      );
       expect(authApi.getUserIdentifier(admin as any)).toBe("admin@example.com");
     });
 
@@ -288,7 +308,9 @@ describe("auth.api - CORE LOGIC", () => {
         role: "guest",
         email: "guest@example.com",
       };
-      expect(authApi.getUserIdentifier(unknown as any)).toBe("guest@example.com");
+      expect(authApi.getUserIdentifier(unknown as any)).toBe(
+        "guest@example.com",
+      );
     });
 
     it("getUserIdentifier: dosen fallback ke nidn lalu email", () => {
@@ -303,7 +325,9 @@ describe("auth.api - CORE LOGIC", () => {
         dosen: { nip: "", nidn: "" },
       };
 
-      expect(authApi.getUserIdentifier(dosenWithNidnOnly as any)).toBe("99887766");
+      expect(authApi.getUserIdentifier(dosenWithNidnOnly as any)).toBe(
+        "99887766",
+      );
       expect(authApi.getUserIdentifier(dosenWithoutIdentifiers as any)).toBe(
         "fallback@example.com",
       );
@@ -333,7 +357,9 @@ describe("auth.api - CORE LOGIC", () => {
       // Password yang punya uppercase & angka tapi tidak ada lowercase
       const result = authApi.isValidPassword("ABCDEF1");
       expect(result.isValid).toBe(false);
-      expect(result.errors).toContain("Password harus mengandung minimal 1 huruf kecil");
+      expect(result.errors).toContain(
+        "Password harus mengandung minimal 1 huruf kecil",
+      );
     });
 
     it("isValidPassword: password dengan huruf kecil tidak cover lowercase branch = valid huruf kecil", () => {
@@ -341,7 +367,9 @@ describe("auth.api - CORE LOGIC", () => {
       const result = authApi.isValidPassword("Abc1");
       expect(result.isValid).toBe(false);
       expect(result.errors).toContain("Password minimal 6 karakter");
-      expect(result.errors).not.toContain("Password harus mengandung minimal 1 huruf kecil");
+      expect(result.errors).not.toContain(
+        "Password harus mengandung minimal 1 huruf kecil",
+      );
     });
   });
 });
