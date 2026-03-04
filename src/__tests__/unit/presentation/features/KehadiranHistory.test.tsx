@@ -38,9 +38,7 @@ describe("KehadiranHistory", () => {
   describe("loading state", () => {
     it("menampilkan loading spinner saat data dimuat", () => {
       mockGetKehadiranHistory.mockReturnValue(new Promise(() => {}));
-      render(
-        <KehadiranHistory kelasId="kelas-1" kelasNama="Kelas A" />,
-      );
+      render(<KehadiranHistory kelasId="kelas-1" kelasNama="Kelas A" />);
       expect(screen.getByText("Memuat riwayat...")).toBeInTheDocument();
     });
   });
@@ -48,11 +46,11 @@ describe("KehadiranHistory", () => {
   describe("empty state", () => {
     it("menampilkan pesan kosong saat tidak ada riwayat", async () => {
       mockGetKehadiranHistory.mockResolvedValue([]);
-      render(
-        <KehadiranHistory kelasId="kelas-1" kelasNama="Kelas A" />,
-      );
+      render(<KehadiranHistory kelasId="kelas-1" kelasNama="Kelas A" />);
       await waitFor(() => {
-        expect(screen.getByText("Belum ada riwayat kehadiran")).toBeInTheDocument();
+        expect(
+          screen.getByText("Belum ada riwayat kehadiran"),
+        ).toBeInTheDocument();
       });
     });
   });
@@ -120,7 +118,9 @@ describe("KehadiranHistory", () => {
       await userEvent.click(row);
 
       await waitFor(() => {
-        expect(screen.getByText("Lihat Detail / Edit Kehadiran")).toBeInTheDocument();
+        expect(
+          screen.getByText("Lihat Detail / Edit Kehadiran"),
+        ).toBeInTheDocument();
       });
     });
 
@@ -153,7 +153,9 @@ describe("KehadiranHistory", () => {
       render(<KehadiranHistory kelasId="kelas-1" kelasNama="Kelas A" />);
 
       await waitFor(() => {
-        expect(toast.error).toHaveBeenCalledWith("Gagal memuat riwayat kehadiran");
+        expect(toast.error).toHaveBeenCalledWith(
+          "Gagal memuat riwayat kehadiran",
+        );
       });
     });
   });

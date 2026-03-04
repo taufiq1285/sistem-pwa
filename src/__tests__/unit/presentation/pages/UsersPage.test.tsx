@@ -3,17 +3,13 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import UsersPage from "@/pages/admin/UsersPage";
 
-const {
-  mockUseAuth,
-  mockCacheAPI,
-  mockGetAllUsers,
-  mockGetUserStats,
-} = vi.hoisted(() => ({
-  mockUseAuth: vi.fn(),
-  mockCacheAPI: vi.fn(),
-  mockGetAllUsers: vi.fn(),
-  mockGetUserStats: vi.fn(),
-}));
+const { mockUseAuth, mockCacheAPI, mockGetAllUsers, mockGetUserStats } =
+  vi.hoisted(() => ({
+    mockUseAuth: vi.fn(),
+    mockCacheAPI: vi.fn(),
+    mockGetAllUsers: vi.fn(),
+    mockGetUserStats: vi.fn(),
+  }));
 
 vi.mock("sonner", () => ({
   toast: {
@@ -24,7 +20,13 @@ vi.mock("sonner", () => ({
 }));
 
 vi.mock("@/components/common/PageHeader", () => ({
-  PageHeader: ({ title, description }: { title: string; description?: string }) => (
+  PageHeader: ({
+    title,
+    description,
+  }: {
+    title: string;
+    description?: string;
+  }) => (
     <div>
       <h1>{title}</h1>
       {description ? <p>{description}</p> : null}
@@ -63,7 +65,9 @@ vi.mock("@/components/shared/DataTable/useRowSelection", () => ({
     toggleAll: vi.fn(),
     toggleRow: vi.fn(),
     isSelected: (item: any) =>
-      Boolean(opts?.data?.some((d: any) => d?.id && d.id === item?.id && false)),
+      Boolean(
+        opts?.data?.some((d: any) => d?.id && d.id === item?.id && false),
+      ),
   }),
 }));
 
@@ -127,9 +131,11 @@ describe("UsersPage", () => {
       },
     });
 
-    mockCacheAPI.mockImplementation(async (_key: string, fn: () => Promise<any>) => {
-      return fn();
-    });
+    mockCacheAPI.mockImplementation(
+      async (_key: string, fn: () => Promise<any>) => {
+        return fn();
+      },
+    );
 
     mockGetAllUsers.mockResolvedValue([
       {
@@ -159,7 +165,9 @@ describe("UsersPage", () => {
     renderWithRouter();
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /user management/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole("heading", { name: /user management/i }),
+      ).toBeInTheDocument();
       expect(mockGetAllUsers).toHaveBeenCalled();
       expect(mockGetUserStats).toHaveBeenCalled();
     });

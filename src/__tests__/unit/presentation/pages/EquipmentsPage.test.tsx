@@ -3,11 +3,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import EquipmentsPage from "@/pages/admin/EquipmentsPage";
 
-const {
-  mockUseAuth,
-  mockCacheAPI,
-  mockGetInventarisList,
-} = vi.hoisted(() => ({
+const { mockUseAuth, mockCacheAPI, mockGetInventarisList } = vi.hoisted(() => ({
   mockUseAuth: vi.fn(),
   mockCacheAPI: vi.fn(),
   mockGetInventarisList: vi.fn(),
@@ -22,7 +18,13 @@ vi.mock("sonner", () => ({
 }));
 
 vi.mock("@/components/common/PageHeader", () => ({
-  PageHeader: ({ title, description }: { title: string; description?: string }) => (
+  PageHeader: ({
+    title,
+    description,
+  }: {
+    title: string;
+    description?: string;
+  }) => (
     <div>
       <h1>{title}</h1>
       {description ? <p>{description}</p> : null}
@@ -74,9 +76,11 @@ describe("EquipmentsPage", () => {
       },
     });
 
-    mockCacheAPI.mockImplementation(async (_key: string, fn: () => Promise<any>) => {
-      return fn();
-    });
+    mockCacheAPI.mockImplementation(
+      async (_key: string, fn: () => Promise<any>) => {
+        return fn();
+      },
+    );
 
     mockGetInventarisList.mockResolvedValue({
       data: [
@@ -100,7 +104,9 @@ describe("EquipmentsPage", () => {
     renderWithRouter();
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /equipment management/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole("heading", { name: /equipment management/i }),
+      ).toBeInTheDocument();
     });
 
     expect(mockGetInventarisList).toHaveBeenCalled();

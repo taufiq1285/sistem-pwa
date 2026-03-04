@@ -12,21 +12,33 @@ describe("Public + Offline Placeholder Pages", () => {
   it("HomePage menampilkan hero utama dan tombol auth", () => {
     render(<HomePage />);
 
-    expect(screen.getByRole("heading", { name: /sistem informasi praktikum akademi kebidanan mega buana/i })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /akademi kebidanan mega buana/i })).toBeInTheDocument();
-    expect(screen.getAllByRole("link", { name: "Masuk" }).length).toBeGreaterThan(0);
+    expect(
+      screen.getByRole("heading", {
+        name: /sistem informasi praktikum akademi kebidanan mega buana/i,
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /akademi kebidanan mega buana/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getAllByRole("link", { name: "Masuk" }).length,
+    ).toBeGreaterThan(0);
     expect(screen.getByRole("link", { name: "Daftar" })).toBeInTheDocument();
   });
 
   it("OfflinePage placeholder tampil", () => {
     render(<OfflinePage />);
 
-    expect(screen.getByText("TODO: Implement [ComponentName]")).toBeInTheDocument();
+    expect(
+      screen.getByText("TODO: Implement [ComponentName]"),
+    ).toBeInTheDocument();
   });
 
   it("Mahasiswa OfflineSyncPage placeholder tampil", () => {
     render(<MahasiswaOfflineSyncPage />);
 
-    expect(screen.getByText("TODO: Implement [ComponentName]")).toBeInTheDocument();
+    expect(
+      screen.getByText("TODO: Implement [ComponentName]"),
+    ).toBeInTheDocument();
   });
 });

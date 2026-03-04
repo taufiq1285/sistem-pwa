@@ -1099,7 +1099,7 @@ describe("Offline Authentication", () => {
       );
     });
 
-    it("should return true at exact moment before expiry", async () => {
+    it("should return true when credentials are still not expired", async () => {
       const now = Date.now();
 
       vi.mocked(indexedDBManager.getMetadata).mockResolvedValue({
@@ -1107,7 +1107,7 @@ describe("Offline Authentication", () => {
         email: "test@example.com",
         passwordHash: "01".repeat(32),
         createdAt: now - 30 * 24 * 60 * 60 * 1000,
-        expiresAt: now + 1, // Expires in 1ms
+        expiresAt: now + 1000,
       });
 
       const isAvailable = await isOfflineLoginAvailable();

@@ -69,17 +69,17 @@ export function MobileNav({
       {/* Drawer */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 w-72 bg-background transform transition-transform duration-300 ease-in-out md:hidden",
+          "fixed inset-y-0 left-0 z-50 w-72 border-r bg-card transform transition-transform duration-300 ease-in-out md:hidden",
           isOpen ? "translate-x-0" : "-translate-x-full",
           className,
         )}
       >
         <div className="flex h-full flex-col">
           {/* Header */}
-          <div className="flex h-16 items-center justify-between border-b px-4">
+          <div className="flex h-16 items-center justify-between border-b px-3.5">
             <div>
-              <h2 className="text-lg font-semibold">AKBID Mega Buana</h2>
-              <p className="text-xs text-muted-foreground">Sistem Praktikum</p>
+              <h2 className="text-sm font-semibold tracking-tight">AKBID Mega Buana</h2>
+              <p className="text-[11px] text-muted-foreground">Sistem Praktikum</p>
             </div>
             <Button
               variant="ghost"
@@ -107,8 +107,8 @@ export function MobileNav({
           </div>
 
           {/* Navigation */}
-          <ScrollArea className="flex-1 px-2 py-4">
-            <nav className="space-y-1">
+          <ScrollArea className="flex-1 px-2.5 py-4">
+            <nav className="space-y-1.5">
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const active = isRouteActive(location.pathname, item.href);
@@ -120,11 +120,11 @@ export function MobileNav({
                     onClick={handleLinkClick}
                     className={cn(
                       "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-                      "hover:bg-accent hover:text-accent-foreground",
-                      active && "bg-accent text-accent-foreground",
+                      "hover:bg-accent/70 hover:text-accent-foreground",
+                      active && "bg-accent text-accent-foreground shadow-sm",
                     )}
                   >
-                    <Icon className="h-5 w-5 flex-shrink-0" />
+                    <Icon className="h-5 w-5 shrink-0" />
                     <span className="flex-1">{item.label}</span>
                     {item.badge !== undefined && (
                       <Badge variant="secondary">{item.badge}</Badge>

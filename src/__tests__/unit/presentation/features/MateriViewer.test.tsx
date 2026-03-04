@@ -113,7 +113,9 @@ describe("MateriViewer", () => {
       render(
         <MateriViewer materi={makeMateri()} open={true} onClose={vi.fn()} />,
       );
-      expect(screen.getAllByText("Materi Anatomi").length).toBeGreaterThanOrEqual(1);
+      expect(
+        screen.getAllByText("Materi Anatomi").length,
+      ).toBeGreaterThanOrEqual(1);
     });
 
     it("menampilkan deskripsi materi", () => {
@@ -176,7 +178,9 @@ describe("MateriViewer", () => {
         file_url: "https://example.com/image.jpg",
       });
       expect(() =>
-        render(<MateriViewer materi={imageMateri} open={true} onClose={vi.fn()} />),
+        render(
+          <MateriViewer materi={imageMateri} open={true} onClose={vi.fn()} />,
+        ),
       ).not.toThrow();
     });
 
@@ -199,7 +203,9 @@ describe("MateriViewer", () => {
         file_url: "https://example.com/video.mp4",
       });
       expect(() =>
-        render(<MateriViewer materi={videoMateri} open={true} onClose={vi.fn()} />),
+        render(
+          <MateriViewer materi={videoMateri} open={true} onClose={vi.fn()} />,
+        ),
       ).not.toThrow();
     });
 

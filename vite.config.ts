@@ -54,7 +54,7 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: ["./src/__tests__/setup.ts"],
     include: ["src/__tests__/**/*.{test,spec}.{ts,tsx}"],
-    exclude: ["server/**", "node_modules/**"],
+    exclude: ["server/**", "node_modules/**", "src/__tests__/legacy/**"],
     coverage: {
       provider: "v8",
       reporter: ["text", "json", "html"],

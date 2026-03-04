@@ -3,7 +3,12 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { ROUTES, buildRoute, getRoleBasePath, getRoleDashboard } from "@/config/routes.config";
+import {
+  ROUTES,
+  buildRoute,
+  getRoleBasePath,
+  getRoleDashboard,
+} from "@/config/routes.config";
 
 describe("ROUTES", () => {
   describe("public routes", () => {

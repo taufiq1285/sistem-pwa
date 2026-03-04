@@ -3,10 +3,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import ManajemenAssignmentPage from "@/pages/admin/ManajemenAssignmentPage";
 
-const {
-  mockUseAuth,
-  mockSupabaseFrom,
-} = vi.hoisted(() => ({
+const { mockUseAuth, mockSupabaseFrom } = vi.hoisted(() => ({
   mockUseAuth: vi.fn(),
   mockSupabaseFrom: vi.fn(),
 }));
@@ -84,7 +81,9 @@ describe("ManajemenAssignmentPage", () => {
     renderWithRouter();
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /manajemen assignment/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole("heading", { name: /manajemen assignment/i }),
+      ).toBeInTheDocument();
     });
 
     expect(mockSupabaseFrom).toHaveBeenCalled();

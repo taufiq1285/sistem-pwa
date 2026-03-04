@@ -6,11 +6,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import { DashboardPage } from "@/pages/mahasiswa/DashboardPage";
 
-const {
-  mockUseAuth,
-  mockCacheAPI,
-  mockNetworkDetector,
-} = vi.hoisted(() => ({
+const { mockUseAuth, mockCacheAPI, mockNetworkDetector } = vi.hoisted(() => ({
   mockUseAuth: vi.fn(),
   mockCacheAPI: vi.fn(),
   mockNetworkDetector: { isOnline: vi.fn(() => true) },

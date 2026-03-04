@@ -20,7 +20,13 @@ vi.mock("@/components/common/DeleteConfirmDialog", () => ({
 }));
 
 vi.mock("@/components/shared/DataTable", () => ({
-  DataTable: ({ data, emptyMessage }: { data: any[]; emptyMessage?: string }) => (
+  DataTable: ({
+    data,
+    emptyMessage,
+  }: {
+    data: any[];
+    emptyMessage?: string;
+  }) => (
     <div>
       <div data-testid="datatable-count">rows:{data.length}</div>
       {data.length === 0 ? <div>{emptyMessage || "empty"}</div> : null}
@@ -60,7 +66,9 @@ describe("KelasPageEnhanced", () => {
 
     await waitFor(() => {
       expect(mockGetKelas).toHaveBeenCalled();
-      expect(screen.getByRole("heading", { name: /manajemen kelas/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole("heading", { name: /manajemen kelas/i }),
+      ).toBeInTheDocument();
     });
   });
 });

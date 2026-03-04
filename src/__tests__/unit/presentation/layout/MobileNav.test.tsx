@@ -5,7 +5,8 @@ import { MemoryRouter } from "react-router-dom";
 import { MobileNav } from "@/components/layout/MobileNav";
 
 vi.mock("@/config/navigation.config", async () => {
-  const { Home, BookOpen } = await vi.importActual<typeof import("lucide-react")>("lucide-react");
+  const { Home, BookOpen } =
+    await vi.importActual<typeof import("lucide-react")>("lucide-react");
 
   return {
     getNavigationItems: vi.fn(() => [
@@ -23,7 +24,9 @@ vi.mock("@/config/navigation.config", async () => {
         icon: BookOpen,
       },
     ]),
-    isRouteActive: vi.fn((currentPath: string, href: string) => currentPath === href),
+    isRouteActive: vi.fn(
+      (currentPath: string, href: string) => currentPath === href,
+    ),
   };
 });
 

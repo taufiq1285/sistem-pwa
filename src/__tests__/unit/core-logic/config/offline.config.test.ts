@@ -42,7 +42,9 @@ describe("SYNC_CONFIG", () => {
     expect(SYNC_CONFIG.retry.maxAttempts).toBeGreaterThan(0);
     expect(SYNC_CONFIG.retry.delayMs).toBeGreaterThan(0);
     expect(SYNC_CONFIG.retry.backoffMultiplier).toBeGreaterThanOrEqual(1);
-    expect(SYNC_CONFIG.retry.maxDelayMs).toBeGreaterThan(SYNC_CONFIG.retry.delayMs);
+    expect(SYNC_CONFIG.retry.maxDelayMs).toBeGreaterThan(
+      SYNC_CONFIG.retry.delayMs,
+    );
   });
 
   it("batch config dikonfigurasi dengan benar", () => {
@@ -72,9 +74,15 @@ describe("INDEXEDDB_CONFIG", () => {
   });
 
   it("quota values urut: target > warning < critical", () => {
-    expect(INDEXEDDB_CONFIG.quota.warning).toBeLessThan(INDEXEDDB_CONFIG.quota.target);
-    expect(INDEXEDDB_CONFIG.quota.critical).toBeLessThanOrEqual(INDEXEDDB_CONFIG.quota.target);
-    expect(INDEXEDDB_CONFIG.quota.warning).toBeLessThan(INDEXEDDB_CONFIG.quota.critical);
+    expect(INDEXEDDB_CONFIG.quota.warning).toBeLessThan(
+      INDEXEDDB_CONFIG.quota.target,
+    );
+    expect(INDEXEDDB_CONFIG.quota.critical).toBeLessThanOrEqual(
+      INDEXEDDB_CONFIG.quota.target,
+    );
+    expect(INDEXEDDB_CONFIG.quota.warning).toBeLessThan(
+      INDEXEDDB_CONFIG.quota.critical,
+    );
   });
 });
 
@@ -101,8 +109,12 @@ describe("NETWORK_CONFIG", () => {
   });
 
   it("quality thresholds naik secara berurutan", () => {
-    expect(NETWORK_CONFIG.quality.good).toBeLessThan(NETWORK_CONFIG.quality.moderate);
-    expect(NETWORK_CONFIG.quality.moderate).toBeLessThan(NETWORK_CONFIG.quality.poor);
+    expect(NETWORK_CONFIG.quality.good).toBeLessThan(
+      NETWORK_CONFIG.quality.moderate,
+    );
+    expect(NETWORK_CONFIG.quality.moderate).toBeLessThan(
+      NETWORK_CONFIG.quality.poor,
+    );
   });
 
   it("offlineDetection dikonfigurasi", () => {

@@ -135,7 +135,10 @@ describe("AnswerReview", () => {
 
   describe("essay / needs manual grading", () => {
     it("menampilkan notifikasi menunggu penilaian saat essay belum dinilai", () => {
-      const essaySoal = makeSoal({ tipe_soal: TIPE_SOAL.ESSAY, jawaban_benar: null });
+      const essaySoal = makeSoal({
+        tipe_soal: TIPE_SOAL.ESSAY,
+        jawaban_benar: null,
+      });
       const essayJawaban = makeJawaban({
         jawaban_mahasiswa: "Jawaban essay saya",
         jawaban: "Jawaban essay saya",
@@ -151,7 +154,10 @@ describe("AnswerReview", () => {
     });
 
     it("tidak menampilkan 'Jawaban yang Benar' untuk essay", () => {
-      const essaySoal = makeSoal({ tipe_soal: TIPE_SOAL.ESSAY, jawaban_benar: null });
+      const essaySoal = makeSoal({
+        tipe_soal: TIPE_SOAL.ESSAY,
+        jawaban_benar: null,
+      });
       const essayJawaban = makeJawaban({
         jawaban: "Ini jawaban",
         is_correct: false,

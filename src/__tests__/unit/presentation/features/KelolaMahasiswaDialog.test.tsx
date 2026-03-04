@@ -51,7 +51,9 @@ vi.mock("@/lib/supabase/client", () => ({
 }));
 
 vi.mock("@/components/ui/button", () => ({
-  Button: ({ children, ...props }: any) => <button {...props}>{children}</button>,
+  Button: ({ children, ...props }: any) => (
+    <button {...props}>{children}</button>
+  ),
 }));
 vi.mock("@/components/ui/input", () => ({
   Input: ({ ...props }: any) => <input {...props} />,
@@ -75,7 +77,8 @@ vi.mock("@/components/ui/table", () => ({
   TableRow: ({ children }: any) => <tr>{children}</tr>,
 }));
 vi.mock("@/components/ui/alert-dialog", () => ({
-  AlertDialog: ({ open, children }: any) => (open ? <div>{children}</div> : null),
+  AlertDialog: ({ open, children }: any) =>
+    open ? <div>{children}</div> : null,
   AlertDialogAction: ({ children, ...props }: any) => (
     <button {...props}>{children}</button>
   ),
@@ -146,7 +149,11 @@ describe("KelolaMahasiswaDialog", () => {
 
   it("load data saat dialog dibuka dan menampilkan mahasiswa terdaftar", async () => {
     render(
-      <KelolaMahasiswaDialog open={true} onOpenChange={vi.fn()} kelas={kelas} />,
+      <KelolaMahasiswaDialog
+        open={true}
+        onOpenChange={vi.fn()}
+        kelas={kelas}
+      />,
     );
 
     await waitFor(() => {
@@ -164,7 +171,11 @@ describe("KelolaMahasiswaDialog", () => {
     mockEnrollStudent.mockResolvedValue({});
 
     render(
-      <KelolaMahasiswaDialog open={true} onOpenChange={vi.fn()} kelas={kelas} />,
+      <KelolaMahasiswaDialog
+        open={true}
+        onOpenChange={vi.fn()}
+        kelas={kelas}
+      />,
     );
 
     await waitFor(() => {
@@ -184,11 +195,17 @@ describe("KelolaMahasiswaDialog", () => {
     const user = userEvent.setup();
 
     render(
-      <KelolaMahasiswaDialog open={true} onOpenChange={vi.fn()} kelas={kelas} />,
+      <KelolaMahasiswaDialog
+        open={true}
+        onOpenChange={vi.fn()}
+        kelas={kelas}
+      />,
     );
 
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: /Mahasiswa Baru/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /Mahasiswa Baru/i }),
+      ).toBeInTheDocument();
     });
 
     await user.click(screen.getByRole("button", { name: /Mahasiswa Baru/i }));
@@ -231,7 +248,9 @@ describe("KelolaMahasiswaDialog", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText(/Kelas sudah penuh! Tidak bisa menambah mahasiswa baru./i),
+        screen.getByText(
+          /Kelas sudah penuh! Tidak bisa menambah mahasiswa baru./i,
+        ),
       ).toBeInTheDocument();
     });
   });

@@ -3,7 +3,12 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { APP_CONFIG, FEATURES, API_CONFIG, STORAGE_CONFIG } from "@/config/app.config";
+import {
+  APP_CONFIG,
+  FEATURES,
+  API_CONFIG,
+  STORAGE_CONFIG,
+} from "@/config/app.config";
 
 describe("APP_CONFIG", () => {
   it("memiliki nama aplikasi yang benar", () => {

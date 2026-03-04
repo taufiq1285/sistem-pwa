@@ -3,15 +3,12 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import PeminjamanApprovalPage from "@/pages/admin/PeminjamanApprovalPage";
 
-const {
-  mockUseAuth,
-  mockGetPendingApprovals,
-  mockGetApprovalHistory,
-} = vi.hoisted(() => ({
-  mockUseAuth: vi.fn(),
-  mockGetPendingApprovals: vi.fn(),
-  mockGetApprovalHistory: vi.fn(),
-}));
+const { mockUseAuth, mockGetPendingApprovals, mockGetApprovalHistory } =
+  vi.hoisted(() => ({
+    mockUseAuth: vi.fn(),
+    mockGetPendingApprovals: vi.fn(),
+    mockGetApprovalHistory: vi.fn(),
+  }));
 
 vi.mock("sonner", () => ({
   toast: {

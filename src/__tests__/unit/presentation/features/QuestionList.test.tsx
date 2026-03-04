@@ -5,6 +5,8 @@ import { ComponentName } from "@/components/features/kuis/builder/QuestionList";
 describe("QuestionList placeholder", () => {
   it("menampilkan placeholder TODO", () => {
     render(<ComponentName />);
-    expect(screen.getByText("TODO: Implement [ComponentName]")).toBeInTheDocument();
+    expect(
+      screen.getByText("TODO: Implement [ComponentName]"),
+    ).toBeInTheDocument();
   });
 });

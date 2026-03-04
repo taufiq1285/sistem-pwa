@@ -7,11 +7,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { DashboardPage } from "@/pages/admin/DashboardPage";
 
-const {
-  mockUseAuth,
-  mockCacheAPI,
-  mockNetworkDetector,
-} = vi.hoisted(() => ({
+const { mockUseAuth, mockCacheAPI, mockNetworkDetector } = vi.hoisted(() => ({
   mockUseAuth: vi.fn(),
   mockCacheAPI: vi.fn(),
   mockNetworkDetector: { isOnline: vi.fn(() => true) },
@@ -36,13 +32,19 @@ vi.mock("react-router-dom", async (importOriginal) => {
 
 // Mock recharts agar tidak error di jsdom
 vi.mock("recharts", () => ({
-  LineChart: ({ children }: any) => <div data-testid="line-chart">{children}</div>,
+  LineChart: ({ children }: any) => (
+    <div data-testid="line-chart">{children}</div>
+  ),
   Line: () => null,
   Area: () => null,
   AreaChart: ({ children }: any) => <div>{children}</div>,
-  BarChart: ({ children }: any) => <div data-testid="bar-chart">{children}</div>,
+  BarChart: ({ children }: any) => (
+    <div data-testid="bar-chart">{children}</div>
+  ),
   Bar: () => null,
-  PieChart: ({ children }: any) => <div data-testid="pie-chart">{children}</div>,
+  PieChart: ({ children }: any) => (
+    <div data-testid="pie-chart">{children}</div>
+  ),
   Pie: () => null,
   Cell: () => null,
   XAxis: () => null,

@@ -37,7 +37,12 @@ describe("Essay Component", () => {
 
   it("menampilkan error saat minWords > maxWords dan showErrors=true", () => {
     render(
-      <Essay onChange={onChange} minWords={100} maxWords={50} showErrors={true} />,
+      <Essay
+        onChange={onChange}
+        minWords={100}
+        maxWords={50}
+        showErrors={true}
+      />,
     );
     expect(
       screen.getByText(/Maksimal kata harus lebih besar dari minimal kata/),

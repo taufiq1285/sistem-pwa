@@ -3,7 +3,9 @@ import { render, screen } from "@testing-library/react";
 import KuisEditPage from "@/pages/dosen/kuis/KuisEditPage";
 
 vi.mock("@/pages/dosen/kuis/KuisBuilderPage", () => ({
-  default: () => <div data-testid="kuis-builder-page">Mock Kuis Builder Page</div>,
+  default: () => (
+    <div data-testid="kuis-builder-page">Mock Kuis Builder Page</div>
+  ),
 }));
 
 describe("KuisEditPage", () => {

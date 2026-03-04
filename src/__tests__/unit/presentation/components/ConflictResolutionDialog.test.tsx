@@ -55,9 +55,14 @@ describe("ConflictResolutionDialog", () => {
     render(<ConflictResolutionDialog {...baseProps} />);
 
     await userEvent.click(screen.getByRole("radio", { name: /local/i }));
-    await userEvent.click(screen.getByRole("button", { name: "Gunakan Local" }));
+    await userEvent.click(
+      screen.getByRole("button", { name: "Gunakan Local" }),
+    );
 
-    expect(baseProps.onResolve).toHaveBeenCalledWith("local", baseProps.localData);
+    expect(baseProps.onResolve).toHaveBeenCalledWith(
+      "local",
+      baseProps.localData,
+    );
     expect(baseProps.onOpenChange).toHaveBeenCalledWith(false);
   });
 
@@ -65,9 +70,14 @@ describe("ConflictResolutionDialog", () => {
     render(<ConflictResolutionDialog {...baseProps} />);
 
     await userEvent.click(screen.getByRole("radio", { name: /remote/i }));
-    await userEvent.click(screen.getByRole("button", { name: "Gunakan Server" }));
+    await userEvent.click(
+      screen.getByRole("button", { name: "Gunakan Server" }),
+    );
 
-    expect(baseProps.onResolve).toHaveBeenCalledWith("remote", baseProps.remoteData);
+    expect(baseProps.onResolve).toHaveBeenCalledWith(
+      "remote",
+      baseProps.remoteData,
+    );
     expect(baseProps.onOpenChange).toHaveBeenCalledWith(false);
   });
 

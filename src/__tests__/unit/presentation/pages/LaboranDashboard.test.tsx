@@ -172,7 +172,9 @@ describe("Laboran DashboardPage", () => {
     it("menampilkan nama mahasiswa yang mengajukan peminjaman", async () => {
       renderWithRouter(<DashboardPage />);
       await waitFor(() => {
-        expect(screen.getByText(/Andi Pratama \(2201001\)/i)).toBeInTheDocument();
+        expect(
+          screen.getByText(/Andi Pratama \(2201001\)/i),
+        ).toBeInTheDocument();
       });
     });
 
@@ -196,12 +198,14 @@ describe("Laboran DashboardPage", () => {
 
     it("membuka dialog reject saat tombol Reject diklik", async () => {
       renderWithRouter(<DashboardPage />);
-      await waitFor(() =>
-        screen.getAllByRole("button", { name: /Tolak/i }),
+      await waitFor(() => screen.getAllByRole("button", { name: /Tolak/i }));
+      await userEvent.click(
+        screen.getAllByRole("button", { name: /^Tolak$/i })[0],
       );
-      await userEvent.click(screen.getAllByRole("button", { name: /^Tolak$/i })[0]);
       await waitFor(() => {
-        expect(screen.getByRole("textbox", { name: /Alasan Penolakan/i })).toBeInTheDocument();
+        expect(
+          screen.getByRole("textbox", { name: /Alasan Penolakan/i }),
+        ).toBeInTheDocument();
       });
     });
   });
@@ -244,9 +248,7 @@ describe("Laboran DashboardPage", () => {
       mockCacheAPI.mockReset().mockRejectedValue(new Error("API Error"));
       renderWithRouter(<DashboardPage />);
       await waitFor(() => {
-        expect(
-          screen.getByText(/API Error|gagal|error/i),
-        ).toBeInTheDocument();
+        expect(screen.getByText(/API Error|gagal|error/i)).toBeInTheDocument();
       });
     });
   });

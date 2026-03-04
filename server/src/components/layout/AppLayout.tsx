@@ -93,7 +93,7 @@ export function AppLayout({ children, className }: AppLayoutProps) {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
+    <div className="flex h-screen overflow-hidden bg-background text-foreground">
       {/* Desktop Sidebar - Hidden on mobile */}
       <div className="hidden md:block">
         <Sidebar
@@ -115,7 +115,7 @@ export function AppLayout({ children, className }: AppLayoutProps) {
       />
 
       {/* Main Content Area */}
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         {/* Header */}
         <Header
           userName={user.full_name}
@@ -131,8 +131,13 @@ export function AppLayout({ children, className }: AppLayoutProps) {
         />
 
         {/* Page Content */}
-        <main className={cn("flex-1 overflow-auto bg-gray-50", className)}>
-          {children}
+        <main
+          className={cn(
+            "flex-1 overflow-auto bg-muted/30 px-3 py-4 md:px-5 md:py-5 lg:px-6",
+            className,
+          )}
+        >
+          <div className="mx-auto w-full max-w-360">{children}</div>
         </main>
       </div>
     </div>

@@ -24,7 +24,13 @@ vi.mock("sonner", () => ({
 }));
 
 vi.mock("@/components/common/PageHeader", () => ({
-  PageHeader: ({ title, description }: { title: string; description?: string }) => (
+  PageHeader: ({
+    title,
+    description,
+  }: {
+    title: string;
+    description?: string;
+  }) => (
     <div>
       <h1>{title}</h1>
       {description ? <p>{description}</p> : null}
@@ -51,7 +57,8 @@ vi.mock("@/lib/offline/api-cache", () => ({
 
 vi.mock("@/lib/api/announcements.api", () => ({
   getAllAnnouncements: (...args: unknown[]) => mockGetAllAnnouncements(...args),
-  getAnnouncementStats: (...args: unknown[]) => mockGetAnnouncementStats(...args),
+  getAnnouncementStats: (...args: unknown[]) =>
+    mockGetAnnouncementStats(...args),
   deleteAnnouncement: vi.fn(),
   createAnnouncement: vi.fn(),
 }));
@@ -86,9 +93,11 @@ describe("AnnouncementsPage", () => {
       },
     });
 
-    mockCacheAPI.mockImplementation(async (_key: string, fn: () => Promise<any>) => {
-      return fn();
-    });
+    mockCacheAPI.mockImplementation(
+      async (_key: string, fn: () => Promise<any>) => {
+        return fn();
+      },
+    );
 
     mockGetAllAnnouncements.mockResolvedValue([
       {
@@ -114,7 +123,9 @@ describe("AnnouncementsPage", () => {
     renderWithRouter();
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /announcements/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole("heading", { name: /announcements/i }),
+      ).toBeInTheDocument();
       expect(mockGetAllAnnouncements).toHaveBeenCalled();
       expect(mockGetAnnouncementStats).toHaveBeenCalled();
     });

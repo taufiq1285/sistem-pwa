@@ -59,7 +59,9 @@ describe("getNavigationItems", () => {
 
 describe("isRouteActive", () => {
   it("mengembalikan true untuk exact match", () => {
-    expect(isRouteActive("/mahasiswa/dashboard", "/mahasiswa/dashboard")).toBe(true);
+    expect(isRouteActive("/mahasiswa/dashboard", "/mahasiswa/dashboard")).toBe(
+      true,
+    );
   });
 
   it("mengembalikan true untuk nested route", () => {
@@ -67,7 +69,9 @@ describe("isRouteActive", () => {
   });
 
   it("mengembalikan false untuk path berbeda", () => {
-    expect(isRouteActive("/mahasiswa/dashboard", "/mahasiswa/kuis")).toBe(false);
+    expect(isRouteActive("/mahasiswa/dashboard", "/mahasiswa/kuis")).toBe(
+      false,
+    );
   });
 
   it("tidak false-positive pada prefix yang mirip", () => {

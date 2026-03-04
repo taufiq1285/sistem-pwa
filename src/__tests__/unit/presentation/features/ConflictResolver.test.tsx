@@ -35,7 +35,9 @@ vi.mock("@/components/ui/dialog", () => ({
   DialogTitle: ({ children }: any) => <h2>{children}</h2>,
 }));
 vi.mock("@/components/ui/button", () => ({
-  Button: ({ children, ...props }: any) => <button {...props}>{children}</button>,
+  Button: ({ children, ...props }: any) => (
+    <button {...props}>{children}</button>
+  ),
 }));
 vi.mock("@/components/ui/badge", () => ({
   Badge: ({ children }: any) => <span>{children}</span>,
@@ -176,10 +178,14 @@ describe("ConflictResolver", () => {
     await user.click(screen.getByText(/Grade/i));
 
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: /Reject \(Use Server\)/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /Reject \(Use Server\)/i }),
+      ).toBeInTheDocument();
     });
 
-    await user.click(screen.getByRole("button", { name: /Reject \(Use Server\)/i }));
+    await user.click(
+      screen.getByRole("button", { name: /Reject \(Use Server\)/i }),
+    );
 
     await waitFor(() => {
       expect(mockRejectConflict).toHaveBeenCalledWith("c1");

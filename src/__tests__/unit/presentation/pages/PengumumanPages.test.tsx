@@ -3,11 +3,13 @@ import { render, screen, waitFor } from "@testing-library/react";
 import MahasiswaPengumumanPage from "@/pages/mahasiswa/PengumumanPage";
 import LaboranPengumumanPage from "@/pages/laboran/PengumumanPage";
 
-const { mockUseAuth, mockCacheAPI, mockGetAllAnnouncements } = vi.hoisted(() => ({
-  mockUseAuth: vi.fn(),
-  mockCacheAPI: vi.fn(),
-  mockGetAllAnnouncements: vi.fn(),
-}));
+const { mockUseAuth, mockCacheAPI, mockGetAllAnnouncements } = vi.hoisted(
+  () => ({
+    mockUseAuth: vi.fn(),
+    mockCacheAPI: vi.fn(),
+    mockGetAllAnnouncements: vi.fn(),
+  }),
+);
 
 vi.mock("@/lib/hooks/useAuth", () => ({
   useAuth: () => mockUseAuth(),
@@ -65,9 +67,11 @@ describe("Pengumuman Pages", () => {
     vi.clearAllMocks();
     mockUseAuth.mockReturnValue({ user: { id: "u1", role: "mahasiswa" } });
     mockGetAllAnnouncements.mockResolvedValue(announcements);
-    mockCacheAPI.mockImplementation(async (_key: string, fn: () => Promise<any>) => {
-      return await fn();
-    });
+    mockCacheAPI.mockImplementation(
+      async (_key: string, fn: () => Promise<any>) => {
+        return await fn();
+      },
+    );
   });
 
   it("MahasiswaPengumumanPage memfilter pengumuman untuk mahasiswa + umum", async () => {
