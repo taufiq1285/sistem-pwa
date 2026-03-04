@@ -3,15 +3,13 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import LaboratoriesPage from "@/pages/admin/LaboratoriesPage";
 
-const {
-  mockUseAuth,
-  mockCacheAPI,
-  mockGetLaboratoriumList,
-} = vi.hoisted(() => ({
-  mockUseAuth: vi.fn(),
-  mockCacheAPI: vi.fn(),
-  mockGetLaboratoriumList: vi.fn(),
-}));
+const { mockUseAuth, mockCacheAPI, mockGetLaboratoriumList } = vi.hoisted(
+  () => ({
+    mockUseAuth: vi.fn(),
+    mockCacheAPI: vi.fn(),
+    mockGetLaboratoriumList: vi.fn(),
+  }),
+);
 
 vi.mock("sonner", () => ({
   toast: {
@@ -22,7 +20,13 @@ vi.mock("sonner", () => ({
 }));
 
 vi.mock("@/components/common/PageHeader", () => ({
-  PageHeader: ({ title, description }: { title: string; description?: string }) => (
+  PageHeader: ({
+    title,
+    description,
+  }: {
+    title: string;
+    description?: string;
+  }) => (
     <div>
       <h1>{title}</h1>
       {description ? <p>{description}</p> : null}
@@ -74,9 +78,11 @@ describe("LaboratoriesPage", () => {
       },
     });
 
-    mockCacheAPI.mockImplementation(async (_key: string, fn: () => Promise<any>) => {
-      return fn();
-    });
+    mockCacheAPI.mockImplementation(
+      async (_key: string, fn: () => Promise<any>) => {
+        return fn();
+      },
+    );
 
     mockGetLaboratoriumList.mockResolvedValue([
       {

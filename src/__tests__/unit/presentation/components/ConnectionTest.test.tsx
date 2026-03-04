@@ -16,7 +16,10 @@ describe("ConnectionTest", () => {
     vi.clearAllMocks();
 
     vi.stubEnv("VITE_SUPABASE_URL", "https://project.supabase.co");
-    vi.stubEnv("VITE_SUPABASE_ANON_KEY", "anon-key-very-long-example-1234567890");
+    vi.stubEnv(
+      "VITE_SUPABASE_ANON_KEY",
+      "anon-key-very-long-example-1234567890",
+    );
   });
 
   it("menampilkan status connected saat query sukses", async () => {
@@ -30,9 +33,13 @@ describe("ConnectionTest", () => {
     render(<ConnectionTest />);
 
     expect(
-      await screen.findByText("✅ Connected to Supabase! Database schema is ready."),
+      await screen.findByText(
+        "✅ Connected to Supabase! Database schema is ready.",
+      ),
     ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Test Again" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Test Again" }),
+    ).toBeInTheDocument();
   });
 
   it("menampilkan status error saat query gagal", async () => {
@@ -61,7 +68,9 @@ describe("ConnectionTest", () => {
 
     render(<ConnectionTest />);
 
-    await screen.findByText("✅ Connected to Supabase! Database schema is ready.");
+    await screen.findByText(
+      "✅ Connected to Supabase! Database schema is ready.",
+    );
 
     await userEvent.click(screen.getByRole("button", { name: "Test Again" }));
 

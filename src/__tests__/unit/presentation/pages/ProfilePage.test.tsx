@@ -3,10 +3,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import AdminProfilePage from "@/pages/admin/ProfilePage";
 
-const {
-  mockUseAuth,
-  mockCacheAPI,
-} = vi.hoisted(() => ({
+const { mockUseAuth, mockCacheAPI } = vi.hoisted(() => ({
   mockUseAuth: vi.fn(),
   mockCacheAPI: vi.fn(),
 }));
@@ -64,7 +61,9 @@ describe("Admin ProfilePage", () => {
     renderWithRouter();
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /profil saya/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole("heading", { name: /profil saya/i }),
+      ).toBeInTheDocument();
     });
 
     expect(screen.getByDisplayValue("Admin Sistem")).toBeInTheDocument();

@@ -49,10 +49,15 @@ describe("ConnectionLostAlert", () => {
 
     it("menampilkan sync status saat sedang memproses", () => {
       mockUseSyncContext.mockReturnValue(
-        buildSyncContext({ isProcessing: true, stats: { pending: 3, completed: 0, failed: 0, total: 3 } }),
+        buildSyncContext({
+          isProcessing: true,
+          stats: { pending: 3, completed: 0, failed: 0, total: 3 },
+        }),
       );
       render(<ConnectionLostAlert />);
-      expect(screen.getByText(/Menyinkronkan 3 jawaban ke server/)).toBeInTheDocument();
+      expect(
+        screen.getByText(/Menyinkronkan 3 jawaban ke server/),
+      ).toBeInTheDocument();
     });
   });
 
@@ -65,25 +70,35 @@ describe("ConnectionLostAlert", () => {
 
     it("menampilkan alert offline", () => {
       render(<ConnectionLostAlert />);
-      expect(screen.getByText("Tidak Ada Koneksi Internet")).toBeInTheDocument();
+      expect(
+        screen.getByText("Tidak Ada Koneksi Internet"),
+      ).toBeInTheDocument();
     });
 
     it("menampilkan pesan bahwa jawaban disimpan lokal", () => {
       render(<ConnectionLostAlert />);
-      expect(screen.getByText(/Jawaban akan disimpan secara lokal/)).toBeInTheDocument();
+      expect(
+        screen.getByText(/Jawaban akan disimpan secara lokal/),
+      ).toBeInTheDocument();
     });
 
     it("menampilkan badge pending sync saat ada pending items", () => {
       mockUseSyncContext.mockReturnValue(
-        buildSyncContext({ stats: { pending: 5, completed: 0, failed: 0, total: 5 } }),
+        buildSyncContext({
+          stats: { pending: 5, completed: 0, failed: 0, total: 5 },
+        }),
       );
       render(<ConnectionLostAlert />);
-      expect(screen.getByText(/5 jawaban menunggu sinkronisasi/)).toBeInTheDocument();
+      expect(
+        screen.getByText(/5 jawaban menunggu sinkronisasi/),
+      ).toBeInTheDocument();
     });
 
     it("tidak menampilkan sync status saat showSyncStatus=false", () => {
       mockUseSyncContext.mockReturnValue(
-        buildSyncContext({ stats: { pending: 5, completed: 0, failed: 0, total: 5 } }),
+        buildSyncContext({
+          stats: { pending: 5, completed: 0, failed: 0, total: 5 },
+        }),
       );
       render(<ConnectionLostAlert showSyncStatus={false} />);
       expect(screen.queryByText(/5 jawaban/)).not.toBeInTheDocument();

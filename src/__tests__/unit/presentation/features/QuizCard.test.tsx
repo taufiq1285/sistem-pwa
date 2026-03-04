@@ -55,7 +55,9 @@ describe("QuizCard", () => {
 
     it("menampilkan deskripsi kuis", () => {
       renderWithRouter(<QuizCard quiz={makeKuis()} />);
-      expect(screen.getByText("Tes awal sebelum praktikum")).toBeInTheDocument();
+      expect(
+        screen.getByText("Tes awal sebelum praktikum"),
+      ).toBeInTheDocument();
     });
 
     it("menampilkan badge Draft saat status=draft", () => {
@@ -69,7 +71,9 @@ describe("QuizCard", () => {
     });
 
     it("menampilkan badge Tes CBT untuk tipe pilihan_ganda", () => {
-      renderWithRouter(<QuizCard quiz={makeKuis({ tipe_kuis: "pilihan_ganda" })} />);
+      renderWithRouter(
+        <QuizCard quiz={makeKuis({ tipe_kuis: "pilihan_ganda" })} />,
+      );
       expect(screen.getByText("Tes CBT")).toBeInTheDocument();
     });
 
@@ -94,7 +98,9 @@ describe("QuizCard", () => {
     it("tidak menampilkan menu actions saat showActions=false", () => {
       renderWithRouter(<QuizCard quiz={makeKuis()} showActions={false} />);
       // No MoreVertical button
-      expect(screen.queryByRole("button", { name: "" })).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: "" }),
+      ).not.toBeInTheDocument();
     });
   });
 
@@ -108,8 +114,12 @@ describe("QuizCard", () => {
     it("tidak menampilkan tombol Edit dan Hasil di compact mode", () => {
       renderWithRouter(<QuizCard quiz={makeKuis()} compact={true} />);
       // Quick action buttons in footer are hidden in compact mode
-      expect(screen.queryByRole("button", { name: /Edit/ })).not.toBeInTheDocument();
-      expect(screen.queryByRole("button", { name: /Hasil/ })).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: /Edit/ }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: /Hasil/ }),
+      ).not.toBeInTheDocument();
     });
   });
 
@@ -130,7 +140,9 @@ describe("QuizCard", () => {
     });
 
     it("menampilkan 'Publish / Mulai' saat kuis masih draft", async () => {
-      renderWithRouter(<QuizCard quiz={makeKuis({ status: "draft" })} compact={true} />);
+      renderWithRouter(
+        <QuizCard quiz={makeKuis({ status: "draft" })} compact={true} />,
+      );
       const iconBtns = screen.getAllByRole("button");
       const triggerBtn = iconBtns.find((b) => !b.textContent?.trim());
       if (triggerBtn) {
@@ -140,7 +152,9 @@ describe("QuizCard", () => {
     });
 
     it("menampilkan 'Unpublish' saat kuis sudah published", async () => {
-      renderWithRouter(<QuizCard quiz={makeKuis({ status: "published" })} compact={true} />);
+      renderWithRouter(
+        <QuizCard quiz={makeKuis({ status: "published" })} compact={true} />,
+      );
       const iconBtns = screen.getAllByRole("button");
       const triggerBtn = iconBtns.find((b) => !b.textContent?.trim());
       if (triggerBtn) {
@@ -171,7 +185,9 @@ describe("QuizCard", () => {
       (publishKuis as ReturnType<typeof vi.fn>).mockResolvedValue(undefined);
       const onUpdate = vi.fn();
 
-      renderWithRouter(<QuizCard quiz={makeKuis({ status: "draft" })} onUpdate={onUpdate} />);
+      renderWithRouter(
+        <QuizCard quiz={makeKuis({ status: "draft" })} onUpdate={onUpdate} />,
+      );
       const iconBtns = screen.getAllByRole("button");
       const triggerBtn = iconBtns.find((b) => !b.textContent?.trim());
       if (triggerBtn) {
@@ -214,7 +230,10 @@ describe("getQuizStatus", () => {
   it("mengembalikan Aktif saat dalam rentang tanggal", () => {
     const past = new Date(Date.now() - 86400000).toISOString();
     const future = new Date(Date.now() + 86400000).toISOString();
-    const quiz = makeKuis({ tanggal_mulai: past, tanggal_selesai: future }) as any;
+    const quiz = makeKuis({
+      tanggal_mulai: past,
+      tanggal_selesai: future,
+    }) as any;
     quiz.is_active = true;
     const result = getQuizStatus(quiz);
     expect(result.label).toBe("Aktif");
@@ -223,7 +242,10 @@ describe("getQuizStatus", () => {
   it("mengembalikan Selesai saat sudah lewat tanggal selesai", () => {
     const past1 = new Date(Date.now() - 2 * 86400000).toISOString();
     const past2 = new Date(Date.now() - 86400000).toISOString();
-    const quiz = makeKuis({ tanggal_mulai: past1, tanggal_selesai: past2 }) as any;
+    const quiz = makeKuis({
+      tanggal_mulai: past1,
+      tanggal_selesai: past2,
+    }) as any;
     quiz.is_active = true;
     const result = getQuizStatus(quiz);
     expect(result.label).toBe("Selesai");

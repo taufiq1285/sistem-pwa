@@ -115,5 +115,4 @@ describe("useRole Hook", () => {
       expect(result.current.hasPermission("view:users" as any)).toBe(false);
     });
   });
-
 });

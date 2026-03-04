@@ -7,11 +7,13 @@ import { ForgotPasswordPage } from "@/pages/auth/ForgotPasswordPage";
 import { NotFoundPage } from "@/pages/public/NotFoundPage";
 import { UnauthorizedPage } from "@/pages/public/UnauthorizedPage";
 
-const { mockNavigate, mockUseAuth, mockResetPasswordForEmail } = vi.hoisted(() => ({
-  mockNavigate: vi.fn(),
-  mockUseAuth: vi.fn(),
-  mockResetPasswordForEmail: vi.fn(),
-}));
+const { mockNavigate, mockUseAuth, mockResetPasswordForEmail } = vi.hoisted(
+  () => ({
+    mockNavigate: vi.fn(),
+    mockUseAuth: vi.fn(),
+    mockResetPasswordForEmail: vi.fn(),
+  }),
+);
 
 vi.mock("react-router-dom", () => ({
   useNavigate: () => mockNavigate,

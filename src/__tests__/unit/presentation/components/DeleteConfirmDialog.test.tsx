@@ -34,15 +34,14 @@ describe("DeleteConfirmDialog", () => {
 
     it("menampilkan tipe item", () => {
       render(<DeleteConfirmDialog {...defaultProps} />);
-      expect(screen.getByText("Mahasiswa yang akan dihapus:")).toBeInTheDocument();
+      expect(
+        screen.getByText("Mahasiswa yang akan dihapus:"),
+      ).toBeInTheDocument();
     });
 
     it("menampilkan deskripsi opsional saat diberikan", () => {
       render(
-        <DeleteConfirmDialog
-          {...defaultProps}
-          description="NIM: 12345678"
-        />,
+        <DeleteConfirmDialog {...defaultProps} description="NIM: 12345678" />,
       );
       expect(screen.getByText("NIM: 12345678")).toBeInTheDocument();
     });
@@ -61,13 +60,14 @@ describe("DeleteConfirmDialog", () => {
       render(
         <DeleteConfirmDialog
           {...defaultProps}
-          consequences={["Semua nilai akan terhapus", "Akun akan dinonaktifkan"]}
+          consequences={[
+            "Semua nilai akan terhapus",
+            "Akun akan dinonaktifkan",
+          ]}
         />,
       );
       expect(screen.getByText("Semua nilai akan terhapus")).toBeInTheDocument();
-      expect(
-        screen.getByText("Akun akan dinonaktifkan"),
-      ).toBeInTheDocument();
+      expect(screen.getByText("Akun akan dinonaktifkan")).toBeInTheDocument();
     });
   });
 

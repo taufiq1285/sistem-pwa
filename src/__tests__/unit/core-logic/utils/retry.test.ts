@@ -153,5 +153,4 @@ describe("Retry Utilities", () => {
       expect(attempts).toBe(2);
     });
   });
-
 });

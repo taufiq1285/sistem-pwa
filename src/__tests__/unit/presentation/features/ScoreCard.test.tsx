@@ -39,15 +39,27 @@ describe("ScoreCard", () => {
     });
 
     it("menampilkan badge Tidak Lulus saat passed=false", () => {
-      render(<ScoreCard score={makeScore({ passed: false, grade: "D", percentage: 40 })} />);
+      render(
+        <ScoreCard
+          score={makeScore({ passed: false, grade: "D", percentage: 40 })}
+        />,
+      );
       expect(screen.getByText(/Tidak Lulus/)).toBeInTheDocument();
     });
 
     it("menampilkan statistik detail saat showDetails=true (default)", () => {
-      render(<ScoreCard score={makeScore({ correct_count: 15, incorrect_count: 4, unanswered_count: 1 })} />);
+      render(
+        <ScoreCard
+          score={makeScore({
+            correct_count: 15,
+            incorrect_count: 4,
+            unanswered_count: 1,
+          })}
+        />,
+      );
       expect(screen.getByText("15")).toBeInTheDocument(); // correct
-      expect(screen.getByText("4")).toBeInTheDocument();  // incorrect
-      expect(screen.getByText("1")).toBeInTheDocument();  // unanswered
+      expect(screen.getByText("4")).toBeInTheDocument(); // incorrect
+      expect(screen.getByText("1")).toBeInTheDocument(); // unanswered
     });
 
     it("tidak menampilkan statistik saat showDetails=false", () => {
@@ -95,9 +107,7 @@ describe("ScoreCard", () => {
     });
 
     it("tidak menampilkan statistik Benar/Salah di laporan mode", () => {
-      render(
-        <ScoreCard score={makeScore()} isLaporanMode={true} />,
-      );
+      render(<ScoreCard score={makeScore()} isLaporanMode={true} />);
       expect(screen.queryByText("Benar")).not.toBeInTheDocument();
     });
   });

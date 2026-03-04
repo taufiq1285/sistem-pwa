@@ -90,7 +90,10 @@ describe("MultipleChoice Component", () => {
   });
 
   it("menampilkan error validation saat showErrors=true dan tidak ada jawaban benar", () => {
-    const noCorrectOptions = makeOptions(2).map((o) => ({ ...o, is_correct: false }));
+    const noCorrectOptions = makeOptions(2).map((o) => ({
+      ...o,
+      is_correct: false,
+    }));
     render(
       <MultipleChoice
         options={noCorrectOptions}
@@ -101,8 +104,8 @@ describe("MultipleChoice Component", () => {
     );
     // Teks error muncul di elemen destructive (bukan helper text biasa)
     const errorEl = screen.getAllByText(/Pilih satu jawaban yang benar/);
-    const destructiveEl = errorEl.find(
-      (el) => el.className?.includes("destructive"),
+    const destructiveEl = errorEl.find((el) =>
+      el.className?.includes("destructive"),
     );
     expect(destructiveEl).toBeDefined();
   });
@@ -145,7 +148,9 @@ describe("MultipleChoice Helper Functions", () => {
     it("invalid saat kurang dari 2 opsi", () => {
       const result = validateMultipleChoice([makeOptions(1)[0]]);
       expect(result.isValid).toBe(false);
-      expect(result.errors.some((e) => e.includes("Minimal 2 opsi"))).toBe(true);
+      expect(result.errors.some((e) => e.includes("Minimal 2 opsi"))).toBe(
+        true,
+      );
     });
 
     it("invalid saat lebih dari 6 opsi", () => {
@@ -165,7 +170,9 @@ describe("MultipleChoice Helper Functions", () => {
       const options = makeOptions(4).map((o) => ({ ...o, is_correct: false }));
       const result = validateMultipleChoice(options);
       expect(result.isValid).toBe(false);
-      expect(result.errors.some((e) => e.includes("satu jawaban yang benar"))).toBe(true);
+      expect(
+        result.errors.some((e) => e.includes("satu jawaban yang benar")),
+      ).toBe(true);
     });
 
     it("invalid saat lebih dari 1 jawaban benar", () => {

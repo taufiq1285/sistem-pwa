@@ -15,8 +15,7 @@ vi.mock("@/lib/hooks/useAuth", () => ({
 // Mock jadwal API
 const mockGetJadwalMingguIni = vi.fn();
 vi.mock("@/lib/api/jadwal.api", () => ({
-  getJadwalMingguIni: (...args: unknown[]) =>
-    mockGetJadwalMingguIni(...args),
+  getJadwalMingguIni: (...args: unknown[]) => mockGetJadwalMingguIni(...args),
 }));
 
 function makeJadwal(overrides = {}) {
@@ -70,7 +69,9 @@ describe("JadwalList", () => {
       mockGetJadwalMingguIni.mockResolvedValue([]);
       render(<JadwalList />);
       await waitFor(() => {
-        expect(screen.getByText("Nikmati waktu libur Anda!")).toBeInTheDocument();
+        expect(
+          screen.getByText("Nikmati waktu libur Anda!"),
+        ).toBeInTheDocument();
       });
     });
   });
@@ -93,9 +94,7 @@ describe("JadwalList", () => {
     it("menampilkan judul halaman", async () => {
       render(<JadwalList />);
       await waitFor(() => {
-        expect(
-          screen.getByText(/Jadwal Praktikum/),
-        ).toBeInTheDocument();
+        expect(screen.getByText(/Jadwal Praktikum/)).toBeInTheDocument();
       });
     });
 

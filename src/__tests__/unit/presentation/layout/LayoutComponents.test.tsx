@@ -41,7 +41,8 @@ vi.mock("@/lib/hooks/useMultiTabSync", () => ({
 }));
 
 vi.mock("@/lib/hooks/useNotificationPolling", () => ({
-  useNotificationPolling: (options: unknown) => mockUseNotificationPolling(options),
+  useNotificationPolling: (options: unknown) =>
+    mockUseNotificationPolling(options),
 }));
 
 vi.mock("@/lib/hooks/useConflicts", () => ({
@@ -65,12 +66,15 @@ vi.mock("@/components/common", async () => {
   const actual = await vi.importActual<object>("@/components/common");
   return {
     ...actual,
-    NotificationDropdown: () => <div data-testid="notification-dropdown">Notification Dropdown</div>,
+    NotificationDropdown: () => (
+      <div data-testid="notification-dropdown">Notification Dropdown</div>
+    ),
   };
 });
 
 vi.mock("@/config/navigation.config", async () => {
-  const { Home, BookOpen } = await vi.importActual<typeof import("lucide-react")>("lucide-react");
+  const { Home, BookOpen } =
+    await vi.importActual<typeof import("lucide-react")>("lucide-react");
 
   const items = [
     {
@@ -90,12 +94,16 @@ vi.mock("@/config/navigation.config", async () => {
 
   return {
     getNavigationItems: vi.fn(() => items),
-    isRouteActive: vi.fn((currentPath: string, href: string) => currentPath === href),
+    isRouteActive: vi.fn(
+      (currentPath: string, href: string) => currentPath === href,
+    ),
   };
 });
 
 function renderWithRouter(ui: React.ReactElement, initialEntries = ["/"]) {
-  return render(<MemoryRouter initialEntries={initialEntries}>{ui}</MemoryRouter>);
+  return render(
+    <MemoryRouter initialEntries={initialEntries}>{ui}</MemoryRouter>,
+  );
 }
 
 describe("Layout Components", () => {
@@ -179,9 +187,13 @@ describe("Layout Components", () => {
       );
 
       expect(screen.getByText("AKBID Mega Buana")).toBeInTheDocument();
-      expect(screen.getByText("Sistem Praktikum Kebidanan")).toBeInTheDocument();
+      expect(
+        screen.getByText("Sistem Praktikum Kebidanan"),
+      ).toBeInTheDocument();
       expect(screen.getByText("Auth Form")).toBeInTheDocument();
-      expect(container.querySelector(".custom-auth-layout")).toBeInTheDocument();
+      expect(
+        container.querySelector(".custom-auth-layout"),
+      ).toBeInTheDocument();
     });
   });
 
@@ -329,7 +341,10 @@ describe("Layout Components", () => {
 
   describe("OfflineBar", () => {
     it("menampilkan banner offline dan jumlah pending changes", () => {
-      mockUseNetworkStatus.mockReturnValue({ isOnline: false, isOffline: true });
+      mockUseNetworkStatus.mockReturnValue({
+        isOnline: false,
+        isOffline: true,
+      });
       mockUseSyncContext.mockReturnValue({
         stats: { pending: 2 },
         processQueue: mockProcessQueue,
@@ -339,13 +354,18 @@ describe("Layout Components", () => {
       render(<OfflineBar />);
 
       expect(screen.getByText(/you are offline/i)).toBeInTheDocument();
-      expect(screen.getByText(/you have 2 unsaved changes/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/you have 2 unsaved changes/i),
+      ).toBeInTheDocument();
     });
 
     it("menampilkan state back online dan memproses sync manual", async () => {
       const user = userEvent.setup();
 
-      mockUseNetworkStatus.mockReturnValue({ isOnline: false, isOffline: true });
+      mockUseNetworkStatus.mockReturnValue({
+        isOnline: false,
+        isOffline: true,
+      });
       mockUseSyncContext.mockReturnValue({
         stats: { pending: 3 },
         processQueue: mockProcessQueue,
@@ -354,7 +374,10 @@ describe("Layout Components", () => {
 
       const { rerender } = render(<OfflineBar />);
 
-      mockUseNetworkStatus.mockReturnValue({ isOnline: true, isOffline: false });
+      mockUseNetworkStatus.mockReturnValue({
+        isOnline: true,
+        isOffline: false,
+      });
       rerender(<OfflineBar />);
 
       expect(screen.getByText(/you are back online/i)).toBeInTheDocument();

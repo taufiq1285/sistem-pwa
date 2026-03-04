@@ -63,7 +63,11 @@ describe("CACHE_RULES", () => {
 
   it("semua strategy adalah nilai yang valid", () => {
     const validStrategies = [
-      "CacheFirst", "NetworkFirst", "StaleWhileRevalidate", "NetworkOnly", "CacheOnly",
+      "CacheFirst",
+      "NetworkFirst",
+      "StaleWhileRevalidate",
+      "NetworkOnly",
+      "CacheOnly",
     ];
     CACHE_RULES.forEach((rule) => {
       expect(validStrategies).toContain(rule.strategy);

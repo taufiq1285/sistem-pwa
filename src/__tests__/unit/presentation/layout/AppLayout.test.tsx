@@ -26,7 +26,8 @@ vi.mock("@/lib/hooks/useMultiTabSync", () => ({
 }));
 
 vi.mock("@/lib/hooks/useNotificationPolling", () => ({
-  useNotificationPolling: (options: unknown) => mockUseNotificationPolling(options),
+  useNotificationPolling: (options: unknown) =>
+    mockUseNotificationPolling(options),
 }));
 
 vi.mock("@/components/layout/Header", () => ({

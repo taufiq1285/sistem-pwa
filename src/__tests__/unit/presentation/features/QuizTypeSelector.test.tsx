@@ -13,7 +13,9 @@ describe("QuizTypeSelector", () => {
     const user = userEvent.setup();
     const onSelect = vi.fn();
 
-    render(<QuizTypeSelector onSelect={onSelect} selectedType={TIPE_KUIS.ESSAY} />);
+    render(
+      <QuizTypeSelector onSelect={onSelect} selectedType={TIPE_KUIS.ESSAY} />,
+    );
 
     expect(screen.getByText("Pilih Tipe Tugas")).toBeInTheDocument();
     expect(screen.getByText(/dipilih/i)).toBeInTheDocument();
@@ -27,9 +29,9 @@ describe("QuizTypeSelector", () => {
     expect(essayAllowed).toContain("Essay (jawaban panjang)");
 
     expect(isQuestionTypeAllowed(TIPE_KUIS.CAMPURAN, "apa-saja")).toBe(true);
-    expect(isQuestionTypeAllowed(TIPE_KUIS.PILIHAN_GANDA, "pilihan_ganda")).toBe(
-      true,
-    );
+    expect(
+      isQuestionTypeAllowed(TIPE_KUIS.PILIHAN_GANDA, "pilihan_ganda"),
+    ).toBe(true);
     expect(isQuestionTypeAllowed(TIPE_KUIS.PILIHAN_GANDA, "essay")).toBe(false);
     expect(isQuestionTypeAllowed(TIPE_KUIS.ESSAY, "file_upload")).toBe(true);
   });

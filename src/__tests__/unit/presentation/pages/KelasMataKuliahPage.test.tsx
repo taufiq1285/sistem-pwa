@@ -3,11 +3,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import KelasMataKuliahPage from "@/pages/admin/KelasMataKuliahPage";
 
-const {
-  mockUseAuth,
-  mockCacheAPI,
-  mockSupabaseFrom,
-} = vi.hoisted(() => ({
+const { mockUseAuth, mockCacheAPI, mockSupabaseFrom } = vi.hoisted(() => ({
   mockUseAuth: vi.fn(),
   mockCacheAPI: vi.fn(),
   mockSupabaseFrom: vi.fn(),
@@ -56,9 +52,11 @@ describe("KelasMataKuliahPage", () => {
       },
     });
 
-    mockCacheAPI.mockImplementation(async (_key: string, fn: () => Promise<any>) => {
-      return fn();
-    });
+    mockCacheAPI.mockImplementation(
+      async (_key: string, fn: () => Promise<any>) => {
+        return fn();
+      },
+    );
 
     mockSupabaseFrom.mockImplementation((table: string) => {
       const dataMap: Record<string, any[]> = {

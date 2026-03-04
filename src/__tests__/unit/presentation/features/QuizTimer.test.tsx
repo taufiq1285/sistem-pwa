@@ -17,9 +17,15 @@ const localStorageMock = (() => {
   let store: Record<string, string> = {};
   return {
     getItem: (key: string) => store[key] ?? null,
-    setItem: (key: string, value: string) => { store[key] = value; },
-    removeItem: (key: string) => { delete store[key]; },
-    clear: () => { store = {}; },
+    setItem: (key: string, value: string) => {
+      store[key] = value;
+    },
+    removeItem: (key: string) => {
+      delete store[key];
+    },
+    clear: () => {
+      store = {};
+    },
   };
 })();
 Object.defineProperty(globalThis, "localStorage", { value: localStorageMock });
@@ -85,7 +91,9 @@ describe("QuizTimer Component", () => {
       );
       expect(screen.getByText("01:00")).toBeInTheDocument();
 
-      act(() => { vi.advanceTimersByTime(5000); });
+      act(() => {
+        vi.advanceTimersByTime(5000);
+      });
       expect(screen.getByText("00:55")).toBeInTheDocument();
     });
 
@@ -98,7 +106,9 @@ describe("QuizTimer Component", () => {
         />,
       );
 
-      act(() => { vi.advanceTimersByTime(60000); });
+      act(() => {
+        vi.advanceTimersByTime(60000);
+      });
       expect(onTimeUp).toHaveBeenCalledTimes(1);
     });
 
@@ -111,7 +121,9 @@ describe("QuizTimer Component", () => {
         />,
       );
 
-      act(() => { vi.advanceTimersByTime(60000); });
+      act(() => {
+        vi.advanceTimersByTime(60000);
+      });
       expect(screen.getByText("00:00")).toBeInTheDocument();
     });
   });
@@ -149,7 +161,10 @@ describe("QuizTimer Helper Functions", () => {
 
   describe("clearTimerData", () => {
     it("menghapus data timer dari localStorage", () => {
-      localStorageMock.setItem("quiz_timer_abc", JSON.stringify({ timeRemaining: 100 }));
+      localStorageMock.setItem(
+        "quiz_timer_abc",
+        JSON.stringify({ timeRemaining: 100 }),
+      );
       clearTimerData("abc");
       expect(localStorageMock.getItem("quiz_timer_abc")).toBeNull();
     });
@@ -161,7 +176,10 @@ describe("QuizTimer Helper Functions", () => {
     });
 
     it("mengembalikan nilai timeRemaining yang tersimpan", () => {
-      localStorageMock.setItem("quiz_timer_test", JSON.stringify({ timeRemaining: 250 }));
+      localStorageMock.setItem(
+        "quiz_timer_test",
+        JSON.stringify({ timeRemaining: 250 }),
+      );
       expect(getStoredTimeRemaining("test")).toBe(250);
     });
 

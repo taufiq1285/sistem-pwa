@@ -121,7 +121,10 @@ describe("ProtectedRoute", () => {
       renderWithRouter(
         <Routes>
           <Route element={<ProtectedRoute />}>
-            <Route path="/dashboard" element={<div>Dashboard via Outlet</div>} />
+            <Route
+              path="/dashboard"
+              element={<div>Dashboard via Outlet</div>}
+            />
           </Route>
         </Routes>,
       );

@@ -348,7 +348,7 @@ export default function InventarisPage() {
             value={selectedKategori || undefined}
             onValueChange={(value) => setSelectedKategori(value)}
           >
-            <SelectTrigger className="w-[200px]">
+            <SelectTrigger className="w-50">
               <SelectValue placeholder="All Categories" />
             </SelectTrigger>
             <SelectContent>

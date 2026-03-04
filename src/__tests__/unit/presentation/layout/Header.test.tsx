@@ -7,12 +7,16 @@ vi.mock("@/components/common", async () => {
   const actual = await vi.importActual<object>("@/components/common");
   return {
     ...actual,
-    NotificationDropdown: () => <div data-testid="notification-dropdown">Notification Dropdown</div>,
+    NotificationDropdown: () => (
+      <div data-testid="notification-dropdown">Notification Dropdown</div>
+    ),
   };
 });
 
 vi.mock("@/components/layout/ConflictNotificationBadge", () => ({
-  ConflictNotificationBadge: () => <div data-testid="conflict-badge">Conflict Badge</div>,
+  ConflictNotificationBadge: () => (
+    <div data-testid="conflict-badge">Conflict Badge</div>
+  ),
 }));
 
 describe("Header", () => {

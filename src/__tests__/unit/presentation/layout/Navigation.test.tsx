@@ -4,11 +4,15 @@ import { MemoryRouter } from "react-router-dom";
 import { Navigation } from "@/components/layout/Navigation";
 
 vi.mock("@/components/layout/Sidebar", () => ({
-  Sidebar: ({ userName }: { userName?: string }) => <div>Sidebar {userName}</div>,
+  Sidebar: ({ userName }: { userName?: string }) => (
+    <div>Sidebar {userName}</div>
+  ),
 }));
 
 vi.mock("@/components/layout/MobileNav", () => ({
-  MobileNav: ({ userName }: { userName?: string }) => <div>MobileNav {userName}</div>,
+  MobileNav: ({ userName }: { userName?: string }) => (
+    <div>MobileNav {userName}</div>
+  ),
 }));
 
 describe("Navigation", () => {

@@ -34,10 +34,15 @@ const PLACEHOLDERS = [
 ] as const;
 
 describe("Feature placeholder components", () => {
-  it.each(PLACEHOLDERS)("render placeholder TODO untuk $name", ({ Component }) => {
-    render(<Component />);
+  it.each(PLACEHOLDERS)(
+    "render placeholder TODO untuk $name",
+    ({ Component }) => {
+      render(<Component />);
 
-    expect(screen.getByText("TODO: Implement [ComponentName]")).toBeInTheDocument();
-    cleanup();
-  });
+      expect(
+        screen.getByText("TODO: Implement [ComponentName]"),
+      ).toBeInTheDocument();
+      cleanup();
+    },
+  );
 });

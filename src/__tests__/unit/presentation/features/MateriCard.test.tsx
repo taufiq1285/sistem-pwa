@@ -5,7 +5,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MateriCard, MateriList } from "@/components/features/materi/MateriCard";
+import {
+  MateriCard,
+  MateriList,
+} from "@/components/features/materi/MateriCard";
 import type { Materi } from "@/types/materi.types";
 
 vi.mock("@/lib/supabase/storage", () => ({

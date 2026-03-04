@@ -55,17 +55,17 @@ export function Sidebar({
   return (
     <aside
       className={cn(
-        "relative h-screen bg-background border-r transition-all duration-300",
+        "relative h-screen border-r bg-card transition-all duration-300",
         collapsed ? "w-16" : "w-64",
         className,
       )}
     >
       {/* Header */}
-      <div className="flex h-16 items-center justify-between border-b px-4">
+      <div className="flex h-16 items-center justify-between border-b px-3.5">
         {!collapsed && (
           <div>
-            <h2 className="text-lg font-semibold">AKBID Mega Buana</h2>
-            <p className="text-xs text-muted-foreground">Sistem Praktikum</p>
+            <h2 className="text-sm font-semibold tracking-tight">AKBID Mega Buana</h2>
+            <p className="text-[11px] text-muted-foreground">Sistem Praktikum</p>
           </div>
         )}
         <Button
@@ -85,7 +85,7 @@ export function Sidebar({
 
       {/* Navigation */}
       <ScrollArea className="h-[calc(100vh-8rem)]">
-        <nav className="space-y-1 p-2">
+        <nav className="space-y-1.5 p-2.5">
           {navItems.map((item) => {
             const Icon = item.icon;
             const active = isRouteActive(location.pathname, item.href);
@@ -95,14 +95,14 @@ export function Sidebar({
                 key={item.href}
                 to={item.href}
                 className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                  "hover:bg-accent hover:text-accent-foreground",
-                  active && "bg-accent text-accent-foreground",
+                  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                  "hover:bg-accent/70 hover:text-accent-foreground",
+                  active && "bg-accent text-accent-foreground shadow-sm",
                   collapsed && "justify-center",
                 )}
                 title={collapsed ? item.label : item.description}
               >
-                <Icon className="h-4 w-4 flex-shrink-0" />
+                <Icon className="h-4 w-4 shrink-0" />
                 {!collapsed && (
                   <>
                     <span className="flex-1">{item.label}</span>
@@ -120,7 +120,7 @@ export function Sidebar({
       </ScrollArea>
 
       {/* Footer - User Info */}
-      <div className="absolute bottom-0 left-0 right-0 border-t bg-background">
+      <div className="absolute bottom-0 left-0 right-0 border-t bg-card/95 backdrop-blur supports-backdrop-filter:bg-card/80">
         <div
           className={cn(
             "flex items-center gap-3 p-4",

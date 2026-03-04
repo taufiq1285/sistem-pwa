@@ -37,7 +37,9 @@ vi.mock("@/lib/utils/format", () => ({
   formatRelativeTime: () => "2 menit lalu",
 }));
 
-const mockNotification = (overrides: Partial<Notification> = {}): Notification => ({
+const mockNotification = (
+  overrides: Partial<Notification> = {},
+): Notification => ({
   id: "notif-1",
   user_id: "user-1",
   type: "pengumuman",
@@ -198,9 +200,7 @@ describe("NotificationDropdown", () => {
       renderComponent();
       await userEvent.click(screen.getByTitle("Notifikasi"));
 
-      await waitFor(() =>
-        screen.getByText("Hapus yang Sudah Dibaca"),
-      );
+      await waitFor(() => screen.getByText("Hapus yang Sudah Dibaca"));
       await userEvent.click(screen.getByText("Hapus yang Sudah Dibaca"));
 
       expect(mockDeleteReadNotifications).toHaveBeenCalledWith("user-1");

@@ -5,6 +5,8 @@ import { ComponentName } from "@/components/features/nilai/TranscriptTable";
 describe("TranscriptTable placeholder", () => {
   it("menampilkan placeholder TODO", () => {
     render(<ComponentName />);
-    expect(screen.getByText("TODO: Implement [ComponentName]")).toBeInTheDocument();
+    expect(
+      screen.getByText("TODO: Implement [ComponentName]"),
+    ).toBeInTheDocument();
   });
 });
