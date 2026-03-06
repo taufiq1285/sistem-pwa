@@ -3,20 +3,12 @@
  * Reusable page header with title, description, breadcrumbs, and actions
  */
 
-/**
- * PageHeader Component
- * Reusable page header with title, description, breadcrumbs, and actions
- */
 import type { ReactNode } from "react";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-
-// ============================================================================
-// TYPES
-// ============================================================================
 
 interface Breadcrumb {
   label: string;
@@ -32,10 +24,6 @@ interface PageHeaderProps {
   onBack?: () => void;
   className?: string;
 }
-
-// ============================================================================
-// COMPONENT
-// ============================================================================
 
 export function PageHeader({
   title,
@@ -58,21 +46,20 @@ export function PageHeader({
 
   return (
     <div className={cn("space-y-4", className)}>
-      {/* Breadcrumbs */}
       {breadcrumbs && breadcrumbs.length > 0 && (
-        <nav className="flex items-center space-x-2 text-sm text-muted-foreground">
+        <nav className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-500 sm:text-sm">
           {breadcrumbs.map((breadcrumb, index) => (
-            <div key={index} className="flex items-center space-x-2">
+            <div key={index} className="flex items-center gap-2">
               {index > 0 && <span>/</span>}
               {breadcrumb.href ? (
                 <button
                   onClick={() => navigate(breadcrumb.href!)}
-                  className="hover:text-foreground transition-colors"
+                  className="transition-colors hover:text-slate-800"
                 >
                   {breadcrumb.label}
                 </button>
               ) : (
-                <span className="text-foreground font-medium">
+                <span className="font-semibold text-slate-800">
                   {breadcrumb.label}
                 </span>
               )}
@@ -81,41 +68,40 @@ export function PageHeader({
         </nav>
       )}
 
-      {/* Header Content */}
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-start gap-4 flex-1 min-w-0">
-          {/* Back Button */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex min-w-0 flex-1 items-start gap-3 sm:gap-4">
           {showBack && (
             <Button
               type="button"
               variant="ghost"
               size="icon"
               onClick={handleBack}
-              className="shrink-0 mt-1"
+              className="mt-0.5 shrink-0"
             >
               <ArrowLeft className="h-4 w-4" />
               <span className="sr-only">Kembali</span>
             </Button>
           )}
 
-          {/* Title & Description */}
-          <div className="flex-1 min-w-0">
-            <h1 className="text-4xl font-extrabold tracking-tight">{title}</h1>
+          <div className="min-w-0 flex-1">
+            <h1 className="text-2xl font-black tracking-tight text-slate-900 sm:text-3xl lg:text-4xl">
+              {title}
+            </h1>
             {description && (
-              <p className="mt-2 text-lg font-semibold max-w-2xl">
+              <p className="mt-2 max-w-2xl text-sm text-slate-600 sm:text-base">
                 {description}
               </p>
             )}
           </div>
         </div>
 
-        {/* Actions */}
         {action && (
-          <div className="shrink-0 flex items-center gap-2">{action}</div>
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+            {action}
+          </div>
         )}
       </div>
 
-      {/* Separator */}
       <Separator />
     </div>
   );

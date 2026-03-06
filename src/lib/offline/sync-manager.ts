@@ -14,6 +14,74 @@
 
 import { queueManager } from "./queue-manager";
 import { networkDetector } from "./network-detector";
+import type { SyncQueueItem } from "@/types/offline.types";
+import { supabase } from "@/lib/supabase/client";
+
+// ============================================================================
+// DEFAULT SYNC PROCESSOR
+// ============================================================================
+
+/**
+ * Default processor: mengirim item queue ke Supabase saat online.
+ * Sama dengan processSyncQueueItem di useSync.ts agar konsisten.
+ */
+async function defaultSyncProcessor(item: SyncQueueItem): Promise<void> {
+  const payload = { ...item.data };
+  delete (payload as Record<string, unknown>)._metadata;
+
+  if (item.entity === "kuis_jawaban") {
+    if (item.operation === "delete") {
+      throw new Error("Delete operation is not supported for kuis_jawaban offline sync");
+    }
+    const attempt_id = payload.attempt_id as string | undefined;
+    const soal_id = payload.soal_id as string | undefined;
+    const jawaban = payload.jawaban as string | undefined;
+
+    if (!attempt_id || !soal_id || jawaban === undefined) {
+      throw new Error("Invalid kuis_jawaban payload: attempt_id, soal_id, dan jawaban wajib ada");
+    }
+
+    const { submitAnswerSafe } = await import("@/lib/api/kuis-versioned-simple.api");
+    await submitAnswerSafe({ attempt_id, soal_id, jawaban });
+    return;
+  }
+
+  const tableByEntity: Record<string, string> = {
+    kuis: "kuis",
+    kuis_soal: "soal",
+    nilai: "nilai",
+    materi: "materi",
+    kelas: "kelas",
+    user: "users",
+  };
+
+  const table = tableByEntity[item.entity];
+  if (!table) throw new Error(`Unsupported sync entity: ${item.entity}`);
+
+  if (item.operation === "create") {
+    const { error } = await (supabase as any).from(table).insert(payload);
+    if (error) throw error;
+    return;
+  }
+
+  const id = payload.id as string | undefined;
+  if (!id) throw new Error(`Missing id for ${item.operation} ${item.entity}`);
+
+  if (item.operation === "update") {
+    const { id: _ignored, ...updateData } = payload;
+    const { error } = await (supabase as any).from(table).update(updateData).eq("id", id);
+    if (error) throw error;
+    return;
+  }
+
+  if (item.operation === "delete") {
+    const { error } = await (supabase as any).from(table).delete().eq("id", id);
+    if (error) throw error;
+    return;
+  }
+
+  throw new Error(`Unsupported sync operation: ${item.operation}`);
+}
 
 // ============================================================================
 // TYPES
@@ -165,6 +233,10 @@ export class SyncManager {
         "message",
         this.swMessageHandler,
       );
+
+      // Set default processor agar SW trigger (PROCESS_SYNC_QUEUE) langsung bisa jalan
+      queueManager.setProcessor(defaultSyncProcessor);
+
       this.isInitialized = true;
       console.log("SyncManager initialized");
     } catch (error) {

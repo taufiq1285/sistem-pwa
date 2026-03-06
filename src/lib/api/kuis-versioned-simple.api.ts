@@ -15,7 +15,7 @@ import type {
   SubmitAnswerData,
 } from "@/types/kuis.types";
 import { supabase } from "@/lib/supabase/client";
-import { clearAllCacheSync } from "@/lib/offline/api-cache";
+import { clearAllCacheSync, invalidateCache } from "@/lib/offline/api-cache";
 
 /**
  * Submit answer - simplified without version checking
@@ -382,7 +382,6 @@ export async function gradeAnswerWithVersion(
           .getUser()
           .then((res) => res.data.user?.id);
         if (dosenId) {
-          const { invalidateCache } = await import("@/lib/offline/api-cache");
           await invalidateCache(`dosen_grading_${dosenId}`);
           console.log(
             "[KuisAPI] Invalidated dosen_grading cache for:",

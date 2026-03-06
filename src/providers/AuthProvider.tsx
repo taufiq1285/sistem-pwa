@@ -24,6 +24,7 @@ import {
   clearOfflineSession,
   restoreOfflineSession,
 } from "@/lib/offline/offline-auth";
+import { recordOnlineLogin } from "@/lib/offline/online-first-auth";
 import { cleanupAllCache } from "@/lib/utils/cache-cleaner";
 
 interface AuthProviderProps {
@@ -319,6 +320,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
             );
             await storeOfflineSession(response.user, response.session);
             await storeUserData(response.user);
+            // Record that user has logged in online (required for offline access)
+            await recordOnlineLogin(response.user, response.session);
             logger.auth("Offline credentials stored successfully");
           } catch (storageError) {
             console.warn("Failed to store offline credentials:", storageError);
@@ -374,6 +377,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (!response.success) {
         throw new Error(response.error || "Registration failed");
       }
+
+      // After successful registration, the user should be able to login
+      // The first login will record the online login
     } catch (error) {
       console.error("Registration error:", error);
       throw error;

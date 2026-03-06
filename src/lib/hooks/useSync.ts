@@ -17,6 +17,7 @@ import type {
   SyncStatus,
 } from "@/types/offline.types";
 import type { QueueStats, QueueEvent } from "../offline/queue-manager";
+import { supabase } from "@/lib/supabase/client";
 
 // ============================================================================
 // TYPES
@@ -45,6 +46,81 @@ export interface UseSyncReturn {
   refreshStats: () => Promise<void>;
   /** Get all items with optional status filter */
   getAllItems: (status?: SyncStatus) => Promise<SyncQueueItem[]>;
+}
+
+// ============================================================================
+// SYNC PROCESSOR
+// ============================================================================
+
+function sanitizeQueueData(data: Record<string, unknown>): Record<string, unknown> {
+  const payload = { ...data };
+  delete (payload as any)._metadata;
+  return payload;
+}
+
+async function processSyncQueueItem(item: SyncQueueItem): Promise<void> {
+  const data = sanitizeQueueData(item.data);
+
+  if (item.entity === "kuis_jawaban") {
+    if (item.operation === "delete") {
+      throw new Error("Delete operation is not supported for kuis_jawaban offline sync");
+    }
+
+    const attempt_id = data.attempt_id as string | undefined;
+    const soal_id = data.soal_id as string | undefined;
+    const jawaban = data.jawaban as string | undefined;
+
+    if (!attempt_id || !soal_id || jawaban === undefined) {
+      throw new Error("Invalid kuis_jawaban payload: attempt_id, soal_id, dan jawaban wajib ada");
+    }
+
+    const { submitAnswerSafe } = await import(
+      "@/lib/api/kuis-versioned-simple.api"
+    );
+    await submitAnswerSafe({ attempt_id, soal_id, jawaban });
+    return;
+  }
+
+  const tableByEntity: Record<Exclude<SyncEntity, "kuis_jawaban">, string> = {
+    kuis: "kuis",
+    kuis_soal: "soal",
+    nilai: "nilai",
+    materi: "materi",
+    kelas: "kelas",
+    user: "users",
+  };
+
+  const table = tableByEntity[item.entity as Exclude<SyncEntity, "kuis_jawaban">];
+
+  if (!table) {
+    throw new Error(`Unsupported sync entity: ${item.entity}`);
+  }
+
+  if (item.operation === "create") {
+    const { error } = await (supabase as any).from(table).insert(data);
+    if (error) throw error;
+    return;
+  }
+
+  const id = data.id as string | undefined;
+  if (!id) {
+    throw new Error(`Missing id for ${item.operation} ${item.entity}`);
+  }
+
+  if (item.operation === "update") {
+    const { id: _ignored, ...updateData } = data;
+    const { error } = await (supabase as any).from(table).update(updateData).eq("id", id);
+    if (error) throw error;
+    return;
+  }
+
+  if (item.operation === "delete") {
+    const { error } = await (supabase as any).from(table).delete().eq("id", id);
+    if (error) throw error;
+    return;
+  }
+
+  throw new Error(`Unsupported sync operation: ${item.operation}`);
 }
 
 // ============================================================================
@@ -215,6 +291,12 @@ export function useSync(): UseSyncReturn {
         // Initialize queue manager if not already initialized
         if (!queueManager.isReady()) {
           await queueManager.initialize();
+        }
+
+        // IMPORTANT: Runtime processor that actually syncs queue items to Supabase
+        // Guarded for test mocks that may not expose setProcessor
+        if (typeof (queueManager as any).setProcessor === "function") {
+          (queueManager as any).setProcessor(processSyncQueueItem);
         }
 
         // Subscribe to queue events

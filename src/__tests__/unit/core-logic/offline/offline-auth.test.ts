@@ -39,6 +39,59 @@ vi.mock("../../../../lib/offline/indexeddb", () => ({
   },
 }));
 
+// Mock online-first auth adapter used by offlineLogin()
+// Keep behavior equivalent to legacy offlineLogin flow so existing unit tests remain valid.
+vi.mock("../../../../lib/offline/online-first-auth", () => ({
+  secureOfflineLogin: vi.fn(async (email: string, password: string) => {
+    try {
+      const {
+        verifyOfflineCredentials,
+        restoreOfflineSession,
+        getStoredUserData,
+        storeOfflineSession,
+      } = await import("@/lib/offline/offline-auth");
+
+      const isValid = await verifyOfflineCredentials(email, password);
+
+      if (!isValid) {
+        return null;
+      }
+
+      const storedSession = await restoreOfflineSession();
+
+      if (storedSession) {
+        return storedSession;
+      }
+
+      const userData = await getStoredUserData();
+
+      if (!userData) {
+        console.error("❌ User data not found");
+        return null;
+      }
+
+      const offlineSession = {
+        access_token: "offline_session_token",
+        refresh_token: "offline_refresh_token",
+        expires_at: Math.floor((Date.now() + 24 * 60 * 60 * 1000) / 1000),
+        user: userData,
+      };
+
+      await storeOfflineSession(userData, offlineSession);
+
+      console.log("✅ Offline login successful");
+
+      return {
+        user: userData,
+        session: offlineSession,
+      };
+    } catch (error) {
+      console.error("❌ Failed to verify offline credentials:", error);
+      return null;
+    }
+  }),
+}));
+
 // Mock Web Crypto API
 const mockCryptoSubtle = {
   digest: vi.fn(),

@@ -935,8 +935,47 @@ export default function JadwalPage() {
           </Button>
         </div>
 
+        {/* Quick Stats */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <Card className="border-0 shadow-xl bg-linear-to-br from-indigo-50 to-purple-50 dark:from-indigo-950/40 dark:to-purple-950/40 overflow-hidden relative">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-400/15 rounded-full blur-2xl -mr-10 -mt-10" />
+            <CardContent className="p-5 relative">
+              <p className="text-sm font-bold text-indigo-700 dark:text-indigo-300">
+                Total Jadwal
+              </p>
+              <p className="mt-2 text-3xl font-black text-indigo-900 dark:text-indigo-100">
+                {jadwalList.length}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-0 shadow-xl bg-linear-to-br from-blue-50 to-cyan-50 dark:from-blue-950/40 dark:to-cyan-950/40 overflow-hidden relative">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-blue-400/15 rounded-full blur-2xl -mr-10 -mt-10" />
+            <CardContent className="p-5 relative">
+              <p className="text-sm font-bold text-blue-700 dark:text-blue-300">
+                Event Bulan Ini
+              </p>
+              <p className="mt-2 text-3xl font-black text-blue-900 dark:text-blue-100">
+                {calendarEvents.length}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-0 shadow-xl bg-linear-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/40 dark:to-teal-950/40 overflow-hidden relative">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-400/15 rounded-full blur-2xl -mr-10 -mt-10" />
+            <CardContent className="p-5 relative">
+              <p className="text-sm font-bold text-emerald-700 dark:text-emerald-300">
+                Tampilan Aktif
+              </p>
+              <p className="mt-2 text-lg sm:text-xl font-extrabold text-emerald-900 dark:text-emerald-100">
+                {currentView === "calendar" ? "Calendar View" : "List View"}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
         {/* Enhanced Filters */}
-        <Card className="border-0 shadow-xl bg-linear-to-br from-white to-blue-50/50 dark:from-slate-900 dark:to-blue-950/30 backdrop-blur-sm">
+        <Card className="border-0 shadow-xl bg-linear-to-br from-white via-blue-50/40 to-indigo-50/40 dark:from-slate-900 dark:via-blue-950/20 dark:to-indigo-950/20 backdrop-blur-sm">
           <CardContent className="p-6">
             <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3 sm:gap-4">
               <div className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
@@ -944,7 +983,7 @@ export default function JadwalPage() {
                 Filter:
               </div>
               <Select value={filterLab} onValueChange={setFilterLab}>
-                <SelectTrigger className="w-full sm:w-[220px] border-2">
+                <SelectTrigger className="w-full sm:w-55 border-2">
                   <SelectValue placeholder="Filter Laboratorium" />
                 </SelectTrigger>
                 <SelectContent>
@@ -958,7 +997,7 @@ export default function JadwalPage() {
               </Select>
 
               <Select value={filterHari} onValueChange={setFilterHari}>
-                <SelectTrigger className="w-full sm:w-[220px] border-2">
+                <SelectTrigger className="w-full sm:w-55 border-2">
                   <SelectValue placeholder="Filter Hari" />
                 </SelectTrigger>
                 <SelectContent>
@@ -988,13 +1027,14 @@ export default function JadwalPage() {
         <Tabs
           value={currentView}
           onValueChange={(v) => setCurrentView(v as any)}
+          className="space-y-6"
         >
-          <TabsList>
-            <TabsTrigger value="calendar" className="gap-2">
+          <TabsList className="grid w-full max-w-md grid-cols-2 rounded-xl p-1 h-auto bg-linear-to-r from-indigo-100 to-purple-100 dark:from-indigo-950/40 dark:to-purple-950/40">
+            <TabsTrigger value="calendar" className="gap-2 rounded-lg py-2.5 font-semibold data-[state=active]:bg-white data-[state=active]:shadow-md dark:data-[state=active]:bg-slate-900">
               <CalendarIcon className="h-4 w-4" />
               Calendar View
             </TabsTrigger>
-            <TabsTrigger value="list" className="gap-2">
+            <TabsTrigger value="list" className="gap-2 rounded-lg py-2.5 font-semibold data-[state=active]:bg-white data-[state=active]:shadow-md dark:data-[state=active]:bg-slate-900">
               <List className="h-4 w-4" />
               List View
             </TabsTrigger>

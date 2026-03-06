@@ -70,6 +70,7 @@ export function AddFromBankDialog({
 
       const filters: BankSoalFilters = {
         dosen_id: dosenId,
+        is_public: true,
         sortBy: "usage_count",
         sortOrder: "desc",
       };
@@ -173,7 +174,7 @@ export function AddFromBankDialog({
         </div>
 
         {/* Questions List */}
-        <ScrollArea className="h-[250px] pr-4">
+        <ScrollArea className="h-62.5 pr-4">
           {isLoading ? (
             <div className="text-center py-12 text-muted-foreground">
               Memuat soal...

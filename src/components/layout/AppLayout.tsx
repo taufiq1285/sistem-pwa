@@ -137,7 +137,12 @@ export function AppLayout({ children, className }: AppLayoutProps) {
         />
 
         {/* Page Content */}
-        <main className={cn("flex-1 overflow-auto bg-gray-50", className)}>
+        <main
+          className={cn(
+            "flex-1 overflow-auto bg-linear-to-br from-slate-50/80 via-white to-blue-50/60 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950",
+            className,
+          )}
+        >
           {children}
         </main>
       </div>

@@ -223,7 +223,7 @@ export default function BankSoalPage() {
 
           <Button
             onClick={() => setShowEditor(true)}
-            className="w-full sm:w-auto bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+            className="w-full sm:w-auto bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg shadow-indigo-500/30"
           >
             <Plus className="h-4 w-4 mr-2" />
             Buat Soal Baru
@@ -288,7 +288,7 @@ export default function BankSoalPage() {
         )}
 
         {/* Search - Only Pilihan Ganda */}
-        <Card className="interactive-card border-0 shadow-xl p-4 sm:p-6">
+        <Card className="interactive-card border-0 shadow-xl bg-linear-to-br from-white via-blue-50/30 to-indigo-50/30 dark:from-slate-900 dark:via-blue-950/20 dark:to-indigo-950/20 p-4 sm:p-6">
           <CardHeader>
             <CardTitle className="text-base font-bold">
               Pencarian Soal Pilihan Ganda
@@ -316,13 +316,20 @@ export default function BankSoalPage() {
               </CardContent>
             </Card>
           ) : questions.length === 0 ? (
-            <Card className="interactive-card border-0 shadow-xl p-8 sm:p-12">
-              <CardContent className="text-center">
-                <BookOpen className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <p className="text-base font-semibold mb-4">
-                  Belum ada soal di bank
+            <Card className="interactive-card border-0 shadow-xl bg-linear-to-br from-white to-indigo-50/40 dark:from-slate-900 dark:to-indigo-950/30 p-8 sm:p-12 overflow-hidden relative">
+              <div className="absolute top-0 right-0 h-40 w-40 rounded-full bg-linear-to-br from-indigo-400/20 to-purple-400/20 blur-3xl -mr-20 -mt-20" />
+              <CardContent className="text-center relative">
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-linear-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/30">
+                  <BookOpen className="h-8 w-8 text-white" />
+                </div>
+                <p className="text-lg font-bold mb-2">Belum ada soal di bank</p>
+                <p className="text-sm text-muted-foreground mb-5">
+                  Mulai dengan membuat soal pilihan ganda pertama untuk memperkaya bank soal.
                 </p>
-                <Button onClick={() => setShowEditor(true)}>
+                <Button
+                  onClick={() => setShowEditor(true)}
+                  className="bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+                >
                   <Plus className="h-4 w-4 mr-2" />
                   Buat Soal Pertama
                 </Button>

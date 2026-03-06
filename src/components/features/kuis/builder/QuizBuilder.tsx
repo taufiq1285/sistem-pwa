@@ -472,11 +472,14 @@ export function QuizBuilder({
         });
         setQuestions((prev) => [...prev, savedQuestion]);
 
-        // Auto-save to Bank Soal if checkbox was checked (only for PILIHAN_GANDA)
-        // Bank Soal hanya untuk CBT (pilihan ganda), tidak untuk laporan
-        if (shouldSaveToBank && savedQuestion.tipe_soal === "pilihan_ganda") {
+        // Auto-save ke Bank Soal jika checkbox aktif (hanya PILIHAN_GANDA)
+        // NOTE: response createSoal bisa berisi `tipe_soal` ATAU `tipe` (raw DB)
+        const createdQuestionType =
+          (savedQuestion as any).tipe_soal || (savedQuestion as any).tipe;
+
+        if (shouldSaveToBank && createdQuestionType === "pilihan_ganda") {
           try {
-            await saveSoalToBank(savedQuestion, dosenId);
+            await saveSoalToBank(savedQuestion as any, dosenId);
             toast.success("Soal berhasil dibuat dan disimpan ke Bank Soal");
           } catch (bankError) {
             console.error("Error saving to bank:", bankError);
@@ -621,7 +624,7 @@ export function QuizBuilder({
                     setValue("kelas_id", "");
                   }}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger id="mata_kuliah">
                     <SelectValue placeholder="Pilih mata kuliah..." />
                   </SelectTrigger>
                   <SelectContent>
@@ -648,6 +651,7 @@ export function QuizBuilder({
                   disabled={!selectedMataKuliah || isLoadingKelas}
                 >
                   <SelectTrigger
+                    id="kelas_id"
                     className={cn(errors.kelas_id && "border-destructive")}
                   >
                     <SelectValue

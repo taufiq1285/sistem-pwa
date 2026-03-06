@@ -3,7 +3,7 @@
  * Menampilkan dan mengedit profil admin
  */
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { cacheAPI, invalidateCache } from "@/lib/offline/api-cache";
 import { getAdminProfile, updateAdminProfile } from "@/lib/api/profile.api";
@@ -19,12 +19,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
-  User,
-  Mail,
-  Save,
   AlertCircle,
   CheckCircle2,
+  Mail,
+  Save,
   Shield,
+  User,
 } from "lucide-react";
 import { PageHeader } from "@/components/common/PageHeader";
 
@@ -62,7 +62,7 @@ export default function AdminProfilePage() {
         `admin_profile_${user?.id}`,
         () => getAdminProfile(user!.id!),
         {
-          ttl: 20 * 60 * 1000, // 20 minutes - profile data rarely changes
+          ttl: 20 * 60 * 1000,
           forceRefresh,
           staleWhileRevalidate: true,
         },
@@ -89,12 +89,10 @@ export default function AdminProfilePage() {
       setError(null);
       setSuccess(null);
 
-      // Update admin profile
       await updateAdminProfile(user!.id!, profile);
 
       setSuccess("Profil berhasil diperbarui!");
 
-      // Invalidate cache and reload
       await invalidateCache(`admin_profile_${user?.id}`);
       await fetchProfile(true);
     } catch (err: any) {
@@ -107,115 +105,109 @@ export default function AdminProfilePage() {
 
   if (loading) {
     return (
-      <div className="p-8">
-        <div className="max-w-4xl mx-auto">
-          <div className="animate-pulse space-y-6">
-            <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-            <div className="h-64 bg-gray-200 rounded"></div>
-          </div>
+      <div className="app-container">
+        <div className="mx-auto max-w-4xl animate-pulse space-y-6">
+          <div className="h-24 rounded-3xl bg-blue-100/70" />
+          <div className="h-64 rounded-3xl bg-slate-100" />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="p-8">
-      <div className="max-w-4xl mx-auto space-y-6">
-        <PageHeader
-          title="Profil Saya"
-          description="Kelola informasi profil Anda"
-        />
+    <div className="app-container space-y-6">
+      <PageHeader
+        title="Profil Saya"
+        description="Kelola informasi profil Anda"
+        className="section-shell"
+      />
 
-        {error && (
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
+      {error && (
+        <Alert variant="destructive" className="rounded-2xl">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
 
-        {success && (
-          <Alert className="border-green-200 bg-green-50 text-green-800">
-            <CheckCircle2 className="h-4 w-4" />
-            <AlertDescription>{success}</AlertDescription>
-          </Alert>
-        )}
+      {success && (
+        <Alert className="rounded-2xl border-emerald-200 bg-emerald-50 text-emerald-800">
+          <CheckCircle2 className="h-4 w-4" />
+          <AlertDescription>{success}</AlertDescription>
+        </Alert>
+      )}
 
-        {/* User Information Card */}
-        <Card className="border-0 shadow-xl">
-          <CardHeader className="p-6">
-            <CardTitle className="flex items-center gap-2 text-xl font-bold">
-              <User className="h-5 w-5" />
-              Informasi Akun
-            </CardTitle>
-            <CardDescription className="text-base font-semibold mt-1">
-              Informasi akun administrator
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="full_name">Nama Lengkap *</Label>
+      <Card className="interactive-card rounded-2xl border border-blue-100/70 bg-white/95 shadow-sm">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-slate-900">
+            <User className="h-5 w-5 text-blue-700" />
+            Informasi Akun
+          </CardTitle>
+          <CardDescription>Informasi akun administrator</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="full_name">Nama Lengkap *</Label>
+              <Input
+                id="full_name"
+                value={profile.full_name}
+                onChange={(e) =>
+                  setProfile({
+                    ...profile,
+                    full_name: e.target.value,
+                  })
+                }
+                placeholder="Masukkan nama lengkap"
+                className="border-blue-100 focus-visible:ring-blue-500"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
                 <Input
-                  id="full_name"
-                  value={profile.full_name}
-                  onChange={(e) =>
-                    setProfile({
-                      ...profile,
-                      full_name: e.target.value,
-                    })
-                  }
-                  placeholder="Masukkan nama lengkap"
+                  id="email"
+                  value={profile.email}
+                  disabled
+                  className="border-blue-100 bg-slate-50 pl-10"
                 />
               </div>
+            </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <Input
-                    id="email"
-                    value={profile.email}
-                    disabled
-                    className="pl-10 bg-gray-50"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="role">Role</Label>
-                <div className="relative">
-                  <Shield className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <Input
-                    id="role"
-                    value="Administrator"
-                    disabled
-                    className="pl-10 bg-gray-50 capitalize"
-                  />
-                </div>
+            <div className="space-y-2">
+              <Label htmlFor="role">Role</Label>
+              <div className="relative">
+                <Shield className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                <Input
+                  id="role"
+                  value="Administrator"
+                  disabled
+                  className="border-blue-100 bg-slate-50 pl-10 capitalize"
+                />
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </CardContent>
+      </Card>
 
-        {/* Action Buttons */}
-        <div className="flex justify-end gap-3">
-          <Button
-            variant="outline"
-            onClick={() => fetchProfile(false)}
-            disabled={saving}
-            className="font-semibold border-2"
-          >
-            Batal
-          </Button>
-          <Button
-            onClick={handleSave}
-            disabled={saving}
-            className="font-semibold bg-linear-to-r from-blue-500 to-indigo-600"
-          >
-            <Save className="mr-2 h-4 w-4" />
-            {saving ? "Menyimpan..." : "Simpan Perubahan"}
-          </Button>
-        </div>
+      <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+        <Button
+          variant="outline"
+          onClick={() => fetchProfile(false)}
+          disabled={saving}
+          className="border-blue-200 text-blue-700 hover:bg-blue-50"
+        >
+          Batal
+        </Button>
+        <Button
+          onClick={handleSave}
+          disabled={saving}
+          className="bg-blue-700 text-white hover:bg-blue-800"
+        >
+          <Save className="mr-2 h-4 w-4" />
+          {saving ? "Menyimpan..." : "Simpan Perubahan"}
+        </Button>
       </div>
     </div>
   );
