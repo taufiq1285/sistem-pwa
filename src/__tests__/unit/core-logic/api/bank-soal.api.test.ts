@@ -51,6 +51,7 @@ const createMockQuery = () => {
     lte: vi.fn().mockReturnThis(),
     like: vi.fn().mockReturnThis(),
     ilike: vi.fn().mockReturnThis(),
+    or: vi.fn().mockReturnThis(),
     is: vi.fn().mockReturnThis(),
     in: vi.fn().mockReturnThis(),
     contains: vi.fn().mockReturnThis(),
@@ -182,7 +183,7 @@ describe("Bank Soal API - Question Bank Management", () => {
         },
       ];
 
-      const mockEq = vi.fn().mockResolvedValue({
+      const mockOr = vi.fn().mockResolvedValue({
         data: mockQuestions,
         error: null,
       });
@@ -190,7 +191,8 @@ describe("Bank Soal API - Question Bank Management", () => {
       (supabase.from as any).mockReturnValue({
         select: vi.fn().mockReturnValue({
           order: vi.fn().mockReturnValue({
-            eq: mockEq,
+            or: mockOr,
+            eq: vi.fn().mockResolvedValue({ data: mockQuestions, error: null }),
           }),
         }),
       });
@@ -198,7 +200,7 @@ describe("Bank Soal API - Question Bank Management", () => {
       const result = await getBankSoal(filters);
 
       expect(result).toHaveLength(1);
-      expect(mockEq).toHaveBeenCalledWith("dosen_id", "dosen-1");
+      expect(mockOr).toHaveBeenCalled();
     });
 
     it("should filter by tipe_soal", async () => {
@@ -641,22 +643,14 @@ describe("Bank Soal API - Question Bank Management", () => {
         },
       ];
 
-      const mockIlike = vi.fn().mockResolvedValue({
+      const mockEqForType = vi.fn().mockResolvedValue({
         data: mockDuplicates,
         error: null,
       });
 
-      // Make the query thenable
-      const createThenable = (data: any) => ({
-        then: (resolve: any) => resolve({ data, error: null }),
-        ilike: mockIlike,
-      });
-
       (supabase.from as any).mockReturnValue({
         select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            eq: vi.fn().mockReturnValue(createThenable(mockDuplicates)),
-          }),
+          eq: mockEqForType,
         }),
       });
 
@@ -937,7 +931,7 @@ describe("Bank Soal API - Question Bank Management", () => {
 
   describe("Edge Cases", () => {
     it("should handle empty bank question list", async () => {
-      const mockEq = vi.fn().mockResolvedValue({
+      const mockOr = vi.fn().mockResolvedValue({
         data: [],
         error: null,
       });
@@ -945,7 +939,7 @@ describe("Bank Soal API - Question Bank Management", () => {
       (supabase.from as any).mockReturnValue({
         select: vi.fn().mockReturnValue({
           order: vi.fn().mockReturnValue({
-            eq: mockEq,
+            or: mockOr,
           }),
         }),
       });

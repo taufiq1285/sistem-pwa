@@ -30,7 +30,7 @@ describe("Public + Offline Placeholder Pages", () => {
     render(<OfflinePage />);
 
     expect(
-      screen.getByText("TODO: Implement [ComponentName]"),
+      screen.getByText(/Anda Sedang Offline/i),
     ).toBeInTheDocument();
   });
 
@@ -38,7 +38,7 @@ describe("Public + Offline Placeholder Pages", () => {
     render(<MahasiswaOfflineSyncPage />);
 
     expect(
-      screen.getByText("TODO: Implement [ComponentName]"),
+      screen.getByText(/Sinkronisasi Offline/i),
     ).toBeInTheDocument();
   });
 });

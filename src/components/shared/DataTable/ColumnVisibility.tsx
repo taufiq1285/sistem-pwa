@@ -41,7 +41,7 @@ export function ColumnVisibilityDropdown({
           {label} ({visibleCount}/{columns.length})
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-[200px]">
+      <DropdownMenuContent align="end" className="w-50">
         <DropdownMenuLabel>Toggle Columns</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {columns.map((column) => (

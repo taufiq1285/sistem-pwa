@@ -23,6 +23,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -308,7 +309,7 @@ export default function DosenMateriPage() {
     return (
       <div className="role-page-shell">
         <div className="role-page-content">
-          <div className="flex items-center justify-center min-h-[400px]">
+          <div className="flex items-center justify-center min-h-100">
             <div className="text-center space-y-4">
               <Loader2 className="h-12 w-12 animate-spin mx-auto text-indigo-600" />
               <p className="text-lg font-semibold text-gray-700 dark:text-gray-300">
@@ -429,59 +430,65 @@ export default function DosenMateriPage() {
         </div>
 
         {/* Enhanced Filters */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="md:col-span-2">
-            <div className="relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-              <Input
-                placeholder="Cari materi..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-12 h-12 border-2 text-base font-semibold"
-              />
+        <Card className="border-0 shadow-xl bg-linear-to-br from-white via-blue-50/30 to-indigo-50/30 dark:from-slate-900 dark:via-blue-950/20 dark:to-indigo-950/20 backdrop-blur-sm">
+          <CardContent className="p-4 sm:p-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="md:col-span-2">
+                <div className="relative">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <Input
+                    placeholder="Cari materi..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-12 h-12 border-2 text-base font-semibold bg-white/90 dark:bg-slate-900/80"
+                  />
+                </div>
+              </div>
+
+              <Select value={selectedKelas} onValueChange={setSelectedKelas}>
+                <SelectTrigger className="h-12 border-2 font-semibold bg-white/90 dark:bg-slate-900/80">
+                  <SelectValue placeholder="Semua Kelas" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Semua Kelas</SelectItem>
+                  {kelasList.map((kelas) => (
+                    <SelectItem key={kelas.id} value={kelas.id}>
+                      {kelas.nama_kelas}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={selectedMinggu} onValueChange={setSelectedMinggu}>
+                <SelectTrigger className="h-12 border-2 font-semibold bg-white/90 dark:bg-slate-900/80">
+                  <SelectValue placeholder="Semua Minggu" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Semua Minggu</SelectItem>
+                  {Array.from({ length: 16 }, (_, i) => i + 1).map((minggu) => (
+                    <SelectItem key={minggu} value={minggu.toString()}>
+                      Minggu {minggu}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-          </div>
-
-          <Select value={selectedKelas} onValueChange={setSelectedKelas}>
-            <SelectTrigger className="h-12 border-2 font-semibold">
-              <SelectValue placeholder="Semua Kelas" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Semua Kelas</SelectItem>
-              {kelasList.map((kelas) => (
-                <SelectItem key={kelas.id} value={kelas.id}>
-                  {kelas.nama_kelas}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Select value={selectedMinggu} onValueChange={setSelectedMinggu}>
-            <SelectTrigger className="h-12 border-2 font-semibold">
-              <SelectValue placeholder="Semua Minggu" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Semua Minggu</SelectItem>
-              {Array.from({ length: 16 }, (_, i) => i + 1).map((minggu) => (
-                <SelectItem key={minggu} value={minggu.toString()}>
-                  Minggu {minggu}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+          </CardContent>
+        </Card>
 
         {/* Materi List */}
-        <MateriList
-          materiList={filteredMateri}
-          showActions={true}
-          showDosenActions={true}
-          onView={handleView}
-          onDownload={handleDownload}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-          emptyMessage="Belum ada materi. Upload materi pertama Anda!"
-        />
+        <div className="rounded-2xl border-0 shadow-xl bg-linear-to-br from-white to-indigo-50/20 dark:from-slate-900 dark:to-indigo-950/20 p-1">
+          <MateriList
+            materiList={filteredMateri}
+            showActions={true}
+            showDosenActions={true}
+            onView={handleView}
+            onDownload={handleDownload}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            emptyMessage="Belum ada materi. Upload materi pertama Anda!"
+          />
+        </div>
 
         {/* Enhanced Upload Dialog */}
         <UploadDialog

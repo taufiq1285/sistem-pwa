@@ -992,13 +992,13 @@ export default function DosenPenilaianPage() {
         )}
 
         {/* Tabs Container */}
-        <Tabs defaultValue="penilaian" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="penilaian" className="gap-2">
+        <Tabs defaultValue="penilaian" className="space-y-6">
+          <TabsList className="grid w-full max-w-xl grid-cols-2 rounded-xl p-1 h-auto bg-linear-to-r from-indigo-100 to-purple-100 dark:from-indigo-950/40 dark:to-purple-950/40">
+            <TabsTrigger value="penilaian" className="gap-2 rounded-lg py-2.5 font-semibold data-[state=active]:bg-white data-[state=active]:shadow-md dark:data-[state=active]:bg-slate-900">
               <FileText className="h-4 w-4" />
               Penilaian Mahasiswa
             </TabsTrigger>
-            <TabsTrigger value="permintaan" className="gap-2">
+            <TabsTrigger value="permintaan" className="gap-2 rounded-lg py-2.5 font-semibold data-[state=active]:bg-white data-[state=active]:shadow-md dark:data-[state=active]:bg-slate-900">
               <ClipboardCheck className="h-4 w-4" />
               Permintaan Perbaikan
             </TabsTrigger>

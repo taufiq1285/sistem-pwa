@@ -129,7 +129,7 @@ export function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="p-4 sm:p-6 lg:p-8">
+      <div className="app-container py-4 sm:py-6 lg:py-8">
         <div className="max-w-7xl mx-auto">
           <div className="animate-pulse space-y-6">
             <div className="h-8 bg-gray-200 rounded w-1/4"></div>
@@ -145,16 +145,16 @@ export function DashboardPage() {
   }
 
   return (
-    <div className="role-page-shell min-h-screen bg-linear-to-br from-emerald-50 via-green-50 to-teal-50 dark:from-slate-950 dark:via-slate-900 dark:to-teal-950">
-      <div className="role-page-content p-4 sm:p-6 lg:p-8">
-        <div className="max-w-7xl mx-auto space-y-6">
+    <div className="role-page-shell min-h-screen bg-linear-to-br from-slate-50 via-white to-emerald-50 dark:from-slate-950 dark:via-slate-900 dark:to-emerald-950">
+      <div className="role-page-content app-container py-4 sm:py-6 lg:py-8">
+        <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8">
           {/* Header */}
-          <div className="flex items-start sm:items-center gap-3 sm:gap-4">
-            <div className="p-2.5 sm:p-3 bg-linear-to-br from-emerald-500 to-teal-600 rounded-2xl shadow-lg shadow-emerald-500/30 shrink-0">
+          <div className="flex items-start sm:items-center gap-3 sm:gap-4 rounded-3xl border border-white/60 bg-white/70 px-4 py-4 sm:px-6 backdrop-blur-xl shadow-lg">
+            <div className="p-2.5 sm:p-3 bg-linear-to-br from-emerald-600 to-teal-700 rounded-2xl shadow-lg shadow-emerald-500/30 shrink-0">
               <BookOpen className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
             </div>
             <div className="min-w-0">
-              <h1 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold text-transparent bg-clip-text bg-linear-to-r from-emerald-600 to-teal-600 dark:from-emerald-400 dark:to-teal-400 leading-tight">
+              <h1 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold text-transparent bg-clip-text bg-linear-to-r from-emerald-700 to-blue-800 dark:from-emerald-400 dark:to-teal-400 leading-tight">
                 Dashboard Mahasiswa
               </h1>
               <p className="text-sm sm:text-base lg:text-lg font-bold text-gray-700 dark:text-gray-300 mt-1">
@@ -169,7 +169,7 @@ export function DashboardPage() {
 
         {/* Info Alert (Only if no classes) */}
         {myKelas.length === 0 && (
-          <Alert className="border-blue-200 bg-blue-50 shadow-lg">
+          <Alert className="border-blue-200 bg-blue-50/90 shadow-lg">
             <Info className="h-4 w-4 text-blue-600" />
             <AlertDescription className="text-blue-800 font-semibold">
               Anda belum terdaftar di kelas praktikum manapun. Hubungi dosen
@@ -179,8 +179,8 @@ export function DashboardPage() {
         )}
 
         {/* Quick Stats Cards */}
-        <div className="grid gap-4 md:grid-cols-4">
-          <Card className="interactive-card border border-white/20 shadow-lg bg-linear-to-br from-emerald-500 to-green-600 text-white overflow-hidden relative">
+        <div className="grid gap-4 sm:gap-5 md:grid-cols-2 xl:grid-cols-4">
+          <Card className="interactive-card border border-white/20 shadow-lg bg-linear-to-br from-emerald-600 to-green-700 text-white overflow-hidden relative">
             <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl -mr-8 -mt-8" />
             <CardContent className="p-6 relative">
               <div className="flex items-center justify-between">
@@ -199,7 +199,7 @@ export function DashboardPage() {
             </CardContent>
           </Card>
 
-          <Card className="interactive-card border border-white/20 shadow-lg bg-linear-to-br from-blue-500 to-cyan-600 text-white overflow-hidden relative">
+          <Card className="interactive-card border border-white/20 shadow-lg bg-linear-to-br from-blue-700 to-sky-600 text-white overflow-hidden relative">
             <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl -mr-8 -mt-8" />
             <CardContent className="p-6 relative">
               <div className="flex items-center justify-between">
@@ -218,7 +218,7 @@ export function DashboardPage() {
             </CardContent>
           </Card>
 
-          <Card className="interactive-card border border-white/20 shadow-lg bg-linear-to-br from-purple-500 to-violet-600 text-white overflow-hidden relative">
+          <Card className="interactive-card border border-white/20 shadow-lg bg-linear-to-br from-indigo-700 to-violet-600 text-white overflow-hidden relative">
             <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl -mr-8 -mt-8" />
             <CardContent className="p-6 relative">
               <div className="flex items-center justify-between">
@@ -237,7 +237,7 @@ export function DashboardPage() {
             </CardContent>
           </Card>
 
-          <Card className="interactive-card border border-white/20 shadow-lg bg-linear-to-br from-orange-500 to-amber-600 text-white overflow-hidden relative">
+          <Card className="interactive-card border border-white/20 shadow-lg bg-linear-to-br from-amber-500 to-orange-600 text-white overflow-hidden relative">
             <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl -mr-8 -mt-8" />
             <CardContent className="p-6 relative">
               <div className="flex items-center justify-between">
@@ -266,7 +266,7 @@ export function DashboardPage() {
 
         {/* Welcome Banner */}
         {myKelas.length > 0 && (
-          <Card className="interactive-card border-0 shadow-xl bg-linear-to-r from-emerald-500 via-teal-500 to-cyan-500 text-white overflow-hidden relative">
+          <Card className="interactive-card border-0 shadow-xl bg-linear-to-r from-emerald-600 via-teal-600 to-blue-700 text-white overflow-hidden relative">
             <div className="absolute inset-0 bg-grid-white/10" />
             <CardContent className="p-5 sm:p-8 relative">
               <div className="flex items-center gap-4 sm:gap-6">

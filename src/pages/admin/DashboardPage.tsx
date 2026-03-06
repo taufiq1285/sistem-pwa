@@ -252,7 +252,7 @@ export function DashboardPage() {
   // Loading state
   if (loading) {
     return (
-      <div className="flex h-full items-center justify-center bg-linear-to-br from-blue-50 to-indigo-100 dark:from-blue-950 dark:to-indigo-900">
+      <div className="flex h-full items-center justify-center bg-linear-to-br from-slate-50 to-blue-100 dark:from-slate-950 dark:to-blue-950">
         <div className="text-center">
           <div className="relative">
             <div className="h-16 w-16 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto" />
@@ -292,18 +292,18 @@ export function DashboardPage() {
   }
 
   return (
-    <div className="role-page-shell min-h-screen bg-linear-to-br from-slate-100 via-blue-50 to-indigo-50 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950">
+    <div className="role-page-shell min-h-screen bg-linear-to-br from-slate-50 via-white to-blue-50 dark:from-slate-950 dark:via-slate-900 dark:to-blue-950">
       {/* Header with Logout */}
-      <div className="role-page-content bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200 dark:border-slate-700 shadow-lg sticky top-0 z-50">
-        <div className="px-6 py-5">
-          <div className="flex items-center justify-between">
+      <div className="role-page-content bg-white/90 dark:bg-slate-900/85 backdrop-blur-xl border-b border-slate-200/80 dark:border-slate-700 shadow-lg sticky top-0 z-50">
+        <div className="app-container py-4 sm:py-5">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
               <div className="flex items-center space-x-4">
                 <div className="p-3 bg-linear-to-br from-blue-500 to-indigo-600 dark:from-blue-600 dark:to-indigo-700 rounded-xl shadow-lg shadow-blue-500/30">
                   <Shield className="h-7 w-7 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
                     Admin Dashboard
                   </h1>
                   <div className="flex items-center space-x-2 text-base font-medium text-slate-700 dark:text-slate-300 mt-1">
@@ -323,7 +323,7 @@ export function DashboardPage() {
                   </div>
                 </div>
               </div>
-              <p className="mt-3 text-base font-medium text-slate-700 dark:text-slate-300">
+              <p className="mt-2 text-sm sm:text-base font-medium text-slate-700 dark:text-slate-300">
                 Selamat datang kembali! Berikut gambaran umum sistem praktikum.
               </p>
             </div>
@@ -332,7 +332,7 @@ export function DashboardPage() {
                 variant="outline"
                 onClick={handleRefresh}
                 disabled={refreshing}
-                className="relative bg-white dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-slate-700 border-2 border-slate-300 dark:border-slate-600 font-semibold shadow-md hover:shadow-lg transition-all duration-200"
+                className="relative bg-white dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-slate-700 border-2 border-slate-300 dark:border-slate-600 font-semibold shadow-md hover:shadow-lg transition-all duration-200 w-full sm:w-auto"
               >
                 {refreshing ? (
                   <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
@@ -346,9 +346,9 @@ export function DashboardPage() {
         </div>
       </div>
 
-      <div className="role-page-content p-4 sm:p-6 lg:p-8 space-y-8">
+      <div className="role-page-content app-container py-4 sm:py-6 lg:py-8 space-y-6 sm:space-y-8">
         {/* Statistics Cards */}
-        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+        <div className="grid gap-4 sm:gap-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
           {/* Total Users Card */}
           <Card className="interactive-card group hover:shadow-2xl hover:scale-[1.03] transition-all duration-300 border-0 shadow-lg bg-linear-to-br from-blue-50 to-indigo-50 dark:from-blue-950/40 dark:to-indigo-950/40 backdrop-blur-sm overflow-hidden relative">
             <div className="absolute top-0 right-0 w-32 h-32 bg-linear-to-br from-blue-400/20 to-indigo-400/20 rounded-full blur-3xl -mr-16 -mt-16 group-hover:from-blue-400/30 group-hover:to-indigo-400/30 transition-all duration-300" />
@@ -396,7 +396,7 @@ export function DashboardPage() {
           </Card>
 
           {/* Dosen Card */}
-          <Card className="group hover:shadow-2xl hover:scale-105 transition-all duration-300 border-0 shadow-lg bg-linear-to-br from-purple-50 to-violet-50 dark:from-purple-950/40 dark:to-violet-950/40 backdrop-blur-sm overflow-hidden relative">
+          <Card className="interactive-card group hover:shadow-2xl hover:scale-[1.03] transition-all duration-300 border-0 shadow-lg bg-linear-to-br from-purple-50 to-violet-50 dark:from-purple-950/40 dark:to-violet-950/40 backdrop-blur-sm overflow-hidden relative">
             <div className="absolute top-0 right-0 w-32 h-32 bg-linear-to-br from-purple-400/20 to-violet-400/20 rounded-full blur-3xl -mr-16 -mt-16 group-hover:from-purple-400/30 group-hover:to-violet-400/30 transition-all duration-300" />
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 relative">
               <CardTitle className="text-base font-bold text-purple-900 dark:text-purple-100">
@@ -418,7 +418,7 @@ export function DashboardPage() {
           </Card>
 
           {/* Laboratorium Card */}
-          <Card className="group hover:shadow-2xl hover:scale-105 transition-all duration-300 border-0 shadow-lg bg-linear-to-br from-orange-50 to-amber-50 dark:from-orange-950/40 dark:to-amber-950/40 backdrop-blur-sm overflow-hidden relative">
+          <Card className="interactive-card group hover:shadow-2xl hover:scale-[1.03] transition-all duration-300 border-0 shadow-lg bg-linear-to-br from-orange-50 to-amber-50 dark:from-orange-950/40 dark:to-amber-950/40 backdrop-blur-sm overflow-hidden relative">
             <div className="absolute top-0 right-0 w-32 h-32 bg-linear-to-br from-orange-400/20 to-amber-400/20 rounded-full blur-3xl -mr-16 -mt-16 group-hover:from-orange-400/30 group-hover:to-amber-400/30 transition-all duration-300" />
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 relative">
               <CardTitle className="text-base font-bold text-orange-900 dark:text-orange-100">
@@ -439,7 +439,7 @@ export function DashboardPage() {
           </Card>
 
           {/* Peralatan Card */}
-          <Card className="group hover:shadow-2xl hover:scale-105 transition-all duration-300 border-0 shadow-lg bg-linear-to-br from-amber-50 to-yellow-50 dark:from-amber-950/40 dark:to-yellow-950/40 backdrop-blur-sm overflow-hidden relative">
+          <Card className="interactive-card group hover:shadow-2xl hover:scale-[1.03] transition-all duration-300 border-0 shadow-lg bg-linear-to-br from-amber-50 to-yellow-50 dark:from-amber-950/40 dark:to-yellow-950/40 backdrop-blur-sm overflow-hidden relative">
             <div className="absolute top-0 right-0 w-32 h-32 bg-linear-to-br from-amber-400/20 to-yellow-400/20 rounded-full blur-3xl -mr-16 -mt-16 group-hover:from-amber-400/30 group-hover:to-yellow-400/30 transition-all duration-300" />
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 relative">
               <CardTitle className="text-base font-bold text-amber-900 dark:text-amber-100">
@@ -460,7 +460,7 @@ export function DashboardPage() {
           </Card>
 
           {/* Pending Approvals Card - Highlighted */}
-          <Card className="group hover:shadow-2xl hover:scale-105 transition-all duration-300 border-2 border-rose-300 dark:border-rose-700 shadow-xl shadow-rose-500/20 bg-linear-to-br from-rose-50 to-pink-50 dark:from-rose-950/40 dark:to-pink-950/40 backdrop-blur-sm overflow-hidden relative">
+          <Card className="interactive-card group hover:shadow-2xl hover:scale-[1.03] transition-all duration-300 border-2 border-rose-300 dark:border-rose-700 shadow-xl shadow-rose-500/20 bg-linear-to-br from-rose-50 to-pink-50 dark:from-rose-950/40 dark:to-pink-950/40 backdrop-blur-sm overflow-hidden relative">
             <div className="absolute top-0 right-0 w-32 h-32 bg-linear-to-br from-rose-400/30 to-pink-400/30 rounded-full blur-3xl -mr-16 -mt-16 animate-pulse" />
             <div className="absolute inset-0 bg-linear-to-br from-rose-500/5 to-pink-500/5 dark:from-rose-500/10 dark:to-pink-500/10" />
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 relative">

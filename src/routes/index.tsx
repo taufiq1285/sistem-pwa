@@ -84,6 +84,7 @@ import MahasiswaNilaiPage from "@/pages/mahasiswa/NilaiPage";
 import MahasiswaPresensiPage from "@/pages/mahasiswa/PresensiPage";
 import MahasiswaPengumumanPage from "@/pages/mahasiswa/PengumumanPage";
 import MahasiswaProfilePage from "@/pages/mahasiswa/ProfilePage"; // ✅ NEW: Mahasiswa profile page
+import OfflineSyncPage from "@/pages/mahasiswa/OfflineSyncPage"; // ✅ Offline sync page
 
 // Laboran Pages
 import { DashboardPage as LaboranDashboard } from "@/pages/laboran/DashboardPage";
@@ -760,9 +761,19 @@ export function AppRouter() {
         }
       />
 
-      {/* TODO: Add more mahasiswa routes as they are implemented
-      <Route path="/mahasiswa/offline-sync" element={...} />
-      */}
+      {/* ✅ Mahasiswa Offline Sync Route */}
+      <Route
+        path="/mahasiswa/offline-sync"
+        element={
+          <ProtectedRoute>
+            <RoleGuard allowedRoles={["mahasiswa"]}>
+              <AppLayout>
+                <OfflineSyncPage />
+              </AppLayout>
+            </RoleGuard>
+          </ProtectedRoute>
+        }
+      />
 
       {/* ================================================================== */}
       {/* LABORAN ROUTES */}

@@ -3,7 +3,7 @@
  * Menampilkan dan mengedit profil laboran
  */
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { cacheAPI, invalidateCache } from "@/lib/offline/api-cache";
 import {
@@ -24,12 +24,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
-  User,
-  Mail,
-  Phone,
-  Save,
   AlertCircle,
   CheckCircle2,
+  Mail,
+  Save,
+  User,
+  Wrench,
 } from "lucide-react";
 import { PageHeader } from "@/components/common/PageHeader";
 
@@ -75,7 +75,7 @@ export default function ProfilePage() {
         `laboran_profile_${user.id}`,
         () => getLaboranProfile(user.id),
         {
-          ttl: 20 * 60 * 1000, // 20 minutes - profile data rarely changes
+          ttl: 20 * 60 * 1000,
           forceRefresh,
           staleWhileRevalidate: true,
         },
@@ -111,17 +111,14 @@ export default function ProfilePage() {
 
       if (!user?.id) return;
 
-      // Update user profile
       await updateUserProfile(user.id, userProfile);
 
-      // Update laboran profile
       await updateLaboranProfile(laboranProfile.id, {
         shift: laboranProfile.shift,
       });
 
       setSuccess("Profil berhasil diperbarui!");
 
-      // Invalidate cache and reload
       await invalidateCache(`laboran_profile_${user.id}`);
       await fetchProfile(true);
     } catch (err: any) {
@@ -134,133 +131,135 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="p-8">
-        <div className="max-w-4xl mx-auto">
-          <div className="animate-pulse space-y-6">
-            <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-            <div className="h-96 bg-gray-200 rounded"></div>
-          </div>
+      <div className="app-container">
+        <div className="mx-auto max-w-4xl animate-pulse space-y-6">
+          <div className="h-24 rounded-3xl bg-blue-100/70" />
+          <div className="h-72 rounded-3xl bg-slate-100" />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="p-8">
-      <div className="max-w-4xl mx-auto space-y-6">
-        <PageHeader
-          title="Profil Saya"
-          description="Kelola informasi profil Anda"
-        />
+    <div className="app-container space-y-6">
+      <PageHeader
+        title="Profil Saya"
+        description="Kelola informasi profil Anda"
+        className="section-shell"
+      />
 
-        {error && (
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
+      {error && (
+        <Alert variant="destructive" className="rounded-2xl">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
 
-        {success && (
-          <Alert className="border-green-200 bg-green-50 text-green-800">
-            <CheckCircle2 className="h-4 w-4" />
-            <AlertDescription>{success}</AlertDescription>
-          </Alert>
-        )}
+      {success && (
+        <Alert className="rounded-2xl border-emerald-200 bg-emerald-50 text-emerald-800">
+          <CheckCircle2 className="h-4 w-4" />
+          <AlertDescription>{success}</AlertDescription>
+        </Alert>
+      )}
 
-        {/* User Information Card */}
-        <Card className="border-0 shadow-xl p-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5" />
-              Informasi Akun
-            </CardTitle>
-            <CardDescription>Informasi akun dan kontak Anda</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="full_name">Nama Lengkap *</Label>
+      <Card className="interactive-card rounded-2xl border border-blue-100/70 bg-white/95 shadow-sm">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-slate-900">
+            <User className="h-5 w-5 text-blue-700" />
+            Informasi Akun
+          </CardTitle>
+          <CardDescription>Informasi akun dan kontak Anda</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="full_name">Nama Lengkap *</Label>
+              <Input
+                id="full_name"
+                value={userProfile.full_name}
+                onChange={(e) =>
+                  setUserProfile({
+                    ...userProfile,
+                    full_name: e.target.value,
+                  })
+                }
+                placeholder="Masukkan nama lengkap"
+                className="border-blue-100 focus-visible:ring-blue-500"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
                 <Input
-                  id="full_name"
-                  value={userProfile.full_name}
-                  onChange={(e) =>
-                    setUserProfile({
-                      ...userProfile,
-                      full_name: e.target.value,
-                    })
-                  }
-                  placeholder="Masukkan nama lengkap"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <Input
-                    id="email"
-                    value={userProfile.email}
-                    disabled
-                    className="pl-10 bg-gray-50"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="nip">NIP</Label>
-                <Input
-                  id="nip"
-                  value={laboranProfile.nip}
+                  id="email"
+                  value={userProfile.email}
                   disabled
-                  className="bg-gray-50"
+                  className="border-blue-100 bg-slate-50 pl-10"
                 />
               </div>
             </div>
-          </CardContent>
-        </Card>
 
-        {/* Work Information Card */}
-        <Card className="border-0 shadow-xl p-6">
-          <CardHeader>
-            <CardTitle>Informasi Pekerjaan</CardTitle>
-            <CardDescription>
-              Informasi shift dan jadwal kerja Anda
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="shift">Shift Kerja</Label>
-                <Input
-                  id="shift"
-                  value={laboranProfile.shift}
-                  onChange={(e) =>
-                    setLaboranProfile({
-                      ...laboranProfile,
-                      shift: e.target.value,
-                    })
-                  }
-                  placeholder="Contoh: Pagi (08:00 - 16:00)"
-                />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="nip">NIP</Label>
+              <Input
+                id="nip"
+                value={laboranProfile.nip}
+                disabled
+                className="border-blue-100 bg-slate-50"
+              />
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </CardContent>
+      </Card>
 
-        {/* Action Buttons */}
-        <div className="flex justify-end gap-3">
-          <Button
-            variant="outline"
-            onClick={() => fetchProfile(false)}
-            disabled={saving}
-          >
-            Batal
-          </Button>
-          <Button onClick={handleSave} disabled={saving}>
-            <Save className="mr-2 h-4 w-4" />
-            {saving ? "Menyimpan..." : "Simpan Perubahan"}
-          </Button>
-        </div>
+      <Card className="interactive-card rounded-2xl border border-blue-100/70 bg-white/95 shadow-sm">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-slate-900">
+            <Wrench className="h-5 w-5 text-blue-700" />
+            Informasi Pekerjaan
+          </CardTitle>
+          <CardDescription>Informasi shift dan jadwal kerja Anda</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="shift">Shift Kerja</Label>
+              <Input
+                id="shift"
+                value={laboranProfile.shift}
+                onChange={(e) =>
+                  setLaboranProfile({
+                    ...laboranProfile,
+                    shift: e.target.value,
+                  })
+                }
+                placeholder="Contoh: Pagi (08:00 - 16:00)"
+                className="border-blue-100 focus-visible:ring-blue-500"
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+        <Button
+          variant="outline"
+          onClick={() => fetchProfile(false)}
+          disabled={saving}
+          className="border-blue-200 text-blue-700 hover:bg-blue-50"
+        >
+          Batal
+        </Button>
+        <Button
+          onClick={handleSave}
+          disabled={saving}
+          className="bg-blue-700 text-white hover:bg-blue-800"
+        >
+          <Save className="mr-2 h-4 w-4" />
+          {saving ? "Menyimpan..." : "Simpan Perubahan"}
+        </Button>
       </div>
     </div>
   );

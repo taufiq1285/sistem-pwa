@@ -283,11 +283,11 @@ export default function KuisResultsPage() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto py-6 max-w-7xl">
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="text-center space-y-4">
-            <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
-            <p className="text-muted-foreground">
+      <div className="role-page-shell p-4 sm:p-6 lg:p-8">
+        <div className="role-page-content">
+          <div className="rounded-3xl border border-white/60 bg-white/90 p-10 text-center shadow-2xl dark:border-slate-700 dark:bg-slate-900/85">
+            <Loader2 className="mx-auto h-10 w-10 animate-spin text-indigo-600" />
+            <p className="mt-4 text-base font-semibold text-slate-700 dark:text-slate-200">
               Memuat hasil tugas praktikum...
             </p>
           </div>
@@ -302,21 +302,28 @@ export default function KuisResultsPage() {
 
   if (error || !quiz || !statistics) {
     return (
-      <div className="container mx-auto py-6 max-w-7xl">
-        <Button variant="ghost" size="sm" onClick={handleBack} className="mb-4">
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Kembali
-        </Button>
+      <div className="role-page-shell p-4 sm:p-6 lg:p-8">
+        <div className="role-page-content max-w-7xl space-y-4">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={handleBack}
+            className="w-fit"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Kembali
+          </Button>
 
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            {error || "Gagal memuat data hasil tugas praktikum"}
-          </AlertDescription>
-        </Alert>
+          <Alert variant="destructive" className="rounded-2xl border-2 shadow-xl">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              {error || "Gagal memuat data hasil tugas praktikum"}
+            </AlertDescription>
+          </Alert>
 
-        <div className="mt-4">
-          <Button onClick={loadQuizData}>Coba Lagi</Button>
+          <div>
+            <Button onClick={loadQuizData}>Coba Lagi</Button>
+          </div>
         </div>
       </div>
     );
@@ -330,28 +337,43 @@ export default function KuisResultsPage() {
   const laporanMode = quiz?.judul?.toLowerCase().includes("laporan") || false;
 
   return (
-    <div className="container mx-auto py-6 max-w-7xl">
-      {/* Header */}
-      <div className="mb-6">
-        <Button variant="ghost" size="sm" onClick={handleBack} className="mb-4">
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Kembali ke Daftar Tugas
-        </Button>
+    <div className="role-page-shell p-4 sm:p-6 lg:p-8">
+      <div className="role-page-content max-w-7xl space-y-6 lg:space-y-8">
+        {/* Header */}
+        <section className="relative overflow-hidden rounded-3xl border border-white/25 bg-linear-to-r from-indigo-600 via-blue-600 to-purple-600 p-6 text-white shadow-2xl sm:p-8">
+          <div className="absolute -top-20 -right-20 h-56 w-56 rounded-full bg-white/20 blur-3xl" />
+          <div className="absolute -bottom-20 -left-20 h-56 w-56 rounded-full bg-violet-300/20 blur-3xl" />
 
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold">{quiz.judul}</h1>
-            <p className="text-muted-foreground mt-1">
-              Hasil & Analisis Tugas Praktikum
-            </p>
+          <div className="relative z-10 space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleBack}
+                className="border border-white/40 bg-white/15 text-white hover:bg-white/25"
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Kembali ke Daftar Tugas
+              </Button>
+
+              <Button
+                onClick={handleExport}
+                variant="secondary"
+                className="gap-2 border border-white/40 bg-white/15 text-white hover:bg-white/25"
+              >
+                <Download className="h-4 w-4" />
+                Export
+              </Button>
+            </div>
+
+            <div>
+              <h1 className="text-2xl font-extrabold sm:text-3xl">{quiz.judul}</h1>
+              <p className="mt-1 text-sm text-blue-100 sm:text-base">
+                Hasil & Analisis Tugas Praktikum
+              </p>
+            </div>
           </div>
-
-          <Button onClick={handleExport} variant="outline" className="gap-2">
-            <Download className="h-4 w-4" />
-            Export
-          </Button>
-        </div>
-      </div>
+        </section>
 
       {/* Statistics Cards - Hide for CBT mode */}
       {!isAutoGradedQuiz(quiz) && (
@@ -664,10 +686,18 @@ export default function KuisResultsPage() {
 
       {/* Tabs - Hide for CBT mode */}
       {!isAutoGradedQuiz(quiz) && (
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList>
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="attempts">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+          <TabsList className="h-auto rounded-xl border border-indigo-100 bg-white/85 p-1 shadow-sm dark:border-indigo-900/40 dark:bg-slate-900/70">
+            <TabsTrigger
+              value="overview"
+              className="rounded-lg px-4 py-2 data-[state=active]:bg-indigo-600 data-[state=active]:text-white"
+            >
+              Overview
+            </TabsTrigger>
+            <TabsTrigger
+              value="attempts"
+              className="rounded-lg px-4 py-2 data-[state=active]:bg-indigo-600 data-[state=active]:text-white"
+            >
               Submissions ({attempts.length})
             </TabsTrigger>
           </TabsList>
@@ -987,6 +1017,7 @@ export default function KuisResultsPage() {
           </TabsContent>
         </Tabs>
       )}
+      </div>
     </div>
   );
 }

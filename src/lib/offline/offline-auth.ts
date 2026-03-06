@@ -319,45 +319,9 @@ export async function offlineLogin(
   password: string,
 ): Promise<{ user: AuthUser; session: AuthSession } | null> {
   try {
-    // Verify credentials
-    const isValid = await verifyOfflineCredentials(email, password);
-
-    if (!isValid) {
-      return null;
-    }
-
-    // Get stored session
-    const storedSession = await restoreOfflineSession();
-
-    if (storedSession) {
-      return storedSession;
-    }
-
-    // If no session but credentials valid, get user data
-    const userData = await getStoredUserData();
-
-    if (!userData) {
-      console.error("❌ User data not found");
-      return null;
-    }
-
-    // Create minimal offline session
-    const offlineSession: AuthSession = {
-      access_token: "offline_session_token",
-      refresh_token: "offline_refresh_token",
-      expires_at: Math.floor((Date.now() + SESSION_EXPIRY) / 1000),
-      user: userData,
-    };
-
-    // Store the session
-    await storeOfflineSession(userData, offlineSession);
-
-    console.log("✅ Offline login successful");
-
-    return {
-      user: userData,
-      session: offlineSession,
-    };
+    // Use the secure offline login that enforces online-first requirement
+    const { secureOfflineLogin } = await import("./online-first-auth");
+    return await secureOfflineLogin(email, password);
   } catch (error) {
     console.error("❌ Offline login failed:", error);
     return null;

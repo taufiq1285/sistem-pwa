@@ -98,7 +98,7 @@ export function CalendarEvent({
             </div>
             {event.location && (
               <div className="flex items-center gap-1 truncate">
-                <MapPin className="h-3 w-3 flex-shrink-0" />
+                <MapPin className="h-3 w-3 shrink-0" />
                 <span className="truncate">{event.location}</span>
               </div>
             )}

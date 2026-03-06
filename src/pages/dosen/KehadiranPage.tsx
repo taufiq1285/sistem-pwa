@@ -515,7 +515,7 @@ export default function DosenKehadiranPage() {
     <div className="role-page-shell">
       <div className="role-page-content space-y-6">
         {/* Hero Header */}
-        <div className="relative overflow-hidden rounded-xl bg-linear-to-r from-indigo-500 via-blue-500 to-purple-600 p-5 sm:p-6 md:p-8 text-white">
+        <div className="relative overflow-hidden rounded-2xl bg-linear-to-r from-indigo-500 via-blue-500 to-purple-600 p-5 sm:p-6 md:p-8 text-white shadow-2xl shadow-indigo-500/30">
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-32 translate-x-32 blur-3xl" />
           <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-400/20 rounded-full translate-y-24 -translate-x-24 blur-2xl" />
 
@@ -532,8 +532,8 @@ export default function DosenKehadiranPage() {
 
         {/* Filter Card */}
         {(tahunAjaranOptions.length > 0 || semesterOptions.length > 0) && (
-          <Card>
-            <CardHeader className="pb-3">
+          <Card className="border-0 shadow-xl bg-linear-to-br from-white via-blue-50/30 to-indigo-50/30 dark:from-slate-900 dark:via-blue-950/20 dark:to-indigo-950/20 backdrop-blur-sm">
+            <CardHeader className="pb-3 border-b bg-linear-to-r from-blue-50/70 to-indigo-50/70 dark:from-blue-950/30 dark:to-indigo-950/30">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Filter className="h-5 w-5 text-muted-foreground" />
@@ -618,7 +618,7 @@ export default function DosenKehadiranPage() {
           {/* Step 1: Mata Kuliah */}
           <Card
             className={cn(
-              "border-2 transition-all",
+              "border-2 transition-all shadow-lg hover:shadow-xl",
               selectedMataKuliah
                 ? "border-green-300 bg-green-50/50"
                 : "border-gray-200",
@@ -674,7 +674,7 @@ export default function DosenKehadiranPage() {
           {/* Step 2: Kelas */}
           <Card
             className={cn(
-              "border-2 transition-all",
+              "border-2 transition-all shadow-lg hover:shadow-xl",
               !selectedMataKuliah && "opacity-50",
               selectedKelas
                 ? "border-green-300 bg-green-50/50"
@@ -733,7 +733,7 @@ export default function DosenKehadiranPage() {
           {/* Step 3: Tanggal */}
           <Card
             className={cn(
-              "border-2 transition-all",
+              "border-2 transition-all shadow-lg hover:shadow-xl",
               !selectedKelas && "opacity-50",
               selectedTanggal
                 ? "border-green-300 bg-green-50/50"
@@ -776,7 +776,7 @@ export default function DosenKehadiranPage() {
         {/* Statistics Cards */}
         {selectedKelas && attendanceRecords.length > 0 && (
           <div className="grid gap-4 md:grid-cols-4">
-            <Card>
+            <Card className="border-0 shadow-xl bg-linear-to-br from-green-50 to-emerald-50 dark:from-green-950/40 dark:to-emerald-950/40">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Hadir</CardTitle>
                 <div className="text-2xl">✓</div>
@@ -789,7 +789,7 @@ export default function DosenKehadiranPage() {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="border-0 shadow-xl bg-linear-to-br from-blue-50 to-cyan-50 dark:from-blue-950/40 dark:to-cyan-950/40">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Izin</CardTitle>
                 <div className="text-2xl">📝</div>
@@ -802,7 +802,7 @@ export default function DosenKehadiranPage() {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="border-0 shadow-xl bg-linear-to-br from-amber-50 to-orange-50 dark:from-amber-950/40 dark:to-orange-950/40">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Sakit</CardTitle>
                 <div className="text-2xl">🏥</div>
@@ -815,7 +815,7 @@ export default function DosenKehadiranPage() {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="border-0 shadow-xl bg-linear-to-br from-rose-50 to-red-50 dark:from-rose-950/40 dark:to-red-950/40">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Alpha</CardTitle>
                 <div className="text-2xl">✗</div>
@@ -836,12 +836,12 @@ export default function DosenKehadiranPage() {
             value={activeTab}
             onValueChange={(v) => setActiveTab(v as "input" | "history")}
           >
-            <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-6">
-              <TabsTrigger value="input" className="gap-2">
+            <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-6 rounded-xl p-1 h-auto bg-linear-to-r from-indigo-100 to-purple-100 dark:from-indigo-950/40 dark:to-purple-950/40">
+              <TabsTrigger value="input" className="gap-2 rounded-lg py-2.5 font-semibold data-[state=active]:bg-white data-[state=active]:shadow-md dark:data-[state=active]:bg-slate-900">
                 <Calendar className="h-4 w-4" />
                 Input Kehadiran
               </TabsTrigger>
-              <TabsTrigger value="history" className="gap-2">
+              <TabsTrigger value="history" className="gap-2 rounded-lg py-2.5 font-semibold data-[state=active]:bg-white data-[state=active]:shadow-md dark:data-[state=active]:bg-slate-900">
                 <History className="h-4 w-4" />
                 Riwayat
               </TabsTrigger>

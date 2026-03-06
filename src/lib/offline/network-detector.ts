@@ -87,7 +87,7 @@ export class NetworkDetector {
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "";
     const defaultPingUrl = supabaseUrl
       ? `${supabaseUrl}/rest/v1/` // Supabase REST API endpoint
-      : "/api/ping"; // Fallback to local API
+      : "https://www.gstatic.com/generate_204"; // Reliable public fallback
 
     this.config = {
       pingUrl: config.pingUrl || defaultPingUrl,
@@ -481,7 +481,7 @@ export class NetworkDetector {
 export const networkDetector = new NetworkDetector({
   pingUrl: import.meta.env.VITE_SUPABASE_URL
     ? `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/`
-    : "/api/health", // Fallback to local health endpoint
+    : "https://www.gstatic.com/generate_204", // Reliable public fallback (no CORS issue, always 204)
   pingInterval: 60000, // 1 minute
   pingTimeout: 5000, // 5 seconds
   enablePeriodicCheck: true, // Enable for reliable offline detection

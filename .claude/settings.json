@@ -15,7 +15,11 @@
       "Bash(sed 's/\\\\.test\\\\.tsx$//')",
       "Bash(sed 's/\\\\.\\(tsx|ts\\)$//')",
       "Bash(sed 's/\\\\.test\\\\.tsx\\\\?$//')",
-      "Read(//f/sistem-praktikum/sistem-praktikum-pwa/**)"
+      "Read(//f/sistem-praktikum/sistem-praktikum-pwa/**)",
+      "Bash(sed 's/\"\".*//')",
+      "Read(//f/sistem-praktikum/sistem-praktikum-pwa/{print $1\"\"/**)",
+      "Bash(python3 -c \"print\\(1471+561+738+776+533+103+170+169+227+294+84+30+60+90+45+1\\)\")",
+      "Bash(node -e \"console.log\\(1471+561+738+776+533+103+170+169+227+294+84+30+60+90+45+1\\)\")"
     ]
   }
 }

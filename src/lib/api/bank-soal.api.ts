@@ -53,7 +53,8 @@ export async function getBankSoal(
 
       // Apply filters
       if (filters?.dosen_id) {
-        query = query.eq("dosen_id", filters.dosen_id);
+        // Global bank access: tampilkan soal milik dosen + soal publik dosen lain
+        query = query.or(`dosen_id.eq.${filters.dosen_id},is_public.eq.true`);
       }
 
       if (filters?.mata_kuliah_id) {
@@ -201,6 +202,9 @@ export async function createBankSoal(
   if (error) throw error;
   if (!newQuestion) throw new Error("Failed to create question");
 
+  // Clear cached bank_soal queries agar data baru langsung muncul di UI
+  await invalidateCachePatternSync("*bank_soal_*");
+
   return {
     ...newQuestion,
     tipe_soal: newQuestion.tipe_soal as TipeSoal,
@@ -216,13 +220,14 @@ export async function createBankSoal(
  */
 export async function checkDuplicateBankSoal(
   pertanyaan: string,
-  dosenId: string,
+  _dosenId: string,
   tipe_soal?: TipeSoal,
 ): Promise<BankSoal[]> {
   // Normalize text for comparison (lowercase, trim)
-  const normalizedPertanyaan = pertanyaan.toLowerCase().trim();
+  const normalizedPertanyaan = normalizeQuestionText(pertanyaan);
 
-  let query = supabase.from("bank_soal").select("*").eq("dosen_id", dosenId);
+  // Global duplicate check: cek ke seluruh bank soal publik + internal
+  let query = supabase.from("bank_soal").select("*");
 
   if (tipe_soal) {
     query = query.eq("tipe_soal", tipe_soal);
@@ -234,7 +239,7 @@ export async function checkDuplicateBankSoal(
 
   // Filter for similar questions (case-insensitive exact match or 90% similarity)
   const similarQuestions = (data || []).filter((item) => {
-    const itemPertanyaan = item.pertanyaan.toLowerCase().trim();
+    const itemPertanyaan = normalizeQuestionText(item.pertanyaan);
 
     // Exact match
     if (itemPertanyaan === normalizedPertanyaan) {
@@ -256,6 +261,17 @@ export async function checkDuplicateBankSoal(
     is_public: item.is_public || false,
     usage_count: item.usage_count || 0,
   }));
+}
+
+/**
+ * Normalize question text for duplicate detection
+ */
+function normalizeQuestionText(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 /**
@@ -310,7 +326,22 @@ export async function saveSoalToBank(
     tags: tags || [],
   };
 
-  const bankSoal = await createBankSoal(bankData);
+  // Hard-block untuk duplikat exact (global), reuse soal existing
+  const normalizedIncoming = normalizeQuestionText(soal.pertanyaan);
+  const exactDuplicate = duplicates.find(
+    (d) =>
+      normalizeQuestionText(d.pertanyaan) === normalizedIncoming &&
+      d.tipe_soal === tipeSoal,
+  );
+
+  if (exactDuplicate) {
+    return { bankSoal: exactDuplicate, duplicates };
+  }
+
+  const bankSoal = await createBankSoal({
+    ...bankData,
+    is_public: true,
+  });
 
   return { bankSoal, duplicates };
 }

@@ -65,6 +65,7 @@ import {
   LOGBOOK_STATUS_COLORS,
 } from "@/types/logbook.types";
 import { supabase } from "@/lib/supabase/client";
+import { PageHeader } from "@/components/common/PageHeader";
 
 // ============================================================================
 // COMPONENT
@@ -316,9 +317,15 @@ export default function DosenLogbookReviewPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-        <span className="ml-2">Memuat data...</span>
+      <div className="role-page-shell">
+        <div className="role-page-content app-container py-6">
+          <div className="flex min-h-[50vh] items-center justify-center rounded-3xl border border-slate-200/70 bg-white/85 px-6 shadow-lg shadow-slate-200/60">
+            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+            <span className="ml-3 text-sm font-medium text-slate-600 sm:text-base">
+              Memuat data review logbook...
+            </span>
+          </div>
+        </div>
       </div>
     );
   }
@@ -326,24 +333,18 @@ export default function DosenLogbookReviewPage() {
   const filteredLogbooks = getFilteredLogbooks();
 
   return (
-    <div className="role-page-shell role-page-content space-y-6">
-      {/* Header */}
-      <div className="mb-6 sm:mb-8">
-        <div className="mb-2 flex items-center gap-3">
-          <FileText className="h-7 w-7 text-blue-600 sm:h-8 sm:w-8" />
-          <h1 className="text-2xl font-bold sm:text-3xl">
-            Review Logbook Mahasiswa
-          </h1>
-        </div>
-        <p className="text-gray-600">
-          Review dan beri nilai pada logbook praktikum mahasiswa
-        </p>
-      </div>
+    <div className="role-page-shell">
+      <div className="role-page-content app-container space-y-6 py-4 sm:space-y-8 sm:py-6 lg:py-8">
+        <PageHeader
+          title="Review Logbook Mahasiswa"
+          description="Tinjau catatan praktikum mahasiswa, berikan umpan balik, dan input nilai dengan tampilan yang lebih fokus dan responsif."
+          className="section-shell"
+        />
 
       {/* Stats Cards */}
       {stats && (
-        <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
-          <Card>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+          <Card className="overflow-hidden rounded-3xl border border-blue-100/80 bg-linear-to-br from-blue-50 to-indigo-50 shadow-lg shadow-blue-100/60">
             <CardContent className="p-4">
               <p className="text-2xl font-bold text-blue-600">
                 {stats.total_logbooks}
@@ -352,7 +353,7 @@ export default function DosenLogbookReviewPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="overflow-hidden rounded-3xl border border-amber-100/80 bg-linear-to-br from-amber-50 to-orange-50 shadow-lg shadow-amber-100/60">
             <CardContent className="p-4">
               <p className="text-2xl font-bold text-yellow-600">
                 {stats.submitted}
@@ -361,7 +362,7 @@ export default function DosenLogbookReviewPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="overflow-hidden rounded-3xl border border-cyan-100/80 bg-linear-to-br from-cyan-50 to-sky-50 shadow-lg shadow-cyan-100/60">
             <CardContent className="p-4">
               <p className="text-2xl font-bold text-orange-600">
                 {stats.reviewed}
@@ -370,7 +371,7 @@ export default function DosenLogbookReviewPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="overflow-hidden rounded-3xl border border-emerald-100/80 bg-linear-to-br from-emerald-50 to-green-50 shadow-lg shadow-emerald-100/60">
             <CardContent className="p-4">
               <p className="text-2xl font-bold text-green-600">
                 {stats.graded}
@@ -379,7 +380,7 @@ export default function DosenLogbookReviewPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="overflow-hidden rounded-3xl border border-violet-100/80 bg-linear-to-br from-violet-50 to-fuchsia-50 shadow-lg shadow-violet-100/60">
             <CardContent className="p-4">
               <p className="text-2xl font-bold text-purple-600">
                 {stats.average_grade?.toFixed(1) || "-"}
@@ -391,8 +392,8 @@ export default function DosenLogbookReviewPage() {
       )}
 
       {/* Filters */}
-      <Card className="interactive-card mb-6 border-0 shadow-lg">
-        <CardContent className="p-4 sm:p-5">
+      <Card className="interactive-card overflow-hidden rounded-3xl border border-slate-200/70 bg-white/90 shadow-lg shadow-slate-200/60">
+        <CardContent className="p-4 sm:p-5 lg:p-6">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <div className="flex items-center gap-2 sm:col-span-2 lg:col-span-1">
               <Filter className="h-4 w-4 text-gray-500" />
@@ -438,10 +439,12 @@ export default function DosenLogbookReviewPage() {
       {/* Logbook List */}
       <div className="space-y-4">
         {filteredLogbooks.length === 0 ? (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <FileText className="h-16 w-16 text-gray-400 mb-4" />
-              <p className="text-gray-500">
+          <Card className="overflow-hidden rounded-3xl border border-dashed border-blue-200/80 bg-white/85 shadow-lg shadow-slate-200/60">
+            <CardContent className="flex flex-col items-center justify-center py-12 text-center sm:py-14">
+              <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-3xl bg-blue-100 text-blue-700">
+                <FileText className="h-8 w-8" />
+              </div>
+              <p className="max-w-md text-sm leading-6 text-slate-500 sm:text-base">
                 {searchQuery ||
                 selectedKelas !== "all" ||
                 selectedStatus !== "submitted"
@@ -454,7 +457,7 @@ export default function DosenLogbookReviewPage() {
           filteredLogbooks.map((logbook) => (
             <Card
               key={logbook.id}
-              className="interactive-card border-0 shadow-lg"
+              className="interactive-card overflow-hidden rounded-3xl border border-slate-200/70 bg-white/90 shadow-lg shadow-slate-200/60"
             >
               <CardContent className="p-4 sm:p-6">
                 <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -891,6 +894,7 @@ export default function DosenLogbookReviewPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   );
 }

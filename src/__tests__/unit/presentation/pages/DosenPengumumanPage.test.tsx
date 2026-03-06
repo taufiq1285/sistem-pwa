@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import DosenPengumumanPage from "@/pages/dosen/PengumumanPage";
 
 const { mockUseAuth, mockCacheAPI, mockGetAllAnnouncements } = vi.hoisted(
@@ -89,7 +90,7 @@ describe("DosenPengumumanPage", () => {
       },
     ]);
 
-    render(<DosenPengumumanPage />);
+    render(<MemoryRouter><DosenPengumumanPage /></MemoryRouter>);
 
     await waitFor(() => {
       expect(screen.getByText("Khusus Dosen")).toBeInTheDocument();
@@ -104,11 +105,11 @@ describe("DosenPengumumanPage", () => {
   it("menampilkan empty state saat tidak ada notifikasi aktif", async () => {
     mockGetAllAnnouncements.mockResolvedValue([]);
 
-    render(<DosenPengumumanPage />);
+    render(<MemoryRouter><DosenPengumumanPage /></MemoryRouter>);
 
     await waitFor(() => {
       expect(
-        screen.getByText(/Tidak ada notifikasi saat ini/i),
+        screen.getByText(/Tidak ada notifikasi aktif/i),
       ).toBeInTheDocument();
     });
   });
@@ -116,7 +117,7 @@ describe("DosenPengumumanPage", () => {
   it("menampilkan error state saat load gagal", async () => {
     mockCacheAPI.mockRejectedValue(new Error("load gagal"));
 
-    render(<DosenPengumumanPage />);
+    render(<MemoryRouter><DosenPengumumanPage /></MemoryRouter>);
 
     await waitFor(() => {
       expect(screen.getByText(/load gagal/i)).toBeInTheDocument();

@@ -619,7 +619,7 @@ export function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="p-8">
+      <div className="app-container py-4 sm:py-6 lg:py-8">
         <div className="max-w-7xl mx-auto">
           <div className="animate-pulse space-y-6">
             <div className="h-8 bg-gray-200 rounded w-1/4"></div>
@@ -635,21 +635,21 @@ export function DashboardPage() {
 
   return (
     <>
-      <div className="role-page-shell min-h-screen bg-linear-to-br from-indigo-50 via-blue-50 to-purple-50 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950">
-        <div className="role-page-content p-4 sm:p-6 lg:p-8">
-          <div className="max-w-7xl mx-auto space-y-8">
+      <div className="role-page-shell min-h-screen bg-linear-to-br from-slate-50 via-white to-indigo-50 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950">
+        <div className="role-page-content app-container py-4 sm:py-6 lg:py-8">
+          <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8">
             {/* Header */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between rounded-3xl border border-white/60 bg-white/70 p-4 sm:p-6 backdrop-blur-xl shadow-lg">
               <div className="flex-1">
-                <div className="flex items-center gap-4 mb-3">
-                  <div className="p-3 bg-linear-to-br from-indigo-500 to-purple-600 rounded-2xl shadow-lg shadow-indigo-500/30">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-3">
+                  <div className="p-3 bg-linear-to-br from-blue-800 to-indigo-700 rounded-2xl shadow-lg shadow-blue-800/25">
                     <Users className="h-8 w-8 text-white" />
                   </div>
                   <div>
-                    <h1 className="text-5xl font-extrabold text-transparent bg-clip-text bg-linear-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400">
+                    <h1 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold text-transparent bg-clip-text bg-linear-to-r from-blue-800 to-indigo-600 dark:from-indigo-400 dark:to-purple-400">
                       Dashboard Dosen
                     </h1>
-                    <p className="text-lg font-bold text-gray-700 dark:text-gray-300 mt-1">
+                    <p className="text-sm sm:text-lg font-bold text-gray-700 dark:text-gray-300 mt-1">
                       Selamat datang,{" "}
                       <span className="text-indigo-600 dark:text-indigo-400">
                         {user?.full_name || user?.email}
@@ -670,7 +670,7 @@ export function DashboardPage() {
                   </p>
                 )}
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex w-full flex-col sm:w-auto sm:flex-row sm:items-center gap-2">
                 {isRefreshing && (
                   <div className="flex items-center gap-2 text-sm text-blue-600">
                     <RefreshCw className="h-4 w-4 animate-spin" />
@@ -689,7 +689,7 @@ export function DashboardPage() {
                         setLastRefresh(new Date());
                       });
                     }}
-                    className="border-orange-200 text-orange-700 hover:bg-orange-50 font-semibold border-2"
+                    className="border-orange-200 text-orange-700 hover:bg-orange-50 font-semibold border-2 w-full sm:w-auto"
                   >
                     <RefreshCw className="h-4 w-4" />
                     Perbarui
@@ -708,7 +708,7 @@ export function DashboardPage() {
                     });
                   }}
                   disabled={loading || isRefreshing}
-                  className="font-semibold border-2"
+                  className="font-semibold border-2 w-full sm:w-auto"
                 >
                   <RefreshCw
                     className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
@@ -731,8 +731,8 @@ export function DashboardPage() {
             )}
 
             {/* Quick Stats Cards */}
-            <div className="grid gap-4 md:grid-cols-4">
-              <Card className="interactive-card border-0 shadow-lg bg-linear-to-br from-indigo-500 to-purple-600 text-white overflow-hidden relative">
+            <div className="grid gap-4 sm:gap-5 md:grid-cols-2 xl:grid-cols-4">
+              <Card className="interactive-card border-0 shadow-lg bg-linear-to-br from-blue-800 to-indigo-700 text-white overflow-hidden relative">
                 <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl -mr-8 -mt-8" />
                 <CardContent className="p-6 relative">
                   <div className="flex items-center justify-between">
@@ -751,7 +751,7 @@ export function DashboardPage() {
                 </CardContent>
               </Card>
 
-              <Card className="interactive-card border-0 shadow-lg bg-linear-to-br from-blue-500 to-cyan-600 text-white overflow-hidden relative">
+              <Card className="interactive-card border-0 shadow-lg bg-linear-to-br from-sky-700 to-cyan-600 text-white overflow-hidden relative">
                 <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl -mr-8 -mt-8" />
                 <CardContent className="p-6 relative">
                   <div className="flex items-center justify-between">
@@ -770,7 +770,7 @@ export function DashboardPage() {
                 </CardContent>
               </Card>
 
-              <Card className="border-0 shadow-lg bg-linear-to-br from-orange-500 to-amber-600 text-white overflow-hidden relative">
+              <Card className="interactive-card border-0 shadow-lg bg-linear-to-br from-amber-500 to-orange-600 text-white overflow-hidden relative">
                 <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl -mr-8 -mt-8" />
                 <CardContent className="p-6 relative">
                   <div className="flex items-center justify-between">
@@ -789,7 +789,7 @@ export function DashboardPage() {
                 </CardContent>
               </Card>
 
-              <Card className="border-0 shadow-lg bg-linear-to-br from-emerald-500 to-teal-600 text-white overflow-hidden relative">
+              <Card className="interactive-card border-0 shadow-lg bg-linear-to-br from-emerald-600 to-teal-700 text-white overflow-hidden relative">
                 <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl -mr-8 -mt-8" />
                 <CardContent className="p-6 relative">
                   <div className="flex items-center justify-between">
@@ -811,10 +811,10 @@ export function DashboardPage() {
 
             {/* Welcome Banner */}
             {assignments.length > 0 && (
-              <Card className="border-0 shadow-xl bg-linear-to-r from-indigo-500 via-purple-500 to-pink-500 text-white overflow-hidden relative">
+              <Card className="interactive-card border-0 shadow-xl bg-linear-to-r from-blue-800 via-indigo-700 to-amber-600 text-white overflow-hidden relative">
                 <div className="absolute inset-0 bg-grid-white/10" />
                 <CardContent className="p-8 relative">
-                  <div className="flex items-center gap-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
                     <div className="w-20 h-20 bg-white/20 rounded-3xl flex items-center justify-center backdrop-blur-sm">
                       <Sparkles className="h-10 w-10" />
                     </div>
@@ -848,7 +848,7 @@ export function DashboardPage() {
 
             <div className="grid gap-6 lg:grid-cols-2">
               {/* Assignment Saya */}
-              <Card className="group hover:shadow-2xl transition-all duration-300 border-0 shadow-xl bg-linear-to-br from-blue-50 to-indigo-50 dark:from-blue-950/40 dark:to-indigo-950/40 backdrop-blur-sm overflow-hidden relative">
+              <Card className="interactive-card group hover:shadow-2xl transition-all duration-300 border-0 shadow-xl bg-linear-to-br from-blue-50 to-indigo-50 dark:from-blue-950/40 dark:to-indigo-950/40 backdrop-blur-sm overflow-hidden relative">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-linear-to-br from-blue-400/20 to-indigo-400/20 rounded-full blur-3xl -mr-16 -mt-16" />
                 <CardHeader className="relative">
                   <div className="flex items-center justify-between">

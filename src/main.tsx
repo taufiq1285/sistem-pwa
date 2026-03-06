@@ -5,6 +5,7 @@ import App from "./App.tsx";
 import { logger } from "@/lib/utils/logger";
 import { registerServiceWorker, skipWaiting } from "@/lib/pwa/register-sw";
 import { startSupabaseWarmup } from "@/lib/supabase/warmup";
+import { initializeSyncManager } from "@/lib/offline/sync-manager";
 
 // Render app
 createRoot(document.getElementById("root")!).render(
@@ -22,6 +23,17 @@ window.addEventListener(
   },
   { once: true },
 );
+
+// ============================================================================
+// OFFLINE SYNC MANAGER INITIALIZATION
+// ============================================================================
+
+// Initialize IndexedDB, QueueManager, NetworkDetector, dan SyncManager
+// HARUS dilakukan di app startup agar auto-sync saat online berfungsi
+// bahkan sebelum komponen apapun di-mount
+initializeSyncManager().catch((error) => {
+  logger.warn("⚠️ SyncManager initialization failed (non-fatal):", error);
+});
 
 // ============================================================================
 // PWA SERVICE WORKER REGISTRATION

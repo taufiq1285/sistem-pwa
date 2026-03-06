@@ -76,6 +76,7 @@ import {
 import { cacheAPI, invalidateCache } from "@/lib/offline/api-cache";
 import { notifyLaboranPeminjamanBaru } from "@/lib/api/notification.api";
 import { supabase } from "@/lib/supabase/client";
+import { PageHeader } from "@/components/common/PageHeader";
 
 // ============================================================================
 // TYPES & VALIDATION
@@ -565,76 +566,79 @@ export default function PeminjamanPage() {
   };
 
   return (
-    <div className="role-page-shell role-page-content space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-extrabold sm:text-3xl">Peminjaman Alat</h1>
-        <p className="text-sm font-medium text-muted-foreground sm:text-base">
-          Kelola peminjaman peralatan laboratorium
-        </p>
-      </div>
+    <div className="role-page-shell">
+      <div className="role-page-content app-container space-y-6 py-4 sm:space-y-8 sm:py-6 lg:py-8">
+        <PageHeader
+          title="Peminjaman Alat"
+          description="Kelola pengajuan, status, dan pengembalian peralatan laboratorium dengan cepat dan rapi."
+          className="section-shell"
+        />
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        <Card className="interactive-card border-0 shadow-lg bg-linear-to-br from-blue-50 to-indigo-50">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-bold">Total</CardTitle>
-            <Package className="h-4 w-4 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-4xl font-extrabold text-blue-900">
-              {stats.total}
-            </div>
-          </CardContent>
-        </Card>
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+          <Card className="interactive-card overflow-hidden rounded-3xl border border-blue-100/80 bg-linear-to-br from-blue-50 to-indigo-50 shadow-lg shadow-blue-100/60">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-bold">Total</CardTitle>
+              <Package className="h-4 w-4 text-blue-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-4xl font-extrabold text-blue-900">
+                {stats.total}
+              </div>
+            </CardContent>
+          </Card>
 
-        <Card className="interactive-card border-0 shadow-lg">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-bold">Menunggu</CardTitle>
-            <Clock className="h-4 w-4 text-yellow-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-4xl font-extrabold">{stats.menunggu}</div>
-          </CardContent>
-        </Card>
+          <Card className="interactive-card overflow-hidden rounded-3xl border border-amber-100/80 bg-linear-to-br from-amber-50 to-orange-50 shadow-lg shadow-amber-100/60">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-bold">Menunggu</CardTitle>
+              <Clock className="h-4 w-4 text-amber-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-4xl font-extrabold text-amber-700">{stats.menunggu}</div>
+            </CardContent>
+          </Card>
 
-        <Card className="interactive-card border-0 shadow-lg">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-bold">Disetujui</CardTitle>
-            <CheckCircle className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-4xl font-extrabold">{stats.disetujui}</div>
-          </CardContent>
-        </Card>
+          <Card className="interactive-card overflow-hidden rounded-3xl border border-emerald-100/80 bg-linear-to-br from-emerald-50 to-green-50 shadow-lg shadow-emerald-100/60">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-bold">Disetujui</CardTitle>
+              <CheckCircle className="h-4 w-4 text-emerald-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-4xl font-extrabold text-emerald-700">{stats.disetujui}</div>
+            </CardContent>
+          </Card>
 
-        <Card className="interactive-card border-0 shadow-lg">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-bold">Dikembalikan</CardTitle>
-            <RotateCcw className="h-4 w-4 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-4xl font-extrabold">{stats.dikembalikan}</div>
-          </CardContent>
-        </Card>
+          <Card className="interactive-card overflow-hidden rounded-3xl border border-sky-100/80 bg-linear-to-br from-sky-50 to-blue-50 shadow-lg shadow-sky-100/60">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-bold">Dikembalikan</CardTitle>
+              <RotateCcw className="h-4 w-4 text-sky-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-4xl font-extrabold text-sky-700">{stats.dikembalikan}</div>
+            </CardContent>
+          </Card>
 
-        <Card className="interactive-card border-0 shadow-lg">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-bold">Ditolak</CardTitle>
-            <XCircle className="h-4 w-4 text-red-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-4xl font-extrabold">{stats.ditolak}</div>
-          </CardContent>
-        </Card>
-      </div>
+          <Card className="interactive-card overflow-hidden rounded-3xl border border-rose-100/80 bg-linear-to-br from-rose-50 to-red-50 shadow-lg shadow-rose-100/60">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-bold">Ditolak</CardTitle>
+              <XCircle className="h-4 w-4 text-rose-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-4xl font-extrabold text-rose-700">{stats.ditolak}</div>
+            </CardContent>
+          </Card>
+        </div>
 
-      {/* Tabs */}
-      <Tabs defaultValue="history" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="history">Riwayat Peminjaman</TabsTrigger>
-          <TabsTrigger value="request">Ajukan Peminjaman</TabsTrigger>
-        </TabsList>
+        {/* Tabs */}
+        <Tabs defaultValue="history" className="w-full space-y-4">
+          <TabsList className="grid h-auto w-full grid-cols-2 rounded-2xl border border-slate-200/70 bg-white/85 p-1 shadow-sm backdrop-blur">
+            <TabsTrigger value="history" className="rounded-xl text-xs sm:text-sm">
+              Riwayat Peminjaman
+            </TabsTrigger>
+            <TabsTrigger value="request" className="rounded-xl text-xs sm:text-sm">
+              Ajukan Peminjaman
+            </TabsTrigger>
+          </TabsList>
 
         {/* Tab 1: Riwayat Peminjaman */}
         <TabsContent value="history" className="space-y-4">
@@ -663,7 +667,7 @@ export default function PeminjamanPage() {
             </Select>
           </div>
 
-          <Card className="interactive-card border-0 shadow-lg">
+          <Card className="interactive-card overflow-hidden rounded-3xl border border-slate-200/70 bg-white/90 shadow-lg shadow-slate-200/60">
             <CardHeader>
               <CardTitle>Daftar Peminjaman</CardTitle>
             </CardHeader>
@@ -781,7 +785,7 @@ export default function PeminjamanPage() {
 
         {/* Tab 2: Ajukan Peminjaman */}
         <TabsContent value="request" className="space-y-4">
-          <Card className="interactive-card border-2 border-dashed border-border/70 shadow-md">
+          <Card className="interactive-card overflow-hidden rounded-3xl border-2 border-dashed border-blue-200/70 bg-linear-to-br from-blue-50/80 via-white to-amber-50/60 shadow-lg shadow-blue-100/50">
             <CardContent className="flex flex-col items-center justify-center py-16">
               <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
                 <Plus className="h-8 w-8 text-blue-600" />
@@ -1310,6 +1314,7 @@ export default function PeminjamanPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      </div>
     </div>
   );
 }

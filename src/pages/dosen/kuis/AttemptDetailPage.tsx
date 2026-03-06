@@ -223,10 +223,14 @@ export default function AttemptDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-600" />
-          <p className="text-gray-600">Memuat detail hasil...</p>
+      <div className="role-page-shell p-4 sm:p-6 lg:p-8">
+        <div className="role-page-content">
+          <div className="rounded-3xl border border-white/60 bg-white/90 p-10 text-center shadow-2xl dark:border-slate-700 dark:bg-slate-900/85">
+            <Loader2 className="mx-auto h-10 w-10 animate-spin text-indigo-600" />
+            <p className="mt-4 text-base font-semibold text-slate-700 dark:text-slate-200">
+              Memuat detail hasil...
+            </p>
+          </div>
         </div>
       </div>
     );
@@ -234,16 +238,18 @@ export default function AttemptDetailPage() {
 
   if (error || !attempt) {
     return (
-      <div className="container mx-auto py-6 max-w-7xl">
-        <Button variant="ghost" size="sm" onClick={handleBack} className="mb-4">
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Kembali
-        </Button>
+      <div className="role-page-shell p-4 sm:p-6 lg:p-8">
+        <div className="role-page-content max-w-7xl space-y-4">
+          <Button variant="secondary" size="sm" onClick={handleBack} className="w-fit">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Kembali
+          </Button>
 
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{error || "Data tidak ditemukan"}</AlertDescription>
-        </Alert>
+          <Alert variant="destructive" className="rounded-2xl border-2 shadow-xl">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error || "Data tidak ditemukan"}</AlertDescription>
+          </Alert>
+        </div>
       </div>
     );
   }
@@ -255,34 +261,55 @@ export default function AttemptDetailPage() {
   const percentage = maxScore > 0 ? (totalScore / maxScore) * 100 : 0;
 
   return (
-    <div className="container mx-auto py-6 max-w-7xl space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <Button variant="ghost" size="sm" onClick={handleBack}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Kembali ke Hasil
-        </Button>
+    <div className="role-page-shell p-4 sm:p-6 lg:p-8">
+      <div className="role-page-content max-w-7xl space-y-6 lg:space-y-8">
+        {/* Header */}
+        <section className="relative overflow-hidden rounded-3xl border border-white/25 bg-linear-to-r from-indigo-600 via-blue-600 to-purple-600 p-6 text-white shadow-2xl sm:p-8">
+          <div className="absolute -top-20 -right-20 h-56 w-56 rounded-full bg-white/20 blur-3xl" />
+          <div className="absolute -bottom-20 -left-20 h-56 w-56 rounded-full bg-violet-300/20 blur-3xl" />
 
-        {hasChanges && (
-          <Button
-            onClick={handleSaveGrading}
-            disabled={isSaving}
-            className="flex items-center gap-2"
-          >
-            {isSaving ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Save className="w-4 h-4" />
-            )}
-            Simpan Penilaian
-          </Button>
-        )}
-      </div>
+          <div className="relative z-10 space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleBack}
+                className="border border-white/40 bg-white/15 text-white hover:bg-white/25"
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Kembali ke Hasil
+              </Button>
+
+              {hasChanges && (
+                <Button
+                  onClick={handleSaveGrading}
+                  disabled={isSaving}
+                  variant="secondary"
+                  className="gap-2 border border-white/40 bg-white/15 text-white hover:bg-white/25"
+                >
+                  {isSaving ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Save className="h-4 w-4" />
+                  )}
+                  Simpan Penilaian
+                </Button>
+              )}
+            </div>
+
+            <div>
+              <h1 className="text-2xl font-extrabold sm:text-3xl">Detail Hasil Mahasiswa</h1>
+              <p className="mt-1 text-sm text-blue-100 sm:text-base">
+                Tinjau jawaban, berikan poin, dan simpan penilaian secara konsisten.
+              </p>
+            </div>
+          </div>
+        </section>
 
       {/* Student & Quiz Info */}
       <div className="grid gap-6 md:grid-cols-3">
         {/* Student Info */}
-        <Card className="border-blue-200 bg-blue-50">
+        <Card className="border-blue-200/70 bg-white/95 shadow-xl dark:border-blue-900/30 dark:bg-slate-900/85">
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
               <User className="w-4 h-4" />
@@ -352,7 +379,7 @@ export default function AttemptDetailPage() {
         </Card>
 
         {/* Quiz Info */}
-        <Card className="border-purple-200 bg-purple-50">
+        <Card className="border-purple-200/70 bg-white/95 shadow-xl dark:border-purple-900/30 dark:bg-slate-900/85">
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
               <FileText className="w-4 h-4" />
@@ -383,7 +410,7 @@ export default function AttemptDetailPage() {
         </Card>
 
         {/* Score Summary */}
-        <Card className="border-green-200 bg-green-50">
+        <Card className="border-emerald-200/70 bg-white/95 shadow-xl dark:border-emerald-900/30 dark:bg-slate-900/85">
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
               <Award className="w-4 h-4" />
@@ -430,7 +457,7 @@ export default function AttemptDetailPage() {
       </div>
 
       {/* Jawaban List */}
-      <Card>
+      <Card className="border border-white/70 bg-white/95 shadow-xl dark:border-slate-700 dark:bg-slate-900/85">
         <CardHeader>
           <CardTitle>Jawaban Mahasiswa</CardTitle>
           <CardDescription>
@@ -694,7 +721,7 @@ export default function AttemptDetailPage() {
 
       {/* Save Button (Bottom) */}
       {hasChanges && (
-        <Card className="border-orange-200 bg-orange-50">
+        <Card className="border-amber-200/80 bg-amber-50/90 shadow-xl dark:border-amber-900/40 dark:bg-amber-950/20">
           <CardContent className="flex items-center justify-between p-4">
             <div className="flex items-center gap-2">
               <AlertCircle className="w-5 h-5 text-orange-600" />
@@ -717,6 +744,7 @@ export default function AttemptDetailPage() {
           </CardContent>
         </Card>
       )}
+      </div>
     </div>
   );
 }

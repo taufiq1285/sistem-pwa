@@ -79,6 +79,9 @@ describe("useUnreadNotifications", () => {
 
   it("memfilter announcement sesuai role dan rentang aktif", async () => {
     const nowIso = "2026-02-26T12:00:00.000Z";
+    const nowMs = new Date(nowIso).getTime();
+    vi.spyOn(Date, "now").mockReturnValue(nowMs);
+    vi.spyOn(Date.prototype, "toISOString").mockReturnValue(nowIso);
 
     const activeForRole = createAnnouncement({
       id: "a-1",
@@ -116,8 +119,6 @@ describe("useUnreadNotifications", () => {
       tanggal_selesai: null,
       created_at: "2026-02-24T12:00:00.000Z",
     });
-
-    vi.spyOn(Date.prototype, "toISOString").mockReturnValue(nowIso);
 
     mockGetAllAnnouncements.mockResolvedValue([
       activeForRole,

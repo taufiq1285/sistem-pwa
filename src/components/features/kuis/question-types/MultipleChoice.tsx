@@ -194,9 +194,13 @@ export function MultipleChoice({
               key={option.id}
               className={cn(
                 "transition-all",
-                option.is_correct && "ring-2 ring-primary",
+                !disabled && "cursor-pointer hover:border-primary/40",
+                option.is_correct && "ring-2 ring-primary border-primary/60 bg-primary/5",
                 showErrors && !option.text.trim() && "ring-2 ring-destructive",
               )}
+              onClick={() => {
+                if (!disabled) handleSetCorrectAnswer(option.id);
+              }}
             >
               <CardContent className="p-4">
                 <div className="flex items-start gap-3">
@@ -213,16 +217,26 @@ export function MultipleChoice({
                     />
                     <Label
                       htmlFor={`option-${option.id}`}
-                      className="text-sm font-medium cursor-pointer"
+                      className={cn(
+                        "text-xs font-medium cursor-pointer px-2 py-1 rounded-md border transition-colors",
+                        option.is_correct
+                          ? "text-primary border-primary/40 bg-primary/10"
+                          : "text-muted-foreground border-border hover:border-primary/30",
+                      )}
                     >
-                      {option.is_correct && (
-                        <Check className="h-4 w-4 text-primary inline mr-1" />
+                      {option.is_correct ? (
+                        <span className="inline-flex items-center gap-1">
+                          <Check className="h-3.5 w-3.5 text-primary" />
+                          Jawaban Benar
+                        </span>
+                      ) : (
+                        "Pilih Benar"
                       )}
                     </Label>
                   </div>
 
                   {/* Option Label */}
-                  <div className="flex-shrink-0 pt-2">
+                  <div className="shrink-0 pt-2">
                     <div
                       className={cn(
                         "w-8 h-8 rounded-full flex items-center justify-center font-semibold",
@@ -243,6 +257,7 @@ export function MultipleChoice({
                       onChange={(e) =>
                         handleUpdateOption(option.id, e.target.value)
                       }
+                      onClick={(e) => e.stopPropagation()}
                       disabled={disabled}
                       className={cn(
                         showErrors &&
@@ -263,9 +278,12 @@ export function MultipleChoice({
                       type="button"
                       variant="ghost"
                       size="icon"
-                      onClick={() => handleRemoveOption(option.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRemoveOption(option.id);
+                      }}
                       disabled={disabled}
-                      className="flex-shrink-0 text-muted-foreground hover:text-destructive"
+                      className="shrink-0 text-muted-foreground hover:text-destructive"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
