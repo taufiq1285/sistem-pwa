@@ -15,6 +15,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { DashboardCard } from "@/components/ui/dashboard-card";
+import { DashboardSkeleton } from "@/components/ui/dashboard-skeleton";
+import { GlassCard } from "@/components/ui/glass-card";
 import {
   Dialog,
   DialogContent,
@@ -620,14 +623,9 @@ export function DashboardPage() {
   if (loading) {
     return (
       <div className="app-container py-4 sm:py-6 lg:py-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="animate-pulse space-y-6">
-            <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-            <div className="grid gap-6 lg:grid-cols-2">
-              <div className="h-64 bg-gray-200 rounded"></div>
-              <div className="h-64 bg-gray-200 rounded"></div>
-            </div>
-          </div>
+        <div className="max-w-7xl mx-auto space-y-6">
+          <DashboardSkeleton />
+          <DashboardSkeleton />
         </div>
       </div>
     );
@@ -635,42 +633,47 @@ export function DashboardPage() {
 
   return (
     <>
-      <div className="role-page-shell min-h-screen bg-linear-to-br from-slate-50 via-white to-indigo-50 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950">
-        <div className="role-page-content app-container py-4 sm:py-6 lg:py-8">
-          <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8">
+      <div className="surface-grid min-h-screen bg-background">
+        <div className="app-container py-4 sm:py-6 lg:py-8">
+          <div className="mx-auto max-w-7xl space-y-6 sm:space-y-8">
             {/* Header */}
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between rounded-3xl border border-white/60 bg-white/70 p-4 sm:p-6 backdrop-blur-xl shadow-lg">
-              <div className="flex-1">
-                <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-3">
-                  <div className="p-3 bg-linear-to-br from-blue-800 to-indigo-700 rounded-2xl shadow-lg shadow-blue-800/25">
-                    <Users className="h-8 w-8 text-white" />
-                  </div>
-                  <div>
-                    <h1 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold text-transparent bg-clip-text bg-linear-to-r from-blue-800 to-indigo-600 dark:from-indigo-400 dark:to-purple-400">
-                      Dashboard Dosen
-                    </h1>
-                    <p className="text-sm sm:text-lg font-bold text-gray-700 dark:text-gray-300 mt-1">
-                      Selamat datang,{" "}
-                      <span className="text-indigo-600 dark:text-indigo-400">
-                        {user?.full_name || user?.email}
-                      </span>
-                    </p>
-                  </div>
-                  {hasDataChanges && (
-                    <div className="flex items-center gap-2 px-4 py-2 bg-linear-to-r from-orange-100 to-amber-100 text-orange-900 rounded-full text-sm font-bold border-2 border-orange-300 shadow-lg">
-                      <div className="w-2.5 h-2.5 bg-orange-500 rounded-full animate-pulse"></div>
-                      Data diperbarui
+            <GlassCard
+              intensity="high"
+              glow
+              className="overflow-hidden rounded-4xl border border-border/50 bg-background/80 p-4 shadow-xl sm:p-6"
+            >
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div className="flex-1">
+                  <div className="mb-3 flex flex-col gap-4 sm:flex-row sm:items-center">
+                    <div className="rounded-3xl bg-linear-to-br from-primary via-primary/90 to-accent/80 p-3 shadow-lg shadow-primary/25">
+                      <Users className="h-8 w-8 text-primary-foreground" />
                     </div>
+                    <div>
+                      <h1 className="bg-linear-to-r from-foreground via-primary to-accent bg-clip-text text-2xl font-extrabold text-transparent sm:text-4xl lg:text-5xl">
+                        Dashboard Dosen
+                      </h1>
+                      <p className="mt-1 text-sm font-bold text-muted-foreground sm:text-lg">
+                        Selamat datang,{" "}
+                        <span className="text-primary">
+                          {user?.full_name || user?.email}
+                        </span>
+                      </p>
+                    </div>
+                    {hasDataChanges && (
+                      <div className="inline-flex items-center gap-2 rounded-full border border-warning/40 bg-warning/15 px-4 py-2 text-sm font-bold text-foreground shadow-sm">
+                        <div className="h-2.5 w-2.5 rounded-full bg-warning animate-pulse"></div>
+                        Data diperbarui
+                      </div>
+                    )}
+                  </div>
+                  {lastRefresh && (
+                    <p className="ml-1 text-sm font-semibold text-muted-foreground sm:text-base">
+                      Terakhir diperbarui:{" "}
+                      {lastRefresh.toLocaleTimeString("id-ID")}
+                    </p>
                   )}
                 </div>
-                {lastRefresh && (
-                  <p className="text-base font-semibold text-gray-500 dark:text-gray-400 ml-1">
-                    Terakhir diperbarui:{" "}
-                    {lastRefresh.toLocaleTimeString("id-ID")}
-                  </p>
-                )}
-              </div>
-              <div className="flex w-full flex-col sm:w-auto sm:flex-row sm:items-center gap-2">
+                <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
                 {isRefreshing && (
                   <div className="flex items-center gap-2 text-sm text-blue-600">
                     <RefreshCw className="h-4 w-4 animate-spin" />
@@ -717,14 +720,12 @@ export function DashboardPage() {
                 </Button>
               </div>
             </div>
+          </GlassCard>
 
             {error && (
-              <Alert
-                variant="destructive"
-                className="border-red-200 bg-red-50 shadow-lg"
-              >
+              <Alert className="border-destructive/30 bg-destructive/10 text-destructive shadow-sm">
                 <AlertCircle className="h-4 w-4" />
-                <AlertDescription className="font-semibold">
+                <AlertDescription className="font-semibold text-inherit">
                   {error}
                 </AlertDescription>
               </Alert>
@@ -732,86 +733,43 @@ export function DashboardPage() {
 
             {/* Quick Stats Cards */}
             <div className="grid gap-4 sm:gap-5 md:grid-cols-2 xl:grid-cols-4">
-              <Card className="interactive-card border-0 shadow-lg bg-linear-to-br from-blue-800 to-indigo-700 text-white overflow-hidden relative">
-                <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl -mr-8 -mt-8" />
-                <CardContent className="p-6 relative">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-indigo-100 text-sm font-semibold mb-1">
-                        Total Assignment
-                      </p>
-                      <p className="text-4xl font-extrabold">
-                        {assignments.length}
-                      </p>
-                    </div>
-                    <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
-                      <Users className="h-7 w-7" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="interactive-card border-0 shadow-lg bg-linear-to-br from-sky-700 to-cyan-600 text-white overflow-hidden relative">
-                <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl -mr-8 -mt-8" />
-                <CardContent className="p-6 relative">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-blue-100 text-sm font-semibold mb-1">
-                        Jadwal Minggu Ini
-                      </p>
-                      <p className="text-4xl font-extrabold">
-                        {upcomingPracticum.length}
-                      </p>
-                    </div>
-                    <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
-                      <Calendar className="h-7 w-7" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="interactive-card border-0 shadow-lg bg-linear-to-br from-amber-500 to-orange-600 text-white overflow-hidden relative">
-                <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl -mr-8 -mt-8" />
-                <CardContent className="p-6 relative">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-orange-100 text-sm font-semibold mb-1">
-                        Perlu Dinilai
-                      </p>
-                      <p className="text-4xl font-extrabold">
-                        {pendingGrading.length}
-                      </p>
-                    </div>
-                    <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
-                      <Edit className="h-7 w-7" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="interactive-card border-0 shadow-lg bg-linear-to-br from-emerald-600 to-teal-700 text-white overflow-hidden relative">
-                <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl -mr-8 -mt-8" />
-                <CardContent className="p-6 relative">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-emerald-100 text-sm font-semibold mb-1">
-                        Kuis Aktif
-                      </p>
-                      <p className="text-4xl font-extrabold">
-                        {activeKuis.length}
-                      </p>
-                    </div>
-                    <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
-                      <Target className="h-7 w-7" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              <DashboardCard
+                title="Total Assignment"
+                value={assignments.length}
+                description="Kelas dan mata kuliah yang sedang Anda ampu"
+                icon={Users}
+                color="blue"
+              />
+              <DashboardCard
+                title="Jadwal Minggu Ini"
+                value={upcomingPracticum.length}
+                description="Praktikum terjadwal dalam 7 hari ke depan"
+                icon={Calendar}
+                color="blue"
+              />
+              <DashboardCard
+                title="Perlu Dinilai"
+                value={pendingGrading.length}
+                description="Submission yang menunggu proses penilaian"
+                icon={Edit}
+                color="amber"
+              />
+              <DashboardCard
+                title="Kuis Aktif"
+                value={activeKuis.length}
+                description="Kuis yang masih berjalan atau dipublikasikan"
+                icon={Target}
+                color="green"
+              />
             </div>
 
             {/* Welcome Banner */}
             {assignments.length > 0 && (
-              <Card className="interactive-card border-0 shadow-xl bg-linear-to-r from-blue-800 via-indigo-700 to-amber-600 text-white overflow-hidden relative">
+              <GlassCard
+                intensity="high"
+                glow
+                className="interactive-card overflow-hidden border-white/20 bg-linear-to-r from-primary via-primary/90 to-accent/85 text-primary-foreground shadow-xl"
+              >
                 <div className="absolute inset-0 bg-grid-white/10" />
                 <CardContent className="p-8 relative">
                   <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
@@ -843,7 +801,7 @@ export function DashboardPage() {
                     </div>
                   </div>
                 </CardContent>
-              </Card>
+              </GlassCard>
             )}
 
             <div className="grid gap-6 lg:grid-cols-2">

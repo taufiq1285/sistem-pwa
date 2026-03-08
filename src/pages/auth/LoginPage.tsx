@@ -6,6 +6,7 @@
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { LoginForm } from "@/components/forms/LoginForm";
+import { GlassCard } from "@/components/ui/glass-card";
 import { useState, useEffect } from "react";
 import {
   Stethoscope,
@@ -77,10 +78,13 @@ export function LoginPage() {
         {/* Main Card */}
         <div className="relative">
           {/* Glow Effect */}
-          <div className="absolute -inset-1 bg-linear-to-r from-blue-800/50 via-blue-600/40 to-amber-500/40 rounded-3xl blur-lg opacity-30" />
+          <div className="absolute -inset-1 bg-linear-to-r from-primary/45 via-primary/30 to-accent/35 rounded-3xl blur-lg opacity-40" />
 
           {/* Card */}
-          <div className="relative bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-slate-200/70 overflow-hidden">
+          <GlassCard
+            intensity="high"
+            className="relative overflow-hidden rounded-3xl border border-white/30 bg-white/85 shadow-2xl dark:border-white/10 dark:bg-slate-950/65"
+          >
             {/* Header Section */}
             <div className="bg-linear-to-br from-blue-800 via-blue-700 to-indigo-700 px-6 sm:px-8 pt-9 sm:pt-10 pb-14 sm:pb-16 relative">
               {/* Decorative Circles */}
@@ -166,7 +170,7 @@ export function LoginPage() {
                 <span>Kembali ke Beranda</span>
               </Link>
             </div>
-          </div>
+          </GlassCard>
         </div>
 
         {/* Security Badge */}

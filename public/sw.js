@@ -17,7 +17,7 @@
 // CONFIGURATION
 // ============================================================================
 
-const CACHE_VERSION = 'v1.0.2'; // Fixed: Comprehensive Vite module skipping
+const CACHE_VERSION = 'v1.0.3'; // Fixed: serve index.html for offline navigation
 const CACHE_PREFIX = 'praktikum-pwa';
 
 // Cache names
@@ -35,7 +35,10 @@ const STATIC_ASSETS = [
   '/index.html',
   '/offline.html',
   '/manifest.json',
-  // Add other critical static assets
+  '/favicon.png',
+  '/apple-touch-icon.png',
+  '/icons/icon-192x192.png',
+  '/icons/icon-512x512.png',
 ];
 
 // Cache configuration
@@ -400,8 +403,19 @@ async function handleOfflineFallback(request) {
   // Return offline page for navigation requests
   if (request.mode === 'navigate') {
     const cache = await caches.open(CACHE_NAMES.static);
+
+    // Try index.html first - allows React Router to handle offline routing
+    // Users with offline sessions can still navigate the app (not blocked by offline.html)
+    const indexPage = await cache.match('/index.html') || await cache.match('/');
+    if (indexPage) {
+      console.log('[SW] Serving cached index.html for offline navigation:', url.pathname);
+      return indexPage;
+    }
+
+    // Fallback to offline.html only if index.html is not cached yet
     const offlinePage = await cache.match('/offline.html');
     if (offlinePage) {
+      console.log('[SW] Serving offline.html (index.html not cached)');
       return offlinePage;
     }
   }

@@ -82,8 +82,9 @@ describe("Laboran InventarisPage", () => {
     mockCacheAPI.mockReset();
     mockCacheAPI.mockReturnValue(new Promise(() => {}));
 
-    render(<InventarisPage />);
+    const { container } = render(<InventarisPage />);
 
-    expect(screen.getByText(/Loading\.\.\./i)).toBeInTheDocument();
+    // Page uses DashboardSkeleton (Skeleton elements with animate-pulse) while loading
+    expect(container.querySelector(".animate-pulse")).toBeTruthy();
   });
 });

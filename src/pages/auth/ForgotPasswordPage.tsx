@@ -13,7 +13,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { GlassCard } from "@/components/ui/glass-card";
+import { ButtonEnhanced } from "@/components/ui/button-enhanced";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -65,7 +66,7 @@ export function ForgotPasswordPage() {
 
   if (success) {
     return (
-      <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-linear-to-br from-slate-50 via-blue-50/70 to-amber-50/80 px-4 py-8 sm:px-6 sm:py-10">
+      <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-linear-to-br from-background via-muted to-primary/5 px-4 py-8 sm:px-6 sm:py-10">
         <div className="pointer-events-none fixed inset-0 overflow-hidden">
           <div className="absolute -right-32 top-0 h-72 w-72 rounded-full bg-blue-500/10 blur-3xl" />
           <div className="absolute -left-24 bottom-0 h-72 w-72 rounded-full bg-amber-300/20 blur-3xl" />
@@ -73,7 +74,11 @@ export function ForgotPasswordPage() {
 
         <div className="relative w-full max-w-lg">
           <div className="absolute -inset-1 rounded-4xl-linear-to-r from-blue-700/40 via-sky-500/30 to-amber-400/40 blur-lg" />
-          <Card className="relative overflow-hidden rounded-4xl border border-blue-100/70 bg-white/90 shadow-2xl backdrop-blur-xl">
+          <GlassCard
+            intensity="high"
+            glow
+            className="relative overflow-hidden rounded-4xl border border-white/20 bg-background/85 shadow-2xl"
+          >
             <CardHeader className="space-y-4 bg-linear-to-br from-blue-800 via-blue-700 to-sky-700 px-6 py-8 text-center sm:px-8">
               <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-white/15 backdrop-blur-sm">
                 <CheckCircle2 className="h-9 w-9 text-emerald-300" />
@@ -103,13 +108,13 @@ export function ForgotPasswordPage() {
 
               <div className="grid gap-3">
                 <Link to={ROUTES.LOGIN}>
-                  <Button
+                  <ButtonEnhanced
                     variant="outline"
                     className="h-11 w-full border-blue-200 bg-white text-blue-700 hover:bg-blue-50 hover:text-blue-800"
+                    leadingIcon={<ArrowLeft className="h-4 w-4" />}
                   >
-                    <ArrowLeft className="mr-2 h-4 w-4" />
                     Kembali ke Login
-                  </Button>
+                  </ButtonEnhanced>
                 </Link>
               </div>
 
@@ -123,14 +128,14 @@ export function ForgotPasswordPage() {
                 </button>
               </div>
             </CardContent>
-          </Card>
+          </GlassCard>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-linear-to-br from-slate-50 via-blue-50/70 to-amber-50/80 px-4 py-8 sm:px-6 sm:py-10">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-linear-to-br from-background via-muted to-primary/5 px-4 py-8 sm:px-6 sm:py-10">
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
         <div className="absolute -right-24 -top-24 h-80 w-80 rounded-full bg-blue-500/15 blur-3xl" />
         <div className="absolute -left-24 bottom-0 h-72 w-72 rounded-full bg-amber-300/20 blur-3xl" />
@@ -139,7 +144,11 @@ export function ForgotPasswordPage() {
 
       <div className="relative w-full max-w-lg">
         <div className="absolute -inset-1 rounded-4xl bg-linear-to-r from-blue-700/40 via-sky-500/30 to-amber-400/40 blur-lg" />
-        <Card className="relative overflow-hidden rounded-4xlrder border-blue-100/70 bg-white/90 shadow-2xl backdrop-blur-xl">
+        <GlassCard
+          intensity="high"
+          glow
+          className="relative overflow-hidden rounded-4xl border border-white/20 bg-background/85 shadow-2xl"
+        >
           <CardHeader className="space-y-4 bg-linear-to-br from-blue-800 via-blue-700 to-sky-700 px-6 py-8 text-center sm:px-8">
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-white/15 backdrop-blur-sm">
               <KeyRound className="h-9 w-9 text-white" />
@@ -162,7 +171,7 @@ export function ForgotPasswordPage() {
           <CardContent className="px-6 py-6 sm:px-8">
             <form onSubmit={handleSubmit} className="space-y-5">
               {error && (
-                <Alert variant="destructive" className="border-red-200 bg-red-50">
+                <Alert variant="destructive" className="border-destructive/20 bg-destructive/5">
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>{error}</AlertDescription>
                 </Alert>
@@ -184,28 +193,30 @@ export function ForgotPasswordPage() {
                 />
               </div>
 
-              <Button
+              <ButtonEnhanced
                 type="submit"
-                className="h-11 w-full bg-blue-700 text-white shadow-lg shadow-blue-900/15 hover:bg-blue-800"
-                disabled={loading}
+                className="h-11 w-full shadow-lg shadow-primary/20"
+                loading={loading}
+                loadingText="Mengirim..."
+                leadingIcon={<Mail className="h-4 w-4" />}
               >
-                {loading ? "Mengirim..." : "Kirim Link Reset"}
-              </Button>
+                Kirim Link Reset
+              </ButtonEnhanced>
 
               <div className="text-center">
                 <Link to={ROUTES.LOGIN}>
-                  <Button
+                  <ButtonEnhanced
                     variant="ghost"
                     className="h-11 w-full text-slate-600 hover:bg-blue-50 hover:text-blue-800"
+                    leadingIcon={<ArrowLeft className="h-4 w-4" />}
                   >
-                    <ArrowLeft className="mr-2 h-4 w-4" />
                     Kembali ke Login
-                  </Button>
+                  </ButtonEnhanced>
                 </Link>
               </div>
             </form>
           </CardContent>
-        </Card>
+        </GlassCard>
       </div>
     </div>
   );

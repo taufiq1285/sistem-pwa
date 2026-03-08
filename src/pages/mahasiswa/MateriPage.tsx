@@ -11,7 +11,7 @@
  */
 
 import { useState, useEffect } from "react";
-import { Loader2, Search, BookOpen, FileText, Library } from "lucide-react";
+import { Search, BookOpen, FileText, Library } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -21,6 +21,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DashboardCard } from "@/components/ui/dashboard-card";
+import { DashboardSkeleton } from "@/components/ui/dashboard-skeleton";
+import { GlassCard } from "@/components/ui/glass-card";
 import { MateriList } from "@/components/features/materi/MateriCard";
 import { MateriViewer } from "@/components/features/materi/MateriViewer";
 import { useAuth } from "@/lib/hooks/useAuth";
@@ -227,190 +230,184 @@ export default function MahasiswaMateriPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center space-y-4">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
-          <p className="text-muted-foreground">Memuat materi...</p>
+      <div className="app-container py-4 sm:py-6 lg:py-8">
+        <div className="max-w-7xl mx-auto space-y-6">
+          <DashboardSkeleton />
+          <DashboardSkeleton />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto py-6 max-w-7xl">
-      {/* Header */}
-      <div className="mb-6">
-        <div className="flex items-center gap-3 mb-2">
-          <BookOpen className="h-8 w-8 text-primary" />
-          <h1 className="text-4xl font-extrabold">Materi Pembelajaran</h1>
-        </div>
-        <p className="text-muted-foreground">
-          Akses materi pembelajaran dari dosen Anda
-        </p>
-      </div>
+    <div className="app-container py-4 sm:py-6 lg:py-8">
+      <div className="mx-auto max-w-7xl space-y-6">
+        {/* Header */}
+        <GlassCard
+          intensity="medium"
+          className="border-white/40 bg-white/80 shadow-xl dark:border-white/10 dark:bg-slate-900/80"
+        >
+          <CardContent className="p-6 sm:p-8">
+            <div className="mb-2 flex items-center gap-3">
+              <BookOpen className="h-8 w-8 text-primary" />
+              <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+                Materi Pembelajaran
+              </h1>
+            </div>
+            <p className="text-muted-foreground">
+              Akses materi pembelajaran dari dosen Anda
+            </p>
+          </CardContent>
+        </GlassCard>
 
-      {/* Filters */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-        <div className="lg:col-span-2">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Cari materi..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
+        {/* Filters */}
+        <GlassCard
+          intensity="low"
+          className="border-white/40 bg-white/90 shadow-lg dark:border-white/10 dark:bg-slate-900/85"
+        >
+          <CardContent className="p-4 sm:p-6">
+            <div className="mb-4 flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-semibold text-foreground">Filter Materi</h2>
+                <p className="text-sm text-muted-foreground">
+                  Saring materi berdasarkan mata kuliah, kelas, minggu, atau kata kunci.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5">
+              <div className="lg:col-span-2">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    placeholder="Cari materi..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+
+              <Select
+                value={selectedMataKuliah}
+                onValueChange={(value) => {
+                  setSelectedMataKuliah(value);
+                  setSelectedKelas("all"); // Reset kelas filter when mata kuliah changes
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Semua Mata Kuliah" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Semua Mata Kuliah</SelectItem>
+                  {uniqueMataKuliah.map((mk) => (
+                    <SelectItem key={mk} value={mk}>
+                      {mk}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select
+                value={selectedKelas}
+                onValueChange={(value) => {
+                  setSelectedKelas(value);
+                  setSelectedMataKuliah("all"); // Reset mata kuliah filter when kelas changes
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Semua Kelas" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Semua Kelas</SelectItem>
+                  {uniqueKelas.map((kelas) => (
+                    <SelectItem key={kelas.id} value={kelas.id}>
+                      {kelas.kodeMk && `${kelas.kodeMk} - `}
+                      {kelas.nama}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={selectedMinggu} onValueChange={setSelectedMinggu}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Semua Minggu" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Semua Minggu</SelectItem>
+                  {Array.from({ length: 16 }, (_, i) => i + 1).map((minggu) => (
+                    <SelectItem key={minggu} value={minggu.toString()}>
+                      Minggu {minggu}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </GlassCard>
+
+        {/* Info Cards - Gradient */}
+        {materiList.length > 0 && (
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <DashboardCard
+              title="Total Materi"
+              value={materiList.length}
+              icon={FileText}
+              color="blue"
+            />
+            <DashboardCard
+              title="Mata Kuliah"
+              value={uniqueMataKuliah.length}
+              icon={BookOpen}
+              color="purple"
+            />
+            <DashboardCard
+              title="Kelas Terdaftar"
+              value={uniqueKelas.length}
+              icon={Library}
+              color="green"
+            />
+            <DashboardCard
+              title="Materi Minggu Ini"
+              value={materiList.filter((m) => {
+                const now = new Date();
+                const weeksSinceStart = Math.ceil(
+                  (now.getTime() - new Date("2024-01-01").getTime()) /
+                    (7 * 24 * 60 * 60 * 1000),
+                );
+                return m.minggu_ke === weeksSinceStart;
+              }).length}
+              icon={Search}
+              color="amber"
             />
           </div>
-        </div>
+        )}
 
-        <Select
-          value={selectedMataKuliah}
-          onValueChange={(value) => {
-            setSelectedMataKuliah(value);
-            setSelectedKelas("all"); // Reset kelas filter when mata kuliah changes
+        {/* Materi List */}
+        <MateriList
+          materiList={filteredMateri}
+          showActions={true}
+          showDosenActions={false}
+          onView={handleView}
+          onDownload={handleDownload}
+          emptyMessage={
+            enrolledKelasIds.length === 0
+              ? "Anda belum terdaftar di kelas manapun"
+              : "Belum ada materi tersedia"
+          }
+        />
+
+        {/* Viewer */}
+        <MateriViewer
+          materi={viewingMateri}
+          open={showViewer}
+          onClose={() => {
+            setShowViewer(false);
+            setViewingMateri(null);
           }}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Semua Mata Kuliah" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Semua Mata Kuliah</SelectItem>
-            {uniqueMataKuliah.map((mk) => (
-              <SelectItem key={mk} value={mk}>
-                {mk}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select
-          value={selectedKelas}
-          onValueChange={(value) => {
-            setSelectedKelas(value);
-            setSelectedMataKuliah("all"); // Reset mata kuliah filter when kelas changes
-          }}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Semua Kelas" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Semua Kelas</SelectItem>
-            {uniqueKelas.map((kelas) => (
-              <SelectItem key={kelas.id} value={kelas.id}>
-                {kelas.kodeMk && `${kelas.kodeMk} - `}
-                {kelas.nama}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select value={selectedMinggu} onValueChange={setSelectedMinggu}>
-          <SelectTrigger>
-            <SelectValue placeholder="Semua Minggu" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Semua Minggu</SelectItem>
-            {Array.from({ length: 16 }, (_, i) => i + 1).map((minggu) => (
-              <SelectItem key={minggu} value={minggu.toString()}>
-                Minggu {minggu}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          onDownload={() => viewingMateri && handleDownload(viewingMateri)}
+        />
       </div>
-
-      {/* Info Cards - Gradient */}
-      {materiList.length > 0 && (
-        <div className="grid gap-4 md:grid-cols-4 mb-6">
-          <Card className="border-0 shadow-lg bg-linear-to-r from-blue-500 to-blue-600 text-white">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-base font-bold text-white">
-                Total Materi
-              </CardTitle>
-              <FileText className="h-5 w-5 text-white" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-4xl font-extrabold">{materiList.length}</div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-lg bg-linear-to-r from-purple-500 to-purple-600 text-white">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-base font-bold text-white">
-                Mata Kuliah
-              </CardTitle>
-              <BookOpen className="h-5 w-5 text-white" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-4xl font-extrabold">
-                {uniqueMataKuliah.length}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-lg bg-linear-to-r from-green-500 to-green-600 text-white">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-base font-bold text-white">
-                Kelas Terdaftar
-              </CardTitle>
-              <Library className="h-5 w-5 text-white" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-4xl font-extrabold">
-                {uniqueKelas.length}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-lg bg-linear-to-r from-orange-500 to-orange-600 text-white">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-base font-bold text-white">
-                Materi Minggu Ini
-              </CardTitle>
-              <Search className="h-5 w-5 text-white" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-4xl font-extrabold">
-                {
-                  materiList.filter((m) => {
-                    const now = new Date();
-                    const weeksSinceStart = Math.ceil(
-                      (now.getTime() - new Date("2024-01-01").getTime()) /
-                        (7 * 24 * 60 * 60 * 1000),
-                    );
-                    return m.minggu_ke === weeksSinceStart;
-                  }).length
-                }
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Materi List */}
-      <MateriList
-        materiList={filteredMateri}
-        showActions={true}
-        showDosenActions={false}
-        onView={handleView}
-        onDownload={handleDownload}
-        emptyMessage={
-          enrolledKelasIds.length === 0
-            ? "Anda belum terdaftar di kelas manapun"
-            : "Belum ada materi tersedia"
-        }
-      />
-
-      {/* Viewer */}
-      <MateriViewer
-        materi={viewingMateri}
-        open={showViewer}
-        onClose={() => {
-          setShowViewer(false);
-          setViewingMateri(null);
-        }}
-        onDownload={() => viewingMateri && handleDownload(viewingMateri)}
-      />
     </div>
   );
 }

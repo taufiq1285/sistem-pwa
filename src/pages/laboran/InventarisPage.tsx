@@ -20,6 +20,10 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { DashboardCard } from "@/components/ui/dashboard-card";
+import { DashboardSkeleton } from "@/components/ui/dashboard-skeleton";
+import { GlassCard } from "@/components/ui/glass-card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -287,217 +291,254 @@ export default function InventarisPage() {
   };
 
   return (
-    <div className="p-8">
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-4xl font-extrabold">Inventaris Lab</h1>
-            <p className="text-muted-foreground">
-              Manage laboratory equipment and inventory
-            </p>
+    <div className="app-container py-4 sm:py-6 lg:py-8">
+      <div className="mx-auto max-w-7xl space-y-6">
+        <GlassCard
+          intensity="medium"
+          className="border-border/60 bg-background/80 shadow-xl"
+        >
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex items-start gap-4">
+              <div className="rounded-2xl bg-primary/10 p-3 text-primary ring-1 ring-primary/20">
+                <Package className="h-7 w-7" />
+              </div>
+              <div className="space-y-2">
+                <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-primary">
+                  Inventaris aktif
+                </div>
+                <div>
+                  <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+                    Inventaris Lab
+                  </h1>
+                  <p className="text-sm text-muted-foreground sm:text-base">
+                    Kelola peralatan laboratorium, stok tersedia, dan kategori
+                    inventaris yang masih dipakai.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Button variant="outline" onClick={exportToCSV}>
+                <Download className="mr-2 h-4 w-4" />
+                Export CSV
+              </Button>
+              <Button onClick={handleCreate}>
+                <Plus className="mr-2 h-4 w-4" />
+                Tambah Barang
+              </Button>
+            </div>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={exportToCSV}>
-              <Download className="h-4 w-4 mr-2" />
-              Export CSV
-            </Button>
-            <Button onClick={handleCreate}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Item
-            </Button>
-          </div>
-        </div>
+        </GlassCard>
 
         <div className="grid gap-4 md:grid-cols-3">
-          <div className="rounded-lg border bg-card p-6">
-            <div className="flex items-center gap-2">
-              <Package className="h-4 w-4 text-muted-foreground" />
-              <h3 className="text-sm font-medium">Total Items</h3>
-            </div>
-            <p className="text-4xl font-extrabold mt-2">{totalCount}</p>
-          </div>
-          <div className="rounded-lg border bg-card p-6">
-            <div className="flex items-center gap-2">
-              <AlertCircle className="h-4 w-4 text-yellow-600" />
-              <h3 className="text-sm font-medium">Low Stock</h3>
-            </div>
-            <p className="text-4xl font-extrabold mt-2">
-              {inventaris.filter((i) => i.jumlah_tersedia < 5).length}
-            </p>
-          </div>
-          <div className="rounded-lg border bg-card p-6">
-            <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-muted-foreground" />
-              <h3 className="text-sm font-medium">Categories</h3>
-            </div>
-            <p className="text-4xl font-extrabold mt-2">{categories.length}</p>
-          </div>
+          <DashboardCard
+            title="Total Items"
+            value={totalCount}
+            icon={Package}
+            color="blue"
+          />
+          <DashboardCard
+            title="Low Stock"
+            value={inventaris.filter((i) => i.jumlah_tersedia < 5).length}
+            icon={AlertCircle}
+            color="amber"
+          />
+          <DashboardCard
+            title="Categories"
+            value={categories.length}
+            icon={Filter}
+            color="purple"
+          />
         </div>
 
-        <div className="flex gap-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search by name or code..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9"
-            />
+        <GlassCard
+          intensity="low"
+          className="border-border/60 bg-background/85 shadow-lg"
+        >
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end">
+            <div className="relative flex-1 space-y-2">
+              <Label htmlFor="inventaris-search">Cari inventaris</Label>
+              <Search className="absolute left-3 top-[calc(50%+12px)] h-4 w-4 -translate-y-1/2 transform text-muted-foreground" />
+              <Input
+                id="inventaris-search"
+                placeholder="Cari berdasarkan nama barang atau kode..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <div className="space-y-2 lg:w-64">
+              <Label>Kategori</Label>
+              <Select
+                value={selectedKategori || undefined}
+                onValueChange={(value) => setSelectedKategori(value)}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Semua kategori" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat} value={cat}>
+                      {cat}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {selectedKategori && (
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setSelectedKategori("")}
+                title="Reset filter kategori"
+                className="shrink-0"
+              >
+                <XCircle className="h-4 w-4" />
+              </Button>
+            )}
           </div>
-          <Select
-            value={selectedKategori || undefined}
-            onValueChange={(value) => setSelectedKategori(value)}
+        </GlassCard>
+
+        {loading ? (
+          <DashboardSkeleton />
+        ) : (
+          <GlassCard
+            intensity="low"
+            className="border-border/60 bg-background/85 shadow-lg"
           >
-            <SelectTrigger className="w-50">
-              <SelectValue placeholder="All Categories" />
-            </SelectTrigger>
-            <SelectContent>
-              {categories.map((cat) => (
-                <SelectItem key={cat} value={cat}>
-                  {cat}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {selectedKategori && (
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setSelectedKategori("")}
-              title="Clear filter"
-            >
-              <XCircle className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
-
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow className="hover:bg-transparent">
-                <TableHead className="font-semibold text-foreground">
-                  Kode
-                </TableHead>
-                <TableHead className="font-semibold text-foreground">
-                  Nama Barang
-                </TableHead>
-                <TableHead className="font-semibold text-foreground">
-                  Kategori
-                </TableHead>
-                <TableHead className="font-semibold text-foreground">
-                  Merk
-                </TableHead>
-                <TableHead className="text-right font-semibold text-foreground">
-                  Jumlah
-                </TableHead>
-                <TableHead className="text-right font-semibold text-foreground">
-                  Tersedia
-                </TableHead>
-                <TableHead className="font-semibold text-foreground">
-                  Kondisi
-                </TableHead>
-                <TableHead className="font-semibold text-foreground">
-                  Lab
-                </TableHead>
-                <TableHead className="text-right font-semibold text-foreground">
-                  Actions
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={9}
-                    className="text-center text-muted-foreground py-8"
-                  >
-                    Loading...
-                  </TableCell>
-                </TableRow>
-              ) : inventaris.length === 0 ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={9}
-                    className="text-center text-muted-foreground py-8"
-                  >
-                    No items found
-                  </TableCell>
-                </TableRow>
-              ) : (
-                inventaris.map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCell className="font-mono text-sm text-gray-900 dark:text-gray-100">
-                      {item.kode_barang}
-                    </TableCell>
-                    <TableCell className="font-medium text-gray-900 dark:text-gray-100">
-                      {item.nama_barang}
-                    </TableCell>
-                    <TableCell className="text-gray-600 dark:text-gray-400">
-                      {item.kategori || "-"}
-                    </TableCell>
-                    <TableCell className="text-gray-600 dark:text-gray-400">
-                      {item.merk || "-"}
-                    </TableCell>
-                    <TableCell className="text-right font-medium text-gray-900 dark:text-gray-100">
-                      {item.jumlah}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <span
-                        className={
-                          item.jumlah_tersedia < 5
-                            ? "text-yellow-600 dark:text-yellow-400 font-semibold"
-                            : "font-medium text-gray-900 dark:text-gray-100"
-                        }
-                      >
-                        {item.jumlah_tersedia}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          KONDISI_OPTIONS.find((k) => k.value === item.kondisi)
-                            ?.variant || "default"
-                        }
-                      >
-                        {KONDISI_OPTIONS.find((k) => k.value === item.kondisi)
-                          ?.label || item.kondisi}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-gray-600 dark:text-gray-400">
-                      {item.laboratorium?.nama_lab || "Depot"}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleStockManagement(item)}
-                          title="Manage Stock"
-                        >
-                          <Package className="h-4 w-4 text-gray-700 dark:text-gray-300" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleEdit(item)}
-                        >
-                          <Edit className="h-4 w-4 text-gray-700 dark:text-gray-300" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDelete(item)}
-                        >
-                          <Trash2 className="h-4 w-4 text-gray-700 dark:text-gray-300" />
-                        </Button>
-                      </div>
-                    </TableCell>
+            <div className="flex items-center justify-between gap-3 border-b border-border/60 pb-4">
+              <div>
+                <h2 className="text-lg font-semibold text-foreground">
+                  Daftar Inventaris
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  {totalCount} item terdata pada hasil pencarian saat ini.
+                </p>
+              </div>
+            </div>
+            <div className="mt-4 overflow-x-auto rounded-xl border border-border/60">
+              <Table>
+                <TableHeader>
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead className="font-semibold text-foreground">
+                      Kode
+                    </TableHead>
+                    <TableHead className="font-semibold text-foreground">
+                      Nama Barang
+                    </TableHead>
+                    <TableHead className="font-semibold text-foreground">
+                      Kategori
+                    </TableHead>
+                    <TableHead className="font-semibold text-foreground">
+                      Merk
+                    </TableHead>
+                    <TableHead className="text-right font-semibold text-foreground">
+                      Jumlah
+                    </TableHead>
+                    <TableHead className="text-right font-semibold text-foreground">
+                      Tersedia
+                    </TableHead>
+                    <TableHead className="font-semibold text-foreground">
+                      Kondisi
+                    </TableHead>
+                    <TableHead className="font-semibold text-foreground">
+                      Lab
+                    </TableHead>
+                    <TableHead className="text-right font-semibold text-foreground">
+                      Actions
+                    </TableHead>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
+                </TableHeader>
+                <TableBody>
+                  {inventaris.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={9} className="p-6">
+                        <Alert className="border-border/60 bg-muted/40">
+                          <AlertCircle className="h-4 w-4" />
+                          <AlertDescription className="text-sm text-muted-foreground">
+                            Tidak ada item inventaris yang cocok dengan filter
+                            saat ini.
+                          </AlertDescription>
+                        </Alert>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    inventaris.map((item) => (
+                      <TableRow key={item.id}>
+                        <TableCell className="font-mono text-sm text-foreground">
+                          {item.kode_barang}
+                        </TableCell>
+                        <TableCell className="font-medium text-foreground">
+                          {item.nama_barang}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {item.kategori || "-"}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {item.merk || "-"}
+                        </TableCell>
+                        <TableCell className="text-right font-medium text-foreground">
+                          {item.jumlah}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <span
+                            className={
+                              item.jumlah_tersedia < 5
+                                ? "font-semibold text-amber-600 dark:text-amber-400"
+                                : "font-medium text-foreground"
+                            }
+                          >
+                            {item.jumlah_tersedia}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={
+                              KONDISI_OPTIONS.find((k) => k.value === item.kondisi)
+                                ?.variant || "default"
+                            }
+                          >
+                            {KONDISI_OPTIONS.find((k) => k.value === item.kondisi)
+                              ?.label || item.kondisi}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {item.laboratorium?.nama_lab || "Depot"}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleStockManagement(item)}
+                              title="Manage Stock"
+                            >
+                              <Package className="h-4 w-4 text-gray-700 dark:text-gray-300" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleEdit(item)}
+                            >
+                              <Edit className="h-4 w-4 text-gray-700 dark:text-gray-300" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleDelete(item)}
+                            >
+                              <Trash2 className="h-4 w-4 text-gray-700 dark:text-gray-300" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </GlassCard>
+        )}
 
         {/* Form Dialog */}
         <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>

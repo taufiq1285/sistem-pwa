@@ -16,7 +16,8 @@ import {
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { DashboardCard } from "@/components/ui/dashboard-card";
 import { DeleteConfirmDialog } from "@/components/common/DeleteConfirmDialog";
 import {
   Card,
@@ -323,83 +324,33 @@ export default function EquipmentsPage() {
   };
 
   return (
-    <div className="container mx-auto py-6 max-w-7xl space-y-6">
+    <div className="app-container space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="section-shell flex items-center justify-between rounded-2xl p-5">
         <div>
-          <h1 className="text-4xl font-extrabold">Equipment Management</h1>
-          <p className="text-lg font-semibold text-muted-foreground mt-2">
-            Manage laboratory equipment and inventory
+          <h1 className="text-2xl font-bold text-foreground">Manajemen Peralatan</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Kelola inventaris peralatan laboratorium
           </p>
         </div>
         <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={loadData}
-            className="font-semibold border-2"
-          >
+          <Button variant="outline" onClick={loadData} className="font-semibold">
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
-          <Button
-            onClick={handleAdd}
-            className="font-semibold bg-linear-to-r from-blue-500 to-indigo-600"
-          >
+          <Button onClick={handleAdd} className="font-semibold bg-linear-to-r from-blue-600 to-indigo-600 text-white">
             <Plus className="h-4 w-4 mr-2" />
-            Add Equipment
+            Tambah Peralatan
           </Button>
         </div>
       </div>
 
       {/* Statistics */}
       <div className="grid gap-4 md:grid-cols-4">
-        <Card className="border-0 shadow-lg bg-linear-to-r from-blue-500 to-blue-600 text-white">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-base font-bold text-white">
-              Total
-            </CardTitle>
-            <Package className="h-5 w-5 text-white" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-4xl font-extrabold">{stats.total}</div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-lg bg-linear-to-r from-green-500 to-green-600 text-white">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-base font-bold text-white">
-              Good Condition
-            </CardTitle>
-            <Package className="h-5 w-5 text-white" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-4xl font-extrabold">{stats.available}</div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-lg bg-linear-to-r from-red-500 to-red-600 text-white">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-base font-bold text-white">
-              Damaged
-            </CardTitle>
-            <AlertCircle className="h-5 w-5 text-white" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-4xl font-extrabold">{stats.damaged}</div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-lg bg-linear-to-r from-orange-500 to-orange-600 text-white">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-base font-bold text-white">
-              In Use
-            </CardTitle>
-            <AlertCircle className="h-5 w-5 text-white" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-4xl font-extrabold">{stats.borrowed}</div>
-          </CardContent>
-        </Card>
+        <DashboardCard title="Total Barang" value={stats.total} icon={Package} color="blue" />
+        <DashboardCard title="Kondisi Baik" value={stats.available} icon={Package} color="green" />
+        <DashboardCard title="Rusak" value={stats.damaged} icon={AlertCircle} color="red" />
+        <DashboardCard title="Dipinjam" value={stats.borrowed} icon={AlertCircle} color="amber" />
       </div>
 
       {/* Search */}
@@ -541,7 +492,7 @@ export default function EquipmentsPage() {
                 <EnhancedTableHeader>
                   <EnhancedTableRow>
                     {columnVisibility.select && (
-                      <EnhancedTableHead className="w-[50px]">
+                      <EnhancedTableHead className="w-12.5">
                         <RowSelectionHeader
                           checked={rowSelection.isAllSelected}
                           indeterminate={rowSelection.isSomeSelected}
@@ -622,21 +573,22 @@ export default function EquipmentsPage() {
                       )}
                       {columnVisibility.condition && (
                         <EnhancedTableCell>
-                          <Badge
-                            variant={
+                          <StatusBadge
+                            status={
                               item.kondisi === "baik"
-                                ? "default"
+                                ? "success"
                                 : item.kondisi === "rusak_ringan"
-                                  ? "secondary"
-                                  : "destructive"
+                                  ? "warning"
+                                  : "error"
                             }
+                            pulse={item.kondisi === "baik"}
                           >
                             {item.kondisi === "rusak_ringan"
-                              ? "Minor Damage"
+                              ? "Rusak Ringan"
                               : item.kondisi === "rusak_berat"
-                                ? "Major Damage"
-                                : item.kondisi}
-                          </Badge>
+                                ? "Rusak Berat"
+                                : "Baik"}
+                          </StatusBadge>
                         </EnhancedTableCell>
                       )}
                       {columnVisibility.actions && (

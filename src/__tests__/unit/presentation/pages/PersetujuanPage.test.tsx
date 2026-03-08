@@ -71,9 +71,10 @@ describe("Laboran PersetujuanPage", () => {
   it("menampilkan loading state saat request belum selesai", () => {
     mockGetPendingApprovals.mockReturnValue(new Promise(() => {}));
 
-    render(<PersetujuanPage />);
+    const { container } = render(<PersetujuanPage />);
 
-    expect(screen.getByText(/Memuat data/i)).toBeInTheDocument();
+    // Page uses DashboardSkeleton (Skeleton elements with animate-pulse) while loading
+    expect(container.querySelector(".animate-pulse")).toBeTruthy();
   });
 
   it("membuka dialog approve dan memproses persetujuan", async () => {

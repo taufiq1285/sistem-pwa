@@ -23,6 +23,7 @@ vi.mock("@/lib/offline/queue-manager", () => ({
   queueManager: {
     isReady: vi.fn(() => true),
     initialize: vi.fn(() => Promise.resolve()),
+    setProcessor: vi.fn(),
     getStats: vi.fn(() =>
       Promise.resolve({
         total: 10,

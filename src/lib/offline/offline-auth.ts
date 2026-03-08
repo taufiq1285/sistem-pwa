@@ -44,7 +44,7 @@ interface StoredSession {
 // ============================================================================
 
 const CREDENTIALS_EXPIRY = 30 * 24 * 60 * 60 * 1000; // 30 days
-const SESSION_EXPIRY = 24 * 60 * 60 * 1000; // 24 hours
+const SESSION_EXPIRY = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 // ============================================================================
 // PASSWORD HASHING (Simple SHA-256 via Web Crypto API)

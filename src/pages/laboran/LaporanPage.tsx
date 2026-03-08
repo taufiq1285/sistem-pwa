@@ -35,6 +35,9 @@ import {
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { DashboardCard } from "@/components/ui/dashboard-card";
+import { DashboardSkeleton } from "@/components/ui/dashboard-skeleton";
+import { GlassCard } from "@/components/ui/glass-card";
 import {
   Card,
   CardContent,
@@ -358,21 +361,35 @@ export default function LaporanPage() {
   };
 
   return (
-    <div className="p-8">
-      <div className="space-y-6">
+    <div className="app-container py-4 sm:py-6 lg:py-8">
+      <div className="mx-auto max-w-7xl space-y-6">
         {/* Header with Refresh Button */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-4xl font-extrabold">Laporan & Analitik</h1>
-            <p className="text-muted-foreground mt-1">
-              Statistik dan laporan lengkap sistem laboratorium
-            </p>
+        <GlassCard
+          intensity="medium"
+          className="border-white/40 bg-white/80 shadow-xl dark:border-white/10 dark:bg-slate-900/80"
+        >
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <div className="mb-2 flex items-center gap-3">
+                <div className="rounded-2xl bg-primary/10 p-3 text-primary ring-1 ring-primary/20">
+                  <BarChart3 className="h-7 w-7" />
+                </div>
+                <div>
+                  <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+                    Laporan & Analitik
+                  </h1>
+                  <p className="text-muted-foreground">
+                    Statistik dan laporan lengkap sistem laboratorium.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <Button onClick={handleRefresh} variant="outline">
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Muat Ulang Data
+            </Button>
           </div>
-          <Button onClick={handleRefresh} variant="outline">
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Muat Ulang Data
-          </Button>
-        </div>
+        </GlassCard>
 
         {/* Tabs */}
         <Tabs
@@ -380,24 +397,24 @@ export default function LaporanPage() {
           onValueChange={setActiveTab}
           className="space-y-6"
         >
-          <TabsList>
-            <TabsTrigger value="overview">
+          <TabsList className="grid h-auto w-full grid-cols-2 gap-2 rounded-2xl bg-muted/60 p-1 md:grid-cols-5">
+            <TabsTrigger value="overview" className="gap-2 rounded-xl">
               <BarChart3 className="h-4 w-4" />
               Overview
             </TabsTrigger>
-            <TabsTrigger value="borrowing">
+            <TabsTrigger value="borrowing" className="gap-2 rounded-xl">
               <TrendingUp className="h-4 w-4" />
               Peminjaman
             </TabsTrigger>
-            <TabsTrigger value="equipment">
+            <TabsTrigger value="equipment" className="gap-2 rounded-xl">
               <Package className="h-4 w-4" />
               Inventaris
             </TabsTrigger>
-            <TabsTrigger value="labs">
+            <TabsTrigger value="labs" className="gap-2 rounded-xl">
               <Building2 className="h-4 w-4" />
               Laboratorium
             </TabsTrigger>
-            <TabsTrigger value="activities">
+            <TabsTrigger value="activities" className="gap-2 rounded-xl">
               <Activity className="h-4 w-4" />
               Aktivitas
             </TabsTrigger>
@@ -406,69 +423,42 @@ export default function LaporanPage() {
           {/* Tab 1: Overview */}
           <TabsContent value="overview" className="space-y-6">
             {loadingOverview ? (
-              <div className="flex items-center justify-center py-12">
-                <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
-              </div>
+              <DashboardSkeleton />
             ) : (
               <>
                 {/* Borrowing Statistics Cards */}
-                <div>
-                  <h2 className="text-xl font-semibold mb-4">
-                    Statistik Peminjaman
-                  </h2>
-                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                    <Card className="border-0 shadow-xl p-6">
-                      <CardHeader>
-                        <CardDescription>Total Peminjaman</CardDescription>
-                        <CardTitle className="text-3xl">
-                          {borrowingStats?.total_borrowings || 0}
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-sm text-muted-foreground">
-                          Semua waktu
-                        </p>
-                      </CardContent>
-                    </Card>
-
-                    <Card className="border-0 shadow-xl p-6">
-                      <CardHeader>
-                        <CardDescription>Pending</CardDescription>
-                        <CardTitle className="text-3xl flex items-center gap-2">
-                          {borrowingStats?.pending || 0}
-                          <Clock className="h-5 w-5 text-yellow-500" />
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <Badge variant="secondary">Menunggu Persetujuan</Badge>
-                      </CardContent>
-                    </Card>
-
-                    <Card className="border-0 shadow-xl p-6">
-                      <CardHeader>
-                        <CardDescription>Disetujui</CardDescription>
-                        <CardTitle className="text-3xl flex items-center gap-2">
-                          {borrowingStats?.approved || 0}
-                          <CheckCircle className="h-5 w-5 text-green-500" />
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <Badge variant="default">Sedang Dipinjam</Badge>
-                      </CardContent>
-                    </Card>
-
-                    <Card className="border-0 shadow-xl p-6">
-                      <CardHeader>
-                        <CardDescription>Dikembalikan</CardDescription>
-                        <CardTitle className="text-3xl flex items-center gap-2">
-                          {borrowingStats?.returned || 0}
-                          <RotateCcw className="h-5 w-5 text-blue-500" />
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <Badge variant="outline">Selesai</Badge>
-                      </CardContent>
-                    </Card>
+                <div className="space-y-4">
+                  <div>
+                    <h2 className="text-xl font-semibold mb-1">Statistik Peminjaman</h2>
+                    <p className="text-sm text-muted-foreground">
+                      Ringkasan status peminjaman terbaru untuk laboratorium.
+                    </p>
+                  </div>
+                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                    <DashboardCard
+                      title="Total Peminjaman"
+                      value={borrowingStats?.total_borrowings || 0}
+                      icon={Package}
+                      color="blue"
+                    />
+                    <DashboardCard
+                      title="Menunggu Persetujuan"
+                      value={borrowingStats?.pending || 0}
+                      icon={Clock}
+                      color="amber"
+                    />
+                    <DashboardCard
+                      title="Disetujui"
+                      value={borrowingStats?.approved || 0}
+                      icon={CheckCircle}
+                      color="green"
+                    />
+                    <DashboardCard
+                      title="Dikembalikan"
+                      value={borrowingStats?.returned || 0}
+                      icon={RotateCcw}
+                      color="purple"
+                    />
                   </div>
                 </div>
 
@@ -476,10 +466,11 @@ export default function LaporanPage() {
 
                 {/* Equipment Status Card */}
                 <div>
-                  <h2 className="text-xl font-semibold mb-4">
-                    Status Inventaris
-                  </h2>
-                  <Card className="border-0 shadow-xl p-6">
+                  <h2 className="mb-4 text-xl font-semibold">Status Inventaris</h2>
+                  <GlassCard
+                    intensity="low"
+                    className="border-white/40 bg-white/85 shadow-lg dark:border-white/10 dark:bg-slate-900/85"
+                  >
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
                         <Package className="h-5 w-5" />
@@ -554,17 +545,18 @@ export default function LaporanPage() {
                         </div>
                       </div>
                     </CardContent>
-                  </Card>
+                  </GlassCard>
                 </div>
 
                 <Separator />
 
                 {/* Laboratory Usage Card */}
                 <div>
-                  <h2 className="text-xl font-semibold mb-4">
-                    Penggunaan Laboratorium
-                  </h2>
-                  <Card className="border-0 shadow-xl p-6">
+                  <h2 className="mb-4 text-xl font-semibold">Penggunaan Laboratorium</h2>
+                  <GlassCard
+                    intensity="low"
+                    className="border-white/40 bg-white/85 shadow-lg dark:border-white/10 dark:bg-slate-900/85"
+                  >
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
                         <Building2 className="h-5 w-5" />
@@ -625,7 +617,7 @@ export default function LaporanPage() {
                         </div>
                       </div>
                     </CardContent>
-                  </Card>
+                  </GlassCard>
                 </div>
               </>
             )}
@@ -670,7 +662,7 @@ export default function LaporanPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-[100px]">Ranking</TableHead>
+                      <TableHead className="w-25">Ranking</TableHead>
                       <TableHead>Kode Barang</TableHead>
                       <TableHead>Nama Barang</TableHead>
                       <TableHead>Kategori</TableHead>

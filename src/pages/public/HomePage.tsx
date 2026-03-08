@@ -5,7 +5,9 @@
 
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
+import akbidLogo from "@/assets/LOGO AKBID MEGA BUANA GOL.png";
+import { ButtonEnhanced } from "@/components/ui/button-enhanced";
+import { GlassCard } from "@/components/ui/glass-card";
 import {
   Card,
   CardContent,
@@ -187,9 +189,13 @@ export function HomePage() {
       >
         <div className="app-container">
           <div className="flex justify-between items-center h-16">
-            <Link to="/" className="flex items-center space-x-2 group min-w-0">
-              <div className="relative shrink-0">
-                <Stethoscope className="h-7 w-7 sm:h-8 sm:w-8 text-blue-600 group-hover:scale-110 transition-transform duration-200" />
+            <Link to="/" className="flex items-center space-x-3 group min-w-0">
+              <div className="relative shrink-0 overflow-hidden rounded-full border border-amber-300/70 bg-white/80 p-1 shadow-md transition-transform duration-200 group-hover:scale-105">
+                <img
+                  src={akbidLogo}
+                  alt="Logo Akademi Kebidanan Mega Buana"
+                  className="h-10 w-10 rounded-full object-contain sm:h-11 sm:w-11"
+                />
                 <Sparkles className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-amber-500 absolute -top-1 -right-1 animate-pulse" />
               </div>
               <span className="hidden sm:inline text-lg lg:text-xl font-bold bg-linear-to-r from-blue-800 to-amber-600 bg-clip-text text-transparent truncate">
@@ -201,21 +207,22 @@ export function HomePage() {
             </Link>
             <div className="flex items-center space-x-2 sm:space-x-3">
               <Link to="/login">
-                <Button
+                <ButtonEnhanced
                   variant="ghost"
                   size="sm"
                   className="h-9 px-3 sm:h-10 sm:px-4 hover:bg-blue-50 hover:text-blue-800 transition-colors duration-200"
                 >
                   Masuk
-                </Button>
+                </ButtonEnhanced>
               </Link>
               <Link to="/register">
-                <Button
+                <ButtonEnhanced
                   size="sm"
-                  className="h-9 px-3 sm:h-10 sm:px-4 bg-linear-to-r from-blue-800 to-amber-600 hover:from-blue-900 hover:to-amber-700 shadow-lg hover:shadow-xl transition-all duration-200"
+                  variant="gradient"
+                  className="h-9 px-3 sm:h-10 sm:px-4 shadow-lg hover:shadow-xl transition-all duration-200"
                 >
                   Daftar
-                </Button>
+                </ButtonEnhanced>
               </Link>
             </div>
           </div>
@@ -236,6 +243,16 @@ export function HomePage() {
             <Baby className="h-4 w-4" />
             <span>Akademi Kebidanan Mega Buana</span>
             <HeartPulse className="h-4 w-4 animate-pulse" />
+          </div>
+
+          <div className="mb-6 flex justify-center sm:mb-8">
+            <div className="rounded-full border border-amber-200/80 bg-white/80 p-2 shadow-2xl backdrop-blur-sm">
+              <img
+                src={akbidLogo}
+                alt="Logo Akademi Kebidanan Mega Buana"
+                className="h-28 w-28 object-contain sm:h-36 sm:w-36 lg:h-44 lg:w-44"
+              />
+            </div>
           </div>
 
           {/* Main Heading */}
@@ -264,32 +281,34 @@ export function HomePage() {
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-5">
             <Link to="/register">
-              <Button
+              <ButtonEnhanced
                 size="lg"
-                className="w-full sm:w-auto text-lg px-10 py-7 bg-linear-to-r from-blue-800 to-amber-600 hover:from-blue-900 hover:to-amber-700 shadow-2xl hover:shadow-blue-700/40 transition-all duration-300 group"
+                variant="gradient"
+                className="w-full sm:w-auto text-lg px-10 py-7 shadow-2xl hover:shadow-blue-700/40 transition-all duration-300 group"
               >
                 Mulai Sekarang
                 <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-2 transition-transform duration-200" />
-              </Button>
+              </ButtonEnhanced>
             </Link>
             <Link to="/login">
-              <Button
+              <ButtonEnhanced
                 size="lg"
                 variant="outline"
                 className="w-full sm:w-auto text-lg px-10 py-7 border-2 hover:bg-blue-50 hover:border-blue-800 hover:text-blue-800 transition-all duration-300 group"
               >
                 Masuk
                 <ArrowRight className="ml-2 h-5 w-4 group-hover:translate-x-2 transition-transform duration-200" />
-              </Button>
+              </ButtonEnhanced>
             </Link>
           </div>
 
           {/* Highlights */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mt-20">
             {highlights.map((item, index) => (
-              <div
+              <GlassCard
                 key={index}
-                className="interactive-card text-center p-6 rounded-2xl border border-white/50 bg-white/80 backdrop-blur-lg shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-[1.03] group"
+                intensity="medium"
+                className="interactive-card text-center p-6 rounded-2xl border border-white/50 bg-white/80 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-[1.03] group"
               >
                 <div className="inline-flex items-center justify-center p-3 bg-linear-to-br from-blue-800 to-amber-600 rounded-xl mb-3 text-white group-hover:scale-110 transition-transform duration-200">
                   {item.icon}
@@ -300,7 +319,7 @@ export function HomePage() {
                 <div className="text-sm text-gray-600 font-medium">
                   {item.description}
                 </div>
-              </div>
+              </GlassCard>
             ))}
           </div>
         </div>
@@ -476,22 +495,22 @@ export function HomePage() {
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-5">
               <Link to="/register">
-                <Button
+                <ButtonEnhanced
                   size="lg"
                   className="w-full sm:w-auto text-lg px-12 py-8 bg-white text-blue-800 hover:bg-gray-50 shadow-2xl hover:shadow-white/50 transition-all duration-300 font-bold group"
                 >
                   Daftar Sekarang
                   <ArrowRight className="ml-2 h-6 w-6 group-hover:translate-x-2 transition-transform duration-200" />
-                </Button>
+                </ButtonEnhanced>
               </Link>
               <Link to="/login">
-                <Button
+                <ButtonEnhanced
                   size="lg"
                   className="w-full sm:w-auto text-lg px-12 py-8 bg-transparent text-white border-2 border-white hover:bg-white hover:text-blue-800 shadow-xl transition-all duration-300 font-bold group"
                 >
                   Masuk
                   <ArrowRight className="ml-2 h-6 w-6 group-hover:translate-x-2 transition-transform duration-200" />
-                </Button>
+                </ButtonEnhanced>
               </Link>
             </div>
           </div>

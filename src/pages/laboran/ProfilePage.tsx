@@ -23,6 +23,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { DashboardCard } from "@/components/ui/dashboard-card";
+import { GlassCard } from "@/components/ui/glass-card";
 import {
   AlertCircle,
   CheckCircle2,
@@ -31,7 +33,6 @@ import {
   User,
   Wrench,
 } from "lucide-react";
-import { PageHeader } from "@/components/common/PageHeader";
 
 interface UserProfile {
   full_name: string;
@@ -131,9 +132,14 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="app-container">
-        <div className="mx-auto max-w-4xl animate-pulse space-y-6">
-          <div className="h-24 rounded-3xl bg-blue-100/70" />
+      <div className="app-container py-4 sm:py-6 lg:py-8">
+        <div className="mx-auto max-w-5xl animate-pulse space-y-6">
+          <div className="h-32 rounded-3xl bg-blue-100/70" />
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="h-28 rounded-3xl bg-slate-100" />
+            <div className="h-28 rounded-3xl bg-slate-100" />
+            <div className="h-28 rounded-3xl bg-slate-100" />
+          </div>
           <div className="h-72 rounded-3xl bg-slate-100" />
         </div>
       </div>
@@ -141,12 +147,81 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="app-container space-y-6">
-      <PageHeader
-        title="Profil Saya"
-        description="Kelola informasi profil Anda"
-        className="section-shell"
-      />
+    <div className="app-container py-4 sm:py-6 lg:py-8">
+      <div className="mx-auto max-w-5xl space-y-6">
+        <GlassCard
+          intensity="medium"
+          className="border-white/40 bg-white/80 shadow-xl dark:border-white/10 dark:bg-slate-900/80"
+        >
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <div className="mb-2 flex items-center gap-3">
+                <div className="rounded-2xl bg-primary/10 p-3 text-primary ring-1 ring-primary/20">
+                  <User className="h-7 w-7" />
+                </div>
+                <div>
+                  <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+                    Profil Saya
+                  </h1>
+                  <p className="text-muted-foreground">
+                    Kelola informasi akun dan data kerja laboran.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </GlassCard>
+
+        <div className="grid gap-4 md:grid-cols-3">
+          <GlassCard
+            intensity="low"
+            className="border-white/40 bg-white/90 shadow-lg dark:border-white/10 dark:bg-slate-900/85"
+          >
+            <div className="flex items-center gap-3">
+              <div className="rounded-xl bg-blue-500/10 p-3 text-blue-600">
+                <User className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Nama Profil</p>
+                <p className="font-semibold text-foreground">
+                  {userProfile.full_name || "-"}
+                </p>
+              </div>
+            </div>
+          </GlassCard>
+          <GlassCard
+            intensity="low"
+            className="border-white/40 bg-white/90 shadow-lg dark:border-white/10 dark:bg-slate-900/85"
+          >
+            <div className="flex items-center gap-3">
+              <div className="rounded-xl bg-green-500/10 p-3 text-green-600">
+                <Mail className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Email</p>
+                <p className="font-semibold text-foreground break-all">
+                  {userProfile.email || "-"}
+                </p>
+              </div>
+            </div>
+          </GlassCard>
+          <GlassCard
+            intensity="low"
+            className="border-white/40 bg-white/90 shadow-lg dark:border-white/10 dark:bg-slate-900/85"
+          >
+            <div className="flex items-center gap-3">
+              <div className="rounded-xl bg-purple-500/10 p-3 text-purple-600">
+                <Wrench className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Shift</p>
+                <p className="font-semibold text-foreground">
+                  {laboranProfile.shift || "-"}
+                </p>
+              </div>
+            </div>
+          </GlassCard>
+        </div>
 
       {error && (
         <Alert variant="destructive" className="rounded-2xl">
@@ -162,7 +237,10 @@ export default function ProfilePage() {
         </Alert>
       )}
 
-      <Card className="interactive-card rounded-2xl border border-blue-100/70 bg-white/95 shadow-sm">
+      <GlassCard
+        intensity="low"
+        className="interactive-card rounded-2xl border-white/40 bg-white/95 shadow-lg dark:border-white/10 dark:bg-slate-900/85"
+      >
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-slate-900">
             <User className="h-5 w-5 text-blue-700" />
@@ -212,9 +290,12 @@ export default function ProfilePage() {
             </div>
           </div>
         </CardContent>
-      </Card>
+      </GlassCard>
 
-      <Card className="interactive-card rounded-2xl border border-blue-100/70 bg-white/95 shadow-sm">
+      <GlassCard
+        intensity="low"
+        className="interactive-card rounded-2xl border-white/40 bg-white/95 shadow-lg dark:border-white/10 dark:bg-slate-900/85"
+      >
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-slate-900">
             <Wrench className="h-5 w-5 text-blue-700" />
@@ -241,7 +322,7 @@ export default function ProfilePage() {
             </div>
           </div>
         </CardContent>
-      </Card>
+      </GlassCard>
 
       <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
         <Button
@@ -260,6 +341,7 @@ export default function ProfilePage() {
           <Save className="mr-2 h-4 w-4" />
           {saving ? "Menyimpan..." : "Simpan Perubahan"}
         </Button>
+      </div>
       </div>
     </div>
   );

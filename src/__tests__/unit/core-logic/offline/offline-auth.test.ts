@@ -561,8 +561,8 @@ describe("Offline Authentication", () => {
       const call = vi.mocked(indexedDBManager.setMetadata).mock.calls[0];
       const sessionData = call[1] as any;
 
-      // Should expire in approximately 24 hours
-      const expectedExpiry = now + 24 * 60 * 60 * 1000;
+      // Should expire in approximately 7 days (SESSION_EXPIRY = 7 days)
+      const expectedExpiry = now + 7 * 24 * 60 * 60 * 1000;
       expect(sessionData.expiresAt).toBeGreaterThanOrEqual(
         expectedExpiry - 1000,
       );

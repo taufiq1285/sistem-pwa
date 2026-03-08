@@ -118,7 +118,8 @@ describe("OfflineProvider", () => {
         </OfflineProvider>,
       );
 
-      expect(container.firstChild).toBeNull();
+      // Non-blocking: children always rendered, overlay may appear
+      expect(container.firstChild).not.toBeNull();
     });
 
     it("should log success message when IndexedDB initializes", async () => {
@@ -405,8 +406,8 @@ describe("OfflineProvider", () => {
         expect(consoleErrorSpy).toHaveBeenCalled();
       });
 
-      // Should not render children on error
-      expect(container.firstChild).toBeNull();
+      // Non-blocking: children still rendered even on error
+      expect(container.firstChild).not.toBeNull();
 
       consoleErrorSpy.mockRestore();
     });
@@ -424,8 +425,8 @@ describe("OfflineProvider", () => {
         </OfflineProvider>,
       );
 
-      // Initially null
-      expect(container.firstChild).toBeNull();
+      // Non-blocking: children rendered immediately
+      expect(container.firstChild).not.toBeNull();
 
       // After initialization
       await waitFor(

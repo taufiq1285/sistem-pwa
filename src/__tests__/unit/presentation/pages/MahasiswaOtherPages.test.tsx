@@ -125,7 +125,7 @@ describe("Mahasiswa MateriPage", () => {
   it("menampilkan judul halaman Materi", async () => {
     wrap(<MahasiswaMateriPage />);
     await waitFor(() =>
-      expect(screen.getByText(/Materi/i)).toBeInTheDocument(),
+      expect(screen.getAllByText(/Materi/i).length).toBeGreaterThan(0),
     );
   });
 
@@ -336,7 +336,7 @@ describe("Mahasiswa PresensiPage", () => {
   it("menampilkan judul halaman Presensi / Kehadiran", async () => {
     wrap(<PresensiPage />);
     await waitFor(() =>
-      expect(screen.getByText(/Presensi|Kehadiran/i)).toBeInTheDocument(),
+      expect(screen.getAllByText(/Presensi|Kehadiran/i).length).toBeGreaterThan(0),
     );
   });
 
