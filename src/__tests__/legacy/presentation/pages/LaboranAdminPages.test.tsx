@@ -186,7 +186,7 @@ describe("Laboran InventarisPage", () => {
   it("menampilkan judul Inventaris", async () => {
     wrap(<InventarisPage />);
     await waitFor(() =>
-      expect(screen.getByText(/Inventaris/i)).toBeInTheDocument(),
+      expect(screen.getAllByText(/Inventaris/i).length).toBeGreaterThan(0),
     );
   });
 

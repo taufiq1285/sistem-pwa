@@ -1,12 +1,15 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   RefreshCw,
   Cloud,
   Database,
   CheckCircle,
   AlertCircle,
+  History,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { DashboardCard } from "@/components/ui/dashboard-card";
+import { DashboardSkeleton } from "@/components/ui/dashboard-skeleton";
+import { ButtonEnhanced } from "@/components/ui/button-enhanced";
 import {
   Card,
   CardContent,
@@ -14,13 +17,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { toast } from "sonner";
+import { StatusBadge } from "@/components/ui/status-badge";
 import {
   getSyncManagementStats,
   forceSyncNow,
   type SyncManagementStats,
 } from "@/lib/api/sync.api";
+import { toastConfig } from "@/lib/toast-config";
 
 export default function SyncManagementPage() {
   const [syncStats, setSyncStats] = useState<SyncManagementStats>({
@@ -41,9 +44,12 @@ export default function SyncManagementPage() {
   const [syncing, setSyncing] = useState(false);
 
   useEffect(() => {
-    loadSyncStats();
-    const interval = setInterval(loadSyncStats, 10000);
-    return () => clearInterval(interval);
+    void loadSyncStats();
+    const interval = window.setInterval(() => {
+      void loadSyncStats();
+    }, 10000);
+
+    return () => window.clearInterval(interval);
   }, []);
 
   const loadSyncStats = async () => {
@@ -53,6 +59,7 @@ export default function SyncManagementPage() {
       setSyncStats(data);
     } catch (error) {
       console.error("Failed to load sync stats:", error);
+      toastConfig.error("Gagal memuat statistik sinkronisasi");
     } finally {
       setLoading(false);
     }
@@ -62,172 +69,166 @@ export default function SyncManagementPage() {
     try {
       setSyncing(true);
       await forceSyncNow();
-      toast.success("Sync process initiated");
-      setTimeout(loadSyncStats, 2000);
+      toastConfig.success(
+        "Sinkronisasi dimulai",
+        "Status akan diperbarui otomatis dalam beberapa detik",
+      );
+      window.setTimeout(() => {
+        void loadSyncStats();
+      }, 2000);
     } catch (error) {
-      toast.error("Failed to trigger sync");
       console.error(error);
+      toastConfig.error("Gagal memulai sinkronisasi");
     } finally {
       setSyncing(false);
     }
   };
 
+  if (loading) {
+    return <DashboardSkeleton />;
+  }
+
   return (
-    <div className="container mx-auto py-6 max-w-7xl space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="container mx-auto max-w-7xl space-y-6 py-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold">Sync Management</h1>
           <p className="text-muted-foreground">
-            Monitor offline synchronization
+            Monitor offline synchronization dengan ringkasan yang lebih jelas.
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={loadSyncStats} disabled={loading}>
-            <RefreshCw
-              className={loading ? "h-4 w-4 mr-2 animate-spin" : "h-4 w-4 mr-2"}
-            />
+        <div className="flex flex-wrap gap-2">
+          <ButtonEnhanced
+            variant="outline"
+            onClick={() => void loadSyncStats()}
+            loading={loading}
+            loadingText="Memuat..."
+          >
+            {!loading && <RefreshCw className="h-4 w-4" />}
             Refresh
-          </Button>
-          <Button onClick={handleForceSync} disabled={syncing}>
-            <RefreshCw
-              className={syncing ? "h-4 w-4 mr-2 animate-spin" : "h-4 w-4 mr-2"}
-            />
+          </ButtonEnhanced>
+          <ButtonEnhanced
+            onClick={handleForceSync}
+            loading={syncing}
+            loadingText="Sinkronisasi..."
+          >
+            {!syncing && <RefreshCw className="h-4 w-4" />}
             Force Sync
-          </Button>
+          </ButtonEnhanced>
         </div>
       </div>
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending</CardTitle>
-            <Cloud className="h-4 w-4 text-yellow-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{syncStats.pendingSync}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {syncStats.queueStats.syncing} syncing
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Synced</CardTitle>
-            <CheckCircle className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{syncStats.synced}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {syncStats.syncStats.totalSynced} total
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Failed</CardTitle>
-            <AlertCircle className="h-4 w-4 text-red-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{syncStats.failed}</div>
-            <p className="text-xs text-muted-foreground mt-1">Needs retry</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Last Sync</CardTitle>
-            <RefreshCw className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-sm font-bold">{syncStats.lastSync}</div>
-            <Badge variant="outline" className="mt-2">
-              Auto
-            </Badge>
-          </CardContent>
-        </Card>
+
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <DashboardCard
+          title="Pending"
+          value={syncStats.pendingSync}
+          icon={Cloud}
+          color="amber"
+        />
+        <DashboardCard
+          title="Synced"
+          value={syncStats.synced}
+          icon={CheckCircle}
+          color="green"
+        />
+        <DashboardCard
+          title="Failed"
+          value={syncStats.failed}
+          icon={AlertCircle}
+          color="red"
+        />
+        <DashboardCard
+          title="Riwayat Sync"
+          value={syncStats.syncStats.syncHistory.length}
+          icon={History}
+          color="blue"
+        />
       </div>
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card className="border-border/60 shadow-sm">
           <CardHeader>
             <CardTitle>Queue Statistics</CardTitle>
-            <CardDescription>Offline sync queue status</CardDescription>
+            <CardDescription>Status item pada offline sync queue</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Total Items</span>
-                <Badge variant="outline">{syncStats.queueStats.total}</Badge>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Pending</span>
-                <Badge variant="secondary">
-                  {syncStats.queueStats.pending}
-                </Badge>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Syncing</span>
-                <Badge variant="default">{syncStats.queueStats.syncing}</Badge>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Completed</span>
-                <Badge variant="outline" className="bg-green-50">
-                  {syncStats.queueStats.completed}
-                </Badge>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Failed</span>
-                <Badge variant="destructive">
-                  {syncStats.queueStats.failed}
-                </Badge>
-              </div>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">Total Items</span>
+              <StatusBadge status="info" pulse={false}>
+                {syncStats.queueStats.total}
+              </StatusBadge>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">Pending</span>
+              <StatusBadge status="warning" pulse={false}>
+                {syncStats.queueStats.pending}
+              </StatusBadge>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">Syncing</span>
+              <StatusBadge status="info">{syncStats.queueStats.syncing}</StatusBadge>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">Completed</span>
+              <StatusBadge status="success" pulse={false}>
+                {syncStats.queueStats.completed}
+              </StatusBadge>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">Failed</span>
+              <StatusBadge status="error" pulse={false}>
+                {syncStats.queueStats.failed}
+              </StatusBadge>
             </div>
           </CardContent>
         </Card>
-        <Card>
+
+        <Card className="border-border/60 shadow-sm">
           <CardHeader>
             <CardTitle>Sync Performance</CardTitle>
-            <CardDescription>Historical sync metrics</CardDescription>
+            <CardDescription>Ringkasan performa sinkronisasi historis</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Total Synced</span>
-                <span className="text-2xl font-bold">
-                  {syncStats.syncStats.totalSynced}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Total Failed</span>
-                <span className="text-2xl font-bold text-red-600">
-                  {syncStats.syncStats.totalFailed}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Avg Duration</span>
-                <span className="text-lg font-bold">
-                  {Math.round(syncStats.syncStats.averageDuration)}ms
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Sync History</span>
-                <Badge variant="outline">
-                  {syncStats.syncStats.syncHistory.length} records
-                </Badge>
-              </div>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">Total Synced</span>
+              <span className="text-2xl font-bold">
+                {syncStats.syncStats.totalSynced}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">Total Failed</span>
+              <span className="text-2xl font-bold text-red-600 dark:text-red-400">
+                {syncStats.syncStats.totalFailed}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">Avg Duration</span>
+              <span className="text-lg font-bold">
+                {Math.round(syncStats.syncStats.averageDuration)}ms
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">Mode</span>
+              <StatusBadge status="success">Auto</StatusBadge>
             </div>
           </CardContent>
         </Card>
       </div>
-      <Card>
+
+      <Card className="overflow-hidden border-border/60 bg-linear-to-br from-background via-background to-primary/5 shadow-sm">
         <CardHeader>
           <CardTitle>Offline Synchronization</CardTitle>
           <CardDescription>PWA offline data sync system</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-8">
-            <Database className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">Background sync is active</p>
-            <p className="text-sm text-muted-foreground mt-2">
-              Monitoring {syncStats.queueStats.total} queue items,{" "}
-              {syncStats.pendingSync} pending synchronization
+          <div className="flex flex-col items-center py-8 text-center">
+            <div className="mb-4 rounded-2xl bg-primary/10 p-4 text-primary">
+              <Database className="h-12 w-12" />
+            </div>
+            <p className="font-medium text-foreground">Background sync aktif</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Monitoring {syncStats.queueStats.total} queue items, dengan{" "}
+              {syncStats.pendingSync} item menunggu sinkronisasi.
             </p>
           </div>
         </CardContent>

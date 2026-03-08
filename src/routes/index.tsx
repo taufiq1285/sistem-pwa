@@ -85,6 +85,7 @@ import MahasiswaPresensiPage from "@/pages/mahasiswa/PresensiPage";
 import MahasiswaPengumumanPage from "@/pages/mahasiswa/PengumumanPage";
 import MahasiswaProfilePage from "@/pages/mahasiswa/ProfilePage"; // ✅ NEW: Mahasiswa profile page
 import OfflineSyncPage from "@/pages/mahasiswa/OfflineSyncPage"; // ✅ Offline sync page
+import SharedOfflineSyncPage from "@/pages/shared/OfflineSyncPage"; // ✅ Shared sync page (dosen, admin, laboran)
 
 // Laboran Pages
 import { DashboardPage as LaboranDashboard } from "@/pages/laboran/DashboardPage";
@@ -309,6 +310,20 @@ export function AppRouter() {
             <RoleGuard allowedRoles={["admin"]}>
               <AppLayout>
                 <AdminProfilePage />
+              </AppLayout>
+            </RoleGuard>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Admin - Offline Sync */}
+      <Route
+        path="/admin/offline-sync"
+        element={
+          <ProtectedRoute>
+            <RoleGuard allowedRoles={["admin"]}>
+              <AppLayout>
+                <SharedOfflineSyncPage />
               </AppLayout>
             </RoleGuard>
           </ProtectedRoute>
@@ -569,6 +584,20 @@ export function AppRouter() {
             <RoleGuard allowedRoles={["dosen"]}>
               <AppLayout>
                 <DosenPengumumanPage />
+              </AppLayout>
+            </RoleGuard>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Dosen - Offline Sync */}
+      <Route
+        path="/dosen/offline-sync"
+        element={
+          <ProtectedRoute>
+            <RoleGuard allowedRoles={["dosen"]}>
+              <AppLayout>
+                <SharedOfflineSyncPage />
               </AppLayout>
             </RoleGuard>
           </ProtectedRoute>
@@ -909,6 +938,20 @@ export function AppRouter() {
             <RoleGuard allowedRoles={["laboran"]}>
               <AppLayout>
                 <LaboranProfilePage />
+              </AppLayout>
+            </RoleGuard>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Laboran - Offline Sync */}
+      <Route
+        path="/laboran/offline-sync"
+        element={
+          <ProtectedRoute>
+            <RoleGuard allowedRoles={["laboran"]}>
+              <AppLayout>
+                <SharedOfflineSyncPage />
               </AppLayout>
             </RoleGuard>
           </ProtectedRoute>

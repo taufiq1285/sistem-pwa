@@ -15,9 +15,6 @@ import { toast } from "sonner";
 import {
   Calendar,
   CheckCircle2,
-  XCircle,
-  AlertCircle,
-  Filter,
   RefreshCw,
   RotateCcw,
   Clock,
@@ -25,10 +22,10 @@ import {
 } from "lucide-react";
 
 // Components
-import { PageHeader } from "@/components/common/PageHeader";
-import { LoadingSpinner } from "@/components/common/LoadingSpinner";
-import { EmptyState } from "@/components/common/EmptyState";
 import { Button } from "@/components/ui/button";
+import { DashboardCard } from "@/components/ui/dashboard-card";
+import { DashboardSkeleton } from "@/components/ui/dashboard-skeleton";
+import { GlassCard } from "@/components/ui/glass-card";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -274,120 +271,114 @@ export default function JadwalApprovalPage() {
   // ============================================================================
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Kelola Jadwal Praktikum"
-        description="Approve jadwal praktikum dosen (termasuk booking lab otomatis)"
-      />
-
-      {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card className="border-0 shadow-xl p-6">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Menunggu Persetujuan
-            </CardTitle>
-            <Clock className="h-4 w-4 text-yellow-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-4xl font-extrabold text-yellow-600">
-              {stats.pending}
+    <div className="app-container py-4 sm:py-6 lg:py-8">
+      <div className="mx-auto max-w-7xl space-y-6">
+        <GlassCard
+          intensity="medium"
+          className="border-white/40 bg-white/80 shadow-xl dark:border-white/10 dark:bg-slate-900/80"
+        >
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <div className="mb-2 flex items-center gap-3">
+                <div className="rounded-2xl bg-primary/10 p-3 text-primary ring-1 ring-primary/20">
+                  <Calendar className="h-7 w-7" />
+                </div>
+                <div>
+                  <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+                    Kelola Jadwal Praktikum
+                  </h1>
+                  <p className="text-muted-foreground">
+                    Approve jadwal praktikum dosen termasuk booking laboratorium otomatis.
+                  </p>
+                </div>
+              </div>
             </div>
-            <p className="text-xs text-muted-foreground">
-              Jadwal praktikum menunggu approval
-            </p>
-          </CardContent>
-        </Card>
+            <Button onClick={refreshAll} variant="outline" size="sm">
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Refresh
+            </Button>
+          </div>
+        </GlassCard>
 
-        <Card className="border-0 shadow-xl p-6">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Jadwal Aktif
-            </CardTitle>
-            <CheckCircle2 className="h-4 w-4 text-green-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-4xl font-extrabold text-green-600">
-              {stats.approved}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Jadwal disetujui (lab ter-booking)
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-xl p-6">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Riwayat
-            </CardTitle>
-            <History className="h-4 w-4 text-gray-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-4xl font-extrabold text-gray-600">
-              {stats.cancelled + stats.rejected}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Jadwal dibatalkan/ditolak
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Filters */}
-      <div className="flex items-center gap-4">
-        <div className="flex-1">
-          <Select value={labFilter} onValueChange={setLabFilter}>
-            <SelectTrigger className="w-full md:w-[300px]">
-              <SelectValue placeholder="Semua Laboratorium" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Semua Laboratorium</SelectItem>
-              {labList.map((lab) => (
-                <SelectItem key={lab.id} value={lab.id}>
-                  {lab.nama_lab}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="grid gap-4 md:grid-cols-3">
+          <DashboardCard
+            title="Menunggu Persetujuan"
+            value={stats.pending}
+            icon={Clock}
+            color="amber"
+          />
+          <DashboardCard
+            title="Jadwal Aktif"
+            value={stats.approved}
+            icon={CheckCircle2}
+            color="green"
+          />
+          <DashboardCard
+            title="Riwayat"
+            value={stats.cancelled + stats.rejected}
+            icon={History}
+            color="purple"
+          />
         </div>
-        <Button onClick={refreshAll} variant="outline" size="sm">
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Refresh
-        </Button>
-      </div>
 
-      {/* Tabs */}
-      <Tabs defaultValue="pending" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="pending" className="gap-2">
-            <Clock className="h-4 w-4" />
-            Menunggu Persetujuan ({stats.pending})
-          </TabsTrigger>
-          <TabsTrigger value="active" className="gap-2">
-            <Calendar className="h-4 w-4" />
-            Jadwal Aktif ({stats.approved})
-          </TabsTrigger>
-          <TabsTrigger value="history" className="gap-2">
-            <History className="h-4 w-4" />
-            Riwayat ({stats.cancelled + stats.rejected})
-          </TabsTrigger>
-        </TabsList>
+        <GlassCard
+          intensity="low"
+          className="border-white/40 bg-white/85 shadow-lg dark:border-white/10 dark:bg-slate-900/85"
+        >
+          <div className="flex items-center gap-4">
+            <div className="flex-1">
+              <Select value={labFilter} onValueChange={setLabFilter}>
+                <SelectTrigger className="w-full md:w-75">
+                  <SelectValue placeholder="Semua Laboratorium" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Semua Laboratorium</SelectItem>
+                  {labList.map((lab) => (
+                    <SelectItem key={lab.id} value={lab.id}>
+                      {lab.nama_lab}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button onClick={refreshAll} variant="outline" size="sm">
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Refresh
+            </Button>
+          </div>
+        </GlassCard>
+
+        {/* Tabs */}
+        <Tabs defaultValue="pending" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="pending" className="gap-2">
+              <Clock className="h-4 w-4" />
+              Menunggu Persetujuan ({stats.pending})
+            </TabsTrigger>
+            <TabsTrigger value="active" className="gap-2">
+              <Calendar className="h-4 w-4" />
+              Jadwal Aktif ({stats.approved})
+            </TabsTrigger>
+            <TabsTrigger value="history" className="gap-2">
+              <History className="h-4 w-4" />
+              Riwayat ({stats.cancelled + stats.rejected})
+            </TabsTrigger>
+          </TabsList>
 
         {/* Pending Tab */}
         <TabsContent value="pending" className="space-y-4">
           {loading ? (
-            <LoadingSpinner />
+            <DashboardSkeleton />
           ) : jadwalList.filter((j) => j.status === "pending").length === 0 ? (
-            <Card className="border-0 shadow-xl bg-linear-to-br from-gray-50 to-blue-50/30 dark:from-slate-900 dark:to-blue-950/20">
-              <CardContent className="p-12">
-                <EmptyState
-                  title="Tidak ada jadwal menunggu"
-                  description="Belum ada jadwal praktikum yang menunggu persetujuan"
-                  icon={Clock}
-                />
-              </CardContent>
-            </Card>
+            <GlassCard className="border-white/40 bg-white/85 dark:border-white/10 dark:bg-slate-900/85">
+              <div className="py-12 text-center">
+                <Clock className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+                <h3 className="text-lg font-semibold">Tidak ada jadwal menunggu</h3>
+                <p className="text-sm text-muted-foreground">
+                  Belum ada jadwal praktikum yang menunggu persetujuan
+                </p>
+              </div>
+            </GlassCard>
           ) : (
             <Card className="border-0 shadow-xl">
               <CardContent className="p-6">
@@ -492,17 +483,17 @@ export default function JadwalApprovalPage() {
         {/* Active Tab */}
         <TabsContent value="active" className="space-y-4">
           {loading ? (
-            <LoadingSpinner />
+            <DashboardSkeleton />
           ) : jadwalList.filter((j) => j.status === "approved").length === 0 ? (
-            <Card className="border-0 shadow-xl bg-linear-to-br from-gray-50 to-green-50/30 dark:from-slate-900 dark:to-green-950/20">
-              <CardContent className="p-12">
-                <EmptyState
-                  title="Tidak ada jadwal aktif"
-                  description="Belum ada jadwal praktikum yang disetujui"
-                  icon={CheckCircle2}
-                />
-              </CardContent>
-            </Card>
+            <GlassCard className="border-white/40 bg-white/85 dark:border-white/10 dark:bg-slate-900/85">
+              <div className="py-12 text-center">
+                <CheckCircle2 className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+                <h3 className="text-lg font-semibold">Tidak ada jadwal aktif</h3>
+                <p className="text-sm text-muted-foreground">
+                  Belum ada jadwal praktikum yang disetujui
+                </p>
+              </div>
+            </GlassCard>
           ) : (
             <Card className="border-0 shadow-xl">
               <CardContent className="p-6">
@@ -594,19 +585,19 @@ export default function JadwalApprovalPage() {
         {/* History Tab */}
         <TabsContent value="history" className="space-y-4">
           {loading ? (
-            <LoadingSpinner />
+            <DashboardSkeleton />
           ) : jadwalList.filter(
               (j) => j.status === "cancelled" || j.status === "rejected",
             ).length === 0 ? (
-            <Card className="border-0 shadow-xl bg-linear-to-br from-gray-50 to-red-50/30 dark:from-slate-900 dark:to-red-950/20">
-              <CardContent className="p-12">
-                <EmptyState
-                  title="Tidak ada riwayat"
-                  description="Belum ada jadwal yang dibatalkan atau ditolak"
-                  icon={History}
-                />
-              </CardContent>
-            </Card>
+            <GlassCard className="border-white/40 bg-white/85 dark:border-white/10 dark:bg-slate-900/85">
+              <div className="py-12 text-center">
+                <History className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+                <h3 className="text-lg font-semibold">Tidak ada riwayat</h3>
+                <p className="text-sm text-muted-foreground">
+                  Belum ada jadwal yang dibatalkan atau ditolak
+                </p>
+              </div>
+            </GlassCard>
           ) : (
             <Card className="border-0 shadow-xl">
               <CardContent className="p-6">
@@ -720,10 +711,10 @@ export default function JadwalApprovalPage() {
             </Card>
           )}
         </TabsContent>
-      </Tabs>
+        </Tabs>
 
-      {/* Approve Dialog */}
-      <Dialog open={showApproveDialog} onOpenChange={setShowApproveDialog}>
+        {/* Approve Dialog */}
+        <Dialog open={showApproveDialog} onOpenChange={setShowApproveDialog}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Setujui Jadwal Praktikum</DialogTitle>
@@ -853,6 +844,7 @@ export default function JadwalApprovalPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   );
 }

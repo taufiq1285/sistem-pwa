@@ -56,7 +56,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   getKehadiranByJadwal,
@@ -861,13 +861,10 @@ export default function DosenKehadiranPage() {
                     </div>
                     <div className="flex gap-2 items-center">
                       {hasUnsavedChanges && (
-                        <Badge
-                          variant="outline"
-                          className="border-yellow-500 text-yellow-700"
-                        >
+                        <StatusBadge status="warning" pulse>
                           <Clock className="h-3 w-3 mr-1" />
                           Belum disimpan
-                        </Badge>
+                        </StatusBadge>
                       )}
                       <Button
                         variant="outline"

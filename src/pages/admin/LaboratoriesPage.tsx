@@ -15,7 +15,8 @@ import {
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { DashboardCard } from "@/components/ui/dashboard-card";
 import { DeleteConfirmDialog } from "@/components/common/DeleteConfirmDialog";
 import {
   Card,
@@ -280,65 +281,44 @@ export default function LaboratoriesPage() {
   };
 
   return (
-    <div className="container mx-auto py-6 max-w-7xl space-y-6">
+    <div className="app-container space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="section-shell flex items-center justify-between rounded-2xl p-5">
         <div>
-          <h1 className="text-4xl font-extrabold">Laboratories Management</h1>
-          <p className="text-lg font-semibold text-muted-foreground mt-2">
-            Manage all laboratory facilities
+          <h1 className="text-2xl font-bold text-foreground">Manajemen Laboratorium</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Kelola semua fasilitas laboratorium
           </p>
         </div>
         <Button
           onClick={handleAdd}
-          className="font-semibold bg-linear-to-r from-blue-500 to-indigo-600"
+          className="font-semibold bg-linear-to-r from-blue-600 to-indigo-600 text-white"
         >
           <Plus className="h-4 w-4 mr-2" />
-          Add Laboratory
+          Tambah Lab
         </Button>
       </div>
 
       {/* Statistics */}
       <div className="grid gap-4 md:grid-cols-3">
-        <Card className="border-0 shadow-lg bg-linear-to-r from-blue-500 to-blue-600 text-white">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-base font-bold text-white">
-              Total Labs
-            </CardTitle>
-            <Building2 className="h-5 w-5 text-white" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-4xl font-extrabold">{laboratories.length}</div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-lg bg-linear-to-r from-purple-500 to-purple-600 text-white">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-base font-bold text-white">
-              Total Capacity
-            </CardTitle>
-            <Users className="h-5 w-5 text-white" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-4xl font-extrabold">
-              {laboratories.reduce((sum, lab) => sum + (lab.kapasitas || 0), 0)}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-lg bg-linear-to-r from-green-500 to-green-600 text-white">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-base font-bold text-white">
-              Active Labs
-            </CardTitle>
-            <Building2 className="h-5 w-5 text-white" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-4xl font-extrabold">
-              {laboratories.filter((lab) => lab.is_active).length}
-            </div>
-          </CardContent>
-        </Card>
+        <DashboardCard
+          title="Total Lab"
+          value={laboratories.length}
+          icon={Building2}
+          color="blue"
+        />
+        <DashboardCard
+          title="Total Kapasitas"
+          value={laboratories.reduce((sum, lab) => sum + (lab.kapasitas || 0), 0)}
+          icon={Users}
+          color="purple"
+        />
+        <DashboardCard
+          title="Lab Aktif"
+          value={laboratories.filter((lab) => lab.is_active).length}
+          icon={Building2}
+          color="green"
+        />
       </div>
 
       {/* Search */}
@@ -474,7 +454,7 @@ export default function LaboratoriesPage() {
                 <EnhancedTableHeader>
                   <EnhancedTableRow>
                     {columnVisibility.select && (
-                      <EnhancedTableHead className="w-[50px]">
+                      <EnhancedTableHead className="w-12.5">
                         <RowSelectionHeader
                           checked={rowSelection.isAllSelected}
                           indeterminate={rowSelection.isSomeSelected}
@@ -536,11 +516,12 @@ export default function LaboratoriesPage() {
                       )}
                       {columnVisibility.status && (
                         <EnhancedTableCell>
-                          <Badge
-                            variant={lab.is_active ? "default" : "secondary"}
+                          <StatusBadge
+                            status={lab.is_active ? "success" : "offline"}
+                            pulse={lab.is_active}
                           >
-                            {lab.is_active ? "Active" : "Inactive"}
-                          </Badge>
+                            {lab.is_active ? "Aktif" : "Nonaktif"}
+                          </StatusBadge>
                         </EnhancedTableCell>
                       )}
                       {columnVisibility.actions && (

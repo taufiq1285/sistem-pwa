@@ -25,6 +25,7 @@ import {
   UserCheck,
   Bell,
   NotebookPen,
+  RefreshCw,
   type LucideIcon,
 } from "lucide-react";
 import type { UserRole } from "@/types/auth.types";
@@ -97,6 +98,12 @@ const mahasiswaNavigation: NavigationItem[] = [
     icon: Bell,
     description: "Lihat notifikasi",
   },
+  {
+    label: "Sinkronisasi Offline",
+    href: "/mahasiswa/offline-sync",
+    icon: RefreshCw,
+    description: "Sinkronisasi data offline ke server",
+  },
 ];
 
 /**
@@ -163,6 +170,12 @@ const dosenNavigation: NavigationItem[] = [
     icon: Bell,
     description: "Lihat notifikasi",
   },
+  {
+    label: "Sinkronisasi Offline",
+    href: "/dosen/offline-sync",
+    icon: RefreshCw,
+    description: "Sinkronisasi data offline ke server",
+  },
 ];
 
 /**
@@ -228,6 +241,12 @@ const adminNavigation: NavigationItem[] = [
     href: "/admin/notifikasi",
     icon: Bell,
     description: "Kelola pengumuman",
+  },
+  {
+    label: "Sinkronisasi Offline",
+    href: "/admin/offline-sync",
+    icon: RefreshCw,
+    description: "Sinkronisasi data offline ke server",
   },
   // ❌ DISABLED: Analytics - tidak dalam scope proposal penelitian
   // {
@@ -296,6 +315,12 @@ const laboranNavigation: NavigationItem[] = [
     href: "/laboran/notifikasi",
     icon: Bell,
     description: "Lihat notifikasi",
+  },
+  {
+    label: "Sinkronisasi Offline",
+    href: "/laboran/offline-sync",
+    icon: RefreshCw,
+    description: "Sinkronisasi data offline ke server",
   },
 ];
 

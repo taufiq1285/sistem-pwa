@@ -156,7 +156,7 @@ describe("Laboran DashboardPage", () => {
     it("menampilkan jumlah pending approvals dari stats", async () => {
       renderWithRouter(<DashboardPage />);
       await waitFor(() => {
-        expect(screen.getByText("4")).toBeInTheDocument();
+        expect(screen.getAllByText(/4/).length).toBeGreaterThan(0);
       });
     });
 

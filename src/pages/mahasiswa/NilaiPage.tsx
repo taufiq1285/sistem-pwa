@@ -10,7 +10,6 @@
 
 import { useState, useEffect } from "react";
 import {
-  Loader2,
   FileText,
   TrendingUp,
   Award,
@@ -19,6 +18,7 @@ import {
   BookOpen,
   Send,
   X,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -45,6 +45,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { DashboardCard } from "@/components/ui/dashboard-card";
+import { DashboardSkeleton } from "@/components/ui/dashboard-skeleton";
+import { GlassCard } from "@/components/ui/glass-card";
 import {
   Dialog,
   DialogContent,
@@ -294,8 +297,11 @@ export default function MahasiswaNilaiPageEnhanced() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-96">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      <div className="app-container py-4 sm:py-6 lg:py-8">
+        <div className="max-w-7xl mx-auto space-y-6">
+          <DashboardSkeleton />
+          <DashboardSkeleton />
+        </div>
       </div>
     );
   }
@@ -329,130 +335,121 @@ export default function MahasiswaNilaiPageEnhanced() {
   const stats = calculateStats();
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-4xl font-extrabold">Nilai Akademik</h1>
-          <p className="text-gray-600">
-            Lihat nilai per kelas, per mata kuliah, dan ajukan perbaikan
-          </p>
-        </div>
-      </div>
-
-      {/* Statistics Cards */}
-      {nilaiList.length > 0 && (
-        <div className="grid gap-4 md:grid-cols-4">
-          <Card className="border-0 shadow-lg bg-linear-to-r from-blue-500 to-blue-600 text-white">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-base font-bold text-white">
-                Total Nilai
-              </CardTitle>
-              <FileText className="h-5 w-5 text-white" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-4xl font-extrabold">{stats.total}</div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-lg bg-linear-to-r from-green-500 to-green-600 text-white">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-base font-bold text-white">
-                Rata-rata
-              </CardTitle>
-              <TrendingUp className="h-5 w-5 text-white" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-4xl font-extrabold">
-                {stats.avgNilai.toFixed(2)}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-lg bg-linear-to-r from-emerald-500 to-emerald-600 text-white">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-base font-bold text-white">
-                Grade A & B
-              </CardTitle>
-              <Award className="h-5 w-5 text-white" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-4xl font-extrabold">
-                {stats.gradeCounts.A + stats.gradeCounts.B}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-lg bg-linear-to-r from-orange-500 to-orange-600 text-white">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-base font-bold text-white">
-                Permintaan
-              </CardTitle>
-              <History className="h-5 w-5 text-white" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-4xl font-extrabold">
-                {permintaanList.length}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Filters */}
-      <div className="grid gap-4 md:grid-cols-2">
-        <Select value={selectedSemester} onValueChange={setSelectedSemester}>
-          <SelectTrigger>
-            <SelectValue placeholder="Semua Semester" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Semua Semester</SelectItem>
-            {getSemesterOptions().map((sem) => (
-              <SelectItem key={sem} value={sem?.toString() || ""}>
-                Semester {sem}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select
-          value={selectedTahunAjaran}
-          onValueChange={setSelectedTahunAjaran}
+    <div className="app-container py-4 sm:py-6 lg:py-8">
+      <div className="mx-auto max-w-7xl space-y-6">
+        {/* Header */}
+        <GlassCard
+          intensity="medium"
+          className="border-white/40 bg-white/80 shadow-xl dark:border-white/10 dark:bg-slate-900/80"
         >
-          <SelectTrigger>
-            <SelectValue placeholder="Semua Tahun" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Semua Tahun</SelectItem>
-            {getTahunAjaranOptions().map((year) => (
-              <SelectItem key={year} value={year || ""}>
-                {year}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+          <CardContent className="p-6 sm:p-8">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+                  Nilai Akademik
+                </h1>
+                <p className="text-muted-foreground">
+                  Lihat nilai per kelas, per mata kuliah, dan ajukan perbaikan
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </GlassCard>
 
-      {/* Tabs */}
-      <Tabs defaultValue="per-kelas" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="per-kelas" className="gap-2">
-            <FileText className="h-4 w-4" />
-            Per Kelas
-          </TabsTrigger>
-          <TabsTrigger value="per-mk" className="gap-2">
-            <BookOpen className="h-4 w-4" />
-            Per Mata Kuliah (Kumulatif)
-          </TabsTrigger>
-          <TabsTrigger value="permintaan" className="gap-2">
-            <History className="h-4 w-4" />
-            Riwayat Permintaan ({permintaanList.length})
-          </TabsTrigger>
-        </TabsList>
+        {/* Statistics Cards */}
+        {nilaiList.length > 0 && (
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <DashboardCard
+              title="Total Nilai"
+              value={stats.total}
+              icon={FileText}
+              color="blue"
+            />
+            <DashboardCard
+              title="Rata-rata"
+              value={Number(stats.avgNilai.toFixed(2))}
+              icon={TrendingUp}
+              color="green"
+            />
+            <DashboardCard
+              title="Grade A & B"
+              value={stats.gradeCounts.A + stats.gradeCounts.B}
+              icon={Award}
+              color="green"
+            />
+            <DashboardCard
+              title="Permintaan"
+              value={permintaanList.length}
+              icon={History}
+              color="amber"
+            />
+          </div>
+        )}
+
+        {/* Filters */}
+        <GlassCard
+          intensity="low"
+          className="border-white/40 bg-white/90 shadow-lg dark:border-white/10 dark:bg-slate-900/85"
+        >
+          <CardContent className="p-4 sm:p-6">
+            <div className="grid gap-4 md:grid-cols-2">
+              <Select value={selectedSemester} onValueChange={setSelectedSemester}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Semua Semester" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Semua Semester</SelectItem>
+                  {getSemesterOptions().map((sem) => (
+                    <SelectItem key={sem} value={sem?.toString() || ""}>
+                      Semester {sem}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select
+                value={selectedTahunAjaran}
+                onValueChange={setSelectedTahunAjaran}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Semua Tahun" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Semua Tahun</SelectItem>
+                  {getTahunAjaranOptions().map((year) => (
+                    <SelectItem key={year} value={year || ""}>
+                      {year}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </GlassCard>
+
+        {/* Tabs */}
+        <Tabs defaultValue="per-kelas" className="space-y-4">
+          <TabsList className="grid h-auto w-full grid-cols-1 gap-2 rounded-2xl bg-muted/60 p-1 md:grid-cols-3">
+            <TabsTrigger value="per-kelas" className="gap-2 rounded-xl">
+              <FileText className="h-4 w-4" />
+              Per Kelas
+            </TabsTrigger>
+            <TabsTrigger value="per-mk" className="gap-2 rounded-xl">
+              <BookOpen className="h-4 w-4" />
+              Per Mata Kuliah (Kumulatif)
+            </TabsTrigger>
+            <TabsTrigger value="permintaan" className="gap-2 rounded-xl">
+              <History className="h-4 w-4" />
+              Riwayat Permintaan ({permintaanList.length})
+            </TabsTrigger>
+          </TabsList>
 
         {/* Tab: Per Kelas */}
         <TabsContent value="per-kelas">
-          <Card className="border-0 shadow-xl p-6">
+          <GlassCard
+            intensity="low"
+            className="border-white/40 bg-white/90 p-6 shadow-lg dark:border-white/10 dark:bg-slate-900/85"
+          >
             <CardHeader>
               <CardTitle>Nilai Per Kelas</CardTitle>
               <CardDescription>
@@ -461,8 +458,10 @@ export default function MahasiswaNilaiPageEnhanced() {
             </CardHeader>
             <CardContent>
               {filteredNilai.length === 0 ? (
-                <Alert>
-                  <AlertDescription>Belum ada data nilai</AlertDescription>
+                <Alert className="border-border/60 bg-muted/30">
+                  <AlertDescription className="text-muted-foreground">
+                    Belum ada data nilai
+                  </AlertDescription>
                 </Alert>
               ) : (
                 <div className="overflow-x-auto">
@@ -531,12 +530,15 @@ export default function MahasiswaNilaiPageEnhanced() {
                 </div>
               )}
             </CardContent>
-          </Card>
+          </GlassCard>
         </TabsContent>
 
         {/* Tab: Per Mata Kuliah (Kumulatif) */}
         <TabsContent value="per-mk">
-          <Card className="border-0 shadow-xl p-6">
+          <GlassCard
+            intensity="low"
+            className="border-white/40 bg-white/90 p-6 shadow-lg dark:border-white/10 dark:bg-slate-900/85"
+          >
             <CardHeader>
               <CardTitle>Nilai Per Mata Kuliah (Kumulatif)</CardTitle>
               <CardDescription>
@@ -545,8 +547,10 @@ export default function MahasiswaNilaiPageEnhanced() {
             </CardHeader>
             <CardContent>
               {nilaiKumulatif.length === 0 ? (
-                <Alert>
-                  <AlertDescription>Belum ada data nilai</AlertDescription>
+                <Alert className="border-border/60 bg-muted/30">
+                  <AlertDescription className="text-muted-foreground">
+                    Belum ada data nilai
+                  </AlertDescription>
                 </Alert>
               ) : (
                 <div className="overflow-x-auto">
@@ -607,12 +611,15 @@ export default function MahasiswaNilaiPageEnhanced() {
                 </div>
               )}
             </CardContent>
-          </Card>
+          </GlassCard>
         </TabsContent>
 
         {/* Tab: Riwayat Permintaan */}
         <TabsContent value="permintaan">
-          <Card className="border-0 shadow-xl p-6">
+          <GlassCard
+            intensity="low"
+            className="border-white/40 bg-white/90 p-6 shadow-lg dark:border-white/10 dark:bg-slate-900/85"
+          >
             <CardHeader>
               <CardTitle>Riwayat Permintaan Perbaikan Nilai</CardTitle>
               <CardDescription>
@@ -621,8 +628,8 @@ export default function MahasiswaNilaiPageEnhanced() {
             </CardHeader>
             <CardContent>
               {permintaanList.length === 0 ? (
-                <Alert>
-                  <AlertDescription>
+                <Alert className="border-border/60 bg-muted/30">
+                  <AlertDescription className="text-muted-foreground">
                     Belum ada permintaan perbaikan nilai
                   </AlertDescription>
                 </Alert>
@@ -685,7 +692,7 @@ export default function MahasiswaNilaiPageEnhanced() {
                 </div>
               )}
             </CardContent>
-          </Card>
+          </GlassCard>
         </TabsContent>
       </Tabs>
 
@@ -694,7 +701,7 @@ export default function MahasiswaNilaiPageEnhanced() {
         open={permintaanDialogOpen}
         onOpenChange={setPermintaanDialogOpen}
       >
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-125">
           <DialogHeader>
             <DialogTitle>Ajukan Permintaan Perbaikan Nilai</DialogTitle>
             <DialogDescription>
@@ -778,6 +785,7 @@ export default function MahasiswaNilaiPageEnhanced() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   );
 }

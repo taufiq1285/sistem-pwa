@@ -16,7 +16,7 @@ import {
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ui/status-badge";
 import {
   Card,
   CardContent,
@@ -78,13 +78,6 @@ import {
   type CreateUserData,
 } from "@/lib/api/users.api";
 import { cacheAPI, invalidateCache } from "@/lib/offline/api-cache";
-
-const ROLE_BADGE = {
-  admin: "default" as const,
-  dosen: "secondary" as const,
-  mahasiswa: "outline" as const,
-  laboran: "destructive" as const,
-};
 
 type UserRole = "admin" | "dosen" | "mahasiswa" | "laboran";
 
@@ -502,7 +495,7 @@ export default function UsersPage() {
           <EnhancedTableHeader>
             <EnhancedTableRow>
               {columnVisibility.select && (
-                <EnhancedTableHead className="w-[50px]">
+                <EnhancedTableHead className="w-12.5">
                   <RowSelectionHeader
                     checked={rowSelection.isAllSelected}
                     indeterminate={rowSelection.isSomeSelected}
@@ -601,32 +594,32 @@ export default function UsersPage() {
   };
 
   return (
-    <div className="container mx-auto py-8 max-w-7xl space-y-8">
+    <div className="app-container space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="section-shell flex items-center justify-between rounded-2xl p-5">
         <div>
-          <h1 className="text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-            User Management
+          <h1 className="text-2xl font-bold text-foreground">
+            Manajemen Pengguna
           </h1>
-          <p className="text-lg font-semibold text-slate-600 dark:text-slate-400 mt-2">
-            Manage all system users
+          <p className="text-sm text-muted-foreground mt-1">
+            Kelola semua pengguna sistem
           </p>
         </div>
         <div className="flex gap-3">
           <Button
             variant="outline"
             onClick={() => loadUsers(true)}
-            className="font-semibold border-2 hover:bg-slate-100 dark:hover:bg-slate-700"
+            className="font-semibold"
           >
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
           <Button
             onClick={handleAdd}
-            className="font-semibold bg-linear-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 shadow-lg shadow-blue-500/30"
+            className="font-semibold bg-linear-to-r from-blue-600 to-indigo-600 text-white"
           >
             <UserPlus className="h-4 w-4 mr-2" />
-            Add User
+            Tambah User
           </Button>
         </div>
       </div>
@@ -1102,9 +1095,18 @@ export default function UsersPage() {
                 </p>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                   Role:{" "}
-                  <Badge variant={ROLE_BADGE[deletingUser.role]}>
+                  <StatusBadge
+                    status={
+                      deletingUser.role === "admin" ? "info"
+                        : deletingUser.role === "dosen" ? "success"
+                        : deletingUser.role === "laboran" ? "warning"
+                        : "online"
+                    }
+                    pulse={false}
+                    className="capitalize"
+                  >
                     {deletingUser.role}
-                  </Badge>
+                  </StatusBadge>
                 </p>
               </div>
 
@@ -1131,14 +1133,14 @@ export default function UsersPage() {
                 <Button
                   variant="outline"
                   onClick={() => setIsDeleteDialogOpen(false)}
-                  className="min-w-[100px]"
+                  className="min-w-25"
                 >
                   Batal
                 </Button>
                 <Button
                   variant="destructive"
                   onClick={confirmDelete}
-                  className="min-w-[100px] bg-red-600 hover:bg-red-700"
+                  className="min-w-25 bg-red-600 hover:bg-red-700"
                 >
                   <Trash2 className="h-4 w-4 mr-2" />
                   Ya, Hapus

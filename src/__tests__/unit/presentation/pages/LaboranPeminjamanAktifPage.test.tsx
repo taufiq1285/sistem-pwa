@@ -76,7 +76,7 @@ describe("Laboran PeminjamanAktifPage", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByRole("heading", { name: /Kelola Peminjaman Alat/i }),
+        screen.getByRole("heading", { name: /Kelola Peminjaman Aktif/i }),
       ).toBeInTheDocument();
     });
 

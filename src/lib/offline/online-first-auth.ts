@@ -203,7 +203,7 @@ export async function secureOfflineLogin(
     const offlineSession: AuthSession = {
       access_token: "offline_session_token",
       refresh_token: "offline_refresh_token",
-      expires_at: Math.floor((Date.now() + 24 * 60 * 60 * 1000) / 1000), // 24 hours
+      expires_at: Math.floor((Date.now() + 7 * 24 * 60 * 60 * 1000) / 1000), // 7 days
       user: userData,
     };
 

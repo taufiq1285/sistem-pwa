@@ -15,6 +15,9 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { DashboardCard } from "@/components/ui/dashboard-card";
+import { DashboardSkeleton } from "@/components/ui/dashboard-skeleton";
+import { GlassCard } from "@/components/ui/glass-card";
 import {
   Users,
   GraduationCap,
@@ -252,20 +255,10 @@ export function DashboardPage() {
   // Loading state
   if (loading) {
     return (
-      <div className="flex h-full items-center justify-center bg-linear-to-br from-slate-50 to-blue-100 dark:from-slate-950 dark:to-blue-950">
-        <div className="text-center">
-          <div className="relative">
-            <div className="h-16 w-16 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto" />
-            <div className="absolute inset-0 flex items-center justify-center">
-              <Shield className="h-8 w-8 text-primary animate-pulse" />
-            </div>
-          </div>
-          <p className="mt-4 text-lg font-medium text-foreground">
-            Memuat Dashboard Admin
-          </p>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Mengambil data terkini sistem...
-          </p>
+      <div className="app-container py-4 sm:py-6 lg:py-8">
+        <div className="mx-auto max-w-7xl space-y-6">
+          <DashboardSkeleton />
+          <DashboardSkeleton />
         </div>
       </div>
     );
@@ -274,40 +267,50 @@ export function DashboardPage() {
   // Error state
   if (error || !stats) {
     return (
-      <div className="flex h-full items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <AlertCircle className="h-12 w-12 text-destructive mx-auto" />
-              <h3 className="mt-4 text-lg font-semibold">Error</h3>
-              <p className="mt-2 text-sm text-muted-foreground">{error}</p>
-              <Button className="mt-4" onClick={() => window.location.reload()}>
-                Retry
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="app-container py-6 sm:py-8">
+        <div className="mx-auto max-w-3xl">
+          <GlassCard className="border-destructive/30 bg-destructive/5 shadow-lg">
+            <CardContent className="pt-6">
+              <div className="text-center">
+                <AlertCircle className="mx-auto h-12 w-12 text-destructive" />
+                <h3 className="mt-4 text-lg font-semibold text-foreground">Gagal memuat dashboard</h3>
+                <p className="mt-2 text-sm text-muted-foreground">{error}</p>
+                <Button className="mt-4" onClick={() => window.location.reload()}>
+                  Coba lagi
+                </Button>
+              </div>
+            </CardContent>
+          </GlassCard>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="role-page-shell min-h-screen bg-linear-to-br from-slate-50 via-white to-blue-50 dark:from-slate-950 dark:via-slate-900 dark:to-blue-950">
-      {/* Header with Logout */}
-      <div className="role-page-content bg-white/90 dark:bg-slate-900/85 backdrop-blur-xl border-b border-slate-200/80 dark:border-slate-700 shadow-lg sticky top-0 z-50">
-        <div className="app-container py-4 sm:py-5">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div>
-              <div className="flex items-center space-x-4">
-                <div className="p-3 bg-linear-to-br from-blue-500 to-indigo-600 dark:from-blue-600 dark:to-indigo-700 rounded-xl shadow-lg shadow-blue-500/30">
-                  <Shield className="h-7 w-7 text-white" />
+    <div className="surface-grid min-h-screen bg-background">
+      <div className="app-container py-4 sm:py-6 lg:py-8">
+        <div className="mx-auto max-w-7xl space-y-6 sm:space-y-8">
+          <GlassCard
+            intensity="medium"
+            glow
+            className="overflow-hidden rounded-4xl border border-border/60 bg-background/80 shadow-xl"
+          >
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+            <div className="space-y-4">
+              <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/70 px-3 py-1 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur-sm">
+                <Shield className="h-3.5 w-3.5 text-primary" />
+                Pusat kontrol admin aktif
+              </div>
+              <div className="flex items-start gap-4">
+                <div className="rounded-2xl bg-primary/10 p-3 text-primary ring-1 ring-primary/20 shadow-sm">
+                  <Shield className="h-7 w-7" />
                 </div>
-                <div>
-                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                <div className="space-y-2">
+                  <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
                     Admin Dashboard
                   </h1>
-                  <div className="flex items-center space-x-2 text-base font-medium text-slate-700 dark:text-slate-300 mt-1">
-                    <Clock className="h-5 w-5" />
+                  <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground sm:text-base">
+                    <Clock className="h-4 w-4" />
                     <span>
                       {currentTime.toLocaleDateString("id-ID", {
                         weekday: "long",
@@ -316,312 +319,198 @@ export function DashboardPage() {
                         day: "numeric",
                       })}
                     </span>
-                    <span className="text-slate-400">•</span>
-                    <span className="font-semibold">
+                    <span className="text-muted-foreground/60">•</span>
+                    <span className="font-medium text-foreground">
                       {currentTime.toLocaleTimeString("id-ID")}
                     </span>
                   </div>
+                  <p className="max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
+                    Ringkasan utama sistem praktikum untuk memantau pengguna,
+                    laboratorium, peralatan, dan aktivitas administratif yang
+                    paling sering digunakan.
+                  </p>
                 </div>
               </div>
-              <p className="mt-2 text-sm sm:text-base font-medium text-slate-700 dark:text-slate-300">
-                Selamat datang kembali! Berikut gambaran umum sistem praktikum.
-              </p>
             </div>
-            <div className="flex items-center space-x-3">
+            <div className="flex w-full flex-col gap-3 lg:w-auto lg:min-w-65">
+              <div className="rounded-2xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-muted-foreground">
+                Fokuskan tindakan pada persetujuan, distribusi pengguna, dan
+                pemantauan kesehatan sistem secara real-time.
+              </div>
               <Button
                 variant="outline"
                 onClick={handleRefresh}
                 disabled={refreshing}
-                className="relative bg-white dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-slate-700 border-2 border-slate-300 dark:border-slate-600 font-semibold shadow-md hover:shadow-lg transition-all duration-200 w-full sm:w-auto"
+                className="w-full border-border/60 bg-background/80 font-medium shadow-sm hover:bg-muted/60 lg:w-auto"
               >
                 {refreshing ? (
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
                 ) : (
-                  <TrendingUp className="h-4 w-4 mr-2" />
+                  <TrendingUp className="mr-2 h-4 w-4" />
                 )}
                 {refreshing ? "Memperbarui..." : "Refresh Data"}
               </Button>
             </div>
           </div>
-        </div>
-      </div>
+          </GlassCard>
 
-      <div className="role-page-content app-container py-4 sm:py-6 lg:py-8 space-y-6 sm:space-y-8">
-        {/* Statistics Cards */}
-        <div className="grid gap-4 sm:gap-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-          {/* Total Users Card */}
-          <Card className="interactive-card group hover:shadow-2xl hover:scale-[1.03] transition-all duration-300 border-0 shadow-lg bg-linear-to-br from-blue-50 to-indigo-50 dark:from-blue-950/40 dark:to-indigo-950/40 backdrop-blur-sm overflow-hidden relative">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-linear-to-br from-blue-400/20 to-indigo-400/20 rounded-full blur-3xl -mr-16 -mt-16 group-hover:from-blue-400/30 group-hover:to-indigo-400/30 transition-all duration-300" />
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 relative">
-              <CardTitle className="text-base font-bold text-blue-900 dark:text-blue-100">
-                Total Users
-              </CardTitle>
-              <div className="p-2.5 bg-linear-to-br from-blue-500 to-indigo-600 dark:from-blue-600 dark:to-indigo-700 rounded-xl shadow-lg shadow-blue-500/30 group-hover:scale-110 transition-transform duration-300">
-                <Users className="h-5 w-5 text-white" />
-              </div>
-            </CardHeader>
-            <CardContent className="relative">
-              <div className="text-4xl font-extrabold text-blue-900 dark:text-white mb-2 tracking-tight">
-                {stats.totalUsers}
-              </div>
-              <div className="flex items-center space-x-2">
-                <Activity className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                  {stats.activeUsers} aktif
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Mahasiswa Card */}
-          <Card className="interactive-card group hover:shadow-2xl hover:scale-[1.03] transition-all duration-300 border-0 shadow-lg bg-linear-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/40 dark:to-teal-950/40 backdrop-blur-sm overflow-hidden relative">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-linear-to-br from-emerald-400/20 to-teal-400/20 rounded-full blur-3xl -mr-16 -mt-16 group-hover:from-emerald-400/30 group-hover:to-teal-400/30 transition-all duration-300" />
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 relative">
-              <CardTitle className="text-base font-bold text-emerald-900 dark:text-emerald-100">
-                Mahasiswa
-              </CardTitle>
-              <div className="p-2.5 bg-linear-to-br from-emerald-500 to-teal-600 dark:from-emerald-600 dark:to-teal-700 rounded-xl shadow-lg shadow-emerald-500/30 group-hover:scale-110 transition-transform duration-300">
-                <GraduationCap className="h-5 w-5 text-white" />
-              </div>
-            </CardHeader>
-            <CardContent className="relative">
-              <div className="text-4xl font-extrabold text-emerald-900 dark:text-white mb-2 tracking-tight">
-                {stats.totalMahasiswa}
-              </div>
-              <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                {Math.round((stats.totalMahasiswa / stats.totalUsers) * 100)}%
-                dari total users
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* Dosen Card */}
-          <Card className="interactive-card group hover:shadow-2xl hover:scale-[1.03] transition-all duration-300 border-0 shadow-lg bg-linear-to-br from-purple-50 to-violet-50 dark:from-purple-950/40 dark:to-violet-950/40 backdrop-blur-sm overflow-hidden relative">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-linear-to-br from-purple-400/20 to-violet-400/20 rounded-full blur-3xl -mr-16 -mt-16 group-hover:from-purple-400/30 group-hover:to-violet-400/30 transition-all duration-300" />
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 relative">
-              <CardTitle className="text-base font-bold text-purple-900 dark:text-purple-100">
-                Dosen
-              </CardTitle>
-              <div className="p-2.5 bg-linear-to-br from-purple-500 to-violet-600 dark:from-purple-600 dark:to-violet-700 rounded-xl shadow-lg shadow-purple-500/30 group-hover:scale-110 transition-transform duration-300">
-                <UserCog className="h-5 w-5 text-white" />
-              </div>
-            </CardHeader>
-            <CardContent className="relative">
-              <div className="text-4xl font-extrabold text-purple-900 dark:text-white mb-2 tracking-tight">
-                {stats.totalDosen}
-              </div>
-              <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                {Math.round((stats.totalDosen / stats.totalUsers) * 100)}% dari
-                total users
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* Laboratorium Card */}
-          <Card className="interactive-card group hover:shadow-2xl hover:scale-[1.03] transition-all duration-300 border-0 shadow-lg bg-linear-to-br from-orange-50 to-amber-50 dark:from-orange-950/40 dark:to-amber-950/40 backdrop-blur-sm overflow-hidden relative">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-linear-to-br from-orange-400/20 to-amber-400/20 rounded-full blur-3xl -mr-16 -mt-16 group-hover:from-orange-400/30 group-hover:to-amber-400/30 transition-all duration-300" />
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 relative">
-              <CardTitle className="text-base font-bold text-orange-900 dark:text-orange-100">
-                Laboratorium
-              </CardTitle>
-              <div className="p-2.5 bg-linear-to-br from-orange-500 to-amber-600 dark:from-orange-600 dark:to-amber-700 rounded-xl shadow-lg shadow-orange-500/30 group-hover:scale-110 transition-transform duration-300">
-                <FlaskConical className="h-5 w-5 text-white" />
-              </div>
-            </CardHeader>
-            <CardContent className="relative">
-              <div className="text-4xl font-extrabold text-orange-900 dark:text-white mb-2 tracking-tight">
-                {stats.totalLaboratorium}
-              </div>
-              <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                Lab tersedia
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* Peralatan Card */}
-          <Card className="interactive-card group hover:shadow-2xl hover:scale-[1.03] transition-all duration-300 border-0 shadow-lg bg-linear-to-br from-amber-50 to-yellow-50 dark:from-amber-950/40 dark:to-yellow-950/40 backdrop-blur-sm overflow-hidden relative">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-linear-to-br from-amber-400/20 to-yellow-400/20 rounded-full blur-3xl -mr-16 -mt-16 group-hover:from-amber-400/30 group-hover:to-yellow-400/30 transition-all duration-300" />
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 relative">
-              <CardTitle className="text-base font-bold text-amber-900 dark:text-amber-100">
-                Peralatan
-              </CardTitle>
-              <div className="p-2.5 bg-linear-to-br from-amber-500 to-yellow-600 dark:from-amber-600 dark:to-yellow-700 rounded-xl shadow-lg shadow-amber-500/30 group-hover:scale-110 transition-transform duration-300">
-                <Wrench className="h-5 w-5 text-white" />
-              </div>
-            </CardHeader>
-            <CardContent className="relative">
-              <div className="text-4xl font-extrabold text-amber-900 dark:text-white mb-2 tracking-tight">
-                {stats.totalPeralatan}
-              </div>
-              <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                Total peralatan
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* Pending Approvals Card - Highlighted */}
-          <Card className="interactive-card group hover:shadow-2xl hover:scale-[1.03] transition-all duration-300 border-2 border-rose-300 dark:border-rose-700 shadow-xl shadow-rose-500/20 bg-linear-to-br from-rose-50 to-pink-50 dark:from-rose-950/40 dark:to-pink-950/40 backdrop-blur-sm overflow-hidden relative">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-linear-to-br from-rose-400/30 to-pink-400/30 rounded-full blur-3xl -mr-16 -mt-16 animate-pulse" />
-            <div className="absolute inset-0 bg-linear-to-br from-rose-500/5 to-pink-500/5 dark:from-rose-500/10 dark:to-pink-500/10" />
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 relative">
-              <CardTitle className="text-base font-bold text-rose-900 dark:text-rose-100">
-                Menunggu Persetujuan
-              </CardTitle>
-              <div className="p-2.5 bg-linear-to-br from-rose-500 to-pink-600 dark:from-rose-600 dark:to-pink-700 rounded-xl shadow-lg shadow-rose-500/30 group-hover:scale-110 transition-transform duration-300 animate-pulse">
-                <AlertCircle className="h-5 w-5 text-white" />
-              </div>
-            </CardHeader>
-            <CardContent className="relative">
-              <div className="text-4xl font-extrabold text-rose-600 dark:text-rose-300 mb-2 tracking-tight">
-                {stats.pendingApprovals}
-              </div>
-              <p className="text-sm font-bold text-rose-700 dark:text-rose-400">
-                Perlu persetujuan admin
-              </p>
-            </CardContent>
-          </Card>
-        </div>
+          {/* Statistics Cards */}
+          <div className="grid gap-4 sm:gap-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+            <DashboardCard
+              title="Total Users"
+              value={stats.totalUsers}
+              description="Seluruh akun aktif dalam ekosistem sistem praktikum"
+              icon={Users}
+              color="blue"
+              trend={{ value: stats.activeUsers, isPositive: true }}
+            />
+            <DashboardCard
+              title="Mahasiswa"
+              value={stats.totalMahasiswa}
+              description="Proporsi mahasiswa dari total pengguna sistem"
+              icon={GraduationCap}
+              color="green"
+              suffix="%"
+              trend={{
+                value: Math.round((stats.totalMahasiswa / stats.totalUsers) * 100),
+                isPositive: true,
+              }}
+            />
+            <DashboardCard
+              title="Dosen"
+              value={stats.totalDosen}
+              description="Tenaga pengajar yang telah terdaftar di sistem"
+              icon={UserCog}
+              color="purple"
+              trend={{
+                value: Math.round((stats.totalDosen / stats.totalUsers) * 100),
+                isPositive: true,
+              }}
+            />
+            <DashboardCard
+              title="Laboratorium"
+              value={stats.totalLaboratorium}
+              description="Ruang praktikum yang sedang dipantau admin"
+              icon={FlaskConical}
+              color="amber"
+            />
+            <DashboardCard
+              title="Peralatan"
+              value={stats.totalPeralatan}
+              description="Inventaris dan perangkat yang tercatat"
+              icon={Wrench}
+              color="amber"
+            />
+            <DashboardCard
+              title="Menunggu Persetujuan"
+              value={stats.pendingApprovals}
+              description="Item dan alur kerja yang membutuhkan tindakan admin"
+              icon={AlertCircle}
+              color="red"
+            />
+          </div>
 
         {/* Quick Actions */}
-        <Card className="border-0 shadow-xl bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl">
-          <CardHeader className="pb-5">
-            <div className="flex items-center space-x-3">
-              <div className="p-3 bg-linear-to-br from-violet-500 to-purple-600 dark:from-violet-600 dark:to-purple-700 rounded-xl shadow-lg shadow-violet-500/30">
-                <Zap className="h-6 w-6 text-white" />
+        <GlassCard
+          intensity="medium"
+          className="border-border/60 bg-background/80 shadow-xl"
+        >
+          <CardHeader className="space-y-2 pb-5">
+            <div className="flex items-center gap-3">
+              <div className="rounded-2xl bg-primary/10 p-3 text-primary ring-1 ring-primary/20 shadow-sm">
+                <Zap className="h-6 w-6" />
               </div>
               <div>
-                <CardTitle className="text-2xl font-bold text-slate-900 dark:text-white">
+                <CardTitle className="text-2xl font-bold text-foreground">
                   Aksi Cepat
                 </CardTitle>
-                <CardDescription className="text-base font-medium text-slate-600 dark:text-slate-400 mt-1">
-                  Tugas administratif yang sering digunakan
+                <CardDescription className="mt-1 text-sm text-muted-foreground sm:text-base">
+                  Pintasan untuk tugas administratif yang paling sering digunakan.
                 </CardDescription>
               </div>
             </div>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-              {/* Tambah User */}
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <Button
                 variant="outline"
-                className="justify-start h-auto py-4 px-5 hover:bg-linear-to-br hover:from-blue-50 hover:to-indigo-50 hover:border-blue-400 hover:text-blue-700 dark:hover:from-blue-950/50 dark:hover:to-indigo-950/50 dark:hover:border-blue-600 dark:hover:text-blue-300 transition-all duration-300 group hover:shadow-lg hover:scale-105 border-2"
+                className="group h-auto justify-start rounded-2xl border-border/60 bg-background/80 px-5 py-4 text-left shadow-sm transition-all duration-200 hover:bg-muted/60 hover:shadow-md"
                 onClick={() => navigate("/admin/users?action=create")}
               >
-                <div className="flex items-center space-x-3 w-full">
-                  <div className="p-2.5 bg-linear-to-br from-blue-500 to-indigo-600 dark:from-blue-600 dark:to-indigo-700 rounded-lg shadow-md group-hover:scale-110 transition-transform duration-300">
-                    <Plus className="h-5 w-5 text-white" />
+                <div className="flex w-full items-center gap-3">
+                  <div className="rounded-xl bg-blue-500/10 p-2.5 text-blue-700 ring-1 ring-blue-500/20 transition-transform duration-200 group-hover:scale-105 dark:text-blue-300">
+                    <Plus className="h-5 w-5" />
                   </div>
-                  <div className="text-left">
-                    <div className="font-bold text-base">Tambah User</div>
-                    <div className="text-xs font-medium text-slate-600 dark:text-slate-400 mt-0.5">
-                      User baru
+                  <div>
+                    <div className="text-base font-semibold text-foreground">Tambah User</div>
+                    <div className="mt-0.5 text-xs text-muted-foreground">
+                      Registrasi akun baru
                     </div>
                   </div>
                 </div>
               </Button>
 
-              {/* Pengumuman */}
               <Button
                 variant="outline"
-                className="justify-start h-auto py-4 px-5 hover:bg-linear-to-br hover:from-emerald-50 hover:to-teal-50 hover:border-emerald-400 hover:text-emerald-700 dark:hover:from-emerald-950/50 dark:hover:to-teal-950/50 dark:hover:border-emerald-600 dark:hover:text-emerald-300 transition-all duration-300 group hover:shadow-lg hover:scale-105 border-2"
+                className="group h-auto justify-start rounded-2xl border-border/60 bg-background/80 px-5 py-4 text-left shadow-sm transition-all duration-200 hover:bg-muted/60 hover:shadow-md"
                 onClick={() => navigate("/admin/announcements?action=create")}
               >
-                <div className="flex items-center space-x-3 w-full">
-                  <div className="p-2.5 bg-linear-to-br from-emerald-500 to-teal-600 dark:from-emerald-600 dark:to-teal-700 rounded-lg shadow-md group-hover:scale-110 transition-transform duration-300">
-                    <Megaphone className="h-5 w-5 text-white" />
+                <div className="flex w-full items-center gap-3">
+                  <div className="rounded-xl bg-emerald-500/10 p-2.5 text-emerald-700 ring-1 ring-emerald-500/20 transition-transform duration-200 group-hover:scale-105 dark:text-emerald-300">
+                    <Megaphone className="h-5 w-5" />
                   </div>
-                  <div className="text-left">
-                    <div className="font-bold text-base">Pengumuman</div>
-                    <div className="text-xs font-medium text-slate-600 dark:text-slate-400 mt-0.5">
-                      Info sistem
+                  <div>
+                    <div className="text-base font-semibold text-foreground">Pengumuman</div>
+                    <div className="mt-0.5 text-xs text-muted-foreground">
+                      Publikasikan info sistem
                     </div>
                   </div>
                 </div>
               </Button>
 
-              {/* Laboratorium */}
               <Button
                 variant="outline"
-                className="justify-start h-auto py-4 px-5 hover:bg-linear-to-br hover:from-orange-50 hover:to-amber-50 hover:border-orange-400 hover:text-orange-700 dark:hover:from-orange-950/50 dark:hover:to-amber-950/50 dark:hover:border-orange-600 dark:hover:text-orange-300 transition-all duration-300 group hover:shadow-lg hover:scale-105 border-2"
+                className="group h-auto justify-start rounded-2xl border-border/60 bg-background/80 px-5 py-4 text-left shadow-sm transition-all duration-200 hover:bg-muted/60 hover:shadow-md"
                 onClick={() => navigate("/admin/laboratories")}
               >
-                <div className="flex items-center space-x-3 w-full">
-                  <div className="p-2.5 bg-linear-to-br from-orange-500 to-amber-600 dark:from-orange-600 dark:to-amber-700 rounded-lg shadow-md group-hover:scale-110 transition-transform duration-300">
-                    <FlaskConical className="h-5 w-5 text-white" />
+                <div className="flex w-full items-center gap-3">
+                  <div className="rounded-xl bg-amber-500/10 p-2.5 text-amber-700 ring-1 ring-amber-500/20 transition-transform duration-200 group-hover:scale-105 dark:text-amber-300">
+                    <FlaskConical className="h-5 w-5" />
                   </div>
-                  <div className="text-left">
-                    <div className="font-bold text-base">Laboratorium</div>
-                    <div className="text-xs font-medium text-slate-600 dark:text-slate-400 mt-0.5">
-                      Kelola lab
+                  <div>
+                    <div className="text-base font-semibold text-foreground">Laboratorium</div>
+                    <div className="mt-0.5 text-xs text-muted-foreground">
+                      Kelola data laboratorium
                     </div>
                   </div>
                 </div>
               </Button>
 
-              {/* Peralatan */}
               <Button
                 variant="outline"
-                className="justify-start h-auto py-4 px-5 hover:bg-linear-to-br hover:from-amber-50 hover:to-yellow-50 hover:border-amber-400 hover:text-amber-700 dark:hover:from-amber-950/50 dark:hover:to-yellow-950/50 dark:hover:border-amber-600 dark:hover:text-amber-300 transition-all duration-300 group hover:shadow-lg hover:scale-105 border-2"
+                className="group h-auto justify-start rounded-2xl border-border/60 bg-background/80 px-5 py-4 text-left shadow-sm transition-all duration-200 hover:bg-muted/60 hover:shadow-md"
                 onClick={() => navigate("/admin/equipments")}
               >
-                <div className="flex items-center space-x-3 w-full">
-                  <div className="p-2.5 bg-linear-to-br from-amber-500 to-yellow-600 dark:from-amber-600 dark:to-yellow-700 rounded-lg shadow-md group-hover:scale-110 transition-transform duration-300">
-                    <Wrench className="h-5 w-5 text-white" />
+                <div className="flex w-full items-center gap-3">
+                  <div className="rounded-xl bg-violet-500/10 p-2.5 text-violet-700 ring-1 ring-violet-500/20 transition-transform duration-200 group-hover:scale-105 dark:text-violet-300">
+                    <Wrench className="h-5 w-5" />
                   </div>
-                  <div className="text-left">
-                    <div className="font-bold text-base">Peralatan</div>
-                    <div className="text-xs font-medium text-slate-600 dark:text-slate-400 mt-0.5">
-                      Inventaris
-                    </div>
-                  </div>
-                </div>
-              </Button>
-
-              {/* Analytics */}
-              <Button
-                variant="outline"
-                className="justify-start h-auto py-4 px-5 hover:bg-linear-to-br hover:from-purple-50 hover:to-violet-50 hover:border-purple-400 hover:text-purple-700 dark:hover:from-purple-950/50 dark:hover:to-violet-950/50 dark:hover:border-purple-600 dark:hover:text-purple-300 transition-all duration-300 group hover:shadow-lg hover:scale-105 border-2"
-                onClick={() => navigate("/admin/system/analytics")}
-              >
-                <div className="flex items-center space-x-3 w-full">
-                  <div className="p-2.5 bg-linear-to-br from-purple-500 to-violet-600 dark:from-purple-600 dark:to-violet-700 rounded-lg shadow-md group-hover:scale-110 transition-transform duration-300">
-                    <BarChart3 className="h-5 w-5 text-white" />
-                  </div>
-                  <div className="text-left">
-                    <div className="font-bold text-base">Analytics</div>
-                    <div className="text-xs font-medium text-slate-600 dark:text-slate-400 mt-0.5">
-                      Statistik
-                    </div>
-                  </div>
-                </div>
-              </Button>
-
-              {/* Roles */}
-              <Button
-                variant="outline"
-                className="justify-start h-auto py-4 px-5 hover:bg-linear-to-br hover:from-violet-50 hover:to-fuchsia-50 hover:border-violet-400 hover:text-violet-700 dark:hover:from-violet-950/50 dark:hover:to-fuchsia-950/50 dark:hover:border-violet-600 dark:hover:text-violet-300 transition-all duration-300 group hover:shadow-lg hover:scale-105 border-2"
-                onClick={() => navigate("/admin/roles")}
-              >
-                <div className="flex items-center space-x-3 w-full">
-                  <div className="p-2.5 bg-linear-to-br from-violet-500 to-fuchsia-600 dark:from-violet-600 dark:to-fuchsia-700 rounded-lg shadow-md group-hover:scale-110 transition-transform duration-300">
-                    <Settings className="h-5 w-5 text-white" />
-                  </div>
-                  <div className="text-left">
-                    <div className="font-bold text-base">Roles</div>
-                    <div className="text-xs font-medium text-slate-600 dark:text-slate-400 mt-0.5">
-                      Hak akses
+                  <div>
+                    <div className="text-base font-semibold text-foreground">Peralatan</div>
+                    <div className="mt-0.5 text-xs text-muted-foreground">
+                      Pantau inventaris utama
                     </div>
                   </div>
                 </div>
               </Button>
             </div>
           </CardContent>
-        </Card>
+        </GlassCard>
 
         {/* Charts */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
           {/* User Growth Chart */}
-          <Card className="col-span-full lg:col-span-4 border-0 shadow-xl bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl">
+          <GlassCard className="col-span-full rounded-4xl border border-border/50 bg-background/85 shadow-xl lg:col-span-4">
             <CardHeader className="pb-5">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
@@ -711,10 +600,10 @@ export function DashboardPage() {
                 </LineChart>
               </ResponsiveContainer>
             </CardContent>
-          </Card>
+          </GlassCard>
 
           {/* User Distribution Chart */}
-          <Card className="col-span-full lg:col-span-3 border-0 shadow-xl bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl">
+          <GlassCard className="col-span-full rounded-4xl border border-border/50 bg-background/85 shadow-xl lg:col-span-3">
             <CardHeader className="pb-5">
               <div className="flex items-center space-x-3">
                 <div className="p-3 bg-linear-to-br from-blue-500 to-indigo-600 dark:from-blue-600 dark:to-indigo-700 rounded-xl shadow-lg shadow-blue-500/30">
@@ -783,10 +672,10 @@ export function DashboardPage() {
                 ))}
               </div>
             </CardContent>
-          </Card>
+          </GlassCard>
 
           {/* Lab Usage Chart */}
-          <Card className="col-span-full border-0 shadow-xl bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl">
+          <GlassCard className="col-span-full rounded-4xl border border-border/50 bg-background/85 shadow-xl">
             <CardHeader className="pb-5">
               <div className="flex items-center space-x-3">
                 <div className="p-3 bg-linear-to-br from-orange-500 to-amber-600 dark:from-orange-600 dark:to-amber-700 rounded-xl shadow-lg shadow-orange-500/30">
@@ -850,7 +739,7 @@ export function DashboardPage() {
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
-          </Card>
+          </GlassCard>
         </div>
 
         {/* Recent Activity */}
@@ -1085,6 +974,7 @@ export function DashboardPage() {
           animation-duration: 1s;
         }
       `}</style>
+        </div>
       </div>
     </div>
   );

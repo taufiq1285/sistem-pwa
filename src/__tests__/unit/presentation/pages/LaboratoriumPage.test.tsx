@@ -63,9 +63,10 @@ describe("Laboran LaboratoriumPage", () => {
   it("menampilkan loading state saat data belum selesai dimuat", () => {
     mockGetLaboratoriumList.mockReturnValue(new Promise(() => {}));
 
-    render(<LaboratoriumPage />);
+    const { container } = render(<LaboratoriumPage />);
 
-    expect(screen.getByText(/Loading\.\.\./i)).toBeInTheDocument();
+    // Page uses DashboardSkeleton (Skeleton elements with animate-pulse) while loading
+    expect(container.querySelector(".animate-pulse")).toBeTruthy();
   });
 
   it("membuka dialog detail dan memuat detail laboratorium", async () => {

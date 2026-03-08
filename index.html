@@ -68,7 +68,7 @@
       (function() {
         'use strict';
 
-        const MIGRATION_FLAG = 'pwa_v102_migration_completed';
+        const MIGRATION_FLAG = 'pwa_v103_migration_completed';
         const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
         // Check if migration already completed
@@ -105,7 +105,7 @@
                   channel.port1.onmessage = function(event) {
                     var version = event.data && event.data.version;
                     // Unregister if old version (not v1.0.2)
-                    if (version && version !== 'v1.0.2') {
+                    if (version && version !== 'v1.0.3') {
                       if (isDev) console.log('[SW Migration] Old version detected:', version);
                       resolve(true);
                     } else {

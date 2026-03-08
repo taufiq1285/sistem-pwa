@@ -27,6 +27,9 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { DashboardCard } from "@/components/ui/dashboard-card";
+import { DashboardSkeleton } from "@/components/ui/dashboard-skeleton";
+import { GlassCard } from "@/components/ui/glass-card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -272,116 +275,103 @@ export default function LaboratoriumPage() {
   const filteredLabs = laboratories;
 
   return (
-    <div className="p-8">
-      <div className="space-y-6">
+    <div className="app-container py-4 sm:py-6 lg:py-8">
+      <div className="mx-auto max-w-7xl space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-4xl font-extrabold">Laboratorium</h1>
-            <p className="text-muted-foreground">
-              Kelola informasi laboratorium dan fasilitas
-            </p>
+        <GlassCard
+          intensity="medium"
+          className="border-white/40 bg-white/80 shadow-xl dark:border-white/10 dark:bg-slate-900/80"
+        >
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <div className="mb-2 flex items-center gap-3">
+                <div className="rounded-2xl bg-primary/10 p-3 text-primary ring-1 ring-primary/20">
+                  <Building2 className="h-7 w-7" />
+                </div>
+                <div>
+                  <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+                    Laboratorium
+                  </h1>
+                  <p className="text-muted-foreground">
+                    Kelola informasi laboratorium dan fasilitas.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Button variant="outline" onClick={handleRefresh}>
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Refresh
+              </Button>
+              <Button onClick={handleCreate}>
+                <Plus className="mr-2 h-4 w-4" />
+                Tambah Laboratorium
+              </Button>
+            </div>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={handleRefresh}>
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Refresh
-            </Button>
-            <Button onClick={handleCreate}>
-              <Plus className="h-4 w-4 mr-2" />
-              Tambah Laboratorium
-            </Button>
-          </div>
-        </div>
+        </GlassCard>
 
         {/* Statistics Cards */}
         <div className="grid gap-4 md:grid-cols-3">
-          <Card className="border-0 shadow-xl p-6">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Total Laboratorium
-              </CardTitle>
-              <Building2 className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-4xl font-extrabold">
-                {laboratories.length}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Laboratorium aktif
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-xl p-6">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Total Kapasitas
-              </CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-4xl font-extrabold">
-                {laboratories.reduce(
-                  (sum, lab) => sum + (lab.kapasitas || 0),
-                  0,
-                )}
-              </div>
-              <p className="text-xs text-muted-foreground">Mahasiswa</p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-xl p-6">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Rata-rata Kapasitas
-              </CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-4xl font-extrabold">
-                {laboratories.length > 0
-                  ? Math.round(
-                      laboratories.reduce(
-                        (sum, lab) => sum + (lab.kapasitas || 0),
-                        0,
-                      ) / laboratories.length,
-                    )
-                  : 0}
-              </div>
-              <p className="text-xs text-muted-foreground">Per lab</p>
-            </CardContent>
-          </Card>
+          <DashboardCard
+            title="Total Laboratorium"
+            value={laboratories.length}
+            icon={Building2}
+            color="blue"
+          />
+          <DashboardCard
+            title="Total Kapasitas"
+            value={laboratories.reduce((sum, lab) => sum + (lab.kapasitas || 0), 0)}
+            icon={Users}
+            color="green"
+          />
+          <DashboardCard
+            title="Rata-rata Kapasitas"
+            value={
+              laboratories.length > 0
+                ? Math.round(
+                    laboratories.reduce((sum, lab) => sum + (lab.kapasitas || 0), 0) /
+                      laboratories.length,
+                  )
+                : 0
+            }
+            icon={Users}
+            color="amber"
+          />
         </div>
 
         {/* Search */}
-        <div className="flex gap-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Cari laboratorium..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9"
-            />
+        <GlassCard
+          intensity="low"
+          className="border-white/40 bg-white/85 shadow-lg dark:border-white/10 dark:bg-slate-900/85"
+        >
+          <div className="flex gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Cari laboratorium..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
           </div>
-        </div>
+        </GlassCard>
 
         {/* Laboratories Table */}
-        <Card className="border-0 shadow-xl p-6">
-          <CardHeader>
+        <GlassCard
+          intensity="low"
+          className="border-white/40 bg-white/85 shadow-lg dark:border-white/10 dark:bg-slate-900/85"
+        >
+          <CardHeader className="px-0 pt-0">
             <CardTitle>Daftar Laboratorium</CardTitle>
-            <CardDescription>
-              Kelola data laboratorium praktikum
-            </CardDescription>
+            <CardDescription>Kelola data laboratorium praktikum</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-0 pb-0">
             {loading ? (
-              <div className="text-center py-8 text-muted-foreground">
-                Loading...
-              </div>
+              <DashboardSkeleton />
             ) : filteredLabs.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
+              <div className="py-8 text-center text-muted-foreground">
                 Tidak ada laboratorium ditemukan
               </div>
             ) : (
@@ -400,25 +390,17 @@ export default function LaboratoriumPage() {
                   <TableBody>
                     {filteredLabs.map((lab) => (
                       <TableRow key={lab.id}>
-                        <TableCell className="font-mono text-sm">
-                          {lab.kode_lab}
-                        </TableCell>
-                        <TableCell className="font-medium">
-                          {lab.nama_lab}
-                        </TableCell>
+                        <TableCell className="font-mono text-sm">{lab.kode_lab}</TableCell>
+                        <TableCell className="font-medium">{lab.nama_lab}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-1">
                             <MapPin className="h-3 w-3 text-muted-foreground" />
                             {lab.lokasi || "-"}
                           </div>
                         </TableCell>
-                        <TableCell className="text-right">
-                          {lab.kapasitas}
-                        </TableCell>
+                        <TableCell className="text-right">{lab.kapasitas}</TableCell>
                         <TableCell>
-                          <Badge
-                            variant={lab.is_active ? "default" : "secondary"}
-                          >
+                          <Badge variant={lab.is_active ? "default" : "secondary"}>
                             {lab.is_active ? "Aktif" : "Tidak Aktif"}
                           </Badge>
                         </TableCell>
@@ -431,11 +413,7 @@ export default function LaboratoriumPage() {
                             >
                               Detail
                             </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleEdit(lab)}
-                            >
+                            <Button variant="outline" size="sm" onClick={() => handleEdit(lab)}>
                               <Pencil className="h-3 w-3" />
                             </Button>
                             <Button
@@ -454,7 +432,7 @@ export default function LaboratoriumPage() {
               </div>
             )}
           </CardContent>
-        </Card>
+        </GlassCard>
       </div>
 
       {/* ======================================================================== */}
@@ -462,7 +440,7 @@ export default function LaboratoriumPage() {
       {/* ======================================================================== */}
 
       <Dialog open={detailDialogOpen} onOpenChange={setDetailDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Building2 className="h-5 w-5" />
@@ -476,22 +454,18 @@ export default function LaboratoriumPage() {
           {selectedLab && (
             <div className="space-y-6">
               {/* Lab Info */}
-              <Card className="border-0 shadow-xl p-6">
+              <Card className="border-0 p-6 shadow-xl">
                 <CardHeader>
                   <CardTitle>Informasi Laboratorium</CardTitle>
                 </CardHeader>
                 <CardContent className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-muted-foreground">Kode Lab</p>
-                    <p className="font-mono font-semibold">
-                      {selectedLab.kode_lab}
-                    </p>
+                    <p className="font-mono font-semibold">{selectedLab.kode_lab}</p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Kapasitas</p>
-                    <p className="font-semibold">
-                      {selectedLab.kapasitas} mahasiswa
-                    </p>
+                    <p className="font-semibold">{selectedLab.kapasitas} mahasiswa</p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Lokasi</p>
@@ -499,40 +473,33 @@ export default function LaboratoriumPage() {
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Status</p>
-                    <Badge
-                      variant={selectedLab.is_active ? "default" : "secondary"}
-                    >
+                    <Badge variant={selectedLab.is_active ? "default" : "secondary"}>
                       {selectedLab.is_active ? "Aktif" : "Tidak Aktif"}
                     </Badge>
                   </div>
                   {selectedLab.keterangan && (
                     <div className="col-span-2">
-                      <p className="text-sm text-muted-foreground">
-                        Keterangan
-                      </p>
+                      <p className="text-sm text-muted-foreground">Keterangan</p>
                       <p className="font-medium">{selectedLab.keterangan}</p>
                     </div>
                   )}
-                  {selectedLab.fasilitas &&
-                    selectedLab.fasilitas.length > 0 && (
-                      <div className="col-span-2">
-                        <p className="text-sm text-muted-foreground mb-2">
-                          Fasilitas
-                        </p>
-                        <div className="flex flex-wrap gap-2">
-                          {selectedLab.fasilitas.map((fasilitas, idx) => (
-                            <Badge key={idx} variant="outline">
-                              {fasilitas}
-                            </Badge>
-                          ))}
-                        </div>
+                  {selectedLab.fasilitas && selectedLab.fasilitas.length > 0 && (
+                    <div className="col-span-2">
+                      <p className="mb-2 text-sm text-muted-foreground">Fasilitas</p>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedLab.fasilitas.map((fasilitas, idx) => (
+                          <Badge key={idx} variant="outline">
+                            {fasilitas}
+                          </Badge>
+                        ))}
                       </div>
-                    )}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
               {/* Schedule */}
-              <Card className="border-0 shadow-xl p-6">
+              <Card className="border-0 p-6 shadow-xl">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Calendar className="h-4 w-4" />
@@ -541,11 +508,9 @@ export default function LaboratoriumPage() {
                 </CardHeader>
                 <CardContent>
                   {loadingDetail ? (
-                    <div className="text-center py-4 text-muted-foreground">
-                      Loading...
-                    </div>
+                    <div className="py-4 text-center text-muted-foreground">Loading...</div>
                   ) : labSchedule.length === 0 ? (
-                    <div className="text-center py-4 text-muted-foreground">
+                    <div className="py-4 text-center text-muted-foreground">
                       Tidak ada jadwal mendatang
                     </div>
                   ) : (
@@ -563,9 +528,7 @@ export default function LaboratoriumPage() {
                       <TableBody>
                         {labSchedule.map((schedule) => (
                           <TableRow key={schedule.id}>
-                            <TableCell>
-                              {formatDate(schedule.tanggal_praktikum)}
-                            </TableCell>
+                            <TableCell>{formatDate(schedule.tanggal_praktikum)}</TableCell>
                             <TableCell className="font-mono text-sm">
                               {schedule.jam_mulai} - {schedule.jam_selesai}
                             </TableCell>
@@ -582,7 +545,7 @@ export default function LaboratoriumPage() {
               </Card>
 
               {/* Equipment */}
-              <Card className="border-0 shadow-xl p-6">
+              <Card className="border-0 p-6 shadow-xl">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Package className="h-4 w-4" />
@@ -591,11 +554,9 @@ export default function LaboratoriumPage() {
                 </CardHeader>
                 <CardContent>
                   {loadingDetail ? (
-                    <div className="text-center py-4 text-muted-foreground">
-                      Loading...
-                    </div>
+                    <div className="py-4 text-center text-muted-foreground">Loading...</div>
                   ) : labEquipment.length === 0 ? (
-                    <div className="text-center py-4 text-muted-foreground">
+                    <div className="py-4 text-center text-muted-foreground">
                       Tidak ada peralatan terdaftar
                     </div>
                   ) : (
@@ -629,9 +590,7 @@ export default function LaboratoriumPage() {
                                 {equipment.kondisi || "baik"}
                               </Badge>
                             </TableCell>
-                            <TableCell className="text-right">
-                              {equipment.jumlah}
-                            </TableCell>
+                            <TableCell className="text-right">{equipment.jumlah}</TableCell>
                             <TableCell className="text-right">
                               {equipment.jumlah_tersedia}
                             </TableCell>
@@ -655,9 +614,7 @@ export default function LaboratoriumPage() {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>
-              {formMode === "create"
-                ? "Tambah Laboratorium Baru"
-                : "Edit Laboratorium"}
+              {formMode === "create" ? "Tambah Laboratorium Baru" : "Edit Laboratorium"}
             </DialogTitle>
             <DialogDescription>
               {formMode === "create"
@@ -676,9 +633,7 @@ export default function LaboratoriumPage() {
                 <Input
                   id="kode_lab"
                   value={formData.kode_lab}
-                  onChange={(e) =>
-                    setFormData({ ...formData, kode_lab: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, kode_lab: e.target.value })}
                   placeholder="LAB-01"
                   required
                 />
@@ -697,7 +652,7 @@ export default function LaboratoriumPage() {
                     if (value === "" || /^\d+$/.test(value)) {
                       setFormData({
                         ...formData,
-                        kapasitas: value === "" ? 0 : parseInt(value),
+                        kapasitas: value === "" ? 0 : parseInt(value, 10),
                       });
                     }
                   }}
@@ -714,9 +669,7 @@ export default function LaboratoriumPage() {
               <Input
                 id="nama_lab"
                 value={formData.nama_lab}
-                onChange={(e) =>
-                  setFormData({ ...formData, nama_lab: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, nama_lab: e.target.value })}
                 placeholder="Laboratorium Komputer 1"
                 required
               />
@@ -728,9 +681,7 @@ export default function LaboratoriumPage() {
               <Input
                 id="lokasi"
                 value={formData.lokasi}
-                onChange={(e) =>
-                  setFormData({ ...formData, lokasi: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, lokasi: e.target.value })}
                 placeholder="Gedung A, Lantai 2"
               />
             </div>
@@ -741,9 +692,7 @@ export default function LaboratoriumPage() {
               <Textarea
                 id="keterangan"
                 value={formData.keterangan}
-                onChange={(e) =>
-                  setFormData({ ...formData, keterangan: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, keterangan: e.target.value })}
                 placeholder="Informasi tambahan tentang laboratorium..."
                 rows={3}
               />
@@ -798,17 +747,14 @@ export default function LaboratoriumPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Hapus Laboratorium?</AlertDialogTitle>
             <AlertDialogDescription>
-              Anda akan menghapus <strong>{labToDelete?.nama_lab}</strong> (
-              {labToDelete?.kode_lab}).
+              Anda akan menghapus <strong>{labToDelete?.nama_lab}</strong> ({labToDelete?.kode_lab}).
               <br />
               <br />
-              <span className="text-red-600 font-semibold">
-                Aksi ini tidak dapat dibatalkan!
-              </span>
+              <span className="font-semibold text-red-600">Aksi ini tidak dapat dibatalkan!</span>
               <br />
               <br />
               Laboratorium tidak dapat dihapus jika:
-              <ul className="list-disc pl-5 mt-2">
+              <ul className="mt-2 list-disc pl-5">
                 <li>Masih memiliki inventaris/peralatan</li>
                 <li>Masih memiliki jadwal praktikum</li>
               </ul>

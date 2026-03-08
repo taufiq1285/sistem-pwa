@@ -23,6 +23,9 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { DashboardCard } from "@/components/ui/dashboard-card";
+import { DashboardSkeleton } from "@/components/ui/dashboard-skeleton";
+import { GlassCard } from "@/components/ui/glass-card";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -204,99 +207,115 @@ export default function PersetujuanPage() {
   const isLoading = loadingEquipment;
 
   return (
-    <div className="p-8">
-      <div className="space-y-6">
-        {/* Page Header */}
-        <div>
-          <h1 className="text-4xl font-extrabold">
-            Persetujuan Peminjaman Alat
-          </h1>
-          <p className="text-muted-foreground">
-            Kelola persetujuan peminjaman alat laboratorium
-          </p>
-          <p className="text-sm text-muted-foreground mt-1">
-            💡 Untuk persetujuan booking ruangan, lihat menu{" "}
-            <strong>"Kelola Jadwal Praktikum"</strong>
-          </p>
-        </div>
-
-        {/* Alert Banner */}
-        {totalPending > 0 && (
-          <Alert variant="default" className="border-yellow-500 bg-yellow-50">
-            <AlertTriangle className="h-4 w-4 text-yellow-600" />
-            <AlertTitle className="text-yellow-800">
-              Ada permintaan yang menunggu persetujuan
-            </AlertTitle>
-            <AlertDescription className="text-yellow-700">
-              Terdapat {totalPending} permintaan peminjaman alat yang perlu
-              ditinjau dan disetujui.
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {/* Statistics Card */}
-        <Card className="border-0 shadow-xl p-6">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Pending Peminjaman Alat
-            </CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-4xl font-extrabold">
-              {equipmentRequests.length}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Permintaan peminjaman yang perlu disetujui
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Refresh Button */}
-        <div className="flex justify-end">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleRefresh}
-            disabled={isLoading}
-          >
-            <RefreshCw
-              className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`}
-            />
-            Refresh
-          </Button>
-        </div>
-
-        {/* Equipment Borrowing Requests */}
-        <Card className="border-0 shadow-xl p-6">
-          <CardHeader>
-            <CardTitle>Permintaan Peminjaman Alat</CardTitle>
-            <CardDescription>
-              Daftar permintaan peminjaman alat yang menunggu persetujuan
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {loadingEquipment ? (
-              <div className="flex items-center justify-center py-8">
-                <div className="text-center">
-                  <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground mx-auto mb-2" />
-                  <p className="text-sm text-muted-foreground">
-                    Memuat data...
+    <div className="app-container py-4 sm:py-6 lg:py-8">
+      <div className="mx-auto max-w-7xl space-y-6">
+        <GlassCard
+          intensity="medium"
+          className="border-border/60 bg-background/80 shadow-xl"
+        >
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex items-start gap-4">
+              <div className="rounded-2xl bg-primary/10 p-3 text-primary ring-1 ring-primary/20">
+                <Package className="h-7 w-7" />
+              </div>
+              <div className="space-y-2">
+                <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-primary">
+                  Approval aktif
+                </div>
+                <div>
+                  <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+                    Persetujuan Peminjaman Alat
+                  </h1>
+                  <p className="text-sm text-muted-foreground sm:text-base">
+                    Kelola permintaan peminjaman alat laboratorium yang sedang
+                    menunggu keputusan laboran.
+                  </p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Untuk persetujuan booking ruangan, gunakan menu
+                    <strong> "Kelola Jadwal Praktikum"</strong>.
                   </p>
                 </div>
               </div>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRefresh}
+              disabled={isLoading}
+            >
+              <RefreshCw
+                className={`mr-2 h-4 w-4 ${isLoading ? "animate-spin" : ""}`}
+              />
+              Refresh
+            </Button>
+          </div>
+        </GlassCard>
+
+        {totalPending > 0 && (
+          <GlassCard
+            intensity="low"
+            className="border-amber-200/70 bg-amber-50/85 shadow-sm dark:border-amber-900/40 dark:bg-amber-950/25"
+          >
+            <Alert variant="default" className="border-0 bg-transparent p-0 shadow-none">
+              <AlertTriangle className="h-4 w-4 text-amber-600" />
+              <AlertTitle className="text-amber-800 dark:text-amber-200">
+                Ada permintaan yang menunggu persetujuan
+              </AlertTitle>
+              <AlertDescription className="text-amber-700 dark:text-amber-300">
+                Terdapat {totalPending} permintaan peminjaman alat yang perlu
+                ditinjau dan diproses.
+              </AlertDescription>
+            </Alert>
+          </GlassCard>
+        )}
+
+        <div className="grid gap-4 md:grid-cols-3">
+          <DashboardCard
+            title="Pending Peminjaman"
+            value={equipmentRequests.length}
+            icon={Package}
+            color="amber"
+          />
+          <DashboardCard
+            title="Siap Diproses"
+            value={equipmentRequests.filter((request) => Boolean(request.id)).length}
+            icon={CheckCircle}
+            color="green"
+          />
+          <DashboardCard
+            title="Perlu Tinjauan"
+            value={totalPending}
+            icon={Clock}
+            color="blue"
+          />
+        </div>
+
+        <GlassCard
+          intensity="low"
+          className="border-border/60 bg-background/85 shadow-lg"
+        >
+          <CardHeader className="px-0 pt-0">
+            <CardTitle className="text-foreground">
+              Permintaan Peminjaman Alat
+            </CardTitle>
+            <CardDescription>
+              Daftar permintaan peminjaman alat yang menunggu persetujuan
+              laboran.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="px-0 pb-0">
+            {loadingEquipment ? (
+              <DashboardSkeleton />
             ) : equipmentRequests.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 text-center">
-                <Clock className="h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-1">
-                  Tidak Ada Permintaan Pending
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  Semua permintaan peminjaman alat sudah diproses
-                </p>
-              </div>
+              <Alert className="border-border/60 bg-muted/40">
+                <Clock className="h-4 w-4" />
+                <AlertDescription className="text-sm text-muted-foreground">
+                  Tidak ada permintaan pending. Semua permintaan peminjaman alat
+                  sudah diproses.
+                </AlertDescription>
+              </Alert>
             ) : (
-              <div className="rounded-md border">
+              <div className="overflow-x-auto rounded-xl border border-border/60">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -315,9 +334,7 @@ export default function PersetujuanPage() {
                       <TableRow key={request.id}>
                         <TableCell>
                           <div>
-                            <div className="font-medium">
-                              {request.peminjam_nama}
-                            </div>
+                            <div className="font-medium">{request.peminjam_nama}</div>
                             <div className="text-sm text-muted-foreground">
                               {request.peminjam_nim}
                             </div>
@@ -325,9 +342,7 @@ export default function PersetujuanPage() {
                         </TableCell>
                         <TableCell>
                           <div>
-                            <div className="font-medium">
-                              {request.inventaris_nama}
-                            </div>
+                            <div className="font-medium">{request.inventaris_nama}</div>
                             <div className="text-sm text-muted-foreground">
                               {request.inventaris_kode}
                             </div>
@@ -335,13 +350,9 @@ export default function PersetujuanPage() {
                         </TableCell>
                         <TableCell>{request.laboratorium_nama}</TableCell>
                         <TableCell>
-                          <Badge variant="secondary">
-                            {request.jumlah_pinjam}
-                          </Badge>
+                          <Badge variant="secondary">{request.jumlah_pinjam}</Badge>
                         </TableCell>
-                        <TableCell>
-                          {formatDate(request.tanggal_pinjam)}
-                        </TableCell>
+                        <TableCell>{formatDate(request.tanggal_pinjam)}</TableCell>
                         <TableCell>
                           {formatDate(request.tanggal_kembali_rencana)}
                         </TableCell>
@@ -356,19 +367,19 @@ export default function PersetujuanPage() {
                             <Button
                               size="sm"
                               variant="outline"
-                              className="text-green-600 border-green-600 hover:bg-green-50"
+                              className="border-emerald-600 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/20"
                               onClick={() => openApproveDialog(request)}
                             >
-                              <CheckCircle className="h-4 w-4 mr-1" />
+                              <CheckCircle className="mr-1 h-4 w-4" />
                               Setujui
                             </Button>
                             <Button
                               size="sm"
                               variant="outline"
-                              className="text-red-600 border-red-600 hover:bg-red-50"
+                              className="border-destructive text-destructive hover:bg-destructive/10"
                               onClick={() => openRejectDialog(request)}
                             >
-                              <XCircle className="h-4 w-4 mr-1" />
+                              <XCircle className="mr-1 h-4 w-4" />
                               Tolak
                             </Button>
                           </div>
@@ -380,7 +391,7 @@ export default function PersetujuanPage() {
               </div>
             )}
           </CardContent>
-        </Card>
+        </GlassCard>
       </div>
 
       {/* Approve Confirmation Dialog */}

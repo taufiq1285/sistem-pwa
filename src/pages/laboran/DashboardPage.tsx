@@ -20,6 +20,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { DashboardCard } from "@/components/ui/dashboard-card";
+import { DashboardSkeleton } from "@/components/ui/dashboard-skeleton";
+import { GlassCard } from "@/components/ui/glass-card";
 import {
   Dialog,
   DialogContent,
@@ -268,192 +271,153 @@ export function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="p-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="animate-pulse space-y-6">
-            <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-            <div className="grid gap-6 lg:grid-cols-2">
-              <div className="h-64 bg-gray-200 rounded"></div>
-              <div className="h-64 bg-gray-200 rounded"></div>
-            </div>
-          </div>
+      <div className="app-container py-4 sm:py-6 lg:py-8">
+        <div className="mx-auto max-w-7xl space-y-6">
+          <DashboardSkeleton />
+          <DashboardSkeleton />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="role-page-shell min-h-screen bg-linear-to-br from-blue-50 via-cyan-50 to-teal-50 dark:from-slate-950 dark:via-slate-900 dark:to-teal-950">
-      <div className="role-page-content p-4 sm:p-6 lg:p-8">
-        <div className="max-w-7xl mx-auto space-y-8">
-          {/* Header */}
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-linear-to-br from-blue-500 to-cyan-600 rounded-2xl shadow-lg shadow-blue-500/30">
-              <FlaskConical className="h-8 w-8 text-white" />
-            </div>
-            <div>
-              <h1 className="text-5xl font-extrabold text-transparent bg-clip-text bg-linear-to-r from-blue-600 to-cyan-600 dark:from-blue-400 dark:to-cyan-400">
-                Dashboard Laboran
-              </h1>
-              <p className="text-lg font-bold text-gray-700 dark:text-gray-300 mt-1">
-                Selamat datang,{" "}
-                <span className="text-blue-600 dark:text-blue-400">
+    <div className="surface-grid min-h-screen bg-background">
+      <div className="app-container py-4 sm:py-6 lg:py-8">
+          <div className="mx-auto max-w-7xl space-y-6 sm:space-y-8">
+            <GlassCard
+              intensity="high"
+              glow
+              className="overflow-hidden rounded-4xl border border-border/50 bg-background/80 shadow-xl"
+            >
+            <CardContent className="flex flex-col gap-6 p-6 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex items-start gap-4">
+                <div className="rounded-2xl bg-linear-to-br from-primary via-primary/90 to-info p-3 text-primary-foreground shadow-lg shadow-primary/20">
+                  <FlaskConical className="h-8 w-8" />
+                </div>
+                <div className="space-y-2">
+                  <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-primary">
+                    <Sparkles className="h-3.5 w-3.5" />
+                    Laboran workspace
+                  </div>
+                  <div>
+                    <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+                      Dashboard Laboran
+                    </h1>
+                    <p className="mt-1 text-sm text-muted-foreground sm:text-base">
+                      Ringkasan operasional laboratorium, approval, inventaris, dan
+                      jadwal praktikum aktif.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-border/60 bg-background/70 px-4 py-3 text-sm shadow-sm backdrop-blur">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Akun aktif
+                </p>
+                <p className="mt-1 font-semibold text-foreground">
                   {user?.full_name || user?.email}
-                </span>
-              </p>
-            </div>
+                </p>
+              </div>
+            </CardContent>
+          </GlassCard>
+
+          {/* Error Alert */}
+          {error && (
+            <Alert className="border-destructive/30 bg-destructive/10 text-destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription className="font-medium text-destructive/90">
+                {error}
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Quick Stats Cards */}
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <DashboardCard
+              title="Total Lab"
+              value={stats?.totalLab || 0}
+              icon={FlaskConical}
+              color="blue"
+              description="Laboratorium aktif"
+            />
+            <DashboardCard
+              title="Total Alat"
+              value={stats?.totalInventaris || 0}
+              icon={Package}
+              color="green"
+              description="Inventaris terpantau"
+            />
+            <DashboardCard
+              title="Pending Approval"
+              value={stats?.pendingApprovals || 0}
+              icon={ClipboardCheck}
+              color="amber"
+              description="Menunggu tindakan"
+            />
+            <DashboardCard
+              title="Stok Rendah"
+              value={stats?.lowStockAlerts || 0}
+              icon={AlertTriangle}
+              color="red"
+              description="Perlu perhatian segera"
+            />
           </div>
-        </div>
 
-        {/* Error Alert */}
-        {error && (
-          <Alert
-            variant="destructive"
-            className="border-red-200 bg-red-50 shadow-lg"
-          >
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription className="font-semibold">
-              {error}
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {/* Quick Stats Cards */}
-        <div className="grid gap-4 md:grid-cols-4">
-          <Card className="interactive-card border-0 shadow-lg bg-linear-to-br from-blue-500 to-cyan-600 text-white overflow-hidden relative">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl -mr-8 -mt-8" />
-            <CardContent className="p-6 relative">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-blue-100 text-sm font-semibold mb-1">
-                    Total Lab
-                  </p>
-                  <p className="text-4xl font-extrabold">
-                    {stats?.totalLab || 0}
-                  </p>
+          {/* Welcome Banner */}
+          {(pendingApprovals.length > 0 || inventoryAlerts.length > 0) && (
+            <GlassCard
+              intensity="high"
+              glow
+              className="overflow-hidden border-white/20 bg-linear-to-r from-blue-500/95 via-cyan-500/95 to-teal-500/95 text-white shadow-2xl"
+            >
+              <div className="absolute inset-0 bg-grid-white/10" />
+              <CardContent className="relative p-8">
+                <div className="flex items-center gap-6">
+                  <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-white/20 backdrop-blur-sm">
+                    <Shield className="h-10 w-10" />
+                  </div>
+                  <div className="flex-1">
+                    <h2 className="mb-2 text-3xl font-extrabold">Tetap Siap! 🛡️</h2>
+                    <p className="text-lg font-semibold text-blue-100">
+                      {pendingApprovals.length > 0 && (
+                        <>
+                          Ada <span className="font-extrabold text-white">{pendingApprovals.length} peminjaman</span>{" "}
+                          yang menunggu approval. 
+                        </>
+                      )}
+                      {inventoryAlerts.length > 0 && (
+                        <>
+                          <span className="font-extrabold text-white">{inventoryAlerts.length} alat</span>{" "}
+                          dengan stok rendah perlu diperhatikan.
+                        </>
+                      )}
+                    </p>
+                  </div>
+                  <div className="hidden md:block">
+                    <FlaskConical className="h-24 w-24 text-white/20" />
+                  </div>
                 </div>
-                <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
-                  <FlaskConical className="h-7 w-7" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="interactive-card border-0 shadow-lg bg-linear-to-br from-emerald-500 to-green-600 text-white overflow-hidden relative">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl -mr-8 -mt-8" />
-            <CardContent className="p-6 relative">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-emerald-100 text-sm font-semibold mb-1">
-                    Total Alat
-                  </p>
-                  <p className="text-4xl font-extrabold">
-                    {stats?.totalInventaris || 0}
-                  </p>
-                </div>
-                <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
-                  <Package className="h-7 w-7" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="interactive-card border-0 shadow-lg bg-linear-to-br from-orange-500 to-amber-600 text-white overflow-hidden relative">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl -mr-8 -mt-8" />
-            <CardContent className="p-6 relative">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-orange-100 text-sm font-semibold mb-1">
-                    Pending Approval
-                  </p>
-                  <p className="text-4xl font-extrabold">
-                    {stats?.pendingApprovals || 0}
-                  </p>
-                </div>
-                <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
-                  <ClipboardCheck className="h-7 w-7" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="interactive-card border-0 shadow-lg bg-linear-to-br from-rose-500 to-red-600 text-white overflow-hidden relative">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl -mr-8 -mt-8" />
-            <CardContent className="p-6 relative">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-rose-100 text-sm font-semibold mb-1">
-                    Stok Rendah
-                  </p>
-                  <p className="text-4xl font-extrabold">
-                    {stats?.lowStockAlerts || 0}
-                  </p>
-                </div>
-                <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
-                  <AlertTriangle className="h-7 w-7" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Welcome Banner */}
-        {(pendingApprovals.length > 0 || inventoryAlerts.length > 0) && (
-          <Card className="border-0 shadow-xl bg-linear-to-r from-blue-500 via-cyan-500 to-teal-500 text-white overflow-hidden relative">
-            <div className="absolute inset-0 bg-grid-white/10" />
-            <CardContent className="p-8 relative">
-              <div className="flex items-center gap-6">
-                <div className="w-20 h-20 bg-white/20 rounded-3xl flex items-center justify-center backdrop-blur-sm">
-                  <Shield className="h-10 w-10" />
-                </div>
-                <div className="flex-1">
-                  <h2 className="text-3xl font-extrabold mb-2">
-                    Tetap Siap! 🛡️
-                  </h2>
-                  <p className="text-lg font-semibold text-blue-100">
-                    {pendingApprovals.length > 0 && (
-                      <>
-                        Ada{" "}
-                        <span className="font-extrabold text-white">
-                          {pendingApprovals.length} peminjaman
-                        </span>{" "}
-                        yang menunggu approval.{" "}
-                      </>
-                    )}
-                    {inventoryAlerts.length > 0 && (
-                      <>
-                        <span className="font-extrabold text-white">
-                          {inventoryAlerts.length} alat
-                        </span>{" "}
-                        dengan stok rendah perlu diperhatikan.
-                      </>
-                    )}
-                  </p>
-                </div>
-                <div className="hidden md:block">
-                  <FlaskConical className="h-24 w-24 text-white/20" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+              </CardContent>
+            </GlassCard>
+          )}
 
         {/* Main Content Grid */}
         <div className="grid gap-6 lg:grid-cols-2">
           {/* Pending Approvals */}
-          <Card className="lg:col-span-2 group hover:shadow-2xl transition-all duration-300 border-0 shadow-xl bg-linear-to-br from-blue-50 to-cyan-50 dark:from-blue-950/40 dark:to-cyan-950/40 backdrop-blur-sm overflow-hidden relative">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-linear-to-br from-blue-400/20 to-cyan-400/20 rounded-full blur-3xl -mr-16 -mt-16" />
-            <CardHeader className="flex flex-row items-center justify-between relative">
+          <GlassCard className="relative overflow-hidden border-border/60 bg-background/80 lg:col-span-2">
+            <div className="absolute right-0 top-0 h-32 w-32 -translate-y-8 translate-x-8 rounded-full bg-primary/10 blur-3xl" />
+            <CardHeader className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="p-2.5 bg-linear-to-br from-blue-500 to-cyan-600 rounded-xl shadow-lg shadow-blue-500/30">
-                    <ClipboardCheck className="h-5 w-5 text-white" />
+                <div className="mb-2 flex items-center gap-2">
+                  <div className="rounded-xl bg-primary/10 p-2.5 text-primary ring-1 ring-primary/20">
+                    <ClipboardCheck className="h-5 w-5" />
                   </div>
-                  <CardTitle className="text-xl font-bold text-blue-900 dark:text-blue-100">
+                  <CardTitle className="text-xl font-bold text-foreground">
                     Persetujuan Peminjaman
                   </CardTitle>
                 </div>
-                <CardDescription className="text-base font-semibold text-gray-700 dark:text-gray-400">
+                <CardDescription className="text-sm font-medium text-muted-foreground sm:text-base">
                   {stats?.pendingApprovals || 0} peminjaman yang menunggu
                   approval
                 </CardDescription>
@@ -463,7 +427,7 @@ export function DashboardPage() {
                   variant="ghost"
                   size="sm"
                   onClick={() => navigate("/laboran/persetujuan")}
-                  className="hover:bg-blue-100 font-semibold"
+                  className="font-semibold"
                 >
                   Lihat Semua
                   <ArrowRight className="ml-2 h-4 w-4" />
@@ -472,17 +436,13 @@ export function DashboardPage() {
             </CardHeader>
             <CardContent className="relative">
               {pendingApprovals.length === 0 ? (
-                <div className="text-center py-12">
-                  <div className="inline-flex p-4 bg-blue-50 rounded-full mb-4">
-                    <ClipboardCheck className="h-12 w-12 text-blue-400" />
-                  </div>
-                  <p className="text-lg font-bold text-gray-900 mb-2">
-                    Tidak ada peminjaman yang menunggu approval
-                  </p>
-                  <p className="text-base font-medium text-gray-600">
-                    Semua peminjaman telah diproses
-                  </p>
-                </div>
+                <Alert className="border-border/60 bg-muted/40">
+                  <ClipboardCheck className="h-4 w-4" />
+                  <AlertDescription className="text-sm text-muted-foreground">
+                    Tidak ada peminjaman yang menunggu approval. Semua
+                    peminjaman telah diproses.
+                  </AlertDescription>
+                </Alert>
               ) : (
                 <div className="space-y-3">
                   {pendingApprovals.map((approval) => (
@@ -551,7 +511,7 @@ export function DashboardPage() {
                 </div>
               )}
             </CardContent>
-          </Card>
+          </GlassCard>
 
           {/* Inventory Alerts */}
           <Card className="group hover:shadow-2xl transition-all duration-300 border-0 shadow-xl bg-linear-to-br from-rose-50 to-red-50 dark:from-rose-950/40 dark:to-red-950/40 backdrop-blur-sm overflow-hidden relative">
@@ -645,19 +605,19 @@ export function DashboardPage() {
           </Card>
 
           {/* Lab Schedule Today */}
-          <Card className="group hover:shadow-2xl transition-all duration-300 border-0 shadow-xl bg-linear-to-br from-teal-50 to-cyan-50 dark:from-teal-950/40 dark:to-cyan-950/40 backdrop-blur-sm overflow-hidden relative">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-linear-to-br from-teal-400/20 to-cyan-400/20 rounded-full blur-3xl -mr-16 -mt-16" />
-            <CardHeader className="flex flex-row items-center justify-between relative">
+          <GlassCard className="relative overflow-hidden border-border/60 bg-background/80">
+            <div className="absolute right-0 top-0 h-32 w-32 -translate-y-8 translate-x-8 rounded-full bg-cyan-500/10 blur-3xl" />
+            <CardHeader className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="p-2.5 bg-linear-to-br from-teal-500 to-cyan-600 rounded-xl shadow-lg shadow-teal-500/30">
-                    <Clock className="h-5 w-5 text-white" />
+                <div className="mb-2 flex items-center gap-2">
+                  <div className="rounded-xl bg-cyan-500/10 p-2.5 text-cyan-700 ring-1 ring-cyan-500/20 dark:text-cyan-300">
+                    <Clock className="h-5 w-5" />
                   </div>
-                  <CardTitle className="text-xl font-bold text-teal-900 dark:text-teal-100">
+                  <CardTitle className="text-xl font-bold text-foreground">
                     Jadwal Lab Hari Ini
                   </CardTitle>
                 </div>
-                <CardDescription className="text-base font-semibold text-gray-700 dark:text-gray-400">
+                <CardDescription className="text-sm font-medium text-muted-foreground sm:text-base">
                   Praktikum yang berlangsung hari ini
                 </CardDescription>
               </div>
@@ -666,7 +626,7 @@ export function DashboardPage() {
                   variant="ghost"
                   size="sm"
                   onClick={() => navigate("/laboran/laboratorium")}
-                  className="hover:bg-teal-100 font-semibold"
+                  className="font-semibold"
                 >
                   Lihat Semua
                   <ArrowRight className="ml-2 h-4 w-4" />
@@ -675,17 +635,12 @@ export function DashboardPage() {
             </CardHeader>
             <CardContent className="relative">
               {labSchedule.length === 0 ? (
-                <div className="text-center py-12">
-                  <div className="inline-flex p-4 bg-teal-50 rounded-full mb-4">
-                    <FlaskConical className="h-12 w-12 text-teal-400" />
-                  </div>
-                  <p className="text-lg font-bold text-gray-900 mb-2">
-                    Tidak ada jadwal lab hari ini
-                  </p>
-                  <p className="text-base font-medium text-gray-600">
-                    Tidak ada praktikum yang dijadwalkan
-                  </p>
-                </div>
+                <Alert className="border-border/60 bg-muted/40">
+                  <FlaskConical className="h-4 w-4 text-cyan-600 dark:text-cyan-300" />
+                  <AlertDescription className="text-sm text-muted-foreground">
+                    Tidak ada praktikum yang dijadwalkan untuk hari ini.
+                  </AlertDescription>
+                </Alert>
               ) : (
                 <div className="space-y-3">
                   {labSchedule.map((schedule) => (
@@ -725,7 +680,8 @@ export function DashboardPage() {
                 </div>
               )}
             </CardContent>
-          </Card>
+          </GlassCard>
+          </div>
         </div>
       </div>
 

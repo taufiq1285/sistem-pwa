@@ -21,6 +21,9 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { DashboardCard } from "@/components/ui/dashboard-card";
+import { DashboardSkeleton } from "@/components/ui/dashboard-skeleton";
+import { GlassCard } from "@/components/ui/glass-card";
 import { networkDetector } from "@/lib/offline/network-detector";
 import { cacheAPI } from "@/lib/offline/api-cache";
 import {
@@ -130,318 +133,283 @@ export function DashboardPage() {
   if (loading) {
     return (
       <div className="app-container py-4 sm:py-6 lg:py-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="animate-pulse space-y-6">
-            <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-            <div className="grid gap-6 md:grid-cols-2">
-              {[...Array(2)].map((_, i) => (
-                <div key={i} className="h-64 bg-gray-200 rounded"></div>
-              ))}
-            </div>
-          </div>
+        <div className="max-w-7xl mx-auto space-y-6">
+          <DashboardSkeleton />
+          <DashboardSkeleton />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="role-page-shell min-h-screen bg-linear-to-br from-slate-50 via-white to-emerald-50 dark:from-slate-950 dark:via-slate-900 dark:to-emerald-950">
+    <div className="role-page-shell surface-grid min-h-screen bg-background">
       <div className="role-page-content app-container py-4 sm:py-6 lg:py-8">
-        <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8">
+        <div className="mx-auto max-w-7xl space-y-6 sm:space-y-8">
           {/* Header */}
-          <div className="flex items-start sm:items-center gap-3 sm:gap-4 rounded-3xl border border-white/60 bg-white/70 px-4 py-4 sm:px-6 backdrop-blur-xl shadow-lg">
-            <div className="p-2.5 sm:p-3 bg-linear-to-br from-emerald-600 to-teal-700 rounded-2xl shadow-lg shadow-emerald-500/30 shrink-0">
-              <BookOpen className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
+          <GlassCard
+            intensity="high"
+            glow
+            className="overflow-hidden rounded-4xl border border-border/50 bg-background/80 px-4 py-4 shadow-xl sm:px-6"
+          >
+            <div className="flex items-start gap-3 sm:items-center sm:gap-4">
+              <div className="shrink-0 rounded-2xl bg-linear-to-br from-emerald-600 via-teal-600 to-blue-700 p-2.5 shadow-lg shadow-emerald-500/25 sm:p-3">
+                <BookOpen className="h-6 w-6 text-white sm:h-8 sm:w-8" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+                  Ringkasan pembelajaran
+                </p>
+                <h1 className="mt-1 bg-linear-to-r from-emerald-700 via-teal-700 to-blue-800 bg-clip-text text-2xl font-extrabold leading-tight text-transparent dark:from-emerald-400 dark:via-teal-300 dark:to-blue-400 sm:text-4xl lg:text-5xl">
+                  Dashboard Mahasiswa
+                </h1>
+                <p className="mt-2 text-sm font-semibold text-foreground/80 sm:text-base lg:text-lg">
+                  Selamat datang, {" "}
+                  <span className="text-emerald-600 dark:text-emerald-400">
+                    {user?.full_name || user?.email}
+                  </span>
+                </p>
+              </div>
             </div>
-            <div className="min-w-0">
-              <h1 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold text-transparent bg-clip-text bg-linear-to-r from-emerald-700 to-blue-800 dark:from-emerald-400 dark:to-teal-400 leading-tight">
-                Dashboard Mahasiswa
-              </h1>
-              <p className="text-sm sm:text-base lg:text-lg font-bold text-gray-700 dark:text-gray-300 mt-1">
-                Selamat datang,{" "}
-                <span className="text-emerald-600 dark:text-emerald-400">
-                  {user?.full_name || user?.email}
-                </span>
-              </p>
-            </div>
+          </GlassCard>
+
+          {/* Info Alert (Only if no classes) */}
+          {myKelas.length === 0 && (
+            <Alert className="border-info/20 bg-info/10 text-info shadow-sm">
+              <Info className="h-4 w-4" />
+              <AlertDescription className="font-medium text-info/90">
+                Anda belum terdaftar di kelas praktikum manapun. Hubungi dosen
+                pengampu atau koordinator program studi untuk pendaftaran kelas.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Quick Stats Cards */}
+          <div className="grid gap-4 sm:gap-5 md:grid-cols-2 xl:grid-cols-4">
+            <DashboardCard
+              title="Total Kelas"
+              value={stats?.totalKelasPraktikum || 0}
+              icon={BookOpen}
+              color="green"
+              description="Kelas praktikum aktif"
+            />
+            <DashboardCard
+              title="Praktikum Hari Ini"
+              value={stats?.jadwalHariIni || 0}
+              icon={Calendar}
+              color="blue"
+              description="Agenda terjadwal"
+            />
+            <DashboardCard
+              title="Minggu Ini"
+              value={myJadwal.length || 0}
+              icon={Clock}
+              color="purple"
+              description="Sesi 7 hari ke depan"
+            />
+            <DashboardCard
+              title="Progress"
+              value={
+                stats?.totalKelasPraktikum
+                  ? Math.round(
+                      ((stats?.totalKelasPraktikum || 0) /
+                        (stats?.totalKelasPraktikum || 1)) *
+                        100,
+                    )
+                  : 0
+              }
+              icon={TrendingUp}
+              color="amber"
+              suffix="%"
+              description="Kesiapan semester ini"
+            />
           </div>
-        </div>
 
-        {/* Info Alert (Only if no classes) */}
-        {myKelas.length === 0 && (
-          <Alert className="border-blue-200 bg-blue-50/90 shadow-lg">
-            <Info className="h-4 w-4 text-blue-600" />
-            <AlertDescription className="text-blue-800 font-semibold">
-              Anda belum terdaftar di kelas praktikum manapun. Hubungi dosen
-              pengampu atau koordinator program studi untuk pendaftaran kelas.
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {/* Quick Stats Cards */}
-        <div className="grid gap-4 sm:gap-5 md:grid-cols-2 xl:grid-cols-4">
-          <Card className="interactive-card border border-white/20 shadow-lg bg-linear-to-br from-emerald-600 to-green-700 text-white overflow-hidden relative">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl -mr-8 -mt-8" />
-            <CardContent className="p-6 relative">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-emerald-100 text-sm font-semibold mb-1">
-                    Total Kelas
-                  </p>
-                  <p className="text-4xl font-extrabold">
-                    {stats?.totalKelasPraktikum || 0}
-                  </p>
-                </div>
-                <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
-                  <BookOpen className="h-7 w-7" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="interactive-card border border-white/20 shadow-lg bg-linear-to-br from-blue-700 to-sky-600 text-white overflow-hidden relative">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl -mr-8 -mt-8" />
-            <CardContent className="p-6 relative">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-blue-100 text-sm font-semibold mb-1">
-                    Praktikum Hari Ini
-                  </p>
-                  <p className="text-4xl font-extrabold">
-                    {stats?.jadwalHariIni || 0}
-                  </p>
-                </div>
-                <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
-                  <Calendar className="h-7 w-7" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="interactive-card border border-white/20 shadow-lg bg-linear-to-br from-indigo-700 to-violet-600 text-white overflow-hidden relative">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl -mr-8 -mt-8" />
-            <CardContent className="p-6 relative">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-purple-100 text-sm font-semibold mb-1">
-                    Minggu Ini
-                  </p>
-                  <p className="text-4xl font-extrabold">
-                    {myJadwal.length || 0}
-                  </p>
-                </div>
-                <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
-                  <Clock className="h-7 w-7" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="interactive-card border border-white/20 shadow-lg bg-linear-to-br from-amber-500 to-orange-600 text-white overflow-hidden relative">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl -mr-8 -mt-8" />
-            <CardContent className="p-6 relative">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-orange-100 text-sm font-semibold mb-1">
-                    Progress
-                  </p>
-                  <p className="text-4xl font-extrabold">
-                    {stats?.totalKelasPraktikum
-                      ? Math.round(
-                          ((stats?.totalKelasPraktikum || 0) /
-                            (stats?.totalKelasPraktikum || 1)) *
-                            100,
-                        )
-                      : 0}
-                    %
-                  </p>
-                </div>
-                <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
-                  <TrendingUp className="h-7 w-7" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Welcome Banner */}
-        {myKelas.length > 0 && (
-          <Card className="interactive-card border-0 shadow-xl bg-linear-to-r from-emerald-600 via-teal-600 to-blue-700 text-white overflow-hidden relative">
-            <div className="absolute inset-0 bg-grid-white/10" />
-            <CardContent className="p-5 sm:p-8 relative">
-              <div className="flex items-center gap-4 sm:gap-6">
-                <div className="w-14 h-14 sm:w-20 sm:h-20 bg-white/20 rounded-2xl sm:rounded-3xl flex items-center justify-center backdrop-blur-sm shrink-0">
-                  <Sparkles className="h-7 w-7 sm:h-10 sm:w-10" />
-                </div>
-                <div className="flex-1">
-                  <h2 className="text-xl sm:text-3xl font-extrabold mb-1.5 sm:mb-2">
-                    Semangat Belajar! 🚀
-                  </h2>
-                  <p className="text-sm sm:text-lg font-semibold text-emerald-100 leading-relaxed">
-                    Kamu terdaftar di{" "}
-                    <span className="font-extrabold text-white">
-                      {stats?.totalKelasPraktikum}
-                    </span>{" "}
-                    kelas praktikum. Jangan lupa cek jadwal hari ini ya!
-                  </p>
-                </div>
-                <div className="hidden md:block">
-                  <Trophy className="h-24 w-24 text-white/20" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        <div className="grid gap-6 lg:grid-cols-2">
-          {/* My Classes */}
-          <Card className="group hover:shadow-2xl transition-all duration-300 border-0 shadow-xl bg-linear-to-br from-emerald-50 to-green-50 dark:from-emerald-950/40 dark:to-green-950/40 backdrop-blur-sm overflow-hidden relative">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-linear-to-br from-emerald-400/20 to-green-400/20 rounded-full blur-3xl -mr-16 -mt-16" />
-            <CardHeader className="relative">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="p-2.5 bg-linear-to-br from-emerald-500 to-green-600 rounded-xl shadow-lg shadow-emerald-500/30">
-                  <BookOpen className="h-5 w-5 text-white" />
-                </div>
-                <div>
-                  <CardTitle className="text-xl font-bold text-emerald-900 dark:text-emerald-100">
-                    Kelas Saya
-                  </CardTitle>
-                  <CardDescription className="text-base font-semibold text-gray-700 dark:text-gray-400 mt-1">
-                    {stats?.totalKelasPraktikum || 0} kelas praktikum yang
-                    diikuti
-                  </CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="relative">
-              {myKelas.length === 0 ? (
-                <div className="text-center py-12">
-                  <div className="inline-flex p-4 bg-emerald-50 rounded-full mb-4">
-                    <BookOpen className="h-12 w-12 text-emerald-400" />
+          {/* Welcome Banner */}
+          {myKelas.length > 0 && (
+            <GlassCard
+              intensity="high"
+              glow
+              className="interactive-card overflow-hidden border-white/20 bg-linear-to-r from-emerald-600/95 via-teal-600/95 to-blue-700/95 text-white shadow-2xl"
+            >
+              <div className="absolute inset-0 bg-grid-white/10" />
+              <CardContent className="relative p-5 sm:p-8">
+                <div className="flex items-center gap-4 sm:gap-6">
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm sm:h-20 sm:w-20 sm:rounded-3xl">
+                    <Sparkles className="h-7 w-7 sm:h-10 sm:w-10" />
                   </div>
-                  <p className="text-lg font-bold text-gray-900 mb-2">
-                    Belum ada kelas yang diikuti
-                  </p>
-                  <p className="text-base font-medium text-gray-600 max-w-sm mx-auto">
-                    Pendaftaran kelas dilakukan oleh dosen atau admin. Silakan
-                    hubungi dosen pengampu untuk informasi lebih lanjut.
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {myKelas.map((kelas) => (
-                    <div
-                      key={kelas.id}
-                      className="interactive-card flex items-center gap-3 p-4 border-2 border-emerald-100 rounded-xl hover:bg-emerald-50 hover:border-emerald-300 transition-all duration-300 shadow-sm hover:shadow-md group"
-                    >
-                      <div className="shrink-0">
-                        <div className="w-12 h-12 bg-linear-to-br from-emerald-500 to-green-600 rounded-xl shadow-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                          <BookOpen className="h-5 w-5 text-white" />
-                        </div>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <h4 className="font-bold text-sm text-gray-900">
-                            {kelas.mata_kuliah_nama}
-                          </h4>
-                          <Badge
-                            variant="secondary"
-                            className="text-xs bg-emerald-100 text-emerald-700 font-semibold"
-                          >
-                            {kelas.mata_kuliah_kode}
-                          </Badge>
-                        </div>
-                        <p className="text-xs font-semibold text-gray-600 mt-1">
-                          {kelas.nama_kelas}
-                        </p>
-                        <p className="text-xs font-semibold text-gray-500 mt-1">
-                          {kelas.sks} SKS • {kelas.tahun_ajaran}
-                        </p>
-                      </div>
-                      <CheckCircle2 className="h-5 w-5 text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Upcoming Schedule */}
-          <Card className="group hover:shadow-2xl transition-all duration-300 border-0 shadow-xl bg-linear-to-br from-teal-50 to-cyan-50 dark:from-teal-950/40 dark:to-cyan-950/40 backdrop-blur-sm overflow-hidden relative">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-linear-to-br from-teal-400/20 to-cyan-400/20 rounded-full blur-3xl -mr-16 -mt-16" />
-            <CardHeader className="relative">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="p-2.5 bg-linear-to-br from-teal-500 to-cyan-600 rounded-xl shadow-lg shadow-teal-500/30">
-                  <Calendar className="h-5 w-5 text-white" />
-                </div>
-                <div>
-                  <CardTitle className="text-xl font-bold text-teal-900 dark:text-teal-100">
-                    Jadwal Praktikum
-                  </CardTitle>
-                  <CardDescription className="text-base font-semibold text-gray-700 dark:text-gray-400 mt-1">
-                    {stats?.jadwalHariIni || 0} praktikum hari ini • 7 hari ke
-                    depan
-                  </CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="relative">
-              {myJadwal.length === 0 ? (
-                <div className="text-center py-12">
-                  <div className="inline-flex p-4 bg-teal-50 rounded-full mb-4">
-                    <Calendar className="h-12 w-12 text-teal-400" />
-                  </div>
-                  <p className="text-lg font-bold text-gray-900 mb-2">
-                    {myKelas.length === 0
-                      ? "Belum ada jadwal praktikum"
-                      : "Tidak ada jadwal minggu ini"}
-                  </p>
-                  {myKelas.length === 0 && (
-                    <p className="text-base font-medium text-gray-600 max-w-sm mx-auto">
-                      Jadwal akan muncul setelah Anda terdaftar di kelas
-                      praktikum
+                  <div className="flex-1">
+                    <h2 className="mb-1.5 text-xl font-extrabold sm:mb-2 sm:text-3xl">
+                      Semangat Belajar! 🚀
+                    </h2>
+                    <p className="text-sm font-semibold leading-relaxed text-emerald-100 sm:text-lg">
+                      Kamu terdaftar di {" "}
+                      <span className="font-extrabold text-white">
+                        {stats?.totalKelasPraktikum}
+                      </span>{" "}
+                      kelas praktikum. Jangan lupa cek jadwal hari ini ya!
                     </p>
-                  )}
+                  </div>
+                  <div className="hidden md:block">
+                    <Trophy className="h-24 w-24 text-white/20" />
+                  </div>
                 </div>
-              ) : (
-                <div className="space-y-3">
-                  {myJadwal.map((jadwal) => (
-                    <div
-                      key={jadwal.id}
-                      className="interactive-card flex gap-3 p-4 border-2 border-teal-100 rounded-xl hover:bg-teal-50 hover:border-teal-300 transition-all duration-300 shadow-sm hover:shadow-md group"
-                    >
-                      <div className="shrink-0">
-                        <div className="w-12 h-12 bg-linear-to-br from-teal-500 to-cyan-600 rounded-xl shadow-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                          <Calendar className="h-5 w-5 text-white" />
-                        </div>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-bold text-sm truncate text-gray-900">
-                          {jadwal.mata_kuliah_nama}
-                        </h4>
-                        <p className="text-xs font-semibold text-gray-600 mt-0.5">
-                          {jadwal.kelas_nama}{" "}
-                          {jadwal.topik && `• ${jadwal.topik}`}
-                        </p>
-                        <div className="flex items-center gap-2 mt-1 text-xs font-bold text-gray-700">
-                          <Clock className="h-3 w-3" />
-                          {dayNames[jadwal.hari] || jadwal.hari},{" "}
-                          {formatDate(jadwal.tanggal_praktikum)},{" "}
-                          {formatTime(jadwal.jam_mulai)}-
-                          {formatTime(jadwal.jam_selesai)}
-                        </div>
-                        <div className="flex items-center gap-1 mt-1 text-xs font-semibold text-gray-600">
-                          <MapPin className="h-3 w-3" />
-                          {jadwal.lab_nama}
-                        </div>
-                      </div>
-                      <AlertCircle className="h-5 w-5 text-teal-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </CardContent>
+            </GlassCard>
+          )}
+
+          <div className="grid gap-6 lg:grid-cols-2">
+            {/* My Classes */}
+            <GlassCard
+              intensity="high"
+              className="group relative overflow-hidden border-border/50 bg-background/75 shadow-xl"
+            >
+              <div className="absolute -right-16 -top-16 h-32 w-32 rounded-full bg-emerald-400/15 blur-3xl" />
+              <CardHeader className="relative">
+                <div className="mb-2 flex items-center gap-2">
+                  <div className="rounded-xl bg-linear-to-br from-emerald-500 to-green-600 p-2.5 shadow-lg shadow-emerald-500/20">
+                    <BookOpen className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-xl font-bold text-foreground">
+                      Kelas Saya
+                    </CardTitle>
+                    <CardDescription className="mt-1 text-base font-medium text-muted-foreground">
+                      {stats?.totalKelasPraktikum || 0} kelas praktikum yang
+                      diikuti
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="relative">
+                {myKelas.length === 0 ? (
+                  <div className="py-12 text-center">
+                    <div className="mb-4 inline-flex rounded-full bg-emerald-500/10 p-4">
+                      <BookOpen className="h-12 w-12 text-emerald-500" />
                     </div>
-                  ))}
+                    <p className="mb-2 text-lg font-bold text-foreground">
+                      Belum ada kelas yang diikuti
+                    </p>
+                    <p className="mx-auto max-w-sm text-base font-medium text-muted-foreground">
+                      Pendaftaran kelas dilakukan oleh dosen atau admin. Silakan
+                      hubungi dosen pengampu untuk informasi lebih lanjut.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {myKelas.map((kelas) => (
+                      <div
+                        key={kelas.id}
+                        className="interactive-card group flex items-center gap-3 rounded-2xl border border-emerald-500/15 bg-emerald-500/5 p-4 shadow-sm transition-all duration-300 hover:border-emerald-500/30 hover:bg-emerald-500/10 hover:shadow-md"
+                      >
+                        <div className="shrink-0">
+                          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-emerald-500 to-green-600 shadow-lg transition-transform group-hover:scale-110">
+                            <BookOpen className="h-5 w-5 text-white" />
+                          </div>
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <h4 className="text-sm font-bold text-foreground">
+                              {kelas.mata_kuliah_nama}
+                            </h4>
+                            <Badge
+                              variant="secondary"
+                              className="border-0 bg-emerald-500/15 text-xs font-semibold text-emerald-700 dark:text-emerald-300"
+                            >
+                              {kelas.mata_kuliah_kode}
+                            </Badge>
+                          </div>
+                          <p className="mt-1 text-xs font-semibold text-muted-foreground">
+                            {kelas.nama_kelas}
+                          </p>
+                          <p className="mt-1 text-xs font-semibold text-muted-foreground/80">
+                            {kelas.sks} SKS • {kelas.tahun_ajaran}
+                          </p>
+                        </div>
+                        <CheckCircle2 className="h-5 w-5 text-emerald-500 opacity-0 transition-opacity group-hover:opacity-100" />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </GlassCard>
+
+            {/* Upcoming Schedule */}
+            <GlassCard
+              intensity="high"
+              className="group relative overflow-hidden border-border/50 bg-background/75 shadow-xl"
+            >
+              <div className="absolute -right-16 -top-16 h-32 w-32 rounded-full bg-teal-400/15 blur-3xl" />
+              <CardHeader className="relative">
+                <div className="mb-2 flex items-center gap-2">
+                  <div className="rounded-xl bg-linear-to-br from-teal-500 to-cyan-600 p-2.5 shadow-lg shadow-teal-500/20">
+                    <Calendar className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-xl font-bold text-foreground">
+                      Jadwal Praktikum
+                    </CardTitle>
+                    <CardDescription className="mt-1 text-base font-medium text-muted-foreground">
+                      {stats?.jadwalHariIni || 0} praktikum hari ini • 7 hari ke
+                      depan
+                    </CardDescription>
+                  </div>
                 </div>
-              )}
-            </CardContent>
-          </Card>
+              </CardHeader>
+              <CardContent className="relative">
+                {myJadwal.length === 0 ? (
+                  <div className="py-12 text-center">
+                    <div className="mb-4 inline-flex rounded-full bg-teal-500/10 p-4">
+                      <Calendar className="h-12 w-12 text-teal-500" />
+                    </div>
+                    <p className="mb-2 text-lg font-bold text-foreground">
+                      {myKelas.length === 0
+                        ? "Belum ada jadwal praktikum"
+                        : "Tidak ada jadwal minggu ini"}
+                    </p>
+                    {myKelas.length === 0 && (
+                      <p className="mx-auto max-w-sm text-base font-medium text-muted-foreground">
+                        Jadwal akan muncul setelah Anda terdaftar di kelas
+                        praktikum
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {myJadwal.map((jadwal) => (
+                      <div
+                        key={jadwal.id}
+                        className="interactive-card group flex gap-3 rounded-2xl border border-teal-500/15 bg-teal-500/5 p-4 shadow-sm transition-all duration-300 hover:border-teal-500/30 hover:bg-teal-500/10 hover:shadow-md"
+                      >
+                        <div className="shrink-0">
+                          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-teal-500 to-cyan-600 shadow-lg transition-transform group-hover:scale-110">
+                            <Calendar className="h-5 w-5 text-white" />
+                          </div>
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <h4 className="truncate text-sm font-bold text-foreground">
+                            {jadwal.mata_kuliah_nama}
+                          </h4>
+                          <p className="mt-0.5 text-xs font-semibold text-muted-foreground">
+                            {jadwal.kelas_nama} {jadwal.topik && `• ${jadwal.topik}`}
+                          </p>
+                          <div className="mt-1 flex items-center gap-2 text-xs font-bold text-foreground/80">
+                            <Clock className="h-3 w-3" />
+                            {dayNames[jadwal.hari] || jadwal.hari}, {formatDate(jadwal.tanggal_praktikum)}, {formatTime(jadwal.jam_mulai)}-
+                            {formatTime(jadwal.jam_selesai)}
+                          </div>
+                          <div className="mt-1 flex items-center gap-1 text-xs font-semibold text-muted-foreground">
+                            <MapPin className="h-3 w-3" />
+                            {jadwal.lab_nama}
+                          </div>
+                        </div>
+                        <AlertCircle className="h-5 w-5 text-teal-500 opacity-0 transition-opacity group-hover:opacity-100" />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </GlassCard>
+          </div>
         </div>
       </div>
     </div>

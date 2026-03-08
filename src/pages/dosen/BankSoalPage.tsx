@@ -31,6 +31,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ui/status-badge";
 import {
   Plus,
   Search,
@@ -356,12 +357,9 @@ export default function BankSoalPage() {
                           }
                         </Badge>
                         {q.usage_count && q.usage_count > 0 && (
-                          <Badge
-                            variant="outline"
-                            className="text-sm font-semibold"
-                          >
+                          <StatusBadge status="info" pulse={false} dot={false}>
                             {q.usage_count}x digunakan
-                          </Badge>
+                          </StatusBadge>
                         )}
                       </div>
                       <p className="text-sm sm:text-base font-medium">

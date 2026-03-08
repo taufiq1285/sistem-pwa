@@ -18,7 +18,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { ButtonEnhanced } from "@/components/ui/button-enhanced";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -175,9 +175,9 @@ export default function ProfilePage() {
       )}
 
       {success && (
-        <Alert className="rounded-2xl border-emerald-200 bg-emerald-50 text-emerald-800">
-          <CheckCircle2 className="h-4 w-4" />
-          <AlertDescription>{success}</AlertDescription>
+        <Alert className="rounded-2xl border-success/30 bg-success/10 dark:border-success/20 dark:bg-success/15">
+          <CheckCircle2 className="h-4 w-4 text-success" />
+          <AlertDescription className="text-success">{success}</AlertDescription>
         </Alert>
       )}
 
@@ -355,22 +355,23 @@ export default function ProfilePage() {
       </Card>
 
       <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-        <Button
+        <ButtonEnhanced
           variant="outline"
           onClick={() => fetchProfile(false)}
           disabled={saving}
           className="border-blue-200 text-blue-700 hover:bg-blue-50"
         >
           Batal
-        </Button>
-        <Button
+        </ButtonEnhanced>
+        <ButtonEnhanced
           onClick={handleSave}
-          disabled={saving}
+          loading={saving}
+          loadingText="Menyimpan..."
           className="bg-blue-700 text-white hover:bg-blue-800"
         >
           <Save className="mr-2 h-4 w-4" />
-          {saving ? "Menyimpan..." : "Simpan Perubahan"}
-        </Button>
+          Simpan Perubahan
+        </ButtonEnhanced>
       </div>
     </div>
   );
