@@ -17,29 +17,23 @@ vi.mock("@/lib/supabase/client", () => ({
         .mockReturnValue({ data: { subscription: { unsubscribe: vi.fn() } } }),
     },
     from: vi.fn().mockReturnValue({
-      select: vi
-        .fn()
-        .mockReturnValue({
-          eq: vi
-            .fn()
-            .mockReturnValue({
-              single: vi.fn().mockResolvedValue({ data: null, error: null }),
-            }),
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({ data: null, error: null }),
         }),
+      }),
     }),
   },
 }));
 
 vi.mock("@/lib/offline/queue-manager", () => ({
   QueueManager: {
-    getInstance: vi
-      .fn()
-      .mockReturnValue({
-        initialize: vi.fn(),
-        getStats: vi
-          .fn()
-          .mockResolvedValue({ pending: 0, completed: 0, failed: 0, total: 0 }),
-      }),
+    getInstance: vi.fn().mockReturnValue({
+      initialize: vi.fn(),
+      getStats: vi
+        .fn()
+        .mockResolvedValue({ pending: 0, completed: 0, failed: 0, total: 0 }),
+    }),
   },
 }));
 

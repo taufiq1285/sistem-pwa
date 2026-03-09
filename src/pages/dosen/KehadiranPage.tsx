@@ -837,11 +837,17 @@ export default function DosenKehadiranPage() {
             onValueChange={(v) => setActiveTab(v as "input" | "history")}
           >
             <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-6 rounded-xl p-1 h-auto bg-linear-to-r from-indigo-100 to-purple-100 dark:from-indigo-950/40 dark:to-purple-950/40">
-              <TabsTrigger value="input" className="gap-2 rounded-lg py-2.5 font-semibold data-[state=active]:bg-white data-[state=active]:shadow-md dark:data-[state=active]:bg-slate-900">
+              <TabsTrigger
+                value="input"
+                className="gap-2 rounded-lg py-2.5 font-semibold data-[state=active]:bg-white data-[state=active]:shadow-md dark:data-[state=active]:bg-slate-900"
+              >
                 <Calendar className="h-4 w-4" />
                 Input Kehadiran
               </TabsTrigger>
-              <TabsTrigger value="history" className="gap-2 rounded-lg py-2.5 font-semibold data-[state=active]:bg-white data-[state=active]:shadow-md dark:data-[state=active]:bg-slate-900">
+              <TabsTrigger
+                value="history"
+                className="gap-2 rounded-lg py-2.5 font-semibold data-[state=active]:bg-white data-[state=active]:shadow-md dark:data-[state=active]:bg-slate-900"
+              >
                 <History className="h-4 w-4" />
                 Riwayat
               </TabsTrigger>

@@ -14,7 +14,7 @@ import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Monitor, FileText, Info, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { QuizBuilder } from "@/components/features/kuis/builder/QuizBuilder";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { supabase } from "@/lib/supabase/client";
@@ -155,8 +155,8 @@ export default function KuisCreatePage() {
                   Buat Tugas Praktikum
                 </h1>
                 <p className="text-sm text-blue-100 sm:text-base">
-                  Pilih jenis tugas yang ingin diberikan agar alur penilaian lebih
-                  terstruktur dan konsisten.
+                  Pilih jenis tugas yang ingin diberikan agar alur penilaian
+                  lebih terstruktur dan konsisten.
                 </p>
               </div>
             </div>
@@ -170,9 +170,9 @@ export default function KuisCreatePage() {
                   onClick={() => setSelectedType("laporan")}
                   className="group relative rounded-2xl border-2 border-green-200 bg-green-50/70 p-6 text-left transition-all hover:-translate-y-0.5 hover:border-green-400 hover:bg-green-100/70 hover:shadow-xl"
                 >
-                  <Badge className="absolute right-3 top-3 bg-green-600">
+                  <StatusBadge status="success" pulse={false} className="absolute right-3 top-3">
                     WAJIB
-                  </Badge>
+                  </StatusBadge>
                   <div className="flex flex-col items-center gap-3 text-center">
                     <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100 transition-colors group-hover:bg-green-200">
                       <FileText className="h-8 w-8 text-green-600" />
@@ -197,12 +197,13 @@ export default function KuisCreatePage() {
                   onClick={() => setSelectedType("tes")}
                   className="group relative rounded-2xl border-2 border-blue-200 bg-blue-50/70 p-6 text-left transition-all hover:-translate-y-0.5 hover:border-blue-400 hover:bg-blue-100/70 hover:shadow-xl"
                 >
-                  <Badge
-                    variant="outline"
-                    className="absolute right-3 top-3 border-blue-400 text-blue-700"
+                  <StatusBadge
+                    status="info"
+                    pulse={false}
+                    className="absolute right-3 top-3"
                   >
                     OPSIONAL
-                  </Badge>
+                  </StatusBadge>
                   <div className="flex flex-col items-center gap-3 text-center">
                     <div className="flex h-16 w-16 items-center justify-center rounded-full bg-blue-100 transition-colors group-hover:bg-blue-200">
                       <Monitor className="h-8 w-8 text-blue-600" />
@@ -212,8 +213,8 @@ export default function KuisCreatePage() {
                         🖥️ Tes CBT
                       </h3>
                       <p className="text-sm text-blue-700/80">
-                        Pre-test atau Post-test dengan soal pilihan ganda seperti
-                        UKOM.
+                        Pre-test atau Post-test dengan soal pilihan ganda
+                        seperti UKOM.
                       </p>
                       <div className="mt-3 inline-block rounded-full bg-blue-100 px-3 py-1 text-xs text-blue-700">
                         Pilihan Ganda • Bank Soal
@@ -228,10 +229,10 @@ export default function KuisCreatePage() {
                 <div className="flex items-start gap-3">
                   <Info className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
                   <div className="text-sm text-amber-800">
-                    <strong>Info:</strong> Laporan praktikum <strong>wajib</strong>{" "}
-                    ada untuk setiap praktikum. Sedangkan tes (pre-test/post-test)
-                    bersifat <strong>opsional</strong> — tidak semua praktikum
-                    memerlukan tes.
+                    <strong>Info:</strong> Laporan praktikum{" "}
+                    <strong>wajib</strong> ada untuk setiap praktikum. Sedangkan
+                    tes (pre-test/post-test) bersifat <strong>opsional</strong>{" "}
+                    — tidak semua praktikum memerlukan tes.
                   </div>
                 </div>
               </div>
@@ -274,8 +275,8 @@ export default function KuisCreatePage() {
                   Buat Tugas Laporan
                 </h1>
                 <p className="text-sm text-emerald-100 sm:text-base">
-                  Mahasiswa akan membuat laporan praktikum dalam bentuk essay atau
-                  upload file (PDF/Word).
+                  Mahasiswa akan membuat laporan praktikum dalam bentuk essay
+                  atau upload file (PDF/Word).
                 </p>
                 <div className="flex flex-wrap gap-2">
                   <div className="inline-flex items-center gap-2 rounded-full bg-white/20 px-3 py-1 text-sm backdrop-blur-sm">

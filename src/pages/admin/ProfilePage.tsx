@@ -132,7 +132,9 @@ export default function AdminProfilePage() {
       {success && (
         <Alert className="rounded-2xl border-success/30 bg-success/10 text-success-foreground dark:border-success/20 dark:bg-success/15">
           <CheckCircle2 className="h-4 w-4 text-success" />
-          <AlertDescription className="text-success">{success}</AlertDescription>
+          <AlertDescription className="text-success">
+            {success}
+          </AlertDescription>
         </Alert>
       )}
 

@@ -149,7 +149,9 @@ export default function SyncManagementPage() {
         <Card className="border-border/60 shadow-sm">
           <CardHeader>
             <CardTitle>Queue Statistics</CardTitle>
-            <CardDescription>Status item pada offline sync queue</CardDescription>
+            <CardDescription>
+              Status item pada offline sync queue
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
@@ -166,7 +168,9 @@ export default function SyncManagementPage() {
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">Syncing</span>
-              <StatusBadge status="info">{syncStats.queueStats.syncing}</StatusBadge>
+              <StatusBadge status="info">
+                {syncStats.queueStats.syncing}
+              </StatusBadge>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">Completed</span>
@@ -186,7 +190,9 @@ export default function SyncManagementPage() {
         <Card className="border-border/60 shadow-sm">
           <CardHeader>
             <CardTitle>Sync Performance</CardTitle>
-            <CardDescription>Ringkasan performa sinkronisasi historis</CardDescription>
+            <CardDescription>
+              Ringkasan performa sinkronisasi historis
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">

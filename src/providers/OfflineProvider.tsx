@@ -69,7 +69,9 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-50 bg-opacity-80 backdrop-blur-sm">
           <div className="text-center">
             <div className="animate-spin rounded-full h-10 w-10 border-4 border-blue-200 border-t-blue-600 mx-auto" />
-            <p className="mt-3 text-sm text-slate-500">Memuat sistem offline...</p>
+            <p className="mt-3 text-sm text-slate-500">
+              Memuat sistem offline...
+            </p>
           </div>
         </div>
       )}

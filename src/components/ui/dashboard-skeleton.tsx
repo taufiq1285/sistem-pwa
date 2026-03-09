@@ -11,7 +11,10 @@ export function DashboardSkeleton() {
     <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {Array.from({ length: 4 }).map((_, index) => (
-          <Card key={index} className="overflow-hidden border-border/60 bg-card/80 backdrop-blur-sm">
+          <Card
+            key={index}
+            className="overflow-hidden border-border/60 bg-card/80 backdrop-blur-sm"
+          >
             <CardContent className="p-6">
               <div className="flex items-center justify-between gap-4">
                 <div className="space-y-2">

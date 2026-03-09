@@ -32,6 +32,7 @@ import { DashboardSkeleton } from "@/components/ui/dashboard-skeleton";
 import { GlassCard } from "@/components/ui/glass-card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ui/status-badge";
 import {
   Card,
   CardContent,
@@ -321,7 +322,10 @@ export default function LaboratoriumPage() {
           />
           <DashboardCard
             title="Total Kapasitas"
-            value={laboratories.reduce((sum, lab) => sum + (lab.kapasitas || 0), 0)}
+            value={laboratories.reduce(
+              (sum, lab) => sum + (lab.kapasitas || 0),
+              0,
+            )}
             icon={Users}
             color="green"
           />
@@ -330,8 +334,10 @@ export default function LaboratoriumPage() {
             value={
               laboratories.length > 0
                 ? Math.round(
-                    laboratories.reduce((sum, lab) => sum + (lab.kapasitas || 0), 0) /
-                      laboratories.length,
+                    laboratories.reduce(
+                      (sum, lab) => sum + (lab.kapasitas || 0),
+                      0,
+                    ) / laboratories.length,
                   )
                 : 0
             }
@@ -365,7 +371,9 @@ export default function LaboratoriumPage() {
         >
           <CardHeader className="px-0 pt-0">
             <CardTitle>Daftar Laboratorium</CardTitle>
-            <CardDescription>Kelola data laboratorium praktikum</CardDescription>
+            <CardDescription>
+              Kelola data laboratorium praktikum
+            </CardDescription>
           </CardHeader>
           <CardContent className="px-0 pb-0">
             {loading ? (
@@ -390,17 +398,25 @@ export default function LaboratoriumPage() {
                   <TableBody>
                     {filteredLabs.map((lab) => (
                       <TableRow key={lab.id}>
-                        <TableCell className="font-mono text-sm">{lab.kode_lab}</TableCell>
-                        <TableCell className="font-medium">{lab.nama_lab}</TableCell>
+                        <TableCell className="font-mono text-sm">
+                          {lab.kode_lab}
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          {lab.nama_lab}
+                        </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-1">
                             <MapPin className="h-3 w-3 text-muted-foreground" />
                             {lab.lokasi || "-"}
                           </div>
                         </TableCell>
-                        <TableCell className="text-right">{lab.kapasitas}</TableCell>
+                        <TableCell className="text-right">
+                          {lab.kapasitas}
+                        </TableCell>
                         <TableCell>
-                          <Badge variant={lab.is_active ? "default" : "secondary"}>
+                          <Badge
+                            variant={lab.is_active ? "default" : "secondary"}
+                          >
                             {lab.is_active ? "Aktif" : "Tidak Aktif"}
                           </Badge>
                         </TableCell>
@@ -413,7 +429,11 @@ export default function LaboratoriumPage() {
                             >
                               Detail
                             </Button>
-                            <Button variant="outline" size="sm" onClick={() => handleEdit(lab)}>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleEdit(lab)}
+                            >
                               <Pencil className="h-3 w-3" />
                             </Button>
                             <Button
@@ -461,11 +481,15 @@ export default function LaboratoriumPage() {
                 <CardContent className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-muted-foreground">Kode Lab</p>
-                    <p className="font-mono font-semibold">{selectedLab.kode_lab}</p>
+                    <p className="font-mono font-semibold">
+                      {selectedLab.kode_lab}
+                    </p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Kapasitas</p>
-                    <p className="font-semibold">{selectedLab.kapasitas} mahasiswa</p>
+                    <p className="font-semibold">
+                      {selectedLab.kapasitas} mahasiswa
+                    </p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Lokasi</p>
@@ -473,28 +497,35 @@ export default function LaboratoriumPage() {
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Status</p>
-                    <Badge variant={selectedLab.is_active ? "default" : "secondary"}>
+                    <Badge
+                      variant={selectedLab.is_active ? "default" : "secondary"}
+                    >
                       {selectedLab.is_active ? "Aktif" : "Tidak Aktif"}
                     </Badge>
                   </div>
                   {selectedLab.keterangan && (
                     <div className="col-span-2">
-                      <p className="text-sm text-muted-foreground">Keterangan</p>
+                      <p className="text-sm text-muted-foreground">
+                        Keterangan
+                      </p>
                       <p className="font-medium">{selectedLab.keterangan}</p>
                     </div>
                   )}
-                  {selectedLab.fasilitas && selectedLab.fasilitas.length > 0 && (
-                    <div className="col-span-2">
-                      <p className="mb-2 text-sm text-muted-foreground">Fasilitas</p>
-                      <div className="flex flex-wrap gap-2">
-                        {selectedLab.fasilitas.map((fasilitas, idx) => (
-                          <Badge key={idx} variant="outline">
-                            {fasilitas}
-                          </Badge>
-                        ))}
+                  {selectedLab.fasilitas &&
+                    selectedLab.fasilitas.length > 0 && (
+                      <div className="col-span-2">
+                        <p className="mb-2 text-sm text-muted-foreground">
+                          Fasilitas
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {selectedLab.fasilitas.map((fasilitas, idx) => (
+                            <Badge key={idx} variant="outline">
+                              {fasilitas}
+                            </Badge>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
                 </CardContent>
               </Card>
 
@@ -508,7 +539,9 @@ export default function LaboratoriumPage() {
                 </CardHeader>
                 <CardContent>
                   {loadingDetail ? (
-                    <div className="py-4 text-center text-muted-foreground">Loading...</div>
+                    <div className="py-4 text-center text-muted-foreground">
+                      Loading...
+                    </div>
                   ) : labSchedule.length === 0 ? (
                     <div className="py-4 text-center text-muted-foreground">
                       Tidak ada jadwal mendatang
@@ -528,7 +561,9 @@ export default function LaboratoriumPage() {
                       <TableBody>
                         {labSchedule.map((schedule) => (
                           <TableRow key={schedule.id}>
-                            <TableCell>{formatDate(schedule.tanggal_praktikum)}</TableCell>
+                            <TableCell>
+                              {formatDate(schedule.tanggal_praktikum)}
+                            </TableCell>
                             <TableCell className="font-mono text-sm">
                               {schedule.jam_mulai} - {schedule.jam_selesai}
                             </TableCell>
@@ -554,7 +589,9 @@ export default function LaboratoriumPage() {
                 </CardHeader>
                 <CardContent>
                   {loadingDetail ? (
-                    <div className="py-4 text-center text-muted-foreground">Loading...</div>
+                    <div className="py-4 text-center text-muted-foreground">
+                      Loading...
+                    </div>
                   ) : labEquipment.length === 0 ? (
                     <div className="py-4 text-center text-muted-foreground">
                       Tidak ada peralatan terdaftar
@@ -590,7 +627,9 @@ export default function LaboratoriumPage() {
                                 {equipment.kondisi || "baik"}
                               </Badge>
                             </TableCell>
-                            <TableCell className="text-right">{equipment.jumlah}</TableCell>
+                            <TableCell className="text-right">
+                              {equipment.jumlah}
+                            </TableCell>
                             <TableCell className="text-right">
                               {equipment.jumlah_tersedia}
                             </TableCell>
@@ -614,7 +653,9 @@ export default function LaboratoriumPage() {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>
-              {formMode === "create" ? "Tambah Laboratorium Baru" : "Edit Laboratorium"}
+              {formMode === "create"
+                ? "Tambah Laboratorium Baru"
+                : "Edit Laboratorium"}
             </DialogTitle>
             <DialogDescription>
               {formMode === "create"
@@ -633,7 +674,9 @@ export default function LaboratoriumPage() {
                 <Input
                   id="kode_lab"
                   value={formData.kode_lab}
-                  onChange={(e) => setFormData({ ...formData, kode_lab: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, kode_lab: e.target.value })
+                  }
                   placeholder="LAB-01"
                   required
                 />
@@ -669,7 +712,9 @@ export default function LaboratoriumPage() {
               <Input
                 id="nama_lab"
                 value={formData.nama_lab}
-                onChange={(e) => setFormData({ ...formData, nama_lab: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, nama_lab: e.target.value })
+                }
                 placeholder="Laboratorium Komputer 1"
                 required
               />
@@ -681,7 +726,9 @@ export default function LaboratoriumPage() {
               <Input
                 id="lokasi"
                 value={formData.lokasi}
-                onChange={(e) => setFormData({ ...formData, lokasi: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, lokasi: e.target.value })
+                }
                 placeholder="Gedung A, Lantai 2"
               />
             </div>
@@ -692,7 +739,9 @@ export default function LaboratoriumPage() {
               <Textarea
                 id="keterangan"
                 value={formData.keterangan}
-                onChange={(e) => setFormData({ ...formData, keterangan: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, keterangan: e.target.value })
+                }
                 placeholder="Informasi tambahan tentang laboratorium..."
                 rows={3}
               />
@@ -747,10 +796,13 @@ export default function LaboratoriumPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Hapus Laboratorium?</AlertDialogTitle>
             <AlertDialogDescription>
-              Anda akan menghapus <strong>{labToDelete?.nama_lab}</strong> ({labToDelete?.kode_lab}).
+              Anda akan menghapus <strong>{labToDelete?.nama_lab}</strong> (
+              {labToDelete?.kode_lab}).
               <br />
               <br />
-              <span className="font-semibold text-red-600">Aksi ini tidak dapat dibatalkan!</span>
+              <span className="font-semibold text-red-600">
+                Aksi ini tidak dapat dibatalkan!
+              </span>
               <br />
               <br />
               Laboratorium tidak dapat dihapus jika:

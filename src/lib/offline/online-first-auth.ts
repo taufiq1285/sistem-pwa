@@ -50,13 +50,13 @@ const ONLINE_LOGIN_RECORD_KEY = "online_login_record";
  */
 export async function recordOnlineLogin(
   user: AuthUser,
-  session: AuthSession
+  session: AuthSession,
 ): Promise<void> {
   try {
     await indexedDBManager.initialize();
 
     const existingRecord = await getOnlineLoginRecord(user.id);
-    
+
     const newRecord: OnlineLoginRecord = {
       id: user.id,
       userId: user.id,
@@ -67,7 +67,7 @@ export async function recordOnlineLogin(
     };
 
     await indexedDBManager.setMetadata(ONLINE_LOGIN_RECORD_KEY, newRecord);
-    
+
     console.log("✅ Online login recorded for user:", user.id);
   } catch (error) {
     console.error("❌ Failed to record online login:", error);
@@ -78,17 +78,21 @@ export async function recordOnlineLogin(
 /**
  * Get online login record for user
  */
-export async function getOnlineLoginRecord(userId: string): Promise<OnlineLoginRecord | null> {
+export async function getOnlineLoginRecord(
+  userId: string,
+): Promise<OnlineLoginRecord | null> {
   try {
     await indexedDBManager.initialize();
 
-    const record = await indexedDBManager.getMetadata(ONLINE_LOGIN_RECORD_KEY) as OnlineLoginRecord | null;
-    
+    const record = (await indexedDBManager.getMetadata(
+      ONLINE_LOGIN_RECORD_KEY,
+    )) as OnlineLoginRecord | null;
+
     // Check if this is the record for the requested user
     if (record && record.userId === userId) {
       return record;
     }
-    
+
     return null;
   } catch (error) {
     console.error("❌ Failed to get online login record:", error);
@@ -100,7 +104,9 @@ export async function getOnlineLoginRecord(userId: string): Promise<OnlineLoginR
  * Check if user has logged in online before
  * This is required before allowing offline login
  */
-export async function hasLoggedInOnlineBefore(userId: string): Promise<boolean> {
+export async function hasLoggedInOnlineBefore(
+  userId: string,
+): Promise<boolean> {
   try {
     const record = await getOnlineLoginRecord(userId);
     return record !== null;
@@ -117,22 +123,33 @@ export async function hasLoggedInOnlineBefore(userId: string): Promise<boolean> 
 export async function canLoginOffline(email: string): Promise<boolean> {
   try {
     // First, get the stored credentials to find the user ID
-    const credentials = (await indexedDBManager.getMetadata("offline_credentials")) as any;
-    
-    if (!credentials || credentials.email.toLowerCase() !== email.toLowerCase()) {
+    const credentials = (await indexedDBManager.getMetadata(
+      "offline_credentials",
+    )) as any;
+
+    if (
+      !credentials ||
+      credentials.email.toLowerCase() !== email.toLowerCase()
+    ) {
       console.log("❌ No matching offline credentials found for email:", email);
       return false;
     }
 
     // Check if this user has logged in online before
     const hasLoggedIn = await hasLoggedInOnlineBefore(credentials.id);
-    
+
     if (!hasLoggedIn) {
-      console.log("❌ User has never logged in online before, offline login not allowed:", email);
+      console.log(
+        "❌ User has never logged in online before, offline login not allowed:",
+        email,
+      );
       return false;
     }
 
-    console.log("✅ User has logged in online before, offline login allowed:", email);
+    console.log(
+      "✅ User has logged in online before, offline login allowed:",
+      email,
+    );
     return true;
   } catch (error) {
     console.error("❌ Failed to verify offline login eligibility:", error);
@@ -150,8 +167,11 @@ export async function clearOnlineLoginRecord(userId: string): Promise<void> {
     // In practice, we might want to keep this record to maintain the fact that
     // the user has logged in online before, even after logout
     // So this function might not actually remove the record
-    
-    console.log("ℹ️ Online login record preserved for user (to maintain online-first requirement):", userId);
+
+    console.log(
+      "ℹ️ Online login record preserved for user (to maintain online-first requirement):",
+      userId,
+    );
   } catch (error) {
     console.error("❌ Failed to clear online login record:", error);
   }
@@ -166,34 +186,42 @@ export async function secureOfflineLogin(
 ): Promise<{ user: AuthUser; session: AuthSession } | null> {
   try {
     // First, verify that this user has logged in online before
-    const credentials = (await indexedDBManager.getMetadata("offline_credentials")) as any;
-    
-    if (credentials && credentials.email.toLowerCase() === email.toLowerCase()) {
+    const credentials = (await indexedDBManager.getMetadata(
+      "offline_credentials",
+    )) as any;
+
+    if (
+      credentials &&
+      credentials.email.toLowerCase() === email.toLowerCase()
+    ) {
       const canLogin = await canLoginOffline(email);
-      
+
       if (!canLogin) {
-        console.log("🔒 Blocking offline login - user must login online first:", email);
+        console.log(
+          "🔒 Blocking offline login - user must login online first:",
+          email,
+        );
         return null;
       }
     }
 
     // Now perform the standard offline login
     const isValid = await verifyOfflineCredentials(email, password);
-    
+
     if (!isValid) {
       return null;
     }
 
     // Get stored session
     const storedSession = await restoreOfflineSession();
-    
+
     if (storedSession) {
       return storedSession;
     }
 
     // If no session but credentials valid, get user data
     const userData = await getStoredUserData();
-    
+
     if (!userData) {
       console.error("❌ User data not found");
       return null;

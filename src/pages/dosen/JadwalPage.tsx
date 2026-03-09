@@ -1030,11 +1030,17 @@ export default function JadwalPage() {
           className="space-y-6"
         >
           <TabsList className="grid w-full max-w-md grid-cols-2 rounded-xl p-1 h-auto bg-linear-to-r from-indigo-100 to-purple-100 dark:from-indigo-950/40 dark:to-purple-950/40">
-            <TabsTrigger value="calendar" className="gap-2 rounded-lg py-2.5 font-semibold data-[state=active]:bg-white data-[state=active]:shadow-md dark:data-[state=active]:bg-slate-900">
+            <TabsTrigger
+              value="calendar"
+              className="gap-2 rounded-lg py-2.5 font-semibold data-[state=active]:bg-white data-[state=active]:shadow-md dark:data-[state=active]:bg-slate-900"
+            >
               <CalendarIcon className="h-4 w-4" />
               Calendar View
             </TabsTrigger>
-            <TabsTrigger value="list" className="gap-2 rounded-lg py-2.5 font-semibold data-[state=active]:bg-white data-[state=active]:shadow-md dark:data-[state=active]:bg-slate-900">
+            <TabsTrigger
+              value="list"
+              className="gap-2 rounded-lg py-2.5 font-semibold data-[state=active]:bg-white data-[state=active]:shadow-md dark:data-[state=active]:bg-slate-900"
+            >
               <List className="h-4 w-4" />
               List View
             </TabsTrigger>

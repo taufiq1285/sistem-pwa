@@ -674,53 +674,53 @@ export function DashboardPage() {
                   )}
                 </div>
                 <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
-                {isRefreshing && (
-                  <div className="flex items-center gap-2 text-sm text-blue-600">
-                    <RefreshCw className="h-4 w-4 animate-spin" />
-                    <span>Memperbarui data...</span>
-                  </div>
-                )}
-                {hasDataChanges && !isRefreshing && (
+                  {isRefreshing && (
+                    <div className="flex items-center gap-2 text-sm text-blue-600">
+                      <RefreshCw className="h-4 w-4 animate-spin" />
+                      <span>Memperbarui data...</span>
+                    </div>
+                  )}
+                  {hasDataChanges && !isRefreshing && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setHasDataChanges(false);
+                        setIsRefreshing(true);
+                        fetchDashboardData().finally(() => {
+                          setIsRefreshing(false);
+                          setLastRefresh(new Date());
+                        });
+                      }}
+                      className="border-orange-200 text-orange-700 hover:bg-orange-50 font-semibold border-2 w-full sm:w-auto"
+                    >
+                      <RefreshCw className="h-4 w-4" />
+                      Perbarui
+                    </Button>
+                  )}
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => {
-                      setHasDataChanges(false);
                       setIsRefreshing(true);
-                      fetchDashboardData().finally(() => {
+                      setHasDataChanges(false); // Clear change indicator on manual refresh
+                      // ✅ FIX: Force refresh to clear cache after cleanup
+                      fetchDashboardData(true).finally(() => {
                         setIsRefreshing(false);
                         setLastRefresh(new Date());
                       });
                     }}
-                    className="border-orange-200 text-orange-700 hover:bg-orange-50 font-semibold border-2 w-full sm:w-auto"
+                    disabled={loading || isRefreshing}
+                    className="font-semibold border-2 w-full sm:w-auto"
                   >
-                    <RefreshCw className="h-4 w-4" />
-                    Perbarui
+                    <RefreshCw
+                      className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
+                    />
+                    Refresh
                   </Button>
-                )}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setIsRefreshing(true);
-                    setHasDataChanges(false); // Clear change indicator on manual refresh
-                    // ✅ FIX: Force refresh to clear cache after cleanup
-                    fetchDashboardData(true).finally(() => {
-                      setIsRefreshing(false);
-                      setLastRefresh(new Date());
-                    });
-                  }}
-                  disabled={loading || isRefreshing}
-                  className="font-semibold border-2 w-full sm:w-auto"
-                >
-                  <RefreshCw
-                    className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
-                  />
-                  Refresh
-                </Button>
+                </div>
               </div>
-            </div>
-          </GlassCard>
+            </GlassCard>
 
             {error && (
               <Alert className="border-destructive/30 bg-destructive/10 text-destructive shadow-sm">

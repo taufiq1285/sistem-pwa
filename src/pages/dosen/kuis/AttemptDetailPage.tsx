@@ -35,6 +35,7 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -240,14 +241,24 @@ export default function AttemptDetailPage() {
     return (
       <div className="role-page-shell p-4 sm:p-6 lg:p-8">
         <div className="role-page-content max-w-7xl space-y-4">
-          <Button variant="secondary" size="sm" onClick={handleBack} className="w-fit">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={handleBack}
+            className="w-fit"
+          >
             <ArrowLeft className="mr-2 h-4 w-4" />
             Kembali
           </Button>
 
-          <Alert variant="destructive" className="rounded-2xl border-2 shadow-xl">
+          <Alert
+            variant="destructive"
+            className="rounded-2xl border-2 shadow-xl"
+          >
             <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error || "Data tidak ditemukan"}</AlertDescription>
+            <AlertDescription>
+              {error || "Data tidak ditemukan"}
+            </AlertDescription>
           </Alert>
         </div>
       </div>
@@ -298,452 +309,463 @@ export default function AttemptDetailPage() {
             </div>
 
             <div>
-              <h1 className="text-2xl font-extrabold sm:text-3xl">Detail Hasil Mahasiswa</h1>
+              <h1 className="text-2xl font-extrabold sm:text-3xl">
+                Detail Hasil Mahasiswa
+              </h1>
               <p className="mt-1 text-sm text-blue-100 sm:text-base">
-                Tinjau jawaban, berikan poin, dan simpan penilaian secara konsisten.
+                Tinjau jawaban, berikan poin, dan simpan penilaian secara
+                konsisten.
               </p>
             </div>
           </div>
         </section>
 
-      {/* Student & Quiz Info */}
-      <div className="grid gap-6 md:grid-cols-3">
-        {/* Student Info */}
-        <Card className="border-blue-200/70 bg-white/95 shadow-xl dark:border-blue-900/30 dark:bg-slate-900/85">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <User className="w-4 h-4" />
-              Informasi Mahasiswa
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-3 mb-4">
-              <Avatar className="h-12 w-12">
-                <AvatarFallback className="bg-blue-600 text-white font-semibold">
-                  {mahasiswa?.user?.full_name?.charAt(0) || "M"}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <p className="font-semibold text-gray-900">
-                  {mahasiswa?.user?.full_name || "Unknown"}
-                </p>
-                <p className="text-sm text-gray-600">
-                  NIM: {mahasiswa?.nim || "-"}
-                </p>
-              </div>
-            </div>
-
-            <Separator className="my-3" />
-
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Status:</span>
-                <Badge
-                  variant={
-                    attempt.status === "graded"
-                      ? "default"
-                      : attempt.status === "submitted"
-                        ? "secondary"
-                        : "outline"
-                  }
-                >
-                  {ATTEMPT_STATUS_LABELS[attempt.status]}
-                </Badge>
-              </div>
-              {attempt.started_at && (
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Mulai:</span>
-                  <span className="font-medium">
-                    {format(
-                      new Date(attempt.started_at),
-                      "dd MMM yyyy, HH:mm",
-                      { locale: localeId },
-                    )}
-                  </span>
+        {/* Student & Quiz Info */}
+        <div className="grid gap-6 md:grid-cols-3">
+          {/* Student Info */}
+          <Card className="border-blue-200/70 bg-white/95 shadow-xl dark:border-blue-900/30 dark:bg-slate-900/85">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <User className="w-4 h-4" />
+                Informasi Mahasiswa
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-3 mb-4">
+                <Avatar className="h-12 w-12">
+                  <AvatarFallback className="bg-blue-600 text-white font-semibold">
+                    {mahasiswa?.user?.full_name?.charAt(0) || "M"}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className="font-semibold text-gray-900">
+                    {mahasiswa?.user?.full_name || "Unknown"}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    NIM: {mahasiswa?.nim || "-"}
+                  </p>
                 </div>
-              )}
-              {attempt.submitted_at && (
+              </div>
+
+              <Separator className="my-3" />
+
+              <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Dikumpulkan:</span>
-                  <span className="font-medium">
-                    {format(
-                      new Date(attempt.submitted_at),
-                      "dd MMM yyyy, HH:mm",
-                      { locale: localeId },
-                    )}
-                  </span>
+                  <span className="text-gray-600">Status:</span>
+                  <StatusBadge
+                    status={
+                      attempt.status === "graded"
+                        ? "success"
+                        : attempt.status === "submitted"
+                          ? "warning"
+                          : "offline"
+                    }
+                    pulse={false}
+                  >
+                    {ATTEMPT_STATUS_LABELS[attempt.status]}
+                  </StatusBadge>
                 </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Quiz Info */}
-        <Card className="border-purple-200/70 bg-white/95 shadow-xl dark:border-purple-900/30 dark:bg-slate-900/85">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <FileText className="w-4 h-4" />
-              Informasi Tugas
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <h3 className="font-semibold text-gray-900">{kuis?.judul}</h3>
-              <p className="text-sm text-gray-600 line-clamp-2">
-                {kuis?.deskripsi || "Tidak ada deskripsi"}
-              </p>
-            </div>
-
-            <Separator className="my-3" />
-
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Total Soal:</span>
-                <span className="font-medium">{kuis?.soal?.length || 0}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Durasi:</span>
-                <span className="font-medium">{kuis?.durasi_menit} menit</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Score Summary */}
-        <Card className="border-emerald-200/70 bg-white/95 shadow-xl dark:border-emerald-900/30 dark:bg-slate-900/85">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Award className="w-4 h-4" />
-              Nilai
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-center mb-4">
-              <div className="text-4xl font-bold text-gray-900">
-                {totalScore.toFixed(0)}
-              </div>
-              <div className="text-sm text-gray-600">dari {maxScore} poin</div>
-              <div className="mt-2">
-                <Badge
-                  variant={percentage >= 70 ? "default" : "destructive"}
-                  className="text-base px-3 py-1"
-                >
-                  {percentage.toFixed(1)}%
-                </Badge>
-              </div>
-            </div>
-
-            <Separator className="my-3" />
-
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Benar:</span>
-                <span className="font-medium text-green-600">
-                  {attempt.jawaban?.filter((j) => checkAnswer(j, j.soal!))
-                    .length || 0}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Salah/Belum Dinilai:</span>
-                <span className="font-medium text-red-600">
-                  {(kuis?.soal?.length || 0) -
-                    (attempt.jawaban?.filter((j) => checkAnswer(j, j.soal!))
-                      .length || 0)}
-                </span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Jawaban List */}
-      <Card className="border border-white/70 bg-white/95 shadow-xl dark:border-slate-700 dark:bg-slate-900/85">
-        <CardHeader>
-          <CardTitle>Jawaban Mahasiswa</CardTitle>
-          <CardDescription>
-            Review dan beri nilai untuk setiap jawaban
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {kuis?.soal?.map((soal, index) => {
-            const jawaban = attempt.jawaban?.find((j) => j.soal_id === soal.id);
-            const isCorrect = jawaban ? checkAnswer(jawaban, soal) : false;
-            const grading = jawaban ? gradingState[jawaban.id] : null;
-            const autoGraded = isAutoGraded(soal);
-
-            return (
-              <div
-                key={soal.id}
-                className={cn(
-                  "p-6 border-2 rounded-lg",
-                  isCorrect
-                    ? "border-green-200 bg-green-50"
-                    : "border-gray-200 bg-gray-50",
-                )}
-              >
-                {/* Question Header */}
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Badge variant="outline">Soal {index + 1}</Badge>
-                      <Badge variant="secondary">
-                        {TIPE_SOAL_LABELS[soal.tipe_soal]}
-                      </Badge>
-                      <Badge variant="outline">{soal.poin} poin</Badge>
-                      {autoGraded && (
-                        <Badge className="bg-blue-600">Auto-Graded</Badge>
+                {attempt.started_at && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Mulai:</span>
+                    <span className="font-medium">
+                      {format(
+                        new Date(attempt.started_at),
+                        "dd MMM yyyy, HH:mm",
+                        { locale: localeId },
                       )}
-                    </div>
-                    <p className="text-base font-medium text-gray-900">
-                      {soal.pertanyaan}
-                    </p>
+                    </span>
                   </div>
-                  {jawaban && (
-                    <div className="ml-4">
-                      {isCorrect ? (
-                        <CheckCircle2 className="w-6 h-6 text-green-600" />
-                      ) : (
-                        <XCircle className="w-6 h-6 text-red-600" />
+                )}
+                {attempt.submitted_at && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Dikumpulkan:</span>
+                    <span className="font-medium">
+                      {format(
+                        new Date(attempt.submitted_at),
+                        "dd MMM yyyy, HH:mm",
+                        { locale: localeId },
                       )}
-                    </div>
-                  )}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Quiz Info */}
+          <Card className="border-purple-200/70 bg-white/95 shadow-xl dark:border-purple-900/30 dark:bg-slate-900/85">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <FileText className="w-4 h-4" />
+                Informasi Tugas
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <h3 className="font-semibold text-gray-900">{kuis?.judul}</h3>
+                <p className="text-sm text-gray-600 line-clamp-2">
+                  {kuis?.deskripsi || "Tidak ada deskripsi"}
+                </p>
+              </div>
+
+              <Separator className="my-3" />
+
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Total Soal:</span>
+                  <span className="font-medium">{kuis?.soal?.length || 0}</span>
                 </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Durasi:</span>
+                  <span className="font-medium">
+                    {kuis?.durasi_menit} menit
+                  </span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-                {/* Answer Display */}
-                <div className="space-y-4">
-                  {/* Pilihan Ganda */}
-                  {soal.tipe_soal === "pilihan_ganda" && (
-                    <div className="space-y-3">
-                      <div className="bg-white p-4 rounded border">
-                        <Label className="text-sm text-gray-600 mb-2 block">
-                          Jawaban Mahasiswa:
-                        </Label>
-                        <p
-                          className={cn(
-                            "font-semibold",
-                            isCorrect ? "text-green-700" : "text-red-700",
-                          )}
-                        >
-                          {jawaban?.jawaban_mahasiswa || "Tidak dijawab"}
-                        </p>
-                      </div>
+          {/* Score Summary */}
+          <Card className="border-emerald-200/70 bg-white/95 shadow-xl dark:border-emerald-900/30 dark:bg-slate-900/85">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Award className="w-4 h-4" />
+                Nilai
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center mb-4">
+                <div className="text-4xl font-bold text-gray-900">
+                  {totalScore.toFixed(0)}
+                </div>
+                <div className="text-sm text-gray-600">
+                  dari {maxScore} poin
+                </div>
+                <div className="mt-2">
+                  <StatusBadge
+                    status={percentage >= 70 ? "success" : "error"}
+                    pulse={false}
+                    className="text-base px-3 py-1"
+                  >
+                    {percentage.toFixed(1)}%
+                  </StatusBadge>
+                </div>
+              </div>
 
-                      <div className="bg-blue-50 p-4 rounded border border-blue-200">
-                        <Label className="text-sm text-gray-600 mb-2 block">
-                          Jawaban Benar:
-                        </Label>
-                        <p className="font-semibold text-blue-700">
-                          {soal.jawaban_benar}
-                        </p>
-                      </div>
+              <Separator className="my-3" />
 
-                      {soal.penjelasan && (
-                        <Alert className="bg-blue-50 border-blue-200">
-                          <AlertDescription>
-                            <strong>Penjelasan:</strong> {soal.penjelasan}
-                          </AlertDescription>
-                        </Alert>
-                      )}
-                    </div>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Benar:</span>
+                  <span className="font-medium text-green-600">
+                    {attempt.jawaban?.filter((j) => checkAnswer(j, j.soal!))
+                      .length || 0}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Salah/Belum Dinilai:</span>
+                  <span className="font-medium text-red-600">
+                    {(kuis?.soal?.length || 0) -
+                      (attempt.jawaban?.filter((j) => checkAnswer(j, j.soal!))
+                        .length || 0)}
+                  </span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Jawaban List */}
+        <Card className="border border-white/70 bg-white/95 shadow-xl dark:border-slate-700 dark:bg-slate-900/85">
+          <CardHeader>
+            <CardTitle>Jawaban Mahasiswa</CardTitle>
+            <CardDescription>
+              Review dan beri nilai untuk setiap jawaban
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {kuis?.soal?.map((soal, index) => {
+              const jawaban = attempt.jawaban?.find(
+                (j) => j.soal_id === soal.id,
+              );
+              const isCorrect = jawaban ? checkAnswer(jawaban, soal) : false;
+              const grading = jawaban ? gradingState[jawaban.id] : null;
+              const autoGraded = isAutoGraded(soal);
+
+              return (
+                <div
+                  key={soal.id}
+                  className={cn(
+                    "p-6 border-2 rounded-lg",
+                    isCorrect
+                      ? "border-green-200 bg-green-50"
+                      : "border-gray-200 bg-gray-50",
                   )}
-
-                  {/* Essay */}
-                  {soal.tipe_soal === "essay" && jawaban && (
-                    <div className="space-y-3">
-                      <div className="bg-white p-4 rounded border">
-                        <Label className="text-sm text-gray-600 mb-2 block">
-                          Jawaban Mahasiswa:
-                        </Label>
-                        <p className="text-gray-900 whitespace-pre-wrap">
-                          {jawaban.jawaban_mahasiswa || "Tidak dijawab"}
-                        </p>
+                >
+                  {/* Question Header */}
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Badge variant="outline">Soal {index + 1}</Badge>
+                        <Badge variant="secondary">
+                          {TIPE_SOAL_LABELS[soal.tipe_soal]}
+                        </Badge>
+                        <Badge variant="outline">{soal.poin} poin</Badge>
+                        {autoGraded && (
+                          <StatusBadge status="info" pulse={false}>Auto-Graded</StatusBadge>
+                        )}
                       </div>
-
-                      {/* Grading Form */}
-                      <div className="grid md:grid-cols-2 gap-4">
-                        <div>
-                          <Label htmlFor={`poin-${jawaban.id}`}>
-                            Poin (Max: {soal.poin})
-                          </Label>
-                          <Input
-                            id={`poin-${jawaban.id}`}
-                            type="number"
-                            min="0"
-                            max={soal.poin}
-                            value={grading?.poin_diperoleh || 0}
-                            onChange={(e) =>
-                              handleGradeChange(
-                                jawaban.id,
-                                "poin_diperoleh",
-                                Number(e.target.value),
-                              )
-                            }
-                            className="mt-1"
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor={`feedback-${jawaban.id}`}>
-                            Feedback/Komentar
-                          </Label>
-                          <Textarea
-                            id={`feedback-${jawaban.id}`}
-                            value={grading?.feedback || ""}
-                            onChange={(e) =>
-                              handleGradeChange(
-                                jawaban.id,
-                                "feedback",
-                                e.target.value,
-                              )
-                            }
-                            placeholder="Berikan feedback untuk mahasiswa..."
-                            className="mt-1"
-                            rows={3}
-                          />
-                        </div>
-                      </div>
+                      <p className="text-base font-medium text-gray-900">
+                        {soal.pertanyaan}
+                      </p>
                     </div>
-                  )}
+                    {jawaban && (
+                      <div className="ml-4">
+                        {isCorrect ? (
+                          <CheckCircle2 className="w-6 h-6 text-green-600" />
+                        ) : (
+                          <XCircle className="w-6 h-6 text-red-600" />
+                        )}
+                      </div>
+                    )}
+                  </div>
 
-                  {/* File Upload */}
-                  {soal.tipe_soal === "file_upload" && jawaban && (
-                    <div className="space-y-3">
-                      {jawaban.file_url ? (
+                  {/* Answer Display */}
+                  <div className="space-y-4">
+                    {/* Pilihan Ganda */}
+                    {soal.tipe_soal === "pilihan_ganda" && (
+                      <div className="space-y-3">
                         <div className="bg-white p-4 rounded border">
                           <Label className="text-sm text-gray-600 mb-2 block">
-                            File yang Diupload:
+                            Jawaban Mahasiswa:
                           </Label>
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <FileText className="w-5 h-5 text-blue-600" />
-                              <div>
-                                <p className="font-medium text-gray-900">
-                                  {jawaban.file_name || "File"}
-                                </p>
-                                <p className="text-xs text-gray-500">
-                                  {jawaban.file_type} •{" "}
-                                  {jawaban.file_size
-                                    ? (jawaban.file_size / 1024).toFixed(2)
-                                    : 0}{" "}
-                                  KB
-                                </p>
-                              </div>
-                            </div>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() =>
-                                window.open(jawaban.file_url!, "_blank")
-                              }
-                            >
-                              <Download className="w-4 h-4 mr-2" />
-                              Download
-                            </Button>
-                          </div>
-                        </div>
-                      ) : jawaban.jawaban_mahasiswa ? (
-                        // Student typed the answer instead of uploading file
-                        <div className="bg-white p-4 rounded border">
-                          <Label className="text-sm text-gray-600 mb-2 block">
-                            Jawaban Mahasiswa (Diketik):
-                          </Label>
-                          <p className="text-gray-900 whitespace-pre-wrap">
-                            {jawaban.jawaban_mahasiswa}
+                          <p
+                            className={cn(
+                              "font-semibold",
+                              isCorrect ? "text-green-700" : "text-red-700",
+                            )}
+                          >
+                            {jawaban?.jawaban_mahasiswa || "Tidak dijawab"}
                           </p>
                         </div>
-                      ) : (
-                        <Alert variant="destructive">
-                          <AlertCircle className="h-4 w-4" />
-                          <AlertDescription>
-                            Mahasiswa tidak mengirim jawaban
-                          </AlertDescription>
-                        </Alert>
-                      )}
 
-                      {/* Grading Form */}
-                      <div className="grid md:grid-cols-2 gap-4">
-                        <div>
-                          <Label htmlFor={`poin-${jawaban.id}`}>
-                            Poin (Max: {soal.poin})
+                        <div className="bg-blue-50 p-4 rounded border border-blue-200">
+                          <Label className="text-sm text-gray-600 mb-2 block">
+                            Jawaban Benar:
                           </Label>
-                          <Input
-                            id={`poin-${jawaban.id}`}
-                            type="number"
-                            min="0"
-                            max={soal.poin}
-                            value={grading?.poin_diperoleh || 0}
-                            onChange={(e) =>
-                              handleGradeChange(
-                                jawaban.id,
-                                "poin_diperoleh",
-                                Number(e.target.value),
-                              )
-                            }
-                            className="mt-1"
-                          />
+                          <p className="font-semibold text-blue-700">
+                            {soal.jawaban_benar}
+                          </p>
                         </div>
-                        <div>
-                          <Label htmlFor={`feedback-${jawaban.id}`}>
-                            Feedback/Komentar
+
+                        {soal.penjelasan && (
+                          <Alert className="bg-blue-50 border-blue-200">
+                            <AlertDescription>
+                              <strong>Penjelasan:</strong> {soal.penjelasan}
+                            </AlertDescription>
+                          </Alert>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Essay */}
+                    {soal.tipe_soal === "essay" && jawaban && (
+                      <div className="space-y-3">
+                        <div className="bg-white p-4 rounded border">
+                          <Label className="text-sm text-gray-600 mb-2 block">
+                            Jawaban Mahasiswa:
                           </Label>
-                          <Textarea
-                            id={`feedback-${jawaban.id}`}
-                            value={grading?.feedback || ""}
-                            onChange={(e) =>
-                              handleGradeChange(
-                                jawaban.id,
-                                "feedback",
-                                e.target.value,
-                              )
-                            }
-                            placeholder="Berikan feedback untuk mahasiswa..."
-                            className="mt-1"
-                            rows={3}
-                          />
+                          <p className="text-gray-900 whitespace-pre-wrap">
+                            {jawaban.jawaban_mahasiswa || "Tidak dijawab"}
+                          </p>
+                        </div>
+
+                        {/* Grading Form */}
+                        <div className="grid md:grid-cols-2 gap-4">
+                          <div>
+                            <Label htmlFor={`poin-${jawaban.id}`}>
+                              Poin (Max: {soal.poin})
+                            </Label>
+                            <Input
+                              id={`poin-${jawaban.id}`}
+                              type="number"
+                              min="0"
+                              max={soal.poin}
+                              value={grading?.poin_diperoleh || 0}
+                              onChange={(e) =>
+                                handleGradeChange(
+                                  jawaban.id,
+                                  "poin_diperoleh",
+                                  Number(e.target.value),
+                                )
+                              }
+                              className="mt-1"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor={`feedback-${jawaban.id}`}>
+                              Feedback/Komentar
+                            </Label>
+                            <Textarea
+                              id={`feedback-${jawaban.id}`}
+                              value={grading?.feedback || ""}
+                              onChange={(e) =>
+                                handleGradeChange(
+                                  jawaban.id,
+                                  "feedback",
+                                  e.target.value,
+                                )
+                              }
+                              placeholder="Berikan feedback untuk mahasiswa..."
+                              className="mt-1"
+                              rows={3}
+                            />
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  )}
+                    )}
 
-                  {/* Display Feedback if exists */}
-                  {jawaban?.feedback && (
-                    <Alert className="bg-yellow-50 border-yellow-200">
-                      <AlertDescription>
-                        <strong>Feedback Dosen:</strong> {jawaban.feedback}
-                      </AlertDescription>
-                    </Alert>
-                  )}
+                    {/* File Upload */}
+                    {soal.tipe_soal === "file_upload" && jawaban && (
+                      <div className="space-y-3">
+                        {jawaban.file_url ? (
+                          <div className="bg-white p-4 rounded border">
+                            <Label className="text-sm text-gray-600 mb-2 block">
+                              File yang Diupload:
+                            </Label>
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <FileText className="w-5 h-5 text-blue-600" />
+                                <div>
+                                  <p className="font-medium text-gray-900">
+                                    {jawaban.file_name || "File"}
+                                  </p>
+                                  <p className="text-xs text-gray-500">
+                                    {jawaban.file_type} •{" "}
+                                    {jawaban.file_size
+                                      ? (jawaban.file_size / 1024).toFixed(2)
+                                      : 0}{" "}
+                                    KB
+                                  </p>
+                                </div>
+                              </div>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() =>
+                                  window.open(jawaban.file_url!, "_blank")
+                                }
+                              >
+                                <Download className="w-4 h-4 mr-2" />
+                                Download
+                              </Button>
+                            </div>
+                          </div>
+                        ) : jawaban.jawaban_mahasiswa ? (
+                          // Student typed the answer instead of uploading file
+                          <div className="bg-white p-4 rounded border">
+                            <Label className="text-sm text-gray-600 mb-2 block">
+                              Jawaban Mahasiswa (Diketik):
+                            </Label>
+                            <p className="text-gray-900 whitespace-pre-wrap">
+                              {jawaban.jawaban_mahasiswa}
+                            </p>
+                          </div>
+                        ) : (
+                          <Alert variant="destructive">
+                            <AlertCircle className="h-4 w-4" />
+                            <AlertDescription>
+                              Mahasiswa tidak mengirim jawaban
+                            </AlertDescription>
+                          </Alert>
+                        )}
+
+                        {/* Grading Form */}
+                        <div className="grid md:grid-cols-2 gap-4">
+                          <div>
+                            <Label htmlFor={`poin-${jawaban.id}`}>
+                              Poin (Max: {soal.poin})
+                            </Label>
+                            <Input
+                              id={`poin-${jawaban.id}`}
+                              type="number"
+                              min="0"
+                              max={soal.poin}
+                              value={grading?.poin_diperoleh || 0}
+                              onChange={(e) =>
+                                handleGradeChange(
+                                  jawaban.id,
+                                  "poin_diperoleh",
+                                  Number(e.target.value),
+                                )
+                              }
+                              className="mt-1"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor={`feedback-${jawaban.id}`}>
+                              Feedback/Komentar
+                            </Label>
+                            <Textarea
+                              id={`feedback-${jawaban.id}`}
+                              value={grading?.feedback || ""}
+                              onChange={(e) =>
+                                handleGradeChange(
+                                  jawaban.id,
+                                  "feedback",
+                                  e.target.value,
+                                )
+                              }
+                              placeholder="Berikan feedback untuk mahasiswa..."
+                              className="mt-1"
+                              rows={3}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Display Feedback if exists */}
+                    {jawaban?.feedback && (
+                      <Alert className="bg-yellow-50 border-yellow-200">
+                        <AlertDescription>
+                          <strong>Feedback Dosen:</strong> {jawaban.feedback}
+                        </AlertDescription>
+                      </Alert>
+                    )}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </CardContent>
-      </Card>
-
-      {/* Save Button (Bottom) */}
-      {hasChanges && (
-        <Card className="border-amber-200/80 bg-amber-50/90 shadow-xl dark:border-amber-900/40 dark:bg-amber-950/20">
-          <CardContent className="flex items-center justify-between p-4">
-            <div className="flex items-center gap-2">
-              <AlertCircle className="w-5 h-5 text-orange-600" />
-              <span className="text-orange-900 font-medium">
-                Ada perubahan penilaian yang belum disimpan
-              </span>
-            </div>
-            <Button
-              onClick={handleSaveGrading}
-              disabled={isSaving}
-              className="flex items-center gap-2"
-            >
-              {isSaving ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Save className="w-4 h-4" />
-              )}
-              Simpan Penilaian
-            </Button>
+              );
+            })}
           </CardContent>
         </Card>
-      )}
+
+        {/* Save Button (Bottom) */}
+        {hasChanges && (
+          <Card className="border-amber-200/80 bg-amber-50/90 shadow-xl dark:border-amber-900/40 dark:bg-amber-950/20">
+            <CardContent className="flex items-center justify-between p-4">
+              <div className="flex items-center gap-2">
+                <AlertCircle className="w-5 h-5 text-orange-600" />
+                <span className="text-orange-900 font-medium">
+                  Ada perubahan penilaian yang belum disimpan
+                </span>
+              </div>
+              <Button
+                onClick={handleSaveGrading}
+                disabled={isSaving}
+                className="flex items-center gap-2"
+              >
+                {isSaving ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Save className="w-4 h-4" />
+                )}
+                Simpan Penilaian
+              </Button>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );

@@ -25,60 +25,86 @@ interface StatusBadgeProps extends React.ComponentProps<typeof Badge> {
 
 const statusConfig: Record<
   StatusType,
-  { dot: string; text: string; label: string; pulseColor: string }
+  {
+    dot: string;
+    text: string;
+    label: string;
+    pulseColor: string;
+    background: string;
+    border: string;
+  }
 > = {
   online: {
-    dot: "bg-green-500",
-    text: "text-green-700 dark:text-green-400",
+    dot: "bg-success",
+    text: "text-success",
     label: "Online",
-    pulseColor: "bg-green-400",
+    pulseColor: "bg-success/70",
+    background: "bg-success/10",
+    border: "border-success/20",
   },
   offline: {
-    dot: "bg-slate-400",
-    text: "text-slate-700 dark:text-slate-300",
+    dot: "bg-muted-foreground",
+    text: "text-muted-foreground",
     label: "Offline",
-    pulseColor: "bg-slate-300",
+    pulseColor: "bg-muted-foreground/60",
+    background: "bg-muted/50",
+    border: "border-border/70",
   },
   busy: {
-    dot: "bg-red-500",
-    text: "text-red-700 dark:text-red-400",
+    dot: "bg-destructive",
+    text: "text-destructive",
     label: "Busy",
-    pulseColor: "bg-red-400",
+    pulseColor: "bg-destructive/70",
+    background: "bg-destructive/10",
+    border: "border-destructive/20",
   },
   away: {
-    dot: "bg-amber-500",
-    text: "text-amber-700 dark:text-amber-400",
+    dot: "bg-warning",
+    text: "text-warning",
     label: "Away",
-    pulseColor: "bg-amber-400",
+    pulseColor: "bg-warning/70",
+    background: "bg-warning/15",
+    border: "border-warning/25",
   },
   success: {
-    dot: "bg-green-500",
-    text: "text-green-700 dark:text-green-400",
+    dot: "bg-success",
+    text: "text-success",
     label: "Success",
-    pulseColor: "bg-green-400",
+    pulseColor: "bg-success/70",
+    background: "bg-success/10",
+    border: "border-success/20",
   },
   warning: {
-    dot: "bg-amber-500",
-    text: "text-amber-700 dark:text-amber-400",
+    dot: "bg-warning",
+    text: "text-warning",
     label: "Warning",
-    pulseColor: "bg-amber-400",
+    pulseColor: "bg-warning/70",
+    background: "bg-warning/15",
+    border: "border-warning/25",
   },
   error: {
-    dot: "bg-red-500",
-    text: "text-red-700 dark:text-red-400",
+    dot: "bg-destructive",
+    text: "text-destructive",
     label: "Error",
-    pulseColor: "bg-red-400",
+    pulseColor: "bg-destructive/70",
+    background: "bg-destructive/10",
+    border: "border-destructive/20",
   },
   info: {
-    dot: "bg-blue-500",
-    text: "text-blue-700 dark:text-blue-400",
+    dot: "bg-info",
+    text: "text-info",
     label: "Info",
-    pulseColor: "bg-blue-400",
+    pulseColor: "bg-info/70",
+    background: "bg-info/10",
+    border: "border-info/20",
   },
 };
 
 const StatusBadge = React.forwardRef<HTMLSpanElement, StatusBadgeProps>(
-  ({ status, pulse = true, dot = true, className, children, ...props }, ref) => {
+  (
+    { status, pulse = true, dot = true, className, children, ...props },
+    ref,
+  ) => {
     const config = statusConfig[status];
 
     return (
@@ -86,9 +112,11 @@ const StatusBadge = React.forwardRef<HTMLSpanElement, StatusBadgeProps>(
         ref={ref}
         variant="outline"
         className={cn(
-          "relative gap-1.5 pr-3 font-medium border-current/15 bg-background/70 backdrop-blur-sm",
+          "relative gap-1.5 pr-3 font-medium backdrop-blur-sm",
           dot ? "pl-6" : "pl-3",
           config.text,
+          config.background,
+          config.border,
           className,
         )}
         {...props}
@@ -104,7 +132,10 @@ const StatusBadge = React.forwardRef<HTMLSpanElement, StatusBadgeProps>(
               />
             )}
             <span
-              className={cn("relative inline-flex h-2 w-2 rounded-full", config.dot)}
+              className={cn(
+                "relative inline-flex h-2 w-2 rounded-full",
+                config.dot,
+              )}
             />
           </span>
         )}

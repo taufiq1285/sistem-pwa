@@ -68,7 +68,9 @@ describe("Calendar", () => {
     );
 
     fireEvent.click(screen.getByText(/Praktikum Basis Data/i));
-    expect(onEventClick).toHaveBeenCalledWith(expect.objectContaining({ id: "evt-1" }));
+    expect(onEventClick).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "evt-1" }),
+    );
   });
 });
 
@@ -94,7 +96,9 @@ describe("EventDialog", () => {
 
     expect(screen.getByText("Praktikum Basis Data")).toBeInTheDocument();
     expect(screen.getByText("Lab Komputer 1")).toBeInTheDocument();
-    expect(screen.getByText(/Materi normalisasi database/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Materi normalisasi database/i),
+    ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Edit" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Hapus" })).toBeInTheDocument();
   });
@@ -115,10 +119,14 @@ describe("EventDialog", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Edit" }));
-    expect(onEdit).toHaveBeenCalledWith(expect.objectContaining({ id: "evt-1" }));
+    expect(onEdit).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "evt-1" }),
+    );
     expect(onOpenChange).toHaveBeenCalledWith(false);
 
     fireEvent.click(screen.getByRole("button", { name: "Hapus" }));
-    expect(onDelete).toHaveBeenCalledWith(expect.objectContaining({ id: "evt-1" }));
+    expect(onDelete).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "evt-1" }),
+    );
   });
 });

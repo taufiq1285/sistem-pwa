@@ -31,17 +31,22 @@ async function defaultSyncProcessor(item: SyncQueueItem): Promise<void> {
 
   if (item.entity === "kuis_jawaban") {
     if (item.operation === "delete") {
-      throw new Error("Delete operation is not supported for kuis_jawaban offline sync");
+      throw new Error(
+        "Delete operation is not supported for kuis_jawaban offline sync",
+      );
     }
     const attempt_id = payload.attempt_id as string | undefined;
     const soal_id = payload.soal_id as string | undefined;
     const jawaban = payload.jawaban as string | undefined;
 
     if (!attempt_id || !soal_id || jawaban === undefined) {
-      throw new Error("Invalid kuis_jawaban payload: attempt_id, soal_id, dan jawaban wajib ada");
+      throw new Error(
+        "Invalid kuis_jawaban payload: attempt_id, soal_id, dan jawaban wajib ada",
+      );
     }
 
-    const { submitAnswerSafe } = await import("@/lib/api/kuis-versioned-simple.api");
+    const { submitAnswerSafe } =
+      await import("@/lib/api/kuis-versioned-simple.api");
     await submitAnswerSafe({ attempt_id, soal_id, jawaban });
     return;
   }
@@ -69,7 +74,10 @@ async function defaultSyncProcessor(item: SyncQueueItem): Promise<void> {
 
   if (item.operation === "update") {
     const { id: _ignored, ...updateData } = payload;
-    const { error } = await (supabase as any).from(table).update(updateData).eq("id", id);
+    const { error } = await (supabase as any)
+      .from(table)
+      .update(updateData)
+      .eq("id", id);
     if (error) throw error;
     return;
   }

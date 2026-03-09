@@ -1097,10 +1097,13 @@ export default function UsersPage() {
                   Role:{" "}
                   <StatusBadge
                     status={
-                      deletingUser.role === "admin" ? "info"
-                        : deletingUser.role === "dosen" ? "success"
-                        : deletingUser.role === "laboran" ? "warning"
-                        : "online"
+                      deletingUser.role === "admin"
+                        ? "info"
+                        : deletingUser.role === "dosen"
+                          ? "success"
+                          : deletingUser.role === "laboran"
+                            ? "warning"
+                            : "online"
                     }
                     pulse={false}
                     className="capitalize"

@@ -25,7 +25,7 @@ import { DashboardCard } from "@/components/ui/dashboard-card";
 import { DashboardSkeleton } from "@/components/ui/dashboard-skeleton";
 import { GlassCard } from "@/components/ui/glass-card";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ui/status-badge";
 import {
   Table,
   TableBody,
@@ -335,19 +335,19 @@ export default function InventarisPage() {
             title="Total Items"
             value={totalCount}
             icon={Package}
-            color="blue"
+            color="primary"
           />
           <DashboardCard
             title="Low Stock"
             value={inventaris.filter((i) => i.jumlah_tersedia < 5).length}
             icon={AlertCircle}
-            color="amber"
+            color="warning"
           />
           <DashboardCard
             title="Categories"
             value={categories.length}
             icon={Filter}
-            color="purple"
+            color="accent"
           />
         </div>
 
@@ -492,15 +492,22 @@ export default function InventarisPage() {
                           </span>
                         </TableCell>
                         <TableCell>
-                          <Badge
-                            variant={
-                              KONDISI_OPTIONS.find((k) => k.value === item.kondisi)
-                                ?.variant || "default"
-                            }
-                          >
-                            {KONDISI_OPTIONS.find((k) => k.value === item.kondisi)
-                              ?.label || item.kondisi}
-                          </Badge>
+                          {(() => {
+                            const kondisiStatusMap: Record<string, "success" | "warning" | "error" | "info"> = {
+                              baik: "success",
+                              rusak_ringan: "warning",
+                              rusak_berat: "error",
+                              maintenance: "info",
+                            };
+                            const label = KONDISI_OPTIONS.find(
+                              (k) => k.value === item.kondisi,
+                            )?.label || item.kondisi;
+                            return (
+                              <StatusBadge status={kondisiStatusMap[item.kondisi] || "info"} pulse={false}>
+                                {label}
+                              </StatusBadge>
+                            );
+                          })()}
                         </TableCell>
                         <TableCell className="text-muted-foreground">
                           {item.laboratorium?.nama_lab || "Depot"}

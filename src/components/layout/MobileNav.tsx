@@ -69,7 +69,7 @@ export function MobileNav({
       {/* Drawer */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 w-[88vw] max-w-xs bg-background/95 supports-backdrop-filter:bg-background/80 backdrop-blur-xl transform transition-transform duration-300 ease-in-out md:hidden shadow-2xl border-r border-border/70",
+          "fixed inset-y-0 left-0 z-50 w-[88vw] max-w-xs border-r border-border/70 bg-background/92 shadow-2xl backdrop-blur-xl transform transition-transform duration-300 ease-in-out supports-backdrop-filter:bg-background/78 md:hidden",
           isOpen ? "translate-x-0" : "-translate-x-full",
           className,
         )}
@@ -77,7 +77,7 @@ export function MobileNav({
         <div className="flex h-full flex-col">
           {/* Header */}
           <div className="relative flex h-16 items-center justify-between border-b px-4">
-            <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent via-blue-400/40 to-transparent" />
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent via-primary/35 to-transparent" />
             <div>
               <h2 className="text-lg font-semibold">AKBID Mega Buana</h2>
               <p className="text-xs text-muted-foreground">Sistem Praktikum</p>
@@ -94,9 +94,9 @@ export function MobileNav({
           </div>
 
           {/* User Info */}
-          <div className="border-b px-4 py-4 bg-linear-to-r from-blue-50/60 to-transparent dark:from-blue-950/20 dark:to-transparent">
+          <div className="border-b border-border/70 px-4 py-4 bg-linear-to-r from-primary/10 via-transparent to-transparent">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-linear-to-br from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-600/25">
+              <div className="brand-gradient flex h-10 w-10 items-center justify-center rounded-full text-primary-foreground shadow-md">
                 {userName.charAt(0).toUpperCase()}
               </div>
               <div className="flex-1 min-w-0">
@@ -141,7 +141,7 @@ export function MobileNav({
           <div className="border-t p-4">
             <Button
               variant="ghost"
-              className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50 transition-all duration-200 hover:translate-x-0.5"
+              className="w-full justify-start text-destructive transition-all duration-200 hover:translate-x-0.5 hover:bg-destructive/10 hover:text-destructive"
               onClick={handleLogout}
             >
               <LogOut className="mr-2 h-5 w-5" />

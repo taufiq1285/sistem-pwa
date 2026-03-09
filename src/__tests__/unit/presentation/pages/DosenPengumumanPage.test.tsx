@@ -90,7 +90,11 @@ describe("DosenPengumumanPage", () => {
       },
     ]);
 
-    render(<MemoryRouter><DosenPengumumanPage /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <DosenPengumumanPage />
+      </MemoryRouter>,
+    );
 
     await waitFor(() => {
       expect(screen.getByText("Khusus Dosen")).toBeInTheDocument();
@@ -105,7 +109,11 @@ describe("DosenPengumumanPage", () => {
   it("menampilkan empty state saat tidak ada notifikasi aktif", async () => {
     mockGetAllAnnouncements.mockResolvedValue([]);
 
-    render(<MemoryRouter><DosenPengumumanPage /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <DosenPengumumanPage />
+      </MemoryRouter>,
+    );
 
     await waitFor(() => {
       expect(
@@ -117,7 +125,11 @@ describe("DosenPengumumanPage", () => {
   it("menampilkan error state saat load gagal", async () => {
     mockCacheAPI.mockRejectedValue(new Error("load gagal"));
 
-    render(<MemoryRouter><DosenPengumumanPage /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <DosenPengumumanPage />
+      </MemoryRouter>,
+    );
 
     await waitFor(() => {
       expect(screen.getByText(/load gagal/i)).toBeInTheDocument();

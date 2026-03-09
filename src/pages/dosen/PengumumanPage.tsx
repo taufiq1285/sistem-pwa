@@ -15,21 +15,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  AlertCircle,
-  Bell,
-  Calendar,
-  FileText,
-  Sparkles,
-} from "lucide-react";
+import { AlertCircle, Bell, Calendar, FileText, Sparkles } from "lucide-react";
 import { format } from "date-fns";
 import { PageHeader } from "@/components/common/PageHeader";
 
 export default function DosenPengumumanPage() {
-  const { user } = useAuth();
+  useAuth();
   const [announcements, setAnnouncements] = useState<Pengumuman[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -94,11 +88,11 @@ export default function DosenPengumumanPage() {
   const getPriorityBadge = (priority: string) => {
     switch (priority) {
       case "high":
-        return <Badge variant="destructive">Penting</Badge>;
+        return <StatusBadge status="error" pulse={false}>Penting</StatusBadge>;
       case "medium":
-        return <Badge variant="default">Menengah</Badge>;
+        return <StatusBadge status="warning" pulse={false}>Menengah</StatusBadge>;
       case "low":
-        return <Badge variant="secondary">Biasa</Badge>;
+        return <StatusBadge status="info" pulse={false}>Biasa</StatusBadge>;
       default:
         return null;
     }
@@ -107,11 +101,11 @@ export default function DosenPengumumanPage() {
   const getTypeBadge = (type: string) => {
     switch (type) {
       case "info":
-        return <Badge variant="outline">Informasi</Badge>;
+        return <StatusBadge status="info" pulse={false}>Informasi</StatusBadge>;
       case "warning":
-        return <Badge className="bg-yellow-500">Peringatan</Badge>;
+        return <StatusBadge status="warning" pulse={false}>Peringatan</StatusBadge>;
       case "event":
-        return <Badge className="bg-blue-500">Event</Badge>;
+        return <StatusBadge status="online" pulse={false}>Event</StatusBadge>;
       default:
         return null;
     }
@@ -161,7 +155,8 @@ export default function DosenPengumumanPage() {
                     Menyiapkan panel notifikasi
                   </h2>
                   <p className="text-sm leading-6 text-slate-600">
-                    Sistem sedang memuat informasi terbaru, termasuk pengumuman prioritas tinggi dan lampiran pendukung.
+                    Sistem sedang memuat informasi terbaru, termasuk pengumuman
+                    prioritas tinggi dan lampiran pendukung.
                   </p>
                 </div>
               </CardContent>
@@ -182,7 +177,10 @@ export default function DosenPengumumanPage() {
             className="section-shell"
           />
 
-          <Alert className="rounded-3xl border-red-200/80 bg-red-50/80 text-red-900 shadow-sm" variant="destructive">
+          <Alert
+            className="rounded-3xl border-red-200/80 bg-red-50/80 text-red-900 shadow-sm"
+            variant="destructive"
+          >
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>{error}</AlertDescription>
           </Alert>
@@ -216,7 +214,9 @@ export default function DosenPengumumanPage() {
                 Tidak ada notifikasi aktif
               </h2>
               <p className="mt-2 max-w-md text-sm leading-6 text-slate-600">
-                Pengumuman baru untuk dosen akan tampil di sini agar Anda dapat memantau agenda, perubahan jadwal, dan informasi akademik dengan cepat.
+                Pengumuman baru untuk dosen akan tampil di sini agar Anda dapat
+                memantau agenda, perubahan jadwal, dan informasi akademik dengan
+                cepat.
               </p>
             </CardContent>
           </Card>
@@ -290,7 +290,8 @@ export default function DosenPengumumanPage() {
 
                       {announcement.tanggal_selesai && (
                         <div className="text-sm font-medium text-slate-500">
-                          Berlaku hingga {format(
+                          Berlaku hingga{" "}
+                          {format(
                             new Date(announcement.tanggal_selesai),
                             "dd MMM yyyy",
                           )}
@@ -309,7 +310,8 @@ export default function DosenPengumumanPage() {
                     Ringkasan Notifikasi
                   </CardTitle>
                   <CardDescription>
-                    Panel cepat untuk membaca kondisi informasi yang sedang aktif.
+                    Panel cepat untuk membaca kondisi informasi yang sedang
+                    aktif.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
@@ -323,8 +325,9 @@ export default function DosenPengumumanPage() {
                     <p className="text-sm text-slate-500">Prioritas tinggi</p>
                     <p className="mt-2 text-2xl font-bold text-red-600">
                       {
-                        announcements.filter((item) => item.prioritas === "high")
-                          .length
+                        announcements.filter(
+                          (item) => item.prioritas === "high",
+                        ).length
                       }
                     </p>
                   </div>

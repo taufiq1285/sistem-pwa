@@ -223,125 +223,127 @@ export default function ProfilePage() {
           </GlassCard>
         </div>
 
-      {error && (
-        <Alert variant="destructive" className="rounded-2xl">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
+        {error && (
+          <Alert variant="destructive" className="rounded-2xl">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
 
-      {success && (
-        <Alert className="rounded-2xl border-emerald-200 bg-emerald-50 text-emerald-800">
-          <CheckCircle2 className="h-4 w-4" />
-          <AlertDescription>{success}</AlertDescription>
-        </Alert>
-      )}
+        {success && (
+          <Alert className="rounded-2xl border-emerald-200 bg-emerald-50 text-emerald-800">
+            <CheckCircle2 className="h-4 w-4" />
+            <AlertDescription>{success}</AlertDescription>
+          </Alert>
+        )}
 
-      <GlassCard
-        intensity="low"
-        className="interactive-card rounded-2xl border-white/40 bg-white/95 shadow-lg dark:border-white/10 dark:bg-slate-900/85"
-      >
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-slate-900">
-            <User className="h-5 w-5 text-blue-700" />
-            Informasi Akun
-          </CardTitle>
-          <CardDescription>Informasi akun dan kontak Anda</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="full_name">Nama Lengkap *</Label>
-              <Input
-                id="full_name"
-                value={userProfile.full_name}
-                onChange={(e) =>
-                  setUserProfile({
-                    ...userProfile,
-                    full_name: e.target.value,
-                  })
-                }
-                placeholder="Masukkan nama lengkap"
-                className="border-blue-100 focus-visible:ring-blue-500"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+        <GlassCard
+          intensity="low"
+          className="interactive-card rounded-2xl border-white/40 bg-white/95 shadow-lg dark:border-white/10 dark:bg-slate-900/85"
+        >
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-slate-900">
+              <User className="h-5 w-5 text-blue-700" />
+              Informasi Akun
+            </CardTitle>
+            <CardDescription>Informasi akun dan kontak Anda</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="full_name">Nama Lengkap *</Label>
                 <Input
-                  id="email"
-                  value={userProfile.email}
+                  id="full_name"
+                  value={userProfile.full_name}
+                  onChange={(e) =>
+                    setUserProfile({
+                      ...userProfile,
+                      full_name: e.target.value,
+                    })
+                  }
+                  placeholder="Masukkan nama lengkap"
+                  className="border-blue-100 focus-visible:ring-blue-500"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                  <Input
+                    id="email"
+                    value={userProfile.email}
+                    disabled
+                    className="border-blue-100 bg-slate-50 pl-10"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="nip">NIP</Label>
+                <Input
+                  id="nip"
+                  value={laboranProfile.nip}
                   disabled
-                  className="border-blue-100 bg-slate-50 pl-10"
+                  className="border-blue-100 bg-slate-50"
                 />
               </div>
             </div>
+          </CardContent>
+        </GlassCard>
 
-            <div className="space-y-2">
-              <Label htmlFor="nip">NIP</Label>
-              <Input
-                id="nip"
-                value={laboranProfile.nip}
-                disabled
-                className="border-blue-100 bg-slate-50"
-              />
-            </div>
-          </div>
-        </CardContent>
-      </GlassCard>
-
-      <GlassCard
-        intensity="low"
-        className="interactive-card rounded-2xl border-white/40 bg-white/95 shadow-lg dark:border-white/10 dark:bg-slate-900/85"
-      >
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-slate-900">
-            <Wrench className="h-5 w-5 text-blue-700" />
-            Informasi Pekerjaan
-          </CardTitle>
-          <CardDescription>Informasi shift dan jadwal kerja Anda</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="shift">Shift Kerja</Label>
-              <Input
-                id="shift"
-                value={laboranProfile.shift}
-                onChange={(e) =>
-                  setLaboranProfile({
-                    ...laboranProfile,
-                    shift: e.target.value,
-                  })
-                }
-                placeholder="Contoh: Pagi (08:00 - 16:00)"
-                className="border-blue-100 focus-visible:ring-blue-500"
-              />
-            </div>
-          </div>
-        </CardContent>
-      </GlassCard>
-
-      <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-        <Button
-          variant="outline"
-          onClick={() => fetchProfile(false)}
-          disabled={saving}
-          className="border-blue-200 text-blue-700 hover:bg-blue-50"
+        <GlassCard
+          intensity="low"
+          className="interactive-card rounded-2xl border-white/40 bg-white/95 shadow-lg dark:border-white/10 dark:bg-slate-900/85"
         >
-          Batal
-        </Button>
-        <Button
-          onClick={handleSave}
-          disabled={saving}
-          className="bg-blue-700 text-white hover:bg-blue-800"
-        >
-          <Save className="mr-2 h-4 w-4" />
-          {saving ? "Menyimpan..." : "Simpan Perubahan"}
-        </Button>
-      </div>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-slate-900">
+              <Wrench className="h-5 w-5 text-blue-700" />
+              Informasi Pekerjaan
+            </CardTitle>
+            <CardDescription>
+              Informasi shift dan jadwal kerja Anda
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="shift">Shift Kerja</Label>
+                <Input
+                  id="shift"
+                  value={laboranProfile.shift}
+                  onChange={(e) =>
+                    setLaboranProfile({
+                      ...laboranProfile,
+                      shift: e.target.value,
+                    })
+                  }
+                  placeholder="Contoh: Pagi (08:00 - 16:00)"
+                  className="border-blue-100 focus-visible:ring-blue-500"
+                />
+              </div>
+            </div>
+          </CardContent>
+        </GlassCard>
+
+        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+          <Button
+            variant="outline"
+            onClick={() => fetchProfile(false)}
+            disabled={saving}
+            className="border-blue-200 text-blue-700 hover:bg-blue-50"
+          >
+            Batal
+          </Button>
+          <Button
+            onClick={handleSave}
+            disabled={saving}
+            className="bg-blue-700 text-white hover:bg-blue-800"
+          >
+            <Save className="mr-2 h-4 w-4" />
+            {saving ? "Menyimpan..." : "Simpan Perubahan"}
+          </Button>
+        </div>
       </div>
     </div>
   );

@@ -18,7 +18,7 @@ interface DashboardCardProps {
     value: number;
     isPositive: boolean;
   };
-  color?: "blue" | "green" | "amber" | "purple" | "red" | "teal";
+  color?: "primary" | "success" | "warning" | "info" | "danger" | "accent";
   className?: string;
   prefix?: string;
   suffix?: string;
@@ -28,43 +28,55 @@ interface DashboardCardProps {
 
 const colorStyles: Record<
   NonNullable<DashboardCardProps["color"]>,
-  { bg: string; text: string; icon: string; ring: string }
+  {
+    bg: string;
+    text: string;
+    icon: string;
+    ring: string;
+    bar: string;
+  }
 > = {
-  blue: {
-    bg: "bg-blue-500/10 dark:bg-blue-500/15",
-    text: "text-blue-600 dark:text-blue-400",
-    icon: "text-blue-500 dark:text-blue-400",
-    ring: "from-blue-500/10",
+  primary: {
+    bg: "bg-primary/10 dark:bg-primary/15",
+    text: "text-primary",
+    icon: "text-primary",
+    ring: "from-primary/12",
+    bar: "bg-primary/20",
   },
-  green: {
-    bg: "bg-green-500/10 dark:bg-green-500/15",
-    text: "text-green-600 dark:text-green-400",
-    icon: "text-green-500 dark:text-green-400",
-    ring: "from-green-500/10",
+  success: {
+    bg: "bg-success/10 dark:bg-success/15",
+    text: "text-success",
+    icon: "text-success",
+    ring: "from-success/12",
+    bar: "bg-success/20",
   },
-  amber: {
-    bg: "bg-amber-500/10 dark:bg-amber-500/15",
-    text: "text-amber-600 dark:text-amber-400",
-    icon: "text-amber-500 dark:text-amber-400",
-    ring: "from-amber-500/10",
+  warning: {
+    bg: "bg-warning/15 dark:bg-warning/15",
+    text: "text-warning",
+    icon: "text-warning",
+    ring: "from-warning/15",
+    bar: "bg-warning/25",
   },
-  purple: {
-    bg: "bg-purple-500/10 dark:bg-purple-500/15",
-    text: "text-purple-600 dark:text-purple-400",
-    icon: "text-purple-500 dark:text-purple-400",
-    ring: "from-purple-500/10",
+  info: {
+    bg: "bg-info/10 dark:bg-info/15",
+    text: "text-info",
+    icon: "text-info",
+    ring: "from-info/12",
+    bar: "bg-info/20",
   },
-  red: {
-    bg: "bg-red-500/10 dark:bg-red-500/15",
-    text: "text-red-600 dark:text-red-400",
-    icon: "text-red-500 dark:text-red-400",
-    ring: "from-red-500/10",
+  danger: {
+    bg: "bg-destructive/10 dark:bg-destructive/15",
+    text: "text-destructive",
+    icon: "text-destructive",
+    ring: "from-destructive/12",
+    bar: "bg-destructive/20",
   },
-  teal: {
-    bg: "bg-cyan-500/10 dark:bg-cyan-500/15",
-    text: "text-cyan-600 dark:text-cyan-400",
-    icon: "text-cyan-500 dark:text-cyan-400",
-    ring: "from-cyan-500/10",
+  accent: {
+    bg: "bg-accent/15 dark:bg-accent/20",
+    text: "text-accent",
+    icon: "text-accent",
+    ring: "from-accent/15",
+    bar: "bg-accent/25",
   },
 };
 
@@ -73,7 +85,7 @@ export function DashboardCard({
   value,
   icon: Icon,
   trend,
-  color = "blue",
+  color = "primary",
   className,
   prefix,
   suffix,
@@ -112,8 +124,8 @@ export function DashboardCard({
                   className={cn(
                     "mb-1 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold",
                     trend.isPositive
-                      ? "bg-green-500/10 text-green-700 dark:bg-green-500/15 dark:text-green-400"
-                      : "bg-red-500/10 text-red-700 dark:bg-red-500/15 dark:text-red-400",
+                      ? "bg-success/10 text-success dark:bg-success/15"
+                      : "bg-destructive/10 text-destructive dark:bg-destructive/15",
                   )}
                 >
                   {trend.isPositive ? (
@@ -139,7 +151,9 @@ export function DashboardCard({
         {description ? (
           <p className="mt-3 text-sm text-muted-foreground">{description}</p>
         ) : null}
-        <div className={cn("mt-4 h-1 w-16 rounded-full", styles.bg, styles.text)} />
+        <div
+          className={cn("mt-4 h-1 w-16 rounded-full", styles.bar)}
+        />
       </CardContent>
     </Card>
   );

@@ -34,6 +34,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ui/status-badge";
 import {
   Dialog,
   DialogContent,
@@ -201,26 +202,23 @@ export default function PeminjamanAktifPage() {
   };
 
   const getKondisiBadge = (kondisi: string) => {
-    switch (kondisi) {
-      case "baik":
-        return (
-          <Badge variant="default" className="bg-green-600">
-            Baik
-          </Badge>
-        );
-      case "rusak_ringan":
-        return (
-          <Badge variant="default" className="bg-yellow-600">
-            Rusak Ringan
-          </Badge>
-        );
-      case "rusak_berat":
-        return <Badge variant="destructive">Rusak Berat</Badge>;
-      case "maintenance":
-        return <Badge variant="secondary">Maintenance</Badge>;
-      default:
-        return <Badge variant="secondary">{kondisi}</Badge>;
-    }
+    const kondisiMap: Record<string, "success" | "warning" | "error" | "info"> = {
+      baik: "success",
+      rusak_ringan: "warning",
+      rusak_berat: "error",
+      maintenance: "info",
+    };
+    const labels: Record<string, string> = {
+      baik: "Baik",
+      rusak_ringan: "Rusak Ringan",
+      rusak_berat: "Rusak Berat",
+      maintenance: "Maintenance",
+    };
+    return (
+      <StatusBadge status={kondisiMap[kondisi] || "info"} pulse={false}>
+        {labels[kondisi] || kondisi}
+      </StatusBadge>
+    );
   };
 
   const overdueCount = activeBorrowings.filter((b) => b.is_overdue).length;
@@ -256,8 +254,8 @@ export default function PeminjamanAktifPage() {
               </div>
             </div>
             <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-700 dark:text-amber-300 lg:max-w-sm">
-              Pastikan kondisi barang diperiksa sebelum menandai pengembalian agar
-              stok inventaris dan riwayat peminjaman tetap akurat.
+              Pastikan kondisi barang diperiksa sebelum menandai pengembalian
+              agar stok inventaris dan riwayat peminjaman tetap akurat.
             </div>
           </div>
         </GlassCard>
@@ -278,11 +276,15 @@ export default function PeminjamanAktifPage() {
           />
           <DashboardCard
             title="Dikembalikan Hari Ini"
-            value={returnedBorrowings.filter((r) => {
-              const today = new Date().toDateString();
-              const returnDate = new Date(r.tanggal_kembali_aktual).toDateString();
-              return today === returnDate;
-            }).length}
+            value={
+              returnedBorrowings.filter((r) => {
+                const today = new Date().toDateString();
+                const returnDate = new Date(
+                  r.tanggal_kembali_aktual,
+                ).toDateString();
+                return today === returnDate;
+              }).length
+            }
             icon={CheckCircle}
             color="green"
           />
@@ -291,7 +293,10 @@ export default function PeminjamanAktifPage() {
         {/* Tabs */}
         <Tabs defaultValue="active" className="space-y-4">
           <TabsList className="h-auto w-full flex-wrap justify-start gap-2 rounded-2xl border border-border/60 bg-background/80 p-2">
-            <TabsTrigger value="active" className="gap-2 rounded-xl px-4 py-2 text-sm">
+            <TabsTrigger
+              value="active"
+              className="gap-2 rounded-xl px-4 py-2 text-sm"
+            >
               <Package className="h-4 w-4" />
               Sedang Dipinjam ({activeBorrowings.length})
             </TabsTrigger>
@@ -320,8 +325,8 @@ export default function PeminjamanAktifPage() {
                   Daftar Peminjaman Aktif
                 </CardTitle>
                 <p className="text-sm text-muted-foreground">
-                  Daftar alat yang belum dikembalikan, termasuk status keterlambatan
-                  dan kondisi saat dipinjam.
+                  Daftar alat yang belum dikembalikan, termasuk status
+                  keterlambatan dan kondisi saat dipinjam.
                 </p>
               </CardHeader>
               <CardContent className="px-0 pb-0">
@@ -331,8 +336,8 @@ export default function PeminjamanAktifPage() {
                   <Alert className="border-border/60 bg-muted/40">
                     <Package className="h-4 w-4" />
                     <AlertDescription className="text-sm text-muted-foreground">
-                      Tidak ada peminjaman aktif. Semua alat yang dipinjam saat ini
-                      sudah dikembalikan.
+                      Tidak ada peminjaman aktif. Semua alat yang dipinjam saat
+                      ini sudah dikembalikan.
                     </AlertDescription>
                   </Alert>
                 ) : (
@@ -390,14 +395,14 @@ export default function PeminjamanAktifPage() {
                             </TableCell>
                             <TableCell>
                               {borrowing.is_overdue ? (
-                                <Badge variant="destructive" className="gap-1">
-                                  <AlertTriangle className="h-3 w-3" />
+                                <StatusBadge status="error" pulse>
+                                  <AlertTriangle className="h-3 w-3 mr-1" />
                                   Terlambat {borrowing.days_overdue} hari
-                                </Badge>
+                                </StatusBadge>
                               ) : (
-                                <Badge className="border border-blue-500/30 bg-blue-500/10 text-blue-700 dark:text-blue-300">
+                                <StatusBadge status="success" pulse={false}>
                                   Sedang Dipinjam
-                                </Badge>
+                                </StatusBadge>
                               )}
                             </TableCell>
                             <TableCell>
@@ -408,7 +413,9 @@ export default function PeminjamanAktifPage() {
                                 size="sm"
                                 variant="outline"
                                 className="border-emerald-500/40 text-emerald-700 hover:bg-emerald-500/10 dark:text-emerald-300"
-                                onClick={() => handleOpenReturnDialog(borrowing)}
+                                onClick={() =>
+                                  handleOpenReturnDialog(borrowing)
+                                }
                               >
                                 <CheckCircle className="mr-1 h-4 w-4" />
                                 Sudah Kembali
@@ -435,8 +442,8 @@ export default function PeminjamanAktifPage() {
                   Riwayat Pengembalian
                 </CardTitle>
                 <p className="text-sm text-muted-foreground">
-                  Rekap alat yang sudah dikembalikan lengkap dengan kondisi akhir,
-                  catatan, dan nominal denda.
+                  Rekap alat yang sudah dikembalikan lengkap dengan kondisi
+                  akhir, catatan, dan nominal denda.
                 </p>
               </CardHeader>
               <CardContent className="px-0 pb-0">
@@ -446,8 +453,8 @@ export default function PeminjamanAktifPage() {
                   <Alert className="border-border/60 bg-muted/40">
                     <History className="h-4 w-4" />
                     <AlertDescription className="text-sm text-muted-foreground">
-                      Belum ada riwayat pengembalian. Data akan muncul setelah proses
-                      pengembalian pertama selesai dicatat.
+                      Belum ada riwayat pengembalian. Data akan muncul setelah
+                      proses pengembalian pertama selesai dicatat.
                     </AlertDescription>
                   </Alert>
                 ) : (
@@ -503,9 +510,9 @@ export default function PeminjamanAktifPage() {
                                   {formatDate(borrowing.tanggal_kembali_aktual)}
                                 </div>
                                 {borrowing.was_overdue && (
-                                  <Badge variant="destructive" className="mt-1 text-xs">
+                                  <StatusBadge status="error" pulse={false} className="mt-1 text-xs">
                                     Terlambat
-                                  </Badge>
+                                  </StatusBadge>
                                 )}
                               </div>
                             </TableCell>
@@ -576,9 +583,9 @@ export default function PeminjamanAktifPage() {
                         Ringkasan peminjaman
                       </h3>
                       {returnDialog.borrowing.is_overdue && (
-                        <Badge variant="destructive" className="text-xs">
+                        <StatusBadge status="error" pulse className="text-xs">
                           Terlambat {returnDialog.borrowing.days_overdue} hari
-                        </Badge>
+                        </StatusBadge>
                       )}
                     </div>
                     <div className="grid gap-3 sm:grid-cols-2">
@@ -611,7 +618,9 @@ export default function PeminjamanAktifPage() {
                           Jadwal kembali
                         </p>
                         <p className="text-sm font-medium text-foreground">
-                          {formatDate(returnDialog.borrowing.tanggal_kembali_rencana)}
+                          {formatDate(
+                            returnDialog.borrowing.tanggal_kembali_rencana,
+                          )}
                         </p>
                       </div>
                     </div>
@@ -650,7 +659,10 @@ export default function PeminjamanAktifPage() {
                     placeholder="Catatan tambahan tentang kondisi barang..."
                     value={returnForm.keterangan}
                     onChange={(e) =>
-                      setReturnForm({ ...returnForm, keterangan: e.target.value })
+                      setReturnForm({
+                        ...returnForm,
+                        keterangan: e.target.value,
+                      })
                     }
                     rows={3}
                   />
@@ -676,9 +688,11 @@ export default function PeminjamanAktifPage() {
                   />
                   {returnDialog.borrowing.is_overdue && (
                     <p className="text-xs text-muted-foreground">
-                      Saran: Rp 5.000/hari × {returnDialog.borrowing.days_overdue}{" "}
-                      hari ={" "}
-                      {formatCurrency(returnDialog.borrowing.days_overdue * 5000)}
+                      Saran: Rp 5.000/hari ×{" "}
+                      {returnDialog.borrowing.days_overdue} hari ={" "}
+                      {formatCurrency(
+                        returnDialog.borrowing.days_overdue * 5000,
+                      )}
                     </p>
                   )}
                 </div>
@@ -688,7 +702,9 @@ export default function PeminjamanAktifPage() {
             <DialogFooter>
               <Button
                 variant="outline"
-                onClick={() => setReturnDialog({ ...returnDialog, open: false })}
+                onClick={() =>
+                  setReturnDialog({ ...returnDialog, open: false })
+                }
                 disabled={processing}
               >
                 Batal

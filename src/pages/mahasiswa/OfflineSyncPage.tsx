@@ -24,7 +24,6 @@ export default function OfflineSyncPage() {
   const { isOnline } = useNetworkStatus();
   const { processQueue, stats, isProcessing, isReady } = useSync();
 
-
   const pendingCount = stats?.pending ?? 0;
   const failedCount = stats?.failed ?? 0;
   const completedCount = stats?.completed ?? 0;
@@ -85,7 +84,8 @@ export default function OfflineSyncPage() {
         <Alert className="rounded-2xl border-red-200 bg-red-50 text-red-800">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
-            {failedCount} item gagal disinkronkan. Coba klik "Sinkronkan Sekarang" saat online.
+            {failedCount} item gagal disinkronkan. Coba klik "Sinkronkan
+            Sekarang" saat online.
           </AlertDescription>
         </Alert>
       )}
@@ -140,7 +140,9 @@ export default function OfflineSyncPage() {
 
         <Card className="rounded-2xl border border-blue-100/70 bg-white/95 shadow-sm">
           <CardHeader>
-            <CardTitle className="text-lg text-slate-900">Keamanan Data</CardTitle>
+            <CardTitle className="text-lg text-slate-900">
+              Keamanan Data
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 text-sm text-slate-600">
             <div className="flex items-start gap-2">

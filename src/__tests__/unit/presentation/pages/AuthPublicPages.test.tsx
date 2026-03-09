@@ -110,7 +110,9 @@ describe("Auth/Public Pages", () => {
     render(<NotFoundPage />);
 
     expect(screen.getByText("404")).toBeInTheDocument();
-    expect(screen.getAllByText(/Halaman Tidak Ditemukan/i).length).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText(/Halaman Tidak Ditemukan/i).length,
+    ).toBeGreaterThan(0);
     expect(screen.getByText(/Ke Beranda/i)).toBeInTheDocument();
     expect(screen.getByText(/Ke Login/i)).toBeInTheDocument();
   });

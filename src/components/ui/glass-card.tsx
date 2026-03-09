@@ -13,7 +13,10 @@ interface GlassCardProps extends React.ComponentProps<"div"> {
   glow?: boolean;
 }
 
-const intensityStyles: Record<NonNullable<GlassCardProps["intensity"]>, string> = {
+const intensityStyles: Record<
+  NonNullable<GlassCardProps["intensity"]>,
+  string
+> = {
   low: "bg-white/40 dark:bg-white/10 backdrop-blur-sm",
   medium: "bg-white/60 dark:bg-white/20 backdrop-blur-md",
   high: "bg-white/80 dark:bg-white/30 backdrop-blur-xl",

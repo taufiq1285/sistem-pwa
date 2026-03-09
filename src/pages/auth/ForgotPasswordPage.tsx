@@ -57,7 +57,8 @@ export function ForgotPasswordPage() {
     } catch (err: any) {
       console.error("Password reset error:", err);
       setError(
-        err.message || "Gagal mengirim email reset password. Silakan coba lagi.",
+        err.message ||
+          "Gagal mengirim email reset password. Silakan coba lagi.",
       );
     } finally {
       setLoading(false);
@@ -92,7 +93,8 @@ export function ForgotPasswordPage() {
                   Cek Email Anda
                 </CardTitle>
                 <CardDescription className="mx-auto max-w-sm text-sm text-blue-100 sm:text-base">
-                  Kami telah mengirim link reset password ke <strong>{email}</strong>
+                  Kami telah mengirim link reset password ke{" "}
+                  <strong>{email}</strong>
                 </CardDescription>
               </div>
             </CardHeader>
@@ -101,8 +103,8 @@ export function ForgotPasswordPage() {
               <Alert className="border-emerald-200 bg-emerald-50 text-emerald-900">
                 <ShieldCheck className="h-4 w-4" />
                 <AlertDescription>
-                  Klik tautan pada email untuk mengatur ulang password Anda. Link
-                  akan kedaluwarsa dalam 1 jam.
+                  Klik tautan pada email untuk mengatur ulang password Anda.
+                  Link akan kedaluwarsa dalam 1 jam.
                 </AlertDescription>
               </Alert>
 
@@ -171,7 +173,10 @@ export function ForgotPasswordPage() {
           <CardContent className="px-6 py-6 sm:px-8">
             <form onSubmit={handleSubmit} className="space-y-5">
               {error && (
-                <Alert variant="destructive" className="border-destructive/20 bg-destructive/5">
+                <Alert
+                  variant="destructive"
+                  className="border-destructive/20 bg-destructive/5"
+                >
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>{error}</AlertDescription>
                 </Alert>

@@ -41,7 +41,8 @@ const buttonEnhancedVariants = cva(
 );
 
 export interface ButtonEnhancedProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+  extends
+    React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonEnhancedVariants> {
   asChild?: boolean;
   loading?: boolean;

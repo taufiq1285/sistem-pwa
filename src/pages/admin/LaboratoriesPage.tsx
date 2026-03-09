@@ -285,7 +285,9 @@ export default function LaboratoriesPage() {
       {/* Header */}
       <div className="section-shell flex items-center justify-between rounded-2xl p-5">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Manajemen Laboratorium</h1>
+          <h1 className="text-2xl font-bold text-foreground">
+            Manajemen Laboratorium
+          </h1>
           <p className="text-sm text-muted-foreground mt-1">
             Kelola semua fasilitas laboratorium
           </p>
@@ -309,7 +311,10 @@ export default function LaboratoriesPage() {
         />
         <DashboardCard
           title="Total Kapasitas"
-          value={laboratories.reduce((sum, lab) => sum + (lab.kapasitas || 0), 0)}
+          value={laboratories.reduce(
+            (sum, lab) => sum + (lab.kapasitas || 0),
+            0,
+          )}
           icon={Users}
           color="purple"
         />

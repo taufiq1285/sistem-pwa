@@ -336,7 +336,9 @@ describe("Mahasiswa PresensiPage", () => {
   it("menampilkan judul halaman Presensi / Kehadiran", async () => {
     wrap(<PresensiPage />);
     await waitFor(() =>
-      expect(screen.getAllByText(/Presensi|Kehadiran/i).length).toBeGreaterThan(0),
+      expect(screen.getAllByText(/Presensi|Kehadiran/i).length).toBeGreaterThan(
+        0,
+      ),
     );
   });
 

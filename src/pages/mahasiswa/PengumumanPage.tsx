@@ -120,7 +120,9 @@ export default function PengumumanPage() {
         );
       case "event":
         return (
-          <Badge className="bg-blue-600 text-white hover:bg-blue-700">Event</Badge>
+          <Badge className="bg-blue-600 text-white hover:bg-blue-700">
+            Event
+          </Badge>
         );
       default:
         return null;
@@ -299,7 +301,10 @@ export default function PengumumanPage() {
                 {announcement.tanggal_selesai && (
                   <div className="mt-4 text-xs text-slate-500 sm:text-sm">
                     Berlaku hingga{" "}
-                    {format(new Date(announcement.tanggal_selesai), "dd MMM yyyy")}
+                    {format(
+                      new Date(announcement.tanggal_selesai),
+                      "dd MMM yyyy",
+                    )}
                   </div>
                 )}
               </CardContent>

@@ -328,17 +328,26 @@ export default function EquipmentsPage() {
       {/* Header */}
       <div className="section-shell flex items-center justify-between rounded-2xl p-5">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Manajemen Peralatan</h1>
+          <h1 className="text-2xl font-bold text-foreground">
+            Manajemen Peralatan
+          </h1>
           <p className="text-sm text-muted-foreground mt-1">
             Kelola inventaris peralatan laboratorium
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={loadData} className="font-semibold">
+          <Button
+            variant="outline"
+            onClick={loadData}
+            className="font-semibold"
+          >
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
-          <Button onClick={handleAdd} className="font-semibold bg-linear-to-r from-blue-600 to-indigo-600 text-white">
+          <Button
+            onClick={handleAdd}
+            className="font-semibold bg-linear-to-r from-blue-600 to-indigo-600 text-white"
+          >
             <Plus className="h-4 w-4 mr-2" />
             Tambah Peralatan
           </Button>
@@ -347,10 +356,30 @@ export default function EquipmentsPage() {
 
       {/* Statistics */}
       <div className="grid gap-4 md:grid-cols-4">
-        <DashboardCard title="Total Barang" value={stats.total} icon={Package} color="blue" />
-        <DashboardCard title="Kondisi Baik" value={stats.available} icon={Package} color="green" />
-        <DashboardCard title="Rusak" value={stats.damaged} icon={AlertCircle} color="red" />
-        <DashboardCard title="Dipinjam" value={stats.borrowed} icon={AlertCircle} color="amber" />
+        <DashboardCard
+          title="Total Barang"
+          value={stats.total}
+          icon={Package}
+          color="blue"
+        />
+        <DashboardCard
+          title="Kondisi Baik"
+          value={stats.available}
+          icon={Package}
+          color="green"
+        />
+        <DashboardCard
+          title="Rusak"
+          value={stats.damaged}
+          icon={AlertCircle}
+          color="red"
+        />
+        <DashboardCard
+          title="Dipinjam"
+          value={stats.borrowed}
+          icon={AlertCircle}
+          color="amber"
+        />
       </div>
 
       {/* Search */}

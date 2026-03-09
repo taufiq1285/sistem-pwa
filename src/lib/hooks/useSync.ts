@@ -52,7 +52,9 @@ export interface UseSyncReturn {
 // SYNC PROCESSOR
 // ============================================================================
 
-function sanitizeQueueData(data: Record<string, unknown>): Record<string, unknown> {
+function sanitizeQueueData(
+  data: Record<string, unknown>,
+): Record<string, unknown> {
   const payload = { ...data };
   delete (payload as any)._metadata;
   return payload;
@@ -63,7 +65,9 @@ async function processSyncQueueItem(item: SyncQueueItem): Promise<void> {
 
   if (item.entity === "kuis_jawaban") {
     if (item.operation === "delete") {
-      throw new Error("Delete operation is not supported for kuis_jawaban offline sync");
+      throw new Error(
+        "Delete operation is not supported for kuis_jawaban offline sync",
+      );
     }
 
     const attempt_id = data.attempt_id as string | undefined;
@@ -71,12 +75,13 @@ async function processSyncQueueItem(item: SyncQueueItem): Promise<void> {
     const jawaban = data.jawaban as string | undefined;
 
     if (!attempt_id || !soal_id || jawaban === undefined) {
-      throw new Error("Invalid kuis_jawaban payload: attempt_id, soal_id, dan jawaban wajib ada");
+      throw new Error(
+        "Invalid kuis_jawaban payload: attempt_id, soal_id, dan jawaban wajib ada",
+      );
     }
 
-    const { submitAnswerSafe } = await import(
-      "@/lib/api/kuis-versioned-simple.api"
-    );
+    const { submitAnswerSafe } =
+      await import("@/lib/api/kuis-versioned-simple.api");
     await submitAnswerSafe({ attempt_id, soal_id, jawaban });
     return;
   }
@@ -90,7 +95,8 @@ async function processSyncQueueItem(item: SyncQueueItem): Promise<void> {
     user: "users",
   };
 
-  const table = tableByEntity[item.entity as Exclude<SyncEntity, "kuis_jawaban">];
+  const table =
+    tableByEntity[item.entity as Exclude<SyncEntity, "kuis_jawaban">];
 
   if (!table) {
     throw new Error(`Unsupported sync entity: ${item.entity}`);
@@ -109,7 +115,10 @@ async function processSyncQueueItem(item: SyncQueueItem): Promise<void> {
 
   if (item.operation === "update") {
     const { id: _ignored, ...updateData } = data;
-    const { error } = await (supabase as any).from(table).update(updateData).eq("id", id);
+    const { error } = await (supabase as any)
+      .from(table)
+      .update(updateData)
+      .eq("id", id);
     if (error) throw error;
     return;
   }
