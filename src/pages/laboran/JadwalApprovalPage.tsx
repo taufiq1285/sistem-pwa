@@ -26,7 +26,7 @@ import { Button } from "@/components/ui/button";
 import { DashboardCard } from "@/components/ui/dashboard-card";
 import { DashboardSkeleton } from "@/components/ui/dashboard-skeleton";
 import { GlassCard } from "@/components/ui/glass-card";
-import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -288,7 +288,8 @@ export default function JadwalApprovalPage() {
                     Kelola Jadwal Praktikum
                   </h1>
                   <p className="text-muted-foreground">
-                    Approve jadwal praktikum dosen termasuk booking laboratorium otomatis.
+                    Approve jadwal praktikum dosen termasuk booking laboratorium
+                    otomatis.
                   </p>
                 </div>
               </div>
@@ -365,485 +366,492 @@ export default function JadwalApprovalPage() {
             </TabsTrigger>
           </TabsList>
 
-        {/* Pending Tab */}
-        <TabsContent value="pending" className="space-y-4">
-          {loading ? (
-            <DashboardSkeleton />
-          ) : jadwalList.filter((j) => j.status === "pending").length === 0 ? (
-            <GlassCard className="border-white/40 bg-white/85 dark:border-white/10 dark:bg-slate-900/85">
-              <div className="py-12 text-center">
-                <Clock className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-                <h3 className="text-lg font-semibold">Tidak ada jadwal menunggu</h3>
-                <p className="text-sm text-muted-foreground">
-                  Belum ada jadwal praktikum yang menunggu persetujuan
-                </p>
-              </div>
-            </GlassCard>
-          ) : (
-            <Card className="border-0 shadow-xl">
-              <CardContent className="p-6">
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Tanggal</TableHead>
-                        <TableHead>Hari</TableHead>
-                        <TableHead>Waktu</TableHead>
-                        <TableHead>Mata Kuliah / Kelas</TableHead>
-                        <TableHead>Laboratorium</TableHead>
-                        <TableHead>Dosen</TableHead>
-                        <TableHead>Topik</TableHead>
-                        <TableHead className="text-right">Aksi</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {jadwalList
-                        .filter((j) => j.status === "pending")
-                        .map((jadwal) => {
-                          const kelas = jadwal.kelas as any;
-                          const lab = jadwal.laboratorium as any;
-                          const dosen = jadwal.dosen_user as any;
+          {/* Pending Tab */}
+          <TabsContent value="pending" className="space-y-4">
+            {loading ? (
+              <DashboardSkeleton />
+            ) : jadwalList.filter((j) => j.status === "pending").length ===
+              0 ? (
+              <GlassCard className="border-white/40 bg-white/85 dark:border-white/10 dark:bg-slate-900/85">
+                <div className="py-12 text-center">
+                  <Clock className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+                  <h3 className="text-lg font-semibold">
+                    Tidak ada jadwal menunggu
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Belum ada jadwal praktikum yang menunggu persetujuan
+                  </p>
+                </div>
+              </GlassCard>
+            ) : (
+              <Card className="border-0 shadow-xl">
+                <CardContent className="p-6">
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Tanggal</TableHead>
+                          <TableHead>Hari</TableHead>
+                          <TableHead>Waktu</TableHead>
+                          <TableHead>Mata Kuliah / Kelas</TableHead>
+                          <TableHead>Laboratorium</TableHead>
+                          <TableHead>Dosen</TableHead>
+                          <TableHead>Topik</TableHead>
+                          <TableHead className="text-right">Aksi</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {jadwalList
+                          .filter((j) => j.status === "pending")
+                          .map((jadwal) => {
+                            const kelas = jadwal.kelas as any;
+                            const lab = jadwal.laboratorium as any;
+                            const dosen = jadwal.dosen_user as any;
 
-                          return (
-                            <TableRow key={jadwal.id}>
-                              <TableCell>
-                                <div className="font-medium">
-                                  {jadwal.tanggal_praktikum
-                                    ? format(
-                                        new Date(jadwal.tanggal_praktikum),
-                                        "dd MMM yyyy",
-                                        { locale: localeId },
-                                      )
-                                    : "-"}
-                                </div>
-                              </TableCell>
-                              <TableCell>{jadwal.hari || "-"}</TableCell>
-                              <TableCell>
-                                <div className="text-sm">
-                                  {jadwal.jam_mulai} - {jadwal.jam_selesai}
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                <div>
+                            return (
+                              <TableRow key={jadwal.id}>
+                                <TableCell>
                                   <div className="font-medium">
-                                    {kelas?.mata_kuliah?.nama_mk || "-"}
+                                    {jadwal.tanggal_praktikum
+                                      ? format(
+                                          new Date(jadwal.tanggal_praktikum),
+                                          "dd MMM yyyy",
+                                          { locale: localeId },
+                                        )
+                                      : "-"}
                                   </div>
-                                  <div className="text-sm text-gray-500">
-                                    {kelas?.nama_kelas || "-"}
+                                </TableCell>
+                                <TableCell>{jadwal.hari || "-"}</TableCell>
+                                <TableCell>
+                                  <div className="text-sm">
+                                    {jadwal.jam_mulai} - {jadwal.jam_selesai}
                                   </div>
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                <div className="font-medium text-orange-700">
-                                  {lab?.nama_lab || "-"}
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                {dosen?.user_id?.full_name || "-"}
-                              </TableCell>
-                              <TableCell
-                                className="max-w-xs truncate"
-                                title={jadwal.topik || "-"}
-                              >
-                                {jadwal.topik || "-"}
-                              </TableCell>
-                              <TableCell className="text-right">
-                                <div className="flex justify-end gap-2">
-                                  <Button
-                                    size="sm"
-                                    onClick={() =>
-                                      handleApproveJadwalClick(jadwal)
-                                    }
-                                    className="bg-green-600 hover:bg-green-700"
-                                  >
-                                    Setujui
-                                  </Button>
+                                </TableCell>
+                                <TableCell>
+                                  <div>
+                                    <div className="font-medium">
+                                      {kelas?.mata_kuliah?.nama_mk || "-"}
+                                    </div>
+                                    <div className="text-sm text-gray-500">
+                                      {kelas?.nama_kelas || "-"}
+                                    </div>
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  <div className="font-medium text-orange-700">
+                                    {lab?.nama_lab || "-"}
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  {dosen?.user_id?.full_name || "-"}
+                                </TableCell>
+                                <TableCell
+                                  className="max-w-xs truncate"
+                                  title={jadwal.topik || "-"}
+                                >
+                                  {jadwal.topik || "-"}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  <div className="flex justify-end gap-2">
+                                    <Button
+                                      size="sm"
+                                      onClick={() =>
+                                        handleApproveJadwalClick(jadwal)
+                                      }
+                                      className="bg-green-600 hover:bg-green-700"
+                                    >
+                                      Setujui
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="destructive"
+                                      onClick={() =>
+                                        handleRejectJadwalClick(jadwal)
+                                      }
+                                    >
+                                      Tolak
+                                    </Button>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
+          {/* Active Tab */}
+          <TabsContent value="active" className="space-y-4">
+            {loading ? (
+              <DashboardSkeleton />
+            ) : jadwalList.filter((j) => j.status === "approved").length ===
+              0 ? (
+              <GlassCard className="border-white/40 bg-white/85 dark:border-white/10 dark:bg-slate-900/85">
+                <div className="py-12 text-center">
+                  <CheckCircle2 className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+                  <h3 className="text-lg font-semibold">
+                    Tidak ada jadwal aktif
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Belum ada jadwal praktikum yang disetujui
+                  </p>
+                </div>
+              </GlassCard>
+            ) : (
+              <Card className="border-0 shadow-xl">
+                <CardContent className="p-6">
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Tanggal</TableHead>
+                          <TableHead>Hari</TableHead>
+                          <TableHead>Waktu</TableHead>
+                          <TableHead>Mata Kuliah / Kelas</TableHead>
+                          <TableHead>Laboratorium</TableHead>
+                          <TableHead>Dosen</TableHead>
+                          <TableHead>Topik</TableHead>
+                          <TableHead className="text-right">Aksi</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {jadwalList
+                          .filter((j) => j.status === "approved")
+                          .map((jadwal) => {
+                            const kelas = jadwal.kelas as any;
+                            const lab = jadwal.laboratorium as any;
+                            const dosen = jadwal.dosen_user as any;
+
+                            return (
+                              <TableRow key={jadwal.id}>
+                                <TableCell>
+                                  <div className="font-medium">
+                                    {jadwal.tanggal_praktikum
+                                      ? format(
+                                          new Date(jadwal.tanggal_praktikum),
+                                          "dd MMM yyyy",
+                                          { locale: localeId },
+                                        )
+                                      : "-"}
+                                  </div>
+                                </TableCell>
+                                <TableCell>{jadwal.hari || "-"}</TableCell>
+                                <TableCell>
+                                  <div className="text-sm">
+                                    {jadwal.jam_mulai} - {jadwal.jam_selesai}
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  <div>
+                                    <div className="font-medium">
+                                      {kelas?.mata_kuliah?.nama_mk || "-"}
+                                    </div>
+                                    <div className="text-sm text-gray-500">
+                                      {kelas?.nama_kelas || "-"}
+                                    </div>
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  <div className="font-medium text-green-700">
+                                    {lab?.nama_lab || "-"}
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  {dosen?.user_id?.full_name || "-"}
+                                </TableCell>
+                                <TableCell
+                                  className="max-w-xs truncate"
+                                  title={jadwal.topik || "-"}
+                                >
+                                  {jadwal.topik || "-"}
+                                </TableCell>
+                                <TableCell className="text-right">
                                   <Button
                                     size="sm"
                                     variant="destructive"
-                                    onClick={() =>
-                                      handleRejectJadwalClick(jadwal)
-                                    }
+                                    onClick={() => handleCancelClick(jadwal)}
                                   >
-                                    Tolak
+                                    Batalkan
                                   </Button>
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })}
-                    </TableBody>
-                  </Table>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
+          {/* History Tab */}
+          <TabsContent value="history" className="space-y-4">
+            {loading ? (
+              <DashboardSkeleton />
+            ) : jadwalList.filter(
+                (j) => j.status === "cancelled" || j.status === "rejected",
+              ).length === 0 ? (
+              <GlassCard className="border-white/40 bg-white/85 dark:border-white/10 dark:bg-slate-900/85">
+                <div className="py-12 text-center">
+                  <History className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+                  <h3 className="text-lg font-semibold">Tidak ada riwayat</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Belum ada jadwal yang dibatalkan atau ditolak
+                  </p>
                 </div>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
+              </GlassCard>
+            ) : (
+              <Card className="border-0 shadow-xl">
+                <CardContent className="p-6">
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Tanggal</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Waktu</TableHead>
+                          <TableHead>Mata Kuliah / Kelas</TableHead>
+                          <TableHead>Laboratorium</TableHead>
+                          <TableHead>Dosen</TableHead>
+                          <TableHead>Topik</TableHead>
+                          <TableHead>Alasan</TableHead>
+                          <TableHead className="text-right">Aksi</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {jadwalList
+                          .filter(
+                            (j) =>
+                              j.status === "cancelled" ||
+                              j.status === "rejected",
+                          )
+                          .map((jadwal) => {
+                            const kelas = jadwal.kelas as any;
+                            const lab = jadwal.laboratorium as any;
+                            const dosen = jadwal.dosen_user as any;
 
-        {/* Active Tab */}
-        <TabsContent value="active" className="space-y-4">
-          {loading ? (
-            <DashboardSkeleton />
-          ) : jadwalList.filter((j) => j.status === "approved").length === 0 ? (
-            <GlassCard className="border-white/40 bg-white/85 dark:border-white/10 dark:bg-slate-900/85">
-              <div className="py-12 text-center">
-                <CheckCircle2 className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-                <h3 className="text-lg font-semibold">Tidak ada jadwal aktif</h3>
-                <p className="text-sm text-muted-foreground">
-                  Belum ada jadwal praktikum yang disetujui
-                </p>
-              </div>
-            </GlassCard>
-          ) : (
-            <Card className="border-0 shadow-xl">
-              <CardContent className="p-6">
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Tanggal</TableHead>
-                        <TableHead>Hari</TableHead>
-                        <TableHead>Waktu</TableHead>
-                        <TableHead>Mata Kuliah / Kelas</TableHead>
-                        <TableHead>Laboratorium</TableHead>
-                        <TableHead>Dosen</TableHead>
-                        <TableHead>Topik</TableHead>
-                        <TableHead className="text-right">Aksi</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {jadwalList
-                        .filter((j) => j.status === "approved")
-                        .map((jadwal) => {
-                          const kelas = jadwal.kelas as any;
-                          const lab = jadwal.laboratorium as any;
-                          const dosen = jadwal.dosen_user as any;
-
-                          return (
-                            <TableRow key={jadwal.id}>
-                              <TableCell>
-                                <div className="font-medium">
-                                  {jadwal.tanggal_praktikum
-                                    ? format(
-                                        new Date(jadwal.tanggal_praktikum),
-                                        "dd MMM yyyy",
-                                        { locale: localeId },
-                                      )
-                                    : "-"}
-                                </div>
-                              </TableCell>
-                              <TableCell>{jadwal.hari || "-"}</TableCell>
-                              <TableCell>
-                                <div className="text-sm">
-                                  {jadwal.jam_mulai} - {jadwal.jam_selesai}
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                <div>
+                            return (
+                              <TableRow key={jadwal.id}>
+                                <TableCell>
                                   <div className="font-medium">
-                                    {kelas?.mata_kuliah?.nama_mk || "-"}
+                                    {jadwal.tanggal_praktikum
+                                      ? format(
+                                          new Date(jadwal.tanggal_praktikum),
+                                          "dd MMM yyyy",
+                                          { locale: localeId },
+                                        )
+                                      : "-"}
                                   </div>
-                                  <div className="text-sm text-gray-500">
-                                    {kelas?.nama_kelas || "-"}
-                                  </div>
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                <div className="font-medium text-green-700">
-                                  {lab?.nama_lab || "-"}
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                {dosen?.user_id?.full_name || "-"}
-                              </TableCell>
-                              <TableCell
-                                className="max-w-xs truncate"
-                                title={jadwal.topik || "-"}
-                              >
-                                {jadwal.topik || "-"}
-                              </TableCell>
-                              <TableCell className="text-right">
-                                <Button
-                                  size="sm"
-                                  variant="destructive"
-                                  onClick={() => handleCancelClick(jadwal)}
-                                >
-                                  Batalkan
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })}
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-
-        {/* History Tab */}
-        <TabsContent value="history" className="space-y-4">
-          {loading ? (
-            <DashboardSkeleton />
-          ) : jadwalList.filter(
-              (j) => j.status === "cancelled" || j.status === "rejected",
-            ).length === 0 ? (
-            <GlassCard className="border-white/40 bg-white/85 dark:border-white/10 dark:bg-slate-900/85">
-              <div className="py-12 text-center">
-                <History className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-                <h3 className="text-lg font-semibold">Tidak ada riwayat</h3>
-                <p className="text-sm text-muted-foreground">
-                  Belum ada jadwal yang dibatalkan atau ditolak
-                </p>
-              </div>
-            </GlassCard>
-          ) : (
-            <Card className="border-0 shadow-xl">
-              <CardContent className="p-6">
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Tanggal</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Waktu</TableHead>
-                        <TableHead>Mata Kuliah / Kelas</TableHead>
-                        <TableHead>Laboratorium</TableHead>
-                        <TableHead>Dosen</TableHead>
-                        <TableHead>Topik</TableHead>
-                        <TableHead>Alasan</TableHead>
-                        <TableHead className="text-right">Aksi</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {jadwalList
-                        .filter(
-                          (j) =>
-                            j.status === "cancelled" || j.status === "rejected",
-                        )
-                        .map((jadwal) => {
-                          const kelas = jadwal.kelas as any;
-                          const lab = jadwal.laboratorium as any;
-                          const dosen = jadwal.dosen_user as any;
-
-                          return (
-                            <TableRow key={jadwal.id}>
-                              <TableCell>
-                                <div className="font-medium">
-                                  {jadwal.tanggal_praktikum
-                                    ? format(
-                                        new Date(jadwal.tanggal_praktikum),
-                                        "dd MMM yyyy",
-                                        { locale: localeId },
-                                      )
-                                    : "-"}
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                <Badge
-                                  variant={
-                                    jadwal.status === "rejected"
-                                      ? "destructive"
-                                      : "secondary"
-                                  }
-                                >
-                                  {jadwal.status === "rejected"
-                                    ? "Ditolak"
-                                    : "Dibatalkan"}
-                                </Badge>
-                              </TableCell>
-                              <TableCell>
-                                <div className="text-sm">
-                                  {jadwal.jam_mulai} - {jadwal.jam_selesai}
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                <div>
-                                  <div className="font-medium">
-                                    {kelas?.mata_kuliah?.nama_mk || "-"}
-                                  </div>
-                                  <div className="text-sm text-gray-500">
-                                    {kelas?.nama_kelas || "-"}
-                                  </div>
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                <div className="font-medium text-gray-700">
-                                  {lab?.nama_lab || "-"}
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                {dosen?.user_id?.full_name || "-"}
-                              </TableCell>
-                              <TableCell
-                                className="max-w-xs truncate"
-                                title={jadwal.topik || "-"}
-                              >
-                                {jadwal.topik || "-"}
-                              </TableCell>
-                              <TableCell className="max-w-xs truncate">
-                                {jadwal.cancellation_reason ||
-                                  jadwal.rejection_reason ||
-                                  "-"}
-                              </TableCell>
-                              <TableCell className="text-right">
-                                {jadwal.status === "cancelled" && (
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() =>
-                                      handleReactivateClick(jadwal)
-                                    }
+                                </TableCell>
+                                <TableCell>
+                                  <StatusBadge
+                                    status={jadwal.status === "rejected" ? "error" : "offline"}
+                                    pulse={false}
                                   >
-                                    <RotateCcw className="h-4 w-4 mr-2" />
-                                    Aktifkan
-                                  </Button>
-                                )}
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })}
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
+                                    {jadwal.status === "rejected"
+                                      ? "Ditolak"
+                                      : "Dibatalkan"}
+                                  </StatusBadge>
+                                </TableCell>
+                                <TableCell>
+                                  <div className="text-sm">
+                                    {jadwal.jam_mulai} - {jadwal.jam_selesai}
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  <div>
+                                    <div className="font-medium">
+                                      {kelas?.mata_kuliah?.nama_mk || "-"}
+                                    </div>
+                                    <div className="text-sm text-gray-500">
+                                      {kelas?.nama_kelas || "-"}
+                                    </div>
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  <div className="font-medium text-gray-700">
+                                    {lab?.nama_lab || "-"}
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  {dosen?.user_id?.full_name || "-"}
+                                </TableCell>
+                                <TableCell
+                                  className="max-w-xs truncate"
+                                  title={jadwal.topik || "-"}
+                                >
+                                  {jadwal.topik || "-"}
+                                </TableCell>
+                                <TableCell className="max-w-xs truncate">
+                                  {jadwal.cancellation_reason ||
+                                    jadwal.rejection_reason ||
+                                    "-"}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  {jadwal.status === "cancelled" && (
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() =>
+                                        handleReactivateClick(jadwal)
+                                      }
+                                    >
+                                      <RotateCcw className="h-4 w-4 mr-2" />
+                                      Aktifkan
+                                    </Button>
+                                  )}
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
         </Tabs>
 
         {/* Approve Dialog */}
         <Dialog open={showApproveDialog} onOpenChange={setShowApproveDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Setujui Jadwal Praktikum</DialogTitle>
-            <DialogDescription>
-              Apakah Anda yakin ingin menyetujui jadwal praktikum ini? Lab akan
-              otomatis ter-booking untuk jadwal ini.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setShowApproveDialog(false)}
-              disabled={submitting}
-            >
-              Batal
-            </Button>
-            <Button onClick={handleApproveJadwalConfirm} disabled={submitting}>
-              {submitting ? "Memproses..." : "Setujui"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Setujui Jadwal Praktikum</DialogTitle>
+              <DialogDescription>
+                Apakah Anda yakin ingin menyetujui jadwal praktikum ini? Lab
+                akan otomatis ter-booking untuk jadwal ini.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setShowApproveDialog(false)}
+                disabled={submitting}
+              >
+                Batal
+              </Button>
+              <Button
+                onClick={handleApproveJadwalConfirm}
+                disabled={submitting}
+              >
+                {submitting ? "Memproses..." : "Setujui"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
-      {/* Reject Dialog */}
-      <Dialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Tolak Jadwal Praktikum</DialogTitle>
-            <DialogDescription>
-              Masukkan alasan penolakan jadwal praktikum ini
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div>
-              <Label htmlFor="rejection-reason">Alasan Penolakan</Label>
-              <Textarea
-                id="rejection-reason"
-                placeholder="Contoh: Lab sedang perbaikan..."
-                value={rejectionReason}
-                onChange={(e) => setRejectionReason(e.target.value)}
-                rows={3}
-              />
+        {/* Reject Dialog */}
+        <Dialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Tolak Jadwal Praktikum</DialogTitle>
+              <DialogDescription>
+                Masukkan alasan penolakan jadwal praktikum ini
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div>
+                <Label htmlFor="rejection-reason">Alasan Penolakan</Label>
+                <Textarea
+                  id="rejection-reason"
+                  placeholder="Contoh: Lab sedang perbaikan..."
+                  value={rejectionReason}
+                  onChange={(e) => setRejectionReason(e.target.value)}
+                  rows={3}
+                />
+              </div>
             </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setShowRejectDialog(false)}
-              disabled={submitting}
-            >
-              Batal
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleRejectJadwalConfirm}
-              disabled={submitting || !rejectionReason.trim()}
-            >
-              {submitting ? "Memproses..." : "Tolak"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setShowRejectDialog(false)}
+                disabled={submitting}
+              >
+                Batal
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleRejectJadwalConfirm}
+                disabled={submitting || !rejectionReason.trim()}
+              >
+                {submitting ? "Memproses..." : "Tolak"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
-      {/* Cancel Dialog */}
-      <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Batalkan Jadwal Praktikum</DialogTitle>
-            <DialogDescription>
-              Masukkan alasan pembatalan jadwal praktikum ini
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div>
-              <Label htmlFor="cancellation-reason">Alasan Pembatalan</Label>
-              <Textarea
-                id="cancellation-reason"
-                placeholder="Contoh: Mahasiswa tidak bisa hadir..."
-                value={cancellationReason}
-                onChange={(e) => setCancellationReason(e.target.value)}
-                rows={3}
-              />
+        {/* Cancel Dialog */}
+        <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Batalkan Jadwal Praktikum</DialogTitle>
+              <DialogDescription>
+                Masukkan alasan pembatalan jadwal praktikum ini
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div>
+                <Label htmlFor="cancellation-reason">Alasan Pembatalan</Label>
+                <Textarea
+                  id="cancellation-reason"
+                  placeholder="Contoh: Mahasiswa tidak bisa hadir..."
+                  value={cancellationReason}
+                  onChange={(e) => setCancellationReason(e.target.value)}
+                  rows={3}
+                />
+              </div>
             </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setShowCancelDialog(false)}
-              disabled={submitting}
-            >
-              Batal
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleCancelConfirm}
-              disabled={submitting || !cancellationReason.trim()}
-            >
-              {submitting ? "Memproses..." : "Batalkan Jadwal"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setShowCancelDialog(false)}
+                disabled={submitting}
+              >
+                Batal
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleCancelConfirm}
+                disabled={submitting || !cancellationReason.trim()}
+              >
+                {submitting ? "Memproses..." : "Batalkan Jadwal"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
-      {/* Reactivate Dialog */}
-      <Dialog
-        open={showReactivateDialog}
-        onOpenChange={setShowReactivateDialog}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Aktifkan Kembali Jadwal</DialogTitle>
-            <DialogDescription>
-              Jadwal yang dibatalkan akan diaktifkan kembali
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setShowReactivateDialog(false)}
-              disabled={submitting}
-            >
-              Batal
-            </Button>
-            <Button onClick={handleReactivateConfirm} disabled={submitting}>
-              {submitting ? "Memproses..." : "Aktifkan"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        {/* Reactivate Dialog */}
+        <Dialog
+          open={showReactivateDialog}
+          onOpenChange={setShowReactivateDialog}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Aktifkan Kembali Jadwal</DialogTitle>
+              <DialogDescription>
+                Jadwal yang dibatalkan akan diaktifkan kembali
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setShowReactivateDialog(false)}
+                disabled={submitting}
+              >
+                Batal
+              </Button>
+              <Button onClick={handleReactivateConfirm} disabled={submitting}>
+                {submitting ? "Memproses..." : "Aktifkan"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

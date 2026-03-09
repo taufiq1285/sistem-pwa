@@ -29,16 +29,12 @@ describe("Public + Offline Placeholder Pages", () => {
   it("OfflinePage placeholder tampil", () => {
     render(<OfflinePage />);
 
-    expect(
-      screen.getByText(/Anda Sedang Offline/i),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Anda Sedang Offline/i)).toBeInTheDocument();
   });
 
   it("Mahasiswa OfflineSyncPage placeholder tampil", () => {
     render(<MahasiswaOfflineSyncPage />);
 
-    expect(
-      screen.getByText(/Sinkronisasi Offline/i),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Sinkronisasi Offline/i)).toBeInTheDocument();
   });
 });

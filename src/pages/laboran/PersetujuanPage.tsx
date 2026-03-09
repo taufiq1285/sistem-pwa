@@ -256,7 +256,10 @@ export default function PersetujuanPage() {
             intensity="low"
             className="border-amber-200/70 bg-amber-50/85 shadow-sm dark:border-amber-900/40 dark:bg-amber-950/25"
           >
-            <Alert variant="default" className="border-0 bg-transparent p-0 shadow-none">
+            <Alert
+              variant="default"
+              className="border-0 bg-transparent p-0 shadow-none"
+            >
               <AlertTriangle className="h-4 w-4 text-amber-600" />
               <AlertTitle className="text-amber-800 dark:text-amber-200">
                 Ada permintaan yang menunggu persetujuan
@@ -278,7 +281,9 @@ export default function PersetujuanPage() {
           />
           <DashboardCard
             title="Siap Diproses"
-            value={equipmentRequests.filter((request) => Boolean(request.id)).length}
+            value={
+              equipmentRequests.filter((request) => Boolean(request.id)).length
+            }
             icon={CheckCircle}
             color="green"
           />
@@ -334,7 +339,9 @@ export default function PersetujuanPage() {
                       <TableRow key={request.id}>
                         <TableCell>
                           <div>
-                            <div className="font-medium">{request.peminjam_nama}</div>
+                            <div className="font-medium">
+                              {request.peminjam_nama}
+                            </div>
                             <div className="text-sm text-muted-foreground">
                               {request.peminjam_nim}
                             </div>
@@ -342,7 +349,9 @@ export default function PersetujuanPage() {
                         </TableCell>
                         <TableCell>
                           <div>
-                            <div className="font-medium">{request.inventaris_nama}</div>
+                            <div className="font-medium">
+                              {request.inventaris_nama}
+                            </div>
                             <div className="text-sm text-muted-foreground">
                               {request.inventaris_kode}
                             </div>
@@ -350,9 +359,13 @@ export default function PersetujuanPage() {
                         </TableCell>
                         <TableCell>{request.laboratorium_nama}</TableCell>
                         <TableCell>
-                          <Badge variant="secondary">{request.jumlah_pinjam}</Badge>
+                          <Badge variant="secondary">
+                            {request.jumlah_pinjam}
+                          </Badge>
                         </TableCell>
-                        <TableCell>{formatDate(request.tanggal_pinjam)}</TableCell>
+                        <TableCell>
+                          {formatDate(request.tanggal_pinjam)}
+                        </TableCell>
                         <TableCell>
                           {formatDate(request.tanggal_kembali_rencana)}
                         </TableCell>

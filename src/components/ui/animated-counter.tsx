@@ -31,7 +31,9 @@ export function AnimatedCounter({
       return;
     }
 
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
 
     if (reducedMotion || duration <= 0) {
       setCount(value);

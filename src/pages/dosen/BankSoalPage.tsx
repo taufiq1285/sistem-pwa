@@ -325,7 +325,8 @@ export default function BankSoalPage() {
                 </div>
                 <p className="text-lg font-bold mb-2">Belum ada soal di bank</p>
                 <p className="text-sm text-muted-foreground mb-5">
-                  Mulai dengan membuat soal pilihan ganda pertama untuk memperkaya bank soal.
+                  Mulai dengan membuat soal pilihan ganda pertama untuk
+                  memperkaya bank soal.
                 </p>
                 <Button
                   onClick={() => setShowEditor(true)}

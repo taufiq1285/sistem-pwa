@@ -35,6 +35,7 @@ import {
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { DashboardCard } from "@/components/ui/dashboard-card";
 import { DashboardSkeleton } from "@/components/ui/dashboard-skeleton";
 import { GlassCard } from "@/components/ui/glass-card";
@@ -288,14 +289,15 @@ export default function LaporanPage() {
   };
 
   /**
-   * Get utilization badge variant based on percentage
+   * Get utilization badge status based on percentage
    */
-  const getUtilizationVariant = (
+  const getUtilizationStatus = (
     percentage: number,
-  ): "destructive" | "default" | "outline" => {
-    if (percentage > 75) return "destructive"; // Red: overutilized
-    if (percentage >= 50) return "default"; // Blue: well-utilized
-    return "outline"; // Gray: underutilized
+  ): "error" | "success" | "offline" => {
+    if (percentage > 75) return "error"; // Red: overutilized
+    if (percentage >= 50) return "success"; // Green: well-utilized
+    return "offline"; // Gray: underutilized
+  };
   };
 
   /**
@@ -322,26 +324,26 @@ export default function LaporanPage() {
   const getRankingBadge = (index: number) => {
     if (index === 0) {
       return (
-        <Badge variant="default" className="bg-yellow-500 hover:bg-yellow-600">
+        <StatusBadge status="warning" pulse={false}>
           <Award className="h-3 w-3 mr-1" />
           #1
-        </Badge>
+        </StatusBadge>
       );
     }
     if (index === 1) {
       return (
-        <Badge variant="default" className="bg-gray-400 hover:bg-gray-500">
+        <StatusBadge status="offline" pulse={false}>
           <Award className="h-3 w-3 mr-1" />
           #2
-        </Badge>
+        </StatusBadge>
       );
     }
     if (index === 2) {
       return (
-        <Badge variant="default" className="bg-amber-600 hover:bg-amber-700">
+        <StatusBadge status="info" pulse={false}>
           <Award className="h-3 w-3 mr-1" />
           #3
-        </Badge>
+        </StatusBadge>
       );
     }
     return <Badge variant="outline">#{index + 1}</Badge>;
@@ -429,7 +431,9 @@ export default function LaporanPage() {
                 {/* Borrowing Statistics Cards */}
                 <div className="space-y-4">
                   <div>
-                    <h2 className="text-xl font-semibold mb-1">Statistik Peminjaman</h2>
+                    <h2 className="text-xl font-semibold mb-1">
+                      Statistik Peminjaman
+                    </h2>
                     <p className="text-sm text-muted-foreground">
                       Ringkasan status peminjaman terbaru untuk laboratorium.
                     </p>
@@ -466,7 +470,9 @@ export default function LaporanPage() {
 
                 {/* Equipment Status Card */}
                 <div>
-                  <h2 className="mb-4 text-xl font-semibold">Status Inventaris</h2>
+                  <h2 className="mb-4 text-xl font-semibold">
+                    Status Inventaris
+                  </h2>
                   <GlassCard
                     intensity="low"
                     className="border-white/40 bg-white/85 shadow-lg dark:border-white/10 dark:bg-slate-900/85"
@@ -552,7 +558,9 @@ export default function LaporanPage() {
 
                 {/* Laboratory Usage Card */}
                 <div>
-                  <h2 className="mb-4 text-xl font-semibold">Penggunaan Laboratorium</h2>
+                  <h2 className="mb-4 text-xl font-semibold">
+                    Penggunaan Laboratorium
+                  </h2>
                   <GlassCard
                     intensity="low"
                     className="border-white/40 bg-white/85 shadow-lg dark:border-white/10 dark:bg-slate-900/85"
@@ -744,7 +752,7 @@ export default function LaporanPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <Badge variant="destructive">Perlu Restock</Badge>
+                    <StatusBadge status="error" pulse={false}>Perlu Restock</StatusBadge>
                   </CardContent>
                 </Card>
 
@@ -827,13 +835,14 @@ export default function LaporanPage() {
                           {lab.total_hours} jam
                         </TableCell>
                         <TableCell className="text-right">
-                          <Badge
-                            variant={getUtilizationVariant(
+                          <StatusBadge
+                            status={getUtilizationStatus(
                               lab.utilization_percentage,
                             )}
+                            pulse={false}
                           >
                             {lab.utilization_percentage.toFixed(1)}%
-                          </Badge>
+                          </StatusBadge>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -842,15 +851,15 @@ export default function LaporanPage() {
                 <CardContent className="pt-4">
                   <div className="flex items-center gap-4 text-sm">
                     <div className="flex items-center gap-2">
-                      <Badge variant="outline">{"< 50%"}</Badge>
+                      <StatusBadge status="offline" pulse={false}>{"< 50%"}</StatusBadge>
                       <span className="text-muted-foreground">Rendah</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Badge variant="default">50-75%</Badge>
+                      <StatusBadge status="success" pulse={false}>50-75%</StatusBadge>
                       <span className="text-muted-foreground">Optimal</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Badge variant="destructive">{"> 75%"}</Badge>
+                      <StatusBadge status="error" pulse={false}>{"> 75%"}</StatusBadge>
                       <span className="text-muted-foreground">Tinggi</span>
                     </div>
                   </div>
@@ -910,16 +919,17 @@ export default function LaporanPage() {
                           <span>{formatTimestamp(activity.timestamp)}</span>
                         </div>
                       </div>
-                      <Badge
-                        variant={
+                      <StatusBadge
+                        status={
                           activity.type === "borrowing"
-                            ? "default"
+                            ? "info"
                             : activity.type === "return"
-                              ? "outline"
+                              ? "success"
                               : activity.type === "approval"
-                                ? "default"
-                                : "destructive"
+                                ? "success"
+                                : "error"
                         }
+                        pulse={false}
                       >
                         {activity.type === "borrowing"
                           ? "Pinjam"
@@ -928,7 +938,7 @@ export default function LaporanPage() {
                             : activity.type === "approval"
                               ? "Disetujui"
                               : "Ditolak"}
-                      </Badge>
+                      </StatusBadge>
                     </div>
                   ))}
                 </CardContent>

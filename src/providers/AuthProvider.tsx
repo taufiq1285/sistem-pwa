@@ -24,7 +24,6 @@ import {
   clearOfflineSession,
   restoreOfflineSession,
 } from "@/lib/offline/offline-auth";
-import { recordOnlineLogin } from "@/lib/offline/online-first-auth";
 import { cleanupAllCache } from "@/lib/utils/cache-cleaner";
 
 interface AuthProviderProps {
@@ -321,6 +320,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
             await storeOfflineSession(response.user, response.session);
             await storeUserData(response.user);
             // Record that user has logged in online (required for offline access)
+            const { recordOnlineLogin } = await import(
+              "@/lib/offline/online-first-auth"
+            );
             await recordOnlineLogin(response.user, response.session);
             logger.auth("Offline credentials stored successfully");
           } catch (storageError) {

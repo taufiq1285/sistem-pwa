@@ -59,22 +59,22 @@ export function Header({
   return (
     <header
       className={cn(
-        "sticky top-0 z-40 w-full border-b border-slate-200/80 dark:border-slate-700/80 bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl shadow-md supports-backdrop-filter:bg-white/70 dark:supports-backdrop-filter:bg-slate-900/70",
+        "sticky top-0 z-40 w-full border-b border-border/70 bg-background/80 shadow-sm backdrop-blur-xl supports-backdrop-filter:bg-background/65",
         className,
       )}
     >
       <div className="relative flex min-h-16 items-center justify-between gap-2 px-3 sm:px-4 md:px-6">
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent via-blue-400/40 to-transparent" />
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent via-primary/35 to-transparent" />
         {/* Left: Mobile menu button */}
         <div className="flex items-center gap-4">
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden hover:bg-slate-200 dark:hover:bg-slate-700 transition-all duration-200 hover:scale-105 active:scale-95"
+            className="md:hidden transition-all duration-200 hover:scale-105 hover:bg-accent active:scale-95"
             onClick={onMenuClick}
             title="Toggle menu"
           >
-            <Menu className="h-5 w-5 text-slate-700 dark:text-slate-300" />
+            <Menu className="h-5 w-5 text-foreground" />
           </Button>
 
           {/* Page title or breadcrumb can go here */}
@@ -94,15 +94,15 @@ export function Header({
             <Button
               variant="ghost"
               size="icon"
-              className="relative hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-all duration-200 hover:scale-105 active:scale-95"
+              className="relative transition-all duration-200 hover:scale-105 hover:bg-accent/70 active:scale-95"
               onClick={onNotificationClick}
               title="Notifications"
             >
-              <Bell className="h-5 w-5 text-slate-700 dark:text-slate-300" />
+              <Bell className="h-5 w-5 text-foreground" />
               {notificationCount > 0 && (
                 <Badge
                   variant="destructive"
-                  className="absolute -top-1 -right-1 h-6 w-6 rounded-full p-0 flex items-center justify-center text-xs font-bold border-2 border-white dark:border-slate-800 shadow-lg"
+                  className="absolute -top-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full border-2 border-background p-0 text-xs font-bold shadow-md"
                 >
                   {notificationCount > 9 ? "9+" : notificationCount}
                 </Badge>
@@ -118,10 +118,10 @@ export function Header({
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
-                className="relative h-10 w-10 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-all duration-200 hover:scale-105 active:scale-95"
+                className="relative h-10 w-10 rounded-full transition-all duration-200 hover:scale-105 hover:bg-accent active:scale-95"
                 title="User menu"
               >
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-linear-to-br from-blue-500 to-indigo-600 text-white text-base font-bold shadow-lg shadow-blue-500/30 ring-2 ring-white dark:ring-slate-700">
+                <div className="brand-gradient flex h-10 w-10 items-center justify-center rounded-full text-base font-bold text-primary-foreground shadow-md ring-2 ring-background">
                   {userName.charAt(0).toUpperCase()}
                 </div>
               </Button>
@@ -129,16 +129,16 @@ export function Header({
             <DropdownMenuContent className="w-64" align="end" forceMount>
               <DropdownMenuLabel className="font-normal p-4">
                 <div className="flex flex-col space-y-2">
-                  <p className="text-base font-bold leading-none text-slate-900 dark:text-white">
+                  <p className="text-base font-bold leading-none text-foreground">
                     {userName}
                   </p>
-                  <p className="text-sm font-medium leading-none text-slate-600 dark:text-slate-400">
+                  <p className="text-sm font-medium leading-none text-muted-foreground">
                     {userEmail}
                   </p>
                   {userRole && (
                     <Badge
                       variant="secondary"
-                      className="w-fit text-xs font-bold bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 border border-blue-300 dark:border-blue-600"
+                      className="w-fit border border-primary/20 bg-primary/10 text-xs font-bold text-primary"
                     >
                       {ROLE_LABELS[userRole]}
                     </Badge>
@@ -148,7 +148,7 @@ export function Header({
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={onProfileClick}
-                className="text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer"
+                className="cursor-pointer text-sm font-semibold text-foreground hover:bg-accent hover:text-accent-foreground"
               >
                 <User className="mr-2 h-4 w-4" />
                 <span>Profil</span>
@@ -161,7 +161,7 @@ export function Header({
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={onLogout}
-                className="text-sm font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 cursor-pointer"
+                className="cursor-pointer text-sm font-semibold text-destructive hover:bg-destructive/10 hover:text-destructive"
               >
                 <LogOut className="mr-2 h-4 w-4" />
                 <span>Logout</span>

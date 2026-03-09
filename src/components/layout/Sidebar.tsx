@@ -55,19 +55,19 @@ export function Sidebar({
   return (
     <aside
       className={cn(
-        "relative h-screen bg-linear-to-b from-slate-50 to-blue-50 dark:from-slate-950 dark:to-blue-950/30 border-r border-slate-200 dark:border-slate-700 shadow-xl transition-all duration-300",
+        "relative h-screen border-r border-border/70 bg-background/85 shadow-xl backdrop-blur-xl transition-all duration-300 supports-backdrop-filter:bg-background/75",
         collapsed ? "w-16" : "w-64",
         className,
       )}
     >
       {/* Header */}
-      <div className="flex h-16 items-center justify-between border-b border-slate-200 dark:border-slate-700 px-4 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm">
+      <div className="flex h-16 items-center justify-between border-b border-border/70 bg-background/60 px-4 backdrop-blur-sm">
         {!collapsed && (
           <div>
-            <h2 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">
+            <h2 className="text-lg font-bold tracking-tight text-foreground">
               AKBID Mega Buana
             </h2>
-            <p className="text-xs font-semibold text-slate-600 dark:text-slate-400">
+            <p className="text-xs font-semibold text-muted-foreground">
               Sistem Praktikum
             </p>
           </div>
@@ -77,15 +77,15 @@ export function Sidebar({
           size="icon"
           onClick={handleToggleCollapse}
           className={cn(
-            "hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors",
+            "transition-colors hover:bg-accent hover:text-accent-foreground",
             collapsed && "mx-auto",
           )}
           title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           {collapsed ? (
-            <Menu className="h-4 w-4 text-slate-700 dark:text-slate-300" />
+            <Menu className="h-4 w-4 text-foreground" />
           ) : (
-            <ChevronLeft className="h-4 w-4 text-slate-700 dark:text-slate-300" />
+            <ChevronLeft className="h-4 w-4 text-foreground" />
           )}
         </Button>
       </div>
@@ -102,17 +102,17 @@ export function Sidebar({
                 key={item.href}
                 to={item.href}
                 className={cn(
-                  "flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition-all duration-200 relative overflow-hidden group",
+                  "group relative flex items-center gap-3 overflow-hidden rounded-xl px-3 py-3 text-sm font-semibold transition-all duration-200",
                   "hover:shadow-md",
                   active
-                    ? "bg-linear-to-r from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/30 scale-[1.02]"
-                    : "text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800 hover:text-blue-700 dark:hover:text-blue-300",
+                    ? "brand-gradient scale-[1.02] text-primary-foreground shadow-lg shadow-primary/20"
+                    : "text-foreground hover:bg-accent/70 hover:text-accent-foreground",
                   collapsed && "justify-center px-2",
                 )}
                 title={collapsed ? item.label : item.description}
               >
                 {active && (
-                  <div className="absolute inset-0 bg-linear-to-r from-blue-400 to-indigo-500 opacity-20 animate-pulse" />
+                  <div className="absolute inset-0 bg-linear-to-r from-white/10 via-white/5 to-transparent opacity-60 animate-pulse" />
                 )}
                 <Icon
                   className={cn(
@@ -130,8 +130,8 @@ export function Sidebar({
                         className={cn(
                           "ml-auto font-bold text-xs px-2 py-0.5",
                           active
-                            ? "bg-white/20 text-white border-white/30"
-                            : "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
+                            ? "border-white/25 bg-white/15 text-white"
+                            : "border-primary/15 bg-primary/10 text-primary",
                         )}
                       >
                         {item.badge}
@@ -146,7 +146,7 @@ export function Sidebar({
       </ScrollArea>
 
       {/* Footer - User Info */}
-      <div className="absolute bottom-0 left-0 right-0 border-t border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm">
+      <div className="absolute bottom-0 left-0 right-0 border-t border-border/70 bg-background/60 backdrop-blur-sm">
         <div
           className={cn(
             "flex items-center gap-3 p-4",
@@ -159,20 +159,20 @@ export function Sidebar({
               size="icon"
               onClick={onLogout}
               title="Logout"
-              className="hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+              className="text-destructive transition-colors hover:bg-destructive/10 hover:text-destructive"
             >
               <LogOut className="h-4 w-4" />
             </Button>
           ) : (
             <>
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-linear-to-br from-blue-500 to-indigo-600 text-white text-base font-bold shadow-lg shadow-blue-500/30">
+              <div className="brand-gradient flex h-10 w-10 items-center justify-center rounded-full text-base font-bold text-primary-foreground shadow-md">
                 {userName.charAt(0).toUpperCase()}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-slate-900 dark:text-white truncate">
+                <p className="truncate text-sm font-bold text-foreground">
                   {userName}
                 </p>
-                <p className="text-xs font-semibold text-slate-600 dark:text-slate-400 truncate">
+                <p className="truncate text-xs font-semibold text-muted-foreground">
                   {userEmail}
                 </p>
               </div>
@@ -181,7 +181,7 @@ export function Sidebar({
                 size="icon"
                 onClick={onLogout}
                 title="Logout"
-                className="hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                className="text-destructive transition-colors hover:bg-destructive/10 hover:text-destructive"
               >
                 <LogOut className="h-4 w-4" />
               </Button>

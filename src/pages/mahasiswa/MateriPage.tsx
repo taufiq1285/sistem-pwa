@@ -268,9 +268,12 @@ export default function MahasiswaMateriPage() {
           <CardContent className="p-4 sm:p-6">
             <div className="mb-4 flex items-start justify-between gap-3">
               <div>
-                <h2 className="text-lg font-semibold text-foreground">Filter Materi</h2>
+                <h2 className="text-lg font-semibold text-foreground">
+                  Filter Materi
+                </h2>
                 <p className="text-sm text-muted-foreground">
-                  Saring materi berdasarkan mata kuliah, kelas, minggu, atau kata kunci.
+                  Saring materi berdasarkan mata kuliah, kelas, minggu, atau
+                  kata kunci.
                 </p>
               </div>
             </div>
@@ -369,14 +372,16 @@ export default function MahasiswaMateriPage() {
             />
             <DashboardCard
               title="Materi Minggu Ini"
-              value={materiList.filter((m) => {
-                const now = new Date();
-                const weeksSinceStart = Math.ceil(
-                  (now.getTime() - new Date("2024-01-01").getTime()) /
-                    (7 * 24 * 60 * 60 * 1000),
-                );
-                return m.minggu_ke === weeksSinceStart;
-              }).length}
+              value={
+                materiList.filter((m) => {
+                  const now = new Date();
+                  const weeksSinceStart = Math.ceil(
+                    (now.getTime() - new Date("2024-01-01").getTime()) /
+                      (7 * 24 * 60 * 60 * 1000),
+                  );
+                  return m.minggu_ke === weeksSinceStart;
+                }).length
+              }
               icon={Search}
               color="amber"
             />

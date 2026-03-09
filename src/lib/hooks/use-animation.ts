@@ -111,7 +111,11 @@ export function useCountUp(target: number, duration = 1000) {
   const [value, setValue] = useState(0);
 
   useEffect(() => {
-    if (typeof window === "undefined" || prefersReducedMotion || duration <= 0) {
+    if (
+      typeof window === "undefined" ||
+      prefersReducedMotion ||
+      duration <= 0
+    ) {
       setValue(target);
       return;
     }

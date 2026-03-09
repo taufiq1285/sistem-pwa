@@ -20,6 +20,15 @@ import { logger } from "@/lib/utils/logger";
 // Flag to prevent multiple reloads
 let isReloading = false;
 
+const SW_UPDATE_FETCH_ERROR_PATTERNS = [
+  "failed to update a serviceworker",
+  "an unknown error occurred when fetching the script",
+  "failed to fetch",
+  "networkerror",
+  "the internet connection appears to be offline",
+  "load failed",
+];
+
 /**
  * Reset the reloading flag (for testing purposes)
  */
@@ -226,17 +235,78 @@ function setupUpdateCheck(
   interval: number,
 ): void {
   // Check for updates immediately
-  registration.update().catch((error) => {
-    logger.error("[SW] Update check failed:", error);
+  void checkForServiceWorkerUpdate(registration, {
+    source: "initial-auto-check",
+    logOfflineAsInfo: true,
   });
 
   // Check for updates periodically
   setInterval(() => {
-    logger.info("[SW] Checking for updates...");
-    registration.update().catch((error) => {
-      logger.error("[SW] Update check failed:", error);
+    void checkForServiceWorkerUpdate(registration, {
+      source: "interval",
+      logOfflineAsInfo: true,
     });
   }, interval);
+}
+
+interface SWUpdateCheckOptions {
+  source?: string;
+  silentWhenOffline?: boolean;
+  logOfflineAsInfo?: boolean;
+}
+
+function isLikelyOfflineUpdateError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  const normalizedMessage = message.toLowerCase();
+
+  return SW_UPDATE_FETCH_ERROR_PATTERNS.some((pattern) =>
+    normalizedMessage.includes(pattern),
+  );
+}
+
+export async function checkForServiceWorkerUpdate(
+  registration?: ServiceWorkerRegistration | null,
+  options: SWUpdateCheckOptions = {},
+): Promise<boolean> {
+  const {
+    source = "manual",
+    silentWhenOffline = true,
+    logOfflineAsInfo = false,
+  } = options;
+
+  if (!("serviceWorker" in navigator)) {
+    return false;
+  }
+
+  if (!navigator.onLine) {
+    if (!silentWhenOffline) {
+      logger.info(`[SW] Skipping update check (${source}): browser offline`);
+    }
+    return false;
+  }
+
+  const activeRegistration =
+    registration ?? (await navigator.serviceWorker.getRegistration());
+
+  if (!activeRegistration) {
+    logger.info(`[SW] Skipping update check (${source}): no registration`);
+    return false;
+  }
+
+  try {
+    logger.info(`[SW] Checking for updates (${source})...`);
+    await activeRegistration.update();
+    return true;
+  } catch (error) {
+    if (isLikelyOfflineUpdateError(error)) {
+      const logMethod = logOfflineAsInfo ? logger.info : logger.warn;
+      logMethod(`[SW] Update check skipped (${source}): network unavailable`, error);
+      return false;
+    }
+
+    logger.error(`[SW] Update check failed (${source}):`, error);
+    return false;
+  }
 }
 
 /**

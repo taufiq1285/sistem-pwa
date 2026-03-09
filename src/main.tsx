@@ -3,7 +3,11 @@ import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App.tsx";
 import { logger } from "@/lib/utils/logger";
-import { registerServiceWorker, skipWaiting } from "@/lib/pwa/register-sw";
+import {
+  checkForServiceWorkerUpdate,
+  registerServiceWorker,
+  skipWaiting,
+} from "@/lib/pwa/register-sw";
 import { startSupabaseWarmup } from "@/lib/supabase/warmup";
 import { initializeSyncManager } from "@/lib/offline/sync-manager";
 
@@ -63,11 +67,13 @@ registerServiceWorker({
 
     // ✅ IMMEDIATE UPDATE CHECK: Cek update segera setelah registrasi
     // Ini memastikan user dapat update terbaru saat pertama buka aplikasi
-    try {
-      await registration.update();
+    const updated = await checkForServiceWorkerUpdate(registration, {
+      source: "on-success",
+      logOfflineAsInfo: true,
+    });
+
+    if (updated) {
       logger.info("🔄 Initial update check completed");
-    } catch (error) {
-      logger.warn("⚠️ Initial update check failed:", error);
     }
   },
 
@@ -198,30 +204,22 @@ if ("ononline" in window && "onoffline" in window) {
 // ✅ Cek update setiap kali aplikasi dibuka/difocus kembali
 // Ini berguna untuk PWA yang sering dibuka-tutup
 if ("serviceWorker" in navigator) {
-  window.addEventListener("focus", async () => {
-    try {
-      const registration = await navigator.serviceWorker.getRegistration();
-      if (registration) {
-        logger.info("🔄 Checking for updates (app focused)...");
-        await registration.update();
-      }
-    } catch (error) {
-      logger.warn("⚠️ Update check on focus failed:", error);
-    }
+  window.addEventListener("focus", () => {
+    void checkForServiceWorkerUpdate(undefined, {
+      source: "focus",
+      silentWhenOffline: true,
+      logOfflineAsInfo: true,
+    });
   });
 
   // ✅ Juga cek saat visibility berubah (tab aktif lagi)
-  document.addEventListener("visibilitychange", async () => {
+  document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") {
-      try {
-        const registration = await navigator.serviceWorker.getRegistration();
-        if (registration) {
-          logger.info("🔄 Checking for updates (tab visible)...");
-          await registration.update();
-        }
-      } catch (error) {
-        logger.warn("⚠️ Update check on visible failed:", error);
-      }
+      void checkForServiceWorkerUpdate(undefined, {
+        source: "visibilitychange",
+        silentWhenOffline: true,
+        logOfflineAsInfo: true,
+      });
     }
   });
 }

@@ -1,17 +1,22 @@
 # Rencana Implementasi Komprehensif UI/UX - Sistem Praktikum PWA
 
 ## 🎯 Tujuan
-Menerapkan tema baru dan komponen UI custom ke **semua fitur aktual** aplikasi berdasarkan audit terhadap [`src/routes/index.tsx`](src/routes/index.tsx) dan seluruh halaman di [`src/pages/`](src/pages).
+Menyusun rencana implementasi UI/UX yang **lebih akurat, lebih menarik, dan lebih konsisten** untuk seluruh aplikasi berdasarkan kondisi aktual di [`src/routes/index.tsx`](src/routes/index.tsx), struktur route di [`src/config/routes.config.ts`](src/config/routes.config.ts), fondasi tema di [`src/index.css`](src/index.css), komponen reusable di [`src/components/ui/index.ts`](src/components/ui/index.ts), serta halaman aktual di [`src/pages/`](src/pages).
 
-Dokumen ini menggantikan rencana sebelumnya yang belum mencakup semua fitur per role.
+Dokumen ini menggantikan versi sebelumnya yang masih mencampur:
+- status implementasi nyata,
+- target visual jangka panjang,
+- dan route yang belum sepenuhnya sinkron dengan aplikasi saat ini.
 
 ---
 
-## ✅ Sumber Audit Fitur
-
+## ✅ Sumber Audit Aktual
 Rencana ini disusun dari audit file berikut:
 - [`src/routes/index.tsx`](src/routes/index.tsx)
 - [`src/config/routes.config.ts`](src/config/routes.config.ts)
+- [`src/index.css`](src/index.css)
+- [`src/components/ui/index.ts`](src/components/ui/index.ts)
+- [`src/components/layout/AppLayout.tsx`](src/components/layout/AppLayout.tsx)
 - seluruh halaman dalam [`src/pages/admin/`](src/pages/admin)
 - seluruh halaman dalam [`src/pages/auth/`](src/pages/auth)
 - seluruh halaman dalam [`src/pages/dosen/`](src/pages/dosen)
@@ -22,29 +27,59 @@ Rencana ini disusun dari audit file berikut:
 
 ---
 
-## 🧭 Prinsip Implementasi
+## 🧭 Prinsip Implementasi Baru
 
-1. **Semua role tercakup**: admin, dosen, laboran, mahasiswa, auth, public, shared.
-2. **Berbasis route aktual**: prioritas halaman yang benar-benar dipakai di router.
-3. **Tetap aman**: komponen lama tidak dihapus, migrasi opt-in.
-4. **Foundation lebih dulu**: tema, token, komponen UI reusable.
-5. **Role-by-role rollout**: setelah foundation selesai, implementasi masuk per domain fitur.
+1. **Berbasis route nyata** — halaman yang benar-benar dipakai di router menjadi prioritas utama.
+2. **Visual harus menarik, bukan hanya rapi** — fokus pada hierarchy, clarity, motion, spacing, dan polish.
+3. **Konsistensi lintas role** — admin, dosen, laboran, dan mahasiswa harus terasa satu produk yang sama.
+4. **Token-first, hardcode-last** — warna, radius, shadow, dan state harus mengutamakan token dari [`src/index.css`](src/index.css).
+5. **Progress bertingkat** — status halaman dibedakan agar tidak semua disederhanakan menjadi hanya “selesai” atau “belum”.
+6. **Aman untuk migrasi bertahap** — primitive lama tetap boleh hidup, tetapi tampilan akhir harus menuju sistem visual tunggal.
+7. **UX state wajib lengkap** — loading, empty, error, disabled, offline, success, warning harus konsisten.
 
 ---
 
-## 📦 FASE 1 — FOUNDATION (Wajib Sebelum Semua Role)
+## 🧪 Definisi Status Implementasi
+Agar audit lebih presisi, semua halaman memakai 4 level status:
 
-### 1.1 Theme System
-- [x] Update [`src/index.css`](src/index.css) dengan token warna baru
-- [x] Tambahkan semantic color tokens: success, warning, info, danger
-- [x] Tambahkan `--color-destructive-foreground` ke @theme inline
-- [x] Tambahkan glassmorphism variables (bgDrift, section-shell, glass utility)
-- [x] Tambahkan token chart color yang konsisten
-- [x] Tambahkan motion tokens dan keyframes animasi (bgDrift, fadeIn, slideDown, shake)
-- [ ] Verifikasi dark mode tidak regress
+- **LEGACY** — masih dominan gaya lama / belum ikut sistem visual baru.
+- **PARTIAL** — sudah memakai sebagian fondasi baru, tetapi belum konsisten.
+- **MOSTLY ALIGNED** — sudah kuat secara visual, tinggal polishing atau penyeragaman detail.
+- **FULLY ALIGNED** — sudah konsisten dengan fondasi tema, komponen, dan pola UX baru.
 
-### 1.2 Custom UI Components
-Buat/siapkan di [`src/components/ui/`](src/components/ui):
+---
+
+## 📦 FASE 1 — FOUNDATION SYSTEM (WAJIB)
+
+## 1.1 Theme & Design Tokens
+Status fondasi: **MOSTLY ALIGNED**
+
+### Sudah ada
+- [x] Token dasar dan semantic colors di [`src/index.css`](src/index.css)
+- [x] Mapping token `@theme inline` termasuk [`--color-destructive-foreground`](src/index.css:26)
+- [x] Semantic tokens `success`, `warning`, `info`, `danger` di [`src/index.css`](src/index.css)
+- [x] Utility visual seperti [`section-shell`](src/index.css:226), [`glass-panel`](src/index.css:233), [`brand-gradient`](src/index.css:247)
+- [x] Chart tokens konsisten di [`src/index.css`](src/index.css)
+
+### Masih perlu diselesaikan
+- [ ] Audit halaman yang masih banyak memakai warna hardcoded `blue-*`, `amber-*`, `slate-*`
+- [ ] Tetapkan aturan kapan pakai token semantic dan kapan pakai accent dekoratif
+- [ ] Verifikasi dark mode lintas auth, public, dashboard, form, tabel, alert, dialog
+- [ ] Tetapkan standar shadow, border opacity, glass intensity, dan surface depth
+- [ ] Pastikan focus ring dan accessibility state konsisten lintas input/button/link
+
+### Target visual foundation
+- Semua halaman terasa berada dalam satu keluarga visual
+- Accent color dipakai sebagai penguat, bukan dekorasi acak
+- Glass effect dipakai konsisten dan tidak berlebihan
+- Contrast aman di light dan dark mode
+
+---
+
+## 1.2 Custom UI Components
+Status fondasi komponen: **FULLY ALIGNED**
+
+### Komponen tersedia di [`src/components/ui/index.ts`](src/components/ui/index.ts)
 - [x] [`src/components/ui/glass-card.tsx`](src/components/ui/glass-card.tsx)
 - [x] [`src/components/ui/animated-counter.tsx`](src/components/ui/animated-counter.tsx)
 - [x] [`src/components/ui/status-badge.tsx`](src/components/ui/status-badge.tsx)
@@ -53,267 +88,370 @@ Buat/siapkan di [`src/components/ui/`](src/components/ui):
 - [x] [`src/components/ui/button-enhanced.tsx`](src/components/ui/button-enhanced.tsx)
 - [x] [`src/components/ui/stepper.tsx`](src/components/ui/stepper.tsx)
 
-### 1.3 Hooks & Utilities
-- [x] Buat [`src/lib/hooks/use-animation.ts`](src/lib/hooks/use-animation.ts)
-- [x] Buat [`src/lib/toast-config.ts`](src/lib/toast-config.ts)
-- [x] Update export aggregator [`src/components/ui/index.ts`](src/components/ui/index.ts)
+### Masih perlu diselesaikan
+- [ ] Tetapkan guideline penggunaan komponen per konteks halaman
+- [ ] Buat pola baku untuk page header, metric section, filter toolbar, empty state, action bar
+- [ ] Kurangi variasi manual styling yang duplikatif di tiap page
 
-### 1.4 Global Layout & Shared Experience
-- [x] `Toaster` sudah terpasang via `NotificationProvider` di `App.tsx`
-- [x] `AppLayout` — spacing, struktur, focus ring sudah konsisten
-- [x] Toast, skeleton, loading, empty-state sudah punya pola konsisten
+---
+
+## 1.3 Hooks, Utilities, dan Shared Experience
+Status: **MOSTLY ALIGNED**
+
+### Sudah ada
+- [x] [`src/lib/hooks/use-animation.ts`](src/lib/hooks/use-animation.ts)
+- [x] [`src/lib/toast-config.ts`](src/lib/toast-config.ts)
+- [x] Export aggregator [`src/components/ui/index.ts`](src/components/ui/index.ts)
+- [x] Layout utama di [`src/components/layout/AppLayout.tsx`](src/components/layout/AppLayout.tsx)
+
+### Masih perlu diselesaikan
+- [ ] Samakan pola empty/loading/error/offline state per jenis halaman
+- [ ] Pastikan layout shell setiap role memakai spacing dan visual rhythm yang sama
+- [ ] Rapikan penggunaan page hero vs card header agar tidak campur aduk
+
+---
+
+## 1.4 Aturan Visual Global yang Wajib Dipatuhi
+Semua fase berikut harus mengikuti aturan ini:
+
+- [ ] Header halaman harus punya hierarchy: eyebrow, title, description, action
+- [ ] Section penting harus punya pemisahan visual yang jelas
+- [ ] Tabel/list wajib punya state: loading, empty, error, filtered-empty
+- [ ] Form wajib punya state: default, focus, error, success, disabled, submitting
+- [ ] CTA primer wajib konsisten secara warna, ukuran, dan emphasis
+- [ ] Status penting wajib memakai badge/indicator konsisten
+- [ ] Semua halaman harus nyaman dibaca pada mobile dan desktop
 
 ---
 
 ## 🔐 FASE 2 — AUTH & PUBLIC EXPERIENCE
 
-### Auth Pages
-- [x] [`src/pages/auth/LoginPage.tsx`](src/pages/auth/LoginPage.tsx) — GlassCard + floating bg
-- [x] [`src/pages/auth/RegisterPage.tsx`](src/pages/auth/RegisterPage.tsx) — GlassCard, konsisten dengan LoginPage
-- [x] [`src/pages/auth/ForgotPasswordPage.tsx`](src/pages/auth/ForgotPasswordPage.tsx) — GlassCard
+## 2.1 Auth Pages
 
-### Target UI/UX
-- [x] Gradient background konsisten
-- [x] Glass card untuk auth container
-- [x] Button loading state via ButtonEnhanced
-- [x] Form validation state lebih jelas
-- [ ] Dark mode nyaman untuk form auth (verifikasi visual)
+| Halaman | Status | Catatan |
+|---|---|---|
+| [`src/pages/auth/LoginPage.tsx`](src/pages/auth/LoginPage.tsx) | MOSTLY ALIGNED | Visual kuat, tetapi masih banyak warna hardcoded |
+| [`src/pages/auth/RegisterPage.tsx`](src/pages/auth/RegisterPage.tsx) | MOSTLY ALIGNED | Sudah konsisten dengan login, perlu tokenisasi lebih rapi |
+| [`src/pages/auth/ForgotPasswordPage.tsx`](src/pages/auth/ForgotPasswordPage.tsx) | PARTIAL | Sudah ikut arah baru, perlu verifikasi detail visual dan dark mode |
 
-### Public Pages
-- [x] [`src/pages/public/HomePage.tsx`](src/pages/public/HomePage.tsx) — GlassCard + ButtonEnhanced
-- [x] [`src/pages/public/UnauthorizedPage.tsx`](src/pages/public/UnauthorizedPage.tsx) — GlassCard
-- [x] [`src/pages/public/NotFoundPage.tsx`](src/pages/public/NotFoundPage.tsx) — GlassCard
-- [x] [`src/pages/public/OfflinePage.tsx`](src/pages/public/OfflinePage.tsx) — GlassCard
+### Target implementasi auth
+- [x] Glass card sebagai container utama
+- [x] Gradient/floating background
+- [x] Loading button dengan [`ButtonEnhanced`](src/components/ui/button-enhanced.tsx)
+- [ ] Samakan spacing, radius, dan shadow antar auth page
+- [ ] Pastikan dark mode auth nyaman dan kontras
+- [ ] Kurangi hardcoded color agar auth konsisten dengan theme token
+- [ ] Samakan secondary actions: kembali, lupa password, daftar, login
 
-### Target UI/UX Public
-- [x] Landing page hero diperkuat dengan visual theme baru
-- [x] Error/empty/offline state lebih informatif
-- [ ] CTA dan navigasi publik lebih konsisten
+## 2.2 Public Pages
+
+| Halaman | Status | Catatan |
+|---|---|---|
+| [`src/pages/public/HomePage.tsx`](src/pages/public/HomePage.tsx) | MOSTLY ALIGNED | Menarik secara visual, tapi tokenisasi masih belum bersih |
+| [`src/pages/public/UnauthorizedPage.tsx`](src/pages/public/UnauthorizedPage.tsx) | MOSTLY ALIGNED | Sudah searah dengan visual baru |
+| [`src/pages/public/NotFoundPage.tsx`](src/pages/public/NotFoundPage.tsx) | MOSTLY ALIGNED | Tinggal penyamaan CTA dan spacing |
+| [`src/pages/public/OfflinePage.tsx`](src/pages/public/OfflinePage.tsx) | PARTIAL | Perlu disamakan dengan pola empty/error modern |
+
+### Target implementasi public
+- [x] Hero landing modern dan lebih kuat
+- [ ] CTA publik konsisten secara hierarchy dan emphasis
+- [ ] Nav publik, auth action, dan error action memakai pola button yang sama
+- [ ] Hardcoded gradient diganti bertahap ke token/theme utilities
+- [ ] Error/offline state memakai pola visual satu keluarga
 
 ---
 
-## 🛠️ FASE 3 — ADMIN ROLE: SELURUH FITUR
+## 🛠️ FASE 3 — ADMIN ROLE
 
-## 3.A Admin Core Navigation & Dashboard
-- [x] [`src/pages/admin/DashboardPage.tsx`](src/pages/admin/DashboardPage.tsx) — DashboardCard + DashboardSkeleton
-- [ ] [`src/pages/admin/ProfilePage.tsx`](src/pages/admin/ProfilePage.tsx) — belum diupgrade
+## 3.1 Admin Core: Dashboard & Profile
 
-### Target
-- [x] Dashboard stats → `DashboardCard`
-- [x] Counter animasi untuk KPI
-- [x] Skeleton loading dashboard
-- [ ] Kartu quick action lebih modern
-- [ ] Profile page konsisten dengan theme baru
+| Halaman | Status | Catatan |
+|---|---|---|
+| [`src/pages/admin/DashboardPage.tsx`](src/pages/admin/DashboardPage.tsx) | MOSTLY ALIGNED | Fondasi dashboard kuat, perlu penyamaan quick action dan chart surface |
+| [`src/pages/admin/ProfilePage.tsx`](src/pages/admin/ProfilePage.tsx) | PARTIAL | Sudah modern, tetapi belum boleh dianggap legacy total maupun fully aligned |
 
-## 3.B Admin User, Role, dan Mahasiswa Management
-- [ ] [`src/pages/admin/UsersPage.tsx`](src/pages/admin/UsersPage.tsx)
-- [ ] [`src/pages/admin/MahasiswaManagementPage.tsx`](src/pages/admin/MahasiswaManagementPage.tsx)
-- [ ] [`src/pages/admin/RolesPage.tsx`](src/pages/admin/RolesPage.tsx)
-- [ ] [`src/pages/admin/RolesPage-ENHANCED.tsx`](src/pages/admin/RolesPage-ENHANCED.tsx)
+### Target admin core
+- [x] KPI memakai [`DashboardCard`](src/components/ui/dashboard-card.tsx)
+- [x] Loading memakai [`DashboardSkeleton`](src/components/ui/dashboard-skeleton.tsx)
+- [ ] Quick action cards lebih premium dan actionable
+- [ ] Chart, recent activity, dan cards memakai surface depth yang konsisten
+- [ ] Profile page memakai pola form profile lintas role
+- [ ] Success/error feedback profile mengikuti pola app-wide
 
-### Target
-- [ ] Table state, filter state, empty state lebih jelas
-- [ ] Status user/role pakai `StatusBadge`
-- [ ] Modal dan action button lebih konsisten
-- [ ] Loading table gunakan skeleton
+## 3.2 Admin User, Role, dan Data Management
 
-## 3.C Admin Academic Structure
-- [ ] [`src/pages/admin/MataKuliahPage.tsx`](src/pages/admin/MataKuliahPage.tsx)
-- [ ] [`src/pages/admin/KelasPage.tsx`](src/pages/admin/KelasPage.tsx)
-- [ ] [`src/pages/admin/KelasPageEnhanced.tsx`](src/pages/admin/KelasPageEnhanced.tsx)
-- [ ] [`src/pages/admin/KelasPageSimple.tsx`](src/pages/admin/KelasPageSimple.tsx)
-- [ ] [`src/pages/admin/KelasMataKuliahPage.tsx`](src/pages/admin/KelasMataKuliahPage.tsx)
-- [ ] [`src/pages/admin/AcademicAssignmentPage.tsx`](src/pages/admin/AcademicAssignmentPage.tsx)
-- [ ] [`src/pages/admin/AssignmentManagementPage.tsx`](src/pages/admin/AssignmentManagementPage.tsx)
-- [ ] [`src/pages/admin/ManajemenAssignmentPage.tsx`](src/pages/admin/ManajemenAssignmentPage.tsx)
+| Halaman | Status |
+|---|---|
+| [`src/pages/admin/UsersPage.tsx`](src/pages/admin/UsersPage.tsx) | LEGACY |
+| [`src/pages/admin/MahasiswaManagementPage.tsx`](src/pages/admin/MahasiswaManagementPage.tsx) | LEGACY |
+| [`src/pages/admin/RolesPage.tsx`](src/pages/admin/RolesPage.tsx) | LEGACY |
+| [`src/pages/admin/RolesPage-ENHANCED.tsx`](src/pages/admin/RolesPage-ENHANCED.tsx) | PARTIAL |
 
-### Target
-- [ ] Data academic structure tampil lebih mudah dipindai
-- [ ] Stepper untuk workflow assignment bila cocok
-- [ ] Badge status untuk relasi kelas, MK, assignment
-- [ ] Bulk actions dan form state lebih jelas
+### Target area ini
+- [ ] Toolbar filter/search/action dibakukan
+- [ ] Table state lebih jelas dan lebih ringan dibaca
+- [ ] Status user/role wajib memakai [`StatusBadge`](src/components/ui/status-badge.tsx)
+- [ ] Modal, bulk action, dan destructive action dibakukan
+- [ ] Empty state tidak lagi sekadar teks datar
 
-## 3.D Admin Lab & Asset Management
-- [ ] [`src/pages/admin/LaboratoriesPage.tsx`](src/pages/admin/LaboratoriesPage.tsx)
-- [ ] [`src/pages/admin/EquipmentsPage.tsx`](src/pages/admin/EquipmentsPage.tsx)
-- [x] [`src/pages/admin/PeminjamanApprovalPage.tsx`](src/pages/admin/PeminjamanApprovalPage.tsx) — StatusBadge
+## 3.3 Admin Academic Structure
 
-### Target
-- [ ] Card/list inventory lebih modern
-- [ ] Status peralatan/peminjaman lebih jelas
-- [x] Approval flow visual lebih kuat
+| Halaman | Status |
+|---|---|
+| [`src/pages/admin/MataKuliahPage.tsx`](src/pages/admin/MataKuliahPage.tsx) | LEGACY |
+| [`src/pages/admin/KelasPage.tsx`](src/pages/admin/KelasPage.tsx) | LEGACY |
+| [`src/pages/admin/KelasPageEnhanced.tsx`](src/pages/admin/KelasPageEnhanced.tsx) | PARTIAL |
+| [`src/pages/admin/KelasPageSimple.tsx`](src/pages/admin/KelasPageSimple.tsx) | LEGACY |
+| [`src/pages/admin/KelasMataKuliahPage.tsx`](src/pages/admin/KelasMataKuliahPage.tsx) | LEGACY |
+| [`src/pages/admin/AcademicAssignmentPage.tsx`](src/pages/admin/AcademicAssignmentPage.tsx) | LEGACY |
+| [`src/pages/admin/AssignmentManagementPage.tsx`](src/pages/admin/AssignmentManagementPage.tsx) | LEGACY |
+| [`src/pages/admin/ManajemenAssignmentPage.tsx`](src/pages/admin/ManajemenAssignmentPage.tsx) | PARTIAL |
+
+### Target area ini
+- [ ] Struktur informasi akademik lebih mudah discan
+- [ ] Workflow assignment kompleks dibagi menjadi steps/sections yang jelas
+- [ ] Relasi kelas–mata kuliah–dosen divisualkan dengan badge, chips, dan summary blocks
+- [ ] Form dan tabel panjang dipisah menjadi section yang lebih manusiawi
+
+## 3.4 Admin Lab, Asset, dan Approval
+
+| Halaman | Status |
+|---|---|
+| [`src/pages/admin/LaboratoriesPage.tsx`](src/pages/admin/LaboratoriesPage.tsx) | LEGACY |
+| [`src/pages/admin/EquipmentsPage.tsx`](src/pages/admin/EquipmentsPage.tsx) | LEGACY |
+| [`src/pages/admin/PeminjamanApprovalPage.tsx`](src/pages/admin/PeminjamanApprovalPage.tsx) | MOSTLY ALIGNED |
+
+### Target area ini
+- [ ] Inventory view lebih modern: card/list hybrid bila perlu
+- [ ] Status alat dan peminjaman lebih tegas
+- [ ] Approval flow tetap cepat, tetapi lebih informatif
 - [ ] Empty/loading/error state dibakukan
 
-## 3.E Admin Communication, Monitoring, Cleanup
-- [ ] [`src/pages/admin/AnnouncementsPage.tsx`](src/pages/admin/AnnouncementsPage.tsx)
-- [ ] [`src/pages/admin/AnalyticsPage.tsx`](src/pages/admin/AnalyticsPage.tsx)
-- [x] [`src/pages/admin/SyncManagementPage.tsx`](src/pages/admin/SyncManagementPage.tsx) — StatusBadge
-- [ ] [`src/pages/admin/SyncMonitoringPage.tsx`](src/pages/admin/SyncMonitoringPage.tsx)
-- [ ] [`src/pages/admin/CleanupPage.tsx`](src/pages/admin/CleanupPage.tsx)
+## 3.5 Admin Communication (Aktif di Router)
 
-### Target
-- [ ] Monitoring cards & analytics chart ikuti token tema baru
-- [ ] Announcements form/list lebih readable
-- [x] Sync status memakai badge/indicator realtime
-- [ ] Halaman utilitas tetap rapi walau teknis
+| Halaman | Status | Catatan |
+|---|---|---|
+| [`src/pages/admin/AnnouncementsPage.tsx`](src/pages/admin/AnnouncementsPage.tsx) | LEGACY | Dipakai untuk route [`/admin/announcements`](src/routes/index.tsx:243) dan alias [`/admin/notifikasi`](src/routes/index.tsx:267) |
+
+### Target area ini
+- [ ] Announcement/notifikasi admin harus readable dan ringkas
+- [ ] List pengumuman perlu hierarchy yang jelas antara judul, waktu, status, dan aksi
+- [ ] Form create/edit pengumuman harus konsisten dengan pola form modern role lain
+- [ ] Alias route announcement dan notifikasi tidak boleh terasa seperti dua halaman berbeda
+
+## 3.6 Admin Utility & Technical Pages (Tidak Aktif / Perlu Validasi Route)
+
+| Halaman | Status | Catatan |
+|---|---|---|
+| [`src/pages/admin/AnalyticsPage.tsx`](src/pages/admin/AnalyticsPage.tsx) | BACKLOG | Import route dinonaktifkan di [`src/routes/index.tsx`](src/routes/index.tsx) |
+| [`src/pages/admin/SyncManagementPage.tsx`](src/pages/admin/SyncManagementPage.tsx) | BACKLOG | Import route dinonaktifkan di [`src/routes/index.tsx`](src/routes/index.tsx) |
+| [`src/pages/admin/SyncMonitoringPage.tsx`](src/pages/admin/SyncMonitoringPage.tsx) | BACKLOG | Belum termasuk fitur aktif admin yang harus diprioritaskan |
+| [`src/pages/admin/CleanupPage.tsx`](src/pages/admin/CleanupPage.tsx) | BACKLOG | Belum termasuk fitur aktif admin yang harus diprioritaskan |
+
+### Target area ini
+- [ ] Halaman teknis tetap rapi, tidak terasa “mentah”
+- [ ] Utility page memakai layout visual yang sama dengan halaman utama
+- [ ] Implementasi hanya dilakukan setelah status route/fitur dipastikan aktif
 
 ---
 
-## 👨‍🏫 FASE 4 — DOSEN ROLE: SELURUH FITUR
+## 👨‍🏫 FASE 4 — DOSEN ROLE
 
-## 4.A Dosen Dashboard & Profil
-- [x] [`src/pages/dosen/DashboardPage.tsx`](src/pages/dosen/DashboardPage.tsx) — DashboardCard + GlassCard
-- [ ] [`src/pages/dosen/ProfilePage.tsx`](src/pages/dosen/ProfilePage.tsx) — belum diupgrade
+## 4.1 Dosen Dashboard & Profile
 
-### Target
-- [x] Stats dan quick-action dashboard modern
-- [ ] Summary aktivitas dengan badge status
-- [ ] Profile page konsisten dan mudah diisi
+| Halaman | Status | Catatan |
+|---|---|---|
+| [`src/pages/dosen/DashboardPage.tsx`](src/pages/dosen/DashboardPage.tsx) | MOSTLY ALIGNED | Kaya data dan kuat secara UI, perlu penyederhanaan visual di area padat |
+| [`src/pages/dosen/ProfilePage.tsx`](src/pages/dosen/ProfilePage.tsx) | LEGACY | Perlu dijadikan pasangan visual konsisten dengan admin/mahasiswa |
 
-## 4.B Dosen Academic Operations
-- [x] [`src/pages/dosen/JadwalPage.tsx`](src/pages/dosen/JadwalPage.tsx) — StatusBadge + GlassCard
-- [ ] [`src/pages/dosen/KehadiranPage.tsx`](src/pages/dosen/KehadiranPage.tsx)
-- [ ] [`src/pages/dosen/PenilaianPage.tsx`](src/pages/dosen/PenilaianPage.tsx)
-- [ ] [`src/pages/dosen/MateriPage.tsx`](src/pages/dosen/MateriPage.tsx)
-- [ ] [`src/pages/dosen/BankSoalPage.tsx`](src/pages/dosen/BankSoalPage.tsx)
-- [x] [`src/pages/dosen/LogbookReviewPage.tsx`](src/pages/dosen/LogbookReviewPage.tsx) — GlassCard
+### Target area ini
+- [x] Stats dashboard modern
+- [ ] Summary aktivitas, alert, dan refresh state lebih rapi
+- [ ] Panel realtime/subscription tidak membuat UI terasa berat
+- [ ] Profile page dosen ikut pola profile lintas role
 
-### Target
-- [x] Jadwal lebih mudah dibaca dan discan
-- [ ] Kehadiran & penilaian punya status visual konsisten
-- [ ] Materi & bank soal gunakan card/list patterns seragam
-- [ ] Logbook review butuh readability tinggi dan sticky info area bila perlu
+## 4.2 Dosen Academic Operations
 
-## 4.C Dosen Kuis System
-- [ ] [`src/pages/dosen/kuis/KuisListPage.tsx`](src/pages/dosen/kuis/KuisListPage.tsx)
-- [ ] [`src/pages/dosen/kuis/KuisCreatePage.tsx`](src/pages/dosen/kuis/KuisCreatePage.tsx)
-- [ ] [`src/pages/dosen/kuis/KuisBuilderPage.tsx`](src/pages/dosen/kuis/KuisBuilderPage.tsx)
-- [ ] [`src/pages/dosen/kuis/KuisEditPage.tsx`](src/pages/dosen/kuis/KuisEditPage.tsx)
-- [ ] [`src/pages/dosen/kuis/KuisResultsPage.tsx`](src/pages/dosen/kuis/KuisResultsPage.tsx)
-- [ ] [`src/pages/dosen/kuis/AttemptDetailPage.tsx`](src/pages/dosen/kuis/AttemptDetailPage.tsx)
+| Halaman | Status |
+|---|---|
+| [`src/pages/dosen/JadwalPage.tsx`](src/pages/dosen/JadwalPage.tsx) | MOSTLY ALIGNED |
+| [`src/pages/dosen/KehadiranPage.tsx`](src/pages/dosen/KehadiranPage.tsx) | LEGACY |
+| [`src/pages/dosen/PenilaianPage.tsx`](src/pages/dosen/PenilaianPage.tsx) | LEGACY |
+| [`src/pages/dosen/MateriPage.tsx`](src/pages/dosen/MateriPage.tsx) | LEGACY |
+| [`src/pages/dosen/BankSoalPage.tsx`](src/pages/dosen/BankSoalPage.tsx) | LEGACY |
+| [`src/pages/dosen/LogbookReviewPage.tsx`](src/pages/dosen/LogbookReviewPage.tsx) | PARTIAL |
 
-### Target
-- [ ] Quiz builder lebih terstruktur
-- [ ] Stepper untuk create/edit flow bila cocok
-- [ ] Result analytics pakai chart colors konsisten
-- [ ] Attempt detail fokus pada readability jawaban
+### Target area ini
+- [ ] Jadwal, kehadiran, penilaian, materi, dan bank soal memakai pola toolbar yang sama
+- [ ] Tabel/list akademik lebih mudah discan
+- [ ] Status akademik memakai badge semantic yang konsisten
+- [ ] Logbook review menonjolkan readability, sticky summary, dan density yang terkontrol
 
-## 4.D Dosen Peminjaman & Komunikasi
-- [ ] [`src/pages/dosen/PeminjamanPage.tsx`](src/pages/dosen/PeminjamanPage.tsx)
-- [ ] [`src/pages/dosen/PengumumanPage.tsx`](src/pages/dosen/PengumumanPage.tsx)
+## 4.3 Dosen Kuis System
 
-### Target
+| Halaman | Status |
+|---|---|
+| [`src/pages/dosen/kuis/KuisListPage.tsx`](src/pages/dosen/kuis/KuisListPage.tsx) | LEGACY |
+| [`src/pages/dosen/kuis/KuisCreatePage.tsx`](src/pages/dosen/kuis/KuisCreatePage.tsx) | LEGACY |
+| [`src/pages/dosen/kuis/KuisBuilderPage.tsx`](src/pages/dosen/kuis/KuisBuilderPage.tsx) | LEGACY |
+| [`src/pages/dosen/kuis/KuisEditPage.tsx`](src/pages/dosen/kuis/KuisEditPage.tsx) | LEGACY |
+| [`src/pages/dosen/kuis/KuisResultsPage.tsx`](src/pages/dosen/kuis/KuisResultsPage.tsx) | LEGACY |
+| [`src/pages/dosen/kuis/AttemptDetailPage.tsx`](src/pages/dosen/kuis/AttemptDetailPage.tsx) | LEGACY |
+
+### Target area ini
+- [ ] Kuis list harus mudah difilter dan dipindai
+- [ ] Create/edit/builder memakai flow bertahap yang jelas
+- [ ] Result analytics memakai chart theme yang seragam
+- [ ] Attempt detail fokus pada jawaban, skor, status, dan readability
+
+## 4.4 Dosen Peminjaman & Komunikasi
+
+| Halaman | Status |
+|---|---|
+| [`src/pages/dosen/PeminjamanPage.tsx`](src/pages/dosen/PeminjamanPage.tsx) | LEGACY |
+| [`src/pages/dosen/PengumumanPage.tsx`](src/pages/dosen/PengumumanPage.tsx) | LEGACY |
+
+### Target area ini
 - [ ] Status pinjam dan approval lebih tegas
-- [ ] Pengumuman/notifikasi konsisten dengan role lain
+- [ ] Pengumuman dosen konsisten dengan role lain
+- [ ] Action state lebih jelas di mobile
 
 ---
 
-## 🧪 FASE 5 — LABORAN ROLE: SELURUH FITUR
+## 🧪 FASE 5 — LABORAN ROLE
 
-## 5.A Laboran Dashboard & Profil
-- [x] [`src/pages/laboran/DashboardPage.tsx`](src/pages/laboran/DashboardPage.tsx) — DashboardCard + DashboardSkeleton
-- [x] [`src/pages/laboran/ProfilePage.tsx`](src/pages/laboran/ProfilePage.tsx) — GlassCard
+## 5.1 Laboran Dashboard & Profile
 
-### Target
-- [x] Ringkasan inventaris/persetujuan pakai dashboard cards
-- [x] Profile page konsisten
+| Halaman | Status |
+|---|---|
+| [`src/pages/laboran/DashboardPage.tsx`](src/pages/laboran/DashboardPage.tsx) | MOSTLY ALIGNED |
+| [`src/pages/laboran/ProfilePage.tsx`](src/pages/laboran/ProfilePage.tsx) | MOSTLY ALIGNED |
 
-## 5.B Laboran Operasional Inti
-- [x] [`src/pages/laboran/InventarisPage.tsx`](src/pages/laboran/InventarisPage.tsx) — StatusBadge
-- [x] [`src/pages/laboran/LaboratoriumPage.tsx`](src/pages/laboran/LaboratoriumPage.tsx) — StatusBadge + GlassCard
-- [x] [`src/pages/laboran/JadwalApprovalPage.tsx`](src/pages/laboran/JadwalApprovalPage.tsx) — StatusBadge + GlassCard
-- [x] [`src/pages/laboran/LaporanPage.tsx`](src/pages/laboran/LaporanPage.tsx) — GlassCard + DashboardCard
+### Target area ini
+- [x] Dashboard laboran sudah menjadi role paling matang
+- [ ] Polishing akhir untuk penyamaan spacing, state, dan CTA dengan role lain
+- [ ] Profile laboran dijadikan baseline visual untuk profile role lain bila cocok
 
-### Target
-- [x] Kondisi inventaris pakai `StatusBadge`
-- [x] Approval jadwal lebih mudah ditelusuri
-- [x] Laporan dan chart selaras dengan tema baru
+## 5.2 Laboran Operasional Inti
 
-## 5.C Laboran Peminjaman & Approval
-- [x] [`src/pages/laboran/PersetujuanPage.tsx`](src/pages/laboran/PersetujuanPage.tsx) — StatusBadge + GlassCard
-- [x] [`src/pages/laboran/PeminjamanAktifPage.tsx`](src/pages/laboran/PeminjamanAktifPage.tsx) — StatusBadge
-- [ ] [`src/pages/laboran/ApprovalPage.tsx`](src/pages/laboran/ApprovalPage.tsx) — belum diupgrade
+| Halaman | Status |
+|---|---|
+| [`src/pages/laboran/InventarisPage.tsx`](src/pages/laboran/InventarisPage.tsx) | FULLY ALIGNED |
+| [`src/pages/laboran/LaboratoriumPage.tsx`](src/pages/laboran/LaboratoriumPage.tsx) | FULLY ALIGNED |
+| [`src/pages/laboran/JadwalApprovalPage.tsx`](src/pages/laboran/JadwalApprovalPage.tsx) | FULLY ALIGNED |
+| [`src/pages/laboran/LaporanPage.tsx`](src/pages/laboran/LaporanPage.tsx) | FULLY ALIGNED |
 
-### Target
-- [x] Approval workflow visual lebih jelas
-- [ ] Progress step dan status transisi lebih mudah dipahami
-- [x] Active borrowing monitoring lebih ringkas
+### Target area ini
+- [x] Jadikan laboran sebagai benchmark kualitas UI operasional
+- [ ] Audit ulang detail hardcoded color dan dark mode
+- [ ] Pastikan pola ini bisa direplikasi ke admin dan dosen
 
-## 5.D Laboran Communication
-- [x] [`src/pages/laboran/PengumumanPage.tsx`](src/pages/laboran/PengumumanPage.tsx) — GlassCard
+## 5.3 Laboran Peminjaman & Approval
+
+| Halaman | Status |
+|---|---|
+| [`src/pages/laboran/PersetujuanPage.tsx`](src/pages/laboran/PersetujuanPage.tsx) | FULLY ALIGNED |
+| [`src/pages/laboran/PeminjamanAktifPage.tsx`](src/pages/laboran/PeminjamanAktifPage.tsx) | MOSTLY ALIGNED |
+| [`src/pages/laboran/ApprovalPage.tsx`](src/pages/laboran/ApprovalPage.tsx) | LEGACY |
+
+### Target area ini
+- [x] Approval flow laboran menjadi referensi visual untuk peminjaman role lain
+- [ ] Progress state dan status transisi dibuat lebih eksplisit
+- [ ] Halaman approval lama ditinggalkan atau diselaraskan total
+
+## 5.4 Laboran Communication
+
+| Halaman | Status |
+|---|---|
+| [`src/pages/laboran/PengumumanPage.tsx`](src/pages/laboran/PengumumanPage.tsx) | MOSTLY ALIGNED |
 
 ---
 
-## 🎓 FASE 6 — MAHASISWA ROLE: SELURUH FITUR
+## 🎓 FASE 6 — MAHASISWA ROLE
 
-## 6.A Mahasiswa Dashboard & Profil
-- [x] [`src/pages/mahasiswa/DashboardPage.tsx`](src/pages/mahasiswa/DashboardPage.tsx) — DashboardCard + DashboardSkeleton
-- [ ] [`src/pages/mahasiswa/ProfilePage.tsx`](src/pages/mahasiswa/ProfilePage.tsx) — belum diupgrade
+## 6.1 Mahasiswa Dashboard & Profile
 
-### Target
-- [x] Ringkasan jadwal, nilai, presensi lebih menarik
-- [ ] Card informasi harian lebih actionable
+| Halaman | Status | Catatan |
+|---|---|---|
+| [`src/pages/mahasiswa/DashboardPage.tsx`](src/pages/mahasiswa/DashboardPage.tsx) | MOSTLY ALIGNED | Salah satu dashboard paling rapi secara hierarchy |
+| [`src/pages/mahasiswa/ProfilePage.tsx`](src/pages/mahasiswa/ProfilePage.tsx) | LEGACY | Perlu dinaikkan minimal ke pola profile modern lintas role |
 
-## 6.B Mahasiswa Pembelajaran Inti
-- [x] [`src/pages/mahasiswa/JadwalPage.tsx`](src/pages/mahasiswa/JadwalPage.tsx) — StatusBadge + GlassCard
-- [x] [`src/pages/mahasiswa/MateriPage.tsx`](src/pages/mahasiswa/MateriPage.tsx) — GlassCard
-- [x] [`src/pages/mahasiswa/NilaiPage.tsx`](src/pages/mahasiswa/NilaiPage.tsx) — StatusBadge + DashboardCard
-- [x] [`src/pages/mahasiswa/PresensiPage.tsx`](src/pages/mahasiswa/PresensiPage.tsx) — StatusBadge + GlassCard
-- [x] [`src/pages/mahasiswa/LogbookPage.tsx`](src/pages/mahasiswa/LogbookPage.tsx) — GlassCard
-- [ ] [`src/pages/mahasiswa/ConflictsPage.tsx`](src/pages/mahasiswa/ConflictsPage.tsx) — belum diupgrade
+### Target area ini
+- [x] Dashboard mahasiswa sudah menarik
+- [ ] Card informasi harian dibuat lebih actionable
+- [ ] Profile mahasiswa harus menjadi pasangan visual dari admin/dosen/laboran
 
-### Target
-- [x] Timeline jadwal lebih jelas
-- [x] Materi dan file download lebih usable
-- [x] Nilai & presensi pakai status/summary card
-- [x] Logbook fokus pada form usability
-- [ ] Conflict page diberi warning UI yang kuat
+## 6.2 Mahasiswa Pembelajaran Inti
 
-## 6.C Mahasiswa Kuis System
-- [x] [`src/pages/mahasiswa/kuis/KuisListPage.tsx`](src/pages/mahasiswa/kuis/KuisListPage.tsx) — StatusBadge
-- [ ] [`src/pages/mahasiswa/kuis/KuisAttemptPage.tsx`](src/pages/mahasiswa/kuis/KuisAttemptPage.tsx)
-- [ ] [`src/pages/mahasiswa/kuis/KuisResultPage.tsx`](src/pages/mahasiswa/kuis/KuisResultPage.tsx)
+| Halaman | Status |
+|---|---|
+| [`src/pages/mahasiswa/JadwalPage.tsx`](src/pages/mahasiswa/JadwalPage.tsx) | FULLY ALIGNED |
+| [`src/pages/mahasiswa/MateriPage.tsx`](src/pages/mahasiswa/MateriPage.tsx) | FULLY ALIGNED |
+| [`src/pages/mahasiswa/NilaiPage.tsx`](src/pages/mahasiswa/NilaiPage.tsx) | FULLY ALIGNED |
+| [`src/pages/mahasiswa/PresensiPage.tsx`](src/pages/mahasiswa/PresensiPage.tsx) | FULLY ALIGNED |
+| [`src/pages/mahasiswa/LogbookPage.tsx`](src/pages/mahasiswa/LogbookPage.tsx) | FULLY ALIGNED |
+| [`src/pages/mahasiswa/ConflictsPage.tsx`](src/pages/mahasiswa/ConflictsPage.tsx) | LEGACY |
 
-### Target
-- [x] Quiz list lebih mudah difilter dan dibedakan statusnya
-- [ ] Attempt page punya progress & timer clarity
-- [ ] Result page lebih informatif dan tidak padat
+### Target area ini
+- [x] Jadwal, materi, nilai, presensi, logbook menjadi benchmark UI mahasiswa
+- [ ] Conflict page harus punya warning UI paling kuat dan edukatif
+- [ ] Pastikan seluruh learning pages konsisten di mobile
 
-## 6.D Mahasiswa Communication & Offline
-- [ ] [`src/pages/mahasiswa/PengumumanPage.tsx`](src/pages/mahasiswa/PengumumanPage.tsx)
-- [ ] [`src/pages/mahasiswa/OfflineSyncPage.tsx`](src/pages/mahasiswa/OfflineSyncPage.tsx)
+## 6.3 Mahasiswa Kuis System
 
-### Target
-- [ ] Pengumuman/notifikasi lebih nyaman dibaca
-- [ ] Offline sync status lebih jelas dan edukatif
+| Halaman | Status |
+|---|---|
+| [`src/pages/mahasiswa/kuis/KuisListPage.tsx`](src/pages/mahasiswa/kuis/KuisListPage.tsx) | MOSTLY ALIGNED |
+| [`src/pages/mahasiswa/kuis/KuisAttemptPage.tsx`](src/pages/mahasiswa/kuis/KuisAttemptPage.tsx) | LEGACY |
+| [`src/pages/mahasiswa/kuis/KuisResultPage.tsx`](src/pages/mahasiswa/kuis/KuisResultPage.tsx) | LEGACY |
+
+### Target area ini
+- [ ] Attempt page wajib punya progress, timer clarity, dan reduced distraction
+- [ ] Result page harus informatif tanpa terasa padat
+- [ ] Quiz system mahasiswa dan dosen harus terasa satu ekosistem visual
+
+## 6.4 Mahasiswa Communication & Offline
+
+| Halaman | Status |
+|---|---|
+| [`src/pages/mahasiswa/PengumumanPage.tsx`](src/pages/mahasiswa/PengumumanPage.tsx) | LEGACY |
+| [`src/pages/mahasiswa/OfflineSyncPage.tsx`](src/pages/mahasiswa/OfflineSyncPage.tsx) | LEGACY |
+
+### Target area ini
+- [ ] Pengumuman/notifikasi nyaman dibaca dan mudah dipindai
+- [ ] Offline sync mahasiswa harus edukatif dan menenangkan
 
 ---
 
 ## 🔄 FASE 7 — SHARED & CROSS-ROLE EXPERIENCE
 
-### Shared Pages
-- [ ] [`src/pages/shared/OfflineSyncPage.tsx`](src/pages/shared/OfflineSyncPage.tsx)
+## 7.1 Shared Pages
 
-### Cross-role route coverage dari router
-Rute ini harus ikut diperhitungkan di rencana UI/UX walaupun memakai halaman yang sama atau shared page:
-- [ ] `/admin/offline-sync`
-- [ ] `/dosen/offline-sync`
-- [ ] `/laboran/offline-sync`
-- [ ] `/mahasiswa/offline-sync`
+| Halaman | Status | Catatan |
+|---|---|---|
+| [`src/pages/shared/OfflineSyncPage.tsx`](src/pages/shared/OfflineSyncPage.tsx) | PARTIAL | Sudah ada dan berfungsi, tetapi belum selevel polish dashboard modern |
+
+### Target shared experience
+- [ ] Offline sync lintas role harus terasa satu produk, bukan halaman utilitas terpisah
+- [ ] Alias route tidak menimbulkan UI berbeda yang membingungkan
+- [ ] Notifikasi/pengumuman lintas role memakai pola visual seragam
+
+## 7.2 Route Alias dan Shared Coverage yang Harus Diperhatikan
+Route berikut perlu diperlakukan sebagai satu keluarga UX:
 - [ ] `/admin/notifikasi`
 - [ ] `/dosen/notifikasi`
 - [ ] `/mahasiswa/notifikasi`
 - [ ] `/laboran/notifikasi`
 - [ ] `/dosen/pengumuman`
-
-### Target
-- [ ] Offline sync experience konsisten lintas role
-- [ ] Notifikasi/pengumuman lintas role pakai pola visual seragam
-- [ ] Alias route tidak menimbulkan UI berbeda yang membingungkan
+- [ ] `/admin/offline-sync`
+- [ ] `/dosen/offline-sync`
+- [ ] `/laboran/offline-sync`
+- [ ] `/mahasiswa/offline-sync`
 
 ---
 
 ## 🗺️ PETA FITUR BERDASARKAN ROUTER AKTUAL
+Catatan penting: bagian ini mengikuti **router nyata** di [`src/routes/index.tsx`](src/routes/index.tsx). Bila berbeda dengan [`src/config/routes.config.ts`](src/config/routes.config.ts), maka router aktual menjadi acuan implementasi UI.
 
 ## Public/Auth
 - [x] `/`
@@ -324,6 +462,7 @@ Rute ini harus ikut diperhitungkan di rencana UI/UX walaupun memakai halaman yan
 - [x] `/404`
 
 ## Admin
+### Route admin aktif di router
 - [x] `/admin`
 - [x] `/admin/dashboard`
 - [x] `/admin/mata-kuliah`
@@ -339,6 +478,10 @@ Rute ini harus ikut diperhitungkan di rencana UI/UX walaupun memakai halaman yan
 - [x] `/admin/notifikasi`
 - [x] `/admin/profil`
 - [x] `/admin/offline-sync`
+
+### Backlog admin yang file-nya ada tetapi route aktifnya belum dipakai
+- [ ] `/admin/analytics`
+- [ ] `/admin/sync-management`
 
 ## Dosen
 - [x] `/dosen`
@@ -393,169 +536,158 @@ Rute ini harus ikut diperhitungkan di rencana UI/UX walaupun memakai halaman yan
 ## 📁 STATUS IMPLEMENTASI HALAMAN PER ROLE
 
 ## Admin
-- [ ] [`src/pages/admin/AcademicAssignmentPage.tsx`](src/pages/admin/AcademicAssignmentPage.tsx)
-- [ ] [`src/pages/admin/AnalyticsPage.tsx`](src/pages/admin/AnalyticsPage.tsx)
-- [ ] [`src/pages/admin/AnnouncementsPage.tsx`](src/pages/admin/AnnouncementsPage.tsx)
-- [ ] [`src/pages/admin/AssignmentManagementPage.tsx`](src/pages/admin/AssignmentManagementPage.tsx)
-- [ ] [`src/pages/admin/CleanupPage.tsx`](src/pages/admin/CleanupPage.tsx)
-- [x] [`src/pages/admin/DashboardPage.tsx`](src/pages/admin/DashboardPage.tsx)
-- [ ] [`src/pages/admin/EquipmentsPage.tsx`](src/pages/admin/EquipmentsPage.tsx)
-- [ ] [`src/pages/admin/KelasMataKuliahPage.tsx`](src/pages/admin/KelasMataKuliahPage.tsx)
-- [ ] [`src/pages/admin/KelasPage.tsx`](src/pages/admin/KelasPage.tsx)
-- [ ] [`src/pages/admin/KelasPageEnhanced.tsx`](src/pages/admin/KelasPageEnhanced.tsx)
-- [ ] [`src/pages/admin/KelasPageSimple.tsx`](src/pages/admin/KelasPageSimple.tsx)
-- [ ] [`src/pages/admin/LaboratoriesPage.tsx`](src/pages/admin/LaboratoriesPage.tsx)
-- [ ] [`src/pages/admin/MahasiswaManagementPage.tsx`](src/pages/admin/MahasiswaManagementPage.tsx)
-- [ ] [`src/pages/admin/ManajemenAssignmentPage.tsx`](src/pages/admin/ManajemenAssignmentPage.tsx)
-- [ ] [`src/pages/admin/MataKuliahPage.tsx`](src/pages/admin/MataKuliahPage.tsx)
-- [x] [`src/pages/admin/PeminjamanApprovalPage.tsx`](src/pages/admin/PeminjamanApprovalPage.tsx)
-- [ ] [`src/pages/admin/ProfilePage.tsx`](src/pages/admin/ProfilePage.tsx)
-- [ ] [`src/pages/admin/RolesPage.tsx`](src/pages/admin/RolesPage.tsx)
-- [ ] [`src/pages/admin/RolesPage-ENHANCED.tsx`](src/pages/admin/RolesPage-ENHANCED.tsx)
-- [x] [`src/pages/admin/SyncManagementPage.tsx`](src/pages/admin/SyncManagementPage.tsx)
-- [ ] [`src/pages/admin/SyncMonitoringPage.tsx`](src/pages/admin/SyncMonitoringPage.tsx)
-- [ ] [`src/pages/admin/UsersPage.tsx`](src/pages/admin/UsersPage.tsx)
+### Halaman admin aktif di router
+- [x] MOSTLY ALIGNED — [`src/pages/admin/DashboardPage.tsx`](src/pages/admin/DashboardPage.tsx)
+- [ ] PARTIAL — [`src/pages/admin/ProfilePage.tsx`](src/pages/admin/ProfilePage.tsx)
+- [ ] LEGACY — [`src/pages/admin/UsersPage.tsx`](src/pages/admin/UsersPage.tsx)
+- [ ] LEGACY — [`src/pages/admin/MataKuliahPage.tsx`](src/pages/admin/MataKuliahPage.tsx)
+- [ ] PARTIAL — [`src/pages/admin/KelasPageEnhanced.tsx`](src/pages/admin/KelasPageEnhanced.tsx)
+- [ ] LEGACY — [`src/pages/admin/KelasMataKuliahPage.tsx`](src/pages/admin/KelasMataKuliahPage.tsx)
+- [ ] LEGACY — [`src/pages/admin/LaboratoriesPage.tsx`](src/pages/admin/LaboratoriesPage.tsx)
+- [ ] LEGACY — [`src/pages/admin/EquipmentsPage.tsx`](src/pages/admin/EquipmentsPage.tsx)
+- [x] MOSTLY ALIGNED — [`src/pages/admin/PeminjamanApprovalPage.tsx`](src/pages/admin/PeminjamanApprovalPage.tsx)
+- [ ] PARTIAL — [`src/pages/admin/ManajemenAssignmentPage.tsx`](src/pages/admin/ManajemenAssignmentPage.tsx)
+- [ ] LEGACY — [`src/pages/admin/AnnouncementsPage.tsx`](src/pages/admin/AnnouncementsPage.tsx)
+- [ ] PARTIAL — [`src/pages/shared/OfflineSyncPage.tsx`](src/pages/shared/OfflineSyncPage.tsx) — dipakai untuk route admin offline sync
+
+### Halaman admin ada di codebase tetapi bukan prioritas fitur aktif
+- [ ] LEGACY — [`src/pages/admin/MahasiswaManagementPage.tsx`](src/pages/admin/MahasiswaManagementPage.tsx)
+- [ ] LEGACY — [`src/pages/admin/RolesPage.tsx`](src/pages/admin/RolesPage.tsx)
+- [ ] PARTIAL — [`src/pages/admin/RolesPage-ENHANCED.tsx`](src/pages/admin/RolesPage-ENHANCED.tsx)
+- [ ] LEGACY — [`src/pages/admin/KelasPage.tsx`](src/pages/admin/KelasPage.tsx)
+- [ ] LEGACY — [`src/pages/admin/KelasPageSimple.tsx`](src/pages/admin/KelasPageSimple.tsx)
+- [ ] LEGACY — [`src/pages/admin/AcademicAssignmentPage.tsx`](src/pages/admin/AcademicAssignmentPage.tsx)
+- [ ] LEGACY — [`src/pages/admin/AssignmentManagementPage.tsx`](src/pages/admin/AssignmentManagementPage.tsx)
+- [ ] BACKLOG — [`src/pages/admin/AnalyticsPage.tsx`](src/pages/admin/AnalyticsPage.tsx)
+- [ ] BACKLOG — [`src/pages/admin/SyncManagementPage.tsx`](src/pages/admin/SyncManagementPage.tsx)
+- [ ] BACKLOG — [`src/pages/admin/SyncMonitoringPage.tsx`](src/pages/admin/SyncMonitoringPage.tsx)
+- [ ] BACKLOG — [`src/pages/admin/CleanupPage.tsx`](src/pages/admin/CleanupPage.tsx)
 
 ## Dosen
-- [ ] [`src/pages/dosen/BankSoalPage.tsx`](src/pages/dosen/BankSoalPage.tsx)
-- [x] [`src/pages/dosen/DashboardPage.tsx`](src/pages/dosen/DashboardPage.tsx)
-- [x] [`src/pages/dosen/JadwalPage.tsx`](src/pages/dosen/JadwalPage.tsx)
-- [ ] [`src/pages/dosen/KehadiranPage.tsx`](src/pages/dosen/KehadiranPage.tsx)
-- [x] [`src/pages/dosen/LogbookReviewPage.tsx`](src/pages/dosen/LogbookReviewPage.tsx)
-- [ ] [`src/pages/dosen/MateriPage.tsx`](src/pages/dosen/MateriPage.tsx)
-- [ ] [`src/pages/dosen/PeminjamanPage.tsx`](src/pages/dosen/PeminjamanPage.tsx)
-- [ ] [`src/pages/dosen/PengumumanPage.tsx`](src/pages/dosen/PengumumanPage.tsx)
-- [ ] [`src/pages/dosen/PenilaianPage.tsx`](src/pages/dosen/PenilaianPage.tsx)
-- [ ] [`src/pages/dosen/ProfilePage.tsx`](src/pages/dosen/ProfilePage.tsx)
-- [ ] [`src/pages/dosen/kuis/AttemptDetailPage.tsx`](src/pages/dosen/kuis/AttemptDetailPage.tsx)
-- [ ] [`src/pages/dosen/kuis/KuisBuilderPage.tsx`](src/pages/dosen/kuis/KuisBuilderPage.tsx)
-- [ ] [`src/pages/dosen/kuis/KuisCreatePage.tsx`](src/pages/dosen/kuis/KuisCreatePage.tsx)
-- [ ] [`src/pages/dosen/kuis/KuisEditPage.tsx`](src/pages/dosen/kuis/KuisEditPage.tsx)
-- [ ] [`src/pages/dosen/kuis/KuisListPage.tsx`](src/pages/dosen/kuis/KuisListPage.tsx)
-- [ ] [`src/pages/dosen/kuis/KuisResultsPage.tsx`](src/pages/dosen/kuis/KuisResultsPage.tsx)
+- [x] MOSTLY ALIGNED — [`src/pages/dosen/DashboardPage.tsx`](src/pages/dosen/DashboardPage.tsx)
+- [x] MOSTLY ALIGNED — [`src/pages/dosen/JadwalPage.tsx`](src/pages/dosen/JadwalPage.tsx)
+- [ ] LEGACY — [`src/pages/dosen/KehadiranPage.tsx`](src/pages/dosen/KehadiranPage.tsx)
+- [ ] LEGACY — [`src/pages/dosen/PenilaianPage.tsx`](src/pages/dosen/PenilaianPage.tsx)
+- [ ] LEGACY — [`src/pages/dosen/MateriPage.tsx`](src/pages/dosen/MateriPage.tsx)
+- [ ] LEGACY — [`src/pages/dosen/BankSoalPage.tsx`](src/pages/dosen/BankSoalPage.tsx)
+- [x] PARTIAL — [`src/pages/dosen/LogbookReviewPage.tsx`](src/pages/dosen/LogbookReviewPage.tsx)
+- [ ] LEGACY — [`src/pages/dosen/PeminjamanPage.tsx`](src/pages/dosen/PeminjamanPage.tsx)
+- [ ] LEGACY — [`src/pages/dosen/PengumumanPage.tsx`](src/pages/dosen/PengumumanPage.tsx)
+- [ ] LEGACY — [`src/pages/dosen/ProfilePage.tsx`](src/pages/dosen/ProfilePage.tsx)
+- [ ] LEGACY — [`src/pages/dosen/kuis/KuisListPage.tsx`](src/pages/dosen/kuis/KuisListPage.tsx)
+- [ ] LEGACY — [`src/pages/dosen/kuis/KuisCreatePage.tsx`](src/pages/dosen/kuis/KuisCreatePage.tsx)
+- [ ] LEGACY — [`src/pages/dosen/kuis/KuisBuilderPage.tsx`](src/pages/dosen/kuis/KuisBuilderPage.tsx)
+- [ ] LEGACY — [`src/pages/dosen/kuis/KuisEditPage.tsx`](src/pages/dosen/kuis/KuisEditPage.tsx)
+- [ ] LEGACY — [`src/pages/dosen/kuis/KuisResultsPage.tsx`](src/pages/dosen/kuis/KuisResultsPage.tsx)
+- [ ] LEGACY — [`src/pages/dosen/kuis/AttemptDetailPage.tsx`](src/pages/dosen/kuis/AttemptDetailPage.tsx)
 
 ## Laboran
-- [ ] [`src/pages/laboran/ApprovalPage.tsx`](src/pages/laboran/ApprovalPage.tsx)
-- [x] [`src/pages/laboran/DashboardPage.tsx`](src/pages/laboran/DashboardPage.tsx)
-- [x] [`src/pages/laboran/InventarisPage.tsx`](src/pages/laboran/InventarisPage.tsx)
-- [x] [`src/pages/laboran/JadwalApprovalPage.tsx`](src/pages/laboran/JadwalApprovalPage.tsx)
-- [x] [`src/pages/laboran/LaboratoriumPage.tsx`](src/pages/laboran/LaboratoriumPage.tsx)
-- [x] [`src/pages/laboran/LaporanPage.tsx`](src/pages/laboran/LaporanPage.tsx)
-- [x] [`src/pages/laboran/PeminjamanAktifPage.tsx`](src/pages/laboran/PeminjamanAktifPage.tsx)
-- [x] [`src/pages/laboran/PengumumanPage.tsx`](src/pages/laboran/PengumumanPage.tsx)
-- [x] [`src/pages/laboran/PersetujuanPage.tsx`](src/pages/laboran/PersetujuanPage.tsx)
-- [x] [`src/pages/laboran/ProfilePage.tsx`](src/pages/laboran/ProfilePage.tsx)
+- [x] MOSTLY ALIGNED — [`src/pages/laboran/DashboardPage.tsx`](src/pages/laboran/DashboardPage.tsx)
+- [x] FULLY ALIGNED — [`src/pages/laboran/InventarisPage.tsx`](src/pages/laboran/InventarisPage.tsx)
+- [x] FULLY ALIGNED — [`src/pages/laboran/JadwalApprovalPage.tsx`](src/pages/laboran/JadwalApprovalPage.tsx)
+- [x] FULLY ALIGNED — [`src/pages/laboran/LaboratoriumPage.tsx`](src/pages/laboran/LaboratoriumPage.tsx)
+- [x] FULLY ALIGNED — [`src/pages/laboran/LaporanPage.tsx`](src/pages/laboran/LaporanPage.tsx)
+- [x] MOSTLY ALIGNED — [`src/pages/laboran/PeminjamanAktifPage.tsx`](src/pages/laboran/PeminjamanAktifPage.tsx)
+- [x] MOSTLY ALIGNED — [`src/pages/laboran/PengumumanPage.tsx`](src/pages/laboran/PengumumanPage.tsx)
+- [x] FULLY ALIGNED — [`src/pages/laboran/PersetujuanPage.tsx`](src/pages/laboran/PersetujuanPage.tsx)
+- [x] MOSTLY ALIGNED — [`src/pages/laboran/ProfilePage.tsx`](src/pages/laboran/ProfilePage.tsx)
+- [ ] LEGACY — [`src/pages/laboran/ApprovalPage.tsx`](src/pages/laboran/ApprovalPage.tsx)
 
 ## Mahasiswa
-- [ ] [`src/pages/mahasiswa/ConflictsPage.tsx`](src/pages/mahasiswa/ConflictsPage.tsx)
-- [x] [`src/pages/mahasiswa/DashboardPage.tsx`](src/pages/mahasiswa/DashboardPage.tsx)
-- [x] [`src/pages/mahasiswa/JadwalPage.tsx`](src/pages/mahasiswa/JadwalPage.tsx)
-- [x] [`src/pages/mahasiswa/LogbookPage.tsx`](src/pages/mahasiswa/LogbookPage.tsx)
-- [x] [`src/pages/mahasiswa/MateriPage.tsx`](src/pages/mahasiswa/MateriPage.tsx)
-- [x] [`src/pages/mahasiswa/NilaiPage.tsx`](src/pages/mahasiswa/NilaiPage.tsx)
-- [ ] [`src/pages/mahasiswa/OfflineSyncPage.tsx`](src/pages/mahasiswa/OfflineSyncPage.tsx)
-- [ ] [`src/pages/mahasiswa/PengumumanPage.tsx`](src/pages/mahasiswa/PengumumanPage.tsx)
-- [x] [`src/pages/mahasiswa/PresensiPage.tsx`](src/pages/mahasiswa/PresensiPage.tsx)
-- [ ] [`src/pages/mahasiswa/ProfilePage.tsx`](src/pages/mahasiswa/ProfilePage.tsx)
-- [ ] [`src/pages/mahasiswa/kuis/KuisAttemptPage.tsx`](src/pages/mahasiswa/kuis/KuisAttemptPage.tsx)
-- [x] [`src/pages/mahasiswa/kuis/KuisListPage.tsx`](src/pages/mahasiswa/kuis/KuisListPage.tsx)
-- [ ] [`src/pages/mahasiswa/kuis/KuisResultPage.tsx`](src/pages/mahasiswa/kuis/KuisResultPage.tsx)
+- [x] MOSTLY ALIGNED — [`src/pages/mahasiswa/DashboardPage.tsx`](src/pages/mahasiswa/DashboardPage.tsx)
+- [x] FULLY ALIGNED — [`src/pages/mahasiswa/JadwalPage.tsx`](src/pages/mahasiswa/JadwalPage.tsx)
+- [x] FULLY ALIGNED — [`src/pages/mahasiswa/LogbookPage.tsx`](src/pages/mahasiswa/LogbookPage.tsx)
+- [x] FULLY ALIGNED — [`src/pages/mahasiswa/MateriPage.tsx`](src/pages/mahasiswa/MateriPage.tsx)
+- [x] FULLY ALIGNED — [`src/pages/mahasiswa/NilaiPage.tsx`](src/pages/mahasiswa/NilaiPage.tsx)
+- [x] FULLY ALIGNED — [`src/pages/mahasiswa/PresensiPage.tsx`](src/pages/mahasiswa/PresensiPage.tsx)
+- [ ] LEGACY — [`src/pages/mahasiswa/ConflictsPage.tsx`](src/pages/mahasiswa/ConflictsPage.tsx)
+- [ ] LEGACY — [`src/pages/mahasiswa/PengumumanPage.tsx`](src/pages/mahasiswa/PengumumanPage.tsx)
+- [ ] LEGACY — [`src/pages/mahasiswa/OfflineSyncPage.tsx`](src/pages/mahasiswa/OfflineSyncPage.tsx)
+- [ ] LEGACY — [`src/pages/mahasiswa/ProfilePage.tsx`](src/pages/mahasiswa/ProfilePage.tsx)
+- [x] MOSTLY ALIGNED — [`src/pages/mahasiswa/kuis/KuisListPage.tsx`](src/pages/mahasiswa/kuis/KuisListPage.tsx)
+- [ ] LEGACY — [`src/pages/mahasiswa/kuis/KuisAttemptPage.tsx`](src/pages/mahasiswa/kuis/KuisAttemptPage.tsx)
+- [ ] LEGACY — [`src/pages/mahasiswa/kuis/KuisResultPage.tsx`](src/pages/mahasiswa/kuis/KuisResultPage.tsx)
 
 ## Public
-- [x] [`src/pages/public/HomePage.tsx`](src/pages/public/HomePage.tsx)
-- [x] [`src/pages/public/NotFoundPage.tsx`](src/pages/public/NotFoundPage.tsx)
-- [x] [`src/pages/public/OfflinePage.tsx`](src/pages/public/OfflinePage.tsx)
-- [x] [`src/pages/public/UnauthorizedPage.tsx`](src/pages/public/UnauthorizedPage.tsx)
+- [x] MOSTLY ALIGNED — [`src/pages/public/HomePage.tsx`](src/pages/public/HomePage.tsx)
+- [x] MOSTLY ALIGNED — [`src/pages/public/NotFoundPage.tsx`](src/pages/public/NotFoundPage.tsx)
+- [ ] PARTIAL — [`src/pages/public/OfflinePage.tsx`](src/pages/public/OfflinePage.tsx)
+- [x] MOSTLY ALIGNED — [`src/pages/public/UnauthorizedPage.tsx`](src/pages/public/UnauthorizedPage.tsx)
 
 ## Auth
-- [x] [`src/pages/auth/LoginPage.tsx`](src/pages/auth/LoginPage.tsx)
-- [x] [`src/pages/auth/RegisterPage.tsx`](src/pages/auth/RegisterPage.tsx)
-- [x] [`src/pages/auth/ForgotPasswordPage.tsx`](src/pages/auth/ForgotPasswordPage.tsx)
+- [x] MOSTLY ALIGNED — [`src/pages/auth/LoginPage.tsx`](src/pages/auth/LoginPage.tsx)
+- [x] MOSTLY ALIGNED — [`src/pages/auth/RegisterPage.tsx`](src/pages/auth/RegisterPage.tsx)
+- [ ] PARTIAL — [`src/pages/auth/ForgotPasswordPage.tsx`](src/pages/auth/ForgotPasswordPage.tsx)
 
 ## Shared
-- [ ] [`src/pages/shared/OfflineSyncPage.tsx`](src/pages/shared/OfflineSyncPage.tsx)
+- [ ] PARTIAL — [`src/pages/shared/OfflineSyncPage.tsx`](src/pages/shared/OfflineSyncPage.tsx)
 
 ---
 
 ## 📊 PRIORITAS IMPLEMENTASI SELANJUTNYA
 
-### ✅ Sudah Selesai — Foundation + Dashboard + Laboran + Mahasiswa Inti
-- [x] Theme tokens + semantic colors
-- [x] Semua custom UI components
-- [x] Login/ForgotPassword
-- [x] Admin, Dosen, Laboran, Mahasiswa Dashboard
-- [x] Laboran: seluruh halaman operasional
-- [x] Mahasiswa: jadwal, materi, nilai, presensi, logbook, kuis-list
+## PRIORITAS 1 — Konsistensi Visual Paling Terlihat
+- [ ] Samakan profile pages semua role:
+  - [`src/pages/admin/ProfilePage.tsx`](src/pages/admin/ProfilePage.tsx)
+  - [`src/pages/dosen/ProfilePage.tsx`](src/pages/dosen/ProfilePage.tsx)
+  - [`src/pages/mahasiswa/ProfilePage.tsx`](src/pages/mahasiswa/ProfilePage.tsx)
+- [ ] Rapikan tokenisasi halaman auth dan public agar tidak terlalu bergantung pada warna hardcoded
+- [ ] Standarkan page header, action bar, alert, dan section spacing lintas role
 
-### 🔴 Priority Berikutnya — Halaman yang Belum Diupgrade
+## PRIORITAS 2 — Area dengan Dampak UX Besar
+- [ ] Admin management pages:
+  - [`src/pages/admin/UsersPage.tsx`](src/pages/admin/UsersPage.tsx)
+  - [`src/pages/admin/LaboratoriesPage.tsx`](src/pages/admin/LaboratoriesPage.tsx)
+  - [`src/pages/admin/EquipmentsPage.tsx`](src/pages/admin/EquipmentsPage.tsx)
+  - [`src/pages/admin/MataKuliahPage.tsx`](src/pages/admin/MataKuliahPage.tsx)
+  - [`src/pages/admin/KelasPageEnhanced.tsx`](src/pages/admin/KelasPageEnhanced.tsx)
+- [ ] Dosen academic operation pages:
+  - [`src/pages/dosen/KehadiranPage.tsx`](src/pages/dosen/KehadiranPage.tsx)
+  - [`src/pages/dosen/PenilaianPage.tsx`](src/pages/dosen/PenilaianPage.tsx)
+  - [`src/pages/dosen/MateriPage.tsx`](src/pages/dosen/MateriPage.tsx)
+  - [`src/pages/dosen/BankSoalPage.tsx`](src/pages/dosen/BankSoalPage.tsx)
+- [ ] Mahasiswa communication + offline pages:
+  - [`src/pages/mahasiswa/PengumumanPage.tsx`](src/pages/mahasiswa/PengumumanPage.tsx)
+  - [`src/pages/mahasiswa/OfflineSyncPage.tsx`](src/pages/mahasiswa/OfflineSyncPage.tsx)
+  - [`src/pages/shared/OfflineSyncPage.tsx`](src/pages/shared/OfflineSyncPage.tsx)
 
-#### Halaman Profile (semua role)
-- [ ] `src/pages/admin/ProfilePage.tsx`
-- [ ] `src/pages/dosen/ProfilePage.tsx`
-- [ ] `src/pages/mahasiswa/ProfilePage.tsx`
+## PRIORITAS 3 — Ekosistem Kuis yang Harus Seragam
+- [ ] Dosen quiz system:
+  - [`src/pages/dosen/kuis/KuisListPage.tsx`](src/pages/dosen/kuis/KuisListPage.tsx)
+  - [`src/pages/dosen/kuis/KuisCreatePage.tsx`](src/pages/dosen/kuis/KuisCreatePage.tsx)
+  - [`src/pages/dosen/kuis/KuisBuilderPage.tsx`](src/pages/dosen/kuis/KuisBuilderPage.tsx)
+  - [`src/pages/dosen/kuis/KuisEditPage.tsx`](src/pages/dosen/kuis/KuisEditPage.tsx)
+  - [`src/pages/dosen/kuis/KuisResultsPage.tsx`](src/pages/dosen/kuis/KuisResultsPage.tsx)
+  - [`src/pages/dosen/kuis/AttemptDetailPage.tsx`](src/pages/dosen/kuis/AttemptDetailPage.tsx)
+- [ ] Mahasiswa quiz system:
+  - [`src/pages/mahasiswa/kuis/KuisAttemptPage.tsx`](src/pages/mahasiswa/kuis/KuisAttemptPage.tsx)
+  - [`src/pages/mahasiswa/kuis/KuisResultPage.tsx`](src/pages/mahasiswa/kuis/KuisResultPage.tsx)
 
-#### Auth
-- [ ] `src/pages/auth/RegisterPage.tsx`
-
-#### Admin management pages
-- [ ] `src/pages/admin/UsersPage.tsx`
-- [ ] `src/pages/admin/MahasiswaManagementPage.tsx`
-- [ ] `src/pages/admin/RolesPage.tsx`
-- [ ] `src/pages/admin/LaboratoriesPage.tsx`
-- [ ] `src/pages/admin/EquipmentsPage.tsx`
-- [ ] `src/pages/admin/MataKuliahPage.tsx`
-- [ ] `src/pages/admin/KelasPage.tsx`
-- [ ] `src/pages/admin/KelasMataKuliahPage.tsx`
-- [ ] `src/pages/admin/ManajemenAssignmentPage.tsx`
-- [ ] `src/pages/admin/AnnouncementsPage.tsx`
-- [ ] `src/pages/admin/AnalyticsPage.tsx`
-
-#### Dosen fitur akademik
-- [ ] `src/pages/dosen/KehadiranPage.tsx`
-- [ ] `src/pages/dosen/PenilaianPage.tsx`
-- [ ] `src/pages/dosen/MateriPage.tsx`
-- [ ] `src/pages/dosen/BankSoalPage.tsx`
-- [ ] `src/pages/dosen/PeminjamanPage.tsx`
-- [ ] `src/pages/dosen/PengumumanPage.tsx`
-
-#### Dosen kuis system
-- [ ] `src/pages/dosen/kuis/KuisListPage.tsx`
-- [ ] `src/pages/dosen/kuis/KuisCreatePage.tsx`
-- [ ] `src/pages/dosen/kuis/KuisBuilderPage.tsx`
-- [ ] `src/pages/dosen/kuis/KuisEditPage.tsx`
-- [ ] `src/pages/dosen/kuis/KuisResultsPage.tsx`
-- [ ] `src/pages/dosen/kuis/AttemptDetailPage.tsx`
-
-#### Mahasiswa sisa
-- [ ] `src/pages/mahasiswa/ConflictsPage.tsx`
-- [ ] `src/pages/mahasiswa/PengumumanPage.tsx`
-- [ ] `src/pages/mahasiswa/OfflineSyncPage.tsx`
-- [ ] `src/pages/mahasiswa/kuis/KuisAttemptPage.tsx`
-- [ ] `src/pages/mahasiswa/kuis/KuisResultPage.tsx`
-
-#### Laboran sisa
-- [ ] `src/pages/laboran/ApprovalPage.tsx`
-
-#### Shared
-- [ ] `src/pages/shared/OfflineSyncPage.tsx`
+## PRIORITAS 4 — Backlog yang Perlu Validasi Route Dulu
+- [ ] [`src/pages/admin/AnalyticsPage.tsx`](src/pages/admin/AnalyticsPage.tsx)
+- [ ] [`src/pages/admin/SyncManagementPage.tsx`](src/pages/admin/SyncManagementPage.tsx)
+- [ ] [`src/pages/admin/SyncMonitoringPage.tsx`](src/pages/admin/SyncMonitoringPage.tsx)
+- [ ] [`src/pages/admin/CleanupPage.tsx`](src/pages/admin/CleanupPage.tsx)
 
 ---
 
 ## ✅ CHECKLIST VALIDASI SETELAH TIAP FASE
-- [ ] Semua route utama tetap bisa dibuka
-- [ ] Tidak ada komponen shadcn/ui lama yang rusak
-- [ ] Responsive tetap aman
-- [ ] Dark mode aman
-- [ ] Empty/loading/error states konsisten
-- [ ] Aksesibilitas dasar tetap baik
-- [ ] Tidak ada role yang tertinggal dari audit route
+- [ ] Semua route utama di [`src/routes/index.tsx`](src/routes/index.tsx) tetap bisa dibuka
+- [ ] Tidak ada regresi pada komponen dasar di [`src/components/ui/index.ts`](src/components/ui/index.ts)
+- [ ] Responsive aman pada mobile, tablet, dan desktop
+- [ ] Dark mode aman dan nyaman dibaca
+- [ ] Empty, loading, error, success, warning, offline state konsisten
+- [ ] CTA primer dan sekunder konsisten lintas role
+- [ ] Tidak ada halaman yang terlihat “asing” dari sistem visual utama
+- [ ] Alias route shared/notifikasi/offline tidak menimbulkan UI yang membingungkan
 
 ---
 
 ## 📝 Catatan Penting
-
-1. Rencana ini sekarang sudah mencakup **fitur aktual dari router** dan **halaman aktual di setiap role**.
-2. Ada beberapa file yang belum tentu terhubung langsung di router, tetapi tetap dimasukkan ke backlog agar tidak ada fitur internal yang tertinggal.
-3. **Foundation (Fase 1) sudah 95% selesai** — tinggal `danger` token dan validasi dark mode.
-4. **Laboran adalah role paling lengkap** — hampir semua halaman sudah diupgrade.
-5. **Dosen kuis system** adalah kelompok halaman terbesar yang belum disentuh sama sekali.
+1. Acuan implementasi UI adalah **router aktual** di [`src/routes/index.tsx`](src/routes/index.tsx), bukan asumsi lama di dokumen lain.
+2. [`src/config/routes.config.ts`](src/config/routes.config.ts) masih perlu sinkronisasi nomenklatur pada beberapa route seperti `profil/profile` dan parameter route kuis.
+3. Fondasi visual aplikasi sudah kuat di [`src/index.css`](src/index.css) dan [`src/components/ui/index.ts`](src/components/ui/index.ts), tetapi banyak halaman masih perlu tokenisasi dan penyamaan detail.
+4. Role **laboran** saat ini adalah benchmark kualitas UI operasional paling matang.
+5. Dashboard **mahasiswa** dan **public landing page** sudah menarik, tetapi masih perlu perapian agar sepenuhnya konsisten dengan design system.
+6. Halaman profile lintas role, admin management pages, dan seluruh ekosistem kuis adalah area paling penting untuk membuat aplikasi terasa benar-benar menarik dan konsisten.
+7. Setelah dokumen ini, implementasi sebaiknya mengikuti urutan: **profile lintas role → admin management → dosen academic pages → kuis system → shared/offline/notifikasi**.

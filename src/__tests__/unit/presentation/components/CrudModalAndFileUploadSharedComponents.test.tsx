@@ -47,7 +47,9 @@ describe("CreateModal", () => {
     fireEvent.click(screen.getByRole("button", { name: "Create" }));
 
     await waitFor(() => {
-      expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ nama: "Data Baru" }));
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({ nama: "Data Baru" }),
+      );
       expect(onOpenChange).toHaveBeenCalledWith(false);
     });
   });
@@ -92,7 +94,9 @@ describe("EditModal", () => {
     fireEvent.click(screen.getByRole("button", { name: /Save Changes/i }));
 
     await waitFor(() => {
-      expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ nama: "Baru" }));
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({ nama: "Baru" }),
+      );
       expect(onOpenChange).toHaveBeenCalledWith(false);
     });
   });

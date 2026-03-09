@@ -248,7 +248,9 @@ describe("PageHeader Component", () => {
         />,
       );
 
-      const headerContent = document.querySelector(".flex-col") || document.querySelector("h1")?.closest("div");
+      const headerContent =
+        document.querySelector(".flex-col") ||
+        document.querySelector("h1")?.closest("div");
       expect(headerContent).toBeInTheDocument();
     });
   });

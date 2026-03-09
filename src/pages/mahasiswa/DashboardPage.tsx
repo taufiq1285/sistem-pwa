@@ -163,7 +163,7 @@ export function DashboardPage() {
                   Dashboard Mahasiswa
                 </h1>
                 <p className="mt-2 text-sm font-semibold text-foreground/80 sm:text-base lg:text-lg">
-                  Selamat datang, {" "}
+                  Selamat datang,{" "}
                   <span className="text-emerald-600 dark:text-emerald-400">
                     {user?.full_name || user?.email}
                   </span>
@@ -242,7 +242,7 @@ export function DashboardPage() {
                       Semangat Belajar! 🚀
                     </h2>
                     <p className="text-sm font-semibold leading-relaxed text-emerald-100 sm:text-lg">
-                      Kamu terdaftar di {" "}
+                      Kamu terdaftar di{" "}
                       <span className="font-extrabold text-white">
                         {stats?.totalKelasPraktikum}
                       </span>{" "}
@@ -390,11 +390,14 @@ export function DashboardPage() {
                             {jadwal.mata_kuliah_nama}
                           </h4>
                           <p className="mt-0.5 text-xs font-semibold text-muted-foreground">
-                            {jadwal.kelas_nama} {jadwal.topik && `• ${jadwal.topik}`}
+                            {jadwal.kelas_nama}{" "}
+                            {jadwal.topik && `• ${jadwal.topik}`}
                           </p>
                           <div className="mt-1 flex items-center gap-2 text-xs font-bold text-foreground/80">
                             <Clock className="h-3 w-3" />
-                            {dayNames[jadwal.hari] || jadwal.hari}, {formatDate(jadwal.tanggal_praktikum)}, {formatTime(jadwal.jam_mulai)}-
+                            {dayNames[jadwal.hari] || jadwal.hari},{" "}
+                            {formatDate(jadwal.tanggal_praktikum)},{" "}
+                            {formatTime(jadwal.jam_mulai)}-
                             {formatTime(jadwal.jam_selesai)}
                           </div>
                           <div className="mt-1 flex items-center gap-1 text-xs font-semibold text-muted-foreground">

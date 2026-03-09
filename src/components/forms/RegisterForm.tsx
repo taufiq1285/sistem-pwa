@@ -65,9 +65,8 @@ const ROLE_CONFIG = {
     bgClass: "bg-blue-50 hover:bg-blue-100 border-blue-200",
     selectedClass: "bg-blue-100 border-blue-500 ring-2 ring-blue-500",
     iconClass: "text-blue-600",
-    description:
-      "Saya adalah mahasiswa yang ingin mengakses materi kuliah dan jadwal praktikum",
-    helperText: "Pilih ini jika Anda adalah mahasiswa/peserta didik",
+    description: "Akses materi kuliah dan jadwal praktikum",
+    helperText: "Untuk mahasiswa",
   },
   dosen: {
     value: "dosen" as ValidRole,
@@ -77,9 +76,8 @@ const ROLE_CONFIG = {
     bgClass: "bg-green-50 hover:bg-green-100 border-green-200",
     selectedClass: "bg-green-100 border-green-500 ring-2 ring-green-500",
     iconClass: "text-green-600",
-    description:
-      "Saya adalah dosen/pengajar yang akan mengelola kelas dan memberikan materi",
-    helperText: "Pilih ini jika Anda adalah dosen/pengajar",
+    description: "Kelola kelas, materi, dan aktivitas pembelajaran",
+    helperText: "Untuk dosen/pengajar",
   },
   laboran: {
     value: "laboran" as ValidRole,
@@ -89,9 +87,8 @@ const ROLE_CONFIG = {
     bgClass: "bg-purple-50 hover:bg-purple-100 border-purple-200",
     selectedClass: "bg-purple-100 border-purple-500 ring-2 ring-purple-500",
     iconClass: "text-purple-600",
-    description:
-      "Saya adalah laboran yang akan mengelola inventaris dan jadwal laboratorium",
-    helperText: "Pilih ini jika Anda adalah laboran/pengelola lab",
+    description: "Kelola inventaris dan jadwal laboratorium",
+    helperText: "Untuk laboran",
   },
 };
 
@@ -261,7 +258,7 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div className="grid grid-cols-3 gap-3">
             {Object.values(ROLE_CONFIG).map((config) => {
               const Icon = config.icon;
               const isSelected = selectedRole === config.value;
@@ -270,7 +267,7 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
                 <Card
                   key={config.value}
                   className={cn(
-                    "cursor-pointer transition-all border-2 hover:scale-105 hover:shadow-xl",
+                    "cursor-pointer border-2 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg",
                     config.bgClass,
                     isSelected && config.selectedClass,
                   )}
@@ -278,32 +275,38 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
                     setValue("role", config.value, { shouldValidate: true })
                   }
                 >
-                  <CardHeader className="p-6 pb-3">
-                    <div className="flex items-center gap-3 mb-2">
+                  <CardContent className="p-3">
+                    <div className="flex flex-col items-center text-center gap-2">
                       <div
                         className={cn(
-                          "p-2 rounded-lg",
+                          "rounded-xl p-2.5",
                           isSelected
                             ? "bg-white shadow-md"
-                            : "bg-opacity-20 bg-white",
+                            : "bg-white/70 shadow-sm",
                         )}
                       >
-                        <Icon className={cn("h-7 w-7", config.iconClass)} />
+                        <Icon className={cn("h-5 w-5", config.iconClass)} />
                       </div>
-                      <CardTitle className="text-lg font-bold">
-                        {config.label}
-                      </CardTitle>
-                      {isSelected && (
-                        <CheckCircle2
-                          className={cn("h-6 w-6 ml-auto", config.iconClass)}
-                        />
-                      )}
+
+                      <div className="w-full">
+                        <div className="flex items-center justify-center gap-1">
+                          <CardTitle className="text-sm font-bold text-slate-900">
+                            {config.label}
+                          </CardTitle>
+                          {isSelected && (
+                            <CheckCircle2
+                              className={cn("h-4 w-4 shrink-0", config.iconClass)}
+                            />
+                          )}
+                        </div>
+                        <p className="mt-1 text-xs font-semibold text-muted-foreground">
+                          {config.helperText}
+                        </p>
+                        <CardDescription className="mt-1.5 text-xs leading-4 text-slate-700">
+                          {config.description}
+                        </CardDescription>
+                      </div>
                     </div>
-                  </CardHeader>
-                  <CardContent className="p-6 pt-2">
-                    <CardDescription className="text-sm font-medium leading-relaxed">
-                      {config.description}
-                    </CardDescription>
                   </CardContent>
                 </Card>
               );

@@ -179,7 +179,8 @@ export default function PresensiPage() {
                     Presensi Praktikum
                   </h1>
                   <p className="text-muted-foreground">
-                    Rekap kehadiran praktikum Anda secara ringkas dan terstruktur.
+                    Rekap kehadiran praktikum Anda secara ringkas dan
+                    terstruktur.
                   </p>
                 </div>
               </div>

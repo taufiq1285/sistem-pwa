@@ -195,7 +195,8 @@ export function MultipleChoice({
               className={cn(
                 "transition-all",
                 !disabled && "cursor-pointer hover:border-primary/40",
-                option.is_correct && "ring-2 ring-primary border-primary/60 bg-primary/5",
+                option.is_correct &&
+                  "ring-2 ring-primary border-primary/60 bg-primary/5",
                 showErrors && !option.text.trim() && "ring-2 ring-destructive",
               )}
               onClick={() => {

@@ -393,7 +393,10 @@ export default function MahasiswaNilaiPageEnhanced() {
         >
           <CardContent className="p-4 sm:p-6">
             <div className="grid gap-4 md:grid-cols-2">
-              <Select value={selectedSemester} onValueChange={setSelectedSemester}>
+              <Select
+                value={selectedSemester}
+                onValueChange={setSelectedSemester}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Semua Semester" />
                 </SelectTrigger>
@@ -444,347 +447,351 @@ export default function MahasiswaNilaiPageEnhanced() {
             </TabsTrigger>
           </TabsList>
 
-        {/* Tab: Per Kelas */}
-        <TabsContent value="per-kelas">
-          <GlassCard
-            intensity="low"
-            className="border-white/40 bg-white/90 p-6 shadow-lg dark:border-white/10 dark:bg-slate-900/85"
-          >
-            <CardHeader>
-              <CardTitle>Nilai Per Kelas</CardTitle>
-              <CardDescription>
-                Nilai untuk setiap kelas praktikum yang Anda ikuti
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {filteredNilai.length === 0 ? (
-                <Alert className="border-border/60 bg-muted/30">
-                  <AlertDescription className="text-muted-foreground">
-                    Belum ada data nilai
-                  </AlertDescription>
-                </Alert>
-              ) : (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-12">No</TableHead>
-                        <TableHead>Kode MK</TableHead>
-                        <TableHead>Mata Kuliah</TableHead>
-                        <TableHead>Kelas</TableHead>
-                        <TableHead className="text-center">Praktikum</TableHead>
-                        <TableHead className="text-center">
-                          Nilai Akhir
-                        </TableHead>
-                        <TableHead className="text-center">Grade</TableHead>
-                        <TableHead>Aksi</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredNilai.map((nilai, index) => (
-                        <TableRow key={nilai.id}>
-                          <TableCell>{index + 1}</TableCell>
-                          <TableCell className="font-mono">
-                            {nilai.kelas?.mata_kuliah?.kode_mk}
-                          </TableCell>
-                          <TableCell className="font-medium">
-                            {nilai.kelas?.mata_kuliah?.nama_mk}
-                          </TableCell>
-                          <TableCell>{nilai.kelas?.nama_kelas}</TableCell>
-                          <TableCell className="text-center">
-                            {nilai.nilai_praktikum?.toFixed(1) || "0.0"}
-                          </TableCell>
-                          <TableCell className="text-center font-bold">
-                            {nilai.nilai_akhir?.toFixed(2) || "0.00"}
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Badge
-                              className={
-                                nilai.nilai_huruf?.startsWith("A")
-                                  ? "bg-green-600"
-                                  : nilai.nilai_huruf?.startsWith("B")
-                                    ? "bg-blue-600"
-                                    : nilai.nilai_huruf?.startsWith("C")
-                                      ? "bg-yellow-600"
-                                      : "bg-red-600"
-                              }
-                            >
-                              {nilai.nilai_huruf || "-"}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="gap-1"
-                              onClick={() => handleAjukanPerbaikan(nilai)}
-                            >
-                              <Edit className="h-3 w-3" />
-                              Ajukan Perbaikan
-                            </Button>
-                          </TableCell>
+          {/* Tab: Per Kelas */}
+          <TabsContent value="per-kelas">
+            <GlassCard
+              intensity="low"
+              className="border-white/40 bg-white/90 p-6 shadow-lg dark:border-white/10 dark:bg-slate-900/85"
+            >
+              <CardHeader>
+                <CardTitle>Nilai Per Kelas</CardTitle>
+                <CardDescription>
+                  Nilai untuk setiap kelas praktikum yang Anda ikuti
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {filteredNilai.length === 0 ? (
+                  <Alert className="border-border/60 bg-muted/30">
+                    <AlertDescription className="text-muted-foreground">
+                      Belum ada data nilai
+                    </AlertDescription>
+                  </Alert>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-12">No</TableHead>
+                          <TableHead>Kode MK</TableHead>
+                          <TableHead>Mata Kuliah</TableHead>
+                          <TableHead>Kelas</TableHead>
+                          <TableHead className="text-center">
+                            Praktikum
+                          </TableHead>
+                          <TableHead className="text-center">
+                            Nilai Akhir
+                          </TableHead>
+                          <TableHead className="text-center">Grade</TableHead>
+                          <TableHead>Aksi</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </CardContent>
-          </GlassCard>
-        </TabsContent>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredNilai.map((nilai, index) => (
+                          <TableRow key={nilai.id}>
+                            <TableCell>{index + 1}</TableCell>
+                            <TableCell className="font-mono">
+                              {nilai.kelas?.mata_kuliah?.kode_mk}
+                            </TableCell>
+                            <TableCell className="font-medium">
+                              {nilai.kelas?.mata_kuliah?.nama_mk}
+                            </TableCell>
+                            <TableCell>{nilai.kelas?.nama_kelas}</TableCell>
+                            <TableCell className="text-center">
+                              {nilai.nilai_praktikum?.toFixed(1) || "0.0"}
+                            </TableCell>
+                            <TableCell className="text-center font-bold">
+                              {nilai.nilai_akhir?.toFixed(2) || "0.00"}
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <Badge
+                                className={
+                                  nilai.nilai_huruf?.startsWith("A")
+                                    ? "bg-green-600"
+                                    : nilai.nilai_huruf?.startsWith("B")
+                                      ? "bg-blue-600"
+                                      : nilai.nilai_huruf?.startsWith("C")
+                                        ? "bg-yellow-600"
+                                        : "bg-red-600"
+                                }
+                              >
+                                {nilai.nilai_huruf || "-"}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="gap-1"
+                                onClick={() => handleAjukanPerbaikan(nilai)}
+                              >
+                                <Edit className="h-3 w-3" />
+                                Ajukan Perbaikan
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </CardContent>
+            </GlassCard>
+          </TabsContent>
 
-        {/* Tab: Per Mata Kuliah (Kumulatif) */}
-        <TabsContent value="per-mk">
-          <GlassCard
-            intensity="low"
-            className="border-white/40 bg-white/90 p-6 shadow-lg dark:border-white/10 dark:bg-slate-900/85"
-          >
-            <CardHeader>
-              <CardTitle>Nilai Per Mata Kuliah (Kumulatif)</CardTitle>
-              <CardDescription>
-                Rata-rata nilai dari semua kelas untuk setiap mata kuliah
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {nilaiKumulatif.length === 0 ? (
-                <Alert className="border-border/60 bg-muted/30">
-                  <AlertDescription className="text-muted-foreground">
-                    Belum ada data nilai
-                  </AlertDescription>
-                </Alert>
-              ) : (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-12">No</TableHead>
-                        <TableHead>Kode MK</TableHead>
-                        <TableHead>Mata Kuliah</TableHead>
-                        <TableHead className="text-center">SKS</TableHead>
-                        <TableHead className="text-center">
-                          Total Kelas
-                        </TableHead>
-                        <TableHead className="text-center">
-                          Nilai Kumulatif
-                        </TableHead>
-                        <TableHead className="text-center">Grade</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {nilaiKumulatif.map((mk, index) => (
-                        <TableRow key={mk.mata_kuliah_id}>
-                          <TableCell>{index + 1}</TableCell>
-                          <TableCell className="font-mono">
-                            {mk.kode_mk}
-                          </TableCell>
-                          <TableCell className="font-medium">
-                            {mk.nama_mk}
-                          </TableCell>
-                          <TableCell className="text-center">
-                            {mk.sks}
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Badge variant="outline">{mk.total_kelas}</Badge>
-                          </TableCell>
-                          <TableCell className="text-center font-bold text-lg">
-                            {mk.nilai_kumulatif.toFixed(2)}
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Badge
-                              className={
-                                mk.nilai_huruf.startsWith("A")
-                                  ? "bg-green-600"
-                                  : mk.nilai_huruf.startsWith("B")
-                                    ? "bg-blue-600"
-                                    : mk.nilai_huruf.startsWith("C")
-                                      ? "bg-yellow-600"
-                                      : "bg-red-600"
-                              }
-                            >
-                              {mk.nilai_huruf}
-                            </Badge>
-                          </TableCell>
+          {/* Tab: Per Mata Kuliah (Kumulatif) */}
+          <TabsContent value="per-mk">
+            <GlassCard
+              intensity="low"
+              className="border-white/40 bg-white/90 p-6 shadow-lg dark:border-white/10 dark:bg-slate-900/85"
+            >
+              <CardHeader>
+                <CardTitle>Nilai Per Mata Kuliah (Kumulatif)</CardTitle>
+                <CardDescription>
+                  Rata-rata nilai dari semua kelas untuk setiap mata kuliah
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {nilaiKumulatif.length === 0 ? (
+                  <Alert className="border-border/60 bg-muted/30">
+                    <AlertDescription className="text-muted-foreground">
+                      Belum ada data nilai
+                    </AlertDescription>
+                  </Alert>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-12">No</TableHead>
+                          <TableHead>Kode MK</TableHead>
+                          <TableHead>Mata Kuliah</TableHead>
+                          <TableHead className="text-center">SKS</TableHead>
+                          <TableHead className="text-center">
+                            Total Kelas
+                          </TableHead>
+                          <TableHead className="text-center">
+                            Nilai Kumulatif
+                          </TableHead>
+                          <TableHead className="text-center">Grade</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </CardContent>
-          </GlassCard>
-        </TabsContent>
+                      </TableHeader>
+                      <TableBody>
+                        {nilaiKumulatif.map((mk, index) => (
+                          <TableRow key={mk.mata_kuliah_id}>
+                            <TableCell>{index + 1}</TableCell>
+                            <TableCell className="font-mono">
+                              {mk.kode_mk}
+                            </TableCell>
+                            <TableCell className="font-medium">
+                              {mk.nama_mk}
+                            </TableCell>
+                            <TableCell className="text-center">
+                              {mk.sks}
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <Badge variant="outline">{mk.total_kelas}</Badge>
+                            </TableCell>
+                            <TableCell className="text-center font-bold text-lg">
+                              {mk.nilai_kumulatif.toFixed(2)}
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <Badge
+                                className={
+                                  mk.nilai_huruf.startsWith("A")
+                                    ? "bg-green-600"
+                                    : mk.nilai_huruf.startsWith("B")
+                                      ? "bg-blue-600"
+                                      : mk.nilai_huruf.startsWith("C")
+                                        ? "bg-yellow-600"
+                                        : "bg-red-600"
+                                }
+                              >
+                                {mk.nilai_huruf}
+                              </Badge>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </CardContent>
+            </GlassCard>
+          </TabsContent>
 
-        {/* Tab: Riwayat Permintaan */}
-        <TabsContent value="permintaan">
-          <GlassCard
-            intensity="low"
-            className="border-white/40 bg-white/90 p-6 shadow-lg dark:border-white/10 dark:bg-slate-900/85"
-          >
-            <CardHeader>
-              <CardTitle>Riwayat Permintaan Perbaikan Nilai</CardTitle>
-              <CardDescription>
-                Status permintaan perbaikan nilai yang pernah Anda ajukan
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {permintaanList.length === 0 ? (
-                <Alert className="border-border/60 bg-muted/30">
-                  <AlertDescription className="text-muted-foreground">
-                    Belum ada permintaan perbaikan nilai
-                  </AlertDescription>
-                </Alert>
-              ) : (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Mata Kuliah</TableHead>
-                        <TableHead>Komponen</TableHead>
-                        <TableHead className="text-center">
-                          Nilai Lama
-                        </TableHead>
-                        <TableHead className="text-center">
-                          Nilai Baru
-                        </TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Tanggal</TableHead>
-                        <TableHead>Response</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {permintaanList.map((req) => (
-                        <TableRow key={req.id}>
-                          <TableCell className="font-medium">
-                            {req.kelas?.mata_kuliah?.nama_mk}
-                          </TableCell>
-                          <TableCell>
-                            {KOMPONEN_NILAI_LABELS[req.komponen_nilai]}
-                          </TableCell>
-                          <TableCell className="text-center">
-                            {req.nilai_lama}
-                          </TableCell>
-                          <TableCell className="text-center">
-                            {req.nilai_baru ? (
-                              <span className="font-bold text-green-600">
-                                {req.nilai_baru}
-                              </span>
-                            ) : (
-                              "-"
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <Badge
-                              className={`${STATUS_COLORS[req.status].bg} ${STATUS_COLORS[req.status].text} border ${STATUS_COLORS[req.status].border}`}
-                            >
-                              {STATUS_PERMINTAAN_LABELS[req.status]}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-sm">
-                            {formatDate(req.created_at)}
-                          </TableCell>
-                          <TableCell className="text-sm max-w-xs truncate">
-                            {req.response_dosen || "-"}
-                          </TableCell>
+          {/* Tab: Riwayat Permintaan */}
+          <TabsContent value="permintaan">
+            <GlassCard
+              intensity="low"
+              className="border-white/40 bg-white/90 p-6 shadow-lg dark:border-white/10 dark:bg-slate-900/85"
+            >
+              <CardHeader>
+                <CardTitle>Riwayat Permintaan Perbaikan Nilai</CardTitle>
+                <CardDescription>
+                  Status permintaan perbaikan nilai yang pernah Anda ajukan
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {permintaanList.length === 0 ? (
+                  <Alert className="border-border/60 bg-muted/30">
+                    <AlertDescription className="text-muted-foreground">
+                      Belum ada permintaan perbaikan nilai
+                    </AlertDescription>
+                  </Alert>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Mata Kuliah</TableHead>
+                          <TableHead>Komponen</TableHead>
+                          <TableHead className="text-center">
+                            Nilai Lama
+                          </TableHead>
+                          <TableHead className="text-center">
+                            Nilai Baru
+                          </TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Tanggal</TableHead>
+                          <TableHead>Response</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </CardContent>
-          </GlassCard>
-        </TabsContent>
-      </Tabs>
+                      </TableHeader>
+                      <TableBody>
+                        {permintaanList.map((req) => (
+                          <TableRow key={req.id}>
+                            <TableCell className="font-medium">
+                              {req.kelas?.mata_kuliah?.nama_mk}
+                            </TableCell>
+                            <TableCell>
+                              {KOMPONEN_NILAI_LABELS[req.komponen_nilai]}
+                            </TableCell>
+                            <TableCell className="text-center">
+                              {req.nilai_lama}
+                            </TableCell>
+                            <TableCell className="text-center">
+                              {req.nilai_baru ? (
+                                <span className="font-bold text-green-600">
+                                  {req.nilai_baru}
+                                </span>
+                              ) : (
+                                "-"
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <Badge
+                                className={`${STATUS_COLORS[req.status].bg} ${STATUS_COLORS[req.status].text} border ${STATUS_COLORS[req.status].border}`}
+                              >
+                                {STATUS_PERMINTAAN_LABELS[req.status]}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-sm">
+                              {formatDate(req.created_at)}
+                            </TableCell>
+                            <TableCell className="text-sm max-w-xs truncate">
+                              {req.response_dosen || "-"}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </CardContent>
+            </GlassCard>
+          </TabsContent>
+        </Tabs>
 
-      {/* Dialog: Ajukan Permintaan Perbaikan */}
-      <Dialog
-        open={permintaanDialogOpen}
-        onOpenChange={setPermintaanDialogOpen}
-      >
-        <DialogContent className="sm:max-w-125">
-          <DialogHeader>
-            <DialogTitle>Ajukan Permintaan Perbaikan Nilai</DialogTitle>
-            <DialogDescription>
-              {selectedNilai?.kelas?.mata_kuliah?.nama_mk} -{" "}
-              {selectedNilai?.kelas?.nama_kelas}
-            </DialogDescription>
-          </DialogHeader>
+        {/* Dialog: Ajukan Permintaan Perbaikan */}
+        <Dialog
+          open={permintaanDialogOpen}
+          onOpenChange={setPermintaanDialogOpen}
+        >
+          <DialogContent className="sm:max-w-125">
+            <DialogHeader>
+              <DialogTitle>Ajukan Permintaan Perbaikan Nilai</DialogTitle>
+              <DialogDescription>
+                {selectedNilai?.kelas?.mata_kuliah?.nama_mk} -{" "}
+                {selectedNilai?.kelas?.nama_kelas}
+              </DialogDescription>
+            </DialogHeader>
 
-          <div className="space-y-4">
-            <div>
-              <Label>Komponen Nilai</Label>
-              <Select
-                value={komponenNilai}
-                onValueChange={(v) => setKomponenNilai(v as KomponenNilai)}
+            <div className="space-y-4">
+              <div>
+                <Label>Komponen Nilai</Label>
+                <Select
+                  value={komponenNilai}
+                  onValueChange={(v) => setKomponenNilai(v as KomponenNilai)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(KOMPONEN_NILAI_LABELS).map(
+                      ([key, label]) => (
+                        <SelectItem key={key} value={key}>
+                          {label} (
+                          {String(
+                            selectedNilai?.[`nilai_${key}` as keyof Nilai] || 0,
+                          )}
+                          )
+                        </SelectItem>
+                      ),
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label>Nilai Usulan (Opsional)</Label>
+                <Input
+                  type="text"
+                  inputMode="numeric"
+                  value={nilaiUsulan}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value === "" || /^\d*\.?\d*$/.test(value)) {
+                      setNilaiUsulan(value);
+                    }
+                  }}
+                  placeholder="Contoh: 85"
+                />
+              </div>
+
+              <div>
+                <Label>
+                  Alasan Permintaan <span className="text-red-500">*</span>
+                </Label>
+                <Textarea
+                  value={alasanPermintaan}
+                  onChange={(e) => setAlasanPermintaan(e.target.value)}
+                  placeholder="Jelaskan alasan Anda mengajukan perbaikan nilai..."
+                  rows={4}
+                />
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setPermintaanDialogOpen(false)}
               >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(KOMPONEN_NILAI_LABELS).map(([key, label]) => (
-                    <SelectItem key={key} value={key}>
-                      {label} (
-                      {String(
-                        selectedNilai?.[`nilai_${key}` as keyof Nilai] || 0,
-                      )}
-                      )
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label>Nilai Usulan (Opsional)</Label>
-              <Input
-                type="text"
-                inputMode="numeric"
-                value={nilaiUsulan}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  if (value === "" || /^\d*\.?\d*$/.test(value)) {
-                    setNilaiUsulan(value);
-                  }
-                }}
-                placeholder="Contoh: 85"
-              />
-            </div>
-
-            <div>
-              <Label>
-                Alasan Permintaan <span className="text-red-500">*</span>
-              </Label>
-              <Textarea
-                value={alasanPermintaan}
-                onChange={(e) => setAlasanPermintaan(e.target.value)}
-                placeholder="Jelaskan alasan Anda mengajukan perbaikan nilai..."
-                rows={4}
-              />
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setPermintaanDialogOpen(false)}
-            >
-              <X className="h-4 w-4 mr-1" />
-              Batal
-            </Button>
-            <Button
-              onClick={handleSubmitPermintaan}
-              disabled={submitting || !alasanPermintaan.trim()}
-            >
-              {submitting ? (
-                <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-              ) : (
-                <Send className="h-4 w-4 mr-1" />
-              )}
-              Kirim Permintaan
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+                <X className="h-4 w-4 mr-1" />
+                Batal
+              </Button>
+              <Button
+                onClick={handleSubmitPermintaan}
+                disabled={submitting || !alasanPermintaan.trim()}
+              >
+                {submitting ? (
+                  <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4 mr-1" />
+                )}
+                Kirim Permintaan
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

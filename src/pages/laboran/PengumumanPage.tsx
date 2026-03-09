@@ -14,7 +14,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -68,7 +68,8 @@ export default function LaboranPengumumanPage() {
 
         const isActive =
           (!announcement.tanggal_mulai || announcement.tanggal_mulai <= now) &&
-          (!announcement.tanggal_selesai || announcement.tanggal_selesai >= now);
+          (!announcement.tanggal_selesai ||
+            announcement.tanggal_selesai >= now);
 
         return isForLaboran && isActive;
       });
@@ -95,15 +96,11 @@ export default function LaboranPengumumanPage() {
   const getPriorityBadge = (priority: string) => {
     switch (priority) {
       case "high":
-        return <Badge variant="destructive">Penting</Badge>;
+        return <StatusBadge status="error" pulse={false}>Penting</StatusBadge>;
       case "medium":
-        return (
-          <Badge className="border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100">
-            Menengah
-          </Badge>
-        );
+        return <StatusBadge status="warning" pulse={false}>Menengah</StatusBadge>;
       case "low":
-        return <Badge variant="secondary">Biasa</Badge>;
+        return <StatusBadge status="info" pulse={false}>Biasa</StatusBadge>;
       default:
         return null;
     }
@@ -112,17 +109,11 @@ export default function LaboranPengumumanPage() {
   const getTypeBadge = (type: string) => {
     switch (type) {
       case "info":
-        return <Badge variant="outline">Informasi</Badge>;
+        return <StatusBadge status="info" pulse={false}>Informasi</StatusBadge>;
       case "warning":
-        return (
-          <Badge className="border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100">
-            Peringatan
-          </Badge>
-        );
+        return <StatusBadge status="warning" pulse={false}>Peringatan</StatusBadge>;
       case "event":
-        return (
-          <Badge className="bg-blue-600 text-white hover:bg-blue-700">Event</Badge>
-        );
+        return <StatusBadge status="online" pulse={false}>Event</StatusBadge>;
       default:
         return null;
     }
@@ -231,8 +222,8 @@ export default function LaboranPengumumanPage() {
   const highPriorityCount = announcements.filter(
     (announcement) => announcement.prioritas === "high",
   ).length;
-  const scheduledCount = announcements.filter(
-    (announcement) => Boolean(announcement.tanggal_selesai),
+  const scheduledCount = announcements.filter((announcement) =>
+    Boolean(announcement.tanggal_selesai),
   ).length;
 
   return (
@@ -268,7 +259,9 @@ export default function LaboranPengumumanPage() {
           >
             <CardContent className="py-14 text-center">
               <Bell className="mx-auto mb-4 h-12 w-12 text-muted-foreground/50" />
-              <p className="text-muted-foreground">Tidak ada notifikasi saat ini</p>
+              <p className="text-muted-foreground">
+                Tidak ada notifikasi saat ini
+              </p>
             </CardContent>
           </GlassCard>
         ) : (
@@ -342,7 +335,10 @@ export default function LaboranPengumumanPage() {
                   {announcement.tanggal_selesai && (
                     <div className="mt-4 text-xs text-slate-500 dark:text-slate-400 sm:text-sm">
                       Berlaku hingga{" "}
-                      {format(new Date(announcement.tanggal_selesai), "dd MMM yyyy")}
+                      {format(
+                        new Date(announcement.tanggal_selesai),
+                        "dd MMM yyyy",
+                      )}
                     </div>
                   )}
                 </CardContent>

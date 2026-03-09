@@ -56,21 +56,27 @@ export function Stepper({
                 <div
                   className={cn(
                     "flex h-10 w-10 items-center justify-center rounded-full text-sm font-medium transition-all duration-300",
-                    isCompleted && "bg-green-500 text-white shadow-sm",
+                    isCompleted &&
+                      "bg-success text-success-foreground shadow-sm ring-4 ring-success/15",
                     isCurrent &&
                       "bg-primary text-primary-foreground ring-4 ring-primary/20",
                     isPending &&
-                      "border-2 border-muted bg-muted text-muted-foreground",
+                      "border-2 border-border bg-muted/70 text-muted-foreground",
                   )}
                   aria-current={isCurrent ? "step" : undefined}
                 >
                   {isCompleted ? <Check className="h-5 w-5" /> : index + 1}
                 </div>
-                <div className={cn("space-y-1", isVertical ? "pt-0.5" : "mt-2 max-w-28")}>
+                <div
+                  className={cn(
+                    "space-y-1",
+                    isVertical ? "pt-0.5" : "mt-2 max-w-28",
+                  )}
+                >
                   <p
                     className={cn(
                       "text-sm font-medium",
-                      isCompleted && "text-green-600 dark:text-green-400",
+                      isCompleted && "text-success",
                       isCurrent && "text-primary",
                       isPending && "text-muted-foreground",
                     )}
@@ -89,10 +95,8 @@ export function Stepper({
                 <div
                   className={cn(
                     "rounded-full transition-all duration-500",
-                    isVertical
-                      ? "ml-5 h-8 w-0.5"
-                      : "mt-5 h-0.5 flex-1",
-                    index < currentStep ? "bg-green-500" : "bg-muted",
+                    isVertical ? "ml-5 h-8 w-0.5" : "mt-5 h-0.5 flex-1",
+                    index < currentStep ? "bg-success" : "bg-border/80",
                   )}
                   aria-hidden="true"
                 />
