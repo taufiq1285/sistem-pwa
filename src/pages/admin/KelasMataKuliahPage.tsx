@@ -17,6 +17,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { DashboardCard } from "@/components/ui/dashboard-card";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -159,40 +160,9 @@ export default function KelasMataKuliahPage() {
 
       {/* Summary */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="border-0 shadow-lg bg-linear-to-r from-blue-500 to-blue-600 text-white">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base font-bold text-white">
-              Total Kelas Aktif
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-4xl font-extrabold">{kelasList.length}</div>
-          </CardContent>
-        </Card>
-        <Card className="border-0 shadow-lg bg-linear-to-r from-orange-500 to-orange-600 text-white">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base font-bold text-white">
-              Belum Ada Mata Kuliah
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-4xl font-extrabold">
-              {kelasWithoutMK.length}
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-0 shadow-lg bg-linear-to-r from-green-500 to-green-600 text-white">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base font-bold text-white">
-              Sudah Ada Mata Kuliah
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-4xl font-extrabold">
-              {kelasList.length - kelasWithoutMK.length}
-            </div>
-          </CardContent>
-        </Card>
+        <DashboardCard title="Total Kelas Aktif" value={kelasList.length} icon={BookOpen} color="primary" />
+        <DashboardCard title="Belum Ada Mata Kuliah" value={kelasWithoutMK.length} icon={AlertCircle} color="warning" />
+        <DashboardCard title="Sudah Ada Mata Kuliah" value={kelasList.length - kelasWithoutMK.length} icon={CheckCircle} color="success" />
       </div>
 
       {/* Alert */}
@@ -213,7 +183,7 @@ export default function KelasMataKuliahPage() {
           <Button
             onClick={handleSave}
             disabled={saving}
-            className="font-semibold bg-linear-to-r from-blue-500 to-indigo-600"
+            className="font-semibold bg-linear-to-r from-primary to-accent"
           >
             {saving ? (
               <>

@@ -537,7 +537,7 @@ export default function KelasPage() {
         </div>
         <Button
           onClick={handleCreate}
-          className="font-semibold bg-linear-to-r from-blue-500 to-indigo-600"
+          className="font-semibold bg-linear-to-r from-primary to-accent"
         >
           <Plus className="h-4 w-4 mr-2" />
           Buat Kelas
@@ -815,7 +815,7 @@ export default function KelasPage() {
             <Button
               onClick={handleSaveKelas}
               disabled={isProcessing}
-              className="font-semibold bg-linear-to-r from-blue-500 to-indigo-600"
+              className="font-semibold bg-linear-to-r from-primary to-accent"
             >
               {isProcessing && (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />

@@ -6,7 +6,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ui/status-badge";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -51,12 +51,10 @@ export default function OfflineSyncPage() {
           </p>
         </div>
 
-        <Badge
-          className={`w-fit ${
-            isOnline
-              ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-              : "border-amber-200 bg-amber-50 text-amber-700"
-          }`}
+        <StatusBadge
+          status={isOnline ? "online" : "offline"}
+          pulse={isOnline}
+          className="w-fit"
         >
           {isOnline ? (
             <>
@@ -67,7 +65,7 @@ export default function OfflineSyncPage() {
               <WifiOff className="mr-1 h-3.5 w-3.5" /> Offline
             </>
           )}
-        </Badge>
+        </StatusBadge>
       </div>
 
       {!isOnline && (

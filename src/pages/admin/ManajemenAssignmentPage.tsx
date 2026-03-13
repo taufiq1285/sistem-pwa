@@ -41,6 +41,7 @@ import { PageHeader } from "@/components/common/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ui/status-badge";
 import {
   Card,
   CardContent,
@@ -1096,17 +1097,17 @@ export default function ManajemenAssignmentPage() {
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "scheduled":
-        return "bg-blue-100 text-blue-800";
-      case "completed":
-        return "bg-green-100 text-green-800";
-      case "cancelled":
-        return "bg-red-100 text-red-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
+  const getStatusBadge = (status: string) => {
+    const statusMap: Record<string, "info" | "success" | "error" | "offline"> = {
+      scheduled: "info",
+      completed: "success",
+      cancelled: "error",
+    };
+    return (
+      <StatusBadge status={statusMap[status] || "offline"} pulse={false}>
+        {status}
+      </StatusBadge>
+    );
   };
 
   // ============================================================================
@@ -1408,9 +1409,7 @@ export default function ManajemenAssignmentPage() {
                             </div>
 
                             <div className="flex items-center gap-2">
-                              <Badge className={getStatusColor(jadwal.status)}>
-                                {jadwal.status}
-                              </Badge>
+                              {getStatusBadge(jadwal.status)}
 
                               <Button
                                 variant="ghost"

@@ -14,7 +14,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { DashboardCard } from "@/components/ui/dashboard-card";
 import { DashboardSkeleton } from "@/components/ui/dashboard-skeleton";
 import { GlassCard } from "@/components/ui/glass-card";
@@ -446,7 +446,7 @@ export function DashboardPage() {
                   onClick={() => navigate("/admin/users?action=create")}
                 >
                   <div className="flex w-full items-center gap-3">
-                    <div className="rounded-xl bg-blue-500/10 p-2.5 text-blue-700 ring-1 ring-blue-500/20 transition-transform duration-200 group-hover:scale-105 dark:text-blue-300">
+                    <div className="rounded-xl bg-primary/10 p-2.5 text-primary ring-1 ring-primary/20 transition-transform duration-200 group-hover:scale-105">
                       <Plus className="h-5 w-5" />
                     </div>
                     <div>
@@ -636,8 +636,8 @@ export function DashboardPage() {
             <GlassCard className="col-span-full rounded-4xl border border-border/50 bg-background/85 shadow-xl lg:col-span-3">
               <CardHeader className="pb-5">
                 <div className="flex items-center space-x-3">
-                  <div className="p-3 bg-linear-to-br from-blue-500 to-indigo-600 dark:from-blue-600 dark:to-indigo-700 rounded-xl shadow-lg shadow-blue-500/30">
-                    <Users className="h-6 w-6 text-white" />
+                  <div className="p-3 bg-linear-to-br from-primary to-accent dark:from-primary/80 dark:to-accent/80 rounded-xl shadow-lg shadow-primary/30">
+                    <Users className="h-6 w-6 text-primary-foreground" />
                   </div>
                   <div>
                     <CardTitle className="text-xl font-bold text-slate-900 dark:text-white">
@@ -712,8 +712,8 @@ export function DashboardPage() {
             <GlassCard className="col-span-full rounded-4xl border border-border/50 bg-background/85 shadow-xl">
               <CardHeader className="pb-5">
                 <div className="flex items-center space-x-3">
-                  <div className="p-3 bg-linear-to-br from-orange-500 to-amber-600 dark:from-orange-600 dark:to-amber-700 rounded-xl shadow-lg shadow-orange-500/30">
-                    <FlaskConical className="h-6 w-6 text-white" />
+                  <div className="p-3 bg-linear-to-br from-warning to-warning/80 rounded-xl shadow-lg shadow-warning/30">
+                    <FlaskConical className="h-6 w-6 text-primary-foreground" />
                   </div>
                   <div>
                     <CardTitle className="text-xl font-bold text-slate-900 dark:text-white">
@@ -841,18 +841,19 @@ export function DashboardPage() {
                           </div>
                         </div>
                         <div className="text-right">
-                          <Badge
-                            variant="secondary"
-                            className={`text-xs ${
+                          <StatusBadge
+                            status={
                               user.role === "admin"
-                                ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300"
+                                ? "error"
                                 : user.role === "dosen"
-                                  ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
-                                  : "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
-                            }`}
+                                  ? "info"
+                                  : "success"
+                            }
+                            pulse={false}
+                            className="text-xs"
                           >
                             {user.role}
-                          </Badge>
+                          </StatusBadge>
                           <div className="flex items-center space-x-1 text-xs text-slate-500 dark:text-slate-400 mt-1">
                             <Calendar className="h-3 w-3" />
                             <span>{formatDate(user.created_at)}</span>
@@ -871,7 +872,7 @@ export function DashboardPage() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
-                      <Megaphone className="h-5 w-5 text-blue-600 dark:text-blue-300" />
+                      <Megaphone className="h-5 w-5 text-primary" />
                     </div>
                     <div>
                       <CardTitle className="text-lg font-semibold text-slate-900 dark:text-white">
@@ -913,7 +914,7 @@ export function DashboardPage() {
                       >
                         <div className="flex items-start justify-between">
                           <div className="flex-1 mr-2">
-                            <p className="text-sm font-medium text-slate-900 dark:text-white line-clamp-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                            <p className="text-sm font-medium line-clamp-1 group-hover:text-primary transition-colors">
                               {announcement.title}
                             </p>
                             <div className="flex items-center space-x-2 mt-1 text-xs text-slate-500 dark:text-slate-400">
@@ -922,12 +923,9 @@ export function DashboardPage() {
                               <span>{formatDate(announcement.created_at)}</span>
                             </div>
                           </div>
-                          <Badge
-                            variant="outline"
-                            className="text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 border-blue-200 dark:border-blue-700"
-                          >
+                          <StatusBadge status="info" pulse={false} className="text-xs">
                             Baru
-                          </Badge>
+                          </StatusBadge>
                         </div>
                       </div>
                     ))

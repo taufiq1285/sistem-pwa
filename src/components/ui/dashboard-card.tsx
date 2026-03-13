@@ -10,6 +10,19 @@ import { cn } from "@/lib/utils";
 import type { LucideIcon } from "lucide-react";
 import { TrendingDown, TrendingUp } from "lucide-react";
 
+type DashboardCardColor =
+  | "primary"
+  | "success"
+  | "warning"
+  | "info"
+  | "danger"
+  | "accent"
+  | "blue"
+  | "green"
+  | "amber"
+  | "red"
+  | "purple";
+
 interface DashboardCardProps {
   title: string;
   value: number;
@@ -18,7 +31,7 @@ interface DashboardCardProps {
     value: number;
     isPositive: boolean;
   };
-  color?: "primary" | "success" | "warning" | "info" | "danger" | "accent";
+  color?: DashboardCardColor;
   className?: string;
   prefix?: string;
   suffix?: string;
@@ -27,7 +40,7 @@ interface DashboardCardProps {
 }
 
 const colorStyles: Record<
-  NonNullable<DashboardCardProps["color"]>,
+  DashboardCardColor,
   {
     bg: string;
     text: string;
@@ -72,6 +85,41 @@ const colorStyles: Record<
     bar: "bg-destructive/20",
   },
   accent: {
+    bg: "bg-accent/15 dark:bg-accent/20",
+    text: "text-accent",
+    icon: "text-accent",
+    ring: "from-accent/15",
+    bar: "bg-accent/25",
+  },
+  blue: {
+    bg: "bg-info/10 dark:bg-info/15",
+    text: "text-info",
+    icon: "text-info",
+    ring: "from-info/12",
+    bar: "bg-info/20",
+  },
+  green: {
+    bg: "bg-success/10 dark:bg-success/15",
+    text: "text-success",
+    icon: "text-success",
+    ring: "from-success/12",
+    bar: "bg-success/20",
+  },
+  amber: {
+    bg: "bg-warning/15 dark:bg-warning/15",
+    text: "text-warning",
+    icon: "text-warning",
+    ring: "from-warning/15",
+    bar: "bg-warning/25",
+  },
+  red: {
+    bg: "bg-destructive/10 dark:bg-destructive/15",
+    text: "text-destructive",
+    icon: "text-destructive",
+    ring: "from-destructive/12",
+    bar: "bg-destructive/20",
+  },
+  purple: {
     bg: "bg-accent/15 dark:bg-accent/20",
     text: "text-accent",
     icon: "text-accent",

@@ -109,7 +109,7 @@ export default function KuisBuilderPage() {
     <div className="role-page-shell p-4 sm:p-6 lg:p-8">
       <div className="role-page-content space-y-6 lg:space-y-8">
         {/* Header */}
-        <section className="relative overflow-hidden rounded-3xl border border-white/25 bg-linear-to-r from-indigo-600 via-blue-600 to-purple-600 p-6 text-white shadow-2xl sm:p-8">
+        <section className="relative overflow-hidden rounded-3xl border border-white/25 bg-linear-to-r from-primary via-primary/90 to-accent/85 p-6 text-primary-foreground shadow-2xl sm:p-8">
           <div className="absolute -top-20 -right-20 h-56 w-56 rounded-full bg-white/20 blur-3xl" />
           <div className="absolute -bottom-20 -left-20 h-56 w-56 rounded-full bg-violet-300/20 blur-3xl" />
 

@@ -16,6 +16,7 @@ type UserTable = Database["public"]["Tables"]["users"]["Row"];
 
 // Extended user with profile data
 export interface AuthUser extends UserTable {
+  user_metadata: any;
   // Contact information
   phone?: string | null;
 

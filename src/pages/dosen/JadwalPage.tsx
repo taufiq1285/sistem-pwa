@@ -909,11 +909,11 @@ export default function JadwalPage() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex-1">
             <div className="flex items-start sm:items-center gap-3 sm:gap-4 mb-3">
-              <div className="p-3 bg-linear-to-br from-indigo-500 to-purple-600 rounded-2xl shadow-lg shadow-indigo-500/30">
-                <CalendarIcon className="h-8 w-8 text-white" />
+              <div className="p-3 bg-linear-to-br from-primary to-accent rounded-2xl shadow-lg shadow-primary/30">
+                <CalendarIcon className="h-8 w-8 text-primary-foreground" />
               </div>
               <div>
-                <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-linear-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400">
+                <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-linear-to-r from-primary to-accent dark:from-primary/80 dark:to-accent/80">
                   Jadwal Praktikum
                 </h1>
                 <p className="text-sm sm:text-base md:text-lg font-bold text-gray-700 dark:text-gray-300 mt-1">
@@ -927,7 +927,7 @@ export default function JadwalPage() {
           </div>
           <Button
             onClick={() => setIsCreateOpen(true)}
-            className="w-full sm:w-auto bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg shadow-indigo-500/30 font-semibold px-6"
+            className="w-full sm:w-auto bg-linear-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground shadow-lg shadow-primary/30 font-semibold px-6"
             size="lg"
           >
             <Plus className="mr-2 h-5 w-5" />
@@ -937,37 +937,37 @@ export default function JadwalPage() {
 
         {/* Quick Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <Card className="border-0 shadow-xl bg-linear-to-br from-indigo-50 to-purple-50 dark:from-indigo-950/40 dark:to-purple-950/40 overflow-hidden relative">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-400/15 rounded-full blur-2xl -mr-10 -mt-10" />
+          <Card className="border-0 shadow-xl bg-linear-to-br from-primary/5 to-accent/10 dark:from-primary/10 dark:to-accent/20 overflow-hidden relative">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-full blur-2xl -mr-10 -mt-10" />
             <CardContent className="p-5 relative">
-              <p className="text-sm font-bold text-indigo-700 dark:text-indigo-300">
+              <p className="text-sm font-bold text-primary dark:text-primary/80">
                 Total Jadwal
               </p>
-              <p className="mt-2 text-3xl font-black text-indigo-900 dark:text-indigo-100">
+              <p className="mt-2 text-3xl font-black text-primary/90 dark:text-primary/70">
                 {jadwalList.length}
               </p>
             </CardContent>
           </Card>
 
-          <Card className="border-0 shadow-xl bg-linear-to-br from-blue-50 to-cyan-50 dark:from-blue-950/40 dark:to-cyan-950/40 overflow-hidden relative">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-blue-400/15 rounded-full blur-2xl -mr-10 -mt-10" />
+          <Card className="border-0 shadow-xl bg-linear-to-br from-info/5 to-info/10 dark:from-info/10 dark:to-info/20 overflow-hidden relative">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-info/10 rounded-full blur-2xl -mr-10 -mt-10" />
             <CardContent className="p-5 relative">
-              <p className="text-sm font-bold text-blue-700 dark:text-blue-300">
+              <p className="text-sm font-bold text-info dark:text-info/80">
                 Event Bulan Ini
               </p>
-              <p className="mt-2 text-3xl font-black text-blue-900 dark:text-blue-100">
+              <p className="mt-2 text-3xl font-black text-info/90 dark:text-info/70">
                 {calendarEvents.length}
               </p>
             </CardContent>
           </Card>
 
-          <Card className="border-0 shadow-xl bg-linear-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/40 dark:to-teal-950/40 overflow-hidden relative">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-400/15 rounded-full blur-2xl -mr-10 -mt-10" />
+          <Card className="border-0 shadow-xl bg-linear-to-br from-success/5 to-success/10 dark:from-success/10 dark:to-success/20 overflow-hidden relative">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-success/10 rounded-full blur-2xl -mr-10 -mt-10" />
             <CardContent className="p-5 relative">
-              <p className="text-sm font-bold text-emerald-700 dark:text-emerald-300">
+              <p className="text-sm font-bold text-success dark:text-success/80">
                 Tampilan Aktif
               </p>
-              <p className="mt-2 text-lg sm:text-xl font-extrabold text-emerald-900 dark:text-emerald-100">
+              <p className="mt-2 text-lg sm:text-xl font-extrabold text-success/90 dark:text-success/70">
                 {currentView === "calendar" ? "Calendar View" : "List View"}
               </p>
             </CardContent>
@@ -975,7 +975,7 @@ export default function JadwalPage() {
         </div>
 
         {/* Enhanced Filters */}
-        <Card className="border-0 shadow-xl bg-linear-to-br from-white via-blue-50/40 to-indigo-50/40 dark:from-slate-900 dark:via-blue-950/20 dark:to-indigo-950/20 backdrop-blur-sm">
+        <Card className="border-0 shadow-xl bg-linear-to-br from-white via-primary/5 to-accent/5 dark:from-slate-900 dark:via-primary/10 dark:to-accent/10 backdrop-blur-sm">
           <CardContent className="p-6">
             <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3 sm:gap-4">
               <div className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
@@ -1029,7 +1029,7 @@ export default function JadwalPage() {
           onValueChange={(v) => setCurrentView(v as any)}
           className="space-y-6"
         >
-          <TabsList className="grid w-full max-w-md grid-cols-2 rounded-xl p-1 h-auto bg-linear-to-r from-indigo-100 to-purple-100 dark:from-indigo-950/40 dark:to-purple-950/40">
+          <TabsList className="grid w-full max-w-md grid-cols-2 rounded-xl p-1 h-auto bg-linear-to-r from-primary/10 to-accent/10 dark:from-primary/20 dark:to-accent/20">
             <TabsTrigger
               value="calendar"
               className="gap-2 rounded-lg py-2.5 font-semibold data-[state=active]:bg-white data-[state=active]:shadow-md dark:data-[state=active]:bg-slate-900"
@@ -1062,7 +1062,7 @@ export default function JadwalPage() {
                 </CardContent>
               </Card>
             ) : (
-              <Card className="border-0 shadow-xl bg-linear-to-br from-white via-blue-50/30 to-indigo-50/30 dark:from-slate-900 dark:via-blue-950/20 dark:to-indigo-950/20 backdrop-blur-sm">
+              <Card className="border-0 shadow-xl bg-linear-to-br from-white via-primary/5 to-accent/5 dark:from-slate-900 dark:via-primary/10 dark:to-accent/10 backdrop-blur-sm">
                 <CardContent className="p-6">
                   <Calendar
                     events={calendarEvents}
@@ -1105,7 +1105,7 @@ export default function JadwalPage() {
                   return (
                     <Card
                       key={jadwal.id}
-                      className={`group hover:shadow-2xl transition-all duration-300 border-2 shadow-xl bg-linear-to-br from-white via-blue-50/30 to-indigo-50/30 dark:from-slate-900 dark:via-blue-950/20 dark:to-indigo-950/20 backdrop-blur-sm overflow-hidden relative ${
+                      className={`group hover:shadow-2xl transition-all duration-300 border-2 shadow-xl bg-linear-to-br from-white via-primary/5 to-accent/5 dark:from-slate-900 dark:via-primary/10 dark:to-accent/10 backdrop-blur-sm overflow-hidden relative ${
                         isOwner
                           ? "border-indigo-200 dark:border-indigo-800"
                           : "border-gray-200 dark:border-gray-800"
@@ -1114,7 +1114,7 @@ export default function JadwalPage() {
                       <div
                         className={`absolute top-0 right-0 w-32 h-32 bg-linear-to-br ${
                           isOwner
-                            ? "from-indigo-400/20 to-purple-400/20"
+                            ? "from-primary/20 to-accent/20"
                             : "from-gray-300/10 to-gray-400/10"
                         } rounded-full blur-3xl -mr-16 -mt-16`}
                       />
@@ -1123,9 +1123,9 @@ export default function JadwalPage() {
                           {/* Date Badge */}
                           <div className="shrink-0">
                             <div
-                              className={`w-20 h-20 rounded-2xl shadow-lg flex flex-col items-center justify-center text-white ${
+                              className={`w-20 h-20 rounded-2xl shadow-lg flex flex-col items-center justify-center text-primary-foreground ${
                                 isOwner
-                                  ? "bg-linear-to-br from-indigo-500 to-purple-600 shadow-indigo-500/30"
+                                  ? "bg-linear-to-br from-primary to-accent shadow-primary/30"
                                   : "bg-linear-to-br from-gray-400 to-gray-500 shadow-gray-400/30"
                               }`}
                             >
@@ -1254,11 +1254,11 @@ export default function JadwalPage() {
         {/* Create Modal */}
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0">
-            <div className="bg-linear-to-r from-indigo-600 to-purple-600 p-6 text-white">
+            <div className="bg-linear-to-r from-primary to-accent p-6 text-primary-foreground">
               <DialogTitle className="text-2xl font-bold">
                 Tambah Jadwal Praktikum
               </DialogTitle>
-              <DialogDescription className="text-base font-semibold text-indigo-100 mt-1">
+              <DialogDescription className="text-base font-semibold text-primary-foreground/80 mt-1">
                 Lengkapi form berikut untuk menambahkan jadwal baru
               </DialogDescription>
             </div>
@@ -1284,7 +1284,7 @@ export default function JadwalPage() {
                     <Button
                       type="submit"
                       disabled={isCreating}
-                      className="bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold"
+                      className="bg-linear-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold"
                     >
                       {isCreating && (
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -1301,11 +1301,11 @@ export default function JadwalPage() {
         {/* Edit Modal */}
         <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0">
-            <div className="bg-linear-to-r from-indigo-600 to-purple-600 p-6 text-white">
+            <div className="bg-linear-to-r from-primary to-accent p-6 text-primary-foreground">
               <DialogTitle className="text-2xl font-bold">
                 Edit Jadwal Praktikum
               </DialogTitle>
-              <DialogDescription className="text-base font-semibold text-indigo-100 mt-1">
+              <DialogDescription className="text-base font-semibold text-primary-foreground/80 mt-1">
                 Perbarui informasi jadwal praktikum
               </DialogDescription>
             </div>
@@ -1331,7 +1331,7 @@ export default function JadwalPage() {
                     <Button
                       type="submit"
                       disabled={isUpdating}
-                      className="bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold"
+                      className="bg-linear-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold"
                     >
                       {isUpdating && (
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />

@@ -298,7 +298,6 @@ export default function LaporanPage() {
     if (percentage >= 50) return "success"; // Green: well-utilized
     return "offline"; // Gray: underutilized
   };
-  };
 
   /**
    * Get activity icon based on type
@@ -443,25 +442,25 @@ export default function LaporanPage() {
                       title="Total Peminjaman"
                       value={borrowingStats?.total_borrowings || 0}
                       icon={Package}
-                      color="blue"
+                      color="info"
                     />
                     <DashboardCard
                       title="Menunggu Persetujuan"
                       value={borrowingStats?.pending || 0}
                       icon={Clock}
-                      color="amber"
+                      color="warning"
                     />
                     <DashboardCard
                       title="Disetujui"
                       value={borrowingStats?.approved || 0}
                       icon={CheckCircle}
-                      color="green"
+                      color="success"
                     />
                     <DashboardCard
                       title="Dikembalikan"
                       value={borrowingStats?.returned || 0}
                       icon={RotateCcw}
-                      color="purple"
+                      color="accent"
                     />
                   </div>
                 </div>

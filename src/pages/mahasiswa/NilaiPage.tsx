@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
@@ -503,19 +504,20 @@ export default function MahasiswaNilaiPageEnhanced() {
                               {nilai.nilai_akhir?.toFixed(2) || "0.00"}
                             </TableCell>
                             <TableCell className="text-center">
-                              <Badge
-                                className={
+                              <StatusBadge
+                                status={
                                   nilai.nilai_huruf?.startsWith("A")
-                                    ? "bg-green-600"
+                                    ? "success"
                                     : nilai.nilai_huruf?.startsWith("B")
-                                      ? "bg-blue-600"
+                                      ? "info"
                                       : nilai.nilai_huruf?.startsWith("C")
-                                        ? "bg-yellow-600"
-                                        : "bg-red-600"
+                                        ? "warning"
+                                        : "error"
                                 }
+                                pulse={false}
                               >
                                 {nilai.nilai_huruf || "-"}
-                              </Badge>
+                              </StatusBadge>
                             </TableCell>
                             <TableCell>
                               <Button
@@ -595,19 +597,20 @@ export default function MahasiswaNilaiPageEnhanced() {
                               {mk.nilai_kumulatif.toFixed(2)}
                             </TableCell>
                             <TableCell className="text-center">
-                              <Badge
-                                className={
+                              <StatusBadge
+                                status={
                                   mk.nilai_huruf.startsWith("A")
-                                    ? "bg-green-600"
+                                    ? "success"
                                     : mk.nilai_huruf.startsWith("B")
-                                      ? "bg-blue-600"
+                                      ? "info"
                                       : mk.nilai_huruf.startsWith("C")
-                                        ? "bg-yellow-600"
-                                        : "bg-red-600"
+                                        ? "warning"
+                                        : "error"
                                 }
+                                pulse={false}
                               >
                                 {mk.nilai_huruf}
-                              </Badge>
+                              </StatusBadge>
                             </TableCell>
                           </TableRow>
                         ))}
@@ -678,11 +681,19 @@ export default function MahasiswaNilaiPageEnhanced() {
                               )}
                             </TableCell>
                             <TableCell>
-                              <Badge
-                                className={`${STATUS_COLORS[req.status].bg} ${STATUS_COLORS[req.status].text} border ${STATUS_COLORS[req.status].border}`}
-                              >
-                                {STATUS_PERMINTAAN_LABELS[req.status]}
-                              </Badge>
+                              {(() => {
+                                const statusMap: Record<string, "warning" | "success" | "error" | "offline"> = {
+                                  pending: "warning",
+                                  approved: "success",
+                                  rejected: "error",
+                                  cancelled: "offline",
+                                };
+                                return (
+                                  <StatusBadge status={statusMap[req.status] || "warning"} pulse={false}>
+                                    {STATUS_PERMINTAAN_LABELS[req.status as keyof typeof STATUS_PERMINTAAN_LABELS]}
+                                  </StatusBadge>
+                                );
+                              })()}
                             </TableCell>
                             <TableCell className="text-sm">
                               {formatDate(req.created_at)}

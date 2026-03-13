@@ -332,7 +332,7 @@ export default function RolesPage() {
             </CardHeader>
             <CardContent>
               <div className="grid gap-4 md:grid-cols-3">
-                <div className="flex items-center justify-between p-5 border-2 rounded-lg bg-linear-to-r from-blue-50 to-blue-100">
+                <div className="flex items-center justify-between p-5 border-2 rounded-lg bg-primary/5">
                   <div>
                     <p className="text-base font-semibold text-muted-foreground">
                       Total Users

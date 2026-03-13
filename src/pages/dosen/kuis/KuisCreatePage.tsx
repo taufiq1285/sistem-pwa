@@ -131,7 +131,7 @@ export default function KuisCreatePage() {
     return (
       <div className="role-page-shell p-4 sm:p-6 lg:p-8">
         <div className="role-page-content max-w-5xl space-y-6">
-          <section className="relative overflow-hidden rounded-3xl border border-white/25 bg-linear-to-r from-indigo-600 via-blue-600 to-purple-600 p-6 text-white shadow-2xl sm:p-8">
+          <section className="relative overflow-hidden rounded-3xl border border-white/25 bg-linear-to-r from-primary via-primary/90 to-accent/85 p-6 text-primary-foreground shadow-2xl sm:p-8">
             <div className="absolute -top-20 -right-20 h-56 w-56 rounded-full bg-white/20 blur-3xl" />
             <div className="absolute -bottom-20 -left-20 h-56 w-56 rounded-full bg-violet-300/20 blur-3xl" />
 
@@ -251,8 +251,8 @@ export default function KuisCreatePage() {
         <section
           className={
             selectedType === "laporan"
-              ? "relative overflow-hidden rounded-3xl border border-white/25 bg-linear-to-r from-green-600 via-emerald-600 to-teal-600 p-6 text-white shadow-2xl sm:p-8"
-              : "relative overflow-hidden rounded-3xl border border-white/25 bg-linear-to-r from-blue-600 via-indigo-600 to-purple-600 p-6 text-white shadow-2xl sm:p-8"
+              ? "relative overflow-hidden rounded-3xl border border-white/25 bg-linear-to-r from-success/80 via-success to-success/90 p-6 text-primary-foreground shadow-2xl sm:p-8"
+              : "relative overflow-hidden rounded-3xl border border-white/25 bg-linear-to-r from-primary via-primary/90 to-accent/85 p-6 text-primary-foreground shadow-2xl sm:p-8"
           }
         >
           <div className="absolute -top-20 -right-20 h-56 w-56 rounded-full bg-white/20 blur-3xl" />
@@ -274,7 +274,7 @@ export default function KuisCreatePage() {
                 <h1 className="text-2xl font-extrabold sm:text-3xl">
                   Buat Tugas Laporan
                 </h1>
-                <p className="text-sm text-emerald-100 sm:text-base">
+                <p className="text-sm text-primary-foreground/80 sm:text-base">
                   Mahasiswa akan membuat laporan praktikum dalam bentuk essay
                   atau upload file (PDF/Word).
                 </p>
@@ -295,7 +295,7 @@ export default function KuisCreatePage() {
                 <h1 className="text-2xl font-extrabold sm:text-3xl">
                   Buat Tes CBT
                 </h1>
-                <p className="text-sm text-blue-100 sm:text-base">
+                <p className="text-sm text-primary-foreground/80 sm:text-base">
                   Buat soal pilihan ganda seperti ujian UKOM. Soal bisa dibuat
                   manual atau diambil dari Bank Soal.
                 </p>

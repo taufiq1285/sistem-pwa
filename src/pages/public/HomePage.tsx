@@ -509,7 +509,7 @@ export function HomePage() {
                 {benefits.map((benefit, index) => (
                   <div
                     key={index}
-                    className="flex items-start space-x-4 p-4 rounded-xl hover:bg-linear-to-r hover:from-blue-50 hover:to-pink-50 transition-all duration-300 group"
+                    className="flex items-start space-x-4 p-4 rounded-xl hover:bg-primary/5 transition-all duration-300 group"
                   >
                     <CheckCircle2 className="h-7 w-7 text-green-600 shrink-0 mt-0.5 group-hover:scale-110 transition-transform duration-200" />
                     <span className="text-lg text-gray-700 font-medium group-hover:text-gray-900 transition-colors duration-200">

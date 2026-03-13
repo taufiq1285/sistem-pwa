@@ -359,11 +359,11 @@ export default function KuisListPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-linear-to-br from-indigo-50 via-blue-50 to-purple-50 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950 p-8">
+      <div className="min-h-screen bg-linear-to-br from-primary/5 via-background to-accent/5 dark:from-slate-950 dark:via-slate-900 dark:to-primary/10 p-8">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-center min-h-100">
             <div className="text-center space-y-4">
-              <Loader2 className="h-12 w-12 animate-spin mx-auto text-indigo-600" />
+              <Loader2 className="h-12 w-12 animate-spin mx-auto text-primary" />
               <p className="text-lg font-semibold text-gray-700 dark:text-gray-300">
                 Memuat daftar tugas praktikum...
               </p>
@@ -380,7 +380,7 @@ export default function KuisListPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-linear-to-br from-indigo-50 via-blue-50 to-purple-50 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950 p-8">
+      <div className="min-h-screen bg-linear-to-br from-primary/5 via-background to-accent/5 dark:from-slate-950 dark:via-slate-900 dark:to-primary/10 p-8">
         <div className="max-w-7xl mx-auto">
           <Alert variant="destructive" className="border-2 shadow-xl">
             <AlertCircle className="h-5 w-5" />
@@ -403,10 +403,10 @@ export default function KuisListPage() {
   // ============================================================================
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-indigo-50 via-blue-50 to-purple-50 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950 p-8">
+    <div className="min-h-screen bg-linear-to-br from-primary/5 via-background to-accent/5 dark:from-slate-950 dark:via-slate-900 dark:to-primary/10 p-8">
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Enhanced Hero Header */}
-        <div className="relative overflow-hidden rounded-2xl shadow-2xl bg-linear-to-r from-blue-600 via-purple-600 to-indigo-700 p-10 text-white">
+        <div className="relative overflow-hidden rounded-2xl shadow-2xl bg-linear-to-r from-primary via-primary/90 to-accent/85 p-10 text-primary-foreground">
           {/* Decorative Elements */}
           <div className="absolute top-0 right-0 w-80 h-80 bg-white/10 rounded-full -translate-y-40 translate-x-40 blur-3xl" />
           <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-400/20 rounded-full translate-y-32 -translate-x-32 blur-3xl" />
@@ -421,7 +421,7 @@ export default function KuisListPage() {
                   Daftar Tugas Praktikum
                 </h1>
               </div>
-              <p className="text-xl font-semibold text-blue-100 mt-3 max-w-2xl">
+              <p className="text-xl font-semibold text-primary-foreground/80 mt-3 max-w-2xl">
                 Kelola tugas praktikum untuk mahasiswa. Fitur ini bersifat
                 opsional - buat hanya jika diperlukan untuk praktikum tertentu.
               </p>
@@ -442,7 +442,7 @@ export default function KuisListPage() {
               <Button
                 onClick={handleCreateQuiz}
                 size="lg"
-                className="gap-3 bg-white text-blue-700 hover:bg-blue-50 shadow-xl font-bold text-lg px-8 py-6"
+                className="gap-3 bg-white/15 backdrop-blur-sm border border-white/30 text-primary-foreground hover:bg-white/25 shadow-xl font-bold text-lg px-8 py-6"
               >
                 <Plus className="h-6 w-6" />
                 Buat Tugas Baru
@@ -452,7 +452,7 @@ export default function KuisListPage() {
         </div>
 
         {/* Enhanced Filters & Controls */}
-        <Card className="border-0 shadow-xl bg-linear-to-br from-white via-blue-50/30 to-indigo-50/30 dark:from-slate-900 dark:via-blue-950/20 dark:to-indigo-950/20 backdrop-blur-sm p-6">
+        <Card className="border-0 shadow-xl bg-linear-to-br from-white via-primary/5 to-accent/5 dark:from-slate-900 dark:via-primary/10 dark:to-accent/10 backdrop-blur-sm p-6">
           <div className="flex flex-col lg:flex-row gap-4">
             {/* Search - Enhanced */}
             <div className="relative flex-1">
@@ -538,7 +538,7 @@ export default function KuisListPage() {
         {filteredQuizzes.length === 0 ? (
           <Card className="border-0 shadow-xl bg-linear-to-br from-gray-50 to-blue-50/30 dark:from-slate-900 dark:to-blue-950/20 p-16">
             <div className="text-center space-y-6">
-              <div className="mx-auto w-24 h-24 bg-linear-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center shadow-xl">
+              <div className="mx-auto w-24 h-24 bg-linear-to-br from-primary/10 to-accent/10 rounded-full flex items-center justify-center shadow-xl">
                 <AlertCircle className="h-12 w-12 text-blue-400" />
               </div>
               <div>
@@ -558,7 +558,7 @@ export default function KuisListPage() {
                 kelasFilter === "all" && (
                   <Button
                     onClick={handleCreateQuiz}
-                    className="gap-2 bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold px-8 py-6 shadow-xl text-lg"
+                    className="gap-2 bg-linear-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold px-8 py-6 shadow-xl text-lg"
                   >
                     <Plus className="h-5 w-5" />
                     Buat Tugas Pertama

@@ -22,7 +22,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { DashboardCard } from "@/components/ui/dashboard-card";
 import {
   Dialog,
   DialogContent,
@@ -67,37 +68,37 @@ const getRoleBadge = (role: string) => {
   switch (role) {
     case "admin":
       return (
-        <Badge variant="destructive" className="gap-1">
+        <StatusBadge status="error" pulse={false} className="gap-1">
           <Shield className="h-3 w-3" />
           Admin
-        </Badge>
+        </StatusBadge>
       );
     case "laboran":
       return (
-        <Badge variant="default" className="gap-1">
+        <StatusBadge status="info" pulse={false} className="gap-1">
           <UserCog className="h-3 w-3" />
           Laboran
-        </Badge>
+        </StatusBadge>
       );
     default:
-      return <Badge variant="secondary">{role}</Badge>;
+      return <StatusBadge status="offline" pulse={false}>{role}</StatusBadge>;
   }
 };
 
 const getStatusBadge = (status: "approved" | "rejected") => {
   if (status === "approved") {
     return (
-      <Badge variant="default" className="gap-1 bg-green-600">
+      <StatusBadge status="success" pulse={false} className="gap-1">
         <CheckCircle className="h-3 w-3" />
         Disetujui
-      </Badge>
+      </StatusBadge>
     );
   }
   return (
-    <Badge variant="destructive" className="gap-1">
+    <StatusBadge status="error" pulse={false} className="gap-1">
       <XCircle className="h-3 w-3" />
       Ditolak
-    </Badge>
+    </StatusBadge>
   );
 };
 
@@ -244,52 +245,42 @@ export default function PeminjamanApprovalPage() {
 
       {/* Stats */}
       <div className="grid gap-4 md:grid-cols-3">
-        <Card className="border-0 shadow-lg bg-linear-to-r from-yellow-500 to-orange-500 text-white">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-base font-bold text-white">
-              Menunggu Persetujuan
-            </CardTitle>
-            <Clock className="h-5 w-5 text-white" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-4xl font-extrabold">{requests.length}</div>
-            <p className="text-sm font-bold text-white mt-1">
-              Requests yang belum diproses
-            </p>
-          </CardContent>
-        </Card>
+        <DashboardCard
+          title="Menunggu Persetujuan"
+          value={requests.length}
+          description="Requests yang belum diproses"
+          icon={Clock}
+          color="warning"
+        />
 
-        <Card className="border-0 shadow-lg bg-linear-to-r from-red-500 to-red-600 text-white">
+        <Card className="border-0 shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-base font-bold text-white">
+            <CardTitle className="text-base font-bold">
               Role Anda
             </CardTitle>
-            <User className="h-5 w-5 text-white" />
+            <User className="h-5 w-5 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <Badge
-                variant="destructive"
-                className="text-base bg-white text-red-600"
-              >
+              <StatusBadge status="error" pulse={false} className="text-base">
                 Administrator
-              </Badge>
+              </StatusBadge>
             </div>
-            <p className="text-sm font-bold text-white mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               Approval dengan role admin
             </p>
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-lg bg-linear-to-r from-blue-500 to-blue-600 text-white">
+        <Card className="border-0 shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-base font-bold text-white">
+            <CardTitle className="text-base font-bold">
               Catatan Penting
             </CardTitle>
-            <AlertCircle className="h-5 w-5 text-white" />
+            <AlertCircle className="h-5 w-5 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <p className="text-base font-bold">
+            <p className="text-sm text-muted-foreground">
               Saat approve: stok <strong>otomatis berkurang</strong>
               <br />
               Saat reject: stok tetap normal
@@ -396,7 +387,7 @@ export default function PeminjamanApprovalPage() {
                                 variant="default"
                                 onClick={() => handleApprove(request.id)}
                                 disabled={processing === request.id}
-                                className="gap-1 font-semibold bg-linear-to-r from-green-500 to-green-600"
+                                className="gap-1 font-semibold"
                               >
                                 {processing === request.id ? (
                                   <Loader2 className="h-3 w-3 animate-spin" />
@@ -515,7 +506,7 @@ export default function PeminjamanApprovalPage() {
 
       {/* Reject Dialog */}
       <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
-        <DialogContent className="sm:max-w-[500px] p-6">
+        <DialogContent className="sm:max-w-125 p-6">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold">
               Tolak Permintaan Peminjaman

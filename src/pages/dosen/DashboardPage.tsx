@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { DashboardCard } from "@/components/ui/dashboard-card";
 import { DashboardSkeleton } from "@/components/ui/dashboard-skeleton";
@@ -675,7 +676,7 @@ export function DashboardPage() {
                 </div>
                 <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
                   {isRefreshing && (
-                    <div className="flex items-center gap-2 text-sm text-blue-600">
+                    <div className="flex items-center gap-2 text-sm text-primary">
                       <RefreshCw className="h-4 w-4 animate-spin" />
                       <span>Memperbarui data...</span>
                     </div>
@@ -692,7 +693,7 @@ export function DashboardPage() {
                           setLastRefresh(new Date());
                         });
                       }}
-                      className="border-orange-200 text-orange-700 hover:bg-orange-50 font-semibold border-2 w-full sm:w-auto"
+                      className="border-warning/40 text-warning hover:bg-warning/5 font-semibold border-2 w-full sm:w-auto"
                     >
                       <RefreshCw className="h-4 w-4" />
                       Perbarui
@@ -806,20 +807,20 @@ export function DashboardPage() {
 
             <div className="grid gap-6 lg:grid-cols-2">
               {/* Assignment Saya */}
-              <Card className="interactive-card group hover:shadow-2xl transition-all duration-300 border-0 shadow-xl bg-linear-to-br from-blue-50 to-indigo-50 dark:from-blue-950/40 dark:to-indigo-950/40 backdrop-blur-sm overflow-hidden relative">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-linear-to-br from-blue-400/20 to-indigo-400/20 rounded-full blur-3xl -mr-16 -mt-16" />
+              <Card className="interactive-card group hover:shadow-2xl transition-all duration-300 border-0 shadow-xl bg-linear-to-br from-primary/5 to-accent/10 dark:from-primary/10 dark:to-accent/20 backdrop-blur-sm overflow-hidden relative">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-linear-to-br from-primary/20 to-accent/20 rounded-full blur-3xl -mr-16 -mt-16" />
                 <CardHeader className="relative">
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="flex items-center gap-2 mb-2">
-                        <div className="p-2.5 bg-linear-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg shadow-blue-500/30">
-                          <Users className="h-5 w-5 text-white" />
+                        <div className="p-2.5 bg-linear-to-br from-primary to-accent rounded-xl shadow-lg shadow-primary/30">
+                          <Users className="h-5 w-5 text-primary-foreground" />
                         </div>
-                        <CardTitle className="text-xl font-bold text-blue-900 dark:text-blue-100">
+                        <CardTitle className="text-xl font-bold text-primary dark:text-primary/80">
                           Assignment Diberikan
                         </CardTitle>
                       </div>
-                      <CardDescription className="text-base font-semibold text-gray-700 dark:text-gray-400">
+                      <CardDescription className="text-base font-semibold text-muted-foreground">
                         {assignments.length} assignment dengan{" "}
                         {assignments.reduce(
                           (sum, a) => sum + a.total_mahasiswa,
@@ -844,13 +845,13 @@ export function DashboardPage() {
                 <CardContent className="relative">
                   {assignments.length === 0 ? (
                     <div className="text-center py-12">
-                      <div className="inline-flex p-4 bg-blue-50 rounded-full mb-4">
-                        <Users className="h-12 w-12 text-blue-400" />
+                      <div className="inline-flex p-4 bg-primary/10 rounded-full mb-4">
+                        <Users className="h-12 w-12 text-primary" />
                       </div>
-                      <p className="text-lg font-bold text-gray-900 mb-2">
+                      <p className="text-lg font-bold text-foreground mb-2">
                         Belum ada assignment yang diberikan
                       </p>
-                      <p className="text-base font-medium text-gray-600">
+                      <p className="text-base font-medium text-muted-foreground">
                         Hubungi admin untuk penugasan assignment
                       </p>
                     </div>
@@ -859,32 +860,32 @@ export function DashboardPage() {
                       {assignments.map((assignment, index) => (
                         <div
                           key={index}
-                          className="flex items-center gap-3 p-4 border-2 border-blue-100 rounded-xl hover:bg-blue-50 hover:border-blue-300 transition-all duration-300 cursor-pointer shadow-sm hover:shadow-md group"
+                          className="flex items-center gap-3 p-4 border-2 border-primary/10 rounded-xl hover:bg-primary/5 hover:border-primary/20 transition-all duration-300 cursor-pointer shadow-sm hover:shadow-md group"
                           onClick={() => navigate("/dosen/jadwal")}
                         >
                           <div className="shrink-0">
-                            <div className="w-12 h-12 bg-linear-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                              <BookOpen className="h-5 w-5 text-white" />
+                            <div className="w-12 h-12 bg-linear-to-br from-primary to-accent rounded-xl shadow-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                              <BookOpen className="h-5 w-5 text-primary-foreground" />
                             </div>
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
-                              <h4 className="font-bold text-base text-gray-900">
+                              <h4 className="font-bold text-base text-foreground">
                                 {assignment.mata_kuliah.nama_mk}
                               </h4>
                               <Badge
                                 variant="secondary"
-                                className="text-sm bg-blue-100 text-blue-700 font-semibold"
+                                className="text-sm bg-primary/10 text-primary font-semibold"
                               >
                                 {assignment.mata_kuliah.kode_mk}
                               </Badge>
                             </div>
-                            <p className="text-sm font-semibold text-gray-700 mt-1">
+                            <p className="text-sm font-semibold text-muted-foreground mt-1">
                               {assignment.kelas.nama_kelas} •{" "}
                               {assignment.kelas.tahun_ajaran}
                             </p>
                             <div className="flex items-center gap-4 mt-2">
-                              <span className="text-sm font-bold text-blue-600">
+                              <span className="text-sm font-bold text-primary">
                                 <Users className="h-3 w-3 mr-1" />
                                 {assignment.total_mahasiswa} mahasiswa
                               </span>
@@ -892,12 +893,12 @@ export function DashboardPage() {
                                 <Calendar className="h-3 w-3 mr-1" />
                                 {assignment.total_jadwal} jadwal
                               </span>
-                              <span className="text-sm font-semibold text-gray-500">
+                              <span className="text-sm font-semibold text-muted-foreground">
                                 {assignment.kelas.semester_ajaran} semester
                               </span>
                             </div>
                           </div>
-                          <ArrowRight className="h-5 w-5 text-blue-600 group-hover:translate-x-1 transition-transform" />
+                          <ArrowRight className="h-5 w-5 text-primary group-hover:translate-x-1 transition-transform" />
                         </div>
                       ))}
                     </div>
@@ -906,20 +907,20 @@ export function DashboardPage() {
               </Card>
 
               {/* Jadwal Mengajar */}
-              <Card className="group hover:shadow-2xl transition-all duration-300 border-0 shadow-xl bg-linear-to-br from-purple-50 to-violet-50 dark:from-purple-950/40 dark:to-violet-950/40 backdrop-blur-sm overflow-hidden relative">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-linear-to-br from-purple-400/20 to-violet-400/20 rounded-full blur-3xl -mr-16 -mt-16" />
+              <Card className="group hover:shadow-2xl transition-all duration-300 border-0 shadow-xl bg-linear-to-br from-accent/5 to-primary/10 dark:from-accent/10 dark:to-primary/20 backdrop-blur-sm overflow-hidden relative">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-linear-to-br from-accent/20 to-primary/20 rounded-full blur-3xl -mr-16 -mt-16" />
                 <CardHeader className="relative">
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="flex items-center gap-2 mb-2">
-                        <div className="p-2.5 bg-linear-to-br from-purple-500 to-violet-600 rounded-xl shadow-lg shadow-purple-500/30">
-                          <Calendar className="h-5 w-5 text-white" />
+                        <div className="p-2.5 bg-linear-to-br from-accent to-primary rounded-xl shadow-lg shadow-accent/30">
+                          <Calendar className="h-5 w-5 text-primary-foreground" />
                         </div>
-                        <CardTitle className="text-xl font-bold text-purple-900 dark:text-purple-100">
+                        <CardTitle className="text-xl font-bold text-accent/80 dark:text-accent/70">
                           Jadwal Mengajar
                         </CardTitle>
                       </div>
-                      <CardDescription className="text-base font-semibold text-gray-700 dark:text-gray-400">
+                      <CardDescription className="text-base font-semibold text-muted-foreground">
                         Praktikum 7 hari ke depan
                       </CardDescription>
                     </div>
@@ -942,10 +943,10 @@ export function DashboardPage() {
                       <div className="inline-flex p-4 bg-purple-50 rounded-full mb-4">
                         <Calendar className="h-12 w-12 text-purple-400" />
                       </div>
-                      <p className="text-lg font-bold text-gray-900 mb-2">
+                      <p className="text-lg font-bold text-foreground mb-2">
                         Tidak ada jadwal minggu ini
                       </p>
-                      <p className="text-base font-medium text-gray-600">
+                      <p className="text-base font-medium text-muted-foreground">
                         Jadwal praktikum akan muncul di sini
                       </p>
                     </div>
@@ -954,18 +955,18 @@ export function DashboardPage() {
                       {upcomingPracticum.map((jadwal) => (
                         <div
                           key={jadwal.id}
-                          className="flex gap-3 p-4 border-2 border-purple-100 rounded-xl hover:bg-purple-50 hover:border-purple-300 transition-all duration-300 cursor-pointer shadow-sm hover:shadow-md group"
+                          className="flex gap-3 p-4 border-2 border-accent/10 rounded-xl hover:bg-accent/5 hover:border-accent/20 transition-all duration-300 cursor-pointer shadow-sm hover:shadow-md group"
                         >
                           <div className="shrink-0">
-                            <div className="w-12 h-12 bg-linear-to-br from-purple-500 to-violet-600 rounded-xl shadow-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                              <Calendar className="h-5 w-5 text-white" />
+                            <div className="w-12 h-12 bg-linear-to-br from-accent to-primary rounded-xl shadow-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                              <Calendar className="h-5 w-5 text-primary-foreground" />
                             </div>
                           </div>
                           <div className="flex-1 min-w-0">
-                            <h4 className="font-bold text-base truncate text-gray-900">
+                            <h4 className="font-bold text-base truncate text-foreground">
                               {jadwal.mata_kuliah_nama}
                             </h4>
-                            <p className="text-sm font-semibold text-gray-700 mt-1">
+                            <p className="text-sm font-semibold text-muted-foreground mt-1">
                               {jadwal.kelas_nama} • {jadwal.topik}
                             </p>
                             <div className="flex items-center gap-3 mt-2">
@@ -980,7 +981,7 @@ export function DashboardPage() {
                                 {formatTime(jadwal.jam_selesai)}
                               </span>
                             </div>
-                            <p className="text-sm font-semibold text-gray-600">
+                            <p className="text-sm font-semibold text-muted-foreground">
                               📍 {jadwal.lab_nama}
                             </p>
                           </div>
@@ -995,20 +996,20 @@ export function DashboardPage() {
 
             <div className="grid gap-6 lg:grid-cols-2">
               {/* Menunggu Penilaian */}
-              <Card className="group hover:shadow-2xl transition-all duration-300 border-0 shadow-xl bg-linear-to-br from-orange-50 to-amber-50 dark:from-orange-950/40 dark:to-amber-950/40 backdrop-blur-sm overflow-hidden relative">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-linear-to-br from-orange-400/20 to-amber-400/20 rounded-full blur-3xl -mr-16 -mt-16" />
+              <Card className="group hover:shadow-2xl transition-all duration-300 border-0 shadow-xl bg-linear-to-br from-warning/5 to-warning/10 dark:from-warning/10 dark:to-warning/20 backdrop-blur-sm overflow-hidden relative">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-linear-to-br from-warning/10 to-warning/5 rounded-full blur-3xl -mr-16 -mt-16" />
                 <CardHeader className="relative">
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="flex items-center gap-2 mb-2">
-                        <div className="p-2.5 bg-linear-to-br from-orange-500 to-amber-600 rounded-xl shadow-lg shadow-orange-500/30">
-                          <AlertTriangle className="h-5 w-5 text-white" />
+                        <div className="p-2.5 bg-linear-to-br from-warning to-warning/80 rounded-xl shadow-lg shadow-warning/30">
+                          <AlertTriangle className="h-5 w-5 text-primary-foreground" />
                         </div>
-                        <CardTitle className="text-xl font-bold text-orange-900 dark:text-orange-100">
+                        <CardTitle className="text-xl font-bold">
                           Menunggu Penilaian
                         </CardTitle>
                       </div>
-                      <CardDescription className="text-base font-semibold text-gray-700 dark:text-gray-400">
+                      <CardDescription className="text-base font-semibold text-muted-foreground">
                         {stats?.pendingGrading || 0} tugas perlu dinilai
                       </CardDescription>
                     </div>
@@ -1017,7 +1018,7 @@ export function DashboardPage() {
                         variant="ghost"
                         size="sm"
                         onClick={() => navigate("/dosen/penilaian")}
-                        className="hover:bg-orange-100 font-semibold"
+                        className="hover:bg-warning/10 font-semibold"
                       >
                         <Eye className="h-4 w-4 mr-1" />
                         Lihat Semua
@@ -1028,13 +1029,13 @@ export function DashboardPage() {
                 <CardContent className="relative">
                   {pendingGrading.length === 0 ? (
                     <div className="text-center py-12">
-                      <div className="inline-flex p-4 bg-green-50 rounded-full mb-4">
-                        <CheckCircle className="h-12 w-12 text-green-500" />
+                      <div className="inline-flex p-4 bg-success/10 rounded-full mb-4">
+                        <CheckCircle className="h-12 w-12 text-success" />
                       </div>
-                      <p className="text-lg font-bold text-gray-900 mb-2">
+                      <p className="text-lg font-bold text-foreground mb-2">
                         Semua tugas sudah dinilai
                       </p>
-                      <p className="text-base font-medium text-gray-600">
+                      <p className="text-base font-medium text-muted-foreground">
                         Kerja bagus! 🎉
                       </p>
                     </div>
@@ -1049,30 +1050,30 @@ export function DashboardPage() {
                           }
                         >
                           <div className="shrink-0">
-                            <div className="w-10 h-10 bg-linear-to-br from-orange-500 to-amber-600 rounded-xl shadow-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                              <Edit className="h-5 w-5 text-white" />
+                            <div className="w-10 h-10 bg-linear-to-br from-warning to-warning/80 rounded-xl shadow-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                              <Edit className="h-5 w-5 text-primary-foreground" />
                             </div>
                           </div>
                           <div className="flex-1 min-w-0">
-                            <h4 className="font-bold text-base truncate text-gray-900">
+                            <h4 className="font-bold text-base truncate text-foreground">
                               {item.mahasiswa_nama}
                             </h4>
-                            <p className="text-sm font-semibold text-gray-600 mt-0.5">
+                            <p className="text-sm font-semibold text-muted-foreground mt-0.5">
                               NIM: {item.mahasiswa_nim}
                             </p>
-                            <p className="text-sm font-semibold text-gray-600 mt-0.5">
+                            <p className="text-sm font-semibold text-muted-foreground mt-0.5">
                               {item.mata_kuliah_nama} • {item.kuis_judul}
                             </p>
                             <div className="flex items-center gap-3 mt-2">
-                              <span className="text-sm text-orange-600 font-bold">
+                              <span className="text-sm text-warning font-bold">
                                 Attempt #{item.attempt_number}
                               </span>
-                              <span className="text-sm text-gray-400">
+                              <span className="text-sm text-muted-foreground/60">
                                 📅 {formatDate(item.submitted_at)}
                               </span>
                             </div>
                           </div>
-                          <ArrowRight className="h-5 w-5 text-orange-600 group-hover:translate-x-1 transition-transform" />
+                          <ArrowRight className="h-5 w-5 text-warning group-hover:translate-x-1 transition-transform" />
                         </div>
                       ))}
                     </div>
@@ -1081,20 +1082,20 @@ export function DashboardPage() {
               </Card>
 
               {/* Tugas Aktif */}
-              <Card className="group hover:shadow-2xl transition-all duration-300 border-0 shadow-xl bg-linear-to-br from-indigo-50 to-blue-50 dark:from-indigo-950/40 dark:to-blue-950/40 backdrop-blur-sm overflow-hidden relative">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-linear-to-br from-indigo-400/20 to-blue-400/20 rounded-full blur-3xl -mr-16 -mt-16" />
+              <Card className="group hover:shadow-2xl transition-all duration-300 border-0 shadow-xl bg-linear-to-br from-primary/5 to-info/10 dark:from-primary/10 dark:to-info/20 backdrop-blur-sm overflow-hidden relative">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-linear-to-br from-primary/20 to-info/20 rounded-full blur-3xl -mr-16 -mt-16" />
                 <CardHeader className="relative">
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="flex items-center gap-2 mb-2">
-                        <div className="p-2.5 bg-linear-to-br from-indigo-500 to-blue-600 rounded-xl shadow-lg shadow-indigo-500/30">
-                          <Target className="h-5 w-5 text-white" />
+                        <div className="p-2.5 bg-linear-to-br from-primary to-info rounded-xl shadow-lg shadow-primary/30">
+                          <Target className="h-5 w-5 text-primary-foreground" />
                         </div>
-                        <CardTitle className="text-xl font-bold text-indigo-900 dark:text-indigo-100">
+                        <CardTitle className="text-xl font-bold text-primary dark:text-primary/80">
                           Tugas Aktif
                         </CardTitle>
                       </div>
-                      <CardDescription className="text-base font-semibold text-gray-700 dark:text-gray-400">
+                      <CardDescription className="text-base font-semibold text-muted-foreground">
                         {stats?.activeKuis || 0} kuis sedang berjalan
                       </CardDescription>
                     </div>
@@ -1117,10 +1118,10 @@ export function DashboardPage() {
                       <div className="inline-flex p-4 bg-indigo-50 rounded-full mb-4">
                         <XCircle className="h-12 w-12 text-indigo-400" />
                       </div>
-                      <p className="text-lg font-bold text-gray-900 mb-2">
+                      <p className="text-lg font-bold text-foreground mb-2">
                         Tidak ada tugas aktif
                       </p>
-                      <p className="text-base font-medium text-gray-600">
+                      <p className="text-base font-medium text-muted-foreground">
                         Buat tugas baru untuk memulai kembali
                       </p>
                     </div>
@@ -1129,33 +1130,28 @@ export function DashboardPage() {
                       {activeKuis.map((kuis) => (
                         <div
                           key={kuis.id}
-                          className="flex items-center gap-3 p-4 border-2 border-indigo-100 rounded-xl hover:bg-indigo-50 hover:border-indigo-300 transition-all duration-300 cursor-pointer shadow-sm hover:shadow-md group"
+                          className="flex items-center gap-3 p-4 border-2 border-primary/10 rounded-xl hover:bg-primary/5 hover:border-primary/20 transition-all duration-300 cursor-pointer shadow-sm hover:shadow-md group"
                           onClick={() => navigate(`/dosen/kuis/${kuis.id}`)}
                         >
                           <div className="shrink-0">
-                            <div className="w-10 h-10 bg-linear-to-br from-indigo-500 to-blue-600 rounded-xl shadow-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                              <Eye className="h-5 w-5 text-white" />
+                            <div className="w-10 h-10 bg-linear-to-br from-primary to-info rounded-xl shadow-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                              <Eye className="h-5 w-5 text-primary-foreground" />
                             </div>
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
-                              <h4 className="font-bold text-base truncate text-gray-900">
+                              <h4 className="font-bold text-base truncate text-foreground">
                                 {kuis.judul}
                               </h4>
-                              <Badge
-                                variant="outline"
-                                className={
-                                  kuis.status === "published"
-                                    ? "bg-green-100 text-green-700 border-green-300 font-bold"
-                                    : "bg-yellow-100 text-yellow-700 border-yellow-300 font-bold"
-                                }
+                              <StatusBadge
+                                status={kuis.status === "published" ? "success" : "warning"}
+                                pulse={false}
+                                className="font-bold"
                               >
-                                {kuis.status === "published"
-                                  ? "✅ Published"
-                                  : "📝 Draft"}
-                              </Badge>
+                                {kuis.status === "published" ? "Published" : "Draft"}
+                              </StatusBadge>
                             </div>
-                            <p className="text-sm font-semibold text-gray-700 mt-1">
+                            <p className="text-sm font-semibold text-muted-foreground mt-1">
                               {kuis.kelas_nama}
                             </p>
                             <div className="flex items-center gap-4 mt-2">
@@ -1168,7 +1164,7 @@ export function DashboardPage() {
                               <span className="text-sm font-bold text-green-600">
                                 ✅ {kuis.submitted_count}/{kuis.total_attempts}
                               </span>
-                              <span className="text-sm font-semibold text-gray-600">
+                              <span className="text-sm font-semibold text-muted-foreground">
                                 Dikumpulkan
                               </span>
                             </div>
@@ -1205,12 +1201,12 @@ export function DashboardPage() {
             <div className="space-y-6">
               {/* Info Kelas */}
               <div className="grid gap-4">
-                <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
+                <div className="flex items-center justify-between p-4 bg-primary/5 rounded-lg">
                   <div>
                     <h3 className="font-semibold text-lg">
                       {selectedKelas.mata_kuliah_nama || "Praktikum"}
                     </h3>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-muted-foreground">
                       {selectedKelas.nama_kelas}
                     </p>
                     <Badge variant="secondary" className="mt-2">
@@ -1218,25 +1214,25 @@ export function DashboardPage() {
                     </Badge>
                   </div>
                   <div className="text-right">
-                    <div className="text-2xl font-bold text-blue-600">
+                    <div className="text-2xl font-bold text-primary">
                       {selectedKelas.totalMahasiswa}
                     </div>
-                    <div className="text-sm text-gray-500">Mahasiswa</div>
+                    <div className="text-sm text-muted-foreground">Mahasiswa</div>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div className="p-3 bg-gray-50 rounded-lg">
-                    <div className="font-medium text-gray-700">
+                  <div className="p-3 bg-muted/40 rounded-lg">
+                    <div className="font-medium text-muted-foreground">
                       Tahun Ajaran
                     </div>
-                    <div className="text-gray-900">
+                    <div className="text-foreground">
                       {selectedKelas.tahun_ajaran}
                     </div>
                   </div>
-                  <div className="p-3 bg-gray-50 rounded-lg">
-                    <div className="font-medium text-gray-700">Semester</div>
-                    <div className="text-gray-900">
+                  <div className="p-3 bg-muted/40 rounded-lg">
+                    <div className="font-medium text-muted-foreground">Semester</div>
+                    <div className="text-foreground">
                       {selectedKelas.semester_ajaran || "-"}
                     </div>
                   </div>
@@ -1255,14 +1251,14 @@ export function DashboardPage() {
                     {[...Array(5)].map((_, i) => (
                       <div
                         key={i}
-                        className="h-12 bg-gray-200 rounded-lg animate-pulse"
+                        className="h-12 bg-muted/50 rounded-lg animate-pulse"
                       />
                     ))}
                   </div>
                 ) : kelasMahasiswa.length === 0 ? (
-                  <div className="text-center py-8 bg-gray-50 rounded-lg">
-                    <Users className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                    <p className="text-sm text-gray-600">
+                  <div className="text-center py-8 bg-muted/40 rounded-lg">
+                    <Users className="h-12 w-12 text-muted-foreground/50 mx-auto mb-3" />
+                    <p className="text-sm text-muted-foreground">
                       Belum ada mahasiswa terdaftar
                     </p>
                   </div>
@@ -1272,20 +1268,20 @@ export function DashboardPage() {
                       {kelasMahasiswa.map((mahasiswa, index) => (
                         <div
                           key={mahasiswa?.nim || index}
-                          className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                          className="flex items-center gap-3 p-3 bg-muted/40 rounded-lg hover:bg-muted/60 transition-colors"
                         >
-                          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-sm font-medium text-blue-600">
+                          <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-sm font-medium text-primary">
                             {mahasiswa?.full_name?.charAt(0) || "M"}
                           </div>
                           <div className="flex-1">
                             <div className="font-medium text-sm">
                               {mahasiswa?.full_name || "Unknown"}
                             </div>
-                            <div className="text-xs text-gray-500">
+                            <div className="text-xs text-muted-foreground">
                               NIM: {mahasiswa?.nim || "Unknown"}
                             </div>
                             {mahasiswa?.email && (
-                              <div className="text-xs text-gray-400">
+                              <div className="text-xs text-muted-foreground/60">
                                 {mahasiswa.email}
                               </div>
                             )}

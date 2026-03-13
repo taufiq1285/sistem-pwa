@@ -329,11 +329,11 @@ export default function DosenMateriPage() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex-1">
             <div className="flex items-start sm:items-center gap-3 sm:gap-4 mb-3">
-              <div className="p-3 bg-linear-to-br from-indigo-500 to-purple-600 rounded-2xl shadow-lg shadow-indigo-500/30">
-                <BookOpen className="h-8 w-8 text-white" />
+              <div className="p-3 bg-linear-to-br from-primary to-accent rounded-2xl shadow-lg shadow-primary/30">
+                <BookOpen className="h-8 w-8 text-primary-foreground" />
               </div>
               <div>
-                <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-linear-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400">
+                <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-linear-to-r from-primary to-accent dark:from-primary/80 dark:to-accent/80">
                   Materi Pembelajaran
                 </h1>
                 <p className="text-sm sm:text-base md:text-lg font-bold text-gray-700 dark:text-gray-300 mt-1">
@@ -347,7 +347,7 @@ export default function DosenMateriPage() {
           </div>
           <Button
             onClick={() => setShowUploadDialog(true)}
-            className="w-full sm:w-auto bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg shadow-indigo-500/30 font-semibold px-6"
+            className="w-full sm:w-auto bg-linear-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground shadow-lg shadow-primary/30 font-semibold px-6"
             size="lg"
           >
             <Plus className="mr-2 h-5 w-5" />
@@ -357,8 +357,8 @@ export default function DosenMateriPage() {
 
         {/* Enhanced Stats */}
         <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="group hover:shadow-2xl transition-all duration-300 border-0 shadow-xl bg-linear-to-br from-blue-50 to-indigo-50 dark:from-blue-950/40 dark:to-indigo-950/40 backdrop-blur-sm rounded-2xl p-6 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-linear-to-br from-blue-400/10 to-indigo-400/10 rounded-full blur-2xl -mr-12 -mt-12" />
+          <div className="group hover:shadow-2xl transition-all duration-300 border-0 shadow-xl bg-linear-to-br from-primary/5 to-accent/10 dark:from-primary/10 dark:to-accent/20 backdrop-blur-sm rounded-2xl p-6 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-linear-to-br from-primary/10 to-accent/10 rounded-full blur-2xl -mr-12 -mt-12" />
             <div className="flex items-center justify-between relative">
               <div>
                 <p className="text-sm font-bold text-gray-600 dark:text-gray-400 mb-2">
@@ -368,8 +368,8 @@ export default function DosenMateriPage() {
                   {materiList.length}
                 </p>
               </div>
-              <div className="p-3 bg-linear-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg shadow-blue-500/30">
-                <FileText className="h-6 w-6 text-white" />
+              <div className="p-3 bg-linear-to-br from-primary to-accent rounded-xl shadow-lg shadow-primary/30">
+                <FileText className="h-6 w-6 text-primary-foreground" />
               </div>
             </div>
           </div>
@@ -408,8 +408,8 @@ export default function DosenMateriPage() {
             </div>
           </div>
 
-          <div className="group hover:shadow-2xl transition-all duration-300 border-0 shadow-xl bg-linear-to-br from-purple-50 to-violet-50 dark:from-purple-950/40 dark:to-violet-950/40 backdrop-blur-sm rounded-2xl p-6 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-linear-to-br from-purple-400/10 to-violet-400/10 rounded-full blur-2xl -mr-12 -mt-12" />
+          <div className="group hover:shadow-2xl transition-all duration-300 border-0 shadow-xl bg-linear-to-br from-primary/5 to-accent/10 dark:from-primary/10 dark:to-accent/20 backdrop-blur-sm rounded-2xl p-6 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-linear-to-br from-primary/10 to-accent/10 rounded-full blur-2xl -mr-12 -mt-12" />
             <div className="flex items-center justify-between relative">
               <div>
                 <p className="text-sm font-bold text-gray-600 dark:text-gray-400 mb-2">
@@ -422,7 +422,7 @@ export default function DosenMateriPage() {
                   )}
                 </p>
               </div>
-              <div className="p-3 bg-linear-to-br from-purple-500 to-violet-600 rounded-xl shadow-lg shadow-purple-500/30">
+              <div className="p-3 bg-linear-to-br from-primary to-accent rounded-xl shadow-lg shadow-primary/30">
                 <Download className="h-6 w-6 text-white" />
               </div>
             </div>
@@ -430,7 +430,7 @@ export default function DosenMateriPage() {
         </div>
 
         {/* Enhanced Filters */}
-        <Card className="border-0 shadow-xl bg-linear-to-br from-white via-blue-50/30 to-indigo-50/30 dark:from-slate-900 dark:via-blue-950/20 dark:to-indigo-950/20 backdrop-blur-sm">
+        <Card className="border-0 shadow-xl bg-linear-to-br from-white via-primary/5 to-accent/5 dark:from-slate-900 dark:via-primary/10 dark:to-accent/10 backdrop-blur-sm">
           <CardContent className="p-4 sm:p-6">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="md:col-span-2">
@@ -477,7 +477,7 @@ export default function DosenMateriPage() {
         </Card>
 
         {/* Materi List */}
-        <div className="rounded-2xl border-0 shadow-xl bg-linear-to-br from-white to-indigo-50/20 dark:from-slate-900 dark:to-indigo-950/20 p-1">
+        <div className="rounded-2xl border-0 shadow-xl bg-linear-to-br from-white to-primary/5 dark:from-slate-900 dark:to-primary/10 p-1">
           <MateriList
             materiList={filteredMateri}
             showActions={true}
@@ -575,11 +575,11 @@ function UploadDialog({
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
       <DialogContent className="max-w-md p-0">
-        <div className="bg-linear-to-r from-indigo-600 to-purple-600 p-6 text-white">
+        <div className="bg-linear-to-r from-primary to-accent p-6 text-primary-foreground">
           <DialogTitle className="text-2xl font-bold">
             Upload Materi Pembelajaran
           </DialogTitle>
-          <DialogDescription className="text-base font-semibold text-indigo-100 mt-1">
+          <DialogDescription className="text-base font-semibold text-primary-foreground/80 mt-1">
             Upload materi pembelajaran untuk kelas Anda
           </DialogDescription>
         </div>
@@ -678,7 +678,7 @@ function UploadDialog({
               </div>
               <div className="h-3 bg-gray-200 rounded-full overflow-hidden border-2">
                 <div
-                  className="h-full bg-linear-to-r from-indigo-600 to-purple-600 transition-all"
+                  className="h-full bg-linear-to-r from-primary to-accent transition-all"
                   style={{ width: `${uploadProgress}%` }}
                 />
               </div>
@@ -689,7 +689,7 @@ function UploadDialog({
             <Button
               type="submit"
               disabled={uploading}
-              className="flex-1 bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold py-6"
+              className="flex-1 bg-linear-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold py-6"
             >
               {uploading ? (
                 <>
@@ -751,11 +751,11 @@ function EditDialog({ open, onClose, onUpdate, materi }: EditDialogProps) {
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
       <DialogContent className="max-w-md p-0">
-        <div className="bg-linear-to-r from-indigo-600 to-purple-600 p-6 text-white">
+        <div className="bg-linear-to-r from-primary to-accent p-6 text-primary-foreground">
           <DialogTitle className="text-2xl font-bold">
             Edit Materi Pembelajaran
           </DialogTitle>
-          <DialogDescription className="text-base font-semibold text-indigo-100 mt-1">
+          <DialogDescription className="text-base font-semibold text-primary-foreground/80 mt-1">
             Update informasi materi
           </DialogDescription>
         </div>
@@ -806,7 +806,7 @@ function EditDialog({ open, onClose, onUpdate, materi }: EditDialogProps) {
           <div className="flex gap-2">
             <Button
               type="submit"
-              className="flex-1 bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold py-6"
+              className="flex-1 bg-linear-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold py-6"
             >
               Update Materi
             </Button>

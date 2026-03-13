@@ -16,7 +16,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, RefreshCw, Shield } from "lucide-react";
 
@@ -52,7 +52,7 @@ export function ConflictsPage() {
                 {pendingConflicts.length}
               </span>
               {pendingConflicts.length > 0 && (
-                <Badge variant="destructive">Action Required</Badge>
+                <StatusBadge status="error" pulse>Action Required</StatusBadge>
               )}
             </div>
           </CardContent>
@@ -69,7 +69,7 @@ export function ConflictsPage() {
               <span className="text-4xl font-extrabold text-green-600">
                 {resolvedConflicts.length}
               </span>
-              <Badge variant="outline">Success</Badge>
+              <StatusBadge status="success" pulse={false}>Success</StatusBadge>
             </div>
           </CardContent>
         </Card>
@@ -168,17 +168,18 @@ export function ConflictsPage() {
                         {new Date(conflict.created_at).toLocaleString()}
                       </div>
                     </div>
-                    <Badge
-                      variant={
+                    <StatusBadge
+                      status={
                         conflict.status === "pending"
-                          ? "destructive"
+                          ? "error"
                           : conflict.status === "resolved"
-                            ? "default"
-                            : "secondary"
+                            ? "success"
+                            : "offline"
                       }
+                      pulse={false}
                     >
                       {conflict.status}
-                    </Badge>
+                    </StatusBadge>
                   </div>
                 ))}
               </div>
@@ -195,7 +196,7 @@ export function ConflictsPage() {
         <CardContent className="space-y-4">
           <div className="space-y-3">
             <div className="flex gap-3">
-              <div className="flex-shrink-0 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center font-bold">
+              <div className="shrink-0 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center font-bold">
                 1
               </div>
               <div>
@@ -209,7 +210,7 @@ export function ConflictsPage() {
             </div>
 
             <div className="flex gap-3">
-              <div className="flex-shrink-0 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center font-bold">
+              <div className="shrink-0 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center font-bold">
                 2
               </div>
               <div>
@@ -223,7 +224,7 @@ export function ConflictsPage() {
             </div>
 
             <div className="flex gap-3">
-              <div className="flex-shrink-0 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center font-bold">
+              <div className="shrink-0 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center font-bold">
                 3
               </div>
               <div>
@@ -236,7 +237,7 @@ export function ConflictsPage() {
             </div>
 
             <div className="flex gap-3">
-              <div className="flex-shrink-0 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center font-bold">
+              <div className="shrink-0 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center font-bold">
                 4
               </div>
               <div>

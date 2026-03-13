@@ -145,9 +145,9 @@ export default function DosenPengumumanPage() {
               ))}
             </div>
 
-            <Card className="overflow-hidden rounded-3xl border border-blue-100/80 bg-linear-to-br from-blue-50 via-white to-amber-50 shadow-lg shadow-blue-100/60">
+            <Card className="overflow-hidden rounded-3xl border border-primary/10 bg-linear-to-br from-primary/5 via-white to-warning/5 shadow-lg shadow-primary/10">
               <CardContent className="space-y-4 p-6">
-                <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-600/10 text-blue-700">
+                <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                   <Sparkles className="h-6 w-6" />
                 </div>
                 <div className="space-y-2">
@@ -304,7 +304,7 @@ export default function DosenPengumumanPage() {
             </div>
 
             <div className="space-y-4 xl:space-y-5">
-              <Card className="overflow-hidden rounded-3xl border border-blue-100/80 bg-linear-to-br from-blue-50 via-white to-amber-50 shadow-lg shadow-blue-100/60">
+              <Card className="overflow-hidden rounded-3xl border border-primary/10 bg-linear-to-br from-primary/5 via-white to-warning/5 shadow-lg shadow-primary/10">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base font-semibold text-slate-900">
                     Ringkasan Notifikasi
