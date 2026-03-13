@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, Menu, LogOut } from "lucide-react";
 import type { UserRole } from "@/types/auth.types";
 import { getNavigationItems, isRouteActive } from "@/config/navigation.config";
+import { useRoleTheme } from "@/lib/hooks/useRoleTheme";
 
 // ============================================================================
 // TYPES
@@ -38,6 +39,7 @@ export function Sidebar({
 }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
+  const theme = useRoleTheme();
 
   // Get navigation items for current role
   const navItems = getNavigationItems(userRole);
@@ -55,19 +57,20 @@ export function Sidebar({
   return (
     <aside
       className={cn(
-        "relative h-screen border-r border-border/70 bg-background/85 shadow-xl backdrop-blur-xl transition-all duration-300 supports-backdrop-filter:bg-background/75",
+        "relative h-screen border-r border-white/10 text-white shadow-xl backdrop-blur-xl transition-all duration-300",
+        theme.sidebarBg,
         collapsed ? "w-16" : "w-64",
         className,
       )}
     >
       {/* Header */}
-      <div className="flex h-16 items-center justify-between border-b border-border/70 bg-background/60 px-4 backdrop-blur-sm">
+      <div className="flex h-16 items-center justify-between border-b border-white/10 bg-black/10 px-4 backdrop-blur-sm">
         {!collapsed && (
           <div>
-            <h2 className="text-lg font-bold tracking-tight text-foreground">
+            <h2 className="text-lg font-bold tracking-tight text-white">
               AKBID Mega Buana
             </h2>
-            <p className="text-xs font-semibold text-muted-foreground">
+            <p className="text-xs font-semibold text-white/70">
               Sistem Praktikum
             </p>
           </div>
@@ -77,15 +80,15 @@ export function Sidebar({
           size="icon"
           onClick={handleToggleCollapse}
           className={cn(
-            "transition-colors hover:bg-accent hover:text-accent-foreground",
+            "text-white transition-colors hover:bg-white/10 hover:text-white",
             collapsed && "mx-auto",
           )}
           title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           {collapsed ? (
-            <Menu className="h-4 w-4 text-foreground" />
+            <Menu className="h-4 w-4 text-white" />
           ) : (
-            <ChevronLeft className="h-4 w-4 text-foreground" />
+            <ChevronLeft className="h-4 w-4 text-white" />
           )}
         </Button>
       </div>
@@ -105,8 +108,8 @@ export function Sidebar({
                   "group relative flex items-center gap-3 overflow-hidden rounded-xl px-3 py-3 text-sm font-semibold transition-all duration-200",
                   "hover:shadow-md",
                   active
-                    ? "brand-gradient scale-[1.02] text-primary-foreground shadow-lg shadow-primary/20"
-                    : "text-foreground hover:bg-accent/70 hover:text-accent-foreground",
+                    ? cn(theme.sidebarActive, "scale-[1.02] shadow-lg")
+                    : cn("text-white/80 hover:text-white", theme.sidebarHover),
                   collapsed && "justify-center px-2",
                 )}
                 title={collapsed ? item.label : item.description}
@@ -128,10 +131,8 @@ export function Sidebar({
                       <Badge
                         variant="secondary"
                         className={cn(
-                          "ml-auto font-bold text-xs px-2 py-0.5",
-                          active
-                            ? "border-white/25 bg-white/15 text-white"
-                            : "border-primary/15 bg-primary/10 text-primary",
+                          "ml-auto px-2 py-0.5 text-xs font-bold",
+                          active ? "border-white/25 bg-white/15 text-white" : theme.badgeBg,
                         )}
                       >
                         {item.badge}
@@ -146,7 +147,7 @@ export function Sidebar({
       </ScrollArea>
 
       {/* Footer - User Info */}
-      <div className="absolute bottom-0 left-0 right-0 border-t border-border/70 bg-background/60 backdrop-blur-sm">
+      <div className="absolute bottom-0 left-0 right-0 border-t border-white/10 bg-black/10 backdrop-blur-sm">
         <div
           className={cn(
             "flex items-center gap-3 p-4",
@@ -165,14 +166,19 @@ export function Sidebar({
             </Button>
           ) : (
             <>
-              <div className="brand-gradient flex h-10 w-10 items-center justify-center rounded-full text-base font-bold text-primary-foreground shadow-md">
+              <div
+                className={cn(
+                  "flex h-10 w-10 items-center justify-center rounded-full bg-linear-to-br text-base font-bold text-white shadow-md",
+                  theme.avatarGradient,
+                )}
+              >
                 {userName.charAt(0).toUpperCase()}
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="truncate text-sm font-bold text-foreground">
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-bold text-white">
                   {userName}
                 </p>
-                <p className="truncate text-xs font-semibold text-muted-foreground">
+                <p className="truncate text-xs font-semibold text-white/70">
                   {userEmail}
                 </p>
               </div>

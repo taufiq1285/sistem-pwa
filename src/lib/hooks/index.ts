@@ -17,6 +17,7 @@ export {
 export { useOffline } from "./useOffline";
 export { usePdfBlobUrl } from "./usePdfBlobUrl";
 export { useRole } from "./useRole";
+export { useRoleTheme } from "./useRoleTheme";
 export { useSupabase } from "./useSupabase";
 export { useSignedUrl } from "./useSignedUrl";
 export { useSync } from "./useSync";

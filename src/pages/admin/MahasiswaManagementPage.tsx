@@ -42,6 +42,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { DashboardCard } from "@/components/ui/dashboard-card";
 import { TableBody } from "@/components/ui/table";
 import { TableSkeleton } from "@/components/shared/DataTable/TableSkeleton";
 import {
@@ -299,53 +300,10 @@ export default function AdminMahasiswaPage() {
 
       {/* Statistics Cards */}
       <div className="grid gap-4 md:grid-cols-4">
-        <Card className="border-0 shadow-lg bg-linear-to-r from-blue-500 to-blue-600 text-white">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-base font-bold text-white">
-              Total Mahasiswa
-            </CardTitle>
-            <Users className="h-5 w-5 text-white" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-4xl font-extrabold">{stats.total}</div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-lg bg-linear-to-r from-green-500 to-green-600 text-white">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-base font-bold text-white">
-              Mahasiswa Aktif
-            </CardTitle>
-            <UserCheck className="h-5 w-5 text-white" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-4xl font-extrabold">{stats.active}</div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-lg bg-linear-to-r from-purple-500 to-purple-600 text-white">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-base font-bold text-white">
-              Program Studi
-            </CardTitle>
-            <BookOpen className="h-5 w-5 text-white" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-4xl font-extrabold">{stats.programs}</div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-lg bg-linear-to-r from-orange-500 to-orange-600 text-white">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-base font-bold text-white">
-              Angkatan
-            </CardTitle>
-            <GraduationCap className="h-5 w-5 text-white" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-4xl font-extrabold">{stats.angkatan}</div>
-          </CardContent>
-        </Card>
+        <DashboardCard title="Total Mahasiswa" value={stats.total} icon={Users} color="primary" />
+        <DashboardCard title="Mahasiswa Aktif" value={stats.active} icon={UserCheck} color="success" />
+        <DashboardCard title="Program Studi" value={stats.programs} icon={BookOpen} color="accent" />
+        <DashboardCard title="Angkatan" value={stats.angkatan} icon={GraduationCap} color="warning" />
       </div>
 
       {/* Filters */}

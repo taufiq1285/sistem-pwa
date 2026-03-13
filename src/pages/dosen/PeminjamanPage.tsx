@@ -591,13 +591,13 @@ export default function PeminjamanPage() {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
-          <Card className="interactive-card overflow-hidden rounded-3xl border border-blue-100/80 bg-linear-to-br from-blue-50 to-indigo-50 shadow-lg shadow-blue-100/60">
+          <Card className="interactive-card overflow-hidden rounded-3xl border border-primary/10 bg-linear-to-br from-primary/5 to-accent/10 shadow-lg shadow-primary/10">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-bold">Total</CardTitle>
-              <Package className="h-4 w-4 text-blue-600" />
+              <Package className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-4xl font-extrabold text-blue-900">
+              <div className="text-4xl font-extrabold text-primary/90">
                 {stats.total}
               </div>
             </CardContent>
@@ -817,10 +817,10 @@ export default function PeminjamanPage() {
 
           {/* Tab 2: Ajukan Peminjaman */}
           <TabsContent value="request" className="space-y-4">
-            <Card className="interactive-card overflow-hidden rounded-3xl border-2 border-dashed border-blue-200/70 bg-linear-to-br from-blue-50/80 via-white to-amber-50/60 shadow-lg shadow-blue-100/50">
+            <Card className="interactive-card overflow-hidden rounded-3xl border-2 border-dashed border-primary/20 bg-linear-to-br from-primary/5 via-white to-warning/5 shadow-lg shadow-primary/10">
               <CardContent className="flex flex-col items-center justify-center py-16">
-                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-                  <Plus className="h-8 w-8 text-blue-600" />
+                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+                  <Plus className="h-8 w-8 text-primary" />
                 </div>
                 <h3 className="text-xl font-semibold mb-2">
                   Ajukan Peminjaman Alat

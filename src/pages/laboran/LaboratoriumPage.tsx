@@ -414,11 +414,9 @@ export default function LaboratoriumPage() {
                           {lab.kapasitas}
                         </TableCell>
                         <TableCell>
-                          <Badge
-                            variant={lab.is_active ? "default" : "secondary"}
-                          >
+                          <StatusBadge status={lab.is_active ? "success" : "offline"} pulse={lab.is_active}>
                             {lab.is_active ? "Aktif" : "Tidak Aktif"}
-                          </Badge>
+                          </StatusBadge>
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-2">
@@ -497,11 +495,9 @@ export default function LaboratoriumPage() {
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Status</p>
-                    <Badge
-                      variant={selectedLab.is_active ? "default" : "secondary"}
-                    >
+                    <StatusBadge status={selectedLab.is_active ? "success" : "offline"} pulse={selectedLab.is_active}>
                       {selectedLab.is_active ? "Aktif" : "Tidak Aktif"}
-                    </Badge>
+                    </StatusBadge>
                   </div>
                   {selectedLab.keterangan && (
                     <div className="col-span-2">
@@ -615,17 +611,18 @@ export default function LaboratoriumPage() {
                             </TableCell>
                             <TableCell>{equipment.nama_barang}</TableCell>
                             <TableCell>
-                              <Badge
-                                variant={
+                              <StatusBadge
+                                status={
                                   equipment.kondisi === "baik"
-                                    ? "default"
+                                    ? "success"
                                     : equipment.kondisi === "rusak_ringan"
-                                      ? "secondary"
-                                      : "destructive"
+                                      ? "warning"
+                                      : "error"
                                 }
+                                pulse={false}
                               >
                                 {equipment.kondisi || "baik"}
-                              </Badge>
+                              </StatusBadge>
                             </TableCell>
                             <TableCell className="text-right">
                               {equipment.jumlah}

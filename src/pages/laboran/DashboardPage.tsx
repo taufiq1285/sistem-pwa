@@ -370,7 +370,7 @@ export function DashboardPage() {
             <GlassCard
               intensity="high"
               glow
-              className="overflow-hidden border-white/20 bg-linear-to-r from-blue-500/95 via-cyan-500/95 to-teal-500/95 text-white shadow-2xl"
+              className="overflow-hidden border-white/20 bg-linear-to-r from-primary/95 via-primary/90 to-accent/90 text-primary-foreground shadow-2xl"
             >
               <div className="absolute inset-0 bg-grid-white/10" />
               <CardContent className="relative p-8">
@@ -386,7 +386,7 @@ export function DashboardPage() {
                       {pendingApprovals.length > 0 && (
                         <>
                           Ada{" "}
-                          <span className="font-extrabold text-white">
+                          <span className="font-extrabold text-primary-foreground">
                             {pendingApprovals.length} peminjaman
                           </span>{" "}
                           yang menunggu approval.
@@ -394,7 +394,7 @@ export function DashboardPage() {
                       )}
                       {inventoryAlerts.length > 0 && (
                         <>
-                          <span className="font-extrabold text-white">
+                          <span className="font-extrabold text-primary-foreground">
                             {inventoryAlerts.length} alat
                           </span>{" "}
                           dengan stok rendah perlu diperhatikan.
@@ -403,7 +403,7 @@ export function DashboardPage() {
                     </p>
                   </div>
                   <div className="hidden md:block">
-                    <FlaskConical className="h-24 w-24 text-white/20" />
+                    <FlaskConical className="h-24 w-24 text-primary-foreground/20" />
                   </div>
                 </div>
               </CardContent>
@@ -459,36 +459,36 @@ export function DashboardPage() {
                         className="flex gap-3 p-4 border-2 border-blue-100 rounded-xl hover:bg-blue-50 hover:border-blue-300 transition-all duration-300 shadow-sm hover:shadow-md group"
                       >
                         <div className="shrink-0">
-                          <div className="w-12 h-12 bg-linear-to-br from-blue-500 to-cyan-600 rounded-xl shadow-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                            <Package className="h-5 w-5 text-white" />
+                          <div className="w-12 h-12 bg-linear-to-br from-primary to-accent rounded-xl shadow-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <Package className="h-5 w-5 text-primary-foreground" />
                           </div>
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <h4 className="font-bold text-sm text-gray-900">
+                            <h4 className="font-bold text-sm text-foreground">
                               {approval.inventaris_nama}
                             </h4>
                             <Badge
                               variant="secondary"
-                              className="text-xs bg-blue-100 text-blue-700 font-semibold"
+                              className="text-xs bg-primary/10 text-primary font-semibold"
                             >
                               {approval.inventaris_kode}
                             </Badge>
                           </div>
-                          <div className="flex items-center gap-1 text-xs font-semibold text-gray-600 mt-1">
+                          <div className="flex items-center gap-1 text-xs font-semibold text-muted-foreground mt-1">
                             <User className="h-3 w-3" />
                             {approval.peminjam_nama} ({approval.peminjam_nim})
                           </div>
-                          <p className="text-xs font-semibold text-gray-600 mt-1">
+                          <p className="text-xs font-semibold text-muted-foreground mt-1">
                             📍 {approval.laboratorium_nama} • Jumlah:{" "}
                             {approval.jumlah_pinjam}
                           </p>
-                          <p className="text-xs font-semibold text-gray-500 mt-1">
+                          <p className="text-xs font-semibold text-muted-foreground mt-1">
                             🗓️ {formatDate(approval.tanggal_pinjam)} -{" "}
                             {formatDate(approval.tanggal_kembali_rencana)}
                           </p>
                           {approval.keperluan && (
-                            <p className="text-xs font-semibold text-gray-600 mt-1 italic">
+                            <p className="text-xs font-semibold text-muted-foreground mt-1 italic">
                               "{approval.keperluan}"
                             </p>
                           )}
@@ -498,7 +498,7 @@ export function DashboardPage() {
                             size="sm"
                             onClick={() => handleApprove(approval.id)}
                             disabled={actionLoading}
-                            className="bg-linear-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-lg hover:shadow-xl font-semibold"
+                            className="bg-linear-to-r from-success/80 to-success hover:from-success hover:to-success/90 shadow-lg hover:shadow-xl font-semibold"
                           >
                             <CheckCircle className="h-4 w-4 mr-1" />
                             Setujui
@@ -522,19 +522,19 @@ export function DashboardPage() {
             </GlassCard>
 
             {/* Inventory Alerts */}
-            <Card className="group hover:shadow-2xl transition-all duration-300 border-0 shadow-xl bg-linear-to-br from-rose-50 to-red-50 dark:from-rose-950/40 dark:to-red-950/40 backdrop-blur-sm overflow-hidden relative">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-linear-to-br from-rose-400/20 to-red-400/20 rounded-full blur-3xl -mr-16 -mt-16" />
+            <Card className="group hover:shadow-2xl transition-all duration-300 border-0 shadow-xl bg-linear-to-br from-danger/5 to-danger/10 dark:from-danger/10 dark:to-danger/5 backdrop-blur-sm overflow-hidden relative">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-linear-to-br from-danger/10 to-danger/5 rounded-full blur-3xl -mr-16 -mt-16" />
               <CardHeader className="flex flex-row items-center justify-between relative">
                 <div>
                   <div className="flex items-center gap-2 mb-2">
-                    <div className="p-2.5 bg-linear-to-br from-rose-500 to-red-600 rounded-xl shadow-lg shadow-rose-500/30">
-                      <AlertTriangle className="h-5 w-5 text-white" />
+                    <div className="p-2.5 bg-linear-to-br from-danger/80 to-danger rounded-xl shadow-lg shadow-danger/20">
+                      <AlertTriangle className="h-5 w-5 text-primary-foreground" />
                     </div>
-                    <CardTitle className="text-xl font-bold text-rose-900 dark:text-rose-100">
+                    <CardTitle className="text-xl font-bold">
                       Peringatan Stok
                     </CardTitle>
                   </div>
-                  <CardDescription className="text-base font-semibold text-gray-700 dark:text-gray-400">
+                  <CardDescription className="text-base font-semibold text-muted-foreground">
                     {stats?.lowStockAlerts || 0} alat dengan stok rendah (&lt;
                     5)
                   </CardDescription>
@@ -544,7 +544,7 @@ export function DashboardPage() {
                     variant="ghost"
                     size="sm"
                     onClick={() => navigate("/laboran/inventaris")}
-                    className="hover:bg-rose-100 font-semibold"
+                    className="hover:bg-danger/10 font-semibold"
                   >
                     Lihat Semua
                     <ArrowRight className="ml-2 h-4 w-4" />
@@ -554,13 +554,13 @@ export function DashboardPage() {
               <CardContent className="relative">
                 {inventoryAlerts.length === 0 ? (
                   <div className="text-center py-12">
-                    <div className="inline-flex p-4 bg-green-50 rounded-full mb-4">
-                      <Package className="h-12 w-12 text-green-500" />
+                    <div className="inline-flex p-4 bg-success/10 rounded-full mb-4">
+                      <Package className="h-12 w-12 text-success" />
                     </div>
-                    <p className="text-lg font-bold text-gray-900 mb-2">
+                    <p className="text-lg font-bold text-foreground mb-2">
                       Semua stok alat mencukupi
                     </p>
-                    <p className="text-base font-medium text-gray-600">
+                    <p className="text-base font-medium text-muted-foreground">
                       Tidak ada peringatan stok
                     </p>
                   </div>
@@ -569,16 +569,16 @@ export function DashboardPage() {
                     {inventoryAlerts.map((alert) => (
                       <div
                         key={alert.id}
-                        className="flex gap-3 p-4 border-2 border-rose-100 rounded-xl hover:bg-rose-50 hover:border-rose-300 transition-all duration-300 shadow-sm hover:shadow-md group"
+                        className="flex gap-3 p-4 border-2 border-danger/20 rounded-xl hover:bg-danger/5 hover:border-danger/40 transition-all duration-300 shadow-sm hover:shadow-md group"
                       >
                         <div className="shrink-0">
                           <div className="w-12 h-12 bg-linear-to-br from-rose-500 to-red-600 rounded-xl shadow-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                            <AlertTriangle className="h-5 w-5 text-white" />
+                            <AlertTriangle className="h-5 w-5 text-primary-foreground" />
                           </div>
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <h4 className="font-bold text-sm truncate text-gray-900">
+                            <h4 className="font-bold text-sm truncate text-foreground">
                               {alert.nama_barang}
                             </h4>
                             <Badge
@@ -588,10 +588,10 @@ export function DashboardPage() {
                               {alert.kode_barang}
                             </Badge>
                           </div>
-                          <p className="text-xs font-semibold text-gray-600 mt-0.5">
+                          <p className="text-xs font-semibold text-muted-foreground mt-0.5">
                             {alert.kategori}
                           </p>
-                          <p className="text-xs font-semibold text-gray-600 mt-1">
+                          <p className="text-xs font-semibold text-muted-foreground mt-1">
                             📍 {alert.laboratorium_nama}
                           </p>
                           <div className="flex items-center gap-2 mt-2">
@@ -659,27 +659,27 @@ export function DashboardPage() {
                         className="flex gap-3 p-4 border-2 border-teal-100 rounded-xl hover:bg-teal-50 hover:border-teal-300 transition-all duration-300 shadow-sm hover:shadow-md group"
                       >
                         <div className="shrink-0">
-                          <div className="w-12 h-12 bg-linear-to-br from-teal-500 to-cyan-600 rounded-xl shadow-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                            <FlaskConical className="h-5 w-5 text-white" />
+                          <div className="w-12 h-12 bg-linear-to-br from-primary to-accent rounded-xl shadow-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <FlaskConical className="h-5 w-5 text-primary-foreground" />
                           </div>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h4 className="font-bold text-sm truncate text-gray-900">
+                          <h4 className="font-bold text-sm truncate text-foreground">
                             {schedule.mata_kuliah_nama}
                           </h4>
-                          <p className="text-xs font-semibold text-gray-600 mt-0.5">
+                          <p className="text-xs font-semibold text-muted-foreground mt-0.5">
                             {schedule.kelas_nama} • {schedule.dosen_nama}
                           </p>
-                          <div className="flex items-center gap-2 mt-1 text-xs font-bold text-gray-700">
+                          <div className="flex items-center gap-2 mt-1 text-xs font-bold text-muted-foreground">
                             <Clock className="h-3 w-3" />
                             {formatTime(schedule.jam_mulai)} -{" "}
                             {formatTime(schedule.jam_selesai)}
                           </div>
-                          <p className="text-xs font-semibold text-gray-600 mt-1">
+                          <p className="text-xs font-semibold text-muted-foreground mt-1">
                             📍 {schedule.laboratorium_nama}
                           </p>
                           {schedule.topik && (
-                            <p className="text-xs font-semibold text-gray-600 mt-1 italic">
+                            <p className="text-xs font-semibold text-muted-foreground mt-1 italic">
                               "{schedule.topik}"
                             </p>
                           )}

@@ -346,7 +346,7 @@ export default function EquipmentsPage() {
           </Button>
           <Button
             onClick={handleAdd}
-            className="font-semibold bg-linear-to-r from-blue-600 to-indigo-600 text-white"
+            className="font-semibold bg-linear-to-r from-primary to-accent"
           >
             <Plus className="h-4 w-4 mr-2" />
             Tambah Peralatan
@@ -853,7 +853,7 @@ export default function EquipmentsPage() {
               </Button>
               <Button
                 onClick={handleCreate}
-                className="font-semibold bg-linear-to-r from-blue-500 to-indigo-600"
+                className="font-semibold bg-linear-to-r from-primary to-accent"
               >
                 Create Equipment
               </Button>
@@ -1004,7 +1004,7 @@ export default function EquipmentsPage() {
               </Button>
               <Button
                 onClick={handleUpdate}
-                className="font-semibold bg-linear-to-r from-blue-500 to-indigo-600"
+                className="font-semibold bg-linear-to-r from-primary to-accent"
               >
                 Update Equipment
               </Button>

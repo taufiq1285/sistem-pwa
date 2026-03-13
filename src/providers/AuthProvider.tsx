@@ -296,6 +296,30 @@ export function AuthProvider({ children }: AuthProviderProps) {
         if (isOnline) {
           // Online login
           logger.auth("Online login attempt...");
+
+          // Clear stale auth state before starting a fresh login.
+          // This prevents old logout flags / persisted sessions from
+          // interfering with the next SIGNED_IN event.
+          clearCachedAuth();
+          clearLogoutFlag();
+          await clearOfflineSession().catch((error) => {
+            logger.warn("Pre-login offline session cleanup failed:", error);
+          });
+
+          const authApiWithLogout = authApi as typeof authApi & {
+            logout?: () => Promise<{ success: boolean; error?: string }>;
+            signOut?: () => Promise<{ success: boolean; error?: string }>;
+          };
+
+          const performPreLoginLogout =
+            authApiWithLogout.logout || authApiWithLogout.signOut;
+
+          if (performPreLoginLogout) {
+            await performPreLoginLogout().catch((error) => {
+              logger.warn("Pre-login Supabase cleanup failed:", error);
+            });
+          }
+
           const response = await authApi.login(credentials);
 
           // Check if login was successful

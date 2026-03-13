@@ -109,13 +109,13 @@ const STATUS_OPTIONS: {
   {
     value: "hadir",
     label: "Hadir",
-    color: "bg-green-100 text-green-800 border-green-300",
+    color: "bg-success/10 text-success border-success/30",
     icon: "✓",
   },
   {
     value: "izin",
     label: "Izin",
-    color: "bg-blue-100 text-blue-800 border-blue-300",
+    color: "bg-info/10 text-info border-info/30",
     icon: "📝",
   },
   {
@@ -515,9 +515,9 @@ export default function DosenKehadiranPage() {
     <div className="role-page-shell">
       <div className="role-page-content space-y-6">
         {/* Hero Header */}
-        <div className="relative overflow-hidden rounded-2xl bg-linear-to-r from-indigo-500 via-blue-500 to-purple-600 p-5 sm:p-6 md:p-8 text-white shadow-2xl shadow-indigo-500/30">
+        <div className="relative overflow-hidden rounded-2xl bg-linear-to-r from-primary via-primary/90 to-accent/85 p-5 sm:p-6 md:p-8 text-primary-foreground shadow-2xl shadow-primary/30">
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-32 translate-x-32 blur-3xl" />
-          <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-400/20 rounded-full translate-y-24 -translate-x-24 blur-2xl" />
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full translate-y-24 -translate-x-24 blur-2xl" />
 
           <div className="relative">
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold flex items-center gap-3">
@@ -532,8 +532,8 @@ export default function DosenKehadiranPage() {
 
         {/* Filter Card */}
         {(tahunAjaranOptions.length > 0 || semesterOptions.length > 0) && (
-          <Card className="border-0 shadow-xl bg-linear-to-br from-white via-blue-50/30 to-indigo-50/30 dark:from-slate-900 dark:via-blue-950/20 dark:to-indigo-950/20 backdrop-blur-sm">
-            <CardHeader className="pb-3 border-b bg-linear-to-r from-blue-50/70 to-indigo-50/70 dark:from-blue-950/30 dark:to-indigo-950/30">
+          <Card className="border-0 shadow-xl bg-linear-to-br from-white via-primary/5 to-accent/5 dark:from-slate-900 dark:via-primary/10 dark:to-accent/10 backdrop-blur-sm">
+            <CardHeader className="pb-3 border-b bg-linear-to-r from-primary/5 to-accent/5 dark:from-primary/10 dark:to-accent/10">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Filter className="h-5 w-5 text-muted-foreground" />
@@ -620,7 +620,7 @@ export default function DosenKehadiranPage() {
             className={cn(
               "border-2 transition-all shadow-lg hover:shadow-xl",
               selectedMataKuliah
-                ? "border-green-300 bg-green-50/50"
+                ? "border-success/50 bg-success/5"
                 : "border-gray-200",
             )}
           >
@@ -630,7 +630,7 @@ export default function DosenKehadiranPage() {
                   className={cn(
                     "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold",
                     selectedMataKuliah
-                      ? "bg-green-600 text-white"
+                      ? "bg-success text-primary-foreground"
                       : "bg-gray-200 text-gray-600",
                   )}
                 >
@@ -645,7 +645,7 @@ export default function DosenKehadiranPage() {
                 onValueChange={setSelectedMataKuliah}
               >
                 <SelectTrigger
-                  className={cn(selectedMataKuliah && "border-green-500")}
+                  className={cn(selectedMataKuliah && "border-success/60")}
                 >
                   <SelectValue placeholder="Pilih mata kuliah..." />
                 </SelectTrigger>
@@ -663,7 +663,7 @@ export default function DosenKehadiranPage() {
                 </SelectContent>
               </Select>
               {selectedMataKuliah && (
-                <div className="mt-2 flex items-center gap-1 text-xs text-green-700">
+                <div className="mt-2 flex items-center gap-1 text-xs text-success">
                   <CheckCircle2 className="h-3 w-3" />
                   <span>Mata kuliah dipilih</span>
                 </div>
@@ -677,7 +677,7 @@ export default function DosenKehadiranPage() {
               "border-2 transition-all shadow-lg hover:shadow-xl",
               !selectedMataKuliah && "opacity-50",
               selectedKelas
-                ? "border-green-300 bg-green-50/50"
+                ? "border-success/50 bg-success/5"
                 : "border-gray-200",
             )}
           >
@@ -687,7 +687,7 @@ export default function DosenKehadiranPage() {
                   className={cn(
                     "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold",
                     selectedKelas
-                      ? "bg-green-600 text-white"
+                      ? "bg-success text-primary-foreground"
                       : "bg-gray-200 text-gray-600",
                   )}
                 >
@@ -703,7 +703,7 @@ export default function DosenKehadiranPage() {
                 disabled={!selectedMataKuliah}
               >
                 <SelectTrigger
-                  className={cn(selectedKelas && "border-green-500")}
+                  className={cn(selectedKelas && "border-success/60")}
                 >
                   <SelectValue
                     placeholder={
@@ -722,7 +722,7 @@ export default function DosenKehadiranPage() {
                 </SelectContent>
               </Select>
               {selectedKelas && (
-                <div className="mt-2 flex items-center gap-1 text-xs text-green-700">
+                <div className="mt-2 flex items-center gap-1 text-xs text-success">
                   <CheckCircle2 className="h-3 w-3" />
                   <span>Kelas dipilih</span>
                 </div>
@@ -736,7 +736,7 @@ export default function DosenKehadiranPage() {
               "border-2 transition-all shadow-lg hover:shadow-xl",
               !selectedKelas && "opacity-50",
               selectedTanggal
-                ? "border-green-300 bg-green-50/50"
+                ? "border-success/50 bg-success/5"
                 : "border-gray-200",
             )}
           >
@@ -746,7 +746,7 @@ export default function DosenKehadiranPage() {
                   className={cn(
                     "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold",
                     selectedTanggal
-                      ? "bg-green-600 text-white"
+                      ? "bg-success text-primary-foreground"
                       : "bg-gray-200 text-gray-600",
                   )}
                 >
@@ -761,10 +761,10 @@ export default function DosenKehadiranPage() {
                 value={selectedTanggal}
                 onChange={(e) => setSelectedTanggal(e.target.value)}
                 disabled={!selectedKelas}
-                className={cn(selectedTanggal && "border-green-500")}
+                className={cn(selectedTanggal && "border-success/60")}
               />
               {selectedTanggal && (
-                <div className="mt-2 flex items-center gap-1 text-xs text-green-700">
+                <div className="mt-2 flex items-center gap-1 text-xs text-success">
                   <CheckCircle2 className="h-3 w-3" />
                   <span>Tanggal: {formatDate(selectedTanggal)}</span>
                 </div>
@@ -776,52 +776,52 @@ export default function DosenKehadiranPage() {
         {/* Statistics Cards */}
         {selectedKelas && attendanceRecords.length > 0 && (
           <div className="grid gap-4 md:grid-cols-4">
-            <Card className="border-0 shadow-xl bg-linear-to-br from-green-50 to-emerald-50 dark:from-green-950/40 dark:to-emerald-950/40">
+            <Card className="border-0 shadow-xl bg-linear-to-br from-success/5 to-success/10 dark:from-success/10 dark:to-success/20">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Hadir</CardTitle>
                 <div className="text-2xl">✓</div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-600">
+                <div className="text-2xl font-bold text-success">
                   {stats.hadir}
                 </div>
                 <p className="text-xs text-muted-foreground">mahasiswa</p>
               </CardContent>
             </Card>
 
-            <Card className="border-0 shadow-xl bg-linear-to-br from-blue-50 to-cyan-50 dark:from-blue-950/40 dark:to-cyan-950/40">
+            <Card className="border-0 shadow-xl bg-linear-to-br from-info/5 to-info/10 dark:from-info/10 dark:to-info/20">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Izin</CardTitle>
                 <div className="text-2xl">📝</div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-blue-600">
+                <div className="text-2xl font-bold text-info">
                   {stats.izin}
                 </div>
                 <p className="text-xs text-muted-foreground">mahasiswa</p>
               </CardContent>
             </Card>
 
-            <Card className="border-0 shadow-xl bg-linear-to-br from-amber-50 to-orange-50 dark:from-amber-950/40 dark:to-orange-950/40">
+            <Card className="border-0 shadow-xl bg-linear-to-br from-warning/5 to-warning/10 dark:from-warning/10 dark:to-warning/20">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Sakit</CardTitle>
                 <div className="text-2xl">🏥</div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-yellow-600">
+                <div className="text-2xl font-bold text-warning">
                   {stats.sakit}
                 </div>
                 <p className="text-xs text-muted-foreground">mahasiswa</p>
               </CardContent>
             </Card>
 
-            <Card className="border-0 shadow-xl bg-linear-to-br from-rose-50 to-red-50 dark:from-rose-950/40 dark:to-red-950/40">
+            <Card className="border-0 shadow-xl bg-linear-to-br from-danger/5 to-danger/10 dark:from-danger/10 dark:to-danger/20">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Alpha</CardTitle>
                 <div className="text-2xl">✗</div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-red-600">
+                <div className="text-2xl font-bold text-danger">
                   {stats.alpha}
                 </div>
                 <p className="text-xs text-muted-foreground">mahasiswa</p>
@@ -836,7 +836,7 @@ export default function DosenKehadiranPage() {
             value={activeTab}
             onValueChange={(v) => setActiveTab(v as "input" | "history")}
           >
-            <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-6 rounded-xl p-1 h-auto bg-linear-to-r from-indigo-100 to-purple-100 dark:from-indigo-950/40 dark:to-purple-950/40">
+            <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-6 rounded-xl p-1 h-auto bg-linear-to-r from-primary/10 to-accent/10 dark:from-primary/20 dark:to-accent/20">
               <TabsTrigger
                 value="input"
                 className="gap-2 rounded-lg py-2.5 font-semibold data-[state=active]:bg-white data-[state=active]:shadow-md dark:data-[state=active]:bg-slate-900"

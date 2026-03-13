@@ -8,7 +8,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { DashboardCard } from "@/components/ui/dashboard-card";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { DeleteConfirmDialog } from "@/components/common/DeleteConfirmDialog";
 import {
   Dialog,
@@ -224,10 +225,24 @@ export default function AnnouncementsPage() {
     }
   };
 
-  const getPriorityVariant = (priority?: string | null) => {
-    if (priority === "high") return "destructive";
-    if (priority === "normal") return "secondary";
-    return "outline";
+  const getPriorityBadge = (priority?: string | null) => {
+    const statusMap: Record<string, "error" | "warning" | "info"> = {
+      high: "error", normal: "warning",
+    };
+    const labels: Record<string, string> = {
+      high: "Penting", normal: "Normal",
+    };
+    const status = statusMap[priority || "normal"] || "info";
+    const label = labels[priority || "normal"] || priority || "normal";
+    return <StatusBadge status={status} pulse={false}>{label}</StatusBadge>;
+  };
+
+  const getTypeBadge = (tipe?: string | null) => {
+    const statusMap: Record<string, "info" | "warning" | "online"> = {
+      info: "info", warning: "warning", event: "online",
+    };
+    const status = statusMap[tipe || "info"] || "info";
+    return <StatusBadge status={status} pulse={false}>{tipe || "info"}</StatusBadge>;
   };
 
   return (
@@ -251,7 +266,7 @@ export default function AnnouncementsPage() {
           </Button>
           <Button
             onClick={handleAdd}
-            className="font-semibold bg-linear-to-r from-blue-500 to-indigo-600"
+            className="font-semibold"
           >
             <Plus className="h-4 w-4 mr-2" />
             Create
@@ -261,53 +276,34 @@ export default function AnnouncementsPage() {
 
       {/* Statistics */}
       <div className="grid gap-4 md:grid-cols-4">
-        <Card className="border-0 shadow-lg bg-linear-to-r from-blue-500 to-blue-600 text-white">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-base font-bold text-white">
-              Total
-            </CardTitle>
-            <Megaphone className="h-5 w-5 text-white" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-4xl font-extrabold">{stats.total}</div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-lg bg-linear-to-r from-green-500 to-green-600 text-white">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-base font-bold text-white">
-              Active
-            </CardTitle>
-            <Bell className="h-5 w-5 text-white" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-4xl font-extrabold">{stats.active}</div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-lg bg-linear-to-r from-red-500 to-red-600 text-white">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-base font-bold text-white">
-              High Priority
-            </CardTitle>
-            <Badge className="bg-white text-red-600 font-bold">High</Badge>
-          </CardHeader>
-          <CardContent>
-            <div className="text-4xl font-extrabold">{stats.highPriority}</div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-lg bg-linear-to-r from-purple-500 to-purple-600 text-white">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-base font-bold text-white">
-              Scheduled
-            </CardTitle>
-            <Bell className="h-5 w-5 text-white" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-4xl font-extrabold">{stats.scheduled}</div>
-          </CardContent>
-        </Card>
+        <DashboardCard
+          title="Total"
+          value={stats.total}
+          description="Total pengumuman yang ada"
+          icon={Megaphone}
+          color="primary"
+        />
+        <DashboardCard
+          title="Active"
+          value={stats.active}
+          description="Pengumuman yang sedang aktif"
+          icon={Bell}
+          color="success"
+        />
+        <DashboardCard
+          title="High Priority"
+          value={stats.highPriority}
+          description="Pengumuman prioritas tinggi"
+          icon={Bell}
+          color="danger"
+        />
+        <DashboardCard
+          title="Scheduled"
+          value={stats.scheduled}
+          description="Pengumuman terjadwal"
+          icon={Bell}
+          color="accent"
+        />
       </div>
 
       {/* Announcements List */}
@@ -348,12 +344,8 @@ export default function AnnouncementsPage() {
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <Badge variant={getPriorityVariant(announcement.prioritas)}>
-                      {announcement.prioritas || "normal"}
-                    </Badge>
-                    <Badge variant="default">
-                      {announcement.tipe || "info"}
-                    </Badge>
+                    {getPriorityBadge(announcement.prioritas)}
+                    {getTypeBadge(announcement.tipe)}
                     <Button
                       variant="ghost"
                       size="sm"

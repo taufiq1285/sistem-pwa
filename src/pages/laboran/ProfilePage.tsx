@@ -13,7 +13,6 @@ import {
   type LaboranProfile,
 } from "@/lib/api/profile.api";
 import {
-  Card,
   CardContent,
   CardDescription,
   CardHeader,
@@ -23,7 +22,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { DashboardCard } from "@/components/ui/dashboard-card";
 import { GlassCard } from "@/components/ui/glass-card";
 import {
   AlertCircle,
@@ -134,13 +132,13 @@ export default function ProfilePage() {
     return (
       <div className="app-container py-4 sm:py-6 lg:py-8">
         <div className="mx-auto max-w-5xl animate-pulse space-y-6">
-          <div className="h-32 rounded-3xl bg-blue-100/70" />
+          <div className="h-32 rounded-3xl bg-primary/10" />
           <div className="grid gap-4 md:grid-cols-3">
-            <div className="h-28 rounded-3xl bg-slate-100" />
-            <div className="h-28 rounded-3xl bg-slate-100" />
-            <div className="h-28 rounded-3xl bg-slate-100" />
+            <div className="h-28 rounded-3xl bg-muted" />
+            <div className="h-28 rounded-3xl bg-muted" />
+            <div className="h-28 rounded-3xl bg-muted" />
           </div>
-          <div className="h-72 rounded-3xl bg-slate-100" />
+          <div className="h-72 rounded-3xl bg-muted" />
         </div>
       </div>
     );
@@ -178,7 +176,7 @@ export default function ProfilePage() {
             className="border-white/40 bg-white/90 shadow-lg dark:border-white/10 dark:bg-slate-900/85"
           >
             <div className="flex items-center gap-3">
-              <div className="rounded-xl bg-blue-500/10 p-3 text-blue-600">
+              <div className="rounded-xl bg-primary/10 p-3 text-primary">
                 <User className="h-5 w-5" />
               </div>
               <div>
@@ -194,7 +192,7 @@ export default function ProfilePage() {
             className="border-white/40 bg-white/90 shadow-lg dark:border-white/10 dark:bg-slate-900/85"
           >
             <div className="flex items-center gap-3">
-              <div className="rounded-xl bg-green-500/10 p-3 text-green-600">
+              <div className="rounded-xl bg-success/10 p-3 text-success">
                 <Mail className="h-5 w-5" />
               </div>
               <div>
@@ -210,7 +208,7 @@ export default function ProfilePage() {
             className="border-white/40 bg-white/90 shadow-lg dark:border-white/10 dark:bg-slate-900/85"
           >
             <div className="flex items-center gap-3">
-              <div className="rounded-xl bg-purple-500/10 p-3 text-purple-600">
+              <div className="rounded-xl bg-accent/10 p-3 text-accent">
                 <Wrench className="h-5 w-5" />
               </div>
               <div>
@@ -231,9 +229,9 @@ export default function ProfilePage() {
         )}
 
         {success && (
-          <Alert className="rounded-2xl border-emerald-200 bg-emerald-50 text-emerald-800">
-            <CheckCircle2 className="h-4 w-4" />
-            <AlertDescription>{success}</AlertDescription>
+          <Alert className="rounded-2xl border-success/30 bg-success/10 text-success-foreground dark:border-success/20 dark:bg-success/15">
+            <CheckCircle2 className="h-4 w-4 text-success" />
+            <AlertDescription className="text-success">{success}</AlertDescription>
           </Alert>
         )}
 
@@ -242,8 +240,8 @@ export default function ProfilePage() {
           className="interactive-card rounded-2xl border-white/40 bg-white/95 shadow-lg dark:border-white/10 dark:bg-slate-900/85"
         >
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-slate-900">
-              <User className="h-5 w-5 text-blue-700" />
+            <CardTitle className="flex items-center gap-2">
+              <User className="h-5 w-5 text-primary" />
               Informasi Akun
             </CardTitle>
             <CardDescription>Informasi akun dan kontak Anda</CardDescription>
@@ -262,19 +260,19 @@ export default function ProfilePage() {
                     })
                   }
                   placeholder="Masukkan nama lengkap"
-                  className="border-blue-100 focus-visible:ring-blue-500"
+                  className="border-border/50 focus-visible:ring-primary"
                 />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                  <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="email"
                     value={userProfile.email}
                     disabled
-                    className="border-blue-100 bg-slate-50 pl-10"
+                    className="border-border/50 bg-muted/50 pl-10"
                   />
                 </div>
               </div>
@@ -285,7 +283,7 @@ export default function ProfilePage() {
                   id="nip"
                   value={laboranProfile.nip}
                   disabled
-                  className="border-blue-100 bg-slate-50"
+                  className="border-border/50 bg-muted/50"
                 />
               </div>
             </div>
@@ -297,8 +295,8 @@ export default function ProfilePage() {
           className="interactive-card rounded-2xl border-white/40 bg-white/95 shadow-lg dark:border-white/10 dark:bg-slate-900/85"
         >
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-slate-900">
-              <Wrench className="h-5 w-5 text-blue-700" />
+            <CardTitle className="flex items-center gap-2">
+              <Wrench className="h-5 w-5 text-primary" />
               Informasi Pekerjaan
             </CardTitle>
             <CardDescription>
@@ -319,7 +317,7 @@ export default function ProfilePage() {
                     })
                   }
                   placeholder="Contoh: Pagi (08:00 - 16:00)"
-                  className="border-blue-100 focus-visible:ring-blue-500"
+                  className="border-border/50 focus-visible:ring-primary"
                 />
               </div>
             </div>
@@ -331,14 +329,14 @@ export default function ProfilePage() {
             variant="outline"
             onClick={() => fetchProfile(false)}
             disabled={saving}
-            className="border-blue-200 text-blue-700 hover:bg-blue-50"
+            className="border-primary/30 text-primary hover:bg-primary/5"
           >
             Batal
           </Button>
           <Button
             onClick={handleSave}
             disabled={saving}
-            className="bg-blue-700 text-white hover:bg-blue-800"
+            className="bg-primary text-primary-foreground hover:bg-primary/90"
           >
             <Save className="mr-2 h-4 w-4" />
             {saving ? "Menyimpan..." : "Simpan Perubahan"}

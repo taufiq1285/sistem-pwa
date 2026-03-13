@@ -40,6 +40,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/lib/hooks/useAuth";
 import {
@@ -376,16 +377,18 @@ export default function MahasiswaLogbookPage() {
   // ============================================================================
 
   function getStatusBadge(status: string) {
-    const color = LOGBOOK_STATUS_COLORS[status] || "gray";
     const label = LOGBOOK_STATUS_LABELS[status] || status;
-
+    const statusMap: Record<string, "success" | "warning" | "error" | "info" | "offline"> = {
+      submitted: "info",
+      reviewed: "warning",
+      graded: "success",
+      rejected: "error",
+      draft: "offline",
+    };
     return (
-      <Badge
-        variant="outline"
-        className={`border-${color}-500 text-${color}-700`}
-      >
+      <StatusBadge status={statusMap[status] || "info"} pulse={false}>
         {label}
-      </Badge>
+      </StatusBadge>
     );
   }
 

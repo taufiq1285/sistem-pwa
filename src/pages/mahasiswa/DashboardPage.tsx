@@ -341,8 +341,8 @@ export function DashboardPage() {
               <div className="absolute -right-16 -top-16 h-32 w-32 rounded-full bg-teal-400/15 blur-3xl" />
               <CardHeader className="relative">
                 <div className="mb-2 flex items-center gap-2">
-                  <div className="rounded-xl bg-linear-to-br from-teal-500 to-cyan-600 p-2.5 shadow-lg shadow-teal-500/20">
-                    <Calendar className="h-5 w-5 text-white" />
+                  <div className="rounded-xl bg-linear-to-br from-primary to-accent p-2.5 shadow-lg shadow-primary/20">
+                    <Calendar className="h-5 w-5 text-primary-foreground" />
                   </div>
                   <div>
                     <CardTitle className="text-xl font-bold text-foreground">
@@ -381,8 +381,8 @@ export function DashboardPage() {
                         className="interactive-card group flex gap-3 rounded-2xl border border-teal-500/15 bg-teal-500/5 p-4 shadow-sm transition-all duration-300 hover:border-teal-500/30 hover:bg-teal-500/10 hover:shadow-md"
                       >
                         <div className="shrink-0">
-                          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-teal-500 to-cyan-600 shadow-lg transition-transform group-hover:scale-110">
-                            <Calendar className="h-5 w-5 text-white" />
+                          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-primary to-accent shadow-lg transition-transform group-hover:scale-110">
+                            <Calendar className="h-5 w-5 text-primary-foreground" />
                           </div>
                         </div>
                         <div className="min-w-0 flex-1">

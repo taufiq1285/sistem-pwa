@@ -24,6 +24,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { DashboardCard } from "@/components/ui/dashboard-card";
 import { TableBody } from "@/components/ui/table";
 import { TableSkeleton } from "@/components/shared/DataTable/TableSkeleton";
 import {
@@ -616,7 +617,7 @@ export default function UsersPage() {
           </Button>
           <Button
             onClick={handleAdd}
-            className="font-semibold bg-linear-to-r from-blue-600 to-indigo-600 text-white"
+            className="font-semibold bg-linear-to-r from-primary to-accent text-primary-foreground"
           >
             <UserPlus className="h-4 w-4 mr-2" />
             Tambah User
@@ -626,88 +627,11 @@ export default function UsersPage() {
 
       {/* Statistics Cards */}
       <div className="grid gap-5 md:grid-cols-5">
-        <Card className="border-0 shadow-lg bg-linear-to-br from-blue-50 to-indigo-50 dark:from-blue-950/40 dark:to-indigo-950/40 hover:shadow-xl hover:scale-105 transition-all duration-300">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-            <CardTitle className="text-base font-bold text-blue-900 dark:text-blue-100">
-              Total
-            </CardTitle>
-            <div className="p-2 bg-linear-to-br from-blue-500 to-indigo-600 rounded-lg shadow-md">
-              <Users className="h-5 w-5 text-white" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-4xl font-extrabold text-blue-900 dark:text-white mb-2">
-              {stats.total}
-            </div>
-            <p className="text-sm font-bold text-slate-700 dark:text-slate-300">
-              {stats.active} active
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-lg bg-linear-to-br from-purple-50 to-violet-50 dark:from-purple-950/40 dark:to-violet-950/40 hover:shadow-xl hover:scale-105 transition-all duration-300">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-            <CardTitle className="text-base font-bold text-purple-900 dark:text-purple-100">
-              Admin
-            </CardTitle>
-            <div className="p-2 bg-linear-to-br from-purple-500 to-violet-600 rounded-lg shadow-md">
-              <Shield className="h-5 w-5 text-white" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-4xl font-extrabold text-purple-900 dark:text-white">
-              {stats.admin}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-lg bg-linear-to-br from-cyan-50 to-blue-50 dark:from-cyan-950/40 dark:to-blue-950/40 hover:shadow-xl hover:scale-105 transition-all duration-300">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-            <CardTitle className="text-base font-bold text-cyan-900 dark:text-cyan-100">
-              Dosen
-            </CardTitle>
-            <div className="p-2 bg-linear-to-br from-cyan-500 to-blue-600 rounded-lg shadow-md">
-              <GraduationCap className="h-5 w-5 text-white" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-4xl font-extrabold text-cyan-900 dark:text-white">
-              {stats.dosen}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-lg bg-linear-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/40 dark:to-teal-950/40 hover:shadow-xl hover:scale-105 transition-all duration-300">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-            <CardTitle className="text-base font-bold text-emerald-900 dark:text-emerald-100">
-              Mahasiswa
-            </CardTitle>
-            <div className="p-2 bg-linear-to-br from-emerald-500 to-teal-600 rounded-lg shadow-md">
-              <BookOpen className="h-5 w-5 text-white" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-4xl font-extrabold text-emerald-900 dark:text-white">
-              {stats.mahasiswa}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-lg bg-linear-to-br from-orange-50 to-amber-50 dark:from-orange-950/40 dark:to-amber-950/40 hover:shadow-xl hover:scale-105 transition-all duration-300">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-            <CardTitle className="text-base font-bold text-orange-900 dark:text-orange-100">
-              Laboran
-            </CardTitle>
-            <div className="p-2 bg-linear-to-br from-orange-500 to-amber-600 rounded-lg shadow-md">
-              <Microscope className="h-5 w-5 text-white" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-4xl font-extrabold text-orange-900 dark:text-white">
-              {stats.laboran}
-            </div>
-          </CardContent>
-        </Card>
+        <DashboardCard title="Total" value={stats.total} description={`${stats.active} active`} icon={Users} color="primary" />
+        <DashboardCard title="Admin" value={stats.admin} icon={Shield} color="danger" />
+        <DashboardCard title="Dosen" value={stats.dosen} icon={GraduationCap} color="info" />
+        <DashboardCard title="Mahasiswa" value={stats.mahasiswa} icon={BookOpen} color="success" />
+        <DashboardCard title="Laboran" value={stats.laboran} icon={Microscope} color="warning" />
       </div>
 
       {/* Search */}

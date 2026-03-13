@@ -14,7 +14,7 @@ import {
   MapPin,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { DashboardCard } from "@/components/ui/dashboard-card";
 import { DashboardSkeleton } from "@/components/ui/dashboard-skeleton";
 import { GlassCard } from "@/components/ui/glass-card";
@@ -97,40 +97,30 @@ export default function PresensiPage() {
   };
 
   const getStatusBadge = (status: KehadiranStatus) => {
-    const variants: Record<
-      KehadiranStatus,
-      { color: string; icon: any; label: string }
-    > = {
-      hadir: {
-        color: "bg-green-100 text-green-800 border-green-300",
-        icon: CheckCircle2,
-        label: "Hadir",
-      },
-      izin: {
-        color: "bg-blue-100 text-blue-800 border-blue-300",
-        icon: Clock,
-        label: "Izin",
-      },
-      sakit: {
-        color: "bg-yellow-100 text-yellow-800 border-yellow-300",
-        icon: AlertCircle,
-        label: "Sakit",
-      },
-      alpha: {
-        color: "bg-red-100 text-red-800 border-red-300",
-        icon: XCircle,
-        label: "Alpha",
-      },
+    const statusMap: Record<KehadiranStatus, "success" | "info" | "warning" | "error"> = {
+      hadir: "success",
+      izin: "info",
+      sakit: "warning",
+      alpha: "error",
     };
-
-    const variant = variants[status];
-    const Icon = variant.icon;
-
+    const labels: Record<KehadiranStatus, string> = {
+      hadir: "Hadir",
+      izin: "Izin",
+      sakit: "Sakit",
+      alpha: "Alpha",
+    };
+    const icons: Record<KehadiranStatus, any> = {
+      hadir: CheckCircle2,
+      izin: Clock,
+      sakit: AlertCircle,
+      alpha: XCircle,
+    };
+    const Icon = icons[status];
     return (
-      <Badge className={variant.color}>
+      <StatusBadge status={statusMap[status]} pulse={false}>
         <Icon className="h-3 w-3 mr-1" />
-        {variant.label}
-      </Badge>
+        {labels[status]}
+      </StatusBadge>
     );
   };
 

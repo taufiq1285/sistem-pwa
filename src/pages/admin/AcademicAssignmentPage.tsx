@@ -40,6 +40,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { DashboardCard } from "@/components/ui/dashboard-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -347,85 +348,34 @@ export default function AcademicAssignmentPage() {
 
       {/* Statistics Cards */}
       <div className="grid grid-cols-4 gap-4">
-        <Card className="border-0 shadow-lg bg-linear-to-r from-blue-500 to-blue-600 text-white">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-base font-bold text-white">
-              Total Kelas Aktif
-            </CardTitle>
-            <Users className="h-5 w-5 text-white" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-4xl font-extrabold">{kelasList.length}</div>
-            <p className="text-sm font-bold text-white mt-1">
-              {kelasList.filter((k) => k.dosen_id).length} dengan dosen assigned
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-lg bg-linear-to-r from-purple-500 to-purple-600 text-white">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-base font-bold text-white">
-              Dosen Aktif
-            </CardTitle>
-            <BookOpen className="h-5 w-5 text-white" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-4xl font-extrabold">{dosenList.length}</div>
-            <p className="text-sm font-bold text-white mt-1">
-              {
-                dosenList.filter((d) =>
-                  kelasList.some((k) => k.dosen_id === d.id),
-                ).length
-              }{" "}
-              mengajar
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-lg bg-linear-to-r from-green-500 to-green-600 text-white">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-base font-bold text-white">
-              Mata Kuliah
-            </CardTitle>
-            <Calendar className="h-5 w-5 text-white" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-4xl font-extrabold">
-              {mataKuliahList.length}
-            </div>
-            <p className="text-sm font-bold text-white mt-1">
-              {
-                mataKuliahList.filter((mk) =>
-                  kelasList.some((k) => k.mata_kuliah_id === mk.id),
-                ).length
-              }{" "}
-              diajarkan
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-lg bg-linear-to-r from-indigo-500 to-indigo-600 text-white">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-base font-bold text-white">
-              Assignment Complete
-            </CardTitle>
-            <CheckCircle className="h-5 w-5 text-white" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-4xl font-extrabold">
-              {kelasList.filter((k) => k.dosen_id && k.mata_kuliah_id).length}
-            </div>
-            <p className="text-sm font-bold text-white mt-1">
-              {Math.round(
-                (kelasList.filter((k) => k.dosen_id && k.mata_kuliah_id)
-                  .length /
-                  kelasList.length) *
-                  100,
-              )}
-              % dari total
-            </p>
-          </CardContent>
-        </Card>
+        <DashboardCard
+          title="Total Kelas Aktif"
+          value={kelasList.length}
+          description={`${kelasList.filter((k) => k.dosen_id).length} dengan dosen assigned`}
+          icon={Users}
+          color="primary"
+        />
+        <DashboardCard
+          title="Dosen Aktif"
+          value={dosenList.length}
+          description={`${dosenList.filter((d) => kelasList.some((k) => k.dosen_id === d.id)).length} mengajar`}
+          icon={BookOpen}
+          color="info"
+        />
+        <DashboardCard
+          title="Mata Kuliah"
+          value={mataKuliahList.length}
+          description={`${mataKuliahList.filter((mk) => kelasList.some((k) => k.mata_kuliah_id === mk.id)).length} diajarkan`}
+          icon={Calendar}
+          color="success"
+        />
+        <DashboardCard
+          title="Assignment Complete"
+          value={kelasList.filter((k) => k.dosen_id && k.mata_kuliah_id).length}
+          description={`${Math.round((kelasList.filter((k) => k.dosen_id && k.mata_kuliah_id).length / kelasList.length) * 100)}% dari total`}
+          icon={CheckCircle}
+          color="accent"
+        />
       </div>
 
       {/* Tahun Ajaran Stats */}
@@ -730,7 +680,7 @@ export default function AcademicAssignmentPage() {
                 <Button
                   type="submit"
                   disabled={isSubmitting}
-                  className="font-semibold bg-linear-to-r from-blue-500 to-indigo-600"
+                  className="font-semibold bg-linear-to-r from-primary to-accent"
                 >
                   {isSubmitting && (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />

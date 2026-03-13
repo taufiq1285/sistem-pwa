@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxGraphModel dx="1800" dy="1000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="1169" math="0" shadow="0">
+  <root>
+    <mxCell id="0" />
+    <mxCell id="1" parent="0" />
+
+    <!--
+      ╔══════════════════════════════════════════════════════════╗
+      ║  NOTASI YOURDON / DeMARCO — KONSISTEN PENUH             ║
+      ║                                                          ║
+      ║  Entitas Eksternal : rectangle (kotak penuh)            ║
+      ║  Proses            : ellipse / bubble                   ║
+      ║  Data Store        : DIBANGUN MANUAL dari:              ║
+      ║    • garis atas    (mxCell edge/line horizontal)        ║
+      ║    • garis bawah   (mxCell edge/line horizontal)        ║
+      ║    • label teks    (mxCell vertex, no stroke/fill)      ║
+      ║    → hasil: dua garis sejajar = open-ended Yourdon store ║
+      ║                                                          ║
+      ║  LAYOUT:                                                 ║
+      ║    Col A  x=30   Actors      w=140 h=46                 ║
+      ║    Col B  x=240  Processes   w=210 h=100                ║
+      ║    Col C  x=590  Data Stores w=220                      ║
+      ║    Band gap = 210px                                      ║
+      ║    Band Y: B1=50  B2=265  B3=480  B4=695               ║
+      ╚══════════════════════════════════════════════════════════╝
+
+      DATA STORE YOURDON — struktur setiap store (contoh D1 di band 1):
+        garis atas  : x=590 y=124  w=220 h=0  (horizontal line)
+        label teks  : x=590 y=124  w=220 h=44 (no border, no fill, text center)
+        garis bawah : x=590 y=168  w=220 h=0  (horizontal line)
+        Koneksi arrow masuk ke label (vertex tengah), bukan ke garis
+    -->
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!--  BAND 1  —  1.0  Manajemen Akun dan Akses              -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+
+    <mxCell id="Mhs1" value="Mahasiswa"
+      style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=1.5;fontStyle=1;fontSize=13;"
+      vertex="1" parent="1"><mxGeometry x="30" y="52" width="140" height="46" as="geometry"/></mxCell>
+
+    <mxCell id="Dos1" value="Dosen"
+      style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;strokeWidth=1.5;fontStyle=1;fontSize=13;"
+      vertex="1" parent="1"><mxGeometry x="30" y="102" width="140" height="46" as="geometry"/></mxCell>
+
+    <mxCell id="Lab1" value="Laboran"
+      style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;strokeWidth=1.5;fontStyle=1;fontSize=13;"
+      vertex="1" parent="1"><mxGeometry x="30" y="152" width="140" height="46" as="geometry"/></mxCell>
+
+    <mxCell id="Adm1" value="Admin"
+      style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;strokeWidth=1.5;fontStyle=1;fontSize=13;"
+      vertex="1" parent="1"><mxGeometry x="30" y="202" width="140" height="46" as="geometry"/></mxCell>
+
+    <mxCell id="P1" value="1.0&#xa;Manajemen Akun&#xa;dan Akses"
+      style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#222222;strokeWidth=1.5;fontColor=#111111;fontStyle=1;fontSize=13;"
+      vertex="1" parent="1"><mxGeometry x="240" y="68" width="210" height="100" as="geometry"/></mxCell>
+
+    <!-- EXT: entitas eksternal = rectangle biasa -->
+    <mxCell id="EXT1" value="Supabase / Auth Service"
+      style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;strokeWidth=1.5;fontStyle=1;fontSize=13;"
+      vertex="1" parent="1"><mxGeometry x="590" y="52" width="220" height="46" as="geometry"/></mxCell>
+
+    <!-- D1 Yourdon store: garis atas + label + garis bawah -->
+    <mxCell id="D1a_top"  value="" style="line;strokeColor=#222222;strokeWidth=1.5;fillColor=none;" vertex="1" parent="1"><mxGeometry x="590" y="124" width="220" height="10" as="geometry"/></mxCell>
+    <mxCell id="D1a_lbl"  value="D1   Database Utama"
+      style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;fontSize=13;fontStyle=1;"
+      vertex="1" parent="1"><mxGeometry x="590" y="124" width="220" height="44" as="geometry"/></mxCell>
+    <mxCell id="D1a_bot"  value="" style="line;strokeColor=#222222;strokeWidth=1.5;fillColor=none;" vertex="1" parent="1"><mxGeometry x="590" y="168" width="220" height="10" as="geometry"/></mxCell>
+
+    <!-- flows band 1 -->
+    <mxCell id="f1a" value="login, akses"   style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=1;exitY=0.5;entryX=0;entryY=0.22;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1" source="Mhs1" target="P1" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="f1b" value="login, akses"   style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=1;exitY=0.5;entryX=0;entryY=0.42;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1" source="Dos1" target="P1" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="f1c" value="login, akses"   style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=1;exitY=0.5;entryX=0;entryY=0.62;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1" source="Lab1" target="P1" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="f1d" value="akun, role"     style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=1;exitY=0.5;entryX=0;entryY=0.84;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1" source="Adm1" target="P1" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="f1e" value="autentikasi"    style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;endArrow=open;endFill=0;startArrow=open;startFill=0;exitX=1;exitY=0.3;entryX=0;entryY=0.5;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1" source="P1" target="EXT1" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="f1f" value="akun, role, sesi" style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;endArrow=open;endFill=0;startArrow=open;startFill=0;exitX=1;exitY=0.7;entryX=0;entryY=0.5;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1" source="P1" target="D1a_lbl" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!--  BAND 2  —  2.0  Manajemen Akademik Praktikum          -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+
+    <mxCell id="Mhs2" value="Mahasiswa" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=1.5;fontStyle=1;fontSize=13;" vertex="1" parent="1"><mxGeometry x="30" y="265" width="140" height="46" as="geometry"/></mxCell>
+    <mxCell id="Dos2" value="Dosen"     style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;strokeWidth=1.5;fontStyle=1;fontSize=13;" vertex="1" parent="1"><mxGeometry x="30" y="315" width="140" height="46" as="geometry"/></mxCell>
+    <mxCell id="Lab2" value="Laboran"   style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;strokeWidth=1.5;fontStyle=1;fontSize=13;" vertex="1" parent="1"><mxGeometry x="30" y="365" width="140" height="46" as="geometry"/></mxCell>
+    <mxCell id="Adm2" value="Admin"     style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;strokeWidth=1.5;fontStyle=1;fontSize=13;" vertex="1" parent="1"><mxGeometry x="30" y="415" width="140" height="46" as="geometry"/></mxCell>
+
+    <mxCell id="P2" value="2.0&#xa;Manajemen Akademik&#xa;Praktikum"
+      style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#222222;strokeWidth=1.5;fontColor=#111111;fontStyle=1;fontSize=13;"
+      vertex="1" parent="1"><mxGeometry x="240" y="281" width="210" height="100" as="geometry"/></mxCell>
+
+    <!-- D1 store band 2 -->
+    <mxCell id="D1b_top" value="" style="line;strokeColor=#222222;strokeWidth=1.5;fillColor=none;" vertex="1" parent="1"><mxGeometry x="590" y="265" width="220" height="10" as="geometry"/></mxCell>
+    <mxCell id="D1b_lbl" value="D1   Database Utama"  style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;fontSize=13;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="590" y="265" width="220" height="44" as="geometry"/></mxCell>
+    <mxCell id="D1b_bot" value="" style="line;strokeColor=#222222;strokeWidth=1.5;fillColor=none;" vertex="1" parent="1"><mxGeometry x="590" y="309" width="220" height="10" as="geometry"/></mxCell>
+
+    <!-- D2 store band 2 -->
+    <mxCell id="D2a_top" value="" style="line;strokeColor=#222222;strokeWidth=1.5;fillColor=none;" vertex="1" parent="1"><mxGeometry x="590" y="325" width="220" height="10" as="geometry"/></mxCell>
+    <mxCell id="D2a_lbl" value="D2   Cache Lokal"     style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;fontSize=13;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="590" y="325" width="220" height="44" as="geometry"/></mxCell>
+    <mxCell id="D2a_bot" value="" style="line;strokeColor=#222222;strokeWidth=1.5;fillColor=none;" vertex="1" parent="1"><mxGeometry x="590" y="369" width="220" height="10" as="geometry"/></mxCell>
+
+    <!-- D4 store band 2 -->
+    <mxCell id="D4_top"  value="" style="line;strokeColor=#222222;strokeWidth=1.5;fillColor=none;" vertex="1" parent="1"><mxGeometry x="590" y="385" width="220" height="10" as="geometry"/></mxCell>
+    <mxCell id="D4_lbl"  value="D4   Storage File"    style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;fontSize=13;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="590" y="385" width="220" height="44" as="geometry"/></mxCell>
+    <mxCell id="D4_bot"  value="" style="line;strokeColor=#222222;strokeWidth=1.5;fillColor=none;" vertex="1" parent="1"><mxGeometry x="590" y="429" width="220" height="10" as="geometry"/></mxCell>
+
+    <!-- flows band 2 -->
+    <mxCell id="f2a" value="jadwal, materi, nilai"  style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=1;exitY=0.5;entryX=0;entryY=0.22;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1" source="Mhs2" target="P2" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="f2b" value="jadwal, kuis, nilai"    style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=1;exitY=0.5;entryX=0;entryY=0.42;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1" source="Dos2" target="P2" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="f2c" value="jadwal laboratorium"    style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=1;exitY=0.5;entryX=0;entryY=0.62;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1" source="Lab2" target="P2" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="f2d" value="kelas, mata kuliah"     style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=1;exitY=0.5;entryX=0;entryY=0.84;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1" source="Adm2" target="P2" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="f2e" value="data akademik"  style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;endArrow=open;endFill=0;startArrow=open;startFill=0;exitX=1;exitY=0.28;entryX=0;entryY=0.5;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1" source="P2" target="D1b_lbl" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="f2f" value="cache akademik" style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;endArrow=open;endFill=0;startArrow=open;startFill=0;exitX=1;exitY=0.5;entryX=0;entryY=0.5;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1" source="P2" target="D2a_lbl" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="f2g" value="file materi"    style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;endArrow=open;endFill=0;startArrow=open;startFill=0;exitX=1;exitY=0.72;entryX=0;entryY=0.5;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1" source="P2" target="D4_lbl" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!--  BAND 3  —  3.0  Operasional dan Layanan Laboratorium      -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
+
+    <mxCell id="Mhs3" value="Mahasiswa" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=1.5;fontStyle=1;fontSize=13;" vertex="1" parent="1"><mxGeometry x="30" y="480" width="140" height="46" as="geometry"/></mxCell>
+    <mxCell id="Dos3" value="Dosen"     style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;strokeWidth=1.5;fontStyle=1;fontSize=13;" vertex="1" parent="1"><mxGeometry x="30" y="530" width="140" height="46" as="geometry"/></mxCell>
+    <mxCell id="Lab3" value="Laboran"   style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;strokeWidth=1.5;fontStyle=1;fontSize=13;" vertex="1" parent="1"><mxGeometry x="30" y="580" width="140" height="46" as="geometry"/></mxCell>
+    <mxCell id="Adm3" value="Admin"     style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;strokeWidth=1.5;fontStyle=1;fontSize=13;" vertex="1" parent="1"><mxGeometry x="30" y="630" width="140" height="46" as="geometry"/></mxCell>
+
+    <mxCell id="P3" value="3.0&#xa;Operasional dan Layanan&#xa;Laboratorium"
+      style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#222222;strokeWidth=1.5;fontColor=#111111;fontStyle=1;fontSize=13;"
+      vertex="1" parent="1"><mxGeometry x="240" y="496" width="210" height="100" as="geometry"/></mxCell>
+
+    <!-- D1 store band 3 -->
+    <mxCell id="D1c_top" value="" style="line;strokeColor=#222222;strokeWidth=1.5;fillColor=none;" vertex="1" parent="1"><mxGeometry x="590" y="480" width="220" height="10" as="geometry"/></mxCell>
+    <mxCell id="D1c_lbl" value="D1   Database Utama" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;fontSize=13;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="590" y="480" width="220" height="44" as="geometry"/></mxCell>
+    <mxCell id="D1c_bot" value="" style="line;strokeColor=#222222;strokeWidth=1.5;fillColor=none;" vertex="1" parent="1"><mxGeometry x="590" y="524" width="220" height="10" as="geometry"/></mxCell>
+
+    <!-- D2 store band 3 -->
+    <mxCell id="D2b_top" value="" style="line;strokeColor=#222222;strokeWidth=1.5;fillColor=none;" vertex="1" parent="1"><mxGeometry x="590" y="560" width="220" height="10" as="geometry"/></mxCell>
+    <mxCell id="D2b_lbl" value="D2   Cache Lokal"    style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;fontSize=13;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="590" y="560" width="220" height="44" as="geometry"/></mxCell>
+    <mxCell id="D2b_bot" value="" style="line;strokeColor=#222222;strokeWidth=1.5;fillColor=none;" vertex="1" parent="1"><mxGeometry x="590" y="604" width="220" height="10" as="geometry"/></mxCell>
+
+    <!-- flows band 3 -->
+    <mxCell id="f3a" value="logbook, pengumuman" style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=1;exitY=0.5;entryX=0;entryY=0.22;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1" source="Mhs3" target="P3" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="f3b" value="review, peminjaman"  style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=1;exitY=0.5;entryX=0;entryY=0.42;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1" source="Dos3" target="P3" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="f3c" value="inventaris, laporan" style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=1;exitY=0.5;entryX=0;entryY=0.62;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1" source="Lab3" target="P3" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="f3d" value="monitoring"          style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=1;exitY=0.5;entryX=0;entryY=0.84;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1" source="Adm3" target="P3" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="f3e" value="data operasional" style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;endArrow=open;endFill=0;startArrow=open;startFill=0;exitX=1;exitY=0.35;entryX=0;entryY=0.5;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1" source="P3" target="D1c_lbl" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="f3f" value="cache informasi"  style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;endArrow=open;endFill=0;startArrow=open;startFill=0;exitX=1;exitY=0.65;entryX=0;entryY=0.5;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1" source="P3" target="D2b_lbl" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <!--  BAND 4  —  4.0  Layanan PWA dan Sinkronisasi Offline     -->
+    <!-- ══════════════════════════════════════════════════════════ -->
+
+    <mxCell id="Mhs4" value="Mahasiswa" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=1.5;fontStyle=1;fontSize=13;" vertex="1" parent="1"><mxGeometry x="30" y="695" width="140" height="46" as="geometry"/></mxCell>
+    <mxCell id="Dos4" value="Dosen"     style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;strokeWidth=1.5;fontStyle=1;fontSize=13;" vertex="1" parent="1"><mxGeometry x="30" y="745" width="140" height="46" as="geometry"/></mxCell>
+    <mxCell id="Lab4" value="Laboran"   style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;strokeWidth=1.5;fontStyle=1;fontSize=13;" vertex="1" parent="1"><mxGeometry x="30" y="795" width="140" height="46" as="geometry"/></mxCell>
+    <mxCell id="Adm4" value="Admin"     style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;strokeWidth=1.5;fontStyle=1;fontSize=13;" vertex="1" parent="1"><mxGeometry x="30" y="845" width="140" height="46" as="geometry"/></mxCell>
+
+    <mxCell id="P4" value="4.0&#xa;Layanan PWA dan&#xa;Sinkronisasi Offline"
+      style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#222222;strokeWidth=1.5;fontColor=#111111;fontStyle=1;fontSize=13;"
+      vertex="1" parent="1"><mxGeometry x="240" y="711" width="210" height="100" as="geometry"/></mxCell>
+
+    <!-- D1 store band 4 -->
+    <mxCell id="D1d_top" value="" style="line;strokeColor=#222222;strokeWidth=1.5;fillColor=none;" vertex="1" parent="1"><mxGeometry x="590" y="695" width="220" height="10" as="geometry"/></mxCell>
+    <mxCell id="D1d_lbl" value="D1   Database Utama" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;fontSize=13;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="590" y="695" width="220" height="44" as="geometry"/></mxCell>
+    <mxCell id="D1d_bot" value="" style="line;strokeColor=#222222;strokeWidth=1.5;fillColor=none;" vertex="1" parent="1"><mxGeometry x="590" y="739" width="220" height="10" as="geometry"/></mxCell>
+
+    <!-- D2 store band 4 -->
+    <mxCell id="D2c_top" value="" style="line;strokeColor=#222222;strokeWidth=1.5;fillColor=none;" vertex="1" parent="1"><mxGeometry x="590" y="755" width="220" height="10" as="geometry"/></mxCell>
+    <mxCell id="D2c_lbl" value="D2   Cache Lokal"    style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;fontSize=13;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="590" y="755" width="220" height="44" as="geometry"/></mxCell>
+    <mxCell id="D2c_bot" value="" style="line;strokeColor=#222222;strokeWidth=1.5;fillColor=none;" vertex="1" parent="1"><mxGeometry x="590" y="799" width="220" height="10" as="geometry"/></mxCell>
+
+    <!-- D3 store band 4 -->
+    <mxCell id="D3_top"  value="" style="line;strokeColor=#222222;strokeWidth=1.5;fillColor=none;" vertex="1" parent="1"><mxGeometry x="590" y="815" width="220" height="10" as="geometry"/></mxCell>
+    <mxCell id="D3_lbl"  value="D3   Offline Queue"  style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;fontSize=13;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="590" y="815" width="220" height="44" as="geometry"/></mxCell>
+    <mxCell id="D3_bot"  value="" style="line;strokeColor=#222222;strokeWidth=1.5;fillColor=none;" vertex="1" parent="1"><mxGeometry x="590" y="859" width="220" height="10" as="geometry"/></mxCell>
+
+    <!-- EXT band 4: entitas eksternal = rectangle -->
+    <mxCell id="EXT2" value="Supabase / Auth Service"
+      style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;strokeWidth=1.5;fontStyle=1;fontSize=13;"
+      vertex="1" parent="1"><mxGeometry x="590" y="875" width="220" height="46" as="geometry"/></mxCell>
+
+    <!-- flows band 4 -->
+    <mxCell id="f4a" value="akses offline"       style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=1;exitY=0.5;entryX=0;entryY=0.22;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1" source="Mhs4" target="P4" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="f4b" value="sinkronisasi"        style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=1;exitY=0.5;entryX=0;entryY=0.42;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1" source="Dos4" target="P4" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="f4c" value="sinkronisasi"        style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=1;exitY=0.5;entryX=0;entryY=0.62;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1" source="Lab4" target="P4" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="f4d" value="monitoring sync"     style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=1;exitY=0.5;entryX=0;entryY=0.84;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1" source="Adm4" target="P4" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="f4e" value="sinkronisasi utama"  style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;endArrow=open;endFill=0;startArrow=open;startFill=0;exitX=1;exitY=0.22;entryX=0;entryY=0.5;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1" source="P4" target="D1d_lbl" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="f4f" value="cache offline"       style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;endArrow=open;endFill=0;startArrow=open;startFill=0;exitX=1;exitY=0.44;entryX=0;entryY=0.5;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1" source="P4" target="D2c_lbl" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="f4g" value="antrian offline"     style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;endArrow=open;endFill=0;startArrow=open;startFill=0;exitX=1;exitY=0.66;entryX=0;entryY=0.5;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1" source="P4" target="D3_lbl" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="f4h" value="auth dan sinkronisasi" style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;endArrow=open;endFill=0;startArrow=open;startFill=0;exitX=1;exitY=0.88;entryX=0;entryY=0.5;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;" edge="1" source="P4" target="EXT2" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+  </root>
+</mxGraphModel>

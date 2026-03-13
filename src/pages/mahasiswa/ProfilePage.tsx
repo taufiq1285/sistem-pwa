@@ -151,9 +151,9 @@ export default function ProfilePage() {
     return (
       <div className="app-container">
         <div className="mx-auto max-w-4xl animate-pulse space-y-6">
-          <div className="h-24 rounded-3xl bg-blue-100/70" />
-          <div className="h-72 rounded-3xl bg-slate-100" />
-          <div className="h-72 rounded-3xl bg-slate-100" />
+          <div className="h-24 rounded-3xl bg-primary/10" />
+          <div className="h-72 rounded-3xl bg-muted" />
+          <div className="h-72 rounded-3xl bg-muted" />
         </div>
       </div>
     );
@@ -183,10 +183,10 @@ export default function ProfilePage() {
         </Alert>
       )}
 
-      <Card className="interactive-card rounded-2xl border border-blue-100/70 bg-white/95 shadow-sm">
+      <Card className="interactive-card rounded-2xl border border-border/60 bg-white/95 shadow-sm dark:bg-card">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-slate-900">
-            <User className="h-5 w-5 text-blue-700" />
+          <CardTitle className="flex items-center gap-2">
+            <User className="h-5 w-5 text-primary" />
             Informasi Akun
           </CardTitle>
           <CardDescription>Informasi akun dan kontak Anda</CardDescription>
@@ -205,19 +205,19 @@ export default function ProfilePage() {
                   })
                 }
                 placeholder="Masukkan nama lengkap"
-                className="border-blue-100 focus-visible:ring-blue-500"
+                className="border-border/50 focus-visible:ring-primary"
               />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="email"
                   value={userProfile.email}
                   disabled
-                  className="border-blue-100 bg-slate-50 pl-10"
+                  className="border-border/50 bg-muted/50 pl-10"
                 />
               </div>
             </div>
@@ -225,7 +225,7 @@ export default function ProfilePage() {
             <div className="space-y-2">
               <Label htmlFor="phone">No. Telepon</Label>
               <div className="relative">
-                <Phone className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="phone"
                   value={userProfile.phone}
@@ -233,7 +233,7 @@ export default function ProfilePage() {
                     setUserProfile({ ...userProfile, phone: e.target.value })
                   }
                   placeholder="08xx-xxxx-xxxx"
-                  className="border-blue-100 pl-10 focus-visible:ring-blue-500"
+                  className="border-border/50 pl-10 focus-visible:ring-primary"
                 />
               </div>
             </div>
@@ -244,17 +244,17 @@ export default function ProfilePage() {
                 id="nim"
                 value={mahasiswaProfile.nim}
                 disabled
-                className="border-blue-100 bg-slate-50"
+                className="border-border/50 bg-muted/50"
               />
             </div>
           </div>
         </CardContent>
       </Card>
 
-      <Card className="interactive-card rounded-2xl border border-blue-100/70 bg-white/95 shadow-sm">
+      <Card className="interactive-card rounded-2xl border border-border/60 bg-white/95 shadow-sm dark:bg-card">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-slate-900">
-            <GraduationCap className="h-5 w-5 text-blue-700" />
+          <CardTitle className="flex items-center gap-2">
+            <GraduationCap className="h-5 w-5 text-primary" />
             Informasi Akademik
           </CardTitle>
           <CardDescription>Data akademik Anda</CardDescription>
@@ -267,7 +267,7 @@ export default function ProfilePage() {
                 id="program_studi"
                 value={mahasiswaProfile.program_studi}
                 disabled
-                className="border-blue-100 bg-slate-50"
+                className="border-border/50 bg-muted/50"
               />
             </div>
 
@@ -277,7 +277,7 @@ export default function ProfilePage() {
                 id="angkatan"
                 value={mahasiswaProfile.angkatan}
                 disabled
-                className="border-blue-100 bg-slate-50"
+                className="border-border/50 bg-muted/50"
               />
             </div>
 
@@ -287,7 +287,7 @@ export default function ProfilePage() {
                 id="semester"
                 value={mahasiswaProfile.semester}
                 disabled
-                className="border-blue-100 bg-slate-50"
+                className="border-border/50 bg-muted/50"
               />
             </div>
 
@@ -295,7 +295,7 @@ export default function ProfilePage() {
               <Label htmlFor="gender">Jenis Kelamin</Label>
               <select
                 id="gender"
-                className="flex h-10 w-full rounded-md border border-blue-100 bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                className="flex h-10 w-full rounded-md border border-border/50 bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 value={mahasiswaProfile.gender || ""}
                 onChange={(e) =>
                   setMahasiswaProfile({
@@ -313,9 +313,9 @@ export default function ProfilePage() {
         </CardContent>
       </Card>
 
-      <Card className="interactive-card rounded-2xl border border-blue-100/70 bg-white/95 shadow-sm">
+      <Card className="interactive-card rounded-2xl border border-border/60 bg-white/95 shadow-sm dark:bg-card">
         <CardHeader>
-          <CardTitle className="text-slate-900">Informasi Pribadi</CardTitle>
+          <CardTitle>Informasi Pribadi</CardTitle>
           <CardDescription>Tanggal lahir dan alamat Anda</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -332,7 +332,7 @@ export default function ProfilePage() {
                     date_of_birth: e.target.value,
                   })
                 }
-                className="border-blue-100 focus-visible:ring-blue-500"
+                className="border-border/50 focus-visible:ring-primary"
               />
             </div>
 
@@ -341,7 +341,7 @@ export default function ProfilePage() {
               <textarea
                 id="address"
                 rows={3}
-                className="flex w-full rounded-md border border-blue-100 bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                className="flex w-full rounded-md border border-border/50 bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 value={mahasiswaProfile.address || ""}
                 onChange={(e) =>
                   setMahasiswaProfile({
@@ -361,7 +361,7 @@ export default function ProfilePage() {
           variant="outline"
           onClick={() => fetchProfile(false)}
           disabled={saving}
-          className="border-blue-200 text-blue-700 hover:bg-blue-50"
+          className="border-primary/30 text-primary hover:bg-primary/5"
         >
           Batal
         </ButtonEnhanced>
@@ -369,7 +369,7 @@ export default function ProfilePage() {
           onClick={handleSave}
           loading={saving}
           loadingText="Menyimpan..."
-          className="bg-blue-700 text-white hover:bg-blue-800"
+          className="bg-primary text-primary-foreground hover:bg-primary/90"
         >
           <Save className="mr-2 h-4 w-4" />
           Simpan Perubahan

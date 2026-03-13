@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -202,28 +203,26 @@ export default function KuisListPage() {
   };
 
   const getStatusBadge = (status: string) => {
-    const badges = {
-      upcoming: (
-        <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-          Belum Dimulai
-        </Badge>
-      ),
-      ongoing: (
-        <Badge variant="default" className="bg-green-100 text-green-800">
-          Sedang Berlangsung
-        </Badge>
-      ),
-      completed: (
-        <Badge variant="secondary" className="bg-gray-100 text-gray-800">
-          Selesai
-        </Badge>
-      ),
-      missed: <Badge variant="destructive">Terlewat</Badge>,
+    const statusMap: Record<string, "info" | "success" | "offline" | "error"> = {
+      upcoming: "info",
+      ongoing: "success",
+      completed: "offline",
+      missed: "error",
+    };
+    const labels: Record<string, string> = {
+      upcoming: "Belum Dimulai",
+      ongoing: "Sedang Berlangsung",
+      completed: "Selesai",
+      missed: "Terlewat",
     };
     return (
-      badges[status as keyof typeof badges] || (
-        <Badge variant="outline">{status}</Badge>
-      )
+      <StatusBadge
+        status={statusMap[status] || "info"}
+        pulse={status === "ongoing"}
+        dot={true}
+      >
+        {labels[status] || status}
+      </StatusBadge>
     );
   };
 

@@ -231,7 +231,7 @@ Semua fase berikut harus mengikuti aturan ini:
 
 | Halaman | Status | Catatan |
 |---|---|---|
-| [`src/pages/admin/AnnouncementsPage.tsx`](src/pages/admin/AnnouncementsPage.tsx) | LEGACY | Dipakai untuk route [`/admin/announcements`](src/routes/index.tsx:243) dan alias [`/admin/notifikasi`](src/routes/index.tsx:267) |
+| [`src/pages/admin/AnnouncementsPage.tsx`](src/pages/admin/AnnouncementsPage.tsx) | MOSTLY ALIGNED | Dipakai untuk route [`/admin/announcements`](src/routes/index.tsx:243) dan alias [`/admin/notifikasi`](src/routes/index.tsx:267) |
 
 ### Target area ini
 - [ ] Announcement/notifikasi admin harus readable dan ringkas
@@ -279,7 +279,7 @@ Semua fase berikut harus mengikuti aturan ini:
 | [`src/pages/dosen/PenilaianPage.tsx`](src/pages/dosen/PenilaianPage.tsx) | LEGACY |
 | [`src/pages/dosen/MateriPage.tsx`](src/pages/dosen/MateriPage.tsx) | LEGACY |
 | [`src/pages/dosen/BankSoalPage.tsx`](src/pages/dosen/BankSoalPage.tsx) | LEGACY |
-| [`src/pages/dosen/LogbookReviewPage.tsx`](src/pages/dosen/LogbookReviewPage.tsx) | PARTIAL |
+| [`src/pages/dosen/LogbookReviewPage.tsx`](src/pages/dosen/LogbookReviewPage.tsx) | MOSTLY ALIGNED |
 
 ### Target area ini
 - [ ] Jadwal, kehadiran, penilaian, materi, dan bank soal memakai pola toolbar yang sama
@@ -292,11 +292,11 @@ Semua fase berikut harus mengikuti aturan ini:
 | Halaman | Status |
 |---|---|
 | [`src/pages/dosen/kuis/KuisListPage.tsx`](src/pages/dosen/kuis/KuisListPage.tsx) | LEGACY |
-| [`src/pages/dosen/kuis/KuisCreatePage.tsx`](src/pages/dosen/kuis/KuisCreatePage.tsx) | LEGACY |
+| [`src/pages/dosen/kuis/KuisCreatePage.tsx`](src/pages/dosen/kuis/KuisCreatePage.tsx) | MOSTLY ALIGNED |
 | [`src/pages/dosen/kuis/KuisBuilderPage.tsx`](src/pages/dosen/kuis/KuisBuilderPage.tsx) | LEGACY |
 | [`src/pages/dosen/kuis/KuisEditPage.tsx`](src/pages/dosen/kuis/KuisEditPage.tsx) | LEGACY |
-| [`src/pages/dosen/kuis/KuisResultsPage.tsx`](src/pages/dosen/kuis/KuisResultsPage.tsx) | LEGACY |
-| [`src/pages/dosen/kuis/AttemptDetailPage.tsx`](src/pages/dosen/kuis/AttemptDetailPage.tsx) | LEGACY |
+| [`src/pages/dosen/kuis/KuisResultsPage.tsx`](src/pages/dosen/kuis/KuisResultsPage.tsx) | MOSTLY ALIGNED |
+| [`src/pages/dosen/kuis/AttemptDetailPage.tsx`](src/pages/dosen/kuis/AttemptDetailPage.tsx) | MOSTLY ALIGNED |
 
 ### Target area ini
 - [ ] Kuis list harus mudah difilter dan dipindai
@@ -308,8 +308,8 @@ Semua fase berikut harus mengikuti aturan ini:
 
 | Halaman | Status |
 |---|---|
-| [`src/pages/dosen/PeminjamanPage.tsx`](src/pages/dosen/PeminjamanPage.tsx) | LEGACY |
-| [`src/pages/dosen/PengumumanPage.tsx`](src/pages/dosen/PengumumanPage.tsx) | LEGACY |
+| [`src/pages/dosen/PeminjamanPage.tsx`](src/pages/dosen/PeminjamanPage.tsx) | MOSTLY ALIGNED |
+| [`src/pages/dosen/PengumumanPage.tsx`](src/pages/dosen/PengumumanPage.tsx) | MOSTLY ALIGNED |
 
 ### Target area ini
 - [ ] Status pinjam dan approval lebih tegas
@@ -390,7 +390,7 @@ Semua fase berikut harus mengikuti aturan ini:
 | [`src/pages/mahasiswa/NilaiPage.tsx`](src/pages/mahasiswa/NilaiPage.tsx) | FULLY ALIGNED |
 | [`src/pages/mahasiswa/PresensiPage.tsx`](src/pages/mahasiswa/PresensiPage.tsx) | FULLY ALIGNED |
 | [`src/pages/mahasiswa/LogbookPage.tsx`](src/pages/mahasiswa/LogbookPage.tsx) | FULLY ALIGNED |
-| [`src/pages/mahasiswa/ConflictsPage.tsx`](src/pages/mahasiswa/ConflictsPage.tsx) | LEGACY |
+| [`src/pages/mahasiswa/ConflictsPage.tsx`](src/pages/mahasiswa/ConflictsPage.tsx) | MOSTLY ALIGNED |
 
 ### Target area ini
 - [x] Jadwal, materi, nilai, presensi, logbook menjadi benchmark UI mahasiswa
@@ -414,8 +414,8 @@ Semua fase berikut harus mengikuti aturan ini:
 
 | Halaman | Status |
 |---|---|
-| [`src/pages/mahasiswa/PengumumanPage.tsx`](src/pages/mahasiswa/PengumumanPage.tsx) | LEGACY |
-| [`src/pages/mahasiswa/OfflineSyncPage.tsx`](src/pages/mahasiswa/OfflineSyncPage.tsx) | LEGACY |
+| [`src/pages/mahasiswa/PengumumanPage.tsx`](src/pages/mahasiswa/PengumumanPage.tsx) | MOSTLY ALIGNED |
+| [`src/pages/mahasiswa/OfflineSyncPage.tsx`](src/pages/mahasiswa/OfflineSyncPage.tsx) | MOSTLY ALIGNED |
 
 ### Target area ini
 - [ ] Pengumuman/notifikasi nyaman dibaca dan mudah dipindai
@@ -538,7 +538,6 @@ Catatan penting: bagian ini mengikuti **router nyata** di [`src/routes/index.tsx
 ## Admin
 ### Halaman admin aktif di router
 - [x] MOSTLY ALIGNED — [`src/pages/admin/DashboardPage.tsx`](src/pages/admin/DashboardPage.tsx)
-- [ ] PARTIAL — [`src/pages/admin/ProfilePage.tsx`](src/pages/admin/ProfilePage.tsx)
 - [ ] LEGACY — [`src/pages/admin/UsersPage.tsx`](src/pages/admin/UsersPage.tsx)
 - [ ] LEGACY — [`src/pages/admin/MataKuliahPage.tsx`](src/pages/admin/MataKuliahPage.tsx)
 - [ ] PARTIAL — [`src/pages/admin/KelasPageEnhanced.tsx`](src/pages/admin/KelasPageEnhanced.tsx)
@@ -546,9 +545,9 @@ Catatan penting: bagian ini mengikuti **router nyata** di [`src/routes/index.tsx
 - [ ] LEGACY — [`src/pages/admin/LaboratoriesPage.tsx`](src/pages/admin/LaboratoriesPage.tsx)
 - [ ] LEGACY — [`src/pages/admin/EquipmentsPage.tsx`](src/pages/admin/EquipmentsPage.tsx)
 - [x] MOSTLY ALIGNED — [`src/pages/admin/PeminjamanApprovalPage.tsx`](src/pages/admin/PeminjamanApprovalPage.tsx)
-- [ ] PARTIAL — [`src/pages/admin/ManajemenAssignmentPage.tsx`](src/pages/admin/ManajemenAssignmentPage.tsx)
-- [ ] LEGACY — [`src/pages/admin/AnnouncementsPage.tsx`](src/pages/admin/AnnouncementsPage.tsx)
-- [ ] PARTIAL — [`src/pages/shared/OfflineSyncPage.tsx`](src/pages/shared/OfflineSyncPage.tsx) — dipakai untuk route admin offline sync
+- [x] MOSTLY ALIGNED — [`src/pages/admin/ManajemenAssignmentPage.tsx`](src/pages/admin/ManajemenAssignmentPage.tsx)
+- [x] MOSTLY ALIGNED — [`src/pages/admin/AnnouncementsPage.tsx`](src/pages/admin/AnnouncementsPage.tsx)
+- [x] MOSTLY ALIGNED — [`src/pages/shared/OfflineSyncPage.tsx`](src/pages/shared/OfflineSyncPage.tsx) — dipakai untuk route admin offline sync
 
 ### Halaman admin ada di codebase tetapi bukan prioritas fitur aktif
 - [ ] LEGACY — [`src/pages/admin/MahasiswaManagementPage.tsx`](src/pages/admin/MahasiswaManagementPage.tsx)
@@ -570,16 +569,16 @@ Catatan penting: bagian ini mengikuti **router nyata** di [`src/routes/index.tsx
 - [ ] LEGACY — [`src/pages/dosen/PenilaianPage.tsx`](src/pages/dosen/PenilaianPage.tsx)
 - [ ] LEGACY — [`src/pages/dosen/MateriPage.tsx`](src/pages/dosen/MateriPage.tsx)
 - [ ] LEGACY — [`src/pages/dosen/BankSoalPage.tsx`](src/pages/dosen/BankSoalPage.tsx)
-- [x] PARTIAL — [`src/pages/dosen/LogbookReviewPage.tsx`](src/pages/dosen/LogbookReviewPage.tsx)
-- [ ] LEGACY — [`src/pages/dosen/PeminjamanPage.tsx`](src/pages/dosen/PeminjamanPage.tsx)
-- [ ] LEGACY — [`src/pages/dosen/PengumumanPage.tsx`](src/pages/dosen/PengumumanPage.tsx)
+- [x] MOSTLY ALIGNED — [`src/pages/dosen/LogbookReviewPage.tsx`](src/pages/dosen/LogbookReviewPage.tsx)
+- [x] MOSTLY ALIGNED — [`src/pages/dosen/PeminjamanPage.tsx`](src/pages/dosen/PeminjamanPage.tsx)
+- [x] MOSTLY ALIGNED — [`src/pages/dosen/PengumumanPage.tsx`](src/pages/dosen/PengumumanPage.tsx)
 - [ ] LEGACY — [`src/pages/dosen/ProfilePage.tsx`](src/pages/dosen/ProfilePage.tsx)
 - [ ] LEGACY — [`src/pages/dosen/kuis/KuisListPage.tsx`](src/pages/dosen/kuis/KuisListPage.tsx)
-- [ ] LEGACY — [`src/pages/dosen/kuis/KuisCreatePage.tsx`](src/pages/dosen/kuis/KuisCreatePage.tsx)
+- [x] MOSTLY ALIGNED — [`src/pages/dosen/kuis/KuisCreatePage.tsx`](src/pages/dosen/kuis/KuisCreatePage.tsx)
 - [ ] LEGACY — [`src/pages/dosen/kuis/KuisBuilderPage.tsx`](src/pages/dosen/kuis/KuisBuilderPage.tsx)
 - [ ] LEGACY — [`src/pages/dosen/kuis/KuisEditPage.tsx`](src/pages/dosen/kuis/KuisEditPage.tsx)
-- [ ] LEGACY — [`src/pages/dosen/kuis/KuisResultsPage.tsx`](src/pages/dosen/kuis/KuisResultsPage.tsx)
-- [ ] LEGACY — [`src/pages/dosen/kuis/AttemptDetailPage.tsx`](src/pages/dosen/kuis/AttemptDetailPage.tsx)
+- [x] MOSTLY ALIGNED — [`src/pages/dosen/kuis/KuisResultsPage.tsx`](src/pages/dosen/kuis/KuisResultsPage.tsx)
+- [x] MOSTLY ALIGNED — [`src/pages/dosen/kuis/AttemptDetailPage.tsx`](src/pages/dosen/kuis/AttemptDetailPage.tsx)
 
 ## Laboran
 - [x] MOSTLY ALIGNED — [`src/pages/laboran/DashboardPage.tsx`](src/pages/laboran/DashboardPage.tsx)
@@ -600,9 +599,9 @@ Catatan penting: bagian ini mengikuti **router nyata** di [`src/routes/index.tsx
 - [x] FULLY ALIGNED — [`src/pages/mahasiswa/MateriPage.tsx`](src/pages/mahasiswa/MateriPage.tsx)
 - [x] FULLY ALIGNED — [`src/pages/mahasiswa/NilaiPage.tsx`](src/pages/mahasiswa/NilaiPage.tsx)
 - [x] FULLY ALIGNED — [`src/pages/mahasiswa/PresensiPage.tsx`](src/pages/mahasiswa/PresensiPage.tsx)
-- [ ] LEGACY — [`src/pages/mahasiswa/ConflictsPage.tsx`](src/pages/mahasiswa/ConflictsPage.tsx)
-- [ ] LEGACY — [`src/pages/mahasiswa/PengumumanPage.tsx`](src/pages/mahasiswa/PengumumanPage.tsx)
-- [ ] LEGACY — [`src/pages/mahasiswa/OfflineSyncPage.tsx`](src/pages/mahasiswa/OfflineSyncPage.tsx)
+- [x] MOSTLY ALIGNED — [`src/pages/mahasiswa/ConflictsPage.tsx`](src/pages/mahasiswa/ConflictsPage.tsx)
+- [x] MOSTLY ALIGNED — [`src/pages/mahasiswa/PengumumanPage.tsx`](src/pages/mahasiswa/PengumumanPage.tsx)
+- [x] MOSTLY ALIGNED — [`src/pages/mahasiswa/OfflineSyncPage.tsx`](src/pages/mahasiswa/OfflineSyncPage.tsx)
 - [ ] LEGACY — [`src/pages/mahasiswa/ProfilePage.tsx`](src/pages/mahasiswa/ProfilePage.tsx)
 - [x] MOSTLY ALIGNED — [`src/pages/mahasiswa/kuis/KuisListPage.tsx`](src/pages/mahasiswa/kuis/KuisListPage.tsx)
 - [ ] LEGACY — [`src/pages/mahasiswa/kuis/KuisAttemptPage.tsx`](src/pages/mahasiswa/kuis/KuisAttemptPage.tsx)
@@ -646,7 +645,7 @@ Catatan penting: bagian ini mengikuti **router nyata** di [`src/routes/index.tsx
   - [`src/pages/dosen/PenilaianPage.tsx`](src/pages/dosen/PenilaianPage.tsx)
   - [`src/pages/dosen/MateriPage.tsx`](src/pages/dosen/MateriPage.tsx)
   - [`src/pages/dosen/BankSoalPage.tsx`](src/pages/dosen/BankSoalPage.tsx)
-- [ ] Mahasiswa communication + offline pages:
+- [x] Mahasiswa communication + offline pages:
   - [`src/pages/mahasiswa/PengumumanPage.tsx`](src/pages/mahasiswa/PengumumanPage.tsx)
   - [`src/pages/mahasiswa/OfflineSyncPage.tsx`](src/pages/mahasiswa/OfflineSyncPage.tsx)
   - [`src/pages/shared/OfflineSyncPage.tsx`](src/pages/shared/OfflineSyncPage.tsx)
@@ -654,11 +653,11 @@ Catatan penting: bagian ini mengikuti **router nyata** di [`src/routes/index.tsx
 ## PRIORITAS 3 — Ekosistem Kuis yang Harus Seragam
 - [ ] Dosen quiz system:
   - [`src/pages/dosen/kuis/KuisListPage.tsx`](src/pages/dosen/kuis/KuisListPage.tsx)
-  - [`src/pages/dosen/kuis/KuisCreatePage.tsx`](src/pages/dosen/kuis/KuisCreatePage.tsx)
+  - [x] [`src/pages/dosen/kuis/KuisCreatePage.tsx`](src/pages/dosen/kuis/KuisCreatePage.tsx)
   - [`src/pages/dosen/kuis/KuisBuilderPage.tsx`](src/pages/dosen/kuis/KuisBuilderPage.tsx)
   - [`src/pages/dosen/kuis/KuisEditPage.tsx`](src/pages/dosen/kuis/KuisEditPage.tsx)
-  - [`src/pages/dosen/kuis/KuisResultsPage.tsx`](src/pages/dosen/kuis/KuisResultsPage.tsx)
-  - [`src/pages/dosen/kuis/AttemptDetailPage.tsx`](src/pages/dosen/kuis/AttemptDetailPage.tsx)
+  - [x] [`src/pages/dosen/kuis/KuisResultsPage.tsx`](src/pages/dosen/kuis/KuisResultsPage.tsx)
+  - [x] [`src/pages/dosen/kuis/AttemptDetailPage.tsx`](src/pages/dosen/kuis/AttemptDetailPage.tsx)
 - [ ] Mahasiswa quiz system:
   - [`src/pages/mahasiswa/kuis/KuisAttemptPage.tsx`](src/pages/mahasiswa/kuis/KuisAttemptPage.tsx)
   - [`src/pages/mahasiswa/kuis/KuisResultPage.tsx`](src/pages/mahasiswa/kuis/KuisResultPage.tsx)

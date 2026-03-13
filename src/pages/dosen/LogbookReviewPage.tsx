@@ -348,9 +348,9 @@ export default function DosenLogbookReviewPage() {
         {/* Stats Cards */}
         {stats && (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
-            <Card className="overflow-hidden rounded-3xl border border-blue-100/80 bg-linear-to-br from-blue-50 to-indigo-50 shadow-lg shadow-blue-100/60">
+            <Card className="overflow-hidden rounded-3xl border border-primary/10 bg-linear-to-br from-primary/5 to-accent/10 shadow-lg shadow-primary/10">
               <CardContent className="p-4">
-                <p className="text-2xl font-bold text-blue-600">
+                <p className="text-2xl font-bold text-primary">
                   {stats.total_logbooks}
                 </p>
                 <p className="text-xs text-gray-500">Total Logbook</p>

@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert"; // ✅ NEW: Alert component
-import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { DashboardCard } from "@/components/ui/dashboard-card";
 import { DashboardSkeleton } from "@/components/ui/dashboard-skeleton";
 import { GlassCard } from "@/components/ui/glass-card";
@@ -399,9 +399,9 @@ export default function JadwalPage() {
                         <Calendar className="h-5 w-5" />
                         {formatDate(date)}
                         {isToday && (
-                          <Badge className="bg-green-100 text-green-700 border-green-200">
+                          <StatusBadge status="success" pulse>
                             Hari Ini
-                          </Badge>
+                          </StatusBadge>
                         )}
                       </h3>
                       <div className="space-y-3">

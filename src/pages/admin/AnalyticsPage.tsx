@@ -14,6 +14,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { DashboardCard } from "@/components/ui/dashboard-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -79,67 +80,10 @@ export default function AnalyticsPage() {
       ) : (
         <>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Card className="border-0 shadow-lg bg-linear-to-r from-blue-500 to-blue-600 text-white">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-base font-bold text-white">
-                  Total Users
-                </CardTitle>
-                <Users className="h-5 w-5 text-white" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-4xl font-extrabold">
-                  {metrics.totalUsers}
-                </div>
-                <p className="text-sm font-bold flex items-center mt-1 text-white">
-                  <TrendingUp className="h-3 w-3 mr-1" />
-                  All system users
-                </p>
-              </CardContent>
-            </Card>
-            <Card className="border-0 shadow-lg bg-linear-to-r from-purple-500 to-purple-600 text-white">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-base font-bold text-white">
-                  Equipment
-                </CardTitle>
-                <Package className="h-5 w-5 text-white" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-4xl font-extrabold">
-                  {metrics.totalEquipment}
-                </div>
-                <p className="text-sm font-bold text-white">Inventory items</p>
-              </CardContent>
-            </Card>
-            <Card className="border-0 shadow-lg bg-linear-to-r from-green-500 to-green-600 text-white">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-base font-bold text-white">
-                  Borrowings
-                </CardTitle>
-                <Activity className="h-5 w-5 text-white" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-4xl font-extrabold">
-                  {metrics.totalBorrowings}
-                </div>
-                <p className="text-sm font-bold text-white">
-                  {metrics.activeBorrowings} active requests
-                </p>
-              </CardContent>
-            </Card>
-            <Card className="border-0 shadow-lg bg-linear-to-r from-orange-500 to-orange-600 text-white">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-base font-bold text-white">
-                  Active Classes
-                </CardTitle>
-                <Users className="h-5 w-5 text-white" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-4xl font-extrabold">
-                  {metrics.activeClasses}
-                </div>
-                <p className="text-sm font-bold text-white">Current semester</p>
-              </CardContent>
-            </Card>
+            <DashboardCard title="Total Users" value={metrics.totalUsers} description="All system users" icon={Users} color="primary" />
+            <DashboardCard title="Equipment" value={metrics.totalEquipment} description="Inventory items" icon={Package} color="accent" />
+            <DashboardCard title="Borrowings" value={metrics.totalBorrowings} description={`${metrics.activeBorrowings} active requests`} icon={Activity} color="success" />
+            <DashboardCard title="Active Classes" value={metrics.activeClasses} description="Current semester" icon={Users} color="warning" />
           </div>
           <Card className="border-0 shadow-xl">
             <CardHeader className="p-6">

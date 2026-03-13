@@ -14,7 +14,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -94,15 +94,11 @@ export default function PengumumanPage() {
   const getPriorityBadge = (priority: string) => {
     switch (priority) {
       case "high":
-        return <Badge variant="destructive">Penting</Badge>;
+        return <StatusBadge status="error" pulse={false}>Penting</StatusBadge>;
       case "medium":
-        return (
-          <Badge className="border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100">
-            Menengah
-          </Badge>
-        );
+        return <StatusBadge status="warning" pulse={false}>Menengah</StatusBadge>;
       case "low":
-        return <Badge variant="secondary">Biasa</Badge>;
+        return <StatusBadge status="info" pulse={false}>Biasa</StatusBadge>;
       default:
         return null;
     }
@@ -111,19 +107,11 @@ export default function PengumumanPage() {
   const getTypeBadge = (type: string) => {
     switch (type) {
       case "info":
-        return <Badge variant="outline">Informasi</Badge>;
+        return <StatusBadge status="info" pulse={false}>Informasi</StatusBadge>;
       case "warning":
-        return (
-          <Badge className="border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100">
-            Peringatan
-          </Badge>
-        );
+        return <StatusBadge status="warning" pulse={false}>Peringatan</StatusBadge>;
       case "event":
-        return (
-          <Badge className="bg-blue-600 text-white hover:bg-blue-700">
-            Event
-          </Badge>
-        );
+        return <StatusBadge status="online" pulse={false}>Event</StatusBadge>;
       default:
         return null;
     }

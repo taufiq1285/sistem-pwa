@@ -294,7 +294,7 @@ export default function LaboratoriesPage() {
         </div>
         <Button
           onClick={handleAdd}
-          className="font-semibold bg-linear-to-r from-blue-600 to-indigo-600 text-white"
+          className="font-semibold bg-linear-to-r from-primary to-accent"
         >
           <Plus className="h-4 w-4 mr-2" />
           Tambah Lab
@@ -656,7 +656,7 @@ export default function LaboratoriesPage() {
               </Button>
               <Button
                 onClick={handleUpdate}
-                className="font-semibold bg-linear-to-r from-blue-500 to-indigo-600"
+                className="font-semibold bg-linear-to-r from-primary to-accent"
               >
                 Save Changes
               </Button>
@@ -764,7 +764,7 @@ export default function LaboratoriesPage() {
               </Button>
               <Button
                 onClick={handleCreate}
-                className="font-semibold bg-linear-to-r from-blue-500 to-indigo-600"
+                className="font-semibold bg-linear-to-r from-primary to-accent"
               >
                 Create Laboratory
               </Button>

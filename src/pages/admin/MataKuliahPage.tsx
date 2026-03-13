@@ -279,7 +279,7 @@ export default function MataKuliahPage() {
         </div>
         <Button
           onClick={handleAdd}
-          className="font-semibold bg-linear-to-r from-blue-500 to-indigo-600"
+          className="font-semibold bg-linear-to-r from-primary to-accent"
         >
           <Plus className="h-4 w-4 mr-2" />
           Tambah Mata Kuliah
@@ -429,7 +429,7 @@ export default function MataKuliahPage() {
             <Button
               onClick={handleSave}
               disabled={isSaving}
-              className="font-semibold bg-linear-to-r from-blue-500 to-indigo-600"
+              className="font-semibold bg-linear-to-r from-primary to-accent"
             >
               {isSaving ? "Menyimpan..." : editingMK ? "Simpan" : "Tambah"}
             </Button>

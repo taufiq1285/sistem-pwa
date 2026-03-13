@@ -214,7 +214,7 @@ export default function BankSoalPage() {
         {/* Header */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl sm:text-4xl font-extrabold bg-clip-text text-transparent bg-linear-to-r from-indigo-600 to-purple-600">
+            <h1 className="text-2xl sm:text-4xl font-extrabold bg-clip-text text-transparent bg-linear-to-r from-primary to-accent">
               Bank Soal
             </h1>
             <p className="text-sm sm:text-lg font-semibold text-muted-foreground">
@@ -224,7 +224,7 @@ export default function BankSoalPage() {
 
           <Button
             onClick={() => setShowEditor(true)}
-            className="w-full sm:w-auto bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg shadow-indigo-500/30"
+            className="w-full sm:w-auto bg-linear-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 shadow-lg shadow-primary/30"
           >
             <Plus className="h-4 w-4 mr-2" />
             Buat Soal Baru
@@ -234,23 +234,23 @@ export default function BankSoalPage() {
         {/* Statistics Cards - Only Pilihan Ganda */}
         {stats && (
           <div className="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-3">
-            <Card className="interactive-card border-0 shadow-lg bg-linear-to-br from-blue-50 to-indigo-50">
+            <Card className="interactive-card border-0 shadow-lg bg-linear-to-br from-primary/5 to-accent/10 dark:from-primary/10 dark:to-accent/20">
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-bold text-blue-900">
+                <CardTitle className="text-sm font-bold text-primary">
                   Total Soal Pilihan Ganda
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center gap-2">
-                  <BookOpen className="h-5 w-5 text-blue-600" />
-                  <div className="text-3xl sm:text-4xl font-bold text-blue-900">
+                  <BookOpen className="h-5 w-5 text-primary" />
+                  <div className="text-3xl sm:text-4xl font-bold text-primary/90">
                     {stats.pilihan_ganda_count}
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="interactive-card border-0 shadow-lg bg-linear-to-br from-orange-50 to-amber-50">
+            <Card className="interactive-card border-0 shadow-lg bg-linear-to-br from-warning/5 to-warning/10 dark:from-warning/10 dark:to-warning/20">
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-bold text-orange-900">
                   Total Penggunaan
@@ -266,16 +266,16 @@ export default function BankSoalPage() {
               </CardContent>
             </Card>
 
-            <Card className="interactive-card border-0 shadow-lg bg-linear-to-br from-green-50 to-emerald-50">
+            <Card className="interactive-card border-0 shadow-lg bg-linear-to-br from-success/5 to-success/10 dark:from-success/10 dark:to-success/20">
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-bold text-green-900">
+                <CardTitle className="text-sm font-bold text-success">
                   Rata-rata Poin
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center gap-2">
-                  <Target className="h-5 w-5 text-green-600" />
-                  <div className="text-3xl sm:text-4xl font-bold text-green-900">
+                  <Target className="h-5 w-5 text-success" />
+                  <div className="text-3xl sm:text-4xl font-bold text-success/90">
                     {stats.pilihan_ganda_count > 0
                       ? Math.round(
                           stats.total_usage / stats.pilihan_ganda_count,
@@ -289,7 +289,7 @@ export default function BankSoalPage() {
         )}
 
         {/* Search - Only Pilihan Ganda */}
-        <Card className="interactive-card border-0 shadow-xl bg-linear-to-br from-white via-blue-50/30 to-indigo-50/30 dark:from-slate-900 dark:via-blue-950/20 dark:to-indigo-950/20 p-4 sm:p-6">
+        <Card className="interactive-card border-0 shadow-xl bg-linear-to-br from-white via-primary/5 to-accent/5 dark:from-slate-900 dark:via-primary/10 dark:to-accent/10 p-4 sm:p-6">
           <CardHeader>
             <CardTitle className="text-base font-bold">
               Pencarian Soal Pilihan Ganda
@@ -317,11 +317,11 @@ export default function BankSoalPage() {
               </CardContent>
             </Card>
           ) : questions.length === 0 ? (
-            <Card className="interactive-card border-0 shadow-xl bg-linear-to-br from-white to-indigo-50/40 dark:from-slate-900 dark:to-indigo-950/30 p-8 sm:p-12 overflow-hidden relative">
-              <div className="absolute top-0 right-0 h-40 w-40 rounded-full bg-linear-to-br from-indigo-400/20 to-purple-400/20 blur-3xl -mr-20 -mt-20" />
+            <Card className="interactive-card border-0 shadow-xl bg-linear-to-br from-white to-primary/5 dark:from-slate-900 dark:to-primary/10 p-8 sm:p-12 overflow-hidden relative">
+              <div className="absolute top-0 right-0 h-40 w-40 rounded-full bg-linear-to-br from-primary/20 to-accent/20 blur-3xl -mr-20 -mt-20" />
               <CardContent className="text-center relative">
-                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-linear-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/30">
-                  <BookOpen className="h-8 w-8 text-white" />
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-linear-to-br from-primary to-accent shadow-lg shadow-primary/30">
+                  <BookOpen className="h-8 w-8 text-primary-foreground" />
                 </div>
                 <p className="text-lg font-bold mb-2">Belum ada soal di bank</p>
                 <p className="text-sm text-muted-foreground mb-5">
@@ -330,7 +330,7 @@ export default function BankSoalPage() {
                 </p>
                 <Button
                   onClick={() => setShowEditor(true)}
-                  className="bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+                  className="bg-linear-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90"
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   Buat Soal Pertama

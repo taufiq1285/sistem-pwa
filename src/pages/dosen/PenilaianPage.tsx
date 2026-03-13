@@ -713,7 +713,7 @@ export default function DosenPenilaianPage() {
     return (
       <div className="role-page-shell">
         <div className="role-page-content flex items-center justify-center h-96">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
         </div>
       </div>
     );
@@ -726,11 +726,11 @@ export default function DosenPenilaianPage() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex-1">
             <div className="flex items-start sm:items-center gap-3 sm:gap-4 mb-3">
-              <div className="p-3 bg-linear-to-br from-indigo-500 to-purple-600 rounded-2xl shadow-lg shadow-indigo-500/30">
-                <ClipboardCheck className="h-8 w-8 text-white" />
+              <div className="p-3 bg-linear-to-br from-primary to-accent rounded-2xl shadow-lg shadow-primary/30">
+                <ClipboardCheck className="h-8 w-8 text-primary-foreground" />
               </div>
               <div>
-                <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-linear-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400">
+                <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-linear-to-r from-primary to-accent dark:from-primary/80 dark:to-accent/80">
                   Penilaian Mahasiswa
                 </h1>
                 <p className="text-sm sm:text-base md:text-lg font-bold text-gray-700 dark:text-gray-300 mt-1">
@@ -749,7 +749,7 @@ export default function DosenPenilaianPage() {
               <Button
                 variant="outline"
                 onClick={handleOpenBobotDialog}
-                className="flex items-center gap-2 border-2 hover:bg-indigo-50 font-semibold"
+                className="flex items-center gap-2 border-2 hover:bg-primary/5 font-semibold"
               >
                 <Settings className="w-4 h-4" />
                 Atur Bobot
@@ -757,7 +757,7 @@ export default function DosenPenilaianPage() {
               <Button
                 onClick={handleSaveAll}
                 disabled={!hasChanges || saving}
-                className="flex items-center gap-2 bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg shadow-indigo-500/30 font-semibold px-6"
+                className="flex items-center gap-2 bg-linear-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground shadow-lg shadow-primary/30 font-semibold px-6"
               >
                 {saving ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -774,11 +774,11 @@ export default function DosenPenilaianPage() {
         {!selectedKelas && (
           <div className="space-y-8">
             {/* Welcome Card - Enhanced */}
-            <Card className="group hover:shadow-2xl transition-all duration-300 border-0 shadow-xl bg-linear-to-br from-blue-50 to-indigo-50 dark:from-blue-950/40 dark:to-indigo-950/40 backdrop-blur-sm overflow-hidden relative">
-              <div className="absolute top-0 right-0 w-40 h-40 bg-linear-to-br from-blue-400/20 to-indigo-400/20 rounded-full blur-3xl -mr-20 -mt-20" />
+            <Card className="group hover:shadow-2xl transition-all duration-300 border-0 shadow-xl bg-linear-to-br from-primary/5 to-accent/10 dark:from-primary/10 dark:to-accent/20 backdrop-blur-sm overflow-hidden relative">
+              <div className="absolute top-0 right-0 w-40 h-40 bg-linear-to-br from-primary/10 to-accent/10 rounded-full blur-3xl -mr-20 -mt-20" />
               <CardContent className="flex flex-col items-center justify-center py-16 relative">
-                <div className="bg-linear-to-br from-blue-500 to-indigo-600 p-5 rounded-full mb-6 shadow-xl shadow-blue-500/30">
-                  <ClipboardCheck className="w-16 h-16 text-white" />
+                <div className="bg-linear-to-br from-primary to-accent p-5 rounded-full mb-6 shadow-xl shadow-primary/30">
+                  <ClipboardCheck className="w-16 h-16 text-primary-foreground" />
                 </div>
                 <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white mb-3">
                   Selamat Datang di Halaman Penilaian
@@ -791,11 +791,11 @@ export default function DosenPenilaianPage() {
             </Card>
 
             {/* Selection Steps Card - Enhanced */}
-            <Card className="border-0 shadow-xl bg-linear-to-br from-white via-blue-50/30 to-indigo-50/30 dark:from-slate-900 dark:via-blue-950/20 dark:to-indigo-950/20 backdrop-blur-sm">
-              <CardHeader className="border-b bg-linear-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30">
+            <Card className="border-0 shadow-xl bg-linear-to-br from-white via-primary/5 to-accent/5 dark:from-slate-900 dark:via-primary/10 dark:to-accent/10 backdrop-blur-sm">
+              <CardHeader className="border-b bg-linear-to-r from-primary/5 to-accent/5 dark:from-primary/10 dark:to-accent/10">
                 <CardTitle className="flex items-center gap-3 text-xl font-bold">
-                  <div className="p-2.5 bg-linear-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg shadow-blue-500/30">
-                    <FileText className="w-5 h-5 text-white" />
+                  <div className="p-2.5 bg-linear-to-br from-primary to-accent rounded-xl shadow-lg shadow-primary/30">
+                    <FileText className="w-5 h-5 text-primary-foreground" />
                   </div>
                   Langkah 1: Pilih Mata Kuliah & Kelas
                 </CardTitle>
@@ -809,7 +809,7 @@ export default function DosenPenilaianPage() {
                   {/* Mata Kuliah Selection - Enhanced */}
                   <div className="space-y-4">
                     <div className="flex items-center gap-3 mb-3">
-                      <span className="flex items-center justify-center w-10 h-10 bg-linear-to-br from-blue-500 to-indigo-600 text-white rounded-full text-lg font-bold shadow-lg shadow-blue-500/30">
+                      <span className="flex items-center justify-center w-10 h-10 bg-linear-to-br from-primary to-accent text-primary-foreground rounded-full text-lg font-bold shadow-lg shadow-primary/30">
                         1
                       </span>
                       <Label
@@ -866,7 +866,7 @@ export default function DosenPenilaianPage() {
                       <span
                         className={`flex items-center justify-center w-10 h-10 rounded-full text-lg font-bold shadow-lg ${
                           selectedMataKuliah
-                            ? "bg-linear-to-br from-blue-500 to-indigo-600 text-white shadow-blue-500/30"
+                            ? "bg-linear-to-br from-primary to-accent text-primary-foreground shadow-primary/30"
                             : "bg-gray-300 text-gray-500"
                         }`}
                       >
@@ -926,11 +926,11 @@ export default function DosenPenilaianPage() {
 
                 {/* Info Helper - Enhanced */}
                 {selectedMataKuliah && kelasList.length > 0 && (
-                  <Alert className="mt-8 border-2 border-blue-200 bg-linear-to-r from-blue-50 to-indigo-50 shadow-lg">
-                    <CheckCircle className="h-5 w-5 text-blue-600" />
+                  <Alert className="mt-8 border-2 border-primary/20 bg-linear-to-r from-primary/5 to-accent/5 shadow-lg">
+                    <CheckCircle className="h-5 w-5 text-primary" />
                     <AlertDescription className="text-base font-semibold">
                       <strong>Siap!</strong> Silakan pilih kelas untuk{" "}
-                      <span className="text-blue-700">
+                      <span className="text-primary">
                         {currentMataKuliahInfo?.nama_mk}
                       </span>{" "}
                       dan mulai memberikan nilai.
@@ -952,32 +952,32 @@ export default function DosenPenilaianPage() {
             </Card>
 
             {/* Info Card - Enhanced */}
-            <Card className="border-2 border-indigo-200 bg-linear-to-br from-indigo-50 to-blue-50 shadow-xl">
+            <Card className="border-2 border-primary/20 bg-linear-to-br from-primary/5 to-accent/5 shadow-xl">
               <CardContent className="py-6">
                 <div className="flex items-start gap-4">
-                  <div className="bg-linear-to-br from-indigo-500 to-purple-600 p-3 rounded-xl shadow-lg shadow-indigo-500/30">
-                    <Settings className="w-6 h-6 text-white" />
+                  <div className="bg-linear-to-br from-primary to-accent p-3 rounded-xl shadow-lg shadow-primary/30">
+                    <Settings className="w-6 h-6 text-primary-foreground" />
                   </div>
                   <div className="flex-1">
-                    <h4 className="text-xl font-bold text-indigo-900 dark:text-indigo-100 mb-3">
+                    <h4 className="text-xl font-bold text-foreground mb-3">
                       Informasi Penting
                     </h4>
-                    <ul className="text-base font-semibold text-indigo-800 dark:text-indigo-200 space-y-2">
+                    <ul className="text-base font-semibold text-muted-foreground space-y-2">
                       <li className="flex items-start gap-2">
-                        <span className="text-indigo-600">•</span>
+                        <span className="text-primary">•</span>
                         <span>
                           Setiap mata kuliah dapat memiliki bobot nilai yang
                           berbeda
                         </span>
                       </li>
                       <li className="flex items-start gap-2">
-                        <span className="text-indigo-600">•</span>
+                        <span className="text-primary">•</span>
                         <span>
                           Anda dapat mengatur bobot nilai setelah memilih kelas
                         </span>
                       </li>
                       <li className="flex items-start gap-2">
-                        <span className="text-indigo-600">•</span>
+                        <span className="text-primary">•</span>
                         <span>
                           Pastikan memilih mata kuliah dan kelas yang benar
                           sebelum input nilai
@@ -993,7 +993,7 @@ export default function DosenPenilaianPage() {
 
         {/* Tabs Container */}
         <Tabs defaultValue="penilaian" className="space-y-6">
-          <TabsList className="grid w-full max-w-xl grid-cols-2 rounded-xl p-1 h-auto bg-linear-to-r from-indigo-100 to-purple-100 dark:from-indigo-950/40 dark:to-purple-950/40">
+          <TabsList className="grid w-full max-w-xl grid-cols-2 rounded-xl p-1 h-auto bg-linear-to-r from-primary/10 to-accent/10 dark:from-primary/20 dark:to-accent/20">
             <TabsTrigger
               value="penilaian"
               className="gap-2 rounded-lg py-2.5 font-semibold data-[state=active]:bg-white data-[state=active]:shadow-md dark:data-[state=active]:bg-slate-900"
@@ -1016,31 +1016,31 @@ export default function DosenPenilaianPage() {
             {selectedKelas && (
               <>
                 {/* Active Class Banner - Enhanced */}
-                <Card className="border-0 shadow-xl bg-linear-to-r from-blue-50 to-indigo-50 dark:from-blue-950/40 dark:to-indigo-950/40 backdrop-blur-sm overflow-hidden relative">
-                  <div className="absolute top-0 right-0 w-40 h-40 bg-linear-to-br from-blue-400/10 to-indigo-400/10 rounded-full blur-3xl -mr-20 -mt-20" />
+                <Card className="border-0 shadow-xl bg-linear-to-r from-primary/5 to-accent/5 dark:from-primary/10 dark:to-accent/10 backdrop-blur-sm overflow-hidden relative">
+                  <div className="absolute top-0 right-0 w-40 h-40 bg-linear-to-br from-primary/10 to-accent/10 rounded-full blur-3xl -mr-20 -mt-20" />
                   <CardHeader className="relative">
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-3">
-                          <div className="p-2.5 bg-linear-to-br from-green-500 to-emerald-600 rounded-xl shadow-lg shadow-green-500/30">
+                          <div className="p-2.5 bg-linear-to-br from-success to-success/80 rounded-xl shadow-lg shadow-success/30">
                             <CheckCircle className="w-6 h-6 text-white" />
                           </div>
-                          <CardTitle className="text-2xl font-bold text-gray-900 dark:text-white">
+                          <CardTitle className="text-2xl font-bold">
                             Kelas Aktif
                           </CardTitle>
                         </div>
                         <div className="space-y-2">
-                          <p className="text-xl font-bold text-blue-900 dark:text-blue-100">
+                          <p className="text-xl font-bold text-foreground">
                             {currentMataKuliahInfo?.kode_mk} -{" "}
                             {currentMataKuliahInfo?.nama_mk}
                           </p>
-                          <p className="text-lg font-semibold text-gray-700 dark:text-gray-300">
+                          <p className="text-lg font-semibold text-muted-foreground">
                             Kelas:{" "}
-                            <span className="text-blue-700 dark:text-blue-300 font-bold">
+                            <span className="text-primary font-bold">
                               {currentNamaKelas}
                             </span>{" "}
                             •{" "}
-                            <span className="text-indigo-700 dark:text-indigo-300 font-bold">
+                            <span className="text-accent font-bold">
                               {mahasiswaList?.length || 0}
                             </span>{" "}
                             mahasiswa terdaftar
@@ -1057,7 +1057,7 @@ export default function DosenPenilaianPage() {
                             setSelectedKelas("");
                           }
                         }}
-                        className="flex items-center gap-2 border-2 hover:bg-blue-50 font-semibold px-6"
+                        className="flex items-center gap-2 border-2 hover:bg-primary/5 font-semibold px-6"
                       >
                         <FileText className="w-4 h-4" />
                         Ganti Kelas
@@ -1069,16 +1069,16 @@ export default function DosenPenilaianPage() {
                 {/* Summary Cards - Enhanced Layout */}
                 <div className="grid gap-6 md:grid-cols-2">
                   {/* Bobot Nilai Card - Enhanced */}
-                  <Card className="group hover:shadow-2xl transition-all duration-300 border-0 shadow-xl bg-linear-to-br from-purple-50 to-violet-50 dark:from-purple-950/40 dark:to-violet-950/40 backdrop-blur-sm overflow-hidden relative">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-linear-to-br from-purple-400/10 to-violet-400/10 rounded-full blur-3xl -mr-16 -mt-16" />
+                  <Card className="group hover:shadow-2xl transition-all duration-300 border-0 shadow-xl bg-linear-to-br from-primary/5 to-accent/10 dark:from-primary/10 dark:to-accent/20 backdrop-blur-sm overflow-hidden relative">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-linear-to-br from-primary/10 to-accent/10 rounded-full blur-3xl -mr-16 -mt-16" />
                     <CardHeader className="pb-4 relative">
                       <div className="flex items-center justify-between">
                         <div>
                           <div className="flex items-center gap-2 mb-2">
-                            <div className="p-2 bg-linear-to-br from-purple-500 to-violet-600 rounded-lg shadow-lg shadow-purple-500/30">
-                              <Settings className="w-4 h-4 text-white" />
+                            <div className="p-2 bg-linear-to-br from-primary to-accent rounded-lg shadow-lg shadow-primary/30">
+                              <Settings className="w-4 h-4 text-primary-foreground" />
                             </div>
-                            <CardTitle className="text-lg font-bold text-purple-900 dark:text-purple-100">
+                            <CardTitle className="text-lg font-bold">
                               Bobot Penilaian
                             </CardTitle>
                           </div>
@@ -1091,7 +1091,7 @@ export default function DosenPenilaianPage() {
                           variant="ghost"
                           size="sm"
                           onClick={handleOpenBobotDialog}
-                          className="text-purple-700 hover:text-purple-900 hover:bg-purple-100 font-semibold"
+                          className="text-primary hover:text-primary/80 hover:bg-primary/10 font-semibold"
                         >
                           <Settings className="w-4 h-4 mr-1" />
                           Edit
@@ -1100,35 +1100,35 @@ export default function DosenPenilaianPage() {
                     </CardHeader>
                     <CardContent className="relative">
                       <div className="grid grid-cols-2 gap-3">
-                        <div className="flex justify-between items-center p-3 bg-white rounded-xl border-2 border-purple-200 shadow-sm hover:shadow-md transition-shadow">
+                        <div className="flex justify-between items-center p-3 bg-background rounded-xl border-2 border-primary/20 shadow-sm hover:shadow-md transition-shadow">
                           <span className="text-sm font-bold text-gray-700">
                             UTS
                           </span>
-                          <span className="text-lg font-black text-purple-700">
+                          <span className="text-lg font-black text-primary">
                             {currentBobot.uts}%
                           </span>
                         </div>
-                        <div className="flex justify-between items-center p-3 bg-white rounded-xl border-2 border-purple-200 shadow-sm hover:shadow-md transition-shadow">
+                        <div className="flex justify-between items-center p-3 bg-background rounded-xl border-2 border-primary/20 shadow-sm hover:shadow-md transition-shadow">
                           <span className="text-sm font-bold text-gray-700">
                             UAS
                           </span>
-                          <span className="text-lg font-black text-purple-700">
+                          <span className="text-lg font-black text-primary">
                             {currentBobot.uas}%
                           </span>
                         </div>
-                        <div className="flex justify-between items-center p-3 bg-white rounded-xl border-2 border-purple-200 shadow-sm hover:shadow-md transition-shadow">
+                        <div className="flex justify-between items-center p-3 bg-background rounded-xl border-2 border-primary/20 shadow-sm hover:shadow-md transition-shadow">
                           <span className="text-sm font-bold text-gray-700">
                             Praktikum
                           </span>
-                          <span className="text-lg font-black text-purple-700">
+                          <span className="text-lg font-black text-primary">
                             {currentBobot.praktikum}%
                           </span>
                         </div>
-                        <div className="flex justify-between items-center p-3 bg-white rounded-xl border-2 border-purple-200 shadow-sm hover:shadow-md transition-shadow">
+                        <div className="flex justify-between items-center p-3 bg-background rounded-xl border-2 border-primary/20 shadow-sm hover:shadow-md transition-shadow">
                           <span className="text-sm font-bold text-gray-700">
                             Kehadiran
                           </span>
-                          <span className="text-lg font-black text-purple-700">
+                          <span className="text-lg font-black text-primary">
                             {currentBobot.kehadiran}%
                           </span>
                         </div>
@@ -1138,14 +1138,14 @@ export default function DosenPenilaianPage() {
 
                   {/* Summary Statistik - Enhanced */}
                   {summary && (
-                    <Card className="group hover:shadow-2xl transition-all duration-300 border-0 shadow-xl bg-linear-to-br from-green-50 to-emerald-50 dark:from-green-950/40 dark:to-emerald-950/40 backdrop-blur-sm overflow-hidden relative">
-                      <div className="absolute top-0 right-0 w-32 h-32 bg-linear-to-br from-green-400/10 to-emerald-400/10 rounded-full blur-3xl -mr-16 -mt-16" />
+                    <Card className="group hover:shadow-2xl transition-all duration-300 border-0 shadow-xl bg-linear-to-br from-success/5 to-success/10 dark:from-success/10 dark:to-success/20 backdrop-blur-sm overflow-hidden relative">
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-linear-to-br from-success/10 to-success/5 rounded-full blur-3xl -mr-16 -mt-16" />
                       <CardHeader className="pb-4 relative">
                         <div className="flex items-center gap-2 mb-2">
-                          <div className="p-2 bg-linear-to-br from-green-500 to-emerald-600 rounded-lg shadow-lg shadow-green-500/30">
+                          <div className="p-2 bg-linear-to-br from-success to-success/80 rounded-lg shadow-lg shadow-success/30">
                             <CheckCircle className="w-4 h-4 text-white" />
                           </div>
-                          <CardTitle className="text-lg font-bold text-green-900 dark:text-green-100">
+                          <CardTitle className="text-lg font-bold">
                             Ringkasan Penilaian
                           </CardTitle>
                         </div>
@@ -1183,7 +1183,7 @@ export default function DosenPenilaianPage() {
                             <p className="text-xs font-bold text-gray-600 mb-1">
                               Rata-rata
                             </p>
-                            <p className="text-3xl font-black text-blue-600">
+                            <p className="text-3xl font-black text-primary">
                               {summary.rata_rata.toFixed(1)}
                             </p>
                           </div>
@@ -1197,10 +1197,10 @@ export default function DosenPenilaianPage() {
 
             {/* Legend & Helper Info */}
             {selectedKelas && (
-              <Alert className="border-blue-200 bg-blue-50">
+              <Alert className="border-primary/20 bg-primary/5">
                 <AlertDescription>
                   <div className="space-y-2">
-                    <p className="font-semibold text-blue-900 mb-2">
+                    <p className="font-semibold text-foreground mb-2">
                       Panduan Input Nilai:
                     </p>
                     <div className="grid md:grid-cols-3 gap-3 text-sm">
@@ -1268,7 +1268,7 @@ export default function DosenPenilaianPage() {
                   {loading ? (
                     <div className="flex items-center justify-center h-64">
                       <div className="text-center">
-                        <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-3" />
+                        <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-3" />
                         <p className="text-gray-600">
                           Memuat data mahasiswa...
                         </p>
@@ -1609,11 +1609,11 @@ export default function DosenPenilaianPage() {
         {/* Bobot Nilai Configuration Dialog - Enhanced */}
         <Dialog open={showBobotDialog} onOpenChange={setShowBobotDialog}>
           <DialogContent className="sm:max-w-md max-h-[90vh] flex flex-col p-0">
-            <div className="bg-linear-to-r from-purple-600 to-violet-600 p-6 text-white">
+            <div className="bg-linear-to-r from-primary to-accent p-6 text-primary-foreground">
               <DialogTitle className="text-2xl font-bold">
                 Atur Bobot Nilai - {currentMataKuliah}
               </DialogTitle>
-              <DialogDescription className="text-base font-semibold text-purple-100 mt-1">
+              <DialogDescription className="text-base font-semibold text-primary-foreground/80 mt-1">
                 Sesuaikan bobot penilaian untuk mata kuliah{" "}
                 <strong>{currentMataKuliah}</strong> (Kelas: {currentNamaKelas}
                 ). Total harus 100%.
@@ -1772,7 +1772,7 @@ export default function DosenPenilaianPage() {
               <Button
                 onClick={handleSaveBobot}
                 disabled={!validateBobotNilai(editingBobot).valid || saving}
-                className="bg-linear-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 text-white font-semibold"
+                className="bg-linear-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold"
               >
                 {saving ? (
                   <>
@@ -1790,12 +1790,12 @@ export default function DosenPenilaianPage() {
         {/* Edit Mahasiswa Dialog - Enhanced */}
         <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
           <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col p-0">
-            <div className="bg-linear-to-r from-indigo-600 to-purple-600 p-6 text-white">
+            <div className="bg-linear-to-r from-primary to-accent p-6 text-primary-foreground">
               <DialogTitle className="text-2xl font-bold">
                 Edit Nilai Mahasiswa
               </DialogTitle>
               {editingMahasiswa && (
-                <DialogDescription className="text-base font-semibold text-indigo-100 mt-2">
+                <DialogDescription className="text-base font-semibold text-primary-foreground/80 mt-2">
                   <div className="space-y-1 mt-2">
                     <p className="font-mono text-base">
                       {editingMahasiswa.mahasiswa.nim}
@@ -1946,13 +1946,13 @@ export default function DosenPenilaianPage() {
               </div>
 
               {/* Calculated Grade Preview */}
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-blue-600 font-medium">
+                    <p className="text-sm text-primary font-medium">
                       Nilai Akhir
                     </p>
-                    <p className="text-2xl font-bold text-blue-900">
+                    <p className="text-2xl font-bold text-foreground">
                       {calculateNilaiAkhir(
                         editFormData.nilai_kuis,
                         editFormData.nilai_tugas,
@@ -1965,8 +1965,8 @@ export default function DosenPenilaianPage() {
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm text-blue-600 font-medium">Grade</p>
-                    <p className="text-2xl font-bold text-blue-900">
+                    <p className="text-sm text-primary font-medium">Grade</p>
+                    <p className="text-2xl font-bold text-foreground">
                       {getNilaiHuruf(
                         calculateNilaiAkhir(
                           editFormData.nilai_kuis,
@@ -2015,7 +2015,7 @@ export default function DosenPenilaianPage() {
               <Button
                 onClick={handleSaveEditDialog}
                 disabled={saving}
-                className="bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold"
+                className="bg-linear-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold"
               >
                 {saving ? (
                   <>
@@ -2041,17 +2041,17 @@ export default function DosenPenilaianPage() {
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle className="flex items-center gap-2">
-                <CheckCircle className="h-5 w-5 text-blue-600" />
+                <CheckCircle className="h-5 w-5 text-primary" />
                 Konfirmasi Penyimpanan Nilai
               </AlertDialogTitle>
               <AlertDialogDescription asChild>
                 <div className="space-y-3">
                   <p>Anda akan menyimpan nilai untuk:</p>
-                  <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded-md border border-blue-200 dark:border-blue-800">
-                    <p className="font-semibold text-blue-900 dark:text-blue-100">
+                  <div className="p-3 bg-primary/5 dark:bg-primary/10 rounded-md border border-primary/20">
+                    <p className="font-semibold text-foreground">
                       📚 {currentMataKuliah} - {currentNamaKelas}
                     </p>
-                    <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
+                    <p className="text-sm text-muted-foreground mt-1">
                       Jumlah mahasiswa: {editedGrades.size} orang
                     </p>
                   </div>
@@ -2066,7 +2066,7 @@ export default function DosenPenilaianPage() {
               <AlertDialogCancel>Batal</AlertDialogCancel>
               <AlertDialogAction
                 onClick={confirmSave}
-                className="bg-blue-600 hover:bg-blue-700"
+                className="bg-primary hover:bg-primary/90"
               >
                 Ya, Simpan untuk {currentMataKuliah}
               </AlertDialogAction>

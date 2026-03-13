@@ -107,8 +107,8 @@ export default function AdminProfilePage() {
     return (
       <div className="app-container">
         <div className="mx-auto max-w-4xl animate-pulse space-y-6">
-          <div className="h-24 rounded-3xl bg-blue-100/70" />
-          <div className="h-64 rounded-3xl bg-slate-100" />
+          <div className="h-24 rounded-3xl bg-primary/10" />
+          <div className="h-64 rounded-3xl bg-muted" />
         </div>
       </div>
     );
@@ -138,10 +138,10 @@ export default function AdminProfilePage() {
         </Alert>
       )}
 
-      <Card className="interactive-card rounded-2xl border border-blue-100/70 bg-white/95 shadow-sm dark:border-white/10 dark:bg-slate-900/80">
+      <Card className="interactive-card rounded-2xl border border-border/60 bg-white/95 shadow-sm dark:bg-card">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-slate-900">
-            <User className="h-5 w-5 text-blue-700" />
+          <CardTitle className="flex items-center gap-2">
+            <User className="h-5 w-5 text-primary" />
             Informasi Akun
           </CardTitle>
           <CardDescription>Informasi akun administrator</CardDescription>
@@ -160,19 +160,19 @@ export default function AdminProfilePage() {
                   })
                 }
                 placeholder="Masukkan nama lengkap"
-                className="border-blue-100 focus-visible:ring-blue-500"
+                className="border-border/50 focus-visible:ring-primary"
               />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="email"
                   value={profile.email}
                   disabled
-                  className="border-blue-100 bg-slate-50 pl-10"
+                  className="border-border/50 bg-muted/50 pl-10"
                 />
               </div>
             </div>
@@ -180,12 +180,12 @@ export default function AdminProfilePage() {
             <div className="space-y-2">
               <Label htmlFor="role">Role</Label>
               <div className="relative">
-                <Shield className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                <Shield className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="role"
                   value="Administrator"
                   disabled
-                  className="border-blue-100 bg-slate-50 pl-10 capitalize"
+                  className="border-border/50 bg-muted/50 pl-10 capitalize"
                 />
               </div>
             </div>
@@ -198,7 +198,7 @@ export default function AdminProfilePage() {
           variant="outline"
           onClick={() => fetchProfile(false)}
           disabled={saving}
-          className="border-blue-200 text-blue-700 hover:bg-blue-50"
+          className="border-primary/30 text-primary hover:bg-primary/5"
         >
           Batal
         </ButtonEnhanced>
@@ -206,7 +206,7 @@ export default function AdminProfilePage() {
           onClick={handleSave}
           loading={saving}
           loadingText="Menyimpan..."
-          className="bg-blue-700 text-white hover:bg-blue-800"
+          className="bg-primary text-primary-foreground hover:bg-primary/90"
         >
           <Save className="mr-2 h-4 w-4" />
           Simpan Perubahan

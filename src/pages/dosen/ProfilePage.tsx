@@ -145,9 +145,9 @@ export default function ProfilePage() {
     return (
       <div className="app-container">
         <div className="mx-auto max-w-4xl animate-pulse space-y-6">
-          <div className="h-24 rounded-3xl bg-blue-100/70" />
-          <div className="h-72 rounded-3xl bg-slate-100" />
-          <div className="h-72 rounded-3xl bg-slate-100" />
+          <div className="h-24 rounded-3xl bg-primary/10" />
+          <div className="h-72 rounded-3xl bg-muted" />
+          <div className="h-72 rounded-3xl bg-muted" />
         </div>
       </div>
     );
@@ -177,10 +177,10 @@ export default function ProfilePage() {
         </Alert>
       )}
 
-      <Card className="interactive-card rounded-2xl border border-blue-100/70 bg-white/95 shadow-sm">
+      <Card className="interactive-card rounded-2xl border border-border/60 bg-white/95 shadow-sm dark:bg-card">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-slate-900">
-            <User className="h-5 w-5 text-blue-700" />
+          <CardTitle className="flex items-center gap-2">
+            <User className="h-5 w-5 text-primary" />
             Informasi Akun
           </CardTitle>
           <CardDescription>Informasi akun dan kontak Anda</CardDescription>
@@ -199,19 +199,19 @@ export default function ProfilePage() {
                   })
                 }
                 placeholder="Masukkan nama lengkap"
-                className="border-blue-100 focus-visible:ring-blue-500"
+                className="border-border/50 focus-visible:ring-primary"
               />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="email"
                   value={userProfile.email}
                   disabled
-                  className="border-blue-100 bg-slate-50 pl-10"
+                  className="border-border/50 bg-muted/50 pl-10"
                 />
               </div>
             </div>
@@ -225,17 +225,17 @@ export default function ProfilePage() {
                   setDosenProfile({ ...dosenProfile, nidn: e.target.value })
                 }
                 placeholder="Masukkan NIDN atau NUPTK"
-                className="border-blue-100 focus-visible:ring-blue-500"
+                className="border-border/50 focus-visible:ring-primary"
               />
             </div>
           </div>
         </CardContent>
       </Card>
 
-      <Card className="interactive-card rounded-2xl border border-blue-100/70 bg-white/95 shadow-sm">
+      <Card className="interactive-card rounded-2xl border border-border/60 bg-white/95 shadow-sm dark:bg-card">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-slate-900">
-            <BookOpen className="h-5 w-5 text-blue-700" />
+          <CardTitle className="flex items-center gap-2">
+            <BookOpen className="h-5 w-5 text-primary" />
             Informasi Akademik
           </CardTitle>
           <CardDescription>Gelar dan informasi akademik Anda</CardDescription>
@@ -254,7 +254,7 @@ export default function ProfilePage() {
                   })
                 }
                 placeholder="Dr., Prof., dll"
-                className="border-blue-100 focus-visible:ring-blue-500"
+                className="border-border/50 focus-visible:ring-primary"
               />
             </div>
 
@@ -270,7 +270,7 @@ export default function ProfilePage() {
                   })
                 }
                 placeholder="S.Kom., M.Kom., Ph.D., dll"
-                className="border-blue-100 focus-visible:ring-blue-500"
+                className="border-border/50 focus-visible:ring-primary"
               />
             </div>
 
@@ -286,7 +286,7 @@ export default function ProfilePage() {
                   })
                 }
                 placeholder="Nama fakultas"
-                className="border-blue-100 focus-visible:ring-blue-500"
+                className="border-border/50 focus-visible:ring-primary"
               />
             </div>
 
@@ -302,7 +302,7 @@ export default function ProfilePage() {
                   })
                 }
                 placeholder="Nama program studi"
-                className="border-blue-100 focus-visible:ring-blue-500"
+                className="border-border/50 focus-visible:ring-primary"
               />
             </div>
           </div>
@@ -314,7 +314,7 @@ export default function ProfilePage() {
           variant="outline"
           onClick={() => fetchProfile(false)}
           disabled={saving}
-          className="border-blue-200 text-blue-700 hover:bg-blue-50"
+          className="border-primary/30 text-primary hover:bg-primary/5"
         >
           Batal
         </ButtonEnhanced>
@@ -322,7 +322,7 @@ export default function ProfilePage() {
           onClick={handleSave}
           loading={saving}
           loadingText="Menyimpan..."
-          className="bg-blue-700 text-white hover:bg-blue-800"
+          className="bg-primary text-primary-foreground hover:bg-primary/90"
         >
           <Save className="mr-2 h-4 w-4" />
           Simpan Perubahan

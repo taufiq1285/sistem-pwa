@@ -11,6 +11,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import type { UserRole } from "@/types/auth.types";
 import { getNavigationItems, isRouteActive } from "@/config/navigation.config";
+import { useRoleTheme } from "@/lib/hooks/useRoleTheme";
 
 // ============================================================================
 // TYPES
@@ -40,6 +41,7 @@ export function MobileNav({
   className,
 }: MobileNavProps) {
   const location = useLocation();
+  const theme = useRoleTheme();
 
   // Get navigation items for current role
   const navItems = getNavigationItems(userRole);
@@ -67,43 +69,57 @@ export function MobileNav({
       )}
 
       {/* Drawer */}
-      <aside
-        className={cn(
-          "fixed inset-y-0 left-0 z-50 w-[88vw] max-w-xs border-r border-border/70 bg-background/92 shadow-2xl backdrop-blur-xl transform transition-transform duration-300 ease-in-out supports-backdrop-filter:bg-background/78 md:hidden",
-          isOpen ? "translate-x-0" : "-translate-x-full",
-          className,
-        )}
-      >
-        <div className="flex h-full flex-col">
+        <aside
+          className={cn(
+            "fixed inset-y-0 left-0 z-50 w-[88vw] max-w-xs border-r border-white/10 text-white shadow-2xl backdrop-blur-xl transform transition-transform duration-300 ease-in-out md:hidden",
+            theme.sidebarBg,
+            isOpen ? "translate-x-0" : "-translate-x-full",
+            className,
+          )}
+        >
+<div className="flex h-full flex-col">
           {/* Header */}
-          <div className="relative flex h-16 items-center justify-between border-b px-4">
-            <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent via-primary/35 to-transparent" />
+          <div className="relative flex h-16 items-center justify-between border-b border-white/10 px-4">
+            <div
+              className={cn(
+                "pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent to-transparent",
+                theme.headerGlow,
+              )}
+            />
             <div>
-              <h2 className="text-lg font-semibold">AKBID Mega Buana</h2>
-              <p className="text-xs text-muted-foreground">Sistem Praktikum</p>
+              <h2 className="text-lg font-semibold text-white">AKBID Mega Buana</h2>
+              <p className="text-xs text-white/70">Sistem Praktikum</p>
             </div>
             <Button
               variant="ghost"
               size="icon"
               onClick={onClose}
               title="Close menu"
-              className="transition-all duration-200 hover:scale-105 active:scale-95"
+              className="text-white transition-all duration-200 hover:scale-105 hover:bg-white/10 hover:text-white active:scale-95"
             >
               <X className="h-5 w-5" />
             </Button>
           </div>
 
           {/* User Info */}
-          <div className="border-b border-border/70 px-4 py-4 bg-linear-to-r from-primary/10 via-transparent to-transparent">
+          <div
+            className={cn(
+              "border-b border-white/10 px-4 py-4 bg-linear-to-r",
+              theme.mobileBanner,
+            )}
+          >
             <div className="flex items-center gap-3">
-              <div className="brand-gradient flex h-10 w-10 items-center justify-center rounded-full text-primary-foreground shadow-md">
+              <div
+                className={cn(
+                  "flex h-10 w-10 items-center justify-center rounded-full bg-linear-to-br text-white shadow-md",
+                  theme.avatarGradient,
+                )}
+              >
                 {userName.charAt(0).toUpperCase()}
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{userName}</p>
-                <p className="text-xs text-muted-foreground truncate">
-                  {userEmail}
-                </p>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium text-white">{userName}</p>
+                <p className="truncate text-xs text-white/70">{userEmail}</p>
               </div>
             </div>
           </div>
@@ -122,8 +138,8 @@ export function MobileNav({
                     onClick={handleLinkClick}
                     className={cn(
                       "interactive-card flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
-                      "hover:bg-accent hover:text-accent-foreground hover:translate-x-0.5",
-                      active && "bg-accent text-accent-foreground shadow-sm",
+                      cn("hover:text-white hover:translate-x-0.5", theme.sidebarHover),
+                      active && cn(theme.sidebarActive, "text-white shadow-sm"),
                     )}
                   >
                     <Icon className="h-5 w-5 shrink-0" />
