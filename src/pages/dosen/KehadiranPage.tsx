@@ -795,9 +795,7 @@ export default function DosenKehadiranPage() {
                 <div className="text-2xl">📝</div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-info">
-                  {stats.izin}
-                </div>
+                <div className="text-2xl font-bold text-info">{stats.izin}</div>
                 <p className="text-xs text-muted-foreground">mahasiswa</p>
               </CardContent>
             </Card>

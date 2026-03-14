@@ -83,15 +83,15 @@ Keberadaan proses ini sangat penting karena sistem praktikum sering kali diakses
 
 # 4.1 Narasi Proses 1.1 — Autentikasi
 
-Proses [`1.1 Autentikasi`](docs/DFD.md:162) menjelaskan bagaimana pengguna masuk ke sistem dan memperoleh akses sesuai perannya. Proses ini terdiri atas lima subproses, yaitu validasi kredensial, pengambilan data role, pembentukan session login, pengalihan berdasarkan role, dan logout.
+Proses [`1.1 Autentikasi`](docs/DFD.md:162) menjelaskan bagaimana pengguna masuk ke sistem dan memperoleh akses sesuai perannya. Proses ini terdiri atas lima aktivitas internal, yaitu validasi kredensial, pengambilan data role, pembentukan session login, pengalihan berdasarkan role, dan logout.
 
-Pada awal alur, pengguna mengirimkan email dan password ke subproses [`1.1.1 Validasi Kredensial`](docs/DFD.md:169). Sistem lalu meneruskan data autentikasi tersebut ke layanan [`Supabase Auth`](docs/DFD.md:167) untuk diverifikasi. Jika kredensial tidak valid, sistem mengirimkan informasi kegagalan login kembali kepada pengguna. Namun jika valid, alur dilanjutkan ke subproses [`1.1.2 Ambil Data Role`](docs/DFD.md:170).
+Pada awal alur, pengguna mengirimkan email dan password ke aktivitas [`A1 Validasi Kredensial`](docs/DFD.md:169). Sistem lalu meneruskan data autentikasi tersebut ke layanan [`Supabase Auth`](docs/DFD.md:167) untuk diverifikasi. Jika kredensial tidak valid, sistem mengirimkan informasi kegagalan login kembali kepada pengguna. Namun jika valid, alur dilanjutkan ke aktivitas [`A2 Ambil Data Role`](docs/DFD.md:170).
 
-Pada subproses ini, sistem membaca data role pengguna dari [`D1 Data User dan Role`](docs/DFD.md:168). Role menentukan jenis akses yang akan diberikan, misalnya sebagai admin, dosen, laboran, atau mahasiswa. Setelah role diperoleh, sistem masuk ke [`1.1.3 Bentuk Session Login`](docs/DFD.md:171), yaitu tahap pembentukan status login aktif agar aplikasi mengenali bahwa pengguna telah terautentikasi.
+Pada aktivitas ini, sistem membaca data role pengguna dari [`D1 Data User dan Role`](docs/DFD.md:168). Role menentukan jenis akses yang akan diberikan, misalnya sebagai admin, dosen, laboran, atau mahasiswa. Setelah role diperoleh, sistem masuk ke [`A3 Bentuk Session Login`](docs/DFD.md:171), yaitu tahap pembentukan status login aktif agar aplikasi mengenali bahwa pengguna telah terautentikasi.
 
-Session yang terbentuk kemudian diteruskan ke [`1.1.4 Redirect Berdasarkan Role`](docs/DFD.md:172). Pada tahap ini, pengguna diarahkan ke dashboard dan fitur yang sesuai dengan kewenangannya. Dengan kata lain, dosen tidak diarahkan ke menu administrasi penuh milik admin, dan mahasiswa tidak memiliki akses ke pengelolaan inventaris laboratorium.
+Session yang terbentuk kemudian diteruskan ke [`A4 Redirect Berdasarkan Role`](docs/DFD.md:172). Pada tahap ini, pengguna diarahkan ke dashboard dan fitur yang sesuai dengan kewenangannya. Dengan kata lain, dosen tidak diarahkan ke menu administrasi penuh milik admin, dan mahasiswa tidak memiliki akses ke pengelolaan inventaris laboratorium.
 
-Selain proses masuk, autentikasi juga mencakup keluarnya pengguna dari sistem melalui [`1.1.5 Logout`](docs/DFD.md:173). Ketika pengguna mengirimkan permintaan logout, sistem mengakhiri session aktif sehingga akses ke fitur internal dihentikan. Narasi ini menegaskan bahwa proses autentikasi tidak hanya memeriksa identitas, tetapi juga mengatur awal dan akhir akses pengguna terhadap sistem.
+Selain proses masuk, autentikasi juga mencakup keluarnya pengguna dari sistem melalui [`A5 Logout`](docs/DFD.md:173). Ketika pengguna mengirimkan permintaan logout, sistem mengakhiri session aktif sehingga akses ke fitur internal dihentikan. Narasi ini menegaskan bahwa proses autentikasi tidak hanya memeriksa identitas, tetapi juga mengatur awal dan akhir akses pengguna terhadap sistem.
 
 ## Alur ringkas proses [`1.1`](docs/DFD.md:162)
 
@@ -108,11 +108,11 @@ Selain proses masuk, autentikasi juga mencakup keluarnya pengguna dari sistem me
 
 Proses [`1.2 Kelola User`](docs/DFD.md:383) menggambarkan bagaimana admin mengelola akun pengguna beserta status dan perannya. Proses ini penting karena seluruh pengguna sistem harus terlebih dahulu terdaftar, memiliki role yang jelas, dan memiliki status akun yang terkontrol.
 
-Alur dimulai ketika admin memasukkan data akun baru ke subproses [`1.2.1 Buat Akun`](docs/DFD.md:390). Data akun tersebut dapat berupa identitas dasar pengguna seperti nama, email, atau data administratif lainnya. Sistem menyimpan akun itu ke [`D1 Data User dan Role`](docs/DFD.md:388), lalu meneruskan proses ke tahap penetapan role.
+Alur dimulai ketika admin memasukkan data akun baru ke aktivitas [`A1 Buat Akun`](docs/DFD.md:390). Data akun tersebut dapat berupa identitas dasar pengguna seperti nama, email, atau data administratif lainnya. Sistem menyimpan akun itu ke [`D1 Data User dan Role`](docs/DFD.md:388), lalu meneruskan proses ke tahap penetapan role.
 
-Pada [`1.2.2 Tetapkan Role`](docs/DFD.md:391), admin menentukan apakah pengguna tersebut berperan sebagai mahasiswa, dosen, laboran, atau admin. Role disimpan ke database agar seluruh modul lain dapat membaca hak akses secara konsisten. Setelah itu, admin dapat melakukan pengelolaan detail identitas per role melalui [`1.2.3 Kelola Profil Role`](docs/DFD.md:392). Pada tahap ini, sistem memperbarui informasi yang relevan dengan jenis pengguna, misalnya data akademik atau atribut kerja tertentu.
+Pada [`A2 Tetapkan Role`](docs/DFD.md:391), admin menentukan apakah pengguna tersebut berperan sebagai mahasiswa, dosen, laboran, atau admin. Role disimpan ke database agar seluruh modul lain dapat membaca hak akses secara konsisten. Setelah itu, admin dapat melakukan pengelolaan detail identitas per role melalui [`A3 Kelola Profil Role`](docs/DFD.md:392). Pada tahap ini, sistem memperbarui informasi yang relevan dengan jenis pengguna, misalnya data akademik atau atribut kerja tertentu.
 
-Jika ada perubahan kondisi akun, admin dapat menggunakan [`1.2.4 Ubah Status User`](docs/DFD.md:393). Subproses ini memungkinkan akun diaktifkan atau dinonaktifkan sesuai kebutuhan. Langkah ini penting untuk menjaga keamanan dan memastikan hanya pengguna aktif yang dapat mengakses sistem. Jika akun sudah tidak diperlukan, admin dapat memakai [`1.2.5 Hapus atau Arsipkan User`](docs/DFD.md:394). Pada tahap ini, sistem dapat menghapus akun atau menandainya sebagai arsip agar tidak lagi digunakan dalam operasi aktif.
+Jika ada perubahan kondisi akun, admin dapat menggunakan [`A4 Ubah Status User`](docs/DFD.md:393). Aktivitas ini memungkinkan akun diaktifkan atau dinonaktifkan sesuai kebutuhan. Langkah ini penting untuk menjaga keamanan dan memastikan hanya pengguna aktif yang dapat mengakses sistem. Jika akun sudah tidak diperlukan, admin dapat memakai [`A5 Hapus atau Arsipkan User`](docs/DFD.md:394). Pada tahap ini, sistem dapat menghapus akun atau menandainya sebagai arsip agar tidak lagi digunakan dalam operasi aktif.
 
 Narasi proses ini menunjukkan bahwa pengelolaan pengguna merupakan fondasi administrasi sistem. Tanpa data user yang tertata, proses autentikasi, distribusi hak akses, dan pelacakan aktivitas tidak akan berjalan dengan baik.
 
@@ -131,11 +131,11 @@ Narasi proses ini menunjukkan bahwa pengelolaan pengguna merupakan fondasi admin
 
 Proses [`2.1 Kelola Jadwal`](docs/DFD.md:197) menjelaskan aliran data ketika jadwal praktikum direncanakan, diperiksa, disetujui, dipublikasikan, lalu diakses oleh pengguna terkait. Proses ini melibatkan dosen, laboran, mahasiswa, [`D1 Data Jadwal Praktikum`](docs/DFD.md:204), dan [`D2 IndexedDB Cache`](docs/DFD.md:205).
 
-Alur dimulai ketika dosen mengirimkan rancangan jadwal ke subproses [`2.1.1 Input atau Ajukan Jadwal`](docs/DFD.md:207). Rancangan ini dapat berisi informasi waktu, kelas, mata kuliah, serta kebutuhan laboratorium. Setelah data masuk, sistem melanjutkan ke [`2.1.2 Validasi Kelas dan Laboratorium`](docs/DFD.md:208). Di tahap ini, sistem memeriksa kesesuaian relasi kelas, mata kuliah, waktu pelaksanaan, serta ketersediaan laboratorium berdasarkan data yang tersimpan pada [`D1`](docs/DFD.md:204).
+Alur dimulai ketika dosen mengirimkan rancangan jadwal ke aktivitas [`A1 Input atau Ajukan Jadwal`](docs/DFD.md:207). Rancangan ini dapat berisi informasi waktu, kelas, mata kuliah, serta kebutuhan laboratorium. Setelah data masuk, sistem melanjutkan ke [`A2 Validasi Kelas dan Laboratorium`](docs/DFD.md:208). Di tahap ini, sistem memeriksa kesesuaian relasi kelas, mata kuliah, waktu pelaksanaan, serta ketersediaan laboratorium berdasarkan data yang tersimpan pada [`D1`](docs/DFD.md:204).
 
-Jika hasil validasi menunjukkan bahwa jadwal layak, alur dilanjutkan ke [`2.1.3 Persetujuan Jadwal`](docs/DFD.md:209). Pada tahap ini laboran melakukan peninjauan dan memberikan keputusan setuju atau tolak. Keputusan tersebut disimpan sebagai pembaruan status pada data jadwal. Jika disetujui, sistem meneruskan jadwal ke [`2.1.4 Publikasi Jadwal`](docs/DFD.md:210). Pada subproses ini, jadwal aktif disimpan ke database utama dan juga dapat ditempatkan di cache lokal agar dapat diakses lebih cepat atau saat offline.
+Jika hasil validasi menunjukkan bahwa jadwal layak, alur dilanjutkan ke [`A3 Persetujuan Jadwal`](docs/DFD.md:209). Pada tahap ini laboran melakukan peninjauan dan memberikan keputusan setuju atau tolak. Keputusan tersebut disimpan sebagai pembaruan status pada data jadwal. Jika disetujui, sistem meneruskan jadwal ke [`A4 Publikasi Jadwal`](docs/DFD.md:210). Pada aktivitas ini, jadwal aktif disimpan ke database utama dan juga dapat ditempatkan di cache lokal agar dapat diakses lebih cepat atau saat offline.
 
-Setelah jadwal dipublikasikan, mahasiswa, dosen, dan laboran dapat mengaksesnya melalui [`2.1.5 Lihat Jadwal`](docs/DFD.md:211). Sistem akan mengambil data dari database utama, dan apabila diperlukan atau saat koneksi bermasalah, sistem dapat menggunakan cache lokal sebagai fallback. Hasil akhirnya adalah mahasiswa menerima jadwal praktikum, dosen menerima jadwal mengajar, dan laboran menerima jadwal penggunaan laboratorium.
+Setelah jadwal dipublikasikan, mahasiswa, dosen, dan laboran dapat mengaksesnya melalui [`A5 Lihat Jadwal`](docs/DFD.md:211). Sistem akan mengambil data dari database utama, dan apabila diperlukan atau saat koneksi bermasalah, sistem dapat menggunakan cache lokal sebagai fallback. Hasil akhirnya adalah mahasiswa menerima jadwal praktikum, dosen menerima jadwal mengajar, dan laboran menerima jadwal penggunaan laboratorium.
 
 Narasi ini memperlihatkan bahwa jadwal tidak langsung muncul begitu saja, melainkan melalui tahapan input, validasi, persetujuan, publikasi, dan distribusi. Hal tersebut penting untuk menunjukkan kontrol dan keteraturan pengelolaan praktikum.
 
@@ -154,13 +154,13 @@ Narasi ini memperlihatkan bahwa jadwal tidak langsung muncul begitu saja, melain
 
 Proses [`2.2 Kelola Kuis dan Bank Soal`](docs/DFD.md:242) menggambarkan bagaimana dosen menyusun kuis, mengelola bank soal, mempublikasikan kuis, lalu mahasiswa mengerjakan kuis baik dalam kondisi online maupun offline. Proses ini juga mencakup penyimpanan hasil dan peninjauan statistik oleh dosen.
 
-Tahap pertama terjadi pada [`2.2.1 Buat Kuis`](docs/DFD.md:252), ketika dosen memasukkan judul kuis, durasi, serta kelas sasaran. Data kuis disimpan di [`D1 Data Kuis, Soal, Hasil`](docs/DFD.md:248). Selanjutnya, dosen dapat mengelola bank soal pada [`2.2.2 Kelola Bank Soal`](docs/DFD.md:253). Di sini dosen dapat membuat, mengubah, atau memilih soal yang reusable. Soal-soal tersebut disimpan dalam database dan dapat dihubungkan kembali ke kuis yang sedang disusun.
+Tahap pertama terjadi pada [`A1 Buat Kuis`](docs/DFD.md:252), ketika dosen memasukkan judul kuis, durasi, serta kelas sasaran. Data kuis disimpan di [`D1 Data Kuis, Soal, Hasil`](docs/DFD.md:248). Selanjutnya, dosen dapat mengelola bank soal pada [`A2 Kelola Bank Soal`](docs/DFD.md:253). Di sini dosen dapat membuat, mengubah, atau memilih soal yang reusable. Soal-soal tersebut disimpan dalam database dan dapat dihubungkan kembali ke kuis yang sedang disusun.
 
-Ketika kuis siap digunakan, dosen melakukan [`2.2.3 Publish Kuis`](docs/DFD.md:254). Sistem mengubah status kuis menjadi aktif, menyimpannya di database, dan dapat pula menyalin informasi penting ke [`D2 IndexedDB Cache`](docs/DFD.md:249) agar soal masih dapat diambil dalam skenario tertentu. Setelah dipublikasikan, mahasiswa mengirimkan permintaan soal ke [`2.2.4 Ambil Soal`](docs/DFD.md:255). Sistem akan berusaha mengambil soal dari database utama, dan jika diperlukan, memakai cache lokal sebagai sumber cadangan.
+Ketika kuis siap digunakan, dosen melakukan [`A3 Publish Kuis`](docs/DFD.md:254). Sistem mengubah status kuis menjadi aktif, menyimpannya di database, dan dapat pula menyalin informasi penting ke [`D2 IndexedDB Cache`](docs/DFD.md:249) agar soal masih dapat diambil dalam skenario tertentu. Setelah dipublikasikan, mahasiswa mengirimkan permintaan soal ke [`A4 Ambil Soal`](docs/DFD.md:255). Sistem akan berusaha mengambil soal dari database utama, dan jika diperlukan, memakai cache lokal sebagai sumber cadangan.
 
-Mahasiswa kemudian mengerjakan kuis melalui [`2.2.5 Kerjakan Kuis`](docs/DFD.md:256). Pada tahap ini terdapat dua kemungkinan alur. Jika koneksi tersedia, jawaban langsung diteruskan ke [`2.2.7 Submit dan Penilaian`](docs/DFD.md:258). Namun jika perangkat sedang offline, jawaban masuk ke [`2.2.6 Auto-save Offline`](docs/DFD.md:257) dan disimpan ke [`D3 Offline Queue`](docs/DFD.md:250). Mahasiswa menerima informasi bahwa jawaban telah tersimpan secara lokal.
+Mahasiswa kemudian mengerjakan kuis melalui [`A5 Kerjakan Kuis`](docs/DFD.md:256). Pada tahap ini terdapat dua kemungkinan alur. Jika koneksi tersedia, jawaban langsung diteruskan ke [`A7 Submit dan Penilaian`](docs/DFD.md:258). Namun jika perangkat sedang offline, jawaban masuk ke [`A6 Auto-save Offline`](docs/DFD.md:257) dan disimpan ke [`D3 Offline Queue`](docs/DFD.md:250). Mahasiswa menerima informasi bahwa jawaban telah tersimpan secara lokal.
 
-Saat sinkronisasi memungkinkan, jawaban pada queue dikirim ke subproses submit. Sistem menyimpan hasil dan jawaban ke database, lalu mengolah nilai sesuai aturan penilaian. Nilai dan hasil dapat langsung dikembalikan kepada mahasiswa. Selanjutnya, dosen dapat mengakses [`2.2.8 Lihat Hasil`](docs/DFD.md:259) untuk memperoleh rekap, statistik, dan capaian mahasiswa.
+Saat sinkronisasi memungkinkan, jawaban pada queue dikirim ke aktivitas submit. Sistem menyimpan hasil dan jawaban ke database, lalu mengolah nilai sesuai aturan penilaian. Nilai dan hasil dapat langsung dikembalikan kepada mahasiswa. Selanjutnya, dosen dapat mengakses [`A8 Lihat Hasil`](docs/DFD.md:259) untuk memperoleh rekap, statistik, dan capaian mahasiswa.
 
 Narasi ini menegaskan bahwa proses kuis tidak berhenti pada pembuatan soal, tetapi juga memperhatikan distribusi, pengerjaan, penyimpanan sementara saat offline, penilaian, dan evaluasi hasil.
 
@@ -181,11 +181,11 @@ Narasi ini menegaskan bahwa proses kuis tidak berhenti pada pembuatan soal, teta
 
 Proses [`2.3 Kelola Materi`](docs/DFD.md:299) menggambarkan pengelolaan bahan ajar praktikum sejak diunggah oleh dosen sampai diakses oleh mahasiswa. Proses ini melibatkan [`D1 Metadata Materi`](docs/DFD.md:305), [`D2 IndexedDB Cache`](docs/DFD.md:306), dan [`D4 Storage File`](docs/DFD.md:307).
 
-Alur dimulai ketika dosen mengirimkan file materi beserta data pendukung ke [`2.3.1 Upload Materi`](docs/DFD.md:309). Sistem kemudian mengunggah file fisik ke storage file. Setelah berkas tersimpan, sistem masuk ke [`2.3.2 Simpan Metadata`](docs/DFD.md:310), yaitu tahap penyimpanan informasi terstruktur seperti judul materi, kelas terkait, deskripsi, dan referensi lokasi file. Metadata ini disimpan ke database agar file dapat diidentifikasi dan ditampilkan dengan benar.
+Alur dimulai ketika dosen mengirimkan file materi beserta data pendukung ke [`A1 Upload Materi`](docs/DFD.md:309). Sistem kemudian mengunggah file fisik ke storage file. Setelah berkas tersimpan, sistem masuk ke [`A2 Simpan Metadata`](docs/DFD.md:310), yaitu tahap penyimpanan informasi terstruktur seperti judul materi, kelas terkait, deskripsi, dan referensi lokasi file. Metadata ini disimpan ke database agar file dapat diidentifikasi dan ditampilkan dengan benar.
 
-Baik mahasiswa maupun dosen dapat meminta daftar materi melalui [`2.3.3 Lihat Daftar Materi`](docs/DFD.md:311). Sistem mengambil metadata dari database dan menampilkan daftar materi yang tersedia. Mahasiswa yang ingin membuka materi kemudian masuk ke [`2.3.4 Akses atau Unduh Materi`](docs/DFD.md:312). Pada subproses ini, sistem mengambil file dari storage dan menyajikannya kepada pengguna.
+Baik mahasiswa maupun dosen dapat meminta daftar materi melalui [`A3 Lihat Daftar Materi`](docs/DFD.md:311). Sistem mengambil metadata dari database dan menampilkan daftar materi yang tersedia. Mahasiswa yang ingin membuka materi kemudian masuk ke [`A4 Akses atau Unduh Materi`](docs/DFD.md:312). Pada aktivitas ini, sistem mengambil file dari storage dan menyajikannya kepada pengguna.
 
-Setelah materi diakses, sistem dapat melanjutkan ke [`2.3.5 Cache Offline`](docs/DFD.md:313), yaitu penyimpanan materi atau referensinya ke cache lokal. Tujuannya adalah agar materi tetap bisa diakses saat jaringan tidak tersedia. Fitur ini sangat relevan untuk sistem PWA karena materi pembelajaran merupakan salah satu kebutuhan utama yang sering dibuka berulang kali.
+Setelah materi diakses, sistem dapat melanjutkan ke [`A5 Cache Offline`](docs/DFD.md:313), yaitu penyimpanan materi atau referensinya ke cache lokal. Tujuannya adalah agar materi tetap bisa diakses saat jaringan tidak tersedia. Fitur ini sangat relevan untuk sistem PWA karena materi pembelajaran merupakan salah satu kebutuhan utama yang sering dibuka berulang kali.
 
 Narasi proses ini memperlihatkan bahwa pengelolaan materi terdiri atas dua komponen besar, yaitu pengelolaan file fisik dan pengelolaan metadata. Keduanya harus berjalan bersama agar materi mudah dicari, aman disimpan, dan nyaman diakses.
 
@@ -204,11 +204,11 @@ Narasi proses ini memperlihatkan bahwa pengelolaan materi terdiri atas dua kompo
 
 Proses [`2.4 Kelola Kelas, Mata Kuliah, dan Assignment`](docs/DFD.md:341) merupakan dasar struktur akademik yang menopang proses lain seperti jadwal, materi, kuis, kehadiran, dan nilai. Proses ini terutama dijalankan oleh admin, lalu hasilnya didistribusikan kepada dosen dan mahasiswa.
 
-Alur pertama terdapat pada [`2.4.1 Kelola Data Kelas`](docs/DFD.md:350), ketika admin membuat atau memperbarui data kelas. Data tersebut disimpan pada [`D1 Data Kelas, Mata Kuliah, dan Assignment`](docs/DFD.md:348). Selanjutnya, admin mengelola master mata kuliah pada [`2.4.2 Kelola Mata Kuliah`](docs/DFD.md:351). Setiap perubahan data mata kuliah juga disimpan ke data store yang sama.
+Alur pertama terdapat pada [`A1 Kelola Data Kelas`](docs/DFD.md:350), ketika admin membuat atau memperbarui data kelas. Data tersebut disimpan pada [`D1 Data Kelas, Mata Kuliah, dan Assignment`](docs/DFD.md:348). Selanjutnya, admin mengelola master mata kuliah pada [`A2 Kelola Mata Kuliah`](docs/DFD.md:351). Setiap perubahan data mata kuliah juga disimpan ke data store yang sama.
 
-Setelah kelas dan mata kuliah terbentuk, admin melakukan [`2.4.3 Assignment Dosen`](docs/DFD.md:352). Pada tahap ini, sistem menghubungkan dosen dengan kelas atau mata kuliah tertentu sehingga nantinya dosen memiliki ruang lingkup pengajaran yang jelas. Selanjutnya, admin menempatkan mahasiswa ke kelas melalui [`2.4.4 Kelola Anggota Kelas`](docs/DFD.md:353). Informasi ini membentuk enrollment yang akan dipakai oleh modul presensi, nilai, dan distribusi materi.
+Setelah kelas dan mata kuliah terbentuk, admin melakukan [`A3 Assignment Dosen`](docs/DFD.md:352). Pada tahap ini, sistem menghubungkan dosen dengan kelas atau mata kuliah tertentu sehingga nantinya dosen memiliki ruang lingkup pengajaran yang jelas. Selanjutnya, admin menempatkan mahasiswa ke kelas melalui [`A4 Kelola Anggota Kelas`](docs/DFD.md:353). Informasi ini membentuk enrollment yang akan dipakai oleh modul presensi, nilai, dan distribusi materi.
 
-Keempat hasil pengelolaan tersebut kemudian diteruskan ke [`2.4.5 Distribusi Relasi Akademik`](docs/DFD.md:354). Di sini sistem merangkum serta mendistribusikan relasi akademik kepada pihak terkait. Dosen menerima informasi kelas yang diajar, mahasiswa menerima informasi kelas yang diikuti, dan admin memperoleh rekap relasi akademik sebagai dasar monitoring.
+Keempat hasil pengelolaan tersebut kemudian diteruskan ke [`A5 Distribusi Relasi Akademik`](docs/DFD.md:354). Di sini sistem merangkum serta mendistribusikan relasi akademik kepada pihak terkait. Dosen menerima informasi kelas yang diajar, mahasiswa menerima informasi kelas yang diikuti, dan admin memperoleh rekap relasi akademik sebagai dasar monitoring.
 
 Narasi proses ini menegaskan bahwa data kelas, mata kuliah, assignment, dan keanggotaan kelas tidak boleh dipandang sebagai data administrasi biasa. Justru data inilah yang menjadi tulang punggung keterkaitan antarproses akademik di dalam sistem.
 
@@ -226,11 +226,11 @@ Narasi proses ini menegaskan bahwa data kelas, mata kuliah, assignment, dan kean
 
 Proses [`2.5 Kehadiran dan Penilaian`](docs/DFD.md:422) menjelaskan bagaimana dosen mencatat presensi, memasukkan nilai, lalu sistem menyusun rekap yang dapat dilihat kembali oleh mahasiswa. Seluruh data proses ini tersimpan dalam [`D1 Data Kehadiran dan Nilai`](docs/DFD.md:428).
 
-Alur dimulai pada [`2.5.1 Input Kehadiran`](docs/DFD.md:430), saat dosen mencatat status hadir mahasiswa. Data tersebut lalu diteruskan ke [`2.5.2 Validasi Presensi`](docs/DFD.md:431). Pada tahap ini, sistem memeriksa kesesuaian kehadiran terhadap jadwal yang berlaku dan daftar peserta yang sah. Jika valid, data kehadiran disimpan ke database.
+Alur dimulai pada [`A1 Input Kehadiran`](docs/DFD.md:430), saat dosen mencatat status hadir mahasiswa. Data tersebut lalu diteruskan ke [`A2 Validasi Presensi`](docs/DFD.md:431). Pada tahap ini, sistem memeriksa kesesuaian kehadiran terhadap jadwal yang berlaku dan daftar peserta yang sah. Jika valid, data kehadiran disimpan ke database.
 
-Selanjutnya, dosen memasukkan komponen penilaian pada [`2.5.3 Input Nilai`](docs/DFD.md:432). Komponen ini dapat mencakup nilai tugas, kuis, praktik, atau bentuk penilaian lain sesuai skema yang digunakan. Setelah tersimpan, sistem menjalankan [`2.5.4 Hitung Rekap Nilai`](docs/DFD.md:433) dengan mengambil komponen nilai dari database dan menyusunnya menjadi rekap nilai atau nilai akhir. Rekap tersebut dapat dikirimkan kembali kepada dosen sebagai bahan evaluasi.
+Selanjutnya, dosen memasukkan komponen penilaian pada [`A3 Input Nilai`](docs/DFD.md:432). Komponen ini dapat mencakup nilai tugas, kuis, praktik, atau bentuk penilaian lain sesuai skema yang digunakan. Setelah tersimpan, sistem menjalankan [`A4 Hitung Rekap Nilai`](docs/DFD.md:433) dengan mengambil komponen nilai dari database dan menyusunnya menjadi rekap nilai atau nilai akhir. Rekap tersebut dapat dikirimkan kembali kepada dosen sebagai bahan evaluasi.
 
-Mahasiswa yang ingin mengetahui perkembangan akademiknya mengakses [`2.5.5 Lihat Hasil Nilai`](docs/DFD.md:434). Sistem mengambil data presensi dan nilai dari database, lalu menampilkannya kepada mahasiswa. Dengan cara ini, mahasiswa tidak hanya mengetahui skor akhir, tetapi juga dapat melihat hubungan antara kehadiran dan performa penilaiannya.
+Mahasiswa yang ingin mengetahui perkembangan akademiknya mengakses [`A5 Lihat Hasil Nilai`](docs/DFD.md:434). Sistem mengambil data presensi dan nilai dari database, lalu menampilkannya kepada mahasiswa. Dengan cara ini, mahasiswa tidak hanya mengetahui skor akhir, tetapi juga dapat melihat hubungan antara kehadiran dan performa penilaiannya.
 
 Narasi ini menunjukkan bahwa kehadiran dan penilaian merupakan dua aliran data yang saling berkaitan. Presensi yang tervalidasi memperkuat akuntabilitas, sedangkan penilaian yang direkap membuat hasil belajar lebih mudah dipahami dan ditindaklanjuti.
 
@@ -248,11 +248,11 @@ Narasi ini menunjukkan bahwa kehadiran dan penilaian merupakan dua aliran data y
 
 Proses [`3.1 Logbook Digital`](docs/DFD.md:460) digunakan untuk mencatat kegiatan praktikum mahasiswa secara sistematis serta memungkinkan dosen melakukan pemantauan dan umpan balik. Data logbook disimpan pada [`D1 Data Logbook`](docs/DFD.md:466).
 
-Alur pertama terjadi saat mahasiswa menuliskan aktivitas praktikum pada [`3.1.1 Input Entri Logbook`](docs/DFD.md:468). Entri ini berisi catatan kegiatan, progres, hasil praktik, atau kendala yang dialami. Setelah entri dibuat, sistem meneruskannya ke [`3.1.2 Simpan Bukti atau Catatan`](docs/DFD.md:469), yaitu tahap penyimpanan isi logbook beserta lampiran atau bukti pendukung jika ada.
+Alur pertama terjadi saat mahasiswa menuliskan aktivitas praktikum pada [`A1 Input Entri Logbook`](docs/DFD.md:468). Entri ini berisi catatan kegiatan, progres, hasil praktik, atau kendala yang dialami. Setelah entri dibuat, sistem meneruskannya ke [`A2 Simpan Bukti atau Catatan`](docs/DFD.md:469), yaitu tahap penyimpanan isi logbook beserta lampiran atau bukti pendukung jika ada.
 
-Dosen kemudian dapat melakukan peninjauan melalui [`3.1.3 Review Logbook`](docs/DFD.md:470). Sistem mengambil logbook mahasiswa dari database dan menyajikannya untuk diperiksa. Berdasarkan hasil peninjauan tersebut, dosen melanjutkan ke [`3.1.4 Beri Umpan Balik`](docs/DFD.md:471). Pada tahap ini dosen dapat memberi komentar, koreksi, atau status review yang kemudian disimpan kembali ke database.
+Dosen kemudian dapat melakukan peninjauan melalui [`A3 Review Logbook`](docs/DFD.md:470). Sistem mengambil logbook mahasiswa dari database dan menyajikannya untuk diperiksa. Berdasarkan hasil peninjauan tersebut, dosen melanjutkan ke [`A4 Beri Umpan Balik`](docs/DFD.md:471). Pada tahap ini dosen dapat memberi komentar, koreksi, atau status review yang kemudian disimpan kembali ke database.
 
-Baik mahasiswa maupun dosen dapat melihat riwayat logbook melalui [`3.1.5 Lihat Riwayat Logbook`](docs/DFD.md:472). Sistem mengambil histori logbook dan menampilkannya sesuai kebutuhan pengguna. Mahasiswa dapat melihat perkembangan catatan kegiatannya sendiri, sedangkan dosen dapat memantau konsistensi aktivitas mahasiswa dari waktu ke waktu.
+Baik mahasiswa maupun dosen dapat melihat riwayat logbook melalui [`A5 Lihat Riwayat Logbook`](docs/DFD.md:472). Sistem mengambil histori logbook dan menampilkannya sesuai kebutuhan pengguna. Mahasiswa dapat melihat perkembangan catatan kegiatannya sendiri, sedangkan dosen dapat memantau konsistensi aktivitas mahasiswa dari waktu ke waktu.
 
 Narasi logbook ini menegaskan bahwa sistem tidak sekadar menyimpan catatan harian, melainkan juga membentuk mekanisme dokumentasi, monitoring, dan evaluasi proses praktikum.
 
@@ -270,13 +270,13 @@ Narasi logbook ini menegaskan bahwa sistem tidak sekadar menyimpan catatan haria
 
 Proses [`3.2 Peminjaman Alat dan Inventaris`](docs/DFD.md:499) menjelaskan bagaimana data inventaris laboratorium dikelola serta bagaimana permohonan peminjaman alat diproses hingga menjadi laporan. Proses ini melibatkan dosen, laboran, admin, dan [`D1 Inventaris dan Peminjaman`](docs/DFD.md:506).
 
-Alur dimulai ketika laboran mengelola data alat pada [`3.2.1 Kelola Inventaris`](docs/DFD.md:508). Kegiatan ini dapat berupa penambahan data alat, pembaruan kondisi, jumlah stok, atau perubahan informasi inventaris lainnya. Semua data tersebut disimpan ke database sebagai dasar layanan peminjaman.
+Alur dimulai ketika laboran mengelola data alat pada [`A1 Kelola Inventaris`](docs/DFD.md:508). Kegiatan ini dapat berupa penambahan data alat, pembaruan kondisi, jumlah stok, atau perubahan informasi inventaris lainnya. Semua data tersebut disimpan ke database sebagai dasar layanan peminjaman.
 
-Ketika dosen memerlukan alat, dosen mengajukan permohonan melalui [`3.2.2 Ajukan Peminjaman`](docs/DFD.md:509). Sistem menyimpan permohonan tersebut ke database dengan informasi status awal. Setelah itu, laboran dan admin dapat memproses permohonan pada [`3.2.3 Verifikasi dan Keputusan`](docs/DFD.md:510). Pada tahap ini dilakukan pemeriksaan kelayakan, ketersediaan alat, dan pengambilan keputusan apakah permohonan disetujui atau ditolak. Hasil keputusan disimpan sebagai pembaruan status dan dikirimkan kepada dosen.
+Ketika dosen memerlukan alat, dosen mengajukan permohonan melalui [`A2 Ajukan Peminjaman`](docs/DFD.md:509). Sistem menyimpan permohonan tersebut ke database dengan informasi status awal. Setelah itu, laboran dan admin dapat memproses permohonan pada [`A3 Verifikasi dan Keputusan`](docs/DFD.md:510). Pada tahap ini dilakukan pemeriksaan kelayakan, ketersediaan alat, dan pengambilan keputusan apakah permohonan disetujui atau ditolak. Hasil keputusan disimpan sebagai pembaruan status dan dikirimkan kepada dosen.
 
-Untuk peminjaman yang sedang berjalan, laboran dan admin dapat mengakses [`3.2.4 Monitor Peminjaman Aktif`](docs/DFD.md:511). Sistem mengambil data transaksi aktif dari database dan menampilkannya sebagai daftar peminjaman yang masih berlangsung. Melalui data ini, pihak pengelola dapat memantau alat yang sedang dipinjam, siapa peminjamnya, dan status pengembaliannya.
+Untuk peminjaman yang sedang berjalan, laboran dan admin dapat mengakses [`A4 Monitor Peminjaman Aktif`](docs/DFD.md:511). Sistem mengambil data transaksi aktif dari database dan menampilkannya sebagai daftar peminjaman yang masih berlangsung. Melalui data ini, pihak pengelola dapat memantau alat yang sedang dipinjam, siapa peminjamnya, dan status pengembaliannya.
 
-Pada akhirnya, laboran dapat meminta [`3.2.5 Laporan`](docs/DFD.md:512). Sistem mengambil rekap inventaris dan transaksi peminjaman dari database, lalu menghasilkan laporan yang dapat digunakan untuk evaluasi operasional laboratorium. Narasi ini menekankan bahwa peminjaman alat bukan proses sederhana, melainkan alur administratif yang membutuhkan pencatatan, verifikasi, monitoring, dan pelaporan.
+Pada akhirnya, laboran dapat meminta [`A5 Laporan`](docs/DFD.md:512). Sistem mengambil rekap inventaris dan transaksi peminjaman dari database, lalu menghasilkan laporan yang dapat digunakan untuk evaluasi operasional laboratorium. Narasi ini menekankan bahwa peminjaman alat bukan proses sederhana, melainkan alur administratif yang membutuhkan pencatatan, verifikasi, monitoring, dan pelaporan.
 
 ## Alur ringkas proses [`3.2`](docs/DFD.md:499)
 
@@ -293,13 +293,13 @@ Pada akhirnya, laboran dapat meminta [`3.2.5 Laporan`](docs/DFD.md:512). Sistem 
 
 Proses [`3.3 Pengumuman dan Notifikasi`](docs/DFD.md:542) mengatur pembuatan, penyimpanan, distribusi, penayangan, dan pengarsipan informasi resmi dalam sistem. Proses ini sangat penting karena pengumuman menjadi media penyebaran informasi akademik maupun operasional kepada mahasiswa, dosen, dan laboran.
 
-Alur dimulai saat admin menyusun judul, konten, prioritas, dan target role pada [`3.3.1 Buat Pengumuman`](docs/DFD.md:553). Data pengumuman yang telah disusun kemudian diteruskan ke [`3.3.2 Simpan dan Publikasikan`](docs/DFD.md:554). Pada tahap ini, sistem menyimpan pengumuman ke [`D1 Pengumuman dan Notifications`](docs/DFD.md:550) serta dapat menyalinnya ke [`D2 IndexedDB Cache`](docs/DFD.md:551) untuk mendukung akses cepat dan offline.
+Alur dimulai saat admin menyusun judul, konten, prioritas, dan target role pada [`A1 Buat Pengumuman`](docs/DFD.md:553). Data pengumuman yang telah disusun kemudian diteruskan ke [`A2 Simpan dan Publikasikan`](docs/DFD.md:554). Pada tahap ini, sistem menyimpan pengumuman ke [`D1 Pengumuman dan Notifications`](docs/DFD.md:550) serta dapat menyalinnya ke [`D2 IndexedDB Cache`](docs/DFD.md:551) untuk mendukung akses cepat dan offline.
 
-Setelah tersimpan, sistem menjalankan [`3.3.3 Distribusi Berdasarkan Role`](docs/DFD.md:555). Sistem mengambil target distribusi dari database, lalu menyampaikan notifikasi atau pengumuman kepada role yang sesuai, yaitu mahasiswa, dosen, dan/atau laboran. Dengan mekanisme ini, setiap informasi dapat diarahkan hanya kepada pihak yang relevan.
+Setelah tersimpan, sistem menjalankan [`A3 Distribusi Berdasarkan Role`](docs/DFD.md:555). Sistem mengambil target distribusi dari database, lalu menyampaikan notifikasi atau pengumuman kepada role yang sesuai, yaitu mahasiswa, dosen, dan/atau laboran. Dengan mekanisme ini, setiap informasi dapat diarahkan hanya kepada pihak yang relevan.
 
-Pengguna kemudian dapat membuka daftar dan detail pengumuman melalui [`3.3.4 Tampilkan Daftar dan Detail`](docs/DFD.md:556). Sistem mengambil pengumuman aktif dari database dan, bila diperlukan, dari cache lokal sebagai fallback. Hasilnya adalah pengguna dapat melihat daftar pengumuman atau membuka detail isi informasi tersebut.
+Pengguna kemudian dapat membuka daftar dan detail pengumuman melalui [`A4 Tampilkan Daftar dan Detail`](docs/DFD.md:556). Sistem mengambil pengumuman aktif dari database dan, bila diperlukan, dari cache lokal sebagai fallback. Hasilnya adalah pengguna dapat melihat daftar pengumuman atau membuka detail isi informasi tersebut.
 
-Jika pengumuman perlu diperbarui, dinonaktifkan, atau dihapus, admin menggunakan [`3.3.5 Arsipkan atau Hapus`](docs/DFD.md:557). Sistem kemudian memperbarui status atau menghapus data di database, lalu memberikan status pengelolaan kembali kepada admin.
+Jika pengumuman perlu diperbarui, dinonaktifkan, atau dihapus, admin menggunakan [`A5 Arsipkan atau Hapus`](docs/DFD.md:557). Sistem kemudian memperbarui status atau menghapus data di database, lalu memberikan status pengelolaan kembali kepada admin.
 
 Narasi ini menunjukkan bahwa pengumuman dalam sistem bukan sekadar konten statis, tetapi data yang melalui siklus hidup penuh: dibuat, dipublikasikan, didistribusikan, dibaca, dan akhirnya diarsipkan atau dihapus.
 
@@ -317,13 +317,13 @@ Narasi ini menunjukkan bahwa pengumuman dalam sistem bukan sekadar konten statis
 
 Proses [`4.1 Sinkronisasi Offline PWA`](docs/DFD.md:591) menjelaskan detail bagaimana sistem menangani kondisi offline dan mengembalikan konsistensi data saat koneksi tersedia kembali. Proses ini melibatkan semua aktor pengguna, layanan [`Supabase`](docs/DFD.md:599), [`D1 Database dan Conflict Log`](docs/DFD.md:600), [`D2 IndexedDB Cache`](docs/DFD.md:601), dan [`D3 Offline Queue`](docs/DFD.md:602).
 
-Tahap pertama adalah [`4.1.1 Deteksi Status Jaringan`](docs/DFD.md:604). Ketika admin, dosen, mahasiswa, atau laboran melakukan aktivitas, sistem terlebih dahulu mengenali apakah perangkat sedang online atau offline. Informasi status jaringan ini sangat penting karena menentukan ke mana data berikutnya akan diarahkan.
+Tahap pertama adalah [`A1 Deteksi Status Jaringan`](docs/DFD.md:604). Ketika admin, dosen, mahasiswa, atau laboran melakukan aktivitas, sistem terlebih dahulu mengenali apakah perangkat sedang online atau offline. Informasi status jaringan ini sangat penting karena menentukan ke mana data berikutnya akan diarahkan.
 
-Jika ada data yang perlu tetap tersedia untuk dibaca, sistem menjalankan [`4.1.2 Simpan Data ke Cache`](docs/DFD.md:605). Pada subproses ini, data penting dicadangkan ke cache lokal. Sementara itu, jika ada operasi tulis yang tidak dapat langsung dikirim ke server karena offline, sistem memanfaatkan [`4.1.3 Simpan Operasi ke Queue`](docs/DFD.md:606). Operasi tersebut ditulis ke offline queue agar tidak hilang.
+Jika ada data yang perlu tetap tersedia untuk dibaca, sistem menjalankan [`A2 Simpan Data ke Cache`](docs/DFD.md:605). Pada aktivitas ini, data penting dicadangkan ke cache lokal. Sementara itu, jika ada operasi tulis yang tidak dapat langsung dikirim ke server karena offline, sistem memanfaatkan [`A3 Simpan Operasi ke Queue`](docs/DFD.md:606). Operasi tersebut ditulis ke offline queue agar tidak hilang.
 
-Ketika pengguna memilih sinkronkan sekarang atau ketika sistem mendeteksi koneksi telah kembali, alur masuk ke [`4.1.4 Proses Sinkronisasi`](docs/DFD.md:607). Sistem mengambil antrean dari queue, lalu mengirimkan perubahan ke database utama dan layanan sinkronisasi eksternal. Pada tahap ini, sistem berusaha menyamakan data lokal dengan data server.
+Ketika pengguna memilih sinkronkan sekarang atau ketika sistem mendeteksi koneksi telah kembali, alur masuk ke [`A4 Proses Sinkronisasi`](docs/DFD.md:607). Sistem mengambil antrean dari queue, lalu mengirimkan perubahan ke database utama dan layanan sinkronisasi eksternal. Pada tahap ini, sistem berusaha menyamakan data lokal dengan data server.
 
-Namun, sinkronisasi tidak selalu berhasil sempurna. Oleh sebab itu, sistem melanjutkan ke [`4.1.5 Tangani Konflik dan Retry`](docs/DFD.md:608). Di sinilah sistem memperbarui cache, menandai antrean yang berhasil, mengulangi pengiriman untuk item yang gagal, dan menyimpan konflik atau hasil resolusi ke database. Setelah proses selesai, sistem mengirimkan status sinkronisasi kepada pengguna.
+Namun, sinkronisasi tidak selalu berhasil sempurna. Oleh sebab itu, sistem melanjutkan ke [`A5 Tangani Konflik dan Retry`](docs/DFD.md:608). Di sinilah sistem memperbarui cache, menandai antrean yang berhasil, mengulangi pengiriman untuk item yang gagal, dan menyimpan konflik atau hasil resolusi ke database. Setelah proses selesai, sistem mengirimkan status sinkronisasi kepada pengguna.
 
 Narasi ini sangat penting dalam konteks PWA karena memperlihatkan bahwa dukungan offline bukan sekadar menyimpan data sementara, melainkan mencakup deteksi koneksi, penyimpanan lokal, antrean operasi, sinkronisasi kembali, penanganan konflik, dan pelaporan hasil.
 
@@ -340,7 +340,7 @@ Narasi ini sangat penting dalam konteks PWA karena memperlihatkan bahwa dukungan
 
 # 5. Kesimpulan Naratif
 
-Berdasarkan seluruh penjabaran DFD pada [`docs/DFD.md`](docs/DFD.md), dapat disimpulkan bahwa Sistem Informasi Praktikum PWA dirancang sebagai sistem yang terintegrasi antara pengelolaan akun, layanan akademik, operasional laboratorium, dan dukungan offline. Pada DFD Level 1, sistem dipetakan ke dalam empat proses besar agar ruang lingkup aplikasi mudah dipahami secara konseptual. Selanjutnya pada DFD Level 2, tiap proses utama diuraikan menjadi subproses yang menunjukkan transformasi data secara lebih rinci.
+Berdasarkan seluruh penjabaran DFD pada [`docs/DFD.md`](docs/DFD.md), dapat disimpulkan bahwa Sistem Informasi Praktikum PWA dirancang sebagai sistem yang terintegrasi antara pengelolaan akun, layanan akademik, operasional laboratorium, dan dukungan offline. Pada DFD Level 1, sistem dipetakan ke dalam empat proses besar agar ruang lingkup aplikasi mudah dipahami secara konseptual. Selanjutnya pada DFD Level 2, tiap proses utama diuraikan menjadi aktivitas internal yang menunjukkan transformasi data secara lebih rinci.
 
 Secara akademik, narasi ini menegaskan bahwa setiap input dari aktor eksternal selalu melalui tahapan logis berupa penerimaan data, validasi, penyimpanan, pengolahan, dan distribusi hasil. Dengan demikian, sistem tidak dipandang sekadar sebagai kumpulan halaman antarmuka, melainkan sebagai mekanisme pengelolaan aliran data yang memiliki aturan, tujuan, dan keluaran yang jelas.
 
@@ -353,7 +353,7 @@ Dokumen naratif ini dapat digunakan untuk memperkuat pembahasan skripsi karena m
 Narasi pada dokumen ini dapat dimanfaatkan untuk beberapa kebutuhan penulisan ilmiah, yaitu:
 
 1. sebagai penjelasan setelah gambar DFD Level 1;
-2. sebagai uraian subbab pembahasan untuk setiap proses DFD Level 2;
+2. sebagai uraian subbab pembahasan untuk setiap proses DFD Level 2 beserta aktivitas internalnya;
 3. sebagai dasar analisis aliran data pada bab hasil dan pembahasan;
 4. sebagai penghubung antara model analisis sistem dengan implementasi aplikasi yang aktif.
 

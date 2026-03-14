@@ -70,9 +70,11 @@ Tabel 4. Alur Data DFD Level 1
 
 5.1.2 DFD Level 2
 
-DFD Level 2 pada penelitian ini merupakan hasil dekomposisi lanjutan dari empat proses utama pada DFD Level 1. Pada tingkat ini, pembahasan tidak lagi berhenti pada identifikasi fungsi besar sistem, tetapi menelusuri bagaimana data bergerak di dalam setiap proses, siapa aktor yang terlibat, data store apa yang digunakan, serta bagaimana keluaran dari satu proses menjadi masukan bagi proses yang lain. Narasi pada bagian ini diselaraskan dengan struktur pada [`docs/DFD.md`](docs/DFD.md:126), sehingga setiap proses Level 2 dibahas dalam diagram tersendiri dengan fokus alur yang lebih tajam, namun tetap menunjukkan keterhubungan antarmodul secara menyeluruh.
+DFD Level 2 pada penelitian ini merupakan hasil dekomposisi lanjutan dari empat proses utama pada DFD Level 1. Pada tingkat ini, pembahasan tidak lagi berhenti pada identifikasi fungsi besar sistem, tetapi menelusuri bagaimana data bergerak di dalam setiap proses, siapa aktor yang terlibat, data store apa yang digunakan, serta bagaimana keluaran dari satu proses menjadi masukan bagi proses yang lain. Narasi pada bagian ini diselaraskan dengan struktur pada [`docs/DFD.md`](docs/DFD.md:127), sehingga setiap proses Level 2 dibahas dalam diagram tersendiri dengan fokus alur yang lebih tajam, namun tetap menunjukkan keterhubungan antarmodul secara menyeluruh.
 
 Pemecahan menjadi sebelas diagram mandiri dipilih agar keterbacaan tetap terjaga dan pembahasan lebih sesuai dengan kaidah penyajian ilmiah. Walaupun dipisahkan, seluruh diagram tersebut tidak berdiri sendiri. Proses 1.1 dan 1.2 menjadi fondasi identitas serta hak akses; proses 2.1 hingga 2.5 membentuk rantai utama kegiatan akademik; proses 3.1 hingga 3.3 mendukung operasional laboratorium dan komunikasi; sedangkan proses 4.1 menjadi lapisan pengikat yang menjaga kontinuitas layanan ketika koneksi internet tidak stabil. Dengan demikian, DFD Level 2 pada sistem ini harus dipahami sebagai jaringan proses yang saling berhubungan, bukan sebagai kumpulan fungsi yang terpisah.
+
+Untuk menjaga konsistensi metodologis bahwa model hanya berhenti sampai Level 2, rincian di dalam setiap gambar tidak lagi dinyatakan sebagai nomor proses bertingkat seperti `1.1.1` atau `2.3.1`. Sebagai gantinya, rincian internal dibaca sebagai **aktivitas lokal** dalam satu diagram Level 2 dan diberi kode sederhana seperti `A1`, `A2`, `A3`, dan seterusnya. Dengan pendekatan ini, pembahasan tetap rinci tanpa mengubah diagram menjadi Level 3.
 
 Ringkasan dekomposisi proses dari DFD Level 1 ke DFD Level 2 disajikan pada Tabel 5.
 
@@ -103,7 +105,7 @@ Tabel 6. Rincian Diagram DFD Level 2
 | Level 2.10 | 3.3 Pengumuman dan Notifikasi | 3.0 Operasional dan Layanan Laboratorium | publikasi informasi dan distribusi role |
 | Level 2.11 | 4.1 Sinkronisasi Offline PWA | 4.0 Layanan PWA dan Sinkronisasi Offline | cache, queue, sinkronisasi, konflik |
 
-Berdasarkan rincian tersebut, jumlah diagram DFD Level 2 yang digunakan dalam penelitian ini adalah sebelas diagram. Jumlah tersebut selaras dengan struktur pada [`docs/DFD.md`](docs/DFD.md:162) dan menunjukkan bahwa setiap proses turunan dibahas secara proporsional tanpa menimbulkan kepadatan visual berlebihan dalam satu diagram. Namun, yang lebih penting dari jumlah diagram tersebut adalah keterhubungan logika proses yang dibentuknya. Alur kerja sistem selalu dimulai dari validasi identitas pengguna, dilanjutkan dengan pemanfaatan data master akademik, kemudian bergerak ke aktivitas pembelajaran, operasional laboratorium, serta ditopang oleh mekanisme sinkronisasi yang menjaga kesinambungan data. Oleh karena itu, pembahasan DFD Level 2 pada bagian ini tidak hanya mendeskripsikan isi diagram, tetapi juga menafsirkan makna hubungan data antardiagram sebagai cerminan proses bisnis pada aplikasi yang dibangun.
+Berdasarkan rincian tersebut, jumlah diagram DFD Level 2 yang digunakan dalam penelitian ini adalah sebelas diagram. Jumlah tersebut selaras dengan struktur pada [`docs/DFD.md`](docs/DFD.md:165) dan menunjukkan bahwa setiap proses turunan dibahas secara proporsional tanpa menimbulkan kepadatan visual berlebihan dalam satu diagram. Namun, yang lebih penting dari jumlah diagram tersebut adalah keterhubungan logika proses yang dibentuknya. Alur kerja sistem selalu dimulai dari validasi identitas pengguna, dilanjutkan dengan pemanfaatan data master akademik, kemudian bergerak ke aktivitas pembelajaran, operasional laboratorium, serta ditopang oleh mekanisme sinkronisasi yang menjaga kesinambungan data. Oleh karena itu, pembahasan DFD Level 2 pada bagian ini tidak hanya mendeskripsikan isi diagram, tetapi juga menafsirkan makna hubungan data antardiagram sebagai cerminan proses bisnis pada aplikasi yang dibangun.
 
 1. Diagram Level 2.1 — Proses 1.1 Autentikasi  
 Diagram Level 2.1 menjelaskan alur autentikasi pengguna, dimulai dari input kredensial, verifikasi melalui layanan autentikasi, pengambilan data role, pembentukan session login, hingga pengalihan pengguna ke dashboard sesuai hak aksesnya. Pada tahap ini, entitas eksternal berupa pengguna mengirimkan data email dan kata sandi ke sistem. Sistem kemudian meneruskan proses verifikasi ke layanan autentikasi, lalu mengambil data identitas dan role dari penyimpanan data utama untuk memastikan bahwa pengguna yang berhasil masuk memang memiliki hak akses yang sah. Output dari proses ini tidak berhenti pada status login, tetapi juga menghasilkan informasi otorisasi yang menentukan menu, halaman, dan data apa saja yang dapat diakses pada proses-proses berikutnya. Secara substantif, diagram ini menunjukkan bahwa autentikasi bukan hanya proses keamanan, melainkan mekanisme awal yang mengendalikan seluruh alur interaksi data pada sistem.
@@ -116,15 +118,15 @@ Sumber file: [`docs/DFD-Level2-1.1-Autentikasi-Yourdon.drawio`](docs/DFD-Level2-
 
 Gambar 7. Data Flow Diagram Level 2.1 Proses 1.1 Autentikasi
 
-Tabel 7. Rincian Subproses 1.1 Autentikasi
+Tabel 7. Rincian Aktivitas Internal 1.1 Autentikasi
 
-| Sub-Proses | Deskripsi |
+| Kode Aktivitas | Deskripsi |
 |---|---|
-| 1.1.1 Validasi Kredensial | Sistem memverifikasi email dan kata sandi pengguna melalui layanan autentikasi. |
-| 1.1.2 Ambil Data Role | Sistem mengambil data role pengguna dari data user dan role. |
-| 1.1.3 Bentuk Session Login | Sistem membentuk status login aktif pada aplikasi. |
-| 1.1.4 Redirect Berdasarkan Role | Sistem mengarahkan pengguna ke dashboard sesuai hak akses. |
-| 1.1.5 Logout | Sistem mengakhiri sesi login pengguna. |
+| A1 Validasi Kredensial | Sistem memverifikasi email dan kata sandi pengguna melalui layanan autentikasi. |
+| A2 Ambil Data Role | Sistem mengambil data role pengguna dari data user dan role. |
+| A3 Bentuk Session Login | Sistem membentuk status login aktif pada aplikasi. |
+| A4 Redirect Berdasarkan Role | Sistem mengarahkan pengguna ke dashboard sesuai hak akses. |
+| A5 Logout | Sistem mengakhiri sesi login pengguna. |
 
 2. Diagram Level 2.2 — Proses 1.2 Kelola User  
 Diagram Level 2.2 menggambarkan proses pengelolaan akun oleh admin, mulai dari pembuatan akun, penetapan role, pengelolaan profil role, perubahan status user, hingga penghapusan atau pengarsipan akun. Aliran data pada proses ini memperlihatkan bahwa admin bukan sekadar memasukkan data pengguna baru, tetapi juga mengelola siklus hidup akun agar tetap relevan dengan kondisi operasional sistem. Ketika admin membuat akun, sistem menyimpan identitas dasar pengguna, menghubungkan akun dengan role tertentu, lalu memperbarui data profil role sesuai kategori pengguna. Pada tahap lanjutan, admin juga dapat mengubah status akun menjadi aktif atau nonaktif, bahkan mengarsipkan akun ketika tidak lagi digunakan.
@@ -137,15 +139,15 @@ Sumber file: [`docs/DFD-Level2-1.2-Kelola-User-Yourdon.drawio`](docs/DFD-Level2-
 
 Gambar 8. Data Flow Diagram Level 2.2 Proses 1.2 Kelola User
 
-Tabel 8. Rincian Subproses 1.2 Kelola User
+Tabel 8. Rincian Aktivitas Internal 1.2 Kelola User
 
-| Sub-Proses | Deskripsi |
+| Kode Aktivitas | Deskripsi |
 |---|---|
-| 1.2.1 Buat Akun | Admin membuat akun pengguna baru. |
-| 1.2.2 Tetapkan Role | Sistem menetapkan role pengguna. |
-| 1.2.3 Kelola Profil Role | Data identitas per role disimpan dan diperbarui. |
-| 1.2.4 Ubah Status User | Admin mengaktifkan atau menonaktifkan user. |
-| 1.2.5 Hapus atau Arsipkan User | Admin menghapus atau mengarsipkan akun yang tidak digunakan. |
+| A1 Buat Akun | Admin membuat akun pengguna baru. |
+| A2 Tetapkan Role | Sistem menetapkan role pengguna. |
+| A3 Kelola Profil Role | Data identitas per role disimpan dan diperbarui. |
+| A4 Ubah Status User | Admin mengaktifkan atau menonaktifkan user. |
+| A5 Hapus atau Arsipkan User | Admin menghapus atau mengarsipkan akun yang tidak digunakan. |
 
 3. Diagram Level 2.3 — Proses 2.1 Kelola Jadwal  
 Diagram Level 2.3 menjelaskan proses pengelolaan jadwal praktikum, mulai dari pengajuan rancangan jadwal oleh dosen, validasi relasi kelas dan laboratorium, proses persetujuan oleh laboran, publikasi jadwal, hingga akses jadwal oleh pengguna terkait. Pada diagram ini, data jadwal tidak langsung diterima begitu saja sebagai input final, melainkan melalui tahap pemeriksaan terhadap data kelas, mata kuliah, slot waktu, dan ketersediaan laboratorium. Artinya, sistem berperan aktif untuk meminimalkan benturan jadwal dan memastikan bahwa kegiatan praktikum memiliki dasar pelaksanaan yang valid. Setelah lolos validasi dan disetujui, jadwal dipublikasikan sehingga dapat menjadi referensi resmi bagi dosen, mahasiswa, dan laboran.
@@ -158,15 +160,15 @@ Sumber file: [`docs/DFD-Level2-2.1-Kelola-Jadwal-Yourdon.drawio`](docs/DFD-Level
 
 Gambar 9. Data Flow Diagram Level 2.3 Proses 2.1 Kelola Jadwal
 
-Tabel 9. Rincian Subproses 2.1 Kelola Jadwal
+Tabel 9. Rincian Aktivitas Internal 2.1 Kelola Jadwal
 
-| Sub-Proses | Deskripsi |
+| Kode Aktivitas | Deskripsi |
 |---|---|
-| 2.1.1 Input atau Ajukan Jadwal | Dosen memasukkan atau mengajukan rancangan jadwal praktikum. |
-| 2.1.2 Validasi Kelas dan Laboratorium | Sistem memeriksa relasi kelas, mata kuliah, waktu, dan laboratorium. |
-| 2.1.3 Persetujuan Jadwal | Laboran meninjau dan memutuskan status jadwal. |
-| 2.1.4 Publikasi Jadwal | Jadwal yang valid dipublikasikan kepada pengguna terkait. |
-| 2.1.5 Lihat Jadwal | Pengguna melihat jadwal dari database utama atau cache lokal. |
+| A1 Input atau Ajukan Jadwal | Dosen memasukkan atau mengajukan rancangan jadwal praktikum. |
+| A2 Validasi Kelas dan Laboratorium | Sistem memeriksa relasi kelas, mata kuliah, waktu, dan laboratorium. |
+| A3 Persetujuan Jadwal | Laboran meninjau dan memutuskan status jadwal. |
+| A4 Publikasi Jadwal | Jadwal yang valid dipublikasikan kepada pengguna terkait. |
+| A5 Lihat Jadwal | Pengguna melihat jadwal dari database utama atau cache lokal. |
 
 4. Diagram Level 2.4 — Proses 2.2 Kelola Kuis dan Bank Soal  
 Diagram Level 2.4 memodelkan pengelolaan kuis dan bank soal sebagai bagian dari evaluasi pembelajaran. Alur yang ditampilkan meliputi penyusunan kuis, pengelolaan bank soal, distribusi kuis kepada mahasiswa, proses pengerjaan, penyimpanan jawaban sementara saat offline, hingga pengolahan hasil. Pada proses ini, dosen terlebih dahulu menyusun parameter kuis, memilih atau menambahkan soal ke dalam bank soal, lalu sistem mendistribusikannya ke mahasiswa yang terdaftar pada kelas terkait. Ketika mahasiswa mengerjakan kuis, sistem mencatat respons dan, bila jaringan tidak stabil, menyimpan jawaban sementara pada media lokal sebelum dilakukan sinkronisasi ke basis data utama.
@@ -179,15 +181,18 @@ Sumber file: [`docs/DFD-Level2-2.2-Kelola-Kuis-dan-Bank-Soal-Yourdon.drawio`](do
 
 Gambar 10. Data Flow Diagram Level 2.4 Proses 2.2 Kelola Kuis dan Bank Soal
 
-Tabel 10. Rincian Subproses 2.2 Kelola Kuis dan Bank Soal
+Tabel 10. Rincian Aktivitas Internal 2.2 Kelola Kuis dan Bank Soal
 
-| Sub-Proses | Deskripsi |
+| Kode Aktivitas | Deskripsi |
 |---|---|
-| 2.2.1 Penyusunan Kuis | Dosen menyusun kuis dan parameter evaluasinya. |
-| 2.2.2 Kelola Bank Soal | Sistem menyimpan dan memanggil soal dari bank soal. |
-| 2.2.3 Pengerjaan Kuis | Mahasiswa menerima dan mengerjakan kuis. |
-| 2.2.4 Auto-save Offline | Jawaban sementara disimpan ke cache lokal saat koneksi tidak stabil. |
-| 2.2.5 Sinkronisasi dan Hasil | Jawaban disinkronkan dan hasil kuis direkap ke sistem. |
+| A1 Buat Kuis | Dosen membuat kuis beserta parameter utamanya. |
+| A2 Kelola Bank Soal | Dosen menambah, memilih, atau memperbarui soal. |
+| A3 Publish Kuis | Sistem mempublikasikan kuis ke kelas target. |
+| A4 Ambil Soal | Mahasiswa mengambil paket soal dari database atau cache. |
+| A5 Kerjakan Kuis | Mahasiswa menerima dan mengerjakan kuis. |
+| A6 Auto-save Offline | Jawaban sementara disimpan ke antrean lokal saat koneksi tidak stabil. |
+| A7 Submit dan Penilaian | Jawaban diproses, disimpan, dan dinilai oleh sistem. |
+| A8 Lihat Hasil | Dosen melihat statistik dan hasil kuis yang tersimpan. |
 
 5. Diagram Level 2.5 — Proses 2.3 Kelola Materi  
 Diagram Level 2.5 menjelaskan proses pengelolaan materi pembelajaran, mulai dari unggah file materi, penyimpanan metadata, penayangan daftar materi, akses atau unduh materi, hingga penyimpanan cache untuk kebutuhan akses offline. Dalam proses ini, dosen berperan sebagai pengunggah konten, sedangkan sistem memisahkan antara penyimpanan berkas dan penyimpanan metadata. Pemisahan tersebut penting agar dokumen materi dapat dikelola secara efisien sekaligus tetap mudah ditelusuri berdasarkan kelas, mata kuliah, atau informasi pendukung lainnya. Mahasiswa kemudian mengakses daftar materi yang telah dipublikasikan, lalu sistem menyediakan jalur untuk membuka, mengunduh, atau menyimpan representasi materi ke cache lokal.
@@ -200,15 +205,15 @@ Sumber file: [`docs/DFD-Level2-2.3-Kelola-Materi-Yourdon.drawio`](docs/DFD-Level
 
 Gambar 11. Data Flow Diagram Level 2.5 Proses 2.3 Kelola Materi
 
-Tabel 11. Rincian Subproses 2.3 Kelola Materi
+Tabel 11. Rincian Aktivitas Internal 2.3 Kelola Materi
 
-| Sub-Proses | Deskripsi |
+| Kode Aktivitas | Deskripsi |
 |---|---|
-| 2.3.1 Upload Materi | Dosen mengunggah file materi. |
-| 2.3.2 Simpan Metadata | Sistem menyimpan judul, kelas, dan referensi file. |
-| 2.3.3 Lihat Daftar Materi | Dosen dan mahasiswa melihat daftar materi. |
-| 2.3.4 Akses atau Unduh Materi | Mahasiswa membuka atau mengunduh materi. |
-| 2.3.5 Cache Offline | Sistem menyimpan materi atau referensinya untuk akses offline. |
+| A1 Upload Materi | Dosen mengunggah file materi. |
+| A2 Simpan Metadata | Sistem menyimpan judul, kelas, dan referensi file. |
+| A3 Lihat Daftar Materi | Dosen dan mahasiswa melihat daftar materi. |
+| A4 Akses atau Unduh Materi | Mahasiswa membuka atau mengunduh materi. |
+| A5 Cache Offline | Sistem menyimpan materi atau referensinya untuk akses offline. |
 
 6. Diagram Level 2.6 — Proses 2.4 Kelola Kelas, Mata Kuliah, dan Assignment  
 Diagram Level 2.6 menunjukkan proses pengelolaan data master akademik. Di dalamnya tercakup pengelolaan mata kuliah, pembentukan kelas praktikum, penetapan relasi dosen dan mahasiswa ke dalam kelas, pengelolaan assignment, pengumpulan submission, serta akses data kelas dan assignment oleh pengguna terkait. Secara struktural, proses ini menghasilkan data induk yang menjadi prasyarat bagi banyak proses lain. Mata kuliah menjadi dasar klasifikasi akademik, kelas menjadi wadah peserta, sedangkan assignment menjadi sarana aktivitas pembelajaran yang melekat pada relasi tersebut. Ketika mahasiswa mengumpulkan submission, sistem merekam hubungan antara pengguna, kelas, tugas, dan status pengumpulan secara konsisten.
@@ -221,21 +226,21 @@ Sumber file: [`docs/DFD-Level2-2.4-Kelola-Kelas-Mata-Kuliah-dan-Assignment-Yourd
 
 Gambar 12. Data Flow Diagram Level 2.6 Proses 2.4 Kelola Kelas, Mata Kuliah, dan Assignment
 
-Tabel 12. Rincian Subproses 2.4 Kelola Kelas, Mata Kuliah, dan Assignment
+Tabel 12. Rincian Aktivitas Internal 2.4 Kelola Kelas, Mata Kuliah, dan Assignment
 
-| Sub-Proses | Deskripsi |
+| Kode Aktivitas | Deskripsi |
 |---|---|
-| 2.4.1 Kelola Mata Kuliah | Admin mengelola data master mata kuliah. |
-| 2.4.2 Kelola Kelas Praktikum | Admin membentuk kelas praktikum yang aktif. |
-| 2.4.3 Enrol Mahasiswa dan Dosen | Admin menetapkan dosen dan mahasiswa ke kelas praktikum. |
-| 2.4.4 Kelola Assignment | Dosen membuat dan mengatur assignment pada kelas. |
-| 2.4.5 Kumpulkan Submission | Mahasiswa mengirim jawaban atau file tugas. |
-| 2.4.6 Lihat Kelas dan Assignment | Dosen dan mahasiswa melihat struktur kelas serta daftar assignment. |
+| A1 Kelola Mata Kuliah | Admin mengelola data master mata kuliah. |
+| A2 Kelola Kelas Praktikum | Admin membentuk kelas praktikum yang aktif. |
+| A3 Enrol Mahasiswa dan Dosen | Admin menetapkan dosen dan mahasiswa ke kelas praktikum. |
+| A4 Kelola Assignment | Dosen membuat dan mengatur assignment pada kelas. |
+| A5 Kumpulkan Submission | Mahasiswa mengirim jawaban atau file tugas. |
+| A6 Lihat Kelas dan Assignment | Dosen dan mahasiswa melihat struktur kelas serta daftar assignment. |
 
 7. Diagram Level 2.7 — Proses 2.5 Kehadiran dan Penilaian  
-Diagram Level 2.7 menjelaskan proses pencatatan kehadiran dan pengolahan nilai, mulai dari input kehadiran, validasi presensi terhadap jadwal dan peserta, input komponen nilai, penyusunan rekap nilai, hingga penayangan hasil presensi dan nilai kepada mahasiswa. Pada alur ini, dosen atau pihak berwenang terlebih dahulu memasukkan data kehadiran mahasiswa, lalu sistem memeriksa kesesuaiannya dengan jadwal dan daftar peserta yang terdaftar. Setelah itu, sistem menerima data komponen penilaian, mengolahnya menjadi rekap hasil belajar, dan menampilkan keluaran akhir kepada mahasiswa sebagai bentuk umpan balik akademik.
+Diagram Level 2.7 menjelaskan proses pencatatan kehadiran dan pengolahan nilai, mulai dari input kehadiran, validasi presensi terhadap jadwal dan peserta, input komponen nilai, penyusunan rekap nilai, hingga penayangan hasil presensi dan nilai kepada mahasiswa. Pada alur ini, dosen atau pihak berwenang terlebih dahulu memasukkan data kehadiran mahasiswa, lalu sistem memeriksa kesesuaiannya dengan jadwal dan daftar peserta yang terdaftar. Setelah presensi tervalidasi, sistem menerima data komponen penilaian dari dosen, kemudian menyusun rekap hasil belajar dengan memanfaatkan dua masukan utama, yaitu data kehadiran yang telah diverifikasi dan data nilai yang telah dicatat. Dengan demikian, keluaran akhir yang ditampilkan kepada mahasiswa tidak hanya berisi skor evaluasi, tetapi juga merepresentasikan keterkaitan antara kehadiran dan hasil belajar.
 
-Nilai penting dari diagram ini terletak pada perannya sebagai titik konvergensi data akademik. Kehadiran bergantung pada jadwal dan data kelas, sedangkan penilaian dapat mengakumulasi hasil dari kuis, assignment, dan penilaian manual dosen. Dengan kata lain, proses 2.5 berfungsi sebagai simpul integrasi yang merangkum aktivitas belajar menjadi informasi evaluatif yang formal. Dari perspektif hasil perancangan, hal ini menunjukkan bahwa sistem tidak hanya mampu mencatat transaksi pembelajaran secara terpisah, tetapi juga mampu menyatukannya menjadi hasil akhir yang bermakna bagi mahasiswa maupun dosen.
+Nilai penting dari diagram ini terletak pada perannya sebagai titik konvergensi data akademik. Kehadiran bergantung pada jadwal dan data kelas, sedangkan penilaian dapat mengakumulasi hasil dari kuis, assignment, dan penilaian manual dosen. Dengan kata lain, proses 2.5 berfungsi sebagai simpul integrasi yang merangkum aktivitas belajar menjadi informasi evaluatif yang formal. Dari perspektif hasil perancangan, hal ini menunjukkan bahwa sistem tidak hanya mampu mencatat transaksi pembelajaran secara terpisah, tetapi juga mampu menyatukannya menjadi hasil akhir yang bermakna bagi mahasiswa maupun dosen. Penegasan bahwa rekap akhir disusun dari nilai dan presensi tervalidasi juga membuat narasi pada bab ini selaras dengan diagram Level 2.7 yang telah direvisi.
 
 [TEMPAT GAMBAR]
 Diagram Level 2.7 — Proses 2.5 Kehadiran dan Penilaian
@@ -243,15 +248,15 @@ Sumber file: [`docs/DFD-Level2-2.5-Kehadiran-dan-Penilaian-Yourdon.drawio`](docs
 
 Gambar 13. Data Flow Diagram Level 2.7 Proses 2.5 Kehadiran dan Penilaian
 
-Tabel 13. Rincian Subproses 2.5 Kehadiran dan Penilaian
+Tabel 13. Rincian Aktivitas Internal 2.5 Kehadiran dan Penilaian
 
-| Sub-Proses | Deskripsi |
+| Kode Aktivitas | Deskripsi |
 |---|---|
-| 2.5.1 Input Kehadiran | Dosen mencatat kehadiran mahasiswa. |
-| 2.5.2 Validasi Presensi | Sistem memvalidasi kehadiran terhadap jadwal dan peserta. |
-| 2.5.3 Input Nilai | Dosen memasukkan komponen penilaian. |
-| 2.5.4 Hitung Rekap Nilai | Sistem menyusun rekap atau nilai akhir. |
-| 2.5.5 Lihat Hasil Nilai | Mahasiswa melihat hasil presensi dan nilai. |
+| A1 Input Kehadiran | Dosen mencatat kehadiran mahasiswa. |
+| A2 Validasi Presensi | Sistem memvalidasi kehadiran terhadap jadwal dan peserta. |
+| A3 Input Nilai | Dosen memasukkan komponen penilaian. |
+| A4 Hitung Rekap Nilai | Sistem menyusun rekap atau nilai akhir. |
+| A5 Lihat Hasil Nilai | Mahasiswa melihat hasil presensi dan nilai. |
 
 8. Diagram Level 2.8 — Proses 3.1 Logbook Digital  
 Diagram Level 2.8 menunjukkan proses pencatatan aktivitas praktikum melalui logbook digital, dimulai dari input entri logbook oleh mahasiswa, penyimpanan isi dan lampiran, proses review oleh dosen, pemberian umpan balik, hingga akses riwayat logbook. Secara aliran data, mahasiswa menjadi penghasil data utama berupa catatan kegiatan dan bukti pendukung, sedangkan dosen berperan sebagai penelaah yang memberikan validasi atau umpan balik. Sistem menyimpan seluruh entri dan riwayatnya sehingga perkembangan aktivitas praktikum dapat ditelusuri kembali dari waktu ke waktu.
@@ -264,15 +269,15 @@ Sumber file: [`docs/DFD-Level2-3.1-Logbook-Digital-Yourdon.drawio`](docs/DFD-Lev
 
 Gambar 14. Data Flow Diagram Level 2.8 Proses 3.1 Logbook Digital
 
-Tabel 14. Rincian Subproses 3.1 Logbook Digital
+Tabel 14. Rincian Aktivitas Internal 3.1 Logbook Digital
 
-| Sub-Proses | Deskripsi |
+| Kode Aktivitas | Deskripsi |
 |---|---|
-| 3.1.1 Input Entri Logbook | Mahasiswa menulis entri kegiatan praktikum. |
-| 3.1.2 Simpan Bukti atau Catatan | Sistem menyimpan isi logbook dan lampiran pendukung. |
-| 3.1.3 Review Logbook | Dosen memeriksa logbook mahasiswa. |
-| 3.1.4 Beri Umpan Balik | Dosen memberi catatan atau status review. |
-| 3.1.5 Lihat Riwayat Logbook | Pengguna melihat histori logbook yang tersimpan. |
+| A1 Input Entri Logbook | Mahasiswa menulis entri kegiatan praktikum. |
+| A2 Simpan Bukti atau Catatan | Sistem menyimpan isi logbook dan lampiran pendukung. |
+| A3 Review Logbook | Dosen memeriksa logbook mahasiswa. |
+| A4 Beri Umpan Balik | Dosen memberi catatan atau status review. |
+| A5 Lihat Riwayat Logbook | Pengguna melihat histori logbook yang tersimpan. |
 
 9. Diagram Level 2.9 — Proses 3.2 Peminjaman Alat dan Inventaris  
 Diagram Level 2.9 menjelaskan proses pengelolaan inventaris dan peminjaman alat laboratorium, mulai dari pengelolaan data inventaris, pengajuan peminjaman, verifikasi dan keputusan, pemantauan peminjaman aktif, hingga penyusunan laporan. Dalam alur ini, laboran mengelola data alat yang tersedia, dosen atau pihak terkait mengajukan peminjaman, kemudian sistem bersama aktor yang berwenang memeriksa ketersediaan dan menetapkan keputusan. Setelah peminjaman disetujui, sistem memantau status transaksi hingga akhirnya dapat menyusun laporan mengenai penggunaan alat dan kondisi inventaris.
@@ -285,20 +290,20 @@ Sumber file: [`docs/DFD-Level2-3.2-Peminjaman-Alat-dan-Inventaris-Yourdon.drawio
 
 Gambar 15. Data Flow Diagram Level 2.9 Proses 3.2 Peminjaman Alat dan Inventaris
 
-Tabel 15. Rincian Subproses 3.2 Peminjaman Alat dan Inventaris
+Tabel 15. Rincian Aktivitas Internal 3.2 Peminjaman Alat dan Inventaris
 
-| Sub-Proses | Deskripsi |
+| Kode Aktivitas | Deskripsi |
 |---|---|
-| 3.2.1 Kelola Inventaris | Laboran mengelola data inventaris alat. |
-| 3.2.2 Ajukan Peminjaman | Dosen mengajukan permohonan peminjaman alat. |
-| 3.2.3 Verifikasi dan Keputusan | Laboran dan admin memverifikasi serta menetapkan status peminjaman. |
-| 3.2.4 Monitor Peminjaman Aktif | Sistem menampilkan status peminjaman yang sedang berjalan. |
-| 3.2.5 Laporan | Sistem menyusun laporan terkait inventaris dan peminjaman. |
+| A1 Kelola Inventaris | Laboran mengelola data inventaris alat. |
+| A2 Ajukan Peminjaman | Dosen mengajukan permohonan peminjaman alat. |
+| A3 Verifikasi dan Keputusan | Laboran dan admin memverifikasi serta menetapkan status peminjaman. |
+| A4 Monitor Peminjaman Aktif | Sistem menampilkan status peminjaman yang sedang berjalan. |
+| A5 Laporan | Sistem menyusun laporan terkait inventaris dan peminjaman. |
 
 10. Diagram Level 2.10 — Proses 3.3 Pengumuman dan Notifikasi
 Diagram Level 2.10 memodelkan proses pengelolaan pengumuman dan notifikasi mulai dari pembuatan pengumuman oleh admin, penyimpanan dan publikasi informasi, distribusi berdasarkan role, penayangan daftar dan detail, hingga pengarsipan atau penghapusan informasi yang sudah tidak aktif. Pada alur ini, admin terlebih dahulu menyusun judul, konten, prioritas, dan target role, kemudian sistem menyimpan data tersebut ke media utama dan menyiapkannya agar dapat diakses oleh pengguna yang menjadi sasaran distribusi. Setelah dipublikasikan, pengumuman tidak hanya muncul sebagai informasi pasif, tetapi juga didorong menjadi notifikasi yang dapat diterima oleh mahasiswa, dosen, maupun laboran sesuai kebutuhan komunikasi sistem.
 
-Dari sudut pandang pembahasan hasil, proses 3.3 menunjukkan bahwa komunikasi data di dalam aplikasi telah dirancang sebagai mekanisme koordinasi antarmodul. Informasi yang dihasilkan dari proses jadwal, materi, kuis, peminjaman, atau layanan operasional lain dapat diteruskan melalui pengumuman dan notifikasi agar setiap aktor memperoleh pembaruan yang relevan dengan perannya. Kehadiran subproses tampilan daftar dan detail menunjukkan bahwa informasi tidak berhenti pada tahap distribusi, tetapi juga harus dapat dipanggil kembali dari basis data utama maupun cache lokal. Dengan demikian, proses ini memperlihatkan keterhubungan langsung antara modul komunikasi, modul akademik, dan dukungan akses cepat berbasis PWA.
+Dari sudut pandang pembahasan hasil, proses 3.3 menunjukkan bahwa komunikasi data di dalam aplikasi telah dirancang sebagai mekanisme koordinasi antarmodul. Informasi yang dihasilkan dari proses jadwal, materi, kuis, peminjaman, atau layanan operasional lain dapat diteruskan melalui pengumuman dan notifikasi agar setiap aktor memperoleh pembaruan yang relevan dengan perannya. Kehadiran aktivitas internal tampilan daftar dan detail menunjukkan bahwa informasi tidak berhenti pada tahap distribusi, tetapi juga harus dapat dipanggil kembali dari basis data utama maupun cache lokal. Dengan demikian, proses ini memperlihatkan keterhubungan langsung antara modul komunikasi, modul akademik, dan dukungan akses cepat berbasis PWA.
 
 [TEMPAT GAMBAR]
 Diagram Level 2.10 — Proses 3.3 Pengumuman dan Notifikasi
@@ -306,20 +311,20 @@ Sumber file: [`docs/DFD-Level2-3.3-Pengumuman-dan-Notifikasi-Yourdon.drawio`](do
 
 Gambar 16. Data Flow Diagram Level 2.10 Proses 3.3 Pengumuman dan Notifikasi
 
-Tabel 16. Rincian Subproses 3.3 Pengumuman dan Notifikasi
+Tabel 16. Rincian Aktivitas Internal 3.3 Pengumuman dan Notifikasi
 
-| Sub-Proses | Deskripsi |
+| Kode Aktivitas | Deskripsi |
 |---|---|
-| 3.3.1 Buat Pengumuman | Admin menyusun judul, konten, prioritas, dan target role. |
-| 3.3.2 Simpan dan Publikasikan | Sistem menyimpan pengumuman lalu memublikasikannya. |
-| 3.3.3 Distribusi Berdasarkan Role | Sistem mendistribusikan pengumuman atau notifikasi kepada role tujuan. |
-| 3.3.4 Tampilkan Daftar dan Detail | Pengguna melihat pengumuman aktif dari basis data atau cache lokal. |
-| 3.3.5 Arsipkan atau Hapus | Admin memperbarui, menonaktifkan, atau menghapus pengumuman. |
+| A1 Buat Pengumuman | Admin menyusun judul, konten, prioritas, dan target role. |
+| A2 Simpan dan Publikasikan | Sistem menyimpan pengumuman lalu memublikasikannya. |
+| A3 Distribusi Berdasarkan Role | Sistem mendistribusikan pengumuman atau notifikasi kepada role tujuan. |
+| A4 Tampilkan Daftar dan Detail | Pengguna melihat pengumuman aktif dari basis data atau cache lokal. |
+| A5 Arsipkan atau Hapus | Admin memperbarui, menonaktifkan, atau menghapus pengumuman. |
 
 11. Diagram Level 2.11 — Proses 4.1 Sinkronisasi Offline PWA
-Diagram Level 2.11 menggambarkan lapisan sinkronisasi offline sebagai karakteristik utama sistem berbasis Progressive Web App. Alur yang ditampilkan meliputi deteksi status jaringan, penyimpanan data ke cache lokal, penyimpanan operasi tulis ke dalam antrean, proses sinkronisasi kembali ke server ketika koneksi tersedia, serta penanganan konflik dan retry apabila terjadi kegagalan. Ketika perangkat berada pada kondisi offline, sistem tidak langsung menghentikan aktivitas pengguna, melainkan mengalihkan data penting ke cache dan menahan operasi mutasi pada antrean lokal. Setelah koneksi kembali tersedia, antrean tersebut diproses kembali ke basis data utama dan hasil sinkronisasi dicatat agar status data tetap dapat ditelusuri.
+Diagram Level 2.11 menggambarkan lapisan sinkronisasi offline sebagai karakteristik utama sistem berbasis Progressive Web App. Alur yang ditampilkan meliputi deteksi status koneksi, pengelolaan cache lokal, pencatatan perubahan ke antrean sinkronisasi, pengiriman ulang data ke Supabase / Server API ketika koneksi tersedia, serta penanganan konflik dan retry apabila terjadi kegagalan. Pada diagram ini, Mahasiswa berinteraksi dengan sistem yang dibantu oleh Service Worker untuk mengenali status jaringan dan menjaga kesinambungan layanan. Ketika perangkat berada pada kondisi offline, sistem tidak langsung menghentikan aktivitas pengguna, melainkan mempertahankan data penting melalui cache lokal dan menahan operasi mutasi pada antrean sinkronisasi. Setelah koneksi kembali tersedia, antrean tersebut diproses kembali ke server dan hasil sinkronisasinya dicatat agar status data tetap dapat ditelusuri.
 
-Dalam pembahasan hasil, proses 4.1 dapat dipandang sebagai lapisan integratif yang menghubungkan hampir seluruh modul aplikasi. Input dari kuis, logbook, materi, pengumuman, maupun transaksi lain dapat disimpan sementara pada media lokal tanpa menghilangkan kontinuitas kerja pengguna. Keberadaan cache memastikan data tertentu tetap dapat dibaca, sedangkan offline queue menjaga agar operasi tulis tetap tercatat untuk direkonsiliasi kemudian. Pada saat sinkronisasi berlangsung, sistem juga harus menangani konflik versi data dan percobaan ulang secara terkendali. Hal ini menunjukkan bahwa dukungan PWA pada sistem bukan sekadar fitur tambahan, tetapi mekanisme inti yang menjaga kesinambungan layanan akademik dan operasional pada kondisi jaringan yang berubah-ubah.
+Dalam pembahasan hasil, proses 4.1 dapat dipandang sebagai lapisan integratif yang menghubungkan hampir seluruh modul aplikasi. Input dari kuis, logbook, materi, pengumuman, maupun transaksi lain dapat disimpan sementara pada media lokal tanpa menghilangkan kontinuitas kerja pengguna. Keberadaan cache memastikan data tertentu tetap dapat dibaca, sedangkan queue sinkronisasi menjaga agar operasi tulis tetap tercatat untuk direkonsiliasi kemudian. Pada saat sinkronisasi berlangsung, sistem juga harus menangani konflik versi data dan percobaan ulang secara terkendali. Hal ini menunjukkan bahwa dukungan PWA pada sistem bukan sekadar fitur tambahan, tetapi mekanisme inti yang menjaga kesinambungan layanan akademik dan operasional pada kondisi jaringan yang berubah-ubah. Uraian ini juga sudah diselaraskan dengan komponen aktual pada diagram, yaitu Mahasiswa, Service Worker, Supabase / Server API, Cache Offline, dan Queue Sinkronisasi.
 
 [TEMPAT GAMBAR]
 Diagram Level 2.11 — Proses 4.1 Sinkronisasi Offline PWA
@@ -327,20 +332,20 @@ Sumber file: [`docs/DFD-Level2-4.1-Sinkronisasi-Offline-PWA-Yourdon.drawio`](doc
 
 Gambar 17. Data Flow Diagram Level 2.11 Proses 4.1 Sinkronisasi Offline PWA
 
-Tabel 17. Rincian Subproses 4.1 Sinkronisasi Offline PWA
+Tabel 17. Rincian Aktivitas Internal 4.1 Sinkronisasi Offline PWA
 
-| Sub-Proses | Deskripsi |
+| Kode Aktivitas | Deskripsi |
 |---|---|
-| 4.1.1 Deteksi Status Jaringan | Sistem mendeteksi kondisi online atau offline. |
-| 4.1.2 Simpan Data ke Cache | Data penting disimpan secara lokal untuk mendukung akses offline. |
-| 4.1.3 Simpan Operasi ke Queue | Operasi tulis ditahan sementara pada antrean saat perangkat offline. |
-| 4.1.4 Proses Sinkronisasi | Antrean operasi dikirim kembali ke sistem pusat ketika koneksi tersedia. |
-| 4.1.5 Tangani Konflik dan Retry | Sistem mengelola konflik data, percobaan ulang, dan status hasil sinkronisasi. |
+| A1 Deteksi Status Koneksi | Sistem mendeteksi kondisi online atau offline sebagai dasar penentuan mode layanan. |
+| A2 Kelola Cache Offline | Data penting disimpan atau diambil dari cache lokal agar tetap dapat dipakai saat koneksi terbatas. |
+| A3 Catat Perubahan ke Queue | Operasi tulis dicatat ke antrean sinkronisasi ketika perubahan belum dapat langsung dikirim ke server. |
+| A4 Sinkronkan Data ke Server | Antrean operasi dikirim kembali ke Supabase / Server API saat koneksi tersedia. |
+| A5 Tangani Konflik dan Retry | Sistem mengelola konflik data, percobaan ulang, dan status hasil sinkronisasi. |
 
 Kesimpulan Hasil Dekomposisi DFD Level 2  
 Berdasarkan uraian tersebut, dapat disimpulkan bahwa DFD Level 2 pada sistem ini telah mampu menggambarkan hubungan antarmodul secara rinci, berlapis, dan menyeluruh. Proses autentikasi dan pengelolaan user membentuk fondasi kontrol akses; proses jadwal, materi, kuis, kelas, kehadiran, dan penilaian membangun alur inti akademik; proses logbook, peminjaman, serta pengumuman memperluas sistem ke aspek operasional laboratorium; sedangkan sinkronisasi PWA menjadi lapisan penopang yang menjaga kesinambungan pertukaran data pada seluruh modul. Rincian ini menunjukkan bahwa setiap proses tidak bekerja secara terpisah, melainkan saling memberi masukan dan saling bergantung melalui aliran data yang konsisten.
 
-Dengan penyajian dalam sebelas diagram terpisah, setiap proses dapat dijelaskan secara lebih fokus tanpa menghilangkan hubungan logis antarproses. Hal ini membuat pembahasan pada [`docs/BAB4.md`](docs/BAB4.md) menjadi lebih kuat sebagai bagian hasil dan pembahasan skripsi, karena tidak hanya menampilkan daftar fungsi, tetapi juga menjelaskan bagaimana fungsi-fungsi tersebut saling terhubung untuk membentuk satu ekosistem informasi praktikum berbasis PWA yang utuh. Selain itu, penyesuaian narasi ini tetap konsisten dengan struktur pada [`docs/DFD.md`](docs/DFD.md:126), sehingga pembahasan menjadi lebih formal, lebih detail, dan lebih layak dipertanggungjawabkan secara akademik.
+Dengan penyajian dalam sebelas diagram terpisah, setiap proses dapat dijelaskan secara lebih fokus tanpa menghilangkan hubungan logis antarproses. Hal ini membuat pembahasan pada [`docs/BAB4.md`](docs/BAB4.md) menjadi lebih kuat sebagai bagian hasil dan pembahasan skripsi, karena tidak hanya menampilkan daftar fungsi, tetapi juga menjelaskan bagaimana fungsi-fungsi tersebut saling terhubung untuk membentuk satu ekosistem informasi praktikum berbasis PWA yang utuh. Selain itu, penyesuaian narasi ini tetap konsisten dengan struktur pada [`docs/DFD.md`](docs/DFD.md:127), sehingga pembahasan menjadi lebih formal, lebih detail, dan lebih layak dipertanggungjawabkan secara akademik.
 
 5.1.3 Entity Relationship Diagram (ERD)
 

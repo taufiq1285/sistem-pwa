@@ -226,9 +226,9 @@ export default function AttemptDetailPage() {
     return (
       <div className="role-page-shell p-4 sm:p-6 lg:p-8">
         <div className="role-page-content">
-          <div className="rounded-3xl border border-white/60 bg-white/90 p-10 text-center shadow-2xl dark:border-slate-700 dark:bg-slate-900/85">
+          <div className="rounded-3xl border border-border/60 bg-white/90 p-10 text-center shadow-2xl dark:bg-card">
             <Loader2 className="mx-auto h-10 w-10 animate-spin text-indigo-600" />
-            <p className="mt-4 text-base font-semibold text-slate-700 dark:text-slate-200">
+            <p className="mt-4 text-base font-semibold text-muted-foreground">
               Memuat detail hasil...
             </p>
           </div>
@@ -277,7 +277,7 @@ export default function AttemptDetailPage() {
         {/* Header */}
         <section className="relative overflow-hidden rounded-3xl border border-white/25 bg-linear-to-r from-primary via-primary/90 to-accent/85 p-6 text-primary-foreground shadow-2xl sm:p-8">
           <div className="absolute -top-20 -right-20 h-56 w-56 rounded-full bg-white/20 blur-3xl" />
-          <div className="absolute -bottom-20 -left-20 h-56 w-56 rounded-full bg-violet-300/20 blur-3xl" />
+          <div className="absolute -bottom-20 -left-20 h-56 w-56 rounded-full bg-accent/20 blur-3xl" />
 
           <div className="relative z-10 space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
@@ -312,7 +312,7 @@ export default function AttemptDetailPage() {
               <h1 className="text-2xl font-extrabold sm:text-3xl">
                 Detail Hasil Mahasiswa
               </h1>
-              <p className="mt-1 text-sm text-blue-100 sm:text-base">
+              <p className="mt-1 text-sm text-primary-foreground/80 sm:text-base">
                 Tinjau jawaban, berikan poin, dan simpan penilaian secara
                 konsisten.
               </p>
@@ -323,7 +323,7 @@ export default function AttemptDetailPage() {
         {/* Student & Quiz Info */}
         <div className="grid gap-6 md:grid-cols-3">
           {/* Student Info */}
-          <Card className="border-blue-200/70 bg-white/95 shadow-xl dark:border-blue-900/30 dark:bg-slate-900/85">
+          <Card className="border-primary/20 bg-white/95 shadow-xl dark:bg-card">
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
                 <User className="w-4 h-4" />
@@ -333,15 +333,15 @@ export default function AttemptDetailPage() {
             <CardContent>
               <div className="flex items-center gap-3 mb-4">
                 <Avatar className="h-12 w-12">
-                  <AvatarFallback className="bg-blue-600 text-white font-semibold">
+                  <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
                     {mahasiswa?.user?.full_name?.charAt(0) || "M"}
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <p className="font-semibold text-gray-900">
+                  <p className="font-semibold text-foreground">
                     {mahasiswa?.user?.full_name || "Unknown"}
                   </p>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-muted-foreground">
                     NIM: {mahasiswa?.nim || "-"}
                   </p>
                 </div>
@@ -351,7 +351,7 @@ export default function AttemptDetailPage() {
 
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Status:</span>
+                  <span className="text-muted-foreground">Status:</span>
                   <StatusBadge
                     status={
                       attempt.status === "graded"
@@ -367,7 +367,7 @@ export default function AttemptDetailPage() {
                 </div>
                 {attempt.started_at && (
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Mulai:</span>
+                    <span className="text-muted-foreground">Mulai:</span>
                     <span className="font-medium">
                       {format(
                         new Date(attempt.started_at),
@@ -379,7 +379,7 @@ export default function AttemptDetailPage() {
                 )}
                 {attempt.submitted_at && (
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Dikumpulkan:</span>
+                    <span className="text-muted-foreground">Dikumpulkan:</span>
                     <span className="font-medium">
                       {format(
                         new Date(attempt.submitted_at),
@@ -394,7 +394,7 @@ export default function AttemptDetailPage() {
           </Card>
 
           {/* Quiz Info */}
-          <Card className="border-purple-200/70 bg-white/95 shadow-xl dark:border-purple-900/30 dark:bg-slate-900/85">
+          <Card className="border-accent/20 bg-white/95 shadow-xl dark:bg-card">
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
                 <FileText className="w-4 h-4" />
@@ -403,8 +403,8 @@ export default function AttemptDetailPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                <h3 className="font-semibold text-gray-900">{kuis?.judul}</h3>
-                <p className="text-sm text-gray-600 line-clamp-2">
+                <h3 className="font-semibold text-foreground">{kuis?.judul}</h3>
+                <p className="text-sm text-muted-foreground line-clamp-2">
                   {kuis?.deskripsi || "Tidak ada deskripsi"}
                 </p>
               </div>
@@ -413,11 +413,11 @@ export default function AttemptDetailPage() {
 
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Total Soal:</span>
+                  <span className="text-muted-foreground">Total Soal:</span>
                   <span className="font-medium">{kuis?.soal?.length || 0}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Durasi:</span>
+                  <span className="text-muted-foreground">Durasi:</span>
                   <span className="font-medium">
                     {kuis?.durasi_menit} menit
                   </span>
@@ -427,7 +427,7 @@ export default function AttemptDetailPage() {
           </Card>
 
           {/* Score Summary */}
-          <Card className="border-emerald-200/70 bg-white/95 shadow-xl dark:border-emerald-900/30 dark:bg-slate-900/85">
+          <Card className="border-success/20 bg-white/95 shadow-xl dark:bg-card">
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
                 <Award className="w-4 h-4" />
@@ -436,10 +436,10 @@ export default function AttemptDetailPage() {
             </CardHeader>
             <CardContent>
               <div className="text-center mb-4">
-                <div className="text-4xl font-bold text-gray-900">
+                <div className="text-4xl font-bold text-foreground">
                   {totalScore.toFixed(0)}
                 </div>
-                <div className="text-sm text-gray-600">
+                <div className="text-sm text-muted-foreground">
                   dari {maxScore} poin
                 </div>
                 <div className="mt-2">
@@ -457,15 +457,17 @@ export default function AttemptDetailPage() {
 
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Benar:</span>
-                  <span className="font-medium text-green-600">
+                  <span className="text-muted-foreground">Benar:</span>
+                  <span className="font-medium text-success">
                     {attempt.jawaban?.filter((j) => checkAnswer(j, j.soal!))
                       .length || 0}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Salah/Belum Dinilai:</span>
-                  <span className="font-medium text-red-600">
+                  <span className="text-muted-foreground">
+                    Salah/Belum Dinilai:
+                  </span>
+                  <span className="font-medium text-danger">
                     {(kuis?.soal?.length || 0) -
                       (attempt.jawaban?.filter((j) => checkAnswer(j, j.soal!))
                         .length || 0)}
@@ -477,7 +479,7 @@ export default function AttemptDetailPage() {
         </div>
 
         {/* Jawaban List */}
-        <Card className="border border-white/70 bg-white/95 shadow-xl dark:border-slate-700 dark:bg-slate-900/85">
+        <Card className="border border-border/60 bg-white/95 shadow-xl dark:bg-card">
           <CardHeader>
             <CardTitle>Jawaban Mahasiswa</CardTitle>
             <CardDescription>
@@ -499,8 +501,8 @@ export default function AttemptDetailPage() {
                   className={cn(
                     "p-6 border-2 rounded-lg",
                     isCorrect
-                      ? "border-green-200 bg-green-50"
-                      : "border-gray-200 bg-gray-50",
+                      ? "border-success/40 bg-success/5"
+                      : "border-border/50 bg-muted/50",
                   )}
                 >
                   {/* Question Header */}
@@ -513,19 +515,21 @@ export default function AttemptDetailPage() {
                         </Badge>
                         <Badge variant="outline">{soal.poin} poin</Badge>
                         {autoGraded && (
-                          <StatusBadge status="info" pulse={false}>Auto-Graded</StatusBadge>
+                          <StatusBadge status="info" pulse={false}>
+                            Auto-Graded
+                          </StatusBadge>
                         )}
                       </div>
-                      <p className="text-base font-medium text-gray-900">
+                      <p className="text-base font-medium text-foreground">
                         {soal.pertanyaan}
                       </p>
                     </div>
                     {jawaban && (
                       <div className="ml-4">
                         {isCorrect ? (
-                          <CheckCircle2 className="w-6 h-6 text-green-600" />
+                          <CheckCircle2 className="w-6 h-6 text-success" />
                         ) : (
-                          <XCircle className="w-6 h-6 text-red-600" />
+                          <XCircle className="w-6 h-6 text-danger" />
                         )}
                       </div>
                     )}
@@ -537,30 +541,30 @@ export default function AttemptDetailPage() {
                     {soal.tipe_soal === "pilihan_ganda" && (
                       <div className="space-y-3">
                         <div className="bg-white p-4 rounded border">
-                          <Label className="text-sm text-gray-600 mb-2 block">
+                          <Label className="text-sm text-muted-foreground mb-2 block">
                             Jawaban Mahasiswa:
                           </Label>
                           <p
                             className={cn(
                               "font-semibold",
-                              isCorrect ? "text-green-700" : "text-red-700",
+                              isCorrect ? "text-success" : "text-danger",
                             )}
                           >
                             {jawaban?.jawaban_mahasiswa || "Tidak dijawab"}
                           </p>
                         </div>
 
-                        <div className="bg-blue-50 p-4 rounded border border-blue-200">
-                          <Label className="text-sm text-gray-600 mb-2 block">
+                        <div className="bg-primary/5 p-4 rounded border border-primary/20">
+                          <Label className="text-sm text-muted-foreground mb-2 block">
                             Jawaban Benar:
                           </Label>
-                          <p className="font-semibold text-blue-700">
+                          <p className="font-semibold text-primary">
                             {soal.jawaban_benar}
                           </p>
                         </div>
 
                         {soal.penjelasan && (
-                          <Alert className="bg-blue-50 border-blue-200">
+                          <Alert className="bg-primary/5 border-primary/20">
                             <AlertDescription>
                               <strong>Penjelasan:</strong> {soal.penjelasan}
                             </AlertDescription>
@@ -573,10 +577,10 @@ export default function AttemptDetailPage() {
                     {soal.tipe_soal === "essay" && jawaban && (
                       <div className="space-y-3">
                         <div className="bg-white p-4 rounded border">
-                          <Label className="text-sm text-gray-600 mb-2 block">
+                          <Label className="text-sm text-muted-foreground mb-2 block">
                             Jawaban Mahasiswa:
                           </Label>
-                          <p className="text-gray-900 whitespace-pre-wrap">
+                          <p className="text-foreground whitespace-pre-wrap">
                             {jawaban.jawaban_mahasiswa || "Tidak dijawab"}
                           </p>
                         </div>
@@ -631,17 +635,17 @@ export default function AttemptDetailPage() {
                       <div className="space-y-3">
                         {jawaban.file_url ? (
                           <div className="bg-white p-4 rounded border">
-                            <Label className="text-sm text-gray-600 mb-2 block">
+                            <Label className="text-sm text-muted-foreground mb-2 block">
                               File yang Diupload:
                             </Label>
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2">
-                                <FileText className="w-5 h-5 text-blue-600" />
+                                <FileText className="w-5 h-5 text-primary" />
                                 <div>
-                                  <p className="font-medium text-gray-900">
+                                  <p className="font-medium text-foreground">
                                     {jawaban.file_name || "File"}
                                   </p>
-                                  <p className="text-xs text-gray-500">
+                                  <p className="text-xs text-muted-foreground/60">
                                     {jawaban.file_type} •{" "}
                                     {jawaban.file_size
                                       ? (jawaban.file_size / 1024).toFixed(2)
@@ -665,10 +669,10 @@ export default function AttemptDetailPage() {
                         ) : jawaban.jawaban_mahasiswa ? (
                           // Student typed the answer instead of uploading file
                           <div className="bg-white p-4 rounded border">
-                            <Label className="text-sm text-gray-600 mb-2 block">
+                            <Label className="text-sm text-muted-foreground mb-2 block">
                               Jawaban Mahasiswa (Diketik):
                             </Label>
-                            <p className="text-gray-900 whitespace-pre-wrap">
+                            <p className="text-foreground whitespace-pre-wrap">
                               {jawaban.jawaban_mahasiswa}
                             </p>
                           </div>
@@ -743,11 +747,11 @@ export default function AttemptDetailPage() {
 
         {/* Save Button (Bottom) */}
         {hasChanges && (
-          <Card className="border-amber-200/80 bg-amber-50/90 shadow-xl dark:border-amber-900/40 dark:bg-amber-950/20">
+          <Card className="border-warning/30 bg-warning/5 shadow-xl dark:border-warning/20">
             <CardContent className="flex items-center justify-between p-4">
               <div className="flex items-center gap-2">
-                <AlertCircle className="w-5 h-5 text-orange-600" />
-                <span className="text-orange-900 font-medium">
+                <AlertCircle className="w-5 h-5 text-warning" />
+                <span className="text-warning font-medium">
                   Ada perubahan penilaian yang belum disimpan
                 </span>
               </div>

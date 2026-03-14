@@ -97,7 +97,10 @@ export default function PresensiPage() {
   };
 
   const getStatusBadge = (status: KehadiranStatus) => {
-    const statusMap: Record<KehadiranStatus, "success" | "info" | "warning" | "error"> = {
+    const statusMap: Record<
+      KehadiranStatus,
+      "success" | "info" | "warning" | "error"
+    > = {
       hadir: "success",
       izin: "info",
       sakit: "warning",

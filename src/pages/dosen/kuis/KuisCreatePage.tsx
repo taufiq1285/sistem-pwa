@@ -79,9 +79,9 @@ export default function KuisCreatePage() {
     return (
       <div className="role-page-shell p-4 sm:p-6 lg:p-8">
         <div className="role-page-content">
-          <div className="rounded-3xl border border-white/60 bg-white/90 p-10 text-center shadow-2xl dark:border-slate-700 dark:bg-slate-900/85">
-            <Loader2 className="mx-auto h-10 w-10 animate-spin text-indigo-600" />
-            <p className="mt-4 text-base font-semibold text-slate-700 dark:text-slate-200">
+          <div className="rounded-3xl border border-border/60 bg-white/90 p-10 text-center shadow-2xl dark:bg-card">
+            <Loader2 className="mx-auto h-10 w-10 animate-spin text-primary" />
+            <p className="mt-4 text-base font-semibold text-muted-foreground">
               Memuat profil dosen...
             </p>
           </div>
@@ -95,9 +95,9 @@ export default function KuisCreatePage() {
     return (
       <div className="role-page-shell p-4 sm:p-6 lg:p-8">
         <div className="role-page-content">
-          <Card className="rounded-3xl border-red-200 bg-red-50/80 shadow-2xl dark:border-red-900/40 dark:bg-red-950/20">
+          <Card className="rounded-3xl border-danger/30 bg-danger/5 shadow-2xl dark:border-danger/20">
             <CardContent className="p-8 text-center">
-              <p className="text-base font-semibold text-red-700 dark:text-red-300">
+              <p className="text-base font-semibold text-danger">
                 Data dosen tidak ditemukan. Silakan logout lalu login kembali.
               </p>
             </CardContent>
@@ -133,7 +133,7 @@ export default function KuisCreatePage() {
         <div className="role-page-content max-w-5xl space-y-6">
           <section className="relative overflow-hidden rounded-3xl border border-white/25 bg-linear-to-r from-primary via-primary/90 to-accent/85 p-6 text-primary-foreground shadow-2xl sm:p-8">
             <div className="absolute -top-20 -right-20 h-56 w-56 rounded-full bg-white/20 blur-3xl" />
-            <div className="absolute -bottom-20 -left-20 h-56 w-56 rounded-full bg-violet-300/20 blur-3xl" />
+            <div className="absolute -bottom-20 -left-20 h-56 w-56 rounded-full bg-accent/20 blur-3xl" />
 
             <div className="relative z-10 space-y-4">
               <Button
@@ -154,7 +154,7 @@ export default function KuisCreatePage() {
                 <h1 className="text-2xl font-extrabold sm:text-3xl">
                   Buat Tugas Praktikum
                 </h1>
-                <p className="text-sm text-blue-100 sm:text-base">
+                <p className="text-sm text-primary-foreground/80 sm:text-base">
                   Pilih jenis tugas yang ingin diberikan agar alur penilaian
                   lebih terstruktur dan konsisten.
                 </p>
@@ -162,30 +162,34 @@ export default function KuisCreatePage() {
             </div>
           </section>
 
-          <Card className="overflow-hidden rounded-3xl border border-white/70 bg-white/95 shadow-2xl dark:border-slate-700 dark:bg-slate-900/90">
+          <Card className="overflow-hidden rounded-3xl border border-border/60 bg-white/95 shadow-2xl dark:bg-card">
             <CardContent className="p-5 sm:p-7">
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 {/* Option 1: Laporan (WAJIB) */}
                 <button
                   onClick={() => setSelectedType("laporan")}
-                  className="group relative rounded-2xl border-2 border-green-200 bg-green-50/70 p-6 text-left transition-all hover:-translate-y-0.5 hover:border-green-400 hover:bg-green-100/70 hover:shadow-xl"
+                  className="group relative rounded-2xl border-2 border-success/30 bg-success/5 p-6 text-left transition-all hover:-translate-y-0.5 hover:border-success/60 hover:bg-success/10 hover:shadow-xl"
                 >
-                  <StatusBadge status="success" pulse={false} className="absolute right-3 top-3">
+                  <StatusBadge
+                    status="success"
+                    pulse={false}
+                    className="absolute right-3 top-3"
+                  >
                     WAJIB
                   </StatusBadge>
                   <div className="flex flex-col items-center gap-3 text-center">
-                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100 transition-colors group-hover:bg-green-200">
-                      <FileText className="h-8 w-8 text-green-600" />
+                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-success/10 transition-colors group-hover:bg-success/20">
+                      <FileText className="h-8 w-8 text-success" />
                     </div>
                     <div>
-                      <h3 className="mb-2 text-lg font-bold text-green-800">
+                      <h3 className="mb-2 text-lg font-bold text-success">
                         📄 Laporan Praktikum
                       </h3>
-                      <p className="text-sm text-green-700/80">
+                      <p className="text-sm text-success/70">
                         Mahasiswa membuat laporan dalam bentuk essay atau upload
                         file.
                       </p>
-                      <div className="mt-3 inline-block rounded-full bg-green-100 px-3 py-1 text-xs text-green-700">
+                      <div className="mt-3 inline-block rounded-full bg-success/10 px-3 py-1 text-xs text-success">
                         Essay • PDF • Word
                       </div>
                     </div>
@@ -195,7 +199,7 @@ export default function KuisCreatePage() {
                 {/* Option 2: Tes CBT (OPSIONAL) */}
                 <button
                   onClick={() => setSelectedType("tes")}
-                  className="group relative rounded-2xl border-2 border-blue-200 bg-blue-50/70 p-6 text-left transition-all hover:-translate-y-0.5 hover:border-blue-400 hover:bg-blue-100/70 hover:shadow-xl"
+                  className="group relative rounded-2xl border-2 border-primary/20 bg-primary/5 p-6 text-left transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:bg-primary/10 hover:shadow-xl"
                 >
                   <StatusBadge
                     status="info"
@@ -205,18 +209,18 @@ export default function KuisCreatePage() {
                     OPSIONAL
                   </StatusBadge>
                   <div className="flex flex-col items-center gap-3 text-center">
-                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-blue-100 transition-colors group-hover:bg-blue-200">
-                      <Monitor className="h-8 w-8 text-blue-600" />
+                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 transition-colors group-hover:bg-primary/20">
+                      <Monitor className="h-8 w-8 text-primary" />
                     </div>
                     <div>
-                      <h3 className="mb-2 text-lg font-bold text-blue-800">
+                      <h3 className="mb-2 text-lg font-bold text-primary">
                         🖥️ Tes CBT
                       </h3>
-                      <p className="text-sm text-blue-700/80">
+                      <p className="text-sm text-primary/70">
                         Pre-test atau Post-test dengan soal pilihan ganda
                         seperti UKOM.
                       </p>
-                      <div className="mt-3 inline-block rounded-full bg-blue-100 px-3 py-1 text-xs text-blue-700">
+                      <div className="mt-3 inline-block rounded-full bg-primary/10 px-3 py-1 text-xs text-primary">
                         Pilihan Ganda • Bank Soal
                       </div>
                     </div>
@@ -225,10 +229,10 @@ export default function KuisCreatePage() {
               </div>
 
               {/* Info Box */}
-              <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-4">
+              <div className="mt-6 rounded-xl border border-warning/30 bg-warning/5 p-4">
                 <div className="flex items-start gap-3">
-                  <Info className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
-                  <div className="text-sm text-amber-800">
+                  <Info className="mt-0.5 h-5 w-5 shrink-0 text-warning" />
+                  <div className="text-sm text-warning/90">
                     <strong>Info:</strong> Laporan praktikum{" "}
                     <strong>wajib</strong> ada untuk setiap praktikum. Sedangkan
                     tes (pre-test/post-test) bersifat <strong>opsional</strong>{" "}
@@ -316,7 +320,7 @@ export default function KuisCreatePage() {
         </section>
 
         {/* Form Builder */}
-        <div className="rounded-3xl border border-white/70 bg-white/95 p-3 shadow-2xl backdrop-blur-sm dark:border-slate-700 dark:bg-slate-900/90 sm:p-4 md:p-6">
+        <div className="rounded-3xl border border-border/60 bg-white/95 p-3 shadow-2xl backdrop-blur-sm dark:bg-card sm:p-4 md:p-6">
           <QuizBuilder
             dosenId={dosenId}
             cbtMode={selectedType === "tes"}

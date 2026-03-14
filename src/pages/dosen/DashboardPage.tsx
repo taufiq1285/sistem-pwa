@@ -1144,11 +1144,17 @@ export function DashboardPage() {
                                 {kuis.judul}
                               </h4>
                               <StatusBadge
-                                status={kuis.status === "published" ? "success" : "warning"}
+                                status={
+                                  kuis.status === "published"
+                                    ? "success"
+                                    : "warning"
+                                }
                                 pulse={false}
                                 className="font-bold"
                               >
-                                {kuis.status === "published" ? "Published" : "Draft"}
+                                {kuis.status === "published"
+                                  ? "Published"
+                                  : "Draft"}
                               </StatusBadge>
                             </div>
                             <p className="text-sm font-semibold text-muted-foreground mt-1">
@@ -1217,7 +1223,9 @@ export function DashboardPage() {
                     <div className="text-2xl font-bold text-primary">
                       {selectedKelas.totalMahasiswa}
                     </div>
-                    <div className="text-sm text-muted-foreground">Mahasiswa</div>
+                    <div className="text-sm text-muted-foreground">
+                      Mahasiswa
+                    </div>
                   </div>
                 </div>
 
@@ -1231,7 +1239,9 @@ export function DashboardPage() {
                     </div>
                   </div>
                   <div className="p-3 bg-muted/40 rounded-lg">
-                    <div className="font-medium text-muted-foreground">Semester</div>
+                    <div className="font-medium text-muted-foreground">
+                      Semester
+                    </div>
                     <div className="text-foreground">
                       {selectedKelas.semester_ajaran || "-"}
                     </div>

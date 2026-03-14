@@ -627,11 +627,37 @@ export default function UsersPage() {
 
       {/* Statistics Cards */}
       <div className="grid gap-5 md:grid-cols-5">
-        <DashboardCard title="Total" value={stats.total} description={`${stats.active} active`} icon={Users} color="primary" />
-        <DashboardCard title="Admin" value={stats.admin} icon={Shield} color="danger" />
-        <DashboardCard title="Dosen" value={stats.dosen} icon={GraduationCap} color="info" />
-        <DashboardCard title="Mahasiswa" value={stats.mahasiswa} icon={BookOpen} color="success" />
-        <DashboardCard title="Laboran" value={stats.laboran} icon={Microscope} color="warning" />
+        <DashboardCard
+          title="Total"
+          value={stats.total}
+          description={`${stats.active} active`}
+          icon={Users}
+          color="primary"
+        />
+        <DashboardCard
+          title="Admin"
+          value={stats.admin}
+          icon={Shield}
+          color="danger"
+        />
+        <DashboardCard
+          title="Dosen"
+          value={stats.dosen}
+          icon={GraduationCap}
+          color="info"
+        />
+        <DashboardCard
+          title="Mahasiswa"
+          value={stats.mahasiswa}
+          icon={BookOpen}
+          color="success"
+        />
+        <DashboardCard
+          title="Laboran"
+          value={stats.laboran}
+          icon={Microscope}
+          color="warning"
+        />
       </div>
 
       {/* Search */}

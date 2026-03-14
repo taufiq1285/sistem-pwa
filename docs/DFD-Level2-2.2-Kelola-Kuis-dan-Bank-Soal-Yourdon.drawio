@@ -24,35 +24,35 @@
       vertex="1" parent="1"><mxGeometry x="30" y="520" width="140" height="46" as="geometry"/></mxCell>
 
     <!-- PROSES -->
-    <mxCell id="P221" value="2.2.1&#xa;Buat&#xa;Kuis"
+    <mxCell id="P221" value="A1&#xa;Buat&#xa;Kuis"
       style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#222222;strokeWidth=1.5;fontColor=#111111;fontStyle=1;fontSize=13;"
       vertex="1" parent="1"><mxGeometry x="250" y="80" width="160" height="100" as="geometry"/></mxCell>
 
-    <mxCell id="P222" value="2.2.2&#xa;Kelola Bank&#xa;Soal"
+    <mxCell id="P222" value="A2&#xa;Kelola Bank&#xa;Soal"
       style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#222222;strokeWidth=1.5;fontColor=#111111;fontStyle=1;fontSize=13;"
       vertex="1" parent="1"><mxGeometry x="250" y="230" width="160" height="100" as="geometry"/></mxCell>
 
-    <mxCell id="P223" value="2.2.3&#xa;Publish&#xa;Kuis"
+    <mxCell id="P223" value="A3&#xa;Publish&#xa;Kuis"
       style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#222222;strokeWidth=1.5;fontColor=#111111;fontStyle=1;fontSize=13;"
       vertex="1" parent="1"><mxGeometry x="500" y="80" width="160" height="100" as="geometry"/></mxCell>
 
-    <mxCell id="P224" value="2.2.4&#xa;Ambil&#xa;Soal"
+    <mxCell id="P224" value="A4&#xa;Ambil&#xa;Soal"
       style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#222222;strokeWidth=1.5;fontColor=#111111;fontStyle=1;fontSize=13;"
       vertex="1" parent="1"><mxGeometry x="500" y="260" width="160" height="100" as="geometry"/></mxCell>
 
-    <mxCell id="P225" value="2.2.5&#xa;Kerjakan&#xa;Kuis"
+    <mxCell id="P225" value="A5&#xa;Kerjakan&#xa;Kuis"
       style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#222222;strokeWidth=1.5;fontColor=#111111;fontStyle=1;fontSize=13;"
       vertex="1" parent="1"><mxGeometry x="500" y="450" width="160" height="100" as="geometry"/></mxCell>
 
-    <mxCell id="P226" value="2.2.6&#xa;Auto-save&#xa;Offline"
+    <mxCell id="P226" value="A6&#xa;Auto-save&#xa;Offline"
       style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#222222;strokeWidth=1.5;fontColor=#111111;fontStyle=1;fontSize=13;"
       vertex="1" parent="1"><mxGeometry x="760" y="500" width="170" height="100" as="geometry"/></mxCell>
 
-    <mxCell id="P227" value="2.2.7&#xa;Submit dan&#xa;Penilaian"
+    <mxCell id="P227" value="A7&#xa;Submit dan&#xa;Penilaian"
       style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#222222;strokeWidth=1.5;fontColor=#111111;fontStyle=1;fontSize=13;"
       vertex="1" parent="1"><mxGeometry x="760" y="320" width="170" height="110" as="geometry"/></mxCell>
 
-    <mxCell id="P228" value="2.2.8&#xa;Lihat&#xa;Hasil"
+    <mxCell id="P228" value="A8&#xa;Lihat&#xa;Hasil"
       style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#222222;strokeWidth=1.5;fontColor=#111111;fontStyle=1;fontSize=13;"
       vertex="1" parent="1"><mxGeometry x="760" y="120" width="170" height="100" as="geometry"/></mxCell>
 

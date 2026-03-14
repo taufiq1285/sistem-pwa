@@ -686,9 +686,9 @@ export default function DosenPenilaianPage() {
     const baseClass = "w-20 text-center border transition-colors";
 
     if (hasValue) {
-      return `${baseClass} border-green-200 bg-green-50 focus:border-green-400 focus:bg-green-100`;
+      return `${baseClass} border-success/40 bg-success/5 focus:border-success focus:bg-success/10`;
     } else {
-      return `${baseClass} border-gray-200 bg-yellow-50 focus:border-yellow-400 focus:bg-yellow-100 placeholder:text-gray-400`;
+      return `${baseClass} border-border/50 bg-warning/5 focus:border-warning/60 focus:bg-warning/10 placeholder:text-muted-foreground/60`;
     }
   };
 
@@ -733,14 +733,14 @@ export default function DosenPenilaianPage() {
                 <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-linear-to-r from-primary to-accent dark:from-primary/80 dark:to-accent/80">
                   Penilaian Mahasiswa
                 </h1>
-                <p className="text-sm sm:text-base md:text-lg font-bold text-gray-700 dark:text-gray-300 mt-1">
+                <p className="text-sm sm:text-base md:text-lg font-bold text-muted-foreground dark:text-gray-300 mt-1">
                   {selectedKelas
                     ? "Input nilai mahasiswa dengan visual indicators untuk kemudahan tracking"
                     : "Pilih mata kuliah dan kelas untuk memulai penilaian"}
                 </p>
               </div>
             </div>
-            <p className="text-sm sm:text-base font-semibold text-gray-500 dark:text-gray-400 ml-1">
+            <p className="text-sm sm:text-base font-semibold text-muted-foreground dark:text-muted-foreground/60 ml-1">
               Kelola nilai mahasiswa dengan mudah dan akurat
             </p>
           </div>
@@ -780,10 +780,10 @@ export default function DosenPenilaianPage() {
                 <div className="bg-linear-to-br from-primary to-accent p-5 rounded-full mb-6 shadow-xl shadow-primary/30">
                   <ClipboardCheck className="w-16 h-16 text-primary-foreground" />
                 </div>
-                <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white mb-3">
+                <h2 className="text-3xl font-extrabold text-foreground dark:text-white mb-3">
                   Selamat Datang di Halaman Penilaian
                 </h2>
-                <p className="text-lg text-gray-700 dark:text-gray-300 text-center max-w-2xl mb-8">
+                <p className="text-lg text-muted-foreground dark:text-gray-300 text-center max-w-2xl mb-8">
                   Untuk memulai memberikan nilai, silakan pilih mata kuliah dan
                   kelas yang Anda ajarkan
                 </p>
@@ -831,7 +831,7 @@ export default function DosenPenilaianPage() {
                       </SelectTrigger>
                       <SelectContent>
                         {mataKuliahList.length === 0 ? (
-                          <div className="p-4 text-center text-gray-500">
+                          <div className="p-4 text-center text-muted-foreground">
                             Tidak ada mata kuliah tersedia
                           </div>
                         ) : (
@@ -842,7 +842,7 @@ export default function DosenPenilaianPage() {
                                   {mk.nama_mk}
                                 </span>
                                 {mk.kode_mk && (
-                                  <span className="text-xs text-gray-500">
+                                  <span className="text-xs text-muted-foreground">
                                     {mk.kode_mk}
                                   </span>
                                 )}
@@ -853,7 +853,7 @@ export default function DosenPenilaianPage() {
                       </SelectContent>
                     </Select>
                     {selectedMataKuliah && (
-                      <div className="flex items-center gap-2 text-base font-semibold text-green-600 bg-green-50 px-4 py-2 rounded-lg border-2 border-green-200">
+                      <div className="flex items-center gap-2 text-base font-semibold text-success bg-success/5 px-4 py-2 rounded-lg border-2 border-success/40">
                         <CheckCircle className="w-5 h-5" />
                         <span>Mata kuliah dipilih</span>
                       </div>
@@ -867,7 +867,7 @@ export default function DosenPenilaianPage() {
                         className={`flex items-center justify-center w-10 h-10 rounded-full text-lg font-bold shadow-lg ${
                           selectedMataKuliah
                             ? "bg-linear-to-br from-primary to-accent text-primary-foreground shadow-primary/30"
-                            : "bg-gray-300 text-gray-500"
+                            : "bg-gray-300 text-muted-foreground"
                         }`}
                       >
                         2
@@ -901,7 +901,7 @@ export default function DosenPenilaianPage() {
                       </SelectTrigger>
                       <SelectContent>
                         {kelasList.length === 0 ? (
-                          <div className="p-4 text-center text-gray-500">
+                          <div className="p-4 text-center text-muted-foreground">
                             {selectedMataKuliah
                               ? "Tidak ada kelas untuk mata kuliah ini"
                               : "Pilih mata kuliah terlebih dahulu"}
@@ -916,7 +916,7 @@ export default function DosenPenilaianPage() {
                       </SelectContent>
                     </Select>
                     {!selectedMataKuliah && (
-                      <div className="flex items-center gap-2 text-base font-semibold text-gray-600 bg-gray-100 px-4 py-2 rounded-lg border-2 border-gray-300">
+                      <div className="flex items-center gap-2 text-base font-semibold text-muted-foreground bg-muted/60 px-4 py-2 rounded-lg border-2 border-border/70">
                         <AlertTriangle className="w-5 h-5" />
                         <span>Pilih mata kuliah terlebih dahulu</span>
                       </div>
@@ -939,8 +939,8 @@ export default function DosenPenilaianPage() {
                 )}
 
                 {selectedMataKuliah && kelasList.length === 0 && (
-                  <Alert className="mt-8 border-2 border-orange-200 bg-linear-to-r from-orange-50 to-amber-50 shadow-lg">
-                    <AlertTriangle className="h-5 w-5 text-orange-600" />
+                  <Alert className="mt-8 border-2 border-warning/40 bg-linear-to-r from-warning/5 to-warning/10 shadow-lg">
+                    <AlertTriangle className="h-5 w-5 text-warning" />
                     <AlertDescription className="text-base font-semibold">
                       Belum ada kelas untuk mata kuliah{" "}
                       <strong>{currentMataKuliahInfo?.nama_mk}</strong>. Silakan
@@ -1101,7 +1101,7 @@ export default function DosenPenilaianPage() {
                     <CardContent className="relative">
                       <div className="grid grid-cols-2 gap-3">
                         <div className="flex justify-between items-center p-3 bg-background rounded-xl border-2 border-primary/20 shadow-sm hover:shadow-md transition-shadow">
-                          <span className="text-sm font-bold text-gray-700">
+                          <span className="text-sm font-bold text-muted-foreground">
                             UTS
                           </span>
                           <span className="text-lg font-black text-primary">
@@ -1109,7 +1109,7 @@ export default function DosenPenilaianPage() {
                           </span>
                         </div>
                         <div className="flex justify-between items-center p-3 bg-background rounded-xl border-2 border-primary/20 shadow-sm hover:shadow-md transition-shadow">
-                          <span className="text-sm font-bold text-gray-700">
+                          <span className="text-sm font-bold text-muted-foreground">
                             UAS
                           </span>
                           <span className="text-lg font-black text-primary">
@@ -1117,7 +1117,7 @@ export default function DosenPenilaianPage() {
                           </span>
                         </div>
                         <div className="flex justify-between items-center p-3 bg-background rounded-xl border-2 border-primary/20 shadow-sm hover:shadow-md transition-shadow">
-                          <span className="text-sm font-bold text-gray-700">
+                          <span className="text-sm font-bold text-muted-foreground">
                             Praktikum
                           </span>
                           <span className="text-lg font-black text-primary">
@@ -1125,7 +1125,7 @@ export default function DosenPenilaianPage() {
                           </span>
                         </div>
                         <div className="flex justify-between items-center p-3 bg-background rounded-xl border-2 border-primary/20 shadow-sm hover:shadow-md transition-shadow">
-                          <span className="text-sm font-bold text-gray-700">
+                          <span className="text-sm font-bold text-muted-foreground">
                             Kehadiran
                           </span>
                           <span className="text-lg font-black text-primary">
@@ -1155,32 +1155,32 @@ export default function DosenPenilaianPage() {
                       </CardHeader>
                       <CardContent className="relative">
                         <div className="grid grid-cols-2 gap-3">
-                          <div className="p-4 bg-white rounded-xl border-2 border-green-200 shadow-sm hover:shadow-md transition-shadow">
-                            <p className="text-xs font-bold text-gray-600 mb-1">
+                          <div className="p-4 bg-white rounded-xl border-2 border-success/40 shadow-sm hover:shadow-md transition-shadow">
+                            <p className="text-xs font-bold text-muted-foreground mb-1">
                               Total Mahasiswa
                             </p>
-                            <p className="text-3xl font-black text-gray-900">
+                            <p className="text-3xl font-black text-foreground">
                               {summary.total_mahasiswa}
                             </p>
                           </div>
-                          <div className="p-4 bg-white rounded-xl border-2 border-green-200 shadow-sm hover:shadow-md transition-shadow">
-                            <p className="text-xs font-bold text-gray-600 mb-1">
+                          <div className="p-4 bg-white rounded-xl border-2 border-success/40 shadow-sm hover:shadow-md transition-shadow">
+                            <p className="text-xs font-bold text-muted-foreground mb-1">
                               Sudah Dinilai
                             </p>
-                            <p className="text-3xl font-black text-green-600">
+                            <p className="text-3xl font-black text-success">
                               {summary.sudah_dinilai}
                             </p>
                           </div>
-                          <div className="p-4 bg-white rounded-xl border-2 border-green-200 shadow-sm hover:shadow-md transition-shadow">
-                            <p className="text-xs font-bold text-gray-600 mb-1">
+                          <div className="p-4 bg-white rounded-xl border-2 border-success/40 shadow-sm hover:shadow-md transition-shadow">
+                            <p className="text-xs font-bold text-muted-foreground mb-1">
                               Belum Dinilai
                             </p>
-                            <p className="text-3xl font-black text-orange-600">
+                            <p className="text-3xl font-black text-warning">
                               {summary.belum_dinilai}
                             </p>
                           </div>
-                          <div className="p-4 bg-white rounded-xl border-2 border-green-200 shadow-sm hover:shadow-md transition-shadow">
-                            <p className="text-xs font-bold text-gray-600 mb-1">
+                          <div className="p-4 bg-white rounded-xl border-2 border-success/40 shadow-sm hover:shadow-md transition-shadow">
+                            <p className="text-xs font-bold text-muted-foreground mb-1">
                               Rata-rata
                             </p>
                             <p className="text-3xl font-black text-primary">
@@ -1205,19 +1205,19 @@ export default function DosenPenilaianPage() {
                     </p>
                     <div className="grid md:grid-cols-3 gap-3 text-sm">
                       <div className="flex items-center gap-2">
-                        <div className="w-5 h-5 bg-yellow-50 border-2 border-yellow-400 rounded"></div>
-                        <span className="text-gray-700">
+                        <div className="w-5 h-5 bg-warning/10 border-2 border-warning/60 rounded"></div>
+                        <span className="text-muted-foreground">
                           Kotak kuning = Belum ada nilai
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <div className="w-5 h-5 bg-green-50 border-2 border-green-400 rounded"></div>
-                        <span className="text-gray-700">
+                        <div className="w-5 h-5 bg-success/5 border-2 border-success/60 rounded"></div>
+                        <span className="text-muted-foreground">
                           Kotak hijau = Sudah ada nilai
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-gray-700">
+                        <span className="text-muted-foreground">
                           Double-click baris untuk edit lengkap
                         </span>
                       </div>
@@ -1231,7 +1231,7 @@ export default function DosenPenilaianPage() {
             {selectedKelas && (
               <div className="flex items-center gap-4">
                 <div className="flex-1 relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60" />
                   <Input
                     placeholder="Cari mahasiswa (NIM atau nama)..."
                     value={searchQuery}
@@ -1257,7 +1257,7 @@ export default function DosenPenilaianPage() {
                       </CardDescription>
                     </div>
                     {searchQuery && (
-                      <div className="text-sm text-gray-600">
+                      <div className="text-sm text-muted-foreground">
                         Hasil pencarian: {filteredMahasiswa.length} dari{" "}
                         {mahasiswaList.length}
                       </div>
@@ -1269,26 +1269,26 @@ export default function DosenPenilaianPage() {
                     <div className="flex items-center justify-center h-64">
                       <div className="text-center">
                         <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-3" />
-                        <p className="text-gray-600">
+                        <p className="text-muted-foreground">
                           Memuat data mahasiswa...
                         </p>
                       </div>
                     </div>
                   ) : filteredMahasiswa.length === 0 ? (
                     <div className="text-center py-16">
-                      <div className="bg-gray-100 p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                      <div className="bg-muted/60 p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
                         {searchQuery ? (
-                          <Search className="w-8 h-8 text-gray-400" />
+                          <Search className="w-8 h-8 text-muted-foreground/60" />
                         ) : (
-                          <Users className="w-8 h-8 text-gray-400" />
+                          <Users className="w-8 h-8 text-muted-foreground/60" />
                         )}
                       </div>
-                      <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                      <h3 className="text-lg font-semibold text-foreground mb-2">
                         {searchQuery
                           ? "Tidak Ada Hasil Pencarian"
                           : "Belum Ada Mahasiswa"}
                       </h3>
-                      <p className="text-gray-600 mb-4">
+                      <p className="text-muted-foreground mb-4">
                         {searchQuery
                           ? `Tidak ditemukan mahasiswa dengan kata kunci "${searchQuery}"`
                           : "Kelas ini belum memiliki mahasiswa terdaftar"}
@@ -1364,12 +1364,12 @@ export default function DosenPenilaianPage() {
                                 <TableCell>
                                   <div className="flex items-center justify-center">
                                     {isMahasiswaGraded(mahasiswa) ? (
-                                      <div className="flex items-center gap-1 px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
+                                      <div className="flex items-center gap-1 px-2 py-1 bg-success/10 text-success rounded-full text-xs font-medium">
                                         <CheckCircle className="w-3 h-3" />
                                         Selesai
                                       </div>
                                     ) : (
-                                      <div className="flex items-center gap-1 px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-medium">
+                                      <div className="flex items-center gap-1 px-2 py-1 bg-warning/10 text-warning rounded-full text-xs font-medium">
                                         <AlertTriangle className="w-3 h-3" />
                                         Belum
                                       </div>
@@ -1522,14 +1522,14 @@ export default function DosenPenilaianPage() {
                                   <span
                                     className={`px-2 py-1 rounded font-bold ${
                                       nilaiHuruf.startsWith("A")
-                                        ? "bg-green-100 text-green-800"
+                                        ? "bg-success/10 text-success"
                                         : nilaiHuruf.startsWith("B")
-                                          ? "bg-blue-100 text-blue-800"
+                                          ? "bg-info/10 text-info"
                                           : nilaiHuruf.startsWith("C")
-                                            ? "bg-yellow-100 text-yellow-800"
+                                            ? "bg-warning/10 text-warning"
                                             : nilaiHuruf.startsWith("D")
-                                              ? "bg-orange-100 text-orange-800"
-                                              : "bg-red-100 text-red-800"
+                                              ? "bg-warning/10 text-warning"
+                                              : "bg-danger/10 text-danger"
                                     }`}
                                   >
                                     {nilaiHuruf}
@@ -1579,9 +1579,9 @@ export default function DosenPenilaianPage() {
             {/* Unsaved Changes Warning */}
             {selectedKelas && hasChanges && (
               <Alert className="border-orange-300 bg-orange-50">
-                <AlertTriangle className="h-5 w-5 text-orange-600" />
+                <AlertTriangle className="h-5 w-5 text-warning" />
                 <AlertDescription className="flex items-center justify-between">
-                  <span className="text-orange-900">
+                  <span className="text-warning">
                     <strong>Perhatian!</strong> Ada {editedGrades.size}{" "}
                     perubahan yang belum disimpan. Klik tombol{" "}
                     <strong>"Simpan Semua"</strong> di pojok kanan atas untuk
@@ -1636,7 +1636,9 @@ export default function DosenPenilaianPage() {
                     onChange={(e) => handleBobotChange("kuis", e.target.value)}
                     className="w-24 border-2"
                   />
-                  <span className="text-sm font-bold text-gray-600">%</span>
+                  <span className="text-sm font-bold text-muted-foreground">
+                    %
+                  </span>
                 </div>
               </div>
 
@@ -1655,7 +1657,9 @@ export default function DosenPenilaianPage() {
                     onChange={(e) => handleBobotChange("tugas", e.target.value)}
                     className="w-24 border-2"
                   />
-                  <span className="text-sm font-bold text-gray-600">%</span>
+                  <span className="text-sm font-bold text-muted-foreground">
+                    %
+                  </span>
                 </div>
               </div>
 
@@ -1674,7 +1678,9 @@ export default function DosenPenilaianPage() {
                     onChange={(e) => handleBobotChange("uts", e.target.value)}
                     className="w-24 border-2"
                   />
-                  <span className="text-sm font-bold text-gray-600">%</span>
+                  <span className="text-sm font-bold text-muted-foreground">
+                    %
+                  </span>
                 </div>
               </div>
 
@@ -1693,7 +1699,9 @@ export default function DosenPenilaianPage() {
                     onChange={(e) => handleBobotChange("uas", e.target.value)}
                     className="w-24 border-2"
                   />
-                  <span className="text-sm font-bold text-gray-600">%</span>
+                  <span className="text-sm font-bold text-muted-foreground">
+                    %
+                  </span>
                 </div>
               </div>
 
@@ -1714,7 +1722,9 @@ export default function DosenPenilaianPage() {
                     }
                     className="w-24 border-2"
                   />
-                  <span className="text-sm font-bold text-gray-600">%</span>
+                  <span className="text-sm font-bold text-muted-foreground">
+                    %
+                  </span>
                 </div>
               </div>
 
@@ -1735,7 +1745,9 @@ export default function DosenPenilaianPage() {
                     }
                     className="w-24 border-2"
                   />
-                  <span className="text-sm font-bold text-gray-600">%</span>
+                  <span className="text-sm font-bold text-muted-foreground">
+                    %
+                  </span>
                 </div>
               </div>
 
@@ -1746,14 +1758,14 @@ export default function DosenPenilaianPage() {
                   <div
                     className={`text-2xl font-black ${
                       validateBobotNilai(editingBobot).valid
-                        ? "text-green-600"
-                        : "text-red-600"
+                        ? "text-success"
+                        : "text-danger"
                     }`}
                   >
                     {validateBobotNilai(editingBobot).total}%
                   </div>
                   {!validateBobotNilai(editingBobot).valid && (
-                    <p className="text-sm font-bold text-red-600 mt-1">
+                    <p className="text-sm font-bold text-danger mt-1">
                       Total harus 100%
                     </p>
                   )}
@@ -1761,7 +1773,7 @@ export default function DosenPenilaianPage() {
               </div>
             </div>
 
-            <DialogFooter className="p-6 border-t bg-gray-50 dark:bg-slate-800">
+            <DialogFooter className="p-6 border-t bg-muted/40 dark:bg-slate-800">
               <Button
                 variant="outline"
                 onClick={() => setShowBobotDialog(false)}
@@ -2001,7 +2013,7 @@ export default function DosenPenilaianPage() {
               </div>
             </div>
 
-            <DialogFooter className="p-6 border-t bg-gray-50 dark:bg-slate-800">
+            <DialogFooter className="p-6 border-t bg-muted/40 dark:bg-slate-800">
               <Button
                 variant="outline"
                 onClick={() => {
@@ -2055,7 +2067,7 @@ export default function DosenPenilaianPage() {
                       Jumlah mahasiswa: {editedGrades.size} orang
                     </p>
                   </div>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-muted-foreground">
                     Pastikan Anda sudah memilih{" "}
                     <strong>mata kuliah yang benar</strong> sebelum menyimpan.
                   </p>
@@ -2081,7 +2093,7 @@ export default function DosenPenilaianPage() {
         >
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle className="flex items-center gap-2 text-orange-600">
+              <AlertDialogTitle className="flex items-center gap-2 text-warning">
                 <AlertTriangle className="h-5 w-5" />
                 Peringatan: Ada Perubahan Belum Disimpan!
               </AlertDialogTitle>
@@ -2091,15 +2103,15 @@ export default function DosenPenilaianPage() {
                   yang belum disimpan untuk:
                 </p>
                 <div className="p-3 bg-orange-50 dark:bg-orange-950 rounded-md border border-orange-200 dark:border-orange-800">
-                  <p className="font-semibold text-orange-900 dark:text-orange-100">
+                  <p className="font-semibold text-warning dark:text-orange-100">
                     📚 {currentMataKuliah} - {currentNamaKelas}
                   </p>
                 </div>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-muted-foreground">
                   Jika Anda pindah mata kuliah sekarang, semua perubahan akan{" "}
                   <strong>hilang</strong>.
                 </p>
-                <p className="text-sm font-semibold text-orange-700">
+                <p className="text-sm font-semibold text-warning">
                   Apakah Anda yakin ingin pindah mata kuliah tanpa menyimpan?
                 </p>
               </AlertDialogDescription>
@@ -2125,7 +2137,7 @@ export default function DosenPenilaianPage() {
         >
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle className="flex items-center gap-2 text-orange-600">
+              <AlertDialogTitle className="flex items-center gap-2 text-warning">
                 <AlertTriangle className="h-5 w-5" />
                 Peringatan: Ada Perubahan Belum Disimpan!
               </AlertDialogTitle>
@@ -2135,15 +2147,15 @@ export default function DosenPenilaianPage() {
                   yang belum disimpan untuk:
                 </p>
                 <div className="p-3 bg-orange-50 dark:bg-orange-950 rounded-md border border-orange-200 dark:border-orange-800">
-                  <p className="font-semibold text-orange-900 dark:text-orange-100">
+                  <p className="font-semibold text-warning dark:text-orange-100">
                     📚 {currentMataKuliah} - {currentNamaKelas}
                   </p>
                 </div>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-muted-foreground">
                   Jika Anda pindah kelas sekarang, semua perubahan akan{" "}
                   <strong>hilang</strong>.
                 </p>
-                <p className="text-sm font-semibold text-orange-700">
+                <p className="text-sm font-semibold text-warning">
                   Apakah Anda yakin ingin pindah kelas tanpa menyimpan?
                 </p>
               </AlertDialogDescription>

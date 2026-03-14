@@ -923,7 +923,11 @@ export function DashboardPage() {
                               <span>{formatDate(announcement.created_at)}</span>
                             </div>
                           </div>
-                          <StatusBadge status="info" pulse={false} className="text-xs">
+                          <StatusBadge
+                            status="info"
+                            pulse={false}
+                            className="text-xs"
+                          >
                             Baru
                           </StatusBadge>
                         </div>

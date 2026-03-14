@@ -96,11 +96,23 @@ export default function LaboranPengumumanPage() {
   const getPriorityBadge = (priority: string) => {
     switch (priority) {
       case "high":
-        return <StatusBadge status="error" pulse={false}>Penting</StatusBadge>;
+        return (
+          <StatusBadge status="error" pulse={false}>
+            Penting
+          </StatusBadge>
+        );
       case "medium":
-        return <StatusBadge status="warning" pulse={false}>Menengah</StatusBadge>;
+        return (
+          <StatusBadge status="warning" pulse={false}>
+            Menengah
+          </StatusBadge>
+        );
       case "low":
-        return <StatusBadge status="info" pulse={false}>Biasa</StatusBadge>;
+        return (
+          <StatusBadge status="info" pulse={false}>
+            Biasa
+          </StatusBadge>
+        );
       default:
         return null;
     }
@@ -109,11 +121,23 @@ export default function LaboranPengumumanPage() {
   const getTypeBadge = (type: string) => {
     switch (type) {
       case "info":
-        return <StatusBadge status="info" pulse={false}>Informasi</StatusBadge>;
+        return (
+          <StatusBadge status="info" pulse={false}>
+            Informasi
+          </StatusBadge>
+        );
       case "warning":
-        return <StatusBadge status="warning" pulse={false}>Peringatan</StatusBadge>;
+        return (
+          <StatusBadge status="warning" pulse={false}>
+            Peringatan
+          </StatusBadge>
+        );
       case "event":
-        return <StatusBadge status="online" pulse={false}>Event</StatusBadge>;
+        return (
+          <StatusBadge status="online" pulse={false}>
+            Event
+          </StatusBadge>
+        );
       default:
         return null;
     }

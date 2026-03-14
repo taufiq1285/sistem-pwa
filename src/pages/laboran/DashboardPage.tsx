@@ -46,7 +46,6 @@ import {
   ArrowRight,
   User,
   FlaskConical,
-  TrendingUp,
   Sparkles,
   Shield,
 } from "lucide-react";
@@ -572,7 +571,7 @@ export function DashboardPage() {
                         className="flex gap-3 p-4 border-2 border-danger/20 rounded-xl hover:bg-danger/5 hover:border-danger/40 transition-all duration-300 shadow-sm hover:shadow-md group"
                       >
                         <div className="shrink-0">
-                          <div className="w-12 h-12 bg-linear-to-br from-rose-500 to-red-600 rounded-xl shadow-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                          <div className="w-12 h-12 bg-linear-to-br from-danger/80 to-danger rounded-xl shadow-lg flex items-center justify-center group-hover:scale-110 transition-transform">
                             <AlertTriangle className="h-5 w-5 text-primary-foreground" />
                           </div>
                         </div>
@@ -583,7 +582,7 @@ export function DashboardPage() {
                             </h4>
                             <Badge
                               variant="secondary"
-                              className="text-xs bg-rose-100 text-rose-700 font-semibold"
+                              className="text-xs bg-danger/10 text-danger font-semibold"
                             >
                               {alert.kode_barang}
                             </Badge>

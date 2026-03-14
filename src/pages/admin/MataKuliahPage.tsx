@@ -205,7 +205,7 @@ export default function MataKuliahPage() {
           <DataTableColumnHeader column={column} title="Nama Mata Kuliah" />
         ),
         cell: ({ row }) => (
-          <div className="max-w-[300px]">
+          <div className="max-w-75">
             <div className="font-semibold">{row.getValue("nama_mk")}</div>
             {row.original.deskripsi && (
               <div className="text-sm text-muted-foreground truncate">
@@ -305,7 +305,7 @@ export default function MataKuliahPage() {
 
       {/* Dialog */}
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="sm:max-w-[500px] p-6">
+        <DialogContent className="sm:max-w-125 p-6">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold">
               {editingMK ? "Edit Mata Kuliah" : "Tambah Mata Kuliah"}

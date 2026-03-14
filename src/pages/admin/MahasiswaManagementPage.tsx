@@ -300,10 +300,30 @@ export default function AdminMahasiswaPage() {
 
       {/* Statistics Cards */}
       <div className="grid gap-4 md:grid-cols-4">
-        <DashboardCard title="Total Mahasiswa" value={stats.total} icon={Users} color="primary" />
-        <DashboardCard title="Mahasiswa Aktif" value={stats.active} icon={UserCheck} color="success" />
-        <DashboardCard title="Program Studi" value={stats.programs} icon={BookOpen} color="accent" />
-        <DashboardCard title="Angkatan" value={stats.angkatan} icon={GraduationCap} color="warning" />
+        <DashboardCard
+          title="Total Mahasiswa"
+          value={stats.total}
+          icon={Users}
+          color="primary"
+        />
+        <DashboardCard
+          title="Mahasiswa Aktif"
+          value={stats.active}
+          icon={UserCheck}
+          color="success"
+        />
+        <DashboardCard
+          title="Program Studi"
+          value={stats.programs}
+          icon={BookOpen}
+          color="accent"
+        />
+        <DashboardCard
+          title="Angkatan"
+          value={stats.angkatan}
+          icon={GraduationCap}
+          color="warning"
+        />
       </div>
 
       {/* Filters */}

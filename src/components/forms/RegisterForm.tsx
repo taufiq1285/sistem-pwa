@@ -295,7 +295,10 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
                           </CardTitle>
                           {isSelected && (
                             <CheckCircle2
-                              className={cn("h-4 w-4 shrink-0", config.iconClass)}
+                              className={cn(
+                                "h-4 w-4 shrink-0",
+                                config.iconClass,
+                              )}
                             />
                           )}
                         </div>

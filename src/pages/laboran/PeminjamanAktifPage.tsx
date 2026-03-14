@@ -202,12 +202,13 @@ export default function PeminjamanAktifPage() {
   };
 
   const getKondisiBadge = (kondisi: string) => {
-    const kondisiMap: Record<string, "success" | "warning" | "error" | "info"> = {
-      baik: "success",
-      rusak_ringan: "warning",
-      rusak_berat: "error",
-      maintenance: "info",
-    };
+    const kondisiMap: Record<string, "success" | "warning" | "error" | "info"> =
+      {
+        baik: "success",
+        rusak_ringan: "warning",
+        rusak_berat: "error",
+        maintenance: "info",
+      };
     const labels: Record<string, string> = {
       baik: "Baik",
       rusak_ringan: "Rusak Ringan",
@@ -510,7 +511,11 @@ export default function PeminjamanAktifPage() {
                                   {formatDate(borrowing.tanggal_kembali_aktual)}
                                 </div>
                                 {borrowing.was_overdue && (
-                                  <StatusBadge status="error" pulse={false} className="mt-1 text-xs">
+                                  <StatusBadge
+                                    status="error"
+                                    pulse={false}
+                                    className="mt-1 text-xs"
+                                  >
                                     Terlambat
                                   </StatusBadge>
                                 )}

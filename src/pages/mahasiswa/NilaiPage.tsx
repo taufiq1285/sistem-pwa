@@ -682,15 +682,25 @@ export default function MahasiswaNilaiPageEnhanced() {
                             </TableCell>
                             <TableCell>
                               {(() => {
-                                const statusMap: Record<string, "warning" | "success" | "error" | "offline"> = {
+                                const statusMap: Record<
+                                  string,
+                                  "warning" | "success" | "error" | "offline"
+                                > = {
                                   pending: "warning",
                                   approved: "success",
                                   rejected: "error",
                                   cancelled: "offline",
                                 };
                                 return (
-                                  <StatusBadge status={statusMap[req.status] || "warning"} pulse={false}>
-                                    {STATUS_PERMINTAAN_LABELS[req.status as keyof typeof STATUS_PERMINTAAN_LABELS]}
+                                  <StatusBadge
+                                    status={statusMap[req.status] || "warning"}
+                                    pulse={false}
+                                  >
+                                    {
+                                      STATUS_PERMINTAAN_LABELS[
+                                        req.status as keyof typeof STATUS_PERMINTAAN_LABELS
+                                      ]
+                                    }
                                   </StatusBadge>
                                 );
                               })()}

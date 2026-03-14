@@ -203,12 +203,13 @@ export default function KuisListPage() {
   };
 
   const getStatusBadge = (status: string) => {
-    const statusMap: Record<string, "info" | "success" | "offline" | "error"> = {
-      upcoming: "info",
-      ongoing: "success",
-      completed: "offline",
-      missed: "error",
-    };
+    const statusMap: Record<string, "info" | "success" | "offline" | "error"> =
+      {
+        upcoming: "info",
+        ongoing: "success",
+        completed: "offline",
+        missed: "error",
+      };
     const labels: Record<string, string> = {
       upcoming: "Belum Dimulai",
       ongoing: "Sedang Berlangsung",

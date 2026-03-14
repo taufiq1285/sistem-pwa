@@ -52,7 +52,9 @@ export function ConflictsPage() {
                 {pendingConflicts.length}
               </span>
               {pendingConflicts.length > 0 && (
-                <StatusBadge status="error" pulse>Action Required</StatusBadge>
+                <StatusBadge status="error" pulse>
+                  Action Required
+                </StatusBadge>
               )}
             </div>
           </CardContent>
@@ -69,7 +71,9 @@ export function ConflictsPage() {
               <span className="text-4xl font-extrabold text-green-600">
                 {resolvedConflicts.length}
               </span>
-              <StatusBadge status="success" pulse={false}>Success</StatusBadge>
+              <StatusBadge status="success" pulse={false}>
+                Success
+              </StatusBadge>
             </div>
           </CardContent>
         </Card>

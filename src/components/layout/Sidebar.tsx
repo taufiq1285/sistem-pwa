@@ -132,7 +132,9 @@ export function Sidebar({
                         variant="secondary"
                         className={cn(
                           "ml-auto px-2 py-0.5 text-xs font-bold",
-                          active ? "border-white/25 bg-white/15 text-white" : theme.badgeBg,
+                          active
+                            ? "border-white/25 bg-white/15 text-white"
+                            : theme.badgeBg,
                         )}
                       >
                         {item.badge}

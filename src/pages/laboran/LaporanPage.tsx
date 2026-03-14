@@ -751,7 +751,9 @@ export default function LaporanPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <StatusBadge status="error" pulse={false}>Perlu Restock</StatusBadge>
+                    <StatusBadge status="error" pulse={false}>
+                      Perlu Restock
+                    </StatusBadge>
                   </CardContent>
                 </Card>
 
@@ -850,15 +852,21 @@ export default function LaporanPage() {
                 <CardContent className="pt-4">
                   <div className="flex items-center gap-4 text-sm">
                     <div className="flex items-center gap-2">
-                      <StatusBadge status="offline" pulse={false}>{"< 50%"}</StatusBadge>
+                      <StatusBadge status="offline" pulse={false}>
+                        {"< 50%"}
+                      </StatusBadge>
                       <span className="text-muted-foreground">Rendah</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <StatusBadge status="success" pulse={false}>50-75%</StatusBadge>
+                      <StatusBadge status="success" pulse={false}>
+                        50-75%
+                      </StatusBadge>
                       <span className="text-muted-foreground">Optimal</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <StatusBadge status="error" pulse={false}>{"> 75%"}</StatusBadge>
+                      <StatusBadge status="error" pulse={false}>
+                        {"> 75%"}
+                      </StatusBadge>
                       <span className="text-muted-foreground">Tinggi</span>
                     </div>
                   </div>

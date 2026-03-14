@@ -270,7 +270,10 @@ export default function DosenLogbookReviewPage() {
 
   function getStatusBadge(status: string) {
     const label = LOGBOOK_STATUS_LABELS[status] || status;
-    const statusMap: Record<string, "success" | "warning" | "error" | "info" | "offline"> = {
+    const statusMap: Record<
+      string,
+      "success" | "warning" | "error" | "info" | "offline"
+    > = {
       submitted: "info",
       reviewed: "warning",
       graded: "success",
@@ -324,8 +327,8 @@ export default function DosenLogbookReviewPage() {
       <div className="role-page-shell">
         <div className="role-page-content app-container py-6">
           <div className="flex min-h-[50vh] items-center justify-center rounded-3xl border border-slate-200/70 bg-white/85 px-6 shadow-lg shadow-slate-200/60">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-            <span className="ml-3 text-sm font-medium text-slate-600 sm:text-base">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <span className="ml-3 text-sm font-medium text-muted-foreground sm:text-base">
               Memuat data review logbook...
             </span>
           </div>
@@ -353,43 +356,41 @@ export default function DosenLogbookReviewPage() {
                 <p className="text-2xl font-bold text-primary">
                   {stats.total_logbooks}
                 </p>
-                <p className="text-xs text-gray-500">Total Logbook</p>
+                <p className="text-xs text-muted-foreground">Total Logbook</p>
               </CardContent>
             </Card>
 
-            <Card className="overflow-hidden rounded-3xl border border-amber-100/80 bg-linear-to-br from-amber-50 to-orange-50 shadow-lg shadow-amber-100/60">
+            <Card className="overflow-hidden rounded-3xl border border-warning/20 bg-linear-to-br from-warning/5 to-warning/10 shadow-lg shadow-warning/10">
               <CardContent className="p-4">
-                <p className="text-2xl font-bold text-yellow-600">
+                <p className="text-2xl font-bold text-warning">
                   {stats.submitted}
                 </p>
-                <p className="text-xs text-gray-500">Menunggu Review</p>
+                <p className="text-xs text-muted-foreground">Menunggu Review</p>
               </CardContent>
             </Card>
 
-            <Card className="overflow-hidden rounded-3xl border border-cyan-100/80 bg-linear-to-br from-cyan-50 to-sky-50 shadow-lg shadow-cyan-100/60">
+            <Card className="overflow-hidden rounded-3xl border border-info/20 bg-linear-to-br from-info/5 to-info/10 shadow-lg shadow-info/10">
               <CardContent className="p-4">
-                <p className="text-2xl font-bold text-orange-600">
-                  {stats.reviewed}
-                </p>
-                <p className="text-xs text-gray-500">Sudah Direview</p>
+                <p className="text-2xl font-bold text-info">{stats.reviewed}</p>
+                <p className="text-xs text-muted-foreground">Sudah Direview</p>
               </CardContent>
             </Card>
 
-            <Card className="overflow-hidden rounded-3xl border border-emerald-100/80 bg-linear-to-br from-emerald-50 to-green-50 shadow-lg shadow-emerald-100/60">
+            <Card className="overflow-hidden rounded-3xl border border-success/20 bg-linear-to-br from-success/5 to-success/10 shadow-lg shadow-success/10">
               <CardContent className="p-4">
-                <p className="text-2xl font-bold text-green-600">
+                <p className="text-2xl font-bold text-success">
                   {stats.graded}
                 </p>
-                <p className="text-xs text-gray-500">Sudah Dinilai</p>
+                <p className="text-xs text-muted-foreground">Sudah Dinilai</p>
               </CardContent>
             </Card>
 
-            <Card className="overflow-hidden rounded-3xl border border-violet-100/80 bg-linear-to-br from-violet-50 to-fuchsia-50 shadow-lg shadow-violet-100/60">
+            <Card className="overflow-hidden rounded-3xl border border-accent/20 bg-linear-to-br from-accent/5 to-accent/10 shadow-lg shadow-accent/10">
               <CardContent className="p-4">
-                <p className="text-2xl font-bold text-purple-600">
+                <p className="text-2xl font-bold text-accent">
                   {stats.average_grade?.toFixed(1) || "-"}
                 </p>
-                <p className="text-xs text-gray-500">Rata-rata Nilai</p>
+                <p className="text-xs text-muted-foreground">Rata-rata Nilai</p>
               </CardContent>
             </Card>
           </div>
@@ -400,7 +401,7 @@ export default function DosenLogbookReviewPage() {
           <CardContent className="p-4 sm:p-5 lg:p-6">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
               <div className="flex items-center gap-2 sm:col-span-2 lg:col-span-1">
-                <Filter className="h-4 w-4 text-gray-500" />
+                <Filter className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm font-medium">Filter:</span>
               </div>
 
@@ -443,12 +444,12 @@ export default function DosenLogbookReviewPage() {
         {/* Logbook List */}
         <div className="space-y-4">
           {filteredLogbooks.length === 0 ? (
-            <Card className="overflow-hidden rounded-3xl border border-dashed border-blue-200/80 bg-white/85 shadow-lg shadow-slate-200/60">
+            <Card className="overflow-hidden rounded-3xl border border-dashed border-primary/30 bg-white/85 shadow-lg shadow-slate-200/60">
               <CardContent className="flex flex-col items-center justify-center py-12 text-center sm:py-14">
-                <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-3xl bg-blue-100 text-blue-700">
+                <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-3xl bg-primary/10 text-primary">
                   <FileText className="h-8 w-8" />
                 </div>
-                <p className="max-w-md text-sm leading-6 text-slate-500 sm:text-base">
+                <p className="max-w-md text-sm leading-6 text-muted-foreground sm:text-base">
                   {searchQuery ||
                   selectedKelas !== "all" ||
                   selectedStatus !== "submitted"
@@ -467,18 +468,18 @@ export default function DosenLogbookReviewPage() {
                   <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
-                        <GraduationCap className="h-5 w-5 text-blue-600" />
+                        <GraduationCap className="h-5 w-5 text-primary" />
                         <h3 className="text-lg font-semibold">
                           {logbook.mahasiswa?.user?.full_name || "Mahasiswa"}
                         </h3>
                         {getStatusBadge(logbook.status)}
                       </div>
 
-                      <p className="text-sm text-gray-600 mb-1">
+                      <p className="text-sm text-muted-foreground mb-1">
                         {logbook.jadwal?.topik || "Praktikum"}
                       </p>
 
-                      <div className="flex flex-wrap gap-3 text-xs text-gray-500">
+                      <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
                         {logbook.jadwal?.tanggal_praktikum && (
                           <span>
                             {format(
@@ -495,7 +496,7 @@ export default function DosenLogbookReviewPage() {
                       </div>
 
                       {logbook.submitted_at && (
-                        <p className="text-xs text-gray-400 mt-1">
+                        <p className="text-xs text-muted-foreground/60 mt-1">
                           Diserahkan:{" "}
                           {format(
                             new Date(logbook.submitted_at),
@@ -541,7 +542,7 @@ export default function DosenLogbookReviewPage() {
                   {logbook.prosedur_dilakukan && (
                     <div className="text-sm mb-2">
                       <span className="font-medium">Prosedur:</span>{" "}
-                      <span className="text-gray-600 line-clamp-2">
+                      <span className="text-muted-foreground line-clamp-2">
                         {logbook.prosedur_dilakukan}
                       </span>
                     </div>
@@ -563,11 +564,11 @@ export default function DosenLogbookReviewPage() {
                     )}
 
                   {logbook.dosen_feedback && (
-                    <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                      <p className="text-xs font-medium text-blue-700 mb-1">
+                    <div className="mt-3 p-3 bg-primary/5 rounded-lg border border-primary/20">
+                      <p className="text-xs font-medium text-primary mb-1">
                         Feedback Anda:
                       </p>
-                      <p className="text-sm text-blue-600">
+                      <p className="text-sm text-primary/80">
                         {logbook.dosen_feedback}
                       </p>
                     </div>
@@ -575,10 +576,10 @@ export default function DosenLogbookReviewPage() {
 
                   {logbook.nilai !== null && logbook.nilai !== undefined && (
                     <div className="mt-3 flex items-center gap-2">
-                      <span className="text-sm font-medium text-gray-600">
+                      <span className="text-sm font-medium text-muted-foreground">
                         Nilai:
                       </span>
-                      <span className="text-2xl font-bold text-green-600">
+                      <span className="text-2xl font-bold text-success">
                         {logbook.nilai}
                       </span>
                     </div>
@@ -601,11 +602,11 @@ export default function DosenLogbookReviewPage() {
 
             <div className="space-y-4 py-4">
               {/* Student Info */}
-              <div className="p-3 bg-gray-50 rounded-lg">
+              <div className="p-3 bg-muted/40 rounded-lg">
                 <p className="text-sm font-medium">
                   Mahasiswa: {selectedLogbook?.mahasiswa?.user?.full_name}
                 </p>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-muted-foreground">
                   {selectedLogbook?.jadwal?.topik} -{" "}
                   {selectedLogbook?.jadwal?.tanggal_praktikum &&
                     format(
@@ -618,14 +619,16 @@ export default function DosenLogbookReviewPage() {
               {/* Logbook Content */}
               <div className="space-y-3">
                 <div>
-                  <p className="text-sm font-medium text-gray-500">Prosedur:</p>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Prosedur:
+                  </p>
                   <p className="text-sm bg-white p-2 rounded border">
                     {selectedLogbook?.prosedur_dilakukan || "-"}
                   </p>
                 </div>
 
                 <div>
-                  <p className="text-sm font-medium text-gray-500">
+                  <p className="text-sm font-medium text-muted-foreground">
                     Hasil Observasi:
                   </p>
                   <p className="text-sm bg-white p-2 rounded border">
@@ -634,7 +637,9 @@ export default function DosenLogbookReviewPage() {
                 </div>
 
                 <div>
-                  <p className="text-sm font-medium text-gray-500">Skill:</p>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Skill:
+                  </p>
                   <div className="flex flex-wrap gap-1">
                     {selectedLogbook?.skill_dipelajari?.map((skill) => (
                       <Badge
@@ -650,7 +655,7 @@ export default function DosenLogbookReviewPage() {
 
                 {selectedLogbook?.kendala_dihadapi && (
                   <div>
-                    <p className="text-sm font-medium text-gray-500">
+                    <p className="text-sm font-medium text-muted-foreground">
                       Kendala:
                     </p>
                     <p className="text-sm bg-white p-2 rounded border">
@@ -661,7 +666,7 @@ export default function DosenLogbookReviewPage() {
 
                 {selectedLogbook?.refleksi && (
                   <div>
-                    <p className="text-sm font-medium text-gray-500">
+                    <p className="text-sm font-medium text-muted-foreground">
                       Refleksi:
                     </p>
                     <p className="text-sm bg-white p-2 rounded border">
@@ -720,16 +725,16 @@ export default function DosenLogbookReviewPage() {
 
             {selectedLogbook && (
               <div className="space-y-4 py-4">
-                <div className="p-3 bg-gray-50 rounded-lg">
+                <div className="p-3 bg-muted/40 rounded-lg">
                   <p className="text-sm font-medium">
                     Mahasiswa:{" "}
                     {selectedLogbook?.mahasiswa?.user?.full_name || "-"}
                   </p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-muted-foreground">
                     {selectedLogbook?.jadwal?.topik || "Praktikum"}
                   </p>
                   {selectedLogbook?.dosen_feedback && (
-                    <p className="text-xs text-blue-600 mt-1">
+                    <p className="text-xs text-primary mt-1">
                       Sudah diberi feedback
                     </p>
                   )}
@@ -749,7 +754,7 @@ export default function DosenLogbookReviewPage() {
                 </div>
 
                 {/* Grade Guide */}
-                <div className="text-xs text-gray-500 space-y-1">
+                <div className="text-xs text-muted-foreground space-y-1">
                   <p>Panduan penilaian:</p>
                   <ul className="list-disc list-inside ml-4 space-y-1">
                     <li>90-100: Sangat Baik</li>
@@ -797,7 +802,7 @@ export default function DosenLogbookReviewPage() {
             <div className="space-y-4 py-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-500">Mahasiswa</p>
+                  <p className="text-sm text-muted-foreground">Mahasiswa</p>
                   <p className="font-medium">
                     {selectedLogbook?.mahasiswa?.user?.full_name}
                   </p>
@@ -806,11 +811,13 @@ export default function DosenLogbookReviewPage() {
               </div>
 
               <div>
-                <p className="text-sm font-medium text-gray-500">Topik</p>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Topik
+                </p>
                 <p className="text-sm">{selectedLogbook?.jadwal?.topik}</p>
               </div>
 
-              <div className="grid grid-cols-1 gap-4 text-sm text-gray-600 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-4 text-sm text-muted-foreground sm:grid-cols-2">
                 <div>
                   <p className="font-medium">Tanggal</p>
                   <p>
@@ -831,14 +838,16 @@ export default function DosenLogbookReviewPage() {
 
               <div className="space-y-3">
                 <div>
-                  <p className="text-sm font-medium text-gray-500">Prosedur</p>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Prosedur
+                  </p>
                   <p className="text-sm bg-white p-2 rounded border">
                     {selectedLogbook?.prosedur_dilakukan || "-"}
                   </p>
                 </div>
 
                 <div>
-                  <p className="text-sm font-medium text-gray-500">
+                  <p className="text-sm font-medium text-muted-foreground">
                     Hasil Observasi
                   </p>
                   <p className="text-sm bg-white p-2 rounded border">
@@ -847,7 +856,9 @@ export default function DosenLogbookReviewPage() {
                 </div>
 
                 <div>
-                  <p className="text-sm font-medium text-gray-500">Skill</p>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Skill
+                  </p>
                   <div className="flex flex-wrap gap-1">
                     {selectedLogbook?.skill_dipelajari?.map((skill) => (
                       <Badge key={skill} variant="secondary">
@@ -859,7 +870,9 @@ export default function DosenLogbookReviewPage() {
 
                 {selectedLogbook?.kendala_dihadapi && (
                   <div>
-                    <p className="text-sm font-medium text-gray-500">Kendala</p>
+                    <p className="text-sm font-medium text-muted-foreground">
+                      Kendala
+                    </p>
                     <p className="text-sm bg-white p-2 rounded border">
                       {selectedLogbook.kendala_dihadapi}
                     </p>
@@ -868,7 +881,7 @@ export default function DosenLogbookReviewPage() {
 
                 {selectedLogbook?.refleksi && (
                   <div>
-                    <p className="text-sm font-medium text-gray-500">
+                    <p className="text-sm font-medium text-muted-foreground">
                       Refleksi
                     </p>
                     <p className="text-sm bg-white p-2 rounded border">
@@ -881,11 +894,11 @@ export default function DosenLogbookReviewPage() {
               {selectedLogbook?.dosen_feedback && (
                 <>
                   <hr />
-                  <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-                    <p className="text-sm font-medium text-blue-700 mb-1">
+                  <div className="p-3 bg-primary/5 rounded-lg border border-primary/20">
+                    <p className="text-sm font-medium text-primary mb-1">
                       Feedback Dosen:
                     </p>
-                    <p className="text-sm text-blue-600">
+                    <p className="text-sm text-primary/80">
                       {selectedLogbook.dosen_feedback}
                     </p>
                   </div>
@@ -896,8 +909,8 @@ export default function DosenLogbookReviewPage() {
                 selectedLogbook?.nilai !== undefined && (
                   <>
                     <hr />
-                    <div className="p-3 bg-green-50 rounded-lg border border-green-200">
-                      <p className="text-sm font-medium text-green-700">
+                    <div className="p-3 bg-success/10 rounded-lg border border-success/30">
+                      <p className="text-sm font-medium text-success">
                         Nilai: {selectedLogbook.nilai}
                       </p>
                     </div>

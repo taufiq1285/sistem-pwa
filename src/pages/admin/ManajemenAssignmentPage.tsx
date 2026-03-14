@@ -1098,11 +1098,12 @@ export default function ManajemenAssignmentPage() {
   };
 
   const getStatusBadge = (status: string) => {
-    const statusMap: Record<string, "info" | "success" | "error" | "offline"> = {
-      scheduled: "info",
-      completed: "success",
-      cancelled: "error",
-    };
+    const statusMap: Record<string, "info" | "success" | "error" | "offline"> =
+      {
+        scheduled: "info",
+        completed: "success",
+        cancelled: "error",
+      };
     return (
       <StatusBadge status={statusMap[status] || "offline"} pulse={false}>
         {status}

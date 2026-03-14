@@ -81,7 +81,11 @@ const getRoleBadge = (role: string) => {
         </StatusBadge>
       );
     default:
-      return <StatusBadge status="offline" pulse={false}>{role}</StatusBadge>;
+      return (
+        <StatusBadge status="offline" pulse={false}>
+          {role}
+        </StatusBadge>
+      );
   }
 };
 
@@ -255,9 +259,7 @@ export default function PeminjamanApprovalPage() {
 
         <Card className="border-0 shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-base font-bold">
-              Role Anda
-            </CardTitle>
+            <CardTitle className="text-base font-bold">Role Anda</CardTitle>
             <User className="h-5 w-5 text-muted-foreground" />
           </CardHeader>
           <CardContent>

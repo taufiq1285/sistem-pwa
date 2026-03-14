@@ -80,10 +80,34 @@ export default function AnalyticsPage() {
       ) : (
         <>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <DashboardCard title="Total Users" value={metrics.totalUsers} description="All system users" icon={Users} color="primary" />
-            <DashboardCard title="Equipment" value={metrics.totalEquipment} description="Inventory items" icon={Package} color="accent" />
-            <DashboardCard title="Borrowings" value={metrics.totalBorrowings} description={`${metrics.activeBorrowings} active requests`} icon={Activity} color="success" />
-            <DashboardCard title="Active Classes" value={metrics.activeClasses} description="Current semester" icon={Users} color="warning" />
+            <DashboardCard
+              title="Total Users"
+              value={metrics.totalUsers}
+              description="All system users"
+              icon={Users}
+              color="primary"
+            />
+            <DashboardCard
+              title="Equipment"
+              value={metrics.totalEquipment}
+              description="Inventory items"
+              icon={Package}
+              color="accent"
+            />
+            <DashboardCard
+              title="Borrowings"
+              value={metrics.totalBorrowings}
+              description={`${metrics.activeBorrowings} active requests`}
+              icon={Activity}
+              color="success"
+            />
+            <DashboardCard
+              title="Active Classes"
+              value={metrics.activeClasses}
+              description="Current semester"
+              icon={Users}
+              color="warning"
+            />
           </div>
           <Card className="border-0 shadow-xl">
             <CardHeader className="p-6">
