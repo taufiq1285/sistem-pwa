@@ -378,7 +378,10 @@ export default function MahasiswaLogbookPage() {
 
   function getStatusBadge(status: string) {
     const label = LOGBOOK_STATUS_LABELS[status] || status;
-    const statusMap: Record<string, "success" | "warning" | "error" | "info" | "offline"> = {
+    const statusMap: Record<
+      string,
+      "success" | "warning" | "error" | "info" | "offline"
+    > = {
       submitted: "info",
       reviewed: "warning",
       graded: "success",

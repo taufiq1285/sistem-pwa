@@ -493,17 +493,26 @@ export default function InventarisPage() {
                         </TableCell>
                         <TableCell>
                           {(() => {
-                            const kondisiStatusMap: Record<string, "success" | "warning" | "error" | "info"> = {
+                            const kondisiStatusMap: Record<
+                              string,
+                              "success" | "warning" | "error" | "info"
+                            > = {
                               baik: "success",
                               rusak_ringan: "warning",
                               rusak_berat: "error",
                               maintenance: "info",
                             };
-                            const label = KONDISI_OPTIONS.find(
-                              (k) => k.value === item.kondisi,
-                            )?.label || item.kondisi;
+                            const label =
+                              KONDISI_OPTIONS.find(
+                                (k) => k.value === item.kondisi,
+                              )?.label || item.kondisi;
                             return (
-                              <StatusBadge status={kondisiStatusMap[item.kondisi] || "info"} pulse={false}>
+                              <StatusBadge
+                                status={
+                                  kondisiStatusMap[item.kondisi] || "info"
+                                }
+                                pulse={false}
+                              >
                                 {label}
                               </StatusBadge>
                             );

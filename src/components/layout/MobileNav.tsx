@@ -69,15 +69,15 @@ export function MobileNav({
       )}
 
       {/* Drawer */}
-        <aside
-          className={cn(
-            "fixed inset-y-0 left-0 z-50 w-[88vw] max-w-xs border-r border-white/10 text-white shadow-2xl backdrop-blur-xl transform transition-transform duration-300 ease-in-out md:hidden",
-            theme.sidebarBg,
-            isOpen ? "translate-x-0" : "-translate-x-full",
-            className,
-          )}
-        >
-<div className="flex h-full flex-col">
+      <aside
+        className={cn(
+          "fixed inset-y-0 left-0 z-50 w-[88vw] max-w-xs border-r border-white/10 text-white shadow-2xl backdrop-blur-xl transform transition-transform duration-300 ease-in-out md:hidden",
+          theme.sidebarBg,
+          isOpen ? "translate-x-0" : "-translate-x-full",
+          className,
+        )}
+      >
+        <div className="flex h-full flex-col">
           {/* Header */}
           <div className="relative flex h-16 items-center justify-between border-b border-white/10 px-4">
             <div
@@ -87,7 +87,9 @@ export function MobileNav({
               )}
             />
             <div>
-              <h2 className="text-lg font-semibold text-white">AKBID Mega Buana</h2>
+              <h2 className="text-lg font-semibold text-white">
+                AKBID Mega Buana
+              </h2>
               <p className="text-xs text-white/70">Sistem Praktikum</p>
             </div>
             <Button
@@ -118,7 +120,9 @@ export function MobileNav({
                 {userName.charAt(0).toUpperCase()}
               </div>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-white">{userName}</p>
+                <p className="truncate text-sm font-medium text-white">
+                  {userName}
+                </p>
                 <p className="truncate text-xs text-white/70">{userEmail}</p>
               </div>
             </div>
@@ -138,7 +142,10 @@ export function MobileNav({
                     onClick={handleLinkClick}
                     className={cn(
                       "interactive-card flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
-                      cn("hover:text-white hover:translate-x-0.5", theme.sidebarHover),
+                      cn(
+                        "hover:text-white hover:translate-x-0.5",
+                        theme.sidebarHover,
+                      ),
                       active && cn(theme.sidebarActive, "text-white shadow-sm"),
                     )}
                   >

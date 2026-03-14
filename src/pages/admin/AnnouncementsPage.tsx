@@ -227,22 +227,34 @@ export default function AnnouncementsPage() {
 
   const getPriorityBadge = (priority?: string | null) => {
     const statusMap: Record<string, "error" | "warning" | "info"> = {
-      high: "error", normal: "warning",
+      high: "error",
+      normal: "warning",
     };
     const labels: Record<string, string> = {
-      high: "Penting", normal: "Normal",
+      high: "Penting",
+      normal: "Normal",
     };
     const status = statusMap[priority || "normal"] || "info";
     const label = labels[priority || "normal"] || priority || "normal";
-    return <StatusBadge status={status} pulse={false}>{label}</StatusBadge>;
+    return (
+      <StatusBadge status={status} pulse={false}>
+        {label}
+      </StatusBadge>
+    );
   };
 
   const getTypeBadge = (tipe?: string | null) => {
     const statusMap: Record<string, "info" | "warning" | "online"> = {
-      info: "info", warning: "warning", event: "online",
+      info: "info",
+      warning: "warning",
+      event: "online",
     };
     const status = statusMap[tipe || "info"] || "info";
-    return <StatusBadge status={status} pulse={false}>{tipe || "info"}</StatusBadge>;
+    return (
+      <StatusBadge status={status} pulse={false}>
+        {tipe || "info"}
+      </StatusBadge>
+    );
   };
 
   return (
@@ -264,10 +276,7 @@ export default function AnnouncementsPage() {
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
-          <Button
-            onClick={handleAdd}
-            className="font-semibold"
-          >
+          <Button onClick={handleAdd} className="font-semibold">
             <Plus className="h-4 w-4 mr-2" />
             Create
           </Button>

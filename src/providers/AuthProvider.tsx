@@ -344,9 +344,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
             await storeOfflineSession(response.user, response.session);
             await storeUserData(response.user);
             // Record that user has logged in online (required for offline access)
-            const { recordOnlineLogin } = await import(
-              "@/lib/offline/online-first-auth"
-            );
+            const { recordOnlineLogin } =
+              await import("@/lib/offline/online-first-auth");
             await recordOnlineLogin(response.user, response.session);
             logger.auth("Offline credentials stored successfully");
           } catch (storageError) {

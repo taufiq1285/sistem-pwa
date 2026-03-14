@@ -199,9 +199,7 @@ export function DashboardCard({
         {description ? (
           <p className="mt-3 text-sm text-muted-foreground">{description}</p>
         ) : null}
-        <div
-          className={cn("mt-4 h-1 w-16 rounded-full", styles.bar)}
-        />
+        <div className={cn("mt-4 h-1 w-16 rounded-full", styles.bar)} />
       </CardContent>
     </Card>
   );

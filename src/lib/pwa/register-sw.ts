@@ -300,7 +300,10 @@ export async function checkForServiceWorkerUpdate(
   } catch (error) {
     if (isLikelyOfflineUpdateError(error)) {
       const logMethod = logOfflineAsInfo ? logger.info : logger.warn;
-      logMethod(`[SW] Update check skipped (${source}): network unavailable`, error);
+      logMethod(
+        `[SW] Update check skipped (${source}): network unavailable`,
+        error,
+      );
       return false;
     }
 

@@ -414,7 +414,10 @@ export default function LaboratoriumPage() {
                           {lab.kapasitas}
                         </TableCell>
                         <TableCell>
-                          <StatusBadge status={lab.is_active ? "success" : "offline"} pulse={lab.is_active}>
+                          <StatusBadge
+                            status={lab.is_active ? "success" : "offline"}
+                            pulse={lab.is_active}
+                          >
                             {lab.is_active ? "Aktif" : "Tidak Aktif"}
                           </StatusBadge>
                         </TableCell>
@@ -495,7 +498,10 @@ export default function LaboratoriumPage() {
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Status</p>
-                    <StatusBadge status={selectedLab.is_active ? "success" : "offline"} pulse={selectedLab.is_active}>
+                    <StatusBadge
+                      status={selectedLab.is_active ? "success" : "offline"}
+                      pulse={selectedLab.is_active}
+                    >
                       {selectedLab.is_active ? "Aktif" : "Tidak Aktif"}
                     </StatusBadge>
                   </div>

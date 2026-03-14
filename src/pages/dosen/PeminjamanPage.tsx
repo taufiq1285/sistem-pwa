@@ -133,7 +133,10 @@ type ReturnFormData = z.infer<typeof returnFormSchema>;
 // CONSTANTS
 // ============================================================================
 
-const BORROWING_STATUS_MAP: Record<string, "warning" | "success" | "info" | "error" | "offline"> = {
+const BORROWING_STATUS_MAP: Record<
+  string,
+  "warning" | "success" | "info" | "error" | "offline"
+> = {
   pending: "warning",
   menunggu: "warning",
   approved: "success",
@@ -603,13 +606,13 @@ export default function PeminjamanPage() {
             </CardContent>
           </Card>
 
-          <Card className="interactive-card overflow-hidden rounded-3xl border border-amber-100/80 bg-linear-to-br from-amber-50 to-orange-50 shadow-lg shadow-amber-100/60">
+          <Card className="interactive-card overflow-hidden rounded-3xl border border-warning/20 bg-linear-to-br from-warning/5 to-warning/10 shadow-lg shadow-warning/10">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-bold">Menunggu</CardTitle>
-              <Clock className="h-4 w-4 text-amber-600" />
+              <Clock className="h-4 w-4 text-warning" />
             </CardHeader>
             <CardContent>
-              <div className="text-4xl font-extrabold text-amber-700">
+              <div className="text-4xl font-extrabold text-warning">
                 {stats.menunggu}
               </div>
             </CardContent>
@@ -703,11 +706,11 @@ export default function PeminjamanPage() {
               <CardContent>
                 {loadingHistory ? (
                   <div className="text-center py-8">
-                    <p className="text-orange-600">Memuat data...</p>
+                    <p className="text-warning">Memuat data...</p>
                   </div>
                 ) : filteredBorrowings.length === 0 ? (
                   <div className="text-center py-8">
-                    <p className="text-orange-600">Tidak ada data</p>
+                    <p className="text-warning">Tidak ada data</p>
                   </div>
                 ) : (
                   <div className="overflow-x-auto rounded-xl border border-border/70">
@@ -744,7 +747,13 @@ export default function PeminjamanPage() {
                               <TableCell>{b.laboratorium_nama}</TableCell>
                               <TableCell>{b.jumlah_pinjam}</TableCell>
                               <TableCell>
-                                <StatusBadge status={BORROWING_STATUS_MAP[b.status as string] || "warning"} pulse={false}>
+                                <StatusBadge
+                                  status={
+                                    BORROWING_STATUS_MAP[b.status as string] ||
+                                    "warning"
+                                  }
+                                  pulse={false}
+                                >
                                   <Icon className="h-3 w-3 mr-1" />
                                   {cfg.label}
                                 </StatusBadge>
@@ -1116,8 +1125,8 @@ export default function PeminjamanPage() {
             </DialogHeader>
 
             <div className="space-y-4">
-              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <p className="text-sm text-blue-800">
+              <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg">
+                <p className="text-sm text-primary/90">
                   Dengan mengklik "Ambil", status peminjaman akan berubah dari
                   "Disetujui" menjadi "Sedang Dipinjam".
                 </p>

@@ -8,146 +8,124 @@
 
     <mxCell id="title" value="DFD Level 2.11 — Proses 4.1 Sinkronisasi Offline PWA"
       style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=18;fontStyle=1;"
-      vertex="1" parent="1"><mxGeometry x="30" y="20" width="640" height="30" as="geometry"/></mxCell>
+      vertex="1" parent="1"><mxGeometry x="30" y="20" width="680" height="30" as="geometry"/></mxCell>
 
-    <mxCell id="subtitle" value="Entitas eksternal: Pengguna, Service Worker, Supabase | Data store: D1 IndexedDB Cache, D2 Offline Queue, D3 Server Database, D4 Log Sinkronisasi"
+    <mxCell id="subtitle" value="Entitas eksternal: Mahasiswa, Service Worker / Browser, Server API | Data store: D1 Cache Offline, D2 Queue Sinkronisasi"
       style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=11;fontColor=#666666;"
-      vertex="1" parent="1"><mxGeometry x="30" y="50" width="1080" height="20" as="geometry"/></mxCell>
+      vertex="1" parent="1"><mxGeometry x="30" y="50" width="1100" height="20" as="geometry"/></mxCell>
 
     <!-- ENTITAS -->
-    <mxCell id="Pengguna" value="Pengguna"
+    <mxCell id="Mahasiswa" value="Mahasiswa"
       style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=1.5;fontStyle=1;fontSize=13;"
-      vertex="1" parent="1"><mxGeometry x="30" y="160" width="140" height="46" as="geometry"/></mxCell>
+      vertex="1" parent="1"><mxGeometry x="30" y="180" width="160" height="46" as="geometry"/></mxCell>
 
-    <mxCell id="ServiceWorker" value="Service Worker"
-      style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;strokeWidth=1.5;fontStyle=1;fontSize=13;"
-      vertex="1" parent="1"><mxGeometry x="30" y="360" width="140" height="46" as="geometry"/></mxCell>
+    <mxCell id="SW" value="Service Worker / Browser"
+      style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;strokeWidth=1.5;fontStyle=1;fontSize=13;"
+      vertex="1" parent="1"><mxGeometry x="30" y="420" width="190" height="50" as="geometry"/></mxCell>
 
-    <mxCell id="Supabase" value="Supabase"
-      style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;strokeWidth=1.5;fontStyle=1;fontSize=13;"
-      vertex="1" parent="1"><mxGeometry x="30" y="560" width="140" height="46" as="geometry"/></mxCell>
+    <mxCell id="Server" value="Supabase / Server API"
+      style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;strokeWidth=1.5;fontStyle=1;fontSize=13;"
+      vertex="1" parent="1"><mxGeometry x="1200" y="420" width="170" height="50" as="geometry"/></mxCell>
 
     <!-- PROSES -->
-    <mxCell id="P411" value="4.1.1&#xa;Deteksi Status&#xa;Koneksi"
+    <mxCell id="P411" value="A1&#xa;Deteksi Status&#xa;Koneksi"
       style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#222222;strokeWidth=1.5;fontColor=#111111;fontStyle=1;fontSize=13;"
-      vertex="1" parent="1"><mxGeometry x="260" y="130" width="170" height="100" as="geometry"/></mxCell>
+      vertex="1" parent="1"><mxGeometry x="290" y="120" width="175" height="110" as="geometry"/></mxCell>
 
-    <mxCell id="P412" value="4.1.2&#xa;Baca atau Tulis&#xa;Cache Lokal"
+    <mxCell id="P412" value="A2&#xa;Kelola Cache&#xa;Offline"
       style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#222222;strokeWidth=1.5;fontColor=#111111;fontStyle=1;fontSize=13;"
-      vertex="1" parent="1"><mxGeometry x="520" y="130" width="175" height="100" as="geometry"/></mxCell>
+      vertex="1" parent="1"><mxGeometry x="550" y="120" width="175" height="110" as="geometry"/></mxCell>
 
-    <mxCell id="P413" value="4.1.3&#xa;Kelola Antrean&#xa;Offline"
+    <mxCell id="P413" value="A3&#xa;Catat Perubahan&#xa;ke Queue"
       style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#222222;strokeWidth=1.5;fontColor=#111111;fontStyle=1;fontSize=13;"
-      vertex="1" parent="1"><mxGeometry x="520" y="360" width="175" height="100" as="geometry"/></mxCell>
+      vertex="1" parent="1"><mxGeometry x="810" y="120" width="180" height="110" as="geometry"/></mxCell>
 
-    <mxCell id="P414" value="4.1.4&#xa;Sinkronkan ke&#xa;Server"
+    <mxCell id="P414" value="A4&#xa;Sinkronkan Data&#xa;ke Server"
       style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#222222;strokeWidth=1.5;fontColor=#111111;fontStyle=1;fontSize=13;"
-      vertex="1" parent="1"><mxGeometry x="800" y="130" width="170" height="100" as="geometry"/></mxCell>
+      vertex="1" parent="1"><mxGeometry x="810" y="410" width="180" height="110" as="geometry"/></mxCell>
 
-    <mxCell id="P415" value="4.1.5&#xa;Resolusi Konflik&#xa;dan Logging"
+    <mxCell id="P415" value="A5&#xa;Tangani Konflik&#xa;dan Retry"
       style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#222222;strokeWidth=1.5;fontColor=#111111;fontStyle=1;fontSize=13;"
-      vertex="1" parent="1"><mxGeometry x="800" y="360" width="170" height="100" as="geometry"/></mxCell>
+      vertex="1" parent="1"><mxGeometry x="550" y="410" width="175" height="110" as="geometry"/></mxCell>
 
-    <!-- DATA STORE -->
-    <mxCell id="D1_top" value="" style="line;strokeColor=#222222;strokeWidth=1.5;fillColor=none;" vertex="1" parent="1"><mxGeometry x="1090" y="110" width="250" height="10" as="geometry"/></mxCell>
-    <mxCell id="D1_lbl" value="D1   IndexedDB Cache"
+    <!-- DATA STORES -->
+    <mxCell id="D1_top" value="" style="line;strokeColor=#222222;strokeWidth=1.5;fillColor=none;" vertex="1" parent="1"><mxGeometry x="1080" y="145" width="250" height="10" as="geometry"/></mxCell>
+    <mxCell id="D1_lbl" value="D1   Cache Offline"
       style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;fontSize=13;fontStyle=1;"
-      vertex="1" parent="1"><mxGeometry x="1090" y="110" width="250" height="44" as="geometry"/></mxCell>
-    <mxCell id="D1_bot" value="" style="line;strokeColor=#222222;strokeWidth=1.5;fillColor=none;" vertex="1" parent="1"><mxGeometry x="1090" y="154" width="250" height="10" as="geometry"/></mxCell>
+      vertex="1" parent="1"><mxGeometry x="1080" y="145" width="250" height="44" as="geometry"/></mxCell>
+    <mxCell id="D1_bot" value="" style="line;strokeColor=#222222;strokeWidth=1.5;fillColor=none;" vertex="1" parent="1"><mxGeometry x="1080" y="189" width="250" height="10" as="geometry"/></mxCell>
 
-    <mxCell id="D2_top" value="" style="line;strokeColor=#222222;strokeWidth=1.5;fillColor=none;" vertex="1" parent="1"><mxGeometry x="1090" y="300" width="250" height="10" as="geometry"/></mxCell>
-    <mxCell id="D2_lbl" value="D2   Offline Queue"
+    <mxCell id="D2_top" value="" style="line;strokeColor=#222222;strokeWidth=1.5;fillColor=none;" vertex="1" parent="1"><mxGeometry x="1080" y="470" width="250" height="10" as="geometry"/></mxCell>
+    <mxCell id="D2_lbl" value="D2   Queue Sinkronisasi"
       style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;fontSize=13;fontStyle=1;"
-      vertex="1" parent="1"><mxGeometry x="1090" y="300" width="250" height="44" as="geometry"/></mxCell>
-    <mxCell id="D2_bot" value="" style="line;strokeColor=#222222;strokeWidth=1.5;fillColor=none;" vertex="1" parent="1"><mxGeometry x="1090" y="344" width="250" height="10" as="geometry"/></mxCell>
-
-    <mxCell id="D3_top" value="" style="line;strokeColor=#222222;strokeWidth=1.5;fillColor=none;" vertex="1" parent="1"><mxGeometry x="1090" y="490" width="250" height="10" as="geometry"/></mxCell>
-    <mxCell id="D3_lbl" value="D3   Server Database"
-      style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;fontSize=13;fontStyle=1;"
-      vertex="1" parent="1"><mxGeometry x="1090" y="490" width="250" height="44" as="geometry"/></mxCell>
-    <mxCell id="D3_bot" value="" style="line;strokeColor=#222222;strokeWidth=1.5;fillColor=none;" vertex="1" parent="1"><mxGeometry x="1090" y="534" width="250" height="10" as="geometry"/></mxCell>
-
-    <mxCell id="D4_top" value="" style="line;strokeColor=#222222;strokeWidth=1.5;fillColor=none;" vertex="1" parent="1"><mxGeometry x="1090" y="620" width="250" height="10" as="geometry"/></mxCell>
-    <mxCell id="D4_lbl" value="D4   Log Sinkronisasi"
-      style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;fontSize=13;fontStyle=1;"
-      vertex="1" parent="1"><mxGeometry x="1090" y="620" width="250" height="44" as="geometry"/></mxCell>
-    <mxCell id="D4_bot" value="" style="line;strokeColor=#222222;strokeWidth=1.5;fillColor=none;" vertex="1" parent="1"><mxGeometry x="1090" y="664" width="250" height="10" as="geometry"/></mxCell>
+      vertex="1" parent="1"><mxGeometry x="1080" y="470" width="250" height="44" as="geometry"/></mxCell>
+    <mxCell id="D2_bot" value="" style="line;strokeColor=#222222;strokeWidth=1.5;fillColor=none;" vertex="1" parent="1"><mxGeometry x="1080" y="514" width="250" height="10" as="geometry"/></mxCell>
 
     <!-- INPUT -->
-    <mxCell id="f1" value="akses fitur"
+    <mxCell id="f1" value="permintaan akses / perubahan data"
       style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=1;exitY=0.45;entryX=0;entryY=0.45;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
-      edge="1" source="Pengguna" target="P411" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+      edge="1" source="Mahasiswa" target="P411" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
 
-    <mxCell id="f2" value="event cache dan sync"
-      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=1;exitY=0.45;entryX=0;entryY=0.55;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
-      edge="1" source="ServiceWorker" target="P412" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="210" y="383"/><mxPoint x="490" y="190"/></Array></mxGeometry></mxCell>
-
-    <mxCell id="f3" value="respons sinkronisasi"
-      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=1;exitY=0.45;entryX=0;entryY=0.8;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
-      edge="1" source="Supabase" target="P415" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="210" y="583"/><mxPoint x="760" y="430"/></Array></mxGeometry></mxCell>
+    <mxCell id="f2" value="status jaringan dan event offline"
+      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=1;exitY=0.45;entryX=0;entryY=0.75;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
+      edge="1" source="SW" target="P411" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="250" y="445"/><mxPoint x="250" y="202"/></Array></mxGeometry></mxCell>
 
     <!-- ANTAR PROSES -->
-    <mxCell id="f4" value="mode online atau offline"
+    <mxCell id="f3" value="status koneksi"
       style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=1;exitY=0.45;entryX=0;entryY=0.45;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
       edge="1" source="P411" target="P412" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
 
-    <mxCell id="f5" value="data perubahan lokal"
-      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=0.5;exitY=1;entryX=0.5;entryY=0;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
+    <mxCell id="f4" value="data offline / perubahan lokal"
+      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=1;exitY=0.45;entryX=0;entryY=0.45;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
       edge="1" source="P412" target="P413" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
 
-    <mxCell id="f6" value="antrean siap dikirim"
-      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=1;exitY=0.45;entryX=0;entryY=0.45;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
-      edge="1" source="P413" target="P415" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
-
-    <mxCell id="f7" value="request sinkronisasi"
-      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=1;exitY=0.45;entryX=0;entryY=0.45;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
-      edge="1" source="P412" target="P414" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="730" y="175"/><mxPoint x="770" y="175"/></Array></mxGeometry></mxCell>
-
-    <mxCell id="f8" value="hasil sinkron"
+    <mxCell id="f5" value="antrian sinkronisasi"
       style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=0.5;exitY=1;entryX=0.5;entryY=0;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
+      edge="1" source="P413" target="P414" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+    <mxCell id="f6" value="hasil sinkronisasi"
+      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=0;exitY=0.55;entryX=1;entryY=0.55;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
       edge="1" source="P414" target="P415" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
 
     <!-- KE DATA STORE -->
-    <mxCell id="f9" value="baca atau tulis cache"
-      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;endArrow=open;endFill=0;startArrow=open;startFill=0;exitX=1;exitY=0.35;entryX=0;entryY=0.45;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
-      edge="1" source="P412" target="D1_lbl" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="730" y="160"/><mxPoint x="1050" y="132"/></Array></mxGeometry></mxCell>
-
-    <mxCell id="f10" value="simpan antrean"
+    <mxCell id="f7" value="simpan / ambil cache"
       style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;endArrow=open;endFill=0;startArrow=open;startFill=0;exitX=1;exitY=0.45;entryX=0;entryY=0.45;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
-      edge="1" source="P413" target="D2_lbl" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="730" y="405"/><mxPoint x="1050" y="352"/></Array></mxGeometry></mxCell>
+      edge="1" source="P412" target="D1_lbl" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="760" y="170"/><mxPoint x="1040" y="167"/></Array></mxGeometry></mxCell>
 
-    <mxCell id="f11" value="kirim data ke server"
-      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;endArrow=open;endFill=0;startArrow=open;startFill=0;exitX=1;exitY=0.45;entryX=0;entryY=0.45;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
-      edge="1" source="P414" target="D3_lbl" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1000" y="175"/><mxPoint x="1050" y="512"/></Array></mxGeometry></mxCell>
+    <mxCell id="f7b" value="cache siap dipakai"
+      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=0;exitY=0.35;entryX=1;entryY=0.55;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
+      edge="1" source="P412" target="Mahasiswa" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="520" y="160"/><mxPoint x="240" y="160"/><mxPoint x="240" y="205"/></Array></mxGeometry></mxCell>
 
-    <mxCell id="f12" value="baca antrean"
-      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;endArrow=open;endFill=0;startArrow=open;startFill=0;exitX=1;exitY=0.45;entryX=0;entryY=0.6;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
-      edge="1" source="P415" target="D2_lbl" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1000" y="405"/><mxPoint x="1050" y="360"/></Array></mxGeometry></mxCell>
+    <mxCell id="f8" value="simpan / baca queue"
+      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;endArrow=open;endFill=0;startArrow=open;startFill=0;exitX=1;exitY=0.55;entryX=0;entryY=0.45;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
+      edge="1" source="P413" target="D2_lbl" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1020" y="180"/><mxPoint x="1040" y="492"/></Array></mxGeometry></mxCell>
 
-    <mxCell id="f13" value="update cache final"
-      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;endArrow=open;endFill=0;startArrow=open;startFill=0;exitX=1;exitY=0.6;entryX=0;entryY=0.7;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
-      edge="1" source="P415" target="D1_lbl" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1000" y="420"/><mxPoint x="1050" y="146"/></Array></mxGeometry></mxCell>
+    <mxCell id="f9" value="ambil queue sinkronisasi"
+      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;endArrow=open;endFill=0;startArrow=open;startFill=0;exitX=1;exitY=0.55;entryX=0;entryY=0.75;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
+      edge="1" source="P414" target="D2_lbl" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1020" y="470"/><mxPoint x="1040" y="500"/></Array></mxGeometry></mxCell>
 
-    <mxCell id="f14" value="catat log sinkronisasi"
-      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;endArrow=open;endFill=0;startArrow=open;startFill=0;exitX=1;exitY=0.8;entryX=0;entryY=0.45;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
-      edge="1" source="P415" target="D4_lbl" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1000" y="440"/><mxPoint x="1050" y="642"/></Array></mxGeometry></mxCell>
+    <mxCell id="f10" value="update retry / konflik"
+      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;endArrow=open;endFill=0;startArrow=open;startFill=0;exitX=1;exitY=0.55;entryX=0;entryY=0.9;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
+      edge="1" source="P415" target="D2_lbl" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="760" y="470"/><mxPoint x="1040" y="510"/></Array></mxGeometry></mxCell>
+
+    <!-- INTERAKSI SERVER -->
+    <mxCell id="f11" value="payload sinkronisasi"
+      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=1;exitY=0.45;entryX=0;entryY=0.45;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
+      edge="1" source="P414" target="Server" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+    <mxCell id="f12" value="respon sinkronisasi"
+      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=0;exitY=0.65;entryX=1;entryY=0.45;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
+      edge="1" source="Server" target="P414" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1180" y="452"/></Array></mxGeometry></mxCell>
 
     <!-- OUTPUT -->
-    <mxCell id="f15" value="status koneksi dan data"
-      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=0;exitY=0.55;entryX=1;entryY=0.5;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
-      edge="1" source="P412" target="Pengguna" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="490" y="185"/><mxPoint x="210" y="185"/><mxPoint x="210" y="183"/></Array></mxGeometry></mxCell>
+    <mxCell id="f14" value="status sinkronisasi / konflik"
+      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=0;exitY=0.65;entryX=1;entryY=0.75;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
+      edge="1" source="P415" target="SW" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="520" y="480"/><mxPoint x="250" y="480"/><mxPoint x="250" y="458"/></Array></mxGeometry></mxCell>
 
-    <mxCell id="f16" value="instruksi cache dan queue"
-      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=0;exitY=0.65;entryX=1;entryY=0.5;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
-      edge="1" source="P413" target="ServiceWorker" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="490" y="420"/><mxPoint x="210" y="420"/><mxPoint x="210" y="383"/></Array></mxGeometry></mxCell>
-
-    <mxCell id="f17" value="request API sinkronisasi"
-      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=0;exitY=0.8;entryX=1;entryY=0.2;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
-      edge="1" source="P414" target="Supabase" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="760" y="210"/><mxPoint x="210" y="210"/><mxPoint x="210" y="570"/></Array></mxGeometry></mxCell>
-
-    <mxCell id="f18" value="status sinkronisasi akhir"
-      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=0;exitY=0.8;entryX=1;entryY=0.7;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
-      edge="1" source="P415" target="Pengguna" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="760" y="440"/><mxPoint x="210" y="440"/><mxPoint x="210" y="193"/></Array></mxGeometry></mxCell>
+    <mxCell id="f15" value="notifikasi hasil sinkronisasi"
+      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=0;exitY=0.8;entryX=1;entryY=0.8;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
+      edge="1" source="P415" target="Mahasiswa" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="520" y="500"/><mxPoint x="240" y="500"/><mxPoint x="240" y="217"/></Array></mxGeometry></mxCell>
 
   </root>
 </mxGraphModel>
+

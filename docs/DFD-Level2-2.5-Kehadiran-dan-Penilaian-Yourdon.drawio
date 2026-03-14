@@ -10,126 +10,107 @@
       style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=18;fontStyle=1;"
       vertex="1" parent="1"><mxGeometry x="30" y="20" width="620" height="30" as="geometry"/></mxCell>
 
-    <mxCell id="subtitle" value="Entitas eksternal: Dosen, Mahasiswa | Data store: D1 Data Kehadiran, D2 Data Nilai, D3 Data Kelas dan Jadwal"
+    <mxCell id="subtitle" value="Entitas eksternal: Dosen, Mahasiswa | Data store: D1 Data Kehadiran dan Nilai"
       style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=11;fontColor=#666666;"
-      vertex="1" parent="1"><mxGeometry x="30" y="50" width="900" height="20" as="geometry"/></mxCell>
+      vertex="1" parent="1"><mxGeometry x="30" y="50" width="860" height="20" as="geometry"/></mxCell>
 
     <!-- ENTITAS -->
     <mxCell id="Dosen" value="Dosen"
       style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;strokeWidth=1.5;fontStyle=1;fontSize=13;"
-      vertex="1" parent="1"><mxGeometry x="30" y="140" width="140" height="46" as="geometry"/></mxCell>
+      vertex="1" parent="1"><mxGeometry x="30" y="150" width="140" height="46" as="geometry"/></mxCell>
 
     <mxCell id="Mahasiswa" value="Mahasiswa"
       style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=1.5;fontStyle=1;fontSize=13;"
-      vertex="1" parent="1"><mxGeometry x="30" y="430" width="140" height="46" as="geometry"/></mxCell>
+      vertex="1" parent="1"><mxGeometry x="30" y="460" width="140" height="46" as="geometry"/></mxCell>
 
     <!-- PROSES -->
-    <mxCell id="P251" value="2.5.1&#xa;Validasi Kelas&#xa;dan Pertemuan"
+    <mxCell id="P251" value="A1&#xa;Input&#xa;Kehadiran"
       style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#222222;strokeWidth=1.5;fontColor=#111111;fontStyle=1;fontSize=13;"
-      vertex="1" parent="1"><mxGeometry x="270" y="110" width="170" height="100" as="geometry"/></mxCell>
+      vertex="1" parent="1"><mxGeometry x="270" y="120" width="170" height="100" as="geometry"/></mxCell>
 
-    <mxCell id="P252" value="2.5.2&#xa;Catat&#xa;Kehadiran"
+    <mxCell id="P252" value="A2&#xa;Validasi&#xa;Presensi"
       style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#222222;strokeWidth=1.5;fontColor=#111111;fontStyle=1;fontSize=13;"
-      vertex="1" parent="1"><mxGeometry x="540" y="110" width="160" height="100" as="geometry"/></mxCell>
+      vertex="1" parent="1"><mxGeometry x="540" y="120" width="170" height="100" as="geometry"/></mxCell>
 
-    <mxCell id="P253" value="2.5.3&#xa;Lihat Status&#xa;Kehadiran"
+    <mxCell id="P253" value="A3&#xa;Input&#xa;Nilai"
       style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#222222;strokeWidth=1.5;fontColor=#111111;fontStyle=1;fontSize=13;"
-      vertex="1" parent="1"><mxGeometry x="540" y="320" width="160" height="100" as="geometry"/></mxCell>
+      vertex="1" parent="1"><mxGeometry x="810" y="120" width="170" height="100" as="geometry"/></mxCell>
 
-    <mxCell id="P254" value="2.5.4&#xa;Input dan Update&#xa;Nilai"
+    <mxCell id="P254" value="A4&#xa;Hitung Rekap&#xa;Nilai"
       style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#222222;strokeWidth=1.5;fontColor=#111111;fontStyle=1;fontSize=13;"
-      vertex="1" parent="1"><mxGeometry x="790" y="110" width="170" height="100" as="geometry"/></mxCell>
+      vertex="1" parent="1"><mxGeometry x="540" y="340" width="170" height="100" as="geometry"/></mxCell>
 
-    <mxCell id="P255" value="2.5.5&#xa;Lihat Rekap&#xa;Nilai"
+    <mxCell id="P255" value="A5&#xa;Lihat Hasil&#xa;Nilai"
       style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#222222;strokeWidth=1.5;fontColor=#111111;fontStyle=1;fontSize=13;"
-      vertex="1" parent="1"><mxGeometry x="790" y="320" width="170" height="100" as="geometry"/></mxCell>
+      vertex="1" parent="1"><mxGeometry x="810" y="340" width="170" height="100" as="geometry"/></mxCell>
 
     <!-- DATA STORE YOURDON -->
-    <mxCell id="D1_top" value="" style="line;strokeColor=#222222;strokeWidth=1.5;fillColor=none;" vertex="1" parent="1"><mxGeometry x="1080" y="110" width="240" height="10" as="geometry"/></mxCell>
-    <mxCell id="D1_lbl" value="D1   Data Kehadiran"
+    <mxCell id="D1_top" value="" style="line;strokeColor=#222222;strokeWidth=1.5;fillColor=none;" vertex="1" parent="1"><mxGeometry x="1090" y="220" width="250" height="10" as="geometry"/></mxCell>
+    <mxCell id="D1_lbl" value="D1   Data Kehadiran dan Nilai"
       style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;fontSize=13;fontStyle=1;"
-      vertex="1" parent="1"><mxGeometry x="1080" y="110" width="240" height="44" as="geometry"/></mxCell>
-    <mxCell id="D1_bot" value="" style="line;strokeColor=#222222;strokeWidth=1.5;fillColor=none;" vertex="1" parent="1"><mxGeometry x="1080" y="154" width="240" height="10" as="geometry"/></mxCell>
-
-    <mxCell id="D2_top" value="" style="line;strokeColor=#222222;strokeWidth=1.5;fillColor=none;" vertex="1" parent="1"><mxGeometry x="1080" y="320" width="240" height="10" as="geometry"/></mxCell>
-    <mxCell id="D2_lbl" value="D2   Data Nilai"
-      style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;fontSize=13;fontStyle=1;"
-      vertex="1" parent="1"><mxGeometry x="1080" y="320" width="240" height="44" as="geometry"/></mxCell>
-    <mxCell id="D2_bot" value="" style="line;strokeColor=#222222;strokeWidth=1.5;fillColor=none;" vertex="1" parent="1"><mxGeometry x="1080" y="364" width="240" height="10" as="geometry"/></mxCell>
-
-    <mxCell id="D3_top" value="" style="line;strokeColor=#222222;strokeWidth=1.5;fillColor=none;" vertex="1" parent="1"><mxGeometry x="1080" y="520" width="240" height="10" as="geometry"/></mxCell>
-    <mxCell id="D3_lbl" value="D3   Data Kelas dan Jadwal"
-      style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;fontSize=13;fontStyle=1;"
-      vertex="1" parent="1"><mxGeometry x="1080" y="520" width="240" height="44" as="geometry"/></mxCell>
-    <mxCell id="D3_bot" value="" style="line;strokeColor=#222222;strokeWidth=1.5;fillColor=none;" vertex="1" parent="1"><mxGeometry x="1080" y="564" width="240" height="10" as="geometry"/></mxCell>
+      vertex="1" parent="1"><mxGeometry x="1090" y="220" width="250" height="44" as="geometry"/></mxCell>
+    <mxCell id="D1_bot" value="" style="line;strokeColor=#222222;strokeWidth=1.5;fillColor=none;" vertex="1" parent="1"><mxGeometry x="1090" y="264" width="250" height="10" as="geometry"/></mxCell>
 
     <!-- INPUT -->
-    <mxCell id="f1" value="pilih kelas dan pertemuan"
+    <mxCell id="f1" value="status hadir mahasiswa"
       style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=1;exitY=0.45;entryX=0;entryY=0.45;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
       edge="1" source="Dosen" target="P251" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
 
-    <mxCell id="f2" value="status hadir"
-      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=1;exitY=0.35;entryX=0;entryY=0.55;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
-      edge="1" source="Mahasiswa" target="P253" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="220" y="446"/><mxPoint x="500" y="390"/></Array></mxGeometry></mxCell>
+    <mxCell id="f2" value="komponen nilai"
+      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=1;exitY=0.75;entryX=0;entryY=0.45;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
+      edge="1" source="Dosen" target="P253" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="220" y="184"/><mxPoint x="780" y="165"/></Array></mxGeometry></mxCell>
 
-    <mxCell id="f3" value="komponen dan nilai"
-      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=1;exitY=0.7;entryX=0;entryY=0.55;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
-      edge="1" source="Dosen" target="P254" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="220" y="168"/><mxPoint x="750" y="160"/></Array></mxGeometry></mxCell>
-
-    <mxCell id="f4" value="lihat nilai"
-      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=1;exitY=0.7;entryX=0;entryY=0.65;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
-      edge="1" source="Mahasiswa" target="P255" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="220" y="460"/><mxPoint x="750" y="390"/></Array></mxGeometry></mxCell>
+    <mxCell id="f3" value="permintaan nilai dan presensi"
+      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=1;exitY=0.5;entryX=0;entryY=0.6;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
+      edge="1" source="Mahasiswa" target="P255" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="220" y="483"/><mxPoint x="780" y="406"/></Array></mxGeometry></mxCell>
 
     <!-- ANTAR PROSES -->
-    <mxCell id="f5" value="kelas valid"
+    <mxCell id="f4" value="data kehadiran"
       style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=1;exitY=0.5;entryX=0;entryY=0.45;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
       edge="1" source="P251" target="P252" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
 
-    <mxCell id="f6" value="kehadiran tercatat"
-      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=0.5;exitY=1;entryX=0.5;entryY=0;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
-      edge="1" source="P252" target="P253" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="f5" value="nilai tersimpan"
+      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=0.5;exitY=1;entryX=0.8;entryY=0;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
+      edge="1" source="P253" target="P254" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="895" y="250"/><mxPoint x="655" y="250"/></Array></mxGeometry></mxCell>
 
-    <mxCell id="f7" value="rekap nilai"
-      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=0.5;exitY=1;entryX=0.5;entryY=0;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
+    <mxCell id="f5b" value="presensi tervalidasi"
+      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=0.55;exitY=1;entryX=0.2;entryY=0;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
+      edge="1" source="P252" target="P254" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="635" y="250"/><mxPoint x="595" y="250"/></Array></mxGeometry></mxCell>
+
+    <mxCell id="f6" value="rekap nilai"
+      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=1;exitY=0.55;entryX=0;entryY=0.45;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
       edge="1" source="P254" target="P255" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
 
     <!-- KE DATA STORE -->
-    <mxCell id="f8" value="ambil jadwal dan kelas"
-      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;endArrow=open;endFill=0;startArrow=open;startFill=0;exitX=1;exitY=0.35;entryX=0;entryY=0.5;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
-      edge="1" source="P251" target="D3_lbl" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="470" y="140"/><mxPoint x="1040" y="542"/></Array></mxGeometry></mxCell>
+    <mxCell id="f7" value="cek jadwal dan peserta"
+      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;endArrow=open;endFill=0;startArrow=open;startFill=0;exitX=1;exitY=0.35;entryX=0;entryY=0.3;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
+      edge="1" source="P252" target="D1_lbl" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="750" y="155"/><mxPoint x="1050" y="230"/></Array></mxGeometry></mxCell>
 
-    <mxCell id="f9" value="simpan kehadiran"
-      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;endArrow=open;endFill=0;startArrow=open;startFill=0;exitX=1;exitY=0.45;entryX=0;entryY=0.5;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
-      edge="1" source="P252" target="D1_lbl" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="740" y="155"/><mxPoint x="1040" y="132"/></Array></mxGeometry></mxCell>
+    <mxCell id="f8" value="simpan kehadiran"
+      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;endArrow=open;endFill=0;startArrow=open;startFill=0;exitX=1;exitY=0.55;entryX=0;entryY=0.45;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
+      edge="1" source="P252" target="D1_lbl" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="750" y="185"/><mxPoint x="1050" y="242"/></Array></mxGeometry></mxCell>
 
-    <mxCell id="f10" value="ambil kehadiran"
-      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;endArrow=open;endFill=0;startArrow=open;startFill=0;exitX=1;exitY=0.55;entryX=0;entryY=0.65;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
-      edge="1" source="P253" target="D1_lbl" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="740" y="390"/><mxPoint x="1040" y="146"/></Array></mxGeometry></mxCell>
+    <mxCell id="f9" value="simpan nilai"
+      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;endArrow=open;endFill=0;startArrow=open;startFill=0;exitX=1;exitY=0.45;entryX=0;entryY=0.6;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
+      edge="1" source="P253" target="D1_lbl" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1020" y="165"/><mxPoint x="1050" y="250"/></Array></mxGeometry></mxCell>
 
-    <mxCell id="f11" value="simpan nilai"
-      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;endArrow=open;endFill=0;startArrow=open;startFill=0;exitX=1;exitY=0.45;entryX=0;entryY=0.45;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
-      edge="1" source="P254" target="D2_lbl" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="990" y="155"/><mxPoint x="1040" y="342"/></Array></mxGeometry></mxCell>
+    <mxCell id="f10" value="ambil komponen nilai"
+      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;endArrow=open;endFill=0;startArrow=open;startFill=0;exitX=1;exitY=0.45;entryX=0;entryY=0.75;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
+      edge="1" source="P254" target="D1_lbl" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="750" y="385"/><mxPoint x="1050" y="258"/></Array></mxGeometry></mxCell>
 
-    <mxCell id="f12" value="ambil nilai"
-      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;endArrow=open;endFill=0;startArrow=open;startFill=0;exitX=1;exitY=0.5;entryX=0;entryY=0.55;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
-      edge="1" source="P255" target="D2_lbl" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="990" y="370"/><mxPoint x="1040" y="350"/></Array></mxGeometry></mxCell>
+    <mxCell id="f11" value="ambil nilai dan kehadiran"
+      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;endArrow=open;endFill=0;startArrow=open;startFill=0;exitX=1;exitY=0.55;entryX=0;entryY=0.9;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
+      edge="1" source="P255" target="D1_lbl" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1020" y="406"/><mxPoint x="1050" y="266"/></Array></mxGeometry></mxCell>
 
     <!-- OUTPUT -->
-    <mxCell id="f13" value="status absensi"
-      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=0;exitY=0.7;entryX=1;entryY=0.5;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
-      edge="1" source="P253" target="Mahasiswa" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="500" y="390"/><mxPoint x="210" y="390"/><mxPoint x="210" y="453"/></Array></mxGeometry></mxCell>
+    <mxCell id="f12" value="rekap nilai"
+      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=0;exitY=0.45;entryX=1;entryY=0.8;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
+      edge="1" source="P254" target="Dosen" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="500" y="385"/><mxPoint x="210" y="385"/><mxPoint x="210" y="188"/></Array></mxGeometry></mxCell>
 
-    <mxCell id="f14" value="rekap kehadiran"
-      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=0;exitY=0.35;entryX=1;entryY=0.82;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
-      edge="1" source="P253" target="Dosen" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="500" y="350"/><mxPoint x="210" y="350"/><mxPoint x="210" y="178"/></Array></mxGeometry></mxCell>
-
-    <mxCell id="f15" value="nilai tersimpan"
-      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=0;exitY=0.7;entryX=1;entryY=0.7;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
-      edge="1" source="P254" target="Dosen" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="750" y="180"/><mxPoint x="210" y="180"/></Array></mxGeometry></mxCell>
-
-    <mxCell id="f16" value="rekap nilai"
-      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=0;exitY=0.65;entryX=1;entryY=0.65;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
-      edge="1" source="P255" target="Mahasiswa" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="750" y="390"/><mxPoint x="210" y="390"/><mxPoint x="210" y="460"/></Array></mxGeometry></mxCell>
+    <mxCell id="f13" value="hasil nilai dan presensi"
+      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=0;exitY=0.65;entryX=1;entryY=0.5;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
+      edge="1" source="P255" target="Mahasiswa" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="780" y="406"/><mxPoint x="210" y="406"/><mxPoint x="210" y="483"/></Array></mxGeometry></mxCell>
 
   </root>
 </mxGraphModel>
+

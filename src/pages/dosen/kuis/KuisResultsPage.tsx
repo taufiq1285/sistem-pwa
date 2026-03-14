@@ -936,7 +936,10 @@ export default function KuisResultsPage() {
                                         )}
                                       </StatusBadge>
                                     ) : attempt.status === "submitted" ? (
-                                      <StatusBadge status="warning" pulse={false}>
+                                      <StatusBadge
+                                        status="warning"
+                                        pulse={false}
+                                      >
                                         <Clock className="h-3 w-3 mr-1" />
                                         Menunggu Penilaian
                                       </StatusBadge>

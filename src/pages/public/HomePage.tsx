@@ -473,7 +473,9 @@ export function HomePage() {
                     >
                       {role.icon}
                     </div>
-                    <CardTitle className={`text-3xl font-black ${styles.title}`}>
+                    <CardTitle
+                      className={`text-3xl font-black ${styles.title}`}
+                    >
                       {role.title}
                     </CardTitle>
                   </CardHeader>

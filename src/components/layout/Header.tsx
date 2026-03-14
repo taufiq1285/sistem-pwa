@@ -119,7 +119,9 @@ export function Header({
                   theme.primaryBtn.split(" ")[0] || "bg-primary",
                 )}
               >
-                <span className="text-sm font-bold leading-none">{initial}</span>
+                <span className="text-sm font-bold leading-none">
+                  {initial}
+                </span>
               </div>
 
               <div className="hidden flex-col items-start justify-center md:flex">

@@ -10,144 +10,107 @@
       style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=18;fontStyle=1;"
       vertex="1" parent="1"><mxGeometry x="30" y="20" width="560" height="30" as="geometry"/></mxCell>
 
-    <mxCell id="subtitle" value="Entitas eksternal: Mahasiswa, Dosen, Laboran | Data store: D1 Data Logbook, D2 Data Verifikasi Logbook, D3 IndexedDB Cache, D4 Offline Queue"
+    <mxCell id="subtitle" value="Entitas eksternal: Mahasiswa, Dosen | Data store: D1 Data Logbook"
       style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=11;fontColor=#666666;"
-      vertex="1" parent="1"><mxGeometry x="30" y="50" width="980" height="20" as="geometry"/></mxCell>
+      vertex="1" parent="1"><mxGeometry x="30" y="50" width="760" height="20" as="geometry"/></mxCell>
 
     <!-- ENTITAS -->
     <mxCell id="Mahasiswa" value="Mahasiswa"
       style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=1.5;fontStyle=1;fontSize=13;"
-      vertex="1" parent="1"><mxGeometry x="30" y="170" width="140" height="46" as="geometry"/></mxCell>
+      vertex="1" parent="1"><mxGeometry x="30" y="160" width="140" height="46" as="geometry"/></mxCell>
 
     <mxCell id="Dosen" value="Dosen"
       style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;strokeWidth=1.5;fontStyle=1;fontSize=13;"
-      vertex="1" parent="1"><mxGeometry x="30" y="380" width="140" height="46" as="geometry"/></mxCell>
-
-    <mxCell id="Laboran" value="Laboran"
-      style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;strokeWidth=1.5;fontStyle=1;fontSize=13;"
-      vertex="1" parent="1"><mxGeometry x="30" y="560" width="140" height="46" as="geometry"/></mxCell>
+      vertex="1" parent="1"><mxGeometry x="30" y="430" width="140" height="46" as="geometry"/></mxCell>
 
     <!-- PROSES -->
-    <mxCell id="P311" value="3.1.1&#xa;Input Aktivitas&#xa;Logbook"
+    <mxCell id="P311" value="A1&#xa;Input Entri&#xa;Logbook"
       style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#222222;strokeWidth=1.5;fontColor=#111111;fontStyle=1;fontSize=13;"
-      vertex="1" parent="1"><mxGeometry x="260" y="140" width="170" height="100" as="geometry"/></mxCell>
+      vertex="1" parent="1"><mxGeometry x="260" y="130" width="170" height="100" as="geometry"/></mxCell>
 
-    <mxCell id="P312" value="3.1.2&#xa;Simpan atau Queue&#xa;Logbook"
+    <mxCell id="P312" value="A2&#xa;Simpan Bukti&#xa;atau Catatan"
       style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#222222;strokeWidth=1.5;fontColor=#111111;fontStyle=1;fontSize=13;"
-      vertex="1" parent="1"><mxGeometry x="520" y="140" width="175" height="100" as="geometry"/></mxCell>
+      vertex="1" parent="1"><mxGeometry x="520" y="130" width="175" height="100" as="geometry"/></mxCell>
 
-    <mxCell id="P313" value="3.1.3&#xa;Lihat dan Filter&#xa;Logbook"
+    <mxCell id="P313" value="A3&#xa;Review&#xa;Logbook"
       style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#222222;strokeWidth=1.5;fontColor=#111111;fontStyle=1;fontSize=13;"
-      vertex="1" parent="1"><mxGeometry x="520" y="360" width="175" height="100" as="geometry"/></mxCell>
+      vertex="1" parent="1"><mxGeometry x="520" y="400" width="175" height="100" as="geometry"/></mxCell>
 
-    <mxCell id="P314" value="3.1.4&#xa;Validasi atau&#xa;Verifikasi"
+    <mxCell id="P314" value="A4&#xa;Beri Umpan&#xa;Balik"
       style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#222222;strokeWidth=1.5;fontColor=#111111;fontStyle=1;fontSize=13;"
-      vertex="1" parent="1"><mxGeometry x="790" y="360" width="170" height="100" as="geometry"/></mxCell>
+      vertex="1" parent="1"><mxGeometry x="790" y="400" width="170" height="100" as="geometry"/></mxCell>
 
-    <mxCell id="P315" value="3.1.5&#xa;Sinkronkan Logbook&#xa;Offline"
+    <mxCell id="P315" value="A5&#xa;Lihat Riwayat&#xa;Logbook"
       style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#222222;strokeWidth=1.5;fontColor=#111111;fontStyle=1;fontSize=13;"
-      vertex="1" parent="1"><mxGeometry x="790" y="140" width="170" height="100" as="geometry"/></mxCell>
+      vertex="1" parent="1"><mxGeometry x="790" y="130" width="170" height="100" as="geometry"/></mxCell>
 
     <!-- DATA STORE -->
-    <mxCell id="D1_top" value="" style="line;strokeColor=#222222;strokeWidth=1.5;fillColor=none;" vertex="1" parent="1"><mxGeometry x="1080" y="120" width="250" height="10" as="geometry"/></mxCell>
+    <mxCell id="D1_top" value="" style="line;strokeColor=#222222;strokeWidth=1.5;fillColor=none;" vertex="1" parent="1"><mxGeometry x="1080" y="250" width="250" height="10" as="geometry"/></mxCell>
     <mxCell id="D1_lbl" value="D1   Data Logbook"
       style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;fontSize=13;fontStyle=1;"
-      vertex="1" parent="1"><mxGeometry x="1080" y="120" width="250" height="44" as="geometry"/></mxCell>
-    <mxCell id="D1_bot" value="" style="line;strokeColor=#222222;strokeWidth=1.5;fillColor=none;" vertex="1" parent="1"><mxGeometry x="1080" y="164" width="250" height="10" as="geometry"/></mxCell>
-
-    <mxCell id="D2_top" value="" style="line;strokeColor=#222222;strokeWidth=1.5;fillColor=none;" vertex="1" parent="1"><mxGeometry x="1080" y="310" width="250" height="10" as="geometry"/></mxCell>
-    <mxCell id="D2_lbl" value="D2   Data Verifikasi Logbook"
-      style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;fontSize=13;fontStyle=1;"
-      vertex="1" parent="1"><mxGeometry x="1080" y="310" width="250" height="44" as="geometry"/></mxCell>
-    <mxCell id="D2_bot" value="" style="line;strokeColor=#222222;strokeWidth=1.5;fillColor=none;" vertex="1" parent="1"><mxGeometry x="1080" y="354" width="250" height="10" as="geometry"/></mxCell>
-
-    <mxCell id="D3_top" value="" style="line;strokeColor=#222222;strokeWidth=1.5;fillColor=none;" vertex="1" parent="1"><mxGeometry x="1080" y="500" width="250" height="10" as="geometry"/></mxCell>
-    <mxCell id="D3_lbl" value="D3   IndexedDB Cache"
-      style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;fontSize=13;fontStyle=1;"
-      vertex="1" parent="1"><mxGeometry x="1080" y="500" width="250" height="44" as="geometry"/></mxCell>
-    <mxCell id="D3_bot" value="" style="line;strokeColor=#222222;strokeWidth=1.5;fillColor=none;" vertex="1" parent="1"><mxGeometry x="1080" y="544" width="250" height="10" as="geometry"/></mxCell>
-
-    <mxCell id="D4_top" value="" style="line;strokeColor=#222222;strokeWidth=1.5;fillColor=none;" vertex="1" parent="1"><mxGeometry x="1080" y="620" width="250" height="10" as="geometry"/></mxCell>
-    <mxCell id="D4_lbl" value="D4   Offline Queue"
-      style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;fontSize=13;fontStyle=1;"
-      vertex="1" parent="1"><mxGeometry x="1080" y="620" width="250" height="44" as="geometry"/></mxCell>
-    <mxCell id="D4_bot" value="" style="line;strokeColor=#222222;strokeWidth=1.5;fillColor=none;" vertex="1" parent="1"><mxGeometry x="1080" y="664" width="250" height="10" as="geometry"/></mxCell>
+      vertex="1" parent="1"><mxGeometry x="1080" y="250" width="250" height="44" as="geometry"/></mxCell>
+    <mxCell id="D1_bot" value="" style="line;strokeColor=#222222;strokeWidth=1.5;fillColor=none;" vertex="1" parent="1"><mxGeometry x="1080" y="294" width="250" height="10" as="geometry"/></mxCell>
 
     <!-- INPUT -->
-    <mxCell id="f1" value="aktivitas harian dan bukti"
-      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=1;exitY=0.45;entryX=0;entryY=0.5;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
+    <mxCell id="f1" value="entri kegiatan"
+      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=1;exitY=0.45;entryX=0;entryY=0.45;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
       edge="1" source="Mahasiswa" target="P311" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
 
-    <mxCell id="f2" value="lihat logbook"
+    <mxCell id="f2" value="permintaan review"
       style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=1;exitY=0.45;entryX=0;entryY=0.45;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
       edge="1" source="Dosen" target="P313" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
 
-    <mxCell id="f3" value="lihat logbook"
-      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=1;exitY=0.45;entryX=0;entryY=0.7;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
-      edge="1" source="Laboran" target="P313" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="210" y="583"/><mxPoint x="490" y="430"/></Array></mxGeometry></mxCell>
+    <mxCell id="f3" value="catatan atau feedback"
+      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=1;exitY=0.8;entryX=0;entryY=0.55;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
+      edge="1" source="Dosen" target="P314" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="220" y="467"/><mxPoint x="760" y="455"/></Array></mxGeometry></mxCell>
+
+    <mxCell id="f4" value="permintaan riwayat"
+      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=1;exitY=0.6;entryX=0;entryY=0.35;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
+      edge="1" source="Mahasiswa" target="P315" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="220" y="188"/><mxPoint x="760" y="165"/></Array></mxGeometry></mxCell>
+
+    <mxCell id="f5" value="permintaan riwayat logbook"
+      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=1;exitY=0.2;entryX=0;entryY=0.75;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
+      edge="1" source="Dosen" target="P315" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="220" y="439"/><mxPoint x="220" y="210"/><mxPoint x="760" y="210"/></Array></mxGeometry></mxCell>
 
     <!-- ANTAR PROSES -->
-    <mxCell id="f4" value="entri logbook"
-      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=1;exitY=0.5;entryX=0;entryY=0.5;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
+    <mxCell id="f6" value="entri logbook"
+      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=1;exitY=0.5;entryX=0;entryY=0.45;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
       edge="1" source="P311" target="P312" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
 
-    <mxCell id="f5" value="data untuk sinkronisasi"
-      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=1;exitY=0.45;entryX=0;entryY=0.45;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
-      edge="1" source="P312" target="P315" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
-
-    <mxCell id="f6" value="hasil filter"
-      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=1;exitY=0.5;entryX=0;entryY=0.5;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
+    <mxCell id="f7" value="hasil review"
+      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=1;exitY=0.5;entryX=0;entryY=0.45;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
       edge="1" source="P313" target="P314" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
 
     <!-- KE DATA STORE -->
-    <mxCell id="f7" value="simpan logbook online"
-      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;endArrow=open;endFill=0;startArrow=open;startFill=0;exitX=1;exitY=0.4;entryX=0;entryY=0.45;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
-      edge="1" source="P312" target="D1_lbl" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="730" y="170"/><mxPoint x="1040" y="142"/></Array></mxGeometry></mxCell>
+    <mxCell id="f8" value="simpan isi dan lampiran"
+      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;endArrow=open;endFill=0;startArrow=open;startFill=0;exitX=1;exitY=0.45;entryX=0;entryY=0.25;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
+      edge="1" source="P312" target="D1_lbl" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="730" y="175"/><mxPoint x="1040" y="260"/></Array></mxGeometry></mxCell>
 
-    <mxCell id="f8" value="simpan cache lokal"
-      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;endArrow=open;endFill=0;startArrow=open;startFill=0;exitX=1;exitY=0.7;entryX=0;entryY=0.45;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
-      edge="1" source="P312" target="D3_lbl" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="730" y="220"/><mxPoint x="1040" y="522"/></Array></mxGeometry></mxCell>
+    <mxCell id="f9" value="ambil logbook mahasiswa"
+      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;endArrow=open;endFill=0;startArrow=open;startFill=0;exitX=1;exitY=0.45;entryX=0;entryY=0.55;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
+      edge="1" source="P313" target="D1_lbl" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="730" y="445"/><mxPoint x="1040" y="282"/></Array></mxGeometry></mxCell>
 
-    <mxCell id="f9" value="simpan antrean offline"
-      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;endArrow=open;endFill=0;startArrow=open;startFill=0;exitX=1;exitY=0.85;entryX=0;entryY=0.45;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
-      edge="1" source="P312" target="D4_lbl" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="730" y="235"/><mxPoint x="1040" y="642"/></Array></mxGeometry></mxCell>
+    <mxCell id="f10" value="simpan feedback"
+      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;endArrow=open;endFill=0;startArrow=open;startFill=0;exitX=1;exitY=0.45;entryX=0;entryY=0.75;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
+      edge="1" source="P314" target="D1_lbl" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="990" y="445"/><mxPoint x="1040" y="290"/></Array></mxGeometry></mxCell>
 
-    <mxCell id="f10" value="ambil logbook"
-      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;endArrow=open;endFill=0;startArrow=open;startFill=0;exitX=1;exitY=0.45;entryX=0;entryY=0.6;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
-      edge="1" source="P313" target="D1_lbl" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="730" y="390"/><mxPoint x="1040" y="150"/></Array></mxGeometry></mxCell>
-
-    <mxCell id="f11" value="simpan verifikasi"
-      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;endArrow=open;endFill=0;startArrow=open;startFill=0;exitX=1;exitY=0.45;entryX=0;entryY=0.45;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
-      edge="1" source="P314" target="D2_lbl" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="990" y="390"/><mxPoint x="1040" y="332"/></Array></mxGeometry></mxCell>
-
-    <mxCell id="f12" value="ambil antrean offline"
-      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;endArrow=open;endFill=0;startArrow=open;startFill=0;exitX=1;exitY=0.65;entryX=0;entryY=0.5;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
-      edge="1" source="P315" target="D4_lbl" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="990" y="205"/><mxPoint x="1040" y="642"/></Array></mxGeometry></mxCell>
-
-    <mxCell id="f13" value="update logbook hasil sinkron"
-      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;endArrow=open;endFill=0;startArrow=open;startFill=0;exitX=1;exitY=0.4;entryX=0;entryY=0.35;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
-      edge="1" source="P315" target="D1_lbl" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="990" y="170"/><mxPoint x="1040" y="136"/></Array></mxGeometry></mxCell>
+    <mxCell id="f11" value="ambil histori logbook"
+      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;endArrow=open;endFill=0;startArrow=open;startFill=0;exitX=1;exitY=0.55;entryX=0;entryY=0.4;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
+      edge="1" source="P315" target="D1_lbl" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="990" y="185"/><mxPoint x="1040" y="274"/></Array></mxGeometry></mxCell>
 
     <!-- OUTPUT -->
-    <mxCell id="f14" value="status simpan logbook"
-      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=0;exitY=0.65;entryX=1;entryY=0.5;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
-      edge="1" source="P312" target="Mahasiswa" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="490" y="210"/><mxPoint x="210" y="210"/><mxPoint x="210" y="193"/></Array></mxGeometry></mxCell>
+    <mxCell id="f12" value="riwayat logbook"
+      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=0;exitY=0.35;entryX=1;entryY=0.55;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
+      edge="1" source="P315" target="Mahasiswa" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="760" y="165"/><mxPoint x="210" y="165"/><mxPoint x="210" y="188"/></Array></mxGeometry></mxCell>
 
-    <mxCell id="f15" value="hasil verifikasi"
+    <mxCell id="f13" value="riwayat logbook mahasiswa"
+      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=0;exitY=0.8;entryX=1;entryY=0.2;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
+      edge="1" source="P315" target="Dosen" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="760" y="210"/><mxPoint x="210" y="210"/><mxPoint x="210" y="439"/></Array></mxGeometry></mxCell>
+
+    <mxCell id="f14" value="hasil verifikasi"
       style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=0;exitY=0.65;entryX=1;entryY=0.8;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
-      edge="1" source="P314" target="Mahasiswa" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="760" y="420"/><mxPoint x="210" y="420"/><mxPoint x="210" y="205"/></Array></mxGeometry></mxCell>
-
-    <mxCell id="f16" value="daftar logbook"
-      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=0;exitY=0.35;entryX=1;entryY=0.5;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
-      edge="1" source="P313" target="Dosen" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="490" y="390"/><mxPoint x="210" y="390"/><mxPoint x="210" y="403"/></Array></mxGeometry></mxCell>
-
-    <mxCell id="f17" value="daftar logbook"
-      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=0;exitY=0.7;entryX=1;entryY=0.5;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
-      edge="1" source="P313" target="Laboran" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="490" y="430"/><mxPoint x="210" y="430"/><mxPoint x="210" y="583"/></Array></mxGeometry></mxCell>
-
-    <mxCell id="f18" value="status sinkronisasi"
-      style="edgeStyle=orthogonalEdgeStyle;strokeWidth=1.5;exitX=0;exitY=0.35;entryX=1;entryY=0.2;fontSize=12;align=center;verticalAlign=bottom;labelBackgroundColor=#ffffff;"
-      edge="1" source="P315" target="Mahasiswa" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="760" y="170"/><mxPoint x="210" y="170"/><mxPoint x="210" y="180"/></Array></mxGeometry></mxCell>
+      edge="1" source="P314" target="Mahasiswa" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="760" y="465"/><mxPoint x="210" y="465"/><mxPoint x="210" y="198"/></Array></mxGeometry></mxCell>
 
   </root>
 </mxGraphModel>
+

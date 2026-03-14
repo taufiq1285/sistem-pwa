@@ -650,7 +650,11 @@ export default function JadwalApprovalPage() {
                                 </TableCell>
                                 <TableCell>
                                   <StatusBadge
-                                    status={jadwal.status === "rejected" ? "error" : "offline"}
+                                    status={
+                                      jadwal.status === "rejected"
+                                        ? "error"
+                                        : "offline"
+                                    }
                                     pulse={false}
                                   >
                                     {jadwal.status === "rejected"

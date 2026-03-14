@@ -19,7 +19,8 @@ export const themeConfig: Record<UserRole, RoleTheme> = {
   admin: {
     sidebarBg: "bg-slate-950/95",
     sidebarHover: "hover:bg-slate-800/80",
-    sidebarActive: "bg-slate-800/90 border-l-4 border-slate-300 text-white shadow-lg shadow-slate-950/20",
+    sidebarActive:
+      "bg-slate-800/90 border-l-4 border-slate-300 text-white shadow-lg shadow-slate-950/20",
     accentText: "text-slate-600",
     accentBorder: "border-t-4 border-slate-600",
     badgeBg: "bg-slate-100 text-slate-800 border border-slate-200",
@@ -32,7 +33,8 @@ export const themeConfig: Record<UserRole, RoleTheme> = {
   dosen: {
     sidebarBg: "bg-emerald-950/95",
     sidebarHover: "hover:bg-emerald-800/75",
-    sidebarActive: "bg-emerald-800/90 border-l-4 border-emerald-300 text-white shadow-lg shadow-emerald-950/20",
+    sidebarActive:
+      "bg-emerald-800/90 border-l-4 border-emerald-300 text-white shadow-lg shadow-emerald-950/20",
     accentText: "text-emerald-600",
     accentBorder: "border-t-4 border-emerald-600",
     badgeBg: "bg-emerald-100 text-emerald-800 border border-emerald-200",
@@ -45,7 +47,8 @@ export const themeConfig: Record<UserRole, RoleTheme> = {
   mahasiswa: {
     sidebarBg: "bg-indigo-950/95",
     sidebarHover: "hover:bg-indigo-800/75",
-    sidebarActive: "bg-indigo-800/90 border-l-4 border-indigo-300 text-white shadow-lg shadow-indigo-950/20",
+    sidebarActive:
+      "bg-indigo-800/90 border-l-4 border-indigo-300 text-white shadow-lg shadow-indigo-950/20",
     accentText: "text-indigo-600",
     accentBorder: "border-t-4 border-indigo-600",
     badgeBg: "bg-indigo-100 text-indigo-800 border border-indigo-200",
@@ -58,7 +61,8 @@ export const themeConfig: Record<UserRole, RoleTheme> = {
   laboran: {
     sidebarBg: "bg-amber-950/95",
     sidebarHover: "hover:bg-amber-800/75",
-    sidebarActive: "bg-amber-800/90 border-l-4 border-amber-300 text-white shadow-lg shadow-amber-950/20",
+    sidebarActive:
+      "bg-amber-800/90 border-l-4 border-amber-300 text-white shadow-lg shadow-amber-950/20",
     accentText: "text-amber-600",
     accentBorder: "border-t-4 border-amber-600",
     badgeBg: "bg-amber-100 text-amber-800 border border-amber-200",

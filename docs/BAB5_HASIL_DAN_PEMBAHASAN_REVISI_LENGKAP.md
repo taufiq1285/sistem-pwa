@@ -33,7 +33,7 @@ Dari sudut pandang pembahasan, proses 1.0 berfungsi sebagai fondasi keamanan dan
 
 ### 5.1.2 DFD Level 2
 
-DFD Level 2 pada penelitian ini merupakan hasil dekomposisi lebih rinci dari empat proses utama pada DFD Level 1. Tujuannya adalah untuk memperlihatkan bagaimana aliran data berlangsung pada tingkat proses yang lebih operasional, siapa aktor yang berinteraksi pada setiap subproses, data store apa yang digunakan, serta bagaimana satu proses menghasilkan keluaran yang menjadi masukan bagi proses yang lain.
+DFD Level 2 pada penelitian ini merupakan hasil dekomposisi lebih rinci dari empat proses utama pada DFD Level 1. Tujuannya adalah untuk memperlihatkan bagaimana aliran data berlangsung pada tingkat proses yang lebih operasional, siapa aktor yang berinteraksi pada setiap aktivitas internal, data store apa yang digunakan, serta bagaimana satu proses menghasilkan keluaran yang menjadi masukan bagi proses yang lain.
 
 Pada sistem yang dibangun, DFD Level 2 tidak disajikan dalam satu gambar besar, tetapi dibagi ke dalam sebelas diagram agar keterbacaan tetap terjaga. Pembagian ini bukan berarti tiap proses berdiri sendiri, melainkan merupakan strategi penyajian agar setiap diagram dapat dibahas secara fokus tanpa menghilangkan keterhubungan logis antarproses. Ringkasan dekomposisi tersebut disajikan pada Tabel 5.2.
 
@@ -55,15 +55,15 @@ Proses 1.1 menggambarkan alur login, verifikasi kredensial, pengambilan role, pe
 [TEMPAT GAMBAR]
 Gambar 7. DFD Level 2.1 Proses 1.1 Autentikasi
 
-**Tabel 5.3 Rincian Subproses 1.1 Autentikasi**
+**Tabel 5.3 Rincian Aktivitas Internal 1.1 Autentikasi**
 
-| Subproses | Deskripsi |
+| Kode Aktivitas | Deskripsi |
 |---|---|
-| 1.1.1 | validasi kredensial pengguna |
-| 1.1.2 | pengambilan data role |
-| 1.1.3 | pembentukan session login |
-| 1.1.4 | pengalihan dashboard berdasarkan role |
-| 1.1.5 | logout dan pengakhiran sesi |
+| A1 | validasi kredensial pengguna |
+| A2 | pengambilan data role |
+| A3 | pembentukan session login |
+| A4 | pengalihan dashboard berdasarkan role |
+| A5 | logout dan pengakhiran sesi |
 
 #### 5.1.2.2 Proses 1.2 Kelola User
 
@@ -135,15 +135,15 @@ Proses 4.1 menggambarkan deteksi jaringan, penyimpanan cache, antrean operasi of
 [TEMPAT GAMBAR]
 Gambar 17. DFD Level 2.11 Proses 4.1 Sinkronisasi Offline PWA
 
-**Tabel 5.4 Rincian Subproses 4.1 Sinkronisasi Offline PWA**
+**Tabel 5.4 Rincian Aktivitas Internal 4.1 Sinkronisasi Offline PWA**
 
-| Subproses | Deskripsi |
+| Kode Aktivitas | Deskripsi |
 |---|---|
-| 4.1.1 | deteksi status online atau offline |
-| 4.1.2 | penyimpanan data ke cache lokal |
-| 4.1.3 | penyimpanan operasi tulis ke antrean |
-| 4.1.4 | sinkronisasi ulang ke server |
-| 4.1.5 | penanganan konflik dan *retry* |
+| A1 | deteksi status online atau offline |
+| A2 | penyimpanan data ke cache lokal |
+| A3 | penyimpanan operasi tulis ke antrean |
+| A4 | sinkronisasi ulang ke server |
+| A5 | penanganan konflik dan *retry* |
 
 Berdasarkan keseluruhan DFD Level 2, dapat disimpulkan bahwa sistem yang dibangun memiliki hubungan proses yang berlapis dan saling bergantung. Modul autentikasi dan manajemen user menjadi fondasi akses, modul akademik membentuk alur inti pembelajaran, modul operasional memperluas sistem ke kebutuhan laboratorium, dan modul sinkronisasi menjadi penopang layanan berkelanjutan pada konteks PWA.
 

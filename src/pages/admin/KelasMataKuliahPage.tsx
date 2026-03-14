@@ -160,9 +160,24 @@ export default function KelasMataKuliahPage() {
 
       {/* Summary */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <DashboardCard title="Total Kelas Aktif" value={kelasList.length} icon={BookOpen} color="primary" />
-        <DashboardCard title="Belum Ada Mata Kuliah" value={kelasWithoutMK.length} icon={AlertCircle} color="warning" />
-        <DashboardCard title="Sudah Ada Mata Kuliah" value={kelasList.length - kelasWithoutMK.length} icon={CheckCircle} color="success" />
+        <DashboardCard
+          title="Total Kelas Aktif"
+          value={kelasList.length}
+          icon={BookOpen}
+          color="primary"
+        />
+        <DashboardCard
+          title="Belum Ada Mata Kuliah"
+          value={kelasWithoutMK.length}
+          icon={AlertCircle}
+          color="warning"
+        />
+        <DashboardCard
+          title="Sudah Ada Mata Kuliah"
+          value={kelasList.length - kelasWithoutMK.length}
+          icon={CheckCircle}
+          color="success"
+        />
       </div>
 
       {/* Alert */}
