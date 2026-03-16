@@ -70,11 +70,12 @@ Dengan demikian, setiap proses Level 2 adalah bagian dari satu siklus: **input â
 ### 3.2 Domain Akademik Praktikum
 
 #### A. Proses 2.4 sebagai Fondasi Struktur Akademik
-- Admin kelola kelas.
 - Admin kelola mata kuliah.
-- Admin tetapkan assignment dosen.
-- Admin kelola anggota kelas (enrollment mahasiswa).
-- Sistem distribusikan relasi akademik ke pihak terkait.
+- Admin kelola kelas praktikum.
+- Admin menetapkan dosen dan mahasiswa ke kelas.
+- Dosen kelola assignment pada kelas terkait.
+- Mahasiswa mengumpulkan submission tugas.
+- Dosen dan mahasiswa mengakses data kelas serta assignment.
 
 #### B. Proses 2.1 Kelola Jadwal
 - Dosen ajukan/input jadwal.

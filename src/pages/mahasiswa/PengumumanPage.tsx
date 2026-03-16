@@ -146,10 +146,10 @@ export default function PengumumanPage() {
       <div className="app-container space-y-6">
         <div className="section-shell flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
+            <h1 className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">
               Notifikasi
             </h1>
-            <p className="mt-1 text-sm text-slate-600 sm:text-base">
+            <p className="mt-1 text-sm text-muted-foreground sm:text-base">
               Informasi dan pemberitahuan penting
             </p>
           </div>
@@ -159,7 +159,7 @@ export default function PengumumanPage() {
           {[1, 2, 3].map((i) => (
             <Card
               key={i}
-              className="rounded-2xl border border-blue-100/70 bg-white/90 shadow-sm"
+              className="rounded-2xl border border-border/60 bg-white/90 shadow-sm"
             >
               <CardHeader>
                 <Skeleton className="h-6 w-3/4" />
@@ -180,17 +180,17 @@ export default function PengumumanPage() {
       <div className="app-container space-y-6">
         <div className="section-shell flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
+            <h1 className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">
               Notifikasi
             </h1>
-            <p className="mt-1 text-sm text-slate-600 sm:text-base">
+            <p className="mt-1 text-sm text-muted-foreground sm:text-base">
               Informasi dan pemberitahuan penting
             </p>
           </div>
           <Button
             variant="outline"
             onClick={() => loadAnnouncements(true)}
-            className="w-full border-blue-200 bg-white text-blue-700 hover:bg-blue-50 sm:w-auto"
+            className="w-full border-primary/30 bg-white text-primary hover:bg-primary/5 sm:w-auto"
           >
             <RefreshCcw className="mr-2 h-4 w-4" />
             Coba Muat Ulang
@@ -209,24 +209,24 @@ export default function PengumumanPage() {
     <div className="app-container space-y-6">
       <div className="section-shell flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
+          <h1 className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">
             Notifikasi
           </h1>
-          <p className="mt-1 text-sm text-slate-600 sm:text-base">
+          <p className="mt-1 text-sm text-muted-foreground sm:text-base">
             Informasi dan pemberitahuan penting
           </p>
         </div>
 
         <div className="flex flex-col gap-2 sm:items-end">
-          <div className="inline-flex items-center gap-2 text-sm font-medium text-slate-600">
-            <Bell className="h-4 w-4 text-blue-600" />
+          <div className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground">
+            <Bell className="h-4 w-4 text-primary" />
             {announcements.length} Notifikasi Aktif
           </div>
           <Button
             variant="outline"
             onClick={() => loadAnnouncements(true)}
             disabled={refreshing}
-            className="w-full border-blue-200 bg-white text-blue-700 hover:bg-blue-50 sm:w-auto"
+            className="w-full border-primary/30 bg-white text-primary hover:bg-primary/5 sm:w-auto"
           >
             <RefreshCcw
               className={`mr-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
@@ -237,10 +237,10 @@ export default function PengumumanPage() {
       </div>
 
       {announcements.length === 0 ? (
-        <Card className="rounded-2xl border border-blue-100/70 bg-white/90 shadow-sm">
+        <Card className="rounded-2xl border border-border/60 bg-white/90 shadow-sm">
           <CardContent className="py-14 text-center">
-            <Bell className="mx-auto mb-4 h-12 w-12 text-blue-300" />
-            <p className="text-slate-600">Tidak ada notifikasi saat ini</p>
+            <Bell className="mx-auto mb-4 h-12 w-12 text-muted-foreground/60" />
+            <p className="text-muted-foreground">Tidak ada notifikasi saat ini</p>
           </CardContent>
         </Card>
       ) : (
@@ -250,8 +250,8 @@ export default function PengumumanPage() {
               key={announcement.id}
               className={`rounded-2xl border bg-white/95 shadow-sm transition-all duration-200 hover:shadow-md ${
                 announcement.prioritas === "high"
-                  ? "border-red-200 bg-red-50/50"
-                  : "border-blue-100/70"
+                  ? "border-danger/30 bg-danger/5"
+                  : "border-border/60"
               }`}
             >
               <CardHeader>
@@ -262,18 +262,18 @@ export default function PengumumanPage() {
                         getPriorityBadge(announcement.prioritas)}
                       {announcement.tipe && getTypeBadge(announcement.tipe)}
                       {announcement.prioritas === "high" && (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-1 text-xs font-semibold text-red-700">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-danger/10 px-2 py-1 text-xs font-semibold text-danger">
                           <Sparkles className="h-3 w-3" />
                           Perhatian
                         </span>
                       )}
                     </div>
-                    <CardTitle className="text-lg text-slate-900 sm:text-xl">
+                    <CardTitle className="text-lg text-foreground sm:text-xl">
                       {announcement.judul}
                     </CardTitle>
                     <CardDescription className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs sm:text-sm">
                       {announcement.created_at && (
-                        <span className="inline-flex items-center gap-1 text-slate-500">
+                        <span className="inline-flex items-center gap-1 text-muted-foreground">
                           <Calendar className="h-4 w-4" />
                           {format(
                             new Date(announcement.created_at),
@@ -282,7 +282,7 @@ export default function PengumumanPage() {
                         </span>
                       )}
                       {announcement.penulis && (
-                        <span className="text-slate-500">
+                        <span className="text-muted-foreground">
                           oleh {announcement.penulis.full_name}
                         </span>
                       )}
@@ -292,17 +292,17 @@ export default function PengumumanPage() {
               </CardHeader>
 
               <CardContent>
-                <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-700 sm:text-base">
+                <p className="whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground sm:text-base">
                   {announcement.konten}
                 </p>
 
                 {announcement.attachment_url && (
-                  <div className="mt-4 border-t border-blue-100 pt-4">
+                  <div className="mt-4 border-t border-border/40 pt-4">
                     <a
                       href={announcement.attachment_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 text-sm font-medium text-blue-700 transition-colors hover:text-blue-800"
+                      className="inline-flex items-center gap-2 text-sm font-medium text-primary transition-colors hover:text-primary/80"
                     >
                       <FileText className="h-4 w-4" />
                       Lihat Lampiran
@@ -311,7 +311,7 @@ export default function PengumumanPage() {
                 )}
 
                 {announcement.tanggal_selesai && (
-                  <div className="mt-4 text-xs text-slate-500 sm:text-sm">
+                  <div className="mt-4 text-xs text-muted-foreground sm:text-sm">
                     Berlaku hingga{" "}
                     {format(
                       new Date(announcement.tanggal_selesai),

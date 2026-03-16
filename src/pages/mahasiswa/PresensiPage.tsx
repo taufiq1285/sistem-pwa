@@ -13,7 +13,7 @@ import {
   AlertCircle,
   MapPin,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { DashboardCard } from "@/components/ui/dashboard-card";
 import { DashboardSkeleton } from "@/components/ui/dashboard-skeleton";
@@ -159,7 +159,7 @@ export default function PresensiPage() {
         {/* Header */}
         <GlassCard
           intensity="medium"
-          className="border-white/40 bg-white/80 shadow-xl dark:border-white/10 dark:bg-slate-900/80"
+          className="border-white/40 bg-white/80 shadow-xl dark:border-white/10 dark:bg-card"
         >
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
@@ -218,7 +218,7 @@ export default function PresensiPage() {
         {/* Persentase Kehadiran */}
         <GlassCard
           intensity="low"
-          className="border-white/40 bg-white/85 shadow-lg dark:border-white/10 dark:bg-slate-900/85"
+          className="border-white/40 bg-white/85 shadow-lg dark:border-white/10 dark:bg-card"
         >
           <CardHeader>
             <CardTitle>Persentase Kehadiran</CardTitle>
@@ -233,10 +233,10 @@ export default function PresensiPage() {
                   <div
                     className={`h-4 rounded-full transition-all ${
                       stats.persentase >= 75
-                        ? "bg-green-600"
+                        ? "bg-success"
                         : stats.persentase >= 50
-                          ? "bg-yellow-600"
-                          : "bg-red-600"
+                          ? "bg-warning"
+                          : "bg-danger"
                     }`}
                     style={{ width: `${stats.persentase}%` }}
                   ></div>
@@ -256,7 +256,7 @@ export default function PresensiPage() {
         {/* Riwayat Presensi */}
         <GlassCard
           intensity="low"
-          className="border-white/40 bg-white/85 shadow-lg dark:border-white/10 dark:bg-slate-900/85"
+          className="border-white/40 bg-white/85 shadow-lg dark:border-white/10 dark:bg-card"
         >
           <CardHeader>
             <CardTitle>Riwayat Presensi</CardTitle>

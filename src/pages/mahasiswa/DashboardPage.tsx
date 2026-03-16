@@ -152,19 +152,19 @@ export function DashboardPage() {
             className="overflow-hidden rounded-4xl border border-border/50 bg-background/80 px-4 py-4 shadow-xl sm:px-6"
           >
             <div className="flex items-start gap-3 sm:items-center sm:gap-4">
-              <div className="shrink-0 rounded-2xl bg-linear-to-br from-emerald-600 via-teal-600 to-blue-700 p-2.5 shadow-lg shadow-emerald-500/25 sm:p-3">
+              <div className="shrink-0 rounded-2xl bg-linear-to-br from-primary via-accent to-primary/80 p-2.5 shadow-lg shadow-primary/25 sm:p-3">
                 <BookOpen className="h-6 w-6 text-white sm:h-8 sm:w-8" />
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
                   Ringkasan pembelajaran
                 </p>
-                <h1 className="mt-1 bg-linear-to-r from-emerald-700 via-teal-700 to-blue-800 bg-clip-text text-2xl font-extrabold leading-tight text-transparent dark:from-emerald-400 dark:via-teal-300 dark:to-blue-400 sm:text-4xl lg:text-5xl">
+                <h1 className="mt-1 bg-linear-to-r from-primary via-accent to-primary/80 bg-clip-text text-2xl font-extrabold leading-tight text-transparent sm:text-4xl lg:text-5xl">
                   Dashboard Mahasiswa
                 </h1>
                 <p className="mt-2 text-sm font-semibold text-foreground/80 sm:text-base lg:text-lg">
                   Selamat datang,{" "}
-                  <span className="text-emerald-600 dark:text-emerald-400">
+                  <span className="text-primary">
                     {user?.full_name || user?.email}
                   </span>
                 </p>
@@ -229,7 +229,7 @@ export function DashboardPage() {
             <GlassCard
               intensity="high"
               glow
-              className="interactive-card overflow-hidden border-white/20 bg-linear-to-r from-emerald-600/95 via-teal-600/95 to-blue-700/95 text-white shadow-2xl"
+              className="interactive-card overflow-hidden border-white/20 bg-linear-to-r from-primary/95 via-accent/90 to-primary/80 text-primary-foreground shadow-2xl"
             >
               <div className="absolute inset-0 bg-grid-white/10" />
               <CardContent className="relative p-5 sm:p-8">
@@ -241,7 +241,7 @@ export function DashboardPage() {
                     <h2 className="mb-1.5 text-xl font-extrabold sm:mb-2 sm:text-3xl">
                       Semangat Belajar! 🚀
                     </h2>
-                    <p className="text-sm font-semibold leading-relaxed text-emerald-100 sm:text-lg">
+                    <p className="text-sm font-semibold leading-relaxed text-primary-foreground/80 sm:text-lg">
                       Kamu terdaftar di{" "}
                       <span className="font-extrabold text-white">
                         {stats?.totalKelasPraktikum}
@@ -263,10 +263,10 @@ export function DashboardPage() {
               intensity="high"
               className="group relative overflow-hidden border-border/50 bg-background/75 shadow-xl"
             >
-              <div className="absolute -right-16 -top-16 h-32 w-32 rounded-full bg-emerald-400/15 blur-3xl" />
+              <div className="absolute -right-16 -top-16 h-32 w-32 rounded-full bg-primary/10 blur-3xl" />
               <CardHeader className="relative">
                 <div className="mb-2 flex items-center gap-2">
-                  <div className="rounded-xl bg-linear-to-br from-emerald-500 to-green-600 p-2.5 shadow-lg shadow-emerald-500/20">
+                  <div className="rounded-xl bg-linear-to-br from-primary to-accent p-2.5 shadow-lg shadow-primary/20">
                     <BookOpen className="h-5 w-5 text-white" />
                   </div>
                   <div>
@@ -283,8 +283,8 @@ export function DashboardPage() {
               <CardContent className="relative">
                 {myKelas.length === 0 ? (
                   <div className="py-12 text-center">
-                    <div className="mb-4 inline-flex rounded-full bg-emerald-500/10 p-4">
-                      <BookOpen className="h-12 w-12 text-emerald-500" />
+                    <div className="mb-4 inline-flex rounded-full bg-primary/10 p-4">
+                      <BookOpen className="h-12 w-12 text-primary" />
                     </div>
                     <p className="mb-2 text-lg font-bold text-foreground">
                       Belum ada kelas yang diikuti
@@ -299,10 +299,10 @@ export function DashboardPage() {
                     {myKelas.map((kelas) => (
                       <div
                         key={kelas.id}
-                        className="interactive-card group flex items-center gap-3 rounded-2xl border border-emerald-500/15 bg-emerald-500/5 p-4 shadow-sm transition-all duration-300 hover:border-emerald-500/30 hover:bg-emerald-500/10 hover:shadow-md"
+                        className="interactive-card group flex items-center gap-3 rounded-2xl border border-primary/15 bg-primary/5 p-4 shadow-sm transition-all duration-300 hover:border-primary/30 hover:bg-primary/10 hover:shadow-md"
                       >
                         <div className="shrink-0">
-                          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-emerald-500 to-green-600 shadow-lg transition-transform group-hover:scale-110">
+                          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-primary to-accent shadow-lg transition-transform group-hover:scale-110">
                             <BookOpen className="h-5 w-5 text-white" />
                           </div>
                         </div>
@@ -313,7 +313,7 @@ export function DashboardPage() {
                             </h4>
                             <Badge
                               variant="secondary"
-                              className="border-0 bg-emerald-500/15 text-xs font-semibold text-emerald-700 dark:text-emerald-300"
+                              className="border-0 bg-primary/15 text-xs font-semibold text-primary"
                             >
                               {kelas.mata_kuliah_kode}
                             </Badge>
@@ -325,7 +325,7 @@ export function DashboardPage() {
                             {kelas.sks} SKS • {kelas.tahun_ajaran}
                           </p>
                         </div>
-                        <CheckCircle2 className="h-5 w-5 text-emerald-500 opacity-0 transition-opacity group-hover:opacity-100" />
+                        <CheckCircle2 className="h-5 w-5 text-primary opacity-0 transition-opacity group-hover:opacity-100" />
                       </div>
                     ))}
                   </div>
@@ -338,7 +338,7 @@ export function DashboardPage() {
               intensity="high"
               className="group relative overflow-hidden border-border/50 bg-background/75 shadow-xl"
             >
-              <div className="absolute -right-16 -top-16 h-32 w-32 rounded-full bg-teal-400/15 blur-3xl" />
+              <div className="absolute -right-16 -top-16 h-32 w-32 rounded-full bg-accent/15 blur-3xl" />
               <CardHeader className="relative">
                 <div className="mb-2 flex items-center gap-2">
                   <div className="rounded-xl bg-linear-to-br from-primary to-accent p-2.5 shadow-lg shadow-primary/20">
@@ -358,8 +358,8 @@ export function DashboardPage() {
               <CardContent className="relative">
                 {myJadwal.length === 0 ? (
                   <div className="py-12 text-center">
-                    <div className="mb-4 inline-flex rounded-full bg-teal-500/10 p-4">
-                      <Calendar className="h-12 w-12 text-teal-500" />
+                    <div className="mb-4 inline-flex rounded-full bg-accent/10 p-4">
+                      <Calendar className="h-12 w-12 text-accent" />
                     </div>
                     <p className="mb-2 text-lg font-bold text-foreground">
                       {myKelas.length === 0
@@ -378,7 +378,7 @@ export function DashboardPage() {
                     {myJadwal.map((jadwal) => (
                       <div
                         key={jadwal.id}
-                        className="interactive-card group flex gap-3 rounded-2xl border border-teal-500/15 bg-teal-500/5 p-4 shadow-sm transition-all duration-300 hover:border-teal-500/30 hover:bg-teal-500/10 hover:shadow-md"
+                        className="interactive-card group flex gap-3 rounded-2xl border border-accent/15 bg-accent/5 p-4 shadow-sm transition-all duration-300 hover:border-accent/30 hover:bg-accent/10 hover:shadow-md"
                       >
                         <div className="shrink-0">
                           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-primary to-accent shadow-lg transition-transform group-hover:scale-110">
@@ -405,7 +405,7 @@ export function DashboardPage() {
                             {jadwal.lab_nama}
                           </div>
                         </div>
-                        <AlertCircle className="h-5 w-5 text-teal-500 opacity-0 transition-opacity group-hover:opacity-100" />
+                        <AlertCircle className="h-5 w-5 text-accent opacity-0 transition-opacity group-hover:opacity-100" />
                       </div>
                     ))}
                   </div>

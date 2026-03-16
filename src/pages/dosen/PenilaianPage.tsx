@@ -733,7 +733,7 @@ export default function DosenPenilaianPage() {
                 <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-linear-to-r from-primary to-accent dark:from-primary/80 dark:to-accent/80">
                   Penilaian Mahasiswa
                 </h1>
-                <p className="text-sm sm:text-base md:text-lg font-bold text-muted-foreground dark:text-gray-300 mt-1">
+                <p className="text-sm sm:text-base md:text-lg font-bold text-muted-foreground mt-1">
                   {selectedKelas
                     ? "Input nilai mahasiswa dengan visual indicators untuk kemudahan tracking"
                     : "Pilih mata kuliah dan kelas untuk memulai penilaian"}
@@ -783,7 +783,7 @@ export default function DosenPenilaianPage() {
                 <h2 className="text-3xl font-extrabold text-foreground dark:text-white mb-3">
                   Selamat Datang di Halaman Penilaian
                 </h2>
-                <p className="text-lg text-muted-foreground dark:text-gray-300 text-center max-w-2xl mb-8">
+                <p className="text-lg text-muted-foreground text-center max-w-2xl mb-8">
                   Untuk memulai memberikan nilai, silakan pilih mata kuliah dan
                   kelas yang Anda ajarkan
                 </p>
@@ -791,7 +791,7 @@ export default function DosenPenilaianPage() {
             </Card>
 
             {/* Selection Steps Card - Enhanced */}
-            <Card className="border-0 shadow-xl bg-linear-to-br from-white via-primary/5 to-accent/5 dark:from-slate-900 dark:via-primary/10 dark:to-accent/10 backdrop-blur-sm">
+            <Card className="border-0 shadow-xl bg-linear-to-br from-white via-primary/5 to-accent/5 dark:from-card dark:via-primary/10 dark:to-accent/10 backdrop-blur-sm">
               <CardHeader className="border-b bg-linear-to-r from-primary/5 to-accent/5 dark:from-primary/10 dark:to-accent/10">
                 <CardTitle className="flex items-center gap-3 text-xl font-bold">
                   <div className="p-2.5 bg-linear-to-br from-primary to-accent rounded-xl shadow-lg shadow-primary/30">
@@ -867,7 +867,7 @@ export default function DosenPenilaianPage() {
                         className={`flex items-center justify-center w-10 h-10 rounded-full text-lg font-bold shadow-lg ${
                           selectedMataKuliah
                             ? "bg-linear-to-br from-primary to-accent text-primary-foreground shadow-primary/30"
-                            : "bg-gray-300 text-muted-foreground"
+                            : "bg-muted text-muted-foreground"
                         }`}
                       >
                         2
@@ -996,14 +996,14 @@ export default function DosenPenilaianPage() {
           <TabsList className="grid w-full max-w-xl grid-cols-2 rounded-xl p-1 h-auto bg-linear-to-r from-primary/10 to-accent/10 dark:from-primary/20 dark:to-accent/20">
             <TabsTrigger
               value="penilaian"
-              className="gap-2 rounded-lg py-2.5 font-semibold data-[state=active]:bg-white data-[state=active]:shadow-md dark:data-[state=active]:bg-slate-900"
+              className="gap-2 rounded-lg py-2.5 font-semibold data-[state=active]:bg-white data-[state=active]:shadow-md dark:data-[state=active]:bg-card"
             >
               <FileText className="h-4 w-4" />
               Penilaian Mahasiswa
             </TabsTrigger>
             <TabsTrigger
               value="permintaan"
-              className="gap-2 rounded-lg py-2.5 font-semibold data-[state=active]:bg-white data-[state=active]:shadow-md dark:data-[state=active]:bg-slate-900"
+              className="gap-2 rounded-lg py-2.5 font-semibold data-[state=active]:bg-white data-[state=active]:shadow-md dark:data-[state=active]:bg-card"
             >
               <ClipboardCheck className="h-4 w-4" />
               Permintaan Perbaikan
@@ -1352,7 +1352,7 @@ export default function DosenPenilaianPage() {
                                 key={mahasiswa.mahasiswa_id}
                                 className={
                                   isEdited
-                                    ? "bg-yellow-50 cursor-pointer"
+                                    ? "bg-warning/10 cursor-pointer"
                                     : "cursor-pointer"
                                 }
                                 onDoubleClick={() =>
@@ -1578,7 +1578,7 @@ export default function DosenPenilaianPage() {
 
             {/* Unsaved Changes Warning */}
             {selectedKelas && hasChanges && (
-              <Alert className="border-orange-300 bg-orange-50">
+              <Alert className="border-warning/40 bg-warning/5">
                 <AlertTriangle className="h-5 w-5 text-warning" />
                 <AlertDescription className="flex items-center justify-between">
                   <span className="text-warning">
@@ -1773,7 +1773,7 @@ export default function DosenPenilaianPage() {
               </div>
             </div>
 
-            <DialogFooter className="p-6 border-t bg-muted/40 dark:bg-slate-800">
+            <DialogFooter className="p-6 border-t bg-muted/40">
               <Button
                 variant="outline"
                 onClick={() => setShowBobotDialog(false)}
@@ -2013,7 +2013,7 @@ export default function DosenPenilaianPage() {
               </div>
             </div>
 
-            <DialogFooter className="p-6 border-t bg-muted/40 dark:bg-slate-800">
+            <DialogFooter className="p-6 border-t bg-muted/40">
               <Button
                 variant="outline"
                 onClick={() => {
@@ -2102,8 +2102,8 @@ export default function DosenPenilaianPage() {
                   Anda memiliki <strong>{editedGrades.size} perubahan</strong>{" "}
                   yang belum disimpan untuk:
                 </p>
-                <div className="p-3 bg-orange-50 dark:bg-orange-950 rounded-md border border-orange-200 dark:border-orange-800">
-                  <p className="font-semibold text-warning dark:text-orange-100">
+                <div className="p-3 bg-warning/5 rounded-md border border-warning/30">
+                  <p className="font-semibold text-warning">
                     📚 {currentMataKuliah} - {currentNamaKelas}
                   </p>
                 </div>
@@ -2122,7 +2122,7 @@ export default function DosenPenilaianPage() {
               </AlertDialogCancel>
               <AlertDialogAction
                 onClick={confirmMataKuliahSwitch}
-                className="bg-orange-600 hover:bg-orange-700"
+                className="bg-warning hover:bg-warning/90"
               >
                 Ya, Pindah Mata Kuliah (Buang Perubahan)
               </AlertDialogAction>
@@ -2146,8 +2146,8 @@ export default function DosenPenilaianPage() {
                   Anda memiliki <strong>{editedGrades.size} perubahan</strong>{" "}
                   yang belum disimpan untuk:
                 </p>
-                <div className="p-3 bg-orange-50 dark:bg-orange-950 rounded-md border border-orange-200 dark:border-orange-800">
-                  <p className="font-semibold text-warning dark:text-orange-100">
+                <div className="p-3 bg-warning/5 rounded-md border border-warning/30">
+                  <p className="font-semibold text-warning">
                     📚 {currentMataKuliah} - {currentNamaKelas}
                   </p>
                 </div>
@@ -2166,7 +2166,7 @@ export default function DosenPenilaianPage() {
               </AlertDialogCancel>
               <AlertDialogAction
                 onClick={confirmKelasSwitch}
-                className="bg-orange-600 hover:bg-orange-700"
+                className="bg-warning hover:bg-warning/90"
               >
                 Ya, Pindah Kelas (Buang Perubahan)
               </AlertDialogAction>

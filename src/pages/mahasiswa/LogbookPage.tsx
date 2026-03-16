@@ -429,7 +429,7 @@ export default function MahasiswaLogbookPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
         <span className="ml-2">Memuat data...</span>
       </div>
     );
@@ -440,10 +440,10 @@ export default function MahasiswaLogbookPage() {
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-2">
-          <BookOpen className="h-8 w-8 text-blue-600" />
+          <BookOpen className="h-8 w-8 text-primary" />
           <h1 className="text-3xl font-bold">Logbook Praktikum</h1>
         </div>
-        <p className="text-gray-600">
+        <p className="text-muted-foreground">
           Catat pengalaman, hasil observasi, dan refleksi pembelajaran Anda
           selama praktikum kebidanan
         </p>
@@ -467,16 +467,16 @@ export default function MahasiswaLogbookPage() {
           {logbookList.length === 0 ? (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-12">
-                <BookOpen className="h-16 w-16 text-gray-400 mb-4" />
-                <p className="text-gray-500 mb-2">
+                <BookOpen className="h-16 w-16 text-muted-foreground/60 mb-4" />
+                <p className="text-muted-foreground mb-2">
                   Belum ada logbook. Buat logbook pertama Anda!
                 </p>
                 {jadwalList.length === 0 ? (
-                  <p className="text-sm text-amber-600">
+                  <p className="text-sm text-warning">
                     Tidak ada jadwal praktikum aktif untuk Anda.
                   </p>
                 ) : (
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-muted-foreground">
                     Ada {jadwalList.length} jadwal praktikum tersedia.
                   </p>
                 )}
@@ -500,14 +500,14 @@ export default function MahasiswaLogbookPage() {
                             </h3>
                             {getStatusBadge(logbook.status)}
                           </div>
-                          <p className="text-sm text-gray-500 mb-1">
+                          <p className="text-sm text-muted-foreground mb-1">
                             {logbook.jadwal?.tanggal_praktikum &&
                               format(
                                 new Date(logbook.jadwal.tanggal_praktikum),
                                 "dd MMMM yyyy",
                               )}
                           </p>
-                          <p className="text-sm text-gray-500">
+                          <p className="text-sm text-muted-foreground">
                             Lab: {logbook.jadwal?.laboratorium?.nama_lab || "-"}
                           </p>
                         </div>
@@ -535,7 +535,7 @@ export default function MahasiswaLogbookPage() {
                                 variant="outline"
                                 onClick={() => handleDeleteLogbook(logbook.id)}
                               >
-                                <Trash2 className="h-4 w-4 text-red-500" />
+                                <Trash2 className="h-4 w-4 text-danger" />
                               </Button>
                               <Button
                                 size="sm"
@@ -550,7 +550,7 @@ export default function MahasiswaLogbookPage() {
                             logbook.status === "graded") && (
                             <div className="text-right">
                               {logbook.nilai != null && (
-                                <div className="text-2xl font-bold text-green-600">
+                                <div className="text-2xl font-bold text-success">
                                   {logbook.nilai}
                                 </div>
                               )}
@@ -563,7 +563,7 @@ export default function MahasiswaLogbookPage() {
                       {logbook.prosedur_dilakukan && (
                         <div className="text-sm mb-2">
                           <span className="font-medium">Prosedur:</span>{" "}
-                          <span className="text-gray-600 line-clamp-1">
+                          <span className="text-muted-foreground line-clamp-1">
                             {logbook.prosedur_dilakukan}
                           </span>
                         </div>
@@ -585,11 +585,11 @@ export default function MahasiswaLogbookPage() {
                         )}
 
                       {logbook.dosen_feedback && (
-                        <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                          <p className="text-xs font-medium text-blue-700 mb-1">
+                        <div className="mt-3 p-3 bg-primary/5 rounded-lg border border-primary/20">
+                          <p className="text-xs font-medium text-primary mb-1">
                             Feedback Dosen:
                           </p>
-                          <p className="text-sm text-blue-600">
+                          <p className="text-sm text-primary">
                             {logbook.dosen_feedback}
                           </p>
                         </div>
@@ -606,15 +606,15 @@ export default function MahasiswaLogbookPage() {
           {jadwalList.length === 0 ? (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-12">
-                <AlertCircle className="h-16 w-16 text-amber-500 mb-4" />
-                <p className="text-gray-700 font-medium mb-2">
+                <AlertCircle className="h-16 w-16 text-warning mb-4" />
+                <p className="text-muted-foreground font-medium mb-2">
                   Tidak ada jadwal praktikum aktif
                 </p>
-                <p className="text-sm text-gray-500 text-center max-w-md">
+                <p className="text-sm text-muted-foreground text-center max-w-md">
                   Anda belum terdaftar di kelas mana pun atau belum ada jadwal
                   praktikum yang dijadwalkan untuk kelas Anda.
                 </p>
-                <p className="text-xs text-gray-400 mt-4">
+                <p className="text-xs text-muted-foreground/60 mt-4">
                   Hubungi dosen atau admin jika Anda merasa ini adalah
                   kesalahan.
                 </p>
@@ -623,11 +623,11 @@ export default function MahasiswaLogbookPage() {
           ) : getJadwalWithoutLogbook().length === 0 ? (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-12">
-                <CheckCircle2 className="h-16 w-16 text-green-500 mb-4" />
-                <p className="text-gray-700 font-medium mb-2">
+                <CheckCircle2 className="h-16 w-16 text-success mb-4" />
+                <p className="text-muted-foreground font-medium mb-2">
                   Semua jadwal praktikum sudah memiliki logbook!
                 </p>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-muted-foreground">
                   Anda telah membuat logbook untuk semua {jadwalList.length}{" "}
                   jadwal praktikum.
                 </p>
@@ -653,14 +653,14 @@ export default function MahasiswaLogbookPage() {
                     <p className="text-sm font-medium mb-1">
                       {jadwal.topik || "Praktikum"}
                     </p>
-                    <p className="text-xs text-gray-500 mb-2">
+                    <p className="text-xs text-muted-foreground mb-2">
                       {jadwal.tanggal_praktikum &&
                         format(
                           new Date(jadwal.tanggal_praktikum),
                           "dd MMM yyyy",
                         )}
                     </p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-muted-foreground">
                       Lab: {jadwal.laboratorium?.nama_lab}
                     </p>
                     <Button size="sm" className="w-full mt-3">
@@ -694,7 +694,7 @@ export default function MahasiswaLogbookPage() {
             {/* Prosedur */}
             <div>
               <Label htmlFor="prosedur">
-                Prosedur yang Dilakukan <span className="text-red-500">*</span>
+                Prosedur yang Dilakukan <span className="text-danger">*</span>
               </Label>
               <Textarea
                 id="prosedur"
@@ -713,7 +713,7 @@ export default function MahasiswaLogbookPage() {
             {/* Hasil Observasi */}
             <div>
               <Label htmlFor="observasi">
-                Hasil Observasi <span className="text-red-500">*</span>
+                Hasil Observasi <span className="text-danger">*</span>
               </Label>
               <Textarea
                 id="observasi"
@@ -729,7 +729,7 @@ export default function MahasiswaLogbookPage() {
             {/* Skill Dipelajari */}
             <div>
               <Label>
-                Skill yang Dipelajari <span className="text-red-500">*</span>
+                Skill yang Dipelajari <span className="text-danger">*</span>
               </Label>
               <div className="grid grid-cols-2 gap-2 mt-2">
                 {SKILL_KEBIDANAN.map((skill) => {
@@ -741,8 +741,8 @@ export default function MahasiswaLogbookPage() {
                       onClick={() => toggleSkill(skill)}
                       className={`text-xs p-2 rounded-lg border transition-colors ${
                         isSelected
-                          ? "bg-blue-500 text-white border-blue-500"
-                          : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "bg-white text-muted-foreground border-border/50 hover:bg-muted/40"
                       }`}
                     >
                       {skill}
@@ -750,7 +750,7 @@ export default function MahasiswaLogbookPage() {
                   );
                 })}
               </div>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 Dipilih: {formData.skill_dipelajari?.length || 0} skill
               </p>
             </div>
@@ -826,7 +826,7 @@ export default function MahasiswaLogbookPage() {
           <DialogHeader>
             <DialogTitle>Edit Logbook</DialogTitle>
             <DialogDescription>
-              Status: <span className="text-yellow-600">Draft</span> - Anda
+              Status: <span className="text-warning">Draft</span> - Anda
               masih bisa mengubah logbook ini
             </DialogDescription>
           </DialogHeader>
@@ -835,7 +835,7 @@ export default function MahasiswaLogbookPage() {
             {/* Same fields as create */}
             <div>
               <Label htmlFor="edit-prosedur">
-                Prosedur yang Dilakukan <span className="text-red-500">*</span>
+                Prosedur yang Dilakukan <span className="text-danger">*</span>
               </Label>
               <Textarea
                 id="edit-prosedur"
@@ -852,7 +852,7 @@ export default function MahasiswaLogbookPage() {
 
             <div>
               <Label htmlFor="edit-observasi">
-                Hasil Observasi <span className="text-red-500">*</span>
+                Hasil Observasi <span className="text-danger">*</span>
               </Label>
               <Textarea
                 id="edit-observasi"
@@ -866,7 +866,7 @@ export default function MahasiswaLogbookPage() {
 
             <div>
               <Label>
-                Skill yang Dipelajari <span className="text-red-500">*</span>
+                Skill yang Dipelajari <span className="text-danger">*</span>
               </Label>
               <div className="grid grid-cols-2 gap-2 mt-2">
                 {SKILL_KEBIDANAN.map((skill) => {
@@ -878,8 +878,8 @@ export default function MahasiswaLogbookPage() {
                       onClick={() => toggleSkill(skill)}
                       className={`text-xs p-2 rounded-lg border transition-colors ${
                         isSelected
-                          ? "bg-blue-500 text-white border-blue-500"
-                          : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "bg-white text-muted-foreground border-border/50 hover:bg-muted/40"
                       }`}
                     >
                       {skill}
@@ -961,18 +961,18 @@ export default function MahasiswaLogbookPage() {
           <div className="space-y-3 py-4">
             <div className="flex items-center gap-2 text-sm">
               {selectedLogbook?.prosedur_dilakukan ? (
-                <CheckCircle2 className="h-4 w-4 text-green-500" />
+                <CheckCircle2 className="h-4 w-4 text-success" />
               ) : (
-                <AlertCircle className="h-4 w-4 text-red-500" />
+                <AlertCircle className="h-4 w-4 text-danger" />
               )}
               <span>Prosedur Dilakukan</span>
             </div>
 
             <div className="flex items-center gap-2 text-sm">
               {selectedLogbook?.hasil_observasi ? (
-                <CheckCircle2 className="h-4 w-4 text-green-500" />
+                <CheckCircle2 className="h-4 w-4 text-success" />
               ) : (
-                <AlertCircle className="h-4 w-4 text-red-500" />
+                <AlertCircle className="h-4 w-4 text-danger" />
               )}
               <span>Hasil Observasi</span>
             </div>
@@ -980,9 +980,9 @@ export default function MahasiswaLogbookPage() {
             <div className="flex items-center gap-2 text-sm">
               {selectedLogbook?.skill_dipelajari &&
               selectedLogbook.skill_dipelajari.length > 0 ? (
-                <CheckCircle2 className="h-4 w-4 text-green-500" />
+                <CheckCircle2 className="h-4 w-4 text-success" />
               ) : (
-                <AlertCircle className="h-4 w-4 text-red-500" />
+                <AlertCircle className="h-4 w-4 text-danger" />
               )}
               <span>
                 Skill yang Dipelajari (
@@ -1043,19 +1043,19 @@ export default function MahasiswaLogbookPage() {
 
           <div className="space-y-4 py-4">
             <div>
-              <p className="text-sm font-medium text-gray-500">Status</p>
+              <p className="text-sm font-medium text-muted-foreground">Status</p>
               {selectedLogbook && getStatusBadge(selectedLogbook.status)}
             </div>
 
             <div>
-              <p className="text-sm font-medium text-gray-500">Prosedur</p>
+              <p className="text-sm font-medium text-muted-foreground">Prosedur</p>
               <p className="text-sm mt-1">
                 {selectedLogbook?.prosedur_dilakukan || "-"}
               </p>
             </div>
 
             <div>
-              <p className="text-sm font-medium text-gray-500">
+              <p className="text-sm font-medium text-muted-foreground">
                 Hasil Observasi
               </p>
               <p className="text-sm mt-1">
@@ -1064,7 +1064,7 @@ export default function MahasiswaLogbookPage() {
             </div>
 
             <div>
-              <p className="text-sm font-medium text-gray-500">
+              <p className="text-sm font-medium text-muted-foreground">
                 Skill yang Dipelajari
               </p>
               <div className="flex flex-wrap gap-1 mt-1">
@@ -1076,14 +1076,14 @@ export default function MahasiswaLogbookPage() {
                     </Badge>
                   ))
                 ) : (
-                  <p className="text-sm text-gray-400">-</p>
+                  <p className="text-sm text-muted-foreground/60">-</p>
                 )}
               </div>
             </div>
 
             {selectedLogbook?.kendala_dihadapi && (
               <div>
-                <p className="text-sm font-medium text-gray-500">Kendala</p>
+                <p className="text-sm font-medium text-muted-foreground">Kendala</p>
                 <p className="text-sm mt-1">
                   {selectedLogbook.kendala_dihadapi}
                 </p>
@@ -1092,20 +1092,20 @@ export default function MahasiswaLogbookPage() {
 
             {selectedLogbook?.refleksi && (
               <div>
-                <p className="text-sm font-medium text-gray-500">Refleksi</p>
+                <p className="text-sm font-medium text-muted-foreground">Refleksi</p>
                 <p className="text-sm mt-1">{selectedLogbook.refleksi}</p>
               </div>
             )}
 
             {selectedLogbook?.dosen_feedback && (
-              <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-                <p className="text-sm font-medium text-blue-700 mb-1">
+              <div className="p-3 bg-primary/5 rounded-lg border border-primary/20">
+                <p className="text-sm font-medium text-primary mb-1">
                   Feedback Dosen:
                 </p>
-                <p className="text-sm text-blue-600">
+                <p className="text-sm text-primary">
                   {selectedLogbook.dosen_feedback}
                 </p>
-                <p className="text-xs text-blue-500 mt-2">
+                <p className="text-xs text-primary/70 mt-2">
                   {selectedLogbook.reviewed_at &&
                     format(
                       new Date(selectedLogbook.reviewed_at),
@@ -1116,8 +1116,8 @@ export default function MahasiswaLogbookPage() {
             )}
 
             {selectedLogbook?.nilai != null && (
-              <div className="p-3 bg-green-50 rounded-lg border border-green-200">
-                <p className="text-sm font-medium text-green-700 mb-1">
+              <div className="p-3 bg-success/10 rounded-lg border border-success/30">
+                <p className="text-sm font-medium text-success mb-1">
                   Nilai: {selectedLogbook.nilai}
                 </p>
               </div>

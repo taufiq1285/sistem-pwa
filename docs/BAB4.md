@@ -322,9 +322,9 @@ Tabel 16. Rincian Aktivitas Internal 3.3 Pengumuman dan Notifikasi
 | A5 Arsipkan atau Hapus | Admin memperbarui, menonaktifkan, atau menghapus pengumuman. |
 
 11. Diagram Level 2.11 — Proses 4.1 Sinkronisasi Offline PWA
-Diagram Level 2.11 menggambarkan lapisan sinkronisasi offline sebagai karakteristik utama sistem berbasis Progressive Web App. Alur yang ditampilkan meliputi deteksi status koneksi, pengelolaan cache lokal, pencatatan perubahan ke antrean sinkronisasi, pengiriman ulang data ke Supabase / Server API ketika koneksi tersedia, serta penanganan konflik dan retry apabila terjadi kegagalan. Pada diagram ini, Mahasiswa berinteraksi dengan sistem yang dibantu oleh Service Worker untuk mengenali status jaringan dan menjaga kesinambungan layanan. Ketika perangkat berada pada kondisi offline, sistem tidak langsung menghentikan aktivitas pengguna, melainkan mempertahankan data penting melalui cache lokal dan menahan operasi mutasi pada antrean sinkronisasi. Setelah koneksi kembali tersedia, antrean tersebut diproses kembali ke server dan hasil sinkronisasinya dicatat agar status data tetap dapat ditelusuri.
+Diagram Level 2.11 menggambarkan lapisan sinkronisasi offline sebagai karakteristik utama sistem berbasis Progressive Web App. Alur yang ditampilkan meliputi deteksi status jaringan, penyimpanan data ke cache lokal, pencatatan operasi ke antrean sinkronisasi, pemrosesan sinkronisasi saat koneksi tersedia, serta penanganan konflik dan retry apabila terjadi kegagalan. Pada diagram ini, admin, dosen, mahasiswa, dan laboran sama-sama dapat berinteraksi dengan mekanisme sinkronisasi sesuai aktivitasnya masing-masing. Ketika perangkat berada pada kondisi offline, sistem tidak langsung menghentikan aktivitas pengguna, melainkan mempertahankan data penting melalui cache lokal dan menahan operasi mutasi pada antrean sinkronisasi. Setelah koneksi kembali tersedia, antrean tersebut diproses kembali ke server dan hasil sinkronisasinya dicatat agar status data tetap dapat ditelusuri.
 
-Dalam pembahasan hasil, proses 4.1 dapat dipandang sebagai lapisan integratif yang menghubungkan hampir seluruh modul aplikasi. Input dari kuis, logbook, materi, pengumuman, maupun transaksi lain dapat disimpan sementara pada media lokal tanpa menghilangkan kontinuitas kerja pengguna. Keberadaan cache memastikan data tertentu tetap dapat dibaca, sedangkan queue sinkronisasi menjaga agar operasi tulis tetap tercatat untuk direkonsiliasi kemudian. Pada saat sinkronisasi berlangsung, sistem juga harus menangani konflik versi data dan percobaan ulang secara terkendali. Hal ini menunjukkan bahwa dukungan PWA pada sistem bukan sekadar fitur tambahan, tetapi mekanisme inti yang menjaga kesinambungan layanan akademik dan operasional pada kondisi jaringan yang berubah-ubah. Uraian ini juga sudah diselaraskan dengan komponen aktual pada diagram, yaitu Mahasiswa, Service Worker, Supabase / Server API, Cache Offline, dan Queue Sinkronisasi.
+Dalam pembahasan hasil, proses 4.1 dapat dipandang sebagai lapisan integratif yang menghubungkan hampir seluruh modul aplikasi. Input dari kuis, logbook, materi, pengumuman, maupun transaksi lain dapat disimpan sementara pada media lokal tanpa menghilangkan kontinuitas kerja pengguna. Keberadaan cache memastikan data tertentu tetap dapat dibaca, sedangkan queue sinkronisasi menjaga agar operasi tulis tetap tercatat untuk direkonsiliasi kemudian. Pada saat sinkronisasi berlangsung, sistem juga harus menangani konflik versi data dan percobaan ulang secara terkendali. Hal ini menunjukkan bahwa dukungan PWA pada sistem bukan sekadar fitur tambahan, tetapi mekanisme inti yang menjaga kesinambungan layanan akademik dan operasional pada kondisi jaringan yang berubah-ubah. Uraian ini juga sudah diselaraskan dengan komponen aktual pada diagram, yaitu Admin, Dosen, Mahasiswa, Laboran, Supabase, Database dan Conflict Log, IndexedDB Cache, dan Offline Queue.
 
 [TEMPAT GAMBAR]
 Diagram Level 2.11 — Proses 4.1 Sinkronisasi Offline PWA
@@ -336,10 +336,10 @@ Tabel 17. Rincian Aktivitas Internal 4.1 Sinkronisasi Offline PWA
 
 | Kode Aktivitas | Deskripsi |
 |---|---|
-| A1 Deteksi Status Koneksi | Sistem mendeteksi kondisi online atau offline sebagai dasar penentuan mode layanan. |
-| A2 Kelola Cache Offline | Data penting disimpan atau diambil dari cache lokal agar tetap dapat dipakai saat koneksi terbatas. |
-| A3 Catat Perubahan ke Queue | Operasi tulis dicatat ke antrean sinkronisasi ketika perubahan belum dapat langsung dikirim ke server. |
-| A4 Sinkronkan Data ke Server | Antrean operasi dikirim kembali ke Supabase / Server API saat koneksi tersedia. |
+| A1 Deteksi Status Jaringan | Sistem mendeteksi kondisi online atau offline sebagai dasar penentuan mode layanan. |
+| A2 Simpan Data ke Cache | Data penting disimpan ke cache lokal agar tetap dapat dipakai saat koneksi terbatas. |
+| A3 Simpan Operasi ke Queue | Operasi tulis dicatat ke antrean sinkronisasi ketika perubahan belum dapat langsung dikirim ke server. |
+| A4 Proses Sinkronisasi | Antrean operasi diproses kembali ke server saat koneksi tersedia. |
 | A5 Tangani Konflik dan Retry | Sistem mengelola konflik data, percobaan ulang, dan status hasil sinkronisasi. |
 
 Kesimpulan Hasil Dekomposisi DFD Level 2  

@@ -108,18 +108,18 @@ Materi pembelajaran tersedia dan dapat diakses sesuai hak akses.
 **File diagram:** `docs/DFD-Level2-2.4-Kelola-Kelas-Mata-Kuliah-dan-Assignment-Yourdon.drawio`
 
 ### Tujuan
-Membentuk struktur akademik inti: kelas, mata kuliah, assignment dosen, dan keanggotaan mahasiswa.
+Membentuk dan memanfaatkan struktur akademik inti melalui pengelolaan mata kuliah, kelas praktikum, enrol peserta, assignment, dan submission.
 
 ### Alur utama
-1. Admin membuat/memperbarui data kelas.
-2. Admin membuat/memperbarui data mata kuliah.
-3. Admin menetapkan assignment dosen ke kelas/mata kuliah.
-4. Admin mengelola enrollment mahasiswa pada kelas.
-5. Sistem menyimpan relasi akademik final.
-6. Sistem mendistribusikan struktur ini ke modul akademik lain.
+1. Admin membuat atau memperbarui data mata kuliah.
+2. Admin membuat atau memperbarui data kelas praktikum.
+3. Admin menetapkan dosen dan mahasiswa ke kelas yang sesuai.
+4. Dosen membuat dan mengatur assignment pada kelas terkait.
+5. Mahasiswa mengumpulkan submission tugas.
+6. Dosen dan mahasiswa melihat struktur kelas serta daftar assignment.
 
 ### Output kunci
-Relasi kelas–mata kuliah–dosen–mahasiswa yang valid sebagai fondasi proses 2.x.
+Relasi mata kuliah–kelas–dosen–mahasiswa beserta assignment dan submission yang tersusun konsisten sebagai fondasi proses 2.x.
 
 ---
 
