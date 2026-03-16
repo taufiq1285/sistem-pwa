@@ -4,43 +4,41 @@ Dokumen ini menjelaskan alur proses pada diagram [`docs/DFD-Level2-4.1-Sinkronis
 
 ## 1. Tujuan Proses 4.1
 
-Proses [`4.1 Sinkronisasi Offline PWA`](docs/DFD.md:591) bertujuan menjaga kontinuitas layanan aplikasi ketika perangkat berada pada kondisi offline, sekaligus memastikan data lokal dapat disinkronkan kembali secara aman saat koneksi internet tersedia.
+Proses [`4.1 Sinkronisasi Offline PWA`](docs/DFD.md:637) bertujuan menjaga kontinuitas layanan aplikasi ketika pengguna berada pada kondisi offline, sekaligus memastikan data cache, antrean operasi, dan hasil sinkronisasi dapat dikelola kembali secara aman saat koneksi tersedia.
 
 ## 2. Komponen Proses
 
-- **Entitas eksternal:** Mahasiswa, Service Worker, Supabase / Server API
-- **Data store:** D1 Cache Offline, D2 Queue Sinkronisasi
+- **Entitas eksternal:** Admin, Dosen, Mahasiswa, Laboran, Supabase
+- **Data store:** D1 Database dan Conflict Log, D2 IndexedDB Cache, D3 Offline Queue
 - **Aktivitas internal:**
-  - `A1` Deteksi Status Koneksi
-  - `A2` Kelola Cache Offline
-  - `A3` Catat Perubahan ke Queue
-  - `A4` Sinkronkan Data ke Server
+  - `A1` Deteksi Status Jaringan
+  - `A2` Simpan Data ke Cache
+  - `A3` Simpan Operasi ke Queue
+  - `A4` Proses Sinkronisasi
   - `A5` Tangani Konflik dan Retry
 
 ## 3. Narasi Alur Utama
 
-1. Mahasiswa atau aplikasi memicu `A1 Deteksi Status Koneksi` ketika ada permintaan akses data atau perubahan data.
-2. Service Worker juga mengirimkan status jaringan dan event offline ke `A1`, sehingga sistem dapat menentukan apakah proses berjalan pada mode online atau offline.
-3. Jika data perlu tetap tersedia saat koneksi terbatas, sistem meneruskan status koneksi ke `A2 Kelola Cache Offline`.
-4. Pada aktivitas ini, sistem menyimpan atau mengambil data dari D1 Cache Offline agar data tetap dapat dipakai ketika perangkat tidak terhubung ke jaringan.
-5. Jika terjadi perubahan lokal saat offline, `A2` meneruskan data perubahan ke `A3 Catat Perubahan ke Queue`.
-6. Aktivitas `A3` menyimpan atau membaca antrean perubahan pada D2 Queue Sinkronisasi supaya operasi tulis tidak hilang.
-7. Saat koneksi kembali tersedia, antrean sinkronisasi diteruskan ke `A4 Sinkronkan Data ke Server`.
-8. `A4` mengambil queue sinkronisasi dan mengirim payload sinkronisasi ke entitas Supabase / Server API.
-9. Server mengirim respons sinkronisasi kembali ke `A4` sebagai dasar status berhasil, gagal, atau konflik.
-10. Hasil sinkronisasi lalu diteruskan ke `A5 Tangani Konflik dan Retry`.
-11. Jika terjadi konflik atau kegagalan, `A5` memperbarui D2 Queue Sinkronisasi untuk retry dan mengirim status sinkronisasi/konflik ke Service Worker.
-12. Setelah itu, sistem mengirim notifikasi hasil sinkronisasi kepada mahasiswa agar kondisi data lokal dan server diketahui dengan jelas.
+1. Admin, dosen, mahasiswa, atau laboran memicu [`A1 Deteksi Status Jaringan`](docs/DFD.md:650) ketika melakukan aktivitas yang dapat berjalan pada mode online maupun offline.
+2. Sistem membaca status jaringan dan meneruskannya ke [`A2 Simpan Data ke Cache`](docs/DFD.md:651) untuk menjaga ketersediaan data lokal yang masih diperlukan pengguna.
+3. Pada aktivitas ini, sistem menyimpan atau mengambil data dari [`D2 IndexedDB Cache`](docs/DFD.md:647) agar informasi penting tetap dapat diakses ketika koneksi tidak stabil.
+4. Jika selama kondisi offline terjadi operasi tulis atau perubahan data, sistem meneruskannya ke [`A3 Simpan Operasi ke Queue`](docs/DFD.md:652).
+5. Aktivitas `A3` menyimpan antrean operasi pada [`D3 Offline Queue`](docs/DFD.md:648) supaya perubahan tidak hilang dan dapat diproses kembali saat koneksi pulih.
+6. Ketika pengguna memicu sinkronisasi atau koneksi kembali tersedia, sistem menjalankan [`A4 Proses Sinkronisasi`](docs/DFD.md:653).
+7. Pada tahap ini, sistem mengambil antrean dari `D3`, mengirimkan data sinkronisasi ke [`Supabase`](docs/DFD.md:645), dan mencatat interaksi yang relevan ke [`D1 Database dan Conflict Log`](docs/DFD.md:646).
+8. Hasil sinkronisasi kemudian diteruskan ke [`A5 Tangani Konflik dan Retry`](docs/DFD.md:654) untuk menentukan apakah data berhasil diproses, perlu percobaan ulang, atau mengalami konflik.
+9. Jika terjadi konflik atau kegagalan, `A5` memperbarui cache pada `D2`, menandai atau menjadwalkan retry pada `D3`, dan menyimpan hasil resolusi atau konflik ke `D1`.
+10. Setelah proses selesai, sistem mengirimkan status sinkronisasi kepada admin, dosen, mahasiswa, dan laboran agar kondisi data dapat dipantau dengan jelas.
 
 ## 4. Output Kunci
 
-- Status koneksi dapat dikenali melalui interaksi aplikasi dan Service Worker.
-- Data offline tetap tersedia melalui cache lokal.
-- Perubahan lokal saat offline tidak hilang karena dicatat di antrean sinkronisasi.
-- Sinkronisasi ke Supabase / Server API dapat dijalankan saat koneksi kembali tersedia.
-- Konflik atau kegagalan sinkronisasi dapat ditangani melalui mekanisme retry.
-- Mahasiswa menerima notifikasi hasil sinkronisasi secara jelas.
+- Status jaringan dapat dikenali sebagai dasar penentuan mode layanan.
+- Data penting tetap tersedia melalui cache lokal berbasis IndexedDB.
+- Operasi tulis saat offline tidak hilang karena dicatat ke antrean sinkronisasi.
+- Sinkronisasi ke server dapat dijalankan kembali ketika koneksi tersedia.
+- Konflik data dan retry dapat ditangani serta dicatat secara terkontrol.
+- Pengguna memperoleh status hasil sinkronisasi setelah proses selesai.
 
 ## 5. Ringkasan Siap Pakai Skripsi
 
-Proses [`4.1 Sinkronisasi Offline PWA`](docs/DFD.md:591) menunjukkan bahwa dukungan offline pada aplikasi tidak hanya berarti menyimpan data sementara, tetapi mencakup deteksi jaringan, penyimpanan cache, antrean operasi, sinkronisasi ulang, penanganan konflik, dan pelaporan status. Dengan mekanisme ini, sistem tetap mampu menjaga kesinambungan layanan meskipun kondisi internet pengguna tidak stabil.
+Proses [`4.1 Sinkronisasi Offline PWA`](docs/DFD.md:637) menunjukkan bahwa dukungan offline pada aplikasi tidak hanya berarti penyimpanan data sementara, tetapi mencakup deteksi jaringan, pengelolaan cache, pencatatan operasi ke queue, sinkronisasi ulang ke server, penanganan konflik, dan pelaporan status hasil. Dengan mekanisme ini, sistem tetap mampu menjaga kesinambungan layanan bagi berbagai peran pengguna meskipun kondisi internet berubah-ubah.

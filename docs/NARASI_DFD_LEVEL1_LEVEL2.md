@@ -81,6 +81,25 @@ Keberadaan proses ini sangat penting karena sistem praktikum sering kali diakses
 
 # 4. Narasi Lengkap DFD Level 2
 
+> **Catatan Konvensi Penamaan Proses (Disclaimer Akademis):**
+> Pada diagram DFD Level 2 di laporan ini, penamaan proses menggunakan notasi alias lokal alfanumerik (seperti `A1`, `A2`, `A3`, dst.) untuk membantu keterbacaan visual pada kanvas diagram yang terbatas agar teks label tetap ringkas di dalam gelembung.
+> 
+> Secara konseptual, label tersebut merupakan representasi dari subproses hasil dekomposisi hierarkis nomor proses induknya pada DFD Level 1. Penggunaan notasi *Local Sequence* ini murni merupakan konvensi penyajian visual grafis pada dokumen ini (bukan standar baku Yourdon/DeMarco), sedangkan hubungan keterikatan hierarkis (misal `A1` pada diagram `1.1` mewakili proses dekomposisi tingkatan Level 2 `1.1.1`) tetap ditunjukkan sepenuhnya melalui judul diagram dan narasi pembahasan berikut.
+
+## Tabel Pemetaan Alias (Contoh Dekomposisi Bab 4.1 dan 4.2)
+Tabel di bawah ini memberikan ilustrasi pemetaan hierarkis terkait alias yang disajikan dalam diagram agar tetap selaras dengan landasan teoretis Yourdon:
+
+| Alias | Status Hierarkis DFD Yourdon | Nama Proses (Level 2) | Keterkaitan DFD Level 1 |
+|-------|------------------------------|-----------------------|-------------------------|
+| **A1** | Subproses ke-1 (Mewakili 1.1.1) | Validasi Kredensial | 1.1 Autentikasi |
+| **A2** | Subproses ke-2 (Mewakili 1.1.2) | Ambil Data Role | 1.1 Autentikasi |
+| **A3** | Subproses ke-3 (Mewakili 1.1.3) | Bentuk Session Login | 1.1 Autentikasi |
+| **A1** | Subproses ke-1 (Mewakili 1.2.1) | Buat Akun | 1.2 Kelola User |
+| **A2** | Subproses ke-2 (Mewakili 1.2.2) | Tetapkan Role | 1.2 Kelola User |
+*(Pola berulang yang sama berlaku logis untuk diagram proses turunan Manajemen Praktikum [2.0], Operasional Lab [3.0], hingga Sinkronisasi [4.0])*
+
+---
+
 # 4.1 Narasi Proses 1.1 — Autentikasi
 
 Proses [`1.1 Autentikasi`](docs/DFD.md:162) menjelaskan bagaimana pengguna masuk ke sistem dan memperoleh akses sesuai perannya. Proses ini terdiri atas lima aktivitas internal, yaitu validasi kredensial, pengambilan data role, pembentukan session login, pengalihan berdasarkan role, dan logout.
@@ -202,23 +221,24 @@ Narasi proses ini memperlihatkan bahwa pengelolaan materi terdiri atas dua kompo
 
 # 4.6 Narasi Proses 2.4 — Kelola Kelas, Mata Kuliah, dan Assignment
 
-Proses [`2.4 Kelola Kelas, Mata Kuliah, dan Assignment`](docs/DFD.md:341) merupakan dasar struktur akademik yang menopang proses lain seperti jadwal, materi, kuis, kehadiran, dan nilai. Proses ini terutama dijalankan oleh admin, lalu hasilnya didistribusikan kepada dosen dan mahasiswa.
+Proses [`2.4 Kelola Kelas, Mata Kuliah, dan Assignment`](docs/DFD.md:341) merupakan dasar struktur akademik yang menopang proses lain seperti jadwal, materi, kuis, kehadiran, dan nilai. Proses ini tidak hanya membentuk data master akademik, tetapi juga memastikan assignment dan submission berada pada relasi kelas yang benar. Admin berperan utama pada pembentukan struktur, sedangkan dosen dan mahasiswa memanfaatkan struktur tersebut untuk aktivitas pembelajaran.
 
-Alur pertama terdapat pada [`A1 Kelola Data Kelas`](docs/DFD.md:350), ketika admin membuat atau memperbarui data kelas. Data tersebut disimpan pada [`D1 Data Kelas, Mata Kuliah, dan Assignment`](docs/DFD.md:348). Selanjutnya, admin mengelola master mata kuliah pada [`A2 Kelola Mata Kuliah`](docs/DFD.md:351). Setiap perubahan data mata kuliah juga disimpan ke data store yang sama.
+Alur dimulai pada [`A1 Kelola Mata Kuliah`](docs/DFD.md:350) ketika admin membuat atau memperbarui data mata kuliah. Data ini disimpan pada [`D1 Data Mata Kuliah`](docs/DFD.md:347). Setelah itu admin melanjutkan ke [`A2 Kelola Kelas Praktikum`](docs/DFD.md:351) untuk membentuk atau memperbarui kelas yang akan digunakan pada kegiatan praktikum. Informasi kelas disimpan pada [`D2 Data Kelas Praktikum`](docs/DFD.md:348).
 
-Setelah kelas dan mata kuliah terbentuk, admin melakukan [`A3 Assignment Dosen`](docs/DFD.md:352). Pada tahap ini, sistem menghubungkan dosen dengan kelas atau mata kuliah tertentu sehingga nantinya dosen memiliki ruang lingkup pengajaran yang jelas. Selanjutnya, admin menempatkan mahasiswa ke kelas melalui [`A4 Kelola Anggota Kelas`](docs/DFD.md:353). Informasi ini membentuk enrollment yang akan dipakai oleh modul presensi, nilai, dan distribusi materi.
+Setelah struktur dasar tersedia, admin menjalankan [`A3 Enrol Mahasiswa dan Dosen`](docs/DFD.md:352). Pada tahap ini sistem menghubungkan dosen dan mahasiswa ke kelas yang sesuai sehingga relasi akademik menjadi jelas dan siap dipakai oleh modul lain. Berikutnya, dosen mengelola tugas melalui [`A4 Kelola Assignment`](docs/DFD.md:353). Assignment yang dibuat disimpan pada [`D3 Data Assignment dan Submission`](docs/DFD.md:349) sebagai bagian dari aktivitas pembelajaran pada kelas terkait.
 
-Keempat hasil pengelolaan tersebut kemudian diteruskan ke [`A5 Distribusi Relasi Akademik`](docs/DFD.md:354). Di sini sistem merangkum serta mendistribusikan relasi akademik kepada pihak terkait. Dosen menerima informasi kelas yang diajar, mahasiswa menerima informasi kelas yang diikuti, dan admin memperoleh rekap relasi akademik sebagai dasar monitoring.
+Mahasiswa kemudian mengirimkan hasil tugas melalui [`A5 Kumpulkan Submission`](docs/DFD.md:354). Submission yang masuk dicatat pada data store yang sama agar keterkaitan antara assignment dan respons mahasiswa tetap terjaga. Setelah itu, dosen dan mahasiswa dapat menggunakan [`A6 Lihat Kelas dan Assignment`](docs/DFD.md:355) untuk melihat struktur kelas, daftar assignment, serta informasi akademik yang relevan.
 
-Narasi proses ini menegaskan bahwa data kelas, mata kuliah, assignment, dan keanggotaan kelas tidak boleh dipandang sebagai data administrasi biasa. Justru data inilah yang menjadi tulang punggung keterkaitan antarproses akademik di dalam sistem.
+Narasi proses ini menegaskan bahwa data mata kuliah, kelas, enrollment, assignment, dan submission membentuk satu rantai akademik yang saling terhubung. Karena itu, proses [`2.4`](docs/DFD.md:341) bukan sekadar administrasi data dasar, melainkan fondasi operasional bagi proses akademik lain di dalam sistem.
 
 ## Alur ringkas proses [`2.4`](docs/DFD.md:341)
 
-1. Admin mengelola data kelas.
-2. Admin mengelola data mata kuliah.
-3. Admin menetapkan assignment dosen.
-4. Admin mengelola anggota kelas atau enrollment mahasiswa.
-5. Sistem mendistribusikan relasi akademik ke dosen, mahasiswa, dan admin.
+1. Admin mengelola data mata kuliah.
+2. Admin mengelola data kelas praktikum.
+3. Admin menetapkan dosen dan mahasiswa ke kelas.
+4. Dosen mengelola assignment.
+5. Mahasiswa mengumpulkan submission.
+6. Dosen dan mahasiswa melihat data kelas serta assignment.
 
 ---
 
@@ -315,19 +335,19 @@ Narasi ini menunjukkan bahwa pengumuman dalam sistem bukan sekadar konten statis
 
 # 4.11 Narasi Proses 4.1 — Sinkronisasi Offline PWA
 
-Proses [`4.1 Sinkronisasi Offline PWA`](docs/DFD.md:591) menjelaskan detail bagaimana sistem menangani kondisi offline dan mengembalikan konsistensi data saat koneksi tersedia kembali. Proses ini melibatkan semua aktor pengguna, layanan [`Supabase`](docs/DFD.md:599), [`D1 Database dan Conflict Log`](docs/DFD.md:600), [`D2 IndexedDB Cache`](docs/DFD.md:601), dan [`D3 Offline Queue`](docs/DFD.md:602).
+Proses [`4.1 Sinkronisasi Offline PWA`](docs/DFD.md:637) menjelaskan detail bagaimana sistem menangani kondisi offline dan mengembalikan konsistensi data saat koneksi tersedia kembali. Proses ini melibatkan semua aktor pengguna, layanan [`Supabase`](docs/DFD.md:645), [`D1 Database dan Conflict Log`](docs/DFD.md:646), [`D2 IndexedDB Cache`](docs/DFD.md:647), dan [`D3 Offline Queue`](docs/DFD.md:648).
 
-Tahap pertama adalah [`A1 Deteksi Status Jaringan`](docs/DFD.md:604). Ketika admin, dosen, mahasiswa, atau laboran melakukan aktivitas, sistem terlebih dahulu mengenali apakah perangkat sedang online atau offline. Informasi status jaringan ini sangat penting karena menentukan ke mana data berikutnya akan diarahkan.
+Tahap pertama adalah [`A1 Deteksi Status Jaringan`](docs/DFD.md:650). Ketika admin, dosen, mahasiswa, atau laboran melakukan aktivitas, sistem terlebih dahulu mengenali apakah perangkat sedang online atau offline. Informasi status jaringan ini sangat penting karena menentukan ke mana data berikutnya akan diarahkan.
 
-Jika ada data yang perlu tetap tersedia untuk dibaca, sistem menjalankan [`A2 Simpan Data ke Cache`](docs/DFD.md:605). Pada aktivitas ini, data penting dicadangkan ke cache lokal. Sementara itu, jika ada operasi tulis yang tidak dapat langsung dikirim ke server karena offline, sistem memanfaatkan [`A3 Simpan Operasi ke Queue`](docs/DFD.md:606). Operasi tersebut ditulis ke offline queue agar tidak hilang.
+Jika ada data yang perlu tetap tersedia untuk dibaca, sistem menjalankan [`A2 Simpan Data ke Cache`](docs/DFD.md:651). Pada aktivitas ini, data penting dicadangkan ke cache lokal. Sementara itu, jika ada operasi tulis yang tidak dapat langsung dikirim ke server karena offline, sistem memanfaatkan [`A3 Simpan Operasi ke Queue`](docs/DFD.md:652). Operasi tersebut ditulis ke offline queue agar tidak hilang.
 
-Ketika pengguna memilih sinkronkan sekarang atau ketika sistem mendeteksi koneksi telah kembali, alur masuk ke [`A4 Proses Sinkronisasi`](docs/DFD.md:607). Sistem mengambil antrean dari queue, lalu mengirimkan perubahan ke database utama dan layanan sinkronisasi eksternal. Pada tahap ini, sistem berusaha menyamakan data lokal dengan data server.
+Ketika pengguna memilih sinkronkan sekarang atau ketika sistem mendeteksi koneksi telah kembali, alur masuk ke [`A4 Proses Sinkronisasi`](docs/DFD.md:653). Sistem mengambil antrean dari queue, lalu mengirimkan perubahan ke database utama dan layanan sinkronisasi eksternal. Pada tahap ini, sistem berusaha menyamakan data lokal dengan data server.
 
-Namun, sinkronisasi tidak selalu berhasil sempurna. Oleh sebab itu, sistem melanjutkan ke [`A5 Tangani Konflik dan Retry`](docs/DFD.md:608). Di sinilah sistem memperbarui cache, menandai antrean yang berhasil, mengulangi pengiriman untuk item yang gagal, dan menyimpan konflik atau hasil resolusi ke database. Setelah proses selesai, sistem mengirimkan status sinkronisasi kepada pengguna.
+Namun, sinkronisasi tidak selalu berhasil sempurna. Oleh sebab itu, sistem melanjutkan ke [`A5 Tangani Konflik dan Retry`](docs/DFD.md:654). Di sinilah sistem memperbarui cache, menandai antrean yang berhasil, mengulangi pengiriman untuk item yang gagal, dan menyimpan konflik atau hasil resolusi ke database. Setelah proses selesai, sistem mengirimkan status sinkronisasi kepada pengguna.
 
 Narasi ini sangat penting dalam konteks PWA karena memperlihatkan bahwa dukungan offline bukan sekadar menyimpan data sementara, melainkan mencakup deteksi koneksi, penyimpanan lokal, antrean operasi, sinkronisasi kembali, penanganan konflik, dan pelaporan hasil.
 
-## Alur ringkas proses [`4.1`](docs/DFD.md:591)
+## Alur ringkas proses [`4.1`](docs/DFD.md:637)
 
 1. Sistem mendeteksi status online atau offline.
 2. Data penting disimpan ke cache lokal.

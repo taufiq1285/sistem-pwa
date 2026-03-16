@@ -219,34 +219,22 @@ export default function JadwalPage() {
       setLoading(true);
 
       const filters: Record<string, string | boolean> = {};
-      // ✅ FIX: Don't filter by is_active by default
-      // This ensures all jadwal are visible regardless of is_active status
-      // is_active filter is handled by the API layer
       if (filterKelas) filters.kelas_id = filterKelas;
       if (filterLab) filters.laboratorium_id = filterLab;
       if (filterHari) filters.hari = filterHari;
 
-      const data = await getJadwal(filters);
-      setJadwalList(data);
-
-      // ✅ FIX: Kirim filter yang sama ke Calendar Events agar konsisten
+      // ✅ OPTIMIZED: Fetch jadwal and calendar events in parallel
       const monthStart = startOfMonth(currentDate);
       const monthEnd = endOfMonth(currentDate);
       const calendarStart = startOfWeek(monthStart, { weekStartsOn: 1 });
       const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
 
-      const events = await getCalendarEvents(
-        calendarStart,
-        calendarEnd,
-        filters,
-      );
-      console.log("=== DEBUG CALENDAR ===");
-      console.log("Jadwal List (filtered):", jadwalList.length);
-      console.log("Calendar Events:", events.length);
-      console.log(
-        "Calendar Events data:",
-        events.map((e) => ({ id: e.id, title: e.title, start: e.start })),
-      );
+      const [data, events] = await Promise.all([
+        getJadwal(filters),
+        getCalendarEvents(calendarStart, calendarEnd, filters),
+      ]);
+
+      setJadwalList(data);
       setCalendarEvents(events);
     } catch (error: any) {
       toast.error("Gagal memuat data jadwal", {
@@ -271,19 +259,14 @@ export default function JadwalPage() {
 
   const fetchMataKuliah = async () => {
     try {
-      console.log("🔵 Fetching mata kuliah...");
       const data = await query("mata_kuliah", {
         select: "id, kode_mk, nama_mk, sks, semester, program_studi, is_active",
         order: { column: "nama_mk", ascending: true },
       });
-      console.log("📦 Raw mata kuliah data:", data);
       const filtered = data.filter((mk: any) => mk.is_active) as MataKuliah[];
-      console.log("✅ Filtered mata kuliah (is_active=true):", filtered);
-      console.table(filtered); // ← Tampilkan dalam tabel
       setMataKuliahList(filtered);
-      console.log("🔵 State mataKuliahList updated, count:", filtered.length);
     } catch (error) {
-      console.error("❌ Failed to fetch mata kuliah:", error);
+      console.error("Failed to fetch mata kuliah:", error);
       toast.error("Gagal memuat mata kuliah", {
         description: error instanceof Error ? error.message : "Unknown error",
       });
@@ -292,20 +275,15 @@ export default function JadwalPage() {
 
   const fetchKelas = async () => {
     try {
-      console.log("🔵 Fetching kelas...");
       const data = await query("kelas", {
         select:
           "id, kode_kelas, nama_kelas, mata_kuliah_id, dosen_id, tahun_ajaran, semester_ajaran, kuota, is_active",
         order: { column: "nama_kelas", ascending: true },
       });
-      console.log("📦 Raw kelas data:", data);
       const filtered = data.filter((k: any) => k.is_active) as Kelas[];
-      console.log("✅ Filtered kelas (is_active=true):", filtered);
-      console.table(filtered); // ← Tampilkan dalam tabel
       setKelasList(filtered);
-      console.log("🔵 State kelasList updated, count:", filtered.length);
     } catch (error) {
-      console.error("❌ Failed to fetch kelas:", error);
+      console.error("Failed to fetch kelas:", error);
       toast.error("Gagal memuat kelas", {
         description: error instanceof Error ? error.message : "Unknown error",
       });
@@ -340,10 +318,9 @@ export default function JadwalPage() {
     }
   };
 
+  // ✅ OPTIMIZED: Fetch all reference data in parallel
   useEffect(() => {
-    fetchLaboratorium();
-    fetchMataKuliah();
-    fetchKelas();
+    Promise.all([fetchLaboratorium(), fetchMataKuliah(), fetchKelas()]);
   }, []);
 
   useEffect(() => {
@@ -385,29 +362,12 @@ export default function JadwalPage() {
     try {
       setIsCreating(true);
 
-      // 🔍 DEBUG: Log data yang masuk
-      console.log("🔍 DEBUG handleCreate called with data:", {
-        data,
-        kelasList: kelasList.map((k) => ({
-          id: k.id,
-          nama_kelas: k.nama_kelas,
-        })),
-        laboratoriumList: laboratoriumList.map((l) => ({
-          id: l.id,
-          nama_lab: l.nama_lab,
-        })),
-      });
-
-      // Dosen HANYA bisa memilih kelas yang sudah ada
       // Cari kelas dari list
       const selectedKelas = kelasList.find(
         (k) => k.nama_kelas === data.kelas_nama,
       );
 
-      console.log("🔍 DEBUG: selectedKelas:", selectedKelas);
-
       if (!selectedKelas) {
-        console.error("❌ Kelas tidak ditemukan:", data.kelas_nama);
         toast.error("Kelas tidak ditemukan", {
           description:
             "Pilih kelas yang sudah ada. Jika tidak ada, hubungi Admin.",
@@ -416,7 +376,6 @@ export default function JadwalPage() {
       }
 
       const kelasId = selectedKelas.id;
-      console.log("🔍 DEBUG: kelasId:", kelasId);
 
       // ✅ Dosen memilih kelas yang sudah ada (dibuat Admin)
       const createData: CreateJadwalData = {
@@ -430,11 +389,7 @@ export default function JadwalPage() {
         is_active: data.is_active ?? true,
       };
 
-      console.log("🔍 DEBUG: createData:", createData);
-
-      console.log("🔍 DEBUG: Memanggil createJadwal...");
-      const result = await createJadwal(createData);
-      console.log("✅ DEBUG: createJadwal success:", result);
+      await createJadwal(createData);
 
       // ✅ IMPROVED: Beri feedback jelas tentang status pending
       toast.success("Jadwal berhasil dibuat!", {
@@ -484,12 +439,10 @@ export default function JadwalPage() {
       createForm.reset();
       fetchJadwal();
     } catch (error: any) {
-      console.error("❌ DEBUG: Error di handleCreate:", error);
       toast.error("Gagal menambahkan jadwal", {
         description: error.message || "Unknown error occurred",
       });
     } finally {
-      console.log("🔍 DEBUG: setIsCreating(false)");
       setIsCreating(false);
     }
   };

@@ -1,3 +1,8 @@
+/// <reference lib="webworker" />
+declare const self: ServiceWorkerGlobalScope & typeof globalThis;
+
+import { precacheAndRoute } from 'workbox-precaching';
+
 /**
  * Service Worker for PWA Sistem Praktikum
  *
@@ -16,6 +21,9 @@
 // ============================================================================
 // CONFIGURATION
 // ============================================================================
+
+// Precache injected assets by Vite Workbox
+precacheAndRoute(self.__WB_MANIFEST || []);
 
 const CACHE_VERSION = 'v1.0.3'; // Fixed: serve index.html for offline navigation
 const CACHE_PREFIX = 'praktikum-pwa';

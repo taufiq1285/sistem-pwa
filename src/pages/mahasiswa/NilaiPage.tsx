@@ -341,12 +341,12 @@ export default function MahasiswaNilaiPageEnhanced() {
         {/* Header */}
         <GlassCard
           intensity="medium"
-          className="border-white/40 bg-white/80 shadow-xl dark:border-white/10 dark:bg-slate-900/80"
+          className="border-white/40 bg-white/80 shadow-xl dark:border-white/10 dark:bg-card"
         >
           <CardContent className="p-6 sm:p-8">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+                <h1 className="text-4xl font-extrabold tracking-tight text-foreground">
                   Nilai Akademik
                 </h1>
                 <p className="text-muted-foreground">
@@ -390,7 +390,7 @@ export default function MahasiswaNilaiPageEnhanced() {
         {/* Filters */}
         <GlassCard
           intensity="low"
-          className="border-white/40 bg-white/90 shadow-lg dark:border-white/10 dark:bg-slate-900/85"
+          className="border-white/40 bg-white/90 shadow-lg dark:border-white/10 dark:bg-card"
         >
           <CardContent className="p-4 sm:p-6">
             <div className="grid gap-4 md:grid-cols-2">
@@ -452,7 +452,7 @@ export default function MahasiswaNilaiPageEnhanced() {
           <TabsContent value="per-kelas">
             <GlassCard
               intensity="low"
-              className="border-white/40 bg-white/90 p-6 shadow-lg dark:border-white/10 dark:bg-slate-900/85"
+              className="border-white/40 bg-white/90 p-6 shadow-lg dark:border-white/10 dark:bg-card"
             >
               <CardHeader>
                 <CardTitle>Nilai Per Kelas</CardTitle>
@@ -544,7 +544,7 @@ export default function MahasiswaNilaiPageEnhanced() {
           <TabsContent value="per-mk">
             <GlassCard
               intensity="low"
-              className="border-white/40 bg-white/90 p-6 shadow-lg dark:border-white/10 dark:bg-slate-900/85"
+              className="border-white/40 bg-white/90 p-6 shadow-lg dark:border-white/10 dark:bg-card"
             >
               <CardHeader>
                 <CardTitle>Nilai Per Mata Kuliah (Kumulatif)</CardTitle>
@@ -626,7 +626,7 @@ export default function MahasiswaNilaiPageEnhanced() {
           <TabsContent value="permintaan">
             <GlassCard
               intensity="low"
-              className="border-white/40 bg-white/90 p-6 shadow-lg dark:border-white/10 dark:bg-slate-900/85"
+              className="border-white/40 bg-white/90 p-6 shadow-lg dark:border-white/10 dark:bg-card"
             >
               <CardHeader>
                 <CardTitle>Riwayat Permintaan Perbaikan Nilai</CardTitle>
@@ -673,7 +673,7 @@ export default function MahasiswaNilaiPageEnhanced() {
                             </TableCell>
                             <TableCell className="text-center">
                               {req.nilai_baru ? (
-                                <span className="font-bold text-green-600">
+                                <span className="font-bold text-success">
                                   {req.nilai_baru}
                                 </span>
                               ) : (
@@ -780,7 +780,7 @@ export default function MahasiswaNilaiPageEnhanced() {
 
               <div>
                 <Label>
-                  Alasan Permintaan <span className="text-red-500">*</span>
+                  Alasan Permintaan <span className="text-danger">*</span>
                 </Label>
                 <Textarea
                   value={alasanPermintaan}

@@ -1,972 +1,1007 @@
 /**
- * Main Application Router - COMPLETE WITH KUIS ROUTES
+ * Main Application Router - WITH CODE-SPLITTING
  *
  * CHANGES:
- * ✅ ADDED: Complete Kuis/Quiz system routes (Dosen & Mahasiswa)
- * ✅ KEPT: All other existing routes
- * ✅ All TypeScript errors resolved
+ * ✅ REFACTORED: All page imports converted to React.lazy() for code-splitting
+ * ✅ ADDED: Suspense wrapper with PageLoader fallback
+ * ✅ KEPT: All existing routes and role guards intact
  */
 
+import { lazy, Suspense } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { ProtectedRoute } from "@/components/common/ProtectedRoute";
 import { RoleGuard } from "@/components/common/RoleGuard";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { PageLoader } from "@/components/common/PageLoader";
 import { ROUTES } from "@/config/routes.config";
 
+// =============================================================================
+// LAZY-LOADED PAGES (Code-Splitting)
+// =============================================================================
+
 // Auth Pages
-import { LoginPage } from "@/pages/auth/LoginPage";
-import { RegisterPage } from "@/pages/auth/RegisterPage";
-import { ForgotPasswordPage } from "@/pages/auth/ForgotPasswordPage";
+const LoginPage = lazy(() =>
+  import("@/pages/auth/LoginPage").then((m) => ({ default: m.LoginPage })),
+);
+const RegisterPage = lazy(() =>
+  import("@/pages/auth/RegisterPage").then((m) => ({
+    default: m.RegisterPage,
+  })),
+);
+const ForgotPasswordPage = lazy(() =>
+  import("@/pages/auth/ForgotPasswordPage").then((m) => ({
+    default: m.ForgotPasswordPage,
+  })),
+);
 
 // Public Pages
-import { HomePage } from "@/pages/public/HomePage";
-import { NotFoundPage } from "@/pages/public/NotFoundPage";
-import { UnauthorizedPage } from "@/pages/public/UnauthorizedPage";
+const HomePage = lazy(() =>
+  import("@/pages/public/HomePage").then((m) => ({ default: m.HomePage })),
+);
+const NotFoundPage = lazy(() =>
+  import("@/pages/public/NotFoundPage").then((m) => ({
+    default: m.NotFoundPage,
+  })),
+);
+const UnauthorizedPage = lazy(() =>
+  import("@/pages/public/UnauthorizedPage").then((m) => ({
+    default: m.UnauthorizedPage,
+  })),
+);
 
 // Admin Pages
-import { DashboardPage as AdminDashboard } from "@/pages/admin/DashboardPage";
-import MataKuliahPage from "@/pages/admin/MataKuliahPage";
-import KelasPageEnhanced from "@/pages/admin/KelasPageEnhanced"; // ✅ ENHANCED: With Kelola Mahasiswa feature
-import AdminUsersPage from "@/pages/admin/UsersPage";
-import AdminLaboratoriesPage from "@/pages/admin/LaboratoriesPage";
-import AdminEquipmentsPage from "@/pages/admin/EquipmentsPage";
-import AdminAnnouncementsPage from "@/pages/admin/AnnouncementsPage";
-// ❌ DISABLED: Analytics & Sync tidak dalam scope proposal penelitian
-// import AdminAnalyticsPage from "@/pages/admin/AnalyticsPage";
-// import AdminSyncManagementPage from "@/pages/admin/SyncManagementPage";
-import PeminjamanApprovalPage from "@/pages/admin/PeminjamanApprovalPage";
-import AdminProfilePage from "@/pages/admin/ProfilePage"; // ✅ NEW: Admin profile page
-import ManajemenAssignmentPage from "@/pages/admin/ManajemenAssignmentPage"; // ✅ NEW: Unified assignment & jadwal management
-import KelasMataKuliahPage from "@/pages/admin/KelasMataKuliahPage"; // ✅ NEW: Admin kelas-mata_kuliah assignment
+const AdminDashboard = lazy(() =>
+  import("@/pages/admin/DashboardPage").then((m) => ({
+    default: m.DashboardPage,
+  })),
+);
+const MataKuliahPage = lazy(() => import("@/pages/admin/MataKuliahPage"));
+const KelasPageEnhanced = lazy(
+  () => import("@/pages/admin/KelasPageEnhanced"),
+);
+const AdminUsersPage = lazy(() => import("@/pages/admin/UsersPage"));
+const AdminLaboratoriesPage = lazy(
+  () => import("@/pages/admin/LaboratoriesPage"),
+);
+const AdminEquipmentsPage = lazy(
+  () => import("@/pages/admin/EquipmentsPage"),
+);
+const AdminAnnouncementsPage = lazy(
+  () => import("@/pages/admin/AnnouncementsPage"),
+);
+const PeminjamanApprovalPage = lazy(
+  () => import("@/pages/admin/PeminjamanApprovalPage"),
+);
+const AdminProfilePage = lazy(() => import("@/pages/admin/ProfilePage"));
+const ManajemenAssignmentPage = lazy(
+  () => import("@/pages/admin/ManajemenAssignmentPage"),
+);
+const KelasMataKuliahPage = lazy(
+  () => import("@/pages/admin/KelasMataKuliahPage"),
+);
 
 // Dosen Pages
-import { DashboardPage as DosenDashboard } from "@/pages/dosen/DashboardPage";
-import DosenJadwalPage from "@/pages/dosen/JadwalPage";
-
-// Dosen Kuis Pages - NEW! ✅
-import KuisListPage from "@/pages/dosen/kuis/KuisListPage";
-import KuisCreatePage from "@/pages/dosen/kuis/KuisCreatePage";
-import KuisEditPage from "@/pages/dosen/kuis/KuisEditPage";
-import KuisResultsPage from "@/pages/dosen/kuis/KuisResultsPage";
-import AttemptDetailPage from "@/pages/dosen/kuis/AttemptDetailPage";
-
-// Dosen Bank Soal - NEW! ✅
-import BankSoalPage from "@/pages/dosen/BankSoalPage";
-
-// Dosen Materi Page - NEW! ✅
-import DosenMateriPage from "@/pages/dosen/MateriPage";
-
-// Dosen Penilaian Page - NEW! ✅
-import DosenPenilaianPage from "@/pages/dosen/PenilaianPage";
-import DosenPeminjamanPage from "@/pages/dosen/PeminjamanPage";
-
-// Dosen Kehadiran Page - NEW! ✅
-import DosenKehadiranPage from "@/pages/dosen/KehadiranPage";
-import DosenPengumumanPage from "@/pages/dosen/PengumumanPage";
-import DosenProfilePage from "@/pages/dosen/ProfilePage";
-import DosenLogbookReviewPage from "@/pages/dosen/LogbookReviewPage";
+const DosenDashboard = lazy(() =>
+  import("@/pages/dosen/DashboardPage").then((m) => ({
+    default: m.DashboardPage,
+  })),
+);
+const DosenJadwalPage = lazy(() => import("@/pages/dosen/JadwalPage"));
+const KuisListPage = lazy(() => import("@/pages/dosen/kuis/KuisListPage"));
+const KuisCreatePage = lazy(() => import("@/pages/dosen/kuis/KuisCreatePage"));
+const KuisEditPage = lazy(() => import("@/pages/dosen/kuis/KuisEditPage"));
+const KuisResultsPage = lazy(
+  () => import("@/pages/dosen/kuis/KuisResultsPage"),
+);
+const AttemptDetailPage = lazy(
+  () => import("@/pages/dosen/kuis/AttemptDetailPage"),
+);
+const BankSoalPage = lazy(() => import("@/pages/dosen/BankSoalPage"));
+const DosenMateriPage = lazy(() => import("@/pages/dosen/MateriPage"));
+const DosenPenilaianPage = lazy(() => import("@/pages/dosen/PenilaianPage"));
+const DosenPeminjamanPage = lazy(
+  () => import("@/pages/dosen/PeminjamanPage"),
+);
+const DosenKehadiranPage = lazy(() => import("@/pages/dosen/KehadiranPage"));
+const DosenPengumumanPage = lazy(
+  () => import("@/pages/dosen/PengumumanPage"),
+);
+const DosenProfilePage = lazy(() => import("@/pages/dosen/ProfilePage"));
+const DosenLogbookReviewPage = lazy(
+  () => import("@/pages/dosen/LogbookReviewPage"),
+);
 
 // Mahasiswa Pages
-import { DashboardPage as MahasiswaDashboard } from "@/pages/mahasiswa/DashboardPage";
-import MahasiswaJadwalPage from "@/pages/mahasiswa/JadwalPage";
-import MahasiswaLogbookPage from "@/pages/mahasiswa/LogbookPage";
-
-// Mahasiswa Kuis Pages - NEW! ✅
-import KuisAttemptPage from "@/pages/mahasiswa/kuis/KuisAttemptPage";
-import MahasiswaKuisListPage from "@/pages/mahasiswa/kuis/KuisListPage";
-import KuisResultPage from "@/pages/mahasiswa/kuis/KuisResultPage";
-
-// Mahasiswa Materi Page - NEW! ✅
-import MahasiswaMateriPage from "@/pages/mahasiswa/MateriPage";
-
-// Mahasiswa Nilai Page - NEW! ✅
-import MahasiswaNilaiPage from "@/pages/mahasiswa/NilaiPage";
-import MahasiswaPresensiPage from "@/pages/mahasiswa/PresensiPage";
-import MahasiswaPengumumanPage from "@/pages/mahasiswa/PengumumanPage";
-import MahasiswaProfilePage from "@/pages/mahasiswa/ProfilePage"; // ✅ NEW: Mahasiswa profile page
-import OfflineSyncPage from "@/pages/mahasiswa/OfflineSyncPage"; // ✅ Offline sync page
-import SharedOfflineSyncPage from "@/pages/shared/OfflineSyncPage"; // ✅ Shared sync page (dosen, admin, laboran)
+const MahasiswaDashboard = lazy(() =>
+  import("@/pages/mahasiswa/DashboardPage").then((m) => ({
+    default: m.DashboardPage,
+  })),
+);
+const MahasiswaJadwalPage = lazy(
+  () => import("@/pages/mahasiswa/JadwalPage"),
+);
+const MahasiswaLogbookPage = lazy(
+  () => import("@/pages/mahasiswa/LogbookPage"),
+);
+const KuisAttemptPage = lazy(
+  () => import("@/pages/mahasiswa/kuis/KuisAttemptPage"),
+);
+const MahasiswaKuisListPage = lazy(
+  () => import("@/pages/mahasiswa/kuis/KuisListPage"),
+);
+const KuisResultPage = lazy(
+  () => import("@/pages/mahasiswa/kuis/KuisResultPage"),
+);
+const MahasiswaMateriPage = lazy(
+  () => import("@/pages/mahasiswa/MateriPage"),
+);
+const MahasiswaNilaiPage = lazy(
+  () => import("@/pages/mahasiswa/NilaiPage"),
+);
+const MahasiswaPresensiPage = lazy(
+  () => import("@/pages/mahasiswa/PresensiPage"),
+);
+const MahasiswaPengumumanPage = lazy(
+  () => import("@/pages/mahasiswa/PengumumanPage"),
+);
+const MahasiswaProfilePage = lazy(
+  () => import("@/pages/mahasiswa/ProfilePage"),
+);
+const OfflineSyncPage = lazy(
+  () => import("@/pages/mahasiswa/OfflineSyncPage"),
+);
+const SharedOfflineSyncPage = lazy(
+  () => import("@/pages/shared/OfflineSyncPage"),
+);
 
 // Laboran Pages
-import { DashboardPage as LaboranDashboard } from "@/pages/laboran/DashboardPage";
-import LaboranInventarisPage from "@/pages/laboran/InventarisPage";
-import LaboranPersetujuanPage from "@/pages/laboran/PersetujuanPage";
-import LaboranPeminjamanAktifPage from "@/pages/laboran/PeminjamanAktifPage";
-import LaboranLaboratoriumPage from "@/pages/laboran/LaboratoriumPage";
-import LaboranJadwalApprovalPage from "@/pages/laboran/JadwalApprovalPage";
-import LaboranLaporanPage from "@/pages/laboran/LaporanPage";
-import LaboranPengumumanPage from "@/pages/laboran/PengumumanPage";
-import LaboranProfilePage from "@/pages/laboran/ProfilePage";
+const LaboranDashboard = lazy(() =>
+  import("@/pages/laboran/DashboardPage").then((m) => ({
+    default: m.DashboardPage,
+  })),
+);
+const LaboranInventarisPage = lazy(
+  () => import("@/pages/laboran/InventarisPage"),
+);
+const LaboranPersetujuanPage = lazy(
+  () => import("@/pages/laboran/PersetujuanPage"),
+);
+const LaboranPeminjamanAktifPage = lazy(
+  () => import("@/pages/laboran/PeminjamanAktifPage"),
+);
+const LaboranLaboratoriumPage = lazy(
+  () => import("@/pages/laboran/LaboratoriumPage"),
+);
+const LaboranJadwalApprovalPage = lazy(
+  () => import("@/pages/laboran/JadwalApprovalPage"),
+);
+const LaboranLaporanPage = lazy(
+  () => import("@/pages/laboran/LaporanPage"),
+);
+const LaboranPengumumanPage = lazy(
+  () => import("@/pages/laboran/PengumumanPage"),
+);
+const LaboranProfilePage = lazy(
+  () => import("@/pages/laboran/ProfilePage"),
+);
+
+// =============================================================================
+// APP ROUTER
+// =============================================================================
 
 export function AppRouter() {
   return (
-    <Routes>
-      {/* ================================================================== */}
-      {/* PUBLIC ROUTES (No authentication required) */}
-      {/* ================================================================== */}
-      <Route path={ROUTES.LOGIN} element={<LoginPage />} />
-      <Route path={ROUTES.REGISTER} element={<RegisterPage />} />
-      <Route path={ROUTES.FORGOT_PASSWORD} element={<ForgotPasswordPage />} />
-      <Route path={ROUTES.UNAUTHORIZED} element={<UnauthorizedPage />} />
-      <Route path={ROUTES.NOT_FOUND} element={<NotFoundPage />} />
+    <Suspense fallback={<PageLoader />}>
+      <Routes>
+        {/* ================================================================== */}
+        {/* PUBLIC ROUTES (No authentication required) */}
+        {/* ================================================================== */}
+        <Route path={ROUTES.LOGIN} element={<LoginPage />} />
+        <Route path={ROUTES.REGISTER} element={<RegisterPage />} />
+        <Route path={ROUTES.FORGOT_PASSWORD} element={<ForgotPasswordPage />} />
+        <Route path={ROUTES.UNAUTHORIZED} element={<UnauthorizedPage />} />
+        <Route path={ROUTES.NOT_FOUND} element={<NotFoundPage />} />
 
-      {/* ================================================================== */}
-      {/* ADMIN ROUTES (Require admin role) */}
-      {/* ================================================================== */}
-      <Route
-        path={ROUTES.ADMIN.ROOT}
-        element={
-          <ProtectedRoute>
-            <RoleGuard allowedRoles={["admin"]}>
-              <Navigate to={ROUTES.ADMIN.DASHBOARD} replace />
-            </RoleGuard>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path={ROUTES.ADMIN.DASHBOARD}
-        element={
-          <ProtectedRoute>
-            <RoleGuard allowedRoles={["admin"]}>
-              <AppLayout>
-                <AdminDashboard />
-              </AppLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        }
-      />
+        {/* ================================================================== */}
+        {/* ADMIN ROUTES (Require admin role) */}
+        {/* ================================================================== */}
+        <Route
+          path={ROUTES.ADMIN.ROOT}
+          element={
+            <ProtectedRoute>
+              <RoleGuard allowedRoles={["admin"]}>
+                <Navigate to={ROUTES.ADMIN.DASHBOARD} replace />
+              </RoleGuard>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={ROUTES.ADMIN.DASHBOARD}
+          element={
+            <ProtectedRoute>
+              <RoleGuard allowedRoles={["admin"]}>
+                <AppLayout>
+                  <AdminDashboard />
+                </AppLayout>
+              </RoleGuard>
+            </ProtectedRoute>
+          }
+        />
 
-      {/* Mata Kuliah Management */}
-      <Route
-        path="/admin/mata-kuliah"
-        element={
-          <ProtectedRoute>
-            <RoleGuard allowedRoles={["admin"]}>
-              <AppLayout>
-                <MataKuliahPage />
-              </AppLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        }
-      />
+        {/* Mata Kuliah Management */}
+        <Route
+          path="/admin/mata-kuliah"
+          element={
+            <ProtectedRoute>
+              <RoleGuard allowedRoles={["admin"]}>
+                <AppLayout>
+                  <MataKuliahPage />
+                </AppLayout>
+              </RoleGuard>
+            </ProtectedRoute>
+          }
+        />
 
-      {/* Kelas Mata Kuliah Assignment */}
-      <Route
-        path="/admin/kelas-mata-kuliah"
-        element={
-          <ProtectedRoute>
-            <RoleGuard allowedRoles={["admin"]}>
-              <AppLayout>
-                <KelasMataKuliahPage />
-              </AppLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        }
-      />
+        {/* Kelas Mata Kuliah Assignment */}
+        <Route
+          path="/admin/kelas-mata-kuliah"
+          element={
+            <ProtectedRoute>
+              <RoleGuard allowedRoles={["admin"]}>
+                <AppLayout>
+                  <KelasMataKuliahPage />
+                </AppLayout>
+              </RoleGuard>
+            </ProtectedRoute>
+          }
+        />
 
-      {/* Kelas Management */}
-      <Route
-        path="/admin/kelas"
-        element={
-          <ProtectedRoute>
-            <RoleGuard allowedRoles={["admin"]}>
-              <AppLayout>
-                <KelasPageEnhanced />
-              </AppLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        }
-      />
+        {/* Kelas Management */}
+        <Route
+          path="/admin/kelas"
+          element={
+            <ProtectedRoute>
+              <RoleGuard allowedRoles={["admin"]}>
+                <AppLayout>
+                  <KelasPageEnhanced />
+                </AppLayout>
+              </RoleGuard>
+            </ProtectedRoute>
+          }
+        />
 
-      {/* Admin - Users */}
-      <Route
-        path="/admin/users"
-        element={
-          <ProtectedRoute>
-            <RoleGuard allowedRoles={["admin"]}>
-              <AppLayout>
-                <AdminUsersPage />
-              </AppLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/laboratories"
-        element={
-          <ProtectedRoute>
-            <RoleGuard allowedRoles={["admin"]}>
-              <AppLayout>
-                <AdminLaboratoriesPage />
-              </AppLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/equipments"
-        element={
-          <ProtectedRoute>
-            <RoleGuard allowedRoles={["admin"]}>
-              <AppLayout>
-                <AdminEquipmentsPage />
-              </AppLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/peminjaman"
-        element={
-          <ProtectedRoute>
-            <RoleGuard allowedRoles={["admin"]}>
-              <AppLayout>
-                <PeminjamanApprovalPage />
-              </AppLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/peminjaman-aktif"
-        element={
-          <ProtectedRoute>
-            <RoleGuard allowedRoles={["admin"]}>
-              <AppLayout>
-                <LaboranPeminjamanAktifPage />
-              </AppLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/announcements"
-        element={
-          <ProtectedRoute>
-            <RoleGuard allowedRoles={["admin"]}>
-              <AppLayout>
-                <AdminAnnouncementsPage />
-              </AppLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/manajemen-assignment"
-        element={
-          <ProtectedRoute>
-            <RoleGuard allowedRoles={["admin"]}>
-              <AppLayout>
-                <ManajemenAssignmentPage />
-              </AppLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/notifikasi"
-        element={
-          <ProtectedRoute>
-            <RoleGuard allowedRoles={["admin"]}>
-              <AppLayout>
-                <AdminAnnouncementsPage />
-              </AppLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        }
-      />
-      {/* ❌ DISABLED: Analytics route - tidak dalam scope proposal */}
-      {/* <Route
-        path="/admin/analytics"
-        element={
-          <ProtectedRoute>
-            <RoleGuard allowedRoles={["admin"]}>
-              <AppLayout>
-                <AdminAnalyticsPage />
-              </AppLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        }
-      /> */}
-      {/* ❌ DISABLED: Sync Management route - tidak dalam scope proposal */}
-      {/* <Route
-        path="/admin/sync-management"
-        element={
-          <ProtectedRoute>
-            <RoleGuard allowedRoles={["admin"]}>
-              <AppLayout>
-                <AdminSyncManagementPage />
-              </AppLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        }
-      /> */}
+        {/* Admin - Users */}
+        <Route
+          path="/admin/users"
+          element={
+            <ProtectedRoute>
+              <RoleGuard allowedRoles={["admin"]}>
+                <AppLayout>
+                  <AdminUsersPage />
+                </AppLayout>
+              </RoleGuard>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/laboratories"
+          element={
+            <ProtectedRoute>
+              <RoleGuard allowedRoles={["admin"]}>
+                <AppLayout>
+                  <AdminLaboratoriesPage />
+                </AppLayout>
+              </RoleGuard>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/equipments"
+          element={
+            <ProtectedRoute>
+              <RoleGuard allowedRoles={["admin"]}>
+                <AppLayout>
+                  <AdminEquipmentsPage />
+                </AppLayout>
+              </RoleGuard>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/peminjaman"
+          element={
+            <ProtectedRoute>
+              <RoleGuard allowedRoles={["admin"]}>
+                <AppLayout>
+                  <PeminjamanApprovalPage />
+                </AppLayout>
+              </RoleGuard>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/peminjaman-aktif"
+          element={
+            <ProtectedRoute>
+              <RoleGuard allowedRoles={["admin"]}>
+                <AppLayout>
+                  <LaboranPeminjamanAktifPage />
+                </AppLayout>
+              </RoleGuard>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/announcements"
+          element={
+            <ProtectedRoute>
+              <RoleGuard allowedRoles={["admin"]}>
+                <AppLayout>
+                  <AdminAnnouncementsPage />
+                </AppLayout>
+              </RoleGuard>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/manajemen-assignment"
+          element={
+            <ProtectedRoute>
+              <RoleGuard allowedRoles={["admin"]}>
+                <AppLayout>
+                  <ManajemenAssignmentPage />
+                </AppLayout>
+              </RoleGuard>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/notifikasi"
+          element={
+            <ProtectedRoute>
+              <RoleGuard allowedRoles={["admin"]}>
+                <AppLayout>
+                  <AdminAnnouncementsPage />
+                </AppLayout>
+              </RoleGuard>
+            </ProtectedRoute>
+          }
+        />
 
-      {/* ✅ NEW: Admin Profile Route */}
-      <Route
-        path="/admin/profil"
-        element={
-          <ProtectedRoute>
-            <RoleGuard allowedRoles={["admin"]}>
-              <AppLayout>
-                <AdminProfilePage />
-              </AppLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        }
-      />
+        {/* ✅ Admin Profile Route */}
+        <Route
+          path="/admin/profil"
+          element={
+            <ProtectedRoute>
+              <RoleGuard allowedRoles={["admin"]}>
+                <AppLayout>
+                  <AdminProfilePage />
+                </AppLayout>
+              </RoleGuard>
+            </ProtectedRoute>
+          }
+        />
 
-      {/* Admin - Offline Sync */}
-      <Route
-        path="/admin/offline-sync"
-        element={
-          <ProtectedRoute>
-            <RoleGuard allowedRoles={["admin"]}>
-              <AppLayout>
-                <SharedOfflineSyncPage />
-              </AppLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        }
-      />
+        {/* Admin - Offline Sync */}
+        <Route
+          path="/admin/offline-sync"
+          element={
+            <ProtectedRoute>
+              <RoleGuard allowedRoles={["admin"]}>
+                <AppLayout>
+                  <SharedOfflineSyncPage />
+                </AppLayout>
+              </RoleGuard>
+            </ProtectedRoute>
+          }
+        />
 
-      {/* ================================================================== */}
-      {/* DOSEN ROUTES */}
-      {/* ================================================================== */}
+        {/* ================================================================== */}
+        {/* DOSEN ROUTES */}
+        {/* ================================================================== */}
 
-      {/* Root redirect */}
-      <Route
-        path={ROUTES.DOSEN.ROOT}
-        element={
-          <ProtectedRoute>
-            <RoleGuard allowedRoles={["dosen"]}>
-              <Navigate to={ROUTES.DOSEN.DASHBOARD} replace />
-            </RoleGuard>
-          </ProtectedRoute>
-        }
-      />
+        {/* Root redirect */}
+        <Route
+          path={ROUTES.DOSEN.ROOT}
+          element={
+            <ProtectedRoute>
+              <RoleGuard allowedRoles={["dosen"]}>
+                <Navigate to={ROUTES.DOSEN.DASHBOARD} replace />
+              </RoleGuard>
+            </ProtectedRoute>
+          }
+        />
 
-      {/* Dashboard */}
-      <Route
-        path={ROUTES.DOSEN.DASHBOARD}
-        element={
-          <ProtectedRoute>
-            <RoleGuard allowedRoles={["dosen"]}>
-              <AppLayout>
-                <DosenDashboard />
-              </AppLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        }
-      />
+        {/* Dashboard */}
+        <Route
+          path={ROUTES.DOSEN.DASHBOARD}
+          element={
+            <ProtectedRoute>
+              <RoleGuard allowedRoles={["dosen"]}>
+                <AppLayout>
+                  <DosenDashboard />
+                </AppLayout>
+              </RoleGuard>
+            </ProtectedRoute>
+          }
+        />
 
-      {/* Jadwal Praktikum */}
-      <Route
-        path="/dosen/jadwal"
-        element={
-          <ProtectedRoute>
-            <RoleGuard allowedRoles={["dosen"]}>
-              <AppLayout>
-                <DosenJadwalPage />
-              </AppLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        }
-      />
+        {/* Jadwal Praktikum */}
+        <Route
+          path="/dosen/jadwal"
+          element={
+            <ProtectedRoute>
+              <RoleGuard allowedRoles={["dosen"]}>
+                <AppLayout>
+                  <DosenJadwalPage />
+                </AppLayout>
+              </RoleGuard>
+            </ProtectedRoute>
+          }
+        />
 
-      {/* ================================================================== */}
-      {/* DOSEN KUIS ROUTES - COMPLETE QUIZ SYSTEM ✅ */}
-      {/* ================================================================== */}
+        {/* ================================================================== */}
+        {/* DOSEN KUIS ROUTES - COMPLETE QUIZ SYSTEM ✅ */}
+        {/* ================================================================== */}
 
-      {/* Kuis List - View all quizzes */}
-      <Route
-        path="/dosen/kuis"
-        element={
-          <ProtectedRoute>
-            <RoleGuard allowedRoles={["dosen"]}>
-              <AppLayout>
-                <KuisListPage />
-              </AppLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        }
-      />
+        {/* Kuis List */}
+        <Route
+          path="/dosen/kuis"
+          element={
+            <ProtectedRoute>
+              <RoleGuard allowedRoles={["dosen"]}>
+                <AppLayout>
+                  <KuisListPage />
+                </AppLayout>
+              </RoleGuard>
+            </ProtectedRoute>
+          }
+        />
 
-      {/* Kuis Create - Build new quiz */}
-      <Route
-        path="/dosen/kuis/create"
-        element={
-          <ProtectedRoute>
-            <RoleGuard allowedRoles={["dosen"]}>
-              <AppLayout>
-                <KuisCreatePage />
-              </AppLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        }
-      />
+        {/* Kuis Create */}
+        <Route
+          path="/dosen/kuis/create"
+          element={
+            <ProtectedRoute>
+              <RoleGuard allowedRoles={["dosen"]}>
+                <AppLayout>
+                  <KuisCreatePage />
+                </AppLayout>
+              </RoleGuard>
+            </ProtectedRoute>
+          }
+        />
 
-      {/* Kuis Edit - Edit existing quiz */}
-      <Route
-        path="/dosen/kuis/:kuisId/edit"
-        element={
-          <ProtectedRoute>
-            <RoleGuard allowedRoles={["dosen"]}>
-              <AppLayout>
-                <KuisEditPage />
-              </AppLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        }
-      />
+        {/* Kuis Edit */}
+        <Route
+          path="/dosen/kuis/:kuisId/edit"
+          element={
+            <ProtectedRoute>
+              <RoleGuard allowedRoles={["dosen"]}>
+                <AppLayout>
+                  <KuisEditPage />
+                </AppLayout>
+              </RoleGuard>
+            </ProtectedRoute>
+          }
+        />
 
-      {/* Kuis Results - View analytics & student scores */}
-      <Route
-        path="/dosen/kuis/:kuisId/results"
-        element={
-          <ProtectedRoute>
-            <RoleGuard allowedRoles={["dosen"]}>
-              <AppLayout>
-                <KuisResultsPage />
-              </AppLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        }
-      />
+        {/* Kuis Results */}
+        <Route
+          path="/dosen/kuis/:kuisId/results"
+          element={
+            <ProtectedRoute>
+              <RoleGuard allowedRoles={["dosen"]}>
+                <AppLayout>
+                  <KuisResultsPage />
+                </AppLayout>
+              </RoleGuard>
+            </ProtectedRoute>
+          }
+        />
 
-      {/* Kuis Attempt Detail - View individual student's answers */}
-      <Route
-        path="/dosen/kuis/:kuisId/attempt/:attemptId"
-        element={
-          <ProtectedRoute>
-            <RoleGuard allowedRoles={["dosen"]}>
-              <AppLayout>
-                <AttemptDetailPage />
-              </AppLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        }
-      />
+        {/* Kuis Attempt Detail */}
+        <Route
+          path="/dosen/kuis/:kuisId/attempt/:attemptId"
+          element={
+            <ProtectedRoute>
+              <RoleGuard allowedRoles={["dosen"]}>
+                <AppLayout>
+                  <AttemptDetailPage />
+                </AppLayout>
+              </RoleGuard>
+            </ProtectedRoute>
+          }
+        />
 
-      {/* ================================================================== */}
-      {/* DOSEN BANK SOAL ROUTES - QUESTION BANK ✅ */}
-      {/* ================================================================== */}
+        {/* Bank Soal */}
+        <Route
+          path="/dosen/bank-soal"
+          element={
+            <ProtectedRoute>
+              <RoleGuard allowedRoles={["dosen"]}>
+                <AppLayout>
+                  <BankSoalPage />
+                </AppLayout>
+              </RoleGuard>
+            </ProtectedRoute>
+          }
+        />
 
-      {/* Bank Soal - Manage reusable questions */}
-      <Route
-        path="/dosen/bank-soal"
-        element={
-          <ProtectedRoute>
-            <RoleGuard allowedRoles={["dosen"]}>
-              <AppLayout>
-                <BankSoalPage />
-              </AppLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        }
-      />
+        {/* Materi */}
+        <Route
+          path="/dosen/materi"
+          element={
+            <ProtectedRoute>
+              <RoleGuard allowedRoles={["dosen"]}>
+                <AppLayout>
+                  <DosenMateriPage />
+                </AppLayout>
+              </RoleGuard>
+            </ProtectedRoute>
+          }
+        />
 
-      {/* ================================================================== */}
-      {/* DOSEN MATERI ROUTES - LEARNING MATERIALS ✅ */}
-      {/* ================================================================== */}
+        {/* Penilaian */}
+        <Route
+          path="/dosen/penilaian"
+          element={
+            <ProtectedRoute>
+              <RoleGuard allowedRoles={["dosen"]}>
+                <AppLayout>
+                  <DosenPenilaianPage />
+                </AppLayout>
+              </RoleGuard>
+            </ProtectedRoute>
+          }
+        />
 
-      {/* Materi List - Manage learning materials */}
-      <Route
-        path="/dosen/materi"
-        element={
-          <ProtectedRoute>
-            <RoleGuard allowedRoles={["dosen"]}>
-              <AppLayout>
-                <DosenMateriPage />
-              </AppLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        }
-      />
+        {/* Logbook Review */}
+        <Route
+          path="/dosen/logbook-review"
+          element={
+            <ProtectedRoute>
+              <RoleGuard allowedRoles={["dosen"]}>
+                <AppLayout>
+                  <DosenLogbookReviewPage />
+                </AppLayout>
+              </RoleGuard>
+            </ProtectedRoute>
+          }
+        />
 
-      {/* ================================================================== */}
-      {/* DOSEN PENILAIAN ROUTES - GRADING SYSTEM ✅ */}
-      {/* ================================================================== */}
+        {/* Dosen - Peminjaman */}
+        <Route
+          path="/dosen/peminjaman"
+          element={
+            <ProtectedRoute>
+              <RoleGuard allowedRoles={["dosen"]}>
+                <AppLayout>
+                  <DosenPeminjamanPage />
+                </AppLayout>
+              </RoleGuard>
+            </ProtectedRoute>
+          }
+        />
 
-      {/* Penilaian - Manage student grades */}
-      <Route
-        path="/dosen/penilaian"
-        element={
-          <ProtectedRoute>
-            <RoleGuard allowedRoles={["dosen"]}>
-              <AppLayout>
-                <DosenPenilaianPage />
-              </AppLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        }
-      />
+        {/* Dosen - Kehadiran */}
+        <Route
+          path="/dosen/kehadiran"
+          element={
+            <ProtectedRoute>
+              <RoleGuard allowedRoles={["dosen"]}>
+                <AppLayout>
+                  <DosenKehadiranPage />
+                </AppLayout>
+              </RoleGuard>
+            </ProtectedRoute>
+          }
+        />
 
-      {/* ================================================================== */}
-      {/* DOSEN LOGBOOK REVIEW ROUTES - DIGITAL LOGBOOK REVIEW ✅ */}
-      {/* ================================================================== */}
+        {/* Dosen - Notifikasi */}
+        <Route
+          path="/dosen/notifikasi"
+          element={
+            <ProtectedRoute>
+              <RoleGuard allowedRoles={["dosen"]}>
+                <AppLayout>
+                  <DosenPengumumanPage />
+                </AppLayout>
+              </RoleGuard>
+            </ProtectedRoute>
+          }
+        />
 
-      {/* Logbook Review - Review and grade student logbooks */}
-      <Route
-        path="/dosen/logbook-review"
-        element={
-          <ProtectedRoute>
-            <RoleGuard allowedRoles={["dosen"]}>
-              <AppLayout>
-                <DosenLogbookReviewPage />
-              </AppLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        }
-      />
+        {/* Dosen - Profil */}
+        <Route
+          path="/dosen/profil"
+          element={
+            <ProtectedRoute>
+              <RoleGuard allowedRoles={["dosen"]}>
+                <AppLayout>
+                  <DosenProfilePage />
+                </AppLayout>
+              </RoleGuard>
+            </ProtectedRoute>
+          }
+        />
 
-      {/* Dosen - Peminjaman */}
-      <Route
-        path="/dosen/peminjaman"
-        element={
-          <ProtectedRoute>
-            <RoleGuard allowedRoles={["dosen"]}>
-              <AppLayout>
-                <DosenPeminjamanPage />
-              </AppLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        }
-      />
+        {/* Dosen - Pengumuman */}
+        <Route
+          path="/dosen/pengumuman"
+          element={
+            <ProtectedRoute>
+              <RoleGuard allowedRoles={["dosen"]}>
+                <AppLayout>
+                  <DosenPengumumanPage />
+                </AppLayout>
+              </RoleGuard>
+            </ProtectedRoute>
+          }
+        />
 
-      {/* Dosen - Kehadiran */}
-      <Route
-        path="/dosen/kehadiran"
-        element={
-          <ProtectedRoute>
-            <RoleGuard allowedRoles={["dosen"]}>
-              <AppLayout>
-                <DosenKehadiranPage />
-              </AppLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        }
-      />
+        {/* Dosen - Offline Sync */}
+        <Route
+          path="/dosen/offline-sync"
+          element={
+            <ProtectedRoute>
+              <RoleGuard allowedRoles={["dosen"]}>
+                <AppLayout>
+                  <SharedOfflineSyncPage />
+                </AppLayout>
+              </RoleGuard>
+            </ProtectedRoute>
+          }
+        />
 
-      {/* Dosen - Notifikasi */}
-      <Route
-        path="/dosen/notifikasi"
-        element={
-          <ProtectedRoute>
-            <RoleGuard allowedRoles={["dosen"]}>
-              <AppLayout>
-                <DosenPengumumanPage />
-              </AppLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        }
-      />
+        {/* ================================================================== */}
+        {/* MAHASISWA ROUTES */}
+        {/* ================================================================== */}
 
-      {/* Dosen - Profil */}
-      <Route
-        path="/dosen/profil"
-        element={
-          <ProtectedRoute>
-            <RoleGuard allowedRoles={["dosen"]}>
-              <AppLayout>
-                <DosenProfilePage />
-              </AppLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        }
-      />
+        {/* Root redirect */}
+        <Route
+          path={ROUTES.MAHASISWA.ROOT}
+          element={
+            <ProtectedRoute>
+              <RoleGuard allowedRoles={["mahasiswa"]}>
+                <Navigate to={ROUTES.MAHASISWA.DASHBOARD} replace />
+              </RoleGuard>
+            </ProtectedRoute>
+          }
+        />
 
-      {/* Dosen - Pengumuman */}
-      <Route
-        path="/dosen/pengumuman"
-        element={
-          <ProtectedRoute>
-            <RoleGuard allowedRoles={["dosen"]}>
-              <AppLayout>
-                <DosenPengumumanPage />
-              </AppLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        }
-      />
+        {/* Dashboard */}
+        <Route
+          path={ROUTES.MAHASISWA.DASHBOARD}
+          element={
+            <ProtectedRoute>
+              <RoleGuard allowedRoles={["mahasiswa"]}>
+                <AppLayout>
+                  <MahasiswaDashboard />
+                </AppLayout>
+              </RoleGuard>
+            </ProtectedRoute>
+          }
+        />
 
-      {/* Dosen - Offline Sync */}
-      <Route
-        path="/dosen/offline-sync"
-        element={
-          <ProtectedRoute>
-            <RoleGuard allowedRoles={["dosen"]}>
-              <AppLayout>
-                <SharedOfflineSyncPage />
-              </AppLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        }
-      />
+        {/* Jadwal Praktikum */}
+        <Route
+          path="/mahasiswa/jadwal"
+          element={
+            <ProtectedRoute>
+              <RoleGuard allowedRoles={["mahasiswa"]}>
+                <AppLayout>
+                  <MahasiswaJadwalPage />
+                </AppLayout>
+              </RoleGuard>
+            </ProtectedRoute>
+          }
+        />
 
-      {/* ================================================================== */}
-      {/* MAHASISWA ROUTES */}
-      {/* ================================================================== */}
+        {/* Logbook */}
+        <Route
+          path="/mahasiswa/logbook"
+          element={
+            <ProtectedRoute>
+              <RoleGuard allowedRoles={["mahasiswa"]}>
+                <AppLayout>
+                  <MahasiswaLogbookPage />
+                </AppLayout>
+              </RoleGuard>
+            </ProtectedRoute>
+          }
+        />
 
-      {/* Root redirect */}
-      <Route
-        path={ROUTES.MAHASISWA.ROOT}
-        element={
-          <ProtectedRoute>
-            <RoleGuard allowedRoles={["mahasiswa"]}>
-              <Navigate to={ROUTES.MAHASISWA.DASHBOARD} replace />
-            </RoleGuard>
-          </ProtectedRoute>
-        }
-      />
+        {/* Kuis Attempt */}
+        <Route
+          path="/mahasiswa/kuis/:kuisId/attempt/:attemptId?"
+          element={
+            <ProtectedRoute>
+              <RoleGuard allowedRoles={["mahasiswa"]}>
+                <AppLayout>
+                  <KuisAttemptPage />
+                </AppLayout>
+              </RoleGuard>
+            </ProtectedRoute>
+          }
+        />
 
-      {/* Dashboard */}
-      <Route
-        path={ROUTES.MAHASISWA.DASHBOARD}
-        element={
-          <ProtectedRoute>
-            <RoleGuard allowedRoles={["mahasiswa"]}>
-              <AppLayout>
-                <MahasiswaDashboard />
-              </AppLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        }
-      />
+        {/* Kuis Result */}
+        <Route
+          path="/mahasiswa/kuis/:kuisId/result/:attemptId"
+          element={
+            <ProtectedRoute>
+              <RoleGuard allowedRoles={["mahasiswa"]}>
+                <AppLayout>
+                  <KuisResultPage />
+                </AppLayout>
+              </RoleGuard>
+            </ProtectedRoute>
+          }
+        />
 
-      {/* Jadwal Praktikum */}
-      <Route
-        path="/mahasiswa/jadwal"
-        element={
-          <ProtectedRoute>
-            <RoleGuard allowedRoles={["mahasiswa"]}>
-              <AppLayout>
-                <MahasiswaJadwalPage />
-              </AppLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        }
-      />
+        {/* Kuis List */}
+        <Route
+          path="/mahasiswa/kuis"
+          element={
+            <ProtectedRoute>
+              <RoleGuard allowedRoles={["mahasiswa"]}>
+                <AppLayout>
+                  <MahasiswaKuisListPage />
+                </AppLayout>
+              </RoleGuard>
+            </ProtectedRoute>
+          }
+        />
 
-      {/* ================================================================== */}
-      {/* MAHASISWA LOGBOOK ROUTES - DIGITAL LOGBOOK ✅ */}
-      {/* ================================================================== */}
+        {/* Materi */}
+        <Route
+          path="/mahasiswa/materi"
+          element={
+            <ProtectedRoute>
+              <RoleGuard allowedRoles={["mahasiswa"]}>
+                <AppLayout>
+                  <MahasiswaMateriPage />
+                </AppLayout>
+              </RoleGuard>
+            </ProtectedRoute>
+          }
+        />
 
-      {/* Logbook - Create and view practical learning logs */}
-      <Route
-        path="/mahasiswa/logbook"
-        element={
-          <ProtectedRoute>
-            <RoleGuard allowedRoles={["mahasiswa"]}>
-              <AppLayout>
-                <MahasiswaLogbookPage />
-              </AppLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        }
-      />
+        {/* Nilai */}
+        <Route
+          path="/mahasiswa/nilai"
+          element={
+            <ProtectedRoute>
+              <RoleGuard allowedRoles={["mahasiswa"]}>
+                <AppLayout>
+                  <MahasiswaNilaiPage />
+                </AppLayout>
+              </RoleGuard>
+            </ProtectedRoute>
+          }
+        />
 
-      {/* ================================================================== */}
-      {/* MAHASISWA KUIS ROUTES - QUIZ ATTEMPT ✅ */}
-      {/* ================================================================== */}
+        {/* Mahasiswa - Presensi */}
+        <Route
+          path="/mahasiswa/presensi"
+          element={
+            <ProtectedRoute>
+              <RoleGuard allowedRoles={["mahasiswa"]}>
+                <AppLayout>
+                  <MahasiswaPresensiPage />
+                </AppLayout>
+              </RoleGuard>
+            </ProtectedRoute>
+          }
+        />
 
-      {/* Kuis Attempt - Take quiz */}
-      <Route
-        path="/mahasiswa/kuis/:kuisId/attempt/:attemptId?"
-        element={
-          <ProtectedRoute>
-            <RoleGuard allowedRoles={["mahasiswa"]}>
-              <AppLayout>
-                <KuisAttemptPage />
-              </AppLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        }
-      />
+        {/* Mahasiswa - Notifikasi */}
+        <Route
+          path="/mahasiswa/notifikasi"
+          element={
+            <ProtectedRoute>
+              <RoleGuard allowedRoles={["mahasiswa"]}>
+                <AppLayout>
+                  <MahasiswaPengumumanPage />
+                </AppLayout>
+              </RoleGuard>
+            </ProtectedRoute>
+          }
+        />
 
-      {/* Kuis Result - View quiz results */}
-      <Route
-        path="/mahasiswa/kuis/:kuisId/result/:attemptId"
-        element={
-          <ProtectedRoute>
-            <RoleGuard allowedRoles={["mahasiswa"]}>
-              <AppLayout>
-                <KuisResultPage />
-              </AppLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        }
-      />
+        {/* ✅ Mahasiswa Profile Route */}
+        <Route
+          path="/mahasiswa/profil"
+          element={
+            <ProtectedRoute>
+              <RoleGuard allowedRoles={["mahasiswa"]}>
+                <AppLayout>
+                  <MahasiswaProfilePage />
+                </AppLayout>
+              </RoleGuard>
+            </ProtectedRoute>
+          }
+        />
 
-      {/* Kuis List - Available quizzes */}
-      <Route
-        path="/mahasiswa/kuis"
-        element={
-          <ProtectedRoute>
-            <RoleGuard allowedRoles={["mahasiswa"]}>
-              <AppLayout>
-                <MahasiswaKuisListPage />
-              </AppLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        }
-      />
+        {/* ✅ Mahasiswa Offline Sync Route */}
+        <Route
+          path="/mahasiswa/offline-sync"
+          element={
+            <ProtectedRoute>
+              <RoleGuard allowedRoles={["mahasiswa"]}>
+                <AppLayout>
+                  <OfflineSyncPage />
+                </AppLayout>
+              </RoleGuard>
+            </ProtectedRoute>
+          }
+        />
 
-      {/* ================================================================== */}
-      {/* MAHASISWA MATERI ROUTES - LEARNING MATERIALS ✅ */}
-      {/* ================================================================== */}
+        {/* ================================================================== */}
+        {/* LABORAN ROUTES */}
+        {/* ================================================================== */}
 
-      {/* Materi List - View and download learning materials */}
-      <Route
-        path="/mahasiswa/materi"
-        element={
-          <ProtectedRoute>
-            <RoleGuard allowedRoles={["mahasiswa"]}>
-              <AppLayout>
-                <MahasiswaMateriPage />
-              </AppLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        }
-      />
+        {/* Root redirect */}
+        <Route
+          path={ROUTES.LABORAN.ROOT}
+          element={
+            <ProtectedRoute>
+              <RoleGuard allowedRoles={["laboran"]}>
+                <Navigate to={ROUTES.LABORAN.DASHBOARD} replace />
+              </RoleGuard>
+            </ProtectedRoute>
+          }
+        />
 
-      {/* ================================================================== */}
-      {/* MAHASISWA NILAI ROUTES - VIEW GRADES ✅ */}
-      {/* ================================================================== */}
+        {/* Dashboard */}
+        <Route
+          path={ROUTES.LABORAN.DASHBOARD}
+          element={
+            <ProtectedRoute>
+              <RoleGuard allowedRoles={["laboran"]}>
+                <AppLayout>
+                  <LaboranDashboard />
+                </AppLayout>
+              </RoleGuard>
+            </ProtectedRoute>
+          }
+        />
 
-      {/* Nilai - View academic grades */}
-      <Route
-        path="/mahasiswa/nilai"
-        element={
-          <ProtectedRoute>
-            <RoleGuard allowedRoles={["mahasiswa"]}>
-              <AppLayout>
-                <MahasiswaNilaiPage />
-              </AppLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        }
-      />
+        {/* Laboran - Inventaris */}
+        <Route
+          path="/laboran/inventaris"
+          element={
+            <ProtectedRoute>
+              <RoleGuard allowedRoles={["laboran"]}>
+                <AppLayout>
+                  <LaboranInventarisPage />
+                </AppLayout>
+              </RoleGuard>
+            </ProtectedRoute>
+          }
+        />
 
-      {/* Mahasiswa - Presensi */}
-      <Route
-        path="/mahasiswa/presensi"
-        element={
-          <ProtectedRoute>
-            <RoleGuard allowedRoles={["mahasiswa"]}>
-              <AppLayout>
-                <MahasiswaPresensiPage />
-              </AppLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        }
-      />
+        {/* Laboran - Persetujuan */}
+        <Route
+          path="/laboran/persetujuan"
+          element={
+            <ProtectedRoute>
+              <RoleGuard allowedRoles={["laboran"]}>
+                <AppLayout>
+                  <LaboranPersetujuanPage />
+                </AppLayout>
+              </RoleGuard>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/laboran/peminjaman-aktif"
+          element={
+            <ProtectedRoute>
+              <RoleGuard allowedRoles={["laboran"]}>
+                <AppLayout>
+                  <LaboranPeminjamanAktifPage />
+                </AppLayout>
+              </RoleGuard>
+            </ProtectedRoute>
+          }
+        />
 
-      {/* Mahasiswa - Notifikasi */}
-      <Route
-        path="/mahasiswa/notifikasi"
-        element={
-          <ProtectedRoute>
-            <RoleGuard allowedRoles={["mahasiswa"]}>
-              <AppLayout>
-                <MahasiswaPengumumanPage />
-              </AppLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        }
-      />
+        {/* Laboran - Laboratorium */}
+        <Route
+          path="/laboran/laboratorium"
+          element={
+            <ProtectedRoute>
+              <RoleGuard allowedRoles={["laboran"]}>
+                <AppLayout>
+                  <LaboranLaboratoriumPage />
+                </AppLayout>
+              </RoleGuard>
+            </ProtectedRoute>
+          }
+        />
 
-      {/* ✅ NEW: Mahasiswa Profile Route */}
-      <Route
-        path="/mahasiswa/profil"
-        element={
-          <ProtectedRoute>
-            <RoleGuard allowedRoles={["mahasiswa"]}>
-              <AppLayout>
-                <MahasiswaProfilePage />
-              </AppLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        }
-      />
+        {/* Laboran - Kelola Jadwal */}
+        <Route
+          path="/laboran/jadwal"
+          element={
+            <ProtectedRoute>
+              <RoleGuard allowedRoles={["laboran"]}>
+                <AppLayout>
+                  <LaboranJadwalApprovalPage />
+                </AppLayout>
+              </RoleGuard>
+            </ProtectedRoute>
+          }
+        />
 
-      {/* ✅ Mahasiswa Offline Sync Route */}
-      <Route
-        path="/mahasiswa/offline-sync"
-        element={
-          <ProtectedRoute>
-            <RoleGuard allowedRoles={["mahasiswa"]}>
-              <AppLayout>
-                <OfflineSyncPage />
-              </AppLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        }
-      />
+        {/* Laboran - Laporan */}
+        <Route
+          path="/laboran/laporan"
+          element={
+            <ProtectedRoute>
+              <RoleGuard allowedRoles={["laboran"]}>
+                <AppLayout>
+                  <LaboranLaporanPage />
+                </AppLayout>
+              </RoleGuard>
+            </ProtectedRoute>
+          }
+        />
 
-      {/* ================================================================== */}
-      {/* LABORAN ROUTES */}
-      {/* ================================================================== */}
+        {/* Laboran - Notifikasi */}
+        <Route
+          path="/laboran/notifikasi"
+          element={
+            <ProtectedRoute>
+              <RoleGuard allowedRoles={["laboran"]}>
+                <AppLayout>
+                  <LaboranPengumumanPage />
+                </AppLayout>
+              </RoleGuard>
+            </ProtectedRoute>
+          }
+        />
 
-      {/* Root redirect */}
-      <Route
-        path={ROUTES.LABORAN.ROOT}
-        element={
-          <ProtectedRoute>
-            <RoleGuard allowedRoles={["laboran"]}>
-              <Navigate to={ROUTES.LABORAN.DASHBOARD} replace />
-            </RoleGuard>
-          </ProtectedRoute>
-        }
-      />
+        {/* Laboran - Profil */}
+        <Route
+          path="/laboran/profil"
+          element={
+            <ProtectedRoute>
+              <RoleGuard allowedRoles={["laboran"]}>
+                <AppLayout>
+                  <LaboranProfilePage />
+                </AppLayout>
+              </RoleGuard>
+            </ProtectedRoute>
+          }
+        />
 
-      {/* Dashboard */}
-      <Route
-        path={ROUTES.LABORAN.DASHBOARD}
-        element={
-          <ProtectedRoute>
-            <RoleGuard allowedRoles={["laboran"]}>
-              <AppLayout>
-                <LaboranDashboard />
-              </AppLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        }
-      />
+        {/* Laboran - Offline Sync */}
+        <Route
+          path="/laboran/offline-sync"
+          element={
+            <ProtectedRoute>
+              <RoleGuard allowedRoles={["laboran"]}>
+                <AppLayout>
+                  <SharedOfflineSyncPage />
+                </AppLayout>
+              </RoleGuard>
+            </ProtectedRoute>
+          }
+        />
 
-      {/* Laboran - Inventaris */}
-      <Route
-        path="/laboran/inventaris"
-        element={
-          <ProtectedRoute>
-            <RoleGuard allowedRoles={["laboran"]}>
-              <AppLayout>
-                <LaboranInventarisPage />
-              </AppLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        }
-      />
+        {/* ================================================================== */}
+        {/* FALLBACK ROUTES */}
+        {/* ================================================================== */}
 
-      {/* Laboran - Persetujuan */}
-      <Route
-        path="/laboran/persetujuan"
-        element={
-          <ProtectedRoute>
-            <RoleGuard allowedRoles={["laboran"]}>
-              <AppLayout>
-                <LaboranPersetujuanPage />
-              </AppLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/laboran/peminjaman-aktif"
-        element={
-          <ProtectedRoute>
-            <RoleGuard allowedRoles={["laboran"]}>
-              <AppLayout>
-                <LaboranPeminjamanAktifPage />
-              </AppLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        }
-      />
+        {/* Home route - Landing page */}
+        <Route path={ROUTES.HOME} element={<HomePage />} />
 
-      {/* Laboran - Laboratorium */}
-      <Route
-        path="/laboran/laboratorium"
-        element={
-          <ProtectedRoute>
-            <RoleGuard allowedRoles={["laboran"]}>
-              <AppLayout>
-                <LaboranLaboratoriumPage />
-              </AppLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        }
-      />
-
-      {/* Laboran - Kelola Jadwal (Hybrid Approval Workflow) */}
-      <Route
-        path="/laboran/jadwal"
-        element={
-          <ProtectedRoute>
-            <RoleGuard allowedRoles={["laboran"]}>
-              <AppLayout>
-                <LaboranJadwalApprovalPage />
-              </AppLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        }
-      />
-
-      {/* Laboran - Laporan */}
-      <Route
-        path="/laboran/laporan"
-        element={
-          <ProtectedRoute>
-            <RoleGuard allowedRoles={["laboran"]}>
-              <AppLayout>
-                <LaboranLaporanPage />
-              </AppLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        }
-      />
-
-      {/* Laboran - Notifikasi */}
-      <Route
-        path="/laboran/notifikasi"
-        element={
-          <ProtectedRoute>
-            <RoleGuard allowedRoles={["laboran"]}>
-              <AppLayout>
-                <LaboranPengumumanPage />
-              </AppLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        }
-      />
-
-      {/* Laboran - Profil */}
-      <Route
-        path="/laboran/profil"
-        element={
-          <ProtectedRoute>
-            <RoleGuard allowedRoles={["laboran"]}>
-              <AppLayout>
-                <LaboranProfilePage />
-              </AppLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        }
-      />
-
-      {/* Laboran - Offline Sync */}
-      <Route
-        path="/laboran/offline-sync"
-        element={
-          <ProtectedRoute>
-            <RoleGuard allowedRoles={["laboran"]}>
-              <AppLayout>
-                <SharedOfflineSyncPage />
-              </AppLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        }
-      />
-
-      {/* ================================================================== */}
-      {/* FALLBACK ROUTES */}
-      {/* ================================================================== */}
-
-      {/* Home route - Landing page */}
-      <Route path={ROUTES.HOME} element={<HomePage />} />
-
-      {/* Catch-all route - 404 */}
-      <Route path="*" element={<NotFoundPage />} />
-    </Routes>
+        {/* Catch-all route - 404 */}
+        <Route path="*" element={<NotFoundPage />} />
+      </Routes>
+    </Suspense>
   );
 }

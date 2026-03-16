@@ -4,12 +4,12 @@ Dokumen ini menjelaskan alur proses pada diagram [`docs/DFD-Level2-2.5-Kehadiran
 
 ## 1. Tujuan Proses 2.5
 
-Proses [`2.5 Kehadiran dan Penilaian`](docs/DFD.md:422) bertujuan mengelola pencatatan presensi mahasiswa, input komponen nilai oleh dosen, perhitungan rekap hasil belajar, dan penyajian hasil tersebut kepada mahasiswa secara terstruktur.
+Proses [`2.5 Kehadiran dan Penilaian`](docs/DFD.md:468) bertujuan mengelola pencatatan presensi mahasiswa, input komponen nilai oleh dosen, perhitungan rekap hasil belajar, dan penyajian hasil tersebut kepada mahasiswa secara terstruktur.
 
 ## 2. Komponen Proses
 
 - **Entitas eksternal:** Dosen, Mahasiswa
-- **Data store:** [`D1 Data Kehadiran dan Nilai`](docs/DFD.md:428)
+- **Data store:** [`D1 Data Kehadiran dan Nilai`](docs/DFD.md:474)
 - **Aktivitas internal:**
   - `A1` Input Kehadiran
   - `A2` Validasi Presensi
@@ -21,7 +21,7 @@ Proses [`2.5 Kehadiran dan Penilaian`](docs/DFD.md:422) bertujuan mengelola penc
 
 1. Dosen memulai proses dengan mencatat kehadiran mahasiswa pada `A1 Input Kehadiran`.
 2. Data presensi kemudian diteruskan ke `A2 Validasi Presensi` untuk diperiksa kesesuaiannya dengan jadwal dan daftar peserta yang sah.
-3. Jika valid, sistem menyimpan data kehadiran ke [`D1 Data Kehadiran dan Nilai`](docs/DFD.md:428).
+3. Jika valid, sistem menyimpan data kehadiran ke [`D1 Data Kehadiran dan Nilai`](docs/DFD.md:474).
 4. Setelah itu, dosen memasukkan komponen penilaian melalui `A3 Input Nilai`.
 5. Komponen ini dapat mencakup nilai tugas, kuis, praktik, atau komponen evaluasi lain sesuai skema perkuliahan praktikum.
 6. Sistem lalu menjalankan `A4 Hitung Rekap Nilai` dengan memanfaatkan dua masukan utama, yaitu nilai yang telah disimpan dari `A3` dan presensi tervalidasi dari `A2`.
@@ -39,4 +39,4 @@ Proses [`2.5 Kehadiran dan Penilaian`](docs/DFD.md:422) bertujuan mengelola penc
 
 ## 5. Ringkasan Siap Pakai Skripsi
 
-Proses [`2.5 Kehadiran dan Penilaian`](docs/DFD.md:422) menunjukkan bahwa kehadiran dan penilaian merupakan dua aliran data yang saling terkait. Melalui aktivitas pencatatan presensi, validasi, input nilai, perhitungan rekap, dan penyajian hasil, sistem membentuk mekanisme evaluasi akademik yang terdokumentasi, akuntabel, dan mudah dipahami oleh dosen maupun mahasiswa.
+Proses [`2.5 Kehadiran dan Penilaian`](docs/DFD.md:468) menunjukkan bahwa kehadiran dan penilaian merupakan dua aliran data yang saling terkait. Melalui aktivitas pencatatan presensi, validasi, input nilai, perhitungan rekap, dan penyajian hasil, sistem membentuk mekanisme evaluasi akademik yang terdokumentasi, akuntabel, dan mudah dipahami oleh dosen maupun mahasiswa.

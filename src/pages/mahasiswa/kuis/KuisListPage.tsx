@@ -229,10 +229,10 @@ export default function KuisListPage() {
 
   const getStatusIcon = (status: string) => {
     const icons = {
-      upcoming: <Clock className="h-4 w-4 text-blue-600" />,
-      ongoing: <Play className="h-4 w-4 text-green-600" />,
-      completed: <CheckCircle2 className="h-4 w-4 text-gray-600" />,
-      missed: <XCircle className="h-4 w-4 text-red-600" />,
+      upcoming: <Clock className="h-4 w-4 text-primary" />,
+      ongoing: <Play className="h-4 w-4 text-success" />,
+      completed: <CheckCircle2 className="h-4 w-4 text-muted-foreground" />,
+      missed: <XCircle className="h-4 w-4 text-danger" />,
     };
     return (
       icons[status as keyof typeof icons] || (
@@ -259,18 +259,18 @@ export default function KuisListPage() {
 
     // Get border color based on task type
     const getBorderColor = () => {
-      if (isTes) return "border-l-blue-500";
-      if (isLaporan) return "border-l-orange-500";
-      return "border-l-gray-400";
+      if (isTes) return "border-l-primary";
+      if (isLaporan) return "border-l-warning";
+      return "border-l-border";
     };
 
     // Get type badge style
     const getTypeBadgeStyle = () => {
       if (isTes)
-        return "bg-blue-100 text-blue-800 border-blue-300 font-semibold";
+        return "bg-primary/10 text-primary border-primary/30 font-semibold";
       if (isLaporan)
-        return "bg-orange-100 text-orange-800 border-orange-300 font-semibold";
-      return "bg-gray-100 text-gray-800 border-gray-300";
+        return "bg-warning/10 text-warning border-warning/30 font-semibold";
+      return "bg-muted/50 text-muted-foreground border-border/50";
     };
 
     // Get type label
@@ -311,7 +311,7 @@ export default function KuisListPage() {
                 {quiz.nama_kelas && ` • ${quiz.nama_kelas}`}
               </CardDescription>
             </div>
-            <div className="shrink-0 p-2 bg-gray-50 rounded-full">
+            <div className="shrink-0 p-2 bg-muted/50 rounded-full">
               {getStatusIcon(quiz.status)}
             </div>
           </div>
@@ -353,9 +353,9 @@ export default function KuisListPage() {
 
           {/* For LAPORAN, show submission status */}
           {isLaporan && (
-            <div className="flex items-center justify-between p-3 bg-orange-50 border border-orange-200 rounded-lg text-sm">
-              <span className="text-orange-700 font-medium">Status</span>
-              <span className="font-semibold text-orange-800">
+            <div className="flex items-center justify-between p-3 bg-warning/5 border border-warning/30 rounded-lg text-sm">
+              <span className="text-warning font-medium">Status</span>
+              <span className="font-semibold text-warning">
                 {quiz.status === "completed"
                   ? "✓ Sudah Dikirim"
                   : "Belum Dikirim"}
@@ -368,15 +368,15 @@ export default function KuisListPage() {
               className={cn(
                 "flex items-center justify-between p-3 rounded-lg text-sm",
                 isPassed
-                  ? "bg-green-50 border border-green-200"
-                  : "bg-red-50 border border-red-200",
+                  ? "bg-success/5 border border-success/30"
+                  : "bg-danger/5 border border-danger/30",
               )}
             >
               <div className="flex items-center gap-2">
                 <Trophy
                   className={cn(
                     "h-4 w-4",
-                    isPassed ? "text-green-600" : "text-red-600",
+                    isPassed ? "text-success" : "text-danger",
                   )}
                 />
                 <span className="font-medium">Nilai Terbaik</span>
@@ -384,7 +384,7 @@ export default function KuisListPage() {
               <span
                 className={cn(
                   "font-bold text-lg",
-                  isPassed ? "text-green-700" : "text-red-700",
+                  isPassed ? "text-success" : "text-danger",
                 )}
               >
                 {quiz.best_score}
@@ -407,7 +407,7 @@ export default function KuisListPage() {
               ) : canStart ? (
                 <Button
                   onClick={() => handleStartQuiz(quiz.id)}
-                  className="flex-1 gap-2 bg-orange-600 hover:bg-orange-700"
+                  className="flex-1 gap-2 bg-warning hover:bg-warning/90"
                 >
                   <Upload className="h-4 w-4" />
                   Kirim Laporan
@@ -419,7 +419,7 @@ export default function KuisListPage() {
                 {canStart && (
                   <Button
                     onClick={() => handleStartQuiz(quiz.id)}
-                    className="flex-1 gap-2 bg-blue-600 hover:bg-blue-700"
+                    className="flex-1 gap-2 bg-primary hover:bg-primary/90"
                   >
                     <Play className="h-4 w-4" />
                     {quiz.attempts_used > 0 ? "Lanjutkan Tes" : "Mulai Tes"}
@@ -441,7 +441,7 @@ export default function KuisListPage() {
               <Button
                 variant="outline"
                 disabled
-                className="flex-1 text-blue-600"
+                className="flex-1 text-primary"
               >
                 <Clock className="h-4 w-4 mr-2" />
                 Belum Dimulai
@@ -451,7 +451,7 @@ export default function KuisListPage() {
               <Button
                 variant="outline"
                 disabled
-                className="flex-1 text-red-600"
+                className="flex-1 text-danger"
               >
                 <XCircle className="h-4 w-4 mr-2" />
                 Terlewat
@@ -501,17 +501,17 @@ export default function KuisListPage() {
   return (
     <div className="container mx-auto py-6 max-w-7xl space-y-6">
       {/* Hero Header */}
-      <div className="relative overflow-hidden rounded-xl bg-linear-to-r from-emerald-600 via-teal-600 to-cyan-700 p-8 text-white">
+      <div className="relative overflow-hidden rounded-xl bg-linear-to-r from-primary via-primary/90 to-accent/85 p-8 text-primary-foreground">
         {/* Decorative Elements */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-32 translate-x-32 blur-3xl" />
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-teal-400/20 rounded-full translate-y-24 -translate-x-24 blur-2xl" />
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary-foreground/10 rounded-full -translate-y-32 translate-x-32 blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-accent/20 rounded-full translate-y-24 -translate-x-24 blur-2xl" />
 
         <div className="relative flex items-start justify-between">
           <div>
             <h1 className="text-3xl font-bold flex items-center gap-3">
               📋 Tugas Praktikum
             </h1>
-            <p className="text-emerald-100 mt-2 max-w-xl">
+            <p className="text-primary-foreground/80 mt-2 max-w-xl">
               Kerjakan tugas praktikum sesuai jadwal yang tersedia. Perhatikan
               batas waktu pengerjaan!
             </p>
@@ -544,29 +544,29 @@ export default function KuisListPage() {
             status: "upcoming" as const,
             label: "Akan Datang",
             Icon: Clock,
-            iconWrap: "bg-blue-100",
-            iconColor: "text-blue-600",
+            iconWrap: "bg-primary/10",
+            iconColor: "text-primary",
           },
           {
             status: "ongoing" as const,
             label: "Berlangsung",
             Icon: Play,
-            iconWrap: "bg-green-100",
-            iconColor: "text-green-600",
+            iconWrap: "bg-success/10",
+            iconColor: "text-success",
           },
           {
             status: "completed" as const,
             label: "Selesai",
             Icon: CheckCircle2,
-            iconWrap: "bg-gray-100",
-            iconColor: "text-gray-600",
+            iconWrap: "bg-muted/60",
+            iconColor: "text-muted-foreground",
           },
           {
             status: "missed" as const,
             label: "Terlewat",
             Icon: XCircle,
-            iconWrap: "bg-red-100",
-            iconColor: "text-red-600",
+            iconWrap: "bg-danger/10",
+            iconColor: "text-danger",
           },
         ].map(({ status, label, Icon, iconWrap, iconColor }) => (
           <Card key={status}>
