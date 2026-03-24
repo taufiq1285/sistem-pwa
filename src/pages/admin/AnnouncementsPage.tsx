@@ -1,5 +1,12 @@
 import { useState, useEffect, useMemo } from "react";
-import { Megaphone, Plus, Bell, RefreshCw, Trash2, AlertCircle } from "lucide-react";
+import {
+  Megaphone,
+  Plus,
+  Bell,
+  RefreshCw,
+  Trash2,
+  AlertCircle,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -41,7 +48,11 @@ import { notifyUsersAnnouncement } from "@/lib/api/notification.api";
 import type { Pengumuman, CreatePengumumanData } from "@/types/common.types";
 import { formatDate } from "@/lib/utils/format";
 import { useAuth } from "@/lib/hooks/useAuth";
-import { cacheAPI, getCachedData, invalidateCache } from "@/lib/offline/api-cache";
+import {
+  cacheAPI,
+  getCachedData,
+  invalidateCache,
+} from "@/lib/offline/api-cache";
 
 export default function AnnouncementsPage() {
   const { user } = useAuth();
@@ -96,7 +107,9 @@ export default function AnnouncementsPage() {
         getCachedData<AnnouncementStats>(statsCacheKey),
       ]);
 
-      const hasCachedAnnouncements = Array.isArray(cachedAnnouncementsEntry?.data);
+      const hasCachedAnnouncements = Array.isArray(
+        cachedAnnouncementsEntry?.data,
+      );
       const hasCachedStats = !!cachedStatsEntry?.data;
 
       if (hasCachedAnnouncements) {
@@ -110,7 +123,9 @@ export default function AnnouncementsPage() {
       if (hasCachedAnnouncements || hasCachedStats) {
         setIsOfflineData(!navigator.onLine);
         setLastUpdatedAt(
-          cachedAnnouncementsEntry?.timestamp || cachedStatsEntry?.timestamp || null,
+          cachedAnnouncementsEntry?.timestamp ||
+            cachedStatsEntry?.timestamp ||
+            null,
         );
         setLoading(false);
       }
@@ -342,7 +357,9 @@ export default function AnnouncementsPage() {
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
             Pengumuman admin sedang memakai snapshot lokal dari perangkat.
-            {lastUpdatedLabel ? ` Pembaruan terakhir: ${lastUpdatedLabel}.` : ""}
+            {lastUpdatedLabel
+              ? ` Pembaruan terakhir: ${lastUpdatedLabel}.`
+              : ""}
           </AlertDescription>
         </Alert>
       )}

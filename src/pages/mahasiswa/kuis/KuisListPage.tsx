@@ -152,7 +152,8 @@ export default function KuisListPage() {
     };
 
     window.addEventListener("cache:updated", handleCacheUpdated);
-    return () => window.removeEventListener("cache:updated", handleCacheUpdated);
+    return () =>
+      window.removeEventListener("cache:updated", handleCacheUpdated);
   }, [quizzesCacheKey]);
 
   useEffect(() => {
@@ -174,7 +175,8 @@ export default function KuisListPage() {
     setIsLoading(true);
     setError(null);
     try {
-      const cachedQuizzesEntry = await getCachedData<UpcomingQuiz[]>(quizzesCacheKey);
+      const cachedQuizzesEntry =
+        await getCachedData<UpcomingQuiz[]>(quizzesCacheKey);
       const cachedQuizzes = Array.isArray(cachedQuizzesEntry?.data)
         ? cachedQuizzesEntry.data
         : [];
@@ -510,11 +512,7 @@ export default function KuisListPage() {
               </Button>
             )}
             {quiz.status === "missed" && (
-              <Button
-                variant="outline"
-                disabled
-                className="flex-1 text-danger"
-              >
+              <Button variant="outline" disabled className="flex-1 text-danger">
                 <XCircle className="h-4 w-4 mr-2" />
                 Terlewat
               </Button>
@@ -574,8 +572,11 @@ export default function KuisListPage() {
           <WifiOff className="h-4 w-4" />
           <AlertTitle>Mode Offline</AlertTitle>
           <AlertDescription>
-            Daftar tugas praktikum sedang menggunakan snapshot lokal dari perangkat.
-            {lastUpdatedLabel ? ` Pembaruan terakhir: ${lastUpdatedLabel}.` : ""}
+            Daftar tugas praktikum sedang menggunakan snapshot lokal dari
+            perangkat.
+            {lastUpdatedLabel
+              ? ` Pembaruan terakhir: ${lastUpdatedLabel}.`
+              : ""}
           </AlertDescription>
         </Alert>
       )}

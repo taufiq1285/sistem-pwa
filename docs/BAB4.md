@@ -561,7 +561,7 @@ Subkelompok	File Test	Fokus Pengujian
 Autentikasi dan peran	useAuth.test.ts, useRole.test.ts, useSupabase.test.ts	autentikasi, peran, akses client Supabase
 Penyimpanan lokal dan sinkronisasi	useLocalData.test.ts, useLocalStorage.test.ts, useMultiTabSync.test.ts, useSync.test.ts, useOffline.test.ts	local data, localStorage, multi-tab sync, queue, offline mode
 Notifikasi dan sesi	useNotification.test.ts, useNotificationPolling.test.ts, useNotifications.test.ts, useUnreadNotifications.test.ts, useSessionTimeout.test.ts	notifikasi, polling, unread state, timeout sesi
-UI, utilitas, dan media	useAutoSave.test.ts, useConflicts.test.ts, useDebounce.test.ts, useNetworkStatus.test.ts, usePdfBlobUrl.test.ts, useSignedUrl.test.ts, useTheme.test.ts, useTheme.test.tsx	auto-save, konflik, debounce, status jaringan, PDF blob URL, signed URL, tema
+UI, utilitas, dan media	useAutoSave.test.ts, useConflicts.test.ts, useDebounce.test.ts, useNetworkStatus.test.ts, usePdfBlobUrl.test.ts, useSignedUrl.test.ts, useTheme.test.tsx, useTheme.test.tsx	auto-save, konflik, debounce, status jaringan, PDF blob URL, signed URL, tema
 File-file tersebut menguji hook autentikasi, auto-save, deteksi konflik data, debounce, local storage, multi-tab synchronization, polling notifikasi, status jaringan, sesi pengguna, pemrosesan sinkronisasi, pengelolaan tema, signed URL, hingga akses data Supabase.
 
 
@@ -716,7 +716,7 @@ Total Test Case	5.317
 Test Case Lulus (Pass)	5.317
 Test Case Gagal (Fail)	0
 Persentase Kelulusan	100%
-Durasi Eksekusi	313,75 detik
+Durasi Eksekusi	353,95 detik
 
 Seluruh 5.317 test case pada 238 file test berhasil dieksekusi dan memberikan hasil lulus tanpa ada satu pun kegagalan.
 

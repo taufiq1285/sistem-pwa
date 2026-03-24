@@ -52,7 +52,8 @@ export default function DosenPengumumanPage() {
             targetRoles.includes("dosen") || targetRoles.length === 0;
 
           const isActive =
-            (!announcement.tanggal_mulai || announcement.tanggal_mulai <= now) &&
+            (!announcement.tanggal_mulai ||
+              announcement.tanggal_mulai <= now) &&
             (!announcement.tanggal_selesai ||
               announcement.tanggal_selesai >= now);
 

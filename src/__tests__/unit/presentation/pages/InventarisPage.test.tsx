@@ -91,6 +91,8 @@ describe("Laboran InventarisPage", () => {
 
     const { container } = render(<InventarisPage />);
 
-    expect(container.querySelectorAll('[data-slot="card"]').length).toBeGreaterThan(0);
+    expect(
+      container.querySelectorAll('[data-slot="card"]').length,
+    ).toBeGreaterThan(0);
   });
 });

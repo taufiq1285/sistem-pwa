@@ -199,6 +199,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
             );
             await clearOfflineSession();
             updateAuthState(null, null);
+            setInitialized(true); // ✅ FIX: jangan stuck loading
+            setLoading(false);
             return;
           }
 
@@ -299,6 +301,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             );
             // Keep auth state as null (no session)
             updateAuthState(null, null);
+            setInitialized(true); // ✅ FIX: jangan biarkan app stuck di loading
             setLoading(false);
             return;
           }
@@ -454,6 +457,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const logout = useCallback(async () => {
     console.log("🔵 logout: START - INSTANT MODE ⚡");
 
+    // Simpan userId sebelum di-clear untuk clearOfflineSession
+    const currentUserId = user?.id;
+
     // Clear any existing timeout
     if (logoutTimeoutRef.current) {
       clearTimeout(logoutTimeoutRef.current);
@@ -487,10 +493,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
           });
         }
 
-        // 2. Clear offline session ONLY (keep credentials for future offline login)
-        // This allows users to login offline again after logout
+        // 2. Clear offline session ONLY untuk user yang logout (keep credentials for future offline login)
         const offlineCleanupPromise = Promise.all([
-          clearOfflineSession().catch((error) => {
+          clearOfflineSession(currentUserId).catch((error) => {
             console.warn("⚠️ Clear offline session error:", error);
           }),
           // NOTE: We DON'T clear credentials here, so users can login offline again
@@ -531,7 +536,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         window.location.href = "/login";
       }, 100) as unknown as number;
     }
-  }, [updateAuthState]);
+  }, [updateAuthState, user]);
 
   const resetPassword = useCallback(async (email: string) => {
     setLoading(true);

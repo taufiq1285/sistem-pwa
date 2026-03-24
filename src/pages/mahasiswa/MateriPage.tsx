@@ -132,7 +132,9 @@ export default function MahasiswaMateriPage() {
       if (hasCachedData) {
         setMateriList(cachedEntry!.data);
         const cachedKelasIds = Array.from(
-          new Set(cachedEntry!.data.map((materi) => materi.kelas_id).filter(Boolean)),
+          new Set(
+            cachedEntry!.data.map((materi) => materi.kelas_id).filter(Boolean),
+          ),
         );
         setEnrolledKelasIds(cachedKelasIds);
         setIsOfflineData(!navigator.onLine);

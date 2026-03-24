@@ -450,3 +450,155 @@
     transform: none !important;
   }
 }
+
+/* ============================================================
+ * AURORA BACKGROUND EFFECT
+ * Referensi: Dribbble "Aurora Gradient Bank Landing Page"
+ * Teknik: Multiple animated radial blobs layered with mix-blend-mode
+ * ============================================================ */
+
+@keyframes aurora1 {
+  0%,
+  100% {
+    transform: translate(0%, 0%) scale(1);
+  }
+  30% {
+    transform: translate(8%, -12%) scale(1.15);
+  }
+  60% {
+    transform: translate(-10%, 6%) scale(0.9);
+  }
+  80% {
+    transform: translate(5%, 10%) scale(1.05);
+  }
+}
+
+@keyframes aurora2 {
+  0%,
+  100% {
+    transform: translate(0%, 0%) scale(1);
+  }
+  25% {
+    transform: translate(-12%, 8%) scale(1.1);
+  }
+  55% {
+    transform: translate(14%, -10%) scale(0.95);
+  }
+  75% {
+    transform: translate(-4%, -6%) scale(1.08);
+  }
+}
+
+@keyframes aurora3 {
+  0%,
+  100% {
+    transform: translate(0%, 0%) scale(1);
+  }
+  20% {
+    transform: translate(10%, 14%) scale(0.9);
+  }
+  50% {
+    transform: translate(-8%, -8%) scale(1.12);
+  }
+  70% {
+    transform: translate(6%, 4%) scale(0.97);
+  }
+}
+
+@keyframes aurora4 {
+  0%,
+  100% {
+    transform: translate(0%, 0%) scale(1.05);
+  }
+  35% {
+    transform: translate(-14%, -10%) scale(0.9);
+  }
+  65% {
+    transform: translate(10%, 14%) scale(1.1);
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-14px);
+  }
+}
+
+.aurora-bg {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.aurora-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.7;
+}
+
+.aurora-orb-1 {
+  width: 60vw;
+  height: 60vw;
+  max-width: 750px;
+  max-height: 750px;
+  top: -20%;
+  right: -10%;
+  background: radial-gradient(
+    circle at center,
+    oklch(0.55 0.22 263),
+    transparent 60%
+  );
+  animation: aurora1 18s ease-in-out infinite;
+}
+
+.aurora-orb-2 {
+  width: 55vw;
+  height: 55vw;
+  max-width: 680px;
+  max-height: 680px;
+  bottom: -15%;
+  left: -10%;
+  background: radial-gradient(
+    circle at center,
+    oklch(0.52 0.2 215),
+    transparent 60%
+  );
+  animation: aurora2 22s ease-in-out infinite;
+}
+
+.aurora-orb-3 {
+  width: 45vw;
+  height: 45vw;
+  max-width: 550px;
+  max-height: 550px;
+  top: 25%;
+  left: 20%;
+  background: radial-gradient(
+    circle at center,
+    oklch(0.45 0.2 280),
+    transparent 60%
+  );
+  animation: aurora3 26s ease-in-out infinite;
+}
+
+.aurora-orb-4 {
+  width: 40vw;
+  height: 40vw;
+  max-width: 450px;
+  max-height: 450px;
+  top: 5%;
+  left: 0%;
+  background: radial-gradient(
+    circle at center,
+    oklch(0.58 0.18 195),
+    transparent 60%
+  );
+  animation: aurora4 20s ease-in-out infinite;
+}

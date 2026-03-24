@@ -65,7 +65,8 @@ export default function LaboranPengumumanPage() {
             targetRoles.includes("laboran") || targetRoles.length === 0;
 
           const isActive =
-            (!announcement.tanggal_mulai || announcement.tanggal_mulai <= now) &&
+            (!announcement.tanggal_mulai ||
+              announcement.tanggal_mulai <= now) &&
             (!announcement.tanggal_selesai ||
               announcement.tanggal_selesai >= now);
 

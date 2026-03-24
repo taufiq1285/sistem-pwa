@@ -172,7 +172,9 @@ export default function UsersPage() {
         Array.isArray(cachedUsersEntry?.data) || !!cachedStatsEntry?.data;
 
       if (hasCachedData) {
-        setUsers(Array.isArray(cachedUsersEntry?.data) ? cachedUsersEntry.data : []);
+        setUsers(
+          Array.isArray(cachedUsersEntry?.data) ? cachedUsersEntry.data : [],
+        );
         setStats(
           cachedStatsEntry?.data ?? {
             total: 0,
@@ -692,7 +694,9 @@ export default function UsersPage() {
         <Alert className="border-warning/40 bg-warning/10">
           <AlertDescription>
             Data pengguna sedang memakai snapshot lokal dari perangkat.
-            {lastUpdatedLabel ? ` Pembaruan terakhir: ${lastUpdatedLabel}.` : ""}
+            {lastUpdatedLabel
+              ? ` Pembaruan terakhir: ${lastUpdatedLabel}.`
+              : ""}
           </AlertDescription>
         </Alert>
       )}

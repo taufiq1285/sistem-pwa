@@ -73,7 +73,10 @@ export function DashboardPage() {
         data?: MahasiswaStats | MyKelas[] | JadwalMahasiswa[];
       }>;
 
-      if (customEvent.detail?.key === statsCacheKey && customEvent.detail?.data) {
+      if (
+        customEvent.detail?.key === statsCacheKey &&
+        customEvent.detail?.data
+      ) {
         setStats(customEvent.detail.data as MahasiswaStats);
         setIsOfflineData(false);
         setLastUpdatedAt(Date.now());
@@ -128,7 +131,8 @@ export function DashboardPage() {
       const hasCachedStats = !!cachedStatsEntry?.data;
       const hasCachedKelas = Array.isArray(cachedKelasEntry?.data);
       const hasCachedJadwal = Array.isArray(cachedJadwalEntry?.data);
-      const hasAnyCachedData = hasCachedStats || hasCachedKelas || hasCachedJadwal;
+      const hasAnyCachedData =
+        hasCachedStats || hasCachedKelas || hasCachedJadwal;
 
       if (hasAnyCachedData) {
         setStats(hasCachedStats ? cachedStatsEntry!.data : null);
@@ -294,7 +298,9 @@ export function DashboardPage() {
           {isOfflineData && (
             <Alert className="border-warning/30 bg-warning/10 text-warning dark:border-warning/30 dark:bg-warning/10 dark:text-warning">
               <AlertDescription>
-                Dashboard tetap bisa dibuka dari cache lokal saat offline. Statistik, daftar kelas, dan jadwal yang tampil adalah snapshot terakhir yang berhasil disimpan.
+                Dashboard tetap bisa dibuka dari cache lokal saat offline.
+                Statistik, daftar kelas, dan jadwal yang tampil adalah snapshot
+                terakhir yang berhasil disimpan.
               </AlertDescription>
             </Alert>
           )}

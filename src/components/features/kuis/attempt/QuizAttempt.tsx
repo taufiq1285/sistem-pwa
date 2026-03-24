@@ -223,13 +223,17 @@ export function QuizAttempt({
    */
   useEffect(() => {
     if (isOnline && attempt) {
-      syncOfflineAnswers(attempt.id).then((count) => {
-        if (count > 0) {
-          toast.success(`Sinyal kembali! ${count} jawaban offline berhasil disinkronkan ke server.`);
-        }
-      }).catch((err) => {
-        console.error("Failed to sync offline answers:", err);
-      });
+      syncOfflineAnswers(attempt.id)
+        .then((count) => {
+          if (count > 0) {
+            toast.success(
+              `Sinyal kembali! ${count} jawaban offline berhasil disinkronkan ke server.`,
+            );
+          }
+        })
+        .catch((err) => {
+          console.error("Failed to sync offline answers:", err);
+        });
     }
   }, [isOnline, attempt]);
 

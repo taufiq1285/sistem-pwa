@@ -177,9 +177,13 @@ export default function DosenKehadiranPage() {
 
   const cacheKeys = useMemo(
     () => ({
-      mataKuliah: user?.dosen?.id ? `dosen_mk_kehadiran_${user.dosen.id}` : null,
+      mataKuliah: user?.dosen?.id
+        ? `dosen_mk_kehadiran_${user.dosen.id}`
+        : null,
       kelas: user?.dosen?.id ? `dosen_kelas_kehadiran_${user.dosen.id}` : null,
-      mahasiswa: selectedKelas ? `dosen_kehadiran_mahasiswa_${selectedKelas}` : null,
+      mahasiswa: selectedKelas
+        ? `dosen_kehadiran_mahasiswa_${selectedKelas}`
+        : null,
     }),
     [selectedKelas, user?.dosen?.id],
   );
@@ -263,24 +267,16 @@ export default function DosenKehadiranPage() {
       }
 
       const [mataKuliahData, kelasData] = await Promise.all([
-        cacheAPI(
-          cacheKeys.mataKuliah,
-          () => getMataKuliah(),
-          {
-            ttl: 20 * 60 * 1000,
-            forceRefresh,
-            staleWhileRevalidate: true,
-          },
-        ),
-        cacheAPI(
-          cacheKeys.kelas,
-          () => getMyKelas(),
-          {
-            ttl: 15 * 60 * 1000,
-            forceRefresh,
-            staleWhileRevalidate: true,
-          },
-        ),
+        cacheAPI(cacheKeys.mataKuliah, () => getMataKuliah(), {
+          ttl: 20 * 60 * 1000,
+          forceRefresh,
+          staleWhileRevalidate: true,
+        }),
+        cacheAPI(cacheKeys.kelas, () => getMyKelas(), {
+          ttl: 15 * 60 * 1000,
+          forceRefresh,
+          staleWhileRevalidate: true,
+        }),
       ]);
 
       const mataKuliahArray = mataKuliahData.map((mk: any) => ({
@@ -350,15 +346,11 @@ export default function DosenKehadiranPage() {
         );
       }
 
-      const allKelas = await cacheAPI(
-        cacheKeys.kelas,
-        () => getMyKelas(),
-        {
-          ttl: 15 * 60 * 1000,
-          forceRefresh,
-          staleWhileRevalidate: true,
-        },
-      );
+      const allKelas = await cacheAPI(cacheKeys.kelas, () => getMyKelas(), {
+        ttl: 15 * 60 * 1000,
+        forceRefresh,
+        staleWhileRevalidate: true,
+      });
 
       const filteredKelas = allKelas.filter((kelas) => {
         if (
@@ -403,9 +395,8 @@ export default function DosenKehadiranPage() {
       setLoading(true);
       const mahasiswaCacheKey = `dosen_kehadiran_mahasiswa_${kelasId}`;
 
-      const cachedMahasiswaEntry = await getCachedData<AttendanceRecord[]>(
-        mahasiswaCacheKey,
-      );
+      const cachedMahasiswaEntry =
+        await getCachedData<AttendanceRecord[]>(mahasiswaCacheKey);
       if (cachedMahasiswaEntry?.data) {
         setAttendanceRecords(cachedMahasiswaEntry.data);
         setHasUnsavedChanges(false);
@@ -603,7 +594,10 @@ export default function DosenKehadiranPage() {
         return;
       }
 
-      if (updatedKey === cacheKeys.mataKuliah && Array.isArray(customEvent.detail.data)) {
+      if (
+        updatedKey === cacheKeys.mataKuliah &&
+        Array.isArray(customEvent.detail.data)
+      ) {
         const mataKuliahData = customEvent.detail.data as any[];
         setMataKuliahList(
           mataKuliahData.map((mk) => ({
@@ -617,7 +611,10 @@ export default function DosenKehadiranPage() {
         return;
       }
 
-      if (updatedKey === cacheKeys.kelas && Array.isArray(customEvent.detail.data)) {
+      if (
+        updatedKey === cacheKeys.kelas &&
+        Array.isArray(customEvent.detail.data)
+      ) {
         const kelasData = customEvent.detail.data as any[];
         const filteredKelas = kelasData.filter((kelas) => {
           if (
@@ -661,14 +658,23 @@ export default function DosenKehadiranPage() {
       }
     };
 
-    window.addEventListener("cache:updated", handleCacheUpdated as EventListener);
+    window.addEventListener(
+      "cache:updated",
+      handleCacheUpdated as EventListener,
+    );
     return () => {
       window.removeEventListener(
         "cache:updated",
         handleCacheUpdated as EventListener,
       );
     };
-  }, [cacheKeys.kelas, cacheKeys.mahasiswa, cacheKeys.mataKuliah, semesterFilter, tahunAjaranFilter]);
+  }, [
+    cacheKeys.kelas,
+    cacheKeys.mahasiswa,
+    cacheKeys.mataKuliah,
+    semesterFilter,
+    tahunAjaranFilter,
+  ]);
 
   // Calculate stats
   const stats = {
@@ -705,8 +711,11 @@ export default function DosenKehadiranPage() {
           <Alert className="border-warning/40 bg-warning/10 text-foreground shadow-sm">
             <WifiOff className="h-4 w-4" />
             <AlertDescription>
-              Halaman kehadiran dosen sedang memakai snapshot lokal dari perangkat.
-              {lastUpdatedLabel ? ` Pembaruan terakhir: ${lastUpdatedLabel}.` : ""}
+              Halaman kehadiran dosen sedang memakai snapshot lokal dari
+              perangkat.
+              {lastUpdatedLabel
+                ? ` Pembaruan terakhir: ${lastUpdatedLabel}.`
+                : ""}
             </AlertDescription>
           </Alert>
         )}

@@ -595,9 +595,7 @@ export default function KuisListPage() {
                 {filteredQuizzes.length}
               </span>{" "}
               dari{" "}
-              <span className="text-accent font-black">
-                {quizzes.length}
-              </span>{" "}
+              <span className="text-accent font-black">{quizzes.length}</span>{" "}
               tugas praktikum
             </p>
           </div>

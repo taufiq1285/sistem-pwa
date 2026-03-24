@@ -65,9 +65,9 @@ describe("Laboran LaboratoriumPage", () => {
 
     const { container } = render(<LaboratoriumPage />);
 
-    expect(container.querySelectorAll('[data-slot="card"]').length).toBeGreaterThan(
-      0,
-    );
+    expect(
+      container.querySelectorAll('[data-slot="card"]').length,
+    ).toBeGreaterThan(0);
   });
 
   it("membuka dialog detail dan memuat detail laboratorium", async () => {

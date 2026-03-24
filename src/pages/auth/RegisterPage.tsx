@@ -113,7 +113,9 @@ export function RegisterPage() {
                 <span>Kembali ke Beranda</span>
               </Link>
               <div className="text-sm">
-                <span className="text-muted-foreground">Sudah punya akun? </span>
+                <span className="text-muted-foreground">
+                  Sudah punya akun?{" "}
+                </span>
                 <Link
                   to="/login"
                   className="font-bold text-primary hover:text-primary/80 transition-colors duration-200"

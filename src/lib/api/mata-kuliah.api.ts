@@ -436,7 +436,7 @@ export async function getMataKuliahStats(): Promise<MataKuliahStats> {
   try {
     const [allMataKuliah, totalMahasiswaCount] = await Promise.all([
       query<MataKuliah>("mata_kuliah"),
-      count("kelas_mahasiswa")
+      count("kelas_mahasiswa"),
     ]);
 
     // Calculate stats

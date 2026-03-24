@@ -189,29 +189,21 @@ export function DashboardPage() {
             forceRefresh,
             staleWhileRevalidate: true,
           }),
-          cacheAPI(
-            approvalsCacheKey,
-            () => getPendingApprovals(10),
-            {
-              ttl: 2 * 60 * 1000, // 2 minutes (approvals need fresh data)
-              forceRefresh,
-              staleWhileRevalidate: true,
-            },
-          ),
+          cacheAPI(approvalsCacheKey, () => getPendingApprovals(10), {
+            ttl: 2 * 60 * 1000, // 2 minutes (approvals need fresh data)
+            forceRefresh,
+            staleWhileRevalidate: true,
+          }),
           cacheAPI(alertsCacheKey, () => getInventoryAlerts(10), {
             ttl: 5 * 60 * 1000, // 5 minutes
             forceRefresh,
             staleWhileRevalidate: true,
           }),
-          cacheAPI(
-            scheduleCacheKey,
-            () => getLabScheduleToday(10),
-            {
-              ttl: 5 * 60 * 1000, // 5 minutes
-              forceRefresh,
-              staleWhileRevalidate: true,
-            },
-          ),
+          cacheAPI(scheduleCacheKey, () => getLabScheduleToday(10), {
+            ttl: 5 * 60 * 1000, // 5 minutes
+            forceRefresh,
+            staleWhileRevalidate: true,
+          }),
         ]);
 
       setStats(statsData);

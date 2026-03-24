@@ -138,6 +138,43 @@ describe("Offline Authentication", () => {
     user: mockUser,
   };
 
+  const createValidCredentials = () => ({
+    id: mockUser.id,
+    email: "test@example.com",
+    passwordHash: "01".repeat(32),
+    createdAt: Date.now(),
+    expiresAt: Date.now() + 10000,
+  });
+
+  const createOnlineLoginRecord = () => ({
+    id: mockUser.id,
+    userId: mockUser.id,
+    email: "test@example.com",
+    firstOnlineLoginAt: Date.now(),
+    lastOnlineLoginAt: Date.now(),
+    onlineLoginCount: 1,
+  });
+
+  const setupOfflineLoginMetadata = (options?: {
+    credentials?: any;
+    onlineLoginRecord?: any;
+    storedSession?: any;
+  }) => {
+    const credentialsData = options?.credentials ?? createValidCredentials();
+    const onlineLoginRecord =
+      options?.onlineLoginRecord ?? createOnlineLoginRecord();
+    const storedSession = options?.storedSession;
+
+    vi.mocked(indexedDBManager.getMetadata).mockImplementation(
+      async (key: string) => {
+        if (key === "offline_credentials") return credentialsData as any;
+        if (key === "online_login_record") return onlineLoginRecord as any;
+        if (key === "offline_session") return storedSession as any;
+        return null as any;
+      },
+    );
+  };
+
   beforeEach(() => {
     vi.resetAllMocks();
 
@@ -902,23 +939,45 @@ describe("Offline Authentication", () => {
   // ==========================================
 
   describe("offlineLogin", () => {
-    it("should perform successful offline login", async () => {
-      const credentialsData = {
-        id: mockUser.id,
-        email: "test@example.com",
-        passwordHash: "01".repeat(32),
-        createdAt: Date.now(),
-        expiresAt: Date.now() + 10000,
-      };
+    const createValidCredentials = () => ({
+      id: mockUser.id,
+      email: "test@example.com",
+      passwordHash: "01".repeat(32),
+      createdAt: Date.now(),
+      expiresAt: Date.now() + 10000,
+    });
 
-      // Mock multiple getMetadata calls in sequence:
-      // 1. verifyOfflineCredentials - needs credentials
-      // 2. restoreOfflineSession - return undefined (no stored session)
-      // 3. getStoredUserData - needs credentials again
-      vi.mocked(indexedDBManager.getMetadata)
-        .mockResolvedValueOnce(credentialsData) // verify
-        .mockResolvedValueOnce(undefined) // restore session
-        .mockResolvedValueOnce(credentialsData); // getStoredUserData
+    const createOnlineLoginRecord = () => ({
+      id: mockUser.id,
+      userId: mockUser.id,
+      email: "test@example.com",
+      firstOnlineLoginAt: Date.now(),
+      lastOnlineLoginAt: Date.now(),
+      onlineLoginCount: 1,
+    });
+
+    const setupOfflineLoginMetadata = (options?: {
+      credentials?: any;
+      onlineLoginRecord?: any;
+      storedSession?: any;
+    }) => {
+      const credentialsData = options?.credentials ?? createValidCredentials();
+      const onlineLoginRecord =
+        options?.onlineLoginRecord ?? createOnlineLoginRecord();
+      const storedSession = options?.storedSession;
+
+      vi.mocked(indexedDBManager.getMetadata).mockImplementation(
+        async (key: string) => {
+          if (key === "offline_credentials") return credentialsData as any;
+          if (key === "online_login_record") return onlineLoginRecord as any;
+          if (key === "offline_session") return storedSession as any;
+          return null as any;
+        },
+      );
+    };
+
+    it("should perform successful offline login", async () => {
+      setupOfflineLoginMetadata({ storedSession: undefined });
 
       // Mock user data retrieval
       vi.mocked(indexedDBManager.getById).mockResolvedValue(mockUser);
@@ -933,7 +992,7 @@ describe("Offline Authentication", () => {
         user: mockUser,
       });
       expect(mockConsoleLog).toHaveBeenCalledWith(
-        "✅ Offline login successful",
+        "✅ Secure offline login successful",
       );
     });
 
@@ -946,41 +1005,15 @@ describe("Offline Authentication", () => {
     });
 
     it("should restore existing session if available", async () => {
-      // Mock credential verification
-      vi.mocked(indexedDBManager.getMetadata)
-        .mockResolvedValueOnce({
-          // verifyOfflineCredentials: credentials
-          id: mockUser.id,
-          email: "test@example.com",
-          passwordHash: "01".repeat(32),
-          createdAt: Date.now(),
-          expiresAt: Date.now() + 10000,
-        })
-        .mockResolvedValueOnce({
-          // canLoginOffline: credentials
-          id: mockUser.id,
-          email: "test@example.com",
-          passwordHash: "01".repeat(32),
-          createdAt: Date.now(),
-          expiresAt: Date.now() + 10000,
-        })
-        .mockResolvedValueOnce({
-          // online login record
-          id: mockUser.id,
-          userId: mockUser.id,
-          email: "test@example.com",
-          firstOnlineLoginAt: Date.now(),
-          lastOnlineLoginAt: Date.now(),
-          onlineLoginCount: 1,
-        })
-        .mockResolvedValueOnce({
-          // restoreOfflineSession: existing session
+      setupOfflineLoginMetadata({
+        storedSession: {
           id: mockUser.id,
           user: mockUser,
           session: mockSession,
           createdAt: Date.now(),
           expiresAt: Date.now() + 10000,
-        });
+        },
+      });
 
       const result = await offlineLogin("test@example.com", "password");
 
@@ -999,11 +1032,10 @@ describe("Offline Authentication", () => {
         expiresAt: Date.now() + 10000,
       };
 
-      // Mock credential verification + session + userData
-      vi.mocked(indexedDBManager.getMetadata)
-        .mockResolvedValueOnce(credentialsData) // verifyOfflineCredentials
-        .mockResolvedValueOnce(undefined) // restoreOfflineSession - no session
-        .mockResolvedValueOnce(credentialsData); // getStoredUserData
+      setupOfflineLoginMetadata({
+        credentials: credentialsData,
+        storedSession: undefined,
+      });
 
       // Mock user data retrieval
       vi.mocked(indexedDBManager.getById).mockResolvedValue(mockUser);
@@ -1023,11 +1055,10 @@ describe("Offline Authentication", () => {
         expiresAt: Date.now() + 10000,
       };
 
-      // Mock sequence: verify, restore session, getStoredUserData
-      vi.mocked(indexedDBManager.getMetadata)
-        .mockResolvedValueOnce(credentialsData) // verifyOfflineCredentials
-        .mockResolvedValueOnce(undefined) // restoreOfflineSession
-        .mockResolvedValueOnce(credentialsData); // getStoredUserData
+      setupOfflineLoginMetadata({
+        credentials: credentialsData,
+        storedSession: undefined,
+      });
 
       // Mock user data not found
       vi.mocked(indexedDBManager.getById).mockResolvedValue(null);
@@ -1062,19 +1093,10 @@ describe("Offline Authentication", () => {
         expiresAt: Date.now() + 10000,
       };
 
-      vi.mocked(indexedDBManager.getMetadata)
-        .mockResolvedValueOnce(credentialsData)
-        .mockResolvedValueOnce(credentialsData)
-        .mockResolvedValueOnce({
-          id: mockUser.id,
-          userId: mockUser.id,
-          email: "test@example.com",
-          firstOnlineLoginAt: Date.now(),
-          lastOnlineLoginAt: Date.now(),
-          onlineLoginCount: 1,
-        })
-        .mockResolvedValueOnce(undefined)
-        .mockResolvedValueOnce(credentialsData);
+      setupOfflineLoginMetadata({
+        credentials: credentialsData,
+        storedSession: undefined,
+      });
 
       vi.mocked(indexedDBManager.getById).mockResolvedValue(mockUser);
 
@@ -1100,19 +1122,10 @@ describe("Offline Authentication", () => {
         expiresAt: Date.now() + 10000,
       };
 
-      vi.mocked(indexedDBManager.getMetadata)
-        .mockResolvedValueOnce(credentialsData)
-        .mockResolvedValueOnce(credentialsData)
-        .mockResolvedValueOnce({
-          id: mockUser.id,
-          userId: mockUser.id,
-          email: "test@example.com",
-          firstOnlineLoginAt: Date.now(),
-          lastOnlineLoginAt: Date.now(),
-          onlineLoginCount: 1,
-        })
-        .mockResolvedValueOnce(undefined)
-        .mockResolvedValueOnce(credentialsData);
+      setupOfflineLoginMetadata({
+        credentials: credentialsData,
+        storedSession: undefined,
+      });
 
       vi.mocked(indexedDBManager.getById).mockResolvedValue(mockUser);
 
@@ -1349,19 +1362,10 @@ describe("Offline Authentication", () => {
         expiresAt: Date.now() + 10000,
       };
 
-      vi.mocked(indexedDBManager.getMetadata)
-        .mockResolvedValueOnce(credentialsData)
-        .mockResolvedValueOnce(credentialsData)
-        .mockResolvedValueOnce({
-          id: mockUser.id,
-          userId: mockUser.id,
-          email: "test@example.com",
-          firstOnlineLoginAt: Date.now(),
-          lastOnlineLoginAt: Date.now(),
-          onlineLoginCount: 1,
-        })
-        .mockResolvedValueOnce(undefined)
-        .mockResolvedValueOnce(credentialsData);
+      setupOfflineLoginMetadata({
+        credentials: credentialsData,
+        storedSession: undefined,
+      });
 
       vi.mocked(indexedDBManager.getById).mockResolvedValue(mockUser);
 
@@ -1381,19 +1385,10 @@ describe("Offline Authentication", () => {
         expiresAt: Date.now() + 10000,
       };
 
-      vi.mocked(indexedDBManager.getMetadata)
-        .mockResolvedValueOnce(credentialsData)
-        .mockResolvedValueOnce(credentialsData)
-        .mockResolvedValueOnce({
-          id: mockUser.id,
-          userId: mockUser.id,
-          email: "test@example.com",
-          firstOnlineLoginAt: Date.now(),
-          lastOnlineLoginAt: Date.now(),
-          onlineLoginCount: 1,
-        })
-        .mockResolvedValueOnce(undefined)
-        .mockResolvedValueOnce(credentialsData);
+      setupOfflineLoginMetadata({
+        credentials: credentialsData,
+        storedSession: undefined,
+      });
 
       vi.mocked(indexedDBManager.getById).mockResolvedValue(mockUser);
 
@@ -1704,36 +1699,15 @@ describe("Offline Authentication", () => {
     });
 
     it("branch: if (storedSession) in offlineLogin - existing session", async () => {
-      vi.mocked(indexedDBManager.getMetadata)
-        .mockResolvedValueOnce({
-          id: mockUser.id,
-          email: "test@example.com",
-          passwordHash: "01".repeat(32),
-          createdAt: Date.now(),
-          expiresAt: Date.now() + 10000,
-        })
-        .mockResolvedValueOnce({
-          id: mockUser.id,
-          email: "test@example.com",
-          passwordHash: "01".repeat(32),
-          createdAt: Date.now(),
-          expiresAt: Date.now() + 10000,
-        })
-        .mockResolvedValueOnce({
-          id: mockUser.id,
-          userId: mockUser.id,
-          email: "test@example.com",
-          firstOnlineLoginAt: Date.now(),
-          lastOnlineLoginAt: Date.now(),
-          onlineLoginCount: 1,
-        })
-        .mockResolvedValueOnce({
+      setupOfflineLoginMetadata({
+        storedSession: {
           id: mockUser.id,
           user: mockUser,
           session: mockSession,
           createdAt: Date.now(),
           expiresAt: Date.now() + 10000,
-        });
+        },
+      });
 
       const result = await offlineLogin("test@example.com", "password");
 
@@ -1752,19 +1726,10 @@ describe("Offline Authentication", () => {
         expiresAt: Date.now() + 10000,
       };
 
-      vi.mocked(indexedDBManager.getMetadata)
-        .mockResolvedValueOnce(credentialsData)
-        .mockResolvedValueOnce(credentialsData)
-        .mockResolvedValueOnce({
-          id: mockUser.id,
-          userId: mockUser.id,
-          email: "test@example.com",
-          firstOnlineLoginAt: Date.now(),
-          lastOnlineLoginAt: Date.now(),
-          onlineLoginCount: 1,
-        })
-        .mockResolvedValueOnce(undefined)
-        .mockResolvedValueOnce(credentialsData);
+      setupOfflineLoginMetadata({
+        credentials: credentialsData,
+        storedSession: undefined,
+      });
 
       vi.mocked(indexedDBManager.getById).mockResolvedValue(null);
 
@@ -1948,19 +1913,10 @@ describe("Offline Authentication", () => {
         expiresAt: Date.now() + 10000,
       };
 
-      vi.mocked(indexedDBManager.getMetadata)
-        .mockResolvedValueOnce(credentialsData)
-        .mockResolvedValueOnce(credentialsData)
-        .mockResolvedValueOnce({
-          id: mockUser.id,
-          userId: mockUser.id,
-          email: "test@example.com",
-          firstOnlineLoginAt: Date.now(),
-          lastOnlineLoginAt: Date.now(),
-          onlineLoginCount: 1,
-        })
-        .mockResolvedValueOnce(undefined)
-        .mockResolvedValueOnce(credentialsData);
+      setupOfflineLoginMetadata({
+        credentials: credentialsData,
+        storedSession: undefined,
+      });
 
       vi.mocked(indexedDBManager.getById).mockResolvedValue(mockUser);
 
@@ -1969,7 +1925,7 @@ describe("Offline Authentication", () => {
       expect(result).not.toBeNull();
       expect(result?.session.access_token).toBe("offline_session_token");
       expect(mockConsoleLog).toHaveBeenCalledWith(
-        "✅ Offline login successful",
+        "✅ Secure offline login successful",
       );
     });
 
@@ -2150,19 +2106,10 @@ describe("Offline Authentication", () => {
       expect(isAvailable).toBe(true);
 
       // 2. Perform offline login
-      vi.mocked(indexedDBManager.getMetadata)
-        .mockResolvedValueOnce(credentialsData)
-        .mockResolvedValueOnce(credentialsData)
-        .mockResolvedValueOnce({
-          id: mockUser.id,
-          userId: mockUser.id,
-          email: "test@example.com",
-          firstOnlineLoginAt: Date.now(),
-          lastOnlineLoginAt: Date.now(),
-          onlineLoginCount: 1,
-        })
-        .mockResolvedValueOnce(undefined)
-        .mockResolvedValueOnce(credentialsData);
+      setupOfflineLoginMetadata({
+        credentials: credentialsData,
+        storedSession: undefined,
+      });
 
       vi.mocked(indexedDBManager.getById).mockResolvedValue(mockUser);
 
@@ -2187,19 +2134,10 @@ describe("Offline Authentication", () => {
       };
 
       // Login
-      vi.mocked(indexedDBManager.getMetadata)
-        .mockResolvedValueOnce(credentialsData)
-        .mockResolvedValueOnce(credentialsData)
-        .mockResolvedValueOnce({
-          id: mockUser.id,
-          userId: mockUser.id,
-          email: "test@example.com",
-          firstOnlineLoginAt: Date.now(),
-          lastOnlineLoginAt: Date.now(),
-          onlineLoginCount: 1,
-        })
-        .mockResolvedValueOnce(undefined)
-        .mockResolvedValueOnce(credentialsData);
+      setupOfflineLoginMetadata({
+        credentials: credentialsData,
+        storedSession: undefined,
+      });
 
       vi.mocked(indexedDBManager.getById).mockResolvedValue(mockUser);
 
@@ -2268,19 +2206,10 @@ describe("Offline Authentication", () => {
       };
 
       // Offline login
-      vi.mocked(indexedDBManager.getMetadata)
-        .mockResolvedValueOnce(credentialsData)
-        .mockResolvedValueOnce(credentialsData)
-        .mockResolvedValueOnce({
-          id: mockUser.id,
-          userId: mockUser.id,
-          email: "test@example.com",
-          firstOnlineLoginAt: Date.now(),
-          lastOnlineLoginAt: Date.now(),
-          onlineLoginCount: 1,
-        })
-        .mockResolvedValueOnce(undefined)
-        .mockResolvedValueOnce(credentialsData);
+      setupOfflineLoginMetadata({
+        credentials: credentialsData,
+        storedSession: undefined,
+      });
 
       vi.mocked(indexedDBManager.getById).mockResolvedValue(mockUser);
 

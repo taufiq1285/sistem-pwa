@@ -216,15 +216,11 @@ export default function MahasiswaNilaiPageEnhanced() {
 
       // Use cacheAPI with stale-while-revalidate for offline support
       const [nilaiData, permintaanData] = await Promise.all([
-        cacheAPI(
-          nilaiCacheKey,
-          () => getNilaiByMahasiswa(user.mahasiswa.id),
-          {
-            ttl: 15 * 60 * 1000,
-            forceRefresh,
-            staleWhileRevalidate: true,
-          },
-        ),
+        cacheAPI(nilaiCacheKey, () => getNilaiByMahasiswa(user.mahasiswa.id), {
+          ttl: 15 * 60 * 1000,
+          forceRefresh,
+          staleWhileRevalidate: true,
+        }),
         cacheAPI(
           permintaanCacheKey,
           () => getPermintaanByMahasiswa(user.mahasiswa.id),
@@ -243,7 +239,11 @@ export default function MahasiswaNilaiPageEnhanced() {
       console.log("[NilaiPage] Data loaded:", nilaiData.length, "nilai");
     } catch (error: any) {
       console.error("Error loading data:", error);
-      if (nilaiList.length > 0 || permintaanList.length > 0 || !navigator.onLine) {
+      if (
+        nilaiList.length > 0 ||
+        permintaanList.length > 0 ||
+        !navigator.onLine
+      ) {
         setIsOfflineData(true);
       }
       toast.error(error?.message || "Gagal memuat data nilai");
@@ -471,7 +471,10 @@ export default function MahasiswaNilaiPageEnhanced() {
         {isOfflineData && (
           <Alert className="border-warning/30 bg-warning/10 text-warning dark:border-warning/30 dark:bg-warning/10 dark:text-warning">
             <AlertDescription>
-              Halaman nilai tetap bisa dibuka dari cache lokal saat offline. Data yang tampil adalah snapshot terakhir yang berhasil disimpan. Pengajuan perbaikan nilai tetap memerlukan koneksi internet agar benar-benar terkirim ke server.
+              Halaman nilai tetap bisa dibuka dari cache lokal saat offline.
+              Data yang tampil adalah snapshot terakhir yang berhasil disimpan.
+              Pengajuan perbaikan nilai tetap memerlukan koneksi internet agar
+              benar-benar terkirim ke server.
             </AlertDescription>
           </Alert>
         )}

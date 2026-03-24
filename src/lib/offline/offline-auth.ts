@@ -105,8 +105,9 @@ export async function storeOfflineCredentials(
       expiresAt: Date.now() + CREDENTIALS_EXPIRY,
     };
 
-    // Store in IndexedDB metadata (more secure than users table)
-    await indexedDBManager.setMetadata("offline_credentials", credentials);
+    // ✅ FIX: simpan per-user pakai key unik per email agar multi-user tidak saling timpa
+    const key = `offline_credentials_${email.toLowerCase()}`;
+    await indexedDBManager.setMetadata(key, credentials);
 
     console.log("✅ Offline credentials stored successfully");
   } catch (error) {
@@ -125,9 +126,11 @@ export async function verifyOfflineCredentials(
   try {
     await indexedDBManager.initialize();
 
-    const stored = (await indexedDBManager.getMetadata(
-      "offline_credentials",
-    )) as StoredCredentials | undefined;
+    // ✅ FIX: baca credentials per-user menggunakan key unik per email
+    const key = `offline_credentials_${email.toLowerCase()}`;
+    const stored = (await indexedDBManager.getMetadata(key)) as
+      | StoredCredentials
+      | undefined;
 
     if (!stored) {
       console.log("❌ No offline credentials found");
@@ -137,7 +140,7 @@ export async function verifyOfflineCredentials(
     // Check if credentials expired
     if (Date.now() >= stored.expiresAt) {
       console.log("❌ Offline credentials expired");
-      await clearOfflineCredentials();
+      await clearOfflineCredentials(email);
       return false;
     }
 
@@ -169,10 +172,17 @@ export async function verifyOfflineCredentials(
 /**
  * Clear offline credentials (on logout)
  */
-export async function clearOfflineCredentials(): Promise<void> {
+export async function clearOfflineCredentials(email?: string): Promise<void> {
   try {
     await indexedDBManager.initialize();
-    await indexedDBManager.setMetadata("offline_credentials", null);
+    if (email) {
+      // ✅ FIX: hapus hanya credentials user yang logout
+      const key = `offline_credentials_${email.toLowerCase()}`;
+      await indexedDBManager.setMetadata(key, null);
+    } else {
+      // fallback: hapus key lama (single-user) jika ada
+      await indexedDBManager.setMetadata("offline_credentials", null);
+    }
     console.log("✅ Offline credentials cleared");
   } catch (error) {
     console.error("❌ Failed to clear offline credentials:", error);
@@ -201,7 +211,13 @@ export async function storeOfflineSession(
       expiresAt: Date.now() + SESSION_EXPIRY,
     };
 
-    await indexedDBManager.setMetadata("offline_session", storedSession);
+    // ✅ FIX: simpan per-user pakai key unik per userId
+    await indexedDBManager.setMetadata(
+      `offline_session_${user.id}`,
+      storedSession,
+    );
+    // ✅ Simpan pointer user terakhir login untuk restore saat startup offline
+    await indexedDBManager.setMetadata("last_logged_in_user_id", user.id);
     console.log("✅ Offline session stored");
   } catch (error) {
     console.error("❌ Failed to store offline session:", error);
@@ -210,7 +226,7 @@ export async function storeOfflineSession(
 }
 
 /**
- * Restore session from offline storage
+ * Restore session from offline storage (user terakhir login)
  */
 export async function restoreOfflineSession(): Promise<{
   user: AuthUser;
@@ -219,9 +235,18 @@ export async function restoreOfflineSession(): Promise<{
   try {
     await indexedDBManager.initialize();
 
-    const stored = (await indexedDBManager.getMetadata("offline_session")) as
-      | StoredSession
-      | undefined;
+    // ✅ FIX: cari session berdasarkan user terakhir login
+    const lastUserId = (await indexedDBManager.getMetadata(
+      "last_logged_in_user_id",
+    )) as string | null;
+    if (!lastUserId) {
+      console.log("ℹ️ No offline session found");
+      return null;
+    }
+
+    const stored = (await indexedDBManager.getMetadata(
+      `offline_session_${lastUserId}`,
+    )) as StoredSession | undefined;
 
     if (!stored) {
       console.log("ℹ️ No offline session found");
@@ -247,11 +272,21 @@ export async function restoreOfflineSession(): Promise<{
 }
 
 /**
- * Clear offline session
+ * Clear offline session (hanya session user yang sedang logout)
+ * @param userId - userId user yang logout, jika tidak diisi hapus session last_logged_in
  */
-export async function clearOfflineSession(): Promise<void> {
+export async function clearOfflineSession(userId?: string): Promise<void> {
   try {
     await indexedDBManager.initialize();
+    const targetId =
+      userId ??
+      ((await indexedDBManager.getMetadata("last_logged_in_user_id")) as
+        | string
+        | null);
+    if (targetId) {
+      await indexedDBManager.setMetadata(`offline_session_${targetId}`, null);
+    }
+    // Hapus juga key lama (single-user) jika ada
     await indexedDBManager.setMetadata("offline_session", null);
     console.log("✅ Offline session cleared");
   } catch (error) {
@@ -262,13 +297,25 @@ export async function clearOfflineSession(): Promise<void> {
 /**
  * Get stored user data for offline mode
  */
-export async function getStoredUserData(): Promise<AuthUser | null> {
+export async function getStoredUserData(
+  email?: string,
+): Promise<AuthUser | null> {
   try {
     await indexedDBManager.initialize();
 
-    const credentials = (await indexedDBManager.getMetadata(
-      "offline_credentials",
-    )) as StoredCredentials | undefined;
+    let credentials: StoredCredentials | undefined;
+
+    if (email) {
+      // ✅ FIX: baca per-user pakai email
+      credentials = (await indexedDBManager.getMetadata(
+        `offline_credentials_${email.toLowerCase()}`,
+      )) as StoredCredentials | undefined;
+    } else {
+      // fallback: coba key lama (single-user)
+      credentials = (await indexedDBManager.getMetadata(
+        "offline_credentials",
+      )) as StoredCredentials | undefined;
+    }
 
     if (!credentials) {
       return null;
@@ -322,7 +369,7 @@ export async function storeUserData(user: AuthUser): Promise<void> {
  */
 export async function recordOnlineLogin(
   user: AuthUser,
-  session: AuthSession,
+  _session: AuthSession,
 ): Promise<void> {
   try {
     await indexedDBManager.initialize();
@@ -335,7 +382,11 @@ export async function recordOnlineLogin(
       lastOnlineLoginAt: Date.now(),
       onlineLoginCount: (existingRecord?.onlineLoginCount || 0) + 1,
     };
-    await indexedDBManager.setMetadata(ONLINE_LOGIN_RECORD_KEY, newRecord);
+    // ✅ FIX: simpan per-user pakai key unik per userId, bukan satu key global
+    await indexedDBManager.setMetadata(
+      `${ONLINE_LOGIN_RECORD_KEY}_${user.id}`,
+      newRecord,
+    );
     console.log("✅ Online login recorded for user:", user.id);
   } catch (error) {
     console.error("❌ Failed to record online login:", error);
@@ -351,8 +402,9 @@ export async function getOnlineLoginRecord(
 ): Promise<OnlineLoginRecord | null> {
   try {
     await indexedDBManager.initialize();
+    // ✅ FIX: baca record per-user menggunakan key unik per userId
     const record = (await indexedDBManager.getMetadata(
-      ONLINE_LOGIN_RECORD_KEY,
+      `${ONLINE_LOGIN_RECORD_KEY}_${userId}`,
     )) as OnlineLoginRecord | null;
     if (record && record.userId === userId) {
       return record;
@@ -384,14 +436,12 @@ export async function hasLoggedInOnlineBefore(
  */
 export async function canLoginOffline(email: string): Promise<boolean> {
   try {
+    // ✅ FIX: baca credentials per-user pakai key unik per email
     const credentials = (await indexedDBManager.getMetadata(
-      "offline_credentials",
+      `offline_credentials_${email.toLowerCase()}`,
     )) as any;
 
-    if (
-      !credentials ||
-      credentials.email.toLowerCase() !== email.toLowerCase()
-    ) {
+    if (!credentials) {
       console.log("❌ No matching offline credentials found for email:", email);
       return false;
     }
@@ -433,14 +483,12 @@ export async function secureOfflineLogin(
   password: string,
 ): Promise<{ user: AuthUser; session: AuthSession } | null> {
   try {
+    // ✅ FIX: baca credentials per-user pakai key unik per email
     const credentials = (await indexedDBManager.getMetadata(
-      "offline_credentials",
+      `offline_credentials_${email.toLowerCase()}`,
     )) as any;
 
-    if (
-      credentials &&
-      credentials.email.toLowerCase() === email.toLowerCase()
-    ) {
+    if (credentials) {
       const canLogin = await canLoginOffline(email);
       if (!canLogin) {
         console.log(
@@ -454,10 +502,27 @@ export async function secureOfflineLogin(
     const isValid = await verifyOfflineCredentials(email, password);
     if (!isValid) return null;
 
-    const storedSession = await restoreOfflineSession();
-    if (storedSession) return storedSession;
+    // ✅ FIX: restore session spesifik user ini (pakai credentials.id), bukan last_logged_in
+    const credData = (await indexedDBManager.getMetadata(
+      `offline_credentials_${email.toLowerCase()}`,
+    )) as StoredCredentials | null;
 
-    const userData = await getStoredUserData();
+    if (credData?.id) {
+      const perUserSession = (await indexedDBManager.getMetadata(
+        `offline_session_${credData.id}`,
+      )) as StoredSession | null;
+      if (perUserSession && Date.now() < perUserSession.expiresAt) {
+        // Update last_logged_in_user_id agar startup offline berikutnya restore user ini
+        await indexedDBManager.setMetadata(
+          "last_logged_in_user_id",
+          credData.id,
+        );
+        console.log("✅ Restored per-user offline session");
+        return { user: perUserSession.user, session: perUserSession.session };
+      }
+    }
+
+    const userData = await getStoredUserData(email);
     if (!userData) {
       console.error("❌ User data not found");
       return null;
@@ -502,21 +567,31 @@ export async function offlineLogin(
 
 /**
  * Check if offline login is available
+ * @param email - optional, cek untuk user spesifik
  */
-export async function isOfflineLoginAvailable(): Promise<boolean> {
+export async function isOfflineLoginAvailable(
+  email?: string,
+): Promise<boolean> {
   try {
     await indexedDBManager.initialize();
 
-    const credentials = (await indexedDBManager.getMetadata(
-      "offline_credentials",
-    )) as StoredCredentials | undefined;
-
-    if (!credentials) {
-      return false;
+    if (email) {
+      const credentials = (await indexedDBManager.getMetadata(
+        `offline_credentials_${email.toLowerCase()}`,
+      )) as StoredCredentials | undefined;
+      if (!credentials) return false;
+      return Date.now() < credentials.expiresAt;
     }
 
-    // Check if not expired
-    return Date.now() < credentials.expiresAt;
+    // fallback: cek last_logged_in_user_id
+    const lastUserId = (await indexedDBManager.getMetadata(
+      "last_logged_in_user_id",
+    )) as string | null;
+    if (!lastUserId) return false;
+    const session = (await indexedDBManager.getMetadata(
+      `offline_session_${lastUserId}`,
+    )) as StoredSession | undefined;
+    return !!session && Date.now() < session.expiresAt;
   } catch (error) {
     console.error("❌ Failed to check offline login availability:", error);
     return false;

@@ -122,15 +122,11 @@ export default function PengumumanPage() {
         );
       }
 
-      const data = await cacheAPI(
-        cacheKey,
-        () => getAllAnnouncements(),
-        {
-          ttl: 10 * 60 * 1000,
-          forceRefresh,
-          staleWhileRevalidate: true,
-        },
-      );
+      const data = await cacheAPI(cacheKey, () => getAllAnnouncements(), {
+        ttl: 10 * 60 * 1000,
+        forceRefresh,
+        staleWhileRevalidate: true,
+      });
 
       applyFilteredAnnouncements(data);
       setIsOfflineData(false);
@@ -307,8 +303,8 @@ export default function PengumumanPage() {
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
             Aplikasi sedang memakai data notifikasi yang tersimpan di perangkat.
-            Tampilan tetap bisa dibuka saat offline, tetapi isi terbaru baru akan
-            disegarkan saat koneksi kembali tersedia.
+            Tampilan tetap bisa dibuka saat offline, tetapi isi terbaru baru
+            akan disegarkan saat koneksi kembali tersedia.
           </AlertDescription>
         </Alert>
       )}
@@ -317,7 +313,9 @@ export default function PengumumanPage() {
         <Card className="rounded-2xl border border-border/60 bg-white/90 shadow-sm">
           <CardContent className="py-14 text-center">
             <Bell className="mx-auto mb-4 h-12 w-12 text-muted-foreground/60" />
-            <p className="text-muted-foreground">Tidak ada notifikasi saat ini</p>
+            <p className="text-muted-foreground">
+              Tidak ada notifikasi saat ini
+            </p>
           </CardContent>
         </Card>
       ) : (

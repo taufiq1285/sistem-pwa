@@ -379,7 +379,9 @@ export default function InventarisPage() {
           <Alert className="border-warning/40 bg-warning/10">
             <AlertDescription>
               Data inventaris sedang memakai snapshot lokal dari perangkat.
-              {lastUpdatedLabel ? ` Pembaruan terakhir: ${lastUpdatedLabel}.` : ""}
+              {lastUpdatedLabel
+                ? ` Pembaruan terakhir: ${lastUpdatedLabel}.`
+                : ""}
             </AlertDescription>
           </Alert>
         )}

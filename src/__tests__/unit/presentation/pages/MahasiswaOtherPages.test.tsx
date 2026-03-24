@@ -117,9 +117,9 @@ describe("Mahasiswa MateriPage", () => {
   it("menampilkan loading skeleton", () => {
     mockCacheAPI.mockReturnValue(new Promise(() => {}));
     const { container } = wrap(<MahasiswaMateriPage />);
-    expect(container.querySelectorAll('[data-slot="card"]').length).toBeGreaterThan(
-      0,
-    );
+    expect(
+      container.querySelectorAll('[data-slot="card"]').length,
+    ).toBeGreaterThan(0);
   });
 
   it("menampilkan judul halaman Materi", async () => {
@@ -190,9 +190,9 @@ describe("Mahasiswa NilaiPage", () => {
   it("menampilkan loading skeleton", () => {
     mockCacheAPI.mockReturnValue(new Promise(() => {}));
     const { container } = wrap(<NilaiPage />);
-    expect(container.querySelectorAll('[data-slot="card"]').length).toBeGreaterThan(
-      0,
-    );
+    expect(
+      container.querySelectorAll('[data-slot="card"]').length,
+    ).toBeGreaterThan(0);
   });
 
   it("menampilkan judul halaman Nilai", async () => {
@@ -253,9 +253,9 @@ describe("Mahasiswa JadwalPage", () => {
   it("menampilkan loading skeleton", () => {
     mockCacheAPI.mockReturnValue(new Promise(() => {}));
     const { container } = wrap(<JadwalPage />);
-    expect(container.querySelectorAll('[data-slot="card"]').length).toBeGreaterThan(
-      0,
-    );
+    expect(
+      container.querySelectorAll('[data-slot="card"]').length,
+    ).toBeGreaterThan(0);
   });
 
   it("menampilkan judul halaman Jadwal Praktikum", async () => {
@@ -325,9 +325,9 @@ describe("Mahasiswa PresensiPage", () => {
   it("menampilkan loading skeleton", () => {
     mockCacheAPI.mockReturnValue(new Promise(() => {}));
     const { container } = wrap(<PresensiPage />);
-    expect(container.querySelectorAll('[data-slot="card"]').length).toBeGreaterThan(
-      0,
-    );
+    expect(
+      container.querySelectorAll('[data-slot="card"]').length,
+    ).toBeGreaterThan(0);
   });
 
   it("menampilkan judul halaman Presensi / Kehadiran", async () => {

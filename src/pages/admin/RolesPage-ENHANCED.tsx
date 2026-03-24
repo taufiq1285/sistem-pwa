@@ -333,7 +333,10 @@ export default function RolesPage() {
                       {stats.active}
                     </p>
                   </div>
-                  <Badge variant="outline" className="bg-success/10 text-success">
+                  <Badge
+                    variant="outline"
+                    className="bg-success/10 text-success"
+                  >
                     Active
                   </Badge>
                 </div>

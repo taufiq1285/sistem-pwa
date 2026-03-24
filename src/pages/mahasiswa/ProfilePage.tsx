@@ -97,7 +97,10 @@ export default function ProfilePage() {
     const handleCacheUpdated = (event: Event) => {
       const customEvent = event as CustomEvent<{ key?: string; data?: any }>;
 
-      if (customEvent.detail?.key !== profileCacheKey || !customEvent.detail?.data) {
+      if (
+        customEvent.detail?.key !== profileCacheKey ||
+        !customEvent.detail?.data
+      ) {
         return;
       }
 
@@ -124,7 +127,8 @@ export default function ProfilePage() {
     };
 
     window.addEventListener("cache:updated", handleCacheUpdated);
-    return () => window.removeEventListener("cache:updated", handleCacheUpdated);
+    return () =>
+      window.removeEventListener("cache:updated", handleCacheUpdated);
   }, [profileCacheKey]);
 
   const fetchProfile = async (forceRefresh = false) => {

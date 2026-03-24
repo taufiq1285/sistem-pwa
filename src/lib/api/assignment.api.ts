@@ -373,15 +373,17 @@ export const getAssignmentSummary = requirePermission(
  * Get assignment statistics
  */
 async function getAssignmentStatsImpl(): Promise<AssignmentStats> {
-  const [
-    { data: dosenData },
-    { data: jadwalData },
-    { data: kelasData }
-  ] = await Promise.all([
-    supabase.from("dosen").select("id"),
-    supabase.from("jadwal_praktikum").select("id, dosen_id, kelas_id, kelas:kelas_id(dosen_id, mata_kuliah_id)").eq("is_active", true),
-    supabase.from("kelas").select("id").eq("is_active", true)
-  ]);
+  const [{ data: dosenData }, { data: jadwalData }, { data: kelasData }] =
+    await Promise.all([
+      supabase.from("dosen").select("id"),
+      supabase
+        .from("jadwal_praktikum")
+        .select(
+          "id, dosen_id, kelas_id, kelas:kelas_id(dosen_id, mata_kuliah_id)",
+        )
+        .eq("is_active", true),
+      supabase.from("kelas").select("id").eq("is_active", true),
+    ]);
 
   const totalDosenAktif = dosenData?.length || 0;
 
@@ -777,12 +779,12 @@ export const getAcademicAssignments = requirePermission(
  * Get academic assignment statistics
  */
 async function getAcademicAssignmentStatsImpl(): Promise<AssignmentStats> {
-  const [
-    { data: kelasData },
-    { data: dosenData }
-  ] = await Promise.all([
-    supabase.from("kelas").select("dosen_id, mata_kuliah_id, is_active").eq("is_active", true),
-    supabase.from("dosen").select("id")
+  const [{ data: kelasData }, { data: dosenData }] = await Promise.all([
+    supabase
+      .from("kelas")
+      .select("dosen_id, mata_kuliah_id, is_active")
+      .eq("is_active", true),
+    supabase.from("dosen").select("id"),
   ]);
 
   const totalDosenAktif = dosenData?.length || 0;

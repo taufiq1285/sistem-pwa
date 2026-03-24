@@ -37,11 +37,14 @@ import {
   HeartPulse,
   Award,
   TrendingUp,
+  Moon,
+  Sun,
 } from "lucide-react";
 
 export function HomePage() {
   const [scrollY, setScrollY] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
+  const [isDark, setIsDark] = useState(true);
 
   useEffect(() => {
     setIsVisible(true);
@@ -208,31 +211,102 @@ export function HomePage() {
       icon: <Stethoscope className="h-6 w-6" />,
       title: "Fasilitas Modern",
       description: "9 Laboratorium & 1 Depo Alat",
-      tone: "warning",
+      tone: "info",
     },
     {
       icon: <ShieldCheck className="h-6 w-6" />,
       title: "Aman & Terpercaya",
       description: "Data Tersinkronisasi Otomatis",
-      tone: "info",
+      tone: "primary",
     },
   ] as const;
 
   return (
-    <div className="relative isolate min-h-screen overflow-x-hidden bg-linear-to-br from-background via-background to-primary/5">
-      {/* Floating Background Elements */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+    <div
+      className={`${isDark ? "dark" : ""} relative isolate min-h-screen ${isDark ? "bg-slate-950" : "bg-white"}`}
+    >
+      {/* Aurora — guaranteed visible radial blobs */}
+      <div
+        aria-hidden="true"
+        style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 0,
+          pointerEvents: "none",
+          overflow: "hidden",
+        }}
+      >
+        {/* Top-right Indigo */}
         <div
-          className="bg-drift-slow absolute -top-40 -right-40 h-96 w-96 rounded-full bg-primary/15 blur-3xl animate-pulse"
-          style={{ animationDuration: "8s" }}
+          style={{
+            position: "absolute",
+            borderRadius: "50%",
+            width: "55vw",
+            height: "55vw",
+            maxWidth: "700px",
+            maxHeight: "700px",
+            top: "-15%",
+            right: "-8%",
+            background: isDark
+              ? "radial-gradient(circle at center, rgba(99,102,241,0.65) 0%, transparent 65%)"
+              : "radial-gradient(circle at center, rgba(99,102,241,0.35) 0%, transparent 60%)",
+            filter: "blur(80px)",
+            animation: "aurora1 18s ease-in-out infinite",
+          }}
         />
+        {/* Bottom-left Cyan */}
         <div
-          className="bg-drift-slower absolute -bottom-40 -left-40 h-96 w-96 rounded-full bg-warning/20 blur-3xl animate-pulse"
-          style={{ animationDuration: "10s", animationDelay: "2s" }}
+          style={{
+            position: "absolute",
+            borderRadius: "50%",
+            width: "50vw",
+            height: "50vw",
+            maxWidth: "650px",
+            maxHeight: "650px",
+            bottom: "-12%",
+            left: "-8%",
+            background: isDark
+              ? "radial-gradient(circle at center, rgba(34,211,238,0.5) 0%, transparent 65%)"
+              : "radial-gradient(circle at center, rgba(34,211,238,0.32) 0%, transparent 60%)",
+            filter: "blur(80px)",
+            animation: "aurora2 22s ease-in-out infinite",
+          }}
         />
+        {/* Center Violet */}
         <div
-          className="bg-drift-slower absolute left-1/2 top-1/2 h-200 w-200 -translate-x-1/2 -translate-y-1/2 rounded-full bg-info/10 blur-3xl animate-pulse"
-          style={{ animationDuration: "12s", animationDelay: "4s" }}
+          style={{
+            position: "absolute",
+            borderRadius: "50%",
+            width: "40vw",
+            height: "40vw",
+            maxWidth: "500px",
+            maxHeight: "500px",
+            top: "28%",
+            left: "22%",
+            background: isDark
+              ? "radial-gradient(circle at center, rgba(139,92,246,0.45) 0%, transparent 65%)"
+              : "radial-gradient(circle at center, rgba(139,92,246,0.28) 0%, transparent 60%)",
+            filter: "blur(70px)",
+            animation: "aurora3 26s ease-in-out infinite",
+          }}
+        />
+        {/* Top-left Sky */}
+        <div
+          style={{
+            position: "absolute",
+            borderRadius: "50%",
+            width: "35vw",
+            height: "35vw",
+            maxWidth: "420px",
+            maxHeight: "420px",
+            top: "5%",
+            left: "2%",
+            background: isDark
+              ? "radial-gradient(circle at center, rgba(14,165,233,0.4) 0%, transparent 65%)"
+              : "radial-gradient(circle at center, rgba(14,165,233,0.3) 0%, transparent 60%)",
+            filter: "blur(70px)",
+            animation: "aurora4 20s ease-in-out infinite",
+          }}
         />
       </div>
 
@@ -240,8 +314,12 @@ export function HomePage() {
       <nav
         className={`sticky top-0 z-50 transition-all duration-300 ${
           scrollY > 50
-            ? "border-b border-border/70 bg-background/92 shadow-lg backdrop-blur-lg"
-            : "bg-background/60 backdrop-blur-md"
+            ? isDark
+              ? "border-b border-white/10 bg-slate-950/90 shadow-xl shadow-black/20 backdrop-blur-lg"
+              : "border-b border-slate-200/80 bg-white/90 shadow-md backdrop-blur-lg"
+            : isDark
+              ? "bg-slate-950/50 backdrop-blur-md"
+              : "bg-white/60 backdrop-blur-md"
         }`}
       >
         <div className="app-container">
@@ -263,6 +341,22 @@ export function HomePage() {
               </span>
             </Link>
             <div className="flex items-center space-x-2 sm:space-x-3">
+              {/* Theme Toggle Button */}
+              <button
+                onClick={() => setIsDark(!isDark)}
+                aria-label="Toggle tema"
+                className={`relative h-9 w-9 rounded-full border transition-all duration-300 flex items-center justify-center sm:h-10 sm:w-10 ${
+                  isDark
+                    ? "border-white/15 bg-white/10 text-yellow-300 hover:bg-white/20"
+                    : "border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200"
+                }`}
+              >
+                {isDark ? (
+                  <Sun className="h-4 w-4 transition-transform duration-300 rotate-0" />
+                ) : (
+                  <Moon className="h-4 w-4 transition-transform duration-300" />
+                )}
+              </button>
               <Link to="/login">
                 <ButtonEnhanced
                   variant="ghost"
@@ -287,61 +381,87 @@ export function HomePage() {
       </nav>
 
       {/* Hero Section */}
-      <section className="app-container py-12 sm:py-16 lg:py-24 relative">
-        <div className="pointer-events-none absolute inset-x-4 bottom-6 top-6 rounded-4xl bg-linear-to-br from-background/60 via-background/20 to-transparent opacity-70 blur-3xl" />
-        <div
-          className={`relative text-center max-w-5xl mx-auto transition-all duration-1000 ${
-            isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
-          }`}
-        >
-          <div className="pointer-events-none absolute inset-0 -z-10 rounded-4xl border border-white/30 bg-background/20 backdrop-blur-sm" />
-          {/* Badge */}
-          <div className="mb-6 inline-flex max-w-full items-center space-x-2 rounded-full border border-primary/15 bg-linear-to-r from-primary/10 to-warning/15 px-4 py-2 text-xs font-medium text-primary shadow-lg transition-all duration-300 hover:shadow-xl sm:mb-8 sm:px-6 sm:py-3 sm:text-sm">
-            <Baby className="h-4 w-4" />
-            <span>Akademi Kebidanan Mega Buana</span>
-            <HeartPulse className="h-4 w-4 animate-pulse" />
+      <section className="surface-grid app-container py-12 sm:py-16 lg:py-24 relative overflow-hidden border-b border-white/5 bg-transparent">
+        {/* Glow Effects Pulled Closer to Center */}
+        <div className="pointer-events-none absolute inset-x-4 bottom-6 top-6 rounded-4xl bg-linear-to-br from-slate-950/80 via-slate-950/40 to-transparent opacity-90 blur-3xl" />
+
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div
+            className="bg-drift-slow absolute -top-10 right-1/4 h-80 w-80 rounded-full bg-primary/30 blur-[100px] animate-pulse"
+            style={{ animationDuration: "8s" }}
+          />
+          <div
+            className="bg-drift-slower absolute -bottom-10 left-1/4 h-80 w-80 rounded-full bg-info/25 blur-[100px] animate-pulse"
+            style={{ animationDuration: "10s", animationDelay: "2s" }}
+          />
+        </div>
+
+        <div className="relative text-center max-w-5xl mx-auto z-10">
+          <div className="pointer-events-none absolute inset-0 -z-10 rounded-4xl border border-white/10 bg-white/5 backdrop-blur-[2px]" />
+
+          {/* Badge - Stagger 1 */}
+          <div
+            className={`transition-all duration-1000 ease-out ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
+          >
+            <div className="mb-6 inline-flex max-w-full items-center space-x-2 rounded-full border border-primary/20 bg-linear-to-r from-primary/10 to-info/10 px-4 py-2 text-xs font-bold text-primary shadow-lg transition-all duration-300 hover:shadow-primary/20 sm:mb-8 sm:px-6 sm:py-3 sm:text-sm">
+              <Baby className="h-4 w-4" />
+              <span>Akademik Medis & Kebidanan</span>
+              <HeartPulse className="h-4 w-4 animate-pulse text-info" />
+            </div>
           </div>
 
-          <div className="mb-6 flex justify-center sm:mb-8">
-            <div className="rounded-full border border-warning/25 bg-background/80 p-2 shadow-2xl backdrop-blur-sm">
+          {/* Logo - Stagger 2 + Floating */}
+          <div
+            className={`mb-6 flex justify-center sm:mb-8 transition-all duration-1000 delay-150 ease-out ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
+          >
+            <div
+              className="rounded-full border border-warning/25 bg-background/80 p-2 shadow-2xl backdrop-blur-sm"
+              style={{ animation: "float 6s ease-in-out infinite" }}
+            >
               <img
                 src={akbidLogo}
                 alt="Logo Akademi Kebidanan Mega Buana"
-                className="h-28 w-28 object-contain sm:h-36 sm:w-36 lg:h-44 lg:w-44"
+                className="h-28 w-28 object-contain sm:h-36 sm:w-36 lg:h-44 lg:w-44 drop-shadow-md"
               />
             </div>
           </div>
 
-          {/* Main Heading */}
-          <h1 className="text-3xl sm:text-5xl lg:text-7xl font-black mb-6 sm:mb-8 leading-tight">
-            <span className="bg-linear-to-r from-foreground via-primary to-primary bg-clip-text text-transparent">
+          {/* Main Heading - Stagger 3 */}
+          <h1
+            className={`text-3xl sm:text-5xl lg:text-7xl font-black mb-6 sm:mb-8 leading-tight transition-all duration-1000 delay-300 ease-out ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
+          >
+            <span className="bg-linear-to-r from-foreground via-primary to-primary/80 bg-clip-text text-transparent">
               Sistem Informasi
             </span>
             <br />
-            <span className="relative bg-linear-to-r from-primary via-info to-warning bg-clip-text text-transparent">
+            <span className="relative bg-linear-to-r from-primary via-info to-info bg-clip-text text-transparent drop-shadow-sm">
               Praktikum
-              <Sparkles className="absolute -right-8 -top-4 hidden h-12 w-12 animate-spin-slow text-warning sm:block" />
+              <Sparkles className="absolute -right-8 -top-4 hidden h-12 w-12 animate-spin-slow text-info sm:block drop-shadow-lg" />
             </span>
             <br />
-            <span className="bg-linear-to-r from-primary to-warning bg-clip-text text-2xl text-transparent sm:text-5xl lg:text-6xl">
+            <span className="bg-linear-to-r from-foreground to-primary/80 bg-clip-text text-2xl text-transparent sm:text-5xl lg:text-6xl drop-shadow-xs">
               Akademi Kebidanan Mega Buana
             </span>
           </h1>
 
-          {/* Description */}
-          <p className="mx-auto mb-8 max-w-3xl px-2 text-base leading-relaxed text-muted-foreground sm:mb-12 sm:px-0 sm:text-xl lg:text-2xl">
+          {/* Description - Stagger 4 */}
+          <p
+            className={`mx-auto mb-8 max-w-3xl px-2 text-base leading-relaxed text-muted-foreground sm:mb-12 sm:px-0 sm:text-xl lg:text-2xl transition-all duration-1000 delay-500 ease-out ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
+          >
             Sistem informasi praktikum kebidanan dengan fitur lengkap, akses
             offline, dan pengalaman pengguna yang modern
-            <span className="inline-block animate-pulse">✨</span>
+            <span className="inline-block animate-pulse ml-1">✨</span>
           </p>
 
-          {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-5">
+          {/* CTA Buttons - Stagger 5 */}
+          <div
+            className={`flex flex-col sm:flex-row items-center justify-center gap-5 transition-all duration-1000 delay-[600ms] ease-out ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
+          >
             <Link to="/register">
               <ButtonEnhanced
                 size="lg"
                 variant="gradient"
-                className="group w-full px-10 py-7 text-lg shadow-2xl transition-all duration-300 hover:shadow-primary/35 sm:w-auto"
+                className="group w-full px-10 py-7 text-lg shadow-2xl transition-all duration-300 hover:shadow-primary/35 hover:scale-105 sm:w-auto"
               >
                 Mulai Sekarang
                 <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-2 transition-transform duration-200" />
@@ -351,7 +471,7 @@ export function HomePage() {
               <ButtonEnhanced
                 size="lg"
                 variant="outline"
-                className="group w-full border-2 border-border/70 bg-background/75 px-10 py-7 text-lg text-foreground transition-all duration-300 hover:bg-accent hover:text-accent-foreground sm:w-auto"
+                className="group w-full border-2 border-primary/20 bg-background/75 px-10 py-7 text-lg text-foreground shadow-lg transition-all duration-300 hover:bg-primary/5 hover:border-primary/40 hover:scale-105 sm:w-auto"
               >
                 Masuk
                 <ArrowRight className="ml-2 h-5 w-4 group-hover:translate-x-2 transition-transform duration-200" />
@@ -359,8 +479,9 @@ export function HomePage() {
             </Link>
           </div>
 
-          {/* Highlights */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mt-20">
+          <div
+            className={`grid grid-cols-2 lg:grid-cols-4 gap-6 mt-20 transition-all duration-1000 delay-[800ms] ease-out ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"}`}
+          >
             {highlights.map((item, index) => {
               const styles = highlightToneStyles[item.tone];
 
@@ -368,17 +489,17 @@ export function HomePage() {
                 <GlassCard
                   key={index}
                   intensity="medium"
-                  className="interactive-card group rounded-2xl border border-white/40 bg-background/80 p-6 text-center shadow-lg transition-all duration-300 hover:scale-[1.03] hover:shadow-2xl"
+                  className="interactive-card group rounded-2xl border border-white/40 bg-background/80 p-6 text-center shadow-lg transition-all duration-300 hover:scale-[1.05] hover:shadow-2xl hover:border-primary/30"
                 >
                   <div
-                    className={`mb-3 inline-flex items-center justify-center rounded-xl p-3 transition-transform duration-200 group-hover:scale-110 ${styles.icon}`}
+                    className={`mb-3 inline-flex items-center justify-center rounded-xl p-3 transition-transform duration-300 group-hover:scale-125 ${styles.icon}`}
                   >
                     {item.icon}
                   </div>
                   <div className="mb-1 text-lg font-black text-foreground">
                     {item.title}
                   </div>
-                  <div className="text-sm font-medium text-muted-foreground">
+                  <div className="text-sm font-medium text-muted-foreground group-hover:text-primary transition-colors duration-300">
                     {item.description}
                   </div>
                 </GlassCard>
@@ -442,7 +563,7 @@ export function HomePage() {
       </section>
 
       {/* User Roles Section */}
-      <section className="bg-linear-to-b from-warning/8 via-background to-primary/6 py-20 sm:py-24">
+      <section className="bg-linear-to-b from-background/80 via-background to-background/80 py-20 sm:py-24">
         <div className="app-container">
           <div className="mb-16 text-center">
             <div className="mb-4 inline-flex items-center space-x-2 rounded-full border border-info/15 bg-info/10 px-4 py-2 text-sm font-semibold text-info shadow-sm">
@@ -492,7 +613,7 @@ export function HomePage() {
       </section>
 
       {/* Benefits Section */}
-      <section className="py-20 sm:py-24 bg-white">
+      <section className="py-20 sm:py-24 bg-background/95">
         <div className="app-container">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <div>
@@ -522,8 +643,8 @@ export function HomePage() {
               </div>
             </div>
             <div className="relative">
-              <div className="absolute -inset-4 bg-linear-to-r from-blue-800 to-amber-600 rounded-3xl blur-2xl opacity-30 animate-pulse" />
-              <div className="relative bg-linear-to-br from-blue-800 to-amber-600 rounded-3xl p-10 lg:p-14 text-white shadow-2xl">
+              <div className="absolute -inset-4 bg-linear-to-r from-primary to-info rounded-3xl blur-2xl opacity-30 animate-pulse" />
+              <div className="relative bg-linear-to-br from-primary to-info rounded-3xl p-10 lg:p-14 text-white shadow-2xl">
                 <div className="flex items-center justify-center p-6 bg-white/20 backdrop-blur-lg rounded-2xl mb-8">
                   <Smartphone className="h-24 w-24 text-white" />
                 </div>
@@ -545,22 +666,22 @@ export function HomePage() {
       </section>
 
       {/* CTA Section */}
-      <section className="relative overflow-hidden bg-linear-to-r from-primary via-info to-warning py-20 sm:py-24">
+      <section className="relative overflow-hidden bg-linear-to-r from-primary via-info to-success py-20 sm:py-24">
         <div className="absolute inset-0">
-          <div className="absolute top-0 left-0 w-40 h-40 bg-white/10 rounded-full -translate-x-1/2 -translate-y-1/2" />
-          <div className="absolute bottom-0 right-0 w-60 h-60 bg-white/10 rounded-full translate-x-1/2 translate-y-1/2" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-150 h-150 bg-white/5 rounded-full blur-3xl" />
+          <div className="absolute top-0 left-0 w-40 h-40 bg-white/15 rounded-full -translate-x-1/2 -translate-y-1/2" />
+          <div className="absolute bottom-0 right-0 w-60 h-60 bg-white/15 rounded-full translate-x-1/2 translate-y-1/2" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-150 h-150 bg-white/10 rounded-full blur-3xl" />
         </div>
         <div className="app-container relative">
           <div className="text-center max-w-4xl mx-auto text-white">
-            <div className="inline-flex items-center space-x-2 bg-white/20 backdrop-blur-lg px-6 py-3 rounded-full text-sm font-bold mb-8">
+            <div className="inline-flex items-center space-x-2 bg-white/20 backdrop-blur-lg px-6 py-3 rounded-full text-sm font-bold mb-8 shadow-xl">
               <Zap className="h-4 w-4" />
               <span>Mulai Sekarang</span>
             </div>
-            <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black mb-8 leading-tight">
+            <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black mb-8 leading-tight drop-shadow-md">
               Siap Memulai Praktikum
               <br />
-              <span className="text-warning-foreground/90">Lebih Baik?</span>
+              <span className="text-white/90">Lebih Baik?</span>
             </h2>
             <p className="mb-12 text-2xl leading-relaxed text-primary-foreground/85">
               Bergabunglah sekarang dan rasakan kemudahan dalam mengelola

@@ -164,7 +164,8 @@ export default function MahasiswaLogbookPage() {
     };
 
     window.addEventListener("cache:updated", handleCacheUpdated);
-    return () => window.removeEventListener("cache:updated", handleCacheUpdated);
+    return () =>
+      window.removeEventListener("cache:updated", handleCacheUpdated);
   }, [jadwalCacheKey, logbookCacheKey]);
 
   // ============================================================================
@@ -300,7 +301,10 @@ export default function MahasiswaLogbookPage() {
       setLastUpdatedAt(Date.now());
     } catch (error: any) {
       console.error("Error loading data:", error);
-      if (!navigator.onLine && (jadwalList.length > 0 || logbookList.length > 0)) {
+      if (
+        !navigator.onLine &&
+        (jadwalList.length > 0 || logbookList.length > 0)
+      ) {
         setIsOfflineData(true);
       } else {
         toast.error(error.message || "Gagal memuat data");
@@ -639,7 +643,9 @@ export default function MahasiswaLogbookPage() {
           <WifiOff className="h-4 w-4" />
           <AlertDescription>
             Anda sedang melihat snapshot logbook tersimpan di perangkat.
-            {lastUpdatedLabel ? ` Pembaruan terakhir: ${lastUpdatedLabel}.` : ""}
+            {lastUpdatedLabel
+              ? ` Pembaruan terakhir: ${lastUpdatedLabel}.`
+              : ""}
             {!navigator.onLine
               ? " Aksi buat, edit, kirim, dan hapus logbook sementara dinonaktifkan saat offline."
               : ""}
@@ -872,7 +878,11 @@ export default function MahasiswaLogbookPage() {
                     <p className="text-xs text-muted-foreground">
                       Lab: {jadwal.laboratorium?.nama_lab}
                     </p>
-                    <Button size="sm" className="w-full mt-3" disabled={isOffline}>
+                    <Button
+                      size="sm"
+                      className="w-full mt-3"
+                      disabled={isOffline}
+                    >
                       <Plus className="h-4 w-4 mr-2" />
                       Buat Logbook
                     </Button>
@@ -1035,8 +1045,8 @@ export default function MahasiswaLogbookPage() {
           <DialogHeader>
             <DialogTitle>Edit Logbook</DialogTitle>
             <DialogDescription>
-              Status: <span className="text-warning">Draft</span> - Anda
-              masih bisa mengubah logbook ini
+              Status: <span className="text-warning">Draft</span> - Anda masih
+              bisa mengubah logbook ini
             </DialogDescription>
           </DialogHeader>
 
@@ -1252,12 +1262,16 @@ export default function MahasiswaLogbookPage() {
 
           <div className="space-y-4 py-4">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Status</p>
+              <p className="text-sm font-medium text-muted-foreground">
+                Status
+              </p>
               {selectedLogbook && getStatusBadge(selectedLogbook.status)}
             </div>
 
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Prosedur</p>
+              <p className="text-sm font-medium text-muted-foreground">
+                Prosedur
+              </p>
               <p className="text-sm mt-1">
                 {selectedLogbook?.prosedur_dilakukan || "-"}
               </p>
@@ -1292,7 +1306,9 @@ export default function MahasiswaLogbookPage() {
 
             {selectedLogbook?.kendala_dihadapi && (
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Kendala</p>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Kendala
+                </p>
                 <p className="text-sm mt-1">
                   {selectedLogbook.kendala_dihadapi}
                 </p>
@@ -1301,7 +1317,9 @@ export default function MahasiswaLogbookPage() {
 
             {selectedLogbook?.refleksi && (
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Refleksi</p>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Refleksi
+                </p>
                 <p className="text-sm mt-1">{selectedLogbook.refleksi}</p>
               </div>
             )}

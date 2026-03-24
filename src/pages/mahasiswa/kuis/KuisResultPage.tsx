@@ -357,7 +357,8 @@ export default function KuisResultPage() {
         <Alert>
           <WifiOff className="h-4 w-4" />
           <AlertDescription>
-            Hasil tugas praktikum ini sedang ditampilkan dari snapshot lokal perangkat karena koneksi offline.
+            Hasil tugas praktikum ini sedang ditampilkan dari snapshot lokal
+            perangkat karena koneksi offline.
           </AlertDescription>
         </Alert>
       )}
