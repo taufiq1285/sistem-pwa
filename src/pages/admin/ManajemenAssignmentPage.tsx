@@ -1265,7 +1265,7 @@ export default function ManajemenAssignmentPage() {
                 <div className="flex items-start justify-between">
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
-                      <Users className="h-5 w-5 text-blue-600" />
+                      <Users className="h-5 w-5 text-primary" />
                       <span className="font-semibold">
                         {assignment.dosen.full_name}
                       </span>
@@ -1342,7 +1342,7 @@ export default function ManajemenAssignmentPage() {
                       variant="outline"
                       size="sm"
                       onClick={() => handleDeleteAssignment(assignment)}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      className="text-danger hover:text-danger/80 hover:bg-danger/5"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -1373,7 +1373,7 @@ export default function ManajemenAssignmentPage() {
                         {assignment.jadwalDetail.map((jadwal) => (
                           <div
                             key={jadwal.id}
-                            className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                            className="flex items-center justify-between p-3 bg-muted/40 rounded-lg"
                           >
                             <div className="flex items-center gap-4">
                               <div className="text-sm">
@@ -1445,7 +1445,7 @@ export default function ManajemenAssignmentPage() {
 
           {deleteConfirmation && (
             <div className="space-y-4">
-              <Alert className="border-red-200 bg-red-50">
+              <Alert className="border-danger/30 bg-danger/5">
                 <AlertTriangle className="h-4 w-4" />
                 <AlertDescription>
                   <strong>Perhatian:</strong> Ini akan menghapus:
@@ -1768,7 +1768,7 @@ export default function ManajemenAssignmentPage() {
                 </Select>
               </div>
 
-              <Alert className="border-blue-200 bg-blue-50">
+              <Alert className="border-primary/20 bg-primary/5">
                 <AlertTriangle className="h-4 w-4" />
                 <AlertDescription>
                   <strong>Perhatian:</strong>

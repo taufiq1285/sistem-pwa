@@ -99,6 +99,7 @@ vi.mock("@/lib/hooks/useAuth", () => ({
 
 vi.mock("@/lib/offline/api-cache", () => ({
   cacheAPI: (...args: unknown[]) => mockCacheAPI(...args),
+  getCachedData: vi.fn().mockResolvedValue(null),
   invalidateCache: vi.fn(),
 }));
 
@@ -166,7 +167,7 @@ describe("UsersPage", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByRole("heading", { name: /user management/i }),
+        screen.getByRole("heading", { name: /manajemen pengguna/i }),
       ).toBeInTheDocument();
       expect(mockGetAllUsers).toHaveBeenCalled();
       expect(mockGetUserStats).toHaveBeenCalled();

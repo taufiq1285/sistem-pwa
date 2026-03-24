@@ -19,7 +19,15 @@ createRoot(document.getElementById("root")!).render(
 );
 
 // Start lightweight Supabase warm-up (safe, non-intrusive)
-const stopSupabaseWarmup = startSupabaseWarmup();
+const shouldRunSupabaseWarmup = navigator.onLine;
+const stopSupabaseWarmup = shouldRunSupabaseWarmup
+  ? startSupabaseWarmup()
+  : () => {};
+
+if (!shouldRunSupabaseWarmup) {
+  logger.info("⏸️ Skipping Supabase warm-up on offline startup");
+}
+
 window.addEventListener(
   "beforeunload",
   () => {
@@ -32,12 +40,25 @@ window.addEventListener(
 // OFFLINE SYNC MANAGER INITIALIZATION
 // ============================================================================
 
-// Initialize IndexedDB, QueueManager, NetworkDetector, dan SyncManager
-// HARUS dilakukan di app startup agar auto-sync saat online berfungsi
-// bahkan sebelum komponen apapun di-mount
-initializeSyncManager().catch((error) => {
-  logger.warn("⚠️ SyncManager initialization failed (non-fatal):", error);
-});
+// Saat startup offline, tunda init sync manager supaya app shell/auth bisa tampil lebih cepat.
+const bootstrapSyncManager = () => {
+  initializeSyncManager().catch((error) => {
+    logger.warn("⚠️ SyncManager initialization failed (non-fatal):", error);
+  });
+};
+
+if (navigator.onLine) {
+  bootstrapSyncManager();
+} else {
+  logger.info("⏸️ Deferring SyncManager initialization until connection returns");
+  window.addEventListener(
+    "online",
+    () => {
+      bootstrapSyncManager();
+    },
+    { once: true },
+  );
+}
 
 // ============================================================================
 // PWA SERVICE WORKER REGISTRATION

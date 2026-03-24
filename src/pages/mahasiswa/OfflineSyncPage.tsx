@@ -43,10 +43,10 @@ export default function OfflineSyncPage() {
     <div className="app-container space-y-6">
       <div className="section-shell flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
+          <h1 className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">
             Sinkronisasi Offline
           </h1>
-          <p className="mt-1 text-sm text-slate-600 sm:text-base">
+          <p className="mt-1 text-sm text-muted-foreground sm:text-base">
             Kelola data lokal dan sinkronkan saat koneksi internet tersedia.
           </p>
         </div>
@@ -69,7 +69,7 @@ export default function OfflineSyncPage() {
       </div>
 
       {!isOnline && (
-        <Alert className="rounded-2xl border-amber-200 bg-amber-50 text-amber-800">
+        <Alert className="rounded-2xl border-warning/30 bg-warning/10 text-warning">
           <CloudOff className="h-4 w-4" />
           <AlertDescription>
             Koneksi internet tidak tersedia. Data tetap tersimpan lokal dan akan
@@ -79,7 +79,7 @@ export default function OfflineSyncPage() {
       )}
 
       {failedCount > 0 && (
-        <Alert className="rounded-2xl border-red-200 bg-red-50 text-red-800">
+        <Alert className="rounded-2xl border-danger/30 bg-danger/10 text-danger">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
             {failedCount} item gagal disinkronkan. Coba klik "Sinkronkan
@@ -89,35 +89,35 @@ export default function OfflineSyncPage() {
       )}
 
       <div className="grid gap-4 lg:grid-cols-3">
-        <Card className="rounded-2xl border border-blue-100/70 bg-white/95 shadow-sm lg:col-span-2">
+        <Card className="rounded-2xl border border-primary/20 bg-white/95 shadow-sm lg:col-span-2">
           <CardHeader>
-            <CardTitle className="text-lg text-slate-900">
+            <CardTitle className="text-lg text-foreground">
               Status Sinkronisasi
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-3 sm:grid-cols-3">
-              <div className="rounded-xl border border-amber-100 bg-amber-50/50 p-4">
-                <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+              <div className="rounded-xl border border-warning/20 bg-warning/5 p-4">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                   Menunggu Sync
                 </p>
-                <p className="mt-1 text-2xl font-bold text-amber-700">
+                <p className="mt-1 text-2xl font-bold text-warning">
                   {isReady ? pendingCount : "—"}
                 </p>
               </div>
-              <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-4">
-                <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+              <div className="rounded-xl border border-success/20 bg-success/5 p-4">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                   Berhasil
                 </p>
-                <p className="mt-1 text-2xl font-bold text-emerald-700">
+                <p className="mt-1 text-2xl font-bold text-success">
                   {isReady ? completedCount : "—"}
                 </p>
               </div>
-              <div className="rounded-xl border border-red-100 bg-red-50/50 p-4">
-                <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+              <div className="rounded-xl border border-danger/20 bg-danger/5 p-4">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                   Gagal
                 </p>
-                <p className="mt-1 text-2xl font-bold text-red-700">
+                <p className="mt-1 text-2xl font-bold text-danger">
                   {isReady ? failedCount : "—"}
                 </p>
               </div>
@@ -126,7 +126,7 @@ export default function OfflineSyncPage() {
             <Button
               onClick={handleSync}
               disabled={!isOnline || isProcessing || !isReady}
-              className="h-11 bg-blue-700 text-white shadow-lg shadow-blue-900/15 hover:bg-blue-800"
+              className="h-11 bg-primary text-primary-foreground shadow-lg hover:bg-primary/90"
             >
               <RefreshCcw
                 className={`mr-2 h-4 w-4 ${isProcessing ? "animate-spin" : ""}`}
@@ -136,19 +136,19 @@ export default function OfflineSyncPage() {
           </CardContent>
         </Card>
 
-        <Card className="rounded-2xl border border-blue-100/70 bg-white/95 shadow-sm">
+        <Card className="rounded-2xl border border-primary/20 bg-white/95 shadow-sm">
           <CardHeader>
-            <CardTitle className="text-lg text-slate-900">
+            <CardTitle className="text-lg text-foreground">
               Keamanan Data
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3 text-sm text-slate-600">
+          <CardContent className="space-y-3 text-sm text-muted-foreground">
             <div className="flex items-start gap-2">
-              <ShieldCheck className="mt-0.5 h-4 w-4 text-blue-700" />
+              <ShieldCheck className="mt-0.5 h-4 w-4 text-primary" />
               Data lokal disimpan aman pada perangkat.
             </div>
             <div className="flex items-start gap-2">
-              <CheckCircle2 className="mt-0.5 h-4 w-4 text-emerald-600" />
+              <CheckCircle2 className="mt-0.5 h-4 w-4 text-success" />
               Sinkronisasi otomatis dilanjutkan saat online.
             </div>
           </CardContent>

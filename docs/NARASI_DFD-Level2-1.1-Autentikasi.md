@@ -6,7 +6,7 @@ Dokumen ini berisi narasi/tulisan alur khusus untuk diagram [`docs/DFD-Level2-1.
 
 ## 1. Tujuan Proses 1.1
 
-Proses `1.1 Autentikasi` bertujuan memastikan bahwa hanya pengguna yang memiliki kredensial valid yang dapat masuk ke sistem, memperoleh hak akses sesuai peran (role), dan menutup sesi akses secara benar melalui mekanisme logout.
+Proses `1.1 Autentikasi` bertujuan memastikan bahwa hanya pengguna yang memiliki kredensial valid yang dapat masuk ke sistem, memperoleh hak akses sesuai `role`, dan menutup sesi akses secara benar melalui mekanisme `logout`.
 
 Proses ini melibatkan:
 - **Entitas eksternal**: Pengguna, Supabase Auth
@@ -47,11 +47,11 @@ Alur login berhasil pada diagram berjalan sebagai berikut:
 3. Supabase Auth mengirim balik **status validasi login** ke `A1`.
 4. Jika valid, `A1` mengirim **status login valid** ke `A2 Ambil Data Role`.
 5. `A2` membaca **data user dan role** dari data store D1.
-6. Setelah role valid diperoleh, `A2` meneruskan **role pengguna valid** ke `A3 Bentuk Session Login`.
-7. `A3` membentuk sesi aktif lalu mengirim **session login aktif** ke `A4 Redirect Berdasarkan Role`.
-8. `A4` mengirim **hak akses pengguna** kembali ke entitas Pengguna sesuai role (admin/dosen/laboran/mahasiswa).
+6. Setelah `role` valid diperoleh, `A2` meneruskan **role pengguna valid** ke `A3 Bentuk Session Login`.
+7. `A3` membentuk sesi login aktif lalu mengirim **status sesi login aktif** ke `A4 Redirect Berdasarkan Role`.
+8. `A4` mengirim **hak akses pengguna** kembali ke entitas Pengguna sesuai `role` (admin/dosen/laboran/mahasiswa).
 
-Inti alur ini menunjukkan bahwa akses tidak diberikan hanya karena password benar, tetapi juga setelah pembacaan role dari D1 dan pembentukan session.
+Inti alur ini menunjukkan bahwa akses tidak diberikan hanya karena password benar, tetapi juga setelah pembacaan `role` dari D1 dan pembentukan sesi login.
 
 ---
 
@@ -64,19 +64,19 @@ Jika kredensial tidak valid:
 3. Saat status dari Supabase menyatakan gagal, `A1` mengirim **notifikasi login gagal** ke Pengguna.
 4. Alur tidak diteruskan ke `A2`, `A3`, dan `A4`.
 
-Makna proses ini adalah kontrol keamanan: sistem menghentikan alur sebelum role/session dibentuk.
+Makna proses ini adalah kontrol keamanan: sistem menghentikan alur sebelum `role` dan sesi login dibentuk.
 
 ---
 
 ## 5. Narasi Alur Logout
 
-Mekanisme logout pada diagram berjalan sebagai berikut:
+Mekanisme `logout` pada diagram berjalan sebagai berikut:
 
 1. Pengguna mengirim **permintaan logout** ke `A5 Logout`.
 2. `A5` mengirim **permintaan akhir sesi** ke Supabase Auth agar sesi pada layanan autentikasi dinonaktifkan.
 3. Setelah proses akhir sesi diproses, `A5` mengirim **status logout berhasil** ke Pengguna.
 
-Dengan demikian, logout diperlakukan sebagai akhir alur autentikasi yang eksplisit, bukan sekadar menutup halaman aplikasi.
+Dengan demikian, `logout` diperlakukan sebagai akhir alur autentikasi yang eksplisit, bukan sekadar menutup halaman aplikasi.
 
 ---
 
@@ -89,7 +89,7 @@ Dengan demikian, logout diperlakukan sebagai akhir alur autentikasi yang eksplis
 5. **f5 — notifikasi login gagal**: pesan gagal dari `A1` ke Pengguna.
 6. **f6 — data user dan role**: pertukaran data antara `A2` dan D1.
 7. **f7 — role pengguna valid**: role terverifikasi dari `A2` ke `A3`.
-8. **f8 — session login aktif**: hasil pembentukan session dari `A3` ke `A4`.
+8. **f8 — status sesi login aktif**: hasil pembentukan sesi login dari `A3` ke `A4`.
 9. **f9 — hak akses pengguna**: hasil redirect dan otorisasi dari `A4` ke Pengguna.
 10. **f10 — permintaan logout**: trigger keluar dari Pengguna ke `A5`.
 11. **f11 — permintaan akhir sesi**: perintah terminasi sesi dari `A5` ke Supabase Auth.
@@ -99,7 +99,7 @@ Dengan demikian, logout diperlakukan sebagai akhir alur autentikasi yang eksplis
 
 ## 7. Ringkasan Alur Siap Pakai di Skripsi
 
-Proses `1.1 Autentikasi` dimulai saat pengguna mengirimkan email dan password ke sistem. Sistem memverifikasi kredensial ke layanan autentikasi eksternal. Jika valid, sistem mengambil role pengguna dari data store, membentuk session login aktif, lalu mengarahkan pengguna ke hak akses sesuai perannya. Jika tidak valid, sistem mengirim notifikasi login gagal dan menghentikan alur. Ketika pengguna melakukan logout, sistem mengakhiri sesi melalui layanan autentikasi dan mengirim status logout berhasil. Alur ini menunjukkan bahwa autentikasi pada sistem tidak hanya memeriksa identitas, tetapi juga mengelola pembentukan dan pengakhiran akses secara terkontrol.
+Proses `1.1 Autentikasi` dimulai saat pengguna mengirimkan email dan password ke sistem. Sistem memverifikasi kredensial ke layanan autentikasi eksternal. Jika valid, sistem mengambil `role` pengguna dari data store, membentuk sesi login aktif, lalu mengarahkan pengguna ke hak akses sesuai `role`-nya. Jika tidak valid, sistem mengirim notifikasi login gagal dan menghentikan alur. Ketika pengguna melakukan `logout`, sistem mengakhiri sesi melalui layanan autentikasi dan mengirim status logout berhasil. Alur ini menunjukkan bahwa autentikasi pada sistem tidak hanya memeriksa identitas, tetapi juga mengelola pembentukan dan pengakhiran akses secara terkontrol.
 
 ---
 

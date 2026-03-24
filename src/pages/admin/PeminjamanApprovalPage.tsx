@@ -229,15 +229,15 @@ export default function PeminjamanApprovalPage() {
       </div>
 
       {/* Info Banner */}
-      <Card className="border-blue-200 bg-blue-50 dark:bg-blue-950/20">
+      <Card className="border-primary/20 bg-primary/5">
         <CardContent className="pt-6">
           <div className="flex gap-3">
-            <AlertCircle className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
+            <AlertCircle className="h-5 w-5 text-primary shrink-0 mt-0.5" />
             <div className="space-y-1">
-              <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
+              <p className="text-sm font-medium text-primary">
                 Admin sebagai Backup Laboran
               </p>
-              <p className="text-sm text-blue-700 dark:text-blue-200">
+              <p className="text-sm text-primary/80">
                 Ketika laboran tidak hadir, Admin dapat mengambil alih fungsi
                 approval peminjaman alat dan laboratorium. Semua approval akan
                 tercatat dengan role yang menyetujui.

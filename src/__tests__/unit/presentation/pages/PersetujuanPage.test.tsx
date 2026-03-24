@@ -73,8 +73,9 @@ describe("Laboran PersetujuanPage", () => {
 
     const { container } = render(<PersetujuanPage />);
 
-    // Page uses DashboardSkeleton (Skeleton elements with animate-pulse) while loading
-    expect(container.querySelector(".animate-pulse")).toBeTruthy();
+    expect(container.querySelectorAll('[data-slot="card"]').length).toBeGreaterThan(
+      0,
+    );
   });
 
   it("membuka dialog approve dan memproses persetujuan", async () => {

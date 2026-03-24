@@ -227,7 +227,7 @@ export default function AttemptDetailPage() {
       <div className="role-page-shell p-4 sm:p-6 lg:p-8">
         <div className="role-page-content">
           <div className="rounded-3xl border border-border/60 bg-white/90 p-10 text-center shadow-2xl dark:bg-card">
-            <Loader2 className="mx-auto h-10 w-10 animate-spin text-indigo-600" />
+            <Loader2 className="mx-auto h-10 w-10 animate-spin text-primary" />
             <p className="mt-4 text-base font-semibold text-muted-foreground">
               Memuat detail hasil...
             </p>
@@ -732,7 +732,7 @@ export default function AttemptDetailPage() {
 
                     {/* Display Feedback if exists */}
                     {jawaban?.feedback && (
-                      <Alert className="bg-yellow-50 border-yellow-200">
+                      <Alert className="bg-warning/10 border-warning/30">
                         <AlertDescription>
                           <strong>Feedback Dosen:</strong> {jawaban.feedback}
                         </AlertDescription>

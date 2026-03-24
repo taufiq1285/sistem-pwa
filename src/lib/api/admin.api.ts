@@ -62,12 +62,23 @@ export interface RecentAnnouncement {
 
 async function getDashboardStatsImpl(): Promise<DashboardStats> {
   try {
-    // Get total users by role
-    const { data: users, error: usersError } = await supabase
-      .from("users")
-      .select("role, is_active");
+    // Execute all independent queries concurrently to improve dashboard loading speed
+    const [
+      { data: users, error: usersError },
+      { data: labs, error: labsError },
+      { data: equipment, error: equipmentError },
+      { data: pendingData, error: pendingError }
+    ] = await Promise.all([
+      supabase.from("users").select("role, is_active"),
+      supabase.from("laboratorium").select("id, is_active"),
+      supabase.from("inventaris").select("id, is_available_for_borrowing"),
+      supabase.from("peminjaman").select("id").eq("status", "pending")
+    ]);
 
     if (usersError) throw usersError;
+    if (labsError) console.error("Error fetching labs:", labsError);
+    if (equipmentError) console.error("Error fetching equipment:", equipmentError);
+    if (pendingError) console.error("Error fetching pending:", pendingError);
 
     const totalUsers = users?.length || 0;
     const totalMahasiswa =
@@ -76,32 +87,10 @@ async function getDashboardStatsImpl(): Promise<DashboardStats> {
     const totalLaboran = users?.filter((u) => u.role === "laboran").length || 0;
     const activeUsers = users?.filter((u) => u.is_active).length || 0;
 
-    // Get total laboratorium (FIXED)
-    const { data: labs, error: labsError } = await supabase
-      .from("laboratorium")
-      .select("id, is_active");
-
-    if (labsError) console.error("Error fetching labs:", labsError);
     const totalLaboratorium = labs?.filter((lab) => lab.is_active).length || 0;
 
-    // Get total inventaris/peralatan (FIXED)
-    // PERBAIKAN 1: Menghapus 'as any'
-    const { data: equipment, error: equipmentError } = await supabase
-      .from("inventaris")
-      .select("id, is_available_for_borrowing");
-
-    if (equipmentError)
-      console.error("Error fetching equipment:", equipmentError);
     const totalPeralatan = equipment?.length || 0;
 
-    // Get pending approvals (peminjaman dengan status pending)
-    // PERBAIKAN 2: Menghapus 'as any'
-    const { data: pendingData, error: pendingError } = await supabase
-      .from("peminjaman")
-      .select("id")
-      .eq("status", "pending");
-
-    if (pendingError) console.error("Error fetching pending:", pendingError);
     const pendingApprovals = pendingData?.length || 0;
 
     return {

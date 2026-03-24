@@ -1994,14 +1994,14 @@ export async function submitAnswerOffline(
  * Sync offline answers to server
  * ✅ FASE 3 Week 4: Updated to use versioned API with optimistic locking
  */
-export async function syncOfflineAnswers(attemptId: string): Promise<void> {
+export async function syncOfflineAnswers(attemptId: string): Promise<number> {
   try {
     const offlineAnswers = await getOfflineAnswers(attemptId);
     const answerIds = Object.keys(offlineAnswers);
 
     if (answerIds.length === 0) {
       console.log("No offline answers to sync");
-      return;
+      return 0;
     }
 
     console.log(
@@ -2013,6 +2013,7 @@ export async function syncOfflineAnswers(attemptId: string): Promise<void> {
       await import("./kuis-versioned-simple.api");
 
     // Sync each answer with version check
+    let syncCount = 0;
     for (const soalId of answerIds) {
       try {
         const answerId = `${attemptId}_${soalId}`;
@@ -2035,6 +2036,7 @@ export async function syncOfflineAnswers(attemptId: string): Promise<void> {
 
         if (result.success) {
           console.log(`[Synced] ${soalId}: Success`);
+          syncCount++;
           // Delete from offline storage after successful sync
           await indexedDBManager.delete(OFFLINE_STORES.ANSWERS, answerId);
         } else {
@@ -2046,7 +2048,8 @@ export async function syncOfflineAnswers(attemptId: string): Promise<void> {
       }
     }
 
-    console.log("Offline answers synced successfully");
+    console.log(`Offline answers synced successfully: ${syncCount}`);
+    return syncCount;
   } catch (error) {
     console.error("Failed to sync offline answers:", error);
     throw error;

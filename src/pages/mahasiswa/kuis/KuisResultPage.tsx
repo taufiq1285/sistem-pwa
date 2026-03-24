@@ -17,12 +17,17 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, ArrowLeft, Loader2 } from "lucide-react";
+import { AlertCircle, ArrowLeft, Loader2, WifiOff } from "lucide-react";
 import { QuizResult } from "@/components/features/kuis/result/QuizResult";
 import {
   getAttemptByIdForMahasiswa,
   canAttemptQuiz,
   gradeAnswer as gradeAnswerApi,
+  cacheAttemptOffline,
+  getCachedAttempt,
+  getCachedQuiz,
+  getCachedQuestions,
+  getOfflineAnswers,
 } from "@/lib/api/kuis.api";
 // ✅ SECURITY FIX: Import secure API to show jawaban_benar in results
 import { getSoalForResult } from "@/lib/api/kuis-secure.api";
@@ -58,6 +63,7 @@ export default function KuisResultPage() {
   const [answers, setAnswers] = useState<Jawaban[]>([]);
   const [attempt, setAttempt] = useState<AttemptKuis | null>(null);
   const [canRetake, setCanRetake] = useState(false);
+  const [isOfflineData, setIsOfflineData] = useState(false);
 
   // ============================================================================
   // EFFECTS
@@ -95,6 +101,57 @@ export default function KuisResultPage() {
       setLoading(true);
       setError(null);
 
+      if (!navigator.onLine) {
+        const cachedAttempt = await getCachedAttempt(attemptId);
+
+        if (!cachedAttempt) {
+          throw new Error(
+            "Perangkat sedang offline dan hasil tugas praktikum ini belum pernah disimpan di perangkat.",
+          );
+        }
+
+        const cachedQuiz =
+          ((cachedAttempt.kuis as Kuis | undefined) ?? null) ||
+          (kuisId ? await getCachedQuiz(kuisId) : null);
+
+        if (!cachedQuiz) {
+          throw new Error(
+            "Perangkat sedang offline dan detail tugas praktikum belum tersedia di penyimpanan lokal.",
+          );
+        }
+
+        const cachedQuestions =
+          (await getCachedQuestions(cachedQuiz.id)) ||
+          ((cachedQuiz.soal as Soal[]) ?? []);
+
+        const cachedAnswers =
+          ((cachedAttempt.jawaban as Jawaban[] | undefined) ?? []).length > 0
+            ? ((cachedAttempt.jawaban as Jawaban[]) ?? [])
+            : await Promise.all(
+                Object.entries(await getOfflineAnswers(attemptId)).map(
+                  async ([soalId, jawaban]) =>
+                    ({
+                      id: `${attemptId}-${soalId}`,
+                      attempt_id: attemptId,
+                      soal_id: soalId,
+                      jawaban_mahasiswa: jawaban,
+                      jawaban,
+                      poin_diperoleh: null,
+                      is_correct: null,
+                      feedback: null,
+                      is_synced: false,
+                    }) as Jawaban,
+                ),
+              );
+
+        setAttempt(cachedAttempt);
+        setQuiz(cachedQuiz);
+        setQuestions(cachedQuestions);
+        setAnswers(cachedAnswers);
+        setIsOfflineData(true);
+        return;
+      }
+
       // Load attempt with all related data
       const attemptData = await getAttemptByIdForMahasiswa(attemptId);
 
@@ -131,10 +188,12 @@ export default function KuisResultPage() {
         questionsData = (quizData.soal as Soal[]) || [];
       }
 
+      await cacheAttemptOffline(attemptData);
       setAttempt(attemptData);
       setQuiz(quizData);
       setQuestions(questionsData);
       setAnswers(answersData);
+      setIsOfflineData(false);
 
       // Auto-grade if needed
       await autoGradeAnswers(questionsData, answersData);
@@ -220,6 +279,11 @@ export default function KuisResultPage() {
   async function checkCanRetake() {
     if (!kuisId || !user?.mahasiswa?.id) return;
 
+    if (!navigator.onLine) {
+      setCanRetake(false);
+      return;
+    }
+
     try {
       const result = await canAttemptQuiz(kuisId, user.mahasiswa.id);
       setCanRetake(result.canAttempt);
@@ -288,15 +352,23 @@ export default function KuisResultPage() {
 
   // Success state - show results
   return (
-    <div className="container mx-auto py-6 max-w-6xl">
+    <div className="container mx-auto py-6 max-w-6xl space-y-4">
+      {isOfflineData && (
+        <Alert>
+          <WifiOff className="h-4 w-4" />
+          <AlertDescription>
+            Hasil tugas praktikum ini sedang ditampilkan dari snapshot lokal perangkat karena koneksi offline.
+          </AlertDescription>
+        </Alert>
+      )}
       <QuizResult
         quiz={quiz}
         questions={questions}
         answers={answers}
         attempt={attempt}
         onBack={handleBack}
-        onRetake={canRetake ? handleRetake : undefined}
-        canRetake={canRetake}
+        onRetake={!isOfflineData && canRetake ? handleRetake : undefined}
+        canRetake={!isOfflineData && canRetake}
       />
     </div>
   );

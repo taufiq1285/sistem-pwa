@@ -203,7 +203,7 @@ export default function SyncManagementPage() {
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">Total Failed</span>
-              <span className="text-2xl font-bold text-red-600 dark:text-red-400">
+              <span className="text-2xl font-bold text-danger">
                 {syncStats.syncStats.totalFailed}
               </span>
             </div>

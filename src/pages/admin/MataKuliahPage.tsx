@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DeleteConfirmDialog } from "@/components/common/DeleteConfirmDialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
@@ -42,9 +43,13 @@ import type {
   CreateMataKuliahData,
 } from "@/types/mata-kuliah.types";
 
+import { cacheAPI, getCachedData } from "@/lib/offline/api-cache";
+
 export default function MataKuliahPage() {
   const [mataKuliahList, setMataKuliahList] = useState<MataKuliah[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isOfflineData, setIsOfflineData] = useState(false);
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<number | null>(null);
 
   const [showDialog, setShowDialog] = useState(false);
   const [editingMK, setEditingMK] = useState<MataKuliah | null>(null);
@@ -67,18 +72,58 @@ export default function MataKuliahPage() {
   );
   const [showCascadeDialog, setShowCascadeDialog] = useState(false);
 
+  const lastUpdatedLabel = useMemo(() => {
+    if (!lastUpdatedAt) {
+      return null;
+    }
+
+    return new Date(lastUpdatedAt).toLocaleString("id-ID", {
+      dateStyle: "medium",
+      timeStyle: "short",
+    });
+  }, [lastUpdatedAt]);
+
   // Load mata kuliah
   useEffect(() => {
     loadMataKuliah();
   }, []);
 
-  const loadMataKuliah = async () => {
+  const loadMataKuliah = async (forceRefresh = false) => {
     setIsLoading(true);
     try {
-      const data = await getMataKuliah();
+      const cacheKey = "admin_mata_kuliah_list";
+      const cachedEntry = await getCachedData<MataKuliah[]>(cacheKey);
+      const hasCachedData = Array.isArray(cachedEntry?.data);
+
+      if (hasCachedData) {
+        setMataKuliahList(cachedEntry.data);
+        setIsOfflineData(!navigator.onLine);
+        setLastUpdatedAt(cachedEntry.timestamp || null);
+        setIsLoading(false);
+      }
+
+      if (forceRefresh && !navigator.onLine) {
+        throw new Error(
+          hasCachedData
+            ? "Perangkat sedang offline. Menampilkan snapshot mata kuliah terakhir."
+            : "Perangkat sedang offline dan belum ada snapshot mata kuliah tersimpan.",
+        );
+      }
+
+      const data = await cacheAPI(cacheKey, () => getMataKuliah(), {
+        ttl: 10 * 60 * 1000,
+        forceRefresh,
+        staleWhileRevalidate: true,
+      });
       setMataKuliahList(data);
+      setIsOfflineData(false);
+      setLastUpdatedAt(Date.now());
     } catch (error: any) {
-      toast.error("Gagal memuat mata kuliah", { description: error.message });
+      if (!navigator.onLine) {
+        setIsOfflineData(true);
+      } else {
+        toast.error("Gagal memuat mata kuliah", { description: error.message });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -126,7 +171,7 @@ export default function MataKuliahPage() {
         toast.success("Mata kuliah berhasil ditambahkan");
       }
 
-      await loadMataKuliah();
+      await loadMataKuliah(true);
       setShowDialog(false);
     } catch (error: any) {
       toast.error(editingMK ? "Gagal memperbarui" : "Gagal menambahkan", {
@@ -156,7 +201,7 @@ export default function MataKuliahPage() {
       setShowCascadeDialog(false);
       setDeletingMK(null);
       setCascadeInfo(null);
-      await loadMataKuliah();
+      await loadMataKuliah(true);
     } catch (error: any) {
       // Check if error is about active kelas
       if (
@@ -285,6 +330,15 @@ export default function MataKuliahPage() {
           Tambah Mata Kuliah
         </Button>
       </div>
+
+      {(isOfflineData || !navigator.onLine) && (
+        <Alert className="border-warning/40 bg-warning/10">
+          <AlertDescription>
+            Data mata kuliah sedang memakai snapshot lokal dari perangkat.
+            {lastUpdatedLabel ? ` Pembaruan terakhir: ${lastUpdatedLabel}.` : ""}
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Data Table */}
       <Card className="border-0 shadow-xl">

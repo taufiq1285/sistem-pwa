@@ -70,6 +70,31 @@ const ButtonEnhanced = React.forwardRef<HTMLButtonElement, ButtonEnhancedProps>(
   ) => {
     const Comp = asChild ? Slot : "button";
     const isDisabled = disabled || loading;
+    const content = (
+      <>
+        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : leadingIcon}
+        {loading && loadingText ? loadingText : children}
+        {!loading ? trailingIcon : null}
+      </>
+    );
+
+    if (asChild && React.isValidElement(children)) {
+      return (
+        <Comp
+          className={cn(buttonEnhancedVariants({ variant, size, className }))}
+          ref={ref}
+          disabled={isDisabled}
+          aria-busy={loading || undefined}
+          {...props}
+        >
+          {React.cloneElement(
+            children as React.ReactElement<{ children?: React.ReactNode }>,
+            undefined,
+            content,
+          )}
+        </Comp>
+      );
+    }
 
     return (
       <Comp
@@ -79,9 +104,7 @@ const ButtonEnhanced = React.forwardRef<HTMLButtonElement, ButtonEnhancedProps>(
         aria-busy={loading || undefined}
         {...props}
       >
-        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : leadingIcon}
-        {loading && loadingText ? loadingText : children}
-        {!loading ? trailingIcon : null}
+        {content}
       </Comp>
     );
   },

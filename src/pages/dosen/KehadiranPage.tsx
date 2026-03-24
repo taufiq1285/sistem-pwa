@@ -10,12 +10,12 @@
  * - Clean, modern UI without view/report
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { toast } from "sonner";
 import { getMyKelas } from "@/lib/api/dosen.api";
 import { getMataKuliah } from "@/lib/api/mata-kuliah.api";
-import { cacheAPI } from "@/lib/offline/api-cache";
+import { cacheAPI, getCachedData } from "@/lib/offline/api-cache";
 import { supabase } from "@/lib/supabase/client";
 import {
   BookOpen,
@@ -30,6 +30,7 @@ import {
   X,
   Download,
   History,
+  WifiOff,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -121,13 +122,13 @@ const STATUS_OPTIONS: {
   {
     value: "sakit",
     label: "Sakit",
-    color: "bg-yellow-100 text-yellow-800 border-yellow-300",
+    color: "bg-warning/10 text-warning border-warning/40",
     icon: "🏥",
   },
   {
     value: "alpha",
     label: "Alpha",
-    color: "bg-red-100 text-red-800 border-red-300",
+    color: "bg-danger/10 text-danger border-danger/40",
     icon: "✗",
   },
 ];
@@ -162,6 +163,8 @@ export default function DosenKehadiranPage() {
     AttendanceRecord[]
   >([]);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [isOfflineData, setIsOfflineData] = useState(false);
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<number | null>(null);
 
   // Filters
   const [tahunAjaranFilter, setTahunAjaranFilter] = useState<string>("__all__");
@@ -171,6 +174,26 @@ export default function DosenKehadiranPage() {
 
   // Tabs
   const [activeTab, setActiveTab] = useState<"input" | "history">("input");
+
+  const cacheKeys = useMemo(
+    () => ({
+      mataKuliah: user?.dosen?.id ? `dosen_mk_kehadiran_${user.dosen.id}` : null,
+      kelas: user?.dosen?.id ? `dosen_kelas_kehadiran_${user.dosen.id}` : null,
+      mahasiswa: selectedKelas ? `dosen_kehadiran_mahasiswa_${selectedKelas}` : null,
+    }),
+    [selectedKelas, user?.dosen?.id],
+  );
+
+  const lastUpdatedLabel = useMemo(() => {
+    if (!lastUpdatedAt) {
+      return null;
+    }
+
+    return new Date(lastUpdatedAt).toLocaleString("id-ID", {
+      dateStyle: "medium",
+      timeStyle: "short",
+    });
+  }, [lastUpdatedAt]);
 
   // ============================================================================
   // EFFECTS
@@ -205,38 +228,71 @@ export default function DosenKehadiranPage() {
   const loadMataKuliah = async (forceRefresh = false) => {
     try {
       setLoading(true);
+      if (!cacheKeys.mataKuliah || !cacheKeys.kelas) {
+        return;
+      }
 
-      // Use cacheAPI with stale-while-revalidate for offline support
-      const mataKuliahData = await cacheAPI(
-        `dosen_mk_kehadiran_${user?.dosen?.id}`,
-        () => getMataKuliah(),
-        {
-          ttl: 20 * 60 * 1000, // 20 minutes (mata kuliah jarang berubah)
-          forceRefresh,
-          staleWhileRevalidate: true,
-        },
-      );
+      const [cachedMataKuliahEntry, cachedKelasEntry] = await Promise.all([
+        getCachedData<any[]>(cacheKeys.mataKuliah),
+        getCachedData<any[]>(cacheKeys.kelas),
+      ]);
 
-      console.log(
-        "🔍 DEBUG KehadiranPage: Fetched mata kuliah =",
-        mataKuliahData,
-      );
+      if (cachedMataKuliahEntry?.data) {
+        const cachedMataKuliah = cachedMataKuliahEntry.data.map((mk: any) => ({
+          id: mk.id,
+          nama_mk: mk.nama_mk,
+          kode_mk: mk.kode_mk,
+        }));
+        setMataKuliahList(cachedMataKuliah);
+        setIsOfflineData(true);
+        setLastUpdatedAt(cachedMataKuliahEntry.timestamp);
+      }
 
-      // Convert to dropdown format
+      if (cachedKelasEntry?.data) {
+        const tahunAjaranSet = new Set<string>();
+        const semesterSet = new Set<number>();
+        cachedKelasEntry.data.forEach((k: any) => {
+          if (k.tahun_ajaran) tahunAjaranSet.add(k.tahun_ajaran);
+          if (k.semester_ajaran) semesterSet.add(k.semester_ajaran);
+        });
+        setTahunAjaranOptions(Array.from(tahunAjaranSet).sort().reverse());
+        setSemesterOptions(Array.from(semesterSet).sort((a, b) => a - b));
+        setLastUpdatedAt((current) =>
+          Math.max(current ?? 0, cachedKelasEntry.timestamp),
+        );
+      }
+
+      const [mataKuliahData, kelasData] = await Promise.all([
+        cacheAPI(
+          cacheKeys.mataKuliah,
+          () => getMataKuliah(),
+          {
+            ttl: 20 * 60 * 1000,
+            forceRefresh,
+            staleWhileRevalidate: true,
+          },
+        ),
+        cacheAPI(
+          cacheKeys.kelas,
+          () => getMyKelas(),
+          {
+            ttl: 15 * 60 * 1000,
+            forceRefresh,
+            staleWhileRevalidate: true,
+          },
+        ),
+      ]);
+
       const mataKuliahArray = mataKuliahData.map((mk: any) => ({
         id: mk.id,
         nama_mk: mk.nama_mk,
         kode_mk: mk.kode_mk,
       }));
 
-      console.log("🔍 DEBUG KehadiranPage: mataKuliahArray =", mataKuliahArray);
       setMataKuliahList(mataKuliahArray);
+      setIsOfflineData(false);
+      setLastUpdatedAt(Date.now());
 
-      // Get kelas for filter options only
-      const kelasData = await getMyKelas();
-      console.log("🔍 DEBUG KehadiranPage: kelasData =", kelasData);
-
-      // Extract unique filter options
       const tahunAjaranSet = new Set<string>();
       const semesterSet = new Set<number>();
       kelasData.forEach((k: any) => {
@@ -244,13 +300,8 @@ export default function DosenKehadiranPage() {
         if (k.semester_ajaran) semesterSet.add(k.semester_ajaran);
       });
 
-      const tahunOptions = Array.from(tahunAjaranSet).sort().reverse(); // Terbaru dulu
-      const semOptions = Array.from(semesterSet).sort((a, b) => a - b);
-
-      setTahunAjaranOptions(tahunOptions);
-      setSemesterOptions(semOptions);
-
-      console.log("🔍 DEBUG Filter options:", { tahunOptions, semOptions });
+      setTahunAjaranOptions(Array.from(tahunAjaranSet).sort().reverse());
+      setSemesterOptions(Array.from(semesterSet).sort((a, b) => a - b));
     } catch (error) {
       console.error("Error loading mata kuliah:", error);
       toast.error("Gagal memuat daftar mata kuliah");
@@ -262,34 +313,54 @@ export default function DosenKehadiranPage() {
   const loadKelas = async (mataKuliahId: string, forceRefresh = false) => {
     try {
       setLoading(true);
+      if (!cacheKeys.kelas) {
+        return;
+      }
 
-      console.log(
-        "🔍 DEBUG KehadiranPage loadKelas: mataKuliahId =",
-        mataKuliahId,
-      );
-      console.log("🔍 DEBUG KehadiranPage: mataKuliahList =", mataKuliahList);
+      const cachedKelasEntry = await getCachedData<any[]>(cacheKeys.kelas);
+      if (cachedKelasEntry?.data) {
+        const filteredCachedKelas = cachedKelasEntry.data.filter((kelas) => {
+          if (
+            tahunAjaranFilter &&
+            tahunAjaranFilter !== "__all__" &&
+            kelas.tahun_ajaran !== tahunAjaranFilter
+          )
+            return false;
 
-      // Use cacheAPI for offline support
+          if (
+            semesterFilter &&
+            semesterFilter !== "__all__" &&
+            kelas.semester_ajaran.toString() !== semesterFilter
+          )
+            return false;
+
+          return true;
+        });
+
+        setKelasList(
+          filteredCachedKelas.map((kelas: any) => ({
+            id: kelas.id,
+            nama_kelas: kelas.nama_kelas,
+            kode_kelas: kelas.kode_kelas || "",
+          })),
+        );
+        setIsOfflineData(true);
+        setLastUpdatedAt((current) =>
+          Math.max(current ?? 0, cachedKelasEntry.timestamp),
+        );
+      }
+
       const allKelas = await cacheAPI(
-        `dosen_kelas_kehadiran_${user?.dosen?.id}`,
+        cacheKeys.kelas,
         () => getMyKelas(),
         {
-          ttl: 15 * 60 * 1000, // 15 minutes
+          ttl: 15 * 60 * 1000,
           forceRefresh,
           staleWhileRevalidate: true,
         },
       );
-      console.log("🔍 DEBUG KehadiranPage: allKelas =", allKelas);
 
-      // Mata kuliah selected (for attendance record only, not for filtering kelas)
-      console.log(
-        "🔍 DEBUG KehadiranPage: Selected mata kuliah =",
-        mataKuliahId,
-      );
-
-      // Filter kelas by tahun ajaran and semester (mata kuliah independent)
       const filteredKelas = allKelas.filter((kelas) => {
-        // Filter by tahun ajaran if selected
         if (
           tahunAjaranFilter &&
           tahunAjaranFilter !== "__all__" &&
@@ -297,7 +368,6 @@ export default function DosenKehadiranPage() {
         )
           return false;
 
-        // Filter by semester if selected
         if (
           semesterFilter &&
           semesterFilter !== "__all__" &&
@@ -307,9 +377,7 @@ export default function DosenKehadiranPage() {
 
         return true;
       });
-      console.log("🔍 DEBUG KehadiranPage: filteredKelas =", filteredKelas);
 
-      // Transform to KelasOption format
       const uniqueKelas = filteredKelas.map((kelas: any) => ({
         id: kelas.id,
         nama_kelas: kelas.nama_kelas,
@@ -317,6 +385,8 @@ export default function DosenKehadiranPage() {
       }));
 
       setKelasList(uniqueKelas);
+      setIsOfflineData(false);
+      setLastUpdatedAt(Date.now());
     } catch (error) {
       console.error("Error loading kelas:", error);
       toast.error("Gagal memuat daftar kelas");
@@ -325,44 +395,69 @@ export default function DosenKehadiranPage() {
     }
   };
 
-  const loadMahasiswaForKehadiran = async (kelasId: string) => {
+  const loadMahasiswaForKehadiran = async (
+    kelasId: string,
+    forceRefresh = false,
+  ) => {
     try {
       setLoading(true);
+      const mahasiswaCacheKey = `dosen_kehadiran_mahasiswa_${kelasId}`;
 
-      // Get all mahasiswa in this kelas
-      const { data: mahasiswaData, error: mahasiswaError } = await supabase
-        .from("kelas_mahasiswa")
-        .select("mahasiswa_id, mahasiswa(id, nim, user_id)")
-        .eq("kelas_id", kelasId)
-        .eq("is_active", true)
-        .limit(100);
-
-      if (mahasiswaError) throw mahasiswaError;
-
-      // Get user data for names
-      const mahasiswaIds = (mahasiswaData || []).map(
-        (m) => m.mahasiswa.user_id,
+      const cachedMahasiswaEntry = await getCachedData<AttendanceRecord[]>(
+        mahasiswaCacheKey,
       );
-      const { data: usersData } = await supabase
-        .from("users")
-        .select("id, full_name")
-        .in("id", mahasiswaIds);
+      if (cachedMahasiswaEntry?.data) {
+        setAttendanceRecords(cachedMahasiswaEntry.data);
+        setHasUnsavedChanges(false);
+        setIsOfflineData(true);
+        setLastUpdatedAt((current) =>
+          Math.max(current ?? 0, cachedMahasiswaEntry.timestamp),
+        );
+      }
 
-      const usersMap = new Map(
-        usersData?.map((u) => [u.id, u.full_name]) || [],
+      const records = await cacheAPI(
+        mahasiswaCacheKey,
+        async () => {
+          const { data: mahasiswaData, error: mahasiswaError } = await supabase
+            .from("kelas_mahasiswa")
+            .select("mahasiswa_id, mahasiswa(id, nim, user_id)")
+            .eq("kelas_id", kelasId)
+            .eq("is_active", true)
+            .limit(100);
+
+          if (mahasiswaError) throw mahasiswaError;
+
+          const mahasiswaIds = (mahasiswaData || []).map(
+            (m) => m.mahasiswa.user_id,
+          );
+          const { data: usersData } = await supabase
+            .from("users")
+            .select("id, full_name")
+            .in("id", mahasiswaIds);
+
+          const usersMap = new Map(
+            usersData?.map((u) => [u.id, u.full_name]) || [],
+          );
+
+          return (mahasiswaData || []).map((item: any) => ({
+            mahasiswa_id: item.mahasiswa_id,
+            nim: item.mahasiswa.nim,
+            nama: usersMap.get(item.mahasiswa.user_id) || "-",
+            status: "hadir" as KehadiranStatus,
+            keterangan: "",
+          }));
+        },
+        {
+          ttl: 5 * 60 * 1000,
+          forceRefresh,
+          staleWhileRevalidate: true,
+        },
       );
-
-      // Map to attendance records (default: hadir)
-      const records = (mahasiswaData || []).map((item: any) => ({
-        mahasiswa_id: item.mahasiswa_id,
-        nim: item.mahasiswa.nim,
-        nama: usersMap.get(item.mahasiswa.user_id) || "-",
-        status: "hadir" as KehadiranStatus,
-        keterangan: "",
-      }));
 
       setAttendanceRecords(records);
       setHasUnsavedChanges(false);
+      setIsOfflineData(false);
+      setLastUpdatedAt(Date.now());
     } catch (error) {
       console.error("Error loading mahasiswa:", error);
       toast.error("Gagal memuat data mahasiswa");
@@ -499,6 +594,82 @@ export default function DosenKehadiranPage() {
     return timeString.slice(0, 5);
   };
 
+  useEffect(() => {
+    const handleCacheUpdated = (event: Event) => {
+      const customEvent = event as CustomEvent<{ key: string; data: unknown }>;
+      const updatedKey = customEvent.detail?.key;
+
+      if (!updatedKey) {
+        return;
+      }
+
+      if (updatedKey === cacheKeys.mataKuliah && Array.isArray(customEvent.detail.data)) {
+        const mataKuliahData = customEvent.detail.data as any[];
+        setMataKuliahList(
+          mataKuliahData.map((mk) => ({
+            id: mk.id,
+            nama_mk: mk.nama_mk,
+            kode_mk: mk.kode_mk,
+          })),
+        );
+        setIsOfflineData(false);
+        setLastUpdatedAt(Date.now());
+        return;
+      }
+
+      if (updatedKey === cacheKeys.kelas && Array.isArray(customEvent.detail.data)) {
+        const kelasData = customEvent.detail.data as any[];
+        const filteredKelas = kelasData.filter((kelas) => {
+          if (
+            tahunAjaranFilter &&
+            tahunAjaranFilter !== "__all__" &&
+            kelas.tahun_ajaran !== tahunAjaranFilter
+          )
+            return false;
+
+          if (
+            semesterFilter &&
+            semesterFilter !== "__all__" &&
+            kelas.semester_ajaran.toString() !== semesterFilter
+          )
+            return false;
+
+          return true;
+        });
+
+        setKelasList(
+          filteredKelas.map((kelas: any) => ({
+            id: kelas.id,
+            nama_kelas: kelas.nama_kelas,
+            kode_kelas: kelas.kode_kelas || "",
+          })),
+        );
+        setIsOfflineData(false);
+        setLastUpdatedAt(Date.now());
+        return;
+      }
+
+      if (
+        cacheKeys.mahasiswa &&
+        updatedKey === cacheKeys.mahasiswa &&
+        Array.isArray(customEvent.detail.data)
+      ) {
+        setAttendanceRecords(customEvent.detail.data as AttendanceRecord[]);
+        setHasUnsavedChanges(false);
+        setIsOfflineData(false);
+        setLastUpdatedAt(Date.now());
+      }
+    };
+
+    window.addEventListener("cache:updated", handleCacheUpdated as EventListener);
+    return () => {
+      window.removeEventListener(
+        "cache:updated",
+        handleCacheUpdated as EventListener,
+      );
+    };
+  }, [cacheKeys.kelas, cacheKeys.mahasiswa, cacheKeys.mataKuliah, semesterFilter, tahunAjaranFilter]);
+
   // Calculate stats
   const stats = {
     hadir: attendanceRecords.filter((r) => r.status === "hadir").length,
@@ -529,6 +700,16 @@ export default function DosenKehadiranPage() {
             </p>
           </div>
         </div>
+
+        {(isOfflineData || !navigator.onLine) && (
+          <Alert className="border-warning/40 bg-warning/10 text-foreground shadow-sm">
+            <WifiOff className="h-4 w-4" />
+            <AlertDescription>
+              Halaman kehadiran dosen sedang memakai snapshot lokal dari perangkat.
+              {lastUpdatedLabel ? ` Pembaruan terakhir: ${lastUpdatedLabel}.` : ""}
+            </AlertDescription>
+          </Alert>
+        )}
 
         {/* Filter Card */}
         {(tahunAjaranOptions.length > 0 || semesterOptions.length > 0) && (
@@ -621,7 +802,7 @@ export default function DosenKehadiranPage() {
               "border-2 transition-all shadow-lg hover:shadow-xl",
               selectedMataKuliah
                 ? "border-success/50 bg-success/5"
-                : "border-gray-200",
+                : "border-border/50",
             )}
           >
             <CardHeader className="pb-3">
@@ -631,7 +812,7 @@ export default function DosenKehadiranPage() {
                     "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold",
                     selectedMataKuliah
                       ? "bg-success text-primary-foreground"
-                      : "bg-gray-200 text-gray-600",
+                      : "bg-muted text-muted-foreground",
                   )}
                 >
                   1
@@ -678,7 +859,7 @@ export default function DosenKehadiranPage() {
               !selectedMataKuliah && "opacity-50",
               selectedKelas
                 ? "border-success/50 bg-success/5"
-                : "border-gray-200",
+                : "border-border/50",
             )}
           >
             <CardHeader className="pb-3">
@@ -688,7 +869,7 @@ export default function DosenKehadiranPage() {
                     "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold",
                     selectedKelas
                       ? "bg-success text-primary-foreground"
-                      : "bg-gray-200 text-gray-600",
+                      : "bg-muted text-muted-foreground",
                   )}
                 >
                   2
@@ -737,7 +918,7 @@ export default function DosenKehadiranPage() {
               !selectedKelas && "opacity-50",
               selectedTanggal
                 ? "border-success/50 bg-success/5"
-                : "border-gray-200",
+                : "border-border/50",
             )}
           >
             <CardHeader className="pb-3">
@@ -747,7 +928,7 @@ export default function DosenKehadiranPage() {
                     "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold",
                     selectedTanggal
                       ? "bg-success text-primary-foreground"
-                      : "bg-gray-200 text-gray-600",
+                      : "bg-muted text-muted-foreground",
                   )}
                 >
                   3
@@ -837,14 +1018,14 @@ export default function DosenKehadiranPage() {
             <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-6 rounded-xl p-1 h-auto bg-linear-to-r from-primary/10 to-accent/10 dark:from-primary/20 dark:to-accent/20">
               <TabsTrigger
                 value="input"
-                className="gap-2 rounded-lg py-2.5 font-semibold data-[state=active]:bg-white data-[state=active]:shadow-md dark:data-[state=active]:bg-slate-900"
+                className="gap-2 rounded-lg py-2.5 font-semibold data-[state=active]:bg-white data-[state=active]:shadow-md dark:data-[state=active]:bg-card"
               >
                 <Calendar className="h-4 w-4" />
                 Input Kehadiran
               </TabsTrigger>
               <TabsTrigger
                 value="history"
-                className="gap-2 rounded-lg py-2.5 font-semibold data-[state=active]:bg-white data-[state=active]:shadow-md dark:data-[state=active]:bg-slate-900"
+                className="gap-2 rounded-lg py-2.5 font-semibold data-[state=active]:bg-white data-[state=active]:shadow-md dark:data-[state=active]:bg-card"
               >
                 <History className="h-4 w-4" />
                 Riwayat
@@ -1019,8 +1200,8 @@ export default function DosenKehadiranPage() {
         {!selectedKelas && (
           <Card className="border-2 border-dashed">
             <CardContent className="flex flex-col items-center justify-center py-16">
-              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                <Users className="h-8 w-8 text-gray-400" />
+              <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
+                <Users className="h-8 w-8 text-muted-foreground" />
               </div>
               <h3 className="text-lg font-semibold mb-2">
                 Pilih Mata Kuliah dan Kelas

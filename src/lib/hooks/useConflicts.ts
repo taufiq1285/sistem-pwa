@@ -8,8 +8,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { useAuth } from "./useAuth";
-import { cacheAPI } from "@/lib/offline/api-cache";
-import type { CacheEntry } from "@/lib/offline/api-cache";
+import { cacheAPI, getCachedData } from "@/lib/offline/api-cache";
 
 export interface ConflictData {
   id: string;
@@ -43,7 +42,7 @@ interface UseConflictsReturn {
   pendingConflicts: ConflictData[];
   loading: boolean;
   error: Error | null;
-  refreshConflicts: () => Promise<void>;
+  refreshConflicts: (forceRefresh?: boolean) => Promise<void>;
   resolveConflict: (
     conflictId: string,
     resolvedData: any,
@@ -60,7 +59,7 @@ export function useConflicts(): UseConflictsReturn {
   const [error, setError] = useState<Error | null>(null);
 
   // Fetch conflicts from database
-  const fetchConflicts = useCallback(async () => {
+  const fetchConflicts = useCallback(async (forceRefresh = false) => {
     if (!user) {
       setConflicts([]);
       setLoading(false);
@@ -74,9 +73,46 @@ export function useConflicts(): UseConflictsReturn {
       setLoading(true);
       setError(null);
 
+      const cacheKey = `conflicts_${user.id}`;
+      const transformConflicts = (rows: any[]): ConflictData[] =>
+        (rows || []).map((row: any) => ({
+          id: row.id,
+          queue_item_id: row.queue_item_id,
+          user_id: row.user_id,
+          table_name: row.table_name,
+          record_id: row.record_id,
+          client_data: row.client_data,
+          server_data: row.remote_data,
+          resolution_strategy: row.resolution_strategy,
+          resolved_data: row.resolved_data,
+          resolved_by: row.resolved_by,
+          resolved_at: row.resolved_at,
+          created_at: row.created_at,
+          local_version: row.local_version,
+          remote_version: row.remote_version,
+          status: row.status,
+          winner: row.winner,
+        }));
+
+      const cachedEntry = await getCachedData<any[]>(cacheKey);
+      const cachedRows = Array.isArray(cachedEntry?.data) ? cachedEntry.data : null;
+
+      if (cachedRows) {
+        setConflicts(transformConflicts(cachedRows));
+        setLoading(false);
+      }
+
+      if (forceRefresh && isOffline) {
+        throw new Error(
+          cachedRows
+            ? "Perangkat sedang offline. Menampilkan konflik tersimpan terakhir."
+            : "Perangkat sedang offline dan belum ada data konflik tersimpan.",
+        );
+      }
+
       // ✅ Use cacheAPI for offline support
       const data = await cacheAPI(
-        `conflicts_${user.id}`,
+        cacheKey,
         async () => {
           const { data, error: fetchError } = await supabase
             .from("conflict_log")
@@ -89,32 +125,13 @@ export function useConflicts(): UseConflictsReturn {
           return data;
         },
         {
-          ttl: 5 * 60 * 1000, // 5 minutes cache
+          ttl: 5 * 60 * 1000,
           staleWhileRevalidate: true,
+          forceRefresh,
         },
       );
 
-      // Transform database rows to ConflictData interface
-      const transformedData: ConflictData[] = (data || []).map((row: any) => ({
-        id: row.id,
-        queue_item_id: row.queue_item_id,
-        user_id: row.user_id,
-        table_name: row.table_name,
-        record_id: row.record_id,
-        client_data: row.client_data,
-        server_data: row.remote_data, // remote_data maps to server_data
-        resolution_strategy: row.resolution_strategy,
-        resolved_data: row.resolved_data,
-        resolved_by: row.resolved_by,
-        resolved_at: row.resolved_at,
-        created_at: row.created_at,
-        local_version: row.local_version,
-        remote_version: row.remote_version,
-        status: row.status,
-        winner: row.winner,
-      }));
-
-      setConflicts(transformedData);
+      setConflicts(transformConflicts(data || []));
 
       if (isOffline) {
         console.log("ℹ️ Offline mode - showing cached conflicts");
@@ -144,9 +161,12 @@ export function useConflicts(): UseConflictsReturn {
   const pendingConflicts = conflicts.filter((c) => c.status === "pending");
 
   // Refresh conflicts
-  const refreshConflicts = useCallback(async () => {
-    await fetchConflicts();
-  }, [fetchConflicts]);
+  const refreshConflicts = useCallback(
+    async (forceRefresh = false) => {
+      await fetchConflicts(forceRefresh);
+    },
+    [fetchConflicts],
+  );
 
   // Resolve conflict
   const resolveConflict = useCallback(

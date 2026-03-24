@@ -679,7 +679,7 @@ export default function DosenLogbookReviewPage() {
               {/* Feedback Form */}
               <div>
                 <Label htmlFor="feedback">
-                  Feedback Dosen <span className="text-red-500">*</span>
+                  Feedback Dosen <span className="text-danger">*</span>
                 </Label>
                 <Textarea
                   id="feedback"

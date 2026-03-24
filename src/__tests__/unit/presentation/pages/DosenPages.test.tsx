@@ -17,6 +17,7 @@ const { mockUseAuth, mockCacheAPI, mockNavigate, mockToast } = vi.hoisted(
 vi.mock("@/lib/hooks/useAuth", () => ({ useAuth: () => mockUseAuth() }));
 vi.mock("@/lib/offline/api-cache", () => ({
   cacheAPI: (...a: unknown[]) => mockCacheAPI(...a),
+  getCachedData: vi.fn().mockResolvedValue(null),
   invalidateCache: vi.fn(),
 }));
 vi.mock("react-router-dom", async (orig) => {
@@ -45,6 +46,9 @@ vi.mock("@/lib/api/mata-kuliah.api", () => ({
 }));
 vi.mock("@/lib/api/kuis.api", () => ({
   getKuis: vi.fn(),
+  cacheAttemptOffline: vi.fn(),
+  syncOfflineAnswers: vi.fn(),
+  getCachedAttempt: vi.fn().mockResolvedValue(null),
 }));
 vi.mock("@/lib/supabase/client", () => ({
   supabase: {
@@ -80,7 +84,14 @@ vi.mock("@/components/features/kuis/QuizCard", () => ({
   QuizCard: ({ quiz }: any) => <div data-testid="quiz-card">{quiz.judul}</div>,
 }));
 vi.mock("@/lib/offline/network-detector", () => ({
-  networkDetector: { isOnline: vi.fn(() => true) },
+  networkDetector: {
+    isOnline: vi.fn(() => true),
+    getStatus: vi.fn(() => "online"),
+    isReady: vi.fn(() => true),
+    initialize: vi.fn(),
+    on: vi.fn(),
+    off: vi.fn(),
+  },
 }));
 
 import * as materiApi from "@/lib/api/materi.api";

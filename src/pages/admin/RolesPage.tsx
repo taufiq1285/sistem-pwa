@@ -197,7 +197,7 @@ export default function RolesPage() {
       users: stats.admin,
       permissions: ROLE_PERMISSIONS.admin,
       variant: "default",
-      color: "bg-blue-500",
+      color: "bg-primary",
     },
     {
       name: "Dosen",
@@ -207,7 +207,7 @@ export default function RolesPage() {
       users: stats.dosen,
       permissions: ROLE_PERMISSIONS.dosen,
       variant: "secondary",
-      color: "bg-purple-500",
+      color: "bg-accent",
     },
     {
       name: "Mahasiswa",
@@ -216,7 +216,7 @@ export default function RolesPage() {
       users: stats.mahasiswa,
       permissions: ROLE_PERMISSIONS.mahasiswa,
       variant: "outline",
-      color: "bg-green-500",
+      color: "bg-success",
     },
     {
       name: "Laboran",
@@ -225,7 +225,7 @@ export default function RolesPage() {
       users: stats.laboran,
       permissions: ROLE_PERMISSIONS.laboran,
       variant: "destructive",
-      color: "bg-orange-500",
+      color: "bg-warning",
     },
   ];
 
@@ -339,20 +339,20 @@ export default function RolesPage() {
                     </p>
                     <p className="text-4xl font-extrabold">{stats.total}</p>
                   </div>
-                  <UsersIcon className="h-8 w-8 text-blue-600" />
+                  <UsersIcon className="h-8 w-8 text-primary" />
                 </div>
-                <div className="flex items-center justify-between p-5 border-2 rounded-lg bg-linear-to-r from-green-50 to-green-100">
+                <div className="flex items-center justify-between p-5 border-2 rounded-lg bg-success/5">
                   <div>
                     <p className="text-base font-semibold text-muted-foreground">
                       Active Users
                     </p>
-                    <p className="text-4xl font-extrabold text-green-600">
+                    <p className="text-4xl font-extrabold text-success">
                       {stats.active}
                     </p>
                   </div>
                   <Badge
                     variant="outline"
-                    className="bg-green-50 text-green-700 font-semibold"
+                    className="bg-success/10 text-success font-semibold"
                   >
                     Active
                   </Badge>
@@ -362,7 +362,7 @@ export default function RolesPage() {
                     <p className="text-base font-semibold text-muted-foreground">
                       Inactive Users
                     </p>
-                    <p className="text-4xl font-extrabold text-gray-600">
+                    <p className="text-4xl font-extrabold text-muted-foreground">
                       {stats.inactive}
                     </p>
                   </div>
@@ -375,15 +375,15 @@ export default function RolesPage() {
           </Card>
 
           {/* Info Card */}
-          <Card className="border-2 border-blue-200 bg-blue-50/50 shadow-xl">
+          <Card className="border-2 border-primary/20 bg-primary/5 shadow-xl">
             <CardContent className="pt-6 p-6">
               <div className="flex items-start gap-3">
-                <FileText className="h-5 w-5 text-blue-600 mt-0.5" />
+                <FileText className="h-5 w-5 text-primary mt-0.5" />
                 <div className="space-y-1">
-                  <p className="font-medium text-blue-900">
+                  <p className="font-medium text-primary">
                     About Roles & Permissions
                   </p>
-                  <p className="text-sm text-blue-700">
+                  <p className="text-sm text-primary/80">
                     Permissions are defined in the application code and enforced
                     through route guards and API access controls. Each role has
                     specific capabilities designed for their responsibilities in
@@ -414,7 +414,7 @@ export default function RolesPage() {
             <div className="space-y-6">
               {/* Stats */}
               <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 border-2 rounded-lg bg-blue-50">
+                <div className="p-4 border-2 rounded-lg bg-primary/5">
                   <p className="text-base font-semibold text-muted-foreground">
                     Active Users
                   </p>
@@ -422,7 +422,7 @@ export default function RolesPage() {
                     {selectedRole.users}
                   </p>
                 </div>
-                <div className="p-4 border-2 rounded-lg bg-purple-50">
+                <div className="p-4 border-2 rounded-lg bg-accent/5">
                   <p className="text-base font-semibold text-muted-foreground">
                     Total Permissions
                   </p>
@@ -447,7 +447,7 @@ export default function RolesPage() {
                     <ul className="space-y-2 ml-6">
                       {category.permissions.map((perm, permIdx) => (
                         <li key={permIdx} className="flex items-start gap-2">
-                          <span className="text-green-600 mt-1">✓</span>
+                          <span className="text-success mt-1">✓</span>
                           <span className="text-sm">{perm}</span>
                         </li>
                       ))}

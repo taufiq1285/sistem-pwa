@@ -17,6 +17,7 @@ const { mockUseAuth, mockCacheAPI, mockNavigate, mockToast } = vi.hoisted(
 vi.mock("@/lib/hooks/useAuth", () => ({ useAuth: () => mockUseAuth() }));
 vi.mock("@/lib/offline/api-cache", () => ({
   cacheAPI: (...a: unknown[]) => mockCacheAPI(...a),
+  getCachedData: vi.fn().mockResolvedValue(null),
   invalidateCache: vi.fn(),
 }));
 vi.mock("react-router-dom", async (orig) => {
@@ -69,6 +70,9 @@ vi.mock("@/lib/api/kuis.api", () => ({
   getAttemptDetail: vi.fn(),
   getKuisById: vi.fn(),
   gradeAnswer: vi.fn(),
+  getCachedAttempt: vi.fn().mockResolvedValue(null),
+  syncOfflineAnswers: vi.fn(),
+  cacheAttemptOffline: vi.fn(),
 }));
 vi.mock("@/lib/api/mata-kuliah.api", () => ({
   getMataKuliah: vi.fn(),

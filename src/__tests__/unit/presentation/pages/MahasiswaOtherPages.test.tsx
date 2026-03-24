@@ -14,6 +14,7 @@ const { mockUseAuth, mockCacheAPI, mockToast } = vi.hoisted(() => ({
 vi.mock("@/lib/hooks/useAuth", () => ({ useAuth: () => mockUseAuth() }));
 vi.mock("@/lib/offline/api-cache", () => ({
   cacheAPI: (...a: unknown[]) => mockCacheAPI(...a),
+  getCachedData: vi.fn().mockResolvedValue(null),
   invalidateCache: vi.fn(),
 }));
 vi.mock("@/lib/offline/network-detector", () => ({
@@ -116,10 +117,9 @@ describe("Mahasiswa MateriPage", () => {
   it("menampilkan loading skeleton", () => {
     mockCacheAPI.mockReturnValue(new Promise(() => {}));
     const { container } = wrap(<MahasiswaMateriPage />);
-    expect(
-      container.querySelector(".animate-pulse") ||
-        container.querySelector(".animate-spin"),
-    ).toBeTruthy();
+    expect(container.querySelectorAll('[data-slot="card"]').length).toBeGreaterThan(
+      0,
+    );
   });
 
   it("menampilkan judul halaman Materi", async () => {
@@ -190,10 +190,9 @@ describe("Mahasiswa NilaiPage", () => {
   it("menampilkan loading skeleton", () => {
     mockCacheAPI.mockReturnValue(new Promise(() => {}));
     const { container } = wrap(<NilaiPage />);
-    expect(
-      container.querySelector(".animate-pulse") ||
-        container.querySelector(".animate-spin"),
-    ).toBeTruthy();
+    expect(container.querySelectorAll('[data-slot="card"]').length).toBeGreaterThan(
+      0,
+    );
   });
 
   it("menampilkan judul halaman Nilai", async () => {
@@ -254,10 +253,9 @@ describe("Mahasiswa JadwalPage", () => {
   it("menampilkan loading skeleton", () => {
     mockCacheAPI.mockReturnValue(new Promise(() => {}));
     const { container } = wrap(<JadwalPage />);
-    expect(
-      container.querySelector(".animate-pulse") ||
-        container.querySelector(".animate-spin"),
-    ).toBeTruthy();
+    expect(container.querySelectorAll('[data-slot="card"]').length).toBeGreaterThan(
+      0,
+    );
   });
 
   it("menampilkan judul halaman Jadwal Praktikum", async () => {
@@ -327,10 +325,9 @@ describe("Mahasiswa PresensiPage", () => {
   it("menampilkan loading skeleton", () => {
     mockCacheAPI.mockReturnValue(new Promise(() => {}));
     const { container } = wrap(<PresensiPage />);
-    expect(
-      container.querySelector(".animate-pulse") ||
-        container.querySelector(".animate-spin"),
-    ).toBeTruthy();
+    expect(container.querySelectorAll('[data-slot="card"]').length).toBeGreaterThan(
+      0,
+    );
   });
 
   it("menampilkan judul halaman Presensi / Kehadiran", async () => {

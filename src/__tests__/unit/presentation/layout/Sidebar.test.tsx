@@ -30,6 +30,16 @@ vi.mock("@/config/navigation.config", async () => {
   };
 });
 
+vi.mock("@/lib/hooks/useRoleTheme", () => ({
+  useRoleTheme: () => ({
+    sidebarBg: "bg-slate-950/95",
+    sidebarHover: "hover:bg-slate-800/80",
+    sidebarActive: "bg-slate-800/90 border-l-4 border-slate-300 text-white",
+    badgeBg: "bg-slate-100 text-slate-800 border border-slate-200",
+    avatarGradient: "from-slate-700 via-slate-800 to-slate-950",
+  }),
+}));
+
 describe("Sidebar", () => {
   it("render user info dan toggle collapse", async () => {
     const user = userEvent.setup();

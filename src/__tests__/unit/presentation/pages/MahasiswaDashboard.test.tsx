@@ -18,6 +18,7 @@ vi.mock("@/lib/hooks/useAuth", () => ({
 
 vi.mock("@/lib/offline/api-cache", () => ({
   cacheAPI: (...args: unknown[]) => mockCacheAPI(...args),
+  getCachedData: vi.fn().mockResolvedValue(null),
 }));
 
 vi.mock("@/lib/offline/network-detector", () => ({
@@ -87,8 +88,8 @@ describe("Mahasiswa DashboardPage", () => {
     it("merender loading skeleton dengan animate-pulse", () => {
       mockCacheAPI.mockReturnValue(new Promise(() => {}));
       const { container } = render(<DashboardPage />);
-      const pulseEls = container.querySelectorAll(".animate-pulse");
-      expect(pulseEls.length).toBeGreaterThan(0);
+      const skeletonCards = container.querySelectorAll('[data-slot="card"]');
+      expect(skeletonCards.length).toBeGreaterThan(0);
     });
   });
 

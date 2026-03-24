@@ -23,6 +23,7 @@ import {
   FileText,
   ClipboardCheck,
   Users,
+  WifiOff,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -92,6 +93,7 @@ import {
   getDefaultBobotNilai,
   validateBobotNilai,
 } from "@/lib/validations/nilai.schema";
+import { useNetworkStatus } from "@/lib/hooks/useNetworkStatus";
 
 // ============================================================================
 // COMPONENT
@@ -99,6 +101,7 @@ import {
 
 export default function DosenPenilaianPage() {
   const { user } = useAuth();
+  const { isOnline } = useNetworkStatus();
 
   // ============================================================================
   // STATE
@@ -466,6 +469,10 @@ export default function DosenPenilaianPage() {
   // ============================================================================
 
   const handleSaveAll = () => {
+    if (!isOnline) {
+      toast.error("Tidak dapat menyimpan nilai saat offline. Hubungkan internet terlebih dahulu.");
+      return;
+    }
     if (editedGrades.size === 0) {
       toast.info("Tidak ada perubahan untuk disimpan");
       return;
@@ -746,9 +753,16 @@ export default function DosenPenilaianPage() {
           </div>
           {selectedKelas && (
             <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto">
+              {!isOnline && (
+                <span className="flex items-center gap-1.5 text-xs font-semibold text-warning bg-warning/10 border border-warning/30 rounded-lg px-3 py-1.5">
+                  <WifiOff className="w-3.5 h-3.5" /> Offline — simpan dinonaktifkan
+                </span>
+              )}
               <Button
                 variant="outline"
                 onClick={handleOpenBobotDialog}
+                disabled={!isOnline}
+                title={!isOnline ? 'Tidak dapat mengubah bobot saat offline' : ''}
                 className="flex items-center gap-2 border-2 hover:bg-primary/5 font-semibold"
               >
                 <Settings className="w-4 h-4" />
@@ -756,15 +770,18 @@ export default function DosenPenilaianPage() {
               </Button>
               <Button
                 onClick={handleSaveAll}
-                disabled={!hasChanges || saving}
+                disabled={!hasChanges || saving || !isOnline}
+                title={!isOnline ? 'Tidak dapat menyimpan saat offline' : ''}
                 className="flex items-center gap-2 bg-linear-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground shadow-lg shadow-primary/30 font-semibold px-6"
               >
                 {saving ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
+                ) : !isOnline ? (
+                  <WifiOff className="w-4 h-4" />
                 ) : (
                   <Save className="w-4 h-4" />
                 )}
-                Simpan Semua {hasChanges && `(${editedGrades.size})`}
+                {!isOnline ? 'Offline' : `Simpan Semua ${hasChanges ? `(${editedGrades.size})` : ''}`}
               </Button>
             </div>
           )}

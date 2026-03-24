@@ -84,6 +84,9 @@ vi.mock("@/lib/api/notification.api", () => ({
 vi.mock("@/lib/api/kuis.api", () => ({
   getAttemptById: vi.fn(),
   getJawabanByAttempt: vi.fn(),
+  cacheAttemptOffline: vi.fn(),
+  syncOfflineAnswers: vi.fn(),
+  getCachedAttempt: vi.fn().mockResolvedValue(null),
 }));
 
 describe("Kuis Versioned Simple API - Simplified Auto-Save", () => {

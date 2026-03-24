@@ -82,17 +82,17 @@ export function ForgotPasswordPage() {
           >
             <CardHeader className="space-y-4 bg-linear-to-br from-blue-800 via-blue-700 to-sky-700 px-6 py-8 text-center sm:px-8">
               <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-white/15 backdrop-blur-sm">
-                <CheckCircle2 className="h-9 w-9 text-emerald-300" />
+                <CheckCircle2 className="h-9 w-9 text-success" />
               </div>
               <div className="space-y-2">
-                <div className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold text-blue-50">
-                  <Sparkles className="h-3.5 w-3.5 text-amber-200" />
+                <div className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold text-primary-foreground/80">
+                  <Sparkles className="h-3.5 w-3.5 text-warning" />
                   Tautan reset berhasil dikirim
                 </div>
                 <CardTitle className="text-2xl font-black tracking-tight text-white sm:text-3xl">
                   Cek Email Anda
                 </CardTitle>
-                <CardDescription className="mx-auto max-w-sm text-sm text-blue-100 sm:text-base">
+                <CardDescription className="mx-auto max-w-sm text-sm text-primary-foreground/80 sm:text-base">
                   Kami telah mengirim link reset password ke{" "}
                   <strong>{email}</strong>
                 </CardDescription>
@@ -100,7 +100,7 @@ export function ForgotPasswordPage() {
             </CardHeader>
 
             <CardContent className="space-y-5 px-6 py-6 sm:px-8">
-              <Alert className="border-emerald-200 bg-emerald-50 text-emerald-900">
+              <Alert className="border-success/30 bg-success/5 text-success">
                 <ShieldCheck className="h-4 w-4" />
                 <AlertDescription>
                   Klik tautan pada email untuk mengatur ulang password Anda.
@@ -112,7 +112,7 @@ export function ForgotPasswordPage() {
                 <Link to={ROUTES.LOGIN}>
                   <ButtonEnhanced
                     variant="outline"
-                    className="h-11 w-full border-blue-200 bg-white text-blue-700 hover:bg-blue-50 hover:text-blue-800"
+                    className="h-11 w-full border-primary/20 bg-white text-primary hover:bg-primary/5 hover:text-primary"
                     leadingIcon={<ArrowLeft className="h-4 w-4" />}
                   >
                     Kembali ke Login
@@ -120,11 +120,11 @@ export function ForgotPasswordPage() {
                 </Link>
               </div>
 
-              <div className="text-center text-sm text-slate-600">
+              <div className="text-center text-sm text-muted-foreground">
                 Tidak menerima email? Periksa folder spam atau{" "}
                 <button
                   onClick={() => setSuccess(false)}
-                  className="font-semibold text-blue-700 transition-colors hover:text-blue-800"
+                  className="font-semibold text-primary transition-colors hover:text-primary/80"
                 >
                   coba lagi
                 </button>
@@ -156,14 +156,14 @@ export function ForgotPasswordPage() {
               <KeyRound className="h-9 w-9 text-white" />
             </div>
             <div className="space-y-2">
-              <div className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold text-blue-50">
-                <Mail className="h-3.5 w-3.5 text-amber-200" />
+              <div className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold text-primary-foreground/80">
+                <Mail className="h-3.5 w-3.5 text-warning" />
                 Pemulihan akses akun
               </div>
               <CardTitle className="text-2xl font-black tracking-tight text-white sm:text-3xl">
                 Lupa Password?
               </CardTitle>
-              <CardDescription className="mx-auto max-w-sm text-sm text-blue-100 sm:text-base">
+              <CardDescription className="mx-auto max-w-sm text-sm text-primary-foreground/80 sm:text-base">
                 Masukkan email Anda dan kami akan mengirimkan link untuk
                 mengatur ulang password.
               </CardDescription>
@@ -183,7 +183,7 @@ export function ForgotPasswordPage() {
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-slate-700">
+                <Label htmlFor="email" className="text-foreground">
                   Alamat Email
                 </Label>
                 <Input
@@ -212,7 +212,7 @@ export function ForgotPasswordPage() {
                 <Link to={ROUTES.LOGIN}>
                   <ButtonEnhanced
                     variant="ghost"
-                    className="h-11 w-full text-slate-600 hover:bg-blue-50 hover:text-blue-800"
+                    className="h-11 w-full text-muted-foreground hover:bg-primary/5 hover:text-primary"
                     leadingIcon={<ArrowLeft className="h-4 w-4" />}
                   >
                     Kembali ke Login

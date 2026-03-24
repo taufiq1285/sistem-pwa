@@ -65,8 +65,9 @@ describe("Laboran LaboratoriumPage", () => {
 
     const { container } = render(<LaboratoriumPage />);
 
-    // Page uses DashboardSkeleton (Skeleton elements with animate-pulse) while loading
-    expect(container.querySelector(".animate-pulse")).toBeTruthy();
+    expect(container.querySelectorAll('[data-slot="card"]').length).toBeGreaterThan(
+      0,
+    );
   });
 
   it("membuka dialog detail dan memuat detail laboratorium", async () => {

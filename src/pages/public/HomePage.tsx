@@ -496,14 +496,14 @@ export function HomePage() {
         <div className="app-container">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <div>
-              <div className="inline-flex items-center space-x-2 bg-green-100 text-green-700 px-4 py-2 rounded-full text-sm font-semibold mb-4">
+              <div className="inline-flex items-center space-x-2 bg-success/10 text-success px-4 py-2 rounded-full text-sm font-semibold mb-4">
                 <TrendingUp className="h-4 w-4" />
                 <span>Keunggulan</span>
               </div>
-              <h2 className="text-4xl sm:text-5xl font-black mb-8 bg-linear-to-r from-gray-900 to-green-600 bg-clip-text text-transparent">
+              <h2 className="text-4xl sm:text-5xl font-black mb-8 bg-linear-to-r from-foreground to-success bg-clip-text text-transparent">
                 Mengapa Memilih Sistem Kami?
               </h2>
-              <p className="text-xl text-gray-700 mb-10 leading-relaxed">
+              <p className="text-xl text-muted-foreground mb-10 leading-relaxed">
                 Dibangun dengan teknologi terkini untuk memberikan pengalaman
                 terbaik dalam pengelolaan praktikum kebidanan
               </p>
@@ -513,8 +513,8 @@ export function HomePage() {
                     key={index}
                     className="flex items-start space-x-4 p-4 rounded-xl hover:bg-primary/5 transition-all duration-300 group"
                   >
-                    <CheckCircle2 className="h-7 w-7 text-green-600 shrink-0 mt-0.5 group-hover:scale-110 transition-transform duration-200" />
-                    <span className="text-lg text-gray-700 font-medium group-hover:text-gray-900 transition-colors duration-200">
+                    <CheckCircle2 className="h-7 w-7 text-success shrink-0 mt-0.5 group-hover:scale-110 transition-transform duration-200" />
+                    <span className="text-lg text-muted-foreground font-medium group-hover:text-foreground transition-colors duration-200">
                       {benefit}
                     </span>
                   </div>
@@ -528,11 +528,11 @@ export function HomePage() {
                   <Smartphone className="h-24 w-24 text-white" />
                 </div>
                 <h3 className="text-3xl font-black mb-6">Akses Di Mana Saja</h3>
-                <p className="text-xl text-blue-50 mb-8 leading-relaxed">
+                <p className="text-xl text-primary-foreground/80 mb-8 leading-relaxed">
                   Dengan Progressive Web App, Anda dapat mengakses sistem ini
                   dari berbagai perangkat, bahkan tanpa koneksi internet
                 </p>
-                <div className="flex items-center space-x-3 text-blue-50 bg-white/10 backdrop-blur-lg p-4 rounded-xl">
+                <div className="flex items-center space-x-3 text-primary-foreground/80 bg-white/10 backdrop-blur-lg p-4 rounded-xl">
                   <Shield className="h-6 w-6" />
                   <span className="font-semibold">
                     Data Anda aman dan tersinkronisasi

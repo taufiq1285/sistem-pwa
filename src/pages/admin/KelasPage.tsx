@@ -913,9 +913,9 @@ export default function KelasPage() {
                           className="hover:bg-muted"
                         >
                           {enrollment.is_active ? (
-                            <CheckCircle className="h-4 w-4 text-green-600 mr-1" />
+                            <CheckCircle className="h-4 w-4 text-success mr-1" />
                           ) : (
-                            <XCircle className="h-4 w-4 text-red-600 mr-1" />
+                            <XCircle className="h-4 w-4 text-danger mr-1" />
                           )}
                           {enrollment.is_active ? "Aktif" : "Nonaktif"}
                         </Button>

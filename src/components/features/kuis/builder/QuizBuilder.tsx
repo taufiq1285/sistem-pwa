@@ -20,6 +20,7 @@ import {
   Save,
   CheckCircle,
   BookOpen,
+  WifiOff,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -68,6 +69,7 @@ import type { Kuis, Soal } from "@/types/kuis.types";
 import type { Kelas } from "@/types/kelas.types";
 import type { MataKuliah } from "@/types/mata-kuliah.types";
 import { cn } from "@/lib/utils";
+import { useNetworkStatus } from "@/lib/hooks/useNetworkStatus";
 
 interface QuizBuilderProps {
   quiz?: Kuis;
@@ -97,6 +99,7 @@ export function QuizBuilder({
   onCancel: _onCancel,
 }: QuizBuilderProps) {
   const isEditing = !!quiz;
+  const { isOnline } = useNetworkStatus();
 
   // ✅ AUTO-DETECT MODE from quiz.tipe_kuis when editing
   // If mode props are not explicitly set, infer from tipe_kuis
@@ -534,6 +537,13 @@ export function QuizBuilder({
 
   return (
     <div className="space-y-6">
+      {/* Offline Banner */}
+      {!isOnline && (
+        <div className="flex items-center gap-3 rounded-lg border border-yellow-300 bg-yellow-50 px-4 py-3 text-sm text-yellow-800 dark:border-yellow-700 dark:bg-yellow-950 dark:text-yellow-200">
+          <WifiOff className="h-4 w-4 shrink-0" />
+          <span><strong>Anda sedang Offline.</strong> Fitur simpan dan publish dinonaktifkan sementara. Sambungkan internet untuk melanjutkan.</span>
+        </div>
+      )}
       {/* Simple Status Header - Different based on mode */}
       <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg border">
         <div className="flex items-center gap-3">
@@ -788,15 +798,17 @@ export function QuizBuilder({
 
             {/* Save Button */}
             <div className="flex justify-end pt-4 border-t">
-              <Button onClick={handleSaveQuizInfo} disabled={isSavingQuiz}>
-                <Save className="h-4 w-4 mr-2" />
-                {isSavingQuiz
-                  ? "Menyimpan..."
-                  : currentQuiz
-                    ? "Perbarui"
-                    : effectiveLaporanMode
-                      ? "Simpan Laporan"
-                      : "Simpan Tes"}
+              <Button onClick={handleSaveQuizInfo} disabled={isSavingQuiz || !isOnline} title={!isOnline ? 'Tidak dapat menyimpan saat offline' : ''}>
+                {!isOnline ? <WifiOff className="h-4 w-4 mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+                {!isOnline
+                  ? 'Offline'
+                  : isSavingQuiz
+                    ? "Menyimpan..."
+                    : currentQuiz
+                      ? "Perbarui"
+                      : effectiveLaporanMode
+                        ? "Simpan Laporan"
+                        : "Simpan Tes"}
               </Button>
             </div>
           </div>
@@ -957,22 +969,24 @@ export function QuizBuilder({
                   (effectiveLaporanMode || questions.length > 0) && (
                     <Button
                       onClick={handlePublishQuiz}
-                      disabled={isPublishing}
+                      disabled={isPublishing || !isOnline}
+                      title={!isOnline ? 'Tidak dapat publish saat offline' : ''}
                       className="bg-green-600 hover:bg-green-700"
                     >
                       <CheckCircle className="h-4 w-4 mr-2" />
-                      {isPublishing ? "Publishing..." : "Publish"}
+                      {isPublishing ? "Publishing..." : !isOnline ? "Offline" : "Publish"}
                     </Button>
                   )}
                 {/* Unpublish button - only show when published */}
                 {quizStatus === "published" && (
                   <Button
                     onClick={handleUnpublishQuiz}
-                    disabled={isPublishing}
+                    disabled={isPublishing || !isOnline}
+                    title={!isOnline ? 'Tidak dapat unpublish saat offline' : ''}
                     variant="outline"
                     className="border-orange-300 text-orange-700 hover:bg-orange-50"
                   >
-                    {isPublishing ? "Unpublishing..." : "Unpublish"}
+                    {isPublishing ? "Unpublishing..." : !isOnline ? "Offline" : "Unpublish"}
                   </Button>
                 )}
                 <Button

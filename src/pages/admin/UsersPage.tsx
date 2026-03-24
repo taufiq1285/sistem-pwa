@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useMemo, useState, useEffect } from "react";
 import {
   Users,
   UserPlus,
@@ -16,6 +16,7 @@ import {
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { StatusBadge } from "@/components/ui/status-badge";
 import {
   Card,
@@ -78,7 +79,11 @@ import {
   type UpdateUserData,
   type CreateUserData,
 } from "@/lib/api/users.api";
-import { cacheAPI, invalidateCache } from "@/lib/offline/api-cache";
+import {
+  cacheAPI,
+  getCachedData,
+  invalidateCache,
+} from "@/lib/offline/api-cache";
 
 type UserRole = "admin" | "dosen" | "mahasiswa" | "laboran";
 
@@ -96,6 +101,8 @@ export default function UsersPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState<UserRole | "all">("all");
+  const [isOfflineData, setIsOfflineData] = useState(false);
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<number | null>(null);
 
   // Edit dialog
   const [editingUser, setEditingUser] = useState<SystemUser | null>(null);
@@ -132,6 +139,17 @@ export default function UsersPage() {
   // Export functionality
   const { exportToCSV } = useTableExport<SystemUser>();
 
+  const lastUpdatedLabel = useMemo(() => {
+    if (!lastUpdatedAt) {
+      return null;
+    }
+
+    return new Date(lastUpdatedAt).toLocaleString("id-ID", {
+      dateStyle: "medium",
+      timeStyle: "short",
+    });
+  }, [lastUpdatedAt]);
+
   useEffect(() => {
     loadUsers();
   }, []);
@@ -144,6 +162,45 @@ export default function UsersPage() {
         ")",
       );
       setLoading(true);
+
+      const [cachedUsersEntry, cachedStatsEntry] = await Promise.all([
+        getCachedData<SystemUser[]>("all_users"),
+        getCachedData<UserStats>("user_stats"),
+      ]);
+
+      const hasCachedData =
+        Array.isArray(cachedUsersEntry?.data) || !!cachedStatsEntry?.data;
+
+      if (hasCachedData) {
+        setUsers(Array.isArray(cachedUsersEntry?.data) ? cachedUsersEntry.data : []);
+        setStats(
+          cachedStatsEntry?.data ?? {
+            total: 0,
+            admin: 0,
+            dosen: 0,
+            mahasiswa: 0,
+            laboran: 0,
+            active: 0,
+            inactive: 0,
+          },
+        );
+        setIsOfflineData(!navigator.onLine);
+        setLastUpdatedAt(
+          Math.max(
+            cachedUsersEntry?.timestamp || 0,
+            cachedStatsEntry?.timestamp || 0,
+          ) || null,
+        );
+        setLoading(false);
+      }
+
+      if (forceRefresh && !navigator.onLine) {
+        throw new Error(
+          hasCachedData
+            ? "Perangkat sedang offline. Menampilkan snapshot data pengguna terakhir."
+            : "Perangkat sedang offline dan belum ada snapshot data pengguna tersimpan.",
+        );
+      }
 
       // Use cacheAPI with stale-while-revalidate pattern
       const [usersData, statsData] = await Promise.all([
@@ -165,10 +222,16 @@ export default function UsersPage() {
       });
       setUsers(usersData);
       setStats(statsData);
+      setIsOfflineData(false);
+      setLastUpdatedAt(Date.now());
       console.log("[loadUsers] State updated with", usersData.length, "users");
     } catch (error) {
       console.error("[loadUsers] Error:", error);
-      toast.error("Gagal memuat data users");
+      if (!navigator.onLine) {
+        setIsOfflineData(true);
+      } else {
+        toast.error("Gagal memuat data users");
+      }
     } finally {
       setLoading(false);
       console.log("[loadUsers] DONE");
@@ -553,12 +616,12 @@ export default function UsersPage() {
                     >
                       {u.is_active ? (
                         <>
-                          <CheckCircle className="h-4 w-4 text-green-600 mr-1" />
+                          <CheckCircle className="h-4 w-4 text-success mr-1" />
                           Aktif
                         </>
                       ) : (
                         <>
-                          <XCircle className="h-4 w-4 text-red-600 mr-1" />
+                          <XCircle className="h-4 w-4 text-danger mr-1" />
                           Nonaktif
                         </>
                       )}
@@ -581,7 +644,7 @@ export default function UsersPage() {
                         size="sm"
                         onClick={() => handleDelete(u)}
                       >
-                        <Trash2 className="h-4 w-4 text-red-600" />
+                        <Trash2 className="h-4 w-4 text-danger" />
                       </Button>
                     </div>
                   </EnhancedTableCell>
@@ -624,6 +687,15 @@ export default function UsersPage() {
           </Button>
         </div>
       </div>
+
+      {(isOfflineData || !navigator.onLine) && (
+        <Alert className="border-warning/40 bg-warning/10">
+          <AlertDescription>
+            Data pengguna sedang memakai snapshot lokal dari perangkat.
+            {lastUpdatedLabel ? ` Pembaruan terakhir: ${lastUpdatedLabel}.` : ""}
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Statistics Cards */}
       <div className="grid gap-5 md:grid-cols-5">
@@ -1022,7 +1094,7 @@ export default function UsersPage() {
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-red-600 dark:text-red-400 flex items-center gap-2">
+            <DialogTitle className="text-danger flex items-center gap-2">
               <XCircle className="h-5 w-5" />
               Hapus User - Konfirmasi
             </DialogTitle>
@@ -1033,17 +1105,17 @@ export default function UsersPage() {
           {deletingUser && (
             <div className="space-y-4">
               {/* User Info to Delete */}
-              <div className="p-4 border-2 border-red-500 rounded-lg bg-red-50 dark:bg-red-950/30">
-                <p className="text-sm font-semibold text-red-800 dark:text-red-300 mb-2">
+              <div className="p-4 border-2 border-danger/50 rounded-lg bg-danger/5">
+                <p className="text-sm font-semibold text-danger mb-2">
                   User yang akan dihapus:
                 </p>
-                <p className="text-lg font-bold text-gray-900 dark:text-white">
+                <p className="text-lg font-bold text-foreground">
                   {deletingUser.full_name}
                 </p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
+                <p className="text-sm text-muted-foreground">
                   {deletingUser.email}
                 </p>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                <p className="text-sm text-muted-foreground mt-1">
                   Role:{" "}
                   <StatusBadge
                     status={
@@ -1064,11 +1136,11 @@ export default function UsersPage() {
               </div>
 
               {/* Warning Box */}
-              <div className="p-3 bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-400 rounded-md">
-                <p className="text-sm text-yellow-800 dark:text-yellow-300 font-medium">
+              <div className="p-3 bg-warning/5 border border-warning/40 rounded-md">
+                <p className="text-sm text-warning font-medium">
                   ⚠️ Data yang akan dihapus:
                 </p>
-                <ul className="text-sm text-yellow-700 dark:text-yellow-400 mt-2 ml-4 list-disc space-y-1">
+                <ul className="text-sm text-warning/80 mt-2 ml-4 list-disc space-y-1">
                   <li>Akun user dari sistem</li>
                   <li>Data profil dan role</li>
                   <li>Akses login user</li>
@@ -1077,7 +1149,7 @@ export default function UsersPage() {
               </div>
 
               {/* Confirmation Question */}
-              <p className="text-center font-semibold text-gray-900 dark:text-white">
+              <p className="text-center font-semibold text-foreground">
                 Apakah Anda yakin ingin menghapus user ini?
               </p>
 
@@ -1093,7 +1165,7 @@ export default function UsersPage() {
                 <Button
                   variant="destructive"
                   onClick={confirmDelete}
-                  className="min-w-25 bg-red-600 hover:bg-red-700"
+                  className="min-w-25 bg-danger hover:bg-danger/90"
                 >
                   <Trash2 className="h-4 w-4 mr-2" />
                   Ya, Hapus

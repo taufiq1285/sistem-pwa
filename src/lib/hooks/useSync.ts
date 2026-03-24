@@ -18,6 +18,7 @@ import type {
 } from "@/types/offline.types";
 import type { QueueStats, QueueEvent } from "../offline/queue-manager";
 import { supabase } from "@/lib/supabase/client";
+import { submitAnswerSafe } from "@/lib/api/kuis-versioned-simple.api";
 
 // ============================================================================
 // TYPES
@@ -80,8 +81,6 @@ async function processSyncQueueItem(item: SyncQueueItem): Promise<void> {
       );
     }
 
-    const { submitAnswerSafe } =
-      await import("@/lib/api/kuis-versioned-simple.api");
     await submitAnswerSafe({ attempt_id, soal_id, jawaban });
     return;
   }

@@ -254,7 +254,7 @@ export default function PeminjamanAktifPage() {
                 </div>
               </div>
             </div>
-            <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-700 dark:text-amber-300 lg:max-w-sm">
+            <div className="rounded-2xl border border-warning/30 bg-warning/10 px-4 py-3 text-sm text-warning lg:max-w-sm">
               Pastikan kondisi barang diperiksa sebelum menandai pengembalian
               agar stok inventaris dan riwayat peminjaman tetap akurat.
             </div>
@@ -413,7 +413,7 @@ export default function PeminjamanAktifPage() {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className="border-emerald-500/40 text-emerald-700 hover:bg-emerald-500/10 dark:text-emerald-300"
+                                className="border-success/40 text-success hover:bg-success/10"
                                 onClick={() =>
                                   handleOpenReturnDialog(borrowing)
                                 }
@@ -717,7 +717,7 @@ export default function PeminjamanAktifPage() {
               <Button
                 onClick={handleMarkAsReturned}
                 disabled={processing}
-                className="bg-emerald-600 hover:bg-emerald-700"
+                className="bg-success hover:bg-success/90"
               >
                 {processing ? (
                   <>

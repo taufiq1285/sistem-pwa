@@ -3,7 +3,7 @@
  * Main dashboard for admin with statistics, charts, and recent activity
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import {
@@ -77,7 +77,8 @@ import {
   type RecentUser,
   type RecentAnnouncement,
 } from "@/lib/api/admin.api";
-import { cacheAPI } from "@/lib/offline/api-cache";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { cacheAPI, getCachedData } from "@/lib/offline/api-cache";
 
 // ============================================================================
 // CONSTANTS
@@ -108,6 +109,8 @@ export function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [refreshing, setRefreshing] = useState(false);
+  const [isOfflineData, setIsOfflineData] = useState(false);
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<number | null>(null);
 
   // Update current time
   useEffect(() => {
@@ -116,6 +119,17 @@ export function DashboardPage() {
     }, 1000);
     return () => clearInterval(timer);
   }, []);
+
+  const lastUpdatedLabel = useMemo(() => {
+    if (!lastUpdatedAt) {
+      return null;
+    }
+
+    return new Date(lastUpdatedAt).toLocaleString("id-ID", {
+      dateStyle: "medium",
+      timeStyle: "short",
+    });
+  }, [lastUpdatedAt]);
 
   // Fetch all data
   const fetchDashboardData = async (forceRefresh = false) => {
@@ -127,12 +141,90 @@ export function DashboardPage() {
       setLabUsage([]);
       setRecentUsers([]);
       setRecentAnnouncements([]);
+      setIsOfflineData(false);
+      setLastUpdatedAt(null);
       return;
     }
 
     try {
       setLoading(true);
       setError(null);
+
+      const cacheKeys = [
+        "admin_dashboard_stats",
+        "admin_user_growth",
+        "admin_user_distribution",
+        "admin_lab_usage",
+        "admin_recent_users",
+        "admin_recent_announcements",
+      ] as const;
+
+      const [
+        cachedStatsEntry,
+        cachedGrowthEntry,
+        cachedDistributionEntry,
+        cachedUsageEntry,
+        cachedUsersEntry,
+        cachedAnnouncementsEntry,
+      ] = await Promise.all([
+        getCachedData<DashboardStats>(cacheKeys[0]),
+        getCachedData<UserGrowthData[]>(cacheKeys[1]),
+        getCachedData<UserDistribution[]>(cacheKeys[2]),
+        getCachedData<LabUsageData[]>(cacheKeys[3]),
+        getCachedData<RecentUser[]>(cacheKeys[4]),
+        getCachedData<RecentAnnouncement[]>(cacheKeys[5]),
+      ]);
+
+      const hasCachedData =
+        !!cachedStatsEntry?.data ||
+        Array.isArray(cachedGrowthEntry?.data) ||
+        Array.isArray(cachedDistributionEntry?.data) ||
+        Array.isArray(cachedUsageEntry?.data) ||
+        Array.isArray(cachedUsersEntry?.data) ||
+        Array.isArray(cachedAnnouncementsEntry?.data);
+
+      if (hasCachedData) {
+        setStats(cachedStatsEntry?.data ?? null);
+        setUserGrowth(
+          Array.isArray(cachedGrowthEntry?.data) ? cachedGrowthEntry.data : [],
+        );
+        setUserDistribution(
+          Array.isArray(cachedDistributionEntry?.data)
+            ? cachedDistributionEntry.data
+            : [],
+        );
+        setLabUsage(
+          Array.isArray(cachedUsageEntry?.data) ? cachedUsageEntry.data : [],
+        );
+        setRecentUsers(
+          Array.isArray(cachedUsersEntry?.data) ? cachedUsersEntry.data : [],
+        );
+        setRecentAnnouncements(
+          Array.isArray(cachedAnnouncementsEntry?.data)
+            ? cachedAnnouncementsEntry.data
+            : [],
+        );
+        setIsOfflineData(!navigator.onLine);
+        setLastUpdatedAt(
+          Math.max(
+            cachedStatsEntry?.timestamp || 0,
+            cachedGrowthEntry?.timestamp || 0,
+            cachedDistributionEntry?.timestamp || 0,
+            cachedUsageEntry?.timestamp || 0,
+            cachedUsersEntry?.timestamp || 0,
+            cachedAnnouncementsEntry?.timestamp || 0,
+          ) || null,
+        );
+        setLoading(false);
+      }
+
+      if (forceRefresh && !navigator.onLine) {
+        throw new Error(
+          hasCachedData
+            ? "Perangkat sedang offline. Menampilkan snapshot dashboard admin terakhir."
+            : "Perangkat sedang offline dan belum ada snapshot dashboard admin tersimpan.",
+        );
+      }
 
       const [
         statsData,
@@ -201,11 +293,15 @@ export function DashboardPage() {
       if (announcementsData.status === "fulfilled") {
         setRecentAnnouncements(announcementsData.value);
       }
+
+      setIsOfflineData(false);
+      setLastUpdatedAt(Date.now());
     } catch (err) {
       // Handle offline mode gracefully
       if (!networkDetector.isOnline()) {
         console.log("ℹ️ Offline mode - showing cached dashboard data");
         setError(null); // Don't show error in offline mode
+        setIsOfflineData(true);
       } else {
         console.error("Error fetching dashboard data:", err);
         setError("Failed to load dashboard data");
@@ -340,7 +436,9 @@ export function DashboardPage() {
               <div className="flex w-full flex-col gap-3 lg:w-auto lg:min-w-65">
                 <div className="rounded-2xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-muted-foreground">
                   Fokuskan tindakan pada persetujuan, distribusi pengguna, dan
-                  pemantauan kesehatan sistem secara real-time.
+                  pemantauan kesehatan sistem.
+                  {(isOfflineData || !navigator.onLine) &&
+                    " Saat offline, ringkasan terakhir dari perangkat tetap ditampilkan."}
                 </div>
                 <Button
                   variant="outline"
@@ -358,6 +456,18 @@ export function DashboardPage() {
               </div>
             </div>
           </GlassCard>
+
+          {(isOfflineData || !navigator.onLine) && (
+            <Alert className="border-warning/40 bg-warning/10">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                Dashboard admin sedang memakai snapshot lokal dari perangkat.
+                {lastUpdatedLabel
+                  ? ` Pembaruan terakhir: ${lastUpdatedLabel}.`
+                  : ""}
+              </AlertDescription>
+            </Alert>
+          )}
 
           {/* Statistics Cards */}
           <div className="grid gap-4 sm:gap-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
@@ -466,7 +576,7 @@ export function DashboardPage() {
                   onClick={() => navigate("/admin/announcements?action=create")}
                 >
                   <div className="flex w-full items-center gap-3">
-                    <div className="rounded-xl bg-emerald-500/10 p-2.5 text-emerald-700 ring-1 ring-emerald-500/20 transition-transform duration-200 group-hover:scale-105 dark:text-emerald-300">
+                    <div className="rounded-xl bg-success/10 p-2.5 text-success ring-1 ring-success/20 transition-transform duration-200 group-hover:scale-105">
                       <Megaphone className="h-5 w-5" />
                     </div>
                     <div>
@@ -486,7 +596,7 @@ export function DashboardPage() {
                   onClick={() => navigate("/admin/laboratories")}
                 >
                   <div className="flex w-full items-center gap-3">
-                    <div className="rounded-xl bg-amber-500/10 p-2.5 text-amber-700 ring-1 ring-amber-500/20 transition-transform duration-200 group-hover:scale-105 dark:text-amber-300">
+                    <div className="rounded-xl bg-warning/10 p-2.5 text-warning ring-1 ring-warning/20 transition-transform duration-200 group-hover:scale-105">
                       <FlaskConical className="h-5 w-5" />
                     </div>
                     <div>
@@ -506,7 +616,7 @@ export function DashboardPage() {
                   onClick={() => navigate("/admin/equipments")}
                 >
                   <div className="flex w-full items-center gap-3">
-                    <div className="rounded-xl bg-violet-500/10 p-2.5 text-violet-700 ring-1 ring-violet-500/20 transition-transform duration-200 group-hover:scale-105 dark:text-violet-300">
+                    <div className="rounded-xl bg-accent/10 p-2.5 text-accent ring-1 ring-accent/20 transition-transform duration-200 group-hover:scale-105">
                       <Wrench className="h-5 w-5" />
                     </div>
                     <div>
@@ -534,15 +644,15 @@ export function DashboardPage() {
                       <TrendingUp className="h-6 w-6 text-white" />
                     </div>
                     <div>
-                      <CardTitle className="text-xl font-bold text-slate-900 dark:text-white">
+                      <CardTitle className="text-xl font-bold text-foreground">
                         Pertumbuhan Pengguna
                       </CardTitle>
-                      <CardDescription className="text-base font-medium text-slate-600 dark:text-slate-400 mt-1">
+                      <CardDescription className="text-base font-medium text-muted-foreground mt-1">
                         Pendaftaran pengguna baru sepanjang waktu
                       </CardDescription>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2 text-base font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 px-4 py-2 rounded-lg border-2 border-emerald-200 dark:border-emerald-700">
+                  <div className="flex items-center space-x-2 text-base font-bold text-success bg-success/5 px-4 py-2 rounded-lg border-2 border-success/30">
                     <Activity className="h-5 w-5" />
                     <span>
                       +
@@ -640,10 +750,10 @@ export function DashboardPage() {
                     <Users className="h-6 w-6 text-primary-foreground" />
                   </div>
                   <div>
-                    <CardTitle className="text-xl font-bold text-slate-900 dark:text-white">
+                    <CardTitle className="text-xl font-bold text-foreground">
                       Distribusi Pengguna
                     </CardTitle>
-                    <CardDescription className="text-base font-medium text-slate-600 dark:text-slate-400 mt-1">
+                    <CardDescription className="text-base font-medium text-muted-foreground mt-1">
                       Pengguna berdasarkan peran
                     </CardDescription>
                   </div>
@@ -691,7 +801,7 @@ export function DashboardPage() {
                   {userDistribution.map((entry, index) => (
                     <div
                       key={entry.role}
-                      className="flex items-center space-x-2 bg-slate-50 dark:bg-slate-800 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700"
+                      className="flex items-center space-x-2 bg-muted/40 px-3 py-2 rounded-lg border border-border/50"
                     >
                       <div
                         className="w-4 h-4 rounded-full shadow-sm"
@@ -699,7 +809,7 @@ export function DashboardPage() {
                           backgroundColor: COLORS[index % COLORS.length],
                         }}
                       />
-                      <span className="text-sm font-bold text-slate-700 dark:text-slate-300">
+                      <span className="text-sm font-bold text-muted-foreground">
                         {entry.role}: {entry.count}
                       </span>
                     </div>
@@ -716,10 +826,10 @@ export function DashboardPage() {
                     <FlaskConical className="h-6 w-6 text-primary-foreground" />
                   </div>
                   <div>
-                    <CardTitle className="text-xl font-bold text-slate-900 dark:text-white">
+                    <CardTitle className="text-xl font-bold text-foreground">
                       Penggunaan Laboratorium
                     </CardTitle>
-                    <CardDescription className="text-base font-medium text-slate-600 dark:text-slate-400 mt-1">
+                    <CardDescription className="text-base font-medium text-muted-foreground mt-1">
                       Laboratorium yang paling sering digunakan
                     </CardDescription>
                   </div>
@@ -779,18 +889,18 @@ export function DashboardPage() {
           {/* Recent Activity */}
           <div className="grid gap-4 md:grid-cols-2">
             {/* Recent Users */}
-            <Card className="border-0 shadow-sm bg-white dark:bg-slate-800">
+            <Card className="border-0 shadow-sm bg-white dark:bg-card">
               <CardHeader className="pb-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
-                    <div className="p-2 bg-emerald-100 dark:bg-emerald-900 rounded-lg">
-                      <UserCheck className="h-5 w-5 text-emerald-600 dark:text-emerald-300" />
+                    <div className="p-2 bg-success/10 rounded-lg">
+                      <UserCheck className="h-5 w-5 text-success" />
                     </div>
                     <div>
-                      <CardTitle className="text-lg font-semibold text-slate-900 dark:text-white">
+                      <CardTitle className="text-lg font-semibold text-foreground">
                         Pengguna Baru
                       </CardTitle>
-                      <CardDescription className="text-slate-600 dark:text-slate-400">
+                      <CardDescription className="text-muted-foreground">
                         Pendaftaran pengguna terbaru
                       </CardDescription>
                     </div>
@@ -810,8 +920,8 @@ export function DashboardPage() {
                 <div className="space-y-3">
                   {recentUsers.length === 0 ? (
                     <div className="text-center py-6">
-                      <Users className="h-12 w-12 text-slate-300 dark:text-slate-600 mx-auto" />
-                      <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                      <Users className="h-12 w-12 text-muted-foreground/30 mx-auto" />
+                      <p className="mt-2 text-sm text-muted-foreground">
                         Belum ada pengguna baru
                       </p>
                     </div>
@@ -819,23 +929,23 @@ export function DashboardPage() {
                     recentUsers.map((user, index) => (
                       <div
                         key={user.id}
-                        className="flex items-center justify-between p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors group"
+                        className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/40 transition-colors group"
                         style={{
                           animation: `slideIn 0.3s ease-out ${index * 0.1}s backwards`,
                         }}
                       >
                         <div className="flex items-center space-x-3">
                           <div className="relative">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-linear-to-br from-emerald-400 to-emerald-600 text-white text-sm font-medium shadow-sm">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-linear-to-br from-primary/80 to-primary text-primary-foreground text-sm font-medium shadow-sm">
                               {user.full_name.charAt(0).toUpperCase()}
                             </div>
-                            <div className="absolute -bottom-1 -right-1 h-3 w-3 bg-green-500 rounded-full border-2 border-white dark:border-slate-800" />
+                            <div className="absolute -bottom-1 -right-1 h-3 w-3 bg-success rounded-full border-2 border-background" />
                           </div>
                           <div>
-                            <p className="text-sm font-medium text-slate-900 dark:text-white">
+                            <p className="text-sm font-medium text-foreground">
                               {user.full_name}
                             </p>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                            <p className="text-xs text-muted-foreground">
                               {user.email}
                             </p>
                           </div>
@@ -854,7 +964,7 @@ export function DashboardPage() {
                           >
                             {user.role}
                           </StatusBadge>
-                          <div className="flex items-center space-x-1 text-xs text-slate-500 dark:text-slate-400 mt-1">
+                          <div className="flex items-center space-x-1 text-xs text-muted-foreground mt-1">
                             <Calendar className="h-3 w-3" />
                             <span>{formatDate(user.created_at)}</span>
                           </div>
@@ -867,18 +977,18 @@ export function DashboardPage() {
             </Card>
 
             {/* Recent Announcements */}
-            <Card className="border-0 shadow-sm bg-white dark:bg-slate-800">
+            <Card className="border-0 shadow-sm bg-white dark:bg-card">
               <CardHeader className="pb-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
-                    <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
+                    <div className="p-2 bg-primary/10 rounded-lg">
                       <Megaphone className="h-5 w-5 text-primary" />
                     </div>
                     <div>
-                      <CardTitle className="text-lg font-semibold text-slate-900 dark:text-white">
+                      <CardTitle className="text-lg font-semibold text-foreground">
                         Pengumuman Terbaru
                       </CardTitle>
-                      <CardDescription className="text-slate-600 dark:text-slate-400">
+                      <CardDescription className="text-muted-foreground">
                         Pengumuman sistem terkini
                       </CardDescription>
                     </div>
@@ -898,8 +1008,8 @@ export function DashboardPage() {
                 <div className="space-y-3">
                   {recentAnnouncements.length === 0 ? (
                     <div className="text-center py-6">
-                      <MessageSquare className="h-12 w-12 text-slate-300 dark:text-slate-600 mx-auto" />
-                      <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                      <MessageSquare className="h-12 w-12 text-muted-foreground/30 mx-auto" />
+                      <p className="mt-2 text-sm text-muted-foreground">
                         Belum ada pengumuman
                       </p>
                     </div>
@@ -907,7 +1017,7 @@ export function DashboardPage() {
                     recentAnnouncements.map((announcement, index) => (
                       <div
                         key={announcement.id}
-                        className="p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors group"
+                        className="p-3 rounded-lg hover:bg-muted/40 transition-colors group"
                         style={{
                           animation: `slideIn 0.3s ease-out ${index * 0.1}s backwards`,
                         }}
@@ -917,7 +1027,7 @@ export function DashboardPage() {
                             <p className="text-sm font-medium line-clamp-1 group-hover:text-primary transition-colors">
                               {announcement.title}
                             </p>
-                            <div className="flex items-center space-x-2 mt-1 text-xs text-slate-500 dark:text-slate-400">
+                            <div className="flex items-center space-x-2 mt-1 text-xs text-muted-foreground">
                               <span> oleh {announcement.author}</span>
                               <span>•</span>
                               <span>{formatDate(announcement.created_at)}</span>
@@ -940,20 +1050,20 @@ export function DashboardPage() {
           </div>
 
           {/* System Status Footer */}
-          <Card className="border-0 shadow-sm bg-linear-to-r from-slate-50 to-blue-50 dark:from-slate-800/50 dark:to-blue-900/20">
+          <Card className="border-0 shadow-sm bg-linear-to-r from-muted/40 to-primary/5">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
                   <div className="flex items-center space-x-2">
                     <div className="relative">
-                      <div className="h-3 w-3 rounded-full bg-green-500 animate-pulse" />
-                      <div className="absolute inset-0 h-3 w-3 rounded-full bg-green-500 animate-ping opacity-75" />
+                      <div className="h-3 w-3 rounded-full bg-success animate-pulse" />
+                      <div className="absolute inset-0 h-3 w-3 rounded-full bg-success animate-ping opacity-75" />
                     </div>
-                    <span className="text-sm font-medium text-slate-900 dark:text-white">
+                    <span className="text-sm font-medium text-foreground">
                       Status Sistem: Online
                     </span>
                   </div>
-                  <div className="flex items-center space-x-6 text-sm text-slate-600 dark:text-slate-400">
+                  <div className="flex items-center space-x-6 text-sm text-muted-foreground">
                     <div className="flex items-center space-x-1">
                       <Database className="h-4 w-4" />
                       <span>Database: Aktif</span>
@@ -969,7 +1079,7 @@ export function DashboardPage() {
                   </div>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <span className="text-xs text-slate-500 dark:text-slate-400">
+                  <span className="text-xs text-muted-foreground">
                     Terakhir diperbarui:{" "}
                     {currentTime.toLocaleTimeString("id-ID")}
                   </span>

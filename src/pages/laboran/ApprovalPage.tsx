@@ -166,7 +166,7 @@ export default function ApprovalPage() {
             <CardTitle className="text-sm font-medium">
               Menunggu Persetujuan
             </CardTitle>
-            <Clock className="h-4 w-4 text-yellow-600" />
+            <Clock className="h-4 w-4 text-warning" />
           </CardHeader>
           <CardContent>
             <div className="text-4xl font-extrabold">{requests.length}</div>
@@ -181,7 +181,7 @@ export default function ApprovalPage() {
             <CardTitle className="text-sm font-medium">
               Catatan Penting
             </CardTitle>
-            <AlertCircle className="h-4 w-4 text-blue-600" />
+            <AlertCircle className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
             <p className="text-sm">

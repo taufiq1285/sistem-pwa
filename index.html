@@ -8,11 +8,17 @@
 
     <!-- PWA Meta Tags -->
     <meta name="description" content="Sistem Informasi Praktikum - Akademi Kebidanan Mega Buana. Progressive Web App dengan dukungan offline" />
-    <meta name="theme-color" content="#3b82f6" />
+    
+    <!-- Dynamic Theme Color for Light/Dark Mode -->
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#020817" media="(prefers-color-scheme: dark)" />
+    
+    <!-- iOS Native App Capabilities -->
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="Praktikum AKMB" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="SiPraktik" />
+    <meta name="apple-touch-fullscreen" content="yes" />
 
     <!-- Performance & Network Hints -->
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -36,7 +42,64 @@
   </head>
   <body>
     <!-- App container -->
-    <div id="root"></div>
+    <div id="root">
+      <!-- PWA Native App Loading State -->
+      <style>
+        .pwa-loader-container {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          height: 100vh;
+          width: 100vw;
+          background-color: #f8fafc;
+          font-family: system-ui, -apple-system, sans-serif;
+        }
+        @media (prefers-color-scheme: dark) {
+          .pwa-loader-container {
+            background-color: #020817;
+          }
+        }
+        .pwa-loader-spinner {
+          width: 48px;
+          height: 48px;
+          border: 4px solid rgba(59, 130, 246, 0.2);
+          border-left-color: #3b82f6;
+          border-radius: 50%;
+          animation: pwa-spin 1s linear infinite;
+          margin-bottom: 24px;
+        }
+        .pwa-loader-text {
+          color: #3b82f6;
+          font-size: 1.125rem;
+          font-weight: 600;
+          letter-spacing: 0.5px;
+          animation: pwa-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        .pwa-loader-brand {
+          position: absolute;
+          bottom: 32px;
+          font-size: 0.875rem;
+          color: #64748b;
+          font-weight: 500;
+        }
+        @media (prefers-color-scheme: dark) {
+          .pwa-loader-brand { color: #94a3b8; }
+        }
+        @keyframes pwa-spin {
+          to { transform: rotate(360deg); }
+        }
+        @keyframes pwa-pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: .5; }
+        }
+      </style>
+      <div class="pwa-loader-container">
+        <div class="pwa-loader-spinner"></div>
+        <div class="pwa-loader-text">SiPraktik AKMB</div>
+        <div class="pwa-loader-brand">Sistem Informasi Praktikum</div>
+      </div>
+    </div>
 
     <!-- Fallback for users with JavaScript disabled -->
     <noscript>

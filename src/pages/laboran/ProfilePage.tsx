@@ -149,7 +149,7 @@ export default function ProfilePage() {
       <div className="mx-auto max-w-5xl space-y-6">
         <GlassCard
           intensity="medium"
-          className="border-white/40 bg-white/80 shadow-xl dark:border-white/10 dark:bg-slate-900/80"
+          className="border-white/40 bg-white/80 shadow-xl dark:border-white/10 dark:bg-card"
         >
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
@@ -173,7 +173,7 @@ export default function ProfilePage() {
         <div className="grid gap-4 md:grid-cols-3">
           <GlassCard
             intensity="low"
-            className="border-white/40 bg-white/90 shadow-lg dark:border-white/10 dark:bg-slate-900/85"
+            className="border-white/40 bg-white/90 shadow-lg dark:border-white/10 dark:bg-card"
           >
             <div className="flex items-center gap-3">
               <div className="rounded-xl bg-primary/10 p-3 text-primary">
@@ -189,7 +189,7 @@ export default function ProfilePage() {
           </GlassCard>
           <GlassCard
             intensity="low"
-            className="border-white/40 bg-white/90 shadow-lg dark:border-white/10 dark:bg-slate-900/85"
+            className="border-white/40 bg-white/90 shadow-lg dark:border-white/10 dark:bg-card"
           >
             <div className="flex items-center gap-3">
               <div className="rounded-xl bg-success/10 p-3 text-success">
@@ -205,7 +205,7 @@ export default function ProfilePage() {
           </GlassCard>
           <GlassCard
             intensity="low"
-            className="border-white/40 bg-white/90 shadow-lg dark:border-white/10 dark:bg-slate-900/85"
+            className="border-white/40 bg-white/90 shadow-lg dark:border-white/10 dark:bg-card"
           >
             <div className="flex items-center gap-3">
               <div className="rounded-xl bg-accent/10 p-3 text-accent">
@@ -239,7 +239,7 @@ export default function ProfilePage() {
 
         <GlassCard
           intensity="low"
-          className="interactive-card rounded-2xl border-white/40 bg-white/95 shadow-lg dark:border-white/10 dark:bg-slate-900/85"
+          className="interactive-card rounded-2xl border-white/40 bg-white/95 shadow-lg dark:border-white/10 dark:bg-card"
         >
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -294,7 +294,7 @@ export default function ProfilePage() {
 
         <GlassCard
           intensity="low"
-          className="interactive-card rounded-2xl border-white/40 bg-white/95 shadow-lg dark:border-white/10 dark:bg-slate-900/85"
+          className="interactive-card rounded-2xl border-white/40 bg-white/95 shadow-lg dark:border-white/10 dark:bg-card"
         >
           <CardHeader>
             <CardTitle className="flex items-center gap-2">

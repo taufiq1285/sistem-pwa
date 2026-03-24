@@ -65,6 +65,7 @@ import {
 } from "@/lib/api/kuis.api";
 // ✅ SECURITY FIX: Import secure API untuk hide jawaban_benar
 import { getSoalForAttempt } from "@/lib/api/kuis-secure.api";
+import { submitAllAnswersWithVersion } from "@/lib/api/kuis-versioned-simple.api";
 // ✅ FIX: Dynamic import untuk menghindari circular dependency warning
 import { createLaporanUploader } from "@/lib/api/laporan-storage.api";
 import type {
@@ -222,7 +223,11 @@ export function QuizAttempt({
    */
   useEffect(() => {
     if (isOnline && attempt) {
-      syncOfflineAnswers(attempt.id).catch((err) => {
+      syncOfflineAnswers(attempt.id).then((count) => {
+        if (count > 0) {
+          toast.success(`Sinyal kembali! ${count} jawaban offline berhasil disinkronkan ke server.`);
+        }
+      }).catch((err) => {
         console.error("Failed to sync offline answers:", err);
       });
     }
@@ -717,10 +722,8 @@ export function QuizAttempt({
       console.log("🐛 [QuizAttempt] Answers to save:", answers);
       console.log("🐛 [QuizAttempt] File uploads:", fileUploads);
 
-      // ✅ FIX: Dynamic import untuk menghindari circular dependency
-      const { submitAllAnswersWithVersion } =
-        await import("@/lib/api/kuis-versioned-simple.api");
-
+      // ✅ Offline-critical: gunakan static import agar submit kuis tidak bergantung
+      // pada lazy chunk tambahan saat perangkat sudah offline.
       // ✅ FIX: Pass fileUploads to store file metadata (file_url, file_name, etc.)
       const saveResult = await submitAllAnswersWithVersion(
         attempt.id,

@@ -14,6 +14,9 @@ vi.mock("@/lib/api/kuis.api", () => ({
   duplicateKuis: vi.fn(),
   publishKuis: vi.fn(),
   unpublishKuis: vi.fn(),
+  cacheAttemptOffline: vi.fn(),
+  syncOfflineAnswers: vi.fn(),
+  getCachedAttempt: vi.fn().mockResolvedValue(null),
 }));
 
 vi.mock("sonner", () => ({

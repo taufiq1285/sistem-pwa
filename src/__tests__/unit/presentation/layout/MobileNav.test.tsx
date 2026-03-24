@@ -30,6 +30,15 @@ vi.mock("@/config/navigation.config", async () => {
   };
 });
 
+vi.mock("@/lib/hooks/useRoleTheme", () => ({
+  useRoleTheme: () => ({
+    sidebarBg: "bg-slate-950/95",
+    headerGlow: "via-slate-400/35",
+    mobileBanner: "from-slate-500/15 via-slate-400/5 to-transparent",
+    avatarGradient: "from-slate-700 via-slate-800 to-slate-950",
+  }),
+}));
+
 describe("MobileNav", () => {
   it("render drawer dan menjalankan onClose saat overlay diklik", async () => {
     const user = userEvent.setup();

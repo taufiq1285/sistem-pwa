@@ -254,17 +254,17 @@ export default function PersetujuanPage() {
         {totalPending > 0 && (
           <GlassCard
             intensity="low"
-            className="border-amber-200/70 bg-amber-50/85 shadow-sm dark:border-amber-900/40 dark:bg-amber-950/25"
+            className="border-warning/30 bg-warning/10 shadow-sm dark:border-warning/30 dark:bg-warning/10"
           >
             <Alert
               variant="default"
               className="border-0 bg-transparent p-0 shadow-none"
             >
-              <AlertTriangle className="h-4 w-4 text-amber-600" />
-              <AlertTitle className="text-amber-800 dark:text-amber-200">
+              <AlertTriangle className="h-4 w-4 text-warning" />
+              <AlertTitle className="text-warning dark:text-warning">
                 Ada permintaan yang menunggu persetujuan
               </AlertTitle>
-              <AlertDescription className="text-amber-700 dark:text-amber-300">
+              <AlertDescription className="text-warning/80 dark:text-warning/80">
                 Terdapat {totalPending} permintaan peminjaman alat yang perlu
                 ditinjau dan diproses.
               </AlertDescription>
@@ -380,7 +380,7 @@ export default function PersetujuanPage() {
                             <Button
                               size="sm"
                               variant="outline"
-                              className="border-emerald-600 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/20"
+                              className="border-success/50 text-success hover:bg-success/10 dark:hover:bg-success/10"
                               onClick={() => openApproveDialog(request)}
                             >
                               <CheckCircle className="mr-1 h-4 w-4" />
@@ -442,7 +442,7 @@ export default function PersetujuanPage() {
             <Button
               onClick={handleApprove}
               disabled={processing}
-              className="bg-green-600 hover:bg-green-700"
+              className="bg-success hover:bg-success/90"
             >
               {processing ? (
                 <>
@@ -486,7 +486,7 @@ export default function PersetujuanPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="rejection-reason">
-                Alasan Penolakan <span className="text-red-500">*</span>
+                Alasan Penolakan <span className="text-danger">*</span>
               </Label>
               <Textarea
                 id="rejection-reason"

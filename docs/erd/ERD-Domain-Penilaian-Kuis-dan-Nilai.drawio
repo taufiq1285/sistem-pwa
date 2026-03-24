@@ -1,0 +1,72 @@
+<?xml version=1.0 encoding=UTF-8?>
+<mxfile host=app.diagrams.net modified=2026-03-18T12:00:00.000Z agent=Mozilla/5.0 version=24.7.17>
+  <diagram id=0323e7ce-2c8d-49b0-bc64-b22fab39c22c name=Page-1>
+<mxGraphModel dx="1800" dy="1000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="1169" math="0" shadow="0">
+  <root>
+    <mxCell id="0" />
+    <mxCell id="1" parent="0" />
+
+    <mxCell id="title" value="ERD Domain Penilaian: Kuis dan Nilai" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=18;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="30" y="20" width="560" height="30" as="geometry" />
+    </mxCell>
+    <mxCell id="subtitle" value="Sistem Praktikum PWA" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=11;fontColor=#666666;" vertex="1" parent="1">
+      <mxGeometry x="30" y="50" width="260" height="20" as="geometry" />
+    </mxCell>
+
+    <mxCell id="kuis" value="<b>kuis</b><hr/>PK id : uuid<br/>FK kelas_id : uuid<br/>FK dosen_id : uuid<br/>FK mata_kuliah_id : uuid<br/>judul : string<br/>buka : datetime<br/>tutup : datetime<br/>durasi_menit : int" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=1.5;align=left;spacingLeft=10;verticalAlign=top;fontSize=12;" vertex="1" parent="1">
+      <mxGeometry x="440" y="120" width="280" height="190" as="geometry" />
+    </mxCell>
+
+    <mxCell id="soal" value="<b>soal</b><hr/>PK id : uuid<br/>FK kuis_id : uuid<br/>pertanyaan : text<br/>pilihan : json<br/>jawaban_benar : string<br/>bobot : int" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;strokeWidth=1.5;align=left;spacingLeft=10;verticalAlign=top;fontSize=12;" vertex="1" parent="1">
+      <mxGeometry x="90" y="420" width="250" height="160" as="geometry" />
+    </mxCell>
+
+    <mxCell id="attempt" value="<b>attempt_kuis</b><hr/>PK id : uuid<br/>FK kuis_id : uuid<br/>FK mahasiswa_id : uuid<br/>mulai_at : timestamp<br/>selesai_at : timestamp<br/>nilai : float<br/>status : enum" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;strokeWidth=1.5;align=left;spacingLeft=10;verticalAlign=top;fontSize=12;" vertex="1" parent="1">
+      <mxGeometry x="430" y="430" width="260" height="180" as="geometry" />
+    </mxCell>
+
+    <mxCell id="jawaban" value="<b>jawaban</b><hr/>PK id : uuid<br/>FK attempt_id : uuid<br/>FK soal_id : uuid<br/>jawaban_dipilih : string<br/>benar : boolean" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;strokeWidth=1.5;align=left;spacingLeft=10;verticalAlign=top;fontSize=12;" vertex="1" parent="1">
+      <mxGeometry x="780" y="430" width="250" height="150" as="geometry" />
+    </mxCell>
+
+    <mxCell id="nilai" value="<b>nilai</b><hr/>PK id : uuid<br/>FK kelas_id : uuid<br/>FK mahasiswa_id : uuid<br/>FK mata_kuliah_id : uuid<br/>nilai_akhir : float<br/>grade : string" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;strokeWidth=1.5;align=left;spacingLeft=10;verticalAlign=top;fontSize=12;" vertex="1" parent="1">
+      <mxGeometry x="1090" y="430" width="250" height="160" as="geometry" />
+    </mxCell>
+
+    <mxCell id="mahasiswa" value="<b>mahasiswa</b><hr/>PK id : uuid<br/>FK user_id : uuid<br/>nim : string" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;strokeWidth=1.5;align=left;spacingLeft=10;verticalAlign=top;fontSize=12;" vertex="1" parent="1">
+      <mxGeometry x="860" y="120" width="220" height="110" as="geometry" />
+    </mxCell>
+
+    <mxCell id="dosen" value="<b>dosen</b><hr/>PK id : uuid<br/>FK user_id : uuid<br/>nip : string" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;strokeWidth=1.5;align=left;spacingLeft=10;verticalAlign=top;fontSize=12;" vertex="1" parent="1">
+      <mxGeometry x="90" y="120" width="220" height="110" as="geometry" />
+    </mxCell>
+
+    <mxCell id="bank_soal" value="<b>bank_soal</b><hr/>PK id : uuid<br/>FK dosen_id : uuid<br/>pertanyaan : text<br/>tipe_soal : string" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=1.5;align=left;spacingLeft=10;verticalAlign=top;fontSize=12;" vertex="1" parent="1">
+      <mxGeometry x="90" y="260" width="250" height="130" as="geometry" />
+    </mxCell>
+
+    <mxCell id="e1" value="1 to many" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeWidth=1.5;endArrow=none;startArrow=none;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="kuis" target="soal" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e2" value="1 to many" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeWidth=1.5;endArrow=none;startArrow=none;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="kuis" target="attempt" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e3" value="1 to many" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeWidth=1.5;endArrow=none;startArrow=none;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="mahasiswa" target="attempt" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e4" value="1 to many" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeWidth=1.5;endArrow=none;startArrow=none;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="attempt" target="jawaban" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e5" value="1 to many" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeWidth=1.5;endArrow=none;startArrow=none;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="soal" target="jawaban" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e6" value="1 to many" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeWidth=1.5;endArrow=none;startArrow=none;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="mahasiswa" target="nilai" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e7" value="1 to many" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeWidth=1.5;endArrow=none;startArrow=none;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="dosen" target="bank_soal" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+  </root>
+</mxGraphModel>
+  </diagram>
+</mxfile>

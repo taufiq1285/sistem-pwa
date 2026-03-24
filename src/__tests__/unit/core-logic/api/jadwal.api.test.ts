@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { format } from "date-fns";
+import { addDays, format } from "date-fns";
 import {
   getJadwal,
   getJadwalById,
@@ -1045,7 +1045,7 @@ describe("Jadwal API", () => {
 
       await expect(
         updateJadwal("jadwal-1", {
-          tanggal_praktikum: "2026-03-10",
+          tanggal_praktikum: format(addDays(new Date(), 7), "yyyy-MM-dd"),
           jam_mulai: "09:00",
           jam_selesai: "11:00",
         } as any),

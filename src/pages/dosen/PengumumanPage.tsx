@@ -3,9 +3,9 @@
  * View announcements and notifications relevant to lecturers
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/lib/hooks/useAuth";
-import { cacheAPI } from "@/lib/offline/api-cache";
+import { cacheAPI, getCachedData } from "@/lib/offline/api-cache";
 import { getAllAnnouncements } from "@/lib/api/announcements.api";
 import type { Pengumuman } from "@/types/common.types";
 import {
@@ -27,58 +27,79 @@ export default function DosenPengumumanPage() {
   const [announcements, setAnnouncements] = useState<Pengumuman[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isOfflineData, setIsOfflineData] = useState(false);
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<number | null>(null);
 
   useEffect(() => {
     loadAnnouncements();
   }, []);
 
   const loadAnnouncements = async (forceRefresh = false) => {
+    const cacheKey = "dosen_announcements";
+
     try {
       setLoading(true);
       setError(null);
 
-      const data = await cacheAPI(
-        "dosen_announcements",
-        () => getAllAnnouncements(),
-        {
-          ttl: 10 * 60 * 1000, // 10 minutes - announcements change moderately
-          forceRefresh,
-          staleWhileRevalidate: true,
-        },
-      );
+      const cachedEntry = await getCachedData<Pengumuman[]>(cacheKey);
+      const hasCachedData = Array.isArray(cachedEntry?.data);
 
-      // Filter announcements for dosen role
-      const now = new Date().toISOString();
-      const filtered = data.filter((announcement) => {
-        // Check if announcement is for dosen or all roles
-        const targetRoles = announcement.target_role || [];
-        const isForDosen =
-          targetRoles.includes("dosen") || targetRoles.length === 0;
+      const filterAnnouncements = (data: Pengumuman[]) => {
+        const now = new Date().toISOString();
+        const filtered = data.filter((announcement) => {
+          const targetRoles = announcement.target_role || [];
+          const isForDosen =
+            targetRoles.includes("dosen") || targetRoles.length === 0;
 
-        // Check if announcement is currently active
-        const isActive =
-          (!announcement.tanggal_mulai || announcement.tanggal_mulai <= now) &&
-          (!announcement.tanggal_selesai ||
-            announcement.tanggal_selesai >= now);
+          const isActive =
+            (!announcement.tanggal_mulai || announcement.tanggal_mulai <= now) &&
+            (!announcement.tanggal_selesai ||
+              announcement.tanggal_selesai >= now);
 
-        return isForDosen && isActive;
+          return isForDosen && isActive;
+        });
+
+        filtered.sort((a, b) => {
+          if (a.prioritas === "high" && b.prioritas !== "high") return -1;
+          if (a.prioritas !== "high" && b.prioritas === "high") return 1;
+
+          const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+          const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+          return dateB - dateA;
+        });
+
+        return filtered;
+      };
+
+      if (hasCachedData) {
+        setAnnouncements(filterAnnouncements(cachedEntry.data));
+        setIsOfflineData(!navigator.onLine);
+        setLastUpdatedAt(cachedEntry.timestamp || null);
+        setLoading(false);
+      }
+
+      if (forceRefresh && !navigator.onLine) {
+        throw new Error(
+          hasCachedData
+            ? "Perangkat sedang offline. Menampilkan notifikasi tersimpan terakhir."
+            : "Perangkat sedang offline dan belum ada notifikasi tersimpan.",
+        );
+      }
+
+      const data = await cacheAPI(cacheKey, () => getAllAnnouncements(), {
+        ttl: 10 * 60 * 1000,
+        forceRefresh,
+        staleWhileRevalidate: true,
       });
 
-      // Sort by priority and date
-      filtered.sort((a, b) => {
-        // High priority first
-        if (a.prioritas === "high" && b.prioritas !== "high") return -1;
-        if (a.prioritas !== "high" && b.prioritas === "high") return 1;
-
-        // Then by created date (newest first)
-        const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
-        const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
-        return dateB - dateA;
-      });
-
-      setAnnouncements(filtered);
+      setAnnouncements(filterAnnouncements(data));
+      setIsOfflineData(false);
+      setLastUpdatedAt(Date.now());
     } catch (err: any) {
       console.error("Error loading announcements:", err);
+      if (announcements.length > 0 || !navigator.onLine) {
+        setIsOfflineData(true);
+      }
       setError(err.message || "Failed to load announcements");
     } finally {
       setLoading(false);
@@ -134,6 +155,15 @@ export default function DosenPengumumanPage() {
         return null;
     }
   };
+
+  const lastUpdatedLabel = useMemo(() => {
+    if (!lastUpdatedAt) return null;
+
+    return new Intl.DateTimeFormat("id-ID", {
+      dateStyle: "medium",
+      timeStyle: "short",
+    }).format(lastUpdatedAt);
+  }, [lastUpdatedAt]);
 
   if (loading) {
     return (
@@ -227,6 +257,18 @@ export default function DosenPengumumanPage() {
             </div>
           }
         />
+
+        {(isOfflineData || !navigator.onLine) && (
+          <Alert className="rounded-3xl border-warning/40 bg-warning/10 text-foreground shadow-sm">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              Notifikasi dosen sedang memakai snapshot lokal dari perangkat.
+              {lastUpdatedLabel
+                ? ` Pembaruan terakhir: ${lastUpdatedLabel}.`
+                : ""}
+            </AlertDescription>
+          </Alert>
+        )}
 
         {announcements.length === 0 ? (
           <Card className="overflow-hidden rounded-3xl border border-dashed border-primary/30 bg-white/85 shadow-lg shadow-slate-200/60">

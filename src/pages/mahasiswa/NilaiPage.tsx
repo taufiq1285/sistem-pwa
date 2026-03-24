@@ -8,7 +8,7 @@
  * - Track revision request history
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   FileText,
   TrendingUp,
@@ -19,6 +19,7 @@ import {
   Send,
   X,
   Loader2,
+  WifiOff,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -79,7 +80,7 @@ import {
 } from "@/types/permintaan-perbaikan.types";
 import { toast } from "sonner";
 import { getGradeStatus } from "@/lib/validations/nilai.schema";
-import { cacheAPI } from "@/lib/offline/api-cache";
+import { cacheAPI, getCachedData } from "@/lib/offline/api-cache";
 
 // ============================================================================
 // TYPES
@@ -112,6 +113,9 @@ export default function MahasiswaNilaiPageEnhanced() {
   const [selectedSemester, setSelectedSemester] = useState<string>("all");
   const [selectedTahunAjaran, setSelectedTahunAjaran] = useState<string>("all");
 
+  const [isOfflineData, setIsOfflineData] = useState(false);
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<number | null>(null);
+
   // Permintaan Perbaikan Dialog
   const [permintaanDialogOpen, setPermintaanDialogOpen] = useState(false);
   const [selectedNilai, setSelectedNilai] = useState<Nilai | null>(null);
@@ -120,6 +124,13 @@ export default function MahasiswaNilaiPageEnhanced() {
   const [alasanPermintaan, setAlasanPermintaan] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  const nilaiCacheKey = user?.mahasiswa?.id
+    ? `mahasiswa_nilai_${user.mahasiswa.id}`
+    : null;
+  const permintaanCacheKey = user?.mahasiswa?.id
+    ? `mahasiswa_permintaan_${user.mahasiswa.id}`
+    : null;
+
   // Load data
   useEffect(() => {
     if (user?.mahasiswa?.id) {
@@ -127,27 +138,98 @@ export default function MahasiswaNilaiPageEnhanced() {
     }
   }, [user?.mahasiswa?.id]);
 
+  useEffect(() => {
+    if (!nilaiCacheKey || !permintaanCacheKey) {
+      return;
+    }
+
+    const handleCacheUpdated = (event: Event) => {
+      const customEvent = event as CustomEvent<{
+        key?: string;
+        data?: Nilai[] | PermintaanPerbaikanWithRelations[];
+      }>;
+
+      if (customEvent.detail?.key === nilaiCacheKey) {
+        const nextNilai = customEvent.detail?.data;
+        if (Array.isArray(nextNilai)) {
+          setNilaiList(nextNilai as Nilai[]);
+          setIsOfflineData(false);
+          setLastUpdatedAt(Date.now());
+        }
+      }
+
+      if (customEvent.detail?.key === permintaanCacheKey) {
+        const nextPermintaan = customEvent.detail?.data;
+        if (Array.isArray(nextPermintaan)) {
+          setPermintaanList(
+            nextPermintaan as PermintaanPerbaikanWithRelations[],
+          );
+          setIsOfflineData(false);
+          setLastUpdatedAt(Date.now());
+        }
+      }
+    };
+
+    window.addEventListener("cache:updated", handleCacheUpdated);
+
+    return () => {
+      window.removeEventListener("cache:updated", handleCacheUpdated);
+    };
+  }, [nilaiCacheKey, permintaanCacheKey]);
+
   const loadData = async (forceRefresh = false) => {
     try {
       setLoading(true);
-      if (!user?.mahasiswa?.id) return;
+      if (!user?.mahasiswa?.id || !nilaiCacheKey || !permintaanCacheKey) return;
+
+      const [cachedNilaiEntry, cachedPermintaanEntry] = await Promise.all([
+        getCachedData<Nilai[]>(nilaiCacheKey),
+        getCachedData<PermintaanPerbaikanWithRelations[]>(permintaanCacheKey),
+      ]);
+
+      const hasCachedNilai = Array.isArray(cachedNilaiEntry?.data);
+      const hasCachedPermintaan = Array.isArray(cachedPermintaanEntry?.data);
+      const hasAnyCachedData = hasCachedNilai || hasCachedPermintaan;
+
+      if (hasAnyCachedData) {
+        setNilaiList(hasCachedNilai ? cachedNilaiEntry!.data : []);
+        setPermintaanList(
+          hasCachedPermintaan ? cachedPermintaanEntry!.data : [],
+        );
+        setIsOfflineData(!navigator.onLine);
+        setLastUpdatedAt(
+          Math.max(
+            cachedNilaiEntry?.timestamp || 0,
+            cachedPermintaanEntry?.timestamp || 0,
+          ) || null,
+        );
+        setLoading(false);
+      }
+
+      if (forceRefresh && !navigator.onLine) {
+        throw new Error(
+          hasAnyCachedData
+            ? "Perangkat sedang offline. Menampilkan data nilai tersimpan terakhir."
+            : "Perangkat sedang offline dan belum ada data nilai tersimpan.",
+        );
+      }
 
       // Use cacheAPI with stale-while-revalidate for offline support
       const [nilaiData, permintaanData] = await Promise.all([
         cacheAPI(
-          `mahasiswa_nilai_${user?.mahasiswa?.id}`,
+          nilaiCacheKey,
           () => getNilaiByMahasiswa(user.mahasiswa.id),
           {
-            ttl: 15 * 60 * 1000, // 15 minutes (nilai jarang berubah)
+            ttl: 15 * 60 * 1000,
             forceRefresh,
             staleWhileRevalidate: true,
           },
         ),
         cacheAPI(
-          `mahasiswa_permintaan_${user?.mahasiswa?.id}`,
+          permintaanCacheKey,
           () => getPermintaanByMahasiswa(user.mahasiswa.id),
           {
-            ttl: 5 * 60 * 1000, // 5 minutes
+            ttl: 5 * 60 * 1000,
             forceRefresh,
             staleWhileRevalidate: true,
           },
@@ -156,10 +238,15 @@ export default function MahasiswaNilaiPageEnhanced() {
 
       setNilaiList(nilaiData);
       setPermintaanList(permintaanData);
+      setIsOfflineData(false);
+      setLastUpdatedAt(Date.now());
       console.log("[NilaiPage] Data loaded:", nilaiData.length, "nilai");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error loading data:", error);
-      toast.error("Gagal memuat data nilai");
+      if (nilaiList.length > 0 || permintaanList.length > 0 || !navigator.onLine) {
+        setIsOfflineData(true);
+      }
+      toast.error(error?.message || "Gagal memuat data nilai");
     } finally {
       setLoading(false);
     }
@@ -296,6 +383,17 @@ export default function MahasiswaNilaiPageEnhanced() {
     });
   };
 
+  const lastUpdatedLabel = useMemo(() => {
+    if (!lastUpdatedAt) {
+      return null;
+    }
+
+    return new Date(lastUpdatedAt).toLocaleString("id-ID", {
+      dateStyle: "medium",
+      timeStyle: "short",
+    });
+  }, [lastUpdatedAt]);
+
   if (loading) {
     return (
       <div className="app-container py-4 sm:py-6 lg:py-8">
@@ -352,10 +450,31 @@ export default function MahasiswaNilaiPageEnhanced() {
                 <p className="text-muted-foreground">
                   Lihat nilai per kelas, per mata kuliah, dan ajukan perbaikan
                 </p>
+                {(isOfflineData || lastUpdatedLabel) && (
+                  <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                    {isOfflineData && (
+                      <span className="inline-flex items-center gap-1 font-medium text-warning">
+                        <WifiOff className="h-4 w-4" />
+                        Menampilkan data nilai tersimpan lokal
+                      </span>
+                    )}
+                    {lastUpdatedLabel && (
+                      <span>Update terakhir: {lastUpdatedLabel}</span>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </CardContent>
         </GlassCard>
+
+        {isOfflineData && (
+          <Alert className="border-warning/30 bg-warning/10 text-warning dark:border-warning/30 dark:bg-warning/10 dark:text-warning">
+            <AlertDescription>
+              Halaman nilai tetap bisa dibuka dari cache lokal saat offline. Data yang tampil adalah snapshot terakhir yang berhasil disimpan. Pengajuan perbaikan nilai tetap memerlukan koneksi internet agar benar-benar terkirim ke server.
+            </AlertDescription>
+          </Alert>
+        )}
 
         {/* Statistics Cards */}
         {nilaiList.length > 0 && (

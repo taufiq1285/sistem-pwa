@@ -282,9 +282,7 @@ describe("kuis.api - CORE LOGIC", () => {
         success: true,
       } as any);
 
-      await expect(
-        kuisApi.syncOfflineAnswers("att-1"),
-      ).resolves.toBeUndefined();
+      await expect(kuisApi.syncOfflineAnswers("att-1")).resolves.toBe(1);
 
       expect(submitAnswerWithVersion).toHaveBeenCalledWith({
         attempt_id: "att-1",
@@ -300,9 +298,7 @@ describe("kuis.api - CORE LOGIC", () => {
     it("syncOfflineAnswers: no-op jika tidak ada data offline", async () => {
       vi.mocked(indexedDBManager.getAll).mockResolvedValue([] as any);
 
-      await expect(
-        kuisApi.syncOfflineAnswers("att-empty"),
-      ).resolves.toBeUndefined();
+      await expect(kuisApi.syncOfflineAnswers("att-empty")).resolves.toBe(0);
       expect(submitAnswerWithVersion).not.toHaveBeenCalled();
     });
 

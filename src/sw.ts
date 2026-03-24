@@ -25,7 +25,7 @@ import { precacheAndRoute } from 'workbox-precaching';
 // Precache injected assets by Vite Workbox
 precacheAndRoute(self.__WB_MANIFEST || []);
 
-const CACHE_VERSION = 'v1.0.3'; // Fixed: serve index.html for offline navigation
+const CACHE_VERSION = 'v1.0.4'; // Fixed: harden startup asset caching for installed offline PWA
 const CACHE_PREFIX = 'praktikum-pwa';
 
 // Cache names
@@ -43,9 +43,17 @@ const STATIC_ASSETS = [
   '/index.html',
   '/offline.html',
   '/manifest.json',
+  '/registerSW.js',
   '/favicon.png',
+  '/logo.svg',
   '/apple-touch-icon.png',
+  '/icons/icon-48x48.png',
+  '/icons/icon-72x72.png',
+  '/icons/icon-96x96.png',
+  '/icons/icon-144x144.png',
   '/icons/icon-192x192.png',
+  '/icons/icon-256x256.png',
+  '/icons/icon-384x384.png',
   '/icons/icon-512x512.png',
 ];
 
@@ -95,11 +103,7 @@ self.addEventListener('install', (event) => {
         });
 
         await Promise.allSettled(cachePromises);
-        console.log('[SW] Static assets caching completed');
-      })
-      .then(() => {
-        // Force immediate activation
-        return self.skipWaiting();
+        console.log('[SW] Custom static assets caching completed');
       })
       .catch((error) => {
         console.error('[SW] Install failed:', error);
@@ -135,6 +139,12 @@ self.addEventListener('activate', (event) => {
           })
         );
       })
+      .then(async () => {
+        if ('navigationPreload' in self.registration) {
+          await self.registration.navigationPreload.enable();
+          console.log('[SW] Navigation preload enabled');
+        }
+      })
       .then(() => {
         console.log('[SW] Old caches cleaned up');
         // Take control of all clients immediately
@@ -156,6 +166,11 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
+
+  if (request.mode === 'navigate') {
+    event.respondWith(handleNavigationRequest(event));
+    return;
+  }
 
   // ========================================================================
   // SKIP ALL DEVELOPMENT & SPECIAL REQUESTS (NO CACHING)
@@ -220,7 +235,27 @@ self.addEventListener('fetch', (event) => {
   // ROUTE TO CACHING STRATEGIES (PRODUCTION ASSETS ONLY)
   // ========================================================================
 
-  // Route to appropriate caching strategy
+  // ⚠️ CRITICAL: Skip assets natively handled by Workbox Precache
+  // This prevents InvalidStateError & double-caching from duplicate respondWith() calls
+  const isWorkboxAsset = (
+    url.pathname.startsWith('/assets/') ||
+    url.pathname.endsWith('.js') ||
+    url.pathname.endsWith('.css') ||
+    url.pathname.endsWith('.html') ||
+    url.pathname === '/' ||
+    url.pathname.endsWith('.json') ||
+    url.pathname === '/registerSW.js' ||
+    url.pathname.endsWith('.svg') ||
+    url.pathname.endsWith('.png') ||
+    url.pathname.endsWith('.ico')
+  );
+
+  if (isWorkboxAsset) {
+    // Let Workbox's precacheAndRoute or default browser network handle these
+    return;
+  }
+
+  // Route to appropriate caching strategy for custom non-bundled assets
   if (isApiRequest(url)) {
     event.respondWith(networkFirstStrategy(request, CACHE_NAMES.api));
   } else if (isImageRequest(url)) {
@@ -245,10 +280,19 @@ self.addEventListener('fetch', (event) => {
  */
 async function cacheFirstStrategy(request, cacheName) {
   try {
-    // Try cache first
+    const url = new URL(request.url);
+
+    // Try cache first using full request URL
     const cachedResponse = await caches.match(request);
     if (cachedResponse) {
       return cachedResponse;
+    }
+
+    // For startup/public assets, also try pathname lookup because install step
+    // stores some entries by path string and browsers may request absolute URLs.
+    const cachedByPathname = await caches.match(url.pathname);
+    if (cachedByPathname) {
+      return cachedByPathname;
     }
 
     // Cache miss - fetch from network
@@ -405,25 +449,119 @@ async function staleWhileRevalidateStrategy(request, cacheName) {
 /**
  * Handle offline fallback
  */
+async function handleNavigationRequest(event) {
+  const { request, preloadResponse } = event;
+  const url = new URL(request.url);
+
+  try {
+    const preloadedResponse = await preloadResponse;
+    if (preloadedResponse) {
+      const cache = await caches.open(CACHE_NAMES.dynamic);
+      cache.put(request, preloadedResponse.clone());
+      return preloadedResponse;
+    }
+
+    const cachedNavigation = await caches.match(request);
+    const precachedIndex = await caches.match('/index.html');
+    const cachedRoot = await caches.match('/');
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 4000);
+
+    try {
+      const networkResponse = await fetch(request, {
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (networkResponse && networkResponse.status === 200) {
+        const cache = await caches.open(CACHE_NAMES.dynamic);
+        cache.put(request, networkResponse.clone());
+      }
+      return networkResponse;
+    } catch (error) {
+      clearTimeout(timeoutId);
+
+      if (cachedNavigation) {
+        console.log('[SW] Serving cached navigation after network failure:', url.pathname);
+        return cachedNavigation;
+      }
+
+      if (precachedIndex) {
+        console.log('[SW] Serving precached index.html after navigation timeout/failure:', url.pathname);
+        return precachedIndex;
+      }
+
+      if (cachedRoot) {
+        console.log('[SW] Serving cached root after navigation timeout/failure:', url.pathname);
+        return cachedRoot;
+      }
+
+      throw error;
+    }
+  } catch (error) {
+    console.warn('[SW] Navigation request failed, falling back offline:', url.pathname, error);
+    return handleOfflineFallback(request);
+  }
+}
+
 async function handleOfflineFallback(request) {
   const url = new URL(request.url);
 
-  // Return offline page for navigation requests
-  if (request.mode === 'navigate') {
-    const cache = await caches.open(CACHE_NAMES.static);
-
-    // Try index.html first - allows React Router to handle offline routing
-    // Users with offline sessions can still navigate the app (not blocked by offline.html)
-    const indexPage = await cache.match('/index.html') || await cache.match('/');
-    if (indexPage) {
-      console.log('[SW] Serving cached index.html for offline navigation:', url.pathname);
-      return indexPage;
+  // Try exact cached resource first for non-navigation requests.
+  if (request.mode !== 'navigate') {
+    const exactMatch = await caches.match(request);
+    if (exactMatch) {
+      return exactMatch;
     }
 
-    // Fallback to offline.html only if index.html is not cached yet
+    const pathnameMatch = await caches.match(url.pathname);
+    if (pathnameMatch) {
+      return pathnameMatch;
+    }
+
+    if (url.pathname === '/registerSW.js') {
+      return new Response('', {
+        status: 200,
+        headers: new Headers({
+          'Content-Type': 'application/javascript; charset=utf-8',
+          'Cache-Control': 'no-store',
+        }),
+      });
+    }
+
+    if (url.pathname.endsWith('.json') || url.pathname === '/manifest.json') {
+      return new Response('{"name":"Offline","short_name":"Offline","display":"standalone","start_url":"/"}', {
+        status: 200,
+        headers: new Headers({
+          'Content-Type': 'application/manifest+json; charset=utf-8',
+          'Cache-Control': 'no-store',
+        }),
+      });
+    }
+  }
+
+  // Return offline page for navigation requests
+  if (request.mode === 'navigate') {
+    const precachedIndex = await caches.match('/index.html');
+    if (precachedIndex) {
+      console.log('[SW] Serving precached index.html for offline navigation:', url.pathname);
+      return precachedIndex;
+    }
+
+    const precachedRoot = await caches.match('/');
+    if (precachedRoot) {
+      console.log('[SW] Serving cached root for offline navigation:', url.pathname);
+      return precachedRoot;
+    }
+
+    const cache = await caches.open(CACHE_NAMES.static);
+
+    // Fallback to offline.html only if app shell is not cached yet
     const offlinePage = await cache.match('/offline.html');
     if (offlinePage) {
-      console.log('[SW] Serving offline.html (index.html not cached)');
+      console.log('[SW] Serving offline.html (app shell not cached)');
       return offlinePage;
     }
   }
@@ -475,6 +613,10 @@ function isStaticAsset(url) {
     url.pathname.startsWith('/assets/') ||
     url.pathname.endsWith('.css') ||
     url.pathname.endsWith('.js') ||
+    url.pathname.endsWith('.json') ||
+    url.pathname.endsWith('.svg') ||
+    url.pathname.endsWith('.png') ||
+    url.pathname.endsWith('.webmanifest') ||
     url.pathname === '/' ||
     url.pathname.endsWith('.html')
   );

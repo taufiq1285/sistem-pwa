@@ -252,14 +252,14 @@ export default function BankSoalPage() {
 
             <Card className="interactive-card border-0 shadow-lg bg-linear-to-br from-warning/5 to-warning/10 dark:from-warning/10 dark:to-warning/20">
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-bold text-orange-900">
+                <CardTitle className="text-sm font-bold text-warning">
                   Total Penggunaan
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5 text-orange-600" />
-                  <div className="text-3xl sm:text-4xl font-bold text-orange-900">
+                  <TrendingUp className="h-5 w-5 text-warning" />
+                  <div className="text-3xl sm:text-4xl font-bold text-warning">
                     {stats.total_usage}
                   </div>
                 </div>

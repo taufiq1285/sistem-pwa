@@ -23,6 +23,7 @@ import {
   storeUserData,
   clearOfflineSession,
   restoreOfflineSession,
+  recordOnlineLogin,
 } from "@/lib/offline/offline-auth";
 import { cleanupAllCache } from "@/lib/utils/cache-cleaner";
 
@@ -185,14 +186,51 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     async function initAuth() {
       try {
+        const logoutFlag = getLogoutFlag();
+
         if (initialCache) {
           logger.auth("Using cached auth ⚡ (instant load!)");
           setLoading(false);
           setInitialized(true);
+
+          if (logoutFlag) {
+            logger.auth(
+              "Logout flag detected while using cache - clearing cached auth state",
+            );
+            await clearOfflineSession();
+            updateAuthState(null, null);
+            return;
+          }
+
+          if (!navigator.onLine) {
+            logger.auth(
+              "Offline startup with cached auth - skipping remote session bootstrap",
+            );
+            return;
+          }
+        }
+
+        if (!navigator.onLine) {
+          logger.auth("Offline startup - restoring offline session only");
+          const offlineSession = await restoreOfflineSession();
+
+          if (mounted) {
+            if (logoutFlag) {
+              await clearOfflineSession();
+              updateAuthState(null, null);
+            } else if (offlineSession) {
+              logger.auth("Restored session from offline storage");
+              updateAuthState(offlineSession.user, offlineSession.session);
+            } else {
+              updateAuthState(null, null);
+            }
+            setInitialized(true);
+            setLoading(false);
+          }
+          return;
         }
 
         const currentSession = await authApi.getSession();
-        const logoutFlag = getLogoutFlag();
 
         if (mounted) {
           // ✅ PERBAIKAN: Jika ada logout flag, prioritaskan logout daripada online session
@@ -344,8 +382,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
             await storeOfflineSession(response.user, response.session);
             await storeUserData(response.user);
             // Record that user has logged in online (required for offline access)
-            const { recordOnlineLogin } =
-              await import("@/lib/offline/online-first-auth");
             await recordOnlineLogin(response.user, response.session);
             logger.auth("Offline credentials stored successfully");
           } catch (storageError) {
@@ -357,6 +393,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           clearLogoutFlag();
 
           updateAuthState(response.user, response.session);
+          setInitialized(true); // ✅ FORCE INITIALIZED AFTER SUCCESSFUL ONLINE LOGIN
         } else {
           // Offline login
           logger.auth("Offline mode detected - attempting offline login...");
@@ -383,6 +420,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           clearLogoutFlag();
 
           updateAuthState(offlineResponse.user, offlineResponse.session);
+          setInitialized(true); // ✅ FORCE INITIALIZED AFTER SUCCESSFUL OFFLINE LOGIN
         }
       } catch (error) {
         console.error("Login error:", error);

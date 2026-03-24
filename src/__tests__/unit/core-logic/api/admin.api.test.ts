@@ -193,15 +193,25 @@ describe("Admin API", () => {
     });
 
     it("should handle database errors", async () => {
-      vi.mocked(supabase.from).mockImplementation(
-        () =>
-          ({
+      vi.mocked(supabase.from).mockImplementation((table: string) => {
+        if (table === "peminjaman") {
+          return {
             select: vi.fn().mockReturnValue({
-              data: null,
-              error: new Error("Database error"),
+              eq: vi.fn().mockReturnValue({
+                data: null,
+                error: null,
+              }),
             }),
-          }) as any,
-      );
+          } as any;
+        }
+
+        return {
+          select: vi.fn().mockReturnValue({
+            data: null,
+            error: new Error("Database error"),
+          }),
+        } as any;
+      });
 
       await expect(adminAPI.getDashboardStats()).rejects.toThrow(
         "Database error",

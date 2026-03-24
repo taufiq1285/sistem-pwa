@@ -373,24 +373,23 @@ export const getAssignmentSummary = requirePermission(
  * Get assignment statistics
  */
 async function getAssignmentStatsImpl(): Promise<AssignmentStats> {
-  // Get all dosen (assuming all are active since table doesn't have is_active column)
-  const { data: dosenData } = await supabase.from("dosen").select("id");
+  const [
+    { data: dosenData },
+    { data: jadwalData },
+    { data: kelasData }
+  ] = await Promise.all([
+    supabase.from("dosen").select("id"),
+    supabase.from("jadwal_praktikum").select("id, dosen_id, kelas_id, kelas:kelas_id(dosen_id, mata_kuliah_id)").eq("is_active", true),
+    supabase.from("kelas").select("id").eq("is_active", true)
+  ]);
 
   const totalDosenAktif = dosenData?.length || 0;
 
-  // Get dosen with jadwal - check both jadwal.dosen_id and kelas.dosen_id
-  const { data: dosenWithJadwal } = await supabase
-    .from("jadwal_praktikum")
-    .select("dosen_id, kelas:kelas_id(dosen_id)")
-    .eq("is_active", true);
-
   const dosenIdsWithJadwal = new Set();
-  (dosenWithJadwal || []).forEach((j: any) => {
-    // Add dosen_id from jadwal if exists
+  (jadwalData || []).forEach((j: any) => {
     if (j.dosen_id) {
       dosenIdsWithJadwal.add(j.dosen_id);
     }
-    // Add dosen_id from kelas if exists
     if (j.kelas?.dosen_id) {
       dosenIdsWithJadwal.add(j.kelas.dosen_id);
     }
@@ -399,27 +398,14 @@ async function getAssignmentStatsImpl(): Promise<AssignmentStats> {
   const dosenDenganJadwal = dosenIdsWithJadwal.size;
   const dosenTanpaJadwal = totalDosenAktif - dosenDenganJadwal;
 
-  // Get all active kelas
-  const { data: kelasData } = await supabase
-    .from("kelas")
-    .select("id")
-    .eq("is_active", true);
-
   const totalKelas = kelasData?.length || 0;
 
-  // Get kelas with jadwal
   const kelasIdsWithJadwal = new Set(
-    (dosenWithJadwal || []).map((j: any) => j.kelas_id),
+    (jadwalData || []).map((j: any) => j.kelas_id).filter(Boolean),
   );
 
   const kelasDenganJadwal = kelasIdsWithJadwal.size;
   const kelasTanpaJadwal = totalKelas - kelasDenganJadwal;
-
-  // Get total active jadwal
-  const { data: jadwalData } = await supabase
-    .from("jadwal_praktikum")
-    .select("id, kelas:kelas_id(mata_kuliah_id)")
-    .eq("is_active", true);
 
   const totalJadwalAktif = jadwalData?.length || 0;
 
@@ -791,12 +777,13 @@ export const getAcademicAssignments = requirePermission(
  * Get academic assignment statistics
  */
 async function getAcademicAssignmentStatsImpl(): Promise<AssignmentStats> {
-  const { data: kelasData } = await supabase
-    .from("kelas")
-    .select("dosen_id, mata_kuliah_id, is_active")
-    .eq("is_active", true);
-
-  const { data: dosenData } = await supabase.from("dosen").select("id");
+  const [
+    { data: kelasData },
+    { data: dosenData }
+  ] = await Promise.all([
+    supabase.from("kelas").select("dosen_id, mata_kuliah_id, is_active").eq("is_active", true),
+    supabase.from("dosen").select("id")
+  ]);
 
   const totalDosenAktif = dosenData?.length || 0;
 

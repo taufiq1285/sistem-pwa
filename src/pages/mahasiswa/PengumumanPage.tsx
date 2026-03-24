@@ -4,7 +4,7 @@
  */
 
 import { useEffect, useState } from "react";
-import { cacheAPI } from "@/lib/offline/api-cache";
+import { cacheAPI, getCachedData } from "@/lib/offline/api-cache";
 import { getAllAnnouncements } from "@/lib/api/announcements.api";
 import type { Pengumuman } from "@/types/common.types";
 import {
@@ -33,10 +33,65 @@ export default function PengumumanPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [isOfflineData, setIsOfflineData] = useState(false);
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<number | null>(null);
 
   useEffect(() => {
     loadAnnouncements();
+
+    const handleCacheUpdated = (event: Event) => {
+      const customEvent = event as CustomEvent<{
+        key?: string;
+        data?: Pengumuman[];
+      }>;
+
+      if (customEvent.detail?.key !== "mahasiswa_announcements") {
+        return;
+      }
+
+      const nextData = customEvent.detail?.data;
+      if (!Array.isArray(nextData)) {
+        return;
+      }
+
+      applyFilteredAnnouncements(nextData);
+      setIsOfflineData(false);
+      setLastUpdatedAt(Date.now());
+      setError(null);
+    };
+
+    window.addEventListener("cache:updated", handleCacheUpdated);
+
+    return () => {
+      window.removeEventListener("cache:updated", handleCacheUpdated);
+    };
   }, []);
+
+  const applyFilteredAnnouncements = (data: Pengumuman[]) => {
+    const now = new Date().toISOString();
+    const filtered = data.filter((announcement) => {
+      const targetRoles = announcement.target_role || [];
+      const isForMahasiswa =
+        targetRoles.includes("mahasiswa") || targetRoles.length === 0;
+
+      const isActive =
+        (!announcement.tanggal_mulai || announcement.tanggal_mulai <= now) &&
+        (!announcement.tanggal_selesai || announcement.tanggal_selesai >= now);
+
+      return isForMahasiswa && isActive;
+    });
+
+    filtered.sort((a, b) => {
+      if (a.prioritas === "high" && b.prioritas !== "high") return -1;
+      if (a.prioritas !== "high" && b.prioritas === "high") return 1;
+
+      const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+      const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+      return dateB - dateA;
+    });
+
+    setAnnouncements(filtered);
+  };
 
   const loadAnnouncements = async (forceRefresh = false) => {
     try {
@@ -48,8 +103,27 @@ export default function PengumumanPage() {
 
       setError(null);
 
+      const cacheKey = "mahasiswa_announcements";
+      const cachedEntry = await getCachedData<Pengumuman[]>(cacheKey);
+      const hasCachedData = Array.isArray(cachedEntry?.data);
+
+      if (hasCachedData) {
+        applyFilteredAnnouncements(cachedEntry!.data);
+        setLastUpdatedAt(cachedEntry!.timestamp);
+        setIsOfflineData(!navigator.onLine);
+        setLoading(false);
+      }
+
+      if (forceRefresh && !navigator.onLine) {
+        throw new Error(
+          hasCachedData
+            ? "Perangkat sedang offline. Menampilkan notifikasi tersimpan terakhir."
+            : "Perangkat sedang offline dan belum ada notifikasi tersimpan.",
+        );
+      }
+
       const data = await cacheAPI(
-        "mahasiswa_announcements",
+        cacheKey,
         () => getAllAnnouncements(),
         {
           ttl: 10 * 60 * 1000,
@@ -58,32 +132,16 @@ export default function PengumumanPage() {
         },
       );
 
-      const now = new Date().toISOString();
-      const filtered = data.filter((announcement) => {
-        const targetRoles = announcement.target_role || [];
-        const isForMahasiswa =
-          targetRoles.includes("mahasiswa") || targetRoles.length === 0;
-
-        const isActive =
-          (!announcement.tanggal_mulai || announcement.tanggal_mulai <= now) &&
-          (!announcement.tanggal_selesai ||
-            announcement.tanggal_selesai >= now);
-
-        return isForMahasiswa && isActive;
-      });
-
-      filtered.sort((a, b) => {
-        if (a.prioritas === "high" && b.prioritas !== "high") return -1;
-        if (a.prioritas !== "high" && b.prioritas === "high") return 1;
-
-        const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
-        const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
-        return dateB - dateA;
-      });
-
-      setAnnouncements(filtered);
+      applyFilteredAnnouncements(data);
+      setIsOfflineData(false);
+      setLastUpdatedAt(Date.now());
     } catch (err: any) {
       console.error("Error loading announcements:", err);
+
+      if (announcements.length > 0 || !navigator.onLine) {
+        setIsOfflineData(true);
+      }
+
       setError(err.message || "Gagal memuat notifikasi");
     } finally {
       setLoading(false);
@@ -222,6 +280,14 @@ export default function PengumumanPage() {
             <Bell className="h-4 w-4 text-primary" />
             {announcements.length} Notifikasi Aktif
           </div>
+          {isOfflineData && (
+            <div className="text-right text-xs text-muted-foreground">
+              Mode offline • data tersimpan lokal
+              {lastUpdatedAt
+                ? ` • update ${format(new Date(lastUpdatedAt), "dd MMM yyyy, HH:mm")}`
+                : ""}
+            </div>
+          )}
           <Button
             variant="outline"
             onClick={() => loadAnnouncements(true)}
@@ -235,6 +301,17 @@ export default function PengumumanPage() {
           </Button>
         </div>
       </div>
+
+      {isOfflineData && (
+        <Alert className="rounded-2xl border-warning/30 bg-warning/10 text-warning">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Aplikasi sedang memakai data notifikasi yang tersimpan di perangkat.
+            Tampilan tetap bisa dibuka saat offline, tetapi isi terbaru baru akan
+            disegarkan saat koneksi kembali tersedia.
+          </AlertDescription>
+        </Alert>
+      )}
 
       {announcements.length === 0 ? (
         <Card className="rounded-2xl border border-border/60 bg-white/90 shadow-sm">

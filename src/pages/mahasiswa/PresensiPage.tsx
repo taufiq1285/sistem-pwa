@@ -3,7 +3,7 @@
  * View attendance records and statistics
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   ClipboardCheck,
   Calendar,
@@ -12,6 +12,7 @@ import {
   Clock,
   AlertCircle,
   MapPin,
+  WifiOff,
 } from "lucide-react";
 import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -29,7 +30,7 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { networkDetector } from "@/lib/offline/network-detector";
-import { cacheAPI } from "@/lib/offline/api-cache";
+import { cacheAPI, getCachedData } from "@/lib/offline/api-cache";
 import {
   getMahasiswaKehadiran,
   type MahasiswaKehadiranRecord,
@@ -41,6 +42,12 @@ export default function PresensiPage() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [records, setRecords] = useState<MahasiswaKehadiranRecord[]>([]);
+  const [isOfflineData, setIsOfflineData] = useState(false);
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<number | null>(null);
+
+  const presensiCacheKey = user?.mahasiswa?.id
+    ? `mahasiswa_presensi_${user.mahasiswa.id}`
+    : null;
 
   useEffect(() => {
     if (user?.id) {
@@ -48,37 +55,96 @@ export default function PresensiPage() {
     }
   }, [user?.id]);
 
+  useEffect(() => {
+    if (!presensiCacheKey) {
+      return;
+    }
+
+    const handleCacheUpdated = (event: Event) => {
+      const customEvent = event as CustomEvent<{
+        key?: string;
+        data?: MahasiswaKehadiranRecord[];
+      }>;
+
+      if (customEvent.detail?.key !== presensiCacheKey) {
+        return;
+      }
+
+      const nextRecords = customEvent.detail?.data;
+      if (!Array.isArray(nextRecords)) {
+        return;
+      }
+
+      setRecords(nextRecords);
+      setIsOfflineData(false);
+      setLastUpdatedAt(Date.now());
+    };
+
+    window.addEventListener("cache:updated", handleCacheUpdated);
+
+    return () => {
+      window.removeEventListener("cache:updated", handleCacheUpdated);
+    };
+  }, [presensiCacheKey]);
+
   const loadPresensi = async (forceRefresh = false) => {
     try {
       setLoading(true);
 
       // ✅ Check if mahasiswa data exists
-      if (!user?.mahasiswa?.id) {
+      if (!user?.mahasiswa?.id || !presensiCacheKey) {
         toast.error("Profil mahasiswa tidak ditemukan");
         return;
       }
 
+      const cachedEntry = await getCachedData<MahasiswaKehadiranRecord[]>(
+        presensiCacheKey,
+      );
+      const hasCachedData = Array.isArray(cachedEntry?.data);
+
+      if (hasCachedData) {
+        setRecords(cachedEntry!.data);
+        setIsOfflineData(!navigator.onLine);
+        setLastUpdatedAt(cachedEntry!.timestamp);
+        setLoading(false);
+      }
+
+      if (forceRefresh && !navigator.onLine) {
+        throw new Error(
+          hasCachedData
+            ? "Perangkat sedang offline. Menampilkan presensi tersimpan terakhir."
+            : "Perangkat sedang offline dan belum ada data presensi tersimpan.",
+        );
+      }
+
       // Use cacheAPI with stale-while-revalidate for offline support
       const data = await cacheAPI(
-        `mahasiswa_presensi_${user?.mahasiswa?.id}`,
+        presensiCacheKey,
         () => getMahasiswaKehadiran(user.mahasiswa.id),
         {
-          ttl: 10 * 60 * 1000, // 10 minutes
+          ttl: 10 * 60 * 1000,
           forceRefresh,
           staleWhileRevalidate: true,
         },
       );
 
       setRecords(data);
+      setIsOfflineData(false);
+      setLastUpdatedAt(Date.now());
       console.log("[Presensi] Data loaded:", data.length, "records");
-    } catch (error) {
-      // Handle offline mode gracefully
+    } catch (error: any) {
       if (!networkDetector.isOnline()) {
         console.log("ℹ️ Offline mode - could not load presensi");
-        toast.info("Mode offline - menampilkan data tersimpan");
+        setIsOfflineData(true);
+        toast.info(
+          error?.message || "Mode offline - menampilkan data presensi tersimpan",
+        );
       } else {
         console.error("Error loading presensi:", error);
-        toast.error("Gagal memuat data presensi");
+        if (records.length > 0) {
+          setIsOfflineData(true);
+        }
+        toast.error(error?.message || "Gagal memuat data presensi");
       }
     } finally {
       setLoading(false);
@@ -141,6 +207,16 @@ export default function PresensiPage() {
   };
 
   const stats = calculateStats();
+  const lastUpdatedLabel = useMemo(() => {
+    if (!lastUpdatedAt) {
+      return null;
+    }
+
+    return new Date(lastUpdatedAt).toLocaleString("id-ID", {
+      dateStyle: "medium",
+      timeStyle: "short",
+    });
+  }, [lastUpdatedAt]);
 
   if (loading) {
     return (
@@ -175,11 +251,32 @@ export default function PresensiPage() {
                     Rekap kehadiran praktikum Anda secara ringkas dan
                     terstruktur.
                   </p>
+                  {(isOfflineData || lastUpdatedLabel) && (
+                    <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                      {isOfflineData && (
+                        <span className="inline-flex items-center gap-1 font-medium text-warning">
+                          <WifiOff className="h-4 w-4" />
+                          Menampilkan presensi tersimpan lokal
+                        </span>
+                      )}
+                      {lastUpdatedLabel && (
+                        <span>Update terakhir: {lastUpdatedLabel}</span>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
           </div>
         </GlassCard>
+
+        {isOfflineData && (
+          <Alert className="border-warning/30 bg-warning/10 text-warning dark:border-warning/30 dark:bg-warning/10 dark:text-warning">
+            <AlertDescription>
+              Halaman presensi tetap bisa dibuka dari cache lokal saat offline. Data yang tampil adalah snapshot terakhir yang berhasil disimpan dan mungkin belum memuat absensi terbaru.
+            </AlertDescription>
+          </Alert>
+        )}
 
         {/* Summary Stats */}
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
