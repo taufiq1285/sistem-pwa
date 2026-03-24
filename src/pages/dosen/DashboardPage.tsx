@@ -108,7 +108,9 @@ export function DashboardPage() {
   const [hasDataChanges, setHasDataChanges] = useState(false);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
   const [isOfflineData, setIsOfflineData] = useState(false);
-  const [lastOfflineSnapshotAt, setLastOfflineSnapshotAt] = useState<number | null>(null);
+  const [lastOfflineSnapshotAt, setLastOfflineSnapshotAt] = useState<
+    number | null
+  >(null);
 
   const lastOfflineSnapshotLabel = useMemo(() => {
     if (!lastOfflineSnapshotAt) {
@@ -535,16 +537,26 @@ export function DashboardPage() {
 
       if (hasCachedData) {
         setStats(cachedStatsEntry?.data ?? null);
-        setMyKelas(Array.isArray(cachedKelasEntry?.data) ? cachedKelasEntry.data : []);
+        setMyKelas(
+          Array.isArray(cachedKelasEntry?.data) ? cachedKelasEntry.data : [],
+        );
         setUpcomingPracticum(
-          Array.isArray(cachedPracticumEntry?.data) ? cachedPracticumEntry.data : [],
+          Array.isArray(cachedPracticumEntry?.data)
+            ? cachedPracticumEntry.data
+            : [],
         );
         setPendingGrading(
-          Array.isArray(cachedGradingEntry?.data) ? cachedGradingEntry.data : [],
+          Array.isArray(cachedGradingEntry?.data)
+            ? cachedGradingEntry.data
+            : [],
         );
-        setActiveKuis(Array.isArray(cachedKuisEntry?.data) ? cachedKuisEntry.data : []);
+        setActiveKuis(
+          Array.isArray(cachedKuisEntry?.data) ? cachedKuisEntry.data : [],
+        );
         setAssignments(
-          Array.isArray(cachedAssignmentsEntry?.data) ? cachedAssignmentsEntry.data : [],
+          Array.isArray(cachedAssignmentsEntry?.data)
+            ? cachedAssignmentsEntry.data
+            : [],
         );
         setIsOfflineData(!navigator.onLine);
         setLastOfflineSnapshotAt(
@@ -575,29 +587,21 @@ export function DashboardPage() {
       // Use cacheAPI with stale-while-revalidate for offline support
       const [statsData, kelasData, practicumData, gradingData, kuisData] =
         await Promise.all([
-          cacheAPI(
-            statsCacheKey,
-            () => getDosenStats(forceRefresh),
-            {
-              ttl: 10 * 60 * 1000, // 10 minutes
-              forceRefresh,
-              staleWhileRevalidate: true,
-            },
-          ),
+          cacheAPI(statsCacheKey, () => getDosenStats(forceRefresh), {
+            ttl: 10 * 60 * 1000, // 10 minutes
+            forceRefresh,
+            staleWhileRevalidate: true,
+          }),
           cacheAPI(kelasCacheKey, () => getMyKelas(5), {
             ttl: 10 * 60 * 1000,
             forceRefresh,
             staleWhileRevalidate: true,
           }),
-          cacheAPI(
-            practicumCacheKey,
-            () => getUpcomingPracticum(5),
-            {
-              ttl: 5 * 60 * 1000, // 5 minutes (schedule changes frequently)
-              forceRefresh,
-              staleWhileRevalidate: true,
-            },
-          ),
+          cacheAPI(practicumCacheKey, () => getUpcomingPracticum(5), {
+            ttl: 5 * 60 * 1000, // 5 minutes (schedule changes frequently)
+            forceRefresh,
+            staleWhileRevalidate: true,
+          }),
           cacheAPI(gradingCacheKey, () => getPendingGrading(5), {
             ttl: 5 * 60 * 1000,
             forceRefresh,

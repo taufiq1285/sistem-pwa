@@ -97,9 +97,8 @@ export default function PresensiPage() {
         return;
       }
 
-      const cachedEntry = await getCachedData<MahasiswaKehadiranRecord[]>(
-        presensiCacheKey,
-      );
+      const cachedEntry =
+        await getCachedData<MahasiswaKehadiranRecord[]>(presensiCacheKey);
       const hasCachedData = Array.isArray(cachedEntry?.data);
 
       if (hasCachedData) {
@@ -137,7 +136,8 @@ export default function PresensiPage() {
         console.log("ℹ️ Offline mode - could not load presensi");
         setIsOfflineData(true);
         toast.info(
-          error?.message || "Mode offline - menampilkan data presensi tersimpan",
+          error?.message ||
+            "Mode offline - menampilkan data presensi tersimpan",
         );
       } else {
         console.error("Error loading presensi:", error);
@@ -273,7 +273,9 @@ export default function PresensiPage() {
         {isOfflineData && (
           <Alert className="border-warning/30 bg-warning/10 text-warning dark:border-warning/30 dark:bg-warning/10 dark:text-warning">
             <AlertDescription>
-              Halaman presensi tetap bisa dibuka dari cache lokal saat offline. Data yang tampil adalah snapshot terakhir yang berhasil disimpan dan mungkin belum memuat absensi terbaru.
+              Halaman presensi tetap bisa dibuka dari cache lokal saat offline.
+              Data yang tampil adalah snapshot terakhir yang berhasil disimpan
+              dan mungkin belum memuat absensi terbaru.
             </AlertDescription>
           </Alert>
         )}

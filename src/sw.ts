@@ -1,7 +1,7 @@
 /// <reference lib="webworker" />
 declare const self: ServiceWorkerGlobalScope & typeof globalThis;
 
-import { precacheAndRoute } from 'workbox-precaching';
+import { precacheAndRoute } from "workbox-precaching";
 
 /**
  * Service Worker for PWA Sistem Praktikum
@@ -25,8 +25,8 @@ import { precacheAndRoute } from 'workbox-precaching';
 // Precache injected assets by Vite Workbox
 precacheAndRoute(self.__WB_MANIFEST || []);
 
-const CACHE_VERSION = 'v1.0.4'; // Fixed: harden startup asset caching for installed offline PWA
-const CACHE_PREFIX = 'praktikum-pwa';
+const CACHE_VERSION = "v1.0.5"; // Bump: force cache invalidation to fix blank screen after update
+const CACHE_PREFIX = "praktikum-pwa";
 
 // Cache names
 const CACHE_NAMES = {
@@ -39,22 +39,22 @@ const CACHE_NAMES = {
 
 // Static assets to cache on install
 const STATIC_ASSETS = [
-  '/',
-  '/index.html',
-  '/offline.html',
-  '/manifest.json',
-  '/registerSW.js',
-  '/favicon.png',
-  '/logo.svg',
-  '/apple-touch-icon.png',
-  '/icons/icon-48x48.png',
-  '/icons/icon-72x72.png',
-  '/icons/icon-96x96.png',
-  '/icons/icon-144x144.png',
-  '/icons/icon-192x192.png',
-  '/icons/icon-256x256.png',
-  '/icons/icon-384x384.png',
-  '/icons/icon-512x512.png',
+  "/",
+  "/index.html",
+  "/offline.html",
+  "/manifest.json",
+  "/registerSW.js",
+  "/favicon.png",
+  "/logo.svg",
+  "/apple-touch-icon.png",
+  "/icons/icon-48x48.png",
+  "/icons/icon-72x72.png",
+  "/icons/icon-96x96.png",
+  "/icons/icon-144x144.png",
+  "/icons/icon-192x192.png",
+  "/icons/icon-256x256.png",
+  "/icons/icon-384x384.png",
+  "/icons/icon-512x512.png",
 ];
 
 // Cache configuration
@@ -78,14 +78,14 @@ const CACHE_CONFIG = {
 /**
  * Install event - Cache static assets
  */
-self.addEventListener('install', (event) => {
-  console.log('[SW] Installing Service Worker...', CACHE_VERSION);
+self.addEventListener("install", (event) => {
+  console.log("[SW] Installing Service Worker...", CACHE_VERSION);
 
   event.waitUntil(
     caches
       .open(CACHE_NAMES.static)
       .then(async (cache) => {
-        console.log('[SW] Caching static assets');
+        console.log("[SW] Caching static assets");
 
         // Cache files individually to avoid failing if one fails
         const cachePromises = STATIC_ASSETS.map(async (url) => {
@@ -103,11 +103,11 @@ self.addEventListener('install', (event) => {
         });
 
         await Promise.allSettled(cachePromises);
-        console.log('[SW] Custom static assets caching completed');
+        console.log("[SW] Custom static assets caching completed");
       })
       .catch((error) => {
-        console.error('[SW] Install failed:', error);
-      })
+        console.error("[SW] Install failed:", error);
+      }),
   );
 });
 
@@ -118,8 +118,8 @@ self.addEventListener('install', (event) => {
 /**
  * Activate event - Clean old caches
  */
-self.addEventListener('activate', (event) => {
-  console.log('[SW] Activating Service Worker...', CACHE_VERSION);
+self.addEventListener("activate", (event) => {
+  console.log("[SW] Activating Service Worker...", CACHE_VERSION);
 
   event.waitUntil(
     caches
@@ -134,25 +134,25 @@ self.addEventListener('activate', (event) => {
             }
 
             // Delete old version caches
-            console.log('[SW] Deleting old cache:', cacheName);
+            console.log("[SW] Deleting old cache:", cacheName);
             return caches.delete(cacheName);
-          })
+          }),
         );
       })
       .then(async () => {
-        if ('navigationPreload' in self.registration) {
+        if ("navigationPreload" in self.registration) {
           await self.registration.navigationPreload.enable();
-          console.log('[SW] Navigation preload enabled');
+          console.log("[SW] Navigation preload enabled");
         }
       })
       .then(() => {
-        console.log('[SW] Old caches cleaned up');
+        console.log("[SW] Old caches cleaned up");
         // Take control of all clients immediately
         return self.clients.claim();
       })
       .catch((error) => {
-        console.error('[SW] Activation failed:', error);
-      })
+        console.error("[SW] Activation failed:", error);
+      }),
   );
 });
 
@@ -163,11 +163,11 @@ self.addEventListener('activate', (event) => {
 /**
  * Fetch event - Implement caching strategies
  */
-self.addEventListener('fetch', (event) => {
+self.addEventListener("fetch", (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  if (request.mode === 'navigate') {
+  if (request.mode === "navigate") {
     event.respondWith(handleNavigationRequest(event));
     return;
   }
@@ -177,34 +177,35 @@ self.addEventListener('fetch', (event) => {
   // ========================================================================
 
   // Skip non-GET requests
-  if (request.method !== 'GET') {
+  if (request.method !== "GET") {
     return;
   }
 
   // Skip Chrome extensions and special protocols
-  if (url.protocol === 'chrome-extension:' ||
-      url.protocol === 'moz-extension:' ||
-      url.protocol === 'ws:' ||
-      url.protocol === 'wss:') {
+  if (
+    url.protocol === "chrome-extension:" ||
+    url.protocol === "moz-extension:" ||
+    url.protocol === "ws:" ||
+    url.protocol === "wss:"
+  ) {
     return;
   }
 
   // ⚠️ CRITICAL: Skip ALL Vite development modules
   // These should NEVER be cached or intercepted
-  const isViteDevModule = (
-    url.pathname.startsWith('/@') ||                    // All Vite virtual modules
-    url.pathname.includes('/@vite') ||                  // Vite client
-    url.pathname.includes('/@fs') ||                    // File system
-    url.pathname.includes('/@id') ||                    // Module IDs
-    url.pathname.includes('/@react-refresh') ||         // React refresh
-    url.pathname.includes('/node_modules/.vite') ||     // Vite deps
-    url.pathname.includes('/node_modules/') ||          // Node modules
-    url.search.includes('?import') ||                   // ES imports
-    url.search.includes('?direct') ||                   // Direct imports
-    url.search.includes('?worker') ||                   // Web workers
-    url.search.includes('?raw') ||                      // Raw imports
-    url.search.includes('?url')                         // URL imports
-  );
+  const isViteDevModule =
+    url.pathname.startsWith("/@") || // All Vite virtual modules
+    url.pathname.includes("/@vite") || // Vite client
+    url.pathname.includes("/@fs") || // File system
+    url.pathname.includes("/@id") || // Module IDs
+    url.pathname.includes("/@react-refresh") || // React refresh
+    url.pathname.includes("/node_modules/.vite") || // Vite deps
+    url.pathname.includes("/node_modules/") || // Node modules
+    url.search.includes("?import") || // ES imports
+    url.search.includes("?direct") || // Direct imports
+    url.search.includes("?worker") || // Web workers
+    url.search.includes("?raw") || // Raw imports
+    url.search.includes("?url"); // URL imports
 
   if (isViteDevModule) {
     // DO NOT intercept - let browser handle natively
@@ -212,22 +213,21 @@ self.addEventListener('fetch', (event) => {
   }
 
   // Skip development source files with timestamp
-  const isDevSourceFile = (
-    url.search.includes('?t=') ||                       // Timestamped files
-    url.search.includes('?v=')                          // Versioned files
-  );
+  const isDevSourceFile =
+    url.search.includes("?t=") || // Timestamped files
+    url.search.includes("?v="); // Versioned files
 
-  if (isDevSourceFile && url.pathname.includes('/src/')) {
+  if (isDevSourceFile && url.pathname.includes("/src/")) {
     return;
   }
 
   // Skip favicon.ico (we use favicon.png)
-  if (url.pathname === '/favicon.ico') {
+  if (url.pathname === "/favicon.ico") {
     return;
   }
 
   // Skip localhost API calls in development
-  if (url.hostname === 'localhost' && url.port !== '' && url.port !== '5173') {
+  if (url.hostname === "localhost" && url.port !== "" && url.port !== "5173") {
     return;
   }
 
@@ -237,18 +237,17 @@ self.addEventListener('fetch', (event) => {
 
   // ⚠️ CRITICAL: Skip assets natively handled by Workbox Precache
   // This prevents InvalidStateError & double-caching from duplicate respondWith() calls
-  const isWorkboxAsset = (
-    url.pathname.startsWith('/assets/') ||
-    url.pathname.endsWith('.js') ||
-    url.pathname.endsWith('.css') ||
-    url.pathname.endsWith('.html') ||
-    url.pathname === '/' ||
-    url.pathname.endsWith('.json') ||
-    url.pathname === '/registerSW.js' ||
-    url.pathname.endsWith('.svg') ||
-    url.pathname.endsWith('.png') ||
-    url.pathname.endsWith('.ico')
-  );
+  const isWorkboxAsset =
+    url.pathname.startsWith("/assets/") ||
+    url.pathname.endsWith(".js") ||
+    url.pathname.endsWith(".css") ||
+    url.pathname.endsWith(".html") ||
+    url.pathname === "/" ||
+    url.pathname.endsWith(".json") ||
+    url.pathname === "/registerSW.js" ||
+    url.pathname.endsWith(".svg") ||
+    url.pathname.endsWith(".png") ||
+    url.pathname.endsWith(".ico");
 
   if (isWorkboxAsset) {
     // Let Workbox's precacheAndRoute or default browser network handle these
@@ -265,7 +264,9 @@ self.addEventListener('fetch', (event) => {
   } else if (isStaticAsset(url)) {
     event.respondWith(cacheFirstStrategy(request, CACHE_NAMES.static));
   } else {
-    event.respondWith(staleWhileRevalidateStrategy(request, CACHE_NAMES.dynamic));
+    event.respondWith(
+      staleWhileRevalidateStrategy(request, CACHE_NAMES.dynamic),
+    );
   }
 });
 
@@ -309,13 +310,17 @@ async function cacheFirstStrategy(request, cacheName) {
     // Check if it's an image request - return a placeholder instead of error
     const url = new URL(request.url);
     if (url.pathname.match(/\.(png|jpg|jpeg|gif|webp|svg|ico)$/i)) {
-      console.log('[SW] Image not available offline, returning placeholder:', url.pathname);
+      console.log(
+        "[SW] Image not available offline, returning placeholder:",
+        url.pathname,
+      );
       // Return a minimal transparent 1x1 PNG
-      const transparentPixel = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+      const transparentPixel =
+        "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
       return fetch(transparentPixel);
     }
 
-    console.error('[SW] Cache First failed:', error);
+    console.error("[SW] Cache First failed:", error);
     return handleOfflineFallback(request);
   }
 }
@@ -334,7 +339,7 @@ async function networkFirstStrategy(request, cacheName) {
   try {
     // Try network first with timeout
     const networkResponse = await fetch(request, {
-      signal: controller.signal
+      signal: controller.signal,
     });
 
     clearTimeout(timeoutId);
@@ -350,20 +355,24 @@ async function networkFirstStrategy(request, cacheName) {
     clearTimeout(timeoutId);
 
     // Check if it's a timeout/abort error
-    const isTimeout = error.name === 'AbortError';
+    const isTimeout = error.name === "AbortError";
     if (isTimeout) {
-      console.log('[SW] Network timeout, falling back to cache:', request.url);
+      console.log("[SW] Network timeout, falling back to cache:", request.url);
     }
 
     // Network failed or timeout - try cache
     const cachedResponse = await caches.match(request);
     if (cachedResponse) {
-      console.log('[SW] Serving from cache (network ' + (isTimeout ? 'timeout' : 'failed') + ')');
+      console.log(
+        "[SW] Serving from cache (network " +
+          (isTimeout ? "timeout" : "failed") +
+          ")",
+      );
       return cachedResponse;
     }
 
     // Both failed
-    console.warn('[SW] No cache available for:', request.url);
+    console.warn("[SW] No cache available for:", request.url);
     return handleOfflineFallback(request);
   }
 }
@@ -383,7 +392,7 @@ async function staleWhileRevalidateStrategy(request, cacheName) {
   const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
 
   const fetchPromise = fetch(request, {
-    signal: controller.signal
+    signal: controller.signal,
   })
     .then((networkResponse) => {
       clearTimeout(timeoutId);
@@ -404,16 +413,21 @@ async function staleWhileRevalidateStrategy(request, cacheName) {
       // 1. Vite HMR/dev files
       // 2. Module imports
       // 3. Timeout errors when we have cache
-      const isDevFile = url.pathname.startsWith('/@') ||
-                       url.pathname.includes('/node_modules/') ||
-                       url.search.includes('?t=') ||
-                       url.search.includes('?import');
+      const isDevFile =
+        url.pathname.startsWith("/@") ||
+        url.pathname.includes("/node_modules/") ||
+        url.search.includes("?t=") ||
+        url.search.includes("?import");
 
-      const isTimeout = error.name === 'AbortError';
+      const isTimeout = error.name === "AbortError";
 
       // Only log real errors for non-dev files
       if (!isDevFile && !isTimeout && !cachedResponse) {
-        console.warn('[SW] Background fetch failed:', request.url, error.message);
+        console.warn(
+          "[SW] Background fetch failed:",
+          request.url,
+          error.message,
+        );
       }
 
       throw error;
@@ -430,12 +444,16 @@ async function staleWhileRevalidateStrategy(request, cacheName) {
     return await fetchPromise;
   } catch (error) {
     // Only show error for important files (not dev/HMR files)
-    const isDevFile = url.pathname.startsWith('/@') ||
-                     url.pathname.includes('/node_modules/') ||
-                     url.search.includes('?t=');
+    const isDevFile =
+      url.pathname.startsWith("/@") ||
+      url.pathname.includes("/node_modules/") ||
+      url.search.includes("?t=");
 
     if (!isDevFile) {
-      console.warn('[SW] Stale While Revalidate failed (no cache):', request.url);
+      console.warn(
+        "[SW] Stale While Revalidate failed (no cache):",
+        request.url,
+      );
     }
 
     return handleOfflineFallback(request);
@@ -462,8 +480,8 @@ async function handleNavigationRequest(event) {
     }
 
     const cachedNavigation = await caches.match(request);
-    const precachedIndex = await caches.match('/index.html');
-    const cachedRoot = await caches.match('/');
+    const precachedIndex = await caches.match("/index.html");
+    const cachedRoot = await caches.match("/");
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 4000);
@@ -484,24 +502,37 @@ async function handleNavigationRequest(event) {
       clearTimeout(timeoutId);
 
       if (cachedNavigation) {
-        console.log('[SW] Serving cached navigation after network failure:', url.pathname);
+        console.log(
+          "[SW] Serving cached navigation after network failure:",
+          url.pathname,
+        );
         return cachedNavigation;
       }
 
       if (precachedIndex) {
-        console.log('[SW] Serving precached index.html after navigation timeout/failure:', url.pathname);
+        console.log(
+          "[SW] Serving precached index.html after navigation timeout/failure:",
+          url.pathname,
+        );
         return precachedIndex;
       }
 
       if (cachedRoot) {
-        console.log('[SW] Serving cached root after navigation timeout/failure:', url.pathname);
+        console.log(
+          "[SW] Serving cached root after navigation timeout/failure:",
+          url.pathname,
+        );
         return cachedRoot;
       }
 
       throw error;
     }
   } catch (error) {
-    console.warn('[SW] Navigation request failed, falling back offline:', url.pathname, error);
+    console.warn(
+      "[SW] Navigation request failed, falling back offline:",
+      url.pathname,
+      error,
+    );
     return handleOfflineFallback(request);
   }
 }
@@ -510,7 +541,7 @@ async function handleOfflineFallback(request) {
   const url = new URL(request.url);
 
   // Try exact cached resource first for non-navigation requests.
-  if (request.mode !== 'navigate') {
+  if (request.mode !== "navigate") {
     const exactMatch = await caches.match(request);
     if (exactMatch) {
       return exactMatch;
@@ -521,57 +552,66 @@ async function handleOfflineFallback(request) {
       return pathnameMatch;
     }
 
-    if (url.pathname === '/registerSW.js') {
-      return new Response('', {
+    if (url.pathname === "/registerSW.js") {
+      return new Response("", {
         status: 200,
         headers: new Headers({
-          'Content-Type': 'application/javascript; charset=utf-8',
-          'Cache-Control': 'no-store',
+          "Content-Type": "application/javascript; charset=utf-8",
+          "Cache-Control": "no-store",
         }),
       });
     }
 
-    if (url.pathname.endsWith('.json') || url.pathname === '/manifest.json') {
-      return new Response('{"name":"Offline","short_name":"Offline","display":"standalone","start_url":"/"}', {
-        status: 200,
-        headers: new Headers({
-          'Content-Type': 'application/manifest+json; charset=utf-8',
-          'Cache-Control': 'no-store',
-        }),
-      });
+    if (url.pathname.endsWith(".json") || url.pathname === "/manifest.json") {
+      return new Response(
+        '{"name":"Offline","short_name":"Offline","display":"standalone","start_url":"/"}',
+        {
+          status: 200,
+          headers: new Headers({
+            "Content-Type": "application/manifest+json; charset=utf-8",
+            "Cache-Control": "no-store",
+          }),
+        },
+      );
     }
   }
 
   // Return offline page for navigation requests
-  if (request.mode === 'navigate') {
-    const precachedIndex = await caches.match('/index.html');
+  if (request.mode === "navigate") {
+    const precachedIndex = await caches.match("/index.html");
     if (precachedIndex) {
-      console.log('[SW] Serving precached index.html for offline navigation:', url.pathname);
+      console.log(
+        "[SW] Serving precached index.html for offline navigation:",
+        url.pathname,
+      );
       return precachedIndex;
     }
 
-    const precachedRoot = await caches.match('/');
+    const precachedRoot = await caches.match("/");
     if (precachedRoot) {
-      console.log('[SW] Serving cached root for offline navigation:', url.pathname);
+      console.log(
+        "[SW] Serving cached root for offline navigation:",
+        url.pathname,
+      );
       return precachedRoot;
     }
 
     const cache = await caches.open(CACHE_NAMES.static);
 
     // Fallback to offline.html only if app shell is not cached yet
-    const offlinePage = await cache.match('/offline.html');
+    const offlinePage = await cache.match("/offline.html");
     if (offlinePage) {
-      console.log('[SW] Serving offline.html (app shell not cached)');
+      console.log("[SW] Serving offline.html (app shell not cached)");
       return offlinePage;
     }
   }
 
   // Return generic offline response
-  return new Response('Offline - No cached version available', {
+  return new Response("Offline - No cached version available", {
     status: 503,
-    statusText: 'Service Unavailable',
+    statusText: "Service Unavailable",
     headers: new Headers({
-      'Content-Type': 'text/plain',
+      "Content-Type": "text/plain",
     }),
   });
 }
@@ -585,9 +625,9 @@ async function handleOfflineFallback(request) {
  */
 function isApiRequest(url) {
   return (
-    url.pathname.startsWith('/api/') ||
-    url.hostname.includes('supabase') ||
-    url.pathname.includes('/rest/v1/')
+    url.pathname.startsWith("/api/") ||
+    url.hostname.includes("supabase") ||
+    url.pathname.includes("/rest/v1/")
   );
 }
 
@@ -610,15 +650,15 @@ function isFontRequest(url) {
  */
 function isStaticAsset(url) {
   return (
-    url.pathname.startsWith('/assets/') ||
-    url.pathname.endsWith('.css') ||
-    url.pathname.endsWith('.js') ||
-    url.pathname.endsWith('.json') ||
-    url.pathname.endsWith('.svg') ||
-    url.pathname.endsWith('.png') ||
-    url.pathname.endsWith('.webmanifest') ||
-    url.pathname === '/' ||
-    url.pathname.endsWith('.html')
+    url.pathname.startsWith("/assets/") ||
+    url.pathname.endsWith(".css") ||
+    url.pathname.endsWith(".js") ||
+    url.pathname.endsWith(".json") ||
+    url.pathname.endsWith(".svg") ||
+    url.pathname.endsWith(".png") ||
+    url.pathname.endsWith(".webmanifest") ||
+    url.pathname === "/" ||
+    url.pathname.endsWith(".html")
   );
 }
 
@@ -634,17 +674,17 @@ function isStaticAsset(url) {
  * - sync-offline-data: Sync all offline data
  * - sync-periodic: Periodic sync check
  */
-self.addEventListener('sync', (event) => {
-  console.log('[SW] Background sync triggered:', event.tag);
+self.addEventListener("sync", (event) => {
+  console.log("[SW] Background sync triggered:", event.tag);
 
   // Handle different sync tags
-  if (event.tag === 'sync-quiz-answers') {
+  if (event.tag === "sync-quiz-answers") {
     event.waitUntil(syncQuizAnswers(event.tag));
-  } else if (event.tag === 'sync-offline-data') {
+  } else if (event.tag === "sync-offline-data") {
     event.waitUntil(syncOfflineData(event.tag));
-  } else if (event.tag === 'sync-periodic') {
+  } else if (event.tag === "sync-periodic") {
     event.waitUntil(syncPeriodic(event.tag));
-  } else if (event.tag.startsWith('sync-')) {
+  } else if (event.tag.startsWith("sync-")) {
     // Generic sync for any other sync- prefixed tags
     event.waitUntil(syncQueuedRequests(event.tag));
   }
@@ -654,14 +694,16 @@ self.addEventListener('sync', (event) => {
  * Sync quiz answers specifically
  */
 async function syncQuizAnswers(tag) {
-  console.log('[SW] Syncing quiz answers...');
+  console.log("[SW] Syncing quiz answers...");
 
   try {
     // Notify all clients to process quiz answer sync
     const clients = await self.clients.matchAll({ includeUncontrolled: true });
 
     if (clients.length === 0) {
-      console.log('[SW] No active clients, sync will be handled when app opens');
+      console.log(
+        "[SW] No active clients, sync will be handled when app opens",
+      );
       return;
     }
 
@@ -673,43 +715,47 @@ async function syncQuizAnswers(tag) {
 
         messageChannel.port1.onmessage = (event) => {
           if (event.data.success) {
-            console.log('[SW] Client sync successful:', event.data);
+            console.log("[SW] Client sync successful:", event.data);
             resolve(true);
           } else {
-            console.error('[SW] Client sync failed:', event.data.error);
+            console.error("[SW] Client sync failed:", event.data.error);
             resolve(false);
           }
         };
 
         // Send sync request with response port
-        client.postMessage({
-          type: 'SYNC_QUIZ_ANSWERS',
-          tag: tag,
-          timestamp: Date.now(),
-        }, [messageChannel.port2]);
+        client.postMessage(
+          {
+            type: "SYNC_QUIZ_ANSWERS",
+            tag: tag,
+            timestamp: Date.now(),
+          },
+          [messageChannel.port2],
+        );
 
         // Timeout after 30 seconds
         setTimeout(() => {
-          console.warn('[SW] Sync timeout for client');
+          console.warn("[SW] Sync timeout for client");
           resolve(false);
         }, 30000);
       });
     });
 
     const results = await Promise.all(syncPromises);
-    const successCount = results.filter(r => r).length;
+    const successCount = results.filter((r) => r).length;
 
-    console.log(`[SW] Quiz answers sync completed: ${successCount}/${clients.length} clients synced`);
+    console.log(
+      `[SW] Quiz answers sync completed: ${successCount}/${clients.length} clients synced`,
+    );
 
     // Log sync event
-    await logSyncToStorage('completed', tag, {
+    await logSyncToStorage("completed", tag, {
       successCount,
-      totalClients: clients.length
+      totalClients: clients.length,
     });
-
   } catch (error) {
-    console.error('[SW] Quiz answers sync failed:', error);
-    await logSyncToStorage('failed', tag, { error: error.message });
+    console.error("[SW] Quiz answers sync failed:", error);
+    await logSyncToStorage("failed", tag, { error: error.message });
     throw error;
   }
 }
@@ -718,7 +764,7 @@ async function syncQuizAnswers(tag) {
  * Sync all offline data
  */
 async function syncOfflineData(tag) {
-  console.log('[SW] Syncing all offline data...');
+  console.log("[SW] Syncing all offline data...");
   // Similar implementation to syncQuizAnswers but for all data types
   return syncQueuedRequests(tag);
 }
@@ -727,7 +773,7 @@ async function syncOfflineData(tag) {
  * Periodic sync check
  */
 async function syncPeriodic(tag) {
-  console.log('[SW] Running periodic sync...');
+  console.log("[SW] Running periodic sync...");
   return syncQueuedRequests(tag);
 }
 
@@ -736,20 +782,20 @@ async function syncPeriodic(tag) {
  */
 async function syncQueuedRequests(tag) {
   try {
-    console.log('[SW] Syncing queued requests for tag:', tag);
+    console.log("[SW] Syncing queued requests for tag:", tag);
 
     // Get all active clients
     const clients = await self.clients.matchAll({ includeUncontrolled: true });
 
     if (clients.length === 0) {
-      console.log('[SW] No active clients, will sync when app opens');
+      console.log("[SW] No active clients, will sync when app opens");
       return;
     }
 
     // Notify clients that sync is starting
     clients.forEach((client) => {
       client.postMessage({
-        type: 'SYNC_STARTED',
+        type: "SYNC_STARTED",
         tag: tag,
         timestamp: Date.now(),
       });
@@ -758,7 +804,7 @@ async function syncQueuedRequests(tag) {
     // Trigger clients to process their sync queues
     clients.forEach((client) => {
       client.postMessage({
-        type: 'PROCESS_SYNC_QUEUE',
+        type: "PROCESS_SYNC_QUEUE",
         tag: tag,
         timestamp: Date.now(),
       });
@@ -767,34 +813,33 @@ async function syncQueuedRequests(tag) {
     // Wait for clients to process (increased timeout for reliability)
     await new Promise((resolve) => setTimeout(resolve, 2000));
 
-    console.log('[SW] Sync completed successfully for tag:', tag);
+    console.log("[SW] Sync completed successfully for tag:", tag);
 
     // Notify clients that sync completed
     clients.forEach((client) => {
       client.postMessage({
-        type: 'SYNC_COMPLETED',
+        type: "SYNC_COMPLETED",
         tag: tag,
         timestamp: Date.now(),
       });
     });
 
-    await logSyncToStorage('completed', tag, { clientCount: clients.length });
-
+    await logSyncToStorage("completed", tag, { clientCount: clients.length });
   } catch (error) {
-    console.error('[SW] Sync failed for tag:', tag, error);
+    console.error("[SW] Sync failed for tag:", tag, error);
 
     // Notify clients that sync failed
     const clients = await self.clients.matchAll({ includeUncontrolled: true });
     clients.forEach((client) => {
       client.postMessage({
-        type: 'SYNC_FAILED',
+        type: "SYNC_FAILED",
         tag: tag,
         error: error.message,
         timestamp: Date.now(),
       });
     });
 
-    await logSyncToStorage('failed', tag, { error: error.message });
+    await logSyncToStorage("failed", tag, { error: error.message });
     throw error;
   }
 }
@@ -812,9 +857,9 @@ async function logSyncToStorage(event, tag, details) {
       details,
     };
 
-    console.log('[SW] Sync log:', logEntry);
+    console.log("[SW] Sync log:", logEntry);
   } catch (error) {
-    console.error('[SW] Failed to log sync event:', error);
+    console.error("[SW] Failed to log sync event:", error);
   }
 }
 
@@ -825,27 +870,27 @@ async function logSyncToStorage(event, tag, details) {
 /**
  * Message event - Communication from clients
  */
-self.addEventListener('message', (event) => {
-  console.log('[SW] Message received:', event.data);
+self.addEventListener("message", (event) => {
+  console.log("[SW] Message received:", event.data);
 
-  if (event.data && event.data.type === 'SKIP_WAITING') {
+  if (event.data && event.data.type === "SKIP_WAITING") {
     self.skipWaiting();
   }
 
-  if (event.data && event.data.type === 'CLEAR_CACHE') {
+  if (event.data && event.data.type === "CLEAR_CACHE") {
     event.waitUntil(
       caches.keys().then((cacheNames) => {
         return Promise.all(
           cacheNames.map((cacheName) => {
-            console.log('[SW] Clearing cache:', cacheName);
+            console.log("[SW] Clearing cache:", cacheName);
             return caches.delete(cacheName);
-          })
+          }),
         );
-      })
+      }),
     );
   }
 
-  if (event.data && event.data.type === 'GET_VERSION') {
+  if (event.data && event.data.type === "GET_VERSION") {
     event.ports[0].postMessage({
       version: CACHE_VERSION,
       caches: Object.keys(CACHE_NAMES),
@@ -872,7 +917,7 @@ async function cleanupCache(cacheName, maxAge, maxEntries) {
     const response = await cache.match(request);
     if (!response) continue;
 
-    const dateHeader = response.headers.get('date');
+    const dateHeader = response.headers.get("date");
     if (!dateHeader) continue;
 
     const cachedTime = new Date(dateHeader).getTime();
@@ -890,26 +935,32 @@ async function cleanupCache(cacheName, maxAge, maxEntries) {
   }
 
   await Promise.all(deletePromises);
-  console.log(`[SW] Cleaned up ${deletePromises.length} entries from ${cacheName}`);
+  console.log(
+    `[SW] Cleaned up ${deletePromises.length} entries from ${cacheName}`,
+  );
 }
 
 // Periodic cache cleanup (runs on activation)
-self.addEventListener('activate', (event) => {
+self.addEventListener("activate", (event) => {
   event.waitUntil(
     Promise.all([
-      cleanupCache(CACHE_NAMES.api, CACHE_CONFIG.maxAge.api, CACHE_CONFIG.maxEntries.api),
+      cleanupCache(
+        CACHE_NAMES.api,
+        CACHE_CONFIG.maxAge.api,
+        CACHE_CONFIG.maxEntries.api,
+      ),
       cleanupCache(
         CACHE_NAMES.dynamic,
         CACHE_CONFIG.maxAge.dynamic,
-        CACHE_CONFIG.maxEntries.dynamic
+        CACHE_CONFIG.maxEntries.dynamic,
       ),
       cleanupCache(
         CACHE_NAMES.images,
         CACHE_CONFIG.maxAge.images,
-        CACHE_CONFIG.maxEntries.images
+        CACHE_CONFIG.maxEntries.images,
       ),
-    ])
+    ]),
   );
 });
 
-console.log('[SW] Service Worker loaded successfully', CACHE_VERSION);
+console.log("[SW] Service Worker loaded successfully", CACHE_VERSION);

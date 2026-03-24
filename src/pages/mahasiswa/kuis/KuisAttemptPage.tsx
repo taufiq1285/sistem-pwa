@@ -181,7 +181,9 @@ export default function KuisAttemptPage() {
         <Alert>
           <WifiOff className="h-4 w-4" />
           <AlertDescription>
-            Detail tugas praktikum sedang dibuka dari cache lokal perangkat. Jawaban tetap dapat dilanjutkan dan akan disinkronkan saat koneksi tersedia.
+            Detail tugas praktikum sedang dibuka dari cache lokal perangkat.
+            Jawaban tetap dapat dilanjutkan dan akan disinkronkan saat koneksi
+            tersedia.
           </AlertDescription>
         </Alert>
       )}

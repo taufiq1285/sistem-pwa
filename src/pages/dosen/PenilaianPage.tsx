@@ -470,7 +470,9 @@ export default function DosenPenilaianPage() {
 
   const handleSaveAll = () => {
     if (!isOnline) {
-      toast.error("Tidak dapat menyimpan nilai saat offline. Hubungkan internet terlebih dahulu.");
+      toast.error(
+        "Tidak dapat menyimpan nilai saat offline. Hubungkan internet terlebih dahulu.",
+      );
       return;
     }
     if (editedGrades.size === 0) {
@@ -755,14 +757,17 @@ export default function DosenPenilaianPage() {
             <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto">
               {!isOnline && (
                 <span className="flex items-center gap-1.5 text-xs font-semibold text-warning bg-warning/10 border border-warning/30 rounded-lg px-3 py-1.5">
-                  <WifiOff className="w-3.5 h-3.5" /> Offline — simpan dinonaktifkan
+                  <WifiOff className="w-3.5 h-3.5" /> Offline — simpan
+                  dinonaktifkan
                 </span>
               )}
               <Button
                 variant="outline"
                 onClick={handleOpenBobotDialog}
                 disabled={!isOnline}
-                title={!isOnline ? 'Tidak dapat mengubah bobot saat offline' : ''}
+                title={
+                  !isOnline ? "Tidak dapat mengubah bobot saat offline" : ""
+                }
                 className="flex items-center gap-2 border-2 hover:bg-primary/5 font-semibold"
               >
                 <Settings className="w-4 h-4" />
@@ -771,7 +776,7 @@ export default function DosenPenilaianPage() {
               <Button
                 onClick={handleSaveAll}
                 disabled={!hasChanges || saving || !isOnline}
-                title={!isOnline ? 'Tidak dapat menyimpan saat offline' : ''}
+                title={!isOnline ? "Tidak dapat menyimpan saat offline" : ""}
                 className="flex items-center gap-2 bg-linear-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground shadow-lg shadow-primary/30 font-semibold px-6"
               >
                 {saving ? (
@@ -781,7 +786,9 @@ export default function DosenPenilaianPage() {
                 ) : (
                   <Save className="w-4 h-4" />
                 )}
-                {!isOnline ? 'Offline' : `Simpan Semua ${hasChanges ? `(${editedGrades.size})` : ''}`}
+                {!isOnline
+                  ? "Offline"
+                  : `Simpan Semua ${hasChanges ? `(${editedGrades.size})` : ""}`}
               </Button>
             </div>
           )}

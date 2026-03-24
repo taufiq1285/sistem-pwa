@@ -50,7 +50,9 @@ const bootstrapSyncManager = () => {
 if (navigator.onLine) {
   bootstrapSyncManager();
 } else {
-  logger.info("⏸️ Deferring SyncManager initialization until connection returns");
+  logger.info(
+    "⏸️ Deferring SyncManager initialization until connection returns",
+  );
   window.addEventListener(
     "online",
     () => {
@@ -110,8 +112,8 @@ registerServiceWorker({
       // In development, auto-reload for easier testing
       logger.info("🔧 Dev mode: Auto-reloading for update");
     } else {
-      // In production, show notification
-      showUpdateAvailableNotification();
+      // In production, show notification — pass registration so update button works reliably
+      showUpdateAvailableNotification(registration);
     }
   },
 
@@ -124,7 +126,9 @@ registerServiceWorker({
 /**
  * Show update available notification to user
  */
-function showUpdateAvailableNotification() {
+function showUpdateAvailableNotification(
+  registration: ServiceWorkerRegistration,
+) {
   // Remove existing notification if any
   const existing = document.getElementById("pwa-update-notification");
   if (existing) {
@@ -193,16 +197,68 @@ function showUpdateAvailableNotification() {
   document
     .getElementById("pwa-update-btn")
     ?.addEventListener("click", async () => {
-      // ✅ PERBAIKAN: Skip waiting dulu untuk mengaktifkan service worker baru
       logger.info("🔄 Activating new service worker...");
-      await skipWaiting();
-      // skipWaiting akan otomatis reload halaman setelah service worker aktif
+      // Kirim SKIP_WAITING langsung ke waiting SW via registration yang sudah kita simpan
+      if (registration.waiting) {
+        registration.waiting.postMessage({ type: "SKIP_WAITING" });
+        // Tunggu controller change lalu reload
+        navigator.serviceWorker.addEventListener(
+          "controllerchange",
+          () => {
+            window.location.reload();
+          },
+          { once: true },
+        );
+        // Fallback reload jika controllerchange tidak terjadi dalam 5 detik
+        setTimeout(() => {
+          window.location.reload();
+        }, 5000);
+      } else {
+        // Tidak ada waiting SW, coba skipWaiting generic lalu reload
+        await skipWaiting();
+      }
     });
 
   // Handle dismiss button click
   document.getElementById("pwa-dismiss-btn")?.addEventListener("click", () => {
     notification.remove();
   });
+}
+
+// ============================================================================
+// BLANK SCREEN RECOVERY
+// ============================================================================
+
+// Jika app blank setelah 4 detik (root kosong) DAN ada SW waiting → paksa update
+// Ini menyelamatkan user yang skip notifikasi update lalu buka offline
+if ("serviceWorker" in navigator) {
+  setTimeout(async () => {
+    const root = document.getElementById("root");
+    const isBlank =
+      !root || root.children.length === 0 || root.innerHTML.trim() === "";
+    if (!isBlank) return;
+
+    // ✅ Anti-loop: hanya reload sekali per session
+    if (sessionStorage.getItem("sw_blank_recovery_attempted")) return;
+    sessionStorage.setItem("sw_blank_recovery_attempted", "1");
+
+    logger.warn("[SW] Blank screen detected, checking for waiting SW...");
+    const reg = await navigator.serviceWorker.getRegistration();
+    if (reg?.waiting) {
+      logger.warn(
+        "[SW] Waiting SW found, forcing update to recover blank screen",
+      );
+      reg.waiting.postMessage({ type: "SKIP_WAITING" });
+      navigator.serviceWorker.addEventListener(
+        "controllerchange",
+        () => {
+          window.location.reload();
+        },
+        { once: true },
+      );
+      setTimeout(() => window.location.reload(), 3000);
+    }
+  }, 4000);
 }
 
 // Log PWA status

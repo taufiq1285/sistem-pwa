@@ -541,7 +541,10 @@ export function QuizBuilder({
       {!isOnline && (
         <div className="flex items-center gap-3 rounded-lg border border-yellow-300 bg-yellow-50 px-4 py-3 text-sm text-yellow-800 dark:border-yellow-700 dark:bg-yellow-950 dark:text-yellow-200">
           <WifiOff className="h-4 w-4 shrink-0" />
-          <span><strong>Anda sedang Offline.</strong> Fitur simpan dan publish dinonaktifkan sementara. Sambungkan internet untuk melanjutkan.</span>
+          <span>
+            <strong>Anda sedang Offline.</strong> Fitur simpan dan publish
+            dinonaktifkan sementara. Sambungkan internet untuk melanjutkan.
+          </span>
         </div>
       )}
       {/* Simple Status Header - Different based on mode */}
@@ -798,10 +801,18 @@ export function QuizBuilder({
 
             {/* Save Button */}
             <div className="flex justify-end pt-4 border-t">
-              <Button onClick={handleSaveQuizInfo} disabled={isSavingQuiz || !isOnline} title={!isOnline ? 'Tidak dapat menyimpan saat offline' : ''}>
-                {!isOnline ? <WifiOff className="h-4 w-4 mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+              <Button
+                onClick={handleSaveQuizInfo}
+                disabled={isSavingQuiz || !isOnline}
+                title={!isOnline ? "Tidak dapat menyimpan saat offline" : ""}
+              >
+                {!isOnline ? (
+                  <WifiOff className="h-4 w-4 mr-2" />
+                ) : (
+                  <Save className="h-4 w-4 mr-2" />
+                )}
                 {!isOnline
-                  ? 'Offline'
+                  ? "Offline"
                   : isSavingQuiz
                     ? "Menyimpan..."
                     : currentQuiz
@@ -970,11 +981,17 @@ export function QuizBuilder({
                     <Button
                       onClick={handlePublishQuiz}
                       disabled={isPublishing || !isOnline}
-                      title={!isOnline ? 'Tidak dapat publish saat offline' : ''}
+                      title={
+                        !isOnline ? "Tidak dapat publish saat offline" : ""
+                      }
                       className="bg-green-600 hover:bg-green-700"
                     >
                       <CheckCircle className="h-4 w-4 mr-2" />
-                      {isPublishing ? "Publishing..." : !isOnline ? "Offline" : "Publish"}
+                      {isPublishing
+                        ? "Publishing..."
+                        : !isOnline
+                          ? "Offline"
+                          : "Publish"}
                     </Button>
                   )}
                 {/* Unpublish button - only show when published */}
@@ -982,11 +999,17 @@ export function QuizBuilder({
                   <Button
                     onClick={handleUnpublishQuiz}
                     disabled={isPublishing || !isOnline}
-                    title={!isOnline ? 'Tidak dapat unpublish saat offline' : ''}
+                    title={
+                      !isOnline ? "Tidak dapat unpublish saat offline" : ""
+                    }
                     variant="outline"
                     className="border-orange-300 text-orange-700 hover:bg-orange-50"
                   >
-                    {isPublishing ? "Unpublishing..." : !isOnline ? "Offline" : "Unpublish"}
+                    {isPublishing
+                      ? "Unpublishing..."
+                      : !isOnline
+                        ? "Offline"
+                        : "Unpublish"}
                   </Button>
                 )}
                 <Button

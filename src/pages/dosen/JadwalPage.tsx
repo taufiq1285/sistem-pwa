@@ -310,15 +310,11 @@ export default function JadwalPage() {
       }
 
       const [data, events] = await Promise.all([
-        cacheAPI(
-          scheduleCacheKeys.jadwal,
-          () => getJadwal(filters),
-          {
-            ttl: 5 * 60 * 1000,
-            forceRefresh,
-            staleWhileRevalidate: true,
-          },
-        ),
+        cacheAPI(scheduleCacheKeys.jadwal, () => getJadwal(filters), {
+          ttl: 5 * 60 * 1000,
+          forceRefresh,
+          staleWhileRevalidate: true,
+        }),
         cacheAPI(
           scheduleCacheKeys.events,
           () => getCalendarEvents(calendarStart, calendarEnd, filters),
@@ -335,7 +331,10 @@ export default function JadwalPage() {
       setIsOfflineData(false);
       setLastUpdatedAt(Date.now());
     } catch (error: any) {
-      if (!navigator.onLine && (jadwalList.length > 0 || calendarEvents.length > 0)) {
+      if (
+        !navigator.onLine &&
+        (jadwalList.length > 0 || calendarEvents.length > 0)
+      ) {
         toast.error("Mode offline aktif", {
           description:
             error?.message ||
@@ -363,7 +362,9 @@ export default function JadwalPage() {
       if (hasCachedData) {
         setLaboratoriumList(cachedEntry!.data);
         setIsOfflineData(!navigator.onLine);
-        setLastUpdatedAt((prev) => Math.max(prev || 0, cachedEntry?.timestamp || 0) || null);
+        setLastUpdatedAt(
+          (prev) => Math.max(prev || 0, cachedEntry?.timestamp || 0) || null,
+        );
       }
 
       if (forceRefresh && !navigator.onLine) {
@@ -407,7 +408,9 @@ export default function JadwalPage() {
       if (hasCachedData) {
         setMataKuliahList(cachedEntry!.data);
         setIsOfflineData(!navigator.onLine);
-        setLastUpdatedAt((prev) => Math.max(prev || 0, cachedEntry?.timestamp || 0) || null);
+        setLastUpdatedAt(
+          (prev) => Math.max(prev || 0, cachedEntry?.timestamp || 0) || null,
+        );
       }
 
       if (forceRefresh && !navigator.onLine) {
@@ -422,7 +425,8 @@ export default function JadwalPage() {
         referenceCacheKeys.mataKuliah,
         async () => {
           const response = await query("mata_kuliah", {
-            select: "id, kode_mk, nama_mk, sks, semester, program_studi, is_active",
+            select:
+              "id, kode_mk, nama_mk, sks, semester, program_studi, is_active",
             order: { column: "nama_mk", ascending: true },
           });
           return response.filter((mk: any) => mk.is_active) as MataKuliah[];
@@ -448,13 +452,17 @@ export default function JadwalPage() {
     try {
       if (!referenceCacheKeys.kelas) return;
 
-      const cachedEntry = await getCachedData<Kelas[]>(referenceCacheKeys.kelas);
+      const cachedEntry = await getCachedData<Kelas[]>(
+        referenceCacheKeys.kelas,
+      );
       const hasCachedData = Array.isArray(cachedEntry?.data);
 
       if (hasCachedData) {
         setKelasList(cachedEntry!.data);
         setIsOfflineData(!navigator.onLine);
-        setLastUpdatedAt((prev) => Math.max(prev || 0, cachedEntry?.timestamp || 0) || null);
+        setLastUpdatedAt(
+          (prev) => Math.max(prev || 0, cachedEntry?.timestamp || 0) || null,
+        );
       }
 
       if (forceRefresh && !navigator.onLine) {
@@ -589,7 +597,8 @@ export default function JadwalPage() {
     };
 
     window.addEventListener("cache:updated", handleCacheUpdated);
-    return () => window.removeEventListener("cache:updated", handleCacheUpdated);
+    return () =>
+      window.removeEventListener("cache:updated", handleCacheUpdated);
   }, [referenceCacheKeys, scheduleCacheKeys]);
 
   // ✅ OPTIMIZED: Fetch all reference data in parallel
@@ -1429,9 +1438,7 @@ export default function JadwalPage() {
                                 <div className="flex items-start gap-2">
                                   <div className="w-1 h-1 bg-primary rounded-full mt-2"></div>
                                   <p className="text-sm font-semibold text-muted-foreground">
-                                    <span className="text-primary">
-                                      Topik:
-                                    </span>{" "}
+                                    <span className="text-primary">Topik:</span>{" "}
                                     {jadwal.topik}
                                   </p>
                                 </div>

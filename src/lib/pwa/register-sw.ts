@@ -206,11 +206,9 @@ function setupUpdateListeners(
     logger.info("[SW] Update found, installing new version...");
 
     newWorker.addEventListener("statechange", () => {
-      if (
-        newWorker.state === "installed" &&
-        navigator.serviceWorker.controller
-      ) {
-        // New service worker available
+      if (newWorker.state === "installed") {
+        // New service worker available — trigger onUpdate regardless of
+        // whether a controller exists (handles first-install updates too)
         logger.info("[SW] New version installed, waiting to activate");
 
         if (onUpdate) {
@@ -409,17 +407,31 @@ export async function skipWaiting(): Promise<void> {
 
   if (!registration || !registration.waiting) {
     logger.warn("[SW] No waiting service worker to skip");
+    // Fallback: jika tidak ada waiting SW, coba reload langsung
+    window.location.reload();
     return;
   }
 
-  logger.info("[SW] Skipping waiting...");
+  logger.info("[SW] Sending SKIP_WAITING to waiting service worker...");
 
-  await sendMessageToSW({ type: "SKIP_WAITING" });
+  // ✅ PERBAIKAN: Kirim langsung ke registration.waiting (bukan controller!)
+  // Controller adalah SW yang AKTIF, waiting adalah SW BARU yang menunggu.
+  registration.waiting.postMessage({ type: "SKIP_WAITING" });
 
-  // Wait for controller change (only reload once)
+  // Wait for controller change, lalu reload halaman
+  const reloadTimeout = setTimeout(() => {
+    // Fallback: reload paksa jika controllerchange tidak terjadi dalam 5 detik
+    if (!isReloading) {
+      isReloading = true;
+      logger.warn("[SW] controllerchange timeout, forcing reload...");
+      window.location.reload();
+    }
+  }, 5000);
+
   navigator.serviceWorker.addEventListener(
     "controllerchange",
     () => {
+      clearTimeout(reloadTimeout);
       if (!isReloading) {
         isReloading = true;
         logger.info("[SW] Controller changed, reloading page...");
@@ -427,7 +439,7 @@ export async function skipWaiting(): Promise<void> {
       }
     },
     { once: true },
-  ); // Only trigger once
+  );
 }
 
 /**

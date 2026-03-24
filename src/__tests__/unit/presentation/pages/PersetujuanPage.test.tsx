@@ -73,9 +73,9 @@ describe("Laboran PersetujuanPage", () => {
 
     const { container } = render(<PersetujuanPage />);
 
-    expect(container.querySelectorAll('[data-slot="card"]').length).toBeGreaterThan(
-      0,
-    );
+    expect(
+      container.querySelectorAll('[data-slot="card"]').length,
+    ).toBeGreaterThan(0);
   });
 
   it("membuka dialog approve dan memproses persetujuan", async () => {

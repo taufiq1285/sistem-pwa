@@ -255,7 +255,9 @@ export default function JadwalPage() {
         {isOfflineData && (
           <Alert className="border-warning/30 bg-warning/10 text-warning dark:border-warning/30 dark:bg-warning/10 dark:text-warning">
             <AlertDescription>
-              Halaman jadwal tetap bisa dibuka dari cache lokal saat offline. Data yang tampil adalah snapshot terakhir yang berhasil disimpan dan mungkin belum mencerminkan perubahan jadwal terbaru.
+              Halaman jadwal tetap bisa dibuka dari cache lokal saat offline.
+              Data yang tampil adalah snapshot terakhir yang berhasil disimpan
+              dan mungkin belum mencerminkan perubahan jadwal terbaru.
             </AlertDescription>
           </Alert>
         )}
@@ -531,21 +533,23 @@ export default function JadwalPage() {
                                 <div className="/* shrink-0 */">
                                   <div
                                     className={`w-16 h-16 rounded-lg flex flex-col items-center justify-center ${
-                                      isToday ? "bg-success/10" : "bg-primary/10"
+                                      isToday
+                                        ? "bg-success/10"
+                                        : "bg-primary/10"
                                     }`}
                                   >
                                     <Clock
                                       className={`h-5 w-5 mb-1 ${
                                         isToday
                                           ? "text-success"
-                                    : "text-primary"
+                                          : "text-primary"
                                       }`}
                                     />
                                     <span
                                       className={`text-xs font-medium ${
                                         isToday
-                                    ? "text-success"
-                                    : "text-primary"
+                                          ? "text-success"
+                                          : "text-primary"
                                       }`}
                                     >
                                       {formatTime(jadwal.jam_mulai)}

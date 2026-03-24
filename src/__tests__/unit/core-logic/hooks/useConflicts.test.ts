@@ -207,6 +207,7 @@ describe("useConflicts Hook", () => {
         {
           ttl: 5 * 60 * 1000,
           staleWhileRevalidate: true,
+          forceRefresh: false,
         },
       );
     });

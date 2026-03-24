@@ -67,17 +67,18 @@ async function getDashboardStatsImpl(): Promise<DashboardStats> {
       { data: users, error: usersError },
       { data: labs, error: labsError },
       { data: equipment, error: equipmentError },
-      { data: pendingData, error: pendingError }
+      { data: pendingData, error: pendingError },
     ] = await Promise.all([
       supabase.from("users").select("role, is_active"),
       supabase.from("laboratorium").select("id, is_active"),
       supabase.from("inventaris").select("id, is_available_for_borrowing"),
-      supabase.from("peminjaman").select("id").eq("status", "pending")
+      supabase.from("peminjaman").select("id").eq("status", "pending"),
     ]);
 
     if (usersError) throw usersError;
     if (labsError) console.error("Error fetching labs:", labsError);
-    if (equipmentError) console.error("Error fetching equipment:", equipmentError);
+    if (equipmentError)
+      console.error("Error fetching equipment:", equipmentError);
     if (pendingError) console.error("Error fetching pending:", pendingError);
 
     const totalUsers = users?.length || 0;

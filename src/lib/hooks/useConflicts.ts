@@ -59,98 +59,103 @@ export function useConflicts(): UseConflictsReturn {
   const [error, setError] = useState<Error | null>(null);
 
   // Fetch conflicts from database
-  const fetchConflicts = useCallback(async (forceRefresh = false) => {
-    if (!user) {
-      setConflicts([]);
-      setLoading(false);
-      return;
-    }
+  const fetchConflicts = useCallback(
+    async (forceRefresh = false) => {
+      if (!user) {
+        setConflicts([]);
+        setLoading(false);
+        return;
+      }
 
-    // ✅ Check if offline - skip fetch but keep cached data
-    const isOffline = typeof navigator !== "undefined" && !navigator.onLine;
+      // ✅ Check if offline - skip fetch but keep cached data
+      const isOffline = typeof navigator !== "undefined" && !navigator.onLine;
 
-    try {
-      setLoading(true);
-      setError(null);
+      try {
+        setLoading(true);
+        setError(null);
 
-      const cacheKey = `conflicts_${user.id}`;
-      const transformConflicts = (rows: any[]): ConflictData[] =>
-        (rows || []).map((row: any) => ({
-          id: row.id,
-          queue_item_id: row.queue_item_id,
-          user_id: row.user_id,
-          table_name: row.table_name,
-          record_id: row.record_id,
-          client_data: row.client_data,
-          server_data: row.remote_data,
-          resolution_strategy: row.resolution_strategy,
-          resolved_data: row.resolved_data,
-          resolved_by: row.resolved_by,
-          resolved_at: row.resolved_at,
-          created_at: row.created_at,
-          local_version: row.local_version,
-          remote_version: row.remote_version,
-          status: row.status,
-          winner: row.winner,
-        }));
+        const cacheKey = `conflicts_${user.id}`;
+        const transformConflicts = (rows: any[]): ConflictData[] =>
+          (rows || []).map((row: any) => ({
+            id: row.id,
+            queue_item_id: row.queue_item_id,
+            user_id: row.user_id,
+            table_name: row.table_name,
+            record_id: row.record_id,
+            client_data: row.client_data,
+            server_data: row.remote_data,
+            resolution_strategy: row.resolution_strategy,
+            resolved_data: row.resolved_data,
+            resolved_by: row.resolved_by,
+            resolved_at: row.resolved_at,
+            created_at: row.created_at,
+            local_version: row.local_version,
+            remote_version: row.remote_version,
+            status: row.status,
+            winner: row.winner,
+          }));
 
-      const cachedEntry = await getCachedData<any[]>(cacheKey);
-      const cachedRows = Array.isArray(cachedEntry?.data) ? cachedEntry.data : null;
+        const cachedEntry = await getCachedData<any[]>(cacheKey);
+        const cachedRows = Array.isArray(cachedEntry?.data)
+          ? cachedEntry.data
+          : null;
 
-      if (cachedRows) {
-        setConflicts(transformConflicts(cachedRows));
+        if (cachedRows) {
+          setConflicts(transformConflicts(cachedRows));
+          setLoading(false);
+        }
+
+        if (forceRefresh && isOffline) {
+          throw new Error(
+            cachedRows
+              ? "Perangkat sedang offline. Menampilkan konflik tersimpan terakhir."
+              : "Perangkat sedang offline dan belum ada data konflik tersimpan.",
+          );
+        }
+
+        // ✅ Use cacheAPI for offline support
+        const data = await cacheAPI(
+          cacheKey,
+          async () => {
+            const { data, error: fetchError } = await supabase
+              .from("conflict_log")
+              .select("*")
+              .eq("user_id", user.id)
+              .order("created_at", { ascending: false });
+
+            if (fetchError) throw fetchError;
+
+            return data;
+          },
+          {
+            ttl: 5 * 60 * 1000,
+            staleWhileRevalidate: true,
+            forceRefresh,
+          },
+        );
+
+        setConflicts(transformConflicts(data || []));
+
+        if (isOffline) {
+          console.log("ℹ️ Offline mode - showing cached conflicts");
+        }
+      } catch (err) {
+        console.error("Error fetching conflicts:", err);
+
+        // ✅ Don't set error in offline mode - it's expected
+        if (isOffline) {
+          console.log(
+            "ℹ️ Offline mode - conflict fetch failed (using cached data if available)",
+          );
+        } else {
+          setError(err as Error);
+        }
+      } finally {
         setLoading(false);
       }
-
-      if (forceRefresh && isOffline) {
-        throw new Error(
-          cachedRows
-            ? "Perangkat sedang offline. Menampilkan konflik tersimpan terakhir."
-            : "Perangkat sedang offline dan belum ada data konflik tersimpan.",
-        );
-      }
-
-      // ✅ Use cacheAPI for offline support
-      const data = await cacheAPI(
-        cacheKey,
-        async () => {
-          const { data, error: fetchError } = await supabase
-            .from("conflict_log")
-            .select("*")
-            .eq("user_id", user.id)
-            .order("created_at", { ascending: false });
-
-          if (fetchError) throw fetchError;
-
-          return data;
-        },
-        {
-          ttl: 5 * 60 * 1000,
-          staleWhileRevalidate: true,
-          forceRefresh,
-        },
-      );
-
-      setConflicts(transformConflicts(data || []));
-
-      if (isOffline) {
-        console.log("ℹ️ Offline mode - showing cached conflicts");
-      }
-    } catch (err) {
-      console.error("Error fetching conflicts:", err);
-
-      // ✅ Don't set error in offline mode - it's expected
-      if (isOffline) {
-        console.log(
-          "ℹ️ Offline mode - conflict fetch failed (using cached data if available)",
-        );
-      } else {
-        setError(err as Error);
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [user]);
+    },
+    [user],
+  );
 
   // Initial fetch
   useEffect(() => {

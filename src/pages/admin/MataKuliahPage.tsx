@@ -335,7 +335,9 @@ export default function MataKuliahPage() {
         <Alert className="border-warning/40 bg-warning/10">
           <AlertDescription>
             Data mata kuliah sedang memakai snapshot lokal dari perangkat.
-            {lastUpdatedLabel ? ` Pembaruan terakhir: ${lastUpdatedLabel}.` : ""}
+            {lastUpdatedLabel
+              ? ` Pembaruan terakhir: ${lastUpdatedLabel}.`
+              : ""}
           </AlertDescription>
         </Alert>
       )}

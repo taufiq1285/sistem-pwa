@@ -40,7 +40,9 @@ export class RouteChunkBoundary extends Component<
     isChunkLoadError: false,
   };
 
-  public static getDerivedStateFromError(error: unknown): RouteChunkBoundaryState {
+  public static getDerivedStateFromError(
+    error: unknown,
+  ): RouteChunkBoundaryState {
     return {
       hasError: true,
       isChunkLoadError: isChunkLoadError(error),
@@ -97,7 +99,8 @@ export class RouteChunkBoundary extends Component<
 
               {this.state.isChunkLoadError && (
                 <p className="mx-auto mb-7 max-w-md text-xs text-muted-foreground/80 sm:text-sm">
-                  Route chunk tidak tersedia untuk path <strong>{window.location.pathname}</strong>.
+                  Route chunk tidak tersedia untuk path{" "}
+                  <strong>{window.location.pathname}</strong>.
                 </p>
               )}
 
