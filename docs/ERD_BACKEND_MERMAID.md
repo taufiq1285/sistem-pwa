@@ -68,7 +68,7 @@ erDiagram
         uuid id PK
         uuid mata_kuliah_id FK
         uuid dosen_id FK
-        string nama_kelas
+        string nama
         string semester
         int tahun_ajaran
     }
@@ -134,6 +134,12 @@ erDiagram
         string jawaban_benar
         int bobot
     }
+    bank_soal {
+        uuid id PK
+        uuid dosen_id FK
+        text pertanyaan
+        string tipe_soal
+    }
     attempt_kuis {
         uuid id PK
         uuid kuis_id FK
@@ -141,6 +147,7 @@ erDiagram
         timestamp mulai_at
         timestamp selesai_at
         float nilai
+        enum status
     }
     jawaban {
         uuid id PK
@@ -162,12 +169,18 @@ erDiagram
         uuid user_id FK
         string nim
     }
+    dosen {
+        uuid id PK
+        uuid user_id FK
+        string nip
+    }
     kuis ||--o{ soal : terdiri_dari
     kuis ||--o{ attempt_kuis : dikerjakan
     mahasiswa ||--o{ attempt_kuis : melakukan
     attempt_kuis ||--o{ jawaban : menghasilkan
     soal ||--o{ jawaban : dijawab
     mahasiswa ||--o{ nilai : menerima
+    dosen ||--o{ bank_soal : membuat
 ```
 
 ### Caption yang disarankan
@@ -248,7 +261,7 @@ erDiagram
     inventaris {
         uuid id PK
         uuid laboratorium_id FK
-        string nama_alat
+        string nama_barang
         int jumlah
         enum kondisi
     }
@@ -292,14 +305,14 @@ erDiagram
         uuid user_id FK
         uuid kelas_id FK
         string judul
-        text isi
+        text konten
         timestamp created_at
     }
     notifications {
         uuid id PK
         uuid user_id FK
         string pesan
-        boolean dibaca
+        boolean is_read
         timestamp created_at
     }
     users ||--o{ pengumuman : menulis

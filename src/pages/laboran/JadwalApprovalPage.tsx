@@ -275,7 +275,7 @@ export default function JadwalApprovalPage() {
       <div className="mx-auto max-w-7xl space-y-6">
         <GlassCard
           intensity="medium"
-          className="border-white/40 bg-white/80 shadow-xl dark:border-white/10 dark:bg-slate-900/80"
+          className="border-white/40 bg-white/80 shadow-xl dark:border-white/10 dark:bg-card"
         >
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
@@ -324,7 +324,7 @@ export default function JadwalApprovalPage() {
 
         <GlassCard
           intensity="low"
-          className="border-white/40 bg-white/85 shadow-lg dark:border-white/10 dark:bg-slate-900/85"
+          className="border-white/40 bg-white/85 shadow-lg dark:border-white/10 dark:bg-card"
         >
           <div className="flex items-center gap-4">
             <div className="flex-1">
@@ -372,7 +372,7 @@ export default function JadwalApprovalPage() {
               <DashboardSkeleton />
             ) : jadwalList.filter((j) => j.status === "pending").length ===
               0 ? (
-              <GlassCard className="border-white/40 bg-white/85 dark:border-white/10 dark:bg-slate-900/85">
+              <GlassCard className="border-white/40 bg-white/85 dark:border-white/10 dark:bg-card">
                 <div className="py-12 text-center">
                   <Clock className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
                   <h3 className="text-lg font-semibold">
@@ -432,13 +432,13 @@ export default function JadwalApprovalPage() {
                                     <div className="font-medium">
                                       {kelas?.mata_kuliah?.nama_mk || "-"}
                                     </div>
-                                    <div className="text-sm text-gray-500">
+                                    <div className="text-sm text-muted-foreground">
                                       {kelas?.nama_kelas || "-"}
                                     </div>
                                   </div>
                                 </TableCell>
                                 <TableCell>
-                                  <div className="font-medium text-orange-700">
+                                  <div className="font-medium text-warning">
                                     {lab?.nama_lab || "-"}
                                   </div>
                                 </TableCell>
@@ -458,7 +458,7 @@ export default function JadwalApprovalPage() {
                                       onClick={() =>
                                         handleApproveJadwalClick(jadwal)
                                       }
-                                      className="bg-green-600 hover:bg-green-700"
+                                      className="bg-success hover:bg-success/90"
                                     >
                                       Setujui
                                     </Button>
@@ -490,7 +490,7 @@ export default function JadwalApprovalPage() {
               <DashboardSkeleton />
             ) : jadwalList.filter((j) => j.status === "approved").length ===
               0 ? (
-              <GlassCard className="border-white/40 bg-white/85 dark:border-white/10 dark:bg-slate-900/85">
+              <GlassCard className="border-white/40 bg-white/85 dark:border-white/10 dark:bg-card">
                 <div className="py-12 text-center">
                   <CheckCircle2 className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
                   <h3 className="text-lg font-semibold">
@@ -550,13 +550,13 @@ export default function JadwalApprovalPage() {
                                     <div className="font-medium">
                                       {kelas?.mata_kuliah?.nama_mk || "-"}
                                     </div>
-                                    <div className="text-sm text-gray-500">
+                                    <div className="text-sm text-muted-foreground">
                                       {kelas?.nama_kelas || "-"}
                                     </div>
                                   </div>
                                 </TableCell>
                                 <TableCell>
-                                  <div className="font-medium text-green-700">
+                                  <div className="font-medium text-success">
                                     {lab?.nama_lab || "-"}
                                   </div>
                                 </TableCell>
@@ -596,7 +596,7 @@ export default function JadwalApprovalPage() {
             ) : jadwalList.filter(
                 (j) => j.status === "cancelled" || j.status === "rejected",
               ).length === 0 ? (
-              <GlassCard className="border-white/40 bg-white/85 dark:border-white/10 dark:bg-slate-900/85">
+              <GlassCard className="border-white/40 bg-white/85 dark:border-white/10 dark:bg-card">
                 <div className="py-12 text-center">
                   <History className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
                   <h3 className="text-lg font-semibold">Tidak ada riwayat</h3>
@@ -672,13 +672,13 @@ export default function JadwalApprovalPage() {
                                     <div className="font-medium">
                                       {kelas?.mata_kuliah?.nama_mk || "-"}
                                     </div>
-                                    <div className="text-sm text-gray-500">
+                                    <div className="text-sm text-muted-foreground">
                                       {kelas?.nama_kelas || "-"}
                                     </div>
                                   </div>
                                 </TableCell>
                                 <TableCell>
-                                  <div className="font-medium text-gray-700">
+                                  <div className="font-medium text-muted-foreground">
                                     {lab?.nama_lab || "-"}
                                   </div>
                                 </TableCell>

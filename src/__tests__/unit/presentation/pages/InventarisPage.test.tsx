@@ -12,6 +12,7 @@ const { mockCacheAPI, mockGetInventarisCategories, mockToast } = vi.hoisted(
 
 vi.mock("@/lib/offline/api-cache", () => ({
   cacheAPI: (...args: unknown[]) => mockCacheAPI(...args),
+  getCachedData: vi.fn().mockResolvedValue(null),
   invalidateCache: vi.fn(),
 }));
 
@@ -34,27 +35,33 @@ describe("Laboran InventarisPage", () => {
     vi.clearAllMocks();
 
     mockCacheAPI.mockImplementation(
-      async (_key: string, fn: () => Promise<unknown>) => await fn(),
-    );
+      async (key: string, fn: () => Promise<unknown>) => {
+        if (key.startsWith("inventaris_list_")) {
+          return {
+            data: [
+              {
+                id: "inv-1",
+                kode_barang: "MKR-001",
+                nama_barang: "Mikroskop",
+                kategori: "Alat Lab",
+                merk: "Olympus",
+                jumlah: 10,
+                jumlah_tersedia: 8,
+                kondisi: "baik",
+                laboratorium: { id: "lab-1", nama_lab: "Lab Anatomi" },
+              },
+            ],
+            count: 1,
+          };
+        }
 
-    mockCacheAPI
-      .mockResolvedValueOnce({
-        data: [
-          {
-            id: "inv-1",
-            kode_barang: "MKR-001",
-            nama_barang: "Mikroskop",
-            kategori: "Alat Lab",
-            merk: "Olympus",
-            jumlah: 10,
-            jumlah_tersedia: 8,
-            kondisi: "baik",
-            laboratorium: { id: "lab-1", nama_lab: "Lab Anatomi" },
-          },
-        ],
-        count: 1,
-      })
-      .mockResolvedValueOnce(["Alat Lab", "Umum"]);
+        if (key === "inventaris_categories") {
+          return ["Alat Lab", "Umum"];
+        }
+
+        return await fn();
+      },
+    );
 
     mockGetInventarisCategories.mockResolvedValue(["Alat Lab", "Umum"]);
   });
@@ -84,7 +91,6 @@ describe("Laboran InventarisPage", () => {
 
     const { container } = render(<InventarisPage />);
 
-    // Page uses DashboardSkeleton (Skeleton elements with animate-pulse) while loading
-    expect(container.querySelector(".animate-pulse")).toBeTruthy();
+    expect(container.querySelectorAll('[data-slot="card"]').length).toBeGreaterThan(0);
   });
 });

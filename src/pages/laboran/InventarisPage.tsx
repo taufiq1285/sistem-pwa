@@ -4,7 +4,7 @@
  * Full CRUD for managing laboratory equipment inventory
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Plus,
   Search,
@@ -72,7 +72,11 @@ import {
   type CreateInventarisData,
 } from "@/lib/api/laboran.api";
 import type { EquipmentCondition } from "@/types/inventaris.types";
-import { cacheAPI, invalidateCache } from "@/lib/offline/api-cache";
+import {
+  cacheAPI,
+  getCachedData,
+  invalidateCache,
+} from "@/lib/offline/api-cache";
 
 const KONDISI_OPTIONS: {
   value: EquipmentCondition;
@@ -114,6 +118,19 @@ export default function InventarisPage() {
     amount: 0,
     type: "add" as "add" | "subtract" | "set",
   });
+  const [isOfflineData, setIsOfflineData] = useState(false);
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<number | null>(null);
+
+  const lastUpdatedLabel = useMemo(() => {
+    if (!lastUpdatedAt) {
+      return null;
+    }
+
+    return new Date(lastUpdatedAt).toLocaleString("id-ID", {
+      dateStyle: "medium",
+      timeStyle: "short",
+    });
+  }, [lastUpdatedAt]);
 
   useEffect(() => {
     loadInventaris(false);
@@ -124,6 +141,28 @@ export default function InventarisPage() {
     try {
       setLoading(true);
       const cacheKey = `inventaris_list_${searchQuery || ""}_${selectedKategori || ""}`;
+      const cachedInventarisEntry = await getCachedData<{
+        data: InventarisListItem[];
+        count: number;
+      }>(cacheKey);
+      const hasCachedData = Array.isArray(cachedInventarisEntry?.data?.data);
+
+      if (hasCachedData) {
+        setInventaris(cachedInventarisEntry.data.data);
+        setTotalCount(cachedInventarisEntry.data.count || 0);
+        setIsOfflineData(!navigator.onLine);
+        setLastUpdatedAt(cachedInventarisEntry.timestamp || null);
+        setLoading(false);
+      }
+
+      if (forceRefresh && !navigator.onLine) {
+        throw new Error(
+          hasCachedData
+            ? "Perangkat sedang offline. Menampilkan snapshot inventaris terakhir."
+            : "Perangkat sedang offline dan belum ada snapshot inventaris tersimpan.",
+        );
+      }
+
       const result = await cacheAPI(
         cacheKey,
         () =>
@@ -139,8 +178,14 @@ export default function InventarisPage() {
       );
       setInventaris(result.data);
       setTotalCount(result.count);
+      setIsOfflineData(false);
+      setLastUpdatedAt(Date.now());
     } catch (error) {
-      toast.error("Failed to load inventaris data");
+      if (!navigator.onLine) {
+        setIsOfflineData(true);
+      } else {
+        toast.error("Failed to load inventaris data");
+      }
       console.error(error);
     } finally {
       setLoading(false);
@@ -330,6 +375,15 @@ export default function InventarisPage() {
           </div>
         </GlassCard>
 
+        {(isOfflineData || !navigator.onLine) && (
+          <Alert className="border-warning/40 bg-warning/10">
+            <AlertDescription>
+              Data inventaris sedang memakai snapshot lokal dari perangkat.
+              {lastUpdatedLabel ? ` Pembaruan terakhir: ${lastUpdatedLabel}.` : ""}
+            </AlertDescription>
+          </Alert>
+        )}
+
         <div className="grid gap-4 md:grid-cols-3">
           <DashboardCard
             title="Total Items"
@@ -484,7 +538,7 @@ export default function InventarisPage() {
                           <span
                             className={
                               item.jumlah_tersedia < 5
-                                ? "font-semibold text-amber-600 dark:text-amber-400"
+                                ? "font-semibold text-warning"
                                 : "font-medium text-foreground"
                             }
                           >
@@ -529,21 +583,21 @@ export default function InventarisPage() {
                               onClick={() => handleStockManagement(item)}
                               title="Manage Stock"
                             >
-                              <Package className="h-4 w-4 text-gray-700 dark:text-gray-300" />
+                              <Package className="h-4 w-4 text-muted-foreground" />
                             </Button>
                             <Button
                               variant="ghost"
                               size="icon"
                               onClick={() => handleEdit(item)}
                             >
-                              <Edit className="h-4 w-4 text-gray-700 dark:text-gray-300" />
+                              <Edit className="h-4 w-4 text-muted-foreground" />
                             </Button>
                             <Button
                               variant="ghost"
                               size="icon"
                               onClick={() => handleDelete(item)}
                             >
-                              <Trash2 className="h-4 w-4 text-gray-700 dark:text-gray-300" />
+                              <Trash2 className="h-4 w-4 text-muted-foreground" />
                             </Button>
                           </div>
                         </TableCell>

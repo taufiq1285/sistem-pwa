@@ -62,6 +62,20 @@ vi.mock("@/components/features/sync/ConflictResolver", () => ({
     open ? <div data-testid="conflict-resolver">Resolver Open</div> : null,
 }));
 
+vi.mock("@/lib/hooks/useRoleTheme", () => ({
+  useRoleTheme: () => ({
+    accentBorder: "border-t-4 border-slate-600",
+    primaryBtn: "bg-slate-800 hover:bg-slate-900 text-white shadow-sm",
+    sidebarBg: "bg-slate-950/95",
+    sidebarHover: "hover:bg-slate-800/80",
+    sidebarActive: "bg-slate-800/90 border-l-4 border-slate-300 text-white",
+    badgeBg: "bg-slate-100 text-slate-800 border border-slate-200",
+    headerGlow: "via-slate-400/35",
+    avatarGradient: "from-slate-700 via-slate-800 to-slate-950",
+    mobileBanner: "from-slate-500/15 via-slate-400/5 to-transparent",
+  }),
+}));
+
 vi.mock("@/components/common", async () => {
   const actual = await vi.importActual<object>("@/components/common");
   return {
@@ -151,7 +165,9 @@ describe("Layout Components", () => {
       );
 
       expect(screen.getByText("Only Child")).toBeInTheDocument();
-      expect(screen.queryByTitle("Toggle menu")).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: /toggle menu/i }),
+      ).not.toBeInTheDocument();
     });
 
     it("render layout lengkap dan memanggil hooks proteksi session/sync", () => {
@@ -257,12 +273,15 @@ describe("Layout Components", () => {
         />,
       );
 
-      await user.click(screen.getByTitle("Toggle menu"));
-      await user.click(screen.getByTitle("Notifications"));
+      await user.click(screen.getByRole("button", { name: /toggle menu/i }));
+      const notificationButton = screen.getByRole("button", {
+        name: /lihat notifikasi/i,
+      });
+      await user.click(notificationButton);
 
       expect(onMenuClick).toHaveBeenCalledTimes(1);
       expect(onNotificationClick).toHaveBeenCalledTimes(1);
-      expect(screen.getByText("3")).toBeInTheDocument();
+      expect(notificationButton.querySelector(".animate-ping")).toBeTruthy();
     });
 
     it("menampilkan NotificationDropdown saat mode dropdown aktif", () => {

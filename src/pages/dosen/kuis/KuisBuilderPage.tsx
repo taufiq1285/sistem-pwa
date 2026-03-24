@@ -94,9 +94,9 @@ export default function KuisBuilderPage() {
     return (
       <div className="role-page-shell p-4 sm:p-6 lg:p-8">
         <div className="role-page-content space-y-6">
-          <div className="rounded-3xl border border-white/60 bg-white/90 p-10 text-center shadow-2xl dark:border-slate-700 dark:bg-slate-900/85">
-            <Loader2 className="h-10 w-10 animate-spin mx-auto text-indigo-600" />
-            <p className="mt-4 text-base font-semibold text-slate-700 dark:text-slate-200">
+          <div className="rounded-3xl border border-white/60 bg-white/90 p-10 text-center shadow-2xl dark:border-border/60 dark:bg-card">
+            <Loader2 className="h-10 w-10 animate-spin mx-auto text-primary" />
+            <p className="mt-4 text-base font-semibold text-muted-foreground">
               Memuat data tugas praktikum...
             </p>
           </div>
@@ -111,7 +111,7 @@ export default function KuisBuilderPage() {
         {/* Header */}
         <section className="relative overflow-hidden rounded-3xl border border-white/25 bg-linear-to-r from-primary via-primary/90 to-accent/85 p-6 text-primary-foreground shadow-2xl sm:p-8">
           <div className="absolute -top-20 -right-20 h-56 w-56 rounded-full bg-white/20 blur-3xl" />
-          <div className="absolute -bottom-20 -left-20 h-56 w-56 rounded-full bg-violet-300/20 blur-3xl" />
+          <div className="absolute -bottom-20 -left-20 h-56 w-56 rounded-full bg-accent/20 blur-3xl" />
 
           <div className="relative z-10 space-y-4">
             <Button
@@ -135,7 +135,7 @@ export default function KuisBuilderPage() {
                     ? "Edit Tugas Praktikum"
                     : "Buat Tugas Praktikum Baru"}
                 </h1>
-                <p className="max-w-3xl text-sm text-blue-100 sm:text-base">
+                <p className="max-w-3xl text-sm text-primary-foreground/80 sm:text-base">
                   {isEditing
                     ? "Perbarui informasi tugas, pengaturan, dan struktur soal dengan tampilan yang lebih rapi dan konsisten."
                     : "Susun tugas praktikum baru (pre-test, post-test, atau laporan) dengan alur yang responsif dan mudah dipakai."}
@@ -146,7 +146,7 @@ export default function KuisBuilderPage() {
         </section>
 
         {/* Quiz Builder */}
-        <div className="rounded-3xl border border-white/70 bg-white/95 p-3 shadow-2xl backdrop-blur-sm dark:border-slate-700 dark:bg-slate-900/90 sm:p-4 md:p-6">
+        <div className="rounded-3xl border border-white/70 bg-white/95 p-3 shadow-2xl backdrop-blur-sm dark:border-border/50 dark:bg-card sm:p-4 md:p-6">
           <QuizBuilder
             quiz={quiz || undefined}
             dosenId={dosenId}

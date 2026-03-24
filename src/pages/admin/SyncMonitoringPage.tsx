@@ -155,15 +155,15 @@ export function SyncMonitoringPage() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "completed":
-        return "bg-green-500";
+        return "bg-success";
       case "failed":
-        return "bg-red-500";
+        return "bg-danger";
       case "pending":
-        return "bg-yellow-500";
+        return "bg-warning";
       case "syncing":
-        return "bg-blue-500";
+        return "bg-primary";
       default:
-        return "bg-gray-500";
+        return "bg-muted-foreground";
     }
   };
 
@@ -187,7 +187,7 @@ export function SyncMonitoringPage() {
   if (!isReady || loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <RefreshCw className="w-8 h-8 animate-spin text-gray-400" />
+        <RefreshCw className="w-8 h-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -236,7 +236,7 @@ export function SyncMonitoringPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Pending</CardTitle>
-            <AlertCircle className="h-4 w-4 text-yellow-500" />
+            <AlertCircle className="h-4 w-4 text-warning" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats?.pending || 0}</div>
@@ -249,7 +249,7 @@ export function SyncMonitoringPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Completed</CardTitle>
-            <CheckCircle2 className="h-4 w-4 text-green-500" />
+            <CheckCircle2 className="h-4 w-4 text-success" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats?.completed || 0}</div>
@@ -262,7 +262,7 @@ export function SyncMonitoringPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Failed</CardTitle>
-            <XCircle className="h-4 w-4 text-red-500" />
+            <XCircle className="h-4 w-4 text-danger" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats?.failed || 0}</div>
@@ -310,7 +310,7 @@ export function SyncMonitoringPage() {
                           {formatTimestamp(item.timestamp)}
                         </p>
                         {item.error && (
-                          <div className="bg-red-50 dark:bg-red-950 p-2 rounded text-sm">
+                          <div className="bg-danger/5 p-2 rounded text-sm">
                             <strong>Error:</strong> {item.error}
                           </div>
                         )}
@@ -318,7 +318,7 @@ export function SyncMonitoringPage() {
                           <summary className="text-sm cursor-pointer hover:underline">
                             Lihat Data
                           </summary>
-                          <pre className="mt-2 p-2 bg-gray-100 dark:bg-gray-800 rounded text-xs overflow-x-auto">
+                          <pre className="mt-2 p-2 bg-muted/60 rounded text-xs overflow-x-auto">
                             {JSON.stringify(item.data, null, 2)}
                           </pre>
                         </details>
@@ -361,7 +361,7 @@ export function SyncMonitoringPage() {
                       {formatTimestamp(item.timestamp)}
                     </p>
                   </div>
-                  <Clock className="w-4 h-4 text-yellow-500" />
+                  <Clock className="w-4 h-4 text-warning" />
                 </div>
               ))}
             </div>
@@ -396,7 +396,7 @@ export function SyncMonitoringPage() {
               {completedItems.map((item) => (
                 <div
                   key={item.id}
-                  className="flex items-center justify-between p-3 border rounded-lg bg-green-50 dark:bg-green-950"
+                  className="flex items-center justify-between p-3 border rounded-lg bg-success/5"
                 >
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
@@ -411,7 +411,7 @@ export function SyncMonitoringPage() {
                       {formatTimestamp(item.timestamp)}
                     </p>
                   </div>
-                  <CheckCircle2 className="w-4 h-4 text-green-500" />
+                  <CheckCircle2 className="w-4 h-4 text-success" />
                 </div>
               ))}
             </div>
@@ -425,7 +425,7 @@ export function SyncMonitoringPage() {
         completedItems.length === 0 && (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12">
-              <CheckCircle2 className="w-16 h-16 text-green-500 mb-4" />
+              <CheckCircle2 className="w-16 h-16 text-success mb-4" />
               <h3 className="text-lg font-semibold mb-2">Queue Kosong</h3>
               <p className="text-muted-foreground text-center">
                 Tidak ada item dalam sync queue.

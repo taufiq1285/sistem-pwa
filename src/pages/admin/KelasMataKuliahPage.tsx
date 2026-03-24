@@ -226,7 +226,7 @@ export default function KelasMataKuliahPage() {
         <CardContent>
           {kelasWithoutMK.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              <CheckCircle className="mx-auto h-12 w-12 text-green-600 mb-4" />
+              <CheckCircle className="mx-auto h-12 w-12 text-success mb-4" />
               <p>Semua kelas sudah memiliki mata kuliah!</p>
             </div>
           ) : (

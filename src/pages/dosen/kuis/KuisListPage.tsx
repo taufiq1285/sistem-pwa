@@ -364,7 +364,7 @@ export default function KuisListPage() {
           <div className="flex items-center justify-center min-h-100">
             <div className="text-center space-y-4">
               <Loader2 className="h-12 w-12 animate-spin mx-auto text-primary" />
-              <p className="text-lg font-semibold text-gray-700 dark:text-gray-300">
+              <p className="text-lg font-semibold text-muted-foreground">
                 Memuat daftar tugas praktikum...
               </p>
             </div>
@@ -409,7 +409,7 @@ export default function KuisListPage() {
         <div className="relative overflow-hidden rounded-2xl shadow-2xl bg-linear-to-r from-primary via-primary/90 to-accent/85 p-10 text-primary-foreground">
           {/* Decorative Elements */}
           <div className="absolute top-0 right-0 w-80 h-80 bg-white/10 rounded-full -translate-y-40 translate-x-40 blur-3xl" />
-          <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-400/20 rounded-full translate-y-32 -translate-x-32 blur-3xl" />
+          <div className="absolute bottom-0 left-0 w-64 h-64 bg-accent/20 rounded-full translate-y-32 -translate-x-32 blur-3xl" />
 
           <div className="relative flex items-center justify-between">
             <div className="flex-1">
@@ -456,7 +456,7 @@ export default function KuisListPage() {
           <div className="flex flex-col lg:flex-row gap-4">
             {/* Search - Enhanced */}
             <div className="relative flex-1">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <Input
                 placeholder="Cari tugas praktikum..."
                 value={searchQuery}
@@ -536,16 +536,16 @@ export default function KuisListPage() {
 
         {/* Enhanced Task List/Grid */}
         {filteredQuizzes.length === 0 ? (
-          <Card className="border-0 shadow-xl bg-linear-to-br from-gray-50 to-blue-50/30 dark:from-slate-900 dark:to-blue-950/20 p-16">
+          <Card className="border-0 shadow-xl bg-linear-to-br from-muted/30 to-primary/5 p-16">
             <div className="text-center space-y-6">
               <div className="mx-auto w-24 h-24 bg-linear-to-br from-primary/10 to-accent/10 rounded-full flex items-center justify-center shadow-xl">
-                <AlertCircle className="h-12 w-12 text-blue-400" />
+                <AlertCircle className="h-12 w-12 text-primary/60" />
               </div>
               <div>
-                <h3 className="text-2xl font-extrabold text-gray-900 dark:text-white mb-3">
+                <h3 className="text-2xl font-extrabold text-foreground mb-3">
                   Tidak ada tugas praktikum
                 </h3>
-                <p className="text-lg font-semibold text-gray-700 dark:text-gray-300">
+                <p className="text-lg font-semibold text-muted-foreground">
                   {searchQuery ||
                   statusFilter !== "all" ||
                   kelasFilter !== "all"
@@ -588,14 +588,14 @@ export default function KuisListPage() {
 
         {/* Results Count - Enhanced */}
         {filteredQuizzes.length > 0 && (
-          <div className="mt-8 text-center p-4 bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm rounded-xl border-2 border-gray-200 dark:border-slate-700 shadow-lg">
-            <p className="text-base font-semibold text-gray-700 dark:text-gray-300">
+          <div className="mt-8 text-center p-4 bg-white/50 dark:bg-card/50 backdrop-blur-sm rounded-xl border-2 border-border/50 shadow-lg">
+            <p className="text-base font-semibold text-muted-foreground">
               Menampilkan{" "}
-              <span className="text-indigo-600 dark:text-indigo-400 font-black">
+              <span className="text-primary font-black">
                 {filteredQuizzes.length}
               </span>{" "}
               dari{" "}
-              <span className="text-purple-600 dark:text-purple-400 font-black">
+              <span className="text-accent font-black">
                 {quizzes.length}
               </span>{" "}
               tugas praktikum

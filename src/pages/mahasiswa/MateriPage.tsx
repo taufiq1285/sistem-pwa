@@ -11,7 +11,7 @@
  */
 
 import { useState, useEffect } from "react";
-import { Search, BookOpen, FileText, Library } from "lucide-react";
+import { Search, BookOpen, FileText, Library, AlertCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { DashboardCard } from "@/components/ui/dashboard-card";
 import { DashboardSkeleton } from "@/components/ui/dashboard-skeleton";
 import { GlassCard } from "@/components/ui/glass-card";
@@ -31,7 +32,7 @@ import { getMateri, downloadMateri } from "@/lib/api/materi.api";
 import type { Materi } from "@/types/materi.types";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase/client";
-import { cacheAPI } from "@/lib/offline/api-cache";
+import { cacheAPI, getCachedData } from "@/lib/offline/api-cache";
 
 // ============================================================================
 // COMPONENT
@@ -48,6 +49,8 @@ export default function MahasiswaMateriPage() {
   const [materiList, setMateriList] = useState<Materi[]>([]);
   const [filteredMateri, setFilteredMateri] = useState<Materi[]>([]);
   const [enrolledKelasIds, setEnrolledKelasIds] = useState<string[]>([]);
+  const [isOfflineData, setIsOfflineData] = useState(false);
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<number | null>(null);
 
   // Filters
   const [selectedKelas, setSelectedKelas] = useState<string>("all");
@@ -70,6 +73,39 @@ export default function MahasiswaMateriPage() {
   }, [user?.mahasiswa?.id]);
 
   useEffect(() => {
+    if (!user?.mahasiswa?.id) {
+      return;
+    }
+
+    const cacheKey = `mahasiswa_materi_${user.mahasiswa.id}`;
+    const handleCacheUpdated = (event: Event) => {
+      const customEvent = event as CustomEvent<{
+        key?: string;
+        data?: Materi[];
+      }>;
+
+      if (customEvent.detail?.key !== cacheKey) {
+        return;
+      }
+
+      const nextData = customEvent.detail?.data;
+      if (!Array.isArray(nextData)) {
+        return;
+      }
+
+      setMateriList(nextData);
+      setIsOfflineData(false);
+      setLastUpdatedAt(Date.now());
+    };
+
+    window.addEventListener("cache:updated", handleCacheUpdated);
+
+    return () => {
+      window.removeEventListener("cache:updated", handleCacheUpdated);
+    };
+  }, [user?.mahasiswa?.id]);
+
+  useEffect(() => {
     filterMateri();
   }, [
     materiList,
@@ -89,9 +125,32 @@ export default function MahasiswaMateriPage() {
     try {
       setLoading(true);
 
+      const cacheKey = `mahasiswa_materi_${user.mahasiswa.id}`;
+      const cachedEntry = await getCachedData<Materi[]>(cacheKey);
+      const hasCachedData = Array.isArray(cachedEntry?.data);
+
+      if (hasCachedData) {
+        setMateriList(cachedEntry!.data);
+        const cachedKelasIds = Array.from(
+          new Set(cachedEntry!.data.map((materi) => materi.kelas_id).filter(Boolean)),
+        );
+        setEnrolledKelasIds(cachedKelasIds);
+        setIsOfflineData(!navigator.onLine);
+        setLastUpdatedAt(cachedEntry!.timestamp);
+        setLoading(false);
+      }
+
+      if (forceRefresh && !navigator.onLine) {
+        throw new Error(
+          hasCachedData
+            ? "Perangkat sedang offline. Menampilkan materi tersimpan terakhir."
+            : "Perangkat sedang offline dan belum ada materi tersimpan.",
+        );
+      }
+
       // Use cacheAPI for materi with offline support
       const enrolledMateri = await cacheAPI(
-        `mahasiswa_materi_${user?.mahasiswa?.id}`,
+        cacheKey,
         async () => {
           // Get enrolled kelas IDs
           const { data: enrollments, error: enrollmentError } = await supabase
@@ -119,10 +178,18 @@ export default function MahasiswaMateriPage() {
       );
 
       setMateriList(enrolledMateri);
+      setEnrolledKelasIds(
+        Array.from(new Set(enrolledMateri.map((materi) => materi.kelas_id))),
+      );
+      setIsOfflineData(false);
+      setLastUpdatedAt(Date.now());
       console.log("[Materi] Data loaded:", enrolledMateri.length, "materi");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error loading materi:", error);
-      toast.error("Gagal memuat materi");
+      if (materiList.length > 0 || !navigator.onLine) {
+        setIsOfflineData(true);
+      }
+      toast.error(error?.message || "Gagal memuat materi");
     } finally {
       setLoading(false);
     }
@@ -245,25 +312,47 @@ export default function MahasiswaMateriPage() {
         {/* Header */}
         <GlassCard
           intensity="medium"
-          className="border-white/40 bg-white/80 shadow-xl dark:border-white/10 dark:bg-slate-900/80"
+          className="border-white/40 bg-white/80 shadow-xl dark:border-white/10 dark:bg-card"
         >
           <CardContent className="p-6 sm:p-8">
             <div className="mb-2 flex items-center gap-3">
               <BookOpen className="h-8 w-8 text-primary" />
-              <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+              <h1 className="text-4xl font-extrabold tracking-tight text-foreground">
                 Materi Pembelajaran
               </h1>
             </div>
             <p className="text-muted-foreground">
               Akses materi pembelajaran dari dosen Anda
             </p>
+            {isOfflineData && (
+              <p className="mt-2 text-sm text-muted-foreground">
+                Mode offline • data tersimpan lokal
+                {lastUpdatedAt
+                  ? ` • update ${new Intl.DateTimeFormat("id-ID", {
+                      dateStyle: "medium",
+                      timeStyle: "short",
+                    }).format(new Date(lastUpdatedAt))}`
+                  : ""}
+              </p>
+            )}
           </CardContent>
         </GlassCard>
+
+        {isOfflineData && (
+          <Alert className="rounded-2xl border-warning/30 bg-warning/10 text-warning">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              Halaman materi sedang memakai data yang tersimpan di perangkat.
+              Daftar materi tetap bisa dibuka saat offline, tetapi file materi
+              mungkin tetap memerlukan file yang sudah pernah tersimpan browser.
+            </AlertDescription>
+          </Alert>
+        )}
 
         {/* Filters */}
         <GlassCard
           intensity="low"
-          className="border-white/40 bg-white/90 shadow-lg dark:border-white/10 dark:bg-slate-900/85"
+          className="border-white/40 bg-white/90 shadow-lg dark:border-white/10 dark:bg-card"
         >
           <CardContent className="p-4 sm:p-6">
             <div className="mb-4 flex items-start justify-between gap-3">

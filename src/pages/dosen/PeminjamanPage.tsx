@@ -621,10 +621,10 @@ export default function PeminjamanPage() {
           <Card className="interactive-card overflow-hidden rounded-3xl border border-emerald-100/80 bg-linear-to-br from-emerald-50 to-green-50 shadow-lg shadow-emerald-100/60">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-bold">Disetujui</CardTitle>
-              <CheckCircle className="h-4 w-4 text-emerald-600" />
+              <CheckCircle className="h-4 w-4 text-success" />
             </CardHeader>
             <CardContent>
-              <div className="text-4xl font-extrabold text-emerald-700">
+              <div className="text-4xl font-extrabold text-success">
                 {stats.disetujui}
               </div>
             </CardContent>

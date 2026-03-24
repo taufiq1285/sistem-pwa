@@ -50,10 +50,10 @@ export default function AnalyticsPage() {
 
   const healthColor =
     metrics.systemHealth === "Good"
-      ? "bg-green-600"
+      ? "bg-success"
       : metrics.systemHealth === "Warning"
-        ? "bg-yellow-600"
-        : "bg-red-600";
+        ? "bg-warning"
+        : "bg-danger";
 
   return (
     <div className="container mx-auto py-6 max-w-7xl space-y-6">

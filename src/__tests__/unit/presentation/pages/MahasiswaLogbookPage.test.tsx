@@ -8,12 +8,16 @@ const {
   mockGetJadwal,
   mockGetLogbook,
   mockSupabaseFrom,
+  mockCacheAPI,
+  mockGetCachedData,
 } = vi.hoisted(() => ({
   mockUseAuth: vi.fn(),
   mockToast: { success: vi.fn(), error: vi.fn() },
   mockGetJadwal: vi.fn(),
   mockGetLogbook: vi.fn(),
   mockSupabaseFrom: vi.fn(),
+  mockCacheAPI: vi.fn(),
+  mockGetCachedData: vi.fn(),
 }));
 
 vi.mock("@/lib/hooks/useAuth", () => ({
@@ -50,9 +54,19 @@ vi.mock("@/lib/supabase/client", () => ({
   },
 }));
 
+vi.mock("@/lib/offline/api-cache", () => ({
+  cacheAPI: (...args: unknown[]) => mockCacheAPI(...args),
+  getCachedData: (...args: unknown[]) => mockGetCachedData(...args),
+}));
+
 describe("Mahasiswa LogbookPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+
+    mockGetCachedData.mockResolvedValue(null);
+    mockCacheAPI.mockImplementation(
+      async (_key: string, fn: () => Promise<unknown>) => await fn(),
+    );
 
     mockUseAuth.mockReturnValue({
       user: {

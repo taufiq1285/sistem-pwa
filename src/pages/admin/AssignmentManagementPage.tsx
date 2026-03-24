@@ -438,15 +438,15 @@ export default function AssignmentManagementPage() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "pending":
-        return "bg-yellow-100 text-yellow-800";
+        return "bg-warning/10 text-warning";
       case "approved":
-        return "bg-green-100 text-green-800";
+        return "bg-success/10 text-success";
       case "rejected":
-        return "bg-red-100 text-red-800";
+        return "bg-danger/10 text-danger";
       case "cancelled":
-        return "bg-gray-100 text-gray-800";
+        return "bg-muted text-muted-foreground";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-muted text-muted-foreground";
     }
   };
 
@@ -499,7 +499,7 @@ export default function AssignmentManagementPage() {
             <CardTitle className="text-base">Approved</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">
+            <div className="text-2xl font-bold text-success">
               {filteredJadwal.filter((j) => j.status === "approved").length}
             </div>
           </CardContent>
@@ -509,7 +509,7 @@ export default function AssignmentManagementPage() {
             <CardTitle className="text-base">Pending</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">
+            <div className="text-2xl font-bold text-warning">
               {filteredJadwal.filter((j) => j.status === "pending").length}
             </div>
           </CardContent>
@@ -519,7 +519,7 @@ export default function AssignmentManagementPage() {
             <CardTitle className="text-base">Rejected</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">
+            <div className="text-2xl font-bold text-danger">
               {filteredJadwal.filter((j) => j.status === "rejected").length}
             </div>
           </CardContent>
@@ -529,7 +529,7 @@ export default function AssignmentManagementPage() {
             <CardTitle className="text-base">Cancelled</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-gray-600">
+            <div className="text-2xl font-bold text-muted-foreground">
               {filteredJadwal.filter((j) => j.status === "cancelled").length}
             </div>
           </CardContent>
@@ -544,7 +544,7 @@ export default function AssignmentManagementPage() {
         <CardContent>
           <div className="flex flex-wrap gap-4">
             <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-45">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
@@ -557,7 +557,7 @@ export default function AssignmentManagementPage() {
             </Select>
 
             <Select value={filterLab} onValueChange={setFilterLab}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-45">
                 <SelectValue placeholder="Laboratorium" />
               </SelectTrigger>
               <SelectContent>
@@ -571,7 +571,7 @@ export default function AssignmentManagementPage() {
             </Select>
 
             <Select value={filterKelas} onValueChange={setFilterKelas}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-45">
                 <SelectValue placeholder="Kelas" />
               </SelectTrigger>
               <SelectContent>

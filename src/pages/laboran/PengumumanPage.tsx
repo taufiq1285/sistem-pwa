@@ -3,8 +3,8 @@
  * View announcements and notifications relevant to laboratory staff
  */
 
-import { useEffect, useState } from "react";
-import { cacheAPI } from "@/lib/offline/api-cache";
+import { useEffect, useMemo, useState } from "react";
+import { cacheAPI, getCachedData } from "@/lib/offline/api-cache";
 import { getAllAnnouncements } from "@/lib/api/announcements.api";
 import type { Pengumuman } from "@/types/common.types";
 import {
@@ -35,12 +35,16 @@ export default function LaboranPengumumanPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [isOfflineData, setIsOfflineData] = useState(false);
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<number | null>(null);
 
   useEffect(() => {
     loadAnnouncements();
   }, []);
 
   const loadAnnouncements = async (forceRefresh = false) => {
+    const cacheKey = "laboran_announcements";
+
     try {
       if (forceRefresh) {
         setRefreshing(true);
@@ -50,42 +54,65 @@ export default function LaboranPengumumanPage() {
 
       setError(null);
 
-      const data = await cacheAPI(
-        "laboran_announcements",
-        () => getAllAnnouncements(),
-        {
-          ttl: 10 * 60 * 1000,
-          forceRefresh,
-          staleWhileRevalidate: true,
-        },
-      );
+      const cachedEntry = await getCachedData<Pengumuman[]>(cacheKey);
+      const hasCachedData = Array.isArray(cachedEntry?.data);
 
-      const now = new Date().toISOString();
-      const filtered = data.filter((announcement) => {
-        const targetRoles = announcement.target_role || [];
-        const isForLaboran =
-          targetRoles.includes("laboran") || targetRoles.length === 0;
+      const filterAnnouncements = (data: Pengumuman[]) => {
+        const now = new Date().toISOString();
+        const filtered = data.filter((announcement) => {
+          const targetRoles = announcement.target_role || [];
+          const isForLaboran =
+            targetRoles.includes("laboran") || targetRoles.length === 0;
 
-        const isActive =
-          (!announcement.tanggal_mulai || announcement.tanggal_mulai <= now) &&
-          (!announcement.tanggal_selesai ||
-            announcement.tanggal_selesai >= now);
+          const isActive =
+            (!announcement.tanggal_mulai || announcement.tanggal_mulai <= now) &&
+            (!announcement.tanggal_selesai ||
+              announcement.tanggal_selesai >= now);
 
-        return isForLaboran && isActive;
+          return isForLaboran && isActive;
+        });
+
+        filtered.sort((a, b) => {
+          if (a.prioritas === "high" && b.prioritas !== "high") return -1;
+          if (a.prioritas !== "high" && b.prioritas === "high") return 1;
+
+          const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+          const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+          return dateB - dateA;
+        });
+
+        return filtered;
+      };
+
+      if (hasCachedData) {
+        setAnnouncements(filterAnnouncements(cachedEntry.data));
+        setIsOfflineData(!navigator.onLine);
+        setLastUpdatedAt(cachedEntry.timestamp || null);
+        setLoading(false);
+      }
+
+      if (forceRefresh && !navigator.onLine) {
+        throw new Error(
+          hasCachedData
+            ? "Perangkat sedang offline. Menampilkan notifikasi tersimpan terakhir."
+            : "Perangkat sedang offline dan belum ada notifikasi tersimpan.",
+        );
+      }
+
+      const data = await cacheAPI(cacheKey, () => getAllAnnouncements(), {
+        ttl: 10 * 60 * 1000,
+        forceRefresh,
+        staleWhileRevalidate: true,
       });
 
-      filtered.sort((a, b) => {
-        if (a.prioritas === "high" && b.prioritas !== "high") return -1;
-        if (a.prioritas !== "high" && b.prioritas === "high") return 1;
-
-        const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
-        const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
-        return dateB - dateA;
-      });
-
-      setAnnouncements(filtered);
+      setAnnouncements(filterAnnouncements(data));
+      setIsOfflineData(false);
+      setLastUpdatedAt(Date.now());
     } catch (err: any) {
       console.error("Error loading announcements:", err);
+      if (announcements.length > 0 || !navigator.onLine) {
+        setIsOfflineData(true);
+      }
       setError(err.message || "Gagal memuat notifikasi");
     } finally {
       setLoading(false);
@@ -143,10 +170,19 @@ export default function LaboranPengumumanPage() {
     }
   };
 
+  const lastUpdatedLabel = useMemo(() => {
+    if (!lastUpdatedAt) return null;
+
+    return new Intl.DateTimeFormat("id-ID", {
+      dateStyle: "medium",
+      timeStyle: "short",
+    }).format(lastUpdatedAt);
+  }, [lastUpdatedAt]);
+
   const headerSection = (
     <GlassCard
       intensity="medium"
-      className="border-white/40 bg-white/80 shadow-xl dark:border-white/10 dark:bg-slate-900/80"
+      className="border-white/40 bg-white/80 shadow-xl dark:border-white/10 dark:bg-card"
     >
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
@@ -180,11 +216,23 @@ export default function LaboranPengumumanPage() {
     </GlassCard>
   );
 
+  const offlineNotice =
+    isOfflineData || !navigator.onLine ? (
+      <Alert className="border-warning/40 bg-warning/10 text-foreground shadow-sm">
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>
+          Notifikasi laboran sedang memakai snapshot lokal dari perangkat.
+          {lastUpdatedLabel ? ` Pembaruan terakhir: ${lastUpdatedLabel}.` : ""}
+        </AlertDescription>
+      </Alert>
+    ) : null;
+
   if (loading) {
     return (
       <div className="app-container py-4 sm:py-6 lg:py-8">
         <div className="mx-auto max-w-7xl space-y-6">
           {headerSection}
+          {offlineNotice}
 
           <div className="grid gap-4 md:grid-cols-3">
             <DashboardCard
@@ -211,7 +259,7 @@ export default function LaboranPengumumanPage() {
             {[1, 2, 3].map((i) => (
               <Card
                 key={i}
-                className="rounded-2xl border border-blue-100/70 bg-white/90 shadow-sm"
+                className="rounded-2xl border border-border/60 bg-white/90 shadow-sm"
               >
                 <CardHeader>
                   <Skeleton className="h-6 w-3/4" />
@@ -279,7 +327,7 @@ export default function LaboranPengumumanPage() {
         {announcements.length === 0 ? (
           <GlassCard
             intensity="low"
-            className="border-white/40 bg-white/85 shadow-lg dark:border-white/10 dark:bg-slate-900/85"
+            className="border-white/40 bg-white/85 shadow-lg dark:border-white/10 dark:bg-card"
           >
             <CardContent className="py-14 text-center">
               <Bell className="mx-auto mb-4 h-12 w-12 text-muted-foreground/50" />
@@ -296,8 +344,8 @@ export default function LaboranPengumumanPage() {
                 intensity="low"
                 className={`rounded-2xl border shadow-lg transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl ${
                   announcement.prioritas === "high"
-                    ? "border-red-200/80 bg-red-50/70 dark:border-red-500/20 dark:bg-red-950/20"
-                    : "border-white/40 bg-white/90 dark:border-white/10 dark:bg-slate-900/85"
+                    ? "border-danger/30 bg-danger/5 dark:border-danger/20 dark:bg-danger/10"
+                    : "border-border/40 bg-white/90 dark:bg-card"
                 }`}
               >
                 <CardHeader>
@@ -308,18 +356,18 @@ export default function LaboranPengumumanPage() {
                           getPriorityBadge(announcement.prioritas)}
                         {announcement.tipe && getTypeBadge(announcement.tipe)}
                         {announcement.prioritas === "high" && (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-1 text-xs font-semibold text-red-700">
+                          <span className="inline-flex items-center gap-1 rounded-full bg-danger/10 px-2 py-1 text-xs font-semibold text-danger">
                             <Sparkles className="h-3 w-3" />
                             Perhatian
                           </span>
                         )}
                       </div>
-                      <CardTitle className="text-lg text-slate-900 sm:text-xl dark:text-slate-100">
+                      <CardTitle className="text-lg text-foreground">
                         {announcement.judul}
                       </CardTitle>
                       <CardDescription className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs sm:text-sm">
                         {announcement.created_at && (
-                          <span className="inline-flex items-center gap-1 text-slate-500 dark:text-slate-400">
+                          <span className="inline-flex items-center gap-1 text-muted-foreground">
                             <Calendar className="h-4 w-4" />
                             {format(
                               new Date(announcement.created_at),
@@ -328,7 +376,7 @@ export default function LaboranPengumumanPage() {
                           </span>
                         )}
                         {announcement.penulis && (
-                          <span className="text-slate-500 dark:text-slate-400">
+                          <span className="text-muted-foreground">
                             oleh {announcement.penulis.full_name}
                           </span>
                         )}
@@ -338,17 +386,17 @@ export default function LaboranPengumumanPage() {
                 </CardHeader>
 
                 <CardContent>
-                  <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-700 dark:text-slate-200 sm:text-base">
+                  <p className="whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground sm:text-base">
                     {announcement.konten}
                   </p>
 
                   {announcement.attachment_url && (
-                    <div className="mt-4 border-t border-blue-100 pt-4 dark:border-slate-700">
+                    <div className="mt-4 border-t border-border/40 pt-4 dark:border-border/20">
                       <a
                         href={announcement.attachment_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 text-sm font-medium text-blue-700 transition-colors hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                        className="inline-flex items-center gap-2 text-sm font-medium text-primary transition-colors hover:text-primary/80"
                       >
                         <FileText className="h-4 w-4" />
                         Lihat Lampiran
@@ -357,7 +405,7 @@ export default function LaboranPengumumanPage() {
                   )}
 
                   {announcement.tanggal_selesai && (
-                    <div className="mt-4 text-xs text-slate-500 dark:text-slate-400 sm:text-sm">
+                    <div className="mt-4 text-xs text-muted-foreground sm:text-sm">
                       Berlaku hingga{" "}
                       {format(
                         new Date(announcement.tanggal_selesai),

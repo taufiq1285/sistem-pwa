@@ -434,8 +434,10 @@ export const deleteMataKuliah = requirePermission(
  */
 export async function getMataKuliahStats(): Promise<MataKuliahStats> {
   try {
-    // Get all mata kuliah
-    const allMataKuliah = await query<MataKuliah>("mata_kuliah");
+    const [allMataKuliah, totalMahasiswaCount] = await Promise.all([
+      query<MataKuliah>("mata_kuliah"),
+      count("kelas_mahasiswa")
+    ]);
 
     // Calculate stats
     const total = allMataKuliah.length;
@@ -457,21 +459,7 @@ export async function getMataKuliahStats(): Promise<MataKuliahStats> {
       by_sks[String(mk.sks)] = (by_sks[String(mk.sks)] || 0) + 1;
     });
 
-    // Calculate average mahasiswa per mata kuliah
-    let totalMahasiswa = 0;
-    for (const mk of allMataKuliah) {
-      const kelasList = await queryWithFilters("kelas", [
-        { column: "mata_kuliah_id", operator: "eq", value: mk.id },
-      ]);
-
-      for (const kelas of kelasList) {
-        const mahasiswaCount = await count("kelas_mahasiswa", [
-          { column: "kelas_id", operator: "eq", value: kelas.id },
-        ]);
-        totalMahasiswa += mahasiswaCount;
-      }
-    }
-
+    const totalMahasiswa = totalMahasiswaCount || 0;
     const avg_mahasiswa_per_mk = total > 0 ? totalMahasiswa / total : 0;
 
     return {

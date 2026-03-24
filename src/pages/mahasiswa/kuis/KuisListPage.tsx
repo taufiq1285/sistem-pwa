@@ -24,6 +24,7 @@ import {
   Timer,
   Upload,
   RefreshCw,
+  WifiOff,
 } from "lucide-react";
 
 // UI Components
@@ -46,7 +47,7 @@ import { useAuth } from "@/lib/hooks/useAuth";
 import { getUpcomingQuizzes } from "@/lib/api/kuis.api";
 import type { UpcomingQuiz } from "@/types/kuis.types";
 import { toast } from "sonner";
-import { cacheAPI } from "@/lib/offline/api-cache";
+import { cacheAPI, getCachedData } from "@/lib/offline/api-cache";
 import { supabase } from "@/lib/supabase/client";
 
 // Utils
@@ -81,6 +82,12 @@ export default function KuisListPage() {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<QuizStatus>("all");
+  const [isOfflineData, setIsOfflineData] = useState(false);
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<number | null>(null);
+
+  const quizzesCacheKey = user?.mahasiswa?.id
+    ? `mahasiswa_kuis_${user.mahasiswa.id}`
+    : null;
 
   useEffect(() => {
     if (user?.mahasiswa?.id) loadQuizzes();
@@ -120,6 +127,35 @@ export default function KuisListPage() {
   }, [quizzes, searchQuery, statusFilter]);
 
   useEffect(() => {
+    if (!quizzesCacheKey) {
+      return;
+    }
+
+    const handleCacheUpdated = (event: Event) => {
+      const customEvent = event as CustomEvent<{
+        key?: string;
+        data?: UpcomingQuiz[];
+      }>;
+
+      if (customEvent.detail?.key !== quizzesCacheKey) {
+        return;
+      }
+
+      const nextQuizzes = customEvent.detail?.data;
+      if (!Array.isArray(nextQuizzes)) {
+        return;
+      }
+
+      setQuizzes(nextQuizzes);
+      setIsOfflineData(false);
+      setLastUpdatedAt(Date.now());
+    };
+
+    window.addEventListener("cache:updated", handleCacheUpdated);
+    return () => window.removeEventListener("cache:updated", handleCacheUpdated);
+  }, [quizzesCacheKey]);
+
+  useEffect(() => {
     const status = searchParams.get("status");
     if (
       status &&
@@ -130,7 +166,7 @@ export default function KuisListPage() {
   }, [searchParams]);
 
   const loadQuizzes = async (forceRefresh = false) => {
-    if (!user?.mahasiswa?.id) {
+    if (!user?.mahasiswa?.id || !quizzesCacheKey) {
       setError("Data mahasiswa tidak ditemukan");
       setIsLoading(false);
       return;
@@ -138,25 +174,51 @@ export default function KuisListPage() {
     setIsLoading(true);
     setError(null);
     try {
+      const cachedQuizzesEntry = await getCachedData<UpcomingQuiz[]>(quizzesCacheKey);
+      const cachedQuizzes = Array.isArray(cachedQuizzesEntry?.data)
+        ? cachedQuizzesEntry.data
+        : [];
+
+      if (cachedQuizzes.length > 0) {
+        setQuizzes(cachedQuizzes);
+        setIsOfflineData(!navigator.onLine);
+        setLastUpdatedAt(cachedQuizzesEntry?.timestamp || null);
+        setIsLoading(false);
+      }
+
+      if (forceRefresh && !navigator.onLine) {
+        throw new Error(
+          cachedQuizzes.length > 0
+            ? "Perangkat sedang offline. Menampilkan daftar tugas praktikum tersimpan terakhir."
+            : "Perangkat sedang offline dan belum ada daftar tugas praktikum tersimpan.",
+        );
+      }
+
       // Use cacheAPI with stale-while-revalidate for offline support
       const data = await cacheAPI(
-        `mahasiswa_kuis_${user?.mahasiswa?.id}`,
+        quizzesCacheKey,
         () => getUpcomingQuizzes(user.mahasiswa.id),
         {
-          ttl: 5 * 60 * 1000, // 5 minutes (quiz status changes frequently)
+          ttl: 5 * 60 * 1000,
           forceRefresh,
           staleWhileRevalidate: true,
         },
       );
       setQuizzes(data);
+      setIsOfflineData(false);
+      setLastUpdatedAt(Date.now());
       console.log("[KuisList] Data loaded:", data.length, "quizzes");
     } catch (err: any) {
       const errorMessage =
         err?.message || "Gagal memuat daftar tugas praktikum";
       setError(errorMessage);
-      toast.error("Gagal memuat tugas praktikum", {
-        description: errorMessage,
-      });
+      if (!navigator.onLine && quizzes.length > 0) {
+        setIsOfflineData(true);
+      } else {
+        toast.error("Gagal memuat tugas praktikum", {
+          description: errorMessage,
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -498,8 +560,25 @@ export default function KuisListPage() {
     );
   }
 
+  const lastUpdatedLabel = lastUpdatedAt
+    ? new Date(lastUpdatedAt).toLocaleString("id-ID", {
+        dateStyle: "medium",
+        timeStyle: "short",
+      })
+    : null;
+
   return (
     <div className="container mx-auto py-6 max-w-7xl space-y-6">
+      {(isOfflineData || !navigator.onLine) && (
+        <Alert className="border-warning/40 bg-warning/10">
+          <WifiOff className="h-4 w-4" />
+          <AlertTitle>Mode Offline</AlertTitle>
+          <AlertDescription>
+            Daftar tugas praktikum sedang menggunakan snapshot lokal dari perangkat.
+            {lastUpdatedLabel ? ` Pembaruan terakhir: ${lastUpdatedLabel}.` : ""}
+          </AlertDescription>
+        </Alert>
+      )}
       {/* Hero Header */}
       <div className="relative overflow-hidden rounded-xl bg-linear-to-r from-primary via-primary/90 to-accent/85 p-8 text-primary-foreground">
         {/* Decorative Elements */}

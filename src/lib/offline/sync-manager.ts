@@ -16,6 +16,7 @@ import { queueManager } from "./queue-manager";
 import { networkDetector } from "./network-detector";
 import type { SyncQueueItem } from "@/types/offline.types";
 import { supabase } from "@/lib/supabase/client";
+import { submitAnswerSafe } from "@/lib/api/kuis-versioned-simple.api";
 
 // ============================================================================
 // DEFAULT SYNC PROCESSOR
@@ -45,8 +46,6 @@ async function defaultSyncProcessor(item: SyncQueueItem): Promise<void> {
       );
     }
 
-    const { submitAnswerSafe } =
-      await import("@/lib/api/kuis-versioned-simple.api");
     await submitAnswerSafe({ attempt_id, soal_id, jawaban });
     return;
   }

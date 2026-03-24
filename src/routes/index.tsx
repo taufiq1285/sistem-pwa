@@ -7,47 +7,226 @@
  * ✅ KEPT: All existing routes and role guards intact
  */
 
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { ProtectedRoute } from "@/components/common/ProtectedRoute";
 import { RoleGuard } from "@/components/common/RoleGuard";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PageLoader } from "@/components/common/PageLoader";
+import { RouteChunkBoundary } from "@/components/common/RouteChunkBoundary";
 import { ROUTES } from "@/config/routes.config";
+import { useAuth } from "@/lib/hooks/useAuth";
+import type { UserRole } from "@/types/auth.types";
 
 // =============================================================================
 // LAZY-LOADED PAGES (Code-Splitting)
 // =============================================================================
 
+const routeModuleImporters = {
+  login: () =>
+    import("@/pages/auth/LoginPage").then((m) => ({ default: m.LoginPage })),
+  register: () =>
+    import("@/pages/auth/RegisterPage").then((m) => ({
+      default: m.RegisterPage,
+    })),
+  forgotPassword: () =>
+    import("@/pages/auth/ForgotPasswordPage").then((m) => ({
+      default: m.ForgotPasswordPage,
+    })),
+  home: () =>
+    import("@/pages/public/HomePage").then((m) => ({ default: m.HomePage })),
+  notFound: () =>
+    import("@/pages/public/NotFoundPage").then((m) => ({
+      default: m.NotFoundPage,
+    })),
+  unauthorized: () =>
+    import("@/pages/public/UnauthorizedPage").then((m) => ({
+      default: m.UnauthorizedPage,
+    })),
+  adminDashboard: () =>
+    import("@/pages/admin/DashboardPage").then((m) => ({
+      default: m.DashboardPage,
+    })),
+  mataKuliah: () => import("@/pages/admin/MataKuliahPage"),
+  kelasEnhanced: () => import("@/pages/admin/KelasPageEnhanced"),
+  adminUsers: () => import("@/pages/admin/UsersPage"),
+  adminLaboratories: () => import("@/pages/admin/LaboratoriesPage"),
+  adminEquipments: () => import("@/pages/admin/EquipmentsPage"),
+  adminAnnouncements: () => import("@/pages/admin/AnnouncementsPage"),
+  peminjamanApproval: () => import("@/pages/admin/PeminjamanApprovalPage"),
+  adminProfile: () => import("@/pages/admin/ProfilePage"),
+  manajemenAssignment: () => import("@/pages/admin/ManajemenAssignmentPage"),
+  kelasMataKuliah: () => import("@/pages/admin/KelasMataKuliahPage"),
+  dosenDashboard: () =>
+    import("@/pages/dosen/DashboardPage").then((m) => ({
+      default: m.DashboardPage,
+    })),
+  dosenJadwal: () => import("@/pages/dosen/JadwalPage"),
+  dosenKuisList: () => import("@/pages/dosen/kuis/KuisListPage"),
+  dosenKuisCreate: () => import("@/pages/dosen/kuis/KuisCreatePage"),
+  dosenKuisEdit: () => import("@/pages/dosen/kuis/KuisEditPage"),
+  dosenKuisResults: () => import("@/pages/dosen/kuis/KuisResultsPage"),
+  dosenAttemptDetail: () => import("@/pages/dosen/kuis/AttemptDetailPage"),
+  dosenBankSoal: () => import("@/pages/dosen/BankSoalPage"),
+  dosenMateri: () => import("@/pages/dosen/MateriPage"),
+  dosenPenilaian: () => import("@/pages/dosen/PenilaianPage"),
+  dosenPeminjaman: () => import("@/pages/dosen/PeminjamanPage"),
+  dosenKehadiran: () => import("@/pages/dosen/KehadiranPage"),
+  dosenPengumuman: () => import("@/pages/dosen/PengumumanPage"),
+  dosenProfile: () => import("@/pages/dosen/ProfilePage"),
+  dosenLogbookReview: () => import("@/pages/dosen/LogbookReviewPage"),
+  mahasiswaDashboard: () =>
+    import("@/pages/mahasiswa/DashboardPage").then((m) => ({
+      default: m.DashboardPage,
+    })),
+  mahasiswaJadwal: () => import("@/pages/mahasiswa/JadwalPage"),
+  mahasiswaLogbook: () => import("@/pages/mahasiswa/LogbookPage"),
+  mahasiswaKuisAttempt: () => import("@/pages/mahasiswa/kuis/KuisAttemptPage"),
+  mahasiswaKuisList: () => import("@/pages/mahasiswa/kuis/KuisListPage"),
+  mahasiswaKuisResult: () => import("@/pages/mahasiswa/kuis/KuisResultPage"),
+  mahasiswaMateri: () => import("@/pages/mahasiswa/MateriPage"),
+  mahasiswaNilai: () => import("@/pages/mahasiswa/NilaiPage"),
+  mahasiswaPresensi: () => import("@/pages/mahasiswa/PresensiPage"),
+  mahasiswaPengumuman: () => import("@/pages/mahasiswa/PengumumanPage"),
+  mahasiswaProfile: () => import("@/pages/mahasiswa/ProfilePage"),
+  mahasiswaOfflineSync: () => import("@/pages/mahasiswa/OfflineSyncPage"),
+  sharedOfflineSync: () => import("@/pages/shared/OfflineSyncPage"),
+  laboranDashboard: () =>
+    import("@/pages/laboran/DashboardPage").then((m) => ({
+      default: m.DashboardPage,
+    })),
+  laboranInventaris: () => import("@/pages/laboran/InventarisPage"),
+  laboranPersetujuan: () => import("@/pages/laboran/PersetujuanPage"),
+  laboranPeminjamanAktif: () => import("@/pages/laboran/PeminjamanAktifPage"),
+  laboranLaboratorium: () => import("@/pages/laboran/LaboratoriumPage"),
+  laboranJadwalApproval: () => import("@/pages/laboran/JadwalApprovalPage"),
+  laboranLaporan: () => import("@/pages/laboran/LaporanPage"),
+  laboranPengumuman: () => import("@/pages/laboran/PengumumanPage"),
+  laboranProfile: () => import("@/pages/laboran/ProfilePage"),
+} as const;
+
+const publicRouteWarmup = [
+  routeModuleImporters.login,
+  routeModuleImporters.register,
+  routeModuleImporters.forgotPassword,
+  routeModuleImporters.home,
+  routeModuleImporters.unauthorized,
+  routeModuleImporters.notFound,
+] as const;
+
+const roleRouteWarmup: Record<UserRole, readonly (() => Promise<unknown>)[]> = {
+  admin: [
+    routeModuleImporters.adminDashboard,
+    routeModuleImporters.mataKuliah,
+    routeModuleImporters.kelasEnhanced,
+    routeModuleImporters.adminUsers,
+    routeModuleImporters.adminLaboratories,
+    routeModuleImporters.adminEquipments,
+    routeModuleImporters.peminjamanApproval,
+    routeModuleImporters.laboranPeminjamanAktif,
+    routeModuleImporters.adminAnnouncements,
+    routeModuleImporters.manajemenAssignment,
+    routeModuleImporters.adminProfile,
+    routeModuleImporters.sharedOfflineSync,
+    routeModuleImporters.kelasMataKuliah,
+  ],
+  dosen: [
+    routeModuleImporters.dosenDashboard,
+    routeModuleImporters.dosenJadwal,
+    routeModuleImporters.dosenKuisList,
+    routeModuleImporters.dosenKuisCreate,
+    routeModuleImporters.dosenKuisEdit,
+    routeModuleImporters.dosenKuisResults,
+    routeModuleImporters.dosenAttemptDetail,
+    routeModuleImporters.dosenBankSoal,
+    routeModuleImporters.dosenMateri,
+    routeModuleImporters.dosenPenilaian,
+    routeModuleImporters.dosenPeminjaman,
+    routeModuleImporters.dosenKehadiran,
+    routeModuleImporters.dosenPengumuman,
+    routeModuleImporters.dosenProfile,
+    routeModuleImporters.dosenLogbookReview,
+    routeModuleImporters.sharedOfflineSync,
+  ],
+  mahasiswa: [
+    routeModuleImporters.mahasiswaDashboard,
+    routeModuleImporters.mahasiswaJadwal,
+    routeModuleImporters.mahasiswaLogbook,
+    routeModuleImporters.mahasiswaKuisAttempt,
+    routeModuleImporters.mahasiswaKuisList,
+    routeModuleImporters.mahasiswaKuisResult,
+    routeModuleImporters.mahasiswaMateri,
+    routeModuleImporters.mahasiswaNilai,
+    routeModuleImporters.mahasiswaPresensi,
+    routeModuleImporters.mahasiswaPengumuman,
+    routeModuleImporters.mahasiswaProfile,
+    routeModuleImporters.mahasiswaOfflineSync,
+  ],
+  laboran: [
+    routeModuleImporters.laboranDashboard,
+    routeModuleImporters.laboranInventaris,
+    routeModuleImporters.laboranPersetujuan,
+    routeModuleImporters.laboranPeminjamanAktif,
+    routeModuleImporters.laboranLaboratorium,
+    routeModuleImporters.laboranJadwalApproval,
+    routeModuleImporters.laboranLaporan,
+    routeModuleImporters.laboranPengumuman,
+    routeModuleImporters.laboranProfile,
+    routeModuleImporters.sharedOfflineSync,
+  ],
+};
+
+type IdleCallbackHandle = number;
+type IdleCallback = (deadline: { didTimeout: boolean; timeRemaining: () => number }) => void;
+
+type WindowWithIdleCallback = Window & {
+  requestIdleCallback?: (callback: IdleCallback, options?: { timeout?: number }) => IdleCallbackHandle;
+  cancelIdleCallback?: (handle: IdleCallbackHandle) => void;
+};
+
+function warmRouteModules(importers: readonly (() => Promise<unknown>)[]) {
+  const windowWithIdleCallback = window as WindowWithIdleCallback;
+  let cancelled = false;
+
+  const runWarmup = () => {
+    if (cancelled) {
+      return;
+    }
+
+    void Promise.allSettled(importers.map((load) => load()));
+  };
+
+  if (typeof windowWithIdleCallback.requestIdleCallback === "function") {
+    const idleHandle = windowWithIdleCallback.requestIdleCallback(
+      () => {
+        runWarmup();
+      },
+      { timeout: 2000 },
+    );
+
+    return () => {
+      cancelled = true;
+      windowWithIdleCallback.cancelIdleCallback?.(idleHandle);
+    };
+  }
+
+  const timeoutHandle = window.setTimeout(runWarmup, 300);
+
+  return () => {
+    cancelled = true;
+    window.clearTimeout(timeoutHandle);
+  };
+}
+
 // Auth Pages
-const LoginPage = lazy(() =>
-  import("@/pages/auth/LoginPage").then((m) => ({ default: m.LoginPage })),
-);
-const RegisterPage = lazy(() =>
-  import("@/pages/auth/RegisterPage").then((m) => ({
-    default: m.RegisterPage,
-  })),
-);
-const ForgotPasswordPage = lazy(() =>
-  import("@/pages/auth/ForgotPasswordPage").then((m) => ({
-    default: m.ForgotPasswordPage,
-  })),
-);
+const LoginPage = lazy(routeModuleImporters.login);
+const RegisterPage = lazy(routeModuleImporters.register);
+const ForgotPasswordPage = lazy(routeModuleImporters.forgotPassword);
 
 // Public Pages
-const HomePage = lazy(() =>
-  import("@/pages/public/HomePage").then((m) => ({ default: m.HomePage })),
-);
-const NotFoundPage = lazy(() =>
-  import("@/pages/public/NotFoundPage").then((m) => ({
-    default: m.NotFoundPage,
-  })),
-);
-const UnauthorizedPage = lazy(() =>
-  import("@/pages/public/UnauthorizedPage").then((m) => ({
-    default: m.UnauthorizedPage,
-  })),
-);
+const HomePage = lazy(routeModuleImporters.home);
+const NotFoundPage = lazy(routeModuleImporters.notFound);
+const UnauthorizedPage = lazy(routeModuleImporters.unauthorized);
 
 // Admin Pages
 const AdminDashboard = lazy(() =>
@@ -190,9 +369,28 @@ const LaboranProfilePage = lazy(
 // =============================================================================
 
 export function AppRouter() {
+  const { user, initialized } = useAuth();
+
+  useEffect(() => {
+    if (!initialized) {
+      return;
+    }
+
+    const cleanupTasks = [warmRouteModules(publicRouteWarmup)];
+
+    if (user?.role) {
+      cleanupTasks.push(warmRouteModules(roleRouteWarmup[user.role]));
+    }
+
+    return () => {
+      cleanupTasks.forEach((cleanup) => cleanup?.());
+    };
+  }, [initialized, user?.role]);
+
   return (
-    <Suspense fallback={<PageLoader />}>
-      <Routes>
+    <RouteChunkBoundary>
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
         {/* ================================================================== */}
         {/* PUBLIC ROUTES (No authentication required) */}
         {/* ================================================================== */}
@@ -999,9 +1197,10 @@ export function AppRouter() {
         {/* Home route - Landing page */}
         <Route path={ROUTES.HOME} element={<HomePage />} />
 
-        {/* Catch-all route - 404 */}
-        <Route path="*" element={<NotFoundPage />} />
-      </Routes>
-    </Suspense>
+          {/* Catch-all route - 404 */}
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </Suspense>
+    </RouteChunkBoundary>
   );
 }

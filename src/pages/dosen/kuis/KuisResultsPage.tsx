@@ -285,9 +285,9 @@ export default function KuisResultsPage() {
     return (
       <div className="role-page-shell p-4 sm:p-6 lg:p-8">
         <div className="role-page-content">
-          <div className="rounded-3xl border border-white/60 bg-white/90 p-10 text-center shadow-2xl dark:border-slate-700 dark:bg-slate-900/85">
-            <Loader2 className="mx-auto h-10 w-10 animate-spin text-indigo-600" />
-            <p className="mt-4 text-base font-semibold text-slate-700 dark:text-slate-200">
+          <div className="rounded-3xl border border-border/60 bg-white/90 p-10 text-center shadow-2xl dark:bg-card">
+            <Loader2 className="mx-auto h-10 w-10 animate-spin text-primary" />
+            <p className="mt-4 text-base font-semibold text-muted-foreground">
               Memuat hasil tugas praktikum...
             </p>
           </div>
@@ -345,7 +345,7 @@ export default function KuisResultsPage() {
         {/* Header */}
         <section className="relative overflow-hidden rounded-3xl border border-white/25 bg-linear-to-r from-primary via-primary/90 to-accent/85 p-6 text-primary-foreground shadow-2xl sm:p-8">
           <div className="absolute -top-20 -right-20 h-56 w-56 rounded-full bg-white/20 blur-3xl" />
-          <div className="absolute -bottom-20 -left-20 h-56 w-56 rounded-full bg-violet-300/20 blur-3xl" />
+          <div className="absolute -bottom-20 -left-20 h-56 w-56 rounded-full bg-accent/20 blur-3xl" />
 
           <div className="relative z-10 space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
@@ -373,7 +373,7 @@ export default function KuisResultsPage() {
               <h1 className="text-2xl font-extrabold sm:text-3xl">
                 {quiz.judul}
               </h1>
-              <p className="mt-1 text-sm text-blue-100 sm:text-base">
+              <p className="mt-1 text-sm text-primary-foreground/80 sm:text-base">
                 Hasil & Analisis Tugas Praktikum
               </p>
             </div>
@@ -410,10 +410,10 @@ export default function KuisResultsPage() {
                     <CardTitle className="text-sm font-medium">
                       Sudah Upload
                     </CardTitle>
-                    <CheckCircle2 className="h-4 w-4 text-green-600" />
+                    <CheckCircle2 className="h-4 w-4 text-success" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold text-green-600">
+                    <div className="text-2xl font-bold text-success">
                       {statistics.completedAttempts}
                     </div>
                     <p className="text-xs text-muted-foreground">
@@ -428,10 +428,10 @@ export default function KuisResultsPage() {
                     <CardTitle className="text-sm font-medium">
                       Belum Upload
                     </CardTitle>
-                    <AlertCircle className="h-4 w-4 text-yellow-600" />
+                    <AlertCircle className="h-4 w-4 text-warning" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold text-yellow-600">
+                    <div className="text-2xl font-bold text-warning">
                       {statistics.totalAttempts - statistics.completedAttempts}
                     </div>
                     <p className="text-xs text-muted-foreground">
@@ -524,7 +524,7 @@ export default function KuisResultsPage() {
                     <Award className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold text-green-600">
+                    <div className="text-2xl font-bold text-success">
                       {statistics.highestScore}
                     </div>
                     <p className="text-xs text-muted-foreground">
@@ -653,7 +653,7 @@ export default function KuisResultsPage() {
                             <span
                               className={cn(
                                 "font-semibold",
-                                isPassed ? "text-green-600" : "text-red-600",
+                                isPassed ? "text-success" : "text-danger",
                               )}
                             >
                               {attempt.total_poin || 0}
@@ -700,16 +700,16 @@ export default function KuisResultsPage() {
             onValueChange={setActiveTab}
             className="space-y-4"
           >
-            <TabsList className="h-auto rounded-xl border border-indigo-100 bg-white/85 p-1 shadow-sm dark:border-indigo-900/40 dark:bg-slate-900/70">
+            <TabsList className="h-auto rounded-xl border border-primary/20 bg-white/85 p-1 shadow-sm dark:border-primary/20 dark:bg-card/70">
               <TabsTrigger
                 value="overview"
-                className="rounded-lg px-4 py-2 data-[state=active]:bg-indigo-600 data-[state=active]:text-white"
+                className="rounded-lg px-4 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
               >
                 Overview
               </TabsTrigger>
               <TabsTrigger
                 value="attempts"
-                className="rounded-lg px-4 py-2 data-[state=active]:bg-indigo-600 data-[state=active]:text-white"
+                className="rounded-lg px-4 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
               >
                 Submissions ({attempts.length})
               </TabsTrigger>
@@ -743,7 +743,7 @@ export default function KuisResultsPage() {
                         <Label className="text-sm font-medium">
                           Sudah Submit
                         </Label>
-                        <p className="text-2xl font-bold text-green-600">
+                        <p className="text-2xl font-bold text-success">
                           {statistics.completedAttempts}
                         </p>
                       </div>
@@ -960,8 +960,8 @@ export default function KuisResultsPage() {
                                       className={cn(
                                         "font-semibold",
                                         isPassed
-                                          ? "text-green-600"
-                                          : "text-red-600",
+                                          ? "text-success"
+                                          : "text-danger",
                                       )}
                                     >
                                       {/* FIXED: Changed nilai to total_poin */}

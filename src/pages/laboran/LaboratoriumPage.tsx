@@ -12,7 +12,7 @@
  * - Search and filter labs
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Building2,
   Search,
@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { DashboardCard } from "@/components/ui/dashboard-card";
 import { DashboardSkeleton } from "@/components/ui/dashboard-skeleton";
 import { GlassCard } from "@/components/ui/glass-card";
@@ -88,6 +89,7 @@ import {
 } from "@/lib/api/laboran.api";
 import type { Laboratorium } from "@/lib/api/laboran.api";
 import { formatDate } from "@/lib/utils/format";
+import { cacheAPI, getCachedData } from "@/lib/offline/api-cache";
 
 type FormMode = "create" | "edit" | null;
 
@@ -99,6 +101,8 @@ export default function LaboratoriumPage() {
   const [laboratories, setLaboratories] = useState<Laboratorium[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isOfflineData, setIsOfflineData] = useState(false);
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<number | null>(null);
 
   // Detail dialog state
   const [selectedLab, setSelectedLab] = useState<Laboratorium | null>(null);
@@ -129,16 +133,52 @@ export default function LaboratoriumPage() {
     loadLaboratories();
   }, [searchQuery]);
 
-  const loadLaboratories = async () => {
+  const loadLaboratories = async (forceRefresh = false) => {
+    const cacheKey = `laboran_laboratorium_${searchQuery || "all"}`;
+
     try {
       setLoading(true);
-      const data = await getLaboratoriumList({
-        search: searchQuery || undefined,
-        is_active: true,
-      });
+
+      const cachedEntry = await getCachedData<Laboratorium[]>(cacheKey);
+      const hasCachedData = Array.isArray(cachedEntry?.data);
+
+      if (hasCachedData) {
+        setLaboratories(cachedEntry.data);
+        setIsOfflineData(!navigator.onLine);
+        setLastUpdatedAt(cachedEntry.timestamp || null);
+        setLoading(false);
+      }
+
+      if (forceRefresh && !navigator.onLine) {
+        throw new Error(
+          hasCachedData
+            ? "Perangkat sedang offline. Menampilkan snapshot laboratorium terakhir."
+            : "Perangkat sedang offline dan belum ada snapshot laboratorium tersimpan.",
+        );
+      }
+
+      const data = await cacheAPI(
+        cacheKey,
+        () =>
+          getLaboratoriumList({
+            search: searchQuery || undefined,
+            is_active: true,
+          }),
+        {
+          ttl: 15 * 60 * 1000,
+          forceRefresh,
+          staleWhileRevalidate: true,
+        },
+      );
+
       setLaboratories(data as Laboratorium[]);
-    } catch (error) {
-      toast.error("Gagal memuat data laboratorium");
+      setIsOfflineData(false);
+      setLastUpdatedAt(Date.now());
+    } catch (error: any) {
+      if (laboratories.length > 0 || !navigator.onLine) {
+        setIsOfflineData(true);
+      }
+      toast.error(error?.message || "Gagal memuat data laboratorium");
       console.error(error);
     } finally {
       setLoading(false);
@@ -166,7 +206,7 @@ export default function LaboratoriumPage() {
   };
 
   const handleRefresh = () => {
-    loadLaboratories();
+    void loadLaboratories(true);
     toast.success("Data diperbarui");
   };
 
@@ -275,13 +315,24 @@ export default function LaboratoriumPage() {
 
   const filteredLabs = laboratories;
 
+  const lastUpdatedLabel = useMemo(() => {
+    if (!lastUpdatedAt) {
+      return null;
+    }
+
+    return new Intl.DateTimeFormat("id-ID", {
+      dateStyle: "medium",
+      timeStyle: "short",
+    }).format(lastUpdatedAt);
+  }, [lastUpdatedAt]);
+
   return (
     <div className="app-container py-4 sm:py-6 lg:py-8">
       <div className="mx-auto max-w-7xl space-y-6">
         {/* Header */}
         <GlassCard
           intensity="medium"
-          className="border-white/40 bg-white/80 shadow-xl dark:border-white/10 dark:bg-slate-900/80"
+          className="border-white/40 bg-white/80 shadow-xl dark:border-white/10 dark:bg-card"
         >
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
@@ -311,6 +362,17 @@ export default function LaboratoriumPage() {
             </div>
           </div>
         </GlassCard>
+
+        {(isOfflineData || !navigator.onLine) && (
+          <Alert className="border-warning/40 bg-warning/10">
+            <AlertDescription>
+              Data laboratorium sedang memakai snapshot lokal dari perangkat.
+              {lastUpdatedLabel
+                ? ` Pembaruan terakhir: ${lastUpdatedLabel}.`
+                : ""}
+            </AlertDescription>
+          </Alert>
+        )}
 
         {/* Statistics Cards */}
         <div className="grid gap-4 md:grid-cols-3">
@@ -349,7 +411,7 @@ export default function LaboratoriumPage() {
         {/* Search */}
         <GlassCard
           intensity="low"
-          className="border-white/40 bg-white/85 shadow-lg dark:border-white/10 dark:bg-slate-900/85"
+          className="border-white/40 bg-white/85 shadow-lg dark:border-white/10 dark:bg-card"
         >
           <div className="flex gap-4">
             <div className="relative flex-1">
@@ -367,7 +429,7 @@ export default function LaboratoriumPage() {
         {/* Laboratories Table */}
         <GlassCard
           intensity="low"
-          className="border-white/40 bg-white/85 shadow-lg dark:border-white/10 dark:bg-slate-900/85"
+          className="border-white/40 bg-white/85 shadow-lg dark:border-white/10 dark:bg-card"
         >
           <CardHeader className="px-0 pt-0">
             <CardTitle>Daftar Laboratorium</CardTitle>
@@ -442,7 +504,7 @@ export default function LaboratoriumPage() {
                               size="sm"
                               onClick={() => handleDeleteClick(lab)}
                             >
-                              <Trash2 className="h-3 w-3 text-red-600" />
+                              <Trash2 className="h-3 w-3 text-danger" />
                             </Button>
                           </div>
                         </TableCell>
@@ -672,7 +734,7 @@ export default function LaboratoriumPage() {
               {/* Kode Lab */}
               <div className="space-y-2">
                 <Label htmlFor="kode_lab">
-                  Kode Lab <span className="text-red-500">*</span>
+                  Kode Lab <span className="text-danger">*</span>
                 </Label>
                 <Input
                   id="kode_lab"
@@ -710,7 +772,7 @@ export default function LaboratoriumPage() {
             {/* Nama Lab */}
             <div className="space-y-2">
               <Label htmlFor="nama_lab">
-                Nama Laboratorium <span className="text-red-500">*</span>
+                Nama Laboratorium <span className="text-danger">*</span>
               </Label>
               <Input
                 id="nama_lab"
@@ -803,7 +865,7 @@ export default function LaboratoriumPage() {
               {labToDelete?.kode_lab}).
               <br />
               <br />
-              <span className="font-semibold text-red-600">
+              <span className="font-semibold text-danger">
                 Aksi ini tidak dapat dibatalkan!
               </span>
               <br />
@@ -820,7 +882,7 @@ export default function LaboratoriumPage() {
             <AlertDialogAction
               onClick={handleDeleteConfirm}
               disabled={deleting}
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-danger hover:bg-danger/90"
             >
               {deleting ? "Menghapus..." : "Hapus"}
             </AlertDialogAction>

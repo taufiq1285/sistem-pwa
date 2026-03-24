@@ -1,0 +1,61 @@
+<?xml version=1.0 encoding=UTF-8?>
+<mxfile host=app.diagrams.net modified=2026-03-18T12:00:00.000Z agent=Mozilla/5.0 version=24.7.17>
+  <diagram id=e4557fad-d8e4-47d0-a55a-483c57874406 name=Page-1>
+<mxGraphModel dx="1800" dy="1000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="1169" math="0" shadow="0">
+  <root>
+    <mxCell id="0" />
+    <mxCell id="1" parent="0" />
+
+    <mxCell id="title" value="ERD Domain Akademik: Kelas dan Materi" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=18;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="30" y="20" width="520" height="30" as="geometry" />
+    </mxCell>
+    <mxCell id="subtitle" value="Sistem Praktikum PWA" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=11;fontColor=#666666;" vertex="1" parent="1">
+      <mxGeometry x="30" y="50" width="260" height="20" as="geometry" />
+    </mxCell>
+
+    <mxCell id="mata_kuliah" value="<b>mata_kuliah</b><hr/>PK id : uuid<br/>kode : string<br/>nama : string<br/>sks : int<br/>prodi : string" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=1.5;align=left;spacingLeft=10;verticalAlign=top;fontSize=12;" vertex="1" parent="1">
+      <mxGeometry x="70" y="160" width="230" height="130" as="geometry" />
+    </mxCell>
+
+    <mxCell id="dosen" value="<b>dosen</b><hr/>PK id : uuid<br/>FK user_id : uuid<br/>nip : string" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;strokeWidth=1.5;align=left;spacingLeft=10;verticalAlign=top;fontSize=12;" vertex="1" parent="1">
+      <mxGeometry x="360" y="160" width="220" height="110" as="geometry" />
+    </mxCell>
+
+    <mxCell id="kelas" value="<b>kelas</b><hr/>PK id : uuid<br/>FK mata_kuliah_id : uuid<br/>FK dosen_id : uuid<br/>nama : string<br/>semester : string<br/>tahun_ajaran : int" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;strokeWidth=1.5;align=left;spacingLeft=10;verticalAlign=top;fontSize=12;" vertex="1" parent="1">
+      <mxGeometry x="640" y="130" width="270" height="170" as="geometry" />
+    </mxCell>
+
+    <mxCell id="kelas_mahasiswa" value="<b>kelas_mahasiswa</b><hr/>PK id : uuid<br/>FK kelas_id : uuid<br/>FK mahasiswa_id : uuid<br/>joined_at : timestamp" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;strokeWidth=1.5;align=left;spacingLeft=10;verticalAlign=top;fontSize=12;" vertex="1" parent="1">
+      <mxGeometry x="560" y="420" width="250" height="130" as="geometry" />
+    </mxCell>
+
+    <mxCell id="mahasiswa" value="<b>mahasiswa</b><hr/>PK id : uuid<br/>FK user_id : uuid<br/>nim : string" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;strokeWidth=1.5;align=left;spacingLeft=10;verticalAlign=top;fontSize=12;" vertex="1" parent="1">
+      <mxGeometry x="890" y="430" width="220" height="110" as="geometry" />
+    </mxCell>
+
+    <mxCell id="materi" value="<b>materi</b><hr/>PK id : uuid<br/>FK kelas_id : uuid<br/>FK dosen_id : uuid<br/>judul : string<br/>file_url : string<br/>uploaded_at : timestamp" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;strokeWidth=1.5;align=left;spacingLeft=10;verticalAlign=top;fontSize=12;" vertex="1" parent="1">
+      <mxGeometry x="970" y="130" width="260" height="150" as="geometry" />
+    </mxCell>
+
+    <mxCell id="e1" value="1 to many" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeWidth=1.5;endArrow=none;startArrow=none;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="mata_kuliah" target="kelas" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e2" value="1 to many" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeWidth=1.5;endArrow=none;startArrow=none;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="dosen" target="kelas" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e3" value="1 to many" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeWidth=1.5;endArrow=none;startArrow=none;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="kelas" target="kelas_mahasiswa" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e4" value="1 to many" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeWidth=1.5;endArrow=none;startArrow=none;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="mahasiswa" target="kelas_mahasiswa" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e5" value="1 to many" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeWidth=1.5;endArrow=none;startArrow=none;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="kelas" target="materi" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e6" value="1 to many" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeWidth=1.5;endArrow=none;startArrow=none;fontSize=11;labelBackgroundColor=#ffffff;" edge="1" source="dosen" target="materi" parent="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+  </root>
+</mxGraphModel>
+  </diagram>
+</mxfile>

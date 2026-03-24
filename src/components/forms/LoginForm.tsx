@@ -82,11 +82,8 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
         navigatorOnline: navigator.onLine,
       });
 
-      if (!isOnline) {
-        setError("Mode Offline - Mencoba login dengan kredensial tersimpan...");
-      } else {
-        setError(null);
-      }
+      // Always clear previous error before login attempt
+      setError(null);
 
       await login(data);
       console.log("✅ Login successful");
@@ -155,7 +152,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
           </Alert>
         )}
         {/* Error Alert */}
-        {error && isOnline && (
+        {error && (
           <Alert variant="destructive" className="shadow-md">
             <AlertCircle className="h-5 w-5" />
             <AlertTitle className="font-bold text-base">Login Gagal</AlertTitle>

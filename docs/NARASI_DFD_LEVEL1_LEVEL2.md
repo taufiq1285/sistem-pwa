@@ -83,43 +83,43 @@ Keberadaan proses ini sangat penting karena sistem praktikum sering kali diakses
 
 > **Catatan Konvensi Penamaan Proses (Disclaimer Akademis):**
 > Pada diagram DFD Level 2 di laporan ini, penamaan proses menggunakan notasi alias lokal alfanumerik (seperti `A1`, `A2`, `A3`, dst.) untuk membantu keterbacaan visual pada kanvas diagram yang terbatas agar teks label tetap ringkas di dalam gelembung.
-> 
-> Secara konseptual, label tersebut merupakan representasi dari subproses hasil dekomposisi hierarkis nomor proses induknya pada DFD Level 1. Penggunaan notasi *Local Sequence* ini murni merupakan konvensi penyajian visual grafis pada dokumen ini (bukan standar baku Yourdon/DeMarco), sedangkan hubungan keterikatan hierarkis (misal `A1` pada diagram `1.1` mewakili proses dekomposisi tingkatan Level 2 `1.1.1`) tetap ditunjukkan sepenuhnya melalui judul diagram dan narasi pembahasan berikut.
+>
+> Dalam dokumen ini, label tersebut diperlakukan sebagai **kode aktivitas lokal** di dalam satu diagram Level 2, bukan sebagai nomor proses dekomposisi lanjutan. Penggunaan notasi *Local Sequence* ini murni merupakan konvensi penyajian visual grafis pada dokumen ini, sedangkan hubungan proses dengan induknya tetap ditunjukkan melalui judul diagram, nomor proses Level 2, dan narasi pembahasan.
 
-## Tabel Pemetaan Alias (Contoh Dekomposisi Bab 4.1 dan 4.2)
-Tabel di bawah ini memberikan ilustrasi pemetaan hierarkis terkait alias yang disajikan dalam diagram agar tetap selaras dengan landasan teoretis Yourdon:
+## Tabel Pemetaan Alias Aktivitas Lokal
+Tabel di bawah ini memberikan ilustrasi penggunaan alias lokal pada diagram agar pembacaan tetap konsisten, ringkas, dan tidak bergeser menjadi DFD Level 3.
 
-| Alias | Status Hierarkis DFD Yourdon | Nama Proses (Level 2) | Keterkaitan DFD Level 1 |
-|-------|------------------------------|-----------------------|-------------------------|
-| **A1** | Subproses ke-1 (Mewakili 1.1.1) | Validasi Kredensial | 1.1 Autentikasi |
-| **A2** | Subproses ke-2 (Mewakili 1.1.2) | Ambil Data Role | 1.1 Autentikasi |
-| **A3** | Subproses ke-3 (Mewakili 1.1.3) | Bentuk Session Login | 1.1 Autentikasi |
-| **A1** | Subproses ke-1 (Mewakili 1.2.1) | Buat Akun | 1.2 Kelola User |
-| **A2** | Subproses ke-2 (Mewakili 1.2.2) | Tetapkan Role | 1.2 Kelola User |
+| Alias | Status dalam Diagram | Nama Aktivitas Lokal | Keterkaitan Proses Level 2 |
+|-------|----------------------|----------------------|----------------------------|
+| **A1** | Aktivitas lokal ke-1 | Validasi Kredensial | 1.1 Autentikasi |
+| **A2** | Aktivitas lokal ke-2 | Ambil Data Role | 1.1 Autentikasi |
+| **A3** | Aktivitas lokal ke-3 | Bentuk Sesi Login | 1.1 Autentikasi |
+| **A1** | Aktivitas lokal ke-1 | Buat Akun | 1.2 Kelola User |
+| **A2** | Aktivitas lokal ke-2 | Tetapkan Role | 1.2 Kelola User |
 *(Pola berulang yang sama berlaku logis untuk diagram proses turunan Manajemen Praktikum [2.0], Operasional Lab [3.0], hingga Sinkronisasi [4.0])*
 
 ---
 
 # 4.1 Narasi Proses 1.1 — Autentikasi
 
-Proses [`1.1 Autentikasi`](docs/DFD.md:162) menjelaskan bagaimana pengguna masuk ke sistem dan memperoleh akses sesuai perannya. Proses ini terdiri atas lima aktivitas internal, yaitu validasi kredensial, pengambilan data role, pembentukan session login, pengalihan berdasarkan role, dan logout.
+Proses [`1.1 Autentikasi`](docs/DFD.md:162) menjelaskan bagaimana pengguna masuk ke sistem dan memperoleh akses sesuai `role`-nya. Proses ini terdiri atas lima aktivitas internal, yaitu validasi kredensial, pengambilan data `role`, pembentukan sesi login, pengalihan berdasarkan `role`, dan `logout`.
 
 Pada awal alur, pengguna mengirimkan email dan password ke aktivitas [`A1 Validasi Kredensial`](docs/DFD.md:169). Sistem lalu meneruskan data autentikasi tersebut ke layanan [`Supabase Auth`](docs/DFD.md:167) untuk diverifikasi. Jika kredensial tidak valid, sistem mengirimkan informasi kegagalan login kembali kepada pengguna. Namun jika valid, alur dilanjutkan ke aktivitas [`A2 Ambil Data Role`](docs/DFD.md:170).
 
-Pada aktivitas ini, sistem membaca data role pengguna dari [`D1 Data User dan Role`](docs/DFD.md:168). Role menentukan jenis akses yang akan diberikan, misalnya sebagai admin, dosen, laboran, atau mahasiswa. Setelah role diperoleh, sistem masuk ke [`A3 Bentuk Session Login`](docs/DFD.md:171), yaitu tahap pembentukan status login aktif agar aplikasi mengenali bahwa pengguna telah terautentikasi.
+Pada aktivitas ini, sistem membaca data `role` pengguna dari [`D1 Data User dan Role`](docs/DFD.md:168). `Role` menentukan jenis akses yang akan diberikan, misalnya sebagai admin, dosen, laboran, atau mahasiswa. Setelah `role` diperoleh, sistem masuk ke [`A3 Bentuk Session Login`](docs/DFD.md:171), yaitu tahap pembentukan sesi login aktif agar aplikasi mengenali bahwa pengguna telah terautentikasi.
 
-Session yang terbentuk kemudian diteruskan ke [`A4 Redirect Berdasarkan Role`](docs/DFD.md:172). Pada tahap ini, pengguna diarahkan ke dashboard dan fitur yang sesuai dengan kewenangannya. Dengan kata lain, dosen tidak diarahkan ke menu administrasi penuh milik admin, dan mahasiswa tidak memiliki akses ke pengelolaan inventaris laboratorium.
+Sesi login yang terbentuk kemudian diteruskan ke [`A4 Redirect Berdasarkan Role`](docs/DFD.md:172). Pada tahap ini, pengguna diarahkan ke dashboard dan fitur yang sesuai dengan kewenangannya. Dengan kata lain, dosen tidak diarahkan ke menu administrasi penuh milik admin, dan mahasiswa tidak memiliki akses ke pengelolaan inventaris laboratorium.
 
-Selain proses masuk, autentikasi juga mencakup keluarnya pengguna dari sistem melalui [`A5 Logout`](docs/DFD.md:173). Ketika pengguna mengirimkan permintaan logout, sistem mengakhiri session aktif sehingga akses ke fitur internal dihentikan. Narasi ini menegaskan bahwa proses autentikasi tidak hanya memeriksa identitas, tetapi juga mengatur awal dan akhir akses pengguna terhadap sistem.
+Selain proses masuk, autentikasi juga mencakup keluarnya pengguna dari sistem melalui [`A5 Logout`](docs/DFD.md:173). Ketika pengguna mengirimkan permintaan `logout`, sistem mengakhiri sesi login aktif sehingga akses ke fitur internal dihentikan. Narasi ini menegaskan bahwa proses autentikasi tidak hanya memeriksa identitas, tetapi juga mengatur awal dan akhir akses pengguna terhadap sistem.
 
 ## Alur ringkas proses [`1.1`](docs/DFD.md:162)
 
 1. Pengguna mengirimkan email dan password.
 2. Sistem memverifikasi kredensial ke layanan autentikasi.
-3. Jika berhasil, sistem mengambil data role pengguna.
-4. Sistem membentuk session login aktif.
-5. Sistem mengarahkan pengguna ke dashboard sesuai role.
-6. Saat pengguna logout, sistem mengakhiri session.
+3. Jika berhasil, sistem mengambil data `role` pengguna.
+4. Sistem membentuk sesi login aktif.
+5. Sistem mengarahkan pengguna ke dashboard sesuai `role`.
+6. Saat pengguna `logout`, sistem mengakhiri sesi login.
 
 ---
 

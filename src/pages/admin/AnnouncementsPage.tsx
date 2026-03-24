@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Megaphone, Plus, Bell, RefreshCw, Trash2 } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { Megaphone, Plus, Bell, RefreshCw, Trash2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -29,6 +29,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   getAllAnnouncements,
   getAnnouncementStats,
@@ -40,7 +41,7 @@ import { notifyUsersAnnouncement } from "@/lib/api/notification.api";
 import type { Pengumuman, CreatePengumumanData } from "@/types/common.types";
 import { formatDate } from "@/lib/utils/format";
 import { useAuth } from "@/lib/hooks/useAuth";
-import { cacheAPI, invalidateCache } from "@/lib/offline/api-cache";
+import { cacheAPI, getCachedData, invalidateCache } from "@/lib/offline/api-cache";
 
 export default function AnnouncementsPage() {
   const { user } = useAuth();
@@ -52,6 +53,8 @@ export default function AnnouncementsPage() {
     scheduled: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [isOfflineData, setIsOfflineData] = useState(false);
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<number | null>(null);
 
   // Add dialog
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -82,24 +85,66 @@ export default function AnnouncementsPage() {
   }, [user]);
 
   const loadAnnouncements = async (forceRefresh = false) => {
+    const announcementsCacheKey = "admin_announcements";
+    const statsCacheKey = "admin_announcement_stats";
+
     try {
       setLoading(true);
+
+      const [cachedAnnouncementsEntry, cachedStatsEntry] = await Promise.all([
+        getCachedData<Pengumuman[]>(announcementsCacheKey),
+        getCachedData<AnnouncementStats>(statsCacheKey),
+      ]);
+
+      const hasCachedAnnouncements = Array.isArray(cachedAnnouncementsEntry?.data);
+      const hasCachedStats = !!cachedStatsEntry?.data;
+
+      if (hasCachedAnnouncements) {
+        setAnnouncements(cachedAnnouncementsEntry.data);
+      }
+
+      if (hasCachedStats) {
+        setStats(cachedStatsEntry.data);
+      }
+
+      if (hasCachedAnnouncements || hasCachedStats) {
+        setIsOfflineData(!navigator.onLine);
+        setLastUpdatedAt(
+          cachedAnnouncementsEntry?.timestamp || cachedStatsEntry?.timestamp || null,
+        );
+        setLoading(false);
+      }
+
+      if (forceRefresh && !navigator.onLine) {
+        throw new Error(
+          hasCachedAnnouncements || hasCachedStats
+            ? "Perangkat sedang offline. Menampilkan snapshot pengumuman admin yang tersimpan."
+            : "Perangkat sedang offline dan belum ada snapshot pengumuman admin yang tersimpan.",
+        );
+      }
+
       const [announcementsData, statsData] = await Promise.all([
-        cacheAPI("admin_announcements", () => getAllAnnouncements(), {
-          ttl: 5 * 60 * 1000, // 5 minutes - announcements change frequently
+        cacheAPI(announcementsCacheKey, () => getAllAnnouncements(), {
+          ttl: 5 * 60 * 1000,
           forceRefresh,
           staleWhileRevalidate: true,
         }),
-        cacheAPI("admin_announcement_stats", () => getAnnouncementStats(), {
-          ttl: 5 * 60 * 1000, // 5 minutes
+        cacheAPI(statsCacheKey, () => getAnnouncementStats(), {
+          ttl: 5 * 60 * 1000,
           forceRefresh,
           staleWhileRevalidate: true,
         }),
       ]);
+
       setAnnouncements(announcementsData);
       setStats(statsData);
-    } catch (error) {
-      toast.error("Failed to load announcements");
+      setIsOfflineData(false);
+      setLastUpdatedAt(Date.now());
+    } catch (error: any) {
+      if (announcements.length > 0 || stats.total > 0 || !navigator.onLine) {
+        setIsOfflineData(true);
+      }
+      toast.error(error?.message || "Failed to load announcements");
       console.error(error);
     } finally {
       setLoading(false);
@@ -257,6 +302,15 @@ export default function AnnouncementsPage() {
     );
   };
 
+  const lastUpdatedLabel = useMemo(() => {
+    if (!lastUpdatedAt) return null;
+
+    return new Intl.DateTimeFormat("id-ID", {
+      dateStyle: "medium",
+      timeStyle: "short",
+    }).format(lastUpdatedAt);
+  }, [lastUpdatedAt]);
+
   return (
     <div className="container mx-auto py-6 max-w-7xl space-y-6">
       {/* Header */}
@@ -282,6 +336,16 @@ export default function AnnouncementsPage() {
           </Button>
         </div>
       </div>
+
+      {(isOfflineData || !navigator.onLine) && (
+        <Alert className="border-warning/40 bg-warning/10 text-foreground shadow-sm">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Pengumuman admin sedang memakai snapshot lokal dari perangkat.
+            {lastUpdatedLabel ? ` Pembaruan terakhir: ${lastUpdatedLabel}.` : ""}
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Statistics */}
       <div className="grid gap-4 md:grid-cols-4">
@@ -360,7 +424,7 @@ export default function AnnouncementsPage() {
                       size="sm"
                       onClick={() => handleDelete(announcement)}
                     >
-                      <Trash2 className="h-4 w-4 text-red-600" />
+                      <Trash2 className="h-4 w-4 text-danger" />
                     </Button>
                   </div>
                 </div>
@@ -386,7 +450,7 @@ export default function AnnouncementsPage() {
             {/* Judul */}
             <div className="space-y-2">
               <Label htmlFor="new_judul">
-                Judul <span className="text-red-500">*</span>
+                Judul <span className="text-danger">*</span>
               </Label>
               <Input
                 id="new_judul"
@@ -402,7 +466,7 @@ export default function AnnouncementsPage() {
             {/* Konten */}
             <div className="space-y-2">
               <Label htmlFor="new_konten">
-                Isi Pengumuman <span className="text-red-500">*</span>
+                Isi Pengumuman <span className="text-danger">*</span>
               </Label>
               <Textarea
                 id="new_konten"
@@ -496,8 +560,8 @@ export default function AnnouncementsPage() {
                       px-3 py-2 rounded-lg border-2 text-sm font-medium transition-all
                       ${
                         addFormData.target_role?.includes(role.value)
-                          ? "border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300"
-                          : "border-gray-200 hover:border-gray-300 dark:border-gray-700"
+                          ? "border-primary/50 bg-primary/5 text-primary"
+                          : "border-border/50 hover:border-border"
                       }
                     `}
                   >
@@ -556,7 +620,7 @@ export default function AnnouncementsPage() {
             </Button>
             <Button
               onClick={handleCreate}
-              className="bg-blue-600 hover:bg-blue-700"
+              className="bg-primary hover:bg-primary/90"
               type="button"
             >
               <Megaphone className="h-4 w-4 mr-2" />

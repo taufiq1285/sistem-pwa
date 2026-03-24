@@ -19,6 +19,13 @@ vi.mock("@/components/layout/ConflictNotificationBadge", () => ({
   ),
 }));
 
+vi.mock("@/lib/hooks/useRoleTheme", () => ({
+  useRoleTheme: () => ({
+    accentBorder: "border-t-4 border-slate-600",
+    primaryBtn: "bg-slate-800 hover:bg-slate-900 text-white shadow-sm",
+  }),
+}));
+
 describe("Header", () => {
   it("menampilkan notification button default dan memanggil callback", async () => {
     const user = userEvent.setup();
@@ -35,12 +42,15 @@ describe("Header", () => {
       />,
     );
 
-    await user.click(screen.getByTitle("Toggle menu"));
-    await user.click(screen.getByTitle("Notifications"));
+    await user.click(screen.getByRole("button", { name: /toggle menu/i }));
+    const notificationButton = screen.getByRole("button", {
+      name: /lihat notifikasi/i,
+    });
+    await user.click(notificationButton);
 
     expect(onMenuClick).toHaveBeenCalledTimes(1);
     expect(onNotificationClick).toHaveBeenCalledTimes(1);
-    expect(screen.getByText("3")).toBeInTheDocument();
+    expect(notificationButton.querySelector(".animate-ping")).toBeTruthy();
     expect(screen.getByTestId("conflict-badge")).toBeInTheDocument();
   });
 

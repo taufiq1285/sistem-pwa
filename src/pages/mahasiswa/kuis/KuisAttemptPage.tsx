@@ -9,12 +9,13 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, AlertCircle, Loader2 } from "lucide-react";
+import { ArrowLeft, AlertCircle, Loader2, WifiOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { QuizAttempt } from "@/components/features/kuis/attempt/QuizAttempt";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { getKuisForAttempt } from "@/lib/api/kuis-secure.api";
+import { getKuisByIdOffline } from "@/lib/api/kuis.api";
 import type { Kuis } from "@/types/kuis.types";
 import { toast } from "sonner";
 
@@ -37,6 +38,7 @@ export default function KuisAttemptPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [canAttempt, setCanAttempt] = useState(false);
+  const [isOfflineData, setIsOfflineData] = useState(false);
 
   /**
    * Validate quiz access and timing
@@ -60,7 +62,9 @@ export default function KuisAttemptPage() {
       }
 
       // Load quiz
-      const quizData = await getKuisForAttempt(kuisId);
+      const quizData = navigator.onLine
+        ? await getKuisForAttempt(kuisId)
+        : await getKuisByIdOffline(kuisId);
       setQuiz(quizData);
 
       // ✅ SIMPLIFIED: Only check status, no date validation
@@ -80,6 +84,7 @@ export default function KuisAttemptPage() {
       // All checks passed - tugas sudah dipublish, mahasiswa bisa akses
       debugLog("✅ Tugas sudah dipublish, mahasiswa bisa mengakses");
       setCanAttempt(true);
+      setIsOfflineData(!navigator.onLine);
     } catch (err: any) {
       // Provide helpful error message
       const errorMessage = err.message || "Gagal memuat tugas praktikum";
@@ -171,7 +176,15 @@ export default function KuisAttemptPage() {
   // ============================================================================
 
   return (
-    <div className="container mx-auto py-6 max-w-7xl">
+    <div className="container mx-auto py-6 max-w-7xl space-y-4">
+      {isOfflineData && (
+        <Alert>
+          <WifiOff className="h-4 w-4" />
+          <AlertDescription>
+            Detail tugas praktikum sedang dibuka dari cache lokal perangkat. Jawaban tetap dapat dilanjutkan dan akan disinkronkan saat koneksi tersedia.
+          </AlertDescription>
+        </Alert>
+      )}
       {/* Header with back button */}
       <div className="mb-6">
         <Button variant="ghost" size="sm" onClick={handleBack} className="mb-4">

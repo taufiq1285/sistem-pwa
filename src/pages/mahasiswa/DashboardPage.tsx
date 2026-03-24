@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/lib/hooks/useAuth";
 import {
   BookOpen,
@@ -11,6 +11,7 @@ import {
   AlertCircle,
   Sparkles,
   Trophy,
+  WifiOff,
 } from "lucide-react";
 import {
   Card,
@@ -25,7 +26,7 @@ import { DashboardCard } from "@/components/ui/dashboard-card";
 import { DashboardSkeleton } from "@/components/ui/dashboard-skeleton";
 import { GlassCard } from "@/components/ui/glass-card";
 import { networkDetector } from "@/lib/offline/network-detector";
-import { cacheAPI } from "@/lib/offline/api-cache";
+import { cacheAPI, getCachedData } from "@/lib/offline/api-cache";
 import {
   getMahasiswaStats,
   getMyKelas,
@@ -42,7 +43,13 @@ export function DashboardPage() {
   const [stats, setStats] = useState<MahasiswaStats | null>(null);
   const [myKelas, setMyKelas] = useState<MyKelas[]>([]);
   const [myJadwal, setMyJadwal] = useState<JadwalMahasiswa[]>([]);
+  const [isOfflineData, setIsOfflineData] = useState(false);
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<number | null>(null);
   // ❌ REMOVED: enrollDialogOpen state
+
+  const statsCacheKey = user?.id ? `mahasiswa_stats_${user.id}` : null;
+  const kelasCacheKey = user?.id ? `mahasiswa_kelas_${user.id}` : null;
+  const jadwalCacheKey = user?.id ? `mahasiswa_jadwal_${user.id}` : null;
 
   useEffect(() => {
     if (user?.id) {
@@ -55,6 +62,49 @@ export function DashboardPage() {
     }
   }, [user?.id]);
 
+  useEffect(() => {
+    if (!statsCacheKey || !kelasCacheKey || !jadwalCacheKey) {
+      return;
+    }
+
+    const handleCacheUpdated = (event: Event) => {
+      const customEvent = event as CustomEvent<{
+        key?: string;
+        data?: MahasiswaStats | MyKelas[] | JadwalMahasiswa[];
+      }>;
+
+      if (customEvent.detail?.key === statsCacheKey && customEvent.detail?.data) {
+        setStats(customEvent.detail.data as MahasiswaStats);
+        setIsOfflineData(false);
+        setLastUpdatedAt(Date.now());
+      }
+
+      if (customEvent.detail?.key === kelasCacheKey) {
+        const nextKelas = customEvent.detail?.data;
+        if (Array.isArray(nextKelas)) {
+          setMyKelas(nextKelas as MyKelas[]);
+          setIsOfflineData(false);
+          setLastUpdatedAt(Date.now());
+        }
+      }
+
+      if (customEvent.detail?.key === jadwalCacheKey) {
+        const nextJadwal = customEvent.detail?.data;
+        if (Array.isArray(nextJadwal)) {
+          setMyJadwal(nextJadwal as JadwalMahasiswa[]);
+          setIsOfflineData(false);
+          setLastUpdatedAt(Date.now());
+        }
+      }
+    };
+
+    window.addEventListener("cache:updated", handleCacheUpdated);
+
+    return () => {
+      window.removeEventListener("cache:updated", handleCacheUpdated);
+    };
+  }, [statsCacheKey, kelasCacheKey, jadwalCacheKey]);
+
   const fetchDashboardData = async (forceRefresh = false) => {
     try {
       setLoading(true);
@@ -64,20 +114,59 @@ export function DashboardPage() {
         ")",
       );
 
+      if (!statsCacheKey || !kelasCacheKey || !jadwalCacheKey) {
+        return;
+      }
+
+      const [cachedStatsEntry, cachedKelasEntry, cachedJadwalEntry] =
+        await Promise.all([
+          getCachedData<MahasiswaStats>(statsCacheKey),
+          getCachedData<MyKelas[]>(kelasCacheKey),
+          getCachedData<JadwalMahasiswa[]>(jadwalCacheKey),
+        ]);
+
+      const hasCachedStats = !!cachedStatsEntry?.data;
+      const hasCachedKelas = Array.isArray(cachedKelasEntry?.data);
+      const hasCachedJadwal = Array.isArray(cachedJadwalEntry?.data);
+      const hasAnyCachedData = hasCachedStats || hasCachedKelas || hasCachedJadwal;
+
+      if (hasAnyCachedData) {
+        setStats(hasCachedStats ? cachedStatsEntry!.data : null);
+        setMyKelas(hasCachedKelas ? cachedKelasEntry!.data : []);
+        setMyJadwal(hasCachedJadwal ? cachedJadwalEntry!.data : []);
+        setIsOfflineData(!navigator.onLine);
+        setLastUpdatedAt(
+          Math.max(
+            cachedStatsEntry?.timestamp || 0,
+            cachedKelasEntry?.timestamp || 0,
+            cachedJadwalEntry?.timestamp || 0,
+          ) || null,
+        );
+        setLoading(false);
+      }
+
+      if (forceRefresh && !navigator.onLine) {
+        throw new Error(
+          hasAnyCachedData
+            ? "Perangkat sedang offline. Menampilkan ringkasan dashboard tersimpan terakhir."
+            : "Perangkat sedang offline dan belum ada data dashboard tersimpan.",
+        );
+      }
+
       // Use cacheAPI with stale-while-revalidate for offline support
       const [statsData, kelasData, jadwalData] = await Promise.all([
-        cacheAPI(`mahasiswa_stats_${user?.id}`, () => getMahasiswaStats(), {
-          ttl: 10 * 60 * 1000, // 10 minutes
+        cacheAPI(statsCacheKey, () => getMahasiswaStats(), {
+          ttl: 10 * 60 * 1000,
           forceRefresh,
           staleWhileRevalidate: true,
         }),
-        cacheAPI(`mahasiswa_kelas_${user?.id}`, () => getMyKelas(), {
-          ttl: 10 * 60 * 1000, // 10 minutes
+        cacheAPI(kelasCacheKey, () => getMyKelas(), {
+          ttl: 10 * 60 * 1000,
           forceRefresh,
           staleWhileRevalidate: true,
         }),
-        cacheAPI(`mahasiswa_jadwal_${user?.id}`, () => getMyJadwal(5), {
-          ttl: 5 * 60 * 1000, // 5 minutes (schedule changes more frequently)
+        cacheAPI(jadwalCacheKey, () => getMyJadwal(5), {
+          ttl: 5 * 60 * 1000,
           forceRefresh,
           staleWhileRevalidate: true,
         }),
@@ -86,14 +175,20 @@ export function DashboardPage() {
       setStats(statsData);
       setMyKelas(kelasData);
       setMyJadwal(jadwalData);
+      setIsOfflineData(false);
+      setLastUpdatedAt(Date.now());
 
       console.log("[Mahasiswa Dashboard] Data loaded successfully");
-    } catch (error) {
+    } catch (error: any) {
       // Handle offline mode gracefully
       if (!networkDetector.isOnline()) {
         console.log("ℹ️ Offline mode - showing cached dashboard data");
+        setIsOfflineData(true);
       } else {
         console.error("Error fetching dashboard data:", error);
+        if (stats || myKelas.length > 0 || myJadwal.length > 0) {
+          setIsOfflineData(true);
+        }
       }
     } finally {
       setLoading(false);
@@ -129,6 +224,17 @@ export function DashboardPage() {
     sabtu: "Sabtu",
     minggu: "Minggu",
   };
+
+  const lastUpdatedLabel = useMemo(() => {
+    if (!lastUpdatedAt) {
+      return null;
+    }
+
+    return new Date(lastUpdatedAt).toLocaleString("id-ID", {
+      dateStyle: "medium",
+      timeStyle: "short",
+    });
+  }, [lastUpdatedAt]);
 
   if (loading) {
     return (
@@ -168,9 +274,30 @@ export function DashboardPage() {
                     {user?.full_name || user?.email}
                   </span>
                 </p>
+                {(isOfflineData || lastUpdatedLabel) && (
+                  <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                    {isOfflineData && (
+                      <span className="inline-flex items-center gap-1 font-medium text-warning">
+                        <WifiOff className="h-4 w-4" />
+                        Menampilkan ringkasan dashboard tersimpan lokal
+                      </span>
+                    )}
+                    {lastUpdatedLabel && (
+                      <span>Update terakhir: {lastUpdatedLabel}</span>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </GlassCard>
+
+          {isOfflineData && (
+            <Alert className="border-warning/30 bg-warning/10 text-warning dark:border-warning/30 dark:bg-warning/10 dark:text-warning">
+              <AlertDescription>
+                Dashboard tetap bisa dibuka dari cache lokal saat offline. Statistik, daftar kelas, dan jadwal yang tampil adalah snapshot terakhir yang berhasil disimpan.
+              </AlertDescription>
+            </Alert>
+          )}
 
           {/* Info Alert (Only if no classes) */}
           {myKelas.length === 0 && (

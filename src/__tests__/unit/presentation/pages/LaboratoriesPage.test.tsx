@@ -48,6 +48,7 @@ vi.mock("@/lib/hooks/useAuth", () => ({
 
 vi.mock("@/lib/offline/api-cache", () => ({
   cacheAPI: (...args: unknown[]) => mockCacheAPI(...args),
+  getCachedData: vi.fn().mockResolvedValue(null),
   invalidateCache: vi.fn(),
 }));
 
@@ -101,7 +102,7 @@ describe("LaboratoriesPage", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByRole("heading", { name: /laboratories management/i }),
+        screen.getByRole("heading", { name: /manajemen laboratorium/i }),
       ).toBeInTheDocument();
     });
 

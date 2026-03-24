@@ -68,7 +68,7 @@ export function ConflictsPage() {
           </CardHeader>
           <CardContent>
             <div className="flex items-baseline justify-between">
-              <span className="text-4xl font-extrabold text-green-600">
+              <span className="text-4xl font-extrabold text-success">
                 {resolvedConflicts.length}
               </span>
               <StatusBadge status="success" pulse={false}>
@@ -148,7 +148,7 @@ export function ConflictsPage() {
             </>
           ) : (
             <div className="text-center py-8 space-y-2">
-              <Shield className="h-16 w-16 mx-auto text-green-500" />
+              <Shield className="h-16 w-16 mx-auto text-success" />
               <h3 className="font-semibold">No Pending Conflicts</h3>
               <p className="text-sm text-muted-foreground">
                 All your data is synchronized successfully!

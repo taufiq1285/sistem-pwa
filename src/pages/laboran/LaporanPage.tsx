@@ -367,7 +367,7 @@ export default function LaporanPage() {
         {/* Header with Refresh Button */}
         <GlassCard
           intensity="medium"
-          className="border-white/40 bg-white/80 shadow-xl dark:border-white/10 dark:bg-slate-900/80"
+          className="border-white/40 bg-white/80 shadow-xl dark:border-white/10 dark:bg-card"
         >
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
@@ -474,7 +474,7 @@ export default function LaporanPage() {
                   </h2>
                   <GlassCard
                     intensity="low"
-                    className="border-white/40 bg-white/85 shadow-lg dark:border-white/10 dark:bg-slate-900/85"
+                    className="border-white/40 bg-white/85 shadow-lg dark:border-white/10 dark:bg-card"
                   >
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
@@ -500,7 +500,7 @@ export default function LaporanPage() {
                           <p className="text-sm font-medium text-muted-foreground">
                             Tersedia
                           </p>
-                          <p className="text-4xl font-extrabold text-green-600">
+                          <p className="text-4xl font-extrabold text-success">
                             {equipmentStats?.available || 0}
                           </p>
                         </div>
@@ -509,17 +509,17 @@ export default function LaporanPage() {
                           <p className="text-sm font-medium text-muted-foreground">
                             Sedang Dipinjam
                           </p>
-                          <p className="text-4xl font-extrabold text-blue-600">
+                          <p className="text-4xl font-extrabold text-primary">
                             {equipmentStats?.borrowed || 0}
                           </p>
                         </div>
 
                         <div className="space-y-2">
                           <p className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                            <AlertTriangle className="h-4 w-4 text-red-500" />
+                            <AlertTriangle className="h-4 w-4 text-danger" />
                             Stok Rendah
                           </p>
-                          <p className="text-4xl font-extrabold text-red-600">
+                          <p className="text-4xl font-extrabold text-danger">
                             {equipmentStats?.low_stock || 0}
                           </p>
                           <p className="text-xs text-muted-foreground">
@@ -529,10 +529,10 @@ export default function LaporanPage() {
 
                         <div className="space-y-2">
                           <p className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                            <PackageOpen className="h-4 w-4 text-red-500" />
+                            <PackageOpen className="h-4 w-4 text-danger" />
                             Habis
                           </p>
-                          <p className="text-4xl font-extrabold text-red-600">
+                          <p className="text-4xl font-extrabold text-danger">
                             {equipmentStats?.out_of_stock || 0}
                           </p>
                           <p className="text-xs text-muted-foreground">
@@ -562,7 +562,7 @@ export default function LaporanPage() {
                   </h2>
                   <GlassCard
                     intensity="low"
-                    className="border-white/40 bg-white/85 shadow-lg dark:border-white/10 dark:bg-slate-900/85"
+                    className="border-white/40 bg-white/85 shadow-lg dark:border-white/10 dark:bg-card"
                   >
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
@@ -588,7 +588,7 @@ export default function LaporanPage() {
                           <p className="text-sm font-medium text-muted-foreground">
                             Jadwal Aktif
                           </p>
-                          <p className="text-4xl font-extrabold text-green-600">
+                          <p className="text-4xl font-extrabold text-success">
                             {labStats?.active_schedules || 0}
                           </p>
                         </div>
@@ -597,7 +597,7 @@ export default function LaporanPage() {
                           <p className="text-sm font-medium text-muted-foreground">
                             Booking Disetujui
                           </p>
-                          <p className="text-4xl font-extrabold text-blue-600">
+                          <p className="text-4xl font-extrabold text-primary">
                             {labStats?.approved_bookings || 0}
                           </p>
                         </div>
@@ -606,7 +606,7 @@ export default function LaporanPage() {
                           <p className="text-sm font-medium text-muted-foreground">
                             Booking Pending
                           </p>
-                          <p className="text-4xl font-extrabold text-yellow-600">
+                          <p className="text-4xl font-extrabold text-warning">
                             {labStats?.pending_bookings || 0}
                           </p>
                         </div>
@@ -732,7 +732,7 @@ export default function LaporanPage() {
                   </CardHeader>
                   <CardContent>
                     <p className="text-sm text-muted-foreground">
-                      <span className="font-semibold text-green-600">
+                      <span className="font-semibold text-success">
                         {equipmentStats?.available || 0}
                       </span>{" "}
                       tersedia
@@ -743,10 +743,10 @@ export default function LaporanPage() {
                 <Card className="border-0 shadow-xl p-6">
                   <CardHeader>
                     <CardDescription className="flex items-center gap-2">
-                      <AlertTriangle className="h-4 w-4 text-red-500" />
+                      <AlertTriangle className="h-4 w-4 text-danger" />
                       Stok Rendah
                     </CardDescription>
-                    <CardTitle className="text-3xl text-red-600">
+                    <CardTitle className="text-3xl text-danger">
                       {equipmentStats?.low_stock || 0}
                     </CardTitle>
                   </CardHeader>
@@ -906,12 +906,12 @@ export default function LaporanPage() {
                       <div
                         className={`p-2 rounded-full ${
                           activity.type === "borrowing"
-                            ? "bg-blue-100 text-blue-600"
+                            ? "bg-primary/10 text-primary"
                             : activity.type === "return"
-                              ? "bg-green-100 text-green-600"
+                              ? "bg-success/10 text-success"
                               : activity.type === "approval"
-                                ? "bg-emerald-100 text-emerald-600"
-                                : "bg-red-100 text-red-600"
+                                ? "bg-success/10 text-success"
+                                : "bg-danger/10 text-danger"
                         }`}
                       >
                         {getActivityIcon(activity.type)}

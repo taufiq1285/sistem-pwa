@@ -340,7 +340,7 @@ export default function AcademicAssignmentPage() {
       {/* Header */}
       <div>
         <h1 className="text-4xl font-extrabold">Assignment Dosen Akademik</h1>
-        <p className="text-lg font-semibold text-gray-600 mt-2">
+        <p className="text-lg font-semibold text-muted-foreground mt-2">
           Monitor dan kelola assignment dosen untuk mata kuliah dan kelas (bukan
           praktikum)
         </p>
@@ -391,7 +391,7 @@ export default function AcademicAssignmentPage() {
               {tahunAjaranStats.map(([tahunAjaran, stats]) => (
                 <div key={tahunAjaran} className="text-sm">
                   <div className="font-medium">{tahunAjaran}</div>
-                  <div className="text-gray-600">
+                  <div className="text-muted-foreground">
                     {stats.total} kelas, {stats.withDosen} dengan dosen,{" "}
                     {stats.withMataKuliah} dengan mata kuliah
                   </div>
@@ -471,7 +471,7 @@ export default function AcademicAssignmentPage() {
             <div>
               <Label>Pencarian</Label>
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Cari kelas, dosen, mata kuliah..."
                   value={searchQuery}
@@ -519,7 +519,7 @@ export default function AcademicAssignmentPage() {
                     <TableCell>
                       <div>
                         <div className="font-medium">{kelas.nama_kelas}</div>
-                        <div className="text-xs text-gray-500">
+                        <div className="text-xs text-muted-foreground">
                           {kelas.kode_kelas}
                         </div>
                       </div>
@@ -530,7 +530,7 @@ export default function AcademicAssignmentPage() {
                           {kelas.mata_kuliah?.nama_mk ||
                             "Belum ada mata kuliah"}
                         </div>
-                        <div className="text-xs text-gray-500">
+                        <div className="text-xs text-muted-foreground">
                           {kelas.mata_kuliah?.kode_mk || "-"} •{" "}
                           {kelas.mata_kuliah?.sks || 0} SKS
                         </div>
@@ -541,7 +541,7 @@ export default function AcademicAssignmentPage() {
                         <div className="font-medium">
                           {kelas.dosen?.users?.full_name || "Belum ada dosen"}
                         </div>
-                        <div className="text-xs text-gray-500">
+                        <div className="text-xs text-muted-foreground">
                           {kelas.dosen?.nip || "-"}
                         </div>
                       </div>
@@ -549,7 +549,7 @@ export default function AcademicAssignmentPage() {
                     <TableCell>
                       <div>
                         <div>{kelas.tahun_ajaran}</div>
-                        <div className="text-xs text-gray-500">
+                        <div className="text-xs text-muted-foreground">
                           Semester {kelas.semester_ajaran}
                         </div>
                       </div>

@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { supabase } from "@/lib/supabase/client";
 import { networkDetector } from "@/lib/offline/network-detector";
-import { cacheAPI } from "@/lib/offline/api-cache";
+import { cacheAPI, getCachedData } from "@/lib/offline/api-cache";
 import { RefreshCw } from "lucide-react";
 import {
   Card,
@@ -107,6 +107,19 @@ export function DashboardPage() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [hasDataChanges, setHasDataChanges] = useState(false);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
+  const [isOfflineData, setIsOfflineData] = useState(false);
+  const [lastOfflineSnapshotAt, setLastOfflineSnapshotAt] = useState<number | null>(null);
+
+  const lastOfflineSnapshotLabel = useMemo(() => {
+    if (!lastOfflineSnapshotAt) {
+      return null;
+    }
+
+    return new Date(lastOfflineSnapshotAt).toLocaleString("id-ID", {
+      dateStyle: "medium",
+      timeStyle: "short",
+    });
+  }, [lastOfflineSnapshotAt]);
 
   useEffect(() => {
     if (user?.id) {
@@ -344,6 +357,8 @@ export function DashboardPage() {
       setUpcomingPracticum([]);
       setPendingGrading([]);
       setActiveKuis([]);
+      setIsOfflineData(false);
+      setLastOfflineSnapshotAt(null);
     }
   }, [user?.id]);
 
@@ -352,6 +367,7 @@ export function DashboardPage() {
     try {
       if (!user?.id) {
         setAssignments([]);
+        setIsOfflineData(false);
         return;
       }
 
@@ -486,6 +502,72 @@ export function DashboardPage() {
       setLoading(true);
       setError(null);
 
+      const statsCacheKey = `dosen_stats_${user?.id}`;
+      const kelasCacheKey = `dosen_kelas_${user?.id}`;
+      const practicumCacheKey = `dosen_practicum_${user?.id}`;
+      const gradingCacheKey = `dosen_grading_${user?.id}`;
+      const kuisCacheKey = `dosen_kuis_${user?.id}`;
+      const assignmentsCacheKey = `dosen_assignments_${user?.id}`;
+
+      const [
+        cachedStatsEntry,
+        cachedKelasEntry,
+        cachedPracticumEntry,
+        cachedGradingEntry,
+        cachedKuisEntry,
+        cachedAssignmentsEntry,
+      ] = await Promise.all([
+        getCachedData<DosenStats>(statsCacheKey),
+        getCachedData<KelasWithStats[]>(kelasCacheKey),
+        getCachedData<UpcomingPracticumType[]>(practicumCacheKey),
+        getCachedData<PendingGradingType[]>(gradingCacheKey),
+        getCachedData<KuisWithStats[]>(kuisCacheKey),
+        getCachedData<DosenAssignment[]>(assignmentsCacheKey),
+      ]);
+
+      const hasCachedData =
+        !!cachedStatsEntry?.data ||
+        Array.isArray(cachedKelasEntry?.data) ||
+        Array.isArray(cachedPracticumEntry?.data) ||
+        Array.isArray(cachedGradingEntry?.data) ||
+        Array.isArray(cachedKuisEntry?.data) ||
+        Array.isArray(cachedAssignmentsEntry?.data);
+
+      if (hasCachedData) {
+        setStats(cachedStatsEntry?.data ?? null);
+        setMyKelas(Array.isArray(cachedKelasEntry?.data) ? cachedKelasEntry.data : []);
+        setUpcomingPracticum(
+          Array.isArray(cachedPracticumEntry?.data) ? cachedPracticumEntry.data : [],
+        );
+        setPendingGrading(
+          Array.isArray(cachedGradingEntry?.data) ? cachedGradingEntry.data : [],
+        );
+        setActiveKuis(Array.isArray(cachedKuisEntry?.data) ? cachedKuisEntry.data : []);
+        setAssignments(
+          Array.isArray(cachedAssignmentsEntry?.data) ? cachedAssignmentsEntry.data : [],
+        );
+        setIsOfflineData(!navigator.onLine);
+        setLastOfflineSnapshotAt(
+          Math.max(
+            cachedStatsEntry?.timestamp || 0,
+            cachedKelasEntry?.timestamp || 0,
+            cachedPracticumEntry?.timestamp || 0,
+            cachedGradingEntry?.timestamp || 0,
+            cachedKuisEntry?.timestamp || 0,
+            cachedAssignmentsEntry?.timestamp || 0,
+          ) || null,
+        );
+        setLoading(false);
+      }
+
+      if (forceRefresh && !navigator.onLine) {
+        throw new Error(
+          hasCachedData
+            ? "Perangkat sedang offline. Menampilkan snapshot dashboard dosen terakhir."
+            : "Perangkat sedang offline dan belum ada snapshot dashboard dosen tersimpan.",
+        );
+      }
+
       // Fetch assignments juga
       await fetchAssignments(forceRefresh);
 
@@ -494,7 +576,7 @@ export function DashboardPage() {
       const [statsData, kelasData, practicumData, gradingData, kuisData] =
         await Promise.all([
           cacheAPI(
-            `dosen_stats_${user?.id}`,
+            statsCacheKey,
             () => getDosenStats(forceRefresh),
             {
               ttl: 10 * 60 * 1000, // 10 minutes
@@ -502,13 +584,13 @@ export function DashboardPage() {
               staleWhileRevalidate: true,
             },
           ),
-          cacheAPI(`dosen_kelas_${user?.id}`, () => getMyKelas(5), {
+          cacheAPI(kelasCacheKey, () => getMyKelas(5), {
             ttl: 10 * 60 * 1000,
             forceRefresh,
             staleWhileRevalidate: true,
           }),
           cacheAPI(
-            `dosen_practicum_${user?.id}`,
+            practicumCacheKey,
             () => getUpcomingPracticum(5),
             {
               ttl: 5 * 60 * 1000, // 5 minutes (schedule changes frequently)
@@ -516,12 +598,12 @@ export function DashboardPage() {
               staleWhileRevalidate: true,
             },
           ),
-          cacheAPI(`dosen_grading_${user?.id}`, () => getPendingGrading(5), {
+          cacheAPI(gradingCacheKey, () => getPendingGrading(5), {
             ttl: 5 * 60 * 1000,
             forceRefresh,
             staleWhileRevalidate: true,
           }),
-          cacheAPI(`dosen_kuis_${user?.id}`, () => getActiveKuis(20), {
+          cacheAPI(kuisCacheKey, () => getActiveKuis(20), {
             ttl: 5 * 60 * 1000,
             forceRefresh,
             staleWhileRevalidate: true,
@@ -533,6 +615,8 @@ export function DashboardPage() {
       setUpcomingPracticum(practicumData || []);
       setPendingGrading(gradingData || []);
       setActiveKuis(kuisData || []);
+      setIsOfflineData(false);
+      setLastOfflineSnapshotAt(Date.now());
 
       console.log("✅ Dashboard data loaded successfully");
     } catch (err) {
@@ -540,6 +624,7 @@ export function DashboardPage() {
       if (!networkDetector.isOnline()) {
         console.log("ℹ️ Offline mode - showing cached dashboard data");
         setError(null); // Don't show error in offline mode
+        setIsOfflineData(true);
       } else {
         console.error("Error fetching dashboard data:", err);
         setError("Gagal memuat data dashboard. Silakan refresh halaman.");
@@ -732,6 +817,18 @@ export function DashboardPage() {
               </Alert>
             )}
 
+            {(isOfflineData || !navigator.onLine) && (
+              <Alert className="border-warning/40 bg-warning/10 shadow-sm">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription className="font-medium text-foreground">
+                  Dashboard dosen sedang memakai snapshot lokal dari perangkat.
+                  {lastOfflineSnapshotLabel
+                    ? ` Pembaruan terakhir: ${lastOfflineSnapshotLabel}.`
+                    : ""}
+                </AlertDescription>
+              </Alert>
+            )}
+
             {/* Quick Stats Cards */}
             <div className="grid gap-4 sm:gap-5 md:grid-cols-2 xl:grid-cols-4">
               <DashboardCard
@@ -781,7 +878,7 @@ export function DashboardPage() {
                       <h2 className="text-3xl font-extrabold mb-2">
                         Selamat Mengajar! 👨‍🏫
                       </h2>
-                      <p className="text-lg font-semibold text-indigo-100">
+                      <p className="text-lg font-semibold text-primary-foreground/80">
                         Kamu memiliki{" "}
                         <span className="font-extrabold text-white">
                           {assignments.length} assignment
@@ -834,7 +931,7 @@ export function DashboardPage() {
                         variant="ghost"
                         size="sm"
                         onClick={() => navigate("/dosen/jadwal")}
-                        className="hover:bg-blue-100 font-semibold"
+                        className="hover:bg-primary/10 font-semibold"
                       >
                         <Eye className="h-4 w-4 mr-1" />
                         Kelola Jadwal
@@ -889,7 +986,7 @@ export function DashboardPage() {
                                 <Users className="h-3 w-3 mr-1" />
                                 {assignment.total_mahasiswa} mahasiswa
                               </span>
-                              <span className="text-sm font-bold text-green-600">
+                              <span className="text-sm font-bold text-success">
                                 <Calendar className="h-3 w-3 mr-1" />
                                 {assignment.total_jadwal} jadwal
                               </span>
@@ -929,7 +1026,7 @@ export function DashboardPage() {
                         variant="ghost"
                         size="sm"
                         onClick={() => navigate("/dosen/jadwal")}
-                        className="hover:bg-purple-100 font-semibold"
+                        className="hover:bg-accent/10 font-semibold"
                       >
                         <Eye className="h-4 w-4 mr-1" />
                         Lihat Semua
@@ -940,8 +1037,8 @@ export function DashboardPage() {
                 <CardContent className="relative">
                   {upcomingPracticum.length === 0 ? (
                     <div className="text-center py-12">
-                      <div className="inline-flex p-4 bg-purple-50 rounded-full mb-4">
-                        <Calendar className="h-12 w-12 text-purple-400" />
+                      <div className="inline-flex p-4 bg-accent/10 rounded-full mb-4">
+                        <Calendar className="h-12 w-12 text-accent/60" />
                       </div>
                       <p className="text-lg font-bold text-foreground mb-2">
                         Tidak ada jadwal minggu ini
@@ -970,13 +1067,13 @@ export function DashboardPage() {
                               {jadwal.kelas_nama} • {jadwal.topik}
                             </p>
                             <div className="flex items-center gap-3 mt-2">
-                              <span className="text-sm font-bold text-purple-600">
+                              <span className="text-sm font-bold text-accent">
                                 <Clock className="h-3 w-3 mr-1" />
                                 {dayNames[jadwal.hari.toLowerCase()] ||
                                   jadwal.hari}
                                 , {formatDate(jadwal.tanggal_praktikum)}
                               </span>
-                              <span className="text-sm font-bold text-purple-600">
+                              <span className="text-sm font-bold text-accent">
                                 {formatTime(jadwal.jam_mulai)} -{" "}
                                 {formatTime(jadwal.jam_selesai)}
                               </span>
@@ -985,7 +1082,7 @@ export function DashboardPage() {
                               📍 {jadwal.lab_nama}
                             </p>
                           </div>
-                          <ArrowRight className="h-5 w-5 text-purple-600 group-hover:translate-x-1 transition-transform" />
+                          <ArrowRight className="h-5 w-5 text-accent group-hover:translate-x-1 transition-transform" />
                         </div>
                       ))}
                     </div>
@@ -1044,7 +1141,7 @@ export function DashboardPage() {
                       {pendingGrading.map((item) => (
                         <div
                           key={item.id}
-                          className="flex items-center gap-3 p-4 border-2 border-orange-100 rounded-xl hover:bg-orange-50 hover:border-orange-300 transition-all duration-300 cursor-pointer shadow-sm hover:shadow-md group"
+                          className="flex items-center gap-3 p-4 border-2 border-warning/20 rounded-xl hover:bg-warning/5 hover:border-warning/40 transition-all duration-300 cursor-pointer shadow-sm hover:shadow-md group"
                           onClick={() =>
                             navigate(`/dosen/penilaian?task=${item.id}`)
                           }
@@ -1104,7 +1201,7 @@ export function DashboardPage() {
                         variant="ghost"
                         size="sm"
                         onClick={() => navigate("/dosen/kuis")}
-                        className="hover:bg-indigo-100 font-semibold"
+                        className="hover:bg-accent/10 font-semibold"
                       >
                         <Eye className="h-4 w-4 mr-1" />
                         Kelola
@@ -1115,8 +1212,8 @@ export function DashboardPage() {
                 <CardContent className="relative">
                   {activeKuis.length === 0 ? (
                     <div className="text-center py-12">
-                      <div className="inline-flex p-4 bg-indigo-50 rounded-full mb-4">
-                        <XCircle className="h-12 w-12 text-indigo-400" />
+                      <div className="inline-flex p-4 bg-accent/10 rounded-full mb-4">
+                        <XCircle className="h-12 w-12 text-accent/60" />
                       </div>
                       <p className="text-lg font-bold text-foreground mb-2">
                         Tidak ada tugas aktif
@@ -1161,13 +1258,13 @@ export function DashboardPage() {
                               {kuis.kelas_nama}
                             </p>
                             <div className="flex items-center gap-4 mt-2">
-                              <span className="text-sm font-bold text-indigo-600">
+                              <span className="text-sm font-bold text-accent">
                                 ⏰ {formatDate(kuis.tanggal_mulai)} -{" "}
                                 {formatDate(kuis.tanggal_selesai)}
                               </span>
                             </div>
                             <div className="flex items-center gap-3 mt-1">
-                              <span className="text-sm font-bold text-green-600">
+                              <span className="text-sm font-bold text-success">
                                 ✅ {kuis.submitted_count}/{kuis.total_attempts}
                               </span>
                               <span className="text-sm font-semibold text-muted-foreground">
@@ -1175,7 +1272,7 @@ export function DashboardPage() {
                               </span>
                             </div>
                           </div>
-                          <ArrowRight className="h-5 w-5 text-indigo-600 group-hover:translate-x-1 transition-transform" />
+                          <ArrowRight className="h-5 w-5 text-accent group-hover:translate-x-1 transition-transform" />
                         </div>
                       ))}
                     </div>

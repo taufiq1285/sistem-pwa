@@ -23,6 +23,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -58,7 +59,11 @@ import { getMyKelas } from "@/lib/api/dosen.api";
 import type { Materi } from "@/types/materi.types";
 import type { Kelas } from "@/types/kelas.types";
 import { toast } from "sonner";
-import { cacheAPI, invalidateCache } from "@/lib/offline/api-cache";
+import {
+  cacheAPI,
+  getCachedData,
+  invalidateCache,
+} from "@/lib/offline/api-cache";
 import { MAX_FILE_SIZE, formatFileSize } from "@/lib/supabase/storage";
 
 // ============================================================================
@@ -76,6 +81,8 @@ export default function DosenMateriPage() {
   const [materiList, setMateriList] = useState<Materi[]>([]);
   const [kelasList, setKelasList] = useState<Kelas[]>([]);
   const [filteredMateri, setFilteredMateri] = useState<Materi[]>([]);
+  const [isOfflineData, setIsOfflineData] = useState(false);
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<number | null>(null);
 
   // Filters
   const [selectedKelas, setSelectedKelas] = useState<string>("all");
@@ -105,6 +112,46 @@ export default function DosenMateriPage() {
     }
   }, [user?.dosen?.id]);
 
+  useEffect(() => {
+    if (!user?.dosen?.id) {
+      return;
+    }
+
+    const materiCacheKey = `dosen_materi_${user.dosen.id}`;
+    const kelasCacheKey = `dosen_kelas_materi_${user.dosen.id}`;
+
+    const handleCacheUpdated = (event: Event) => {
+      const customEvent = event as CustomEvent<{
+        key?: string;
+        data?: unknown;
+      }>;
+
+      if (customEvent.detail?.key === materiCacheKey) {
+        const nextMateri = customEvent.detail?.data;
+        if (Array.isArray(nextMateri)) {
+          setMateriList(nextMateri as Materi[]);
+          setIsOfflineData(false);
+          setLastUpdatedAt(Date.now());
+        }
+      }
+
+      if (customEvent.detail?.key === kelasCacheKey) {
+        const nextKelas = customEvent.detail?.data;
+        if (Array.isArray(nextKelas)) {
+          setKelasList(nextKelas as Kelas[]);
+          setIsOfflineData(false);
+          setLastUpdatedAt(Date.now());
+        }
+      }
+    };
+
+    window.addEventListener("cache:updated", handleCacheUpdated);
+
+    return () => {
+      window.removeEventListener("cache:updated", handleCacheUpdated);
+    };
+  }, [user?.dosen?.id]);
+
   // ============================================================================
   // DATA LOADING
   // ============================================================================
@@ -115,18 +162,52 @@ export default function DosenMateriPage() {
     try {
       setLoading(true);
 
+      const materiCacheKey = `dosen_materi_${user.dosen.id}`;
+      const kelasCacheKey = `dosen_kelas_materi_${user.dosen.id}`;
+
+      const [cachedMateriEntry, cachedKelasEntry] = await Promise.all([
+        getCachedData<Materi[]>(materiCacheKey),
+        getCachedData<Kelas[]>(kelasCacheKey),
+      ]);
+
+      const hasCachedMateri = Array.isArray(cachedMateriEntry?.data);
+      const hasCachedKelas = Array.isArray(cachedKelasEntry?.data);
+
+      if (hasCachedMateri) {
+        setMateriList(cachedMateriEntry.data);
+      }
+
+      if (hasCachedKelas) {
+        setKelasList(cachedKelasEntry.data);
+      }
+
+      if (hasCachedMateri || hasCachedKelas) {
+        setIsOfflineData(!navigator.onLine);
+        setLastUpdatedAt(
+          Math.max(
+            cachedMateriEntry?.timestamp || 0,
+            cachedKelasEntry?.timestamp || 0,
+          ) || null,
+        );
+        setLoading(false);
+      }
+
+      if (forceRefresh && !navigator.onLine) {
+        throw new Error(
+          hasCachedMateri || hasCachedKelas
+            ? "Perangkat sedang offline. Menampilkan snapshot materi terakhir."
+            : "Perangkat sedang offline dan belum ada snapshot materi tersimpan.",
+        );
+      }
+
       // Use cacheAPI with stale-while-revalidate for offline support
       const [materiData, kelasData] = await Promise.all([
-        cacheAPI(
-          `dosen_materi_${user?.dosen?.id}`,
-          () => getMateriByDosen(user.dosen.id),
-          {
-            ttl: 10 * 60 * 1000, // 10 minutes
-            forceRefresh,
-            staleWhileRevalidate: true,
-          },
-        ),
-        cacheAPI(`dosen_kelas_materi_${user?.dosen?.id}`, () => getMyKelas(), {
+        cacheAPI(materiCacheKey, () => getMateriByDosen(user.dosen.id), {
+          ttl: 10 * 60 * 1000, // 10 minutes
+          forceRefresh,
+          staleWhileRevalidate: true,
+        }),
+        cacheAPI(kelasCacheKey, () => getMyKelas(), {
           ttl: 15 * 60 * 1000, // 15 minutes (kelas jarang berubah)
           forceRefresh,
           staleWhileRevalidate: true,
@@ -135,14 +216,19 @@ export default function DosenMateriPage() {
 
       setMateriList(materiData);
       setKelasList(kelasData as unknown as Kelas[]);
+      setIsOfflineData(false);
+      setLastUpdatedAt(Date.now());
       console.log(
         "[Dosen MateriPage] Data loaded:",
         materiData.length,
         "materi",
       );
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error loading data:", error);
-      toast.error("Gagal memuat data");
+      if (materiList.length > 0 || kelasList.length > 0 || !navigator.onLine) {
+        setIsOfflineData(true);
+      }
+      toast.error(error?.message || "Gagal memuat data");
     } finally {
       setLoading(false);
     }
@@ -311,8 +397,8 @@ export default function DosenMateriPage() {
         <div className="role-page-content">
           <div className="flex items-center justify-center min-h-100">
             <div className="text-center space-y-4">
-              <Loader2 className="h-12 w-12 animate-spin mx-auto text-indigo-600" />
-              <p className="text-lg font-semibold text-gray-700 dark:text-gray-300">
+              <Loader2 className="h-12 w-12 animate-spin mx-auto text-primary" />
+              <p className="text-lg font-semibold text-muted-foreground">
                 Memuat materi...
               </p>
             </div>
@@ -321,6 +407,13 @@ export default function DosenMateriPage() {
       </div>
     );
   }
+
+  const lastUpdatedLabel = lastUpdatedAt
+    ? new Intl.DateTimeFormat("id-ID", {
+        dateStyle: "medium",
+        timeStyle: "short",
+      }).format(lastUpdatedAt)
+    : null;
 
   return (
     <div className="role-page-shell">
@@ -336,12 +429,12 @@ export default function DosenMateriPage() {
                 <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-linear-to-r from-primary to-accent dark:from-primary/80 dark:to-accent/80">
                   Materi Pembelajaran
                 </h1>
-                <p className="text-sm sm:text-base md:text-lg font-bold text-gray-700 dark:text-gray-300 mt-1">
+                <p className="text-sm sm:text-base md:text-lg font-bold text-muted-foreground mt-1">
                   Kelola materi pembelajaran untuk kelas Anda
                 </p>
               </div>
             </div>
-            <p className="text-sm sm:text-base font-semibold text-gray-500 dark:text-gray-400 ml-1">
+            <p className="text-sm sm:text-base font-semibold text-muted-foreground ml-1">
               Upload dan atur materi pembelajaran dengan mudah
             </p>
           </div>
@@ -355,16 +448,27 @@ export default function DosenMateriPage() {
           </Button>
         </div>
 
+        {(isOfflineData || !navigator.onLine) && (
+          <Alert className="border-warning/40 bg-warning/10">
+            <AlertDescription>
+              Data materi dosen sedang memakai snapshot lokal dari perangkat.
+              {lastUpdatedLabel
+                ? ` Pembaruan terakhir: ${lastUpdatedLabel}.`
+                : ""}
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* Enhanced Stats */}
         <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
           <div className="group hover:shadow-2xl transition-all duration-300 border-0 shadow-xl bg-linear-to-br from-primary/5 to-accent/10 dark:from-primary/10 dark:to-accent/20 backdrop-blur-sm rounded-2xl p-6 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-24 h-24 bg-linear-to-br from-primary/10 to-accent/10 rounded-full blur-2xl -mr-12 -mt-12" />
             <div className="flex items-center justify-between relative">
               <div>
-                <p className="text-sm font-bold text-gray-600 dark:text-gray-400 mb-2">
+                <p className="text-sm font-bold text-muted-foreground mb-2">
                   Total Materi
                 </p>
-                <p className="text-4xl font-black text-gray-900 dark:text-white">
+                <p className="text-4xl font-black text-foreground">
                   {materiList.length}
                 </p>
               </div>
@@ -378,10 +482,10 @@ export default function DosenMateriPage() {
             <div className="absolute top-0 right-0 w-24 h-24 bg-linear-to-br from-green-400/10 to-emerald-400/10 rounded-full blur-2xl -mr-12 -mt-12" />
             <div className="flex items-center justify-between relative">
               <div>
-                <p className="text-sm font-bold text-gray-600 dark:text-gray-400 mb-2">
+                <p className="text-sm font-bold text-muted-foreground mb-2">
                   Published
                 </p>
-                <p className="text-4xl font-black text-green-600">
+                <p className="text-4xl font-black text-success">
                   {materiList.filter((m) => (m as any).is_active).length}
                 </p>
               </div>
@@ -395,10 +499,10 @@ export default function DosenMateriPage() {
             <div className="absolute top-0 right-0 w-24 h-24 bg-linear-to-br from-orange-400/10 to-amber-400/10 rounded-full blur-2xl -mr-12 -mt-12" />
             <div className="flex items-center justify-between relative">
               <div>
-                <p className="text-sm font-bold text-gray-600 dark:text-gray-400 mb-2">
+                <p className="text-sm font-bold text-muted-foreground mb-2">
                   Draft
                 </p>
-                <p className="text-4xl font-black text-orange-600">
+                <p className="text-4xl font-black text-warning">
                   {materiList.filter((m) => !(m as any).is_active).length}
                 </p>
               </div>
@@ -412,10 +516,10 @@ export default function DosenMateriPage() {
             <div className="absolute top-0 right-0 w-24 h-24 bg-linear-to-br from-primary/10 to-accent/10 rounded-full blur-2xl -mr-12 -mt-12" />
             <div className="flex items-center justify-between relative">
               <div>
-                <p className="text-sm font-bold text-gray-600 dark:text-gray-400 mb-2">
+                <p className="text-sm font-bold text-muted-foreground mb-2">
                   Total Downloads
                 </p>
-                <p className="text-4xl font-black text-purple-600">
+                <p className="text-4xl font-black text-accent">
                   {materiList.reduce(
                     (sum, m) => sum + ((m as any).download_count || 0),
                     0,
@@ -435,18 +539,18 @@ export default function DosenMateriPage() {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="md:col-span-2">
                 <div className="relative">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                   <Input
                     placeholder="Cari materi..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-12 h-12 border-2 text-base font-semibold bg-white/90 dark:bg-slate-900/80"
+                    className="pl-12 h-12 border-2 text-base font-semibold bg-white/90 dark:bg-card"
                   />
                 </div>
               </div>
 
               <Select value={selectedKelas} onValueChange={setSelectedKelas}>
-                <SelectTrigger className="h-12 border-2 font-semibold bg-white/90 dark:bg-slate-900/80">
+                <SelectTrigger className="h-12 border-2 font-semibold bg-white/90 dark:bg-card">
                   <SelectValue placeholder="Semua Kelas" />
                 </SelectTrigger>
                 <SelectContent>
@@ -460,7 +564,7 @@ export default function DosenMateriPage() {
               </Select>
 
               <Select value={selectedMinggu} onValueChange={setSelectedMinggu}>
-                <SelectTrigger className="h-12 border-2 font-semibold bg-white/90 dark:bg-slate-900/80">
+                <SelectTrigger className="h-12 border-2 font-semibold bg-white/90 dark:bg-card">
                   <SelectValue placeholder="Semua Minggu" />
                 </SelectTrigger>
                 <SelectContent>
@@ -674,9 +778,9 @@ function UploadDialog({
             <div>
               <div className="flex items-center justify-between text-base font-bold mb-2">
                 <span>Uploading...</span>
-                <span className="text-indigo-600">{uploadProgress}%</span>
+                <span className="text-primary">{uploadProgress}%</span>
               </div>
-              <div className="h-3 bg-gray-200 rounded-full overflow-hidden border-2">
+              <div className="h-3 bg-muted rounded-full overflow-hidden border-2">
                 <div
                   className="h-full bg-linear-to-r from-primary to-accent transition-all"
                   style={{ width: `${uploadProgress}%` }}

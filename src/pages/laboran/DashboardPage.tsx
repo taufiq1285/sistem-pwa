@@ -7,7 +7,7 @@
  * - Lab Schedule Today
  */
 
-import { useState, useEffect } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/hooks/useAuth";
 import {
@@ -50,7 +50,11 @@ import {
   Shield,
 } from "lucide-react";
 import { networkDetector } from "@/lib/offline/network-detector";
-import { cacheAPI, invalidateCache } from "@/lib/offline/api-cache";
+import {
+  cacheAPI,
+  getCachedData,
+  invalidateCache,
+} from "@/lib/offline/api-cache";
 import {
   getLaboranStats,
   getPendingApprovals,
@@ -77,6 +81,8 @@ export function DashboardPage() {
   );
   const [inventoryAlerts, setInventoryAlerts] = useState<InventoryAlert[]>([]);
   const [labSchedule, setLabSchedule] = useState<LabScheduleToday[]>([]);
+  const [isOfflineData, setIsOfflineData] = useState(false);
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<number | null>(null);
 
   // Dialog state for rejection
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
@@ -85,6 +91,17 @@ export function DashboardPage() {
   );
   const [rejectionReason, setRejectionReason] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
+
+  const lastUpdatedLabel = useMemo(() => {
+    if (!lastUpdatedAt) {
+      return null;
+    }
+
+    return new Date(lastUpdatedAt).toLocaleString("id-ID", {
+      dateStyle: "medium",
+      timeStyle: "short",
+    });
+  }, [lastUpdatedAt]);
 
   // Fetch all dashboard data
   useEffect(() => {
@@ -96,6 +113,8 @@ export function DashboardPage() {
       setPendingApprovals([]);
       setInventoryAlerts([]);
       setLabSchedule([]);
+      setIsOfflineData(false);
+      setLastUpdatedAt(null);
     }
   }, [user?.id]);
 
@@ -104,16 +123,74 @@ export function DashboardPage() {
       setLoading(true);
       setError(null);
 
+      const statsCacheKey = `laboran_stats_${user?.id}`;
+      const approvalsCacheKey = `laboran_approvals_${user?.id}`;
+      const alertsCacheKey = `laboran_alerts_${user?.id}`;
+      const scheduleCacheKey = `laboran_schedule_${user?.id}`;
+
+      const [
+        cachedStatsEntry,
+        cachedApprovalsEntry,
+        cachedAlertsEntry,
+        cachedScheduleEntry,
+      ] = await Promise.all([
+        getCachedData<LaboranStats>(statsCacheKey),
+        getCachedData<PendingApproval[]>(approvalsCacheKey),
+        getCachedData<InventoryAlert[]>(alertsCacheKey),
+        getCachedData<LabScheduleToday[]>(scheduleCacheKey),
+      ]);
+
+      const hasCachedData =
+        !!cachedStatsEntry?.data ||
+        Array.isArray(cachedApprovalsEntry?.data) ||
+        Array.isArray(cachedAlertsEntry?.data) ||
+        Array.isArray(cachedScheduleEntry?.data);
+
+      if (hasCachedData) {
+        setStats(cachedStatsEntry?.data ?? null);
+        setPendingApprovals(
+          Array.isArray(cachedApprovalsEntry?.data)
+            ? cachedApprovalsEntry.data
+            : [],
+        );
+        setInventoryAlerts(
+          Array.isArray(cachedAlertsEntry?.data) ? cachedAlertsEntry.data : [],
+        );
+        setLabSchedule(
+          Array.isArray(cachedScheduleEntry?.data)
+            ? cachedScheduleEntry.data
+            : [],
+        );
+        setIsOfflineData(!navigator.onLine);
+        setLastUpdatedAt(
+          Math.max(
+            cachedStatsEntry?.timestamp || 0,
+            cachedApprovalsEntry?.timestamp || 0,
+            cachedAlertsEntry?.timestamp || 0,
+            cachedScheduleEntry?.timestamp || 0,
+          ) || null,
+        );
+        setLoading(false);
+      }
+
+      if (forceRefresh && !navigator.onLine) {
+        throw new Error(
+          hasCachedData
+            ? "Perangkat sedang offline. Menampilkan snapshot dashboard laboran terakhir."
+            : "Perangkat sedang offline dan belum ada snapshot dashboard laboran tersimpan.",
+        );
+      }
+
       // Use cacheAPI with stale-while-revalidate for offline support
       const [statsData, approvalsData, alertsData, scheduleData] =
         await Promise.all([
-          cacheAPI(`laboran_stats_${user?.id}`, () => getLaboranStats(), {
+          cacheAPI(statsCacheKey, () => getLaboranStats(), {
             ttl: 10 * 60 * 1000, // 10 minutes
             forceRefresh,
             staleWhileRevalidate: true,
           }),
           cacheAPI(
-            `laboran_approvals_${user?.id}`,
+            approvalsCacheKey,
             () => getPendingApprovals(10),
             {
               ttl: 2 * 60 * 1000, // 2 minutes (approvals need fresh data)
@@ -121,13 +198,13 @@ export function DashboardPage() {
               staleWhileRevalidate: true,
             },
           ),
-          cacheAPI(`laboran_alerts_${user?.id}`, () => getInventoryAlerts(10), {
+          cacheAPI(alertsCacheKey, () => getInventoryAlerts(10), {
             ttl: 5 * 60 * 1000, // 5 minutes
             forceRefresh,
             staleWhileRevalidate: true,
           }),
           cacheAPI(
-            `laboran_schedule_${user?.id}`,
+            scheduleCacheKey,
             () => getLabScheduleToday(10),
             {
               ttl: 5 * 60 * 1000, // 5 minutes
@@ -141,11 +218,14 @@ export function DashboardPage() {
       setPendingApprovals(approvalsData);
       setInventoryAlerts(alertsData);
       setLabSchedule(scheduleData);
+      setIsOfflineData(false);
+      setLastUpdatedAt(Date.now());
     } catch (err) {
       // Handle offline mode gracefully
       if (!networkDetector.isOnline()) {
         console.log("ℹ️ Offline mode - showing cached dashboard data");
         setError(null); // Don't show error in offline mode
+        setIsOfflineData(true);
       } else {
         console.error("Error fetching dashboard data:", err);
         setError("Gagal memuat data dashboard. Silakan refresh halaman.");
@@ -332,6 +412,18 @@ export function DashboardPage() {
             </Alert>
           )}
 
+          {(isOfflineData || !navigator.onLine) && (
+            <Alert className="border-warning/40 bg-warning/10">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                Dashboard laboran sedang memakai snapshot lokal dari perangkat.
+                {lastUpdatedLabel
+                  ? ` Pembaruan terakhir: ${lastUpdatedLabel}.`
+                  : ""}
+              </AlertDescription>
+            </Alert>
+          )}
+
           {/* Quick Stats Cards */}
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <DashboardCard
@@ -381,7 +473,7 @@ export function DashboardPage() {
                     <h2 className="mb-2 text-3xl font-extrabold">
                       Tetap Siap! 🛡️
                     </h2>
-                    <p className="text-lg font-semibold text-blue-100">
+                    <p className="text-lg font-semibold text-primary-foreground/80">
                       {pendingApprovals.length > 0 && (
                         <>
                           Ada{" "}
@@ -455,7 +547,7 @@ export function DashboardPage() {
                     {pendingApprovals.map((approval) => (
                       <div
                         key={approval.id}
-                        className="flex gap-3 p-4 border-2 border-blue-100 rounded-xl hover:bg-blue-50 hover:border-blue-300 transition-all duration-300 shadow-sm hover:shadow-md group"
+                        className="flex gap-3 p-4 border-2 border-primary/20 rounded-xl hover:bg-primary/5 hover:border-primary/40 transition-all duration-300 shadow-sm hover:shadow-md group"
                       >
                         <div className="shrink-0">
                           <div className="w-12 h-12 bg-linear-to-br from-primary to-accent rounded-xl shadow-lg flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -507,7 +599,7 @@ export function DashboardPage() {
                             variant="outline"
                             onClick={() => handleRejectClick(approval.id)}
                             disabled={actionLoading}
-                            className="text-red-600 border-red-600 border-2 hover:bg-red-50 font-semibold"
+                            className="text-danger border-danger border-2 hover:bg-danger/5 font-semibold"
                           >
                             <XCircle className="h-4 w-4 mr-1" />
                             Tolak
@@ -601,7 +693,7 @@ export function DashboardPage() {
                             >
                               {getConditionLabel(alert.kondisi)}
                             </StatusBadge>
-                            <span className="text-xs font-bold text-red-600">
+                            <span className="text-xs font-bold text-danger">
                               Tersedia: {alert.jumlah_tersedia}/{alert.jumlah}
                             </span>
                           </div>
@@ -728,7 +820,7 @@ export function DashboardPage() {
             <Button
               onClick={handleRejectSubmit}
               disabled={actionLoading || !rejectionReason.trim()}
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-danger hover:bg-danger/90"
             >
               {actionLoading ? "Memproses..." : "Tolak Peminjaman"}
             </Button>

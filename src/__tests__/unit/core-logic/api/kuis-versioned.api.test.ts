@@ -91,6 +91,9 @@ vi.mock("@/lib/api/kuis.api", () => ({
   getAttemptById: vi.fn(),
   getJawabanByAttempt: vi.fn(),
   submitQuiz: vi.fn(),
+  getCachedAttempt: vi.fn().mockResolvedValue(null),
+  syncOfflineAnswers: vi.fn(),
+  cacheAttemptOffline: vi.fn(),
   submitAnswer: vi.fn(),
 }));
 

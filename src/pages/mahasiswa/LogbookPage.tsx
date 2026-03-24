@@ -10,7 +10,7 @@
  * - Track logbook status (draft → submitted → reviewed → graded)
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { format } from "date-fns";
 import { supabase } from "@/lib/supabase/client";
 import {
@@ -25,8 +25,10 @@ import {
   CheckCircle2,
   Clock,
   AlertCircle,
+  WifiOff,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -53,6 +55,7 @@ import {
 import { getJadwal } from "@/lib/api/jadwal.api";
 import { getKelas } from "@/lib/api/kelas.api";
 import { notifyDosenLogbookSubmitted } from "@/lib/api/notification.api";
+import { cacheAPI, getCachedData } from "@/lib/offline/api-cache";
 import type {
   LogbookEntry,
   CreateLogbookData,
@@ -80,6 +83,8 @@ export default function MahasiswaLogbookPage() {
   const [loading, setLoading] = useState(true);
   const [jadwalList, setJadwalList] = useState<Jadwal[]>([]);
   const [logbookList, setLogbookList] = useState<LogbookEntry[]>([]);
+  const [isOfflineData, setIsOfflineData] = useState(false);
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<number | null>(null);
 
   // Dialog states
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -104,6 +109,16 @@ export default function MahasiswaLogbookPage() {
   // Submit validation
   const [submitting, setSubmitting] = useState(false);
 
+  const enrollmentsCacheKey = user?.mahasiswa?.id
+    ? `mahasiswa_logbook_enrollments_${user.mahasiswa.id}`
+    : null;
+  const jadwalCacheKey = user?.mahasiswa?.id
+    ? `mahasiswa_logbook_jadwal_${user.mahasiswa.id}`
+    : null;
+  const logbookCacheKey = user?.mahasiswa?.id
+    ? `mahasiswa_logbook_entries_${user.mahasiswa.id}`
+    : null;
+
   // ============================================================================
   // EFFECTS
   // ============================================================================
@@ -114,52 +129,182 @@ export default function MahasiswaLogbookPage() {
     }
   }, [user?.mahasiswa?.id]);
 
+  useEffect(() => {
+    if (!jadwalCacheKey && !logbookCacheKey) {
+      return;
+    }
+
+    const handleCacheUpdated = (event: Event) => {
+      const customEvent = event as CustomEvent<{
+        key?: string;
+        data?: Jadwal[] | LogbookEntry[];
+      }>;
+
+      if (customEvent.detail?.key === jadwalCacheKey) {
+        const nextJadwal = customEvent.detail?.data;
+        if (Array.isArray(nextJadwal)) {
+          setJadwalList(nextJadwal as Jadwal[]);
+          setIsOfflineData(false);
+          setLastUpdatedAt(Date.now());
+        }
+      }
+
+      if (customEvent.detail?.key === logbookCacheKey) {
+        const nextLogbook = customEvent.detail?.data;
+        if (Array.isArray(nextLogbook)) {
+          setLogbookList(
+            (nextLogbook as LogbookEntry[]).filter(
+              (item): item is LogbookEntry => item != null && "id" in item,
+            ),
+          );
+          setIsOfflineData(false);
+          setLastUpdatedAt(Date.now());
+        }
+      }
+    };
+
+    window.addEventListener("cache:updated", handleCacheUpdated);
+    return () => window.removeEventListener("cache:updated", handleCacheUpdated);
+  }, [jadwalCacheKey, logbookCacheKey]);
+
   // ============================================================================
   // DATA LOADING
   // ============================================================================
 
-  async function loadData() {
+  async function loadData(forceRefresh = false) {
     if (!user?.mahasiswa?.id) return;
 
     try {
       setLoading(true);
 
-      // Load jadwal for this mahasiswa's kelas
-      const { data: enrollments } = await supabase
-        .from("kelas_mahasiswa")
-        .select("kelas_id")
-        .eq("mahasiswa_id", user.mahasiswa.id);
-
-      if (enrollments && enrollments.length > 0) {
-        const kelasIds = enrollments.map((e) => e.kelas_id);
-
-        // Get upcoming jadwal for enrolled kelas (ONLY approved jadwal)
-        const allJadwalData = await getJadwal({
-          is_active: true,
-        });
-
-        // Filter: Only show APPROVED jadwal to students
-        const jadwalData = allJadwalData.filter((j) => j.status === "approved");
-
-        // Filter jadwal by enrolled kelas
-        const myJadwal = jadwalData.filter((jadwal) => {
-          return kelasIds.includes(jadwal.kelas_id || "");
-        });
-        setJadwalList(myJadwal);
+      if (!enrollmentsCacheKey || !jadwalCacheKey || !logbookCacheKey) {
+        return;
       }
 
-      // Load logbook entries
-      const logbookData = await getLogbook({
-        mahasiswa_id: user.mahasiswa.id,
-      });
+      const [cachedEnrollmentsEntry, cachedJadwalEntry, cachedLogbookEntry] =
+        await Promise.all([
+          getCachedData<Array<{ kelas_id: string }>>(enrollmentsCacheKey),
+          getCachedData<Jadwal[]>(jadwalCacheKey),
+          getCachedData<LogbookEntry[]>(logbookCacheKey),
+        ]);
 
-      // Filter out any null entries
+      const cachedJadwal = Array.isArray(cachedJadwalEntry?.data)
+        ? cachedJadwalEntry.data
+        : [];
+      const cachedLogbook = Array.isArray(cachedLogbookEntry?.data)
+        ? cachedLogbookEntry.data.filter(
+            (item): item is LogbookEntry => item != null && "id" in item,
+          )
+        : [];
+      const hasCachedData =
+        Array.isArray(cachedEnrollmentsEntry?.data) ||
+        cachedJadwal.length > 0 ||
+        cachedLogbook.length > 0;
+
+      if (hasCachedData) {
+        setJadwalList(cachedJadwal);
+        setLogbookList(cachedLogbook);
+        setIsOfflineData(!navigator.onLine);
+        setLastUpdatedAt(
+          Math.max(
+            cachedEnrollmentsEntry?.timestamp || 0,
+            cachedJadwalEntry?.timestamp || 0,
+            cachedLogbookEntry?.timestamp || 0,
+          ) || null,
+        );
+        setLoading(false);
+      }
+
+      if (!navigator.onLine) {
+        if (!hasCachedData) {
+          throw new Error(
+            "Perangkat sedang offline dan data logbook belum pernah tersimpan di perangkat ini.",
+          );
+        }
+        return;
+      }
+
+      if (forceRefresh && !navigator.onLine) {
+        throw new Error(
+          hasCachedData
+            ? "Perangkat sedang offline. Menampilkan logbook tersimpan terakhir."
+            : "Perangkat sedang offline dan belum ada data logbook tersimpan.",
+        );
+      }
+
+      const enrollments = await cacheAPI(
+        enrollmentsCacheKey,
+        async () => {
+          const { data, error } = await supabase
+            .from("kelas_mahasiswa")
+            .select("kelas_id")
+            .eq("mahasiswa_id", user.mahasiswa.id);
+
+          if (error) {
+            throw error;
+          }
+
+          return (data || []) as Array<{ kelas_id: string }>;
+        },
+        {
+          ttl: 20 * 60 * 1000,
+          forceRefresh,
+          staleWhileRevalidate: true,
+        },
+      );
+
+      let myJadwal: Jadwal[] = [];
+      if (enrollments.length > 0) {
+        const kelasIds = enrollments.map((e) => e.kelas_id);
+
+        const allJadwalData = await cacheAPI(
+          jadwalCacheKey,
+          async () => {
+            const fetched = await getJadwal({
+              is_active: true,
+            });
+
+            const approvedOnly = fetched.filter((j) => j.status === "approved");
+            return approvedOnly.filter((jadwal) => {
+              return kelasIds.includes(jadwal.kelas_id || "");
+            });
+          },
+          {
+            ttl: 10 * 60 * 1000,
+            forceRefresh,
+            staleWhileRevalidate: true,
+          },
+        );
+
+        myJadwal = Array.isArray(allJadwalData) ? allJadwalData : [];
+      }
+
+      const logbookData = await cacheAPI(
+        logbookCacheKey,
+        () =>
+          getLogbook({
+            mahasiswa_id: user.mahasiswa.id,
+          }),
+        {
+          ttl: 10 * 60 * 1000,
+          forceRefresh,
+          staleWhileRevalidate: true,
+        },
+      );
+
+      setJadwalList(myJadwal);
       setLogbookList(
         logbookData.filter((l): l is LogbookEntry => l != null && "id" in l),
       );
+      setIsOfflineData(false);
+      setLastUpdatedAt(Date.now());
     } catch (error: any) {
       console.error("Error loading data:", error);
-      toast.error(error.message || "Gagal memuat data");
+      if (!navigator.onLine && (jadwalList.length > 0 || logbookList.length > 0)) {
+        setIsOfflineData(true);
+      } else {
+        toast.error(error.message || "Gagal memuat data");
+      }
     } finally {
       setLoading(false);
     }
@@ -184,6 +329,13 @@ export default function MahasiswaLogbookPage() {
 
   async function handleCreateLogbook() {
     if (!selectedJadwal) return;
+
+    if (!navigator.onLine) {
+      toast.error(
+        "Pembuatan logbook baru belum didukung saat offline. Sambungkan internet untuk menyimpan.",
+      );
+      return;
+    }
 
     // Validate required fields
     if (!formData.prosedur_dilakukan || !formData.hasil_observasi) {
@@ -232,6 +384,13 @@ export default function MahasiswaLogbookPage() {
   async function handleUpdateLogbook() {
     if (!selectedLogbook) return;
 
+    if (!navigator.onLine) {
+      toast.error(
+        "Perubahan logbook belum didukung saat offline. Sambungkan internet untuk menyimpan.",
+      );
+      return;
+    }
+
     try {
       setSubmitting(true);
 
@@ -262,6 +421,13 @@ export default function MahasiswaLogbookPage() {
 
   async function handleSubmitLogbook() {
     if (!selectedLogbook) return;
+
+    if (!navigator.onLine) {
+      toast.error(
+        "Pengiriman logbook belum didukung saat offline. Sambungkan internet untuk mengirim.",
+      );
+      return;
+    }
 
     // Validate required fields before submit
     if (
@@ -351,6 +517,13 @@ export default function MahasiswaLogbookPage() {
   // ============================================================================
 
   async function handleDeleteLogbook(id: string) {
+    if (!navigator.onLine) {
+      toast.error(
+        "Penghapusan logbook belum didukung saat offline. Sambungkan internet untuk menghapus.",
+      );
+      return;
+    }
+
     if (!confirm("Yakin ingin menghapus logbook ini?")) return;
 
     try {
@@ -426,6 +599,18 @@ export default function MahasiswaLogbookPage() {
   // RENDER
   // ============================================================================
 
+  const isOffline = !navigator.onLine;
+  const lastUpdatedLabel = useMemo(() => {
+    if (!lastUpdatedAt) {
+      return null;
+    }
+
+    return new Date(lastUpdatedAt).toLocaleString("id-ID", {
+      dateStyle: "medium",
+      timeStyle: "short",
+    });
+  }, [lastUpdatedAt]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -448,6 +633,19 @@ export default function MahasiswaLogbookPage() {
           selama praktikum kebidanan
         </p>
       </div>
+
+      {(isOfflineData || isOffline) && (
+        <Alert className="mb-6 border-warning/40 bg-warning/10">
+          <WifiOff className="h-4 w-4" />
+          <AlertDescription>
+            Anda sedang melihat snapshot logbook tersimpan di perangkat.
+            {lastUpdatedLabel ? ` Pembaruan terakhir: ${lastUpdatedLabel}.` : ""}
+            {!navigator.onLine
+              ? " Aksi buat, edit, kirim, dan hapus logbook sementara dinonaktifkan saat offline."
+              : ""}
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Tabs */}
       <Tabs defaultValue="my-logbook" className="mb-6">
@@ -527,6 +725,7 @@ export default function MahasiswaLogbookPage() {
                                 size="sm"
                                 variant="outline"
                                 onClick={() => openEditDialog(logbook)}
+                                disabled={isOffline}
                               >
                                 <Edit className="h-4 w-4" />
                               </Button>
@@ -534,12 +733,14 @@ export default function MahasiswaLogbookPage() {
                                 size="sm"
                                 variant="outline"
                                 onClick={() => handleDeleteLogbook(logbook.id)}
+                                disabled={isOffline}
                               >
                                 <Trash2 className="h-4 w-4 text-danger" />
                               </Button>
                               <Button
                                 size="sm"
                                 onClick={() => openSubmitDialog(logbook)}
+                                disabled={isOffline}
                               >
                                 <Send className="h-4 w-4" />
                               </Button>
@@ -639,7 +840,15 @@ export default function MahasiswaLogbookPage() {
                 <Card
                   key={jadwal.id}
                   className="hover:shadow-lg transition-shadow cursor-pointer"
-                  onClick={() => openCreateDialog(jadwal)}
+                  onClick={() => {
+                    if (isOffline) {
+                      toast.error(
+                        "Pembuatan logbook baru belum didukung saat offline. Sambungkan internet untuk melanjutkan.",
+                      );
+                      return;
+                    }
+                    openCreateDialog(jadwal);
+                  }}
                 >
                   <CardHeader>
                     <CardTitle className="text-base">
@@ -663,7 +872,7 @@ export default function MahasiswaLogbookPage() {
                     <p className="text-xs text-muted-foreground">
                       Lab: {jadwal.laboratorium?.nama_lab}
                     </p>
-                    <Button size="sm" className="w-full mt-3">
+                    <Button size="sm" className="w-full mt-3" disabled={isOffline}>
                       <Plus className="h-4 w-4 mr-2" />
                       Buat Logbook
                     </Button>

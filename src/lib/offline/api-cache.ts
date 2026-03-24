@@ -19,7 +19,7 @@ export interface CacheEntry<T> {
   expiresAt: number;
 }
 
-interface CacheOptions {
+export interface CacheOptions {
   ttl?: number; // Time to live in milliseconds (default: 5 minutes)
   forceRefresh?: boolean; // Skip cache and fetch fresh data
   staleWhileRevalidate?: boolean; // Return stale data while fetching fresh
@@ -112,8 +112,12 @@ export async function cacheAPI<T>(
 /**
  * Get cached data from IndexedDB
  */
-async function getCachedData<T>(key: string): Promise<CacheEntry<T> | null> {
+export async function getCachedData<T>(
+  key: string,
+): Promise<CacheEntry<T> | null> {
   try {
+    await indexedDBManager.initialize();
+
     const cached = (await indexedDBManager.getMetadata(`cache_${key}`)) as
       | CacheEntry<T>
       | undefined;

@@ -3,9 +3,13 @@
  * Menampilkan dan mengedit profil mahasiswa
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/lib/hooks/useAuth";
-import { cacheAPI, invalidateCache } from "@/lib/offline/api-cache";
+import {
+  cacheAPI,
+  getCachedData,
+  invalidateCache,
+} from "@/lib/offline/api-cache";
 import {
   getMahasiswaProfile,
   updateMahasiswaProfile,
@@ -30,6 +34,7 @@ import {
   Phone,
   Save,
   User,
+  WifiOff,
 } from "lucide-react";
 import { PageHeader } from "@/components/common/PageHeader";
 
@@ -56,6 +61,8 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [isOfflineData, setIsOfflineData] = useState(false);
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<number | null>(null);
 
   const [userProfile, setUserProfile] = useState<UserProfile>({
     full_name: "",
@@ -74,19 +81,97 @@ export default function ProfilePage() {
     address: "",
   });
 
+  const profileCacheKey = user?.id ? `mahasiswa_profile_${user.id}` : null;
+
   useEffect(() => {
     if (user) {
       fetchProfile();
     }
   }, [user]);
 
+  useEffect(() => {
+    if (!profileCacheKey) {
+      return;
+    }
+
+    const handleCacheUpdated = (event: Event) => {
+      const customEvent = event as CustomEvent<{ key?: string; data?: any }>;
+
+      if (customEvent.detail?.key !== profileCacheKey || !customEvent.detail?.data) {
+        return;
+      }
+
+      const profileData = customEvent.detail.data;
+      setUserProfile({
+        full_name: profileData.users?.full_name || "",
+        email: profileData.users?.email || "",
+        phone: "",
+      });
+
+      setMahasiswaProfile({
+        id: profileData.id || "",
+        nim: profileData.nim || "",
+        program_studi: profileData.program_studi || "",
+        angkatan: profileData.angkatan || new Date().getFullYear(),
+        semester: profileData.semester || 1,
+        gender: profileData.gender || null,
+        date_of_birth: profileData.date_of_birth || "",
+        address: profileData.address || "",
+      });
+
+      setIsOfflineData(false);
+      setLastUpdatedAt(Date.now());
+    };
+
+    window.addEventListener("cache:updated", handleCacheUpdated);
+    return () => window.removeEventListener("cache:updated", handleCacheUpdated);
+  }, [profileCacheKey]);
+
   const fetchProfile = async (forceRefresh = false) => {
     try {
       setLoading(true);
       setError(null);
 
+      if (!profileCacheKey) {
+        return;
+      }
+
+      const cachedProfileEntry = await getCachedData<any>(profileCacheKey);
+      const cachedProfile = cachedProfileEntry?.data;
+
+      if (cachedProfile) {
+        setUserProfile({
+          full_name: cachedProfile.users?.full_name || "",
+          email: cachedProfile.users?.email || "",
+          phone: "",
+        });
+
+        setMahasiswaProfile({
+          id: cachedProfile.id || "",
+          nim: cachedProfile.nim || "",
+          program_studi: cachedProfile.program_studi || "",
+          angkatan: cachedProfile.angkatan || new Date().getFullYear(),
+          semester: cachedProfile.semester || 1,
+          gender: cachedProfile.gender || null,
+          date_of_birth: cachedProfile.date_of_birth || "",
+          address: cachedProfile.address || "",
+        });
+
+        setIsOfflineData(!navigator.onLine);
+        setLastUpdatedAt(cachedProfileEntry?.timestamp || null);
+        setLoading(false);
+      }
+
+      if (forceRefresh && !navigator.onLine) {
+        throw new Error(
+          cachedProfile
+            ? "Perangkat sedang offline. Menampilkan profil tersimpan terakhir."
+            : "Perangkat sedang offline dan belum ada profil tersimpan.",
+        );
+      }
+
       const profileData = await cacheAPI(
-        `mahasiswa_profile_${user?.id}`,
+        profileCacheKey,
         () => getMahasiswaProfile(user!.id!),
         {
           ttl: 20 * 60 * 1000,
@@ -112,10 +197,16 @@ export default function ProfilePage() {
           date_of_birth: profileData.date_of_birth || "",
           address: profileData.address || "",
         });
+
+        setIsOfflineData(false);
+        setLastUpdatedAt(Date.now());
       }
     } catch (err: any) {
       console.error("Error fetching profile:", err);
       setError(err.message || "Gagal memuat profil");
+      if (!navigator.onLine) {
+        setIsOfflineData(true);
+      }
     } finally {
       setLoading(false);
     }
@@ -123,6 +214,13 @@ export default function ProfilePage() {
 
   const handleSave = async () => {
     try {
+      if (!navigator.onLine) {
+        setError(
+          "Perubahan profil belum didukung penuh saat offline. Sambungkan internet untuk menyimpan perubahan.",
+        );
+        return;
+      }
+
       setSaving(true);
       setError(null);
       setSuccess(null);
@@ -147,6 +245,17 @@ export default function ProfilePage() {
     }
   };
 
+  const lastUpdatedLabel = useMemo(() => {
+    if (!lastUpdatedAt) {
+      return null;
+    }
+
+    return new Date(lastUpdatedAt).toLocaleString("id-ID", {
+      dateStyle: "medium",
+      timeStyle: "short",
+    });
+  }, [lastUpdatedAt]);
+
   if (loading) {
     return (
       <div className="app-container">
@@ -166,6 +275,18 @@ export default function ProfilePage() {
         description="Kelola informasi profil Anda"
         className="section-shell"
       />
+
+      {(isOfflineData || lastUpdatedLabel) && (
+        <Alert className="rounded-2xl border-warning/30 bg-warning/10 text-warning dark:border-warning/30 dark:bg-warning/10 dark:text-warning">
+          <WifiOff className="h-4 w-4" />
+          <AlertDescription>
+            {isOfflineData
+              ? "Profil ditampilkan dari cache lokal. Perubahan data profil masih memerlukan koneksi internet."
+              : "Data profil lokal tersedia sebagai fallback offline."}
+            {lastUpdatedLabel ? ` Update terakhir: ${lastUpdatedLabel}.` : ""}
+          </AlertDescription>
+        </Alert>
+      )}
 
       {error && (
         <Alert variant="destructive" className="rounded-2xl">
@@ -369,7 +490,8 @@ export default function ProfilePage() {
           onClick={handleSave}
           loading={saving}
           loadingText="Menyimpan..."
-          className="bg-primary text-primary-foreground hover:bg-primary/90"
+          disabled={!navigator.onLine}
+          className="bg-primary text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
         >
           <Save className="mr-2 h-4 w-4" />
           Simpan Perubahan

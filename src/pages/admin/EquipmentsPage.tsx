@@ -588,7 +588,7 @@ export default function EquipmentsPage() {
                           <span
                             className={
                               item.jumlah_tersedia < item.jumlah
-                                ? "text-orange-600 font-semibold"
+                                ? "text-warning font-semibold"
                                 : ""
                             }
                           >
@@ -636,7 +636,7 @@ export default function EquipmentsPage() {
                               size="sm"
                               onClick={() => handleDelete(item)}
                             >
-                              <Trash2 className="h-4 w-4 text-red-600" />
+                              <Trash2 className="h-4 w-4 text-danger" />
                             </Button>
                           </div>
                         </EnhancedTableCell>

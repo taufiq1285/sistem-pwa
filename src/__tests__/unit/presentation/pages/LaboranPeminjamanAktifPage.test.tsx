@@ -20,6 +20,7 @@ const {
 
 vi.mock("@/lib/offline/api-cache", () => ({
   cacheAPI: (...args: unknown[]) => mockCacheAPI(...args),
+  getCachedData: vi.fn().mockResolvedValue(null),
   invalidateCache: (...args: unknown[]) => mockInvalidateCache(...args),
 }));
 

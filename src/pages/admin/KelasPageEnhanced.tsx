@@ -245,7 +245,7 @@ export default function KelasPageEnhanced() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Manajemen Kelas</h1>
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             Kelola kelas universal untuk pengelolaan mahasiswa
           </p>
         </div>

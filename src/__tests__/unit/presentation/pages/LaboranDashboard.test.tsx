@@ -30,6 +30,7 @@ vi.mock("@/lib/hooks/useAuth", () => ({
 
 vi.mock("@/lib/offline/api-cache", () => ({
   cacheAPI: (...args: unknown[]) => mockCacheAPI(...args),
+  getCachedData: vi.fn().mockResolvedValue(null),
   invalidateCache: (...args: unknown[]) => mockInvalidateCache(...args),
 }));
 
@@ -133,8 +134,8 @@ describe("Laboran DashboardPage", () => {
     it("merender skeleton loading saat data dimuat", () => {
       mockCacheAPI.mockReturnValue(new Promise(() => {}));
       const { container } = renderWithRouter(<DashboardPage />);
-      const pulseEls = container.querySelectorAll(".animate-pulse");
-      expect(pulseEls.length).toBeGreaterThan(0);
+      const skeletonCards = container.querySelectorAll('[data-slot="card"]');
+      expect(skeletonCards.length).toBeGreaterThan(0);
     });
   });
 

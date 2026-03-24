@@ -36,6 +36,9 @@ vi.mock("@/lib/hooks/useAuth", () => ({
 
 vi.mock("@/lib/api/kuis.api", () => ({
   getKuisById: (...args: unknown[]) => mockGetKuisById(...args),
+  cacheAttemptOffline: vi.fn(),
+  syncOfflineAnswers: vi.fn(),
+  getCachedAttempt: vi.fn().mockResolvedValue(null),
 }));
 
 vi.mock("sonner", () => ({

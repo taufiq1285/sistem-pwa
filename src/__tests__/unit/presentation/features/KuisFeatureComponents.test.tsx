@@ -109,6 +109,9 @@ vi.mock("@/lib/api/kuis.api", () => ({
   createSoal: vi.fn(),
   updateSoal: vi.fn(),
   deleteSoal: vi.fn(),
+  cacheAttemptOffline: vi.fn(),
+  syncOfflineAnswers: vi.fn(),
+  getCachedAttempt: vi.fn().mockResolvedValue(null),
 }));
 
 function wrap(ui: React.ReactElement) {

@@ -20,6 +20,7 @@ const { mockUseAuth, mockCacheAPI, mockToast, mockUseSync } = vi.hoisted(
 vi.mock("@/lib/hooks/useAuth", () => ({ useAuth: () => mockUseAuth() }));
 vi.mock("@/lib/offline/api-cache", () => ({
   cacheAPI: (...a: unknown[]) => mockCacheAPI(...a),
+  getCachedData: vi.fn().mockResolvedValue(null),
   invalidateCache: vi.fn(),
 }));
 vi.mock("sonner", () => ({ toast: mockToast }));
