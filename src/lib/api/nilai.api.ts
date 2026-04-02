@@ -184,10 +184,12 @@ export async function getNilaiByMahasiswa(
           kode_kelas,
           tahun_ajaran,
           semester_ajaran,
+          is_active,
           mata_kuliah:mata_kuliah_id (
             nama_mk,
             kode_mk,
-            sks
+            sks,
+            is_active
           )
         )
       `,

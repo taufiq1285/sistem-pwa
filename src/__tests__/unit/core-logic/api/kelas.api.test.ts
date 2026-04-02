@@ -450,65 +450,38 @@ describe("Kelas API - CRUD Operations", () => {
   });
 
   describe("deleteKelas (TC006)", () => {
-    it("TC006: should delete kelas by ID", async () => {
-      vi.mocked(remove).mockResolvedValue(true);
-
-      // deleteKelasImpl performs an existence check via Supabase before calling remove()
-      const kelasCheckBuilder = mockQueryBuilder();
-      kelasCheckBuilder.single.mockResolvedValue({
-        data: { id: "kelas-1", nama_kelas: "Kelas A" },
-        error: null,
-      });
-
-      vi.mocked(supabase.from).mockReturnValueOnce(kelasCheckBuilder as any);
+    it("TC006: should archive kelas by ID via soft delete", async () => {
+      vi.mocked(update).mockResolvedValue({ ...mockKelas, is_active: false } as any);
 
       await deleteKelas("kelas-1");
 
-      expect(remove).toHaveBeenCalledWith("kelas", "kelas-1");
+      expect(update).toHaveBeenCalledWith("kelas", "kelas-1", {
+        is_active: false,
+      });
+      expect(remove).not.toHaveBeenCalled();
     });
 
-    it("TC006: should cascade delete enrollments", async () => {
-      // Note: Cascade behavior is handled at database level via foreign key constraints
-      // This test documents expected behavior
-      vi.mocked(remove).mockResolvedValue(true);
-
-      const kelasCheckBuilder = mockQueryBuilder();
-      kelasCheckBuilder.single.mockResolvedValue({
-        data: { id: "kelas-1", nama_kelas: "Kelas A" },
-        error: null,
-      });
-
-      vi.mocked(supabase.from).mockReturnValueOnce(kelasCheckBuilder as any);
+    it("TC006: should archive kelas without touching enrollments directly", async () => {
+      vi.mocked(update).mockResolvedValue({ ...mockKelas, is_active: false } as any);
 
       await deleteKelas("kelas-1");
 
-      // Verify remove was called - cascade happens at DB level
-      expect(remove).toHaveBeenCalledWith("kelas", "kelas-1");
+      expect(update).toHaveBeenCalledWith("kelas", "kelas-1", {
+        is_active: false,
+      });
+      expect(remove).not.toHaveBeenCalled();
     });
 
     it("should handle non-existent kelas deletion", async () => {
-      const kelasCheckBuilder = mockQueryBuilder();
-      kelasCheckBuilder.single.mockResolvedValue({
-        data: null,
-        error: new Error("Not found"),
-      });
-
-      vi.mocked(supabase.from).mockReturnValueOnce(kelasCheckBuilder as any);
+      vi.mocked(update).mockRejectedValue(new Error("Not found"));
 
       await expect(deleteKelas("nonexistent")).rejects.toThrow(
-        "Kelas not found",
+        "Failed to delete kelas: Not found",
       );
     });
 
     it("should handle permission errors (RLS)", async () => {
-      const kelasCheckBuilder = mockQueryBuilder();
-      kelasCheckBuilder.single.mockResolvedValue({
-        data: { id: "kelas-1", nama_kelas: "Kelas A" },
-        error: null,
-      });
-
-      vi.mocked(supabase.from).mockReturnValueOnce(kelasCheckBuilder as any);
-      vi.mocked(remove).mockRejectedValue(
+      vi.mocked(update).mockRejectedValue(
         new Error("permission denied for table kelas"),
       );
 
@@ -516,14 +489,7 @@ describe("Kelas API - CRUD Operations", () => {
     });
 
     it("should handle deletion errors gracefully", async () => {
-      const kelasCheckBuilder = mockQueryBuilder();
-      kelasCheckBuilder.single.mockResolvedValue({
-        data: { id: "kelas-1", nama_kelas: "Kelas A" },
-        error: null,
-      });
-
-      vi.mocked(supabase.from).mockReturnValueOnce(kelasCheckBuilder as any);
-      vi.mocked(remove).mockRejectedValue(new Error("Delete failed"));
+      vi.mocked(update).mockRejectedValue(new Error("Delete failed"));
 
       await expect(deleteKelas("kelas-1")).rejects.toThrow(
         "Failed to delete kelas",
@@ -543,18 +509,23 @@ describe("Kelas API - Student Enrollment", () => {
 
   describe("getEnrolledStudents", () => {
     it("should fetch enrolled students for a kelas", async () => {
-      const builder = mockQueryBuilder();
-      builder.order.mockResolvedValue({
+      const eqMock = vi.fn().mockReturnThis();
+      const orderMock = vi.fn().mockResolvedValue({
         data: [{ ...mockEnrollment, mahasiswa: mockMahasiswa }],
         error: null,
       });
-      vi.mocked(supabase.from).mockReturnValue(builder);
+      const builder = {
+        select: vi.fn().mockReturnThis(),
+        eq: eqMock,
+        order: orderMock,
+      };
+      vi.mocked(supabase.from).mockReturnValue(builder as any);
 
       const result = await getEnrolledStudents("kelas-1");
 
       expect(supabase.from).toHaveBeenCalledWith("kelas_mahasiswa");
-      expect(builder.eq).toHaveBeenCalledWith("kelas_id", "kelas-1");
-      expect(builder.order).toHaveBeenCalledWith("enrolled_at", {
+      expect(eqMock).toHaveBeenCalledWith("kelas_id", "kelas-1");
+      expect(orderMock).toHaveBeenCalledWith("enrolled_at", {
         ascending: false,
       });
       expect(result).toHaveLength(1);
@@ -575,12 +546,15 @@ describe("Kelas API - Student Enrollment", () => {
           },
         }));
 
-      const builder = mockQueryBuilder();
-      builder.order.mockResolvedValue({
-        data: mockStudents,
-        error: null,
-      });
-      vi.mocked(supabase.from).mockReturnValue(builder);
+      const builder = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        order: vi.fn().mockResolvedValue({
+          data: mockStudents,
+          error: null,
+        }),
+      };
+      vi.mocked(supabase.from).mockReturnValue(builder as any);
 
       const result = await getEnrolledStudents("kelas-1");
 
@@ -601,25 +575,32 @@ describe("Kelas API - Student Enrollment", () => {
         enrolled_at: "2024-01-01T00:00:00Z",
       };
 
-      const builder = mockQueryBuilder();
-      builder.order.mockResolvedValue({
+      const orderMock = vi.fn().mockResolvedValue({
         data: [recentEnrollment, oldEnrollment],
         error: null,
       });
-      vi.mocked(supabase.from).mockReturnValue(builder);
+      const builder = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        order: orderMock,
+      };
+      vi.mocked(supabase.from).mockReturnValue(builder as any);
 
       const result = await getEnrolledStudents("kelas-1");
 
-      expect(builder.order).toHaveBeenCalledWith("enrolled_at", {
+      expect(orderMock).toHaveBeenCalledWith("enrolled_at", {
         ascending: false,
       });
       expect(result[0].id).toBe("enrollment-2"); // Most recent first
     });
 
     it("should handle empty enrollment", async () => {
-      const builder = mockQueryBuilder();
-      builder.order.mockResolvedValue({ data: [], error: null });
-      vi.mocked(supabase.from).mockReturnValue(builder);
+      const builder = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        order: vi.fn().mockResolvedValue({ data: [], error: null }),
+      };
+      vi.mocked(supabase.from).mockReturnValue(builder as any);
 
       const result = await getEnrolledStudents("kelas-1");
 
@@ -627,12 +608,15 @@ describe("Kelas API - Student Enrollment", () => {
     });
 
     it("should handle database errors", async () => {
-      const builder = mockQueryBuilder();
-      builder.order.mockResolvedValue({
-        data: null,
-        error: new Error("DB Error"),
-      });
-      vi.mocked(supabase.from).mockReturnValue(builder);
+      const builder = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        order: vi.fn().mockResolvedValue({
+          data: null,
+          error: new Error("DB Error"),
+        }),
+      };
+      vi.mocked(supabase.from).mockReturnValue(builder as any);
 
       await expect(getEnrolledStudents("kelas-1")).rejects.toThrow();
     });
@@ -1604,29 +1588,17 @@ describe("Kelas API - White-Box Testing", () => {
     });
 
     it("Path 6: Delete kelas success path", async () => {
-      vi.mocked(remove).mockResolvedValue(true);
-
-      const kelasCheckBuilder = mockQueryBuilder();
-      kelasCheckBuilder.single.mockResolvedValue({
-        data: { id: "kelas-1", nama_kelas: "Kelas A" },
-        error: null,
-      });
-
-      vi.mocked(supabase.from).mockReturnValueOnce(kelasCheckBuilder as any);
+      vi.mocked(update).mockResolvedValue({ ...mockKelas, is_active: false } as any);
 
       await deleteKelas("kelas-1");
 
-      expect(remove).toHaveBeenCalledWith("kelas", "kelas-1");
+      expect(update).toHaveBeenCalledWith("kelas", "kelas-1", {
+        is_active: false,
+      });
     });
 
     it("Path 7: Delete kelas error path (not found)", async () => {
-      const kelasCheckBuilder = mockQueryBuilder();
-      kelasCheckBuilder.single.mockResolvedValue({
-        data: null,
-        error: new Error("Not found"),
-      });
-
-      vi.mocked(supabase.from).mockReturnValueOnce(kelasCheckBuilder as any);
+      vi.mocked(update).mockRejectedValue(new Error("Not found"));
 
       await expect(deleteKelas("nonexistent")).rejects.toThrow();
     });

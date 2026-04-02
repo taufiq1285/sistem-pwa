@@ -583,15 +583,27 @@ export async function isOfflineLoginAvailable(
       return Date.now() < credentials.expiresAt;
     }
 
-    // fallback: cek last_logged_in_user_id
+    // fallback: cek last_logged_in_user_id → session, lalu credentials
     const lastUserId = (await indexedDBManager.getMetadata(
       "last_logged_in_user_id",
     )) as string | null;
     if (!lastUserId) return false;
+
+    // Cek session per-user (expiry 7 hari)
     const session = (await indexedDBManager.getMetadata(
       `offline_session_${lastUserId}`,
     )) as StoredSession | undefined;
-    return !!session && Date.now() < session.expiresAt;
+    if (session && Date.now() < session.expiresAt) return true;
+
+    // Session expired/tidak ada — cek credentials langsung (expiry 30 hari)
+    // Credentials yang masih valid memungkinkan offline login meski session sudah expired
+    if (session?.user?.email) {
+      const creds = (await indexedDBManager.getMetadata(
+        `offline_credentials_${session.user.email.toLowerCase()}`,
+      )) as StoredCredentials | undefined;
+      return !!creds && Date.now() < creds.expiresAt;
+    }
+    return false;
   } catch (error) {
     console.error("❌ Failed to check offline login availability:", error);
     return false;

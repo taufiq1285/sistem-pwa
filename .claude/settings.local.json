@@ -73,7 +73,14 @@
       "Bash(git stash)",
       "Bash(git stash pop)",
       "Bash(python -c \"import sys,json; data=json.load\\(sys.stdin\\); keys=list\\(data.keys\\(\\)\\)[:10]; [print\\(k\\) for k in keys]\")",
-      "Bash(supabase --version)"
+      "Bash(supabase --version)",
+      "Bash(curl -s \"https://rkyoifqbfcztnhevpnpx.supabase.co/rest/v1/\" -H \"apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJreW9pZnFiZmN6dG5oZXZwbnB4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3NDQyNDMsImV4cCI6MjA3NjMyMDI0M30.-P894i9DGQdkSl-_4gu9rJL9vu0SPnRMDy4yK5grw-E\")",
+      "Bash(python -m json.tool)",
+      "Bash(grep -v \"//.*\\\\.map\\(\")",
+      "Bash(sed -n '55,70p' src/pages/admin/ProfilePage.tsx)",
+      "Bash(sed -n '170,185p' src/pages/mahasiswa/ProfilePage.tsx)",
+      "Bash(sed -n '240,265p' src/pages/dosen/KehadiranPage.tsx)",
+      "Bash(sed -n '314,325p' src/pages/dosen/KehadiranPage.tsx)"
     ]
   }
 }

@@ -176,7 +176,7 @@ export default function KelasPage() {
       const startTime = performance.now();
       const data = await cacheAPI(
         "admin_all_kelas",
-        () => getKelas({ is_active: undefined }), // Load all kelas
+        () => getKelas({ is_active: true }),
         {
           ttl: 10 * 60 * 1000, // 10 minutes - kelas data changes slowly
           forceRefresh,

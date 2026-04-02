@@ -171,7 +171,7 @@ export default function UsersPage() {
       const hasCachedData =
         Array.isArray(cachedUsersEntry?.data) || !!cachedStatsEntry?.data;
 
-      if (hasCachedData) {
+      if (hasCachedData && !forceRefresh) {
         setUsers(
           Array.isArray(cachedUsersEntry?.data) ? cachedUsersEntry.data : [],
         );

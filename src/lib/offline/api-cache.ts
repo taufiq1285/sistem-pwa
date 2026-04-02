@@ -30,11 +30,6 @@ export interface CacheOptions {
 // ============================================================================
 
 const DEFAULT_TTL = 5 * 60 * 1000; // 5 minutes
-const CACHE_STORE = "api_cache";
-
-// ============================================================================
-// CACHE FUNCTIONS
-// ============================================================================
 
 /**
  * Cache API call dengan automatic offline fallback
@@ -221,10 +216,8 @@ async function invalidateCachePatternImpl(pattern: string): Promise<number> {
 
   return new Promise((resolve, reject) => {
     let deletedCount = 0;
-    let cursorComplete = false;
 
     // ✅ CRITICAL: Wait for transaction to complete, not just cursor
-    // Transaction.oncomplete fires after all operations are committed to database
     transaction.oncomplete = () => {
       console.log(
         `[API Cache] Transaction committed successfully, deleted ${deletedCount} entries`,
@@ -237,7 +230,6 @@ async function invalidateCachePatternImpl(pattern: string): Promise<number> {
       reject(transaction.error);
     };
 
-    // Use a cursor-based approach for better performance and reliability
     const request = store.openCursor();
 
     request.onerror = () => {
@@ -261,11 +253,8 @@ async function invalidateCachePatternImpl(pattern: string): Promise<number> {
           }
         }
 
-        // Continue to next entry
         cursor.continue();
       } else {
-        // Cursor done - mark as complete
-        cursorComplete = true;
         console.log(
           `[API Cache] Cursor completed, waiting for transaction commit... (${deletedCount} entries marked for deletion)`,
         );
@@ -431,7 +420,6 @@ export async function clearAllCache(): Promise<void> {
 
       console.log("[API Cache] Background: Clearing all cache entries...");
 
-      // Use a cursor-based approach for better performance
       const request = store.openCursor();
 
       request.onerror = () => {
@@ -454,7 +442,6 @@ export async function clearAllCache(): Promise<void> {
 
           cursor.continue();
         } else {
-          // Cursor done
           console.log(
             `[API Cache] Background: Completed, cleared ${clearedCount} entries`,
           );

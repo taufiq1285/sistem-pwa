@@ -55,7 +55,7 @@ import {
 import { getJadwal } from "@/lib/api/jadwal.api";
 import { getKelas } from "@/lib/api/kelas.api";
 import { notifyDosenLogbookSubmitted } from "@/lib/api/notification.api";
-import { cacheAPI, getCachedData } from "@/lib/offline/api-cache";
+import { cacheAPI, getCachedData, invalidateCache } from "@/lib/offline/api-cache";
 import type {
   LogbookEntry,
   CreateLogbookData,
@@ -239,13 +239,30 @@ export default function MahasiswaLogbookPage() {
           const { data, error } = await supabase
             .from("kelas_mahasiswa")
             .select("kelas_id")
-            .eq("mahasiswa_id", user.mahasiswa.id);
+            .eq("mahasiswa_id", user.mahasiswa.id)
+            .eq("is_active", true);
 
           if (error) {
             throw error;
           }
 
-          return (data || []) as Array<{ kelas_id: string }>;
+          const enrolledKelasIds = (data || []).map((item) => item.kelas_id);
+
+          if (enrolledKelasIds.length === 0) {
+            return [] as Array<{ kelas_id: string }>;
+          }
+
+          const { data: activeKelas, error: activeKelasError } = await supabase
+            .from("kelas")
+            .select("id")
+            .in("id", enrolledKelasIds)
+            .eq("is_active", true);
+
+          if (activeKelasError) {
+            throw activeKelasError;
+          }
+
+          return (activeKelas || []).map((kelas) => ({ kelas_id: kelas.id }));
         },
         {
           ttl: 20 * 60 * 1000,
@@ -468,7 +485,8 @@ export default function MahasiswaLogbookPage() {
             .from("kelas")
             .select("dosen_id, mata_kuliah_id, nama_kelas")
             .eq("id", selectedLogbook.jadwal.kelas_id)
-            .single();
+            .eq("is_active", true)
+            .maybeSingle();
 
           if (kelasData?.dosen_id) {
             // Get dosen's user_id
@@ -485,7 +503,8 @@ export default function MahasiswaLogbookPage() {
                     .from("mata_kuliah")
                     .select("nama_mk")
                     .eq("id", kelasData.mata_kuliah_id)
-                    .single()
+                    .eq("is_active", true)
+                    .maybeSingle()
                 : null;
 
               notifyDosenLogbookSubmitted(
@@ -533,7 +552,8 @@ export default function MahasiswaLogbookPage() {
     try {
       await deleteLogbook(id);
       toast.success("Logbook berhasil dihapus");
-      loadData();
+      if (logbookCacheKey) await invalidateCache(logbookCacheKey);
+      loadData(true);
     } catch (error: any) {
       console.error("Error deleting logbook:", error);
       toast.error(error.message || "Gagal menghapus logbook");

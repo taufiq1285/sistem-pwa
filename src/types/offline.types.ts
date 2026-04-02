@@ -28,7 +28,8 @@ export type SyncEntity =
   | "nilai"
   | "materi"
   | "kelas"
-  | "user";
+  | "user"
+  | "kehadiran";
 
 /**
  * Sync queue item
@@ -211,7 +212,9 @@ export type StoreName =
   | "offline_quiz"
   | "offline_questions"
   | "offline_answers"
-  | "offline_attempts";
+  | "offline_attempts"
+  | "kehadiran"
+  | "jadwal";
 
 /**
  * Database metadata

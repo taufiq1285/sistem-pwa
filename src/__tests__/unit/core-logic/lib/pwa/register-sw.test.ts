@@ -366,8 +366,9 @@ describe("register-sw", () => {
       }
 
       expect(newWorker.addEventListener).toHaveBeenCalled();
-      // onUpdate should NOT be called because there's no controller
-      expect(onUpdate).not.toHaveBeenCalled();
+      // onUpdate sekarang dipanggil saat worker baru selesai terpasang,
+      // meskipun belum ada controller aktif.
+      expect(onUpdate).toHaveBeenCalledWith(registrationWithListener as any);
     });
 
     it("should handle worker state change to activated", async () => {
@@ -860,7 +861,10 @@ describe("register-sw", () => {
 
   describe("skipWaiting - Update Activation", () => {
     it("should skip waiting and send message to SW", async () => {
-      const waitingWorker = { state: "installed" };
+      const waitingWorker = {
+        state: "installed",
+        postMessage: vi.fn(),
+      };
       const registrationWithWaiting = {
         ...mockRegistration,
         waiting: waitingWorker,
@@ -869,15 +873,10 @@ describe("register-sw", () => {
       mockServiceWorker.getRegistration.mockResolvedValue(
         registrationWithWaiting,
       );
-      mockServiceWorker.controller = {
-        postMessage: vi.fn(),
-      };
-
       await registerSW.skipWaiting();
 
-      expect(mockServiceWorker.controller.postMessage).toHaveBeenCalledWith({
+      expect(waitingWorker.postMessage).toHaveBeenCalledWith({
         type: "SKIP_WAITING",
-        timestamp: expect.any(Number),
       });
     });
 
@@ -894,7 +893,10 @@ describe("register-sw", () => {
     });
 
     it("should setup controllerchange listener", async () => {
-      const waitingWorker = { state: "installed" };
+      const waitingWorker = {
+        state: "installed",
+        postMessage: vi.fn(),
+      };
       const registrationWithWaiting = {
         ...mockRegistration,
         waiting: waitingWorker,
@@ -903,10 +905,6 @@ describe("register-sw", () => {
       mockServiceWorker.getRegistration.mockResolvedValue(
         registrationWithWaiting,
       );
-      mockServiceWorker.controller = {
-        postMessage: vi.fn(),
-      };
-
       await registerSW.skipWaiting();
 
       expect(mockServiceWorker.addEventListener).toHaveBeenCalledWith(
@@ -917,7 +915,10 @@ describe("register-sw", () => {
     });
 
     it("should reload page on controllerchange", async () => {
-      const waitingWorker = { state: "installed" };
+      const waitingWorker = {
+        state: "installed",
+        postMessage: vi.fn(),
+      };
       const registrationWithWaiting = {
         ...mockRegistration,
         waiting: waitingWorker,
@@ -955,7 +956,10 @@ describe("register-sw", () => {
     });
 
     it("should not reload multiple times (prevent update loops)", async () => {
-      const waitingWorker = { state: "installed" };
+      const waitingWorker = {
+        state: "installed",
+        postMessage: vi.fn(),
+      };
       const registrationWithWaiting = {
         ...mockRegistration,
         waiting: waitingWorker,
@@ -964,10 +968,6 @@ describe("register-sw", () => {
       mockServiceWorker.getRegistration.mockResolvedValue(
         registrationWithWaiting,
       );
-      mockServiceWorker.controller = {
-        postMessage: vi.fn(),
-      };
-
       let controllerChangeHandler: (() => void) | null = null;
 
       mockServiceWorker.addEventListener = vi.fn((event, handler) => {
@@ -1649,7 +1649,13 @@ describe("register-sw", () => {
     });
 
     it("branch: if (!isReloading) - reload once", async () => {
-      const waitingWorker = { state: "installed" };
+      const waitingWorker: {
+        state: string;
+        postMessage: ReturnType<typeof vi.fn>;
+      } = {
+        state: "installed",
+        postMessage: vi.fn(),
+      };
 
       const registrationWithWaiting = {
         ...mockRegistration,
@@ -1659,9 +1665,6 @@ describe("register-sw", () => {
       mockServiceWorker.getRegistration.mockResolvedValue(
         registrationWithWaiting,
       );
-      mockServiceWorker.controller = {
-        postMessage: vi.fn(),
-      };
 
       let controllerChangeHandler: (() => void) | null = null;
 
@@ -1790,7 +1793,10 @@ describe("register-sw", () => {
     });
 
     it("Path 7: skipWaiting → Waiting worker → Send SKIP_WAITING", async () => {
-      const waitingWorker = { state: "installed" };
+      const waitingWorker = {
+        state: "installed",
+        postMessage: vi.fn(),
+      };
 
       const registrationWithWaiting = {
         ...mockRegistration,
@@ -1800,13 +1806,9 @@ describe("register-sw", () => {
       mockServiceWorker.getRegistration.mockResolvedValue(
         registrationWithWaiting,
       );
-      mockServiceWorker.controller = {
-        postMessage: vi.fn(),
-      };
-
       await registerSW.skipWaiting();
 
-      expect(mockServiceWorker.controller.postMessage).toHaveBeenCalledWith(
+      expect(waitingWorker.postMessage).toHaveBeenCalledWith(
         expect.objectContaining({ type: "SKIP_WAITING" }),
       );
     });
@@ -1856,7 +1858,13 @@ describe("register-sw", () => {
       expect(mockServiceWorker.register).toHaveBeenCalled();
 
       // 2. Update available
-      const waitingWorker = { state: "installed" };
+      const waitingWorker: {
+        state: string;
+        postMessage: ReturnType<typeof vi.fn>;
+      } = {
+        state: "installed",
+        postMessage: vi.fn(),
+      };
       const registrationWithWaiting = {
         ...mockRegistration,
         waiting: waitingWorker,
@@ -1865,14 +1873,11 @@ describe("register-sw", () => {
       mockServiceWorker.getRegistration.mockResolvedValue(
         registrationWithWaiting,
       );
-      mockServiceWorker.controller = {
-        postMessage: vi.fn(),
-      };
 
       // 3. Skip waiting
       await registerSW.skipWaiting();
 
-      expect(mockServiceWorker.controller.postMessage).toHaveBeenCalledWith(
+      expect(waitingWorker.postMessage).toHaveBeenCalledWith(
         expect.objectContaining({ type: "SKIP_WAITING" }),
       );
     });

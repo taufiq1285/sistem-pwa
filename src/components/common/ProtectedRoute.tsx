@@ -16,26 +16,11 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const BYPASS_AUTH = false;
 
   if (BYPASS_AUTH) {
-    console.log("🔓 AUTH BYPASSED FOR TESTING");
     return children ? <>{children}</> : <Outlet />;
   }
 
-  // Hooks tadinya ada di sini, sekarang sudah dipindah ke atas
-
-  console.log("🔐 ProtectedRoute Check:", {
-    path: location.pathname,
-    loading,
-    initialized,
-    isAuthenticated,
-    timestamp: new Date().toISOString(),
-  });
-
   // Show minimal loading - cache makes this very fast!
   if (loading || !initialized) {
-    console.log(
-      "⏳ ProtectedRoute: LOADING STATE (should be fast with cache!)",
-      { loading, initialized },
-    );
     return (
       <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-primary/5 to-accent/10 dark:from-gray-900 dark:to-gray-800">
         <div className="text-center">
@@ -55,16 +40,8 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   }
 
   if (!isAuthenticated) {
-    console.log("❌ ProtectedRoute: NOT AUTHENTICATED, redirecting to login", {
-      attemptedPath: location.pathname,
-      redirectTo: ROUTES.LOGIN,
-    });
     return <Navigate to={ROUTES.LOGIN} state={{ from: location }} replace />;
   }
-
-  console.log("✅ ProtectedRoute: AUTHENTICATED, rendering children", {
-    path: location.pathname,
-  });
 
   return children ? <>{children}</> : <Outlet />;
 }

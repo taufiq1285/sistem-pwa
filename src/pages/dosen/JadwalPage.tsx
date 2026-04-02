@@ -104,7 +104,7 @@ import type {
   CalendarEvent,
 } from "@/types/jadwal.types";
 import { HARI_OPTIONS, JAM_PRAKTIKUM } from "@/types/jadwal.types";
-import { cacheAPI, getCachedData } from "@/lib/offline/api-cache";
+import { cacheAPI, getCachedData, invalidateCache } from "@/lib/offline/api-cache";
 import { supabase } from "@/lib/supabase/client";
 
 // ============================================================================
@@ -891,7 +891,9 @@ export default function JadwalPage() {
 
       setIsDeleteOpen(false);
       setSelectedJadwal(null);
-      fetchJadwal();
+      await invalidateCache(scheduleCacheKeys.jadwal);
+      await invalidateCache(scheduleCacheKeys.events);
+      fetchJadwal(true);
     } catch (error: any) {
       toast.error("Gagal menghapus jadwal", {
         description: error.message,

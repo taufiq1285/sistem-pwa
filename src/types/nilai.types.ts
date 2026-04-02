@@ -33,10 +33,12 @@ export interface Nilai extends NilaiTable {
     kode_kelas?: string;
     tahun_ajaran?: string;
     semester_ajaran?: number;
+    is_active?: boolean | null;
     mata_kuliah?: {
       nama_mk: string;
       kode_mk?: string;
       sks?: number;
+      is_active?: boolean | null;
     };
   };
 }

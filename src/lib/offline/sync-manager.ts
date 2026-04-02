@@ -57,6 +57,7 @@ async function defaultSyncProcessor(item: SyncQueueItem): Promise<void> {
     materi: "materi",
     kelas: "kelas",
     user: "users",
+    kehadiran: "kehadiran",
   };
 
   const table = tableByEntity[item.entity];

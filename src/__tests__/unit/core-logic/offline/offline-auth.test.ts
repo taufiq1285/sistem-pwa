@@ -167,9 +167,18 @@ describe("Offline Authentication", () => {
 
     vi.mocked(indexedDBManager.getMetadata).mockImplementation(
       async (key: string) => {
-        if (key === "offline_credentials") return credentialsData as any;
-        if (key === "online_login_record") return onlineLoginRecord as any;
-        if (key === "offline_session") return storedSession as any;
+        if (key === "offline_credentials_test@example.com") {
+          return credentialsData as any;
+        }
+        if (key === `online_login_record_${mockUser.id}`) {
+          return onlineLoginRecord as any;
+        }
+        if (key === "last_logged_in_user_id") {
+          return storedSession ? mockUser.id : null;
+        }
+        if (key === `offline_session_${mockUser.id}`) {
+          return storedSession as any;
+        }
         return null as any;
       },
     );
@@ -214,7 +223,7 @@ describe("Offline Authentication", () => {
 
       expect(indexedDBManager.initialize).toHaveBeenCalled();
       expect(indexedDBManager.setMetadata).toHaveBeenCalledWith(
-        "offline_credentials",
+        "offline_credentials_test@example.com",
         expect.objectContaining({
           id: mockUser.id,
           email,
@@ -415,7 +424,7 @@ describe("Offline Authentication", () => {
       await verifyOfflineCredentials("test@example.com", "password");
 
       expect(indexedDBManager.setMetadata).toHaveBeenCalledWith(
-        "offline_credentials",
+        "offline_credentials_test@example.com",
         null,
       );
     });
@@ -585,7 +594,7 @@ describe("Offline Authentication", () => {
       await storeOfflineSession(mockUser, mockSession);
 
       expect(indexedDBManager.setMetadata).toHaveBeenCalledWith(
-        "offline_session",
+        "offline_session_user-123",
         expect.objectContaining({
           id: mockUser.id,
           user: mockUser,
@@ -678,18 +687,26 @@ describe("Offline Authentication", () => {
     });
 
     it("should clear expired session automatically", async () => {
-      vi.mocked(indexedDBManager.getMetadata).mockResolvedValue({
-        id: mockUser.id,
-        user: mockUser,
-        session: mockSession,
-        createdAt: Date.now() - 30 * 60 * 60 * 1000,
-        expiresAt: Date.now() - 6 * 60 * 60 * 1000, // Expired
-      });
+      vi.mocked(indexedDBManager.getMetadata).mockImplementation(
+        async (key: string) => {
+          if (key === "last_logged_in_user_id") return mockUser.id as any;
+          if (key === `offline_session_${mockUser.id}`) {
+            return {
+              id: mockUser.id,
+              user: mockUser,
+              session: mockSession,
+              createdAt: Date.now() - 30 * 60 * 60 * 1000,
+              expiresAt: Date.now() - 6 * 60 * 60 * 1000,
+            } as any;
+          }
+          return undefined as any;
+        },
+      );
 
       await restoreOfflineSession();
 
       expect(indexedDBManager.setMetadata).toHaveBeenCalledWith(
-        "offline_session",
+        "offline_session_user-123",
         null,
       );
     });
@@ -968,9 +985,18 @@ describe("Offline Authentication", () => {
 
       vi.mocked(indexedDBManager.getMetadata).mockImplementation(
         async (key: string) => {
-          if (key === "offline_credentials") return credentialsData as any;
-          if (key === "online_login_record") return onlineLoginRecord as any;
-          if (key === "offline_session") return storedSession as any;
+          if (key === "offline_credentials_test@example.com") {
+            return credentialsData as any;
+          }
+          if (key === `online_login_record_${mockUser.id}`) {
+            return onlineLoginRecord as any;
+          }
+          if (key === "last_logged_in_user_id") {
+            return storedSession ? mockUser.id : null;
+          }
+          if (key === `offline_session_${mockUser.id}`) {
+            return storedSession as any;
+          }
           return null as any;
         },
       );
@@ -1133,7 +1159,7 @@ describe("Offline Authentication", () => {
 
       // Should call setMetadata to store the new session
       expect(indexedDBManager.setMetadata).toHaveBeenCalledWith(
-        "offline_session",
+        "offline_session_user-123",
         expect.objectContaining({
           id: mockUser.id,
           user: mockUser,
@@ -1843,7 +1869,7 @@ describe("Offline Authentication", () => {
 
       expect(result).toBe(false);
       expect(indexedDBManager.setMetadata).toHaveBeenCalledWith(
-        "offline_credentials",
+        "offline_credentials_test@example.com",
         null,
       );
     });
@@ -2122,6 +2148,10 @@ describe("Offline Authentication", () => {
         "offline_credentials",
         null,
       );
+      expect(indexedDBManager.setMetadata).toHaveBeenCalledWith(
+        "offline_session",
+        null,
+      );
     });
 
     it("should handle login → use → logout cycle", async () => {
@@ -2160,6 +2190,10 @@ describe("Offline Authentication", () => {
       await clearAllOfflineAuthData();
       expect(indexedDBManager.setMetadata).toHaveBeenCalledWith(
         "offline_credentials",
+        null,
+      );
+      expect(indexedDBManager.setMetadata).toHaveBeenCalledWith(
+        "offline_session",
         null,
       );
     });

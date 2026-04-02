@@ -183,7 +183,7 @@ export function DashboardPage() {
         Array.isArray(cachedUsersEntry?.data) ||
         Array.isArray(cachedAnnouncementsEntry?.data);
 
-      if (hasCachedData) {
+      if (hasCachedData && !forceRefresh) {
         setStats(cachedStatsEntry?.data ?? null);
         setUserGrowth(
           Array.isArray(cachedGrowthEntry?.data) ? cachedGrowthEntry.data : [],

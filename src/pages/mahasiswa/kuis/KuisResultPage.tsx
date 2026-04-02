@@ -47,9 +47,6 @@ export default function KuisResultPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  // Debug log
-  console.log("🐛 [KuisResultPage] Route params:", { kuisId, attemptId });
-
   // ============================================================================
   // STATE
   // ============================================================================

@@ -194,7 +194,7 @@ export default function DosenPenilaianPage() {
       // 🎯 Fetch mata kuliah with offline caching
       const mataKuliahData = await cacheAPI(
         `dosen_mata_kuliah_${user?.dosen?.id}`,
-        () => getMataKuliah(),
+        () => getMataKuliah({ is_active: true }),
         {
           ttl: 20 * 60 * 1000, // 20 minutes (mata kuliah jarang berubah)
           forceRefresh,

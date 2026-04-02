@@ -191,7 +191,7 @@ export default function MahasiswaNilaiPageEnhanced() {
       const hasCachedPermintaan = Array.isArray(cachedPermintaanEntry?.data);
       const hasAnyCachedData = hasCachedNilai || hasCachedPermintaan;
 
-      if (hasAnyCachedData) {
+      if (hasAnyCachedData && !forceRefresh) {
         setNilaiList(hasCachedNilai ? cachedNilaiEntry!.data : []);
         setPermintaanList(
           hasCachedPermintaan ? cachedPermintaanEntry!.data : [],
@@ -252,9 +252,19 @@ export default function MahasiswaNilaiPageEnhanced() {
     }
   };
 
+  const activeNilaiList = useMemo(
+    () =>
+      nilaiList.filter((nilai) => {
+        const kelasActive = nilai.kelas?.is_active ?? true;
+        const mataKuliahActive = nilai.kelas?.mata_kuliah?.is_active ?? true;
+        return kelasActive && mataKuliahActive;
+      }),
+    [nilaiList],
+  );
+
   // Filter nilai
   const getFilteredNilai = (): Nilai[] => {
-    let filtered = [...nilaiList];
+    let filtered = [...activeNilaiList];
 
     if (selectedSemester !== "all") {
       filtered = filtered.filter(
@@ -336,7 +346,7 @@ export default function MahasiswaNilaiPageEnhanced() {
       ] as number;
 
       await createPermintaan({
-        mahasiswa_id: user!.mahasiswa!.id,
+        mahasiswa_id: user?.mahasiswa?.id ?? "",
         nilai_id: selectedNilai.id,
         kelas_id: selectedNilai.kelas_id,
         komponen_nilai: komponenNilai,
@@ -359,7 +369,7 @@ export default function MahasiswaNilaiPageEnhanced() {
   // Helpers
   const getSemesterOptions = () => {
     const semesters = new Set(
-      nilaiList
+      activeNilaiList
         .map((n) => n.kelas?.semester_ajaran)
         .filter((s) => s !== undefined),
     );
@@ -368,7 +378,7 @@ export default function MahasiswaNilaiPageEnhanced() {
 
   const getTahunAjaranOptions = () => {
     const years = new Set(
-      nilaiList
+      activeNilaiList
         .map((n) => n.kelas?.tahun_ajaran)
         .filter((y) => y !== undefined),
     );
@@ -480,7 +490,7 @@ export default function MahasiswaNilaiPageEnhanced() {
         )}
 
         {/* Statistics Cards */}
-        {nilaiList.length > 0 && (
+        {activeNilaiList.length > 0 && (
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <DashboardCard
               title="Total Nilai"

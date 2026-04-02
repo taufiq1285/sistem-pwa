@@ -81,18 +81,33 @@ describe("Mahasiswa LogbookPage", () => {
   it("menampilkan daftar logbook ketika data tersedia", async () => {
     mockSupabaseFrom.mockImplementation((table: string) => {
       if (table === "kelas_mahasiswa") {
-        return {
+        const chain = {
           select: vi.fn().mockReturnThis(),
-          eq: vi
-            .fn()
-            .mockResolvedValue({ data: [{ kelas_id: "k1" }], error: null }),
+          eq: vi.fn().mockReturnThis(),
+        } as any;
+        chain.eq.mockImplementation((column: string, value: unknown) => {
+          if (column === "is_active" && value === true) {
+            return Promise.resolve({ data: [{ kelas_id: "k1" }], error: null });
+          }
+          return chain;
+        });
+        return chain;
+      }
+
+      if (table === "kelas") {
+        const chain = {
+          select: vi.fn().mockReturnThis(),
+          in: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockResolvedValue({ data: [{ id: "k1" }], error: null }),
         };
+        return chain;
       }
 
       return {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
         single: vi.fn().mockResolvedValue({ data: null, error: null }),
+        maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
       };
     });
 
@@ -138,18 +153,33 @@ describe("Mahasiswa LogbookPage", () => {
   it("menampilkan empty state saat belum ada logbook", async () => {
     mockSupabaseFrom.mockImplementation((table: string) => {
       if (table === "kelas_mahasiswa") {
-        return {
+        const chain = {
           select: vi.fn().mockReturnThis(),
-          eq: vi
-            .fn()
-            .mockResolvedValue({ data: [{ kelas_id: "k1" }], error: null }),
+          eq: vi.fn().mockReturnThis(),
+        } as any;
+        chain.eq.mockImplementation((column: string, value: unknown) => {
+          if (column === "is_active" && value === true) {
+            return Promise.resolve({ data: [{ kelas_id: "k1" }], error: null });
+          }
+          return chain;
+        });
+        return chain;
+      }
+
+      if (table === "kelas") {
+        const chain = {
+          select: vi.fn().mockReturnThis(),
+          in: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockResolvedValue({ data: [{ id: "k1" }], error: null }),
         };
+        return chain;
       }
 
       return {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
         single: vi.fn().mockResolvedValue({ data: null, error: null }),
+        maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
       };
     });
 

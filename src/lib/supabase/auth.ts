@@ -706,22 +706,39 @@ export function onAuthStateChange(
       });
     }
 
+    // ✅ FIX: SIGNED_IN dari login() sudah ditangani langsung oleh login() function.
+    // onAuthStateChange tidak perlu fetch ulang profile untuk SIGNED_IN —
+    // ini menghindari double getUserProfile() yang memperlambat login.
+    // Hanya TOKEN_REFRESHED dan USER_UPDATED yang perlu dihandle di sini.
+    if (event === "SIGNED_IN") {
+      logger.debug("onAuthStateChange: SIGNED_IN — skipping (handled by login())");
+      return;
+    }
+
     if (session?.user) {
       try {
-        // For SIGNED_IN event (new registration), retry with delay to avoid race condition
-        if (event === "SIGNED_IN") {
-          // Wait a bit for profile creation to complete
-          await new Promise((resolve) => setTimeout(resolve, 500));
+        // TOKEN_REFRESHED: perlu fetch ulang profile karena session baru
+        if (event === "TOKEN_REFRESHED") {
+          const user = await getUserProfile(session.user.id);
+          logger.debug("onAuthStateChange: TOKEN_REFRESHED profile loaded", {
+            userId: user.id,
+            role: user.role,
+          });
+          callback({
+            user,
+            access_token: session.access_token,
+            refresh_token: session.refresh_token,
+            expires_at: session.expires_at,
+          });
+          return;
         }
 
-        // Fetch full profile from database
+        // Event lain (USER_UPDATED, PASSWORD_RECOVERY, dsb)
         const user = await getUserProfile(session.user.id);
-
         logger.debug("onAuthStateChange: Profile loaded", {
           userId: user.id,
           role: user.role,
         });
-
         callback({
           user,
           access_token: session.access_token,
@@ -732,7 +749,6 @@ export function onAuthStateChange(
         const errorMsg = (error as Error).message || "";
 
         // If user was deleted or profile not ready yet, just return null silently
-        // (This is normal during registration - profile is being created)
         if (errorMsg.includes("deleted") || errorMsg.includes("0 rows")) {
           logger.debug("onAuthStateChange: Profile not ready yet, skipping");
           callback(null);

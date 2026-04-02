@@ -18,6 +18,7 @@ export interface MataKuliah {
   semester: number;
   program_studi: string;
   deskripsi?: string;
+  is_active?: boolean | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -74,6 +75,7 @@ export interface UpdateMataKuliahData {
   semester?: number;
   program_studi?: string;
   deskripsi?: string;
+  is_active?: boolean | null;
 }
 
 // ============================================================================
@@ -88,6 +90,7 @@ export interface MataKuliahFilters {
   program_studi?: string;
   semester?: number;
   sks?: number;
+  is_active?: boolean;
   sortBy?: "kode_mk" | "nama_mk" | "semester" | "sks" | "created_at";
   sortOrder?: "asc" | "desc";
 }

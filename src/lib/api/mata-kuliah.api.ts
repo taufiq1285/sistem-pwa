@@ -55,6 +55,14 @@ export async function getMataKuliah(
       });
     }
 
+    if (filters?.is_active !== undefined) {
+      filterConditions.push({
+        column: "is_active",
+        operator: "eq" as const,
+        value: filters.is_active,
+      });
+    }
+
     if (filters?.semester) {
       filterConditions.push({
         column: "semester",
@@ -352,35 +360,7 @@ async function deleteMataKuliahImpl(
     ]);
 
     if (kelasCount > 0) {
-      // Default: DETACH (set mata_kuliah_id to NULL)
-      if (options.detach !== false) {
-        logError(
-          {
-            message: `Detaching ${kelasCount} kelas from mata kuliah ${id}`,
-          } as any,
-          "deleteMataKuliah:detach",
-        );
-
-        // Get all related kelas
-        const kelasList = await queryWithFilters("kelas", [
-          { column: "mata_kuliah_id", operator: "eq", value: id },
-        ]);
-
-        // Set mata_kuliah_id to NULL for each kelas
-        // This allows kelas to exist independently
-        for (const kelas of kelasList) {
-          await update("kelas", kelas.id, {
-            mata_kuliah_id: null,
-          });
-        }
-
-        logError(
-          {
-            message: `Successfully detached ${kelasCount} kelas. Kelas will continue to exist without mata kuliah reference.`,
-          } as any,
-          "deleteMataKuliah:detach",
-        );
-      } else if (options.cascade) {
+      if (options.cascade) {
         // CASCADE DELETE: Delete all related kelas (destructive!)
         logError(
           {
@@ -402,14 +382,24 @@ async function deleteMataKuliahImpl(
           "deleteMataKuliah:cascade",
         );
       } else {
-        // Neither detach nor cascade - prevent deletion
-        throw new Error(
-          `Cannot delete mata kuliah. Found ${kelasCount} active kelas. Please choose to either detach kelas or cascade delete.`,
+        // SAFER DEFAULT: archive/nonaktifkan mata kuliah yang sudah dipakai
+        // agar histori kelas tetap utuh dan tidak melanggar constraint assignment.
+        logError(
+          {
+            message: `Archiving mata kuliah ${id} because it is still used by ${kelasCount} kelas`,
+          } as any,
+          "deleteMataKuliah:archive",
         );
+
+        await update<MataKuliah>("mata_kuliah", id, {
+          is_active: false,
+        } as UpdateMataKuliahData);
+
+        return true;
       }
     }
 
-    // Now safe to delete mata kuliah
+    // If no kelas uses this mata kuliah, safe to remove/soft-delete it.
     return await remove("mata_kuliah", id);
   } catch (error) {
     const apiError = handleError(error);

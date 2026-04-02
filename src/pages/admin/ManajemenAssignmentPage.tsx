@@ -636,7 +636,6 @@ export default function ManajemenAssignmentPage() {
   // Fetch dropdown data
   useEffect(() => {
     const fetchDropdownData = async () => {
-      console.log("🔍 [DEBUG] Starting fetchDropdownData...");
       const supabaseAny = supabase as any;
 
       const [dosenResult, labResult, kelasResult, mataKuliahResult] =
@@ -659,72 +658,23 @@ export default function ManajemenAssignmentPage() {
             .order("nama_mk"),
         ]);
 
-      // Debug: Log errors
-      console.log("📊 [DEBUG] dosenResult:", {
-        error: dosenResult.error,
-        data: dosenResult.data,
-        dataLength: dosenResult.data?.length || 0,
-      });
-
       if (dosenResult.error) {
         console.error("❌ Error fetching dosen dropdown:", dosenResult.error);
         toast.error("Gagal memuat data dosen", {
           description: dosenResult.error.message || "RLS policy error",
         });
-      } else {
-        console.log(
-          "✅ Dosen dropdown loaded:",
-          dosenResult.data?.length || 0,
-          "items",
-        );
-        if (dosenResult.data && dosenResult.data.length > 0) {
-          console.log(
-            "📋 [DEBUG] Sample dosen data:",
-            dosenResult.data.slice(0, 2),
-          );
-        }
       }
-
-      console.log("📊 [DEBUG] labResult:", {
-        error: labResult.error,
-        data: labResult.data,
-        dataLength: labResult.data?.length || 0,
-      });
 
       if (labResult.error) {
         console.error("❌ Error fetching lab dropdown:", labResult.error);
-      } else {
-        console.log(
-          "✅ Lab dropdown loaded:",
-          labResult.data?.length || 0,
-          "items",
-        );
       }
-
-      console.log("📊 [DEBUG] kelasResult:", {
-        error: kelasResult.error,
-        data: kelasResult.data,
-        dataLength: kelasResult.data?.length || 0,
-      });
 
       if (kelasResult.error) {
         console.error("❌ Error fetching kelas dropdown:", kelasResult.error);
         toast.error("Gagal memuat data kelas", {
           description: kelasResult.error.message || "RLS policy error",
         });
-      } else {
-        console.log(
-          "✅ Kelas dropdown loaded:",
-          kelasResult.data?.length || 0,
-          "items",
-        );
       }
-
-      console.log("📊 [DEBUG] mataKuliahResult:", {
-        error: mataKuliahResult.error,
-        data: mataKuliahResult.data,
-        dataLength: mataKuliahResult.data?.length || 0,
-      });
 
       if (mataKuliahResult.error) {
         console.error(
@@ -734,46 +684,12 @@ export default function ManajemenAssignmentPage() {
         toast.error("Gagal memuat data mata kuliah", {
           description: mataKuliahResult.error.message || "RLS policy error",
         });
-      } else {
-        console.log(
-          "✅ Mata kuliah dropdown loaded:",
-          mataKuliahResult.data?.length || 0,
-          "items",
-        );
       }
 
-      if (dosenResult.data) {
-        console.log(
-          "💾 [DEBUG] Setting dosenList with",
-          dosenResult.data.length,
-          "items",
-        );
-        setDosenList(dosenResult.data);
-      }
-      if (labResult.data) {
-        console.log(
-          "💾 [DEBUG] Setting labList with",
-          labResult.data.length,
-          "items",
-        );
-        setLabList(labResult.data);
-      }
-      if (kelasResult.data) {
-        console.log(
-          "💾 [DEBUG] Setting kelasList with",
-          kelasResult.data.length,
-          "items",
-        );
-        setKelasList(kelasResult.data);
-      }
-      if (mataKuliahResult.data) {
-        console.log(
-          "💾 [DEBUG] Setting mataKuliahList with",
-          mataKuliahResult.data.length,
-          "items",
-        );
-        setMataKuliahList(mataKuliahResult.data);
-      }
+      if (dosenResult.data) setDosenList(dosenResult.data);
+      if (labResult.data) setLabList(labResult.data);
+      if (kelasResult.data) setKelasList(kelasResult.data);
+      if (mataKuliahResult.data) setMataKuliahList(mataKuliahResult.data);
     };
 
     fetchDropdownData();

@@ -372,7 +372,7 @@ export default function AcademicAssignmentPage() {
         <DashboardCard
           title="Assignment Complete"
           value={kelasList.filter((k) => k.dosen_id && k.mata_kuliah_id).length}
-          description={`${Math.round((kelasList.filter((k) => k.dosen_id && k.mata_kuliah_id).length / kelasList.length) * 100)}% dari total`}
+          description={`${Math.round((kelasList.filter((k) => k.dosen_id && k.mata_kuliah_id).length / (kelasList.length || 1)) * 100)}% dari total`}
           icon={CheckCircle}
           color="accent"
         />

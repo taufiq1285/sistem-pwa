@@ -223,28 +223,14 @@ async function deleteKelasImpl(id: string): Promise<void> {
   try {
     console.log(`🗑️ Attempting to delete kelas with id: ${id}`);
 
-    // First, let's check if the kelas exists
-    const { data: kelasCheck, error: checkError } = await supabase
-      .from("kelas")
-      .select("id, nama_kelas")
-      .eq("id", id)
-      .single();
+    // Use soft delete directly.
+    // This matches admin kelas behavior better and avoids a separate pre-check
+    // query that can fail with RLS/empty-result mismatch before the update runs.
+    await update<Kelas>("kelas", id, {
+      is_active: false,
+    });
 
-    if (checkError) {
-      console.error("❌ Error checking kelas existence:", checkError);
-      throw new Error(
-        `Kelas not found or cannot be accessed: ${checkError.message}`,
-      );
-    }
-
-    console.log(
-      `✅ Found kelas: ${kelasCheck?.nama_kelas} (${kelasCheck?.id})`,
-    );
-
-    // Now try to delete
-    await remove("kelas", id);
-
-    console.log(`✅ Successfully deleted kelas: ${id}`);
+    console.log(`✅ Successfully archived kelas: ${id}`);
   } catch (error: unknown) {
     console.error("❌ Error deleting kelas:", error);
 

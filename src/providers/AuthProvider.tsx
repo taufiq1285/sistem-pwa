@@ -56,11 +56,12 @@ function getCachedAuth(): {
 
     const data: AuthCache = JSON.parse(cached);
 
-    // Invalidate cache if version mismatch or older than 24 hours (increased from 1 hour)
-    const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+    // Invalidate cache if version mismatch or older than 7 days
+    // 7 hari agar konsisten dengan offline session expiry (SESSION_EXPIRY di offline-auth.ts)
+    const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
     if (
       data.version !== CACHE_VERSION ||
-      Date.now() - data.timestamp > TWENTY_FOUR_HOURS
+      Date.now() - data.timestamp > SEVEN_DAYS
     ) {
       localStorage.removeItem(AUTH_CACHE_KEY);
       return null;
@@ -277,9 +278,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
             if (offlineSession) {
               logger.auth("Fallback to offline session after error");
               updateAuthState(offlineSession.user, offlineSession.session);
+            } else {
+              // ✅ FIX: Pastikan state di-reset ke null agar app tidak stuck
+              updateAuthState(null, null);
             }
           } catch (offlineError) {
             logger.error("Failed to restore offline session:", offlineError);
+            // ✅ FIX: Juga reset state jika restore offline session gagal
+            updateAuthState(null, null);
           }
           setInitialized(true);
           setLoading(false);
@@ -306,6 +312,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
             return;
           }
 
+          // ✅ FIX: Jika initialCache ada dan Supabase emit null di awal startup,
+          // jangan timpa cache yang valid. Biarkan initAuth() yang menangani verifikasi.
+          // Supabase kadang emit SIGNED_OUT dulu sebelum SIGNED_IN saat token refresh.
+          if (!newSession && initialCache?.user && !logoutFlag) {
+            logger.auth(
+              "onAuthStateChange: Ignoring null session - initialCache still valid (Supabase init event)",
+            );
+            return;
+          }
+
           if (newSession) {
             // Store new session to offline storage
             storeOfflineSession(newSession.user, newSession).catch((error) => {
@@ -316,6 +332,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
             });
           }
           updateAuthState(newSession?.user || null, newSession);
+          // ✅ FIX: Pastikan initialized=true jika belum (misal saat initialCache null)
+          setInitialized(true);
           setLoading(false);
         }
       },
@@ -341,25 +359,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
           // Clear stale auth state before starting a fresh login.
           // This prevents old logout flags / persisted sessions from
           // interfering with the next SIGNED_IN event.
+          // ✅ CATATAN: Tidak perlu signOut() di sini — sudah dilakukan saat logout sebelumnya.
+          // Memanggil signOut() sebelum login justru memperlambat karena menghapus semua
+          // sb-* keys dari localStorage sehingga Supabase client harus re-init dari awal.
           clearCachedAuth();
           clearLogoutFlag();
           await clearOfflineSession().catch((error) => {
             logger.warn("Pre-login offline session cleanup failed:", error);
           });
-
-          const authApiWithLogout = authApi as typeof authApi & {
-            logout?: () => Promise<{ success: boolean; error?: string }>;
-            signOut?: () => Promise<{ success: boolean; error?: string }>;
-          };
-
-          const performPreLoginLogout =
-            authApiWithLogout.logout || authApiWithLogout.signOut;
-
-          if (performPreLoginLogout) {
-            await performPreLoginLogout().catch((error) => {
-              logger.warn("Pre-login Supabase cleanup failed:", error);
-            });
-          }
 
           const response = await authApi.login(credentials);
 
@@ -387,6 +394,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
             // Record that user has logged in online (required for offline access)
             await recordOnlineLogin(response.user, response.session);
             logger.auth("Offline credentials stored successfully");
+
+            // Request persistent storage so browser doesn't evict IndexedDB data
+            if (navigator.storage && navigator.storage.persist) {
+              navigator.storage.persist().then((granted) => {
+                logger.auth(
+                  granted
+                    ? "Persistent storage granted"
+                    : "Persistent storage not granted (browser may evict data)",
+                );
+              });
+            }
           } catch (storageError) {
             console.warn("Failed to store offline credentials:", storageError);
             // Continue with login even if offline storage fails

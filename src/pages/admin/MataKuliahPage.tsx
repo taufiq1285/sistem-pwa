@@ -43,7 +43,7 @@ import type {
   CreateMataKuliahData,
 } from "@/types/mata-kuliah.types";
 
-import { cacheAPI, getCachedData } from "@/lib/offline/api-cache";
+import { cacheAPI, getCachedData, invalidateCache } from "@/lib/offline/api-cache";
 
 export default function MataKuliahPage() {
   const [mataKuliahList, setMataKuliahList] = useState<MataKuliah[]>([]);
@@ -95,7 +95,7 @@ export default function MataKuliahPage() {
       const cachedEntry = await getCachedData<MataKuliah[]>(cacheKey);
       const hasCachedData = Array.isArray(cachedEntry?.data);
 
-      if (hasCachedData) {
+      if (hasCachedData && !forceRefresh) {
         setMataKuliahList(cachedEntry.data);
         setIsOfflineData(!navigator.onLine);
         setLastUpdatedAt(cachedEntry.timestamp || null);
@@ -110,11 +110,15 @@ export default function MataKuliahPage() {
         );
       }
 
-      const data = await cacheAPI(cacheKey, () => getMataKuliah(), {
-        ttl: 10 * 60 * 1000,
-        forceRefresh,
-        staleWhileRevalidate: true,
-      });
+      const data = await cacheAPI(
+        cacheKey,
+        () => getMataKuliah({ is_active: true }),
+        {
+          ttl: 10 * 60 * 1000,
+          forceRefresh,
+          staleWhileRevalidate: true,
+        },
+      );
       setMataKuliahList(data);
       setIsOfflineData(false);
       setLastUpdatedAt(Date.now());
@@ -195,12 +199,13 @@ export default function MataKuliahPage() {
       toast.success(
         cascade
           ? "Mata kuliah dan semua kelas terkait berhasil dihapus"
-          : "Mata kuliah berhasil dihapus",
+          : "Mata kuliah berhasil dinonaktifkan atau dihapus",
       );
       setIsDeleteDialogOpen(false);
       setShowCascadeDialog(false);
       setDeletingMK(null);
       setCascadeInfo(null);
+      await invalidateCache("admin_mata_kuliah_list");
       await loadMataKuliah(true);
     } catch (error: any) {
       // Check if error is about active kelas

@@ -494,39 +494,27 @@ describe("Mata Kuliah API - CRUD Operations", () => {
       expect(remove).toHaveBeenCalledWith("mata_kuliah", "mk-1");
     });
 
-    it("TC007: should detach kelas by default when kelas exist", async () => {
+    it("TC007: should archive mata kuliah by default when kelas exist", async () => {
       vi.mocked(count).mockResolvedValue(2);
-      vi.mocked(queryWithFilters).mockResolvedValue([
-        { id: "k1", mata_kuliah_id: "mk-1" },
-        { id: "k2", mata_kuliah_id: "mk-1" },
-      ]);
-      vi.mocked(update).mockResolvedValue({} as any);
-      vi.mocked(remove).mockResolvedValue(true);
+      vi.mocked(update).mockResolvedValue({ is_active: false } as any);
 
       await deleteMataKuliah("mk-1");
 
-      expect(update).toHaveBeenCalledTimes(2);
-      expect(update).toHaveBeenCalledWith("kelas", "k1", {
-        mata_kuliah_id: null,
+      expect(update).toHaveBeenCalledTimes(1);
+      expect(update).toHaveBeenCalledWith("mata_kuliah", "mk-1", {
+        is_active: false,
       });
-      expect(update).toHaveBeenCalledWith("kelas", "k2", {
-        mata_kuliah_id: null,
-      });
-      expect(remove).toHaveBeenCalledWith("mata_kuliah", "mk-1");
+      expect(remove).not.toHaveBeenCalled();
     });
 
-    it("TC007: should detach kelas when detach=true explicitly", async () => {
+    it("TC007: should still archive mata kuliah when detach=true explicitly", async () => {
       vi.mocked(count).mockResolvedValue(1);
-      vi.mocked(queryWithFilters).mockResolvedValue([
-        { id: "k1", mata_kuliah_id: "mk-1" },
-      ]);
-      vi.mocked(update).mockResolvedValue({} as any);
-      vi.mocked(remove).mockResolvedValue(true);
+      vi.mocked(update).mockResolvedValue({ is_active: false } as any);
 
       await deleteMataKuliah("mk-1", { detach: true });
 
-      expect(update).toHaveBeenCalledWith("kelas", "k1", {
-        mata_kuliah_id: null,
+      expect(update).toHaveBeenCalledWith("mata_kuliah", "mk-1", {
+        is_active: false,
       });
     });
 
@@ -548,12 +536,16 @@ describe("Mata Kuliah API - CRUD Operations", () => {
       expect(remove).toHaveBeenCalledWith("mata_kuliah", "mk-1");
     });
 
-    it("should prevent deletion when neither detach nor cascade specified", async () => {
+    it("should archive deletion target when neither detach nor cascade specified", async () => {
       vi.mocked(count).mockResolvedValue(5);
+      vi.mocked(update).mockResolvedValue({ is_active: false } as any);
 
       await expect(
         deleteMataKuliah("mk-1", { detach: false, cascade: false }),
-      ).rejects.toThrow("Cannot delete");
+      ).resolves.toBe(true);
+      expect(update).toHaveBeenCalledWith("mata_kuliah", "mk-1", {
+        is_active: false,
+      });
     });
 
     it("should handle deletion errors", async () => {
@@ -841,16 +833,12 @@ describe("Mata Kuliah API - White-Box Testing: Branch Coverage", () => {
 
     it("Branch: kelasCount > 0, detach = true (default)", async () => {
       vi.mocked(count).mockResolvedValue(1);
-      vi.mocked(queryWithFilters).mockResolvedValue([
-        { id: "k1", mata_kuliah_id: "mk-1" },
-      ]);
-      vi.mocked(update).mockResolvedValue({} as any);
-      vi.mocked(remove).mockResolvedValue(true);
+      vi.mocked(update).mockResolvedValue({ is_active: false } as any);
 
       await deleteMataKuliah("mk-1");
 
-      expect(update).toHaveBeenCalledWith("kelas", "k1", {
-        mata_kuliah_id: null,
+      expect(update).toHaveBeenCalledWith("mata_kuliah", "mk-1", {
+        is_active: false,
       });
     });
 
@@ -868,9 +856,10 @@ describe("Mata Kuliah API - White-Box Testing: Branch Coverage", () => {
 
     it("Branch: kelasCount > 0, detach = false, cascade = false", async () => {
       vi.mocked(count).mockResolvedValue(5);
+      vi.mocked(update).mockResolvedValue({ is_active: false } as any);
 
-      await expect(deleteMataKuliah("mk-1", { detach: false })).rejects.toThrow(
-        "Cannot delete",
+      await expect(deleteMataKuliah("mk-1", { detach: false })).resolves.toBe(
+        true,
       );
     });
   });
@@ -1038,12 +1027,13 @@ describe("Mata Kuliah API - White-Box Testing: Path Coverage", () => {
       expect(result).toBe(true);
     });
 
-    it("Path 10: Delete blocked (has kelas, no options)", async () => {
+    it("Path 10: Delete archived (has kelas, no options)", async () => {
       vi.mocked(count).mockResolvedValue(5);
+      vi.mocked(update).mockResolvedValue({ is_active: false } as any);
 
       await expect(
         deleteMataKuliah("mk-1", { detach: false }),
-      ).rejects.toThrow();
+      ).resolves.toBe(true);
     });
 
     it("Path 11: Delete error path", async () => {
@@ -1166,10 +1156,11 @@ describe("Mata Kuliah API - White-Box Testing: Condition Coverage", () => {
 
     it("Condition: kelasCount > 0, detach = false, cascade = false", async () => {
       vi.mocked(count).mockResolvedValue(5);
+      vi.mocked(update).mockResolvedValue({ is_active: false } as any);
 
       await expect(
         deleteMataKuliah("mk-1", { detach: false }),
-      ).rejects.toThrow();
+      ).resolves.toBe(true);
     });
   });
 
@@ -1299,13 +1290,11 @@ describe("Mata Kuliah API - White-Box Testing: Loop Coverage", () => {
         .map((_, i) => ({ id: `k${i}` }));
 
       vi.mocked(count).mockResolvedValue(5);
-      vi.mocked(queryWithFilters).mockResolvedValue(kelasList);
-      vi.mocked(update).mockResolvedValue({} as any);
-      vi.mocked(remove).mockResolvedValue(true);
+      vi.mocked(update).mockResolvedValue({ is_active: false } as any);
 
       await deleteMataKuliah("mk-1");
 
-      expect(update).toHaveBeenCalledTimes(5);
+      expect(update).toHaveBeenCalledTimes(1);
     });
   });
 

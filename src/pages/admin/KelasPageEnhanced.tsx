@@ -129,7 +129,7 @@ export default function KelasPageEnhanced() {
 
   const loadKelas = async () => {
     try {
-      const data = await getKelas({ is_active: undefined });
+      const data = await getKelas({ is_active: true });
       setKelasList(data);
     } catch (error: any) {
       console.error("Error loading kelas:", error);

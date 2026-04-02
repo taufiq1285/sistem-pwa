@@ -163,7 +163,19 @@ export default function MahasiswaMateriPage() {
 
           if (enrollmentError) throw enrollmentError;
 
-          const kelasIds = enrollments?.map((e) => e.kelas_id) || [];
+          const enrolledKelasIds = enrollments?.map((e) => e.kelas_id) || [];
+
+          // Keep only active kelas so materi from archived/nonactive classes
+          // does not remain visible for mahasiswa.
+          const { data: activeKelas, error: activeKelasError } = await supabase
+            .from("kelas")
+            .select("id")
+            .in("id", enrolledKelasIds)
+            .eq("is_active", true);
+
+          if (activeKelasError) throw activeKelasError;
+
+          const kelasIds = (activeKelas || []).map((kelas) => kelas.id);
           setEnrolledKelasIds(kelasIds);
 
           // Get all materi and filter by enrolled kelas

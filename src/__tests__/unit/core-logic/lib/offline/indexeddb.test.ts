@@ -139,7 +139,7 @@ describe("IndexedDBManager", () => {
       const info = await dbManager.getDatabaseInfo();
 
       expect(info).toHaveProperty("name", "sistem_praktikum_pwa");
-      expect(info).toHaveProperty("version", 2);
+      expect(info).toHaveProperty("version", 3);
       expect(info).toHaveProperty("stores");
       expect(info).toHaveProperty("totalSize");
       expect(info.stores).toBeInstanceOf(Array);
@@ -527,7 +527,7 @@ describe("IndexedDBManager", () => {
     it("should set db_version metadata on initialization", async () => {
       const version = await dbManager.getMetadata("db_version");
       expect(version).toBeDefined();
-      expect(version).toBe(2);
+      expect(version).toBe(3);
     });
 
     it("should handle different metadata types", async () => {
@@ -582,7 +582,7 @@ describe("IndexedDBManager", () => {
       const info = await dbManager.getDatabaseInfo();
 
       expect(info.name).toBe("sistem_praktikum_pwa");
-      expect(info.version).toBe(2);
+      expect(info.version).toBe(3);
       expect(info.totalSize).toBeGreaterThanOrEqual(2);
     });
   });

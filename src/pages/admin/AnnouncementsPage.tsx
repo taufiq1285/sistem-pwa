@@ -112,15 +112,15 @@ export default function AnnouncementsPage() {
       );
       const hasCachedStats = !!cachedStatsEntry?.data;
 
-      if (hasCachedAnnouncements) {
+      if (hasCachedAnnouncements && !forceRefresh) {
         setAnnouncements(cachedAnnouncementsEntry.data);
       }
 
-      if (hasCachedStats) {
+      if (hasCachedStats && !forceRefresh) {
         setStats(cachedStatsEntry.data);
       }
 
-      if (hasCachedAnnouncements || hasCachedStats) {
+      if ((hasCachedAnnouncements || hasCachedStats) && !forceRefresh) {
         setIsOfflineData(!navigator.onLine);
         setLastUpdatedAt(
           cachedAnnouncementsEntry?.timestamp ||

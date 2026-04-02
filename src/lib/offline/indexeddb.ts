@@ -28,7 +28,7 @@ import type {
 // ============================================================================
 
 const DB_NAME = "sistem_praktikum_pwa";
-const DB_VERSION = 2; // ✅ Incremented for new object stores
+const DB_VERSION = 3; // ✅ v3: added kehadiran & jadwal stores
 
 /**
  * Database schema configuration
@@ -155,6 +155,27 @@ const DB_CONFIG: IndexedDBConfig = {
         { name: "mahasiswa_id", keyPath: "mahasiswa_id" },
         { name: "synced", keyPath: "synced" },
         { name: "cachedAt", keyPath: "cachedAt" },
+      ],
+    },
+    // Kehadiran Store (absensi mahasiswa, untuk offline dosen & mahasiswa)
+    {
+      name: "kehadiran",
+      keyPath: "id",
+      indexes: [
+        { name: "jadwal_id", keyPath: "jadwal_id" },
+        { name: "mahasiswa_id", keyPath: "mahasiswa_id" },
+        { name: "kelas_id", keyPath: "kelas_id" },
+        { name: "tanggal", keyPath: "tanggal" },
+      ],
+    },
+    // Jadwal Store (jadwal praktikum, untuk offline semua role)
+    {
+      name: "jadwal",
+      keyPath: "id",
+      indexes: [
+        { name: "kelas_id", keyPath: "kelas_id" },
+        { name: "dosen_id", keyPath: "dosen_id" },
+        { name: "tanggal", keyPath: "tanggal" },
       ],
     },
   ],

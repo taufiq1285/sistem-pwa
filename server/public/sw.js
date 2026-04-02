@@ -126,6 +126,14 @@ self.addEventListener('activate', (event) => {
       })
       .then(() => {
         console.log('[SW] Old caches cleaned up');
+        // Run initial cleanup of existing caches
+        return Promise.all([
+          cleanupCache(CACHE_NAMES.api, CACHE_CONFIG.maxAge.api, CACHE_CONFIG.maxEntries.api),
+          cleanupCache(CACHE_NAMES.dynamic, CACHE_CONFIG.maxAge.dynamic, CACHE_CONFIG.maxEntries.dynamic),
+          cleanupCache(CACHE_NAMES.images, CACHE_CONFIG.maxAge.images, CACHE_CONFIG.maxEntries.images),
+        ]);
+      })
+      .then(() => {
         // Take control of all clients immediately
         return self.clients.claim();
       })
@@ -247,6 +255,10 @@ async function cacheFirstStrategy(request, cacheName) {
     if (networkResponse && networkResponse.status === 200) {
       const cache = await caches.open(cacheName);
       cache.put(request, networkResponse.clone());
+      // Enforce maxEntries for images cache
+      if (cacheName === CACHE_NAMES.images) {
+        cleanupCache(cacheName, CACHE_CONFIG.maxAge.images, CACHE_CONFIG.maxEntries.images).catch(() => {});
+      }
     }
 
     return networkResponse;
@@ -282,14 +294,15 @@ async function networkFirstStrategy(request, cacheName) {
       signal: controller.signal
     });
 
-    clearTimeout(timeoutId);
-
     // Cache successful responses
     if (networkResponse && networkResponse.status === 200) {
       const cache = await caches.open(cacheName);
       cache.put(request, networkResponse.clone());
+      // Enforce maxEntries for API cache after each write
+      cleanupCache(cacheName, CACHE_CONFIG.maxAge.api, CACHE_CONFIG.maxEntries.api).catch(() => {});
     }
 
+    clearTimeout(timeoutId);
     return networkResponse;
   } catch (error) {
     clearTimeout(timeoutId);
@@ -728,24 +741,5 @@ async function cleanupCache(cacheName, maxAge, maxEntries) {
   await Promise.all(deletePromises);
   console.log(`[SW] Cleaned up ${deletePromises.length} entries from ${cacheName}`);
 }
-
-// Periodic cache cleanup (runs on activation)
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    Promise.all([
-      cleanupCache(CACHE_NAMES.api, CACHE_CONFIG.maxAge.api, CACHE_CONFIG.maxEntries.api),
-      cleanupCache(
-        CACHE_NAMES.dynamic,
-        CACHE_CONFIG.maxAge.dynamic,
-        CACHE_CONFIG.maxEntries.dynamic
-      ),
-      cleanupCache(
-        CACHE_NAMES.images,
-        CACHE_CONFIG.maxAge.images,
-        CACHE_CONFIG.maxEntries.images
-      ),
-    ])
-  );
-});
 
 console.log('[SW] Service Worker loaded successfully', CACHE_VERSION);
