@@ -76,3 +76,8 @@ vite-project@*/
 # Supabase backup artifacts (sensitive)
 backups/supabase/
 
+
+# Large test output files
+testing/load-test/hasil-*.json
+test_json.json
+test_results.txt
