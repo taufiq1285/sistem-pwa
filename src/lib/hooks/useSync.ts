@@ -91,6 +91,7 @@ async function processSyncQueueItem(item: SyncQueueItem): Promise<void> {
     nilai: "nilai",
     materi: "materi",
     kelas: "kelas",
+    kehadiran: "kehadiran",
     user: "users",
   };
 

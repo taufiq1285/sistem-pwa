@@ -43,7 +43,7 @@ export function startSupabaseWarmup(
   const defaultEnabled = envEnabled ?? !import.meta.env.DEV;
 
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
-  const defaultPingUrl = supabaseUrl ? `${supabaseUrl}/rest/v1/` : "";
+  const defaultPingUrl = supabaseUrl ? `${supabaseUrl}/rest/v1/?apikey=${import.meta.env.VITE_SUPABASE_ANON_KEY || ""}` : "";
 
   const finalConfig: Required<SupabaseWarmupConfig> = {
     enabled: config.enabled ?? defaultEnabled,

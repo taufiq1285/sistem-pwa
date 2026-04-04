@@ -416,22 +416,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
           updateAuthState(response.user, response.session);
           setInitialized(true); // ✅ FORCE INITIALIZED AFTER SUCCESSFUL ONLINE LOGIN
         } else {
-          // Offline login
+          // Offline login — error spesifik dilempar langsung dari offlineLogin()
           logger.auth("Offline mode detected - attempting offline login...");
           const offlineResponse = await offlineLogin(
             credentials.email,
             credentials.password,
           );
 
-          if (!offlineResponse) {
+          if (!offlineResponse || !offlineResponse.user || !offlineResponse.session) {
             throw new Error(
-              "Login offline gagal. Anda perlu login online minimal 1x sebelum bisa login offline.",
-            );
-          }
-
-          if (!offlineResponse.user || !offlineResponse.session) {
-            throw new Error(
-              "Data login offline tidak lengkap. Silakan login online terlebih dahulu.",
+              "Login offline gagal. Silakan login online terlebih dahulu.",
             );
           }
 

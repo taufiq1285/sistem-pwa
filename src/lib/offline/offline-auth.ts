@@ -486,21 +486,28 @@ export async function secureOfflineLogin(
     // ✅ FIX: baca credentials per-user pakai key unik per email
     const credentials = (await indexedDBManager.getMetadata(
       `offline_credentials_${email.toLowerCase()}`,
-    )) as any;
+    )) as StoredCredentials | null;
 
-    if (credentials) {
-      const canLogin = await canLoginOffline(email);
-      if (!canLogin) {
-        console.log(
-          "🔒 Blocking offline login - user must login online first:",
-          email,
-        );
-        return null;
-      }
+    if (!credentials) {
+      // User belum pernah login online sama sekali di perangkat ini
+      throw new Error(
+        "Anda belum pernah login di perangkat ini. Silakan login online minimal 1x terlebih dahulu.",
+      );
+    }
+
+    const canLogin = await canLoginOffline(email);
+    if (!canLogin) {
+      console.log(
+        "🔒 Blocking offline login - user must login online first:",
+        email,
+      );
+      throw new Error(
+        "Login offline tidak diizinkan. Anda perlu login online minimal 1x sebelum bisa login offline.",
+      );
     }
 
     const isValid = await verifyOfflineCredentials(email, password);
-    if (!isValid) return null;
+    if (!isValid) throw new Error("Password salah. Periksa kembali password Anda.");
 
     // ✅ FIX: restore session spesifik user ini (pakai credentials.id), bukan last_logged_in
     const credData = (await indexedDBManager.getMetadata(
@@ -524,8 +531,9 @@ export async function secureOfflineLogin(
 
     const userData = await getStoredUserData(email);
     if (!userData) {
-      console.error("❌ User data not found");
-      return null;
+      throw new Error(
+        "Data pengguna tidak ditemukan. Silakan login online terlebih dahulu untuk menyimpan data.",
+      );
     }
 
     const offlineSession: AuthSession = {
@@ -543,26 +551,22 @@ export async function secureOfflineLogin(
       session: offlineSession,
     };
   } catch (error) {
-    console.error("❌ Secure offline login failed:", error);
-    return null;
+    // Re-throw so specific error messages reach the caller (AuthProvider)
+    throw error;
   }
 }
 
 /**
  * Perform offline login
  * Returns user and session if credentials are valid
+ * Throws Error with specific message if login is not allowed
  */
 export async function offlineLogin(
   email: string,
   password: string,
 ): Promise<{ user: AuthUser; session: AuthSession } | null> {
-  try {
-    // Calling the integrated secureOfflineLogin
-    return await secureOfflineLogin(email, password);
-  } catch (error) {
-    console.error("❌ Offline login failed:", error);
-    return null;
-  }
+  // Let errors bubble up so callers get specific error messages
+  return await secureOfflineLogin(email, password);
 }
 
 /**

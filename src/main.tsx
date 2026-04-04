@@ -124,6 +124,46 @@ registerServiceWorker({
 });
 
 /**
+ * Auto-update when user is idle (no activity for IDLE_TIMEOUT ms)
+ * and there is a waiting service worker.
+ *
+ * Safe: does NOT fire during active input events (click, keydown, scroll, touchstart).
+ */
+const IDLE_TIMEOUT_MS = 2 * 60 * 1000; // 2 minutes
+
+function setupIdleAutoUpdate(): void {
+  if (!("serviceWorker" in navigator)) return;
+
+  let idleTimer: ReturnType<typeof setTimeout> | null = null;
+
+  const resetTimer = () => {
+    if (idleTimer) clearTimeout(idleTimer);
+    idleTimer = setTimeout(async () => {
+      const reg = await navigator.serviceWorker.getRegistration();
+      if (!reg?.waiting) return;
+
+      logger.info("[SW] User idle — applying waiting update automatically");
+      reg.waiting.postMessage({ type: "SKIP_WAITING" });
+      navigator.serviceWorker.addEventListener(
+        "controllerchange",
+        () => { window.location.reload(); },
+        { once: true },
+      );
+      // Fallback reload
+      setTimeout(() => { window.location.reload(); }, 5000);
+    }, IDLE_TIMEOUT_MS);
+  };
+
+  const ACTIVITY_EVENTS = ["click", "keydown", "scroll", "touchstart", "mousemove"] as const;
+  ACTIVITY_EVENTS.forEach((e) => window.addEventListener(e, resetTimer, { passive: true }));
+
+  // Start the initial timer
+  resetTimer();
+}
+
+setupIdleAutoUpdate();
+
+/**
  * Show update available notification to user
  */
 function showUpdateAvailableNotification(

@@ -267,11 +267,15 @@ export default function DosenKehadiranPage() {
       }
 
       const [mataKuliahData, kelasData] = await Promise.all([
-        cacheAPI(cacheKeys.mataKuliah, () => getMataKuliah({ is_active: true }), {
-          ttl: 20 * 60 * 1000,
-          forceRefresh,
-          staleWhileRevalidate: true,
-        }),
+        cacheAPI(
+          cacheKeys.mataKuliah,
+          () => getMataKuliah({ is_active: true }),
+          {
+            ttl: 20 * 60 * 1000,
+            forceRefresh,
+            staleWhileRevalidate: true,
+          },
+        ),
         cacheAPI(cacheKeys.kelas, () => getMyKelas(), {
           ttl: 15 * 60 * 1000,
           forceRefresh,

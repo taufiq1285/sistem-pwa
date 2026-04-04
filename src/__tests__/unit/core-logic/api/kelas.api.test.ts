@@ -451,7 +451,10 @@ describe("Kelas API - CRUD Operations", () => {
 
   describe("deleteKelas (TC006)", () => {
     it("TC006: should archive kelas by ID via soft delete", async () => {
-      vi.mocked(update).mockResolvedValue({ ...mockKelas, is_active: false } as any);
+      vi.mocked(update).mockResolvedValue({
+        ...mockKelas,
+        is_active: false,
+      } as any);
 
       await deleteKelas("kelas-1");
 
@@ -462,7 +465,10 @@ describe("Kelas API - CRUD Operations", () => {
     });
 
     it("TC006: should archive kelas without touching enrollments directly", async () => {
-      vi.mocked(update).mockResolvedValue({ ...mockKelas, is_active: false } as any);
+      vi.mocked(update).mockResolvedValue({
+        ...mockKelas,
+        is_active: false,
+      } as any);
 
       await deleteKelas("kelas-1");
 
@@ -1588,7 +1594,10 @@ describe("Kelas API - White-Box Testing", () => {
     });
 
     it("Path 6: Delete kelas success path", async () => {
-      vi.mocked(update).mockResolvedValue({ ...mockKelas, is_active: false } as any);
+      vi.mocked(update).mockResolvedValue({
+        ...mockKelas,
+        is_active: false,
+      } as any);
 
       await deleteKelas("kelas-1");
 

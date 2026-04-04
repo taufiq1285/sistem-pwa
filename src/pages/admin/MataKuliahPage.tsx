@@ -43,7 +43,11 @@ import type {
   CreateMataKuliahData,
 } from "@/types/mata-kuliah.types";
 
-import { cacheAPI, getCachedData, invalidateCache } from "@/lib/offline/api-cache";
+import {
+  cacheAPI,
+  getCachedData,
+  invalidateCache,
+} from "@/lib/offline/api-cache";
 
 export default function MataKuliahPage() {
   const [mataKuliahList, setMataKuliahList] = useState<MataKuliah[]>([]);

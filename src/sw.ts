@@ -25,7 +25,9 @@ import { precacheAndRoute } from "workbox-precaching";
 // Precache injected assets by Vite Workbox
 precacheAndRoute(self.__WB_MANIFEST || []);
 
-const CACHE_VERSION = "v1.0.5"; // Bump: force cache invalidation to fix blank screen after update
+// Cache version automatically derived from package.json version at build time.
+// Bump version in package.json → cache invalidates → users get update prompt.
+const CACHE_VERSION = `v${__APP_VERSION__}`;
 const CACHE_PREFIX = "praktikum-pwa";
 
 // Cache names

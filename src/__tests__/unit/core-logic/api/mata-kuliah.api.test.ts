@@ -1031,9 +1031,9 @@ describe("Mata Kuliah API - White-Box Testing: Path Coverage", () => {
       vi.mocked(count).mockResolvedValue(5);
       vi.mocked(update).mockResolvedValue({ is_active: false } as any);
 
-      await expect(
-        deleteMataKuliah("mk-1", { detach: false }),
-      ).resolves.toBe(true);
+      await expect(deleteMataKuliah("mk-1", { detach: false })).resolves.toBe(
+        true,
+      );
     });
 
     it("Path 11: Delete error path", async () => {
@@ -1158,9 +1158,9 @@ describe("Mata Kuliah API - White-Box Testing: Condition Coverage", () => {
       vi.mocked(count).mockResolvedValue(5);
       vi.mocked(update).mockResolvedValue({ is_active: false } as any);
 
-      await expect(
-        deleteMataKuliah("mk-1", { detach: false }),
-      ).resolves.toBe(true);
+      await expect(deleteMataKuliah("mk-1", { detach: false })).resolves.toBe(
+        true,
+      );
     });
   });
 

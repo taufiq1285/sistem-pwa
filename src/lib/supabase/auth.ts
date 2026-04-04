@@ -711,7 +711,9 @@ export function onAuthStateChange(
     // ini menghindari double getUserProfile() yang memperlambat login.
     // Hanya TOKEN_REFRESHED dan USER_UPDATED yang perlu dihandle di sini.
     if (event === "SIGNED_IN") {
-      logger.debug("onAuthStateChange: SIGNED_IN — skipping (handled by login())");
+      logger.debug(
+        "onAuthStateChange: SIGNED_IN — skipping (handled by login())",
+      );
       return;
     }
 

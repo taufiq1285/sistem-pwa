@@ -104,7 +104,11 @@ import type {
   CalendarEvent,
 } from "@/types/jadwal.types";
 import { HARI_OPTIONS, JAM_PRAKTIKUM } from "@/types/jadwal.types";
-import { cacheAPI, getCachedData, invalidateCache } from "@/lib/offline/api-cache";
+import {
+  cacheAPI,
+  getCachedData,
+  invalidateCache,
+} from "@/lib/offline/api-cache";
 import { supabase } from "@/lib/supabase/client";
 
 // ============================================================================
