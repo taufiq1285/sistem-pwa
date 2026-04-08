@@ -19,6 +19,7 @@ Dokumen ini juga diselaraskan dengan materi pada [`docs/ANALISIS/ISI-TEKS-PER-SL
 ## Struktur PPT Ujian Hasil yang Disarankan
 
 ## Slide 1 – Judul Penelitian
+
 **Judul:**
 Analisis dan Perancangan Sistem Informasi Praktikum Berbasis Progressive Web Application (PWA) Menggunakan Metode R&D di Akademi Kebidanan Mega Buana
 
@@ -26,6 +27,7 @@ Analisis dan Perancangan Sistem Informasi Praktikum Berbasis Progressive Web App
 Ujian Hasil Skripsi
 
 **Identitas:**
+
 - Nama: Taufiq
 - NIM: IK.22.11.009
 - Program Studi: Sarjana Informatika
@@ -40,7 +42,9 @@ Slide pembuka formal.
 ---
 
 ## Slide 2 – Latar Belakang
+
 **Isi inti:**
+
 - Pengelolaan praktikum di Akademi Kebidanan Mega Buana masih didominasi proses manual seperti kertas, spreadsheet, dan komunikasi yang tidak terintegrasi.
 - Ditemukan masalah miskomunikasi jadwal, keterlambatan pelaporan, dan belum adanya media terpusat untuk logbook serta penilaian digital.
 - Kondisi tersebut berdampak pada efisiensi kerja dosen, keterlibatan mahasiswa, dan akurasi pengelolaan data praktikum.
@@ -53,7 +57,9 @@ Menjelaskan alasan kenapa penelitian ini penting.
 ---
 
 ## Slide 3 – Rumusan Masalah
+
 **Isi inti:**
+
 - Bagaimana menganalisis kebutuhan pengguna, baik dosen maupun mahasiswa, terhadap sistem informasi praktikum di Akademi Kebidanan Mega Buana?
 - Bagaimana merancang dan mengembangkan sistem informasi praktikum berbasis Progressive Web Application (PWA) menggunakan metode Research and Development (R&D)?
 - Bagaimana mengevaluasi kelayakan dan efektivitas sistem dari aspek fungsionalitas, usability, dan manfaat praktisnya?
@@ -64,7 +70,9 @@ Menunjukkan fokus pertanyaan penelitian.
 ---
 
 ## Slide 4 – Tujuan Penelitian
+
 **Isi inti:**
+
 - Menganalisis kebutuhan pengguna terhadap sistem informasi praktikum di Akademi Kebidanan Mega Buana.
 - Merancang dan mengembangkan sistem informasi praktikum berbasis PWA menggunakan metode R&D secara sistematis dan iteratif.
 - Mendukung integrasi proses akademik dan operasional laboratorium dalam satu platform.
@@ -76,7 +84,9 @@ Menjelaskan sasaran penelitian yang sudah diwujudkan.
 ---
 
 ## Slide 5 – Batasan Masalah
+
 **Isi inti:**
+
 1. Penelitian mencakup analisis kebutuhan, perancangan, pengembangan, dan evaluasi awal sistem informasi praktikum berbasis PWA.
 2. Fitur utama difokuskan pada jadwal praktikum, peminjaman alat laboratorium, logbook kegiatan mahasiswa, penilaian praktikum, dan pengumuman.
 3. Evaluasi dilakukan pada kelompok pengguna terbatas di Akademi Kebidanan Mega Buana.
@@ -88,8 +98,37 @@ Menjaga ruang lingkup presentasi tetap aman dan jelas.
 
 ---
 
-## Slide 6 – Metode Penelitian
+## Slide 6 – Penelitian Terdahulu dan Gap Penelitian
+
 **Isi inti:**
+
+- **Maspaeni et al. (2023):** Menerapkan PWA pada pengajuan alat kesehatan, namun belum untuk manajemen akademik praktikum.
+- **Muzakki et al. (2025):** Menggunakan PWA untuk repositori digital, namun tidak memiliki fitur praktikum seperti jadwal dan logbook.
+- **Gap Penelitian:** Belum ada penelitian PWA yang difokuskan pada integrasi manajemen praktikum secara komprehensif, khususnya di institusi vokasi kebidanan.
+
+**Fungsi slide:**
+Menunjukkan letak kontribusi dan kebaruan skripsi ini.
+
+---
+
+## Slide 7 – Landasan Teori
+
+**Isi inti:**
+
+- **Progressive Web Application (PWA):** Mendukung akses sistem secara fleksibel dan responsif pada berbagai perangkat, termasuk dalam mode offline.
+- **Research and Development (R&D):** Digunakan sebagai metode untuk mengembangkan dan mengevaluasi sistem.
+- **Role-Based Access Control (RBAC):** Mendukung pembagian hak akses pengguna (admin, dosen, mahasiswa, laboran).
+- **User-Centered Design (UCD):** Memastikan sistem dirancang sesuai kebutuhan pengguna akhir.
+
+**Fungsi slide:**
+Menyampaikan pijakan teori yang benar-benar digunakan dalam pengembangan sistem.
+
+---
+
+## Slide 8 – Metode Penelitian
+
+**Isi inti:**
+
 - Penelitian menggunakan metode Research and Development (R&D) yang mengadaptasi model Ellis dan Levy.
 - Tahapan utama meliputi identifikasi masalah, penetapan tujuan, perancangan dan pengembangan solusi, pengujian, evaluasi hasil, dan komunikasi hasil.
 - Pengembangan dilakukan dengan pendekatan prototipe iteratif.
@@ -100,8 +139,10 @@ Menjelaskan metode tanpa terlalu panjang.
 
 ---
 
-## Slide 7 – Teknologi dan Arsitektur Sistem
+## Slide 9 – Teknologi dan Arsitektur Sistem
+
 **Isi inti:**
+
 - Sistem dikembangkan menggunakan React, TypeScript, Vite, Tailwind CSS, Supabase, dan PostgreSQL.
 - Arsitektur mencakup frontend, backend, basis data, autentikasi, storage, dan layanan PWA.
 - Dukungan PWA diterapkan melalui service worker, cache lokal, IndexedDB, offline queue, dan sinkronisasi.
@@ -112,8 +153,10 @@ Menjembatani bagian metode ke hasil implementasi.
 
 ---
 
-## Slide 8 – Gambaran Umum Sistem
+## Slide 10 – Gambaran Umum Sistem
+
 **Isi inti:**
+
 - Sistem melibatkan empat peran utama: admin, dosen, mahasiswa, dan laboran.
 - Sistem mendukung pengelolaan kegiatan akademik dan operasional laboratorium dalam satu platform.
 - Proses utama mencakup autentikasi, jadwal, materi, kuis, kehadiran, nilai, logbook, inventaris, peminjaman, pengumuman, dan sinkronisasi offline.
@@ -124,8 +167,10 @@ Memberi gambaran singkat sebelum masuk ke fitur dan hasil.
 
 ---
 
-## Slide 9 – Fitur Utama Sistem
+## Slide 11 – Fitur Utama Sistem
+
 **Isi inti:**
+
 - Pengelolaan jadwal praktikum dan kelas
 - Distribusi materi serta pengelolaan kuis/assignment
 - Kehadiran, penilaian, dan rekap hasil belajar
@@ -138,8 +183,10 @@ Menjelaskan ruang implementasi yang benar-benar dibangun.
 
 ---
 
-## Slide 10 – Hasil Implementasi Sistem
+## Slide 12 – Hasil Implementasi Sistem
+
 **Isi inti:**
+
 - Sistem telah direalisasikan ke dalam modul autentikasi, dashboard berbasis peran, jadwal, materi, kuis, logbook, nilai, peminjaman, inventaris, pengumuman, dan sinkronisasi offline.
 - Fungsi utama telah direalisasikan sesuai kebutuhan yang dianalisis.
 - Implementasi menunjukkan integrasi proses akademik dan operasional laboratorium dalam satu platform.
@@ -150,8 +197,10 @@ Menjadi pintu masuk bagian hasil.
 
 ---
 
-## Slide 11 – Hasil Implementasi Modul Akademik
+## Slide 13 – Hasil Implementasi Modul Akademik
+
 **Isi inti:**
+
 - Modul akademik mencakup jadwal, materi, kuis, assignment, kehadiran, penilaian, dan logbook.
 - Dosen dapat mengelola materi, kuis, kehadiran, nilai, dan telaah logbook mahasiswa.
 - Mahasiswa dapat melihat jadwal, mengakses materi, mengerjakan kuis, mengisi logbook, dan memantau nilai.
@@ -162,8 +211,10 @@ Menunjukkan hasil pada sisi akademik.
 
 ---
 
-## Slide 12 – Hasil Implementasi Modul Laboratorium
+## Slide 14 – Hasil Implementasi Modul Laboratorium
+
 **Isi inti:**
+
 - Sistem mendukung pengelolaan inventaris, persetujuan peminjaman, dan pemantauan penggunaan alat.
 - Data penggunaan alat menjadi lebih terstruktur dan terdokumentasi.
 - Proses operasional laboratorium menjadi lebih mudah dipantau melalui peran laboran dan admin.
@@ -174,8 +225,10 @@ Menunjukkan hasil pada sisi operasional laboratorium.
 
 ---
 
-## Slide 13 – Dukungan PWA dan Akses Fleksibel
+## Slide 15 – Dukungan PWA dan Akses Fleksibel
+
 **Isi inti:**
+
 - Sistem dikembangkan sebagai Progressive Web App yang dapat diakses melalui desktop maupun perangkat seluler.
 - Fitur PWA yang diimplementasikan mencakup install prompt, offline indicator, cache strategy, offline queue, background sync, dan conflict resolution.
 - Data penting dapat disimpan sementara saat offline lalu disinkronkan kembali ketika koneksi tersedia.
@@ -186,8 +239,10 @@ Menunjukkan nilai tambah pendekatan PWA.
 
 ---
 
-## Slide 14 – Hasil Pengujian Fungsional
+## Slide 16 – Hasil Pengujian Fungsional
+
 **Isi inti:**
+
 - Pengujian black box dilakukan pada modul autentikasi, admin, dosen, mahasiswa, laboran, dan fitur PWA.
 - Total 45 skenario diuji.
 - Seluruh skenario memperoleh status Pass dengan tingkat keberhasilan 100%.
@@ -198,8 +253,10 @@ Menyampaikan bukti bahwa sistem berjalan.
 
 ---
 
-## Slide 15 – Hasil Pengujian Teknis dan Usability
+## Slide 17 – Hasil Pengujian Teknis dan Usability
+
 **Isi inti:**
+
 - Pengujian white box dilakukan melalui unit test dan integration test.
 - Hasil eksekusi menunjukkan 238 file test dan 5.317 test case lulus 100%.
 - Evaluasi usability menggunakan SUS melibatkan 46 responden dan menghasilkan skor rata-rata 75,11.
@@ -207,8 +264,10 @@ Menyampaikan bukti bahwa sistem berjalan.
 
 ---
 
-## Slide 16 – Pembahasan Hasil
+## Slide 18 – Pembahasan Hasil
+
 **Isi inti:**
+
 - Sistem berhasil mengintegrasikan kegiatan akademik praktikum dan operasional laboratorium dalam satu platform.
 - Implementasi PWA memberi nilai tambah pada fleksibilitas akses dan keberlanjutan layanan saat koneksi tidak stabil.
 - Hasil black box, white box, dan SUS saling menguatkan bahwa sistem layak secara fungsi, logika teknis, dan penerimaan pengguna.
@@ -219,8 +278,10 @@ Menjelaskan makna hasil, bukan sekadar daftar fitur.
 
 ---
 
-## Slide 17 – Keterbatasan Penelitian
+## Slide 19 – Keterbatasan Penelitian
+
 **Isi inti:**
+
 - Evaluasi pengguna masih dilakukan pada kelompok terbatas, meskipun telah melibatkan beberapa peran.
 - Pengujian white box kuat pada modul yang diuji, tetapi tetap terbuka untuk perluasan cakupan di masa depan.
 - Penelitian belum mencakup pengujian keamanan secara komprehensif.
@@ -231,8 +292,10 @@ Menjaga pembahasan tetap jujur dan aman secara akademik.
 
 ---
 
-## Slide 18 – Kesimpulan
+## Slide 20 – Kesimpulan
+
 **Isi inti:**
+
 - Penelitian berhasil menghasilkan sistem informasi praktikum berbasis PWA yang mendukung kebutuhan akademik dan operasional laboratorium.
 - Sistem telah diimplementasikan pada modul multi-peran: admin, dosen, mahasiswa, dan laboran.
 - Hasil pengujian menunjukkan fungsi utama berjalan baik, logika internal stabil, dan sistem diterima pengguna.
@@ -243,8 +306,10 @@ Menjawab tujuan penelitian secara ringkas.
 
 ---
 
-## Slide 19 – Saran
+## Slide 21 – Saran
+
 **Isi inti:**
+
 - Mengoptimalkan background sync agar lebih konsisten pada lebih banyak browser dan perangkat.
 - Mengembangkan fitur analitik dan pelaporan untuk mendukung evaluasi dan pengambilan keputusan.
 - Memperluas cakupan pengujian otomatis dan evaluasi pengguna.
@@ -256,7 +321,8 @@ Menunjukkan arah pengembangan lanjutan.
 
 ---
 
-## Slide 20 – Penutup
+## Slide 22 – Penutup
+
 **Isi inti:**
 Terima kasih.
 
@@ -279,6 +345,7 @@ Menutup presentasi secara formal.
 ## Kesimpulan Penyusunan
 
 Susunan ini adalah bentuk paling aman untuk ujian hasil karena:
+
 - tetap konsisten dengan proposal,
 - tidak terlalu panjang,
 - menonjolkan implementasi dan pengujian,

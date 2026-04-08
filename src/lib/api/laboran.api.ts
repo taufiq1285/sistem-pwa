@@ -35,6 +35,41 @@ export interface PendingApproval {
   dosen_id?: string; // For tracking which dosen made the request
 }
 
+function resolveBorrowerIdentity({
+  mahasiswa,
+  mahasiswaUser,
+  dosen,
+  dosenUser,
+}: {
+  mahasiswa?: any;
+  mahasiswaUser?: any;
+  dosen?: any;
+  dosenUser?: any;
+}): {
+  peminjam_nama: string;
+  peminjam_nim: string;
+} {
+  if (mahasiswa) {
+    return {
+      peminjam_nama: mahasiswaUser?.full_name || mahasiswa?.nim || "Unknown",
+      peminjam_nim: mahasiswa?.nim || "-",
+    };
+  }
+
+  if (dosen) {
+    const dosenIdentifier = dosen?.nip || dosen?.nidn;
+    return {
+      peminjam_nama: dosenUser?.full_name || dosenIdentifier || "Unknown",
+      peminjam_nim: dosenIdentifier || "-",
+    };
+  }
+
+  return {
+    peminjam_nama: "Unknown",
+    peminjam_nim: "-",
+  };
+}
+
 export interface InventoryAlert {
   id: string;
   kode_barang: string;
@@ -151,8 +186,7 @@ export async function getPendingApprovals(
 
     if (error) throw error;
 
-    // Separate mahasiswa and dosen IDs
-    const peminjamIds = [
+    const mahasiswaIds = [
       ...new Set(
         data
           ?.map((item) => item.peminjam_id)
@@ -171,20 +205,23 @@ export async function getPendingApprovals(
     ];
 
     const [mahasiswaData, dosenData, inventarisData] = await Promise.all([
-      peminjamIds.length > 0
+      mahasiswaIds.length > 0
         ? supabase
             .from("mahasiswa")
             .select("id, nim, user_id")
-            .in("id", peminjamIds)
+            .in("id", mahasiswaIds)
         : Promise.resolve({ data: [] }),
       dosenIds.length > 0
-        ? supabase.from("dosen").select("id, nip, user_id").in("id", dosenIds)
+        ? supabase
+            .from("dosen")
+            .select("id, nip, nidn, user_id")
+            .in("id", dosenIds)
         : Promise.resolve({ data: [] }),
       inventarisIds.length > 0
         ? supabase
             .from("inventaris")
             .select(
-              "id, kode_barang, nama_barang, laboratorium_id, laboratorium!inventaris_laboratorium_id_fkey(nama_lab)",
+              "id, kode_barang, nama_barang, laboratorium_id, laboratorium:laboratorium_id(nama_lab)",
             )
             .in("id", inventarisIds)
         : Promise.resolve({ data: [] }),
@@ -192,11 +229,12 @@ export async function getPendingApprovals(
 
     // Fetch user names separately to avoid nested join issues
     const allUserIds = [
-      ...new Set([
-        ...(mahasiswaData.data?.map((m: any) => m.user_id).filter(Boolean) ||
-          []),
-        ...(dosenData.data?.map((d: any) => d.user_id).filter(Boolean) || []),
-      ]),
+      ...new Set(
+        mahasiswaData.data?.map((m: any) => m.user_id).filter(Boolean) || [],
+      ),
+      ...new Set(
+        dosenData.data?.map((d: any) => d.user_id).filter(Boolean) || [],
+      ),
     ];
     const usersData =
       allUserIds.length > 0
@@ -224,37 +262,25 @@ export async function getPendingApprovals(
 
     return (data || []).map((item: any) => {
       const inventaris = inventarisMap.get(item.inventaris_id);
-
-      // Check if peminjam is mahasiswa or dosen
-      let peminjamNama = "Unknown";
-      let peminjamNim = "-";
-
-      // For notification - get dosen user_id if this is a dosen request
-      let dosenUserId: string | undefined;
-      let dosenId: string | undefined;
-
-      if (item.dosen_id) {
-        // Peminjam is DOSEN
-        const dosen = dosenMap.get(item.dosen_id);
-        const user = dosen?.user_id ? usersMap.get(dosen.user_id) : null;
-        peminjamNama = user?.full_name || dosen?.nip || "Unknown";
-        peminjamNim = dosen?.nip || "-";
-        dosenUserId = dosen?.user_id; // For sending notifications
-        dosenId = item.dosen_id;
-      } else if (item.peminjam_id) {
-        // Peminjam is MAHASISWA
-        const mahasiswa = mahasiswaMap.get(item.peminjam_id);
-        const user = mahasiswa?.user_id
-          ? usersMap.get(mahasiswa.user_id)
-          : null;
-        peminjamNama = user?.full_name || mahasiswa?.nim || "Unknown";
-        peminjamNim = mahasiswa?.nim || "-";
-      }
+      const mahasiswa = item.peminjam_id
+        ? mahasiswaMap.get(item.peminjam_id)
+        : null;
+      const dosen = item.dosen_id ? dosenMap.get(item.dosen_id) : null;
+      const mahasiswaUser = mahasiswa?.user_id
+        ? usersMap.get(mahasiswa.user_id)
+        : null;
+      const dosenUser = dosen?.user_id ? usersMap.get(dosen.user_id) : null;
+      const borrower = resolveBorrowerIdentity({
+        mahasiswa,
+        mahasiswaUser,
+        dosen,
+        dosenUser,
+      });
 
       return {
         id: item.id,
-        peminjam_nama: peminjamNama,
-        peminjam_nim: peminjamNim,
+        peminjam_nama: borrower.peminjam_nama,
+        peminjam_nim: borrower.peminjam_nim,
         inventaris_nama: inventaris?.nama_barang || "Unknown",
         inventaris_kode: inventaris?.kode_barang || "-",
         laboratorium_nama: inventaris?.laboratorium?.nama_lab || "-",
@@ -263,8 +289,8 @@ export async function getPendingApprovals(
         tanggal_pinjam: item.tanggal_pinjam,
         tanggal_kembali_rencana: item.tanggal_kembali_rencana,
         created_at: item.created_at,
-        dosen_user_id: dosenUserId,
-        dosen_id: dosenId,
+        dosen_user_id: dosen?.user_id,
+        dosen_id: item.dosen_id,
       };
     });
   } catch (error) {
@@ -295,7 +321,7 @@ export async function getInventoryAlerts(
         jumlah,
         jumlah_tersedia,
         kondisi,
-        laboratorium:laboratorium!inventaris_laboratorium_id_fkey(
+        laboratorium:laboratorium_id(
           kode_lab,
           nama_lab
         )
@@ -524,7 +550,14 @@ async function approvePeminjamanImpl(peminjamanId: string): Promise<void> {
       .update({ jumlah_tersedia: newStock })
       .eq("id", peminjamanData.inventaris_id);
 
-    if (stockError) throw stockError;
+    if (stockError) {
+      // Rollback: revert peminjaman status back to pending
+      await supabase
+        .from("peminjaman")
+        .update({ status: "pending", approved_by: null, approved_at: null })
+        .eq("id", peminjamanId);
+      throw new Error(`Gagal mengurangi stok: ${stockError.message}`);
+    }
   } catch (error) {
     console.error("Error approving peminjaman:", error);
     throw error;
@@ -669,7 +702,7 @@ export async function getInventarisList(params?: {
         keterangan,
         created_at,
         updated_at,
-        laboratorium:laboratorium!inventaris_laboratorium_id_fkey(
+        laboratorium:laboratorium_id(
           id,
           kode_lab,
           nama_lab
@@ -746,7 +779,7 @@ export async function getInventarisById(
         keterangan,
         created_at,
         updated_at,
-        laboratorium:laboratorium!inventaris_laboratorium_id_fkey(
+        laboratorium:laboratorium_id(
           id,
           kode_lab,
           nama_lab
@@ -1313,7 +1346,7 @@ export async function getApprovalHistory(
     if (error) throw error;
 
     // Fetch related data separately
-    const peminjamIds = [
+    const mahasiswaIds = [
       ...new Set(
         data
           ?.map((item) => item.peminjam_id)
@@ -1340,20 +1373,23 @@ export async function getApprovalHistory(
 
     const [mahasiswaData, dosenData, inventarisData, approverData] =
       await Promise.all([
-        peminjamIds.length > 0
+        mahasiswaIds.length > 0
           ? supabase
               .from("mahasiswa")
               .select("id, nim, user_id")
-              .in("id", peminjamIds)
+              .in("id", mahasiswaIds)
           : Promise.resolve({ data: [] }),
         dosenIds.length > 0
-          ? supabase.from("dosen").select("id, nip, user_id").in("id", dosenIds)
+          ? supabase
+              .from("dosen")
+              .select("id, nip, nidn, user_id")
+              .in("id", dosenIds)
           : Promise.resolve({ data: [] }),
         inventarisIds.length > 0
           ? supabase
               .from("inventaris")
               .select(
-                "id, kode_barang, nama_barang, laboratorium_id, laboratorium!inventaris_laboratorium_id_fkey(nama_lab)",
+                "id, kode_barang, nama_barang, laboratorium_id, laboratorium:laboratorium_id(nama_lab)",
               )
               .in("id", inventarisIds)
           : Promise.resolve({ data: [] }),
@@ -1368,10 +1404,10 @@ export async function getApprovalHistory(
     // Fetch all user names
     const allUserIds = [
       ...new Set([
-        ...(mahasiswaData.data?.map((m: any) => m.user_id).filter(Boolean) ||
-          []),
         ...(dosenData.data?.map((d: any) => d.user_id).filter(Boolean) || []),
         ...(approverData.data?.map((a: any) => a.id).filter(Boolean) || []),
+        ...(mahasiswaData.data?.map((m: any) => m.user_id).filter(Boolean) ||
+          []),
       ]),
     ];
     const usersData =
@@ -1404,31 +1440,25 @@ export async function getApprovalHistory(
     return (data || []).map((item: any) => {
       const inventaris = inventarisMap.get(item.inventaris_id);
       const approver = approverMap.get(item.approved_by);
-
-      // Check if peminjam is mahasiswa or dosen
-      let peminjamNama = "Unknown";
-      let peminjamNim = "-";
-
-      if (item.dosen_id) {
-        // Peminjam is DOSEN
-        const dosen = dosenMap.get(item.dosen_id);
-        const user = dosen?.user_id ? usersMap.get(dosen.user_id) : null;
-        peminjamNama = user?.full_name || dosen?.nip || "Unknown";
-        peminjamNim = dosen?.nip || "-";
-      } else if (item.peminjam_id) {
-        // Peminjam is MAHASISWA
-        const mahasiswa = mahasiswaMap.get(item.peminjam_id);
-        const user = mahasiswa?.user_id
-          ? usersMap.get(mahasiswa.user_id)
-          : null;
-        peminjamNama = user?.full_name || mahasiswa?.nim || "Unknown";
-        peminjamNim = mahasiswa?.nim || "-";
-      }
+      const mahasiswa = item.peminjam_id
+        ? mahasiswaMap.get(item.peminjam_id)
+        : null;
+      const dosen = item.dosen_id ? dosenMap.get(item.dosen_id) : null;
+      const mahasiswaUser = mahasiswa?.user_id
+        ? usersMap.get(mahasiswa.user_id)
+        : null;
+      const dosenUser = dosen?.user_id ? usersMap.get(dosen.user_id) : null;
+      const borrower = resolveBorrowerIdentity({
+        mahasiswa,
+        mahasiswaUser,
+        dosen,
+        dosenUser,
+      });
 
       return {
         id: item.id,
-        peminjam_nama: peminjamNama,
-        peminjam_nim: peminjamNim,
+        peminjam_nama: borrower.peminjam_nama,
+        peminjam_nim: borrower.peminjam_nim,
         inventaris_nama: inventaris?.nama_barang || "Unknown",
         inventaris_kode: inventaris?.kode_barang || "-",
         laboratorium_nama: inventaris?.laboratorium?.nama_lab || "-",
@@ -1517,7 +1547,7 @@ export async function getActiveBorrowings(
     if (error) throw error;
 
     // Fetch related data separately
-    const peminjamIds = [
+    const mahasiswaIds = [
       ...new Set(
         data
           ?.map((item) => item.peminjam_id)
@@ -1540,20 +1570,23 @@ export async function getActiveBorrowings(
     ];
 
     const [mahasiswaData, dosenData, inventarisData] = await Promise.all([
-      peminjamIds.length > 0
+      mahasiswaIds.length > 0
         ? supabase
             .from("mahasiswa")
             .select("id, nim, user_id")
-            .in("id", peminjamIds)
+            .in("id", mahasiswaIds)
         : Promise.resolve({ data: [] }),
       dosenIds.length > 0
-        ? supabase.from("dosen").select("id, nip, user_id").in("id", dosenIds)
+        ? supabase
+            .from("dosen")
+            .select("id, nip, nidn, user_id")
+            .in("id", dosenIds)
         : Promise.resolve({ data: [] }),
       inventarisIds.length > 0
         ? supabase
             .from("inventaris")
             .select(
-              "id, kode_barang, nama_barang, laboratorium_id, laboratorium!inventaris_laboratorium_id_fkey(nama_lab)",
+              "id, kode_barang, nama_barang, laboratorium_id, laboratorium:laboratorium_id(nama_lab)",
             )
             .in("id", inventarisIds)
         : Promise.resolve({ data: [] }),
@@ -1561,11 +1594,12 @@ export async function getActiveBorrowings(
 
     // Fetch all user names
     const allUserIds = [
-      ...new Set([
-        ...(mahasiswaData.data?.map((m: any) => m.user_id).filter(Boolean) ||
-          []),
-        ...(dosenData.data?.map((d: any) => d.user_id).filter(Boolean) || []),
-      ]),
+      ...new Set(
+        mahasiswaData.data?.map((m: any) => m.user_id).filter(Boolean) || [],
+      ),
+      ...new Set(
+        dosenData.data?.map((d: any) => d.user_id).filter(Boolean) || [],
+      ),
     ];
     const usersData =
       allUserIds.length > 0
@@ -1596,26 +1630,20 @@ export async function getActiveBorrowings(
 
     return (data || []).map((item: any) => {
       const inventaris = inventarisMap.get(item.inventaris_id);
-
-      // Check if peminjam is mahasiswa or dosen
-      let peminjamNama = "Unknown";
-      let peminjamNim = "-";
-
-      if (item.dosen_id) {
-        // Peminjam is DOSEN
-        const dosen = dosenMap.get(item.dosen_id);
-        const user = dosen?.user_id ? usersMap.get(dosen.user_id) : null;
-        peminjamNama = user?.full_name || dosen?.nip || "Unknown";
-        peminjamNim = dosen?.nip || "-";
-      } else if (item.peminjam_id) {
-        // Peminjam is MAHASISWA
-        const mahasiswa = mahasiswaMap.get(item.peminjam_id);
-        const user = mahasiswa?.user_id
-          ? usersMap.get(mahasiswa.user_id)
-          : null;
-        peminjamNama = user?.full_name || mahasiswa?.nim || "Unknown";
-        peminjamNim = mahasiswa?.nim || "-";
-      }
+      const mahasiswa = item.peminjam_id
+        ? mahasiswaMap.get(item.peminjam_id)
+        : null;
+      const dosen = item.dosen_id ? dosenMap.get(item.dosen_id) : null;
+      const mahasiswaUser = mahasiswa?.user_id
+        ? usersMap.get(mahasiswa.user_id)
+        : null;
+      const dosenUser = dosen?.user_id ? usersMap.get(dosen.user_id) : null;
+      const borrower = resolveBorrowerIdentity({
+        mahasiswa,
+        mahasiswaUser,
+        dosen,
+        dosenUser,
+      });
 
       const returnDate = new Date(item.tanggal_kembali_rencana);
       returnDate.setHours(0, 0, 0, 0);
@@ -1628,8 +1656,8 @@ export async function getActiveBorrowings(
 
       return {
         id: item.id,
-        peminjam_nama: peminjamNama,
-        peminjam_nim: peminjamNim,
+        peminjam_nama: borrower.peminjam_nama,
+        peminjam_nim: borrower.peminjam_nim,
         inventaris_id: item.inventaris_id,
         inventaris_nama: inventaris?.nama_barang || "Unknown",
         inventaris_kode: inventaris?.kode_barang || "-",
@@ -1683,7 +1711,7 @@ export async function getReturnedBorrowings(
     if (error) throw error;
 
     // Fetch related data separately
-    const peminjamIds = [
+    const mahasiswaIds = [
       ...new Set(
         data
           ?.map((item) => item.peminjam_id)
@@ -1706,20 +1734,23 @@ export async function getReturnedBorrowings(
     ];
 
     const [mahasiswaData, dosenData, inventarisData] = await Promise.all([
-      peminjamIds.length > 0
+      mahasiswaIds.length > 0
         ? supabase
             .from("mahasiswa")
             .select("id, nim, user_id")
-            .in("id", peminjamIds)
+            .in("id", mahasiswaIds)
         : Promise.resolve({ data: [] }),
       dosenIds.length > 0
-        ? supabase.from("dosen").select("id, nip, user_id").in("id", dosenIds)
+        ? supabase
+            .from("dosen")
+            .select("id, nip, nidn, user_id")
+            .in("id", dosenIds)
         : Promise.resolve({ data: [] }),
       inventarisIds.length > 0
         ? supabase
             .from("inventaris")
             .select(
-              "id, kode_barang, nama_barang, laboratorium_id, laboratorium!inventaris_laboratorium_id_fkey(nama_lab)",
+              "id, kode_barang, nama_barang, laboratorium_id, laboratorium:laboratorium_id(nama_lab)",
             )
             .in("id", inventarisIds)
         : Promise.resolve({ data: [] }),
@@ -1727,11 +1758,12 @@ export async function getReturnedBorrowings(
 
     // Fetch all user names
     const allUserIds = [
-      ...new Set([
-        ...(mahasiswaData.data?.map((m: any) => m.user_id).filter(Boolean) ||
-          []),
-        ...(dosenData.data?.map((d: any) => d.user_id).filter(Boolean) || []),
-      ]),
+      ...new Set(
+        mahasiswaData.data?.map((m: any) => m.user_id).filter(Boolean) || [],
+      ),
+      ...new Set(
+        dosenData.data?.map((d: any) => d.user_id).filter(Boolean) || [],
+      ),
     ];
     const usersData =
       allUserIds.length > 0
@@ -1759,26 +1791,20 @@ export async function getReturnedBorrowings(
 
     return (data || []).map((item: any) => {
       const inventaris = inventarisMap.get(item.inventaris_id);
-
-      // Check if peminjam is mahasiswa or dosen
-      let peminjamNama = "Unknown";
-      let peminjamNim = "-";
-
-      if (item.dosen_id) {
-        // Peminjam is DOSEN
-        const dosen = dosenMap.get(item.dosen_id);
-        const user = dosen?.user_id ? usersMap.get(dosen.user_id) : null;
-        peminjamNama = user?.full_name || dosen?.nip || "Unknown";
-        peminjamNim = dosen?.nip || "-";
-      } else if (item.peminjam_id) {
-        // Peminjam is MAHASISWA
-        const mahasiswa = mahasiswaMap.get(item.peminjam_id);
-        const user = mahasiswa?.user_id
-          ? usersMap.get(mahasiswa.user_id)
-          : null;
-        peminjamNama = user?.full_name || mahasiswa?.nim || "Unknown";
-        peminjamNim = mahasiswa?.nim || "-";
-      }
+      const mahasiswa = item.peminjam_id
+        ? mahasiswaMap.get(item.peminjam_id)
+        : null;
+      const dosen = item.dosen_id ? dosenMap.get(item.dosen_id) : null;
+      const mahasiswaUser = mahasiswa?.user_id
+        ? usersMap.get(mahasiswa.user_id)
+        : null;
+      const dosenUser = dosen?.user_id ? usersMap.get(dosen.user_id) : null;
+      const borrower = resolveBorrowerIdentity({
+        mahasiswa,
+        mahasiswaUser,
+        dosen,
+        dosenUser,
+      });
 
       const returnDate = new Date(item.tanggal_kembali_rencana);
       returnDate.setHours(0, 0, 0, 0);
@@ -1788,8 +1814,8 @@ export async function getReturnedBorrowings(
 
       return {
         id: item.id,
-        peminjam_nama: peminjamNama,
-        peminjam_nim: peminjamNim,
+        peminjam_nama: borrower.peminjam_nama,
+        peminjam_nim: borrower.peminjam_nim,
         inventaris_nama: inventaris?.nama_barang || "Unknown",
         inventaris_kode: inventaris?.kode_barang || "-",
         laboratorium_nama: inventaris?.laboratorium?.nama_lab || "-",

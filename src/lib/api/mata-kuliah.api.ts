@@ -282,7 +282,10 @@ async function createMataKuliahImpl(
       throw new Error(`Mata kuliah dengan kode ${data.kode_mk} sudah ada`);
     }
 
-    return await insert<MataKuliah>("mata_kuliah", data);
+    return await insert<MataKuliah>("mata_kuliah", {
+      ...data,
+      is_active: true,
+    });
   } catch (error) {
     const apiError = handleError(error);
     logError(apiError, "createMataKuliah");

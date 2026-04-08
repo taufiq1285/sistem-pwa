@@ -179,6 +179,7 @@ export default function MataKuliahPage() {
         toast.success("Mata kuliah berhasil ditambahkan");
       }
 
+      await invalidateCache("admin_mata_kuliah_list");
       await loadMataKuliah(true);
       setShowDialog(false);
     } catch (error: any) {

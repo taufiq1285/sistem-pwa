@@ -103,10 +103,10 @@ export async function getKelas(filters?: KelasFilters): Promise<Kelas[]> {
         column: "nama_kelas",
         ascending: true,
       },
-      // ✅ Enable caching for better offline support
-      enableCache: true,
-      cacheTTL: 5 * 60 * 1000, // 5 minutes
-      staleWhileRevalidate: true,
+      // ✅ No inner cache here — callers (e.g., KelasPage cacheAPI) handle caching
+      // Double-caching caused stale data after create/update because inner cache
+      // was not invalidated when the outer cache was cleared.
+      enableCache: false,
     };
 
     const results = await queryWithFilters<Kelas>(

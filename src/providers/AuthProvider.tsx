@@ -423,7 +423,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
             credentials.password,
           );
 
-          if (!offlineResponse || !offlineResponse.user || !offlineResponse.session) {
+          if (
+            !offlineResponse ||
+            !offlineResponse.user ||
+            !offlineResponse.session
+          ) {
             throw new Error(
               "Login offline gagal. Silakan login online terlebih dahulu.",
             );

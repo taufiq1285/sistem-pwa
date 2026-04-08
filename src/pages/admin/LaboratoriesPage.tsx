@@ -11,6 +11,7 @@ import {
   Users,
   Edit,
   Trash2,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -67,12 +68,13 @@ import {
   type UpdateLaboratoriumData,
   type CreateLaboratoriumData,
 } from "@/lib/api/laboran.api";
-import { cacheAPI, invalidateCache } from "@/lib/offline/api-cache";
+import { cacheAPI, invalidateCachePatternSync } from "@/lib/offline/api-cache";
 
 export default function LaboratoriesPage() {
   const [laboratories, setLaboratories] = useState<Laboratorium[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
   // Delete confirmation
   const [deletingLab, setDeletingLab] = useState<Laboratorium | null>(null);
@@ -143,6 +145,11 @@ export default function LaboratoriesPage() {
     }
   };
 
+  // Invalidate all laboratory cache entries (with and without search)
+  const invalidateLabCache = async () => {
+    await invalidateCachePatternSync("admin_laboratories");
+  };
+
   const handleEdit = (lab: Laboratorium) => {
     setEditingLab(lab);
     setEditFormData({
@@ -158,16 +165,18 @@ export default function LaboratoriesPage() {
 
   const handleUpdate = async () => {
     if (!editingLab) return;
+    setIsSaving(true);
     try {
       await updateLaboratorium(editingLab.id, editFormData);
       toast.success("Laboratory updated successfully");
       setIsEditDialogOpen(false);
-      // Invalidate cache and reload
-      await invalidateCache("admin_laboratories_");
+      await invalidateLabCache();
       await loadLaboratories(true);
     } catch (error) {
       toast.error("Failed to update laboratory");
       console.error(error);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -184,23 +193,24 @@ export default function LaboratoriesPage() {
   };
 
   const handleCreate = async () => {
+    if (!addFormData.kode_lab || !addFormData.nama_lab) {
+      toast.error("Kode Lab dan Nama Lab wajib diisi");
+      return;
+    }
+    setIsSaving(true);
     try {
-      if (!addFormData.kode_lab || !addFormData.nama_lab) {
-        toast.error("Please fill in all required fields");
-        return;
-      }
-
       await createLaboratorium(addFormData);
       toast.success("Laboratory created successfully");
       setIsAddDialogOpen(false);
-      // Invalidate cache and reload
-      await invalidateCache("admin_laboratories_");
+      await invalidateLabCache();
       await loadLaboratories(true);
     } catch (error: any) {
       toast.error(
         "Failed to create laboratory: " + (error.message || "Unknown error"),
       );
       console.error(error);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -217,8 +227,7 @@ export default function LaboratoriesPage() {
       toast.success("Laboratory berhasil dihapus");
       setIsDeleteDialogOpen(false);
       setDeletingLab(null);
-      // Invalidate cache and reload
-      await invalidateCache("admin_laboratories_");
+      await invalidateLabCache();
       await loadLaboratories(true);
     } catch (error: any) {
       toast.error("Gagal menghapus laboratory: " + error.message);
@@ -252,7 +261,7 @@ export default function LaboratoriesPage() {
     try {
       await Promise.all(selectedLabs.map((lab) => deleteLaboratorium(lab.id)));
       toast.success(`Successfully deleted ${selectedLabs.length} laboratories`);
-      await invalidateCache("admin_laboratories_");
+      await invalidateLabCache();
       await loadLaboratories(true);
     } catch (error: any) {
       toast.error("Failed to delete laboratories: " + error.message);
@@ -273,7 +282,7 @@ export default function LaboratoriesPage() {
       toast.success(
         `Successfully ${newStatus ? "activated" : "deactivated"} ${selectedLabs.length} laboratories`,
       );
-      await invalidateCache("admin_laboratories_");
+      await invalidateLabCache();
       await loadLaboratories(true);
     } catch (error: any) {
       toast.error("Failed to update laboratories: " + error.message);
@@ -650,14 +659,17 @@ export default function LaboratoriesPage() {
               <Button
                 variant="outline"
                 onClick={() => setIsEditDialogOpen(false)}
+                disabled={isSaving}
                 className="font-semibold border-2"
               >
                 Cancel
               </Button>
               <Button
                 onClick={handleUpdate}
+                disabled={isSaving}
                 className="font-semibold bg-linear-to-r from-primary to-accent"
               >
+                {isSaving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                 Save Changes
               </Button>
             </div>
@@ -758,14 +770,17 @@ export default function LaboratoriesPage() {
               <Button
                 variant="outline"
                 onClick={() => setIsAddDialogOpen(false)}
+                disabled={isSaving}
                 className="font-semibold border-2"
               >
                 Cancel
               </Button>
               <Button
                 onClick={handleCreate}
+                disabled={isSaving}
                 className="font-semibold bg-linear-to-r from-primary to-accent"
               >
+                {isSaving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                 Create Laboratory
               </Button>
             </div>

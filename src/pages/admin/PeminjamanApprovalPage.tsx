@@ -10,6 +10,7 @@ import {
   History,
   Shield,
   UserCog,
+  RefreshCw,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -158,12 +159,11 @@ export default function PeminjamanApprovalPage() {
       setProcessing(requestId);
       await approvePeminjaman(requestId);
       toast.success("Peminjaman disetujui dan stok otomatis berkurang");
-      setRequests(requests.filter((r) => r.id !== requestId));
-      // Reload history to show the new approval
-      loadHistory();
-    } catch (error) {
+      // Reload both lists after successful approve
+      await Promise.all([loadRequests(), loadHistory()]);
+    } catch (error: any) {
       console.error(error);
-      toast.error("Gagal menyetujui peminjaman");
+      toast.error(error.message || "Gagal menyetujui peminjaman");
     } finally {
       setProcessing(null);
     }
@@ -186,14 +186,13 @@ export default function PeminjamanApprovalPage() {
       setProcessing(selectedRequestId);
       await rejectPeminjaman(selectedRequestId, rejectReason);
       toast.success("Peminjaman ditolak");
-      setRequests(requests.filter((r) => r.id !== selectedRequestId));
       setRejectDialogOpen(false);
       setRejectReason("");
-      // Reload history to show the rejection
-      loadHistory();
-    } catch (error) {
+      // Reload both lists after successful reject
+      await Promise.all([loadRequests(), loadHistory()]);
+    } catch (error: any) {
       console.error(error);
-      toast.error("Gagal menolak peminjaman");
+      toast.error(error.message || "Gagal menolak peminjaman");
     } finally {
       setProcessing(null);
     }
@@ -220,12 +219,29 @@ export default function PeminjamanApprovalPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-4xl font-extrabold">Persetujuan Peminjaman Alat</h1>
-        <p className="text-lg font-semibold text-muted-foreground mt-2">
-          Sebagai Admin, Anda dapat menyetujui atau menolak permintaan
-          peminjaman alat dari mahasiswa dan dosen
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-4xl font-extrabold">
+            Persetujuan Peminjaman Alat
+          </h1>
+          <p className="text-lg font-semibold text-muted-foreground mt-2">
+            Sebagai Admin, Anda dapat menyetujui atau menolak permintaan
+            peminjaman alat dari dosen
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          onClick={() => Promise.all([loadRequests(), loadHistory()])}
+          disabled={loading || historyLoading}
+          className="font-semibold shrink-0"
+        >
+          {loading || historyLoading ? (
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+          ) : (
+            <RefreshCw className="h-4 w-4 mr-2" />
+          )}
+          Refresh
+        </Button>
       </div>
 
       {/* Info Banner */}
@@ -331,7 +347,7 @@ export default function PeminjamanApprovalPage() {
                     <TableHeader>
                       <TableRow>
                         <TableHead className="font-semibold">
-                          Peminjam
+                          Dosen Peminjam
                         </TableHead>
                         <TableHead className="font-semibold">Alat</TableHead>
                         <TableHead className="font-semibold">Lab</TableHead>
@@ -356,7 +372,7 @@ export default function PeminjamanApprovalPage() {
                               {request.peminjam_nama}
                             </div>
                             <div className="text-xs text-muted-foreground">
-                              {request.peminjam_nim}
+                              NIDN: {request.peminjam_nim}
                             </div>
                           </TableCell>
                           <TableCell>
@@ -451,7 +467,7 @@ export default function PeminjamanApprovalPage() {
                     <TableHeader>
                       <TableRow>
                         <TableHead className="font-semibold">
-                          Peminjam
+                          Dosen Peminjam
                         </TableHead>
                         <TableHead className="font-semibold">Alat</TableHead>
                         <TableHead className="font-semibold">Jumlah</TableHead>
@@ -471,7 +487,7 @@ export default function PeminjamanApprovalPage() {
                               {item.peminjam_nama}
                             </div>
                             <div className="text-xs text-muted-foreground">
-                              {item.peminjam_nim}
+                              NIDN: {item.peminjam_nim}
                             </div>
                           </TableCell>
                           <TableCell>

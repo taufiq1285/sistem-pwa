@@ -1,0 +1,44 @@
+<mxfile host="app.diagrams.net" modified="2026-04-06T09:27:40.000Z" agent="Kilo" version="24.7.17" type="device">
+  <diagram id="arsitektur-aktual" name="Arsitektur Sistem Aktual">
+    <mxGraphModel dx="1600" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="1000" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <mxCell id="users" value="Pengguna&#xa;Admin | Dosen | Mahasiswa | Laboran" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="500" y="40" width="320" height="80" as="geometry" />
+        </mxCell>
+
+        <mxCell id="frontend" value="Frontend PWA&#xa;React + TypeScript + Vite + Tailwind CSS&#xa;App Layout | ProtectedRoute | RoleGuard&#xa;Dashboard dan halaman per role" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="420" y="180" width="480" height="120" as="geometry" />
+        </mxCell>
+
+        <mxCell id="offline" value="Offline / PWA Layer&#xa;Service Worker&#xa;Cache Storage&#xa;IndexedDB&#xa;Offline Queue&#xa;Background Sync&#xa;Network Status Detector" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="420" y="360" width="480" height="180" as="geometry" />
+        </mxCell>
+
+        <mxCell id="backend" value="Backend Service&#xa;Supabase Auth&#xa;Supabase Database (PostgreSQL)&#xa;Supabase Storage" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="420" y="610" width="480" height="120" as="geometry" />
+        </mxCell>
+
+        <mxCell id="data" value="Data Utama&#xa;users | mata_kuliah | kelas | jadwal | materi | kuis | soal | jawaban | kehadiran | nilai | logbook | inventaris | peminjaman | pengumuman" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="360" y="800" width="600" height="100" as="geometry" />
+        </mxCell>
+
+        <mxCell id="note_online" value="Mode online: data dikirim ke backend" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#999999;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="960" y="420" width="220" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="note_offline" value="Mode offline: data disimpan sementara di cache, IndexedDB, dan queue" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#999999;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="960" y="480" width="260" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="a1" edge="1" parent="1" source="users" target="frontend" style="endArrow=block;html=1;strokeWidth=2;"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="a2" edge="1" parent="1" source="frontend" target="offline" style="endArrow=block;html=1;strokeWidth=2;"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="a3" edge="1" parent="1" source="offline" target="backend" style="endArrow=block;html=1;strokeWidth=2;"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="a4" edge="1" parent="1" source="backend" target="data" style="endArrow=block;html=1;strokeWidth=2;"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="a5" edge="1" parent="1" source="offline" target="note_online" style="dashed=1;endArrow=none;html=1;"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="a6" edge="1" parent="1" source="offline" target="note_offline" style="dashed=1;endArrow=none;html=1;"><mxGeometry relative="1" as="geometry" /></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

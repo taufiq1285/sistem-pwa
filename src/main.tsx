@@ -146,16 +146,28 @@ function setupIdleAutoUpdate(): void {
       reg.waiting.postMessage({ type: "SKIP_WAITING" });
       navigator.serviceWorker.addEventListener(
         "controllerchange",
-        () => { window.location.reload(); },
+        () => {
+          window.location.reload();
+        },
         { once: true },
       );
       // Fallback reload
-      setTimeout(() => { window.location.reload(); }, 5000);
+      setTimeout(() => {
+        window.location.reload();
+      }, 5000);
     }, IDLE_TIMEOUT_MS);
   };
 
-  const ACTIVITY_EVENTS = ["click", "keydown", "scroll", "touchstart", "mousemove"] as const;
-  ACTIVITY_EVENTS.forEach((e) => window.addEventListener(e, resetTimer, { passive: true }));
+  const ACTIVITY_EVENTS = [
+    "click",
+    "keydown",
+    "scroll",
+    "touchstart",
+    "mousemove",
+  ] as const;
+  ACTIVITY_EVENTS.forEach((e) =>
+    window.addEventListener(e, resetTimer, { passive: true }),
+  );
 
   // Start the initial timer
   resetTimer();

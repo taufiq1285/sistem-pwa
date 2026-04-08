@@ -482,78 +482,71 @@ export async function secureOfflineLogin(
   email: string,
   password: string,
 ): Promise<{ user: AuthUser; session: AuthSession } | null> {
-  try {
-    // ✅ FIX: baca credentials per-user pakai key unik per email
-    const credentials = (await indexedDBManager.getMetadata(
-      `offline_credentials_${email.toLowerCase()}`,
-    )) as StoredCredentials | null;
+  // ✅ FIX: baca credentials per-user pakai key unik per email
+  const credentials = (await indexedDBManager.getMetadata(
+    `offline_credentials_${email.toLowerCase()}`,
+  )) as StoredCredentials | null;
 
-    if (!credentials) {
-      // User belum pernah login online sama sekali di perangkat ini
-      throw new Error(
-        "Anda belum pernah login di perangkat ini. Silakan login online minimal 1x terlebih dahulu.",
-      );
-    }
-
-    const canLogin = await canLoginOffline(email);
-    if (!canLogin) {
-      console.log(
-        "🔒 Blocking offline login - user must login online first:",
-        email,
-      );
-      throw new Error(
-        "Login offline tidak diizinkan. Anda perlu login online minimal 1x sebelum bisa login offline.",
-      );
-    }
-
-    const isValid = await verifyOfflineCredentials(email, password);
-    if (!isValid) throw new Error("Password salah. Periksa kembali password Anda.");
-
-    // ✅ FIX: restore session spesifik user ini (pakai credentials.id), bukan last_logged_in
-    const credData = (await indexedDBManager.getMetadata(
-      `offline_credentials_${email.toLowerCase()}`,
-    )) as StoredCredentials | null;
-
-    if (credData?.id) {
-      const perUserSession = (await indexedDBManager.getMetadata(
-        `offline_session_${credData.id}`,
-      )) as StoredSession | null;
-      if (perUserSession && Date.now() < perUserSession.expiresAt) {
-        // Update last_logged_in_user_id agar startup offline berikutnya restore user ini
-        await indexedDBManager.setMetadata(
-          "last_logged_in_user_id",
-          credData.id,
-        );
-        console.log("✅ Restored per-user offline session");
-        return { user: perUserSession.user, session: perUserSession.session };
-      }
-    }
-
-    const userData = await getStoredUserData(email);
-    if (!userData) {
-      throw new Error(
-        "Data pengguna tidak ditemukan. Silakan login online terlebih dahulu untuk menyimpan data.",
-      );
-    }
-
-    const offlineSession: AuthSession = {
-      access_token: "offline_session_token",
-      refresh_token: "offline_refresh_token",
-      expires_at: Math.floor((Date.now() + 7 * 24 * 60 * 60 * 1000) / 1000),
-      user: userData,
-    };
-
-    await storeOfflineSession(userData, offlineSession);
-    console.log("✅ Secure offline login successful");
-
-    return {
-      user: userData,
-      session: offlineSession,
-    };
-  } catch (error) {
-    // Re-throw so specific error messages reach the caller (AuthProvider)
-    throw error;
+  if (!credentials) {
+    // User belum pernah login online sama sekali di perangkat ini
+    throw new Error(
+      "Anda belum pernah login di perangkat ini. Silakan login online minimal 1x terlebih dahulu.",
+    );
   }
+
+  const canLogin = await canLoginOffline(email);
+  if (!canLogin) {
+    console.log(
+      "🔒 Blocking offline login - user must login online first:",
+      email,
+    );
+    throw new Error(
+      "Login offline tidak diizinkan. Anda perlu login online minimal 1x sebelum bisa login offline.",
+    );
+  }
+
+  const isValid = await verifyOfflineCredentials(email, password);
+  if (!isValid)
+    throw new Error("Password salah. Periksa kembali password Anda.");
+
+  // ✅ FIX: restore session spesifik user ini (pakai credentials.id), bukan last_logged_in
+  const credData = (await indexedDBManager.getMetadata(
+    `offline_credentials_${email.toLowerCase()}`,
+  )) as StoredCredentials | null;
+
+  if (credData?.id) {
+    const perUserSession = (await indexedDBManager.getMetadata(
+      `offline_session_${credData.id}`,
+    )) as StoredSession | null;
+    if (perUserSession && Date.now() < perUserSession.expiresAt) {
+      // Update last_logged_in_user_id agar startup offline berikutnya restore user ini
+      await indexedDBManager.setMetadata("last_logged_in_user_id", credData.id);
+      console.log("✅ Restored per-user offline session");
+      return { user: perUserSession.user, session: perUserSession.session };
+    }
+  }
+
+  const userData = await getStoredUserData(email);
+  if (!userData) {
+    throw new Error(
+      "Data pengguna tidak ditemukan. Silakan login online terlebih dahulu untuk menyimpan data.",
+    );
+  }
+
+  const offlineSession: AuthSession = {
+    access_token: "offline_session_token",
+    refresh_token: "offline_refresh_token",
+    expires_at: Math.floor((Date.now() + 7 * 24 * 60 * 60 * 1000) / 1000),
+    user: userData,
+  };
+
+  await storeOfflineSession(userData, offlineSession);
+  console.log("✅ Secure offline login successful");
+
+  return {
+    user: userData,
+    session: offlineSession,
+  };
 }
 
 /**
@@ -565,8 +558,25 @@ export async function offlineLogin(
   email: string,
   password: string,
 ): Promise<{ user: AuthUser; session: AuthSession } | null> {
-  // Let errors bubble up so callers get specific error messages
-  return await secureOfflineLogin(email, password);
+  try {
+    return await secureOfflineLogin(email, password);
+  } catch (error) {
+    if (error instanceof Error) {
+      if (error.message.includes("Data pengguna tidak ditemukan")) {
+        console.error("❌ User data not found");
+      }
+
+      if (
+        error.message.includes("Anda belum pernah login") ||
+        error.message.includes("Password salah")
+      ) {
+        console.error("❌ Failed to verify offline credentials:", error);
+      }
+    }
+
+    console.error("❌ Offline login failed:", error);
+    return null;
+  }
 }
 
 /**

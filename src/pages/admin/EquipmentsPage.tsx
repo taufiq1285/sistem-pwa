@@ -12,6 +12,7 @@ import {
   AlertCircle,
   Edit2,
   Trash2,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -80,6 +81,7 @@ export default function EquipmentsPage() {
   const [inventaris, setInventaris] = useState<InventarisListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
   // Edit dialog
   const [editingItem, setEditingItem] = useState<InventarisListItem | null>(
@@ -153,11 +155,12 @@ export default function EquipmentsPage() {
   };
 
   const handleBulkDelete = async (items: InventarisListItem[]) => {
+    if (!confirm(`Hapus ${items.length} equipment?`)) return;
+
     try {
-      for (const item of items) {
-        await deleteInventaris(item.id);
-      }
+      await Promise.all(items.map((item) => deleteInventaris(item.id)));
       toast.success(`Successfully deleted ${items.length} equipment(s)`);
+      rowSelection.clearSelection();
       await loadData();
     } catch (error: any) {
       toast.error(
@@ -224,19 +227,18 @@ export default function EquipmentsPage() {
   };
 
   const handleCreate = async () => {
+    if (!addFormData.kode_barang || !addFormData.nama_barang) {
+      toast.error("Kode Barang dan Nama Barang wajib diisi");
+      return;
+    }
+
+    if (addFormData.jumlah_tersedia > addFormData.jumlah) {
+      toast.error("Jumlah tersedia tidak boleh melebihi jumlah total");
+      return;
+    }
+
+    setIsSaving(true);
     try {
-      if (!addFormData.kode_barang || !addFormData.nama_barang) {
-        toast.error("Please fill in all required fields (Code, Name)");
-        return;
-      }
-
-      // Validate jumlah_tersedia
-      if (addFormData.jumlah_tersedia > addFormData.jumlah) {
-        toast.error("Available quantity cannot be greater than total quantity");
-        return;
-      }
-
-      // Create equipment with laboratorium_id as null (stored in central depot)
       await createInventaris({
         ...addFormData,
         laboratorium_id: null,
@@ -249,6 +251,8 @@ export default function EquipmentsPage() {
         "Failed to create equipment: " + (error.message || "Unknown error"),
       );
       console.error(error);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -272,21 +276,19 @@ export default function EquipmentsPage() {
   const handleUpdate = async () => {
     if (!editingItem) return;
 
+    if (!editFormData.kode_barang || !editFormData.nama_barang) {
+      toast.error("Kode Barang dan Nama Barang wajib diisi");
+      return;
+    }
+
+    if (editFormData.jumlah_tersedia > editFormData.jumlah) {
+      toast.error("Jumlah tersedia tidak boleh melebihi jumlah total");
+      return;
+    }
+
+    setIsSaving(true);
     try {
-      if (!editFormData.kode_barang || !editFormData.nama_barang) {
-        toast.error("Please fill in all required fields (Code, Name)");
-        return;
-      }
-
-      if (editFormData.jumlah_tersedia > editFormData.jumlah) {
-        toast.error("Available quantity cannot be greater than total quantity");
-        return;
-      }
-
-      await updateInventaris(editingItem.id, {
-        ...editFormData,
-        laboratorium_id: null,
-      });
+      await updateInventaris(editingItem.id, editFormData);
       toast.success("Equipment updated successfully");
       setIsEditDialogOpen(false);
       setEditingItem(null);
@@ -296,6 +298,8 @@ export default function EquipmentsPage() {
         "Failed to update equipment: " + (error.message || "Unknown error"),
       );
       console.error(error);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -847,14 +851,17 @@ export default function EquipmentsPage() {
               <Button
                 variant="outline"
                 onClick={() => setIsAddDialogOpen(false)}
+                disabled={isSaving}
                 className="font-semibold border-2"
               >
                 Cancel
               </Button>
               <Button
                 onClick={handleCreate}
+                disabled={isSaving}
                 className="font-semibold bg-linear-to-r from-primary to-accent"
               >
+                {isSaving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                 Create Equipment
               </Button>
             </div>
@@ -998,14 +1005,17 @@ export default function EquipmentsPage() {
               <Button
                 variant="outline"
                 onClick={() => setIsEditDialogOpen(false)}
+                disabled={isSaving}
                 className="font-semibold border-2"
               >
                 Cancel
               </Button>
               <Button
                 onClick={handleUpdate}
+                disabled={isSaving}
                 className="font-semibold bg-linear-to-r from-primary to-accent"
               >
+                {isSaving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                 Update Equipment
               </Button>
             </div>

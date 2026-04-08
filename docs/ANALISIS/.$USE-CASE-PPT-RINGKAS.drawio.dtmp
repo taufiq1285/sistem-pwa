@@ -1,0 +1,121 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/29.6.1 Chrome/142.0.7444.265 Electron/39.8.0 Safari/537.36" version="29.6.1">
+  <diagram id="usecase-ppt-ringkas" name="Use Case PPT Ringkas">
+    <mxGraphModel dx="856" dy="521" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="system" parent="1" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=4;fontStyle=1;fillColor=#f8f9fa;strokeColor=#b85450;fontSize=28;fontColor=#800000;verticalAlign=top;spacingTop=20;" value="Sistem Informasi Praktikum&#xa;Berbasis PWA" vertex="1">
+          <mxGeometry height="800" width="850" x="400" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="admin" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;fontSize=22;fontStyle=1;fontColor=#333333;strokeWidth=3;fillColor=#e1d5e7;strokeColor=#9673a6;" value="Admin" vertex="1">
+          <mxGeometry height="120" width="60" x="120" y="140" as="geometry" />
+        </mxCell>
+        <mxCell id="dosen" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;fontSize=22;fontStyle=1;fontColor=#333333;strokeWidth=3;fillColor=#e1d5e7;strokeColor=#9673a6;" value="Dosen" vertex="1">
+          <mxGeometry height="120" width="60" x="120" y="340" as="geometry" />
+        </mxCell>
+        <mxCell id="mahasiswa" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;fontSize=22;fontStyle=1;fontColor=#333333;strokeWidth=3;fillColor=#e1d5e7;strokeColor=#9673a6;" value="Mahasiswa" vertex="1">
+          <mxGeometry height="120" width="60" x="120" y="540" as="geometry" />
+        </mxCell>
+        <mxCell id="laboran" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;fontSize=22;fontStyle=1;fontColor=#333333;strokeWidth=3;fillColor=#e1d5e7;strokeColor=#9673a6;" value="Laboran" vertex="1">
+          <mxGeometry height="120" width="60" x="120" y="740" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_admin1" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=20;fontStyle=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=3;fontColor=#1a1a1a;" value="Kelola Pengguna" vertex="1">
+          <mxGeometry height="70" width="220" x="480" y="140" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_admin2" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=20;fontStyle=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=3;fontColor=#1a1a1a;" value="Kelola Kelas &amp; Mata Kuliah" vertex="1">
+          <mxGeometry height="70" width="280" x="830" y="140" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_admin3" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=20;fontStyle=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=3;fontColor=#1a1a1a;" value="Kelola Lab &amp; Peralatan" vertex="1">
+          <mxGeometry height="70" width="240" x="480" y="230" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_admin4" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=20;fontStyle=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=3;fontColor=#1a1a1a;" value="Approval Peminjaman" vertex="1">
+          <mxGeometry height="70" width="240" x="830" y="230" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_dosen1" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=20;fontStyle=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=3;fontColor=#1a1a1a;" value="Kelola Jadwal Praktikum" vertex="1">
+          <mxGeometry height="70" width="260" x="480" y="340" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_dosen2" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=20;fontStyle=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=3;fontColor=#1a1a1a;" value="Kelola Materi &amp; Kuis" vertex="1">
+          <mxGeometry height="70" width="240" x="800" y="340" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_dosen3" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=20;fontStyle=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=3;fontColor=#1a1a1a;" value="Input Kehadiran &amp; Nilai" vertex="1">
+          <mxGeometry height="70" width="260" x="480" y="430" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_dosen4" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=20;fontStyle=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=3;fontColor=#1a1a1a;" value="Review Logbook" vertex="1">
+          <mxGeometry height="70" width="210" x="800" y="430" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_mhs1" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=20;fontStyle=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=3;fontColor=#1a1a1a;" value="Lihat Jadwal" vertex="1">
+          <mxGeometry height="70" width="200" x="480" y="530" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_mhs2" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=20;fontStyle=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=3;fontColor=#1a1a1a;" value="Akses Materi" vertex="1">
+          <mxGeometry height="70" width="200" x="720" y="530" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_mhs3" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=20;fontStyle=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=3;fontColor=#1a1a1a;" value="Kerjakan Kuis" vertex="1">
+          <mxGeometry height="70" width="200" x="480" y="620" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_mhs4" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=20;fontStyle=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=3;fontColor=#1a1a1a;" value="Isi Logbook" vertex="1">
+          <mxGeometry height="70" width="200" x="720" y="620" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_mhs5" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=20;fontStyle=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=3;fontColor=#1a1a1a;" value="Lihat Nilai &amp; Presensi" vertex="1">
+          <mxGeometry height="70" width="250" x="960" y="580" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_lab1" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=20;fontStyle=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=3;fontColor=#1a1a1a;" value="Kelola Inventaris" vertex="1">
+          <mxGeometry height="70" width="220" x="480" y="760" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_lab2" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=20;fontStyle=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=3;fontColor=#1a1a1a;" value="Persetujuan Jadwal Lab" vertex="1">
+          <mxGeometry height="70" width="250" x="730" y="730" as="geometry" />
+        </mxCell>
+        <mxCell id="uc_lab3" parent="1" style="ellipse;whiteSpace=wrap;html=1;fontSize=20;fontStyle=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=3;fontColor=#1a1a1a;" value="Persetujuan Peminjaman" vertex="1">
+          <mxGeometry height="70" width="260" x="730" y="810" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" edge="1" parent="1" source="admin" style="strokeWidth=3;strokeColor=#555555;" target="uc_admin1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" edge="1" parent="1" source="admin" style="strokeWidth=3;strokeColor=#555555;" target="uc_admin2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" edge="1" parent="1" source="admin" style="strokeWidth=3;strokeColor=#555555;" target="uc_admin3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" edge="1" parent="1" source="admin" style="strokeWidth=3;strokeColor=#555555;" target="uc_admin4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5" edge="1" parent="1" source="dosen" style="strokeWidth=3;strokeColor=#555555;" target="uc_dosen1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e6" edge="1" parent="1" source="dosen" style="strokeWidth=3;strokeColor=#555555;" target="uc_dosen2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e7" edge="1" parent="1" source="dosen" style="strokeWidth=3;strokeColor=#555555;" target="uc_dosen3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e8" edge="1" parent="1" source="dosen" style="strokeWidth=3;strokeColor=#555555;" target="uc_dosen4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e9" edge="1" parent="1" source="mahasiswa" style="strokeWidth=3;strokeColor=#555555;" target="uc_mhs1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e10" edge="1" parent="1" source="mahasiswa" style="strokeWidth=3;strokeColor=#555555;" target="uc_mhs2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e11" edge="1" parent="1" source="mahasiswa" style="strokeWidth=3;strokeColor=#555555;" target="uc_mhs3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e12" edge="1" parent="1" source="mahasiswa" style="strokeWidth=3;strokeColor=#555555;" target="uc_mhs4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e13" edge="1" parent="1" source="mahasiswa" style="strokeWidth=3;strokeColor=#555555;" target="uc_mhs5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e14" edge="1" parent="1" source="laboran" style="strokeWidth=3;strokeColor=#555555;" target="uc_lab1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e15" edge="1" parent="1" source="laboran" style="strokeWidth=3;strokeColor=#555555;" target="uc_lab2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e16" edge="1" parent="1" source="laboran" style="strokeWidth=3;strokeColor=#555555;" target="uc_lab3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

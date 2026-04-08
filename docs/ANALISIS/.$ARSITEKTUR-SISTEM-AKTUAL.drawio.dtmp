@@ -1,0 +1,49 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/29.6.1 Chrome/142.0.7444.265 Electron/39.8.0 Safari/537.36" version="29.6.1">
+  <diagram id="arsitektur-aktual" name="Arsitektur Sistem Aktual">
+    <mxGraphModel dx="856" dy="521" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="1000" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="users" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;strokeWidth=3;" value="Pengguna&#xa;Admin | Dosen | Mahasiswa | Laboran" vertex="1">
+          <mxGeometry height="80" width="320" x="500" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="frontend" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;strokeWidth=3;" value="Frontend PWA&#xa;React + TypeScript + Vite + Tailwind CSS&#xa;App Layout | ProtectedRoute | RoleGuard&#xa;Dashboard dan halaman per role" vertex="1">
+          <mxGeometry height="120" width="480" x="420" y="180" as="geometry" />
+        </mxCell>
+        <mxCell id="offline" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;strokeWidth=3;" value="Offline / PWA Layer&#xa;Service Worker&#xa;Cache Storage&#xa;IndexedDB&#xa;Offline Queue&#xa;Background Sync&#xa;Network Status Detector" vertex="1">
+          <mxGeometry height="180" width="480" x="420" y="360" as="geometry" />
+        </mxCell>
+        <mxCell id="backend" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;strokeWidth=3;" value="Backend Service&#xa;Supabase Auth&#xa;Supabase Database (PostgreSQL)&#xa;Supabase Storage" vertex="1">
+          <mxGeometry height="120" width="480" x="420" y="610" as="geometry" />
+        </mxCell>
+        <mxCell id="data" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;strokeWidth=3;" value="Data Utama&#xa;users | mata_kuliah | kelas | jadwal | materi | kuis | soal | jawaban | kehadiran | nilai | logbook | inventaris | peminjaman | pengumuman" vertex="1">
+          <mxGeometry height="100" width="600" x="360" y="800" as="geometry" />
+        </mxCell>
+        <mxCell id="note_online" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#999999;dashed=1;strokeWidth=3;" value="Mode online: data dikirim ke backend" vertex="1">
+          <mxGeometry height="50" width="220" x="960" y="420" as="geometry" />
+        </mxCell>
+        <mxCell id="note_offline" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#999999;dashed=1;strokeWidth=3;" value="Mode offline: data disimpan sementara di cache, IndexedDB, dan queue" vertex="1">
+          <mxGeometry height="70" width="260" x="960" y="480" as="geometry" />
+        </mxCell>
+        <mxCell id="a1" edge="1" parent="1" source="users" style="endArrow=block;html=1;strokeWidth=3;" target="frontend">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a2" edge="1" parent="1" source="frontend" style="endArrow=block;html=1;strokeWidth=3;" target="offline">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a3" edge="1" parent="1" source="offline" style="endArrow=block;html=1;strokeWidth=3;" target="backend">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a4" edge="1" parent="1" source="backend" style="endArrow=block;html=1;strokeWidth=3;" target="data">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a5" edge="1" parent="1" source="offline" style="dashed=1;endArrow=none;html=1;strokeWidth=3;" target="note_online">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a6" edge="1" parent="1" source="offline" style="dashed=1;endArrow=none;html=1;strokeWidth=3;" target="note_offline">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

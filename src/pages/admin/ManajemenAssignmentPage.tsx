@@ -20,21 +20,19 @@ import {
   Clock,
   MapPin,
   Search,
-  Filter,
   RefreshCw,
-  Plus,
   Edit,
   Trash2,
-  Eye,
   ChevronDown,
   ChevronUp,
   Loader2,
   AlertTriangle,
   CheckCircle,
   BarChart3,
+  GraduationCap,
+  UserCheck,
 } from "lucide-react";
 import { toast } from "sonner";
-import type { ColumnDef } from "@tanstack/react-table";
 
 // UI Components
 import { PageHeader } from "@/components/common/PageHeader";
@@ -42,13 +40,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/ui/status-badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -66,7 +58,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { DashboardCard } from "@/components/ui/dashboard-card";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { networkDetector } from "@/lib/offline/network-detector";
 import { supabase } from "@/lib/supabase/client";
@@ -147,9 +149,42 @@ interface EditAssignmentData {
   mata_kuliah_id: string;
 }
 
+// Tab 1: Assignment Dosen types
+interface KelasWithAssignment {
+  id: string;
+  nama_kelas: string;
+  kode_kelas: string;
+  tahun_ajaran: string;
+  semester_ajaran: number;
+  dosen_id?: string | null;
+  mata_kuliah_id?: string | null;
+  mata_kuliah?: { id: string; nama_mk: string; kode_mk: string; sks: number };
+  dosen?: {
+    id: string;
+    nip: string;
+    users?: { full_name: string; email: string };
+  };
+}
+
 export default function ManajemenAssignmentPage() {
   const { user } = useAuth();
 
+  // ── Tab 1: Assignment Dosen state ──────────────────────────────────────────
+  const [kelasList, setKelasList] = useState<KelasWithAssignment[]>([]);
+  const [filterDosen, setFilterDosen] = useState("all");
+  const [filterMataKuliah, setFilterMataKuliah] = useState("all");
+  const [filterTahunAjaran, setFilterTahunAjaran] = useState("all");
+  const [searchKelas, setSearchKelas] = useState("");
+  const [tahunAjaranList, setTahunAjaranList] = useState<string[]>([]);
+  const [isEditKelasOpen, setIsEditKelasOpen] = useState(false);
+  const [selectedKelas, setSelectedKelas] =
+    useState<KelasWithAssignment | null>(null);
+  const [isSubmittingKelas, setIsSubmittingKelas] = useState(false);
+  const [editKelasDosenId, setEditKelasDosenId] = useState("");
+  const [editKelasMkId, setEditKelasMkId] = useState("");
+  const [kelasLoading, setKelasLoading] = useState(true);
+
+  // ── Tab 2: Jadwal Praktikum state ──────────────────────────────────────────
   // State Management
   const [assignments, setAssignments] = useState<AssignmentDetail[]>([]);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
@@ -179,10 +214,10 @@ export default function ManajemenAssignmentPage() {
     useState<EditAssignmentData | null>(null);
   const [editAssignmentLoading, setEditAssignmentLoading] = useState(false);
 
-  // Dropdown data
+  // Dropdown data (Tab 2 jadwal dialogs)
   const [dosenList, setDosenList] = useState<any[]>([]);
   const [labList, setLabList] = useState<any[]>([]);
-  const [kelasList, setKelasList] = useState<any[]>([]);
+  const [kelasDropdownList, setKelasDropdownList] = useState<any[]>([]);
   const [mataKuliahList, setMataKuliahList] = useState<any[]>([]);
 
   // Stats
@@ -411,6 +446,230 @@ export default function ManajemenAssignmentPage() {
   useEffect(() => {
     fetchAssignments();
   }, [filters, searchQuery]);
+
+  // ============================================================================
+  // TAB 1: ASSIGNMENT DOSEN — DATA FETCHING
+  // ============================================================================
+
+  const loadKelasData = async () => {
+    try {
+      setKelasLoading(true);
+
+      const [kelasResponse, dosenForTab1, mkForTab1] = await Promise.all([
+        supabase
+          .from("kelas")
+          .select(
+            `
+            *,
+            mata_kuliah:mata_kuliah_id (
+              id,
+              nama_mk,
+              kode_mk,
+              sks
+            ),
+            dosen:dosen_id (
+              id,
+              nip,
+              users:user_id (
+                id,
+                full_name,
+                email
+              )
+            )
+          `,
+          )
+          .eq("is_active", true)
+          .order("tahun_ajaran", { ascending: false })
+          .order("nama_kelas"),
+        supabase
+          .from("dosen")
+          .select(
+            `
+            id,
+            nip,
+            users:user_id (
+              id,
+              full_name,
+              email
+            )
+          `,
+          )
+          .order("users(full_name)"),
+        supabase
+          .from("mata_kuliah")
+          .select("id, nama_mk, kode_mk, sks, is_active")
+          .eq("is_active", true)
+          .order("nama_mk"),
+      ]);
+
+      if (kelasResponse.error) throw kelasResponse.error;
+
+      setKelasList(kelasResponse.data || []);
+
+      // Also update shared dropdown lists for Tab 2 dialogs if they haven't loaded
+      if (dosenForTab1.data && dosenList.length === 0) {
+        setDosenList(dosenForTab1.data);
+      }
+      if (mkForTab1.data && mataKuliahList.length === 0) {
+        setMataKuliahList(mkForTab1.data);
+      }
+
+      // Extract unique tahun ajaran
+      const tahunAjarans = [
+        ...new Set((kelasResponse.data || []).map((k: any) => k.tahun_ajaran)),
+      ].sort((a: any, b: any) => b.localeCompare(a));
+      setTahunAjaranList(tahunAjarans as string[]);
+    } catch (error: any) {
+      console.error("Error loading kelas data:", error);
+      toast.error(error.message || "Gagal memuat data kelas");
+    } finally {
+      setKelasLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadKelasData();
+  }, []);
+
+  const filteredKelas = useMemo(() => {
+    let filtered = [...kelasList];
+
+    if (filterDosen !== "all") {
+      filtered = filtered.filter((k) => k.dosen?.id === filterDosen);
+    }
+    if (filterMataKuliah !== "all") {
+      filtered = filtered.filter((k) => k.mata_kuliah?.id === filterMataKuliah);
+    }
+    if (filterTahunAjaran !== "all") {
+      filtered = filtered.filter((k) => k.tahun_ajaran === filterTahunAjaran);
+    }
+    if (searchKelas) {
+      const q = searchKelas.toLowerCase();
+      filtered = filtered.filter(
+        (k) =>
+          k.nama_kelas.toLowerCase().includes(q) ||
+          k.kode_kelas.toLowerCase().includes(q) ||
+          k.dosen?.users?.full_name?.toLowerCase().includes(q) ||
+          k.mata_kuliah?.nama_mk?.toLowerCase().includes(q),
+      );
+    }
+
+    return filtered;
+  }, [
+    kelasList,
+    filterDosen,
+    filterMataKuliah,
+    filterTahunAjaran,
+    searchKelas,
+  ]);
+
+  const handleEditKelas = (kelas: KelasWithAssignment) => {
+    setSelectedKelas(kelas);
+    setEditKelasDosenId(kelas.dosen_id || "");
+    setEditKelasMkId(kelas.mata_kuliah_id || "");
+    setIsEditKelasOpen(true);
+  };
+
+  const handleEditKelasSubmit = async () => {
+    if (!selectedKelas) return;
+
+    try {
+      setIsSubmittingKelas(true);
+
+      const newDosenId =
+        editKelasDosenId && editKelasDosenId !== "none"
+          ? editKelasDosenId
+          : null;
+      const newMkId =
+        editKelasMkId && editKelasMkId !== "none" ? editKelasMkId : null;
+      const oldDosenId = selectedKelas.dosen_id || null;
+      const dosenChanged =
+        newDosenId && oldDosenId && newDosenId !== oldDosenId;
+
+      // 1. Update kelas
+      const { error: kelasError } = await supabase
+        .from("kelas")
+        .update({
+          dosen_id: newDosenId,
+          mata_kuliah_id: newMkId,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", selectedKelas.id);
+
+      if (kelasError) throw kelasError;
+
+      // 2. Jika dosen berubah, cascade ke jadwal_praktikum
+      if (dosenChanged) {
+        const { error: jadwalError } = await (supabase as any)
+          .from("jadwal_praktikum")
+          .update({
+            dosen_id: newDosenId,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("kelas_id", selectedKelas.id)
+          .eq("dosen_id", oldDosenId);
+
+        if (jadwalError) throw jadwalError;
+
+        // 3. Notifikasi dosen lama
+        const { data: oldDosenUser } = await (supabase as any)
+          .from("dosen")
+          .select("id, users:user_id(id, full_name)")
+          .eq("id", oldDosenId)
+          .single();
+
+        const { data: newDosenUser } = await (supabase as any)
+          .from("dosen")
+          .select("id, users:user_id(id, full_name)")
+          .eq("id", newDosenId)
+          .single();
+
+        if (oldDosenUser?.users?.id) {
+          await (supabase as any).from("notifications").insert({
+            user_id: oldDosenUser.users.id,
+            title: "Assignment Kelas Dipindah",
+            message: `Assignment untuk kelas ${selectedKelas.nama_kelas} telah dialihkan dari Anda ke ${newDosenUser?.users?.full_name || "dosen lain"} oleh admin.`,
+            type: "assignment_reassigned",
+            metadata: {
+              kelas_id: selectedKelas.id,
+              old_dosen_id: oldDosenId,
+              new_dosen_id: newDosenId,
+            },
+          });
+        }
+
+        if (newDosenUser?.users?.id) {
+          await (supabase as any).from("notifications").insert({
+            user_id: newDosenUser.users.id,
+            title: "Assignment Kelas Baru",
+            message: `Anda ditugaskan untuk mengajar kelas ${selectedKelas.nama_kelas}${selectedKelas.mata_kuliah ? ` (${selectedKelas.mata_kuliah.nama_mk})` : ""} oleh admin.`,
+            type: "assignment_added",
+            metadata: {
+              kelas_id: selectedKelas.id,
+              new_dosen_id: newDosenId,
+            },
+          });
+        }
+
+        toast.success("Assignment kelas berhasil diperbarui", {
+          description: `Dosen diganti dan ${dosenChanged ? "jadwal praktikum ikut diperbarui" : ""}. Notifikasi dikirim ke dosen terkait.`,
+        });
+      } else {
+        toast.success("Assignment kelas berhasil diperbarui");
+      }
+
+      setIsEditKelasOpen(false);
+      setSelectedKelas(null);
+      await loadKelasData();
+      // Refresh Tab 2 juga karena jadwal mungkin berubah
+      if (dosenChanged) fetchAssignments();
+    } catch (error: any) {
+      console.error("Error updating kelas assignment:", error);
+      toast.error(error.message || "Gagal memperbarui assignment");
+    } finally {
+      setIsSubmittingKelas(false);
+    }
+  };
 
   // ============================================================================
   // EVENT HANDLERS
@@ -688,7 +947,7 @@ export default function ManajemenAssignmentPage() {
 
       if (dosenResult.data) setDosenList(dosenResult.data);
       if (labResult.data) setLabList(labResult.data);
-      if (kelasResult.data) setKelasList(kelasResult.data);
+      if (kelasResult.data) setKelasDropdownList(kelasResult.data);
       if (mataKuliahResult.data) setMataKuliahList(mataKuliahResult.data);
     };
 
@@ -1044,6 +1303,92 @@ export default function ManajemenAssignmentPage() {
     );
   }, [assignments, searchQuery]);
 
+  // ── Tab 3: Ringkasan per dosen ────────────────────────────────────────────
+  // Gabungkan data dari kelasList (assignment) + assignments (jadwal)
+  const dosenSummary = useMemo(() => {
+    // Map: dosen_id → ringkasan
+    const map = new Map<
+      string,
+      {
+        dosen_id: string;
+        nama: string;
+        email: string;
+        kelasList: Array<{
+          id: string;
+          nama_kelas: string;
+          kode_kelas: string;
+          nama_mk: string;
+          kode_mk: string;
+          sks: number;
+          tahun_ajaran: string;
+          semester_ajaran: number;
+        }>;
+        mataKuliahSet: Set<string>;
+        totalJadwal: number;
+        jadwalScheduled: number;
+        jadwalCompleted: number;
+      }
+    >();
+
+    // Dari kelasList (Tab 1): setiap kelas yang punya dosen
+    kelasList.forEach((k) => {
+      if (!k.dosen_id || !k.dosen?.users) return;
+      const id = k.dosen_id;
+      if (!map.has(id)) {
+        map.set(id, {
+          dosen_id: id,
+          nama: k.dosen.users.full_name,
+          email: k.dosen.users.email,
+          kelasList: [],
+          mataKuliahSet: new Set(),
+          totalJadwal: 0,
+          jadwalScheduled: 0,
+          jadwalCompleted: 0,
+        });
+      }
+      const entry = map.get(id)!;
+      entry.kelasList.push({
+        id: k.id,
+        nama_kelas: k.nama_kelas,
+        kode_kelas: k.kode_kelas,
+        nama_mk: k.mata_kuliah?.nama_mk || "—",
+        kode_mk: k.mata_kuliah?.kode_mk || "—",
+        sks: k.mata_kuliah?.sks || 0,
+        tahun_ajaran: k.tahun_ajaran,
+        semester_ajaran: k.semester_ajaran,
+      });
+      if (k.mata_kuliah?.id) entry.mataKuliahSet.add(k.mata_kuliah.id);
+    });
+
+    // Dari assignments (Tab 2): jadwal count per dosen
+    assignments.forEach((a) => {
+      if (!map.has(a.dosen_id)) {
+        // Dosen ada jadwal tapi tidak terdaftar di kelas aktif
+        map.set(a.dosen_id, {
+          dosen_id: a.dosen_id,
+          nama: a.dosen.full_name,
+          email: a.dosen.email,
+          kelasList: [],
+          mataKuliahSet: new Set(),
+          totalJadwal: 0,
+          jadwalScheduled: 0,
+          jadwalCompleted: 0,
+        });
+      }
+      const entry = map.get(a.dosen_id)!;
+      entry.totalJadwal += a.jadwalDetail?.length || 0;
+      a.jadwalDetail?.forEach((j) => {
+        if (j.status === "scheduled") entry.jadwalScheduled++;
+        if (j.status === "completed") entry.jadwalCompleted++;
+      });
+      entry.mataKuliahSet.add(a.mata_kuliah_id);
+    });
+
+    return Array.from(map.values()).sort((a, b) =>
+      a.nama.localeCompare(b.nama),
+    );
+  }, [kelasList, assignments]);
+
   // ============================================================================
   // RENDER
   // ============================================================================
@@ -1113,240 +1458,636 @@ export default function ManajemenAssignmentPage() {
         </Card>
       </div>
 
-      {/* Filters and Search */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="flex-1">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Cari dosen, mata kuliah, atau kelas..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
+      <Tabs defaultValue="assignment" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="assignment" className="flex items-center gap-2">
+            <UserCheck className="h-4 w-4" />
+            Assignment Dosen
+          </TabsTrigger>
+          <TabsTrigger value="jadwal" className="flex items-center gap-2">
+            <GraduationCap className="h-4 w-4" />
+            Jadwal Praktikum
+          </TabsTrigger>
+          <TabsTrigger value="ringkasan" className="flex items-center gap-2">
+            <BarChart3 className="h-4 w-4" />
+            Ringkasan Dosen
+          </TabsTrigger>
+        </TabsList>
+
+        {/* ================================================================ */}
+        {/* TAB 1: ASSIGNMENT DOSEN                                          */}
+        {/* ================================================================ */}
+        <TabsContent value="assignment" className="space-y-4">
+          {/* Tab 1 Stats */}
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <DashboardCard
+              title="Total Kelas Aktif"
+              value={kelasList.length}
+              description={`${kelasList.filter((k) => k.dosen_id).length} dengan dosen assigned`}
+              icon={Users}
+              color="primary"
+            />
+            <DashboardCard
+              title="Dosen Aktif"
+              value={dosenList.length}
+              description={`${new Set(kelasList.filter((k) => k.dosen_id).map((k) => k.dosen_id)).size} mengajar`}
+              icon={BookOpen}
+              color="info"
+            />
+            <DashboardCard
+              title="Mata Kuliah"
+              value={mataKuliahList.length}
+              description={`${new Set(kelasList.filter((k) => k.mata_kuliah_id).map((k) => k.mata_kuliah_id)).size} diajarkan`}
+              icon={Calendar}
+              color="success"
+            />
+            <DashboardCard
+              title="Assignment Complete"
+              value={
+                kelasList.filter((k) => k.dosen_id && k.mata_kuliah_id).length
+              }
+              description={`${Math.round((kelasList.filter((k) => k.dosen_id && k.mata_kuliah_id).length / (kelasList.length || 1)) * 100)}% dari total`}
+              icon={CheckCircle}
+              color="accent"
             />
           </div>
-        </div>
 
-        <div className="flex gap-2">
-          <Select
-            value={filters.status || ""}
-            onValueChange={(value) =>
-              setFilters((prev) => ({ ...prev, status: value || undefined }))
-            }
-          >
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Semua Status</SelectItem>
-              <SelectItem value="scheduled">Scheduled</SelectItem>
-              <SelectItem value="completed">Completed</SelectItem>
-              <SelectItem value="cancelled">Cancelled</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Button
-            variant="outline"
-            onClick={fetchAssignments}
-            disabled={loading}
-          >
-            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-            Refresh
-          </Button>
-        </div>
-      </div>
-
-      {/* Assignment List */}
-      <div className="space-y-4">
-        {filteredAssignments.length === 0 ? (
+          {/* Filters */}
           <Card>
-            <CardContent className="pt-6">
-              <div className="text-center text-muted-foreground">
-                <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p className="text-lg font-medium">
-                  Tidak ada assignment ditemukan
-                </p>
-                <p className="text-sm">
-                  Coba ubah filter atau kata kunci pencarian
-                </p>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Filter & Pencarian</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Cari kelas, dosen, mk..."
+                    value={searchKelas}
+                    onChange={(e) => setSearchKelas(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <Select value={filterDosen} onValueChange={setFilterDosen}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Semua Dosen" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Semua Dosen</SelectItem>
+                    {dosenList.map((dosen: any) => (
+                      <SelectItem key={dosen.id} value={dosen.id}>
+                        {dosen.users?.full_name ||
+                          dosen.user?.full_name ||
+                          dosen.nip}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select
+                  value={filterMataKuliah}
+                  onValueChange={setFilterMataKuliah}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Semua Mata Kuliah" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Semua Mata Kuliah</SelectItem>
+                    {mataKuliahList.map((mk: any) => (
+                      <SelectItem key={mk.id} value={mk.id}>
+                        {mk.nama_mk}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select
+                  value={filterTahunAjaran}
+                  onValueChange={setFilterTahunAjaran}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Semua Tahun Ajaran" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Semua Tahun Ajaran</SelectItem>
+                    {tahunAjaranList.map((ta) => (
+                      <SelectItem key={ta} value={ta}>
+                        {ta}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </CardContent>
           </Card>
-        ) : (
-          filteredAssignments.map((assignment) => (
-            <Card
-              key={`${assignment.dosen_id}-${assignment.mata_kuliah_id}-${assignment.kelas_id}`}
-            >
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <Users className="h-5 w-5 text-primary" />
-                      <span className="font-semibold">
-                        {assignment.dosen.full_name}
-                      </span>
-                      <Badge variant="outline">{assignment.dosen.email}</Badge>
-                    </div>
 
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <div className="flex items-center gap-1">
-                        <BookOpen className="h-4 w-4" />
-                        <span>
-                          {assignment.mata_kuliah.kode_mk} -{" "}
-                          {assignment.mata_kuliah.nama_mk}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center gap-1">
-                        <Users className="h-4 w-4" />
-                        <span>{assignment.kelas.nama_kelas}</span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <Badge variant="secondary">
-                        {assignment.total_jadwal} jadwal aktif
-                      </Badge>
-                      {assignment.tanggal_mulai &&
-                        assignment.tanggal_selesai && (
-                          <Badge variant="outline">
-                            {format(
-                              new Date(assignment.tanggal_mulai),
-                              "dd MMM",
-                              { locale: localeId },
-                            )}{" "}
-                            -{" "}
-                            {format(
-                              new Date(assignment.tanggal_selesai),
-                              "dd MMM yyyy",
-                              { locale: localeId },
-                            )}
-                          </Badge>
-                        )}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() =>
-                        toggleExpanded(
-                          `${assignment.dosen_id}-${assignment.mata_kuliah_id}-${assignment.kelas_id}`,
-                        )
-                      }
-                    >
-                      {expandedRows.has(
-                        `${assignment.dosen_id}-${assignment.mata_kuliah_id}-${assignment.kelas_id}`,
-                      ) ? (
-                        <ChevronUp className="h-4 w-4" />
-                      ) : (
-                        <ChevronDown className="h-4 w-4" />
-                      )}
-                      Details
-                    </Button>
-
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleEditAssignment(assignment)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDeleteAssignment(assignment)}
-                      className="text-danger hover:text-danger/80 hover:bg-danger/5"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+          {/* Kelas Table */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-3">
+              <CardTitle className="text-base">
+                Daftar Kelas ({filteredKelas.length})
+              </CardTitle>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={loadKelasData}
+                disabled={kelasLoading}
+              >
+                <RefreshCw
+                  className={`h-4 w-4 mr-2 ${kelasLoading ? "animate-spin" : ""}`}
+                />
+                Refresh
+              </Button>
+            </CardHeader>
+            <CardContent className="p-0">
+              {kelasLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-6 w-6 animate-spin mr-2" />
+                  <span>Memuat data kelas...</span>
                 </div>
-              </CardHeader>
-
-              {/* Expanded Jadwal Details */}
-              {expandedRows.has(
-                `${assignment.dosen_id}-${assignment.mata_kuliah_id}-${assignment.kelas_id}`,
-              ) && (
-                <CardContent className="border-t">
-                  <div className="space-y-3">
-                    <h4 className="text-sm font-semibold text-muted-foreground">
-                      Jadwal Praktikum Detail
-                    </h4>
-
-                    {!assignment.jadwalDetail ||
-                    assignment.jadwalDetail.length === 0 ? (
-                      <Alert>
-                        <AlertTriangle className="h-4 w-4" />
-                        <AlertDescription>
-                          Tidak ada jadwal praktikum untuk assignment ini
-                        </AlertDescription>
-                      </Alert>
-                    ) : (
-                      <div className="space-y-2">
-                        {assignment.jadwalDetail.map((jadwal) => (
-                          <div
-                            key={jadwal.id}
-                            className="flex items-center justify-between p-3 bg-muted/40 rounded-lg"
-                          >
-                            <div className="flex items-center gap-4">
-                              <div className="text-sm">
-                                <div className="flex items-center gap-2">
-                                  <Calendar className="h-4 w-4" />
-                                  <span>
-                                    {format(
-                                      new Date(jadwal.tanggal_praktikum),
-                                      "dd MMM yyyy",
-                                      { locale: localeId },
-                                    )}
-                                  </span>
-                                  <Badge variant="outline">{jadwal.hari}</Badge>
+              ) : filteredKelas.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  <Users className="h-10 w-10 mx-auto mb-3 opacity-40" />
+                  <p className="font-medium">Tidak ada kelas ditemukan</p>
+                  <p className="text-sm">
+                    Coba ubah filter atau kata kunci pencarian
+                  </p>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Kelas</TableHead>
+                      <TableHead>Mata Kuliah</TableHead>
+                      <TableHead>Dosen</TableHead>
+                      <TableHead>Tahun Ajaran</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Aksi</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredKelas.map((kelas) => {
+                      const isAssigned = !!(
+                        kelas.dosen_id && kelas.mata_kuliah_id
+                      );
+                      return (
+                        <TableRow key={kelas.id}>
+                          <TableCell>
+                            <div className="font-medium">
+                              {kelas.nama_kelas}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {kelas.kode_kelas}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {kelas.mata_kuliah ? (
+                              <div>
+                                <div className="font-medium">
+                                  {kelas.mata_kuliah.nama_mk}
                                 </div>
-                                <div className="flex items-center gap-2 text-muted-foreground">
-                                  <Clock className="h-3 w-3" />
-                                  <span>
-                                    {jadwal.jam_mulai} - {jadwal.jam_selesai}
-                                  </span>
+                                <div className="text-xs text-muted-foreground">
+                                  {kelas.mata_kuliah.kode_mk} ·{" "}
+                                  {kelas.mata_kuliah.sks} SKS
                                 </div>
                               </div>
-
-                              <div className="text-sm">
-                                <div className="flex items-center gap-2">
-                                  <MapPin className="h-4 w-4" />
-                                  <span>{jadwal.laboratorium.nama_lab}</span>
+                            ) : (
+                              <span className="text-muted-foreground text-sm">
+                                —
+                              </span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {kelas.dosen?.users ? (
+                              <div>
+                                <div className="font-medium">
+                                  {kelas.dosen.users.full_name}
                                 </div>
-                                {jadwal.topik && (
-                                  <div className="text-muted-foreground">
-                                    {jadwal.topik}
-                                  </div>
-                                )}
+                                <div className="text-xs text-muted-foreground">
+                                  {kelas.dosen.users.email}
+                                </div>
                               </div>
+                            ) : (
+                              <span className="text-muted-foreground text-sm">
+                                —
+                              </span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-sm">{kelas.tahun_ajaran}</div>
+                            <div className="text-xs text-muted-foreground">
+                              Sem {kelas.semester_ajaran}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {isAssigned ? (
+                              <Badge className="bg-green-100 text-green-800 border-green-200">
+                                <CheckCircle className="h-3 w-3 mr-1" />
+                                Assigned
+                              </Badge>
+                            ) : (
+                              <Badge
+                                variant="outline"
+                                className="text-orange-600 border-orange-300"
+                              >
+                                <AlertTriangle className="h-3 w-3 mr-1" />
+                                Belum Assign
+                              </Badge>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleEditKelas(kelas)}
+                            >
+                              <Edit className="h-4 w-4 mr-1" />
+                              Edit
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* ================================================================ */}
+        {/* TAB 2: JADWAL PRAKTIKUM                                          */}
+        {/* ================================================================ */}
+        <TabsContent value="jadwal" className="space-y-4">
+          {/* Filters and Search */}
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Cari dosen, mata kuliah, atau kelas..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <Select
+                value={filters.status || ""}
+                onValueChange={(value) =>
+                  setFilters((prev) => ({
+                    ...prev,
+                    status: value || undefined,
+                  }))
+                }
+              >
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Semua Status</SelectItem>
+                  <SelectItem value="scheduled">Scheduled</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Button
+                variant="outline"
+                onClick={fetchAssignments}
+                disabled={loading}
+              >
+                <RefreshCw
+                  className={`h-4 w-4 ${loading ? "animate-spin" : ""}`}
+                />
+                Refresh
+              </Button>
+            </div>
+          </div>
+
+          {/* Assignment List */}
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-6 w-6 animate-spin mr-2" />
+              <span>Memuat data jadwal...</span>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {filteredAssignments.length === 0 ? (
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="text-center text-muted-foreground">
+                      <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p className="text-lg font-medium">
+                        Tidak ada assignment ditemukan
+                      </p>
+                      <p className="text-sm">
+                        Coba ubah filter atau kata kunci pencarian
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : (
+                filteredAssignments.map((assignment) => (
+                  <Card
+                    key={`${assignment.dosen_id}-${assignment.mata_kuliah_id}-${assignment.kelas_id}`}
+                  >
+                    <CardHeader>
+                      <div className="flex items-start justify-between">
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <Users className="h-5 w-5 text-primary" />
+                            <span className="font-semibold">
+                              {assignment.dosen.full_name}
+                            </span>
+                            <Badge variant="outline">
+                              {assignment.dosen.email}
+                            </Badge>
+                          </div>
+
+                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                            <div className="flex items-center gap-1">
+                              <BookOpen className="h-4 w-4" />
+                              <span>
+                                {assignment.mata_kuliah.kode_mk} -{" "}
+                                {assignment.mata_kuliah.nama_mk}
+                              </span>
                             </div>
 
-                            <div className="flex items-center gap-2">
-                              {getStatusBadge(jadwal.status)}
-
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleEditJadwal(jadwal)}
-                              >
-                                <Edit className="h-3 w-3" />
-                              </Button>
+                            <div className="flex items-center gap-1">
+                              <Users className="h-4 w-4" />
+                              <span>{assignment.kelas.nama_kelas}</span>
                             </div>
                           </div>
-                        ))}
+
+                          <div className="flex items-center gap-2">
+                            <Badge variant="secondary">
+                              {assignment.total_jadwal} jadwal aktif
+                            </Badge>
+                            {assignment.tanggal_mulai &&
+                              assignment.tanggal_selesai && (
+                                <Badge variant="outline">
+                                  {format(
+                                    new Date(assignment.tanggal_mulai),
+                                    "dd MMM",
+                                    { locale: localeId },
+                                  )}{" "}
+                                  -{" "}
+                                  {format(
+                                    new Date(assignment.tanggal_selesai),
+                                    "dd MMM yyyy",
+                                    { locale: localeId },
+                                  )}
+                                </Badge>
+                              )}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                              toggleExpanded(
+                                `${assignment.dosen_id}-${assignment.mata_kuliah_id}-${assignment.kelas_id}`,
+                              )
+                            }
+                          >
+                            {expandedRows.has(
+                              `${assignment.dosen_id}-${assignment.mata_kuliah_id}-${assignment.kelas_id}`,
+                            ) ? (
+                              <ChevronUp className="h-4 w-4" />
+                            ) : (
+                              <ChevronDown className="h-4 w-4" />
+                            )}
+                            Details
+                          </Button>
+
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEditAssignment(assignment)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDeleteAssignment(assignment)}
+                            className="text-danger hover:text-danger/80 hover:bg-danger/5"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
+                    </CardHeader>
+
+                    {/* Expanded Jadwal Details */}
+                    {expandedRows.has(
+                      `${assignment.dosen_id}-${assignment.mata_kuliah_id}-${assignment.kelas_id}`,
+                    ) && (
+                      <CardContent className="border-t">
+                        <div className="space-y-3">
+                          <h4 className="text-sm font-semibold text-muted-foreground">
+                            Jadwal Praktikum Detail
+                          </h4>
+
+                          {!assignment.jadwalDetail ||
+                          assignment.jadwalDetail.length === 0 ? (
+                            <Alert>
+                              <AlertTriangle className="h-4 w-4" />
+                              <AlertDescription>
+                                Tidak ada jadwal praktikum untuk assignment ini
+                              </AlertDescription>
+                            </Alert>
+                          ) : (
+                            <div className="space-y-2">
+                              {assignment.jadwalDetail.map((jadwal) => (
+                                <div
+                                  key={jadwal.id}
+                                  className="flex items-center justify-between p-3 bg-muted/40 rounded-lg"
+                                >
+                                  <div className="flex items-center gap-4">
+                                    <div className="text-sm">
+                                      <div className="flex items-center gap-2">
+                                        <Calendar className="h-4 w-4" />
+                                        <span>
+                                          {format(
+                                            new Date(jadwal.tanggal_praktikum),
+                                            "dd MMM yyyy",
+                                            { locale: localeId },
+                                          )}
+                                        </span>
+                                        <Badge variant="outline">
+                                          {jadwal.hari}
+                                        </Badge>
+                                      </div>
+                                      <div className="flex items-center gap-2 text-muted-foreground">
+                                        <Clock className="h-3 w-3" />
+                                        <span>
+                                          {jadwal.jam_mulai} -{" "}
+                                          {jadwal.jam_selesai}
+                                        </span>
+                                      </div>
+                                    </div>
+
+                                    <div className="text-sm">
+                                      <div className="flex items-center gap-2">
+                                        <MapPin className="h-4 w-4" />
+                                        <span>
+                                          {jadwal.laboratorium.nama_lab}
+                                        </span>
+                                      </div>
+                                      {jadwal.topik && (
+                                        <div className="text-muted-foreground">
+                                          {jadwal.topik}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  <div className="flex items-center gap-2">
+                                    {getStatusBadge(jadwal.status)}
+
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleEditJadwal(jadwal)}
+                                    >
+                                      <Edit className="h-3 w-3" />
+                                    </Button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </CardContent>
                     )}
-                  </div>
-                </CardContent>
+                  </Card>
+                ))
               )}
+            </div>
+          )}
+        </TabsContent>
+
+        {/* ================================================================ */}
+        {/* TAB 3: RINGKASAN DOSEN                                           */}
+        {/* ================================================================ */}
+        <TabsContent value="ringkasan" className="space-y-4">
+          {dosenSummary.length === 0 ? (
+            <Card>
+              <CardContent className="pt-6">
+                <div className="text-center text-muted-foreground py-8">
+                  <Users className="h-10 w-10 mx-auto mb-3 opacity-40" />
+                  <p className="font-medium">Belum ada data dosen</p>
+                  <p className="text-sm">
+                    Data akan muncul setelah assignment dibuat
+                  </p>
+                </div>
+              </CardContent>
             </Card>
-          ))
-        )}
-      </div>
+          ) : (
+            <div className="space-y-4">
+              {dosenSummary.map((dosen) => (
+                <Card key={dosen.dosen_id}>
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary font-bold text-base">
+                          {dosen.nama.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <CardTitle className="text-base">
+                            {dosen.nama}
+                          </CardTitle>
+                          <p className="text-xs text-muted-foreground">
+                            {dosen.email}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                        <div className="text-center">
+                          <div className="font-bold text-foreground text-lg">
+                            {dosen.kelasList.length}
+                          </div>
+                          <div className="text-xs">Kelas</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="font-bold text-foreground text-lg">
+                            {dosen.mataKuliahSet.size}
+                          </div>
+                          <div className="text-xs">Mata Kuliah</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="font-bold text-foreground text-lg">
+                            {dosen.totalJadwal}
+                          </div>
+                          <div className="text-xs">Total Jadwal</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="font-bold text-green-600 text-lg">
+                            {dosen.jadwalCompleted}
+                          </div>
+                          <div className="text-xs">Selesai</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="font-bold text-blue-600 text-lg">
+                            {dosen.jadwalScheduled}
+                          </div>
+                          <div className="text-xs">Dijadwalkan</div>
+                        </div>
+                      </div>
+                    </div>
+                  </CardHeader>
+
+                  {dosen.kelasList.length > 0 && (
+                    <CardContent className="pt-0">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Kelas</TableHead>
+                            <TableHead>Mata Kuliah</TableHead>
+                            <TableHead>SKS</TableHead>
+                            <TableHead>Tahun Ajaran</TableHead>
+                            <TableHead>Semester</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {dosen.kelasList.map((k) => (
+                            <TableRow key={k.id}>
+                              <TableCell>
+                                <div className="font-medium">
+                                  {k.nama_kelas}
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  {k.kode_kelas}
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <div>{k.nama_mk}</div>
+                                <div className="text-xs text-muted-foreground">
+                                  {k.kode_mk}
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                {k.sks > 0 ? `${k.sks} SKS` : "—"}
+                              </TableCell>
+                              <TableCell>{k.tahun_ajaran}</TableCell>
+                              <TableCell>Sem {k.semester_ajaran}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </CardContent>
+                  )}
+                </Card>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
@@ -1584,6 +2325,85 @@ export default function ManajemenAssignmentPage() {
         </DialogContent>
       </Dialog>
 
+      {/* Edit Kelas (Assignment Dosen) Dialog */}
+      <Dialog open={isEditKelasOpen} onOpenChange={setIsEditKelasOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Assignment Dosen</DialogTitle>
+            <DialogDescription>
+              Assign atau ganti dosen dan mata kuliah untuk kelas{" "}
+              <strong>{selectedKelas?.nama_kelas}</strong>.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit_kelas_dosen">Dosen</Label>
+              <Select
+                value={editKelasDosenId}
+                onValueChange={setEditKelasDosenId}
+              >
+                <SelectTrigger id="edit_kelas_dosen">
+                  <SelectValue placeholder="Pilih dosen" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">— Tidak ada dosen —</SelectItem>
+                  {dosenList.map((dosen: any) => (
+                    <SelectItem key={dosen.id} value={dosen.id}>
+                      {dosen.users?.full_name ||
+                        dosen.user?.full_name ||
+                        dosen.nip}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit_kelas_mk">Mata Kuliah</Label>
+              <Select value={editKelasMkId} onValueChange={setEditKelasMkId}>
+                <SelectTrigger id="edit_kelas_mk">
+                  <SelectValue placeholder="Pilih mata kuliah" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">
+                    — Tidak ada mata kuliah —
+                  </SelectItem>
+                  {mataKuliahList.map((mk: any) => (
+                    <SelectItem key={mk.id} value={mk.id}>
+                      {mk.nama_mk} ({mk.kode_mk})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsEditKelasOpen(false)}
+              disabled={isSubmittingKelas}
+            >
+              Batal
+            </Button>
+            <Button
+              onClick={handleEditKelasSubmit}
+              disabled={isSubmittingKelas}
+            >
+              {isSubmittingKelas ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Menyimpan...
+                </>
+              ) : (
+                "Simpan"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Edit Assignment Dialog */}
       <Dialog
         open={editAssignmentDialogOpen}
@@ -1645,7 +2465,7 @@ export default function ManajemenAssignmentPage() {
                     <SelectValue placeholder="Pilih kelas" />
                   </SelectTrigger>
                   <SelectContent>
-                    {kelasList.map((kelas) => (
+                    {kelasDropdownList.map((kelas) => (
                       <SelectItem key={kelas.id} value={kelas.id}>
                         {kelas.nama_kelas} ({kelas.kode_kelas})
                       </SelectItem>

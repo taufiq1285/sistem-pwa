@@ -1,32 +1,5 @@
-/**
- * Cache Strategies
- *
- * Implements various caching strategies for PWA
- *
- * Strategies:
- * 1. CacheFirst - Try cache, fallback to network
- * 2. NetworkFirst - Try network, fallback to cache
- * 3. StaleWhileRevalidate - Return cache immediately, update in background
- * 4. NetworkOnly - Always fetch from network
- * 5. CacheOnly - Always use cache
- *
- * Features:
- * - TypeScript type safety
- * - Configurable timeouts
- * - Cache expiration
- * - Error handling
- * - Logging
- */
-
 import type { CacheRule } from "@/config/cache.config";
 
-// ============================================================================
-// TYPES
-// ============================================================================
-
-/**
- * Cache match options
- */
 export interface CacheMatchOptions {
   ignoreSearch?: boolean;
   ignoreMethod?: boolean;

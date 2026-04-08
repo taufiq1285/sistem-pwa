@@ -101,10 +101,6 @@ export default function JadwalApprovalPage() {
 
   useEffect(() => {
     loadJadwalData();
-  }, []);
-
-  useEffect(() => {
-    loadJadwalData();
   }, [statusFilter, labFilter]);
 
   // ============================================================================
