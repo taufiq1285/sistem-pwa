@@ -505,6 +505,12 @@ export function QuizBuilder({
   };
 
   const handleDeleteQuestion = async (questionId: string) => {
+    if (!isOnline) {
+      toast.error(
+        "Tidak dapat menghapus soal saat offline. Sambungkan internet terlebih dahulu.",
+      );
+      return;
+    }
     if (!confirm("Yakin ingin menghapus soal ini?")) return;
     try {
       await deleteSoal(questionId);
@@ -919,7 +925,7 @@ export function QuizBuilder({
                         variant="ghost"
                         size="sm"
                         onClick={() => handleEditQuestion(q, i)}
-                        disabled={currentQuiz.status === "published"}
+                        disabled={currentQuiz.status === "published" || !isOnline}
                       >
                         Edit
                       </Button>
@@ -928,7 +934,7 @@ export function QuizBuilder({
                         size="sm"
                         onClick={() => handleDeleteQuestion(q.id)}
                         className="text-destructive hover:text-destructive"
-                        disabled={currentQuiz.status === "published"}
+                        disabled={currentQuiz.status === "published" || !isOnline}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>

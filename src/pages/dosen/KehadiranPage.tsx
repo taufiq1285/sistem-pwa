@@ -489,6 +489,13 @@ export default function DosenKehadiranPage() {
       return;
     }
 
+    if (!navigator.onLine) {
+      toast.error(
+        "Tidak dapat menyimpan kehadiran saat offline. Sambungkan internet terlebih dahulu.",
+      );
+      return;
+    }
+
     try {
       setIsSavingAttendance(true);
 
@@ -1169,7 +1176,7 @@ export default function DosenKehadiranPage() {
                         </Button>
                         <Button
                           onClick={handleSaveAttendance}
-                          disabled={isSavingAttendance || !hasUnsavedChanges}
+                          disabled={isSavingAttendance || !hasUnsavedChanges || !navigator.onLine}
                           size="lg"
                           className="gap-2"
                         >

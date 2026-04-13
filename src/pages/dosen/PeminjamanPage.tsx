@@ -345,6 +345,13 @@ export default function PeminjamanPage() {
   };
 
   const onSubmit = async (data: BorrowingFormData) => {
+    if (!navigator.onLine) {
+      toast.error(
+        "Pengajuan peminjaman belum didukung saat offline. Sambungkan internet terlebih dahulu.",
+      );
+      return;
+    }
+
     try {
       setSubmitting(true);
 
@@ -413,6 +420,13 @@ export default function PeminjamanPage() {
   };
 
   const handleMarkAsTaken = async (borrowingId: string) => {
+    if (!navigator.onLine) {
+      toast.error(
+        "Konfirmasi pengambilan belum didukung saat offline. Sambungkan internet terlebih dahulu.",
+      );
+      return;
+    }
+
     try {
       setTakenLoading(true);
       setSelectedTakenId(borrowingId);
@@ -434,6 +448,13 @@ export default function PeminjamanPage() {
   };
 
   const onReturnSubmit = async (data: ReturnFormData) => {
+    if (!navigator.onLine) {
+      toast.error(
+        "Pengembalian alat belum didukung saat offline. Sambungkan internet terlebih dahulu.",
+      );
+      return;
+    }
+
     try {
       setReturningLoading(true);
       await returnBorrowingRequest({
@@ -494,6 +515,13 @@ export default function PeminjamanPage() {
    */
   const onEditSubmit = async (data: BorrowingFormData) => {
     if (!editingId) return;
+
+    if (!navigator.onLine) {
+      toast.error(
+        "Perubahan peminjaman belum didukung saat offline. Sambungkan internet terlebih dahulu.",
+      );
+      return;
+    }
 
     try {
       setSubmitting(true);
@@ -560,6 +588,13 @@ export default function PeminjamanPage() {
    */
   const confirmCancelRequest = async () => {
     if (!cancelingId) return;
+
+    if (!navigator.onLine) {
+      toast.error(
+        "Pembatalan peminjaman belum didukung saat offline. Sambungkan internet terlebih dahulu.",
+      );
+      return;
+    }
 
     try {
       setCancelingLoading(true);
@@ -988,7 +1023,7 @@ export default function PeminjamanPage() {
                   >
                     Batal
                   </Button>
-                  <Button type="submit" disabled={submitting} className="gap-2">
+                  <Button type="submit" disabled={submitting || !navigator.onLine} className="gap-2">
                     {submitting ? (
                       <>
                         <span className="animate-spin">⌛</span>
@@ -1093,7 +1128,7 @@ export default function PeminjamanPage() {
                   </Button>
                   <Button
                     type="submit"
-                    disabled={returningLoading}
+                    disabled={returningLoading || !navigator.onLine}
                     className="gap-2"
                   >
                     {returningLoading ? (
@@ -1143,7 +1178,7 @@ export default function PeminjamanPage() {
               </Button>
               <Button
                 onClick={() => handleMarkAsTaken(selectedTakenId || "")}
-                disabled={takenLoading}
+                disabled={takenLoading || !navigator.onLine}
                 className="gap-2"
               >
                 {takenLoading ? (
@@ -1292,7 +1327,7 @@ export default function PeminjamanPage() {
                   >
                     Batal
                   </Button>
-                  <Button type="submit" disabled={submitting} className="gap-2">
+                  <Button type="submit" disabled={submitting || !navigator.onLine} className="gap-2">
                     {submitting ? (
                       <>
                         <span className="animate-spin">⌛</span>
@@ -1346,7 +1381,7 @@ export default function PeminjamanPage() {
               </AlertDialogCancel>
               <AlertDialogAction
                 onClick={confirmCancelRequest}
-                disabled={cancelingLoading}
+                disabled={cancelingLoading || !navigator.onLine}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
                 {cancelingLoading ? (

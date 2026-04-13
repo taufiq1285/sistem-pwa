@@ -333,6 +333,13 @@ export default function DosenPenilaianPage() {
   };
 
   const handleSaveBobot = async () => {
+    if (!isOnline) {
+      toast.error(
+        "Tidak dapat menyimpan bobot nilai saat offline. Hubungkan internet terlebih dahulu.",
+      );
+      return;
+    }
+
     try {
       // Validate total = 100%
       const validation = validateBobotNilai(editingBobot);
@@ -522,6 +529,13 @@ export default function DosenPenilaianPage() {
     const data = editedGrades.get(mahasiswaId);
     if (!data) return;
 
+    if (!isOnline) {
+      toast.error(
+        "Tidak dapat menyimpan nilai saat offline. Hubungkan internet terlebih dahulu.",
+      );
+      return;
+    }
+
     try {
       setSaving(true);
 
@@ -587,6 +601,13 @@ export default function DosenPenilaianPage() {
 
   const handleSaveEditDialog = async () => {
     if (!editingMahasiswa) return;
+
+    if (!isOnline) {
+      toast.error(
+        "Tidak dapat menyimpan nilai saat offline. Hubungkan internet terlebih dahulu.",
+      );
+      return;
+    }
 
     try {
       setSaving(true);
@@ -1581,8 +1602,7 @@ export default function DosenPenilaianPage() {
                                             mahasiswa.mahasiswa_id,
                                           );
                                         }}
-                                        disabled={saving}
-                                      >
+                                        disabled={saving || !isOnline}                                      >
                                         <Save className="w-3 h-3 mr-1" />
                                         Simpan
                                       </Button>
@@ -1807,7 +1827,7 @@ export default function DosenPenilaianPage() {
               </Button>
               <Button
                 onClick={handleSaveBobot}
-                disabled={!validateBobotNilai(editingBobot).valid || saving}
+                disabled={!validateBobotNilai(editingBobot).valid || saving || !isOnline}
                 className="bg-linear-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold"
               >
                 {saving ? (
@@ -2050,7 +2070,7 @@ export default function DosenPenilaianPage() {
               </Button>
               <Button
                 onClick={handleSaveEditDialog}
-                disabled={saving}
+                disabled={saving || !isOnline}
                 className="bg-linear-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold"
               >
                 {saving ? (

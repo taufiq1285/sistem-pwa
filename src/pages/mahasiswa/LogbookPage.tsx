@@ -60,6 +60,7 @@ import {
   getCachedData,
   invalidateCache,
 } from "@/lib/offline/api-cache";
+import { queueManager } from "@/lib/offline/queue-manager";
 import type {
   LogbookEntry,
   CreateLogbookData,
@@ -355,16 +356,44 @@ export default function MahasiswaLogbookPage() {
   async function handleCreateLogbook() {
     if (!selectedJadwal) return;
 
-    if (!navigator.onLine) {
-      toast.error(
-        "Pembuatan logbook baru belum didukung saat offline. Sambungkan internet untuk menyimpan.",
-      );
-      return;
-    }
-
     // Validate required fields
     if (!formData.prosedur_dilakukan || !formData.hasil_observasi) {
       toast.error("Prosedur dan Hasil Observasi harus diisi");
+      return;
+    }
+
+    if (!navigator.onLine) {
+      try {
+        setSubmitting(true);
+        const tempId = `offline-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        const now = new Date().toISOString();
+        await queueManager.enqueue("logbook_entry", "create", {
+          id: tempId,
+          jadwal_id: selectedJadwal.id,
+          mahasiswa_id: user?.mahasiswa?.id,
+          status: "draft",
+          ...formData,
+          created_at: now,
+          updated_at: now,
+        });
+        const tempLogbook = {
+          id: tempId,
+          jadwal_id: selectedJadwal.id,
+          mahasiswa_id: user?.mahasiswa?.id ?? "",
+          status: "draft",
+          ...formData,
+          created_at: now,
+          updated_at: now,
+          jadwal: selectedJadwal,
+        } as unknown as LogbookEntry;
+        setLogbookList((prev) => [tempLogbook, ...prev]);
+        setShowCreateDialog(false);
+        toast.success("Logbook disimpan lokal. Akan dikirim saat online.");
+      } catch (err: any) {
+        toast.error(err.message || "Gagal menyimpan logbook secara lokal");
+      } finally {
+        setSubmitting(false);
+      }
       return;
     }
 
@@ -410,9 +439,25 @@ export default function MahasiswaLogbookPage() {
     if (!selectedLogbook) return;
 
     if (!navigator.onLine) {
-      toast.error(
-        "Perubahan logbook belum didukung saat offline. Sambungkan internet untuk menyimpan.",
-      );
+      try {
+        setSubmitting(true);
+        await queueManager.enqueue("logbook_entry", "update", {
+          id: selectedLogbook.id,
+          ...formData,
+          updated_at: new Date().toISOString(),
+        });
+        setLogbookList((prev) =>
+          prev.map((l) =>
+            l.id === selectedLogbook.id ? { ...l, ...formData } : l,
+          ),
+        );
+        setShowEditDialog(false);
+        toast.success("Perubahan disimpan lokal. Akan disinkronkan saat online.");
+      } catch (err: any) {
+        toast.error(err.message || "Gagal menyimpan perubahan secara lokal");
+      } finally {
+        setSubmitting(false);
+      }
       return;
     }
 
@@ -447,14 +492,7 @@ export default function MahasiswaLogbookPage() {
   async function handleSubmitLogbook() {
     if (!selectedLogbook) return;
 
-    if (!navigator.onLine) {
-      toast.error(
-        "Pengiriman logbook belum didukung saat offline. Sambungkan internet untuk mengirim.",
-      );
-      return;
-    }
-
-    // Validate required fields before submit
+    // Validate required fields before submit (online and offline)
     if (
       !selectedLogbook.prosedur_dilakukan ||
       !selectedLogbook.hasil_observasi ||
@@ -464,6 +502,35 @@ export default function MahasiswaLogbookPage() {
       toast.error(
         "Mohon lengkapi semua field wajib (Prosedur, Hasil Observasi, Skill)",
       );
+      return;
+    }
+
+    if (!navigator.onLine) {
+      try {
+        setSubmitting(true);
+        const submittedAt = new Date().toISOString();
+        await queueManager.enqueue("logbook_entry", "update", {
+          id: selectedLogbook.id,
+          status: "submitted",
+          submitted_at: submittedAt,
+          prosedur_dilakukan: selectedLogbook.prosedur_dilakukan,
+          hasil_observasi: selectedLogbook.hasil_observasi,
+          skill_dipelajari: selectedLogbook.skill_dipelajari,
+        });
+        setLogbookList((prev) =>
+          prev.map((l) =>
+            l.id === selectedLogbook.id
+              ? { ...l, status: "submitted", submitted_at: submittedAt }
+              : l,
+          ),
+        );
+        setShowSubmitDialog(false);
+        toast.success("Logbook dikantri untuk pengiriman. Akan dikirim saat online.");
+      } catch (err: any) {
+        toast.error(err.message || "Gagal mengantri logbook");
+      } finally {
+        setSubmitting(false);
+      }
       return;
     }
 
@@ -545,9 +612,16 @@ export default function MahasiswaLogbookPage() {
 
   async function handleDeleteLogbook(id: string) {
     if (!navigator.onLine) {
-      toast.error(
-        "Penghapusan logbook belum didukung saat offline. Sambungkan internet untuk menghapus.",
-      );
+      // Jika ini logbook lokal (belum pernah sync), hapus dari state saja
+      if (id.startsWith("offline-")) {
+        if (!confirm("Yakin ingin menghapus logbook ini?")) return;
+        setLogbookList((prev) => prev.filter((l) => l.id !== id));
+        toast.success("Logbook lokal dihapus.");
+      } else {
+        toast.error(
+          "Penghapusan logbook belum didukung saat offline. Sambungkan internet untuk menghapus.",
+        );
+      }
       return;
     }
 

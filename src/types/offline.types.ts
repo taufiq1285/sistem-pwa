@@ -29,7 +29,8 @@ export type SyncEntity =
   | "materi"
   | "kelas"
   | "user"
-  | "kehadiran";
+  | "kehadiran"
+  | "logbook_entry";
 
 /**
  * Sync queue item

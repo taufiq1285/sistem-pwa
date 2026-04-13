@@ -53,6 +53,7 @@ import {
   reviewLogbook,
   gradeLogbook,
 } from "@/lib/api/logbook.api";
+import { queueManager } from "@/lib/offline/queue-manager";
 import { getKelas } from "@/lib/api/kelas.api";
 import type {
   LogbookEntry,
@@ -196,6 +197,35 @@ export default function DosenLogbookReviewPage() {
       return;
     }
 
+    if (!navigator.onLine) {
+      try {
+        setSubmitting(true);
+        const reviewedAt = new Date().toISOString();
+        await queueManager.enqueue("logbook_entry", "update", {
+          id: selectedLogbook.id,
+          dosen_id: user?.dosen?.id,
+          dosen_feedback: feedback.trim(),
+          status: "reviewed",
+          reviewed_at: reviewedAt,
+        });
+        setLogbookList((prev) =>
+          prev.map((l) =>
+            l.id === selectedLogbook.id
+              ? { ...l, dosen_feedback: feedback.trim(), status: "reviewed", reviewed_at: reviewedAt }
+              : l,
+          ),
+        );
+        setShowReviewDialog(false);
+        setFeedback("");
+        toast.success("Feedback disimpan lokal. Akan dikirim saat online.");
+      } catch (err: any) {
+        toast.error(err.message || "Gagal menyimpan feedback secara lokal");
+      } finally {
+        setSubmitting(false);
+      }
+      return;
+    }
+
     try {
       setSubmitting(true);
 
@@ -231,6 +261,37 @@ export default function DosenLogbookReviewPage() {
 
   async function handleGrade() {
     if (!selectedLogbook) return;
+
+    if (nilai < 0 || nilai > 100) {
+      toast.error("Nilai harus antara 0 dan 100");
+      return;
+    }
+
+    if (!navigator.onLine) {
+      try {
+        setSubmitting(true);
+        await queueManager.enqueue("logbook_entry", "update", {
+          id: selectedLogbook.id,
+          dosen_id: user?.dosen?.id,
+          nilai: nilai,
+          status: "graded",
+        });
+        setLogbookList((prev) =>
+          prev.map((l) =>
+            l.id === selectedLogbook.id
+              ? { ...l, nilai, status: "graded" }
+              : l,
+          ),
+        );
+        setShowGradeDialog(false);
+        toast.success("Nilai disimpan lokal. Akan dikirim saat online.");
+      } catch (err: any) {
+        toast.error(err.message || "Gagal menyimpan nilai secara lokal");
+      } finally {
+        setSubmitting(false);
+      }
+      return;
+    }
 
     try {
       setSubmitting(true);

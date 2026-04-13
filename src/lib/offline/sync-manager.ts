@@ -50,6 +50,36 @@ async function defaultSyncProcessor(item: SyncQueueItem): Promise<void> {
     return;
   }
 
+  if (item.entity === "logbook_entry") {
+    const id = payload.id as string | undefined;
+    if (item.operation === "create") {
+      const { id: _tempId, ...insertData } = payload;
+      const { error } = await (supabase as any)
+        .from("logbook_entries")
+        .insert(insertData);
+      if (error) throw error;
+      return;
+    }
+    if (!id) throw new Error(`Missing id for logbook_entry ${item.operation}`);
+    if (item.operation === "update") {
+      const { id: _ignored, ...updateData } = payload;
+      const { error } = await (supabase as any)
+        .from("logbook_entries")
+        .update(updateData)
+        .eq("id", id);
+      if (error) throw error;
+      return;
+    }
+    if (item.operation === "delete") {
+      const { error } = await (supabase as any)
+        .from("logbook_entries")
+        .delete()
+        .eq("id", id);
+      if (error) throw error;
+      return;
+    }
+  }
+
   const tableByEntity: Record<string, string> = {
     kuis: "kuis",
     kuis_soal: "soal",

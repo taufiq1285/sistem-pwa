@@ -218,6 +218,13 @@ export default function KelasPage() {
       return;
     }
 
+    if (!navigator.onLine) {
+      toast.error(
+        "Tidak dapat menyimpan kelas saat offline. Sambungkan internet terlebih dahulu.",
+      );
+      return;
+    }
+
     setIsProcessing(true);
     try {
       // ✅ Normalize kelas nama before saving
@@ -261,6 +268,13 @@ export default function KelasPage() {
 
   const confirmDelete = async () => {
     if (!deletingKelas) return;
+
+    if (!navigator.onLine) {
+      toast.error(
+        "Tidak dapat menghapus kelas saat offline. Sambungkan internet terlebih dahulu.",
+      );
+      return;
+    }
 
     try {
       await deleteKelas(deletingKelas.id);
@@ -408,6 +422,13 @@ export default function KelasPage() {
       return;
     }
 
+    if (!navigator.onLine) {
+      toast.error(
+        "Tidak dapat menambahkan mahasiswa saat offline. Sambungkan internet terlebih dahulu.",
+      );
+      return;
+    }
+
     setIsProcessing(true);
     try {
       // Enroll existing mahasiswa
@@ -436,6 +457,12 @@ export default function KelasPage() {
 
   const handleRemoveStudent = async (mahasiswaId: string) => {
     if (!selectedKelas) return;
+    if (!navigator.onLine) {
+      toast.error(
+        "Tidak dapat menghapus mahasiswa dari kelas saat offline. Sambungkan internet terlebih dahulu.",
+      );
+      return;
+    }
     if (!confirm("Hapus mahasiswa dari kelas ini?")) return;
 
     setIsProcessing(true);
@@ -466,6 +493,13 @@ export default function KelasPage() {
     currentStatus: boolean,
   ) => {
     if (!selectedKelas) return;
+
+    if (!navigator.onLine) {
+      toast.error(
+        "Tidak dapat mengubah status mahasiswa saat offline. Sambungkan internet terlebih dahulu.",
+      );
+      return;
+    }
 
     setIsProcessing(true);
     try {
@@ -814,7 +848,7 @@ export default function KelasPage() {
             </Button>
             <Button
               onClick={handleSaveKelas}
-              disabled={isProcessing}
+              disabled={isProcessing || !navigator.onLine}
               className="font-semibold bg-linear-to-r from-primary to-accent"
             >
               {isProcessing && (
@@ -991,7 +1025,7 @@ export default function KelasPage() {
             >
               Batal
             </Button>
-            <Button onClick={handleAddStudent} disabled={isProcessing}>
+            <Button onClick={handleAddStudent} disabled={isProcessing || !navigator.onLine}>
               {isProcessing && (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               )}

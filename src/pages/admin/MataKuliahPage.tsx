@@ -169,6 +169,13 @@ export default function MataKuliahPage() {
       return;
     }
 
+    if (!navigator.onLine) {
+      toast.error(
+        "Tidak dapat menyimpan mata kuliah saat offline. Sambungkan internet terlebih dahulu.",
+      );
+      return;
+    }
+
     setIsSaving(true);
     try {
       if (editingMK) {
@@ -198,6 +205,13 @@ export default function MataKuliahPage() {
 
   const confirmDelete = async (cascade: boolean = false) => {
     if (!deletingMK) return;
+
+    if (!navigator.onLine) {
+      toast.error(
+        "Tidak dapat menghapus mata kuliah saat offline. Sambungkan internet terlebih dahulu.",
+      );
+      return;
+    }
 
     try {
       await deleteMataKuliah(deletingMK.id, { cascade });
@@ -494,7 +508,7 @@ export default function MataKuliahPage() {
             </Button>
             <Button
               onClick={handleSave}
-              disabled={isSaving}
+              disabled={isSaving || !navigator.onLine}
               className="font-semibold bg-linear-to-r from-primary to-accent"
             >
               {isSaving ? "Menyimpan..." : editingMK ? "Simpan" : "Tambah"}

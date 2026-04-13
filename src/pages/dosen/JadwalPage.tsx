@@ -646,6 +646,13 @@ export default function JadwalPage() {
   // ============================================================================
 
   const handleCreate = async (data: JadwalFormData) => {
+    if (!navigator.onLine) {
+      toast.error(
+        "Pembuatan jadwal belum didukung saat offline. Sambungkan internet terlebih dahulu.",
+      );
+      return;
+    }
+
     try {
       setIsCreating(true);
 
@@ -763,6 +770,13 @@ export default function JadwalPage() {
   const handleUpdate = async (data: JadwalFormData) => {
     if (!selectedJadwal) return;
 
+    if (!navigator.onLine) {
+      toast.error(
+        "Perubahan jadwal belum didukung saat offline. Sambungkan internet terlebih dahulu.",
+      );
+      return;
+    }
+
     try {
       setIsUpdating(true);
 
@@ -864,6 +878,13 @@ export default function JadwalPage() {
 
   const handleConfirmDelete = async () => {
     if (!selectedJadwal) return;
+
+    if (!navigator.onLine) {
+      toast.error(
+        "Penghapusan jadwal belum didukung saat offline. Sambungkan internet terlebih dahulu.",
+      );
+      return;
+    }
 
     try {
       setIsDeleting(true);
@@ -1535,7 +1556,7 @@ export default function JadwalPage() {
                     </Button>
                     <Button
                       type="submit"
-                      disabled={isCreating}
+                      disabled={isCreating || !navigator.onLine}
                       className="bg-linear-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold"
                     >
                       {isCreating && (
@@ -1582,7 +1603,7 @@ export default function JadwalPage() {
                     </Button>
                     <Button
                       type="submit"
-                      disabled={isUpdating}
+                      disabled={isUpdating || !navigator.onLine}
                       className="bg-linear-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold"
                     >
                       {isUpdating && (

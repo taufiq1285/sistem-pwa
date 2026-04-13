@@ -38,10 +38,9 @@ _Ganti isi teksnya menjadi 3 poin ini:_
 
 _Ganti isinya menjadi:_
 
-- Menganalisis kebutuhan pengguna terhadap sistem informasi praktikum.
-- Merancang dan mengembangkan sistem informasi praktikum berbasis PWA menggunakan metode R&D.
-- Mendukung integrasi proses akademik dan operasional laboratorium dalam satu platform.
-- Mengevaluasi sistem berdasarkan aspek fungsionalitas, usability, dan manfaat praktisnya.
+- Menganalisis kebutuhan pengguna (dosen dan mahasiswa) terhadap sistem informasi praktikum di Akademi Kebidanan Mega Buana.
+- Merancang dan mengembangkan sistem informasi praktikum berbasis PWA menggunakan metode Research and Development (R&D) yang sistematis dan iteratif.
+- Mengevaluasi kelayakan dan efektivitas sistem berdasarkan aspek fungsionalitas, kemudahan penggunaan (Usability), dan manfaat praktisnya dalam pengelolaan kegiatan praktikum.
 
 ---
 
@@ -60,7 +59,8 @@ _Ganti isinya menjadi:_
 _Isi kotak Teoritis:_
 
 - Menambah referensi akademik pengembangan sistem informasi pendidikan berbasis PWA (konteks vokasi kebidanan).
-- Memperkaya kajian penerapan R&D, UCD, serta fitur PWA untuk pembelajaran praktis.
+- Memperkaya kajian penerapan metode R&D dan pendekatan user-centered design dalam pengembangan sistem informasi di lingkungan vokasional.
+- Memberikan kontribusi pada pemahaman implementasi fitur PWA (akses offline dan notifikasi) untuk mendukung proses pembelajaran praktis.
 
 _Isi kotak Praktis:_
 
@@ -196,9 +196,11 @@ _(Ubah judulnya jadi "GAMBARAN & FITUR SISTEM")_
 
 ---
 
-### 11A. Jika pembimbing meminta "semua hasil dimasukkan" buat 1 slide tambahan: "RINGKASAN HASIL PENELITIAN"
+### Sisipan Sebelum Slide 22: "TAHAPAN HASIL PENELITIAN"
 
-_Bagi slide menjadi 4 kotak kecil, beri nomor 1-4 atau panah proses._
+_(**SANGAT DISARANKAN** sebagai pelengkap "Executive Summary". Silakan duplikat (Copy/Paste) slide yang bentuknya memiliki 4 kotak pembagian, lalu posisikan slide ini SETELAH slide Use Case dan SEBELUM slide Hasil Uji)_
+
+_Bagi slide menjadi 4 bagian kecil, beri nomor 1-4 atau panah proses._
 
 **Kotak 1 - Analisis**
 
@@ -225,10 +227,19 @@ _Bagi slide menjadi 4 kotak kecil, beri nomor 1-4 atau panah proses._
 
 📌 **[POSISI MASING-MASING ISI DI SLIDE]:**
 
-- **Kiri atas (1. Analisis):** isi masalah awal dan kebutuhan utama.
-- **Kanan atas (2. Perancangan):** isi multi-role, use case ringkas, dan arsitektur PWA.
-- **Kiri bawah (3. Implementasi):** isi modul akademik, laboratorium, dan fitur PWA.
-- **Kanan bawah (4. Pengujian):** isi black box, white box, dan SUS.
+Gunakan Insert -> SmartArt -> Process (dengan 4 kotak/langkahan) di PPT dengan alur contoh berikut:
+
+```text
+[ 1. Analisis Kebutuhan ]  ➔  [ 2. Perancangan Sistem ]
+   - Proses manual                - Model Multi-Role
+   - Kebutuhan Logbook            - Arsitektur PWA
+
+              Lanjut ke tahap implementasi (Turun ke bawah) ⇓
+
+[ 3. Implementasi PWA ]    ➔  [ 4. Pengujian & Evaluasi ]
+   - Modul Akademik/Lab Aktif     - Black Box (Lulus 100%)
+   - Fitur Offline Berjalan       - Uji SUS (Skor 75,11)
+```
 
 📌 **[JIKA MAU DIBERI GAMBAR KECIL]:**
 
@@ -239,9 +250,9 @@ _Bagi slide menjadi 4 kotak kecil, beri nomor 1-4 atau panah proses._
 
 📌 **[JUDUL SLIDE YANG DISARANKAN]:**
 
-- `Ringkasan Hasil Penelitian`
+- `Tahapan Hasil Penelitian` (Sangat Disarankan, lebih netral)
+- atau `Tahapan Pengembangan Sistem (R&D)`
 - atau `Hasil Penelitian dalam 4 Tahap`
-- atau `Ringkasan Analisis, Perancangan, Implementasi, dan Pengujian`
 
 📌 **[CARA MENJELASKAN SAAT PRESENTASI]:**
 
@@ -252,7 +263,7 @@ _Bagi slide menjadi 4 kotak kecil, beri nomor 1-4 atau panah proses._
 
 ---
 
-### 12. Cari Slide dengan judul: "HASIL UJI PENELITIAN"
+### 12. Cari Slide 22 dengan judul: "HASIL UJI PENELITIAN"
 
 _Ganti isi teksnya menjadi:_
 
@@ -263,9 +274,9 @@ _Ganti isi teksnya menjadi:_
 
 ---
 
-### 13. Cari Slide dengan judul: "ANALISIS DATA PENELITIAN"
+### 13. Cari Slide 23 dengan judul: "ANALISIS DATA PENELITIAN"
 
-_(Ubah judulnya jadi "HASIL PENGUJIAN USABILITY (SUS)")_
+_Ganti judulnya jadi "HASIL PENGUJIAN USABILITY (SUS)" dan isi teksnya menjadi:_
 
 - **Metode:** System Usability Scale (SUS).
 - **Responden:** 46 orang (Dosen dan Mahasiswa).
@@ -276,29 +287,54 @@ _(Ubah judulnya jadi "HASIL PENGUJIAN USABILITY (SUS)")_
 
 ---
 
-### 14. Cari Slide dengan judul: "PEMBAHASAN HASIL"
+### 14. Cari Slide Pembahasan (Mulai dari Slide 24 ke bawah)
 
-_Ganti isi teksnya menjadi:_
+_Karena ini adalah presentasi ujian hasil Informatika, ubah slide pembahasan ini menjadi area ajang pamer keunggulan (Show, Don't Tell). Anda **sangat disarankan menduplikat** slide Pembahasan ini menjadi 3 slide agar tidak terlalu padat:_
 
-- Sistem berhasil mengintegrasikan kegiatan akademik dan laboratorium. PWA memberi nilai tambah kelancaran layanan saat koneksi tidak stabil.
-- Hasil Black box, White box, dan SUS membuktikan sistem layak fungsi, stabil secara logika, dan diterima pengguna.
-- **Keterbatasan:** Uji pengguna masih kelompok terbatas dan belum ada uji penetrasi keamanan komprehensif.
+**Slide Pembahasan 1 (Gunakan Slide 24 - "PEMBAHASAN HASIL PEMBAHASAN 1"): Bukti Fungsional PWA & Kinerja**
+- Fitur Offline PWA tervalidasi berjalan asinkron: Logbook mahasiswa tetap dapat diinput meskipun tanpa koneksi internet.
+- Skor performa dan aksesibilitas terukur stabil berdasarkan standar web modern.
+📌 **[MASUKKAN GAMBAR DI SINI]:** Masukkan _screenshot_ aplikasi saat mode "offline/tanpa internet" tapi masih menampillkan isi logbook, PLUS _screenshot_ skor hijau hasil audit Google Lighthouse (jika ada).
 
-📌 **[MASUKKAN GAMBAR DI SINI]:** masukkan 2 atau 3 **screenshot fitur utama aplikasi aktual** seperti dashboard, logbook, materi, kuis, inventaris, atau peminjaman sebagai bukti visual implementasi.
+**Slide Pembahasan 2 (Gunakan Slide 25 - "PEMBAHASAN HASIL PEMBAHASAN 2"): Integrasi Sinkronisasi & Keamanan**
+- Keamanan hak akses terpisah secara ketat dengan sistem RBAC (Role Based Access Control).
+- Mekanisme sinkronisasi data yang cerdas (_Background Sync_ & _Offline Queue_) ke _Supabase_ saat HP kembali _online_.
+📌 **[MASUKKAN GAMBAR DI SINI]:** Masukkan kolase beda menu Dosen vs Mahasiswa (bukti RBAC), dan **sangat disarankan** membuat bagan sinkronisasi sederhana (Gunakan menu *Insert* -> *SmartArt* -> *Process* di PPT) seperti sketsa di bawah ini:
+
+```text
+[ 📱 HP Tanpa Internet ]
+   Isi logbook praktikum.
+             ↓
+ (Tersimpan lokal via IndexedDB)
+             ↓
+[ 📡 Koneksi Tersambung ]
+   Service Worker bereaksi.
+             ↓
+[ ☁️ Supabase Cloud ]
+   Data Logbook terkirim murni (Background Sync).
+```
+
+**Slide Pembahasan 3 (Duplikat saja Slide 25 sebelumnya): Komparasi Sistem & Nilai Jual Utama**
+- **Manual (Dulu):** Jadwal sering _miss_, pinjam alat antri fisik, dan penilaian masih terpisah di _Excel_ / kertas.
+- **Sistem PWA (Sekarang):** Penjadwalan _real-time_, pinjam alat efisien, pelaporan logbook dan _grading_ langsung terpusat di _Cloud_.
+📌 **[MASUKKAN GAMBAR DI SINI]:** Bikin _tabel sederhana_ komparasi Sebelum vs Sesudah. Ini kunci mutlak agar dosen penguji melihat nilai keberhasilan _Research & Development_.
 
 ---
 
-### 15. Cari Slide dengan judul: "KESIMPULAN & SARAN" (Atau slide dengan teks "POIN 1, POIN 2")
+### 15. Cari Slide 27 dengan judul: "KESIMPULAN TEMUAN UTAMA" & "SARAN"
 
-**Kesimpulan:**
+_(Isi bagian Kesimpulan dengan 4 poin ini — sesuai slot template slide27)_
 
-- Sistem informasi praktikum berbasis PWA berhasil dibangun dan diimplementasikan untuk multi-peran.
-- Hasil pengujian fungsional dan usability (Skor SUS 75,11) menunjukkan sistem berjalan baik, stabil, dan layak digunakan.
+- **Sistem Terintegrasi:** Sistem informasi praktikum berbasis PWA berhasil dibangun dan mendukung kebutuhan akademik serta operasional laboratorium dalam satu platform multi-peran (admin, dosen, mahasiswa, laboran).
+- **Keunggulan PWA:** Penerapan service worker, penyimpanan lokal, dan mekanisme sinkronisasi memungkinkan sistem tetap digunakan pada kondisi jaringan tidak stabil.
+- **Validitas Perancangan & Implementasi:** Rancangan DFD, Use Case, dan ERD yang terstruktur menjadi dasar implementasi modul-modul utama yang berjalan sesuai kebutuhan masing-masing peran.
+- **Hasil Pengujian:** Black box (45 skenario, 100%), white box (5.317 test case, 100%), dan SUS (skor 75,11, kategori Good/Acceptable) menunjukkan sistem layak digunakan secara fungsional dan usability.
 
-**Saran:**
-
-- Optimalisasi _background sync_ di berbagai browser.
-- Penambahan fitur analitik, pelaporan, dan integrasi dengan sistem akademik institusi yang lebih luas.
+_(Isi bagian Saran dengan poin ini)_
+- Optimalisasi mekanisme _background sync_ agar lebih konsisten di berbagai browser dan perangkat.
+- Pengembangan fitur analitik dan pelaporan (kehadiran, aktivitas mahasiswa, inventaris laboratorium) untuk mendukung pengambilan keputusan.
+- Perluasan cakupan pengujian _white box_ ke lebih banyak modul agar kualitas perangkat lunak terjaga secara menyeluruh.
+- Evaluasi pengguna dengan melibatkan lebih banyak responden dan institusi pendidikan vokasi kesehatan sejenis.
 
 ---
 
@@ -471,28 +507,35 @@ Bagian ini adalah mapping final yang paling praktis berdasarkan hasil pengecekan
 - **`slide18`** -> Pembatas BAB IV
   - pakai sebagai pembuka hasil dan pembahasan.
 
-- **`slide19`** -> Gambaran dan Fitur Sistem
-  - ganti judul dari `HASIL PENELITIAN` menjadi `GAMBARAN DAN FITUR SISTEM`.
-  - isi peran, modul, dan use case ringkas.
+- **`slide20`** -> Gambaran Pengguna dan Fitur Sistem (Sudah Mas isi)
+- **`slide21`** -> Use Case Sistem (Sudah Mas isi)
 
-- **`slide20`** -> Hasil Uji Penelitian
+- **`slide (Sisipan/Duplikat)`** -> Tahapan Hasil Penelitian (SANGAT DISARANKAN)
+  - Duplikat slide yang memiliki format banyak kotak (misal copy dari Slide 16 atau 24).
+  - Posisikan sebelum masuk ke pembahasan Black box.
+  - Isi dengan 4 kuadran: Analisis, Perancangan, Implementasi, Pengujian.
+
+- **`slide22`** -> Hasil Uji Penelitian
   - isi black box dan white box dalam bentuk angka/tabel kecil.
 
-- **`slide21`** -> Hasil Pengujian Usability (SUS)
+- **`slide23`** -> Hasil Pengujian Usability (SUS)
   - ganti judul dari `ANALISIS DATA PENELITIAN` menjadi `HASIL PENGUJIAN USABILITY (SUS)`.
   - isi skor SUS dan indikator visual.
 
-- **`slide22`** -> Pembahasan Hasil
-  - isi makna hasil dan keterbatasan.
+- **`slide24`** -> Slide Pembahasan 1 (Bukti PWA)
+  - ganti teks "PEMBAHASAN HASIL PEMBAHASAN 1" jadi "PEMBAHASAN HASIL (PWA & Kinerja)".
 
-- **`slide23`** -> Ringkasan Hasil Penelitian
-  - isi 4 bagian: analisis, perancangan, implementasi, pengujian.
+- **`slide25`** -> Slide Pembahasan 2 (Security)
+  - ganti teks "PEMBAHASAN HASIL PEMBAHASAN 2" jadi "PEMBAHASAN HASIL (Keamanan & Sinkronisasi)".
 
-- **`slide24`** -> Pembatas BAB V
+- **`slide25 (Duplikat)`** -> Slide Pembahasan 3 (Komparasi)
+  - Duplikat/Copy slide 25, lalu ubah jadi "PEMBAHASAN HASIL (Komparasi Sistem)".
+
+- **`slide26`** -> Pembatas BAB V
   - pakai sebagai pembuka kesimpulan dan saran.
 
-- **`slide25`** -> Kesimpulan dan Saran
-  - ganti seluruh placeholder `POIN` dengan isi kesimpulan dan saran.
+- **`slide27`** -> Kesimpulan dan Saran
+  - ganti judul dan placeholder `POIN` dengan isi kesimpulan dan saran sesungguhnya.
 
 - **`slide26`** -> Terima Kasih
   - pertahankan judul `TERIMA KASIH`.

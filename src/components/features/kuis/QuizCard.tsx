@@ -221,6 +221,13 @@ export function QuizCard({
    * Duplicate quiz
    */
   const handleDuplicate = async () => {
+    if (!navigator.onLine) {
+      toast.error(
+        "Tidak dapat menduplikasi tugas saat offline. Sambungkan internet terlebih dahulu.",
+      );
+      return;
+    }
+
     setIsDuplicating(true);
 
     try {
@@ -247,6 +254,13 @@ export function QuizCard({
    * Delete quiz
    */
   const handleDelete = async () => {
+    if (!navigator.onLine) {
+      toast.error(
+        "Tidak dapat menghapus tugas saat offline. Sambungkan internet terlebih dahulu.",
+      );
+      return;
+    }
+
     setIsDeleting(true);
 
     try {
@@ -398,7 +412,7 @@ export function QuizCard({
 
                   <DropdownMenuItem
                     onClick={handleDuplicate}
-                    disabled={isDuplicating}
+                    disabled={isDuplicating || !navigator.onLine}
                   >
                     <Copy className="h-4 w-4 mr-2" />
                     Duplikasi
@@ -589,7 +603,7 @@ export function QuizCard({
             <AlertDialogCancel disabled={isDeleting}>Batal</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
-              disabled={isDeleting}
+              disabled={isDeleting || !navigator.onLine}
               className="bg-destructive hover:bg-destructive/90"
             >
               {isDeleting ? "Menghapus..." : "Ya, Hapus"}

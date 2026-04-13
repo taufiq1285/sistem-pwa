@@ -80,7 +80,9 @@
       "Bash(sed -n '55,70p' src/pages/admin/ProfilePage.tsx)",
       "Bash(sed -n '170,185p' src/pages/mahasiswa/ProfilePage.tsx)",
       "Bash(sed -n '240,265p' src/pages/dosen/KehadiranPage.tsx)",
-      "Bash(sed -n '314,325p' src/pages/dosen/KehadiranPage.tsx)"
+      "Bash(sed -n '314,325p' src/pages/dosen/KehadiranPage.tsx)",
+      "Bash(sed 's/<[^>]*>//g')",
+      "Bash(unzip -o \"TEMPLATE 107.pptx\" -d temp_pptx_latest/)"
     ]
   }
 }

@@ -276,6 +276,13 @@ export default function DosenMateriPage() {
   async function handleUpload(formData: FormData) {
     if (!user?.dosen?.id) return;
 
+    if (!navigator.onLine) {
+      toast.error(
+        "Upload materi belum didukung saat offline. Sambungkan internet terlebih dahulu.",
+      );
+      return;
+    }
+
     try {
       setUploading(true);
       setUploadProgress(0);
@@ -334,6 +341,13 @@ export default function DosenMateriPage() {
   async function handleUpdateMateri(formData: FormData) {
     if (!editingMateri) return;
 
+    if (!navigator.onLine) {
+      toast.error(
+        "Perubahan materi belum didukung saat offline. Sambungkan internet terlebih dahulu.",
+      );
+      return;
+    }
+
     try {
       const judul = formData.get("judul") as string;
       const deskripsi = formData.get("deskripsi") as string;
@@ -356,6 +370,13 @@ export default function DosenMateriPage() {
   }
 
   async function handleDelete(materi: Materi) {
+    if (!navigator.onLine) {
+      toast.error(
+        "Penghapusan materi belum didukung saat offline. Sambungkan internet terlebih dahulu.",
+      );
+      return;
+    }
+
     if (!confirm(`Hapus materi "${materi.judul}"?`)) return;
 
     try {
@@ -440,6 +461,7 @@ export default function DosenMateriPage() {
           </div>
           <Button
             onClick={() => setShowUploadDialog(true)}
+            disabled={!navigator.onLine}
             className="w-full sm:w-auto bg-linear-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground shadow-lg shadow-primary/30 font-semibold px-6"
             size="lg"
           >

@@ -112,6 +112,13 @@ export default function ProfilePage() {
   };
 
   const handleSave = async () => {
+    if (!navigator.onLine) {
+      setError(
+        "Perubahan profil belum didukung saat offline. Sambungkan internet terlebih dahulu.",
+      );
+      return;
+    }
+
     try {
       setSaving(true);
       setError(null);
@@ -322,6 +329,7 @@ export default function ProfilePage() {
           onClick={handleSave}
           loading={saving}
           loadingText="Menyimpan..."
+          disabled={saving || !navigator.onLine}
           className="bg-primary text-primary-foreground hover:bg-primary/90"
         >
           <Save className="mr-2 h-4 w-4" />

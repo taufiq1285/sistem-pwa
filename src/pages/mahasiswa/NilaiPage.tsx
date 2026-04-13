@@ -338,6 +338,13 @@ export default function MahasiswaNilaiPageEnhanced() {
       return;
     }
 
+    if (!navigator.onLine) {
+      toast.error(
+        "Pengajuan perbaikan nilai belum didukung saat offline. Sambungkan internet terlebih dahulu.",
+      );
+      return;
+    }
+
     try {
       setSubmitting(true);
 
@@ -933,7 +940,7 @@ export default function MahasiswaNilaiPageEnhanced() {
               </Button>
               <Button
                 onClick={handleSubmitPermintaan}
-                disabled={submitting || !alasanPermintaan.trim()}
+                disabled={submitting || !alasanPermintaan.trim() || !navigator.onLine}
               >
                 {submitting ? (
                   <Loader2 className="h-4 w-4 mr-1 animate-spin" />

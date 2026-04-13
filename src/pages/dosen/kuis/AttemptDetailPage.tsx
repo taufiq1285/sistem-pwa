@@ -145,6 +145,13 @@ export default function AttemptDetailPage() {
   const handleSaveGrading = async () => {
     if (!attempt?.jawaban) return;
 
+    if (!navigator.onLine) {
+      toast.error(
+        "Tidak dapat menyimpan penilaian saat offline. Sambungkan internet terlebih dahulu.",
+      );
+      return;
+    }
+
     setIsSaving(true);
 
     try {
@@ -294,8 +301,7 @@ export default function AttemptDetailPage() {
               {hasChanges && (
                 <Button
                   onClick={handleSaveGrading}
-                  disabled={isSaving}
-                  variant="secondary"
+                  disabled={isSaving || !navigator.onLine}
                   className="gap-2 border border-white/40 bg-white/15 text-white hover:bg-white/25"
                 >
                   {isSaving ? (
@@ -757,7 +763,7 @@ export default function AttemptDetailPage() {
               </div>
               <Button
                 onClick={handleSaveGrading}
-                disabled={isSaving}
+                disabled={isSaving || !navigator.onLine}
                 className="flex items-center gap-2"
               >
                 {isSaving ? (

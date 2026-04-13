@@ -712,6 +712,13 @@ export function QuizAttempt({
       return;
     }
 
+    if (!navigator.onLine) {
+      toast.error(
+        "Submit kuis belum didukung saat offline. Sambungkan internet terlebih dahulu untuk mengirim jawaban.",
+      );
+      return;
+    }
+
     console.log("🐛 [QuizAttempt] Submitting quiz...");
     console.log("🐛 [QuizAttempt] Attempt ID:", attempt.id);
     console.log("🐛 [QuizAttempt] Kuis ID:", kuisId);
@@ -1237,7 +1244,7 @@ Contoh:
             <AlertDialogCancel disabled={isSubmitting}>Batal</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleSubmitQuiz}
-              disabled={isSubmitting}
+              disabled={isSubmitting || !navigator.onLine}
             >
               {isSubmitting ? (
                 <>

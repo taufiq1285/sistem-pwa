@@ -1,0 +1,83 @@
+<mxfile version="22.1.2" type="device">
+  <diagram id="diagram_alur_penelitian" name="Alur Tahapan R&amp;D">
+    <mxGraphModel dx="1000" dy="1000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+        <!-- Box 1 -->
+        <mxCell id="box1" value="&lt;b&gt;1. Analisis Kebutuhan&lt;/b&gt;&lt;br&gt;&lt;br&gt;- Proses manual&lt;br&gt;- Kebutuhan Logbook" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;align=left;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="200" y="100" width="220" height="120" as="geometry" />
+        </mxCell>
+        
+        <!-- Box 2 -->
+        <mxCell id="box2" value="&lt;b&gt;2. Perancangan Sistem&lt;/b&gt;&lt;br&gt;&lt;br&gt;- Model Multi-Role&lt;br&gt;- Arsitektur PWA" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;align=left;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="500" y="100" width="220" height="120" as="geometry" />
+        </mxCell>
+        
+        <!-- Arrow 1 to 2 -->
+        <mxCell id="edge1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="box1" target="box2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Box 3 -->
+        <mxCell id="box3" value="&lt;b&gt;3. Implementasi PWA&lt;/b&gt;&lt;br&gt;&lt;br&gt;- Modul Akademik/Lab Aktif&lt;br&gt;- Fitur Offline Berjalan" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;align=left;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="200" y="320" width="220" height="120" as="geometry" />
+        </mxCell>
+
+        <!-- Arrow 2 to 3 -->
+        <mxCell id="edge2" value="Masuk ke tahapan penerapan" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="box2" target="box3">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="610" y="270" />
+              <mxPoint x="310" y="270" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Box 4 -->
+        <mxCell id="box4" value="&lt;b&gt;4. Pengujian &amp; Evaluasi&lt;/b&gt;&lt;br&gt;&lt;br&gt;- Black Box (Lulus 100%)&lt;br&gt;- Uji SUS (Skor 75,11)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;align=left;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="500" y="320" width="220" height="120" as="geometry" />
+        </mxCell>
+        
+        <!-- Arrow 3 to 4 -->
+        <mxCell id="edge3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="box3" target="box4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="diagram_alur_sync" name="Alur PWA Offline">
+    <mxGraphModel dx="1000" dy="1000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Sync Box 1 -->
+        <mxCell id="sync1" value="&lt;b&gt;HP Tanpa Internet&lt;/b&gt;&lt;br&gt;Isi logbook praktikum&lt;br&gt;(Tersimpan lokal via IndexedDB)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="100" y="200" width="200" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Sync Arrow 1 to 2 -->
+        <mxCell id="s_edge1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="sync1" target="sync2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Sync Box 2 -->
+        <mxCell id="sync2" value="&lt;b&gt;Sinyal Tersedia&lt;/b&gt;&lt;br&gt;Service Worker deteksi koneksi" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="360" y="200" width="200" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Sync Arrow 2 to 3 -->
+        <mxCell id="s_edge2" value="Background Sync" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="sync2" target="sync3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Sync Box 3 -->
+        <mxCell id="sync3" value="&lt;b&gt;Supabase (Cloud)&lt;/b&gt;&lt;br&gt;Data logbook terkirim ke server" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="640" y="200" width="200" height="80" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
