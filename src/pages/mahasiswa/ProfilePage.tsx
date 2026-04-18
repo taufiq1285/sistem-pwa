@@ -49,6 +49,19 @@ interface MahasiswaProfile {
   address?: string;
 }
 
+/** Raw shape returned from the API / cache before mapping into local state */
+interface MahasiswaProfileRaw {
+  id?: string;
+  nim?: string;
+  program_studi?: string;
+  angkatan?: number;
+  semester?: number;
+  gender?: "L" | "P" | null;
+  date_of_birth?: string;
+  address?: string;
+  users?: { full_name?: string; email?: string };
+}
+
 interface UserProfile {
   full_name: string;
   email: string;
@@ -95,7 +108,7 @@ export default function ProfilePage() {
     }
 
     const handleCacheUpdated = (event: Event) => {
-      const customEvent = event as CustomEvent<{ key?: string; data?: any }>;
+      const customEvent = event as CustomEvent<{ key?: string; data?: MahasiswaProfileRaw }>;
 
       if (
         customEvent.detail?.key !== profileCacheKey ||
@@ -140,7 +153,7 @@ export default function ProfilePage() {
         return;
       }
 
-      const cachedProfileEntry = await getCachedData<any>(profileCacheKey);
+      const cachedProfileEntry = await getCachedData<MahasiswaProfileRaw>(profileCacheKey);
       const cachedProfile = cachedProfileEntry?.data;
 
       if (cachedProfile) {

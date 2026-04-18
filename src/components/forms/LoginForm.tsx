@@ -1,14 +1,6 @@
 /**
- * IMPROVED Login Form Component
- *
- * Improvements:
- * 1. Better visual design with icons
- * 2. Role badges to show what roles can login
- * 3. Better loading states
- * 4. Improved error handling with icons
- * 5. Helper text and tips
- * 6. Eye icon for password visibility
- * 7. Better offline handling - supports offline login
+ * Login Form Component
+ * Consistent visual style with AKBID landing pages.
  */
 
 import { useState, useEffect } from "react";
@@ -54,12 +46,12 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
     resolver: zodResolver(loginSchema),
   });
 
-  // Monitor network status
   useEffect(() => {
     const handleOnline = () => {
       setIsOnline(true);
       setError(null);
     };
+
     const handleOffline = () => {
       setIsOnline(false);
       setError(null);
@@ -76,20 +68,18 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
 
   const onSubmit = async (data: LoginFormData) => {
     try {
-      console.log("🔵 Login attempt:", {
+      console.log("Login attempt:", {
         email: data.email,
         isOnline,
         navigatorOnline: navigator.onLine,
       });
 
-      // Always clear previous error before login attempt
       setError(null);
-
       await login(data);
-      console.log("✅ Login successful");
+      console.log("Login successful");
       onSuccess?.();
     } catch (err: unknown) {
-      console.error("❌ Login failed:", err);
+      console.error("Login failed:", err);
       let errorMessage = "Login gagal. Silakan coba lagi.";
       if (err instanceof Error) {
         errorMessage = err.message;
@@ -100,74 +90,64 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
 
   return (
     <div className="space-y-6">
-      {/* Role Info Badges */}
       <div className="space-y-4">
-        <p className="text-base font-bold text-gray-800 text-center">
+        <p className="text-center akbid-font-display text-base font-semibold text-[#0F172A] sm:text-lg">
           Login untuk mengakses sistem sebagai:
         </p>
-        <div className="flex flex-wrap gap-2 justify-center">
+        <div className="flex flex-wrap justify-center gap-2">
           <Badge
             variant="outline"
-            className="bg-blue-50 border-blue-200 text-blue-700 font-semibold text-sm px-3 py-1 hover:bg-blue-100 transition-colors"
+            className="border-[#E8E0D8] bg-[#F8F3EE] px-3 py-1 text-[13px] font-semibold text-[#7B1D3A]"
           >
-            <GraduationCap className="h-3 w-3 mr-1" />
+            <GraduationCap className="mr-1 h-3.5 w-3.5" />
             Mahasiswa
           </Badge>
           <Badge
             variant="outline"
-            className="bg-green-50 border-green-200 text-green-700 font-semibold text-sm px-3 py-1 hover:bg-green-100 transition-colors"
+            className="border-[#DDD4CB] bg-[#F5EEE8] px-3 py-1 text-[13px] font-semibold text-[#1E293B]"
           >
-            <Users className="h-3 w-3 mr-1" />
+            <Users className="mr-1 h-3.5 w-3.5" />
             Dosen
           </Badge>
           <Badge
             variant="outline"
-            className="bg-purple-50 border-purple-200 text-purple-700 font-semibold text-sm px-3 py-1 hover:bg-purple-100 transition-colors"
+            className="border-[#D9CEC2] bg-[#F4EEE7] px-3 py-1 text-[13px] font-semibold text-[#334155]"
           >
-            <FlaskConical className="h-3 w-3 mr-1" />
+            <FlaskConical className="mr-1 h-3.5 w-3.5" />
             Laboran
           </Badge>
           <Badge
             variant="outline"
-            className="bg-gray-50 border-gray-200 text-gray-700 font-semibold text-sm px-3 py-1 hover:bg-gray-100 transition-colors"
+            className="border-[#E8E0D8] bg-[#F1EBE4] px-3 py-1 text-[13px] font-semibold text-[#0F172A]"
           >
-            <ShieldCheck className="h-3 w-3 mr-1" />
+            <ShieldCheck className="mr-1 h-3.5 w-3.5" />
             Admin
           </Badge>
         </div>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-        {/* Offline Warning */}
         {!isOnline && (
-          <Alert className="bg-linear-to-r from-blue-50 to-blue-100 border-blue-200 shadow-md">
-            <WifiOff className="h-5 w-5 text-blue-600" />
-            <AlertTitle className="text-blue-900 font-bold text-base">
-              Mode Offline
-            </AlertTitle>
-            <AlertDescription className="text-blue-800 font-medium text-sm">
-              Anda sedang offline. Sistem akan menggunakan kredensial tersimpan
-              untuk login.
+          <Alert className="border-[#C7D2FE] bg-[#EEF2FF] shadow-sm">
+            <WifiOff className="h-5 w-5 text-[#3730A3]" />
+            <AlertTitle className="text-base font-semibold text-[#1E293B]">Mode Offline</AlertTitle>
+            <AlertDescription className="text-sm text-[#334155]">
+              Anda sedang offline. Sistem akan memakai kredensial tersimpan untuk login.
             </AlertDescription>
           </Alert>
         )}
-        {/* Error Alert */}
+
         {error && (
-          <Alert variant="destructive" className="shadow-md">
+          <Alert variant="destructive" className="shadow-sm">
             <AlertCircle className="h-5 w-5" />
-            <AlertTitle className="font-bold text-base">Login Gagal</AlertTitle>
-            <AlertDescription className="font-medium text-sm">
-              {error}
-            </AlertDescription>
+            <AlertTitle className="text-base font-semibold">Login Gagal</AlertTitle>
+            <AlertDescription className="text-sm">{error}</AlertDescription>
           </Alert>
         )}
-        {/* Email Field */}
+
         <div className="space-y-2">
-          <Label
-            htmlFor="email"
-            className="flex items-center gap-2 font-bold text-gray-800 text-sm"
-          >
-            <Mail className="h-4 w-4 text-blue-600" />
+          <Label htmlFor="email" className="flex items-center gap-2 text-sm font-semibold text-[#0F172A]">
+            <Mail className="h-4 w-4 text-[#7B1D3A]" />
             Email
           </Label>
           <div className="relative">
@@ -177,24 +157,21 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
               placeholder="email@contoh.com"
               {...register("email")}
               disabled={isSubmitting}
-              className="pl-11 h-11 text-base font-medium border-2 focus-visible:border-blue-500 focus-visible:ring-blue-500 transition-all"
+              className="h-11 border-[#E8E0D8] bg-white pl-11 text-[15px] focus-visible:border-[#7B1D3A] focus-visible:ring-[#7B1D3A]"
             />
-            <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Mail className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           </div>
           {errors.email && (
-            <p className="text-sm font-semibold text-red-600 flex items-center gap-1">
-              <AlertCircle className="h-3 w-3" />
+            <p className="flex items-center gap-1 text-sm font-medium text-red-600">
+              <AlertCircle className="h-3.5 w-3.5" />
               {errors.email.message}
             </p>
           )}
         </div>
-        {/* Password Field */}
+
         <div className="space-y-2">
-          <Label
-            htmlFor="password"
-            className="flex items-center gap-2 font-bold text-gray-800 text-sm"
-          >
-            <Lock className="h-4 w-4 text-blue-600" />
+          <Label htmlFor="password" className="flex items-center gap-2 text-sm font-semibold text-[#0F172A]">
+            <Lock className="h-4 w-4 text-[#7B1D3A]" />
             Password
           </Label>
           <div className="relative">
@@ -204,119 +181,89 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
               placeholder="Masukkan password Anda"
               {...register("password")}
               disabled={isSubmitting}
-              className="pl-11 pr-11 h-11 text-base font-medium border-2 focus-visible:border-blue-500 focus-visible:ring-blue-500 transition-all"
+              className="h-11 border-[#E8E0D8] bg-white pl-11 pr-11 text-[15px] focus-visible:border-[#7B1D3A] focus-visible:ring-[#7B1D3A]"
             />
-            <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Lock className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <button
               type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-600 transition-colors"
+              onClick={() => setShowPassword((prev) => !prev)}
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 transition-colors hover:text-[#7B1D3A]"
               disabled={isSubmitting}
             >
-              {showPassword ? (
-                <EyeOff className="h-4 w-4" />
-              ) : (
-                <Eye className="h-4 w-4" />
-              )}
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
           </div>
           {errors.password && (
-            <p className="text-sm font-semibold text-red-600 flex items-center gap-1">
-              <AlertCircle className="h-3 w-3" />
+            <p className="flex items-center gap-1 text-sm font-medium text-red-600">
+              <AlertCircle className="h-3.5 w-3.5" />
               {errors.password.message}
             </p>
           )}
         </div>
-        {/* Submit Button */}
+
         <Button
           type="submit"
-          className="w-full h-12 text-base font-bold bg-linear-to-r from-blue-600 to-pink-600 hover:from-blue-700 hover:to-pink-700 shadow-lg hover:shadow-xl transition-all duration-300"
+          className="h-12 w-full bg-[#7B1D3A] text-base font-semibold text-white transition-all duration-300 hover:bg-[#9B2448]"
           disabled={isSubmitting}
           size="lg"
         >
           {isSubmitting ? (
             <>
-              <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
               {!isOnline ? "Login Offline..." : "Masuk..."}
             </>
           ) : !isOnline ? (
             <>
-              <WifiOff className="h-5 w-5 mr-2" />
+              <WifiOff className="mr-2 h-5 w-5" />
               Login Offline
             </>
           ) : (
             <>
-              <LogIn className="h-5 w-5 mr-2" />
+              <LogIn className="mr-2 h-5 w-5" />
               Masuk
             </>
           )}
         </Button>
-        {/* Helper Text */}
+
         {!isOnline && (
-          <Alert className="bg-linear-to-r from-blue-50 to-blue-100 border-blue-200">
-            <AlertDescription className="text-sm font-semibold text-blue-900">
-              💡 <strong>Login Offline:</strong> Masukkan email dan password
-              yang sama dengan saat login online terakhir kali.
+          <Alert className="border-[#C7D2FE] bg-[#EEF2FF]">
+            <AlertDescription className="text-sm text-[#1E293B]">
+              <strong>Tips Login Offline:</strong> Masukkan email dan password yang sama dengan login online terakhir.
             </AlertDescription>
           </Alert>
         )}
-        {/* Security Info */}
+
         {!isSubmitting && (
-          <div className="pt-3 border-t-2 border-gray-100">
-            <div className="flex items-start gap-2 text-xs font-medium text-gray-700">
-              <ShieldCheck className="h-4 w-4 text-green-600 shrink-0 mt-0.5" />
+          <div className="border-t border-[#E8E0D8] pt-3">
+            <div className="flex items-start gap-2 text-xs text-slate-700 sm:text-[13px]">
+              <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[#7B1D3A]" />
               <p>
                 {isOnline ? (
                   <>
-                    <span className="font-semibold text-gray-900">
-                      Login Aman:
-                    </span>{" "}
-                    Kredensial Anda terenkripsi dan disimpan (ter-hash) di
-                    perangkat untuk offline login. Data otomatis terhapus
-                    setelah 30 hari atau saat logout.
+                    <span className="font-semibold text-[#0F172A]">Login Aman:</span>{" "}
+                    Kredensial terenkripsi dan disimpan aman di perangkat untuk login offline.
                   </>
                 ) : (
                   <>
-                    <span className="font-semibold text-gray-900">
-                      Mode Offline:
-                    </span>{" "}
-                    Login menggunakan kredensial tersimpan yang telah
-                    di-enkripsi. Password asli tidak pernah disimpan di
-                    perangkat.
+                    <span className="font-semibold text-[#0F172A]">Mode Offline:</span>{" "}
+                    Login memakai kredensial tersimpan terenkripsi, bukan password asli.
                   </>
                 )}
               </p>
             </div>
           </div>
-        )}{" "}
+        )}
       </form>
 
-      {/* Quick Guide */}
-      <div className="space-y-3 pt-5 border-t-2 border-gray-100">
-        <p className="text-sm font-black text-gray-900 flex items-center gap-2">
-          <ShieldCheck className="h-4 w-4 text-blue-600" />
+      <div className="space-y-2 border-t border-[#E8E0D8] pt-4">
+        <p className="flex items-center gap-2 text-sm font-semibold text-[#0F172A]">
+          <ShieldCheck className="h-4 w-4 text-[#7B1D3A]" />
           Panduan Login
         </p>
-        <ul className="text-sm font-medium text-gray-700 space-y-2">
-          <li className="flex items-start gap-2">
-            <span className="text-blue-600 font-bold mt-0.5">•</span>
-            <span>
-              Gunakan email dan password yang Anda daftarkan saat registrasi
-            </span>
-          </li>
-          <li className="flex items-start gap-2">
-            <span className="text-blue-600 font-bold mt-0.5">•</span>
-            <span>
-              Login dapat dilakukan saat online maupun offline (setelah login
-              pertama kali)
-            </span>
-          </li>
-          <li className="flex items-start gap-2">
-            <span className="text-blue-600 font-bold mt-0.5">•</span>
-            <span>
-              Role Anda akan otomatis terdeteksi setelah login berhasil
-            </span>
-          </li>
+        <ul className="space-y-1.5 text-sm text-slate-700">
+          <li>Gunakan email dan password yang didaftarkan saat registrasi.</li>
+          <li>Login bisa dilakukan online, dan offline setelah login online pertama.</li>
+          <li>Role akan otomatis terdeteksi setelah login berhasil.</li>
         </ul>
       </div>
     </div>

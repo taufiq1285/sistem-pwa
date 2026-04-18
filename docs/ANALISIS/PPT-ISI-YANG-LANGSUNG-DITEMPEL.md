@@ -263,61 +263,89 @@ Gunakan Insert -> SmartArt -> Process (dengan 4 kotak/langkahan) di PPT dengan a
 
 ---
 
-### 12. Cari Slide 22 dengan judul: "HASIL UJI PENELITIAN"
+### 12. Cari Slide dengan judul: "HASIL PENELITIAN" (2 kotak)
 
-_Ganti isi teksnya menjadi:_
+📌 **[CATATAN TEMPLATE 107]:** ini adalah **`slide23`** pada susunan PPT Anda saat ini (setelah slide Tahapan Hasil Penelitian).
 
-- **Black Box Testing:** 45 skenario diuji pada seluruh peran dan fitur PWA. Hasil: Lulus 100% (Sistem layak fungsional).
-- **White Box Testing:** 238 file test dan 5.317 test case dieksekusi. Hasil: Lulus 100%.
+_Pertahankan judul `HASIL PENELITIAN`. Isi 2 kotak menjadi:_
 
-📌 **[MASUKKAN GAMBAR DI SINI]:** masukkan **tabel/grafik kecil** yang merangkum Black Box dan White Box. Jangan tempel tabel besar mentah; tampilkan angka inti seperti `45 skenario`, `238 file test`, dan `5.317 test case`.
+- **Kotak 01 — Hasil Implementasi**
+  - Sistem berhasil diimplementasikan untuk 4 peran: Admin, Dosen, Mahasiswa, Laboran.
+  - Modul Akademik: jadwal, materi, kuis, logbook, kehadiran, penilaian.
+  - Modul Laboratorium: inventaris dan peminjaman alat.
+  - Fitur PWA: akses offline, background sync, instalasi lintas perangkat.
+
+- **Kotak 02 — Hasil Pengujian (Ringkasan)**
+  - Black Box: 45 skenario → Lulus 100%
+  - White Box: 238 file test, 5.317 test case → Lulus 100%
+  - SUS: Skor 75,11 | Grade B | Good | Acceptable | 46 Responden
 
 ---
 
-### 13. Cari Slide 23 dengan judul: "ANALISIS DATA PENELITIAN"
+### 13. Cari Slide dengan judul: "ANALISIS DATA PENELITIAN" (3 kotak vertikal)
 
-_Ganti judulnya jadi "HASIL PENGUJIAN USABILITY (SUS)" dan isi teksnya menjadi:_
+📌 **[CATATAN TEMPLATE 107]:** ini adalah **`slide24`** pada susunan PPT Anda saat ini.
 
-- **Metode:** System Usability Scale (SUS).
-- **Responden:** 46 orang (Dosen dan Mahasiswa).
-- **Skor Rata-rata:** 75,11.
-- **Kategori:** Berada pada tingkat B (Good) dan masuk kategori _Acceptable_ (Dapat Diterima).
+_Ganti judulnya jadi "HASIL PENGUJIAN USABILITY (SUS)". Isi 3 kotak vertikal menjadi:_
+
+- **Kotak 01 — Metode & Responden**
+  - Metode: System Usability Scale (SUS)
+  - Responden: 46 orang (Dosen, Mahasiswa, Laboran, Admin)
+
+- **Kotak 02 — Hasil Skor**
+  - Skor Rata-rata: **75,11**
+  - Grade: **B** | Adjective: **Good** | Acceptability: **Acceptable**
+  - Skor tertinggi: 92,5 | Skor terendah: 55,0
+
+- **Kotak 03 — Interpretasi**
+  - 32 dari 46 responden (69,6%) memberi penilaian Good–Excellent.
+  - Sistem dinilai layak digunakan secara nyata oleh pengguna.
 
 📌 **[MASUKKAN GAMBAR DI SINI]:** masukkan **grafik kecil / indikator visual SUS** yang menonjolkan skor `75,11`, kategori `B`, `Good`, dan `Acceptable`.
 
 ---
 
-### 14. Cari Slide Pembahasan (Mulai dari Slide 24 ke bawah)
+### 14. Cari Slide Pembahasan (slide25 dan slide26)
 
-_Karena ini adalah presentasi ujian hasil Informatika, ubah slide pembahasan ini menjadi area ajang pamer keunggulan (Show, Don't Tell). Anda **sangat disarankan menduplikat** slide Pembahasan ini menjadi 3 slide agar tidak terlalu padat:_
+_Karena template memiliki **2 slide pembahasan** (slide25 dengan 5 kotak proses dan slide26 dengan 4 kotak), bagi konten pembahasan menjadi 2 tema besar:_
 
-**Slide Pembahasan 1 (Gunakan Slide 24 - "PEMBAHASAN HASIL PEMBAHASAN 1"): Bukti Fungsional PWA & Kinerja**
-- Fitur Offline PWA tervalidasi berjalan asinkron: Logbook mahasiswa tetap dapat diinput meskipun tanpa koneksi internet.
-- Skor performa dan aksesibilitas terukur stabil berdasarkan standar web modern.
-📌 **[MASUKKAN GAMBAR DI SINI]:** Masukkan _screenshot_ aplikasi saat mode "offline/tanpa internet" tapi masih menampillkan isi logbook, PLUS _screenshot_ skor hijau hasil audit Google Lighthouse (jika ada).
+**Slide Pembahasan 1 — `slide25` (5 kotak proses): "PEMBAHASAN HASIL (PWA & Sinkronisasi)"**
 
-**Slide Pembahasan 2 (Gunakan Slide 25 - "PEMBAHASAN HASIL PEMBAHASAN 2"): Integrasi Sinkronisasi & Keamanan**
-- Keamanan hak akses terpisah secara ketat dengan sistem RBAC (Role Based Access Control).
-- Mekanisme sinkronisasi data yang cerdas (_Background Sync_ & _Offline Queue_) ke _Supabase_ saat HP kembali _online_.
-📌 **[MASUKKAN GAMBAR DI SINI]:** Masukkan kolase beda menu Dosen vs Mahasiswa (bukti RBAC), dan **sangat disarankan** membuat bagan sinkronisasi sederhana (Gunakan menu *Insert* -> *SmartArt* -> *Process* di PPT) seperti sketsa di bawah ini:
+Ganti judul `PEMBAHASAN HASIL PEMBAHASAN 1` → **`PEMBAHASAN HASIL (PWA & Sinkronisasi)`**
+
+Isi 5 kotak proses:
+- **Kotak 1:** Fitur Offline Tervalidasi — Logbook tetap bisa diinput meskipun tanpa koneksi internet.
+- **Kotak 2:** Penyimpanan Lokal — Data tersimpan otomatis via IndexedDB saat offline.
+- **Kotak 3:** Background Sync — Service Worker memicu pengiriman data ke Supabase begitu koneksi kembali.
+- **Kotak 4:** RBAC — Hak akses terpisah ketat per peran: Admin, Dosen, Mahasiswa, Laboran.
+- **Kotak 5:** Akses Lintas Perangkat — Dapat diinstall & diakses dari HP, tablet, dan laptop tanpa App Store.
+
+📌 **[MASUKKAN GAMBAR DI SINI]:** Masukkan _screenshot_ aplikasi saat mode offline (logbook tetap tampil) PLUS bagan alur sinkronisasi sederhana via *Insert → SmartArt → Process*:
 
 ```text
-[ 📱 HP Tanpa Internet ]
+[ HP Tanpa Internet ]
    Isi logbook praktikum.
              ↓
  (Tersimpan lokal via IndexedDB)
              ↓
-[ 📡 Koneksi Tersambung ]
+[ Koneksi Tersambung ]
    Service Worker bereaksi.
              ↓
-[ ☁️ Supabase Cloud ]
-   Data Logbook terkirim murni (Background Sync).
+[ Supabase Cloud ]
+   Data terkirim otomatis (Background Sync).
 ```
 
-**Slide Pembahasan 3 (Duplikat saja Slide 25 sebelumnya): Komparasi Sistem & Nilai Jual Utama**
-- **Manual (Dulu):** Jadwal sering _miss_, pinjam alat antri fisik, dan penilaian masih terpisah di _Excel_ / kertas.
-- **Sistem PWA (Sekarang):** Penjadwalan _real-time_, pinjam alat efisien, pelaporan logbook dan _grading_ langsung terpusat di _Cloud_.
-📌 **[MASUKKAN GAMBAR DI SINI]:** Bikin _tabel sederhana_ komparasi Sebelum vs Sesudah. Ini kunci mutlak agar dosen penguji melihat nilai keberhasilan _Research & Development_.
+**Slide Pembahasan 2 — `slide26` (4 kotak): "PEMBAHASAN HASIL (Komparasi Sistem)"**
+
+Ganti judul `PEMBAHASAN HASIL PEMBAHASAN 2` → **`PEMBAHASAN HASIL (Komparasi Sistem)`**
+
+Isi 4 kotak:
+- **Kotak 1 — Sebelum (Manual):** Jadwal sering miss, pinjam alat antri fisik, penilaian terpisah di Excel/kertas.
+- **Kotak 2 — Sesudah (Sistem PWA):** Jadwal real-time, peminjaman efisien, logbook dan grading terpusat di cloud.
+- **Kotak 3 — Nilai Penelitian:** Sistem terbukti meningkatkan efisiensi operasional dan keterlibatan pengguna dibanding proses manual.
+- **Kotak 4 — Keterbatasan:** Background sync belum konsisten di semua browser. Evaluasi perlu diperluas ke lebih banyak responden dan institusi.
+
+📌 **[MASUKKAN GAMBAR DI SINI]:** Buat tabel sederhana **Sebelum vs Sesudah** — ini kunci mutlak agar penguji melihat nilai keberhasilan _Research & Development_.
 
 ---
 
@@ -364,7 +392,7 @@ Gunakan template ini dengan fokus **analisis -> perancangan -> implementasi -> p
    - isi 3 rumusan masalah inti
 
 4. **Tujuan Penelitian**
-   - isi 4 tujuan ringkas
+   - isi 3 tujuan ringkas (sesuai BAB I skripsi)
 
 5. **Batasan Penelitian**
    - isi 3 batasan versi PPT

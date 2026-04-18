@@ -247,23 +247,25 @@ export async function createLogbook(
     }
 
     // Get mahasiswa record
-    const { data: mahasiswa } = await supabase
+    const { data: mahasiswa, error: mahasiswaError } = await supabase
       .from("mahasiswa")
       .select("id")
       .eq("user_id", user.id)
-      .single();
+      .maybeSingle(); // ✅ FIXED: null-safe, no PGRST116
 
+    if (mahasiswaError) throw handleError(mahasiswaError);
     if (!mahasiswa) {
       throw new Error("Mahasiswa record not found");
     }
 
     // Get jadwal info for validation
-    const { data: jadwal } = await supabase
+    const { data: jadwal, error: jadwalError } = await supabase
       .from("jadwal_praktikum")
       .select("id, status")
       .eq("id", data.jadwal_id)
-      .single<{ status?: string }>();
+      .maybeSingle<{ status?: string }>(); // ✅ FIXED: null-safe
 
+    if (jadwalError) throw handleError(jadwalError);
     if (!jadwal) {
       throw new Error("Jadwal praktikum not found");
     }
@@ -309,7 +311,7 @@ export async function updateLogbook(
       .from("mahasiswa")
       .select("id")
       .eq("user_id", user.id)
-      .single();
+      .maybeSingle();
 
     if (!mahasiswa) {
       throw new Error("Mahasiswa record not found");
@@ -375,7 +377,7 @@ export async function submitLogbook(
       .from("mahasiswa")
       .select("id")
       .eq("user_id", user.id)
-      .single();
+      .maybeSingle();
 
     if (!mahasiswa) {
       throw new Error("Mahasiswa record not found");
@@ -447,7 +449,7 @@ export async function reviewLogbook(
       .from("dosen")
       .select("id")
       .eq("user_id", user.id)
-      .single();
+      .maybeSingle();
 
     if (!dosen) {
       throw new Error("Dosen record not found");
@@ -508,7 +510,7 @@ export async function gradeLogbook(
       .from("dosen")
       .select("id")
       .eq("user_id", user.id)
-      .single();
+      .maybeSingle();
 
     if (!dosen) {
       throw new Error("Dosen record not found");
@@ -564,7 +566,7 @@ export async function deleteLogbook(id: string): Promise<void> {
       .from("mahasiswa")
       .select("id")
       .eq("user_id", user.id)
-      .single();
+      .maybeSingle();
 
     if (!mahasiswa) {
       throw new Error("Mahasiswa record not found");

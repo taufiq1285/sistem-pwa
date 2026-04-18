@@ -16,6 +16,7 @@ import {
 import { cn } from "@/lib/utils";
 import type { UserRole } from "@/types/auth.types";
 import { NotificationDropdown } from "@/components/common";
+import { InstallPWAButton } from "@/components/common/InstallPWAButton";
 import { useRoleTheme } from "@/lib/hooks/useRoleTheme";
 import { ConflictNotificationBadge } from "./ConflictNotificationBadge";
 
@@ -84,6 +85,9 @@ export function Header({
       {/* Sisi Kanan: Notifikasi & Profil */}
       <div className="flex items-center gap-2 md:gap-4">
         <ConflictNotificationBadge autoRefreshInterval={30000} />
+
+        {/* Tombol Install PWA — muncul otomatis jika belum terinstall */}
+        <InstallPWAButton />
 
         {showNotificationDropdown ? (
           <NotificationDropdown />

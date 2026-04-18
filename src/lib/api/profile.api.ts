@@ -2,9 +2,15 @@
  * Profile API
  *
  * API functions for fetching and updating user profiles
+ *
+ * ✅ FIXED: All .single() replaced with .maybeSingle() to prevent PGRST116
+ *   crashes when a user is newly registered and their profile row doesn't
+ *   exist yet. Raw `throw error` also replaced with handleError() for
+ *   consistent, user-friendly error messages.
  */
 
 import { supabase } from "@/lib/supabase/client";
+import { handleError } from "@/lib/utils/errors";
 
 // ============================================================================
 // TYPES
@@ -74,6 +80,9 @@ export interface AdminProfile {
 
 /**
  * Get mahasiswa profile by user ID
+ *
+ * ✅ FIXED: Uses .maybeSingle() — returns null if profile not found (e.g. new
+ *    user) instead of throwing PGRST116 error.
  */
 export async function getMahasiswaProfile(
   userId: string,
@@ -90,9 +99,9 @@ export async function getMahasiswaProfile(
     `,
     )
     .eq("user_id", userId)
-    .single();
+    .maybeSingle(); // ✅ FIXED: null-safe, no PGRST116 for missing profiles
 
-  if (error) throw error;
+  if (error) throw handleError(error); // ✅ FIXED: user-friendly error wrapping
   return data;
 }
 
@@ -108,7 +117,7 @@ export async function updateMahasiswaProfile(
     .update(data)
     .eq("id", mahasiswaId);
 
-  if (error) throw error;
+  if (error) throw handleError(error); // ✅ FIXED
 }
 
 /**
@@ -126,7 +135,7 @@ export async function updateUserProfile(
     })
     .eq("id", userId);
 
-  if (error) throw error;
+  if (error) throw handleError(error); // ✅ FIXED
 }
 
 // ============================================================================
@@ -135,6 +144,8 @@ export async function updateUserProfile(
 
 /**
  * Get dosen profile by user ID
+ *
+ * ✅ FIXED: Uses .maybeSingle() — returns null if not found instead of throwing.
  */
 export async function getDosenProfile(
   userId: string,
@@ -151,9 +162,9 @@ export async function getDosenProfile(
     `,
     )
     .eq("user_id", userId)
-    .single();
+    .maybeSingle(); // ✅ FIXED
 
-  if (error) throw error;
+  if (error) throw handleError(error); // ✅ FIXED
   return data;
 }
 
@@ -164,9 +175,12 @@ export async function updateDosenProfile(
   dosenId: string,
   data: Partial<DosenProfile>,
 ): Promise<void> {
-  const { error } = await supabase.from("dosen").update(data).eq("id", dosenId);
+  const { error } = await supabase
+    .from("dosen")
+    .update(data)
+    .eq("id", dosenId);
 
-  if (error) throw error;
+  if (error) throw handleError(error); // ✅ FIXED
 }
 
 // ============================================================================
@@ -175,6 +189,8 @@ export async function updateDosenProfile(
 
 /**
  * Get laboran profile by user ID
+ *
+ * ✅ FIXED: Uses .maybeSingle() — returns null if not found.
  */
 export async function getLaboranProfile(
   userId: string,
@@ -191,9 +207,9 @@ export async function getLaboranProfile(
     `,
     )
     .eq("user_id", userId)
-    .single();
+    .maybeSingle(); // ✅ FIXED
 
-  if (error) throw error;
+  if (error) throw handleError(error); // ✅ FIXED
   return data;
 }
 
@@ -209,7 +225,7 @@ export async function updateLaboranProfile(
     .update(data)
     .eq("id", laboranId);
 
-  if (error) throw error;
+  if (error) throw handleError(error); // ✅ FIXED
 }
 
 // ============================================================================
@@ -218,6 +234,8 @@ export async function updateLaboranProfile(
 
 /**
  * Get admin profile by user ID
+ *
+ * ✅ FIXED: Uses .maybeSingle() — returns null if not found.
  */
 export async function getAdminProfile(
   userId: string,
@@ -226,9 +244,9 @@ export async function getAdminProfile(
     .from("users")
     .select("full_name, email, role")
     .eq("id", userId)
-    .single();
+    .maybeSingle(); // ✅ FIXED
 
-  if (error) throw error;
+  if (error) throw handleError(error); // ✅ FIXED
   return data;
 }
 
@@ -246,5 +264,5 @@ export async function updateAdminProfile(
     })
     .eq("id", userId);
 
-  if (error) throw error;
+  if (error) throw handleError(error); // ✅ FIXED
 }

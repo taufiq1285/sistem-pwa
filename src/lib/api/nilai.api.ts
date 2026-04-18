@@ -380,9 +380,13 @@ async function updateNilaiImpl(
         onConflict: "mahasiswa_id,kelas_id",
       })
       .select()
-      .single();
+      .maybeSingle(); // ✅ FIXED: null-safe — .single() would PGRST116 if RLS filters it out
 
     if (upsertError) throw handleError(upsertError);
+
+    if (!upserted) {
+      throw new Error("Gagal menyimpan nilai — data tidak dikembalikan server");
+    }
 
     return upserted as Nilai;
   } catch (error) {

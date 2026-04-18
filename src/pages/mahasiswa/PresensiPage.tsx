@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect, useMemo } from "react";
+import type { ElementType } from "react";
 import {
   ClipboardCheck,
   Calendar,
@@ -178,7 +179,7 @@ export default function PresensiPage() {
       sakit: "Sakit",
       alpha: "Alpha",
     };
-    const icons: Record<KehadiranStatus, any> = {
+    const icons: Record<KehadiranStatus, ElementType> = {
       hadir: CheckCircle2,
       izin: Clock,
       sakit: AlertCircle,

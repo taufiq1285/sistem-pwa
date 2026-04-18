@@ -134,7 +134,7 @@ export async function getJadwal(filters?: JadwalFilters): Promise<Jadwal[]> {
         ),
         kelas:kelas_id (
           nama_kelas,
-          mata_kuliah (
+          mata_kuliah:mata_kuliah_id (
             nama_mk
           )
         ),
@@ -352,7 +352,7 @@ export async function getCalendarEvents(
           *,
           kelas:kelas_id (
             nama_kelas,
-            mata_kuliah (
+            mata_kuliah:mata_kuliah_id (
               nama_mk
             )
           ),
@@ -962,7 +962,7 @@ async function getAllJadwalForLaboranImpl(filters?: {
           kelas:kelas_id (
             nama_kelas,
             kode_kelas,
-            mata_kuliah (
+            mata_kuliah:mata_kuliah_id (
               nama_mk,
               kode_mk
             )

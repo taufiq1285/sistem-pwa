@@ -93,6 +93,7 @@ async function processSyncQueueItem(item: SyncQueueItem): Promise<void> {
     kelas: "kelas",
     kehadiran: "kehadiran",
     user: "users",
+    logbook_entry: "logbook_entries",
   };
 
   const table =

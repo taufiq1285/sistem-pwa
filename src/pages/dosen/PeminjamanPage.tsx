@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import type { ElementType } from "react";
 import {
   Package,
   Clock,
@@ -155,7 +156,7 @@ const STATUS_CONFIG: Record<
   {
     label: string;
     variant: "secondary" | "default" | "destructive" | "outline";
-    icon: any;
+    icon: ElementType;
   }
 > = {
   pending: { label: "Menunggu", variant: "secondary", icon: Clock },
@@ -186,7 +187,7 @@ async function getLaboranUserIds(): Promise<string[]> {
       .select("id")
       .eq("role", "laboran");
 
-    return data?.map((u: any) => u.id) || [];
+    return data?.map((u: { id: string }) => u.id) || [];
   } catch (error) {
     console.error("Failed to fetch laboran IDs:", error);
     return []; // Return empty array instead of throwing

@@ -292,7 +292,7 @@ export async function getById<T = any>(
       .from(table as any)
       .select(options.select || "*")
       .eq("id", id)
-      .single();
+      .maybeSingle(); // ✅ FIXED: maybeSingle() returns null instead of PGRST116
 
     if (error) {
       throw handleError(error);

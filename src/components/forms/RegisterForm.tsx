@@ -1,12 +1,6 @@
 /**
- * IMPROVED Register Form Component
- *
- * Improvements:
- * 1. Visual role cards with icons and descriptions
- * 2. Default to mahasiswa (most common role)
- * 3. Clear visual feedback for selected role
- * 4. Confirmation dialog to prevent mistakes
- * 5. Role-specific helper text
+ * Register Form Component
+ * Styled to match AKBID landing theme without changing core logic.
  */
 
 import { useState, useRef, useEffect } from "react";
@@ -26,7 +20,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import {
@@ -55,38 +48,48 @@ interface RegisterFormProps {
 
 type ValidRole = RegisterFormData["role"];
 
-// Role Configuration dengan icon, warna, dan deskripsi
-const ROLE_CONFIG = {
+type RoleStyle = {
+  value: ValidRole;
+  label: string;
+  icon: typeof GraduationCap;
+  bgClass: string;
+  selectedClass: string;
+  iconClass: string;
+  description: string;
+  helperText: string;
+};
+
+const ROLE_CONFIG: Record<ValidRole, RoleStyle> = {
   mahasiswa: {
-    value: "mahasiswa" as ValidRole,
+    value: "mahasiswa",
     label: "Mahasiswa",
     icon: GraduationCap,
-    color: "blue",
-    bgClass: "bg-blue-50 hover:bg-blue-100 border-blue-200",
-    selectedClass: "bg-blue-100 border-blue-500 ring-2 ring-blue-500",
-    iconClass: "text-blue-600",
+    bgClass: "bg-[#FDF8F5] hover:bg-[#F5EDE8] border-[#E8E0D8]",
+    selectedClass:
+      "bg-[#F5EDE8] border-[#7B1D3A] ring-2 ring-[#7B1D3A]/25 shadow-md",
+    iconClass: "text-[#7B1D3A]",
     description: "Akses materi kuliah dan jadwal praktikum",
     helperText: "Untuk mahasiswa",
   },
   dosen: {
-    value: "dosen" as ValidRole,
+    value: "dosen",
     label: "Dosen",
     icon: Users,
-    color: "green",
-    bgClass: "bg-green-50 hover:bg-green-100 border-green-200",
-    selectedClass: "bg-green-100 border-green-500 ring-2 ring-green-500",
-    iconClass: "text-green-600",
+    bgClass: "bg-[#F9F6F1] hover:bg-[#EEE7DF] border-[#DDD4CB]",
+    selectedClass:
+      "bg-[#EEE7DF] border-[#1E293B] ring-2 ring-[#1E293B]/25 shadow-md",
+    iconClass: "text-[#1E293B]",
     description: "Kelola kelas, materi, dan aktivitas pembelajaran",
     helperText: "Untuk dosen/pengajar",
   },
   laboran: {
-    value: "laboran" as ValidRole,
+    value: "laboran",
     label: "Laboran",
     icon: FlaskConical,
-    color: "purple",
-    bgClass: "bg-purple-50 hover:bg-purple-100 border-purple-200",
-    selectedClass: "bg-purple-100 border-purple-500 ring-2 ring-purple-500",
-    iconClass: "text-purple-600",
+    bgClass: "bg-[#F8F4EF] hover:bg-[#ECE4DC] border-[#D9CEC2]",
+    selectedClass:
+      "bg-[#ECE4DC] border-[#334155] ring-2 ring-[#334155]/25 shadow-md",
+    iconClass: "text-[#334155]",
     description: "Kelola inventaris dan jadwal laboratorium",
     helperText: "Untuk laboran",
   },
@@ -110,34 +113,26 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
   } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
-      role: "mahasiswa", // ✅ DEFAULT ke mahasiswa (paling banyak)
+      role: "mahasiswa",
     },
   });
 
   const selectedRole = watch("role") || "mahasiswa";
   const roleConfig = ROLE_CONFIG[selectedRole];
 
-  // Auto-scroll to alert when error or success appears with animation trigger
   useEffect(() => {
     if (error || success) {
       setShowAlert(false);
-      // Trigger animation
       setTimeout(() => setShowAlert(true), 10);
-
-      // Scroll to alert
       setTimeout(() => {
         if (alertRef.current) {
-          alertRef.current.scrollIntoView({
-            behavior: "smooth",
-            block: "center",
-          });
+          alertRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
         }
       }, 100);
     }
   }, [error, success]);
 
   const onSubmit = async (data: RegisterFormData) => {
-    // Show confirmation dialog
     setPendingData(data);
     setShowConfirmDialog(true);
   };
@@ -150,37 +145,28 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
       setSuccess(null);
       setShowConfirmDialog(false);
 
-      // Normalize data before registration
       const normalizedData: RegisterFormData = {
         ...pendingData,
         full_name: normalize.fullName(pendingData.full_name),
         email: normalize.email(pendingData.email),
-        phone: pendingData.phone
-          ? normalize.phone(pendingData.phone)
-          : undefined,
-        // Mahasiswa-specific fields
+        phone: pendingData.phone ? normalize.phone(pendingData.phone) : undefined,
         ...(pendingData.role === "mahasiswa" && {
           nim: pendingData.nim ? normalize.nim(pendingData.nim) : undefined,
           program_studi: pendingData.program_studi
             ? normalize.programStudi(pendingData.program_studi)
             : undefined,
         }),
-        // Dosen-specific fields
         ...(pendingData.role === "dosen" && {
           nip: pendingData.nip ? normalize.nim(pendingData.nip) : undefined,
         }),
       };
 
       await registerUser(normalizedData);
-      setSuccess(
-        "Registrasi berhasil! Silakan cek email Anda untuk verifikasi akun.",
-      );
+      setSuccess("Registrasi berhasil! Silakan cek email Anda untuk verifikasi akun.");
       setTimeout(() => onSuccess?.(), 2000);
     } catch (err: unknown) {
       let errorMessage = "Registrasi gagal. Silakan coba lagi.";
-      if (err instanceof Error) {
-        errorMessage = err.message;
-      }
+      if (err instanceof Error) errorMessage = err.message;
       setError(errorMessage);
     } finally {
       setPendingData(null);
@@ -192,28 +178,23 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
     return fieldError?.message as string | undefined;
   };
 
+  const commonInputClass =
+    "h-11 border-[#E8E0D8] bg-white text-[15px] focus-visible:border-[#7B1D3A] focus-visible:ring-[#7B1D3A]";
+
   return (
     <>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-7">
         {error && showAlert && (
           <div
             ref={alertRef}
-            style={{
-              animation: "shake 0.5s ease-in-out, fadeIn 0.3s ease-in",
-            }}
+            style={{ animation: "shake 0.5s ease-in-out, fadeIn 0.3s ease-in" }}
           >
-            <Alert
-              variant="destructive"
-              className="border-2 border-red-600 bg-linear-to-r from-red-50 to-red-100 shadow-xl p-6 relative overflow-hidden"
-            >
-              <div className="absolute inset-0 bg-red-600 opacity-5 animate-pulse"></div>
-              <div className="relative flex gap-4 items-start">
-                <AlertCircle className="h-8 w-8 text-red-600 shrink-0 mt-0.5" />
+            <Alert variant="destructive" className="relative overflow-hidden border border-red-200 bg-red-50 p-4 shadow-sm">
+              <div className="relative flex items-start gap-3">
+                <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-600" />
                 <div className="flex-1">
-                  <h3 className="font-black text-xl text-red-900 mb-2">
-                    Registrasi Gagal!
-                  </h3>
-                  <AlertDescription className="text-lg text-red-800 font-semibold">
+                  <h3 className="mb-1 text-base font-semibold text-red-900">Registrasi Gagal</h3>
+                  <AlertDescription className="text-sm font-medium text-red-700">
                     {error}
                   </AlertDescription>
                 </div>
@@ -225,19 +206,14 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
         {success && showAlert && (
           <div
             ref={alertRef}
-            style={{
-              animation: "slideDown 0.4s ease-out, fadeIn 0.3s ease-in",
-            }}
+            style={{ animation: "slideDown 0.4s ease-out, fadeIn 0.3s ease-in" }}
           >
-            <Alert className="border-2 border-green-600 bg-linear-to-r from-green-50 to-green-100 shadow-xl p-6 relative overflow-hidden">
-              <div className="absolute inset-0 bg-green-600 opacity-5 animate-pulse"></div>
-              <div className="relative flex gap-4 items-start">
-                <CheckCircle2 className="h-8 w-8 text-green-600 shrink-0 mt-0.5" />
+            <Alert className="relative overflow-hidden border border-emerald-200 bg-emerald-50 p-4 shadow-sm">
+              <div className="relative flex items-start gap-3">
+                <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
                 <div className="flex-1">
-                  <h3 className="font-black text-xl text-green-900 mb-2">
-                    Registrasi Berhasil!
-                  </h3>
-                  <AlertDescription className="text-lg text-green-800 font-semibold">
+                  <h3 className="mb-1 text-base font-semibold text-emerald-900">Registrasi Berhasil</h3>
+                  <AlertDescription className="text-sm font-medium text-emerald-700">
                     {success}
                   </AlertDescription>
                 </div>
@@ -246,19 +222,16 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
           </div>
         )}
 
-        {/* ===== ROLE SELECTION ===== */}
-        <div className="space-y-5">
+        <div className="space-y-4">
           <div>
-            <Label className="text-lg font-black text-gray-900 flex items-center gap-2 mb-2">
-              <GraduationCap className="h-5 w-5 text-pink-600" />
+            <Label className="mb-1.5 flex items-center gap-2 text-base font-semibold text-[#0F172A]">
+              <GraduationCap className="h-5 w-5 text-[#7B1D3A]" />
               Pilih Role Anda
             </Label>
-            <p className="text-base font-semibold text-gray-700">
-              Pilih sesuai dengan status Anda di akademi
-            </p>
+            <p className="text-sm text-slate-600">Pilih sesuai status Anda di akademi</p>
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             {Object.values(ROLE_CONFIG).map((config) => {
               const Icon = config.icon;
               const isSelected = selectedRole === config.value;
@@ -267,45 +240,27 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
                 <Card
                   key={config.value}
                   className={cn(
-                    "cursor-pointer border-2 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg",
+                    "cursor-pointer border transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md",
                     config.bgClass,
                     isSelected && config.selectedClass,
                   )}
-                  onClick={() =>
-                    setValue("role", config.value, { shouldValidate: true })
-                  }
+                  onClick={() => setValue("role", config.value, { shouldValidate: true })}
                 >
-                  <CardContent className="p-3">
-                    <div className="flex flex-col items-center text-center gap-2">
-                      <div
-                        className={cn(
-                          "rounded-xl p-2.5",
-                          isSelected
-                            ? "bg-white shadow-md"
-                            : "bg-white/70 shadow-sm",
-                        )}
-                      >
+                  <CardContent className="p-3.5">
+                    <div className="flex flex-col items-center gap-2 text-center">
+                      <div className={cn("rounded-xl p-2.5", isSelected ? "bg-white shadow" : "bg-white/70") }>
                         <Icon className={cn("h-5 w-5", config.iconClass)} />
                       </div>
 
                       <div className="w-full">
                         <div className="flex items-center justify-center gap-1">
-                          <CardTitle className="text-sm font-bold text-slate-900">
+                          <CardTitle className="text-[15px] font-semibold text-[#0F172A]">
                             {config.label}
                           </CardTitle>
-                          {isSelected && (
-                            <CheckCircle2
-                              className={cn(
-                                "h-4 w-4 shrink-0",
-                                config.iconClass,
-                              )}
-                            />
-                          )}
+                          {isSelected && <CheckCircle2 className={cn("h-4 w-4 shrink-0", config.iconClass)} />}
                         </div>
-                        <p className="mt-1 text-xs font-semibold text-muted-foreground">
-                          {config.helperText}
-                        </p>
-                        <CardDescription className="mt-1.5 text-xs leading-4 text-slate-700">
+                        <p className="mt-1 text-[13px] text-slate-500">{config.helperText}</p>
+                        <CardDescription className="mt-1.5 text-[13px] leading-5 text-slate-600">
                           {config.description}
                         </CardDescription>
                       </div>
@@ -317,161 +272,114 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
           </div>
 
           {errors.role && (
-            <p className="text-base font-bold text-red-600 flex items-center gap-2">
+            <p className="flex items-center gap-2 text-sm font-medium text-red-600">
               <AlertCircle className="h-4 w-4" />
               {errors.role.message}
             </p>
           )}
         </div>
 
-        {/* ===== SELECTED ROLE INFO ===== */}
-        <Alert
-          className={cn(
-            "border-2 bg-linear-to-r shadow-md",
-            roleConfig.color === "blue" &&
-              "from-blue-50 to-blue-100 border-blue-300",
-            roleConfig.color === "green" &&
-              "from-green-50 to-green-100 border-green-300",
-            roleConfig.color === "purple" &&
-              "from-purple-50 to-purple-100 border-purple-300",
-          )}
-        >
-          <AlertDescription className="flex items-center gap-3 text-base font-semibold">
-            <span
-              className={cn(
-                "p-1.5 rounded-lg",
-                roleConfig.color === "blue" && "bg-blue-100",
-                roleConfig.color === "green" && "bg-green-100",
-                roleConfig.color === "purple" && "bg-purple-100",
-              )}
-            >
+        <Alert className="border border-[#E8E0D8] bg-[#F6F0EB] shadow-sm">
+          <AlertDescription className="flex items-center gap-3 text-[15px] text-slate-700">
+            <span className="rounded-lg bg-white p-1.5">
               <GraduationCap className={cn("h-4 w-4", roleConfig.iconClass)} />
             </span>
             <span>
-              Role dipilih:{" "}
-              <span className={cn("font-black", roleConfig.iconClass)}>
-                {roleConfig.label}
-              </span>
+              Role dipilih: <span className={cn("font-semibold", roleConfig.iconClass)}>{roleConfig.label}</span>
             </span>
           </AlertDescription>
         </Alert>
 
-        {/* ===== BASIC INFO ===== */}
-        <div className="space-y-6">
-          <h3 className="font-black text-xl text-gray-900 border-b-2 border-gray-200 pb-3 flex items-center gap-2">
-            <Users className="h-5 w-5 text-blue-600" />
+        <div className="space-y-5">
+          <h3 className="flex items-center gap-2 border-b border-[#E8E0D8] pb-2 text-lg font-semibold text-[#0F172A]">
+            <Users className="h-5 w-5 text-[#7B1D3A]" />
             Informasi Dasar
           </h3>
 
-          <div className="space-y-3">
-            <Label
-              htmlFor="full_name"
-              className="text-base font-bold text-gray-800"
-            >
-              Nama Lengkap *
-            </Label>
+          <div className="space-y-2">
+            <Label htmlFor="full_name" className="text-sm font-semibold text-[#0F172A]">Nama Lengkap *</Label>
             <Input
               id="full_name"
               placeholder="Nama lengkap sesuai identitas"
               {...register("full_name")}
               disabled={isSubmitting}
-              className="h-12 text-base font-medium border-2 focus-visible:border-pink-500 focus-visible:ring-pink-500"
+              className={commonInputClass}
             />
             {errors.full_name && (
-              <p className="text-base font-bold text-red-600 flex items-center gap-1">
+              <p className="flex items-center gap-1 text-sm font-medium text-red-600">
                 <AlertCircle className="h-4 w-4" />
                 {errors.full_name.message}
               </p>
             )}
           </div>
 
-          <div className="space-y-3">
-            <Label
-              htmlFor="email"
-              className="text-base font-bold text-gray-800"
-            >
-              Email *
-            </Label>
+          <div className="space-y-2">
+            <Label htmlFor="email" className="text-sm font-semibold text-[#0F172A]">Email *</Label>
             <Input
               id="email"
               type="email"
               placeholder="email@contoh.com"
               {...register("email")}
               disabled={isSubmitting}
-              className="h-12 text-base font-medium border-2 focus-visible:border-pink-500 focus-visible:ring-pink-500"
+              className={commonInputClass}
             />
             {errors.email && (
-              <p className="text-base font-bold text-red-600 flex items-center gap-1">
+              <p className="flex items-center gap-1 text-sm font-medium text-red-600">
                 <AlertCircle className="h-4 w-4" />
                 {errors.email.message}
               </p>
             )}
           </div>
 
-          <div className="space-y-3">
-            <Label
-              htmlFor="phone"
-              className="text-base font-bold text-gray-800"
-            >
-              Nomor Telepon (Opsional)
-            </Label>
+          <div className="space-y-2">
+            <Label htmlFor="phone" className="text-sm font-semibold text-[#0F172A]">Nomor Telepon (Opsional)</Label>
             <Input
               id="phone"
               type="tel"
               placeholder="08xxxxxxxxxx"
               {...register("phone")}
               disabled={isSubmitting}
-              className="h-12 text-base font-medium border-2 focus-visible:border-pink-500 focus-visible:ring-pink-500"
+              className={commonInputClass}
             />
             {errors.phone && (
-              <p className="text-base font-bold text-red-600 flex items-center gap-1">
+              <p className="flex items-center gap-1 text-sm font-medium text-red-600">
                 <AlertCircle className="h-4 w-4" />
                 {errors.phone.message}
               </p>
             )}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div className="space-y-3">
-              <Label
-                htmlFor="password"
-                className="text-base font-bold text-gray-800"
-              >
-                Password *
-              </Label>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="password" className="text-sm font-semibold text-[#0F172A]">Password *</Label>
               <Input
                 id="password"
                 type="password"
                 placeholder="Minimal 6 karakter"
                 {...register("password")}
                 disabled={isSubmitting}
-                className="h-12 text-base font-medium border-2 focus-visible:border-pink-500 focus-visible:ring-pink-500"
+                className={commonInputClass}
               />
               {errors.password && (
-                <p className="text-base font-bold text-red-600 flex items-center gap-1">
+                <p className="flex items-center gap-1 text-sm font-medium text-red-600">
                   <AlertCircle className="h-4 w-4" />
                   {errors.password.message}
                 </p>
               )}
             </div>
 
-            <div className="space-y-3">
-              <Label
-                htmlFor="confirmPassword"
-                className="text-base font-bold text-gray-800"
-              >
-                Konfirmasi Password *
-              </Label>
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword" className="text-sm font-semibold text-[#0F172A]">Konfirmasi Password *</Label>
               <Input
                 id="confirmPassword"
                 type="password"
                 placeholder="Ketik ulang password"
                 {...register("confirmPassword")}
                 disabled={isSubmitting}
-                className="h-12 text-base font-medium border-2 focus-visible:border-pink-500 focus-visible:ring-pink-500"
+                className={commonInputClass}
               />
               {errors.confirmPassword && (
-                <p className="text-base font-bold text-red-600 flex items-center gap-1">
+                <p className="flex items-center gap-1 text-sm font-medium text-red-600">
                   <AlertCircle className="h-4 w-4" />
                   {errors.confirmPassword.message}
                 </p>
@@ -480,101 +388,80 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
           </div>
         </div>
 
-        {/* ===== ROLE-SPECIFIC FIELDS ===== */}
         {selectedRole === "mahasiswa" && (
-          <div className="space-y-5 p-6 bg-linear-to-br from-blue-50 to-blue-100 rounded-2xl border-2 border-blue-200 shadow-inner">
-            <h3 className="font-black text-xl text-blue-900 flex items-center gap-3">
-              <div className="p-2 bg-blue-500 rounded-lg">
-                <GraduationCap className="h-6 w-6 text-white" />
+          <div className="space-y-4 rounded-2xl border border-[#E8E0D8] bg-[#F8F3EE] p-5 shadow-inner">
+            <h3 className="flex items-center gap-3 text-lg font-semibold text-[#0F172A]">
+              <div className="rounded-lg bg-[#7B1D3A] p-2">
+                <GraduationCap className="h-5 w-5 text-white" />
               </div>
               Data Mahasiswa
             </h3>
 
-            <div className="space-y-3">
-              <Label
-                htmlFor="nim"
-                className="text-base font-bold text-gray-800"
-              >
-                NIM *
-              </Label>
+            <div className="space-y-2">
+              <Label htmlFor="nim" className="text-sm font-semibold text-[#0F172A]">NIM *</Label>
               <Input
                 id="nim"
                 placeholder="Contoh: BD2321001"
                 {...register("nim")}
                 disabled={isSubmitting}
-                className="h-12 text-base font-medium border-2 focus-visible:border-blue-500 focus-visible:ring-blue-500 bg-white"
+                className={commonInputClass}
               />
               {getErrorMessage("nim") && (
-                <p className="text-base font-bold text-red-600 flex items-center gap-1">
+                <p className="flex items-center gap-1 text-sm font-medium text-red-600">
                   <AlertCircle className="h-4 w-4" />
                   {getErrorMessage("nim")}
                 </p>
               )}
             </div>
 
-            <div className="space-y-3">
-              <Label
-                htmlFor="program_studi"
-                className="text-base font-bold text-gray-800"
-              >
-                Program Studi *
-              </Label>
+            <div className="space-y-2">
+              <Label htmlFor="program_studi" className="text-sm font-semibold text-[#0F172A]">Program Studi *</Label>
               <Input
                 id="program_studi"
                 placeholder="Contoh: Kebidanan"
                 {...register("program_studi")}
                 disabled={isSubmitting}
-                className="h-12 text-base font-medium border-2 focus-visible:border-blue-500 focus-visible:ring-blue-500 bg-white"
+                className={commonInputClass}
               />
               {getErrorMessage("program_studi") && (
-                <p className="text-base font-bold text-red-600 flex items-center gap-1">
+                <p className="flex items-center gap-1 text-sm font-medium text-red-600">
                   <AlertCircle className="h-4 w-4" />
                   {getErrorMessage("program_studi")}
                 </p>
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-5">
-              <div className="space-y-3">
-                <Label
-                  htmlFor="angkatan"
-                  className="text-base font-bold text-gray-800"
-                >
-                  Angkatan *
-                </Label>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="angkatan" className="text-sm font-semibold text-[#0F172A]">Angkatan *</Label>
                 <Input
                   id="angkatan"
                   type="number"
                   placeholder="2024"
                   {...register("angkatan", { valueAsNumber: true })}
                   disabled={isSubmitting}
-                  className="h-12 text-base font-medium border-2 focus-visible:border-blue-500 focus-visible:ring-blue-500 bg-white"
+                  className={commonInputClass}
                 />
                 {getErrorMessage("angkatan") && (
-                  <p className="text-base font-bold text-red-600 flex items-center gap-1">
+                  <p className="flex items-center gap-1 text-sm font-medium text-red-600">
                     <AlertCircle className="h-4 w-4" />
                     {getErrorMessage("angkatan")}
                   </p>
                 )}
               </div>
 
-              <div className="space-y-3">
-                <Label
-                  htmlFor="semester"
-                  className="text-base font-bold text-gray-800"
-                >
-                  Semester *
-                </Label>
+              <div className="space-y-2">
+                <Label htmlFor="semester" className="text-sm font-semibold text-[#0F172A]">Semester *</Label>
                 <Input
                   id="semester"
                   type="number"
                   placeholder="1"
                   {...register("semester", { valueAsNumber: true })}
                   disabled={isSubmitting}
-                  className="h-12 text-base font-medium border-2 focus-visible:border-blue-500 focus-visible:ring-blue-500 bg-white"
+                  className={commonInputClass}
                 />
                 {getErrorMessage("semester") && (
-                  <p className="text-base font-bold text-red-600 flex items-center gap-1">
+                  <p className="flex items-center gap-1 text-sm font-medium text-red-600">
                     <AlertCircle className="h-4 w-4" />
                     {getErrorMessage("semester")}
                   </p>
@@ -585,112 +472,87 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
         )}
 
         {selectedRole === "dosen" && (
-          <div className="space-y-5 p-6 bg-linear-to-br from-green-50 to-green-100 rounded-2xl border-2 border-green-200 shadow-inner">
-            <h3 className="font-black text-xl text-green-900 flex items-center gap-3">
-              <div className="p-2 bg-green-500 rounded-lg">
-                <Users className="h-6 w-6 text-white" />
+          <div className="space-y-4 rounded-2xl border border-[#E8E0D8] bg-[#F7F3EF] p-5 shadow-inner">
+            <h3 className="flex items-center gap-3 text-lg font-semibold text-[#0F172A]">
+              <div className="rounded-lg bg-[#1E293B] p-2">
+                <Users className="h-5 w-5 text-white" />
               </div>
               Data Dosen
             </h3>
 
-            <div className="space-y-3">
-              <Label
-                htmlFor="nidn"
-                className="text-base font-bold text-gray-800"
-              >
-                NIDN *
-              </Label>
+            <div className="space-y-2">
+              <Label htmlFor="nidn" className="text-sm font-semibold text-[#0F172A]">NIDN *</Label>
               <Input
                 id="nidn"
                 placeholder="10 digit nomor NIDN"
                 {...register("nidn")}
                 disabled={isSubmitting}
                 maxLength={10}
-                className="h-12 text-base font-medium border-2 focus-visible:border-green-500 focus-visible:ring-green-500 bg-white"
+                className={commonInputClass}
               />
               {getErrorMessage("nidn") && (
-                <p className="text-base font-bold text-red-600 flex items-center gap-1">
+                <p className="flex items-center gap-1 text-sm font-medium text-red-600">
                   <AlertCircle className="h-4 w-4" />
                   {getErrorMessage("nidn")}
                 </p>
               )}
             </div>
 
-            <div className="space-y-3">
-              <Label
-                htmlFor="nuptk"
-                className="text-base font-bold text-gray-800"
-              >
-                NUPTK (Opsional)
-              </Label>
+            <div className="space-y-2">
+              <Label htmlFor="nuptk" className="text-sm font-semibold text-[#0F172A]">NUPTK (Opsional)</Label>
               <Input
                 id="nuptk"
                 placeholder="16 digit nomor NUPTK"
                 {...register("nuptk")}
                 disabled={isSubmitting}
                 maxLength={16}
-                className="h-12 text-base font-medium border-2 focus-visible:border-green-500 focus-visible:ring-green-500 bg-white"
+                className={commonInputClass}
               />
               {getErrorMessage("nuptk") && (
-                <p className="text-base font-bold text-red-600 flex items-center gap-1">
+                <p className="flex items-center gap-1 text-sm font-medium text-red-600">
                   <AlertCircle className="h-4 w-4" />
                   {getErrorMessage("nuptk")}
                 </p>
               )}
             </div>
 
-            <div className="space-y-3">
-              <Label
-                htmlFor="nip"
-                className="text-base font-bold text-gray-800"
-              >
-                NIP (Opsional - Hanya PNS)
-              </Label>
+            <div className="space-y-2">
+              <Label htmlFor="nip" className="text-sm font-semibold text-[#0F172A]">NIP (Opsional - Hanya PNS)</Label>
               <Input
                 id="nip"
                 placeholder="18 digit NIP PNS"
                 {...register("nip")}
                 disabled={isSubmitting}
-                className="h-12 text-base font-medium border-2 focus-visible:border-green-500 focus-visible:ring-green-500 bg-white"
+                className={commonInputClass}
               />
               {getErrorMessage("nip") && (
-                <p className="text-base font-bold text-red-600 flex items-center gap-1">
+                <p className="flex items-center gap-1 text-sm font-medium text-red-600">
                   <AlertCircle className="h-4 w-4" />
                   {getErrorMessage("nip")}
                 </p>
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-5">
-              <div className="space-y-3">
-                <Label
-                  htmlFor="gelar_depan"
-                  className="text-base font-bold text-gray-800"
-                >
-                  Gelar Depan (Opsional)
-                </Label>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="gelar_depan" className="text-sm font-semibold text-[#0F172A]">Gelar Depan (Opsional)</Label>
                 <Input
                   id="gelar_depan"
                   placeholder="Dr."
                   {...register("gelar_depan")}
                   disabled={isSubmitting}
-                  className="h-12 text-base font-medium border-2 focus-visible:border-green-500 focus-visible:ring-green-500 bg-white"
+                  className={commonInputClass}
                 />
               </div>
 
-              <div className="space-y-3">
-                <Label
-                  htmlFor="gelar_belakang"
-                  className="text-base font-bold text-gray-800"
-                >
-                  Gelar Belakang (Opsional)
-                </Label>
+              <div className="space-y-2">
+                <Label htmlFor="gelar_belakang" className="text-sm font-semibold text-[#0F172A]">Gelar Belakang (Opsional)</Label>
                 <Input
                   id="gelar_belakang"
                   placeholder="M.Keb"
                   {...register("gelar_belakang")}
                   disabled={isSubmitting}
-                  className="h-12 text-base font-medium border-2 focus-visible:border-green-500 focus-visible:ring-green-500 bg-white"
+                  className={commonInputClass}
                 />
               </div>
             </div>
@@ -698,30 +560,25 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
         )}
 
         {selectedRole === "laboran" && (
-          <div className="space-y-5 p-6 bg-linear-to-br from-purple-50 to-purple-100 rounded-2xl border-2 border-purple-200 shadow-inner">
-            <h3 className="font-black text-xl text-purple-900 flex items-center gap-3">
-              <div className="p-2 bg-purple-500 rounded-lg">
-                <FlaskConical className="h-6 w-6 text-white" />
+          <div className="space-y-4 rounded-2xl border border-[#E8E0D8] bg-[#F7F3EF] p-5 shadow-inner">
+            <h3 className="flex items-center gap-3 text-lg font-semibold text-[#0F172A]">
+              <div className="rounded-lg bg-[#334155] p-2">
+                <FlaskConical className="h-5 w-5 text-white" />
               </div>
               Data Laboran
             </h3>
 
-            <div className="space-y-3">
-              <Label
-                htmlFor="nip"
-                className="text-base font-bold text-gray-800"
-              >
-                NIP *
-              </Label>
+            <div className="space-y-2">
+              <Label htmlFor="nip" className="text-sm font-semibold text-[#0F172A]">NIP *</Label>
               <Input
                 id="nip"
                 placeholder="Nomor Induk Pegawai"
                 {...register("nip")}
                 disabled={isSubmitting}
-                className="h-12 text-base font-medium border-2 focus-visible:border-purple-500 focus-visible:ring-purple-500 bg-white"
+                className="h-11 border-[#E8E0D8] bg-white text-[15px] focus-visible:border-[#334155] focus-visible:ring-[#334155]"
               />
               {getErrorMessage("nip") && (
-                <p className="text-base font-bold text-red-600 flex items-center gap-1">
+                <p className="flex items-center gap-1 text-sm font-medium text-red-600">
                   <AlertCircle className="h-4 w-4" />
                   {getErrorMessage("nip")}
                 </p>
@@ -732,40 +589,37 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
 
         <Button
           type="submit"
-          className="w-full h-14 text-lg font-bold bg-linear-to-r from-pink-600 to-blue-600 hover:from-pink-700 hover:to-blue-700 shadow-xl hover:shadow-2xl transition-all duration-300"
+          className="h-12 w-full bg-[#7B1D3A] text-base font-semibold text-white shadow-md transition-all duration-300 hover:bg-[#9B2448] hover:shadow-lg"
           disabled={isSubmitting}
           size="lg"
         >
           {isSubmitting ? (
             <>
-              <AlertCircle className="h-5 w-5 mr-2 animate-spin" />
+              <AlertCircle className="mr-2 h-5 w-5 animate-spin" />
               Membuat Akun...
             </>
           ) : (
             <>
-              <UserPlus className="h-5 w-5 mr-2" />
+              <UserPlus className="mr-2 h-5 w-5" />
               Daftar Sekarang
             </>
           )}
         </Button>
       </form>
 
-      {/* ===== CONFIRMATION DIALOG ===== */}
       <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
-        <AlertDialogContent className="max-w-lg">
+        <AlertDialogContent className="max-w-lg border border-[#E8E0D8]">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-2xl font-black">
+            <AlertDialogTitle className="akbid-font-display text-2xl font-semibold text-[#0F172A]">
               Konfirmasi Pendaftaran
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-base">
+            <AlertDialogDescription className="text-[15px]">
               <div className="space-y-4">
-                <div className="font-semibold text-gray-900">
-                  Pastikan data Anda sudah benar sebelum melanjutkan:
-                </div>
-                <div className="bg-linear-to-br from-gray-50 to-gray-100 p-5 rounded-xl space-y-3 text-base border-2 border-gray-200">
-                  <div className="flex justify-between items-center">
-                    <span className="font-bold text-gray-700">Role:</span>
-                    <span className="font-black text-gray-900 bg-white px-3 py-1 rounded-lg border">
+                <div className="font-medium text-slate-700">Pastikan data Anda sudah benar sebelum melanjutkan:</div>
+                <div className="space-y-2.5 rounded-xl border border-[#E8E0D8] bg-[#F8F3EE] p-4 text-[15px]">
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold text-slate-600">Role:</span>
+                    <span className="rounded-lg border border-[#E8E0D8] bg-white px-3 py-1 font-semibold text-[#0F172A]">
                       {pendingData?.role === "mahasiswa"
                         ? "Mahasiswa"
                         : pendingData?.role === "dosen"
@@ -773,38 +627,27 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
                           : "Laboran"}
                     </span>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="font-bold text-gray-700">Nama:</span>
-                    <span className="font-semibold text-gray-900">
-                      {pendingData?.full_name}
-                    </span>
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold text-slate-600">Nama:</span>
+                    <span className="font-medium text-[#0F172A]">{pendingData?.full_name}</span>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="font-bold text-gray-700">Email:</span>
-                    <span className="font-semibold text-gray-900">
-                      {pendingData?.email}
-                    </span>
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold text-slate-600">Email:</span>
+                    <span className="font-medium text-[#0F172A]">{pendingData?.email}</span>
                   </div>
                 </div>
-                <div className="text-red-600 font-bold bg-red-50 p-4 rounded-lg border-2 border-red-200 flex items-start gap-2">
-                  <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
-                  Pastikan role yang dipilih sudah benar! Role tidak bisa diubah
-                  setelah registrasi.
+                <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3.5 font-medium text-red-700">
+                  <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
+                  Pastikan role yang dipilih sudah benar. Role tidak bisa diubah setelah registrasi.
                 </div>
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel
-              onClick={() => setPendingData(null)}
-              className="text-base font-semibold px-6"
-            >
+            <AlertDialogCancel onClick={() => setPendingData(null)} className="px-6 text-sm font-semibold">
               Cek Lagi
             </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmSubmit}
-              className="bg-linear-to-r from-pink-600 to-blue-600 text-base font-bold px-6"
-            >
+            <AlertDialogAction onClick={confirmSubmit} className="bg-linear-to-r from-[#7B1D3A] to-[#1E293B] px-6 text-sm font-semibold">
               Ya, Daftar Sekarang
             </AlertDialogAction>
           </AlertDialogFooter>
