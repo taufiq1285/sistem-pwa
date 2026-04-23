@@ -9,6 +9,7 @@
 
 export interface Jadwal {
   id: string;
+  mata_kuliah_id?: string | null;
   dosen_id?: string | null; // ✅ NEW: Dosen who created this schedule
   dosen?: {
     // ✅ NEW: Dosen info (joined from dosen table)
@@ -25,11 +26,18 @@ export interface Jadwal {
     };
   };
   rejection_reason?: string | null; // ✅ NEW: Reason for rejection
+  mata_kuliah?: {
+    id?: string;
+    nama_mk?: string | null;
+    kode_mk?: string | null;
+    sks?: number | null;
+  } | null;
   kelas?:
     | string
     | null
     | {
         nama_kelas?: string | null;
+        kode_kelas?: string | null;
         mata_kuliah?: { nama_mk?: string | null } | null;
       };
   kelas_id?: string | null; // ✅ NEW: UUID reference to kelas table

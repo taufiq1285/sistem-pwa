@@ -512,6 +512,25 @@ describe("Kehadiran API", () => {
 
   describe("getMahasiswaKehadiran", () => {
     it("should fetch mahasiswa kehadiran records successfully", async () => {
+      const mockKehadiranRows = [
+        {
+          id: "kehadiran-1",
+          status: "hadir",
+          keterangan: null,
+          created_at: "2025-01-15T08:00:00Z",
+          jadwal: {
+            id: "jadwal-1",
+            tanggal_praktikum: "2025-01-15",
+            jam_mulai: "08:00",
+            jam_selesai: "10:00",
+            topik: "Praktikum Dasar",
+            kelas_id: "kelas-1",
+            laboratorium_id: "lab-1",
+            mata_kuliah_id: "mk-1",
+          },
+        },
+      ];
+
       const mockData: MahasiswaKehadiranRecord[] = [
         {
           id: "kehadiran-1",
@@ -524,6 +543,9 @@ describe("Kehadiran API", () => {
             jam_mulai: "08:00",
             jam_selesai: "10:00",
             topik: "Praktikum Dasar",
+            mata_kuliah: {
+              nama_mk: "Kebidanan",
+            },
             kelas: {
               nama_kelas: "Kelas A",
               mata_kuliah: {
@@ -537,18 +559,49 @@ describe("Kehadiran API", () => {
         },
       ];
 
-      vi.mocked(supabase.from).mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            order: vi.fn().mockReturnValue({
-              limit: vi.fn().mockResolvedValue({
-                data: mockData,
+      vi.mocked(supabase.from)
+        .mockReturnValueOnce({
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              order: vi.fn().mockReturnValue({
+                limit: vi.fn().mockResolvedValue({
+                  data: mockKehadiranRows,
+                  error: null,
+                }),
+              }),
+            }),
+          }),
+        } as any)
+        .mockReturnValueOnce({
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              maybeSingle: vi.fn().mockResolvedValue({
+                data: { nama_kelas: "Kelas A", mata_kuliah_id: "mk-1" },
                 error: null,
               }),
             }),
           }),
-        }),
-      } as any);
+        } as any)
+        .mockReturnValueOnce({
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              maybeSingle: vi.fn().mockResolvedValue({
+                data: { nama_mk: "Kebidanan" },
+                error: null,
+              }),
+            }),
+          }),
+        } as any)
+        .mockReturnValueOnce({
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              maybeSingle: vi.fn().mockResolvedValue({
+                data: { nama_lab: "Lab Kebidanan 1" },
+                error: null,
+              }),
+            }),
+          }),
+        } as any);
 
       const result = await getMahasiswaKehadiran("mhs-1");
 
@@ -1079,12 +1132,15 @@ describe("Kehadiran API", () => {
 
   describe("getKehadiranForExport", () => {
     it("should fetch formatted data for CSV export", async () => {
-      const mockKelasData = { nama_kelas: "Kelas A" };
       const mockKehadiranData = [
         {
+          jadwal: {
+            tanggal_praktikum: "2025-01-15",
+            kelas: { nama_kelas: "Kelas A" },
+            mata_kuliah: { nama_mk: "Kebidanan" },
+          },
           status: "hadir",
           keterangan: null,
-          mata_kuliah: { nama_mk: "Kebidanan" },
           mahasiswa: {
             nim: "BD2321001",
             users: { full_name: "Siti Nurhaliza" },
@@ -1092,29 +1148,18 @@ describe("Kehadiran API", () => {
         },
       ];
 
-      vi.mocked(supabase.from)
-        .mockReturnValueOnce({
-          select: vi.fn().mockReturnValue({
+      vi.mocked(supabase.from).mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
             eq: vi.fn().mockReturnValue({
-              single: vi.fn().mockResolvedValue({
-                data: mockKelasData,
+              order: vi.fn().mockResolvedValue({
+                data: mockKehadiranData,
                 error: null,
               }),
             }),
           }),
-        } as any)
-        .mockReturnValueOnce({
-          select: vi.fn().mockReturnValue({
-            eq: vi.fn().mockReturnValue({
-              eq: vi.fn().mockReturnValue({
-                order: vi.fn().mockResolvedValue({
-                  data: mockKehadiranData,
-                  error: null,
-                }),
-              }),
-            }),
-          }),
-        } as any);
+        }),
+      } as any);
 
       const result = await getKehadiranForExport("kelas-1", "2025-01-15");
 
@@ -1131,29 +1176,18 @@ describe("Kehadiran API", () => {
     });
 
     it("should handle missing kelas data gracefully", async () => {
-      vi.mocked(supabase.from)
-        .mockReturnValueOnce({
-          select: vi.fn().mockReturnValue({
+      vi.mocked(supabase.from).mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
             eq: vi.fn().mockReturnValue({
-              single: vi.fn().mockResolvedValue({
-                data: null,
+              order: vi.fn().mockResolvedValue({
+                data: [],
                 error: null,
               }),
             }),
           }),
-        } as any)
-        .mockReturnValueOnce({
-          select: vi.fn().mockReturnValue({
-            eq: vi.fn().mockReturnValue({
-              eq: vi.fn().mockReturnValue({
-                order: vi.fn().mockResolvedValue({
-                  data: [],
-                  error: null,
-                }),
-              }),
-            }),
-          }),
-        } as any);
+        }),
+      } as any);
 
       const result = await getKehadiranForExport("kelas-1", "2025-01-15");
 
@@ -1165,9 +1199,11 @@ describe("Kehadiran API", () => {
       vi.mocked(supabase.from).mockReturnValue({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({
-              data: null,
-              error,
+            eq: vi.fn().mockReturnValue({
+              order: vi.fn().mockResolvedValue({
+                data: null,
+                error,
+              }),
             }),
           }),
         }),
@@ -1183,19 +1219,28 @@ describe("Kehadiran API", () => {
     it("should fetch and group attendance history by date", async () => {
       const mockRecords = [
         {
-          tanggal: "2025-01-15",
           status: "hadir",
-          kelas: { id: "kelas-1", nama_kelas: "Kelas A" },
+          jadwal: {
+            tanggal_praktikum: "2025-01-15",
+            kelas_id: "kelas-1",
+            kelas: { id: "kelas-1", nama_kelas: "Kelas A" },
+          },
         },
         {
-          tanggal: "2025-01-15",
           status: "izin",
-          kelas: { id: "kelas-1", nama_kelas: "Kelas A" },
+          jadwal: {
+            tanggal_praktikum: "2025-01-15",
+            kelas_id: "kelas-1",
+            kelas: { id: "kelas-1", nama_kelas: "Kelas A" },
+          },
         },
         {
-          tanggal: "2025-01-14",
           status: "hadir",
-          kelas: { id: "kelas-1", nama_kelas: "Kelas A" },
+          jadwal: {
+            tanggal_praktikum: "2025-01-14",
+            kelas_id: "kelas-1",
+            kelas: { id: "kelas-1", nama_kelas: "Kelas A" },
+          },
         },
       ];
 
@@ -1252,15 +1297,24 @@ describe("Kehadiran API", () => {
 
       await getKehadiranHistory("kelas-1", "2025-01-01", "2025-01-31", 30);
 
-      expect(gteMock).toHaveBeenCalledWith("tanggal", "2025-01-01");
-      expect(lteMock).toHaveBeenCalledWith("tanggal", "2025-01-31");
+      expect(gteMock).toHaveBeenCalledWith(
+        "jadwal.tanggal_praktikum",
+        "2025-01-01",
+      );
+      expect(lteMock).toHaveBeenCalledWith(
+        "jadwal.tanggal_praktikum",
+        "2025-01-31",
+      );
     });
 
     it("should limit results", async () => {
       const mockRecords = Array(50).fill({
-        tanggal: "2025-01-15",
         status: "hadir",
-        kelas: { id: "kelas-1", nama_kelas: "Kelas A" },
+        jadwal: {
+          tanggal_praktikum: "2025-01-15",
+          kelas_id: "kelas-1",
+          kelas: { id: "kelas-1", nama_kelas: "Kelas A" },
+        },
       });
 
       vi.mocked(supabase.from).mockReturnValue({
@@ -1303,29 +1357,44 @@ describe("Kehadiran API", () => {
     it("should calculate stats correctly for each date", async () => {
       const mockRecords = [
         {
-          tanggal: "2025-01-15",
           status: "hadir",
-          kelas: { id: "kelas-1", nama_kelas: "Kelas A" },
+          jadwal: {
+            tanggal_praktikum: "2025-01-15",
+            kelas_id: "kelas-1",
+            kelas: { id: "kelas-1", nama_kelas: "Kelas A" },
+          },
         },
         {
-          tanggal: "2025-01-15",
           status: "hadir",
-          kelas: { id: "kelas-1", nama_kelas: "Kelas A" },
+          jadwal: {
+            tanggal_praktikum: "2025-01-15",
+            kelas_id: "kelas-1",
+            kelas: { id: "kelas-1", nama_kelas: "Kelas A" },
+          },
         },
         {
-          tanggal: "2025-01-15",
           status: "izin",
-          kelas: { id: "kelas-1", nama_kelas: "Kelas A" },
+          jadwal: {
+            tanggal_praktikum: "2025-01-15",
+            kelas_id: "kelas-1",
+            kelas: { id: "kelas-1", nama_kelas: "Kelas A" },
+          },
         },
         {
-          tanggal: "2025-01-15",
           status: "sakit",
-          kelas: { id: "kelas-1", nama_kelas: "Kelas A" },
+          jadwal: {
+            tanggal_praktikum: "2025-01-15",
+            kelas_id: "kelas-1",
+            kelas: { id: "kelas-1", nama_kelas: "Kelas A" },
+          },
         },
         {
-          tanggal: "2025-01-15",
           status: "alpha",
-          kelas: { id: "kelas-1", nama_kelas: "Kelas A" },
+          jadwal: {
+            tanggal_praktikum: "2025-01-15",
+            kelas_id: "kelas-1",
+            kelas: { id: "kelas-1", nama_kelas: "Kelas A" },
+          },
         },
       ];
 

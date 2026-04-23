@@ -228,6 +228,10 @@ export interface AttemptKuis {
   total_poin?: number | null;
   status: "in_progress" | "submitted" | "graded";
   is_synced?: boolean;
+  offline_submit_pending?: boolean;
+  offline_submitted_at?: string | null;
+  sync_status?: "synced" | "pending_answers" | "pending_submit";
+  server_attempt_id?: string | null;
   created_at?: string;
   updated_at?: string;
 
@@ -285,6 +289,7 @@ export interface UpcomingQuiz {
   kode_mk: string;
   nama_kelas: string;
   dosen_name: string;
+  tipe_kuis?: "essay" | "pilihan_ganda" | "campuran" | null;
 
   // Quiz details - UPDATED FIELD NAMES
   durasi_menit?: number | null; // ✅ NULLABLE for laporan (no time limit)

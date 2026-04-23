@@ -6,7 +6,8 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
-import { QuizCard, getQuizStatus } from "@/components/features/kuis/QuizCard";
+import { QuizCard } from "@/components/features/kuis/QuizCard";
+import { getQuizStatus } from "@/components/features/kuis/quiz-card.utils";
 import type { Kuis } from "@/types/kuis.types";
 
 vi.mock("@/lib/api/kuis.api", () => ({

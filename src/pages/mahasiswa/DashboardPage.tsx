@@ -323,7 +323,7 @@ export function DashboardPage() {
               value={stats?.totalKelasPraktikum || 0}
               icon={BookOpen}
               color="green"
-              description="Kelas praktikum aktif"
+              description="Kelas yang diikuti"
             />
             <DashboardCard
               title="Praktikum Hari Ini"
@@ -337,7 +337,7 @@ export function DashboardPage() {
               value={myJadwal.length || 0}
               icon={Clock}
               color="purple"
-              description="Sesi 7 hari ke depan"
+              description="Praktikum mendatang"
             />
             <DashboardCard
               title="Progress"
@@ -379,7 +379,8 @@ export function DashboardPage() {
                       <span className="font-extrabold text-white">
                         {stats?.totalKelasPraktikum}
                       </span>{" "}
-                      kelas praktikum. Jangan lupa cek jadwal hari ini ya!
+                      kelas. Praktikum yang sudah selesai bisa dilihat di
+                      riwayat jadwal.
                     </p>
                   </div>
                   <div className="hidden md:block">
@@ -407,8 +408,8 @@ export function DashboardPage() {
                       Kelas Saya
                     </CardTitle>
                     <CardDescription className="mt-1 text-base font-medium text-muted-foreground">
-                      {stats?.totalKelasPraktikum || 0} kelas praktikum yang
-                      diikuti
+                      {stats?.totalKelasPraktikum || 0} kelas yang sedang Anda
+                      ikuti
                     </CardDescription>
                   </div>
                 </div>
@@ -482,8 +483,8 @@ export function DashboardPage() {
                       Jadwal Praktikum
                     </CardTitle>
                     <CardDescription className="mt-1 text-base font-medium text-muted-foreground">
-                      {stats?.jadwalHariIni || 0} praktikum hari ini • 7 hari ke
-                      depan
+                      {stats?.jadwalHariIni || 0} praktikum hari ini • sesi
+                      mendatang
                     </CardDescription>
                   </div>
                 </div>
@@ -526,6 +527,11 @@ export function DashboardPage() {
                             {jadwal.kelas_nama}{" "}
                             {jadwal.topik && `• ${jadwal.topik}`}
                           </p>
+                          {jadwal.dosen_nama && jadwal.dosen_nama !== "-" ? (
+                            <p className="mt-1 text-xs font-semibold text-muted-foreground/90">
+                              Dosen: {jadwal.dosen_nama}
+                            </p>
+                          ) : null}
                           <div className="mt-1 flex items-center gap-2 text-xs font-bold text-foreground/80">
                             <Clock className="h-3 w-3" />
                             {dayNames[jadwal.hari] || jadwal.hari},{" "}

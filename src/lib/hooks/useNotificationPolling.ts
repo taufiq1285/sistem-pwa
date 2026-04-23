@@ -84,6 +84,7 @@ export function useNotificationPolling(
         const notifications = await getNotifications({
           user_id: user.id,
           limit: 10, // Only fetch latest 10
+          forceRefresh: true,
         });
 
         // Check if new notifications arrived

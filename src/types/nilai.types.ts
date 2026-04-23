@@ -35,6 +35,7 @@ export interface Nilai extends NilaiTable {
     semester_ajaran?: number;
     is_active?: boolean | null;
     mata_kuliah?: {
+      id?: string;
       nama_mk: string;
       kode_mk?: string;
       sks?: number;

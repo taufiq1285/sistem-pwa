@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties" xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes">
+  <Application>Microsoft Office PowerPoint</Application>
+  <PresentationFormat>Custom</PresentationFormat>
+  <Slides>14</Slides>
+  <Notes>0</Notes>
+  <HiddenSlides>0</HiddenSlides>
+  <MMClips>0</MMClips>
+  <ScaleCrop>false</ScaleCrop>
+  <HeadingPairs>
+    <vt:vector size="2" baseType="variant">
+      <vt:variant><vt:lpstr>Slide Titles</vt:lpstr></vt:variant>
+      <vt:variant><vt:i4>14</vt:i4></vt:variant>
+    </vt:vector>
+  </HeadingPairs>
+  <TitlesOfParts>
+    <vt:vector size="14" baseType="lpstr"><vt:lpstr>Analisis dan Perancangan Sistem Informasi Praktikum Berbasis Progressive Web Application (PWA)</vt:lpstr><vt:lpstr>Alur Presentasi</vt:lpstr><vt:lpstr>Masalah dan Urgensi</vt:lpstr><vt:lpstr>Tujuan dan Kontribusi</vt:lpstr><vt:lpstr>Metode Pengembangan</vt:lpstr><vt:lpstr>Arsitektur Sistem</vt:lpstr><vt:lpstr>Implementasi Admin</vt:lpstr><vt:lpstr>Implementasi Mahasiswa dan PWA</vt:lpstr><vt:lpstr>Implementasi Dosen dan Laboran</vt:lpstr><vt:lpstr>Hasil Pengujian Black Box</vt:lpstr><vt:lpstr>Hasil Pengujian White Box</vt:lpstr><vt:lpstr>Hasil Usability (SUS)</vt:lpstr><vt:lpstr>Pembahasan Hasil</vt:lpstr><vt:lpstr>Kesimpulan dan Saran</vt:lpstr></vt:vector>
+  </TitlesOfParts>
+  <Company></Company>
+  <LinksUpToDate>false</LinksUpToDate>
+  <SharedDoc>false</SharedDoc>
+  <HyperlinksChanged>false</HyperlinksChanged>
+  <AppVersion>16.0000</AppVersion>
+</Properties>

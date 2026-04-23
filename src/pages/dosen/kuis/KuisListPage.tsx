@@ -337,10 +337,19 @@ export default function KuisListPage() {
   // COMPUTED VALUES
   // ============================================================================
 
-  // Get unique kelas for filter with full kelas data
+  // Get unique kelas for filter with tugas context
   const kelasOptions = Array.from(
     new Map(
-      quizzes.filter((q) => q.kelas).map((q) => [q.kelas_id, q.kelas]),
+      quizzes
+        .filter((q) => q.kelas)
+        .map((q) => [
+          q.kelas_id,
+          {
+            kelas_id: q.kelas_id,
+            nama_kelas: q.kelas?.nama_kelas || "-",
+            mata_kuliah: q.mata_kuliah || q.kelas?.mata_kuliah,
+          },
+        ]),
     ).values(),
   );
 
@@ -492,22 +501,18 @@ export default function KuisListPage() {
             {kelasOptions.length > 0 && (
               <Select value={kelasFilter} onValueChange={setKelasFilter}>
                 <SelectTrigger className="w-full lg:w-70 h-12 border-2 font-semibold">
-                  <SelectValue placeholder="Filter Mata Kuliah" />
+                  <SelectValue placeholder="Filter Kelas" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Semua Mata Kuliah</SelectItem>
-                  {kelasOptions.map((kelas: any, index: number) => {
-                    const kelasValue = String(
-                      kelas.kelas_id ??
-                        kelas.id ??
-                        kelas.mata_kuliah?.id ??
-                        index,
-                    );
-
+                  <SelectItem value="all">Semua Kelas</SelectItem>
+                  {kelasOptions.map((kelas: any) => {
+                    const kelasValue = String(kelas.kelas_id);
                     return (
                       <SelectItem key={kelasValue} value={kelasValue}>
-                        {kelas.mata_kuliah?.kode_mk} -{" "}
-                        {kelas.mata_kuliah?.nama_mk} ({kelas.nama_kelas})
+                        {kelas.nama_kelas}
+                        {kelas.mata_kuliah?.kode_mk
+                          ? ` • ${kelas.mata_kuliah.kode_mk}`
+                          : ""}
                       </SelectItem>
                     );
                   })}

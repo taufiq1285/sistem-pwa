@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect, useMemo } from "react";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, RefreshCw, Trash2 } from "lucide-react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -54,6 +54,9 @@ export default function MataKuliahPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isOfflineData, setIsOfflineData] = useState(false);
   const [lastUpdatedAt, setLastUpdatedAt] = useState<number | null>(null);
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">(
+    "active",
+  );
 
   const [showDialog, setShowDialog] = useState(false);
   const [editingMK, setEditingMK] = useState<MataKuliah | null>(null);
@@ -71,10 +74,6 @@ export default function MataKuliahPage() {
   // Delete confirmation state
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [deletingMK, setDeletingMK] = useState<MataKuliah | null>(null);
-  const [cascadeInfo, setCascadeInfo] = useState<{ kelasCount: number } | null>(
-    null,
-  );
-  const [showCascadeDialog, setShowCascadeDialog] = useState(false);
 
   const lastUpdatedLabel = useMemo(() => {
     if (!lastUpdatedAt) {
@@ -90,7 +89,7 @@ export default function MataKuliahPage() {
   // Load mata kuliah
   useEffect(() => {
     loadMataKuliah();
-  }, []);
+  }, [statusFilter]);
 
   const loadMataKuliah = async (forceRefresh = false) => {
     setIsLoading(true);
@@ -114,9 +113,19 @@ export default function MataKuliahPage() {
         );
       }
 
+      const isActiveFilter =
+        statusFilter === "all"
+          ? undefined
+          : statusFilter === "active";
+
       const data = await cacheAPI(
-        cacheKey,
-        () => getMataKuliah({ is_active: true }),
+        `${cacheKey}_${statusFilter}`,
+        () =>
+          getMataKuliah(
+            isActiveFilter === undefined
+              ? undefined
+              : { is_active: isActiveFilter },
+          ),
         {
           ttl: 10 * 60 * 1000,
           forceRefresh,
@@ -218,37 +227,18 @@ export default function MataKuliahPage() {
       toast.success(
         cascade
           ? "Mata kuliah dan semua kelas terkait berhasil dihapus"
-          : "Mata kuliah berhasil dinonaktifkan atau dihapus",
+          : "Mata kuliah berhasil diarsipkan atau dihapus",
       );
       setIsDeleteDialogOpen(false);
-      setShowCascadeDialog(false);
       setDeletingMK(null);
-      setCascadeInfo(null);
       await invalidateCache("admin_mata_kuliah_list");
+      await invalidateCache("admin_mata_kuliah_list_active");
+      await invalidateCache("admin_mata_kuliah_list_inactive");
+      await invalidateCache("admin_mata_kuliah_list_all");
       await loadMataKuliah(true);
     } catch (error: any) {
-      // Check if error is about active kelas
-      if (
-        error.message?.includes("Found") &&
-        error.message?.includes("active kelas")
-      ) {
-        // Extract kelas count from error message
-        const match = error.message.match(/Found (\d+) active kelas/);
-        const kelasCount = match ? parseInt(match[1], 10) : 0;
-
-        // Show cascade confirmation dialog
-        setCascadeInfo({ kelasCount });
-        setShowCascadeDialog(true);
-        setIsDeleteDialogOpen(false);
-      } else {
-        toast.error("Gagal menghapus", { description: error.message });
-      }
+      toast.error("Gagal menghapus", { description: error.message });
     }
-  };
-
-  const confirmCascadeDelete = async () => {
-    // Call confirmDelete with cascade=true
-    await confirmDelete(true);
   };
 
   // ============================================================================
@@ -310,6 +300,17 @@ export default function MataKuliahPage() {
         cell: ({ row }) => <Badge>{row.getValue("sks")} SKS</Badge>,
       },
       {
+        accessorKey: "is_active",
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title="Status" />
+        ),
+        cell: ({ row }) => (
+          <Badge variant={row.original.is_active ? "default" : "secondary"}>
+            {row.original.is_active ? "Aktif" : "Arsip"}
+          </Badge>
+        ),
+      },
+      {
         id: "actions",
         header: "Aksi",
         cell: ({ row }) => (
@@ -346,13 +347,19 @@ export default function MataKuliahPage() {
             Kelola mata kuliah untuk sistem
           </p>
         </div>
-        <Button
-          onClick={handleAdd}
-          className="font-semibold bg-linear-to-r from-primary to-accent"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Tambah Mata Kuliah
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button variant="outline" onClick={() => loadMataKuliah(true)}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
+          <Button
+            onClick={handleAdd}
+            className="font-semibold bg-linear-to-r from-primary to-accent"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Tambah Mata Kuliah
+          </Button>
+        </div>
       </div>
 
       {(isOfflineData || !navigator.onLine) && (
@@ -369,6 +376,34 @@ export default function MataKuliahPage() {
       {/* Data Table */}
       <Card className="border-0 shadow-xl">
         <CardContent className="pt-6 p-6">
+          <div className="mb-4 flex items-center justify-between gap-4">
+            <div>
+              <p className="text-sm font-semibold text-foreground">
+                Status Data
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Mata kuliah yang sudah dipakai kelas akan masuk arsip saat
+                dihapus.
+              </p>
+            </div>
+            <div className="w-full max-w-60">
+              <Select
+                value={statusFilter}
+                onValueChange={(value: "all" | "active" | "inactive") =>
+                  setStatusFilter(value)
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="active">Aktif</SelectItem>
+                  <SelectItem value="inactive">Arsip</SelectItem>
+                  <SelectItem value="all">Semua</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
           <DataTable
             columns={columns}
             data={mataKuliahList}
@@ -528,10 +563,10 @@ export default function MataKuliahPage() {
           itemType="Mata Kuliah"
           description={`${deletingMK.kode_mk} | ${deletingMK.sks} SKS | Semester ${deletingMK.semester}`}
           consequences={[
-            "Data mata kuliah akan dihapus permanen",
-            "Kelas yang menggunakan mata kuliah ini akan terpengaruh",
-            "Jadwal praktikum terkait akan terpengaruh",
-            "Data nilai mahasiswa tidak akan terhapus",
+            "Jika mata kuliah belum dipakai, data dapat dihapus dari referensi aktif",
+            "Jika mata kuliah sudah dipakai kelas, sistem akan mengarsipkan/nonaktifkan data ini",
+            "Riwayat kelas dan jadwal praktikum yang sudah ada tetap dijaga",
+            "Data nilai mahasiswa tidak ikut terhapus",
           ]}
         />
       )}

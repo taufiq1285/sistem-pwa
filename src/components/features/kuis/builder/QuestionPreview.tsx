@@ -301,7 +301,7 @@ function PreviewEssay({
 /**
  * Get icon for question type
  */
-export function getQuestionTypeIcon(tipesoal: string) {
+function getQuestionTypeIcon(tipesoal: string) {
   switch (tipesoal) {
     case TIPE_SOAL.PILIHAN_GANDA:
       return Circle;
@@ -315,7 +315,7 @@ export function getQuestionTypeIcon(tipesoal: string) {
 /**
  * Get color class for question type
  */
-export function getQuestionTypeColor(tipeSoal: string): string {
+function getQuestionTypeColor(tipeSoal: string): string {
   switch (tipeSoal) {
     case TIPE_SOAL.PILIHAN_GANDA:
       return "text-blue-600";

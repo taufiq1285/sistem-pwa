@@ -6,6 +6,10 @@
 import { supabase } from "@/lib/supabase/client";
 import { cacheAPI } from "@/lib/offline/api-cache";
 import { requirePermission } from "@/lib/middleware";
+import {
+  notifyDosenPeminjamanDisetujui,
+  notifyDosenPeminjamanDitolak,
+} from "@/lib/api/notification.api";
 import type { EquipmentCondition } from "@/types/inventaris.types";
 
 // ============================================================================
@@ -99,6 +103,35 @@ export interface ApprovalAction {
   peminjaman_id: string;
   status: "approved" | "rejected";
   rejection_reason?: string;
+}
+
+async function resolveLaboranMataKuliahId(
+  kelasId?: string | null,
+  jadwalMataKuliahId?: string | null,
+  kelasMataKuliahId?: string | null,
+): Promise<string | null> {
+  if (jadwalMataKuliahId) {
+    return jadwalMataKuliahId;
+  }
+
+  if (!kelasId) {
+    return kelasMataKuliahId || null;
+  }
+
+  const { data: latestJadwalMkData } = await (supabase as any)
+    .from("jadwal_praktikum")
+    .select("mata_kuliah_id")
+    .eq("kelas_id", kelasId)
+    .eq("is_active", true)
+    .not("mata_kuliah_id", "is", null)
+    .order("tanggal_praktikum", { ascending: false })
+    .limit(1);
+
+  if (latestJadwalMkData?.[0]?.mata_kuliah_id) {
+    return latestJadwalMkData[0].mata_kuliah_id;
+  }
+
+  return kelasMataKuliahId || null;
 }
 
 // ============================================================================
@@ -363,7 +396,7 @@ export async function getLabScheduleToday(
   try {
     const today = new Date().toISOString().split("T")[0];
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("jadwal_praktikum")
       .select(
         `
@@ -373,6 +406,7 @@ export async function getLabScheduleToday(
         jam_selesai,
         tanggal_praktikum,
         topik,
+        mata_kuliah_id,
         kelas_id,
         laboratorium_id
       `,
@@ -392,17 +426,17 @@ export async function getLabScheduleToday(
     const kelasIds = [
       ...new Set(
         data
-          .map((item) => item.kelas_id)
-          .filter((id): id is string => id !== null),
+          .map((item: any) => item.kelas_id)
+          .filter((id: unknown): id is string => typeof id === "string"),
       ),
-    ];
+    ] as string[];
     const labIds = [
       ...new Set(
         data
-          .map((item) => item.laboratorium_id)
-          .filter((id): id is string => id !== null),
+          .map((item: any) => item.laboratorium_id)
+          .filter((id: unknown): id is string => typeof id === "string"),
       ),
-    ];
+    ] as string[];
 
     const [kelasData, labData] = await Promise.all([
       kelasIds.length > 0
@@ -417,14 +451,23 @@ export async function getLabScheduleToday(
     ]);
 
     // Fetch mata kuliah and dosen if we have kelas data
-    const mataKuliahIds = [
+    const mataKuliahIds: string[] = [
       ...new Set(
-        kelasData.data?.map((k: any) => k.mata_kuliah_id).filter(Boolean) || [],
+        [
+          ...(data
+            .map((item: any) => item.mata_kuliah_id)
+            .filter((id: unknown): id is string => Boolean(id)) || []),
+          ...(kelasData.data
+            ?.map((k: any) => k.mata_kuliah_id)
+            .filter((id: unknown): id is string => Boolean(id)) || []),
+        ],
       ),
     ];
-    const dosenIds = [
+    const dosenIds: string[] = [
       ...new Set(
-        kelasData.data?.map((k: any) => k.dosen_id).filter(Boolean) || [],
+        kelasData.data
+          ?.map((k: any) => k.dosen_id)
+          .filter((id: unknown): id is string => Boolean(id)) || [],
       ),
     ];
 
@@ -460,10 +503,16 @@ export async function getLabScheduleToday(
       (dosenData.data?.map((d: any) => [d.id, d]) || []) as [string, any][],
     );
 
-    return data.map((item: any) => {
+    const mappedItems = await Promise.all(
+      data.map(async (item: any) => {
       const kelas = kelasMap.get(item.kelas_id);
       const lab = labMap.get(item.laboratorium_id);
-      const mataKuliah = kelas ? mataKuliahMap.get(kelas.mata_kuliah_id) : null;
+      const mataKuliahId = await resolveLaboranMataKuliahId(
+        item.kelas_id,
+        item.mata_kuliah_id,
+        kelas?.mata_kuliah_id,
+      );
+      const mataKuliah = mataKuliahMap.get(mataKuliahId);
       const dosen = kelas ? dosenMap.get(kelas.dosen_id) : null;
 
       return {
@@ -478,7 +527,10 @@ export async function getLabScheduleToday(
         tanggal_praktikum: item.tanggal_praktikum,
         topik: item.topik || "-",
       };
-    });
+      }),
+    );
+
+    return mappedItems;
   } catch (error) {
     console.error("Error fetching lab schedule today:", error);
     throw error;
@@ -503,7 +555,9 @@ async function approvePeminjamanImpl(peminjamanId: string): Promise<void> {
     // Step 1: Get peminjaman details (inventaris_id, jumlah_pinjam)
     const { data: peminjamanData, error: fetchError } = await supabase
       .from("peminjaman")
-      .select("inventaris_id, jumlah_pinjam")
+      .select(
+        "inventaris_id, jumlah_pinjam, dosen_id, tanggal_pinjam, tanggal_kembali_rencana",
+      )
       .eq("id", peminjamanId)
       .eq("status", "pending")
       .single();
@@ -558,6 +612,34 @@ async function approvePeminjamanImpl(peminjamanId: string): Promise<void> {
         .eq("id", peminjamanId);
       throw new Error(`Gagal mengurangi stok: ${stockError.message}`);
     }
+
+    // Best-effort notification to dosen after approval succeeds.
+    if (peminjamanData.dosen_id) {
+      try {
+        const { data: dosenData, error: dosenError } = await supabase
+          .from("dosen")
+          .select("user_id")
+          .eq("id", peminjamanData.dosen_id)
+          .single();
+
+        if (dosenError) throw dosenError;
+
+        if (dosenData?.user_id) {
+          await notifyDosenPeminjamanDisetujui(
+            dosenData.user_id,
+            invData.nama_barang,
+            peminjamanData.jumlah_pinjam,
+            peminjamanData.tanggal_pinjam,
+            peminjamanData.tanggal_kembali_rencana,
+          );
+        }
+      } catch (notificationError) {
+        console.error(
+          "Failed to send approval notification to dosen:",
+          notificationError,
+        );
+      }
+    }
   } catch (error) {
     console.error("Error approving peminjaman:", error);
     throw error;
@@ -584,6 +666,27 @@ async function rejectPeminjamanImpl(
     } = await supabase.auth.getUser();
     if (!user) throw new Error("User not authenticated");
 
+    const { data: peminjamanData, error: fetchError } = await supabase
+      .from("peminjaman")
+      .select("dosen_id, inventaris_id")
+      .eq("id", peminjamanId)
+      .eq("status", "pending")
+      .single();
+
+    if (fetchError || !peminjamanData) {
+      throw new Error("Peminjaman not found or not in pending status");
+    }
+
+    const { data: inventarisData, error: inventarisError } = await supabase
+      .from("inventaris")
+      .select("nama_barang")
+      .eq("id", peminjamanData.inventaris_id)
+      .single();
+
+    if (inventarisError || !inventarisData) {
+      throw new Error("Inventaris not found");
+    }
+
     const { error } = await supabase
       .from("peminjaman")
       .update({
@@ -596,6 +699,32 @@ async function rejectPeminjamanImpl(
       .eq("status", "pending"); // Only update if still pending
 
     if (error) throw error;
+
+    // Best-effort notification to dosen after rejection succeeds.
+    if (peminjamanData.dosen_id) {
+      try {
+        const { data: dosenData, error: dosenError } = await supabase
+          .from("dosen")
+          .select("user_id")
+          .eq("id", peminjamanData.dosen_id)
+          .single();
+
+        if (dosenError) throw dosenError;
+
+        if (dosenData?.user_id) {
+          await notifyDosenPeminjamanDitolak(
+            dosenData.user_id,
+            inventarisData.nama_barang,
+            rejectionReason,
+          );
+        }
+      } catch (notificationError) {
+        console.error(
+          "Failed to send rejection notification to dosen:",
+          notificationError,
+        );
+      }
+    }
   } catch (error) {
     console.error("Error rejecting peminjaman:", error);
     throw error;
@@ -1007,6 +1136,85 @@ export async function getInventarisCategories(): Promise<string[]> {
   }
 }
 
+export interface InventoryStockSyncResult {
+  id: string;
+  nama_barang: string;
+  jumlah: number;
+  previousAvailable: number;
+  expectedAvailable: number;
+  activeBorrowedQuantity: number;
+  changed: boolean;
+}
+
+async function syncInventarisAvailableStockImpl(
+  id: string,
+): Promise<InventoryStockSyncResult> {
+  try {
+    const { data: inventarisData, error: inventarisError } = await supabase
+      .from("inventaris")
+      .select("id, nama_barang, jumlah, jumlah_tersedia")
+      .eq("id", id)
+      .single();
+
+    if (inventarisError || !inventarisData) {
+      throw inventarisError || new Error("Inventaris not found");
+    }
+
+    const { data: activeBorrowings, error: borrowingError } = await supabase
+      .from("peminjaman")
+      .select("jumlah_pinjam")
+      .eq("inventaris_id", id)
+      .eq("status", "approved");
+
+    if (borrowingError) {
+      throw borrowingError;
+    }
+
+    const activeBorrowedQuantity = (activeBorrowings || []).reduce(
+      (sum, item) => sum + (item.jumlah_pinjam || 0),
+      0,
+    );
+
+    const expectedAvailable = Math.max(
+      0,
+      inventarisData.jumlah - activeBorrowedQuantity,
+    );
+    const changed = inventarisData.jumlah_tersedia !== expectedAvailable;
+
+    if (changed) {
+      const { error: updateError } = await supabase
+        .from("inventaris")
+        .update({
+          jumlah_tersedia: expectedAvailable,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", id);
+
+      if (updateError) {
+        throw updateError;
+      }
+    }
+
+    return {
+      id: inventarisData.id,
+      nama_barang: inventarisData.nama_barang,
+      jumlah: inventarisData.jumlah,
+      previousAvailable: inventarisData.jumlah_tersedia,
+      expectedAvailable,
+      activeBorrowedQuantity,
+      changed,
+    };
+  } catch (error) {
+    console.error("Error syncing inventaris stock:", error);
+    throw error;
+  }
+}
+
+export const syncInventarisAvailableStock = requirePermission(
+  "manage:inventaris",
+  syncInventarisAvailableStockImpl,
+);
+
 // ============================================================================
 // LABORATORIUM MANAGEMENT
 // ============================================================================
@@ -1106,7 +1314,7 @@ export async function getLabScheduleByLabId(
   try {
     const today = new Date().toISOString().split("T")[0];
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("jadwal_praktikum")
       .select(
         `
@@ -1115,6 +1323,10 @@ export async function getLabScheduleByLabId(
         jam_mulai,
         jam_selesai,
         topik,
+        kelas_id,
+        mata_kuliah:mata_kuliah_id (
+          nama_mk
+        ),
         kelas:kelas_id (
           nama_kelas,
           mata_kuliah:mata_kuliah_id (
@@ -1136,6 +1348,28 @@ export async function getLabScheduleByLabId(
 
     if (error) throw error;
 
+    const latestMataKuliahNameByKelas = new Map<
+      string,
+      { namaMk: string; sortKey: string }
+    >();
+
+    (data || []).forEach((item: any) => {
+      const kelasId = item.kelas_id;
+      const namaMk = item.mata_kuliah?.nama_mk;
+
+      if (!kelasId || !namaMk) {
+        return;
+      }
+
+      const sortKey =
+        item.tanggal_praktikum || item.jam_mulai || item.jam_selesai || item.id;
+      const existing = latestMataKuliahNameByKelas.get(kelasId);
+
+      if (!existing || sortKey > existing.sortKey) {
+        latestMataKuliahNameByKelas.set(kelasId, { namaMk, sortKey });
+      }
+    });
+
     return (data || []).map((item: any) => ({
       id: item.id,
       tanggal_praktikum: item.tanggal_praktikum,
@@ -1143,7 +1377,11 @@ export async function getLabScheduleByLabId(
       jam_selesai: item.jam_selesai,
       topik: item.topik || null,
       kelas_nama: item.kelas?.nama_kelas || "-",
-      mata_kuliah_nama: item.kelas?.mata_kuliah?.nama_mk || "Unknown",
+      mata_kuliah_nama:
+        item.mata_kuliah?.nama_mk ||
+        latestMataKuliahNameByKelas.get(item.kelas_id)?.namaMk ||
+        item.kelas?.mata_kuliah?.nama_mk ||
+        "Unknown",
       dosen_nama: item.kelas?.dosen?.user?.full_name || "Unknown",
     }));
   } catch (error) {
@@ -1845,6 +2083,7 @@ async function markBorrowingReturnedImpl(
   keterangan?: string,
   denda?: number,
 ): Promise<void> {
+  let returnTimestamp: string | null = null;
   try {
     // Step 1: Get peminjaman details
     const { data: peminjamanData, error: fetchError } = await supabase
@@ -1870,15 +2109,16 @@ async function markBorrowingReturnedImpl(
     }
 
     // Step 3: Update peminjaman status to returned
+    returnTimestamp = new Date().toISOString();
     const { error: updateError } = await supabase
       .from("peminjaman")
       .update({
         status: "returned",
-        tanggal_kembali_aktual: new Date().toISOString(),
+        tanggal_kembali_aktual: returnTimestamp,
         kondisi_kembali: kondisiKembali,
         keterangan_kembali: keterangan || null,
         denda: denda || 0,
-        updated_at: new Date().toISOString(),
+        updated_at: returnTimestamp,
       })
       .eq("id", peminjamanId)
       .eq("status", "approved");
@@ -1892,7 +2132,22 @@ async function markBorrowingReturnedImpl(
       .update({ jumlah_tersedia: newStock })
       .eq("id", peminjamanData.inventaris_id);
 
-    if (stockError) throw stockError;
+    if (stockError) {
+      await supabase
+        .from("peminjaman")
+        .update({
+          status: "approved",
+          tanggal_kembali_aktual: null,
+          kondisi_kembali: null,
+          keterangan_kembali: null,
+          denda: null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", peminjamanId)
+        .eq("status", "returned");
+
+      throw new Error(`Gagal memulihkan stok: ${stockError.message}`);
+    }
   } catch (error) {
     console.error("Error marking borrowing as returned:", error);
     throw error;

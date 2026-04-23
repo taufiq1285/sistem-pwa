@@ -77,8 +77,11 @@ export function QuizResult({
 }: QuizResultProps) {
   const [showAnswers, setShowAnswers] = useState(true);
 
-  // Check if this is laporan mode (all FILE_UPLOAD questions)
-  const laporanMode = isLaporanMode(questions);
+  // Source of truth: laporan/CBT follows quiz.tipe_kuis.
+  // Fallback to question structure only for legacy data.
+  const laporanMode =
+    quiz.tipe_kuis === "essay" ||
+    (!quiz.tipe_kuis && isLaporanMode(questions));
 
   // Calculate score
   const score = calculateQuizScore(

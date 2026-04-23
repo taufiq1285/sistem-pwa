@@ -30,6 +30,7 @@ import {
 } from "@/lib/api/notification.api";
 import type { Notification } from "@/types/notification.types";
 import { formatRelativeTime } from "@/lib/utils/format";
+import { getNotificationNavigationTarget } from "@/lib/utils/notification-navigation";
 import { toast } from "sonner";
 
 const MAX_DISPLAY = 10; // Maximum notifications to display
@@ -170,7 +171,11 @@ export function NotificationDropdown() {
     try {
       setLoading(true);
       const [notifs, count] = await Promise.all([
-        getNotifications({ user_id: user.id, limit: MAX_DISPLAY }),
+        getNotifications({
+          user_id: user.id,
+          limit: MAX_DISPLAY,
+          forceRefresh: true,
+        }),
         getUnreadCount(user.id),
       ]);
       setNotifications(notifs);
@@ -235,15 +240,45 @@ export function NotificationDropdown() {
   };
 
   const handleNotificationClick = (notification: Notification) => {
+    const target = getNotificationNavigationTarget(
+      notification,
+      user?.role as "mahasiswa" | "dosen" | "laboran" | "admin" | undefined,
+    );
+
+    if (!target) return;
+
+    navigate(target);
+    setOpen(false);
+  };
+
+  const handleNotificationClickLegacy = (notification: Notification) => {
+    const target = getNotificationNavigationTarget(
+      notification,
+      user?.role as "mahasiswa" | "dosen" | "laboran" | "admin" | undefined,
+    );
+
+    if (target) {
+      navigate(target);
+      setOpen(false);
+      return;
+    }
+
     // Navigate based on notification type
-    if (notification.type === "tugas_baru" && notification.data?.kuis_id) {
+    if (
+      (notification.type === "tugas_baru" ||
+        notification.type === "kuis_published") &&
+      notification.data?.kuis_id
+    ) {
       navigate(`/mahasiswa/kuis/${notification.data.kuis_id}`);
       setOpen(false);
     } else if (
       notification.type === "tugas_submitted" &&
-      notification.data?.attempt_id
+      notification.data?.attempt_id &&
+      notification.data?.kuis_id
     ) {
-      navigate(`/dosen/kuis/attempts/${notification.data.attempt_id}`);
+      navigate(
+        `/dosen/kuis/${notification.data.kuis_id}/attempt/${notification.data.attempt_id}`,
+      );
       setOpen(false);
     } else if (
       notification.type === "tugas_graded" &&
@@ -263,12 +298,45 @@ export function NotificationDropdown() {
       // Mahasiswa receives response → navigate to nilai page
       navigate(`/mahasiswa/nilai`);
       setOpen(false);
+    } else if (notification.type === "materi_baru") {
+      navigate(`/mahasiswa/materi`);
+      setOpen(false);
+    } else if (notification.type === "logbook_submitted") {
+      navigate(`/dosen/logbook-review`);
+      setOpen(false);
+    } else if (
+      notification.type === "logbook_approved" ||
+      notification.type === "logbook_rejected" ||
+      notification.type === "logbook_revision"
+    ) {
+      navigate(`/mahasiswa/logbook`);
+      setOpen(false);
+    } else if (notification.type === "peminjaman_baru") {
+      navigate(`/laboran/persetujuan`);
+      setOpen(false);
+    } else if (
+      notification.type === "peminjaman_disetujui" ||
+      notification.type === "peminjaman_ditolak"
+    ) {
+      navigate(`/dosen/peminjaman`);
+      setOpen(false);
+    } else if (notification.type === "jadwal_pending_approval") {
+      navigate(`/laboran/jadwal`);
+      setOpen(false);
+    } else if (notification.type.startsWith("jadwal_")) {
+      if (user?.role) {
+        navigate(`/${user.role}/jadwal`);
+        setOpen(false);
+      }
     } else if (notification.type === "pengumuman") {
       // Navigate to notifikasi page based on role
       if (user?.role) {
         navigate(`/${user.role}/notifikasi`);
         setOpen(false);
       }
+    } else if (user?.role) {
+      navigate(`/${user.role}/notifikasi`);
+      setOpen(false);
     }
   };
 

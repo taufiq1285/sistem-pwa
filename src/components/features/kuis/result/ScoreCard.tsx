@@ -88,7 +88,7 @@ export function ScoreCard({
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1">
             <CardTitle className="text-lg mb-1">
-              Hasil Tugas Praktikum
+              {isLaporanMode ? "Hasil Laporan Praktikum" : "Hasil CBT Praktikum"}
             </CardTitle>
             {quizTitle && (
               <p className="text-sm text-muted-foreground">{quizTitle}</p>

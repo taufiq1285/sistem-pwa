@@ -5,14 +5,14 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { QuizNavigation } from "@/components/features/kuis/attempt/QuizNavigation";
 import {
-  QuizNavigation,
   createQuestionStatusList,
   getNavigationSummary,
   findNextUnanswered,
   areAllQuestionsAnswered,
   getUnansweredQuestions,
-} from "@/components/features/kuis/attempt/QuizNavigation";
+} from "@/components/features/kuis/attempt/quiz-navigation.utils";
 import type { QuestionStatus } from "@/components/features/kuis/attempt/QuizNavigation";
 
 function makeQuestions(count: number, answeredUntil = 0): QuestionStatus[] {

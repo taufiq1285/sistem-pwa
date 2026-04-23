@@ -14,6 +14,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import type { OpsiJawaban } from "@/types/kuis.types";
+import { generateDefaultOptions } from "./multiple-choice.utils";
 
 // ============================================================================
 // TYPES
@@ -66,13 +67,7 @@ interface MultipleChoiceProps {
 // ============================================================================
 
 const OPTION_LABELS = ["A", "B", "C", "D", "E", "F"];
-
-const DEFAULT_OPTIONS: OpsiJawaban[] = [
-  { id: "1", label: "A", text: "", is_correct: false },
-  { id: "2", label: "B", text: "", is_correct: false },
-  { id: "3", label: "C", text: "", is_correct: false },
-  { id: "4", label: "D", text: "", is_correct: false },
-];
+const DEFAULT_OPTIONS: OpsiJawaban[] = generateDefaultOptions();
 
 // ============================================================================
 // COMPONENT
@@ -332,60 +327,4 @@ export function MultipleChoice({
       )}
     </div>
   );
-}
-
-// ============================================================================
-// HELPER FUNCTIONS
-// ============================================================================
-
-/**
- * Validate multiple choice options
- */
-export function validateMultipleChoice(options: OpsiJawaban[]): {
-  isValid: boolean;
-  errors: string[];
-} {
-  const errors: string[] = [];
-
-  // Check minimum options
-  if (options.length < 2) {
-    errors.push("Minimal 2 opsi jawaban diperlukan");
-  }
-
-  // Check maximum options
-  if (options.length > 6) {
-    errors.push("Maksimal 6 opsi jawaban");
-  }
-
-  // Check empty options
-  const hasEmptyOptions = options.some((opt) => !opt.text.trim());
-  if (hasEmptyOptions) {
-    errors.push("Semua opsi harus diisi");
-  }
-
-  // Check correct answer
-  const correctAnswers = options.filter((opt) => opt.is_correct);
-  if (correctAnswers.length === 0) {
-    errors.push("Harus ada satu jawaban yang benar");
-  }
-  if (correctAnswers.length > 1) {
-    errors.push("Hanya boleh ada satu jawaban yang benar");
-  }
-
-  return {
-    isValid: errors.length === 0,
-    errors,
-  };
-}
-
-/**
- * Generate default options
- */
-export function generateDefaultOptions(count: number = 4): OpsiJawaban[] {
-  return Array.from({ length: count }, (_, i) => ({
-    id: (i + 1).toString(),
-    label: OPTION_LABELS[i] || `Option ${i + 1}`,
-    text: "",
-    is_correct: false,
-  }));
 }

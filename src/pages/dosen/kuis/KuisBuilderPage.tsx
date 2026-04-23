@@ -152,9 +152,6 @@ export default function KuisBuilderPage() {
             dosenId={dosenId}
             onSave={handleSave}
             onCancel={handleCancel}
-            laporanMode={
-              quiz?.judul?.toLowerCase().includes("laporan") || false
-            }
           />
         </div>
       </div>

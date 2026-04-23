@@ -14,6 +14,7 @@ import { useState, useEffect, useRef } from "react";
 import {
   Plus,
   Edit,
+  RefreshCw,
   Trash2,
   Users,
   Loader2,
@@ -89,6 +90,9 @@ export default function KelasPageEnhanced() {
   // State
   const [kelasList, setKelasList] = useState<Kelas[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [statusFilter, setStatusFilter] = useState<"active" | "inactive" | "all">(
+    "active",
+  );
 
   // Form state
   const [showFormDialog, setShowFormDialog] = useState(false);
@@ -111,10 +115,11 @@ export default function KelasPageEnhanced() {
     useState<Kelas | null>(null);
 
   useEffect(() => {
-    if (hasLoadedRef.current) return;
-    hasLoadedRef.current = true;
+    if (!hasLoadedRef.current) {
+      hasLoadedRef.current = true;
+    }
     loadData();
-  }, []);
+  }, [statusFilter]);
 
   const loadData = async () => {
     setIsLoading(true);
@@ -129,7 +134,11 @@ export default function KelasPageEnhanced() {
 
   const loadKelas = async () => {
     try {
-      const data = await getKelas({ is_active: true });
+      const data = await getKelas(
+        statusFilter === "all"
+          ? {}
+          : { is_active: statusFilter === "active" },
+      );
       setKelasList(data);
     } catch (error: any) {
       console.error("Error loading kelas:", error);
@@ -249,10 +258,16 @@ export default function KelasPageEnhanced() {
             Kelola kelas universal untuk pengelolaan mahasiswa
           </p>
         </div>
-        <Button onClick={handleCreate}>
-          <Plus className="h-4 w-4 mr-2" />
-          Buat Kelas Baru
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button variant="outline" onClick={loadData}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
+          <Button onClick={handleCreate}>
+            <Plus className="h-4 w-4 mr-2" />
+            Buat Kelas Baru
+          </Button>
+        </div>
       </div>
 
       {/* Alert Info */}
@@ -274,19 +289,48 @@ export default function KelasPageEnhanced() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          <div className="mb-4 flex items-center justify-between gap-4">
+            <div>
+              <p className="text-sm font-semibold text-foreground">
+                Status Data
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Kelas yang dihapus dari admin akan masuk arsip, bukan hilang
+                permanen.
+              </p>
+            </div>
+            <div className="w-full max-w-60">
+              <Select
+                value={statusFilter}
+                onValueChange={(value: "active" | "inactive" | "all") =>
+                  setStatusFilter(value)
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="active">Aktif</SelectItem>
+                  <SelectItem value="inactive">Arsip</SelectItem>
+                  <SelectItem value="all">Semua</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Nama Kelas</TableHead>
                 <TableHead>Semester/Tahun</TableHead>
                 <TableHead>Kuota</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead>Aksi</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {kelasList.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center py-8">
+                  <TableCell colSpan={5} className="text-center py-8">
                     Belum ada kelas. Klik "Buat Kelas Baru" untuk memulai.
                   </TableCell>
                 </TableRow>
@@ -300,6 +344,11 @@ export default function KelasPageEnhanced() {
                       Semester {kelas.semester_ajaran} • {kelas.tahun_ajaran}
                     </TableCell>
                     <TableCell>{kelas.kuota || "-"}</TableCell>
+                    <TableCell>
+                      <Badge variant={kelas.is_active ? "default" : "secondary"}>
+                        {kelas.is_active ? "Aktif" : "Arsip"}
+                      </Badge>
+                    </TableCell>
                     <TableCell>
                       <div className="flex gap-2">
                         <Button
@@ -457,9 +506,9 @@ export default function KelasPageEnhanced() {
           itemType="Kelas"
           description={`${deletingKelas.tahun_ajaran} - Semester ${deletingKelas.semester_ajaran}`}
           consequences={[
-            "Data kelas akan dihapus permanen",
-            "Mahasiswa yang terdaftar akan kehilangan akses ke kelas ini",
-            "Semua data nilai dan tugas terkait akan hilang",
+            "Kelas akan diarsipkan/nonaktifkan dari daftar aktif admin",
+            "Mahasiswa tidak lagi melihat kelas ini sebagai kelas aktif",
+            "Riwayat data yang sudah ada tetap dijaga oleh sistem",
           ]}
         />
       )}

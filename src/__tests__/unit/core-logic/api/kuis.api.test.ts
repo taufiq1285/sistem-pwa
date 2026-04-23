@@ -14,7 +14,10 @@ import {
 } from "@/lib/api/base.api";
 import { handleError, logError } from "@/lib/utils/errors";
 import { indexedDBManager } from "@/lib/offline/indexeddb";
-import { submitAnswerWithVersion } from "@/lib/api/kuis-versioned-simple.api";
+import {
+  submitAnswerWithVersion,
+  submitQuizSafe,
+} from "@/lib/api/kuis-versioned-simple.api";
 
 vi.mock("@/lib/api/base.api", () => ({
   query: vi.fn(),
@@ -43,6 +46,7 @@ vi.mock("@/lib/offline/indexeddb", () => ({
 
 vi.mock("@/lib/api/kuis-versioned-simple.api", () => ({
   submitAnswerWithVersion: vi.fn(),
+  submitQuizSafe: vi.fn(),
 }));
 
 vi.mock("@/lib/supabase/client", () => ({
@@ -214,8 +218,10 @@ describe("kuis.api - CORE LOGIC", () => {
       await expect(kuisApi.getCachedQuestions("k1")).resolves.toEqual([
         { id: "s1" },
       ]);
-      await expect(kuisApi.getCachedAttempt("a1")).resolves.toEqual({
+      await expect(kuisApi.getCachedAttempt("a1")).resolves.toMatchObject({
         id: "a1",
+        offline_submit_pending: false,
+        sync_status: "synced",
       });
     });
 
@@ -230,6 +236,38 @@ describe("kuis.api - CORE LOGIC", () => {
           soal_id: "soal-2",
           jawaban: "B",
           synced: false,
+        }),
+      );
+    });
+
+    it("markAttemptSubmittedOffline menyimpan status submit lokal di cache attempt", async () => {
+      vi.mocked(indexedDBManager.getById).mockResolvedValue(null as any);
+
+      const result = await kuisApi.markAttemptSubmittedOffline(
+        {
+          id: "att-offline",
+          kuis_id: "kuis-1",
+          mahasiswa_id: "mhs-1",
+          attempt_number: 1,
+          status: "in_progress",
+          started_at: "2025-01-01T00:00:00.000Z",
+        } as any,
+        120,
+      );
+
+      expect(result).toMatchObject({
+        id: "att-offline",
+        status: "submitted",
+        sisa_waktu: 120,
+        offline_submit_pending: true,
+        sync_status: "pending_submit",
+      });
+      expect(indexedDBManager.create).toHaveBeenCalledWith(
+        "offline_attempts",
+        expect.objectContaining({
+          id: "att-offline",
+          pending_submit: true,
+          sync_status: "pending_submit",
         }),
       );
     });
@@ -300,6 +338,61 @@ describe("kuis.api - CORE LOGIC", () => {
 
       await expect(kuisApi.syncOfflineAnswers("att-empty")).resolves.toBe(0);
       expect(submitAnswerWithVersion).not.toHaveBeenCalled();
+    });
+
+    it("syncPendingOfflineQuizSubmission men-submit attempt lokal yang pending", async () => {
+      const permission = await import("@/lib/middleware/permission.middleware");
+      vi.mocked(permission.getCurrentMahasiswaId).mockResolvedValue("mhs-1");
+      vi.mocked(getById).mockResolvedValue({
+        id: "att-submit",
+        mahasiswa_id: "mhs-1",
+      } as any);
+
+      vi.mocked(indexedDBManager.getById).mockResolvedValueOnce({
+        id: "att-submit",
+        pending_submit: true,
+        sync_status: "pending_submit",
+        data: {
+          id: "att-submit",
+          kuis_id: "kuis-1",
+          mahasiswa_id: "mhs-1",
+          attempt_number: 1,
+          status: "submitted",
+          started_at: "2025-01-01T00:00:00.000Z",
+          sisa_waktu: 98,
+        },
+      } as any);
+      vi.mocked(indexedDBManager.getAll).mockResolvedValue([] as any);
+      vi.mocked(submitQuizSafe).mockResolvedValue({
+        id: "att-submit",
+        kuis_id: "kuis-1",
+        mahasiswa_id: "mhs-1",
+        attempt_number: 1,
+        status: "submitted",
+        started_at: "2025-01-01T00:00:00.000Z",
+        submitted_at: "2025-01-01T00:10:00.000Z",
+      } as any);
+
+      const result =
+        await kuisApi.syncPendingOfflineQuizSubmission("att-submit");
+
+      expect(submitQuizSafe).toHaveBeenCalledWith({
+        attempt_id: "att-submit",
+        sisa_waktu: 98,
+      });
+      expect(indexedDBManager.create).toHaveBeenCalledWith(
+        "offline_attempts",
+        expect.objectContaining({
+          id: "att-submit",
+          pending_submit: false,
+          sync_status: "synced",
+        }),
+      );
+      expect(result).toMatchObject({
+        id: "att-submit",
+        offline_submit_pending: false,
+        sync_status: "synced",
+      });
     });
 
     it("getKuisByIdOffline memakai API lalu cache saat online", async () => {
@@ -582,7 +675,14 @@ describe("kuis.api - CORE LOGIC", () => {
           total_poin: 80,
           started_at: "2025-01-01T10:00:00.000Z",
           submitted_at: "2025-01-01T11:00:00.000Z",
-          kuis: { judul: "Kuis 1", passing_grade: 70 },
+          kuis: {
+            judul: "Kuis 1",
+            passing_score: 70,
+            soal: [
+              { id: "s1", poin: 50 },
+              { id: "s2", poin: 50 },
+            ],
+          },
         },
         {
           id: "att-2",
@@ -591,7 +691,14 @@ describe("kuis.api - CORE LOGIC", () => {
           total_poin: 60,
           started_at: "2025-01-02T10:00:00.000Z",
           submitted_at: "2025-01-02T11:00:00.000Z",
-          kuis: { judul: "Kuis 2", passing_grade: 70 },
+          kuis: {
+            judul: "Kuis 2",
+            passing_score: 70,
+            soal: [
+              { id: "s3", poin: 40 },
+              { id: "s4", poin: 40 },
+            ],
+          },
         },
       ] as any);
 
@@ -648,7 +755,9 @@ describe("kuis.api - CORE LOGIC", () => {
         id: "k2",
         attempt_id: "att-2",
         judul: "Kuis 2",
-        passed: false,
+        max_poin: 80,
+        percentage: 75,
+        passed: true,
       });
     });
 

@@ -29,21 +29,27 @@ import {
 // Question type components
 import {
   MultipleChoice,
-  validateMultipleChoice,
-  generateDefaultOptions,
 } from "../question-types/MultipleChoice";
 import {
+  validateMultipleChoice,
+  generateDefaultOptions,
+} from "../question-types/multiple-choice.utils";
+import {
   Essay,
-  validateEssay,
-  getDefaultEssaySettings,
   type EssaySettings,
 } from "../question-types/Essay";
 import {
+  validateEssay,
+  getDefaultEssaySettings,
+} from "../question-types/essay.utils";
+import {
   FileUploadQuestion,
-  validateFileUploadSettings,
-  getDefaultFileUploadSettings,
   type FileUploadSettings,
 } from "../question-types/FileUploadQuestion";
+import {
+  validateFileUploadSettings,
+  getDefaultFileUploadSettings,
+} from "../question-types/file-upload-question.utils";
 
 // Types
 import type { Soal, OpsiJawaban } from "@/types/kuis.types";
@@ -89,7 +95,7 @@ interface QuestionEditorProps {
   cbtMode?: boolean;
 
   /**
-   * Laporan Mode - only essay/upload (for Laporan)
+   * Laporan Mode - only isian laporan/upload berkas (for Laporan)
    */
   laporanMode?: boolean;
 
@@ -393,7 +399,7 @@ export function QuestionEditor({
       <CardContent className="space-y-6">
         {/* Question Type & Points */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Question Type - CBT mode only shows Pilihan Ganda, Laporan mode shows Essay/Upload */}
+          {/* Question Type - CBT mode only shows Pilihan Ganda, Laporan mode shows isian laporan/upload */}
           {cbtMode ? (
             <div className="md:col-span-2 space-y-2">
               <Label>Tipe Soal</Label>
@@ -432,7 +438,7 @@ export function QuestionEditor({
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">
-                Mode Laporan mendukung essay atau upload file
+                Mode Laporan mendukung isian laporan atau upload berkas
               </p>
             </div>
           ) : (
@@ -706,7 +712,7 @@ export function QuestionEditor({
 /**
  * Transform Soal data to editor format
  */
-export function transformSoalToEditor(soal: Soal): Partial<Soal> {
+function transformSoalToEditor(soal: Soal): Partial<Soal> {
   return {
     ...soal,
     opsi_jawaban: soal.opsi_jawaban || generateDefaultOptions(),
@@ -716,7 +722,7 @@ export function transformSoalToEditor(soal: Soal): Partial<Soal> {
 /**
  * Transform editor data to API format
  */
-export function transformEditorToSoal(
+function transformEditorToSoal(
   editorData: Partial<CreateSoalData>,
 ): Partial<CreateSoalData> {
   const data: Partial<CreateSoalData> = {

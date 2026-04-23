@@ -53,6 +53,10 @@ import {
   reviewLogbook,
   gradeLogbook,
 } from "@/lib/api/logbook.api";
+import {
+  notifyMahasiswaLogbookApproved,
+  notifyMahasiswaLogbookRevision,
+} from "@/lib/api/notification.api";
 import { queueManager } from "@/lib/offline/queue-manager";
 import { getKelas } from "@/lib/api/kelas.api";
 import type {
@@ -133,6 +137,71 @@ export default function DosenLogbookReviewPage() {
       setFeedback(selectedLogbook.dosen_feedback || "");
     }
   }, [showReviewDialog, selectedLogbook]);
+
+  async function notifyMahasiswaLogbookStatus(
+    logbookId: string,
+    status: "approved" | "revision",
+    catatan?: string,
+  ) {
+    const supabaseAny = supabase as any;
+    const { data: logbookNotifData, error } = await supabaseAny
+      .from("logbook_entries")
+      .select(
+        `
+        id,
+        mahasiswa:mahasiswa_id (
+          user_id
+        ),
+        jadwal:jadwal_id (
+          tanggal_praktikum,
+          mata_kuliah:mata_kuliah_id (
+            nama_mk
+          ),
+          kelas:kelas_id (
+            nama_kelas,
+            mata_kuliah:mata_kuliah_id (
+              nama_mk
+            )
+          )
+        )
+      `,
+      )
+      .eq("id", logbookId)
+      .single();
+
+    if (error) throw error;
+
+    const mahasiswaUserId = (logbookNotifData as any)?.mahasiswa?.user_id;
+    if (!mahasiswaUserId) return;
+
+    const kelasNama =
+      (logbookNotifData as any)?.jadwal?.kelas?.nama_kelas || "Kelas";
+    const mataKuliahNama =
+      (logbookNotifData as any)?.jadwal?.mata_kuliah?.nama_mk ||
+      (logbookNotifData as any)?.jadwal?.kelas?.mata_kuliah?.nama_mk ||
+      "Mata Kuliah";
+    const tanggalPraktikum =
+      (logbookNotifData as any)?.jadwal?.tanggal_praktikum ||
+      new Date().toISOString();
+
+    if (status === "approved") {
+      await notifyMahasiswaLogbookApproved(
+        mahasiswaUserId,
+        kelasNama,
+        mataKuliahNama,
+        tanggalPraktikum,
+      );
+      return;
+    }
+
+    await notifyMahasiswaLogbookRevision(
+      mahasiswaUserId,
+      kelasNama,
+      mataKuliahNama,
+      tanggalPraktikum,
+      catatan?.trim() || "Silakan periksa feedback dosen pada logbook Anda.",
+    );
+  }
 
   // ============================================================================
   // DATA LOADING
@@ -235,6 +304,16 @@ export default function DosenLogbookReviewPage() {
       };
 
       await reviewLogbook(data);
+      await notifyMahasiswaLogbookStatus(
+        selectedLogbook.id,
+        "revision",
+        feedback,
+      ).catch((notifError) => {
+        console.error(
+          "Failed to notify mahasiswa after logbook review:",
+          notifError,
+        );
+      });
 
       toast.success("Logbook berhasil direview");
       setShowReviewDialog(false);
@@ -302,6 +381,14 @@ export default function DosenLogbookReviewPage() {
       };
 
       await gradeLogbook(data);
+      await notifyMahasiswaLogbookStatus(selectedLogbook.id, "approved").catch(
+        (notifError) => {
+          console.error(
+            "Failed to notify mahasiswa after logbook grading:",
+            notifError,
+          );
+        },
+      );
 
       toast.success("Logbook berhasil dinilai");
       setShowGradeDialog(false);

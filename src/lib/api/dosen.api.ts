@@ -368,108 +368,90 @@ export async function getDosenStats(forceRefresh = false): Promise<DosenStats> {
 
 export async function getMyKelas(limit?: number): Promise<KelasWithStats[]> {
   try {
-    console.log("🔍 DEBUG getMyKelas: Getting ALL available kelas");
-
-    // 🎯 QUERY: Get ALL active kelas (universal, can be used by any dosen)
-    const { data: allKelas, error: kelasError } = await supabase
-      .from("kelas")
-      .select(
-        "id, kode_kelas, nama_kelas, tahun_ajaran, semester_ajaran, mata_kuliah_id, is_active",
-      )
-      .eq("is_active", true)
-      .order("nama_kelas", { ascending: true }); // Sort by name for better UX
-
-    if (kelasError) {
-      console.error("❌ DEBUG: kelasError =", kelasError);
-      throw kelasError;
-    }
-
-    if (!allKelas || allKelas.length === 0) {
-      console.log("⚠️ DEBUG: No kelas found in database");
+    const dosenId = await getDosenId();
+    if (!dosenId) {
       return [];
     }
-
-    console.log(`📚 DEBUG: Found ${allKelas.length} total active kelas`);
-
-    // Step 2: Get unique mata_kuliah_ids
-    const mkIds = [
-      ...new Set(allKelas.map((k: any) => k.mata_kuliah_id).filter(Boolean)),
-    ];
-
-    console.log(
-      `🔍 DEBUG: Extracting ${mkIds.length} unique mata_kuliah_ids:`,
-      mkIds,
+    const { data: jadwalData, error: jadwalError } = await (supabase as any)
+      .from("jadwal_praktikum")
+      .select("kelas_id, mata_kuliah_id, tanggal_praktikum")
+      .eq("dosen_id", dosenId)
+      .eq("is_active", true)
+      .order("tanggal_praktikum", { ascending: false });
+    if (jadwalError) throw jadwalError;
+    if (!jadwalData || jadwalData.length === 0) return [];
+    const kelasIds = Array.from(
+      new Set<string>(
+        (jadwalData || [])
+          .map((jadwal: any) => jadwal.kelas_id)
+          .filter((id): id is string => Boolean(id)),
+      ),
     );
-
-    if (mkIds.length === 0) {
-      // Kelas boleh tanpa mata_kuliah_id - normal behavior
-    }
-
-    // Step 3: Fetch mata_kuliah data separately
-    const { data: mataKuliahData, error: mkError } = await supabase
-      .from("mata_kuliah")
-      .select("id, kode_mk, nama_mk")
-      .in("id", mkIds);
-
+    if (kelasIds.length === 0) return [];
+    const { data: kelasData, error: kelasError } = await supabase
+      .from("kelas")
+      .select(
+        "id, kode_kelas, nama_kelas, tahun_ajaran, semester_ajaran, is_active",
+      )
+      .in("id", kelasIds)
+      .eq("is_active", true)
+      .order("nama_kelas", { ascending: true });
+    if (kelasError) throw kelasError;
+    if (!kelasData || kelasData.length === 0) return [];
+    const jadwalMkMap = new Map<string, string>();
+    (jadwalData || []).forEach((jadwal: any) => {
+      if (
+        jadwal?.kelas_id &&
+        jadwal?.mata_kuliah_id &&
+        !jadwalMkMap.has(jadwal.kelas_id)
+      ) {
+        jadwalMkMap.set(jadwal.kelas_id, jadwal.mata_kuliah_id);
+      }
+    });
+    const mkIds: string[] = Array.from(
+      new Set(
+        (jadwalData || [])
+          .map((jadwal: any) => jadwal?.mata_kuliah_id)
+          .filter((id): id is string => typeof id === "string" && id.length > 0),
+      ),
+    );
+    const { data: mataKuliahData, error: mkError } =
+      mkIds.length > 0
+        ? await supabase
+            .from("mata_kuliah")
+            .select("id, kode_mk, nama_mk")
+            .in("id", mkIds)
+        : { data: [], error: null };
     if (mkError) {
-      console.error("❌ DEBUG: mkError =", mkError);
-      // Continue without mata kuliah data rather than failing completely
+      console.error("Error fetching mata kuliah for dosen kelas:", mkError);
     }
-
-    console.log(
-      `📚 DEBUG: Found ${mataKuliahData?.length || 0} mata kuliah records`,
-    );
-    console.log(`🔍 DEBUG: Mata kuliah data:`, mataKuliahData);
-
-    // Step 4: Create a map for quick lookup
     const mkMap = new Map((mataKuliahData || []).map((mk: any) => [mk.id, mk]));
-
-    // Step 5: Get stats for each kelas and merge with mata kuliah
     const kelasWithStats = await Promise.all(
-      allKelas.map(async (kelas: any) => {
+      kelasData.map(async (kelas: any) => {
         const { count } = await supabase
           .from("kelas_mahasiswa" as any)
           .select("*", { count: "exact", head: true })
           .eq("kelas_id", kelas.id)
           .eq("is_active", true);
-
-        const mk = mkMap.get(kelas.mata_kuliah_id);
-
-        const result = {
+        const resolvedMataKuliahId = jadwalMkMap.get(kelas.id) || null;
+        const mk = resolvedMataKuliahId ? mkMap.get(resolvedMataKuliahId) : null;
+        return {
           id: kelas.id,
           kode_kelas: kelas.kode_kelas || "",
           nama_kelas: kelas.nama_kelas,
           tahun_ajaran: kelas.tahun_ajaran,
           semester_ajaran: kelas.semester_ajaran,
           totalMahasiswa: count || 0,
-          mata_kuliah_id: kelas.mata_kuliah_id,
+          mata_kuliah_id: resolvedMataKuliahId,
           mata_kuliah_kode: mk?.kode_mk || "",
-          mata_kuliah_nama: mk?.nama_mk || "", // Kosong jika belum dipilih,
+          mata_kuliah_nama: mk?.nama_mk || "",
         };
-
-        console.log("🔍 DEBUG: Processed kelas =", {
-          id: result.id,
-          nama_kelas: result.nama_kelas,
-          mk_id: kelas.mata_kuliah_id,
-          mk_nama: result.mata_kuliah_nama,
-          mk_kode: result.mata_kuliah_kode,
-        });
-
-        return result;
       }),
     );
-
-    // Deduplicate by kelas ID and enforce limit client-side
-    const uniqueById = Array.from(
-      new Map(kelasWithStats.map((k) => [k.id, k])).values(),
+    const finalResult = Array.from(
+      new Map(kelasWithStats.map((kelas) => [kelas.id, kelas])).values(),
     );
-
-    const finalResult = limit ? uniqueById.slice(0, limit) : uniqueById;
-    console.log(
-      `✅ DEBUG: Returning ${finalResult.length} kelas (mata kuliah optional)`,
-    );
-
-    return finalResult;
+    return limit ? finalResult.slice(0, limit) : finalResult;
   } catch (error) {
     console.error("Error fetching my kelas:", error);
     return [];
@@ -500,34 +482,29 @@ export async function getMyMataKuliah(
     if (!dosenId) {
       return [];
     }
-
-    const { data: kelasData, error: kelasError } = await supabase
-      .from("kelas")
-      .select(
-        `
-        id,
-        mata_kuliah_id,
-        mata_kuliah (
-          id,
-          kode_mk,
-          nama_mk,
-          sks,
-          semester,
-          program_studi
-        )
-      `,
-      )
+    const { data: jadwalData, error: jadwalError } = await (supabase as any)
+      .from("jadwal_praktikum")
+      .select("kelas_id, mata_kuliah_id")
       .eq("dosen_id", dosenId)
-      .eq("is_active", true);
-
-    if (kelasError) throw kelasError;
-
+      .eq("is_active", true)
+      .not("mata_kuliah_id", "is", null);
+    if (jadwalError) throw jadwalError;
+    if (!jadwalData || jadwalData.length === 0) return [];
+    const mkIds = Array.from(
+      new Set<string>(
+        (jadwalData || [])
+          .map((jadwal: any) => jadwal.mata_kuliah_id)
+          .filter((id): id is string => Boolean(id)),
+      ),
+    );
+    const { data: mataKuliahData, error: mkError } = await supabase
+      .from("mata_kuliah")
+      .select("id, kode_mk, nama_mk, sks, semester, program_studi")
+      .in("id", mkIds);
+    if (mkError) throw mkError;
     const mataKuliahMap = new Map();
-
-    for (const kelas of (kelasData as KelasDataForMK[] | null) || []) {
-      const mk = kelas.mata_kuliah;
+    for (const mk of (mataKuliahData as any[] | null) || []) {
       if (!mk) continue;
-
       if (!mataKuliahMap.has(mk.id)) {
         mataKuliahMap.set(mk.id, {
           ...mk,
@@ -535,37 +512,29 @@ export async function getMyMataKuliah(
           totalMahasiswa: 0,
         });
       }
-
-      const current = mataKuliahMap.get(mk.id);
-      current.totalKelas += 1;
     }
-
     for (const [mkId, mk] of mataKuliahMap.entries()) {
-      const { data: kelasIds } = await supabase
-        .from("kelas")
-        .select("id")
-        .eq("dosen_id", dosenId)
-        .eq("mata_kuliah_id", mkId);
-
-      if (kelasIds && kelasIds.length > 0) {
+      const kelasIds = [
+        ...new Set(
+          (jadwalData || [])
+            .filter((jadwal: any) => jadwal.mata_kuliah_id === mkId)
+            .map((jadwal: any) => jadwal.kelas_id)
+            .filter((id): id is string => Boolean(id)),
+        ),
+      ];
+      mk.totalKelas = kelasIds.length;
+      if (kelasIds.length > 0) {
         const { count } = await supabase
           .from("kelas_mahasiswa" as any)
           .select("*", { count: "exact", head: true })
-          .in(
-            "kelas_id",
-            kelasIds.map((k) => k.id),
-          );
-
+          .in("kelas_id", kelasIds);
         mk.totalMahasiswa = count || 0;
       }
     }
-
     let results = Array.from(mataKuliahMap.values());
-
     if (limit) {
       results = results.slice(0, limit);
     }
-
     return results;
   } catch (error) {
     console.error("Error fetching mata kuliah:", error);
@@ -609,6 +578,9 @@ export async function getUpcomingPracticum(
         status,
         is_active,
         kelas_id,
+        mata_kuliah:mata_kuliah_id (
+          nama_mk
+        ),
         kelas:kelas_id (
           id,
           nama_kelas,
@@ -672,7 +644,7 @@ export async function getUpcomingPracticum(
       lab_nama: item.laboratorium?.nama_lab || "-",
       lab_kode: item.laboratorium?.kode_lab || "-",
       kelas_nama: item.kelas?.nama_kelas || "-", // Nama kelas dari relasi
-      mata_kuliah_nama: item.kelas?.mata_kuliah?.nama_mk || "-",
+      mata_kuliah_nama: item.mata_kuliah?.nama_mk || "-",
     }));
   } catch (error) {
     // Menangkap error jika terjadi di luar query
@@ -700,11 +672,14 @@ type GradingData = {
   };
   kuis: {
     judul: string;
+    mata_kuliah?: {
+      nama_mk: string;
+    } | null;
     kelas: {
-      mata_kuliah: {
+      mata_kuliah?: {
         nama_mk: string;
-      };
-    };
+      } | null;
+    } | null;
   };
 } | null;
 
@@ -781,6 +756,9 @@ export async function getPendingGrading(
         ),
         kuis:kuis_id (
           judul,
+          mata_kuliah:mata_kuliah_id (
+            nama_mk
+          ),
           kelas:kelas_id (
             mata_kuliah:mata_kuliah_id (
               nama_mk
@@ -867,7 +845,10 @@ export async function getPendingGrading(
       id: item.id,
       mahasiswa_nama: item.mahasiswa?.user?.full_name || "-",
       mahasiswa_nim: item.mahasiswa?.nim || "-",
-      mata_kuliah_nama: item.kuis?.kelas?.mata_kuliah?.nama_mk || "-",
+      mata_kuliah_nama:
+        item.kuis?.mata_kuliah?.nama_mk ||
+        item.kuis?.kelas?.mata_kuliah?.nama_mk ||
+        "-",
       kuis_judul: item.kuis?.judul || "-",
       submitted_at: item.submitted_at,
       attempt_number: item.attempt_number,
@@ -1058,11 +1039,11 @@ export async function getKelasStudents(
         mahasiswa_id,
         enrolled_at,
         is_active,
-        mahasiswa (
+        mahasiswa:mahasiswa_id (
           id,
           nim,
-          users (
-            nama,
+          users:user_id (
+            full_name,
             email
           )
         )
@@ -1078,7 +1059,7 @@ export async function getKelasStudents(
       id: item.id,
       mahasiswa_id: item.mahasiswa_id,
       nim: item.mahasiswa?.nim || "-",
-      nama: item.mahasiswa?.users?.nama || "Unknown",
+      nama: item.mahasiswa?.users?.full_name || "Unknown",
       email: item.mahasiswa?.users?.email || "-",
       enrolled_at: item.enrolled_at,
       is_active: item.is_active,
@@ -1096,44 +1077,73 @@ export async function getMyKelasWithStudents(): Promise<KelasWithStudents[]> {
   try {
     const dosenId = await getDosenId();
     if (!dosenId) return [];
-
-    // ✅ FIXED: Get kelas directly from assignment system (kelas table)
-    const { data: kelasData, error } = await supabase
-      .from("kelas")
-      .select(
-        `
-        id,
-        kode_kelas,
-        nama_kelas,
-        tahun_ajaran,
-        semester_ajaran,
-        kuota,
-        mata_kuliah_id,
-        mata_kuliah (
-          id,
-          nama_mk,
-          kode_mk
-        )
-      `,
-      )
+    const { data: jadwalData, error: jadwalError } = await (supabase as any)
+      .from("jadwal_praktikum")
+      .select("kelas_id, mata_kuliah_id, tanggal_praktikum")
       .eq("dosen_id", dosenId)
-      .eq("is_active", true);
-
-    if (error) throw error;
+      .eq("is_active", true)
+      .order("tanggal_praktikum", { ascending: false });
+    if (jadwalError) throw jadwalError;
+    if (!jadwalData || jadwalData.length === 0) return [];
+    const kelasIds = Array.from(
+      new Set<string>(
+        (jadwalData || [])
+          .map((jadwal: any) => jadwal.kelas_id)
+          .filter((id): id is string => Boolean(id)),
+      ),
+    );
+    const kelasMkMap = new Map<string, string>();
+    (jadwalData || []).forEach((jadwal: any) => {
+      if (
+        jadwal?.kelas_id &&
+        jadwal?.mata_kuliah_id &&
+        !kelasMkMap.has(jadwal.kelas_id)
+      ) {
+        kelasMkMap.set(jadwal.kelas_id, jadwal.mata_kuliah_id);
+      }
+    });
+    const mkIds: string[] = [
+      ...new Set(
+        Array.from(kelasMkMap.values()).filter(
+          (id): id is string => Boolean(id),
+        ),
+      ),
+    ];
+    const [kelasDataResult, mataKuliahResult] = await Promise.all([
+      supabase
+        .from("kelas")
+        .select(
+          "id, kode_kelas, nama_kelas, tahun_ajaran, semester_ajaran, kuota",
+        )
+        .in("id", kelasIds)
+        .eq("is_active", true),
+      mkIds.length > 0
+        ? supabase
+            .from("mata_kuliah")
+            .select("id, nama_mk, kode_mk")
+            .in("id", mkIds)
+        : Promise.resolve({ data: [], error: null }),
+    ]);
+    if (kelasDataResult.error) throw kelasDataResult.error;
+    if (mataKuliahResult.error) throw mataKuliahResult.error;
+    const kelasData = kelasDataResult.data;
     if (!kelasData) return [];
-
-    // Process kelas data (no more nested structure)
+    const mkMap = new Map(
+      ((mataKuliahResult.data as any[]) || []).map((mk: any) => [mk.id, mk]),
+    );
     const result = await Promise.all(
       (kelasData || []).map(async (kelas: any) => {
-        // mata_kuliah is already included in the query, no need for separate query
+        const resolvedMataKuliahId = kelasMkMap.get(kelas.id) || null;
+        const mataKuliah = resolvedMataKuliahId
+          ? mkMap.get(resolvedMataKuliahId)
+          : null;
         const students = await getKelasStudents(kelas.id);
-
         return {
           id: kelas.id,
           kode_kelas: kelas.kode_kelas,
           nama_kelas: kelas.nama_kelas,
-          mata_kuliah_kode: kelas.mata_kuliah?.kode_mk || "-",
-          mata_kuliah_nama: kelas.mata_kuliah?.nama_mk || "-",
+          mata_kuliah_kode: mataKuliah?.kode_mk || "-",
+          mata_kuliah_nama: mataKuliah?.nama_mk || "-",
           tahun_ajaran: kelas.tahun_ajaran,
           semester_ajaran: kelas.semester_ajaran,
           kuota: kelas.kuota,
@@ -1379,6 +1389,7 @@ async function returnBorrowingRequestImpl(data: {
     | "hilang";
   keterangan_kembali?: string;
 }): Promise<{ id: string }> {
+  let returnTimestamp: string | null = null;
   try {
     // Get peminjaman details
     const { data: peminjamanData, error: fetchError } = await supabase
@@ -1396,11 +1407,12 @@ async function returnBorrowingRequestImpl(data: {
     }
 
     // Update peminjaman status to returned
+    returnTimestamp = new Date().toISOString().split("T")[0];
     const { error: updateError } = await supabase
       .from("peminjaman")
       .update({
         status: "returned",
-        tanggal_kembali_aktual: new Date().toISOString().split("T")[0],
+        tanggal_kembali_aktual: returnTimestamp,
         kondisi_kembali: data.kondisi_kembali as any,
         keterangan_kembali: data.keterangan_kembali || null,
       })
@@ -1425,7 +1437,20 @@ async function returnBorrowingRequestImpl(data: {
       })
       .eq("id", peminjamanData.inventaris_id);
 
-    if (stockError) throw stockError;
+    if (stockError) {
+      await supabase
+        .from("peminjaman")
+        .update({
+          status: peminjamanData.status,
+          tanggal_kembali_aktual: null,
+          kondisi_kembali: null,
+          keterangan_kembali: null,
+        })
+        .eq("id", data.peminjaman_id)
+        .eq("status", "returned");
+
+      throw new Error(`Gagal memulihkan stok: ${stockError.message}`);
+    }
 
     return { id: peminjamanData.id };
   } catch (error) {
@@ -1441,22 +1466,23 @@ export const returnBorrowingRequest = requirePermission(
 );
 
 /**
- * Mark borrowing as in_use when dosen takes the equipment
+ * Validate borrowing is still approved before downstream actions.
+ * Stock has already been allocated when laboran approves the request.
  */
 async function markBorrowingAsTakenImpl(
   peminjaman_id: string,
 ): Promise<{ id: string }> {
   try {
-    // Update peminjaman status from 'approved' to 'in_use'
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("peminjaman")
-      .update({
-        status: "returned", // Changed from 'in_use' to valid status
-      })
+      .select("id")
       .eq("id", peminjaman_id)
       .eq("status", "approved"); // Only allow if currently approved
 
     if (error) throw error;
+    if (!data || data.length === 0) {
+      throw new Error("Peminjaman tidak ditemukan atau tidak lagi disetujui");
+    }
 
     return { id: peminjaman_id };
   } catch (error) {
@@ -1825,3 +1851,4 @@ export const checkDosenAssignmentChanges = requirePermission(
   "read:dashboard",
   checkDosenAssignmentChangesImpl,
 );
+

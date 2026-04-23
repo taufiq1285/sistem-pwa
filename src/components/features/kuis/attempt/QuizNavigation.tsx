@@ -238,7 +238,7 @@ export function QuizNavigation({
 /**
  * Create question status array from soal list and answers
  */
-export function createQuestionStatusList(
+function createQuestionStatusList(
   questions: Array<{ id: string }>,
   answers: Record<string, any>,
 ): QuestionStatus[] {
@@ -253,7 +253,7 @@ export function createQuestionStatusList(
 /**
  * Get navigation summary
  */
-export function getNavigationSummary(questions: QuestionStatus[]): {
+function getNavigationSummary(questions: QuestionStatus[]): {
   total: number;
   answered: number;
   unanswered: number;
@@ -276,7 +276,7 @@ export function getNavigationSummary(questions: QuestionStatus[]): {
 /**
  * Find next unanswered question
  */
-export function findNextUnanswered(
+function findNextUnanswered(
   questions: QuestionStatus[],
   currentNumber: number,
 ): number | null {
@@ -298,13 +298,13 @@ export function findNextUnanswered(
 /**
  * Check if all questions are answered
  */
-export function areAllQuestionsAnswered(questions: QuestionStatus[]): boolean {
+function areAllQuestionsAnswered(questions: QuestionStatus[]): boolean {
   return questions.every((q) => q.isAnswered);
 }
 
 /**
  * Get unanswered question numbers
  */
-export function getUnansweredQuestions(questions: QuestionStatus[]): number[] {
+function getUnansweredQuestions(questions: QuestionStatus[]): number[] {
   return questions.filter((q) => !q.isAnswered).map((q) => q.number);
 }

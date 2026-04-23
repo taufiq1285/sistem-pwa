@@ -127,6 +127,12 @@ export async function getJadwal(filters?: JadwalFilters): Promise<Jadwal[]> {
     const options = {
       select: `
         *,
+        mata_kuliah:mata_kuliah_id (
+          id,
+          nama_mk,
+          kode_mk,
+          sks
+        ),
         laboratorium:laboratorium_id (
           nama_lab,
           kode_lab,
@@ -184,6 +190,12 @@ export async function getJadwalById(id: string): Promise<Jadwal> {
     return await getById<Jadwal>("jadwal_praktikum", id, {
       select: `
         *,
+        mata_kuliah:mata_kuliah_id (
+          id,
+          nama_mk,
+          kode_mk,
+          sks
+        ),
         laboratorium:laboratorium_id (*)
       `,
       // ✅ Enable caching for better offline support
@@ -350,8 +362,15 @@ export async function getCalendarEvents(
       {
         select: `
           *,
+          mata_kuliah:mata_kuliah_id (
+            id,
+            nama_mk,
+            kode_mk,
+            sks
+          ),
           kelas:kelas_id (
             nama_kelas,
+            kode_kelas,
             mata_kuliah:mata_kuliah_id (
               nama_mk
             )
@@ -419,7 +438,8 @@ export async function getCalendarEvents(
         const kelasRelation =
           typeof j.kelas === "object" && j.kelas !== null ? j.kelas : undefined;
         const kelasNama = kelasRelation?.nama_kelas || "Kelas";
-        const mataKuliahNama = kelasRelation?.mata_kuliah?.nama_mk || "";
+        const mataKuliahNama =
+          j.mata_kuliah?.nama_mk || kelasRelation?.mata_kuliah?.nama_mk || "";
         const labNama = j.laboratorium?.nama_lab || "Lab";
 
         // Build title with mata kuliah if available
@@ -565,6 +585,7 @@ async function createJadwalImpl(data: CreateJadwalData): Promise<Jadwal> {
 
     const insertData: Partial<Jadwal> = {
       dosen_id: dosenId, // ✅ FIX: Set dosen_id saat create jadwal
+      mata_kuliah_id: data.mata_kuliah_id,
       kelas_id: data.kelas_id,
       laboratorium_id: data.laboratorium_id,
       tanggal_praktikum: format(tanggalPraktikum, "yyyy-MM-dd"),
@@ -621,6 +642,8 @@ async function updateJadwalImpl(
 
     // Copy basic fields
     if (data.kelas_id !== undefined) updateData.kelas_id = data.kelas_id;
+    if (data.mata_kuliah_id !== undefined)
+      updateData.mata_kuliah_id = data.mata_kuliah_id;
     if (data.laboratorium_id !== undefined)
       updateData.laboratorium_id = data.laboratorium_id;
     if (data.jam_mulai !== undefined) updateData.jam_mulai = data.jam_mulai;
@@ -959,6 +982,12 @@ async function getAllJadwalForLaboranImpl(filters?: {
       {
         select: `
           *,
+          mata_kuliah:mata_kuliah_id (
+            id,
+            nama_mk,
+            kode_mk,
+            sks
+          ),
           kelas:kelas_id (
             nama_kelas,
             kode_kelas,

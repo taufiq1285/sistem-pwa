@@ -24,6 +24,7 @@ import {
   BookOpen,
   UserCheck,
   Bell,
+  Megaphone,
   NotebookPen,
   RefreshCw,
   type LucideIcon,
@@ -237,10 +238,16 @@ const adminNavigation: NavigationItem[] = [
     description: "Kelola assignment & jadwal terpadu",
   },
   {
+    label: "Pengumuman",
+    href: "/admin/announcements",
+    icon: Megaphone,
+    description: "Kelola broadcast pengumuman",
+  },
+  {
     label: "Notifikasi",
     href: "/admin/notifikasi",
     icon: Bell,
-    description: "Kelola pengumuman",
+    description: "Lihat notifikasi",
   },
   {
     label: "Sinkronisasi Offline",

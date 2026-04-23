@@ -377,7 +377,7 @@ export function DashboardPage() {
                     </h1>
                     <p className="mt-1 text-sm text-muted-foreground sm:text-base">
                       Ringkasan operasional laboratorium, approval, inventaris,
-                      dan jadwal praktikum aktif.
+                      dan praktikum yang perlu ditangani hari ini.
                     </p>
                   </div>
                 </div>

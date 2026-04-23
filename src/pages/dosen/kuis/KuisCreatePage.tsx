@@ -5,7 +5,7 @@
  * Route: /dosen/kuis/create
  *
  * Tugas Praktikum:
- * 1. LAPORAN - WAJIB ada untuk setiap praktikum (essay/upload file)
+ * 1. LAPORAN - WAJIB ada untuk setiap praktikum (isian laporan/upload berkas)
  * 2. TES (Pre/Post-test) - OPSIONAL, tidak semua praktikum ada tes (CBT pilihan ganda)
  */
 
@@ -186,8 +186,8 @@ export default function KuisCreatePage() {
                         📄 Laporan Praktikum
                       </h3>
                       <p className="text-sm text-success/70">
-                        Mahasiswa membuat laporan dalam bentuk essay atau upload
-                        file.
+                        Mahasiswa mengumpulkan laporan dalam bentuk isian
+                        laporan atau upload berkas.
                       </p>
                       <div className="mt-3 inline-block rounded-full bg-success/10 px-3 py-1 text-xs text-success">
                         Essay • PDF • Word
@@ -279,8 +279,8 @@ export default function KuisCreatePage() {
                   Buat Tugas Laporan
                 </h1>
                 <p className="text-sm text-primary-foreground/80 sm:text-base">
-                  Mahasiswa akan membuat laporan praktikum dalam bentuk essay
-                  atau upload file (PDF/Word).
+                  Mahasiswa akan mengumpulkan laporan praktikum dalam bentuk
+                  isian laporan atau upload berkas (PDF/Word).
                 </p>
                 <div className="flex flex-wrap gap-2">
                   <div className="inline-flex items-center gap-2 rounded-full bg-white/20 px-3 py-1 text-sm backdrop-blur-sm">

@@ -39,14 +39,20 @@ import {
 } from "@/components/ui/alert-dialog";
 
 // Custom Components
-import { QuizTimer, clearTimerData, getStoredTimeRemaining } from "./QuizTimer";
+import { QuizTimer } from "./QuizTimer";
+import {
+  clearTimerData,
+  getStoredTimeRemaining,
+} from "./quiz-timer.utils";
 import {
   QuizNavigation,
+  type QuestionStatus,
+} from "./QuizNavigation";
+import {
   createQuestionStatusList,
   areAllQuestionsAnswered,
   getUnansweredQuestions,
-  type QuestionStatus,
-} from "./QuizNavigation";
+} from "./quiz-navigation.utils";
 import { ConnectionLostAlert } from "./ConnectionLostAlert";
 import { OfflineAutoSave } from "./OfflineAutoSave";
 import { FileUpload, type UploadedFile } from "../FileUpload";
@@ -62,6 +68,9 @@ import {
   getOfflineAnswers,
   syncOfflineAnswers,
   cacheAttemptOffline,
+  markAttemptSubmittedOffline,
+  getLatestCachedAttemptForQuiz,
+  syncPendingOfflineQuizSubmission,
 } from "@/lib/api/kuis.api";
 // ✅ SECURITY FIX: Import secure API untuk hide jawaban_benar
 import { getSoalForAttempt } from "@/lib/api/kuis-secure.api";
@@ -187,10 +196,17 @@ export function QuizAttempt({
   const isLastQuestion = currentQuestionIndex === totalQuestions - 1;
   const totalPoints = questions.reduce((sum, q) => sum + (q.poin || 0), 0);
 
-  // Check if this is a LAPORAN mode (all questions are file uploads)
+  // Source of truth: laporan/CBT follows quiz.tipe_kuis.
+  // Fallback to question structure only for legacy data that has no tipe_kuis.
   const isLaporanMode =
-    questions.length > 0 &&
-    questions.every((q) => q.tipe_soal === TIPE_SOAL.FILE_UPLOAD);
+    quiz?.tipe_kuis === "essay" ||
+    (!quiz?.tipe_kuis &&
+      questions.length > 0 &&
+      questions.every(
+        (q) =>
+          q.tipe_soal === TIPE_SOAL.FILE_UPLOAD ||
+          q.tipe_soal === TIPE_SOAL.ESSAY,
+      ));
 
   // Question status for navigation
   const questionStatus: QuestionStatus[] = createQuestionStatusList(
@@ -223,16 +239,32 @@ export function QuizAttempt({
    */
   useEffect(() => {
     if (isOnline && attempt) {
-      syncOfflineAnswers(attempt.id)
-        .then((count) => {
-          if (count > 0) {
+      const syncAttempt = async () => {
+        if (attempt.offline_submit_pending) {
+          const syncedAttempt = await syncPendingOfflineQuizSubmission(
+            attempt.id,
+          );
+
+          if (syncedAttempt) {
+            setAttempt(syncedAttempt);
             toast.success(
-              `Sinyal kembali! ${count} jawaban offline berhasil disinkronkan ke server.`,
+              "Sinyal kembali! Tugas yang tadi dikumpulkan offline sudah berhasil disinkronkan.",
             );
           }
-        })
+          return;
+        }
+
+        const count = await syncOfflineAnswers(attempt.id);
+        if (count > 0) {
+          toast.success(
+            `Sinyal kembali! ${count} jawaban offline berhasil disinkronkan ke server.`,
+          );
+        }
+      };
+
+      syncAttempt()
         .catch((err) => {
-          console.error("Failed to sync offline answers:", err);
+          console.error("Failed to sync offline quiz state:", err);
         });
     }
   }, [isOnline, attempt]);
@@ -362,56 +394,84 @@ export function QuizAttempt({
         // Start new attempt
         console.log("🔵 Starting new attempt for kuis:", kuisId);
 
-        // ✅ LAPORAN MODE: Check if already submitted, prevent retake
-        // Check if this is laporan mode (all questions are FILE_UPLOAD)
-        const isThisLaporanMode =
-          orderedQuestions.length > 0 &&
-          orderedQuestions.every(
-            (q: Soal) => q.tipe_soal === TIPE_SOAL.FILE_UPLOAD,
-          );
+        const cachedAttempt = await getLatestCachedAttemptForQuiz(
+          kuisId,
+          mahasiswaId,
+        );
 
-        if (isThisLaporanMode) {
-          console.log("🔵 LAPORAN MODE: Checking for existing attempts...");
-
-          // Check for any existing attempt (submitted or in_progress)
-          const { data: existingAttempts } = await supabase
-            .from("attempt_kuis")
-            .select("*")
-            .eq("kuis_id", kuisId)
-            .eq("mahasiswa_id", mahasiswaId)
-            .in("status", ["in_progress", "submitted", "graded"])
-            .order("submitted_at", { ascending: false })
-            .limit(1);
-
-          if (existingAttempts && existingAttempts.length > 0) {
-            const existingAttempt = existingAttempts[0];
-            console.log(
-              "✅ LAPORAN MODE: Found existing attempt:",
-              existingAttempt.id,
-              "status:",
-              existingAttempt.status,
-            );
-
-            // Redirect to result page
-            toast.info(
-              "Anda sudah mengirim laporan ini. Mengarahkan ke hasil...",
-            );
-            navigate(`/mahasiswa/kuis/${kuisId}/result/${existingAttempt.id}`);
-            setIsLoading(false);
-            return; // Stop here, already redirected
+        if (cachedAttempt) {
+          if (cachedAttempt.status !== "in_progress") {
+            toast.info("Tugas sudah pernah dikumpulkan di perangkat ini.");
+            navigate(`/mahasiswa/kuis/${kuisId}/result/${cachedAttempt.id}`);
+            return;
           }
-        }
 
-        try {
-          attemptData = await startAttempt({
-            kuis_id: kuisId,
-            mahasiswa_id: mahasiswaId,
-          });
+          attemptData = cachedAttempt;
+          await cacheAttemptOffline(cachedAttempt);
+        } else if (!isOnline) {
+          throw new Error(
+            "Perangkat sedang offline dan attempt tugas ini belum pernah dimulai di perangkat ini.",
+          );
+        } else {
 
-          // Cache attempt for offline use
-          await cacheAttemptOffline(attemptData);
-          toast.success("Tugas praktikum dimulai!");
-        } catch (startError: any) {
+          // ✅ LAPORAN MODE: Check if already submitted, prevent retake
+          // Source of truth stays on quiz.tipe_kuis, with a safe fallback for legacy data.
+          const isThisLaporanMode =
+            quizData?.tipe_kuis === "essay" ||
+            (!quizData?.tipe_kuis &&
+              orderedQuestions.length > 0 &&
+              orderedQuestions.every(
+                (q: Soal) =>
+                  q.tipe_soal === TIPE_SOAL.FILE_UPLOAD ||
+                  q.tipe_soal === TIPE_SOAL.ESSAY,
+              ));
+
+          if (isThisLaporanMode) {
+            console.log("🔵 LAPORAN MODE: Checking for existing attempts...");
+
+            // Check for any existing attempt (submitted or in_progress)
+            const { data: existingAttempts } = await supabase
+              .from("attempt_kuis")
+              .select("*")
+              .eq("kuis_id", kuisId)
+              .eq("mahasiswa_id", mahasiswaId)
+              .in("status", ["in_progress", "submitted", "graded"])
+              .order("submitted_at", { ascending: false })
+              .limit(1);
+
+            if (existingAttempts && existingAttempts.length > 0) {
+              const existingAttempt = existingAttempts[0];
+              console.log(
+                "✅ LAPORAN MODE: Found existing attempt:",
+                existingAttempt.id,
+                "status:",
+                existingAttempt.status,
+              );
+
+              // Redirect to result page
+              toast.info(
+                "Anda sudah mengirim laporan ini. Mengarahkan ke hasil...",
+              );
+              navigate(`/mahasiswa/kuis/${kuisId}/result/${existingAttempt.id}`);
+              setIsLoading(false);
+              return; // Stop here, already redirected
+            }
+          }
+
+          try {
+            attemptData = await startAttempt({
+              kuis_id: kuisId,
+              mahasiswa_id: mahasiswaId,
+            });
+
+            // Cache attempt for offline use
+            await cacheAttemptOffline(attemptData);
+            toast.success(
+              isThisLaporanMode
+                ? "Tugas laporan praktikum dibuka!"
+                : "Tugas CBT praktikum dimulai!",
+            );
+          } catch (startError: any) {
           // ✅ FIX: Handle max attempts reached error
           const errorMessage = startError?.message || "";
 
@@ -467,8 +527,9 @@ export function QuizAttempt({
             }
           }
 
-          // Other errors - rethrow
-          throw startError;
+            // Other errors - rethrow
+            throw startError;
+          }
         }
       }
 
@@ -712,13 +773,6 @@ export function QuizAttempt({
       return;
     }
 
-    if (!navigator.onLine) {
-      toast.error(
-        "Submit kuis belum didukung saat offline. Sambungkan internet terlebih dahulu untuk mengirim jawaban.",
-      );
-      return;
-    }
-
     console.log("🐛 [QuizAttempt] Submitting quiz...");
     console.log("🐛 [QuizAttempt] Attempt ID:", attempt.id);
     console.log("🐛 [QuizAttempt] Kuis ID:", kuisId);
@@ -727,6 +781,42 @@ export function QuizAttempt({
     setIsSubmitting(true);
 
     try {
+      if (!navigator.onLine) {
+        const answerEntries = Object.entries(answers);
+
+        for (const [soalId, jawaban] of answerEntries) {
+          const fileUpload = fileUploads[soalId];
+          await submitAnswerOffline({
+            attempt_id: attempt.id,
+            soal_id: soalId,
+            jawaban,
+            file_url: fileUpload?.url,
+            file_name: fileUpload?.name,
+            file_size: fileUpload?.size,
+            file_type: fileUpload?.type,
+          });
+        }
+
+        const offlineSubmittedAttempt = await markAttemptSubmittedOffline(
+          {
+            ...attempt,
+            kuis: attempt.kuis || quiz || undefined,
+          },
+          getRemainingTime(),
+        );
+
+        setAttempt(offlineSubmittedAttempt);
+        clearTimerData(attempt.id);
+
+        toast.success("Tugas berhasil dikumpulkan secara offline", {
+          description:
+            "Jawaban disimpan di perangkat dan akan dikirim ke server saat koneksi kembali.",
+        });
+
+        navigate(`/mahasiswa/kuis/${kuisId}/result/${attempt.id}`);
+        return;
+      }
+
       // ✅ FIX: Save ALL answers from state before submitting
       // Previously only saved current answer, causing answered questions to be lost
       console.log("🐛 [QuizAttempt] Saving all answers before submit...");
@@ -780,7 +870,11 @@ export function QuizAttempt({
       // Clear timer data
       clearTimerData(attempt.id);
 
-      toast.success("Tugas praktikum berhasil disubmit");
+      toast.success(
+        isLaporanMode
+          ? "Laporan praktikum berhasil dikirim"
+          : "Tugas CBT praktikum berhasil disubmit",
+      );
 
       // Redirect to results - use returned attempt id
       const resultAttemptId = submittedAttempt?.id || attempt.id;
@@ -1218,7 +1312,16 @@ Contoh:
           <AlertDialogHeader>
             <AlertDialogTitle>Submit Tugas?</AlertDialogTitle>
             <AlertDialogDescription>
-              {areAllQuestionsAnswered(questionStatus) ? (
+              {!navigator.onLine ? (
+                <>
+                  Perangkat sedang offline.
+                  <br />
+                  <br />
+                  Jika Anda lanjutkan, tugas akan disimpan sebagai sudah
+                  dikumpulkan di perangkat ini dan otomatis disinkronkan saat
+                  koneksi kembali.
+                </>
+              ) : areAllQuestionsAnswered(questionStatus) ? (
                 <>
                   Anda telah menjawab semua soal. Yakin ingin submit tugas
                   sekarang?
@@ -1244,7 +1347,7 @@ Contoh:
             <AlertDialogCancel disabled={isSubmitting}>Batal</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleSubmitQuiz}
-              disabled={isSubmitting || !navigator.onLine}
+              disabled={isSubmitting}
             >
               {isSubmitting ? (
                 <>
@@ -1252,7 +1355,7 @@ Contoh:
                   Submitting...
                 </>
               ) : (
-                "Ya, Submit"
+                navigator.onLine ? "Ya, Submit" : "Ya, Simpan Offline"
               )}
             </AlertDialogAction>
           </AlertDialogFooter>

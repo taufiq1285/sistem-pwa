@@ -5,14 +5,14 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { Essay } from "@/components/features/kuis/question-types/Essay";
 import {
-  Essay,
   validateEssay,
   getDefaultEssaySettings,
   countWords,
   countCharacters,
   validateEssayAnswer,
-} from "@/components/features/kuis/question-types/Essay";
+} from "@/components/features/kuis/question-types/essay.utils";
 
 describe("Essay Component", () => {
   const onChange = vi.fn();

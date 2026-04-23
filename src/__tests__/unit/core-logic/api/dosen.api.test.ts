@@ -21,6 +21,7 @@ import {
   getMyKelasWithStudents,
   __resetDosenIdCache,
   __setDosenIdCache,
+  getUpcomingPracticum,
 } from "@/lib/api/dosen.api";
 import * as dosenApi from "@/lib/api/dosen.api";
 import { supabase } from "@/lib/supabase/client";
@@ -311,6 +312,18 @@ describe("Dosen API - Kelas Management", () => {
 
   describe("getMyKelas", () => {
     it("should return kelas with stats for dosen", async () => {
+      const jadwalBuilder = mockQueryBuilder();
+      jadwalBuilder._setResolveValue({
+        data: [
+          {
+            kelas_id: "kelas-1",
+            mata_kuliah_id: "mk-1",
+            tanggal_praktikum: "2024-01-10",
+          },
+        ],
+        error: null,
+      });
+
       const kelasBuilder = mockQueryBuilder();
       kelasBuilder._setResolveValue({
         data: [
@@ -320,7 +333,6 @@ describe("Dosen API - Kelas Management", () => {
             nama_kelas: "Kelas A",
             tahun_ajaran: "2024/2025",
             semester_ajaran: 1,
-            mata_kuliah_id: "mk-1",
             is_active: true,
           },
         ],
@@ -343,6 +355,7 @@ describe("Dosen API - Kelas Management", () => {
       mahasiswaCountBuilder._setResolveValue({ count: 30, error: null });
 
       (supabase.from as any)
+        .mockReturnValueOnce(jadwalBuilder) // jadwal_praktikum
         .mockReturnValueOnce(kelasBuilder) // kelas
         .mockReturnValueOnce(mkBuilder) // mata_kuliah
         .mockReturnValueOnce(mahasiswaCountBuilder); // kelas_mahasiswa count
@@ -363,7 +376,73 @@ describe("Dosen API - Kelas Management", () => {
       });
     });
 
+    it("should not fallback to kelas.mata_kuliah_id when jadwal has no mata kuliah", async () => {
+      const jadwalBuilder = mockQueryBuilder();
+      jadwalBuilder._setResolveValue({
+        data: [
+          {
+            kelas_id: "kelas-1",
+            mata_kuliah_id: null,
+            tanggal_praktikum: "2024-01-10",
+          },
+        ],
+        error: null,
+      });
+
+      const kelasBuilder = mockQueryBuilder();
+      kelasBuilder._setResolveValue({
+        data: [
+          {
+            id: "kelas-1",
+            kode_kelas: "IF-101",
+            nama_kelas: "Kelas A",
+            tahun_ajaran: "2024/2025",
+            semester_ajaran: 1,
+            mata_kuliah_id: "legacy-mk",
+            is_active: true,
+          },
+        ],
+        error: null,
+      });
+
+      const countBuilder = mockQueryBuilder();
+      countBuilder._setResolveValue({ count: 30, error: null });
+
+      (supabase.from as any)
+        .mockReturnValueOnce(jadwalBuilder)
+        .mockReturnValueOnce(kelasBuilder)
+        .mockReturnValue(countBuilder);
+
+      const result = await getMyKelas();
+
+      expect(result).toHaveLength(1);
+      expect(result[0].mata_kuliah_id).toBeNull();
+      expect(result[0].mata_kuliah_nama).toBe("");
+    });
+
     it("should apply limit when provided", async () => {
+      const jadwalBuilder = mockQueryBuilder();
+      jadwalBuilder._setResolveValue({
+        data: [
+          {
+            kelas_id: "kelas-1",
+            mata_kuliah_id: "mk-1",
+            tanggal_praktikum: "2024-01-10",
+          },
+          {
+            kelas_id: "kelas-2",
+            mata_kuliah_id: "mk-2",
+            tanggal_praktikum: "2024-01-09",
+          },
+          {
+            kelas_id: "kelas-3",
+            mata_kuliah_id: "mk-3",
+            tanggal_praktikum: "2024-01-08",
+          },
+        ],
+        error: null,
+      });
+
       // Mock kelas query with 3 items
       const kelasBuilder = mockQueryBuilder();
       kelasBuilder._setResolveValue({
@@ -374,7 +453,6 @@ describe("Dosen API - Kelas Management", () => {
             nama_kelas: "Kelas A",
             tahun_ajaran: "2024/2025",
             semester_ajaran: 1,
-            mata_kuliah_id: "mk-1",
             is_active: true,
           },
           {
@@ -383,7 +461,6 @@ describe("Dosen API - Kelas Management", () => {
             nama_kelas: "Kelas B",
             tahun_ajaran: "2024/2025",
             semester_ajaran: 1,
-            mata_kuliah_id: "mk-2",
             is_active: true,
           },
           {
@@ -392,7 +469,6 @@ describe("Dosen API - Kelas Management", () => {
             nama_kelas: "Kelas C",
             tahun_ajaran: "2024/2025",
             semester_ajaran: 1,
-            mata_kuliah_id: "mk-3",
             is_active: true,
           },
         ],
@@ -413,6 +489,7 @@ describe("Dosen API - Kelas Management", () => {
       countBuilder._setResolveValue({ count: 10, error: null });
 
       (supabase.from as any)
+        .mockReturnValueOnce(jadwalBuilder)
         .mockReturnValueOnce(kelasBuilder)
         .mockReturnValueOnce(mkBuilder)
         .mockReturnValue(countBuilder);
@@ -435,6 +512,28 @@ describe("Dosen API - Kelas Management", () => {
     });
 
     it("should handle duplicate kelas correctly", async () => {
+      const jadwalBuilder = mockQueryBuilder();
+      jadwalBuilder._setResolveValue({
+        data: [
+          {
+            kelas_id: "kelas-1",
+            mata_kuliah_id: "mk-1",
+            tanggal_praktikum: "2024-01-10",
+          },
+          {
+            kelas_id: "kelas-1",
+            mata_kuliah_id: "mk-1",
+            tanggal_praktikum: "2024-01-09",
+          },
+          {
+            kelas_id: "kelas-2",
+            mata_kuliah_id: "mk-2",
+            tanggal_praktikum: "2024-01-08",
+          },
+        ],
+        error: null,
+      });
+
       // Mock kelas query with duplicates
       const kelasBuilder = mockQueryBuilder();
       kelasBuilder._setResolveValue({
@@ -445,7 +544,6 @@ describe("Dosen API - Kelas Management", () => {
             nama_kelas: "Kelas A",
             tahun_ajaran: "2024/2025",
             semester_ajaran: 1,
-            mata_kuliah_id: "mk-1",
             is_active: true,
           },
           {
@@ -454,7 +552,6 @@ describe("Dosen API - Kelas Management", () => {
             nama_kelas: "Kelas A",
             tahun_ajaran: "2024/2025",
             semester_ajaran: 1,
-            mata_kuliah_id: "mk-1",
             is_active: true,
           }, // Duplicate
           {
@@ -463,7 +560,6 @@ describe("Dosen API - Kelas Management", () => {
             nama_kelas: "Kelas B",
             tahun_ajaran: "2024/2025",
             semester_ajaran: 1,
-            mata_kuliah_id: "mk-2",
             is_active: true,
           },
         ],
@@ -483,6 +579,7 @@ describe("Dosen API - Kelas Management", () => {
       countBuilder._setResolveValue({ count: 10, error: null });
 
       (supabase.from as any)
+        .mockReturnValueOnce(jadwalBuilder)
         .mockReturnValueOnce(kelasBuilder)
         .mockReturnValueOnce(mkBuilder)
         .mockReturnValue(countBuilder);
@@ -496,37 +593,35 @@ describe("Dosen API - Kelas Management", () => {
 
   describe("getMyMataKuliah", () => {
     it("should return mata kuliah with aggregated stats", async () => {
-      const kelasBuilder = mockQueryBuilder();
-      kelasBuilder._setResolveValue({
+      const jadwalBuilder = mockQueryBuilder();
+      jadwalBuilder._setResolveValue({
         data: [
           {
-            id: "kelas-1",
-            mata_kuliah: { ...mockMataKuliah, id: "mk-1" },
+            kelas_id: "kelas-1",
+            mata_kuliah_id: "mk-1",
           },
           {
-            id: "kelas-2",
-            mata_kuliah: { ...mockMataKuliah, id: "mk-1" }, // Same MK
+            kelas_id: "kelas-2",
+            mata_kuliah_id: "mk-1",
           },
         ],
         error: null,
       });
 
-      // Mock for getting kelas IDs by mata_kuliah
-      const kelasIdsBuilder = mockQueryBuilder();
-      kelasIdsBuilder._setResolveValue({
-        data: [{ id: "kelas-1" }, { id: "kelas-2" }],
+      const mkBuilder = mockQueryBuilder();
+      mkBuilder._setResolveValue({
+        data: [{ ...mockMataKuliah, id: "mk-1" }],
         error: null,
       });
 
-      // Mock for counting mahasiswa
       const countBuilder = {
         select: vi.fn().mockReturnThis(),
         in: vi.fn().mockResolvedValue({ count: 50, error: null }),
       };
 
       (supabase.from as any)
-        .mockReturnValueOnce(kelasBuilder) // Initial kelas query
-        .mockReturnValueOnce(kelasIdsBuilder) // Get kelas IDs for MK
+        .mockReturnValueOnce(jadwalBuilder) // jadwal_praktikum
+        .mockReturnValueOnce(mkBuilder) // mata_kuliah
         .mockReturnValueOnce(countBuilder); // Count mahasiswa
 
       const result = await getMyMataKuliah();
@@ -542,49 +637,42 @@ describe("Dosen API - Kelas Management", () => {
     });
 
     it("should apply limit when provided", async () => {
-      // Mock initial kelas query with proper chaining for .eq().eq()
-      const kelasBuilder = mockQueryBuilder();
-      kelasBuilder._setResolveValue({
+      const jadwalBuilder = mockQueryBuilder();
+      jadwalBuilder._setResolveValue({
         data: [
-          { id: "kelas-1", mata_kuliah: { ...mockMataKuliah, id: "mk-1" } },
           {
-            id: "kelas-2",
-            mata_kuliah: {
-              ...mockMataKuliah,
-              id: "mk-2",
-              kode_mk: "IF102",
-              nama_mk: "Database",
-            },
+            kelas_id: "kelas-1",
+            mata_kuliah_id: "mk-1",
           },
           {
-            id: "kelas-3",
-            mata_kuliah: {
-              ...mockMataKuliah,
-              id: "mk-3",
-              kode_mk: "IF103",
-              nama_mk: "Algoritma",
-            },
+            kelas_id: "kelas-2",
+            mata_kuliah_id: "mk-2",
+          },
+          {
+            kelas_id: "kelas-3",
+            mata_kuliah_id: "mk-3",
           },
         ],
         error: null,
       });
 
-      // Mock for getting kelas IDs for ALL 3 MKs (limit applies after fetching)
-      const kelasIdsBuilder1 = mockQueryBuilder();
-      kelasIdsBuilder1._setResolveValue({
-        data: [{ id: "kelas-1" }],
-        error: null,
-      });
-
-      const kelasIdsBuilder2 = mockQueryBuilder();
-      kelasIdsBuilder2._setResolveValue({
-        data: [{ id: "kelas-2" }],
-        error: null,
-      });
-
-      const kelasIdsBuilder3 = mockQueryBuilder();
-      kelasIdsBuilder3._setResolveValue({
-        data: [{ id: "kelas-3" }],
+      const mkBuilder = mockQueryBuilder();
+      mkBuilder._setResolveValue({
+        data: [
+          { ...mockMataKuliah, id: "mk-1" },
+          {
+            ...mockMataKuliah,
+            id: "mk-2",
+            kode_mk: "IF102",
+            nama_mk: "Database",
+          },
+          {
+            ...mockMataKuliah,
+            id: "mk-3",
+            kode_mk: "IF103",
+            nama_mk: "Algoritma",
+          },
+        ],
         error: null,
       });
 
@@ -604,12 +692,10 @@ describe("Dosen API - Kelas Management", () => {
       };
 
       (supabase.from as any)
-        .mockReturnValueOnce(kelasBuilder) // Initial kelas query
-        .mockReturnValueOnce(kelasIdsBuilder1) // Get kelas IDs for MK1
+        .mockReturnValueOnce(jadwalBuilder) // jadwal_praktikum
+        .mockReturnValueOnce(mkBuilder) // mata_kuliah
         .mockReturnValueOnce(countBuilder1) // Count mahasiswa for MK1
-        .mockReturnValueOnce(kelasIdsBuilder2) // Get kelas IDs for MK2
         .mockReturnValueOnce(countBuilder2) // Count mahasiswa for MK2
-        .mockReturnValueOnce(kelasIdsBuilder3) // Get kelas IDs for MK3
         .mockReturnValueOnce(countBuilder3); // Count mahasiswa for MK3
 
       const result = await getMyMataKuliah(2);
@@ -630,28 +716,74 @@ describe("Dosen API - Student Management", () => {
     localStorageMock.setItem("cached_dosen_id", "dosen-1");
   });
 
+  describe("getMyKelasWithStudents", () => {
+    it("should not fallback to kelas.mata_kuliah_id when jadwal has no mata kuliah", async () => {
+      const jadwalBuilder = mockQueryBuilder();
+      jadwalBuilder._setResolveValue({
+        data: [
+          {
+            kelas_id: "kelas-1",
+            mata_kuliah_id: null,
+            tanggal_praktikum: "2024-01-10",
+          },
+        ],
+        error: null,
+      });
+
+      const kelasBuilder = mockQueryBuilder();
+      kelasBuilder._setResolveValue({
+        data: [
+          {
+            id: "kelas-1",
+            kode_kelas: "IF-101",
+            nama_kelas: "Kelas A",
+            tahun_ajaran: "2024/2025",
+            semester_ajaran: 1,
+            kuota: 30,
+            mata_kuliah_id: "legacy-mk",
+          },
+        ],
+        error: null,
+      });
+
+      mockSupabaseFrom.mockImplementation((tableName: string) => {
+        if (tableName === "jadwal_praktikum") return jadwalBuilder;
+        if (tableName === "kelas") return kelasBuilder;
+        return mockQueryBuilder();
+      });
+
+      const getKelasStudentsSpy = vi
+        .spyOn(dosenApi, "getKelasStudents")
+        .mockResolvedValue([]);
+
+      const result = await getMyKelasWithStudents();
+
+      expect(result).toHaveLength(1);
+      expect(result[0].mata_kuliah_kode).toBe("-");
+      expect(result[0].mata_kuliah_nama).toBe("-");
+      getKelasStudentsSpy.mockRestore();
+    });
+  });
+
   describe("getKelasStudents", () => {
     it("should return students for a kelas", async () => {
-      const builder = {
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        order: vi.fn().mockResolvedValue({
-          data: [
-            {
-              id: "enrollment-1",
-              mahasiswa_id: "mhs-1",
-              enrolled_at: "2024-01-01",
-              is_active: true,
-              mahasiswa: {
-                id: "mhs-1",
-                nim: "BD2321001",
-                users: { nama: "John Doe", email: "john@example.com" },
-              },
+      const builder = mockQueryBuilder();
+      builder._setResolveValue({
+        data: [
+          {
+            id: "enrollment-1",
+            mahasiswa_id: "mhs-1",
+            enrolled_at: "2024-01-01",
+            is_active: true,
+            mahasiswa: {
+              id: "mhs-1",
+              nim: "BD2321001",
+              users: { full_name: "John Doe", email: "john@example.com" },
             },
-          ],
-          error: null,
-        }),
-      };
+          },
+        ],
+        error: null,
+      });
 
       (supabase.from as any).mockReturnValue(builder);
 
@@ -668,11 +800,8 @@ describe("Dosen API - Student Management", () => {
     });
 
     it("should return empty array when no students", async () => {
-      const builder = {
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        order: vi.fn().mockResolvedValue({ data: null, error: null }),
-      };
+      const builder = mockQueryBuilder();
+      builder._setResolveValue({ data: null, error: null });
 
       (supabase.from as any).mockReturnValue(builder);
 
@@ -682,14 +811,11 @@ describe("Dosen API - Student Management", () => {
     });
 
     it("should handle database errors gracefully", async () => {
-      const builder = {
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        order: vi.fn().mockResolvedValue({
-          data: null,
-          error: new Error("DB Error"),
-        }),
-      };
+      const builder = mockQueryBuilder();
+      builder._setResolveValue({
+        data: null,
+        error: new Error("DB Error"),
+      });
 
       (supabase.from as any).mockReturnValue(builder);
 
@@ -703,7 +829,23 @@ describe("Dosen API - Student Management", () => {
     it("should return aggregated student statistics", async () => {
       localStorageMock.setItem("cached_dosen_id", "dosen-1");
 
-      // Mock the kelas query that getMyKelasWithStudents makes
+      const jadwalBuilder = mockQueryBuilder();
+      jadwalBuilder._setResolveValue({
+        data: [
+          {
+            kelas_id: "kelas-1",
+            mata_kuliah_id: "mk-1",
+            tanggal_praktikum: "2024-01-10",
+          },
+          {
+            kelas_id: "kelas-2",
+            mata_kuliah_id: "mk-2",
+            tanggal_praktikum: "2024-01-09",
+          },
+        ],
+        error: null,
+      });
+
       const mockKelasData = [
         {
           id: "kelas-1",
@@ -712,12 +854,6 @@ describe("Dosen API - Student Management", () => {
           tahun_ajaran: "2024/2025",
           semester_ajaran: "Ganjil",
           kuota: 30,
-          mata_kuliah_id: "mk-1",
-          mata_kuliah: {
-            id: "mk-1",
-            nama_mk: "Pemrograman Web",
-            kode_mk: "IF101",
-          },
         },
         {
           id: "kelas-2",
@@ -726,17 +862,28 @@ describe("Dosen API - Student Management", () => {
           tahun_ajaran: "2024/2025",
           semester_ajaran: "Ganjil",
           kuota: 30,
-          mata_kuliah_id: "mk-2",
-          mata_kuliah: {
-            id: "mk-2",
-            nama_mk: "Pemrograman Web Lanjut",
-            kode_mk: "IF102",
-          },
         },
       ];
 
       const kelasBuilder = mockQueryBuilder();
       kelasBuilder._setResolveValue({ data: mockKelasData, error: null });
+
+      const mkBuilder = mockQueryBuilder();
+      mkBuilder._setResolveValue({
+        data: [
+          {
+            id: "mk-1",
+            nama_mk: "Pemrograman Web",
+            kode_mk: "IF101",
+          },
+          {
+            id: "mk-2",
+            nama_mk: "Pemrograman Web Lanjut",
+            kode_mk: "IF102",
+          },
+        ],
+        error: null,
+      });
 
       // Mock getKelasStudents to return 30 students per class
       const mockStudents = Array.from({ length: 30 }, (_, i) => ({
@@ -758,7 +905,7 @@ describe("Dosen API - Student Management", () => {
           id: student.mahasiswa_id,
           nim: student.nim,
           users: {
-            nama: student.nama,
+            full_name: student.nama,
             email: student.email,
           },
         },
@@ -772,8 +919,12 @@ describe("Dosen API - Student Management", () => {
 
       // Set up mock to return different builders based on table name
       mockSupabaseFrom.mockImplementation((tableName: string) => {
-        if (tableName === "kelas") {
+        if (tableName === "jadwal_praktikum") {
+          return jadwalBuilder;
+        } else if (tableName === "kelas") {
           return kelasBuilder;
+        } else if (tableName === "mata_kuliah") {
+          return mkBuilder;
         } else if (tableName === "kelas_mahasiswa") {
           return kelasMahasiswaBuilder;
         }
@@ -792,10 +943,13 @@ describe("Dosen API - Student Management", () => {
     it("should handle no kelas scenario", async () => {
       localStorageMock.setItem("cached_dosen_id", "dosen-1");
 
-      const kelasBuilder = mockQueryBuilder();
-      kelasBuilder._setResolveValue({ data: [], error: null });
+      const jadwalBuilder = mockQueryBuilder();
+      jadwalBuilder._setResolveValue({ data: [], error: null });
 
-      (supabase.from as any).mockReturnValue(kelasBuilder);
+      mockSupabaseFrom.mockImplementation((tableName: string) => {
+        if (tableName === "jadwal_praktikum") return jadwalBuilder;
+        return mockQueryBuilder();
+      });
 
       const result = await getStudentStats();
 
@@ -919,7 +1073,8 @@ describe("Dosen API - Grading Operations", () => {
               mahasiswa: { user: { full_name: "John" }, nim: "BD2321001" },
               kuis: {
                 judul: "Quiz 1",
-                kelas: { mata_kuliah: { nama_mk: "MK" } },
+                mata_kuliah: { nama_mk: "MK Langsung" },
+                kelas: { mata_kuliah: { nama_mk: "MK Lama" } },
               },
               submitted_at: "2024-01-01",
               attempt_number: 1,
@@ -938,6 +1093,55 @@ describe("Dosen API - Grading Operations", () => {
 
       // ✅ CHANGED: Limit diterapkan client-side setelah filter CBT
       expect(result.length).toBeLessThanOrEqual(5);
+      expect(result[0].mata_kuliah_nama).toBe("MK Langsung");
+    });
+  });
+
+  describe("getUpcomingPracticum", () => {
+    it("should use mata kuliah from jadwal directly without kelas fallback", async () => {
+      const practicumBuilder = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        gte: vi.fn().mockReturnThis(),
+        lte: vi.fn().mockReturnThis(),
+        order: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockReturnThis(),
+        then: vi.fn((onFulfilled) =>
+          Promise.resolve({
+            data: [
+              {
+                id: "jadwal-1",
+                kelas_id: "kelas-1",
+                tanggal_praktikum: "2099-01-10",
+                hari: "monday",
+                jam_mulai: "08:00:00",
+                jam_selesai: "10:00:00",
+                topik: "Topik 1",
+                mata_kuliah: null,
+                kelas: {
+                  nama_kelas: "Kelas A",
+                  mata_kuliah: { nama_mk: "MK Legacy" },
+                },
+                laboratorium: {
+                  nama_lab: "Lab 1",
+                  kode_lab: "L1",
+                },
+              },
+            ],
+            error: null,
+          }).then(onFulfilled),
+        ),
+      };
+
+      mockSupabaseFrom.mockImplementation((tableName: string) => {
+        if (tableName === "jadwal_praktikum") return practicumBuilder;
+        return mockQueryBuilder();
+      });
+
+      const result = await getUpcomingPracticum(5);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].mata_kuliah_nama).toBe("-");
     });
   });
 

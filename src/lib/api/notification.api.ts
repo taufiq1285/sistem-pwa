@@ -31,8 +31,10 @@ import type {
 export async function getNotifications(
   filters: NotificationFilters = {},
 ): Promise<Notification[]> {
+  const { forceRefresh = false, ...queryFilters } = filters;
+
   // Create cache key from filters
-  const cacheKey = `notifications_${JSON.stringify(filters)}`;
+  const cacheKey = `notifications_${JSON.stringify(queryFilters)}`;
 
   return cacheAPI(
     cacheKey,
@@ -42,20 +44,20 @@ export async function getNotifications(
         .select("*")
         .order("created_at", { ascending: false });
 
-      if (filters.user_id) {
-        query = query.eq("user_id", filters.user_id);
+      if (queryFilters.user_id) {
+        query = query.eq("user_id", queryFilters.user_id);
       }
 
-      if (filters.type) {
-        query = query.eq("type", filters.type);
+      if (queryFilters.type) {
+        query = query.eq("type", queryFilters.type);
       }
 
-      if (filters.is_read !== undefined) {
-        query = query.eq("is_read", filters.is_read);
+      if (queryFilters.is_read !== undefined) {
+        query = query.eq("is_read", queryFilters.is_read);
       }
 
-      if (filters.limit) {
-        query = query.limit(filters.limit);
+      if (queryFilters.limit) {
+        query = query.limit(queryFilters.limit);
       }
 
       const { data, error } = await query;
@@ -66,7 +68,8 @@ export async function getNotifications(
     },
     {
       ttl: 2 * 60 * 1000, // 2 minutes cache
-      staleWhileRevalidate: true, // Return stale data while fetching fresh
+      forceRefresh,
+      staleWhileRevalidate: !forceRefresh, // Force fresh fetch when requested
     },
   );
 }
@@ -332,8 +335,8 @@ export async function notifyDosenTugasSubmitted(
 ): Promise<Notification | null> {
   return createNotification({
     user_id: dosenId,
-    title: "Tugas Praktikum Dikerjakan",
-    message: `${mahasiswaNama} telah mengerjakan tugas "${tugasNama}"`,
+    title: "Tugas Praktikum Dikumpulkan",
+    message: `${mahasiswaNama} telah mengumpulkan tugas praktikum "${tugasNama}"`,
     type: "tugas_submitted",
     data: {
       attempt_id: attemptId,
@@ -377,16 +380,21 @@ export async function notifyMahasiswaTugasGraded(
   nilai: number,
   attemptId: string,
   kuisId: string,
+  tipeKuis?: "essay" | "pilihan_ganda" | "campuran" | null,
 ): Promise<Notification> {
+  const isLaporan = tipeKuis === "essay";
   return createNotification({
     user_id: mahasiswaId,
-    title: "Tugas Dinilai",
-    message: `Tugas "${tugasNama}" Anda telah dinilai. Nilai: ${nilai}`,
+    title: isLaporan
+      ? "Laporan Praktikum Dinilai"
+      : "Tugas CBT Praktikum Dinilai",
+    message: `${isLaporan ? "Laporan praktikum" : "Tugas CBT praktikum"} "${tugasNama}" Anda telah dinilai. Nilai: ${nilai}`,
     type: "tugas_graded",
     data: {
       attempt_id: attemptId,
       kuis_id: kuisId,
       nilai: nilai,
+      tipe_kuis: tipeKuis || null,
     },
   });
 }
@@ -611,14 +619,65 @@ export async function notifyDosenJadwalDiupdate(
 ): Promise<Notification> {
   return createNotification({
     user_id: dosenUserId,
-    title: "Jadwal Praktikum Diupdate",
-    message: `Jadwal "${mataKuliahNama} - ${kelasNama}" (${tanggalPraktikum}) telah diupdate. Perubahan: ${perubahan.join(", ")}.`,
+    title: "Jadwal Praktikum Diperbarui",
+    message: `Jadwal praktikum "${mataKuliahNama} - ${kelasNama}" (${tanggalPraktikum}) telah diperbarui. Perubahan: ${perubahan.join(", ")}.`,
     type: "jadwal_diupdate",
     data: {
       mata_kuliah: mataKuliahNama,
       kelas: kelasNama,
       tanggal: tanggalPraktikum,
       perubahan: perubahan,
+    },
+  });
+}
+
+/**
+ * Notify dosen when laboran changes final jadwal status
+ */
+export async function notifyDosenJadwalStatus(
+  dosenUserId: string,
+  mataKuliahNama: string,
+  kelasNama: string,
+  tanggalPraktikum: string,
+  status: "disetujui" | "ditolak" | "dibatalkan" | "diaktifkan_kembali",
+  details?: string,
+): Promise<Notification> {
+  const statusConfig = {
+    disetujui: {
+      title: "Jadwal Praktikum Disetujui",
+      type: "jadwal_disetujui" as const,
+      message: `Jadwal praktikum "${mataKuliahNama} - ${kelasNama}" (${tanggalPraktikum}) telah disetujui oleh laboran.`,
+    },
+    ditolak: {
+      title: "Jadwal Praktikum Ditolak",
+      type: "jadwal_ditolak" as const,
+      message: `Jadwal praktikum "${mataKuliahNama} - ${kelasNama}" (${tanggalPraktikum}) ditolak oleh laboran.`,
+    },
+    dibatalkan: {
+      title: "Jadwal Praktikum Dibatalkan",
+      type: "jadwal_dibatalkan" as const,
+      message: `Jadwal praktikum "${mataKuliahNama} - ${kelasNama}" (${tanggalPraktikum}) dibatalkan oleh laboran.`,
+    },
+    diaktifkan_kembali: {
+      title: "Jadwal Praktikum Diaktifkan Kembali",
+      type: "jadwal_diupdate" as const,
+      message: `Jadwal praktikum "${mataKuliahNama} - ${kelasNama}" (${tanggalPraktikum}) diaktifkan kembali oleh laboran.`,
+    },
+  };
+
+  const selectedStatus = statusConfig[status];
+
+  return createNotification({
+    user_id: dosenUserId,
+    title: selectedStatus.title,
+    message: `${selectedStatus.message}${details ? ` ${details}` : ""}`,
+    type: selectedStatus.type,
+    data: {
+      mata_kuliah: mataKuliahNama,
+      kelas: kelasNama,
+      tanggal: tanggalPraktikum,
+      status,
+      details,
     },
   });
 }
@@ -637,7 +696,7 @@ export async function notifyLaboranJadwalBaru(
   const notifications: CreateNotificationData[] = laboranUserIds.map(
     (laboranId) => ({
       user_id: laboranId,
-      title: "Jadwal Baru Menunggu Approval",
+      title: "Jadwal Praktikum Menunggu Persetujuan",
       message: `${dosenNama} membuat jadwal praktikum "${mataKuliahNama} - ${kelasNama}" untuk ${tanggalPraktikum} di ${laboratorium}.`,
       type: "jadwal_pending_approval",
       data: {
@@ -664,11 +723,17 @@ export async function notifyMahasiswaJadwalChange(
   aksi: "baru" | "diupdate" | "dibatalkan",
   details?: string,
 ): Promise<Notification[]> {
+  const actionLabels: Record<"baru" | "diupdate" | "dibatalkan", string> = {
+    baru: "Baru",
+    diupdate: "Diperbarui",
+    dibatalkan: "Dibatalkan",
+  };
+
   const notifications: CreateNotificationData[] = mahasiswaUserIds.map(
     (mahasiswaId) => ({
       user_id: mahasiswaId,
-      title: `Jadwal ${aksi.charAt(0).toUpperCase() + aksi.slice(1)}`,
-      message: `Jadwal praktikum "${mataKuliahNama} - ${kelasNama}" (${tanggalPraktikum}) ${aksi}${details ? `. ${details}` : ""}`,
+      title: `Jadwal Praktikum ${actionLabels[aksi]}`,
+      message: `Jadwal praktikum "${mataKuliahNama} - ${kelasNama}" (${tanggalPraktikum}) ${aksi === "diupdate" ? "diperbarui" : aksi}${details ? `. ${details}` : ""}`,
       type: `jadwal_${aksi}`,
       data: {
         mata_kuliah: mataKuliahNama,
@@ -697,12 +762,15 @@ export async function notifyMahasiswaKuisPublished(
   kelasNama: string,
   deadline: string,
   kuisId: string,
+  tipeKuis?: "essay" | "pilihan_ganda" | "campuran" | null,
 ): Promise<Notification[]> {
+  const isLaporan = tipeKuis === "essay";
+  const taskLabel = isLaporan ? "Tugas Laporan Praktikum" : "Tugas CBT Praktikum";
   const notifications: CreateNotificationData[] = mahasiswaUserIds.map(
     (mahasiswaId) => ({
       user_id: mahasiswaId,
-      title: "Kuis Tersedia",
-      message: `${dosenNama} telah mempublish kuis "${kuisNama}" untuk kelas ${kelasNama}. Deadline: ${deadline}`,
+      title: `${taskLabel} Tersedia`,
+      message: `${dosenNama} telah mempublikasikan ${isLaporan ? "tugas laporan" : "tugas CBT"} "${kuisNama}" untuk kelas ${kelasNama}. Deadline: ${deadline}`,
       type: "kuis_published",
       data: {
         kuis_id: kuisId,
@@ -710,6 +778,35 @@ export async function notifyMahasiswaKuisPublished(
         dosen: dosenNama,
         kelas: kelasNama,
         deadline: deadline,
+        tipe_kuis: tipeKuis || null,
+      },
+    }),
+  );
+
+  return createBulkNotifications(notifications);
+}
+
+/**
+ * Notify all mahasiswa in a kelas when dosen publishes materi
+ */
+export async function notifyMahasiswaMateriBaru(
+  mahasiswaUserIds: string[],
+  dosenNama: string,
+  materiJudul: string,
+  kelasNama: string,
+  materiId: string,
+): Promise<Notification[]> {
+  const notifications: CreateNotificationData[] = mahasiswaUserIds.map(
+    (mahasiswaId) => ({
+      user_id: mahasiswaId,
+      title: "Materi Baru",
+      message: `${dosenNama} telah mempublikasikan materi "${materiJudul}" untuk kelas ${kelasNama}`,
+      type: "materi_baru",
+      data: {
+        materi_id: materiId,
+        materi: materiJudul,
+        dosen: dosenNama,
+        kelas: kelasNama,
       },
     }),
   );
@@ -782,7 +879,7 @@ export async function notifyMahasiswaLogbookRejected(
   return createNotification({
     user_id: mahasiswaUserId,
     title: "Logbook Perlu Diperbaiki",
-    message: `Logbook praktikum "${mataKuliahNama} - ${kelasNama}" (${tanggalPraktikum}) ditolak/perlu perbaiki. ${catatan ? `Catatan: ${catatan}` : ""}`,
+    message: `Logbook praktikum "${mataKuliahNama} - ${kelasNama}" (${tanggalPraktikum}) perlu diperbaiki.${catatan ? ` Catatan: ${catatan}` : ""}`,
     type: "logbook_rejected",
     data: {
       kelas: kelasNama,

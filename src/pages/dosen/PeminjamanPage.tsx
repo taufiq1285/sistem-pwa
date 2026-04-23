@@ -432,9 +432,7 @@ export default function PeminjamanPage() {
       setTakenLoading(true);
       setSelectedTakenId(borrowingId);
       await markBorrowingAsTaken(borrowingId);
-      toast.success(
-        "Alat sudah diambil dan status berubah menjadi sedang dipinjam",
-      );
+      toast.success("Konfirmasi pengambilan berhasil dicek");
       setTakenDialogOpen(false);
       // Invalidate cache and reload
       await invalidateCache("dosen_my_borrowings");
@@ -831,7 +829,7 @@ export default function PeminjamanPage() {
                                     Ambil Alat
                                   </Button>
                                 )}
-                                {isInUse && (
+                                {(isApproved || isInUse) && (
                                   <Button
                                     size="sm"
                                     variant="outline"
@@ -1156,15 +1154,17 @@ export default function PeminjamanPage() {
             <DialogHeader>
               <DialogTitle>Konfirmasi Pengambilan Alat</DialogTitle>
               <DialogDescription>
-                Anda akan menandai alat ini sebagai sedang dipinjam (in_use)
+                Pengambilan alat tidak mengubah status. Peminjaman yang sudah
+                disetujui tetap dianggap aktif sampai dikembalikan.
               </DialogDescription>
             </DialogHeader>
 
             <div className="space-y-4">
               <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg">
                 <p className="text-sm text-primary/90">
-                  Dengan mengklik "Ambil", status peminjaman akan berubah dari
-                  "Disetujui" menjadi "Sedang Dipinjam".
+                  Stok alat sudah dialokasikan saat permintaan disetujui
+                  laboran. Setelah alat selesai digunakan, lanjutkan dengan
+                  proses pengembalian.
                 </p>
               </div>
             </div>

@@ -47,6 +47,44 @@ export interface AvailableKelas {
   };
 }
 
+async function resolveMataKuliahIdForKelas(
+  kelasId: string,
+  fallbackMataKuliahId?: string | null,
+): Promise<string | null> {
+  const today = new Date().toISOString().split("T")[0];
+
+  const { data: upcomingJadwalMkData } = await (supabase as any)
+    .from("jadwal_praktikum")
+    .select("mata_kuliah_id")
+    .eq("kelas_id", kelasId)
+    .eq("is_active", true)
+    .not("mata_kuliah_id", "is", null)
+    .gte("tanggal_praktikum", today)
+    .order("tanggal_praktikum", { ascending: true })
+    .limit(1);
+
+  const upcomingMataKuliahId = upcomingJadwalMkData?.[0]?.mata_kuliah_id;
+  if (upcomingMataKuliahId) {
+    return upcomingMataKuliahId;
+  }
+
+  const { data: latestJadwalMkData } = await (supabase as any)
+    .from("jadwal_praktikum")
+    .select("mata_kuliah_id")
+    .eq("kelas_id", kelasId)
+    .eq("is_active", true)
+    .not("mata_kuliah_id", "is", null)
+    .order("tanggal_praktikum", { ascending: false })
+    .limit(1);
+
+  const latestMataKuliahId = latestJadwalMkData?.[0]?.mata_kuliah_id;
+  if (latestMataKuliahId) {
+    return latestMataKuliahId;
+  }
+
+  return fallbackMataKuliahId || null;
+}
+
 export interface MyKelas {
   id: string;
   kode_kelas: string;
@@ -68,6 +106,7 @@ export interface JadwalMahasiswa {
   topik?: string;
   kelas_nama: string;
   mata_kuliah_nama: string;
+  dosen_nama?: string;
   lab_nama: string;
   lab_kode: string;
 }
@@ -272,13 +311,17 @@ export async function getAvailableKelas(): Promise<AvailableKelas[]> {
 
     const result = await Promise.all(
       kelasData.map(async (kelas: any) => {
-        // FIX: Check if mata_kuliah_id exists before querying
+        const mataKuliahId = await resolveMataKuliahIdForKelas(
+          kelas.id,
+          kelas.mata_kuliah_id,
+        );
+
         let mkData = null;
-        if (kelas.mata_kuliah_id) {
+        if (mataKuliahId) {
           const { data } = await supabase
             .from("mata_kuliah")
             .select("id, kode_mk, nama_mk, sks, semester")
-            .eq("id", kelas.mata_kuliah_id)
+            .eq("id", mataKuliahId)
             .single();
           mkData = data;
         }
@@ -486,13 +529,17 @@ export async function getMyKelas(): Promise<MyKelas[]> {
 
         if (!kelasData) return null;
 
-        // FIX: Check if mata_kuliah_id exists before querying
+        const mataKuliahId = await resolveMataKuliahIdForKelas(
+          item.kelas_id,
+          kelasData.mata_kuliah_id,
+        );
+
         let mkData = null;
-        if (kelasData.mata_kuliah_id) {
+        if (mataKuliahId) {
           const { data } = await supabase
             .from("mata_kuliah")
             .select("kode_mk, nama_mk, sks")
-            .eq("id", kelasData.mata_kuliah_id)
+            .eq("id", mataKuliahId)
             .single();
           mkData = data;
         }
@@ -547,10 +594,9 @@ export async function getMyJadwal(limit?: number): Promise<JadwalMahasiswa[]> {
     const kelasIds = enrolledData.map((e: any) => e.kelas_id);
     console.log("🔍 Kelas IDs:", kelasIds);
 
-    // Get jadwal from 30 days ago to 30 days in future (instead of only future)
+    // Prioritaskan jadwal yang akan datang agar dashboard menampilkan
+    // praktikum terbaru, bukan sesi lampau.
     const today = new Date();
-    const pastDate = new Date();
-    pastDate.setDate(pastDate.getDate() - 30); // 30 hari yang lalu
     const futureDate = new Date();
     futureDate.setDate(futureDate.getDate() + 30); // 30 hari ke depan
 
@@ -562,23 +608,22 @@ export async function getMyJadwal(limit?: number): Promise<JadwalMahasiswa[]> {
       return `${year}-${month}-${day}`;
     };
 
-    const pastDateStr = formatDate(pastDate);
+    const todayStr = formatDate(today);
     const futureDateStr = formatDate(futureDate);
 
     console.log("🔍 Date range:", {
-      pastDate: pastDateStr,
-      today: formatDate(today),
+      today: todayStr,
       future: futureDateStr,
     });
     console.log("🔍 Kelas IDs filter:", kelasIds);
 
-    const { data: jadwalData, error: jadwalError } = await supabase
+    const { data: jadwalData, error: jadwalError } = await (supabase as any)
       .from("jadwal_praktikum")
       .select(
-        "id, tanggal_praktikum, hari, jam_mulai, jam_selesai, topik, kelas_id, laboratorium_id",
+        "id, tanggal_praktikum, hari, jam_mulai, jam_selesai, topik, kelas_id, laboratorium_id, mata_kuliah_id, dosen_id",
       )
       .in("kelas_id", kelasIds)
-      .gte("tanggal_praktikum", pastDateStr)
+      .gte("tanggal_praktikum", todayStr)
       .lte("tanggal_praktikum", futureDateStr)
       .eq("is_active", true)
       .order("tanggal_praktikum", { ascending: true })
@@ -603,13 +648,29 @@ export async function getMyJadwal(limit?: number): Promise<JadwalMahasiswa[]> {
           .single();
 
         let mkData = null;
-        if (kelasData?.mata_kuliah_id) {
+        const mataKuliahId =
+          item.mata_kuliah_id ||
+          (await resolveMataKuliahIdForKelas(
+            item.kelas_id,
+            kelasData?.mata_kuliah_id,
+          ));
+        if (mataKuliahId) {
           const result = await supabase
             .from("mata_kuliah")
             .select("nama_mk")
-            .eq("id", kelasData.mata_kuliah_id)
+            .eq("id", mataKuliahId)
             .single();
           mkData = result.data;
+        }
+
+        let dosenData = null;
+        if (item.dosen_id) {
+          const result = await supabase
+            .from("dosen")
+            .select("user:user_id(full_name)")
+            .eq("id", item.dosen_id)
+            .maybeSingle();
+          dosenData = result.data;
         }
 
         const { data: labData } = await supabase
@@ -627,6 +688,7 @@ export async function getMyJadwal(limit?: number): Promise<JadwalMahasiswa[]> {
           topik: item.topik,
           kelas_nama: kelasData?.nama_kelas || "-",
           mata_kuliah_nama: mkData?.nama_mk || "-",
+          dosen_nama: dosenData?.user?.full_name || "-",
           lab_nama: labData?.nama_lab || "-",
           lab_kode: labData?.kode_lab || "-",
         };

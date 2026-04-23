@@ -257,8 +257,8 @@ export default function UsersPage() {
     setEditFormData({
       email: user.email,
       full_name: user.full_name,
-      role: user.role,
       is_active: user.is_active,
+      nim: user.nim || "",
     });
     setIsEditDialogOpen(true);
   };
@@ -266,6 +266,14 @@ export default function UsersPage() {
   const handleUpdate = async () => {
     if (!editingUser) return;
     try {
+      if (
+        editingUser.role === "mahasiswa" &&
+        !editFormData.nim?.trim()
+      ) {
+        toast.error("NIM wajib diisi untuk user mahasiswa");
+        return;
+      }
+
       await updateUser(editingUser.id, editFormData);
       toast.success("User updated successfully");
       setIsEditDialogOpen(false);
@@ -300,6 +308,25 @@ export default function UsersPage() {
         !addFormData.full_name
       ) {
         toast.error("Please fill in all required fields");
+        return;
+      }
+
+      if (addFormData.role === "mahasiswa" && !addFormData.nim?.trim()) {
+        toast.error("NIM wajib diisi untuk user mahasiswa");
+        return;
+      }
+
+      if (
+        addFormData.role === "dosen" &&
+        !addFormData.nip?.trim() &&
+        !addFormData.nidn?.trim()
+      ) {
+        toast.error("NIP atau NIDN wajib diisi untuk user dosen");
+        return;
+      }
+
+      if (addFormData.role === "laboran" && !addFormData.nip?.trim()) {
+        toast.error("NIP wajib diisi untuk user laboran");
         return;
       }
 
@@ -919,24 +946,32 @@ export default function UsersPage() {
               />
             </div>
             <div>
-              <Label htmlFor="role">Role</Label>
-              <Select
-                value={editFormData.role}
-                onValueChange={(value: any) =>
-                  setEditFormData({ ...editFormData, role: value })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="dosen">Dosen</SelectItem>
-                  <SelectItem value="mahasiswa">Mahasiswa</SelectItem>
-                  <SelectItem value="laboran">Laboran</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label>Role</Label>
+              <Input
+                value={editingUser?.role || "-"}
+                disabled
+                className="capitalize"
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                Role akun tidak diubah dari fitur ini.
+              </p>
             </div>
+            {editingUser?.role === "mahasiswa" && (
+              <div>
+                <Label htmlFor="edit_nim">NIM</Label>
+                <Input
+                  id="edit_nim"
+                  value={editFormData.nim || ""}
+                  onChange={(e) =>
+                    setEditFormData({
+                      ...editFormData,
+                      nim: e.target.value,
+                    })
+                  }
+                  placeholder="Masukkan NIM mahasiswa"
+                />
+              </div>
+            )}
             <div className="flex items-center gap-2">
               <input
                 type="checkbox"
@@ -1067,6 +1102,20 @@ export default function UsersPage() {
                   />
                 </div>
               </>
+            )}
+
+            {addFormData.role === "laboran" && (
+              <div>
+                <Label htmlFor="new_nip_laboran">NIP</Label>
+                <Input
+                  id="new_nip_laboran"
+                  value={addFormData.nip}
+                  onChange={(e) =>
+                    setAddFormData({ ...addFormData, nip: e.target.value })
+                  }
+                  placeholder="NIP laboran"
+                />
+              </div>
             )}
 
             <div>

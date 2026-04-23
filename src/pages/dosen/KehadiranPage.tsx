@@ -13,8 +13,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { toast } from "sonner";
-import { getMyKelas } from "@/lib/api/dosen.api";
-import { getMataKuliah } from "@/lib/api/mata-kuliah.api";
+import { getMyKelas, type KelasWithStats } from "@/lib/api/dosen.api";
 import { cacheAPI, getCachedData } from "@/lib/offline/api-cache";
 import { supabase } from "@/lib/supabase/client";
 import {
@@ -97,6 +96,61 @@ interface KelasOption {
   kode_kelas: string;
 }
 
+const buildMataKuliahOptions = (kelasData: Array<Partial<KelasWithStats>>) => {
+  const mataKuliahMap = new Map<string, MataKuliahOption>();
+
+  kelasData.forEach((kelas) => {
+    if (!kelas.mata_kuliah_id || !kelas.mata_kuliah_nama) {
+      return;
+    }
+
+    if (!mataKuliahMap.has(kelas.mata_kuliah_id)) {
+      mataKuliahMap.set(kelas.mata_kuliah_id, {
+        id: kelas.mata_kuliah_id,
+        nama_mk: kelas.mata_kuliah_nama,
+        kode_mk: kelas.mata_kuliah_kode || "",
+      });
+    }
+  });
+
+  return Array.from(mataKuliahMap.values());
+};
+
+const buildKelasOptions = (
+  kelasData: Array<Partial<KelasWithStats>>,
+  mataKuliahId: string,
+  tahunAjaranFilter: string,
+  semesterFilter: string,
+) =>
+  kelasData
+    .filter((kelas) => {
+      if (kelas.mata_kuliah_id !== mataKuliahId) return false;
+
+      if (
+        tahunAjaranFilter &&
+        tahunAjaranFilter !== "__all__" &&
+        kelas.tahun_ajaran !== tahunAjaranFilter
+      ) {
+        return false;
+      }
+
+      if (
+        semesterFilter &&
+        semesterFilter !== "__all__" &&
+        kelas.semester_ajaran?.toString() !== semesterFilter
+      ) {
+        return false;
+      }
+
+      return true;
+    })
+    .map((kelas) => ({
+      id: kelas.id || "",
+      nama_kelas: kelas.nama_kelas || "",
+      kode_kelas: kelas.kode_kelas || "",
+    }))
+    .filter((kelas) => Boolean(kelas.id));
+
 // ============================================================================
 // STATUS CONSTANTS
 // ============================================================================
@@ -149,6 +203,7 @@ export default function DosenKehadiranPage() {
 
   // Step selections
   const [mataKuliahList, setMataKuliahList] = useState<MataKuliahOption[]>([]);
+  const [dosenKelasList, setDosenKelasList] = useState<KelasWithStats[]>([]);
   const [selectedMataKuliah, setSelectedMataKuliah] = useState<string>("");
 
   const [kelasList, setKelasList] = useState<KelasOption[]>([]);
@@ -181,11 +236,11 @@ export default function DosenKehadiranPage() {
         ? `dosen_mk_kehadiran_${user.dosen.id}`
         : null,
       kelas: user?.dosen?.id ? `dosen_kelas_kehadiran_${user.dosen.id}` : null,
-      mahasiswa: selectedKelas
-        ? `dosen_kehadiran_mahasiswa_${selectedKelas}`
+      mahasiswa: selectedKelas && selectedTanggal
+        ? `dosen_kehadiran_mahasiswa_${selectedKelas}_${selectedMataKuliah || "all"}_${selectedTanggal}`
         : null,
     }),
-    [selectedKelas, user?.dosen?.id],
+    [selectedKelas, selectedMataKuliah, selectedTanggal, user?.dosen?.id],
   );
 
   const lastUpdatedLabel = useMemo(() => {
@@ -209,21 +264,33 @@ export default function DosenKehadiranPage() {
     }
   }, [user?.dosen?.id]);
 
-  // Load kelas when mata kuliah changes
   useEffect(() => {
     if (selectedMataKuliah) {
       loadKelas(selectedMataKuliah);
-      setSelectedKelas("");
-      setAttendanceRecords([]);
+    } else {
+      setKelasList([]);
     }
+  }, [selectedMataKuliah, dosenKelasList, tahunAjaranFilter, semesterFilter]);
+
+  useEffect(() => {
+    setSelectedKelas("");
+    setAttendanceRecords([]);
+    setHasUnsavedChanges(false);
   }, [selectedMataKuliah]);
+
+  useEffect(() => {
+    if (!selectedKelas) {
+      setAttendanceRecords([]);
+      setHasUnsavedChanges(false);
+    }
+  }, [selectedKelas]);
 
   // Load mahasiswa when kelas changes
   useEffect(() => {
-    if (selectedKelas) {
+    if (selectedKelas && selectedTanggal && selectedMataKuliah) {
       loadMahasiswaForKehadiran(selectedKelas);
     }
-  }, [selectedKelas]);
+  }, [selectedKelas, selectedTanggal, selectedMataKuliah]);
 
   // ============================================================================
   // HANDLERS - LOAD DATA
@@ -242,11 +309,9 @@ export default function DosenKehadiranPage() {
       ]);
 
       if (cachedMataKuliahEntry?.data) {
-        const cachedMataKuliah = cachedMataKuliahEntry.data.map((mk: any) => ({
-          id: mk.id,
-          nama_mk: mk.nama_mk,
-          kode_mk: mk.kode_mk,
-        }));
+        const cachedMataKuliah = buildMataKuliahOptions(
+          cachedMataKuliahEntry.data,
+        );
         setMataKuliahList(cachedMataKuliah);
         setIsOfflineData(true);
         setLastUpdatedAt(cachedMataKuliahEntry.timestamp);
@@ -266,28 +331,23 @@ export default function DosenKehadiranPage() {
         );
       }
 
-      const [mataKuliahData, kelasData] = await Promise.all([
-        cacheAPI(
-          cacheKeys.mataKuliah,
-          () => getMataKuliah({ is_active: true }),
-          {
-            ttl: 20 * 60 * 1000,
-            forceRefresh,
-            staleWhileRevalidate: true,
-          },
-        ),
+      const [, kelasData] = await Promise.all([
         cacheAPI(cacheKeys.kelas, () => getMyKelas(), {
+          ttl: 15 * 60 * 1000,
+          forceRefresh,
+          staleWhileRevalidate: true,
+        }),
+        cacheAPI(cacheKeys.mataKuliah, () => getMyKelas(), {
           ttl: 15 * 60 * 1000,
           forceRefresh,
           staleWhileRevalidate: true,
         }),
       ]);
 
-      const mataKuliahArray = mataKuliahData.map((mk: any) => ({
-        id: mk.id,
-        nama_mk: mk.nama_mk,
-        kode_mk: mk.kode_mk,
-      }));
+      const dosenKelasData = kelasData as KelasWithStats[];
+      setDosenKelasList(dosenKelasData);
+
+      const mataKuliahArray = buildMataKuliahOptions(dosenKelasData);
 
       setMataKuliahList(mataKuliahArray);
       setIsOfflineData(false);
@@ -295,7 +355,7 @@ export default function DosenKehadiranPage() {
 
       const tahunAjaranSet = new Set<string>();
       const semesterSet = new Set<number>();
-      kelasData.forEach((k: any) => {
+      dosenKelasData.forEach((k: any) => {
         if (k.tahun_ajaran) tahunAjaranSet.add(k.tahun_ajaran);
         if (k.semester_ajaran) semesterSet.add(k.semester_ajaran);
       });
@@ -319,30 +379,18 @@ export default function DosenKehadiranPage() {
 
       const cachedKelasEntry = await getCachedData<any[]>(cacheKeys.kelas);
       if (cachedKelasEntry?.data) {
-        const filteredCachedKelas = cachedKelasEntry.data.filter((kelas) => {
-          if (
-            tahunAjaranFilter &&
-            tahunAjaranFilter !== "__all__" &&
-            kelas.tahun_ajaran !== tahunAjaranFilter
-          )
-            return false;
+        const filteredCachedKelas = buildKelasOptions(
+          cachedKelasEntry.data,
+          mataKuliahId,
+          tahunAjaranFilter,
+          semesterFilter,
+        );
 
-          if (
-            semesterFilter &&
-            semesterFilter !== "__all__" &&
-            kelas.semester_ajaran.toString() !== semesterFilter
-          )
-            return false;
-
-          return true;
-        });
-
-        setKelasList(
-          filteredCachedKelas.map((kelas: any) => ({
-            id: kelas.id,
-            nama_kelas: kelas.nama_kelas,
-            kode_kelas: kelas.kode_kelas || "",
-          })),
+        setKelasList(filteredCachedKelas);
+        setSelectedKelas((currentSelectedKelas) =>
+          filteredCachedKelas.some((kelas) => kelas.id === currentSelectedKelas)
+            ? currentSelectedKelas
+            : "",
         );
         setIsOfflineData(true);
         setLastUpdatedAt((current) =>
@@ -356,31 +404,19 @@ export default function DosenKehadiranPage() {
         staleWhileRevalidate: true,
       });
 
-      const filteredKelas = allKelas.filter((kelas) => {
-        if (
-          tahunAjaranFilter &&
-          tahunAjaranFilter !== "__all__" &&
-          kelas.tahun_ajaran !== tahunAjaranFilter
-        )
-          return false;
-
-        if (
-          semesterFilter &&
-          semesterFilter !== "__all__" &&
-          kelas.semester_ajaran.toString() !== semesterFilter
-        )
-          return false;
-
-        return true;
-      });
-
-      const uniqueKelas = filteredKelas.map((kelas: any) => ({
-        id: kelas.id,
-        nama_kelas: kelas.nama_kelas,
-        kode_kelas: kelas.kode_kelas || "",
-      }));
+      const uniqueKelas = buildKelasOptions(
+        allKelas,
+        mataKuliahId,
+        tahunAjaranFilter,
+        semesterFilter,
+      );
 
       setKelasList(uniqueKelas);
+      setSelectedKelas((currentSelectedKelas) =>
+        uniqueKelas.some((kelas) => kelas.id === currentSelectedKelas)
+          ? currentSelectedKelas
+          : "",
+      );
       setIsOfflineData(false);
       setLastUpdatedAt(Date.now());
     } catch (error) {
@@ -397,7 +433,9 @@ export default function DosenKehadiranPage() {
   ) => {
     try {
       setLoading(true);
-      const mahasiswaCacheKey = `dosen_kehadiran_mahasiswa_${kelasId}`;
+      const mahasiswaCacheKey =
+        cacheKeys.mahasiswa ||
+        `dosen_kehadiran_mahasiswa_${kelasId}_${selectedMataKuliah || "all"}_${selectedTanggal || "today"}`;
 
       const cachedMahasiswaEntry =
         await getCachedData<AttendanceRecord[]>(mahasiswaCacheKey);
@@ -434,13 +472,57 @@ export default function DosenKehadiranPage() {
             usersData?.map((u) => [u.id, u.full_name]) || [],
           );
 
-          return (mahasiswaData || []).map((item: any) => ({
+          const baseRecords = (mahasiswaData || []).map((item: any) => ({
             mahasiswa_id: item.mahasiswa_id,
             nim: item.mahasiswa.nim,
             nama: usersMap.get(item.mahasiswa.user_id) || "-",
             status: "hadir" as KehadiranStatus,
             keterangan: "",
           }));
+
+          if (!selectedTanggal) {
+            return baseRecords;
+          }
+
+          let jadwalQuery: any = supabase
+            .from("jadwal_praktikum")
+            .select("id")
+            .eq("kelas_id", kelasId)
+            .eq("tanggal_praktikum", selectedTanggal)
+            .eq("is_active", true);
+
+          if (selectedMataKuliah) {
+            jadwalQuery = jadwalQuery.eq("mata_kuliah_id", selectedMataKuliah);
+          }
+
+          const { data: jadwalData, error: jadwalError } = await jadwalQuery
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          if (jadwalError) throw jadwalError;
+          if (!jadwalData?.id) {
+            return baseRecords;
+          }
+
+          const existingKehadiran = await getKehadiranByJadwal(jadwalData.id);
+          const kehadiranMap = new Map(
+            existingKehadiran.map((item) => [item.mahasiswa_id, item]),
+          );
+
+          return baseRecords.map((record) => {
+            const existing = kehadiranMap.get(record.mahasiswa_id);
+            if (!existing) {
+              return record;
+            }
+
+            return {
+              ...record,
+              status: existing.status,
+              keterangan: existing.keterangan || "",
+              kehadiran_id: existing.id,
+            };
+          });
         },
         {
           ttl: 5 * 60 * 1000,
@@ -609,14 +691,8 @@ export default function DosenKehadiranPage() {
         updatedKey === cacheKeys.mataKuliah &&
         Array.isArray(customEvent.detail.data)
       ) {
-        const mataKuliahData = customEvent.detail.data as any[];
-        setMataKuliahList(
-          mataKuliahData.map((mk) => ({
-            id: mk.id,
-            nama_mk: mk.nama_mk,
-            kode_mk: mk.kode_mk,
-          })),
-        );
+        const mataKuliahData = customEvent.detail.data as KelasWithStats[];
+        setMataKuliahList(buildMataKuliahOptions(mataKuliahData));
         setIsOfflineData(false);
         setLastUpdatedAt(Date.now());
         return;
@@ -627,30 +703,20 @@ export default function DosenKehadiranPage() {
         Array.isArray(customEvent.detail.data)
       ) {
         const kelasData = customEvent.detail.data as any[];
-        const filteredKelas = kelasData.filter((kelas) => {
-          if (
-            tahunAjaranFilter &&
-            tahunAjaranFilter !== "__all__" &&
-            kelas.tahun_ajaran !== tahunAjaranFilter
-          )
-            return false;
+        const filteredKelas = selectedMataKuliah
+          ? buildKelasOptions(
+              kelasData,
+              selectedMataKuliah,
+              tahunAjaranFilter,
+              semesterFilter,
+            )
+          : [];
 
-          if (
-            semesterFilter &&
-            semesterFilter !== "__all__" &&
-            kelas.semester_ajaran.toString() !== semesterFilter
-          )
-            return false;
-
-          return true;
-        });
-
-        setKelasList(
-          filteredKelas.map((kelas: any) => ({
-            id: kelas.id,
-            nama_kelas: kelas.nama_kelas,
-            kode_kelas: kelas.kode_kelas || "",
-          })),
+        setKelasList(filteredKelas);
+        setSelectedKelas((currentSelectedKelas) =>
+          filteredKelas.some((kelas) => kelas.id === currentSelectedKelas)
+            ? currentSelectedKelas
+            : "",
         );
         setIsOfflineData(false);
         setLastUpdatedAt(Date.now());
@@ -683,6 +749,7 @@ export default function DosenKehadiranPage() {
     cacheKeys.kelas,
     cacheKeys.mahasiswa,
     cacheKeys.mataKuliah,
+    selectedMataKuliah,
     semesterFilter,
     tahunAjaranFilter,
   ]);
@@ -1209,7 +1276,6 @@ export default function DosenKehadiranPage() {
                 onSelectDate={(date) => {
                   setSelectedTanggal(date);
                   setActiveTab("input");
-                  loadMahasiswaForKehadiran(selectedKelas);
                 }}
               />
             </TabsContent>

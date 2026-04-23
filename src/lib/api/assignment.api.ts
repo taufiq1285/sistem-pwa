@@ -22,6 +22,33 @@ import type {
   KelasInfo,
 } from "@/types/assignment.types";
 
+function resolveAssignmentMataKuliahId(jadwal: any): string {
+  return (
+    jadwal?.mata_kuliah?.id ||
+    jadwal?.mata_kuliah_id ||
+    jadwal?.kelas?.mata_kuliah?.id ||
+    ""
+  );
+}
+
+function resolveAssignmentMataKuliahNama(jadwal: any): string {
+  return (
+    jadwal?.mata_kuliah?.nama_mk ||
+    jadwal?.kelas?.mata_kuliah?.nama_mk ||
+    "Belum ada mata kuliah"
+  );
+}
+
+function resolveAssignmentMataKuliahKode(jadwal: any): string {
+  return (
+    jadwal?.mata_kuliah?.kode_mk || jadwal?.kelas?.mata_kuliah?.kode_mk || "-"
+  );
+}
+
+function resolveAssignmentMataKuliahSks(jadwal: any): number {
+  return jadwal?.mata_kuliah?.sks || jadwal?.kelas?.mata_kuliah?.sks || 0;
+}
+
 // ============================================================================
 // MAIN QUERY FUNCTIONS
 // ============================================================================
@@ -177,7 +204,7 @@ async function getAllAssignmentsImpl(
 
       if (
         filters?.mata_kuliah_id &&
-        jadwal.kelas.mata_kuliah.id !== filters.mata_kuliah_id
+        resolveAssignmentMataKuliahId(jadwal) !== filters.mata_kuliah_id
       ) {
         console.log("❌ Skipping - mata_kuliah filter mismatch");
         return false;
@@ -242,21 +269,10 @@ async function getAllAssignmentsImpl(
       dosen_nip: jadwal.dosen?.nip || jadwal.kelas?.dosen?.nip || "-",
 
       // Mata kuliah info - prioritize mata_kuliah from jadwal (dosen's choice), fallback to kelas
-      mata_kuliah_id:
-        jadwal.mata_kuliah?.id ||
-        jadwal.kelas?.mata_kuliah?.id ||
-        jadwal.mata_kuliah_id ||
-        "",
-      mata_kuliah_nama:
-        jadwal.mata_kuliah?.nama_mk ||
-        jadwal.kelas?.mata_kuliah?.nama_mk ||
-        "Belum ada mata kuliah",
-      mata_kuliah_kode:
-        jadwal.mata_kuliah?.kode_mk ||
-        jadwal.kelas?.mata_kuliah?.kode_mk ||
-        "-",
-      mata_kuliah_sks:
-        jadwal.mata_kuliah?.sks || jadwal.kelas?.mata_kuliah?.sks || 0,
+      mata_kuliah_id: resolveAssignmentMataKuliahId(jadwal),
+      mata_kuliah_nama: resolveAssignmentMataKuliahNama(jadwal),
+      mata_kuliah_kode: resolveAssignmentMataKuliahKode(jadwal),
+      mata_kuliah_sks: resolveAssignmentMataKuliahSks(jadwal),
 
       // Stats (will be populated later)
       mahasiswa_count: 0,
@@ -379,7 +395,7 @@ async function getAssignmentStatsImpl(): Promise<AssignmentStats> {
       supabase
         .from("jadwal_praktikum")
         .select(
-          "id, dosen_id, kelas_id, kelas:kelas_id(dosen_id, mata_kuliah_id)",
+          "id, dosen_id, kelas_id, mata_kuliah_id, kelas:kelas_id(dosen_id, mata_kuliah_id)",
         )
         .eq("is_active", true),
       supabase.from("kelas").select("id").eq("is_active", true),
@@ -413,8 +429,8 @@ async function getAssignmentStatsImpl(): Promise<AssignmentStats> {
 
   const mataKuliahIds = new Set(
     (jadwalData || [])
-      .filter((j: any) => j.kelas?.mata_kuliah_id)
-      .map((j: any) => j.kelas.mata_kuliah_id),
+      .map((j: any) => j.mata_kuliah_id || j.kelas?.mata_kuliah_id)
+      .filter(Boolean),
   );
 
   const totalMataKuliahDiajarkan = mataKuliahIds.size;
@@ -652,18 +668,10 @@ async function getAcademicAssignmentsImpl(filters?: {
         dosen_nip: jadwal.dosen?.nip || jadwal.kelas?.dosen?.nip || "-",
 
         // Mata kuliah info from jadwal or kelas
-        mata_kuliah_id:
-          jadwal.mata_kuliah?.id || jadwal.kelas?.mata_kuliah?.id || "",
-        mata_kuliah_nama:
-          jadwal.mata_kuliah?.nama_mk ||
-          jadwal.kelas?.mata_kuliah?.nama_mk ||
-          "Belum ada mata kuliah",
-        mata_kuliah_kode:
-          jadwal.mata_kuliah?.kode_mk ||
-          jadwal.kelas?.mata_kuliah?.kode_mk ||
-          "-",
-        mata_kuliah_sks:
-          jadwal.mata_kuliah?.sks || jadwal.kelas?.mata_kuliah?.sks || 0,
+        mata_kuliah_id: resolveAssignmentMataKuliahId(jadwal),
+        mata_kuliah_nama: resolveAssignmentMataKuliahNama(jadwal),
+        mata_kuliah_kode: resolveAssignmentMataKuliahKode(jadwal),
+        mata_kuliah_sks: resolveAssignmentMataKuliahSks(jadwal),
 
         // Stats
         mahasiswa_count: 0,

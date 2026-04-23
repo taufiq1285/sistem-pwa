@@ -73,11 +73,18 @@ _Isi kotak Praktis:_
 
 _Ganti isinya menjadi:_
 
-- **Aripin & Somantri (2021):** Repository e-portofolio mahasiswa berbasis PWA; belum berfokus pada pengelolaan praktikum vokasi kebidanan.
-- **Santoso et al. (2022):** Sistem monitoring skripsi berbasis web; belum mengintegrasikan fitur khas PWA dan kebutuhan praktikum.
-- **Fikri et al. (2023):** Website informasi magang mahasiswa berbasis web; belum menerapkan pendekatan multiplatform PWA untuk praktikum.
-- **Maspaeni et al. (2023):** Sistem pengajuan alat kesehatan berbasis web; belum membahas pengelolaan praktikum terintegrasi.
-- **Muzakki et al. (2025):** PWA repositori digital tugas akhir; belum mencakup fitur inti praktikum seperti jadwal, logbook, nilai, dan layanan laboratorium.
+- **Gunakan format tabel state of the art**, dengan penekanan pada **perbandingan teknologi penelitian terdahulu vs teknologi penelitian saya**.
+
+| Peneliti | Fokus Penelitian | Teknologi Penelitian Terdahulu | Perbandingan dengan Penelitian Saya | Kelemahan/Kekurangan |
+|---|---|---|---|---|
+| **Aripin & Somantri (2021)** | Repository e-portofolio mahasiswa | PWA, Waterfall, Black-box, Usability Testing | Penelitian saya menggunakan stack yang lebih lengkap: `Vite`, `React`, `TypeScript`, `Supabase/PostgreSQL`, `Tailwind CSS`, serta dukungan offline PWA. | Fokus pada portofolio mahasiswa, belum membahas jadwal praktikum, logbook, penilaian, dan layanan laboratorium. |
+| **Santoso et al. (2022)** | Sistem monitoring skripsi | PWA, Mobile-D, Black-box | Penelitian saya tidak hanya memakai PWA, tetapi juga backend `Supabase`, database `PostgreSQL`, serta fitur offline seperti `IndexedDB` dan `background sync`. | Berfokus pada bimbingan skripsi, belum mengakomodasi pengelolaan alat, jadwal laboratorium, dan logbook praktikum. |
+| **Fikri et al. (2023)** | Website informasi magang mahasiswa | PWA, Waterfall, Black-box, Lighthouse | Penelitian saya menggunakan pendekatan frontend modern `React + TypeScript + Vite` dan integrasi sistem multi-peran berbasis cloud. | Terbatas pada informasi dan pendaftaran magang, belum mendukung manajemen praktikum internal kampus yang dinamis. |
+| **Maspaeni et al. (2023)** | Sistem pengajuan alat kesehatan | PWA, Waterfall, Black-box | Penelitian saya lebih komprehensif karena menggabungkan teknologi frontend, backend, database, autentikasi, storage, dan offline support dalam satu sistem. | Konteks layanan kesehatan, bukan pendidikan vokasi; belum terintegrasi dengan modul akademik praktikum. |
+| **Muzakki et al. (2025)** | Repositori digital tugas akhir | PWA, SDLC, UML Iconix, Black-box | Penelitian saya menambahkan teknologi implementatif yang lebih operasional: `Supabase`, `PostgreSQL`, `Tailwind CSS`, `IndexedDB`, `offline queue`, dan `background sync`. | Fokus pada publikasi tugas akhir, belum mencakup fitur inti praktikum seperti jadwal, logbook, nilai, peminjaman, dan inventaris. |
+
+- **Gap penelitian / state of the art penelitian ini:**
+  `Penelitian ini mengisi celah dengan membangun sistem informasi praktikum berbasis PWA yang terintegrasi untuk pendidikan vokasi kebidanan, mencakup jadwal, logbook, penilaian, inventaris, peminjaman alat, serta dukungan offline dan sinkronisasi data.`
 
 📌 **[CATATAN TAMPILAN]:** jika template menyediakan 5 kotak, isi masing-masing kotak dengan 1 penelitian. Tambahkan 1 kalimat kecil di bawah slide:
 `Penelitian ini melengkapi penelitian terdahulu dengan fokus pada sistem informasi praktikum berbasis PWA yang terintegrasi untuk pendidikan vokasi kebidanan.`
@@ -143,6 +150,15 @@ _(Pada slide yang ada bagan Waktu/Desain/Instrumen)_
 
 ---
 
+
+
+
+
+ðŸ“Œ **[CATATAN PRESENTASI]:**
+
+
+---
+
 ### 10. Cari Slide dengan judul: "JENIS DAN SUMBER DATA" (Ubah judulnya jadi "TEKNOLOGI & ARSITEKTUR")
 
 📌 **[CATATAN TEMPLATE 107]:** ini adalah **`slide17`** pada `TEMPLATE 107.pptx`.
@@ -159,6 +175,7 @@ _Ganti isi teksnya menjadi:_
   - Supabase
   - PostgreSQL
   - Auth dan Storage
+  - Realtime data service
 
 - **Kotak 3 - PWA dan Offline**
   - Service worker
@@ -401,7 +418,8 @@ Gunakan template ini dengan fokus **analisis -> perancangan -> implementasi -> p
    - bagi menjadi teoritis dan praktis
 
 7. **Penelitian Terdahulu dan Gap**
-   - tampilkan 5 penelitian terdahulu sesuai slot template + 1 kalimat gap penelitian di bawahnya
+   - tampilkan dalam bentuk tabel state of the art
+   - wajib ada kolom `Kelemahan/Kekurangan` dan 1 kalimat gap penelitian
 
 8. **Landasan Teori**
    - tampilkan 2 kotak yang mencakup `PWA + RBAC` dan `R&D + UCD`
@@ -519,7 +537,8 @@ Bagian ini adalah mapping final yang paling praktis berdasarkan hasil pengecekan
   - isi 2 kotak: `PWA + RBAC` dan `R&D + UCD`.
 
 - **`slide14`** -> Penelitian Terdahulu
-  - isi 5 penelitian terdahulu sesuai slot template.
+  - isi dalam bentuk tabel state of the art.
+  - tonjolkan kolom kelemahan/kekurangan dan gap penelitian.
 
 - **`slide15`** -> Pembatas BAB III
   - pakai sebagai pembuka metode penelitian.

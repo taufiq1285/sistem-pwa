@@ -287,7 +287,11 @@ export default function MahasiswaNilaiPageEnhanced() {
     const grouped = new Map<string, Nilai[]>();
 
     filtered.forEach((nilai) => {
-      const mkId = nilai.kelas?.mata_kuliah?.nama_mk || "Unknown";
+      const mkId =
+        nilai.kelas?.mata_kuliah?.id ||
+        nilai.kelas?.mata_kuliah?.kode_mk ||
+        nilai.kelas?.mata_kuliah?.nama_mk ||
+        `kelas-${nilai.kelas?.id || nilai.kelas_id}`;
       if (!grouped.has(mkId)) {
         grouped.set(mkId, []);
       }
@@ -310,7 +314,10 @@ export default function MahasiswaNilaiPageEnhanced() {
       else if (avgNilai >= 40) nilaiHuruf = "D";
 
       return {
-        mata_kuliah_id: firstKelas.kelas?.mata_kuliah?.nama_mk || "",
+        mata_kuliah_id:
+          firstKelas.kelas?.mata_kuliah?.id ||
+          firstKelas.kelas?.mata_kuliah?.kode_mk ||
+          mkName,
         kode_mk: firstKelas.kelas?.mata_kuliah?.kode_mk || "",
         nama_mk: mkName,
         sks: firstKelas.kelas?.mata_kuliah?.sks || 0,

@@ -230,6 +230,11 @@ export async function getKuis(
             kode_mk
           )
         ),
+        mata_kuliah:mata_kuliah_id (
+          id,
+          nama_mk,
+          kode_mk
+        ),
         dosen:dosen_id (
           users:user_id (
             full_name
@@ -296,6 +301,11 @@ export async function getKuisById(id: string): Promise<Kuis> {
             nama_mk,
             kode_mk
           )
+        ),
+        mata_kuliah:mata_kuliah_id (
+          id,
+          nama_mk,
+          kode_mk
         ),
         dosen:dosen_id (
           users:user_id (
@@ -369,71 +379,70 @@ async function createKuisImpl(data: CreateKuisData): Promise<Kuis> {
     );
     console.log("📢 [createKuis] Event dispatched: kuis:changed (created)");
 
-    // ✅ AUTO-NOTIFICATION: Notify all mahasiswa in kelas when dosen creates new tugas
-    // Fire-and-forget: don't await, run in background to avoid blocking
-    Promise.resolve()
-      .then(async () => {
-        try {
-          console.log("[NOTIFICATION] Starting notification process...");
-          // Get all mahasiswa in the kelas
-          const { data: enrollment, error: enrollError } = await supabase
-            .from("kelas_mahasiswa")
-            .select(
-              `
-            mahasiswa:mahasiswa_id (
-              id,
-              user_id
-            )
-          `,
-            )
-            .eq("kelas_id", data.kelas_id);
-
-          if (!enrollError && enrollment && enrollment.length > 0) {
-            // Get dosen info
-            const { data: dosen, error: dosenError } = await supabase
-              .from("dosen")
+    // Notify mahasiswa only when the task is immediately created as published.
+    if (dataWithDefaults.status === "published") {
+      Promise.resolve()
+        .then(async () => {
+          try {
+            console.log("[NOTIFICATION] Starting notification process...");
+            const { data: enrollment, error: enrollError } = await supabase
+              .from("kelas_mahasiswa")
               .select(
                 `
-              id,
-              user:user_id (
-                full_name
+              mahasiswa:mahasiswa_id (
+                id,
+                user_id
               )
             `,
               )
-              .eq("id", data.dosen_id)
-              .single();
+              .eq("kelas_id", data.kelas_id)
+              .eq("is_active", true);
 
-            if (!dosenError && dosen) {
-              const mahasiswaUserIds = enrollment
-                .map((e: any) => e.mahasiswa?.user_id)
-                .filter(Boolean);
-              const dosenNama = (dosen as any).user?.full_name || "Dosen";
+            if (!enrollError && enrollment && enrollment.length > 0) {
+              const { data: dosen, error: dosenError } = await supabase
+                .from("dosen")
+                .select(
+                  `
+                id,
+                user:user_id (
+                  full_name
+                )
+              `,
+                )
+                .eq("id", data.dosen_id)
+                .single();
 
-              if (mahasiswaUserIds.length > 0) {
-                await notifyMahasiswaTugasBaru(
-                  mahasiswaUserIds,
-                  dosenNama,
-                  data.judul,
-                  result.id,
-                  data.kelas_id,
-                );
-                console.log(
-                  `[NOTIFICATION] ${mahasiswaUserIds.length} mahasiswa notified: New tugas "${data.judul}"`,
-                );
+              if (!dosenError && dosen) {
+                const mahasiswaUserIds = enrollment
+                  .map((e: any) => e.mahasiswa?.user_id)
+                  .filter(Boolean);
+                const dosenNama = (dosen as any).user?.full_name || "Dosen";
+
+                if (mahasiswaUserIds.length > 0) {
+                  await notifyMahasiswaTugasBaru(
+                    mahasiswaUserIds,
+                    dosenNama,
+                    data.judul,
+                    result.id,
+                    data.kelas_id,
+                  );
+                  console.log(
+                    `[NOTIFICATION] ${mahasiswaUserIds.length} mahasiswa notified: New tugas "${data.judul}"`,
+                  );
+                }
               }
             }
+          } catch (notifError) {
+            console.error(
+              "[NOTIFICATION] Failed to notify mahasiswa:",
+              notifError,
+            );
           }
-        } catch (notifError) {
-          // Don't fail the creation if notification fails
-          console.error(
-            "[NOTIFICATION] Failed to notify mahasiswa:",
-            notifError,
-          );
-        }
-      })
-      .catch((err) => {
-        console.error("[NOTIFICATION] Unhandled error:", err);
-      });
+        })
+        .catch((err) => {
+          console.error("[NOTIFICATION] Unhandled error:", err);
+        });
+    }
 
     return result;
   } catch (error) {
@@ -479,6 +488,58 @@ async function updateKuisImpl(
       console.log("📢 Event dispatched: kuis:changed (updated)");
     } catch (eventError) {
       console.warn("⚠️ Failed to dispatch kuis:changed event:", eventError);
+    }
+
+    if (data.status === "published") {
+      Promise.resolve()
+        .then(async () => {
+          try {
+            const { data: dosenData } = await supabase
+              .from("dosen")
+              .select("user:user_id(full_name)")
+              .eq("id", updated.dosen_id)
+              .single();
+
+            const dosenNama = dosenData?.user?.full_name || "Dosen";
+
+            const { data: kelasData } = await supabase
+              .from("kelas")
+              .select("nama_kelas")
+              .eq("id", updated.kelas_id)
+              .single();
+
+            const { data: kelasMahasiswa } = await supabase
+              .from("kelas_mahasiswa")
+              .select("mahasiswa:mahasiswa_id(user_id)")
+              .eq("kelas_id", updated.kelas_id)
+              .eq("is_active", true);
+
+            const mahasiswaIds =
+              kelasMahasiswa
+                ?.map((km: any) => km.mahasiswa?.user_id)
+                .filter((userId: string | undefined): userId is string =>
+                  Boolean(userId),
+                ) || [];
+
+            if (mahasiswaIds.length > 0) {
+              await notifyMahasiswaTugasBaru(
+                mahasiswaIds,
+                dosenNama,
+                updated.judul,
+                updated.id,
+                updated.kelas_id,
+              );
+            }
+          } catch (notifError) {
+            console.error(
+              "[NOTIFICATION] Failed to notify mahasiswa on publish:",
+              notifError,
+            );
+          }
+        })
+        .catch((err) => {
+          console.error("[NOTIFICATION] Unhandled publish error:", err);
+        });
     }
 
     return updated;
@@ -567,14 +628,19 @@ export async function publishKuis(id: string): Promise<Kuis> {
 
           const kelasNama = kelasData?.nama_kelas || "Kelas";
 
-          // Get mahasiswa IDs in this kelas
+          // Get mahasiswa user IDs in this kelas
           const { data: kelasMahasiswa } = await supabase
             .from("kelas_mahasiswa")
-            .select("mahasiswa_id")
-            .eq("kelas_id", kuis.kelas_id);
+            .select("mahasiswa:mahasiswa_id(user_id)")
+            .eq("kelas_id", kuis.kelas_id)
+            .eq("is_active", true);
 
           const mahasiswaIds =
-            kelasMahasiswa?.map((km: any) => km.mahasiswa_id) || [];
+            kelasMahasiswa
+              ?.map((km: any) => km.mahasiswa?.user_id)
+              .filter((userId: string | undefined): userId is string =>
+                Boolean(userId),
+              ) || [];
 
           if (mahasiswaIds.length > 0) {
             notifyMahasiswaKuisPublished(
@@ -584,6 +650,7 @@ export async function publishKuis(id: string): Promise<Kuis> {
               kelasNama,
               kuis.tanggal_selesai || new Date().toISOString(),
               kuis.id,
+              (kuis as any).tipe_kuis ?? null,
             ).catch((err) => {
               console.error("Failed to notify mahasiswa about kuis:", err);
             });
@@ -1024,7 +1091,22 @@ export async function getAttempts(
     const options = {
       select: `
         *,
-        kuis:kuis_id (*),
+        kuis:kuis_id (
+          *,
+          kelas:kelas_id (
+            id,
+            nama_kelas,
+            mata_kuliah:mata_kuliah_id (
+              nama_mk,
+              kode_mk
+            )
+          ),
+          mata_kuliah:mata_kuliah_id (
+            id,
+            nama_mk,
+            kode_mk
+          )
+        ),
         mahasiswa:mahasiswa_id (
           nim,
           users:user_id (
@@ -1127,6 +1209,19 @@ export async function getAttemptById(id: string): Promise<AttemptKuis> {
         *,
         kuis:kuis_id (
           *,
+          kelas:kelas_id (
+            id,
+            nama_kelas,
+            mata_kuliah:mata_kuliah_id (
+              nama_mk,
+              kode_mk
+            )
+          ),
+          mata_kuliah:mata_kuliah_id (
+            id,
+            nama_mk,
+            kode_mk
+          ),
           soal:soal(*)
         ),
         mahasiswa:mahasiswa_id (
@@ -1157,7 +1252,22 @@ async function getAttemptByIdForMahasiswaImpl(
     return await getById<AttemptKuis>("attempt_kuis", id, {
       select: `
         *,
-        kuis:kuis_id (*),
+        kuis:kuis_id (
+          *,
+          kelas:kelas_id (
+            id,
+            nama_kelas,
+            mata_kuliah:mata_kuliah_id (
+              nama_mk,
+              kode_mk
+            )
+          ),
+          mata_kuliah:mata_kuliah_id (
+            id,
+            nama_mk,
+            kode_mk
+          )
+        ),
         mahasiswa:mahasiswa_id (
           nim,
           users:user_id (
@@ -1447,6 +1557,11 @@ export async function getUpcomingQuizzes(
             kode_mk
           )
         ),
+        mata_kuliah:mata_kuliah_id (
+          id,
+          nama_mk,
+          kode_mk
+        ),
         dosen:dosen_id (
           users:user_id (
             full_name
@@ -1485,6 +1600,8 @@ export async function getUpcomingQuizzes(
 
     const upcomingQuizzes: UpcomingQuiz[] = await Promise.all(
       enrolledQuizzes.map(async (quiz) => {
+        const quizMataKuliah =
+          (quiz as any).mata_kuliah || quiz.kelas?.mata_kuliah || null;
         const attempts = await getAttempts({
           kuis_id: quiz.id,
           mahasiswa_id: mahasiswaId,
@@ -1533,8 +1650,8 @@ export async function getUpcomingQuizzes(
           id: quiz.id,
           kelas_id: quiz.kelas_id,
           judul: quiz.judul,
-          nama_mk: quiz.kelas?.mata_kuliah?.nama_mk || "",
-          kode_mk: quiz.kelas?.mata_kuliah?.kode_mk || "",
+          nama_mk: quizMataKuliah?.nama_mk || "",
+          kode_mk: quizMataKuliah?.kode_mk || "",
           nama_kelas: quiz.kelas?.nama_kelas || "",
           dosen_name: quiz.dosen?.users?.full_name || "",
           tipe_kuis: (quiz as any).tipe_kuis ?? "campuran",
@@ -1597,10 +1714,50 @@ export async function getRecentQuizResults(
   limit: number = 5,
 ): Promise<RecentQuizResult[]> {
   try {
-    const attempts = await getAttempts({
-      mahasiswa_id: mahasiswaId,
-      status: "graded",
-    });
+    await assertCurrentMahasiswaMatches(mahasiswaId, "view:attempt_kuis");
+
+    const attempts = await queryWithFilters<AttemptKuis>(
+      "attempt_kuis",
+      [
+        {
+          column: "mahasiswa_id",
+          operator: "eq",
+          value: mahasiswaId,
+        },
+        {
+          column: "status",
+          operator: "eq",
+          value: "graded",
+        },
+      ],
+      {
+        select: `
+          *,
+          kuis:kuis_id (
+            id,
+            judul,
+            passing_grade,
+            passing_score,
+            kelas:kelas_id (
+              nama_kelas,
+              mata_kuliah:mata_kuliah_id (
+                nama_mk,
+                kode_mk
+              )
+            ),
+            mata_kuliah:mata_kuliah_id (
+              id,
+              nama_mk,
+              kode_mk
+            ),
+            soal:soal (
+              id,
+              poin
+            )
+          )
+        `,
+      },
+    );
 
     const recentAttempts = attempts
       .filter((a) => a.submitted_at)
@@ -1611,20 +1768,43 @@ export async function getRecentQuizResults(
       )
       .slice(0, limit);
 
-    return recentAttempts.map((attempt) => ({
-      id: attempt.kuis_id,
-      attempt_id: attempt.id,
-      judul: attempt.kuis?.judul || "",
-      nama_mk: "",
-      submitted_at: attempt.submitted_at || "",
-      total_poin: attempt.total_poin ?? 0,
-      max_poin: 100,
-      percentage: ((attempt.total_poin ?? 0) / 100) * 100,
-      status: attempt.status as "graded" | "pending",
-      passed:
-        (attempt.total_poin ?? 0) >=
-        ((attempt.kuis as any)?.passing_grade ?? 70),
-    }));
+    return recentAttempts.map((attempt) => {
+      const attemptMataKuliah =
+        (attempt.kuis as any)?.mata_kuliah ||
+        (attempt.kuis as any)?.kelas?.mata_kuliah ||
+        null;
+      const soalList = Array.isArray((attempt.kuis as any)?.soal)
+        ? ((attempt.kuis as any).soal as Array<{ poin?: number | null }>)
+        : [];
+      const computedMaxPoin = soalList.reduce(
+        (sum, soal) => sum + (soal?.poin ?? 0),
+        0,
+      );
+      const maxPoin = computedMaxPoin > 0 ? computedMaxPoin : 100;
+      const percentage =
+        maxPoin > 0 ? ((attempt.total_poin ?? 0) / maxPoin) * 100 : 0;
+      const passingScore =
+        (attempt.kuis as any)?.passing_score ??
+        (attempt.kuis as any)?.passing_grade ??
+        70;
+      const passed =
+        computedMaxPoin > 0
+          ? percentage >= passingScore
+          : (attempt.total_poin ?? 0) >= passingScore;
+
+      return {
+        id: attempt.kuis_id,
+        attempt_id: attempt.id,
+        judul: attempt.kuis?.judul || "",
+        nama_mk: attemptMataKuliah?.nama_mk || "",
+        submitted_at: attempt.submitted_at || "",
+        total_poin: attempt.total_poin ?? 0,
+        max_poin: maxPoin,
+        percentage: Math.round(percentage * 100) / 100,
+        status: attempt.status as "graded" | "pending",
+        passed,
+      };
+    });
   } catch (error) {
     const apiError = handleError(error);
     logError(apiError, `getRecentQuizResults:${mahasiswaId}`);
@@ -1713,6 +1893,68 @@ const OFFLINE_STORES = {
   ANSWERS: "offline_answers",
   ATTEMPTS: "offline_attempts",
 } as const;
+
+type OfflineAttemptRecord = {
+  id: string;
+  data: AttemptKuis;
+  cachedAt: string;
+  kuis_id?: string;
+  mahasiswa_id?: string;
+  synced?: boolean;
+  pending_submit?: boolean;
+  offline_submitted_at?: string | null;
+  sync_status?: "synced" | "pending_answers" | "pending_submit";
+  server_attempt_id?: string | null;
+};
+
+export interface OfflineAttemptSyncItem {
+  attempt_id: string;
+  kuis_id: string;
+  judul: string;
+  nama_kelas: string | null;
+  nama_mk: string | null;
+  submitted_at: string | null;
+  cached_at: string | null;
+  last_activity_at: string | null;
+  answer_count: number;
+  attempt_status: AttemptKuis["status"];
+  display_status:
+    | "draft_local"
+    | "answers_local"
+    | "pending_submit"
+    | "synced";
+  sync_status: "synced" | "pending_submit";
+  offline_submit_pending: boolean;
+}
+
+function mapOfflineAttemptRecordToAttempt(
+  cached: OfflineAttemptRecord | null | undefined,
+): AttemptKuis | null {
+  if (!cached?.data) {
+    return null;
+  }
+
+  return {
+    ...cached.data,
+    is_synced:
+      cached.sync_status === "synced"
+        ? true
+        : (cached.data.is_synced ?? !cached.pending_submit),
+    offline_submit_pending:
+      cached.pending_submit ?? cached.data.offline_submit_pending ?? false,
+    offline_submitted_at:
+      cached.offline_submitted_at ??
+      cached.data.offline_submitted_at ??
+      cached.data.submitted_at ??
+      null,
+    sync_status:
+      cached.sync_status ??
+      cached.data.sync_status ??
+      (cached.pending_submit ? "pending_submit" : "synced"),
+    server_attempt_id:
+      cached.server_attempt_id ?? cached.data.server_attempt_id ?? null,
+  };
+}
 
 /**
  * Cache quiz to IndexedDB for offline access
@@ -1822,14 +2064,27 @@ export async function saveAnswerOffline(
 ): Promise<void> {
   try {
     const answerId = `${attemptId}_${soalId}`;
-    await indexedDBManager.create(OFFLINE_STORES.ANSWERS, {
+    const existing = await indexedDBManager.getById(
+      OFFLINE_STORES.ANSWERS,
+      answerId,
+    );
+    const record = {
       id: answerId,
       attempt_id: attemptId,
       soal_id: soalId,
       jawaban,
       savedAt: new Date().toISOString(),
       synced: false,
-    });
+    };
+
+    if (existing) {
+      await indexedDBManager.update(OFFLINE_STORES.ANSWERS, {
+        ...(existing as any),
+        ...record,
+      });
+    } else {
+      await indexedDBManager.create(OFFLINE_STORES.ANSWERS, record);
+    }
   } catch (error) {
     console.error("Failed to save answer offline:", error);
     throw error;
@@ -1866,25 +2121,46 @@ export async function getOfflineAnswers(
 export async function cacheAttemptOffline(attempt: AttemptKuis): Promise<void> {
   try {
     // Check if already cached
-    const existing = await indexedDBManager.getById(
+    const existing = (await indexedDBManager.getById(
       OFFLINE_STORES.ATTEMPTS,
       attempt.id,
-    );
+    )) as OfflineAttemptRecord | null;
+
+    const record: OfflineAttemptRecord = {
+      ...(existing || {}),
+      id: attempt.id,
+      kuis_id: attempt.kuis_id,
+      mahasiswa_id: attempt.mahasiswa_id,
+      synced:
+        attempt.sync_status === "synced"
+          ? true
+          : existing?.synced ?? attempt.is_synced ?? true,
+      pending_submit:
+        attempt.offline_submit_pending ?? existing?.pending_submit ?? false,
+      offline_submitted_at:
+        attempt.offline_submitted_at ??
+        existing?.offline_submitted_at ??
+        attempt.submitted_at ??
+        null,
+      sync_status:
+        attempt.sync_status ??
+        existing?.sync_status ??
+        (attempt.offline_submit_pending ? "pending_submit" : "synced"),
+      server_attempt_id:
+        attempt.server_attempt_id ?? existing?.server_attempt_id ?? null,
+      data: {
+        ...(existing?.data || {}),
+        ...attempt,
+      },
+      cachedAt: new Date().toISOString(),
+    };
 
     if (existing) {
       // Update existing cache
-      await indexedDBManager.update(OFFLINE_STORES.ATTEMPTS, {
-        id: attempt.id,
-        data: attempt,
-        cachedAt: new Date().toISOString(),
-      } as any);
+      await indexedDBManager.update(OFFLINE_STORES.ATTEMPTS, record as any);
     } else {
       // Create new cache
-      await indexedDBManager.create(OFFLINE_STORES.ATTEMPTS, {
-        id: attempt.id,
-        data: attempt,
-        cachedAt: new Date().toISOString(),
-      });
+      await indexedDBManager.create(OFFLINE_STORES.ATTEMPTS, record as any);
     }
   } catch (error) {
     console.error("Failed to cache attempt offline:", error);
@@ -1899,15 +2175,174 @@ export async function getCachedAttempt(
   attemptId: string,
 ): Promise<AttemptKuis | null> {
   try {
-    const cached = await indexedDBManager.getById(
+    const cached = (await indexedDBManager.getById(
       OFFLINE_STORES.ATTEMPTS,
       attemptId,
-    );
-    return (cached as any)?.data || null;
+    )) as OfflineAttemptRecord | null;
+    return mapOfflineAttemptRecordToAttempt(cached);
   } catch (error) {
     console.error("Failed to get cached attempt:", error);
     return null;
   }
+}
+
+export async function getLatestCachedAttemptForQuiz(
+  kuisId: string,
+  mahasiswaId: string,
+): Promise<AttemptKuis | null> {
+  try {
+    const allAttempts = (await indexedDBManager.getAll(
+      OFFLINE_STORES.ATTEMPTS,
+    )) as OfflineAttemptRecord[];
+
+    const matchingAttempts = allAttempts
+      .filter((record) => {
+        const data = record?.data;
+        return data?.kuis_id === kuisId && data?.mahasiswa_id === mahasiswaId;
+      })
+      .sort((a, b) => {
+        const aTime =
+          a.offline_submitted_at ||
+          a.cachedAt ||
+          a.data?.submitted_at ||
+          a.data?.updated_at ||
+          a.data?.started_at ||
+          "";
+        const bTime =
+          b.offline_submitted_at ||
+          b.cachedAt ||
+          b.data?.submitted_at ||
+          b.data?.updated_at ||
+          b.data?.started_at ||
+          "";
+        return new Date(bTime).getTime() - new Date(aTime).getTime();
+      });
+
+    return mapOfflineAttemptRecordToAttempt(matchingAttempts[0] || null);
+  } catch (error) {
+    console.error("Failed to get latest cached attempt for quiz:", error);
+    return null;
+  }
+}
+
+export async function getOfflineAttemptSummariesForMahasiswa(
+  mahasiswaId: string,
+): Promise<AttemptKuis[]> {
+  try {
+    const allAttempts = (await indexedDBManager.getAll(
+      OFFLINE_STORES.ATTEMPTS,
+    )) as OfflineAttemptRecord[];
+
+    return allAttempts
+      .filter((record) => record?.data?.mahasiswa_id === mahasiswaId)
+      .map((record) => mapOfflineAttemptRecordToAttempt(record))
+      .filter((attempt): attempt is AttemptKuis => attempt !== null);
+  } catch (error) {
+    console.error("Failed to get offline attempt summaries:", error);
+    return [];
+  }
+}
+
+export async function getOfflineAttemptSyncItemsForMahasiswa(
+  mahasiswaId: string,
+): Promise<OfflineAttemptSyncItem[]> {
+  try {
+    const allAttempts = (await indexedDBManager.getAll(
+      OFFLINE_STORES.ATTEMPTS,
+    )) as OfflineAttemptRecord[];
+    const allAnswers = await indexedDBManager.getAll(OFFLINE_STORES.ANSWERS);
+
+    return allAttempts
+      .filter((record) => record?.data?.mahasiswa_id === mahasiswaId)
+      .map((record) => {
+        const attempt = mapOfflineAttemptRecordToAttempt(record);
+        if (!attempt) {
+          return null;
+        }
+
+        const kuis =
+          (attempt.kuis as Kuis | undefined) ||
+          (record.data?.kuis as Kuis | undefined) ||
+          null;
+        const mataKuliah =
+          (kuis as any)?.mata_kuliah || (kuis as any)?.kelas?.mata_kuliah || null;
+        const attemptAnswers = allAnswers.filter(
+          (answer: any) => answer?.attempt_id === attempt.id,
+        );
+        const answerCount = attemptAnswers.length;
+        const latestAnswerSavedAt = attemptAnswers
+          .map((answer: any) => answer?.savedAt || null)
+          .filter(Boolean)
+          .sort((a: string, b: string) => {
+            return new Date(b).getTime() - new Date(a).getTime();
+          })[0] || null;
+        const displayStatus: OfflineAttemptSyncItem["display_status"] =
+          attempt.offline_submit_pending
+            ? "pending_submit"
+            : attempt.status === "in_progress" && answerCount > 0
+              ? "answers_local"
+              : attempt.status === "in_progress"
+                ? "draft_local"
+                : "synced";
+
+        return {
+          attempt_id: attempt.id,
+          kuis_id: attempt.kuis_id,
+          judul: kuis?.judul || "Tugas Praktikum",
+          nama_kelas: (kuis as any)?.kelas?.nama_kelas || null,
+          nama_mk: mataKuliah?.nama_mk || null,
+          submitted_at:
+            attempt.offline_submitted_at ||
+            attempt.submitted_at ||
+            attempt.started_at ||
+            null,
+          cached_at: record.cachedAt || null,
+          last_activity_at:
+            latestAnswerSavedAt ||
+            attempt.offline_submitted_at ||
+            record.cachedAt ||
+            attempt.updated_at ||
+            attempt.started_at ||
+            null,
+          answer_count: answerCount,
+          attempt_status: attempt.status,
+          display_status: displayStatus,
+          sync_status: attempt.offline_submit_pending
+            ? "pending_submit"
+            : "synced",
+          offline_submit_pending: Boolean(attempt.offline_submit_pending),
+        } satisfies OfflineAttemptSyncItem;
+      })
+      .filter((item): item is OfflineAttemptSyncItem => item !== null)
+      .sort((a, b) => {
+        const aTime = a.last_activity_at || a.submitted_at || a.cached_at || "";
+        const bTime = b.last_activity_at || b.submitted_at || b.cached_at || "";
+        return new Date(bTime).getTime() - new Date(aTime).getTime();
+      });
+  } catch (error) {
+    console.error("Failed to get offline attempt sync items:", error);
+    return [];
+  }
+}
+
+export async function markAttemptSubmittedOffline(
+  attempt: AttemptKuis,
+  sisaWaktu: number,
+): Promise<AttemptKuis> {
+  const submittedAt = new Date().toISOString();
+  const offlineAttempt: AttemptKuis = {
+    ...attempt,
+    status: "submitted",
+    submitted_at: submittedAt,
+    sisa_waktu: sisaWaktu,
+    is_synced: false,
+    offline_submit_pending: true,
+    offline_submitted_at: submittedAt,
+    sync_status: "pending_submit",
+  };
+
+  await cacheAttemptOffline(offlineAttempt);
+  return offlineAttempt;
 }
 
 /**
@@ -2053,6 +2488,90 @@ export async function syncOfflineAnswers(attemptId: string): Promise<number> {
   } catch (error) {
     console.error("Failed to sync offline answers:", error);
     throw error;
+  }
+}
+
+export async function syncPendingOfflineQuizSubmission(
+  attemptId: string,
+): Promise<AttemptKuis | null> {
+  try {
+    const cachedRecord = (await indexedDBManager.getById(
+      OFFLINE_STORES.ATTEMPTS,
+      attemptId,
+    )) as OfflineAttemptRecord | null;
+
+    const cachedAttempt = mapOfflineAttemptRecordToAttempt(cachedRecord);
+    if (!cachedAttempt || !cachedAttempt.offline_submit_pending) {
+      return cachedAttempt;
+    }
+
+    await syncOfflineAnswers(attemptId);
+
+    const syncedAttempt = await submitQuiz({
+      attempt_id: attemptId,
+      sisa_waktu: cachedAttempt.sisa_waktu ?? 0,
+    });
+
+    await cacheAttemptOffline({
+      ...syncedAttempt,
+      is_synced: true,
+      offline_submit_pending: false,
+      offline_submitted_at: null,
+      sync_status: "synced",
+      server_attempt_id: syncedAttempt.id,
+    });
+
+    return {
+      ...syncedAttempt,
+      is_synced: true,
+      offline_submit_pending: false,
+      offline_submitted_at: null,
+      sync_status: "synced",
+      server_attempt_id: syncedAttempt.id,
+    };
+  } catch (error) {
+    console.error("Failed to sync pending offline quiz submission:", error);
+    throw error;
+  }
+}
+
+export async function syncPendingOfflineQuizSubmissions(
+  mahasiswaId?: string,
+): Promise<number> {
+  try {
+    const allAttempts = (await indexedDBManager.getAll(
+      OFFLINE_STORES.ATTEMPTS,
+    )) as OfflineAttemptRecord[];
+
+    const pendingAttempts = allAttempts.filter((record) => {
+      if (!record?.pending_submit) {
+        return false;
+      }
+
+      if (!mahasiswaId) {
+        return true;
+      }
+
+      return record.data?.mahasiswa_id === mahasiswaId;
+    });
+
+    let syncedCount = 0;
+    for (const record of pendingAttempts) {
+      try {
+        await syncPendingOfflineQuizSubmission(record.id);
+        syncedCount += 1;
+      } catch (error) {
+        console.error(
+          `Failed to sync pending offline submission for attempt ${record.id}:`,
+          error,
+        );
+      }
+    }
+
+    return syncedCount;
+  } catch (error) {
+    console.error("Failed to sync pending offline quiz submissions:", error);
+    return 0;
   }
 }
 

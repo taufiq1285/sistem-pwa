@@ -124,6 +124,8 @@ export function QuizCard({
   // ✅ Mapping: essay = laporan praktikum, selain itu = Tes CBT
   const isLaporan = quizType === "essay";
   const isCBT = !isLaporan; // Everything else (pilihan_ganda, campuran) is CBT-style
+  const quizMataKuliah =
+    quiz.mata_kuliah || quiz.kelas?.mata_kuliah || null;
 
   let statusLabel = "Draft";
   let statusVariant: "default" | "secondary" | "destructive" | "outline" =
@@ -354,14 +356,18 @@ export function QuizCard({
               {/* Mata Kuliah & Kelas Info */}
               {quiz.kelas && (
                 <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-                  <span className="inline-flex items-center gap-1">
-                    📚
-                    <span className="font-medium text-blue-700">
-                      {quiz.kelas.mata_kuliah?.kode_mk}
-                    </span>
-                    - {quiz.kelas.mata_kuliah?.nama_mk}
-                  </span>
-                  <span className="text-gray-400">•</span>
+                  {quizMataKuliah && (
+                    <>
+                      <span className="inline-flex items-center gap-1">
+                        📚
+                        <span className="font-medium text-blue-700">
+                          {quizMataKuliah.kode_mk}
+                        </span>
+                        - {quizMataKuliah.nama_mk}
+                      </span>
+                      <span className="text-gray-400">•</span>
+                    </>
+                  )}
                   <span>Kelas: {quiz.kelas.nama_kelas}</span>
                 </div>
               )}
@@ -622,7 +628,7 @@ export function QuizCard({
 /**
  * Get quiz status based on dates and published state
  */
-export function getQuizStatus(quiz: Kuis): {
+function getQuizStatus(quiz: Kuis): {
   label: string;
   variant: "default" | "secondary" | "destructive" | "outline";
   icon: React.ComponentType<{ className?: string }>;

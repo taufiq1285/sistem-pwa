@@ -77,7 +77,7 @@ interface QuizBuilderProps {
   dosenId: string;
   defaultTipe?: "pre_test" | "post_test" | "laporan";
   cbtMode?: boolean; // CBT mode - multiple choice only (for Tes)
-  laporanMode?: boolean; // Laporan mode - essay/upload only
+  laporanMode?: boolean; // Laporan mode - isian laporan/upload berkas
   onSave?: (quiz: Kuis) => void;
   onCancel?: () => void;
 }
@@ -141,36 +141,60 @@ export function QuizBuilder({
     return `${year}-${month}-${day}T${hours}:${minutes}`;
   };
 
-  // ✅ FIX: Set selectedMataKuliah from quiz data when editing
-  useEffect(() => {
-    if (quiz?.kelas_id && !selectedMataKuliah) {
-      // Get mata_kuliah_id from the quiz's kelas
-      const findMataKuliahFromKelas = async () => {
-        try {
-          // Load all kelas to find the mata_kuliah_id
-          const { data: kelasData } = await supabase
-            .from("kelas")
-            .select("mata_kuliah_id")
-            .eq("id", quiz.kelas_id)
-            .single();
-
-          if (kelasData?.mata_kuliah_id) {
-            setSelectedMataKuliah(kelasData.mata_kuliah_id);
-            console.log(
-              "✅ [QuizBuilder] Auto-selected mata kuliah:",
-              kelasData.mata_kuliah_id,
-            );
-          }
-        } catch (error) {
-          console.warn(
-            "⚠️ [QuizBuilder] Failed to get mata kuliah from kelas:",
-            error,
-          );
-        }
-      };
-      findMataKuliahFromKelas();
+  const resolveQuizMataKuliahId = async (): Promise<string | null> => {
+    if (quiz?.mata_kuliah_id) {
+      return quiz.mata_kuliah_id;
     }
-  }, [quiz?.kelas_id, selectedMataKuliah]);
+
+    if (quiz?.mata_kuliah?.id) {
+      return quiz.mata_kuliah.id;
+    }
+
+    if (!quiz?.kelas_id) {
+      return null;
+    }
+
+    try {
+      const { data: jadwalData } = await (supabase as any)
+        .from("jadwal_praktikum")
+        .select("mata_kuliah_id")
+        .eq("kelas_id", quiz.kelas_id)
+        .eq("is_active", true)
+        .not("mata_kuliah_id", "is", null)
+        .order("tanggal_praktikum", { ascending: false })
+        .limit(1);
+
+      if (jadwalData?.[0]?.mata_kuliah_id) {
+        return jadwalData[0].mata_kuliah_id;
+      }
+    } catch (error) {
+      console.warn("⚠️ [QuizBuilder] Failed to resolve mata kuliah:", error);
+    }
+
+    return null;
+  };
+
+  useEffect(() => {
+    if (quiz?.mata_kuliah_id && quiz.mata_kuliah_id !== selectedMataKuliah) {
+      setSelectedMataKuliah(quiz.mata_kuliah_id);
+    }
+  }, [quiz?.mata_kuliah_id, selectedMataKuliah]);
+
+  useEffect(() => {
+    if (!quiz?.kelas_id) {
+      return;
+    }
+
+    const syncSelectedMataKuliah = async () => {
+      const mataKuliahId = await resolveQuizMataKuliahId();
+
+      if (mataKuliahId && mataKuliahId !== selectedMataKuliah) {
+        setSelectedMataKuliah(mataKuliahId);
+      }
+    };
+
+    syncSelectedMataKuliah();
+  }, [quiz?.id, quiz?.kelas_id, quiz?.mata_kuliah_id, selectedMataKuliah]);
 
   const {
     register,
@@ -218,15 +242,6 @@ export function QuizBuilder({
     // FIXED: Load ALL global kelas (not tied to mata kuliah)
     loadKelas();
   }, [dosenId]);
-
-  // Load kelas when mata kuliah changes (for display purposes only)
-  useEffect(() => {
-    if (selectedMataKuliah) {
-      // Kelas bersifat GLOBAL, tidak perlu reload berdasarkan MK
-      // Reset kelas selection when mata kuliah changes
-      setValue("kelas_id", "");
-    }
-  }, [selectedMataKuliah]);
 
   const loadKelas = async (mataKuliahId?: string) => {
     setIsLoadingKelas(true);
@@ -298,6 +313,10 @@ export function QuizBuilder({
       toast.error("Pilih kelas terlebih dahulu");
       return;
     }
+    if (!selectedMataKuliah) {
+      toast.error("Pilih mata kuliah terlebih dahulu");
+      return;
+    }
     // Skip durasi validation for laporan (no time limit needed)
     if (
       !effectiveLaporanMode &&
@@ -319,6 +338,7 @@ export function QuizBuilder({
 
       const dataToSave = {
         ...formData,
+        mata_kuliah_id: selectedMataKuliah || null,
         tipe_kuis: tipeKuisValue, // ✅ Set tipe_kuis based on mode
         status: "draft" as const, // Always start as draft
       };
@@ -366,16 +386,20 @@ export function QuizBuilder({
       return;
     }
 
-    // ✅ UPDATED: Laporan Praktikum BOLEH publish tanpa soal
-    // CBT butuh minimal 1 soal
-    if (!effectiveLaporanMode && questions.length === 0) {
-      console.log("❌ No questions for CBT");
-      toast.error("Tambahkan minimal 1 soal sebelum publish");
+    // Semua tugas praktikum tetap membutuhkan minimal 1 komponen soal/isian
+    // agar mahasiswa punya media untuk mengerjakan atau mengirim laporan.
+    if (questions.length === 0) {
+      console.log("❌ No questions available for publish");
+      toast.error(
+        effectiveLaporanMode
+          ? "Tambahkan minimal 1 komponen laporan sebelum publish"
+          : "Tambahkan minimal 1 soal sebelum publish",
+      );
       return;
     }
 
     const confirmMsg = effectiveLaporanMode
-      ? "Yakin ingin publish laporan ini? Mahasiswa akan bisa mengupload file laporan."
+      ? "Yakin ingin publish laporan ini? Mahasiswa akan bisa mengirim isian laporan atau upload berkas."
       : "Yakin ingin publish tes ini? Mahasiswa akan bisa mengerjakan soal tes.";
 
     const confirmed = confirm(confirmMsg);
@@ -569,7 +593,7 @@ export function QuizBuilder({
             </h2>
             <p className="text-sm text-muted-foreground">
               {effectiveLaporanMode
-                ? "Tugas Praktikum - Essay / Upload File"
+                ? "Tugas Praktikum - Isian Laporan / Upload Berkas"
                 : "Computer Based Test - Pilihan Ganda"}
             </p>
           </div>
@@ -630,18 +654,13 @@ export function QuizBuilder({
               {/* Dropdown Mata Kuliah */}
               <div className="md:col-span-2 space-y-2">
                 <Label htmlFor="mata_kuliah">Pilih Mata Kuliah *</Label>
-                {isEditing && (
-                  <p className="text-xs text-muted-foreground">
-                    ⚠️ Mengubah mata kuliah akan mereset pilihan kelas
-                  </p>
-                )}
+                <p className="text-xs text-muted-foreground">
+                  Mata kuliah dipilih dari master Admin sebagai konteks tugas,
+                  tetapi tidak mengunci pilihan kelas tertentu.
+                </p>
                 <Select
                   value={selectedMataKuliah}
-                  onValueChange={(value) => {
-                    setSelectedMataKuliah(value);
-                    // Reset kelas selection when mata kuliah changes
-                    setValue("kelas_id", "");
-                  }}
+                  onValueChange={setSelectedMataKuliah}
                 >
                   <SelectTrigger id="mata_kuliah">
                     <SelectValue placeholder="Pilih mata kuliah..." />
@@ -664,10 +683,14 @@ export function QuizBuilder({
               {/* Dropdown Kelas */}
               <div className="md:col-span-2 space-y-2">
                 <Label htmlFor="kelas_id">Pilih Kelas *</Label>
+                <p className="text-xs text-muted-foreground">
+                  Kelas dipilih bebas dari master Admin sesuai kebutuhan
+                  praktikum, tidak dibatasi otomatis oleh mata kuliah.
+                </p>
                 <Select
                   value={formData.kelas_id || ""}
                   onValueChange={(value) => setValue("kelas_id", value)}
-                  disabled={!selectedMataKuliah || isLoadingKelas}
+                  disabled={isLoadingKelas}
                 >
                   <SelectTrigger
                     id="kelas_id"
@@ -675,13 +698,11 @@ export function QuizBuilder({
                   >
                     <SelectValue
                       placeholder={
-                        !selectedMataKuliah
-                          ? "Pilih mata kuliah terlebih dahulu"
-                          : isLoadingKelas
-                            ? "Memuat kelas..."
-                            : kelasList.length === 0
-                              ? "Tidak ada kelas untuk mata kuliah ini"
-                              : "Pilih kelas..."
+                        isLoadingKelas
+                          ? "Memuat kelas..."
+                          : kelasList.length === 0
+                            ? "Belum ada kelas aktif"
+                            : "Pilih kelas..."
                       }
                     />
                   </SelectTrigger>
@@ -700,44 +721,44 @@ export function QuizBuilder({
                 )}
 
                 {/* Info jika tidak ada kelas */}
-                {selectedMataKuliah &&
-                  !isLoadingKelas &&
-                  kelasList.length === 0 && (
-                    <Alert className="bg-orange-50 border-orange-200">
-                      <AlertCircle className="h-4 w-4 text-orange-600" />
-                      <AlertDescription className="text-orange-900">
-                        <p className="font-semibold mb-2">
-                          Belum ada kelas untuk mata kuliah ini
-                        </p>
-                        <p className="text-sm mb-3">
-                          Kelas bersifat <strong>UMUM</strong> dan dibuat oleh{" "}
-                          <strong>Admin</strong> di menu Manajemen Kelas. Dosen
-                          hanya memilih kelas yang sudah tersedia untuk
-                          diberikan tugas.
-                        </p>
-                        <div className="flex gap-2 text-xs">
-                          <Badge variant="outline" className="bg-white">
-                            📞 Hubungi Admin
-                          </Badge>
-                          <Badge variant="outline" className="bg-white">
-                            🏫 Buat Kelas di Manajemen Kelas
-                          </Badge>
-                        </div>
-                      </AlertDescription>
-                    </Alert>
-                  )}
-                {formData.kelas_id && selectedMataKuliah && (
+                {!isLoadingKelas && kelasList.length === 0 && (
+                  <Alert className="bg-orange-50 border-orange-200">
+                    <AlertCircle className="h-4 w-4 text-orange-600" />
+                    <AlertDescription className="text-orange-900">
+                      <p className="font-semibold mb-2">
+                        Belum ada kelas aktif yang bisa dipilih
+                      </p>
+                      <p className="text-sm mb-3">
+                        Kelas bersifat <strong>UMUM</strong> dan dibuat oleh{" "}
+                        <strong>Admin</strong> di menu Manajemen Kelas. Dosen
+                        hanya memilih kelas yang sudah tersedia untuk diberikan
+                        tugas.
+                      </p>
+                      <div className="flex gap-2 text-xs">
+                        <Badge variant="outline" className="bg-white">
+                          Hubungi Admin
+                        </Badge>
+                        <Badge variant="outline" className="bg-white">
+                          Cek Manajemen Kelas
+                        </Badge>
+                      </div>
+                    </AlertDescription>
+                  </Alert>
+                )}
+                {formData.kelas_id && (
                   <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                     <div className="flex items-start gap-2">
                       <div className="text-blue-600 mt-0.5">📚</div>
                       <div className="flex-1">
-                        <p className="text-sm font-semibold text-blue-900">
-                          {
-                            mataKuliahList.find(
-                              (mk) => mk.id === selectedMataKuliah,
-                            )?.nama_mk
-                          }
-                        </p>
+                        {selectedMataKuliah && (
+                          <p className="text-sm font-semibold text-blue-900">
+                            {
+                              mataKuliahList.find(
+                                (mk) => mk.id === selectedMataKuliah,
+                              )?.nama_mk
+                            }
+                          </p>
+                        )}
                         <p className="text-xs text-blue-700">
                           Kelas:{" "}
                           {
@@ -797,7 +818,7 @@ export function QuizBuilder({
                     <CheckCircle className="h-4 w-4 text-green-600" />
                     <AlertDescription className="text-green-900">
                       {effectiveLaporanMode
-                        ? "✓ Laporan tersimpan. Tambahkan soal essay/upload jika diperlukan."
+                        ? "✓ Laporan tersimpan. Tambahkan minimal satu isian laporan atau upload berkas sebelum publish."
                         : "✓ Tes tersimpan. Tambahkan soal pilihan ganda."}
                     </AlertDescription>
                   </Alert>
@@ -848,7 +869,7 @@ export function QuizBuilder({
                 </CardTitle>
                 <p className="text-sm text-muted-foreground mt-1">
                   {effectiveLaporanMode
-                    ? "Buat soal essay atau upload file laporan"
+                    ? "Buat minimal satu isian laporan atau komponen upload berkas"
                     : "Buat soal manual atau ambil dari Bank Soal"}
                 </p>
               </div>
@@ -892,7 +913,7 @@ export function QuizBuilder({
                 <p>Belum ada soal</p>
                 <p className="text-sm">
                   {effectiveLaporanMode
-                    ? "Klik 'Buat Soal' untuk membuat soal essay atau upload file laporan"
+                    ? "Klik 'Buat Soal' untuk membuat minimal satu isian laporan atau komponen upload berkas"
                     : "Klik 'Buat Soal' untuk membuat soal baru atau ambil dari Bank Soal"}
                 </p>
               </div>
@@ -964,7 +985,7 @@ export function QuizBuilder({
                   <>
                     <CheckCircle className="h-5 w-5 text-green-600" />
                     <span className="font-medium text-green-700">
-                      Tes aktif - mahasiswa dapat mengerjakan
+                      Tugas aktif - mahasiswa dapat mengerjakan
                     </span>
                   </>
                 ) : (
@@ -972,18 +993,18 @@ export function QuizBuilder({
                     <AlertCircle className="h-5 w-5 text-muted-foreground" />
                     <span className="text-muted-foreground">
                       {questions.length > 0
-                        ? "Klik Publish untuk mengaktifkan tes"
-                        : effectiveLaporanMode
+                        ? effectiveLaporanMode
                           ? "Klik Publish untuk mengaktifkan tugas laporan"
+                          : "Klik Publish untuk mengaktifkan tes"
+                        : effectiveLaporanMode
+                          ? "Tambahkan minimal satu komponen laporan terlebih dahulu"
                           : "Tambahkan soal terlebih dahulu"}
                     </span>
                   </>
                 )}
               </div>
               <div className="flex gap-2">
-                {/* FIXED: Laporan tidak perlu soal, bisa langsung publish */}
-                {quizStatus === "draft" &&
-                  (effectiveLaporanMode || questions.length > 0) && (
+                {quizStatus === "draft" && questions.length > 0 && (
                     <Button
                       onClick={handlePublishQuiz}
                       disabled={isPublishing || !isOnline}

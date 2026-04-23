@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { useLocation } from "react-router-dom";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -21,12 +22,43 @@ import { useNetworkStatus } from "@/lib/hooks/useNetworkStatus";
 import { toast } from "sonner";
 
 export default function OfflineSyncPage() {
+  const location = useLocation();
   const { isOnline } = useNetworkStatus();
   const { processQueue, stats, isProcessing, isReady } = useSync();
 
   const pendingCount = stats?.pending ?? 0;
   const failedCount = stats?.failed ?? 0;
   const completedCount = stats?.completed ?? 0;
+  const isAdminRoute = location.pathname.startsWith("/admin/");
+
+  const copy = isAdminRoute
+    ? {
+        title: "Monitoring Sinkronisasi Offline",
+        description:
+          "Pantau antrian data lokal dan jalankan sinkronisasi pemulihan saat koneksi internet tersedia.",
+        offlineMessage:
+          "Koneksi internet tidak tersedia. Data lokal tetap tersimpan di perangkat dan admin dapat memantau antrian yang menunggu sinkronisasi.",
+        failedMessage: `${failedCount} item gagal disinkronkan. Admin dapat menjalankan sinkronisasi ulang saat online untuk membantu pemulihan data.`,
+        statusTitle: "Status Monitoring Sinkronisasi",
+        securityTitle: "Pemulihan Data",
+        securityPointOne:
+          "Admin memakai halaman ini untuk memantau dan membantu pemulihan data offline.",
+        securityPointTwo:
+          "Sinkronisasi ulang dapat dijalankan saat koneksi kembali stabil.",
+      }
+    : {
+        title: "Sinkronisasi Offline",
+        description:
+          "Kelola data lokal dan sinkronkan saat koneksi internet tersedia.",
+        offlineMessage:
+          "Koneksi internet tidak tersedia. Data tetap tersimpan lokal dan akan disinkronkan otomatis saat online kembali.",
+        failedMessage: `${failedCount} item gagal disinkronkan. Klik "Sinkronkan Sekarang" saat online.`,
+        statusTitle: "Status Sinkronisasi",
+        securityTitle: "Keamanan Data",
+        securityPointOne: "Data lokal disimpan aman pada perangkat.",
+        securityPointTwo:
+          "Sinkronisasi otomatis berjalan saat kembali online.",
+      };
 
   const handleSync = async () => {
     if (!isOnline) return;
@@ -43,10 +75,10 @@ export default function OfflineSyncPage() {
       <div className="section-shell flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">
-            Sinkronisasi Offline
+            {copy.title}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground sm:text-base">
-            Kelola data lokal dan sinkronkan saat koneksi internet tersedia.
+            {copy.description}
           </p>
         </div>
 
@@ -70,20 +102,14 @@ export default function OfflineSyncPage() {
       {!isOnline && (
         <Alert className="rounded-2xl border-warning/30 bg-warning/10 text-warning">
           <CloudOff className="h-4 w-4" />
-          <AlertDescription>
-            Koneksi internet tidak tersedia. Data tetap tersimpan lokal dan akan
-            disinkronkan otomatis saat online kembali.
-          </AlertDescription>
+          <AlertDescription>{copy.offlineMessage}</AlertDescription>
         </Alert>
       )}
 
       {failedCount > 0 && (
         <Alert className="rounded-2xl border-danger/30 bg-danger/10 text-danger">
           <AlertTriangle className="h-4 w-4" />
-          <AlertDescription>
-            {failedCount} item gagal disinkronkan. Klik "Sinkronkan Sekarang"
-            saat online.
-          </AlertDescription>
+          <AlertDescription>{copy.failedMessage}</AlertDescription>
         </Alert>
       )}
 
@@ -91,7 +117,7 @@ export default function OfflineSyncPage() {
         <Card className="rounded-2xl border border-primary/20 bg-white/95 shadow-sm lg:col-span-2">
           <CardHeader>
             <CardTitle className="text-lg text-foreground">
-              Status Sinkronisasi
+              {copy.statusTitle}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -138,17 +164,17 @@ export default function OfflineSyncPage() {
         <Card className="rounded-2xl border border-primary/20 bg-white/95 shadow-sm">
           <CardHeader>
             <CardTitle className="text-lg text-foreground">
-              Keamanan Data
+              {copy.securityTitle}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 text-sm text-muted-foreground">
             <div className="flex items-start gap-2">
               <ShieldCheck className="mt-0.5 h-4 w-4 text-primary" />
-              Data lokal disimpan aman pada perangkat.
+              {copy.securityPointOne}
             </div>
             <div className="flex items-start gap-2">
               <CheckCircle2 className="mt-0.5 h-4 w-4 text-success" />
-              Sinkronisasi otomatis berjalan saat kembali online.
+              {copy.securityPointTwo}
             </div>
           </CardContent>
         </Card>

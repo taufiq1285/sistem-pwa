@@ -30,12 +30,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 // ❌ REMOVED: EnrollKelasDialog import
 import {
   getMyKelas,
-  getMyJadwal,
   type MyKelas,
   type JadwalMahasiswa,
 } from "@/lib/api/mahasiswa.api";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { cacheAPI, getCachedData } from "@/lib/offline/api-cache";
+import { supabase } from "@/lib/supabase/client";
 
 export default function JadwalPage() {
   const { user } = useAuth();
@@ -93,6 +93,108 @@ export default function JadwalPage() {
     };
   }, [kelasCacheKey, jadwalCacheKey]);
 
+  const fetchJadwalWithHistory = async (
+    kelasData: MyKelas[],
+  ): Promise<JadwalMahasiswa[]> => {
+    const kelasIds = kelasData.map((kelas) => kelas.id).filter(Boolean);
+    if (kelasIds.length === 0) {
+      return [];
+    }
+
+    const { data: jadwalData, error: jadwalError } = await (supabase as any)
+      .from("jadwal_praktikum")
+      .select(
+        "id, tanggal_praktikum, hari, jam_mulai, jam_selesai, topik, kelas_id, laboratorium_id, mata_kuliah_id, dosen_id",
+      )
+      .in("kelas_id", kelasIds)
+      .eq("is_active", true)
+      .order("tanggal_praktikum", { ascending: true })
+      .order("jam_mulai", { ascending: true });
+
+    if (jadwalError) {
+      throw jadwalError;
+    }
+
+    if (!jadwalData || jadwalData.length === 0) {
+      return [];
+    }
+
+    const kelasById = new Map(kelasData.map((kelas) => [kelas.id, kelas]));
+    const mataKuliahIds: string[] = Array.from(
+      new Set(
+        jadwalData.map((jadwal: any) => jadwal.mata_kuliah_id).filter(Boolean),
+      ),
+    );
+    const dosenIds: string[] = Array.from(
+      new Set(jadwalData.map((jadwal: any) => jadwal.dosen_id).filter(Boolean)),
+    );
+    const labIds: string[] = Array.from(
+      new Set(
+        jadwalData.map((jadwal: any) => jadwal.laboratorium_id).filter(Boolean),
+      ),
+    );
+
+    const [mataKuliahResult, dosenResult, labResult] = await Promise.all([
+      mataKuliahIds.length > 0
+        ? supabase
+            .from("mata_kuliah")
+            .select("id, nama_mk")
+            .in("id", mataKuliahIds)
+        : Promise.resolve({ data: [], error: null }),
+      dosenIds.length > 0
+        ? supabase
+            .from("dosen")
+            .select("id, user:user_id(full_name)")
+            .in("id", dosenIds)
+        : Promise.resolve({ data: [], error: null }),
+      labIds.length > 0
+        ? supabase
+            .from("laboratorium")
+            .select("id, nama_lab, kode_lab")
+            .in("id", labIds)
+        : Promise.resolve({ data: [], error: null }),
+    ]);
+
+    if (mataKuliahResult.error) throw mataKuliahResult.error;
+    if (dosenResult.error) throw dosenResult.error;
+    if (labResult.error) throw labResult.error;
+
+    const mataKuliahById = new Map(
+      (mataKuliahResult.data || []).map((mk: any) => [mk.id, mk]),
+    );
+    const dosenById = new Map(
+      (dosenResult.data || []).map((dosen: any) => [dosen.id, dosen]),
+    );
+    const labById = new Map(
+      (labResult.data || []).map((lab: any) => [lab.id, lab]),
+    );
+
+    return jadwalData.map((jadwal: any) => {
+      const kelasInfo = kelasById.get(jadwal.kelas_id);
+      const mataKuliahInfo = jadwal.mata_kuliah_id
+        ? mataKuliahById.get(jadwal.mata_kuliah_id)
+        : null;
+      const dosenInfo = jadwal.dosen_id ? dosenById.get(jadwal.dosen_id) : null;
+      const labInfo = jadwal.laboratorium_id
+        ? labById.get(jadwal.laboratorium_id)
+        : null;
+
+      return {
+        id: jadwal.id,
+        tanggal_praktikum: jadwal.tanggal_praktikum,
+        hari: jadwal.hari,
+        jam_mulai: jadwal.jam_mulai,
+        jam_selesai: jadwal.jam_selesai,
+        topik: jadwal.topik,
+        kelas_nama: kelasInfo?.nama_kelas || "-",
+        mata_kuliah_nama: mataKuliahInfo?.nama_mk || kelasInfo?.mata_kuliah_nama || "-",
+        dosen_nama: dosenInfo?.user?.full_name || "-",
+        lab_nama: labInfo?.nama_lab || "-",
+        lab_kode: labInfo?.kode_lab || "-",
+      };
+    });
+  };
+
   const fetchData = async (forceRefresh = false) => {
     try {
       setLoading(true);
@@ -129,18 +231,20 @@ export default function JadwalPage() {
       }
 
       // Use cacheAPI with stale-while-revalidate for offline support
-      const [kelasData, jadwalData] = await Promise.all([
-        cacheAPI(kelasCacheKey, () => getMyKelas(), {
-          ttl: 10 * 60 * 1000,
-          forceRefresh,
-          staleWhileRevalidate: true,
-        }),
-        cacheAPI(jadwalCacheKey, () => getMyJadwal(50), {
+      const kelasData = await cacheAPI(kelasCacheKey, () => getMyKelas(), {
+        ttl: 10 * 60 * 1000,
+        forceRefresh,
+        staleWhileRevalidate: true,
+      });
+      const jadwalData = await cacheAPI(
+        jadwalCacheKey,
+        () => fetchJadwalWithHistory(kelasData),
+        {
           ttl: 5 * 60 * 1000,
           forceRefresh,
           staleWhileRevalidate: true,
-        }),
-      ]);
+        },
+      );
 
       setMyKelas(kelasData);
       setAllJadwal(jadwalData);
@@ -193,6 +297,7 @@ export default function JadwalPage() {
 
   // Get upcoming jadwal (excluding today)
   const upcomingDates = sortedDates.filter((date) => date > today);
+  const historyDates = sortedDates.filter((date) => date < today).reverse();
 
   const lastUpdatedLabel = useMemo(() => {
     if (!lastUpdatedAt) {
@@ -342,8 +447,8 @@ export default function JadwalPage() {
               <TabsTrigger value="today" className="rounded-xl">
                 Hari Ini ({todayJadwal.length})
               </TabsTrigger>
-              <TabsTrigger value="all" className="rounded-xl">
-                Semua ({allJadwal.length})
+              <TabsTrigger value="history" className="rounded-xl">
+                Riwayat ({historyDates.length})
               </TabsTrigger>
             </TabsList>
 
@@ -393,6 +498,11 @@ export default function JadwalPage() {
                                 📝 {jadwal.topik}
                               </p>
                             )}
+                            {jadwal.dosen_nama && jadwal.dosen_nama !== "-" ? (
+                              <p className="text-sm text-muted-foreground mb-2">
+                                Dosen: {jadwal.dosen_nama}
+                              </p>
+                            ) : null}
                             <div className="flex items-center gap-4 text-sm text-muted-foreground">
                               <div className="flex items-center gap-1">
                                 <Clock className="h-4 w-4" />
@@ -465,6 +575,11 @@ export default function JadwalPage() {
                                     📝 {jadwal.topik}
                                   </p>
                                 )}
+                                {jadwal.dosen_nama && jadwal.dosen_nama !== "-" ? (
+                                  <p className="text-sm text-muted-foreground mb-2">
+                                    Dosen: {jadwal.dosen_nama}
+                                  </p>
+                                ) : null}
                                 <div className="flex items-center gap-4 text-sm text-muted-foreground">
                                   <div className="flex items-center gap-1">
                                     <Clock className="h-4 w-4" />
@@ -487,9 +602,9 @@ export default function JadwalPage() {
               )}
             </TabsContent>
 
-            {/* All Schedule */}
-            <TabsContent value="all" className="space-y-6">
-              {sortedDates.length === 0 ? (
+            {/* History Schedule */}
+            <TabsContent value="history" className="space-y-6">
+              {historyDates.length === 0 ? (
                 <GlassCard
                   intensity="low"
                   className="border-white/40 bg-white/90 p-6 shadow-lg dark:border-white/10 dark:bg-card"
@@ -498,60 +613,33 @@ export default function JadwalPage() {
                     <div className="py-6 text-center">
                       <Calendar className="mx-auto mb-3 h-12 w-12 text-muted-foreground/40" />
                       <p className="text-muted-foreground">
-                        Belum ada jadwal praktikum
+                        Belum ada riwayat praktikum
                       </p>
                     </div>
                   </CardContent>
                 </GlassCard>
               ) : (
-                sortedDates.map((date) => {
-                  const isToday = date === today;
+                historyDates.map((date) => {
                   return (
                     <div key={date}>
                       <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
                         <Calendar className="h-5 w-5" />
                         {formatDate(date)}
-                        {isToday && (
-                          <StatusBadge status="success" pulse>
-                            Hari Ini
-                          </StatusBadge>
-                        )}
+                        <StatusBadge status="offline">Selesai</StatusBadge>
                       </h3>
                       <div className="space-y-3">
                         {groupedJadwal[date].map((jadwal) => (
                           <GlassCard
                             key={jadwal.id}
                             intensity="low"
-                            className={
-                              isToday
-                                ? "border-success/30 bg-success/5 dark:border-success/20 dark:bg-success/10"
-                                : "border-border/40 bg-white/90 shadow-lg dark:bg-card"
-                            }
+                            className="border-border/40 bg-white/90 shadow-lg dark:bg-card"
                           >
                             <CardContent className="p-4">
                               <div className="flex gap-4">
                                 <div className="/* shrink-0 */">
-                                  <div
-                                    className={`w-16 h-16 rounded-lg flex flex-col items-center justify-center ${
-                                      isToday
-                                        ? "bg-success/10"
-                                        : "bg-primary/10"
-                                    }`}
-                                  >
-                                    <Clock
-                                      className={`h-5 w-5 mb-1 ${
-                                        isToday
-                                          ? "text-success"
-                                          : "text-primary"
-                                      }`}
-                                    />
-                                    <span
-                                      className={`text-xs font-medium ${
-                                        isToday
-                                          ? "text-success"
-                                          : "text-primary"
-                                      }`}
-                                    >
+                                  <div className="w-16 h-16 rounded-lg flex flex-col items-center justify-center bg-muted">
+                                    <Clock className="h-5 w-5 mb-1 text-muted-foreground" />
+                                    <span className="text-xs font-medium text-muted-foreground">
                                       {formatTime(jadwal.jam_mulai)}
                                     </span>
                                   </div>
@@ -568,6 +656,12 @@ export default function JadwalPage() {
                                       📝 {jadwal.topik}
                                     </p>
                                   )}
+                                  {jadwal.dosen_nama &&
+                                  jadwal.dosen_nama !== "-" ? (
+                                    <p className="text-sm text-muted-foreground mb-2">
+                                      Dosen: {jadwal.dosen_nama}
+                                    </p>
+                                  ) : null}
                                   <div className="flex items-center gap-4 text-sm text-muted-foreground">
                                     <div className="flex items-center gap-1">
                                       <Clock className="h-4 w-4" />

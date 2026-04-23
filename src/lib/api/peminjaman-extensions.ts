@@ -237,20 +237,67 @@ export async function markAsReturned(
   kondisiKembali: "baik" | "rusak_ringan" | "rusak_berat" | "maintenance",
   keterangan?: string,
 ): Promise<void> {
+  let returnTimestamp: string | null = null;
   try {
+    const { data: peminjamanData, error: fetchError } = await supabase
+      .from("peminjaman")
+      .select("inventaris_id, jumlah_pinjam")
+      .eq("id", peminjamanId)
+      .eq("status", "approved")
+      .single();
+
+    if (fetchError || !peminjamanData) {
+      throw fetchError || new Error("Peminjaman not found");
+    }
+
+    const { data: invData, error: invFetchError } = await supabase
+      .from("inventaris")
+      .select("jumlah_tersedia")
+      .eq("id", peminjamanData.inventaris_id)
+      .single();
+
+    if (invFetchError || !invData) {
+      throw invFetchError || new Error("Inventaris not found");
+    }
+
+    returnTimestamp = new Date().toISOString();
     const { error } = await supabase
       .from("peminjaman")
       .update({
         status: "returned",
-        tanggal_kembali_aktual: new Date().toISOString(),
+        tanggal_kembali_aktual: returnTimestamp,
         kondisi_kembali: kondisiKembali,
         keterangan_kembali: keterangan || null,
-        updated_at: new Date().toISOString(),
+        updated_at: returnTimestamp,
       })
       .eq("id", peminjamanId)
       .eq("status", "approved"); // Only mark as returned if currently approved
 
     if (error) throw error;
+
+    const newStock = invData.jumlah_tersedia + peminjamanData.jumlah_pinjam;
+    const { error: stockError } = await supabase
+      .from("inventaris")
+      .update({
+        jumlah_tersedia: newStock,
+      })
+      .eq("id", peminjamanData.inventaris_id);
+
+    if (stockError) {
+      await supabase
+        .from("peminjaman")
+        .update({
+          status: "approved",
+          tanggal_kembali_aktual: null,
+          kondisi_kembali: null,
+          keterangan_kembali: null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", peminjamanId)
+        .eq("status", "returned");
+
+      throw new Error(`Gagal memulihkan stok: ${stockError.message}`);
+    }
   } catch (error) {
     logger.error("Failed to mark peminjaman as returned", {
       peminjamanId,

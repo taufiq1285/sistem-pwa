@@ -224,13 +224,17 @@ export default function LaboratoriesPage() {
 
     try {
       await deleteLaboratorium(deletingLab.id);
-      toast.success("Laboratory berhasil dihapus");
+      toast.success("Laboratorium berhasil dihapus");
       setIsDeleteDialogOpen(false);
       setDeletingLab(null);
       await invalidateLabCache();
       await loadLaboratories(true);
     } catch (error: any) {
-      toast.error("Gagal menghapus laboratory: " + error.message);
+      toast.error(
+        "Gagal menghapus laboratorium: " +
+          (error.message ||
+            "Laboratorium masih dipakai oleh inventaris atau jadwal praktikum."),
+      );
     }
   };
 
@@ -298,7 +302,7 @@ export default function LaboratoriesPage() {
             Manajemen Laboratorium
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Kelola semua fasilitas laboratorium
+            Kelola master data laboratorium untuk mendukung operasional kampus
           </p>
         </div>
         <Button
@@ -334,6 +338,16 @@ export default function LaboratoriesPage() {
           color="green"
         />
       </div>
+
+      <Card className="border-warning/30 bg-warning/5">
+        <CardContent className="p-4">
+          <p className="text-sm text-foreground">
+            Halaman ini berfungsi sebagai master data laboratorium.
+            Laboratorium hanya bisa dihapus jika belum dipakai oleh inventaris
+            maupun jadwal praktikum.
+          </p>
+        </CardContent>
+      </Card>
 
       {/* Search */}
       <div className="flex gap-4">
@@ -799,10 +813,10 @@ export default function LaboratoriesPage() {
           itemType="Laboratorium"
           description={`Kode: ${deletingLab.kode_lab} | Lokasi: ${deletingLab.lokasi || "Tidak ada"}`}
           consequences={[
-            "Data laboratorium akan dihapus permanen",
-            "Jadwal praktikum yang menggunakan lab ini akan terpengaruh",
-            "Equipment/inventaris di lab ini tetap ada",
-            "Tindakan ini tidak dapat dibatalkan",
+            "Laboratorium hanya bisa dihapus jika belum dipakai inventaris",
+            "Laboratorium hanya bisa dihapus jika belum dipakai jadwal praktikum",
+            "Jika masih dipakai data lain, sistem akan menolak penghapusan",
+            "Penghapusan yang berhasil tidak dapat dibatalkan",
           ]}
         />
       )}

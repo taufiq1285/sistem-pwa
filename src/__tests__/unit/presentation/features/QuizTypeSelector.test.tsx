@@ -1,11 +1,11 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { QuizTypeSelector } from "@/components/features/kuis/QuizTypeSelector";
 import {
-  QuizTypeSelector,
   getAllowedQuestionTypes,
   isQuestionTypeAllowed,
-} from "@/components/features/kuis/QuizTypeSelector";
+} from "@/components/features/kuis/quiz-type-selector.utils";
 import { TIPE_KUIS } from "@/types/kuis.types";
 
 describe("QuizTypeSelector", () => {

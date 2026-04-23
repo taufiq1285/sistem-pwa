@@ -1,9 +1,9 @@
 /**
- * Manajemen Assignment & Jadwal Praktikum - Unified Management System
+ * Monitoring Praktikum & Referensi Akademik - Unified Management System
  *
- * Purpose: Single page untuk mengelola assignment dosen dan jadwal praktikum
+ * Purpose: Single page untuk memantau referensi akademik dan jadwal praktikum
  * Features:
- * - Master-Detail View: Assignment sebagai master record, Jadwal sebagai detail
+ * - Master-Detail View: Referensi akademik sebagai master record, Jadwal sebagai detail
  * - Unified CRUD operations
  * - Enhanced cascade delete dengan konfirmasi
  * - Real-time updates
@@ -93,11 +93,14 @@ interface AssignmentDetail {
     id: string;
     nama_mk: string;
     kode_mk: string;
+    sks?: number;
   };
   kelas: {
     id: string;
     nama_kelas: string;
     kode_kelas: string;
+    tahun_ajaran: string;
+    semester_ajaran: number;
   };
 
   // Detailed schedules
@@ -146,7 +149,27 @@ interface EditAssignmentData {
   dosen_id: string;
   old_dosen_id: string;
   kelas_id: string;
+  old_kelas_id: string;
   mata_kuliah_id: string;
+  old_mata_kuliah_id: string;
+}
+
+interface PraktikumReferenceRow {
+  key: string;
+  kelas_id: string;
+  kelas_nama: string;
+  kelas_kode: string;
+  tahun_ajaran: string;
+  semester_ajaran: number;
+  dosen_id: string;
+  dosen_nama: string;
+  dosen_email: string;
+  mata_kuliah_id: string;
+  mata_kuliah_nama: string;
+  mata_kuliah_kode: string;
+  mata_kuliah_sks?: number;
+  total_jadwal: number;
+  assignment: AssignmentDetail;
 }
 
 // Tab 1: Assignment Dosen types
@@ -166,6 +189,20 @@ interface KelasWithAssignment {
   };
 }
 
+function getDosenDisplayName(dosen: any): string {
+  const user = Array.isArray(dosen?.user) ? dosen.user[0] : dosen?.user;
+  const users = Array.isArray(dosen?.users) ? dosen.users[0] : dosen?.users;
+
+  return (
+    user?.full_name ||
+    users?.full_name ||
+    user?.email ||
+    users?.email ||
+    dosen?.nip ||
+    "Dosen tanpa nama"
+  );
+}
+
 export default function ManajemenAssignmentPage() {
   const { user } = useAuth();
 
@@ -176,12 +213,6 @@ export default function ManajemenAssignmentPage() {
   const [filterTahunAjaran, setFilterTahunAjaran] = useState("all");
   const [searchKelas, setSearchKelas] = useState("");
   const [tahunAjaranList, setTahunAjaranList] = useState<string[]>([]);
-  const [isEditKelasOpen, setIsEditKelasOpen] = useState(false);
-  const [selectedKelas, setSelectedKelas] =
-    useState<KelasWithAssignment | null>(null);
-  const [isSubmittingKelas, setIsSubmittingKelas] = useState(false);
-  const [editKelasDosenId, setEditKelasDosenId] = useState("");
-  const [editKelasMkId, setEditKelasMkId] = useState("");
   const [kelasLoading, setKelasLoading] = useState(true);
 
   // ── Tab 2: Jadwal Praktikum state ──────────────────────────────────────────
@@ -197,7 +228,6 @@ export default function ManajemenAssignmentPage() {
   const [deleteConfirmation, setDeleteConfirmation] =
     useState<DeleteConfirmationData | null>(null);
   const [deleteOptions, setDeleteOptions] = useState({
-    alsoDeleteKelas: false,
     notifyDosen: true,
   });
 
@@ -225,6 +255,7 @@ export default function ManajemenAssignmentPage() {
     totalAssignments: 0,
     totalJadwal: 0,
     activeAssignments: 0,
+    historyJadwal: 0,
     uniqueDosen: 0,
   });
 
@@ -245,12 +276,19 @@ export default function ManajemenAssignmentPage() {
           id,
           dosen_id,
           kelas_id,
+          mata_kuliah_id,
           kelas:kelas!inner(
             id,
             nama_kelas,
             kode_kelas,
-            mata_kuliah_id,
-            mata_kuliah:mata_kuliah!inner(id, nama_mk, kode_mk)
+            tahun_ajaran,
+            semester_ajaran
+          ),
+          mata_kuliah:mata_kuliah_id (
+            id,
+            nama_mk,
+            kode_mk,
+            sks
           ),
           dosen:dosen_id (
             id,
@@ -275,12 +313,8 @@ export default function ManajemenAssignmentPage() {
         typedQuery = typedQuery.eq("dosen_id", filters.dosen_id);
       }
 
-      // FIX: mata_kuliah_id is in kelas relation, use nested filter
       if (filters?.mata_kuliah_id) {
-        typedQuery = typedQuery.eq(
-          "kelas.mata_kuliah_id",
-          filters.mata_kuliah_id,
-        );
+        typedQuery = typedQuery.eq("mata_kuliah_id", filters.mata_kuliah_id);
       }
 
       if (filters?.kelas_id) {
@@ -299,7 +333,7 @@ export default function ManajemenAssignmentPage() {
       }
 
       if (filters?.semester) {
-        query = query.eq(
+        typedQuery = typedQuery.eq(
           "kelas.semester_ajaran",
           parseInt(filters.semester as string, 10),
         );
@@ -309,8 +343,8 @@ export default function ManajemenAssignmentPage() {
       if (searchQuery) {
         typedQuery = typedQuery.or(`
           dosen.user.full_name.ilike.%${searchQuery}%,
-          kelas.mata_kuliah.nama_mk.ilike.%${searchQuery}%,
-          kelas.mata_kuliah.kode_mk.ilike.%${searchQuery}%,
+          mata_kuliah.nama_mk.ilike.%${searchQuery}%,
+          mata_kuliah.kode_mk.ilike.%${searchQuery}%,
           kelas.nama_kelas.ilike.%${searchQuery}%,
           kelas.kode_kelas.ilike.%${searchQuery}%
         `);
@@ -325,6 +359,7 @@ export default function ManajemenAssignmentPage() {
           totalAssignments: 0,
           totalJadwal: 0,
           activeAssignments: 0,
+          historyJadwal: 0,
           uniqueDosen: 0,
         });
         return;
@@ -334,8 +369,11 @@ export default function ManajemenAssignmentPage() {
       const assignmentMap = new Map<string, any>();
 
       rawData.forEach((item: any) => {
-        // FIX: Get mata_kuliah_id from kelas relation, not from root
-        const mataKuliahId = item.kelas?.mata_kuliah_id;
+        if (!item.dosen_id || !item.kelas_id || !item.mata_kuliah_id || !item.mata_kuliah) {
+          return;
+        }
+
+        const mataKuliahId = item.mata_kuliah_id;
         const key = `${item.dosen_id}-${mataKuliahId}-${item.kelas_id}`;
 
         if (!assignmentMap.has(key)) {
@@ -351,7 +389,7 @@ export default function ManajemenAssignmentPage() {
               full_name: item.dosen?.user?.full_name,
               email: item.dosen?.user?.email,
             },
-            mata_kuliah: item.kelas?.mata_kuliah,
+            mata_kuliah: item.mata_kuliah,
             kelas: item.kelas,
             jadwalDetail: [],
           });
@@ -362,8 +400,6 @@ export default function ManajemenAssignmentPage() {
       const assignmentsWithSchedules = [];
 
       for (const [key, assignment] of assignmentMap) {
-        // Get all jadwal for this assignment
-        // FIX: Filter by dosen_id and kelas_id only (mata_kuliah_id is in kelas table)
         const { data: jadwalData, error: jadwalError } = await (supabase as any)
           .from("jadwal_praktikum")
           .select(
@@ -375,6 +411,7 @@ export default function ManajemenAssignmentPage() {
             jam_selesai,
             topik,
             status,
+            mata_kuliah_id,
             laboratorium:laboratorium_id (
               id,
               nama_lab,
@@ -384,6 +421,7 @@ export default function ManajemenAssignmentPage() {
           )
           .eq("dosen_id", assignment.dosen_id)
           .eq("kelas_id", assignment.kelas_id)
+          .eq("mata_kuliah_id", assignment.mata_kuliah_id)
           .eq("is_active", true)
           .order("tanggal_praktikum", { ascending: true });
 
@@ -423,19 +461,28 @@ export default function ManajemenAssignmentPage() {
       const uniqueDosenCount = new Set(
         assignmentsWithSchedules?.map((a: AssignmentDetail) => a.dosen_id),
       ).size;
+      const historyJadwal =
+        assignmentsWithSchedules?.reduce(
+          (sum: number, assignment: AssignmentDetail) =>
+            sum +
+            (assignment.jadwalDetail?.filter((j: Jadwal) => isPastJadwal(j))
+              .length || 0),
+          0,
+        ) || 0;
 
       setStats({
         totalAssignments: assignmentsWithSchedules?.length || 0,
         totalJadwal,
         activeAssignments:
           assignmentsWithSchedules?.filter((a: AssignmentDetail) =>
-            a.jadwalDetail?.some((j: Jadwal) => j.status === "scheduled"),
+            a.jadwalDetail?.some((j: Jadwal) => j.status === "approved"),
           ).length || 0,
+        historyJadwal,
         uniqueDosen: uniqueDosenCount,
       });
     } catch (error: any) {
-      console.error("Error fetching assignments:", error);
-      toast.error("Gagal memuat data assignment", {
+      console.error("Error fetching monitoring references:", error);
+      toast.error("Gagal memuat data monitoring praktikum", {
         description: error.message,
       });
     } finally {
@@ -455,7 +502,8 @@ export default function ManajemenAssignmentPage() {
     try {
       setKelasLoading(true);
 
-      const [kelasResponse, dosenForTab1, mkForTab1] = await Promise.all([
+      const [kelasResponse, dosenForTab1, mkForTab1, jadwalAssignmentResponse] =
+        await Promise.all([
         supabase
           .from("kelas")
           .select(
@@ -500,6 +548,36 @@ export default function ManajemenAssignmentPage() {
           .select("id, nama_mk, kode_mk, sks, is_active")
           .eq("is_active", true)
           .order("nama_mk"),
+        (supabase as any)
+          .from("jadwal_praktikum")
+          .select(
+            `
+            id,
+            kelas_id,
+            dosen_id,
+            mata_kuliah_id,
+            created_at,
+            updated_at,
+            dosen:dosen_id (
+              id,
+              nip,
+              users:user_id (
+                id,
+                full_name,
+                email
+              )
+            ),
+            mata_kuliah:mata_kuliah_id (
+              id,
+              nama_mk,
+              kode_mk,
+              sks
+            )
+          `,
+          )
+          .eq("is_active", true)
+          .order("updated_at", { ascending: false })
+          .order("created_at", { ascending: false }),
       ]);
 
       if (kelasResponse.error) throw kelasResponse.error;
@@ -531,145 +609,76 @@ export default function ManajemenAssignmentPage() {
     loadKelasData();
   }, []);
 
-  const filteredKelas = useMemo(() => {
-    let filtered = [...kelasList];
+  const praktikumReferences = useMemo<PraktikumReferenceRow[]>(() => {
+    return assignments.map((assignment) => ({
+      key: `${assignment.kelas_id}-${assignment.mata_kuliah_id}-${assignment.dosen_id}`,
+      kelas_id: assignment.kelas_id,
+      kelas_nama: assignment.kelas.nama_kelas,
+      kelas_kode: assignment.kelas.kode_kelas,
+      tahun_ajaran: assignment.kelas.tahun_ajaran,
+      semester_ajaran: assignment.kelas.semester_ajaran,
+      dosen_id: assignment.dosen_id,
+      dosen_nama: assignment.dosen.full_name,
+      dosen_email: assignment.dosen.email,
+      mata_kuliah_id: assignment.mata_kuliah_id,
+      mata_kuliah_nama: assignment.mata_kuliah.nama_mk,
+      mata_kuliah_kode: assignment.mata_kuliah.kode_mk,
+      mata_kuliah_sks: assignment.mata_kuliah.sks,
+      total_jadwal: assignment.total_jadwal,
+      assignment,
+    }));
+  }, [assignments]);
+
+  const filteredReferences = useMemo(() => {
+    let filtered = [...praktikumReferences];
 
     if (filterDosen !== "all") {
-      filtered = filtered.filter((k) => k.dosen?.id === filterDosen);
+      filtered = filtered.filter((reference) => reference.dosen_id === filterDosen);
     }
     if (filterMataKuliah !== "all") {
-      filtered = filtered.filter((k) => k.mata_kuliah?.id === filterMataKuliah);
+      filtered = filtered.filter(
+        (reference) => reference.mata_kuliah_id === filterMataKuliah,
+      );
     }
     if (filterTahunAjaran !== "all") {
-      filtered = filtered.filter((k) => k.tahun_ajaran === filterTahunAjaran);
+      filtered = filtered.filter(
+        (reference) => reference.tahun_ajaran === filterTahunAjaran,
+      );
     }
     if (searchKelas) {
       const q = searchKelas.toLowerCase();
       filtered = filtered.filter(
-        (k) =>
-          k.nama_kelas.toLowerCase().includes(q) ||
-          k.kode_kelas.toLowerCase().includes(q) ||
-          k.dosen?.users?.full_name?.toLowerCase().includes(q) ||
-          k.mata_kuliah?.nama_mk?.toLowerCase().includes(q),
+        (reference) =>
+          reference.kelas_nama.toLowerCase().includes(q) ||
+          (reference.kelas_kode || "").toLowerCase().includes(q) ||
+          reference.dosen_nama.toLowerCase().includes(q) ||
+          reference.mata_kuliah_nama.toLowerCase().includes(q) ||
+          reference.mata_kuliah_kode.toLowerCase().includes(q),
       );
     }
 
     return filtered;
   }, [
-    kelasList,
+    praktikumReferences,
     filterDosen,
     filterMataKuliah,
     filterTahunAjaran,
     searchKelas,
   ]);
 
-  const handleEditKelas = (kelas: KelasWithAssignment) => {
-    setSelectedKelas(kelas);
-    setEditKelasDosenId(kelas.dosen_id || "");
-    setEditKelasMkId(kelas.mata_kuliah_id || "");
-    setIsEditKelasOpen(true);
-  };
-
-  const handleEditKelasSubmit = async () => {
-    if (!selectedKelas) return;
-
-    try {
-      setIsSubmittingKelas(true);
-
-      const newDosenId =
-        editKelasDosenId && editKelasDosenId !== "none"
-          ? editKelasDosenId
-          : null;
-      const newMkId =
-        editKelasMkId && editKelasMkId !== "none" ? editKelasMkId : null;
-      const oldDosenId = selectedKelas.dosen_id || null;
-      const dosenChanged =
-        newDosenId && oldDosenId && newDosenId !== oldDosenId;
-
-      // 1. Update kelas
-      const { error: kelasError } = await supabase
-        .from("kelas")
-        .update({
-          dosen_id: newDosenId,
-          mata_kuliah_id: newMkId,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", selectedKelas.id);
-
-      if (kelasError) throw kelasError;
-
-      // 2. Jika dosen berubah, cascade ke jadwal_praktikum
-      if (dosenChanged) {
-        const { error: jadwalError } = await (supabase as any)
-          .from("jadwal_praktikum")
-          .update({
-            dosen_id: newDosenId,
-            updated_at: new Date().toISOString(),
-          })
-          .eq("kelas_id", selectedKelas.id)
-          .eq("dosen_id", oldDosenId);
-
-        if (jadwalError) throw jadwalError;
-
-        // 3. Notifikasi dosen lama
-        const { data: oldDosenUser } = await (supabase as any)
-          .from("dosen")
-          .select("id, users:user_id(id, full_name)")
-          .eq("id", oldDosenId)
-          .single();
-
-        const { data: newDosenUser } = await (supabase as any)
-          .from("dosen")
-          .select("id, users:user_id(id, full_name)")
-          .eq("id", newDosenId)
-          .single();
-
-        if (oldDosenUser?.users?.id) {
-          await (supabase as any).from("notifications").insert({
-            user_id: oldDosenUser.users.id,
-            title: "Assignment Kelas Dipindah",
-            message: `Assignment untuk kelas ${selectedKelas.nama_kelas} telah dialihkan dari Anda ke ${newDosenUser?.users?.full_name || "dosen lain"} oleh admin.`,
-            type: "assignment_reassigned",
-            metadata: {
-              kelas_id: selectedKelas.id,
-              old_dosen_id: oldDosenId,
-              new_dosen_id: newDosenId,
-            },
-          });
-        }
-
-        if (newDosenUser?.users?.id) {
-          await (supabase as any).from("notifications").insert({
-            user_id: newDosenUser.users.id,
-            title: "Assignment Kelas Baru",
-            message: `Anda ditugaskan untuk mengajar kelas ${selectedKelas.nama_kelas}${selectedKelas.mata_kuliah ? ` (${selectedKelas.mata_kuliah.nama_mk})` : ""} oleh admin.`,
-            type: "assignment_added",
-            metadata: {
-              kelas_id: selectedKelas.id,
-              new_dosen_id: newDosenId,
-            },
-          });
-        }
-
-        toast.success("Assignment kelas berhasil diperbarui", {
-          description: `Dosen diganti dan ${dosenChanged ? "jadwal praktikum ikut diperbarui" : ""}. Notifikasi dikirim ke dosen terkait.`,
-        });
-      } else {
-        toast.success("Assignment kelas berhasil diperbarui");
-      }
-
-      setIsEditKelasOpen(false);
-      setSelectedKelas(null);
-      await loadKelasData();
-      // Refresh Tab 2 juga karena jadwal mungkin berubah
-      if (dosenChanged) fetchAssignments();
-    } catch (error: any) {
-      console.error("Error updating kelas assignment:", error);
-      toast.error(error.message || "Gagal memperbarui assignment");
-    } finally {
-      setIsSubmittingKelas(false);
-    }
-  };
+  const referenceStats = useMemo(() => {
+    return {
+      totalReferences: praktikumReferences.length,
+      totalJadwal: praktikumReferences.reduce(
+        (sum, reference) => sum + reference.total_jadwal,
+        0,
+      ),
+      dosenAktif: new Set(praktikumReferences.map((r) => r.dosen_id)).size,
+      mataKuliahAktif: new Set(
+        praktikumReferences.map((r) => r.mata_kuliah_id),
+      ).size,
+    };
+  }, [praktikumReferences]);
 
   // ============================================================================
   // EVENT HANDLERS
@@ -720,59 +729,122 @@ export default function ManajemenAssignmentPage() {
         deleteConfirmation.assignment;
 
       const validOptions = {
-        alsoDeleteKelas: Boolean(deleteOptions?.alsoDeleteKelas),
         notifyDosen: Boolean(deleteOptions?.notifyDosen),
       };
 
-      // FIX: Filter by dosen_id and kelas_id only (mata_kuliah_id is in kelas table)
-      const { data: jadwalToDelete, error: countError } = await supabaseAny
+      const { data: jadwalCandidates, error: countError } = await supabaseAny
         .from("jadwal_praktikum")
-        .select("id, tanggal_praktikum, topik")
+        .select(
+          `
+          id,
+          tanggal_praktikum,
+          topik,
+          mata_kuliah_id
+        `,
+        )
         .eq("dosen_id", dosen_id)
-        .eq("kelas_id", kelas_id);
+        .eq("kelas_id", kelas_id)
+        .eq("mata_kuliah_id", mata_kuliah_id);
 
       if (countError) throw countError;
 
+      const jadwalToDelete = jadwalCandidates || [];
+
       const totalJadwal = jadwalToDelete?.length || 0;
+      const hasPastJadwal = jadwalToDelete.some((jadwal: any) =>
+        isPastJadwal(jadwal),
+      );
+
+      if (totalJadwal === 0) {
+        throw new Error(
+          "Jadwal untuk kombinasi kelas, mata kuliah, dan dosen ini tidak ditemukan",
+        );
+      }
+
+      if (hasPastJadwal) {
+        throw new Error(
+          "Referensi praktikum ini sudah memiliki sesi yang lewat tanggal. Untuk menjaga riwayat tetap valid, referensi dan jadwalnya tidak bisa dihapus lagi.",
+        );
+      }
+
+      const jadwalIdsToDelete = jadwalToDelete.map((jadwal: any) => jadwal.id);
+
+      const [
+        { count: kehadiranCount, error: kehadiranCheckError },
+        { count: logbookCount, error: logbookCheckError },
+        { count: materiCount, error: materiCheckError },
+        { count: kuisCount, error: kuisCheckError },
+        { count: nilaiCount, error: nilaiCheckError },
+      ] = await Promise.all([
+        supabaseAny
+          .from("kehadiran")
+          .select("id", {
+            count: "exact",
+            head: true,
+          })
+          .in("jadwal_id", jadwalIdsToDelete),
+        supabaseAny
+          .from("logbook_entries")
+          .select("id", {
+            count: "exact",
+            head: true,
+          })
+          .in("jadwal_id", jadwalIdsToDelete),
+        supabaseAny
+          .from("materi")
+          .select("id", {
+            count: "exact",
+            head: true,
+          })
+          .eq("kelas_id", kelas_id)
+          .eq("dosen_id", dosen_id),
+        supabaseAny
+          .from("kuis")
+          .select("id", {
+            count: "exact",
+            head: true,
+          })
+          .eq("kelas_id", kelas_id)
+          .eq("dosen_id", dosen_id)
+          .eq("mata_kuliah_id", mata_kuliah_id),
+        supabaseAny
+          .from("nilai")
+          .select("id", {
+            count: "exact",
+            head: true,
+          })
+          .eq("kelas_id", kelas_id)
+          .eq("mata_kuliah_id", mata_kuliah_id),
+      ]);
+
+      if (kehadiranCheckError) throw kehadiranCheckError;
+      if (logbookCheckError) throw logbookCheckError;
+      if (materiCheckError) throw materiCheckError;
+      if (kuisCheckError) throw kuisCheckError;
+      if (nilaiCheckError) throw nilaiCheckError;
+
+      const blockedDataLabels = [
+        (kehadiranCount || 0) > 0 ? "presensi" : null,
+        (logbookCount || 0) > 0 ? "logbook" : null,
+        (materiCount || 0) > 0 ? "materi" : null,
+        (kuisCount || 0) > 0 ? "kuis/tugas" : null,
+        (nilaiCount || 0) > 0 ? "nilai" : null,
+      ].filter(Boolean);
+
+      if (blockedDataLabels.length > 0) {
+        throw new Error(
+          `Referensi praktikum tidak dapat dihapus karena sudah ada data ${blockedDataLabels.join(", ")}. Untuk menjaga riwayat akademik tetap valid, nonaktifkan atau koreksi detail jadwal saja, bukan menghapus referensinya.`,
+        );
+      }
 
       const { error: jadwalDeleteError } = await supabaseAny
         .from("jadwal_praktikum")
         .delete()
-        .eq("dosen_id", dosen_id)
-        .eq("kelas_id", kelas_id);
+        .in("id", jadwalIdsToDelete);
 
       if (jadwalDeleteError) throw jadwalDeleteError;
 
-      let kelasDeleted = false;
-      if (validOptions.alsoDeleteKelas) {
-        const { count, error: studentCountError } = await supabaseAny
-          .from("kelas_mahasiswa")
-          .select("*", { count: "exact", head: true })
-          .eq("kelas_id", kelas_id);
-
-        if (studentCountError) throw studentCountError;
-
-        if ((count ?? 0) === 0) {
-          const { count: otherJadwalCount, error: otherJadwalError } =
-            await supabaseAny
-              .from("jadwal_praktikum")
-              .select("*", { count: "exact", head: true })
-              .eq("kelas_id", kelas_id)
-              .eq("is_active", true);
-
-          if (otherJadwalError) throw otherJadwalError;
-
-          if ((otherJadwalCount ?? 0) === 0) {
-            const { error: kelasDeleteError } = await supabaseAny
-              .from("kelas")
-              .delete()
-              .eq("id", kelas_id);
-
-            if (kelasDeleteError) throw kelasDeleteError;
-            kelasDeleted = true;
-          }
-        }
-      }
+      const kelasDeleted = false;
 
       // Check if there are other assignments for this dosen + mata_kuliah combination
       // FIX: Query jadwal with kelas join to find assignments with same mata_kuliah
@@ -783,19 +855,20 @@ export default function ManajemenAssignmentPage() {
             `
             id,
             kelas_id,
-            kelas:kelas_id!inner (
-              mata_kuliah_id
-            )
+            mata_kuliah_id
           `,
           )
           .eq("dosen_id", dosen_id)
-          .eq("kelas.mata_kuliah_id", mata_kuliah_id)
           .eq("is_active", true);
 
       if (otherAssignError) throw otherAssignError;
 
+      const matchingAssignments = (otherAssignments || []).filter(
+        (assignment: any) => assignment.mata_kuliah_id === mata_kuliah_id,
+      );
+
       // Only delete dosen_mata_kuliah if no other assignments exist for this combination
-      if (!otherAssignments || otherAssignments.length === 0) {
+      if (matchingAssignments.length === 0) {
         const { error: dmDeleteError } = await supabase
           .from("dosen_mata_kuliah")
           .delete()
@@ -807,9 +880,15 @@ export default function ManajemenAssignmentPage() {
 
       if (validOptions.notifyDosen) {
         const [
+          { data: dosenData, error: dosenError },
           { data: mkData, error: mkError },
           { data: kelasData, error: kError },
         ] = await Promise.all([
+          supabaseAny
+            .from("dosen")
+            .select("user:user_id(id)")
+            .eq("id", dosen_id)
+            .single(),
           supabaseAny
             .from("mata_kuliah")
             .select("nama_mk")
@@ -822,26 +901,74 @@ export default function ManajemenAssignmentPage() {
             .single(),
         ]);
 
+        if (dosenError) throw dosenError;
         if (mkError) throw mkError;
         if (kError) throw kError;
 
-        const { error: notifError } = await supabaseAny
-          .from("notifications")
-          .insert({
-            user_id: dosen_id,
-            title: "Assignment Dihapus",
-            message: `Assignment untuk mata kuliah ${mkData?.nama_mk} di kelas ${kelasData?.nama_kelas} telah dihapus oleh admin.`,
-            type: "assignment_deleted",
-            metadata: {
+        const dosenUserId = dosenData?.user?.id;
+        if (dosenUserId) {
+          const { error: notifError } = await supabaseAny
+            .from("notifications")
+            .insert({
+              user_id: dosenUserId,
+              title: "Referensi Praktikum Dihapus",
+              message: `Assignment untuk mata kuliah ${mkData?.nama_mk} di kelas ${kelasData?.nama_kelas} telah dihapus oleh admin.`,
+              type: "assignment_deleted",
+              data: {
+                dosen_id,
+                mata_kuliah_id,
+                kelas_id,
+                deleted_jadwal_count: totalJadwal,
+                kelas_deleted: false,
+              },
+            });
+
+          if (notifError) throw notifError;
+        }
+      }
+
+      const { data: mahasiswaNotifList } = await supabaseAny
+        .from("kelas_mahasiswa")
+        .select(
+          "mahasiswa_id, mahasiswa:mahasiswa_id(user:user_id(id, full_name, email))",
+        )
+        .eq("kelas_id", kelas_id)
+        .eq("is_active", true);
+
+      if (mahasiswaNotifList && mahasiswaNotifList.length > 0) {
+        const uniqueMahasiswaNotifications = Array.from(
+          new Map(
+            (mahasiswaNotifList || [])
+              .filter((m: any) => m.mahasiswa?.user?.id)
+              .map((m: any) => [m.mahasiswa.user.id, m]),
+          ).values(),
+        )
+          .filter((m: any) => m.mahasiswa?.user?.id)
+          .map((m: any) => ({
+            user_id: m.mahasiswa.user.id,
+            title: "Praktikum Dibatalkan",
+            message: `Admin membatalkan referensi praktikum ${deleteConfirmation.assignment.mata_kuliah.nama_mk} - ${deleteConfirmation.assignment.kelas.nama_kelas}. Jadwal yang belum berjalan untuk referensi ini tidak lagi berlaku.`,
+            type: "jadwal_updated",
+            data: {
               dosen_id,
               mata_kuliah_id,
               kelas_id,
               deleted_jadwal_count: totalJadwal,
-              kelas_deleted: kelasDeleted,
             },
-          });
+          }));
 
-        if (notifError) throw notifError;
+        if (uniqueMahasiswaNotifications.length > 0) {
+          const { error: mahasiswaNotifError } = await supabaseAny
+            .from("notifications")
+            .insert(uniqueMahasiswaNotifications);
+
+          if (mahasiswaNotifError) {
+            console.warn(
+              "Failed to send praktikum deletion notifications to mahasiswa:",
+              mahasiswaNotifError,
+            );
+          }
+        }
       }
 
       const auditUserAgent =
@@ -862,7 +989,7 @@ export default function ManajemenAssignmentPage() {
           },
           new_data: {
             deleted_jadwal_count: totalJadwal,
-            kelas_deleted: kelasDeleted,
+            kelas_deleted: false,
             jadwal_details: jadwalToDelete,
           },
           ip_address: "unknown",
@@ -874,15 +1001,15 @@ export default function ManajemenAssignmentPage() {
       }
 
       toast.success("Assignment berhasil dihapus", {
-        description: `${deleteConfirmation.totalJadwal} jadwal praktikum juga dihapus${deleteOptions.alsoDeleteKelas ? ", data kelas dibersihkan" : ""}`,
+        description: `${deleteConfirmation.totalJadwal} jadwal praktikum juga dihapus`,
       });
 
       setDeleteDialogOpen(false);
       setDeleteConfirmation(null);
       fetchAssignments();
     } catch (error: any) {
-      console.error("Error deleting assignment:", error);
-      toast.error("Gagal menghapus assignment", {
+      console.error("Error deleting academic reference:", error);
+      toast.error("Gagal menghapus referensi praktikum", {
         description: error.message,
       });
     }
@@ -945,7 +1072,13 @@ export default function ManajemenAssignmentPage() {
         });
       }
 
-      if (dosenResult.data) setDosenList(dosenResult.data);
+      if (dosenResult.data) {
+        setDosenList(
+          dosenResult.data.filter(
+            (dosen: any) => Boolean(dosen?.id) && Boolean(getDosenDisplayName(dosen)),
+          ),
+        );
+      }
       if (labResult.data) setLabList(labResult.data);
       if (kelasResult.data) setKelasDropdownList(kelasResult.data);
       if (mataKuliahResult.data) setMataKuliahList(mataKuliahResult.data);
@@ -954,8 +1087,20 @@ export default function ManajemenAssignmentPage() {
     fetchDropdownData();
   }, []);
 
+  const todayDate = format(new Date(), "yyyy-MM-dd");
+  const isPastJadwal = (jadwal?: { tanggal_praktikum?: string | null } | null) =>
+    Boolean(jadwal?.tanggal_praktikum) &&
+    (jadwal?.tanggal_praktikum || "") < todayDate;
+
   // Edit Jadwal Handler
   const handleEditJadwal = (jadwal: Jadwal) => {
+    if (isPastJadwal(jadwal)) {
+      toast.error("Praktikum yang sudah lewat tidak bisa dikoreksi lagi", {
+        description: "Sesi ini sudah menjadi riwayat tetap.",
+      });
+      return;
+    }
+
     setEditJadwalData({
       id: jadwal.id,
       tanggal_praktikum: jadwal.tanggal_praktikum,
@@ -983,6 +1128,16 @@ export default function ManajemenAssignmentPage() {
         throw new Error("Forbidden - akses admin diperlukan");
       }
 
+      if (editJadwalData.tanggal_praktikum < todayDate) {
+        throw new Error(
+          "Tanggal praktikum tidak boleh diatur ke tanggal yang sudah lewat.",
+        );
+      }
+
+      if (editJadwalData.jam_selesai <= editJadwalData.jam_mulai) {
+        throw new Error("Jam selesai harus setelah jam mulai.");
+      }
+
       const supabaseAny = supabase as any;
 
       // Get current jadwal data before update
@@ -993,8 +1148,13 @@ export default function ManajemenAssignmentPage() {
           *,
           kelas:kelas_id (
             id,
-            nama_kelas,
-            mata_kuliah:mata_kuliah_id (nama_mk)
+            nama_kelas
+          ),
+          mata_kuliah:mata_kuliah_id (
+            id,
+            nama_mk,
+            kode_mk,
+            sks
           ),
           dosen:dosen_id (
             id,
@@ -1007,6 +1167,12 @@ export default function ManajemenAssignmentPage() {
         .single();
 
       if (fetchError) throw fetchError;
+
+      if (isPastJadwal(currentJadwal)) {
+        throw new Error(
+          "Praktikum yang sudah lewat tidak bisa dikoreksi lagi karena sudah menjadi riwayat tetap.",
+        );
+      }
 
       // Update jadwal
       const { error: updateError } = await supabaseAny
@@ -1029,36 +1195,61 @@ export default function ManajemenAssignmentPage() {
         .select(
           "mahasiswa_id, mahasiswa:mahasiswa_id(user:user_id(id, full_name, email))",
         )
-        .eq("kelas_id", currentJadwal.kelas.id);
+        .eq("kelas_id", currentJadwal.kelas.id)
+        .eq("is_active", true);
 
-      // Send notification to dosen
-      await supabaseAny.from("notifications").insert({
-        user_id: currentJadwal.dosen.id,
-        title: "Jadwal Praktikum Diupdate",
-        message: `Jadwal praktikum ${currentJadwal.kelas.mata_kuliah.nama_mk} - ${currentJadwal.kelas.nama_kelas} telah diupdate oleh admin.`,
-        type: "jadwal_updated",
-        metadata: {
-          jadwal_id: editJadwalData.id,
-          tanggal_baru: editJadwalData.tanggal_praktikum,
-          jam_baru: `${editJadwalData.jam_mulai} - ${editJadwalData.jam_selesai}`,
-        },
-      });
+      // Send notification to dosen using users.id, because notification center
+      // fetches rows by authenticated user id instead of dosen profile id.
+      const dosenUserId = currentJadwal.dosen?.user?.id;
+      const mataKuliahNama =
+        currentJadwal.mata_kuliah?.nama_mk || "mata kuliah praktikum";
+      if (dosenUserId) {
+        const { error: dosenNotifError } = await supabaseAny
+          .from("notifications")
+          .insert({
+            user_id: dosenUserId,
+            title: "Jadwal Praktikum Diupdate",
+            message: `Jadwal praktikum ${mataKuliahNama} - ${currentJadwal.kelas.nama_kelas} telah diupdate oleh admin.`,
+            type: "jadwal_updated",
+            data: {
+              jadwal_id: editJadwalData.id,
+              tanggal_baru: editJadwalData.tanggal_praktikum,
+              jam_baru: `${editJadwalData.jam_mulai} - ${editJadwalData.jam_selesai}`,
+            },
+          });
+
+        if (dosenNotifError) {
+          console.warn(
+            "Failed to send jadwal update notification to dosen:",
+            dosenNotifError,
+          );
+        }
+      }
 
       // Send notifications to all mahasiswa
       if (mahasiswaList && mahasiswaList.length > 0) {
         const notifications = mahasiswaList.map((m: any) => ({
           user_id: m.mahasiswa.user.id,
           title: "Jadwal Praktikum Diupdate",
-          message: `Jadwal praktikum ${currentJadwal.kelas.mata_kuliah.nama_mk} - ${currentJadwal.kelas.nama_kelas} telah diupdate oleh admin.`,
+          message: `Jadwal praktikum ${mataKuliahNama} - ${currentJadwal.kelas.nama_kelas} telah diupdate oleh admin.`,
           type: "jadwal_updated",
-          metadata: {
+          data: {
             jadwal_id: editJadwalData.id,
             tanggal_baru: editJadwalData.tanggal_praktikum,
             jam_baru: `${editJadwalData.jam_mulai} - ${editJadwalData.jam_selesai}`,
           },
         }));
 
-        await supabaseAny.from("notifications").insert(notifications);
+        const { error: mahasiswaNotifError } = await supabaseAny
+          .from("notifications")
+          .insert(notifications);
+
+        if (mahasiswaNotifError) {
+          console.warn(
+            "Failed to send jadwal update notifications to mahasiswa:",
+            mahasiswaNotifError,
+          );
+        }
       }
 
       // Audit log
@@ -1100,11 +1291,25 @@ export default function ManajemenAssignmentPage() {
 
   // Edit Assignment Handler (Ganti Dosen)
   const handleEditAssignment = (assignment: AssignmentDetail) => {
+    const hasPastJadwal = assignment.jadwalDetail?.some((jadwal) =>
+      isPastJadwal(jadwal),
+    );
+
+    if (hasPastJadwal) {
+      toast.error("Referensi dengan sesi yang sudah lewat tidak bisa dikoreksi", {
+        description:
+          "Riwayat praktikum yang sudah lewat tanggal tetap dikunci untuk menjaga konsistensi data.",
+      });
+      return;
+    }
+
     setEditAssignmentData({
       dosen_id: assignment.dosen_id,
       old_dosen_id: assignment.dosen_id,
       kelas_id: assignment.kelas_id,
+      old_kelas_id: assignment.kelas_id,
       mata_kuliah_id: assignment.mata_kuliah_id,
+      old_mata_kuliah_id: assignment.mata_kuliah_id,
     });
     setEditAssignmentDialogOpen(true);
   };
@@ -1127,144 +1332,356 @@ export default function ManajemenAssignmentPage() {
 
       const supabaseAny = supabase as any;
 
-      // Check if anything changed
       const dosenChanged =
         editAssignmentData.dosen_id !== editAssignmentData.old_dosen_id;
+      const kelasChanged =
+        editAssignmentData.kelas_id !== editAssignmentData.old_kelas_id;
+      const mataKuliahChanged =
+        editAssignmentData.mata_kuliah_id !==
+        editAssignmentData.old_mata_kuliah_id;
 
-      if (!dosenChanged) {
+      if (!dosenChanged && !kelasChanged && !mataKuliahChanged) {
         toast.info("Tidak ada perubahan");
         return;
       }
 
-      // Get old and new dosen info
       const { data: oldDosen } = await supabaseAny
         .from("dosen")
-        .select("id, user:user_id(full_name, email)")
+        .select("id, user:user_id(id, full_name, email)")
         .eq("id", editAssignmentData.old_dosen_id)
         .single();
 
       const { data: newDosen } = await supabaseAny
         .from("dosen")
-        .select("id, user:user_id(full_name, email)")
+        .select("id, user:user_id(id, full_name, email)")
         .eq("id", editAssignmentData.dosen_id)
         .single();
 
-      // Get kelas and mata kuliah info
-      const { data: kelasInfo } = await supabaseAny
+      const { data: oldKelasInfo } = await supabaseAny
         .from("kelas")
-        .select("nama_kelas, mata_kuliah:mata_kuliah_id(nama_mk)")
+        .select("id, nama_kelas, kode_kelas")
+        .eq("id", editAssignmentData.old_kelas_id)
+        .single();
+
+      const { data: newKelasInfo } = await supabaseAny
+        .from("kelas")
+        .select("id, nama_kelas, kode_kelas")
         .eq("id", editAssignmentData.kelas_id)
         .single();
 
-      const { data: mataKuliahInfo } = await supabaseAny
+      const { data: oldMataKuliahInfo } = await supabaseAny
         .from("mata_kuliah")
-        .select("nama_mk, kode_mk")
+        .select("id, nama_mk, kode_mk")
+        .eq("id", editAssignmentData.old_mata_kuliah_id)
+        .single();
+
+      const { data: newMataKuliahInfo } = await supabaseAny
+        .from("mata_kuliah")
+        .select("id, nama_mk, kode_mk")
         .eq("id", editAssignmentData.mata_kuliah_id)
         .single();
 
-      // Build update data
+      const { data: jadwalCandidates, error: jadwalFetchError } =
+        await supabaseAny
+          .from("jadwal_praktikum")
+          .select(
+            `
+            id,
+            tanggal_praktikum,
+            mata_kuliah_id,
+            kelas:kelas_id!inner (
+              mata_kuliah_id
+            )
+          `,
+          )
+          .eq("dosen_id", editAssignmentData.old_dosen_id)
+          .eq("kelas_id", editAssignmentData.old_kelas_id)
+          .eq("is_active", true);
+
+      if (jadwalFetchError) throw jadwalFetchError;
+
+      const jadwalIdsToUpdate = (jadwalCandidates || [])
+        .filter(
+          (jadwal: any) => jadwal.mata_kuliah_id === editAssignmentData.old_mata_kuliah_id,
+        )
+        .map((jadwal: any) => jadwal.id);
+
+      const hasPastJadwal = (jadwalCandidates || []).some(
+        (jadwal: any) =>
+          jadwal.mata_kuliah_id === editAssignmentData.old_mata_kuliah_id &&
+          isPastJadwal(jadwal),
+      );
+
+      if (jadwalIdsToUpdate.length === 0) {
+        throw new Error(
+          "Jadwal referensi praktikum yang dipilih tidak ditemukan untuk diperbarui",
+        );
+      }
+
+      if (hasPastJadwal) {
+        throw new Error(
+          "Referensi praktikum ini sudah memiliki sesi yang lewat tanggal. Untuk menjaga riwayat tetap valid, kelas, mata kuliah, atau dosen pengampu tidak bisa diubah lagi.",
+        );
+      }
+
+      const [
+        { count: kehadiranCount, error: kehadiranCheckError },
+        { count: logbookCount, error: logbookCheckError },
+        { count: materiCount, error: materiCheckError },
+        { count: kuisCount, error: kuisCheckError },
+        { count: nilaiCount, error: nilaiCheckError },
+      ] = await Promise.all([
+        supabaseAny
+          .from("kehadiran")
+          .select("id", {
+            count: "exact",
+            head: true,
+          })
+          .in("jadwal_id", jadwalIdsToUpdate),
+        supabaseAny
+          .from("logbook_entries")
+          .select("id", {
+            count: "exact",
+            head: true,
+          })
+          .in("jadwal_id", jadwalIdsToUpdate),
+        supabaseAny
+          .from("materi")
+          .select("id", {
+            count: "exact",
+            head: true,
+          })
+          .eq("kelas_id", editAssignmentData.old_kelas_id)
+          .eq("dosen_id", editAssignmentData.old_dosen_id),
+        supabaseAny
+          .from("kuis")
+          .select("id", {
+            count: "exact",
+            head: true,
+          })
+          .eq("kelas_id", editAssignmentData.old_kelas_id)
+          .eq("dosen_id", editAssignmentData.old_dosen_id)
+          .eq("mata_kuliah_id", editAssignmentData.old_mata_kuliah_id),
+        supabaseAny
+          .from("nilai")
+          .select("id", {
+            count: "exact",
+            head: true,
+          })
+          .eq("kelas_id", editAssignmentData.old_kelas_id)
+          .eq("mata_kuliah_id", editAssignmentData.old_mata_kuliah_id),
+      ]);
+
+      if (kehadiranCheckError) throw kehadiranCheckError;
+      if (logbookCheckError) throw logbookCheckError;
+      if (materiCheckError) throw materiCheckError;
+      if (kuisCheckError) throw kuisCheckError;
+      if (nilaiCheckError) throw nilaiCheckError;
+
+      const blockedDataLabels = [
+        (kehadiranCount || 0) > 0 ? "presensi" : null,
+        (logbookCount || 0) > 0 ? "logbook" : null,
+        (materiCount || 0) > 0 ? "materi" : null,
+        (kuisCount || 0) > 0 ? "kuis/tugas" : null,
+        (nilaiCount || 0) > 0 ? "nilai" : null,
+      ].filter(Boolean);
+
+      if (blockedDataLabels.length > 0) {
+        throw new Error(
+          `Referensi praktikum tidak dapat dikoreksi karena sudah ada data ${blockedDataLabels.join(", ")}. Untuk menjaga riwayat akademik tetap valid, ubah hanya detail jadwal (tanggal, jam, lab, topik) atau buat referensi praktikum baru.`,
+        );
+      }
+
       const updateData: any = {
         updated_at: new Date().toISOString(),
       };
 
-      // Only update fields that changed
       if (dosenChanged) {
         updateData.dosen_id = editAssignmentData.dosen_id;
       }
+      if (kelasChanged) {
+        updateData.kelas_id = editAssignmentData.kelas_id;
+      }
+      if (mataKuliahChanged) {
+        updateData.mata_kuliah_id = editAssignmentData.mata_kuliah_id;
+      }
 
-      // Update all jadwal for this assignment
       const { error: updateError } = await supabaseAny
         .from("jadwal_praktikum")
         .update(updateData)
-        .eq("dosen_id", editAssignmentData.old_dosen_id)
-        .eq("kelas_id", editAssignmentData.kelas_id);
+        .in("id", jadwalIdsToUpdate);
 
       if (updateError) throw updateError;
 
-      // Get all mahasiswa in this kelas
+      const kelasNotifIds = Array.from(
+        new Set([
+          editAssignmentData.old_kelas_id,
+          editAssignmentData.kelas_id,
+        ].filter(Boolean)),
+      );
+
       const { data: mahasiswaList } = await supabaseAny
         .from("kelas_mahasiswa")
         .select(
           "mahasiswa_id, mahasiswa:mahasiswa_id(user:user_id(id, full_name, email))",
         )
-        .eq("kelas_id", editAssignmentData.kelas_id);
+        .in("kelas_id", kelasNotifIds)
+        .eq("is_active", true);
 
-      // Notify old dosen (if dosen changed)
-      if (dosenChanged && oldDosen) {
-        await supabaseAny.from("notifications").insert({
+      const perubahanLabels = [
+        dosenChanged ? "dosen pengampu" : null,
+        kelasChanged ? "kelas" : null,
+        mataKuliahChanged ? "mata kuliah" : null,
+      ].filter(Boolean);
+
+      if (dosenChanged && oldDosen?.user?.id) {
+        const { error: oldDosenNotifError } = await supabaseAny
+          .from("notifications")
+          .insert({
           user_id: oldDosen.user.id,
-          title: "Assignment Diberikan ke Dosen Lain",
-          message: `Assignment ${mataKuliahInfo.nama_mk} - ${kelasInfo.nama_kelas} telah dialihkan dari Anda ke ${newDosen.user.full_name}.`,
+          title: "Referensi Praktikum Dikoreksi",
+          message: `Referensi praktikum ${oldMataKuliahInfo?.nama_mk || "-"} - ${oldKelasInfo?.nama_kelas || "-"} tidak lagi ditugaskan kepada Anda.`,
           type: "assignment_reassigned",
-          metadata: {
-            kelas_id: editAssignmentData.kelas_id,
-            mata_kuliah_id: editAssignmentData.mata_kuliah_id,
+          data: {
+            old_kelas_id: editAssignmentData.old_kelas_id,
+            new_kelas_id: editAssignmentData.kelas_id,
+            old_mata_kuliah_id: editAssignmentData.old_mata_kuliah_id,
+            new_mata_kuliah_id: editAssignmentData.mata_kuliah_id,
             old_dosen_id: editAssignmentData.old_dosen_id,
             new_dosen_id: editAssignmentData.dosen_id,
           },
         });
+
+        if (oldDosenNotifError) {
+          console.warn(
+            "Failed to send reassignment notification to old dosen:",
+            oldDosenNotifError,
+          );
+        }
       }
 
-      // Notify new dosen
-      await supabaseAny.from("notifications").insert({
-        user_id: newDosen.user.id,
-        title: "Assignment Baru Ditambahkan",
-        message: `Anda telah ditugaskan untuk mengajar ${mataKuliahInfo.nama_mk} - ${kelasInfo.nama_kelas}.`,
-        type: "assignment_added",
-        metadata: {
-          kelas_id: editAssignmentData.kelas_id,
-          mata_kuliah_id: editAssignmentData.mata_kuliah_id,
-        },
-      });
+      if (newDosen?.user?.id) {
+        const dosenNotificationMessage = dosenChanged
+          ? `Anda ditetapkan pada praktikum ${newMataKuliahInfo?.nama_mk || "-"} - ${newKelasInfo?.nama_kelas || "-"} setelah koreksi admin.`
+          : `Admin memperbarui ${perubahanLabels.join(", ")} pada praktikum ${newMataKuliahInfo?.nama_mk || "-"} - ${newKelasInfo?.nama_kelas || "-"}.`;
 
-      // Notify all mahasiswa
-      if (mahasiswaList && mahasiswaList.length > 0) {
-        const notifications = mahasiswaList.map((m: any) => ({
-          user_id: m.mahasiswa.user.id,
-          title: "Dosen Pengajar Diubah",
-          message: `Dosen pengajar untuk ${mataKuliahInfo.nama_mk} - ${kelasInfo.nama_kelas} telah diubah dari ${oldDosen.user.full_name} ke ${newDosen.user.full_name}.`,
-          type: "dosen_changed",
-          metadata: {
-            kelas_id: editAssignmentData.kelas_id,
-            mata_kuliah_id: editAssignmentData.mata_kuliah_id,
+        const { error: newDosenNotifError } = await supabaseAny
+          .from("notifications")
+          .insert({
+          user_id: newDosen.user.id,
+          title: "Referensi Praktikum Dikoreksi",
+          message: dosenNotificationMessage,
+          type: dosenChanged ? "assignment_added" : "jadwal_updated",
+          data: {
+            old_kelas_id: editAssignmentData.old_kelas_id,
+            new_kelas_id: editAssignmentData.kelas_id,
+            old_mata_kuliah_id: editAssignmentData.old_mata_kuliah_id,
+            new_mata_kuliah_id: editAssignmentData.mata_kuliah_id,
             old_dosen_id: editAssignmentData.old_dosen_id,
             new_dosen_id: editAssignmentData.dosen_id,
           },
-        }));
+        });
 
-        await supabaseAny.from("notifications").insert(notifications);
+        if (newDosenNotifError) {
+          console.warn(
+            "Failed to send praktikum reference notification to new/current dosen:",
+            newDosenNotifError,
+          );
+        }
       }
 
-      // Audit log
+      if (mahasiswaList && mahasiswaList.length > 0) {
+        const mahasiswaChangeSummary = [
+          dosenChanged
+            ? `dosen: ${oldDosen?.user?.full_name || "-"} -> ${newDosen?.user?.full_name || "-"}`
+            : null,
+          kelasChanged
+            ? `kelas: ${oldKelasInfo?.nama_kelas || "-"} -> ${newKelasInfo?.nama_kelas || "-"}`
+            : null,
+          mataKuliahChanged
+            ? `mata kuliah: ${oldMataKuliahInfo?.nama_mk || "-"} -> ${newMataKuliahInfo?.nama_mk || "-"}`
+            : null,
+        ]
+          .filter(Boolean)
+          .join("; ");
+
+        const notifications = Array.from(
+          new Map(
+            (mahasiswaList || [])
+              .filter((m: any) => m.mahasiswa?.user?.id)
+              .map((m: any) => [m.mahasiswa.user.id, m]),
+          ).values(),
+        )
+          .filter((m: any) => m.mahasiswa?.user?.id)
+          .map((m: any) => ({
+            user_id: m.mahasiswa.user.id,
+            title: "Referensi Praktikum Diperbarui",
+            message: mahasiswaChangeSummary
+              ? `Admin mengoreksi referensi praktikum. Perubahan: ${mahasiswaChangeSummary}.`
+              : `Admin memperbarui referensi praktikum ${newMataKuliahInfo?.nama_mk || "-"} - ${newKelasInfo?.nama_kelas || "-"}.`,
+            type: "jadwal_updated",
+            data: {
+              old_kelas_id: editAssignmentData.old_kelas_id,
+              new_kelas_id: editAssignmentData.kelas_id,
+              old_mata_kuliah_id: editAssignmentData.old_mata_kuliah_id,
+              new_mata_kuliah_id: editAssignmentData.mata_kuliah_id,
+              old_dosen_id: editAssignmentData.old_dosen_id,
+              new_dosen_id: editAssignmentData.dosen_id,
+            },
+          }));
+
+        if (notifications.length > 0) {
+          const { error: mahasiswaNotifError } = await supabaseAny
+            .from("notifications")
+            .insert(notifications);
+
+          if (mahasiswaNotifError) {
+            console.warn(
+              "Failed to send praktikum reference notifications to mahasiswa:",
+              mahasiswaNotifError,
+            );
+          }
+        }
+      }
+
       const auditUserAgent =
         typeof navigator !== "undefined" ? navigator.userAgent : "unknown";
       await supabaseAny.from("audit_logs").insert({
         user_id: user.id,
-        action: "REASSIGN_DOSEN",
+        action: "UPDATE_PRAKTIKUM_REFERENCE",
         table_name: "jadwal_praktikum",
-        record_id: `${editAssignmentData.kelas_id}-${editAssignmentData.mata_kuliah_id}`,
+        record_id: `${editAssignmentData.old_kelas_id}-${editAssignmentData.old_mata_kuliah_id}-${editAssignmentData.old_dosen_id}`,
         old_data: {
+          kelas_id: editAssignmentData.old_kelas_id,
+          kelas_name: oldKelasInfo?.nama_kelas || "-",
+          mata_kuliah_id: editAssignmentData.old_mata_kuliah_id,
+          mata_kuliah_name: oldMataKuliahInfo?.nama_mk || "-",
           dosen_id: editAssignmentData.old_dosen_id,
-          dosen_name: oldDosen.user.full_name,
+          dosen_name: oldDosen?.user?.full_name || "-",
         },
         new_data: {
+          kelas_id: editAssignmentData.kelas_id,
+          kelas_name: newKelasInfo?.nama_kelas || "-",
+          mata_kuliah_id: editAssignmentData.mata_kuliah_id,
+          mata_kuliah_name: newMataKuliahInfo?.nama_mk || "-",
           dosen_id: editAssignmentData.dosen_id,
-          dosen_name: newDosen.user.full_name,
+          dosen_name: newDosen?.user?.full_name || "-",
         },
         ip_address: "unknown",
         user_agent: auditUserAgent,
       });
 
-      toast.success("Assignment berhasil diupdate", {
-        description: `Dosen telah diganti dari ${oldDosen.user.full_name} ke ${newDosen.user.full_name}. Notifikasi dikirim ke ${mahasiswaList?.length || 0} mahasiswa`,
+      toast.success("Referensi praktikum berhasil diperbarui", {
+        description: `${perubahanLabels.join(", ")} berhasil dikoreksi. Notifikasi dikirim ke pihak terkait.`,
       });
 
       setEditAssignmentDialogOpen(false);
       setEditAssignmentData(null);
+      await loadKelasData();
       fetchAssignments();
     } catch (error: any) {
-      console.error("Error editing assignment:", error);
-      toast.error("Gagal mengupdate assignment", {
+      console.error("Error editing academic reference:", error);
+      toast.error("Gagal mengupdate referensi akademik", {
         description: error.message,
       });
     } finally {
@@ -1275,13 +1692,26 @@ export default function ManajemenAssignmentPage() {
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, "info" | "success" | "error" | "offline"> =
       {
+        pending: "info",
+        approved: "success",
+        rejected: "error",
+        cancelled: "error",
         scheduled: "info",
         completed: "success",
-        cancelled: "error",
       };
+
+    const statusLabelMap: Record<string, string> = {
+      pending: "Pending",
+      approved: "Approved",
+      rejected: "Rejected",
+      cancelled: "Cancelled",
+      scheduled: "Scheduled",
+      completed: "Completed",
+    };
+
     return (
       <StatusBadge status={statusMap[status] || "offline"} pulse={false}>
-        {status}
+        {statusLabelMap[status] || status}
       </StatusBadge>
     );
   };
@@ -1303,10 +1733,7 @@ export default function ManajemenAssignmentPage() {
     );
   }, [assignments, searchQuery]);
 
-  // ── Tab 3: Ringkasan per dosen ────────────────────────────────────────────
-  // Gabungkan data dari kelasList (assignment) + assignments (jadwal)
-  const dosenSummary = useMemo(() => {
-    // Map: dosen_id → ringkasan
+  const dosenSummaryView = useMemo(() => {
     const map = new Map<
       string,
       {
@@ -1317,6 +1744,7 @@ export default function ManajemenAssignmentPage() {
           id: string;
           nama_kelas: string;
           kode_kelas: string;
+          mata_kuliah_id?: string;
           nama_mk: string;
           kode_mk: string;
           sks: number;
@@ -1330,15 +1758,12 @@ export default function ManajemenAssignmentPage() {
       }
     >();
 
-    // Dari kelasList (Tab 1): setiap kelas yang punya dosen
-    kelasList.forEach((k) => {
-      if (!k.dosen_id || !k.dosen?.users) return;
-      const id = k.dosen_id;
-      if (!map.has(id)) {
-        map.set(id, {
-          dosen_id: id,
-          nama: k.dosen.users.full_name,
-          email: k.dosen.users.email,
+    const ensureEntry = (dosenId: string, nama?: string, email?: string) => {
+      if (!map.has(dosenId)) {
+        map.set(dosenId, {
+          dosen_id: dosenId,
+          nama: nama || "Dosen",
+          email: email || "-",
           kelasList: [],
           mataKuliahSet: new Set(),
           totalJadwal: 0,
@@ -1346,48 +1771,50 @@ export default function ManajemenAssignmentPage() {
           jadwalCompleted: 0,
         });
       }
-      const entry = map.get(id)!;
-      entry.kelasList.push({
-        id: k.id,
-        nama_kelas: k.nama_kelas,
-        kode_kelas: k.kode_kelas,
-        nama_mk: k.mata_kuliah?.nama_mk || "—",
-        kode_mk: k.mata_kuliah?.kode_mk || "—",
-        sks: k.mata_kuliah?.sks || 0,
-        tahun_ajaran: k.tahun_ajaran,
-        semester_ajaran: k.semester_ajaran,
-      });
-      if (k.mata_kuliah?.id) entry.mataKuliahSet.add(k.mata_kuliah.id);
-    });
 
-    // Dari assignments (Tab 2): jadwal count per dosen
+      return map.get(dosenId)!;
+    };
+
+    const ringkasanKeys = new Set<string>();
+
     assignments.forEach((a) => {
-      if (!map.has(a.dosen_id)) {
-        // Dosen ada jadwal tapi tidak terdaftar di kelas aktif
-        map.set(a.dosen_id, {
-          dosen_id: a.dosen_id,
-          nama: a.dosen.full_name,
-          email: a.dosen.email,
-          kelasList: [],
-          mataKuliahSet: new Set(),
-          totalJadwal: 0,
-          jadwalScheduled: 0,
-          jadwalCompleted: 0,
+      const entry = ensureEntry(a.dosen_id, a.dosen.full_name, a.dosen.email);
+      const referenceKey = `${a.dosen_id}-${a.kelas_id}-${a.mata_kuliah_id}`;
+
+      if (!ringkasanKeys.has(referenceKey)) {
+        entry.kelasList.push({
+          id: referenceKey,
+          nama_kelas: a.kelas.nama_kelas,
+          kode_kelas: a.kelas.kode_kelas,
+          mata_kuliah_id: a.mata_kuliah?.id || a.mata_kuliah_id || undefined,
+          nama_mk: a.mata_kuliah?.nama_mk || "-",
+          kode_mk: a.mata_kuliah?.kode_mk || "-",
+          sks: a.mata_kuliah?.sks || 0,
+          tahun_ajaran: (a.kelas as any).tahun_ajaran || "-",
+          semester_ajaran: (a.kelas as any).semester_ajaran || 0,
         });
+        ringkasanKeys.add(referenceKey);
       }
-      const entry = map.get(a.dosen_id)!;
+
       entry.totalJadwal += a.jadwalDetail?.length || 0;
       a.jadwalDetail?.forEach((j) => {
-        if (j.status === "scheduled") entry.jadwalScheduled++;
-        if (j.status === "completed") entry.jadwalCompleted++;
+        if (j.status === "pending") entry.jadwalScheduled++;
+        if (j.status === "approved") entry.jadwalCompleted++;
       });
-      entry.mataKuliahSet.add(a.mata_kuliah_id);
+    });
+
+    map.forEach((entry) => {
+      entry.kelasList.forEach((kelasItem) => {
+        if (kelasItem.mata_kuliah_id) {
+          entry.mataKuliahSet.add(kelasItem.mata_kuliah_id);
+        }
+      });
     });
 
     return Array.from(map.values()).sort((a, b) =>
       a.nama.localeCompare(b.nama),
     );
-  }, [kelasList, assignments]);
+  }, [assignments]);
 
   // ============================================================================
   // RENDER
@@ -1397,7 +1824,7 @@ export default function ManajemenAssignmentPage() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin" />
-        <span className="ml-2">Memuat data assignment...</span>
+        <span className="ml-2">Memuat data monitoring praktikum...</span>
       </div>
     );
   }
@@ -1405,22 +1832,22 @@ export default function ManajemenAssignmentPage() {
   return (
     <div className="container mx-auto py-8 space-y-6">
       <PageHeader
-        title="Manajemen Assignment & Jadwal Praktikum"
-        description="Kelola assignment dosen dan jadwal praktikum dalam satu sistem terintegrasi"
+        title="Monitoring Praktikum & Referensi Akademik"
+        description="Pantau data praktikum yang dibuat dosen dan lakukan koreksi admin bila ada salah pengampu atau mata kuliah"
       />
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Total Assignment
+              Total Referensi
             </CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalAssignments}</div>
-            <p className="text-xs text-muted-foreground">Master assignments</p>
+            <p className="text-xs text-muted-foreground">Referensi akademik</p>
           </CardContent>
         </Card>
 
@@ -1431,38 +1858,49 @@ export default function ManajemenAssignmentPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalJadwal}</div>
-            <p className="text-xs text-muted-foreground">Schedule details</p>
+            <p className="text-xs text-muted-foreground">Detail jadwal praktikum</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active</CardTitle>
+            <CardTitle className="text-sm font-medium">Jadwal Disetujui</CardTitle>
             <CheckCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.activeAssignments}</div>
-            <p className="text-xs text-muted-foreground">Scheduled jadwal</p>
+            <p className="text-xs text-muted-foreground">Jadwal disetujui</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Unique Dosen</CardTitle>
+            <CardTitle className="text-sm font-medium">Riwayat Tetap</CardTitle>
+            <Clock className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.historyJadwal}</div>
+            <p className="text-xs text-muted-foreground">Praktikum yang sudah lewat</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Dosen Terlibat</CardTitle>
             <BarChart3 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.uniqueDosen}</div>
-            <p className="text-xs text-muted-foreground">Active lecturers</p>
+            <p className="text-xs text-muted-foreground">Pengampu pada jadwal aktif</p>
           </CardContent>
         </Card>
       </div>
 
-      <Tabs defaultValue="assignment" className="space-y-4">
+      <Tabs defaultValue="jadwal" className="space-y-4">
         <TabsList>
           <TabsTrigger value="assignment" className="flex items-center gap-2">
             <UserCheck className="h-4 w-4" />
-            Assignment Dosen
+            Referensi Akademik
           </TabsTrigger>
           <TabsTrigger value="jadwal" className="flex items-center gap-2">
             <GraduationCap className="h-4 w-4" />
@@ -1470,7 +1908,7 @@ export default function ManajemenAssignmentPage() {
           </TabsTrigger>
           <TabsTrigger value="ringkasan" className="flex items-center gap-2">
             <BarChart3 className="h-4 w-4" />
-            Ringkasan Dosen
+            Ringkasan Pengampu
           </TabsTrigger>
         </TabsList>
 
@@ -1478,35 +1916,42 @@ export default function ManajemenAssignmentPage() {
         {/* TAB 1: ASSIGNMENT DOSEN                                          */}
         {/* ================================================================ */}
         <TabsContent value="assignment" className="space-y-4">
+          <Alert>
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+              Dosen tetap membuat kelas dan praktikum. Tab ini membantu admin
+              memantau referensi per kelas dan mengoreksi bila dosen salah
+              memilih dosen pengampu atau mata kuliah.
+            </AlertDescription>
+          </Alert>
+
           {/* Tab 1 Stats */}
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <DashboardCard
-              title="Total Kelas Aktif"
-              value={kelasList.length}
-              description={`${kelasList.filter((k) => k.dosen_id).length} dengan dosen assigned`}
+              title="Total Relasi"
+              value={referenceStats.totalReferences}
+              description="Relasi praktikum aktif"
               icon={Users}
               color="primary"
             />
             <DashboardCard
               title="Dosen Aktif"
-              value={dosenList.length}
-              description={`${new Set(kelasList.filter((k) => k.dosen_id).map((k) => k.dosen_id)).size} mengajar`}
+              value={referenceStats.dosenAktif}
+              description={`${dosenList.length} dosen tersedia di master`}
               icon={BookOpen}
               color="info"
             />
             <DashboardCard
               title="Mata Kuliah"
-              value={mataKuliahList.length}
-              description={`${new Set(kelasList.filter((k) => k.mata_kuliah_id).map((k) => k.mata_kuliah_id)).size} diajarkan`}
+              value={referenceStats.mataKuliahAktif}
+              description="Mata kuliah yang sedang dipakai"
               icon={Calendar}
               color="success"
             />
             <DashboardCard
-              title="Assignment Complete"
-              value={
-                kelasList.filter((k) => k.dosen_id && k.mata_kuliah_id).length
-              }
-              description={`${Math.round((kelasList.filter((k) => k.dosen_id && k.mata_kuliah_id).length / (kelasList.length || 1)) * 100)}% dari total`}
+              title="Total Jadwal"
+              value={referenceStats.totalJadwal}
+              description="Jadwal pada relasi aktif"
               icon={CheckCircle}
               color="accent"
             />
@@ -1515,14 +1960,14 @@ export default function ManajemenAssignmentPage() {
           {/* Filters */}
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-base">Filter & Pencarian</CardTitle>
+              <CardTitle className="text-base">Filter Referensi</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
-                    placeholder="Cari kelas, dosen, mk..."
+                    placeholder="Cari kelas, dosen, atau mata kuliah..."
                     value={searchKelas}
                     onChange={(e) => setSearchKelas(e.target.value)}
                     className="pl-10"
@@ -1579,34 +2024,36 @@ export default function ManajemenAssignmentPage() {
             </CardContent>
           </Card>
 
-          {/* Kelas Table */}
+          {/* Referensi Praktikum Table */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-3">
               <CardTitle className="text-base">
-                Daftar Kelas ({filteredKelas.length})
+                Daftar Referensi Praktikum ({filteredReferences.length})
               </CardTitle>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={loadKelasData}
-                disabled={kelasLoading}
+                onClick={() => {
+                  void Promise.all([loadKelasData(), fetchAssignments()]);
+                }}
+                disabled={kelasLoading || loading}
               >
                 <RefreshCw
-                  className={`h-4 w-4 mr-2 ${kelasLoading ? "animate-spin" : ""}`}
+                  className={`h-4 w-4 mr-2 ${kelasLoading || loading ? "animate-spin" : ""}`}
                 />
-                Refresh
+                Muat Ulang
               </Button>
             </CardHeader>
             <CardContent className="p-0">
-              {kelasLoading ? (
+              {kelasLoading || loading ? (
                 <div className="flex items-center justify-center py-12">
                   <Loader2 className="h-6 w-6 animate-spin mr-2" />
-                  <span>Memuat data kelas...</span>
+                  <span>Memuat referensi praktikum...</span>
                 </div>
-              ) : filteredKelas.length === 0 ? (
+              ) : filteredReferences.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground">
                   <Users className="h-10 w-10 mx-auto mb-3 opacity-40" />
-                  <p className="font-medium">Tidak ada kelas ditemukan</p>
+                  <p className="font-medium">Tidak ada referensi praktikum ditemukan</p>
                   <p className="text-sm">
                     Coba ubah filter atau kata kunci pencarian
                   </p>
@@ -1619,34 +2066,32 @@ export default function ManajemenAssignmentPage() {
                       <TableHead>Mata Kuliah</TableHead>
                       <TableHead>Dosen</TableHead>
                       <TableHead>Tahun Ajaran</TableHead>
-                      <TableHead>Status</TableHead>
+                      <TableHead>Jadwal Terkait</TableHead>
                       <TableHead className="text-right">Aksi</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredKelas.map((kelas) => {
-                      const isAssigned = !!(
-                        kelas.dosen_id && kelas.mata_kuliah_id
-                      );
-                      return (
-                        <TableRow key={kelas.id}>
+                    {filteredReferences.map((reference) => (
+                      <TableRow key={reference.key}>
                           <TableCell>
                             <div className="font-medium">
-                              {kelas.nama_kelas}
+                              {reference.kelas_nama}
                             </div>
                             <div className="text-xs text-muted-foreground">
-                              {kelas.kode_kelas}
+                              {reference.kelas_kode}
                             </div>
                           </TableCell>
                           <TableCell>
-                            {kelas.mata_kuliah ? (
+                            {reference.mata_kuliah_nama ? (
                               <div>
                                 <div className="font-medium">
-                                  {kelas.mata_kuliah.nama_mk}
+                                  {reference.mata_kuliah_nama}
                                 </div>
                                 <div className="text-xs text-muted-foreground">
-                                  {kelas.mata_kuliah.kode_mk} ·{" "}
-                                  {kelas.mata_kuliah.sks} SKS
+                                  {reference.mata_kuliah_kode}
+                                  {typeof reference.mata_kuliah_sks === "number"
+                                    ? ` · ${reference.mata_kuliah_sks} SKS`
+                                    : ""}
                                 </div>
                               </div>
                             ) : (
@@ -1656,13 +2101,13 @@ export default function ManajemenAssignmentPage() {
                             )}
                           </TableCell>
                           <TableCell>
-                            {kelas.dosen?.users ? (
+                            {reference.dosen_nama ? (
                               <div>
                                 <div className="font-medium">
-                                  {kelas.dosen.users.full_name}
+                                  {reference.dosen_nama}
                                 </div>
                                 <div className="text-xs text-muted-foreground">
-                                  {kelas.dosen.users.email}
+                                  {reference.dosen_email}
                                 </div>
                               </div>
                             ) : (
@@ -1672,40 +2117,43 @@ export default function ManajemenAssignmentPage() {
                             )}
                           </TableCell>
                           <TableCell>
-                            <div className="text-sm">{kelas.tahun_ajaran}</div>
+                            <div className="text-sm">{reference.tahun_ajaran}</div>
                             <div className="text-xs text-muted-foreground">
-                              Sem {kelas.semester_ajaran}
+                              Sem {reference.semester_ajaran}
                             </div>
                           </TableCell>
                           <TableCell>
-                            {isAssigned ? (
-                              <Badge className="bg-green-100 text-green-800 border-green-200">
-                                <CheckCircle className="h-3 w-3 mr-1" />
-                                Assigned
-                              </Badge>
-                            ) : (
-                              <Badge
-                                variant="outline"
-                                className="text-orange-600 border-orange-300"
-                              >
-                                <AlertTriangle className="h-3 w-3 mr-1" />
-                                Belum Assign
-                              </Badge>
-                            )}
+                            <Badge className="bg-green-100 text-green-800 border-green-200">
+                              <CheckCircle className="h-3 w-3 mr-1" />
+                              {reference.total_jadwal} jadwal
+                            </Badge>
                           </TableCell>
                           <TableCell className="text-right">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleEditKelas(kelas)}
-                            >
-                              <Edit className="h-4 w-4 mr-1" />
-                              Edit
-                            </Button>
+                            <div className="flex justify-end gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() =>
+                                  handleEditAssignment(reference.assignment)
+                                }
+                              >
+                                <Edit className="h-4 w-4 mr-1" />
+                                Koreksi Relasi
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() =>
+                                  handleDeleteAssignment(reference.assignment)
+                                }
+                              >
+                                <Trash2 className="h-4 w-4 mr-1" />
+                                Hapus
+                              </Button>
+                            </div>
                           </TableCell>
-                        </TableRow>
-                      );
-                    })}
+                      </TableRow>
+                    ))}
                   </TableBody>
                 </Table>
               )}
@@ -1717,13 +2165,24 @@ export default function ManajemenAssignmentPage() {
         {/* TAB 2: JADWAL PRAKTIKUM                                          */}
         {/* ================================================================ */}
         <TabsContent value="jadwal" className="space-y-4">
+          <Alert>
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+              Admin memantau praktikum yang dibuat dosen. Gunakan koreksi
+              referensi untuk mengubah kelas, mata kuliah, atau dosen, dan
+              gunakan koreksi jadwal untuk mengubah waktu, lab, atau topik.
+              Praktikum yang sudah lewat otomatis menjadi riwayat tetap dan
+              tidak bisa dikoreksi lagi.
+            </AlertDescription>
+          </Alert>
+
           {/* Filters and Search */}
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Cari dosen, mata kuliah, atau kelas..."
+                  placeholder="Cari praktikum berdasarkan dosen, mata kuliah, atau kelas..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10"
@@ -1744,10 +2203,11 @@ export default function ManajemenAssignmentPage() {
                 <SelectTrigger className="w-40">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="max-h-72">
                   <SelectItem value="all">Semua Status</SelectItem>
-                  <SelectItem value="scheduled">Scheduled</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="approved">Approved</SelectItem>
+                  <SelectItem value="rejected">Rejected</SelectItem>
                   <SelectItem value="cancelled">Cancelled</SelectItem>
                 </SelectContent>
               </Select>
@@ -1760,7 +2220,7 @@ export default function ManajemenAssignmentPage() {
                 <RefreshCw
                   className={`h-4 w-4 ${loading ? "animate-spin" : ""}`}
                 />
-                Refresh
+                Muat Ulang
               </Button>
             </div>
           </div>
@@ -1779,7 +2239,7 @@ export default function ManajemenAssignmentPage() {
                     <div className="text-center text-muted-foreground">
                       <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
                       <p className="text-lg font-medium">
-                        Tidak ada assignment ditemukan
+                        Tidak ada data jadwal praktikum ditemukan
                       </p>
                       <p className="text-sm">
                         Coba ubah filter atau kata kunci pencarian
@@ -1793,22 +2253,22 @@ export default function ManajemenAssignmentPage() {
                     key={`${assignment.dosen_id}-${assignment.mata_kuliah_id}-${assignment.kelas_id}`}
                   >
                     <CardHeader>
-                      <div className="flex items-start justify-between">
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2">
+                      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                        <div className="space-y-2 min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
                             <Users className="h-5 w-5 text-primary" />
                             <span className="font-semibold">
                               {assignment.dosen.full_name}
                             </span>
-                            <Badge variant="outline">
+                            <Badge variant="outline" className="max-w-full">
                               {assignment.dosen.email}
                             </Badge>
                           </div>
 
-                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                            <div className="flex items-center gap-1">
+                          <div className="flex flex-col gap-2 text-sm text-muted-foreground sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
+                            <div className="flex min-w-0 items-center gap-1">
                               <BookOpen className="h-4 w-4" />
-                              <span>
+                              <span className="truncate">
                                 {assignment.mata_kuliah.kode_mk} -{" "}
                                 {assignment.mata_kuliah.nama_mk}
                               </span>
@@ -1820,9 +2280,9 @@ export default function ManajemenAssignmentPage() {
                             </div>
                           </div>
 
-                          <div className="flex items-center gap-2">
+                          <div className="flex flex-wrap items-center gap-2">
                             <Badge variant="secondary">
-                              {assignment.total_jadwal} jadwal aktif
+                              {assignment.total_jadwal} sesi
                             </Badge>
                             {assignment.tanggal_mulai &&
                               assignment.tanggal_selesai && (
@@ -1843,10 +2303,11 @@ export default function ManajemenAssignmentPage() {
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap lg:justify-end">
                           <Button
                             variant="ghost"
                             size="sm"
+                            className="justify-start sm:justify-center"
                             onClick={() =>
                               toggleExpanded(
                                 `${assignment.dosen_id}-${assignment.mata_kuliah_id}-${assignment.kelas_id}`,
@@ -1860,24 +2321,27 @@ export default function ManajemenAssignmentPage() {
                             ) : (
                               <ChevronDown className="h-4 w-4" />
                             )}
-                            Details
+                            Detail Jadwal
                           </Button>
 
                           <Button
                             variant="outline"
                             size="sm"
+                            className="justify-start sm:justify-center"
                             onClick={() => handleEditAssignment(assignment)}
                           >
-                            <Edit className="h-4 w-4" />
+                            <Edit className="h-4 w-4 mr-1" />
+                            Kelas/MK/Dosen
                           </Button>
 
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => handleDeleteAssignment(assignment)}
-                            className="text-danger hover:text-danger/80 hover:bg-danger/5"
+                            className="justify-start text-danger hover:text-danger/80 hover:bg-danger/5 sm:justify-center"
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className="h-4 w-4 mr-1" />
+                            Hapus
                           </Button>
                         </div>
                       </div>
@@ -1890,7 +2354,7 @@ export default function ManajemenAssignmentPage() {
                       <CardContent className="border-t">
                         <div className="space-y-3">
                           <h4 className="text-sm font-semibold text-muted-foreground">
-                            Jadwal Praktikum Detail
+                            Rincian Sesi Praktikum
                           </h4>
 
                           {!assignment.jadwalDetail ||
@@ -1898,68 +2362,127 @@ export default function ManajemenAssignmentPage() {
                             <Alert>
                               <AlertTriangle className="h-4 w-4" />
                               <AlertDescription>
-                                Tidak ada jadwal praktikum untuk assignment ini
+                                Belum ada sesi pada praktikum ini
                               </AlertDescription>
                             </Alert>
                           ) : (
-                            <div className="space-y-2">
-                              {assignment.jadwalDetail.map((jadwal) => (
-                                <div
-                                  key={jadwal.id}
-                                  className="flex items-center justify-between p-3 bg-muted/40 rounded-lg"
-                                >
-                                  <div className="flex items-center gap-4">
-                                    <div className="text-sm">
-                                      <div className="flex items-center gap-2">
-                                        <Calendar className="h-4 w-4" />
-                                        <span>
-                                          {format(
-                                            new Date(jadwal.tanggal_praktikum),
-                                            "dd MMM yyyy",
-                                            { locale: localeId },
-                                          )}
-                                        </span>
-                                        <Badge variant="outline">
-                                          {jadwal.hari}
-                                        </Badge>
+                            <div className="space-y-4">
+                              {(() => {
+                                const upcomingJadwal = assignment.jadwalDetail.filter(
+                                  (jadwal) => !isPastJadwal(jadwal),
+                                );
+                                const historyJadwal = assignment.jadwalDetail.filter(
+                                  (jadwal) => isPastJadwal(jadwal),
+                                );
+
+                                const renderJadwalRow = (
+                                  jadwal: Jadwal,
+                                  readOnly = false,
+                                ) => (
+                                  <div
+                                    key={jadwal.id}
+                                    className="flex items-center justify-between p-3 bg-muted/40 rounded-lg"
+                                  >
+                                    <div className="flex items-center gap-4">
+                                      <div className="text-sm">
+                                        <div className="flex items-center gap-2">
+                                          <Calendar className="h-4 w-4" />
+                                          <span>
+                                            {format(
+                                              new Date(jadwal.tanggal_praktikum),
+                                              "dd MMM yyyy",
+                                              { locale: localeId },
+                                            )}
+                                          </span>
+                                          <Badge variant="outline">
+                                            {jadwal.hari}
+                                          </Badge>
+                                        </div>
+                                        <div className="flex items-center gap-2 text-muted-foreground">
+                                          <Clock className="h-3 w-3" />
+                                          <span>
+                                            {jadwal.jam_mulai} -{" "}
+                                            {jadwal.jam_selesai}
+                                          </span>
+                                        </div>
                                       </div>
-                                      <div className="flex items-center gap-2 text-muted-foreground">
-                                        <Clock className="h-3 w-3" />
-                                        <span>
-                                          {jadwal.jam_mulai} -{" "}
-                                          {jadwal.jam_selesai}
-                                        </span>
+
+                                      <div className="text-sm">
+                                        <div className="flex items-center gap-2">
+                                          <MapPin className="h-4 w-4" />
+                                          <span>{jadwal.laboratorium.nama_lab}</span>
+                                        </div>
+                                        {jadwal.topik && (
+                                          <div className="text-muted-foreground">
+                                            {jadwal.topik}
+                                          </div>
+                                        )}
                                       </div>
                                     </div>
 
-                                    <div className="text-sm">
-                                      <div className="flex items-center gap-2">
-                                        <MapPin className="h-4 w-4" />
-                                        <span>
-                                          {jadwal.laboratorium.nama_lab}
-                                        </span>
-                                      </div>
-                                      {jadwal.topik && (
-                                        <div className="text-muted-foreground">
-                                          {jadwal.topik}
-                                        </div>
+                                    <div className="flex items-center gap-2">
+                                      {getStatusBadge(jadwal.status)}
+
+                                      {readOnly ? (
+                                        <Badge variant="secondary">Riwayat Tetap</Badge>
+                                      ) : (
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() => handleEditJadwal(jadwal)}
+                                        >
+                                          <Edit className="h-3 w-3 mr-1" />
+                                          Koreksi Jadwal
+                                        </Button>
                                       )}
                                     </div>
                                   </div>
+                                );
 
-                                  <div className="flex items-center gap-2">
-                                    {getStatusBadge(jadwal.status)}
+                                return (
+                                  <>
+                                    <div className="space-y-2">
+                                      <div className="flex items-center justify-between">
+                                        <h5 className="text-sm font-semibold">
+                                          Jadwal Aktif / Mendatang
+                                        </h5>
+                                        <Badge variant="outline">
+                                          {upcomingJadwal.length} sesi
+                                        </Badge>
+                                      </div>
+                                      {upcomingJadwal.length > 0 ? (
+                                        upcomingJadwal.map((jadwal) =>
+                                          renderJadwalRow(jadwal),
+                                        )
+                                      ) : (
+                                        <div className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
+                                          Tidak ada sesi aktif atau mendatang.
+                                        </div>
+                                      )}
+                                    </div>
 
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => handleEditJadwal(jadwal)}
-                                    >
-                                      <Edit className="h-3 w-3" />
-                                    </Button>
-                                  </div>
-                                </div>
-                              ))}
+                                    <div className="space-y-2">
+                                      <div className="flex items-center justify-between">
+                                        <h5 className="text-sm font-semibold">
+                                          Riwayat Praktikum
+                                        </h5>
+                                        <Badge variant="secondary">
+                                          {historyJadwal.length} sesi
+                                        </Badge>
+                                      </div>
+                                      {historyJadwal.length > 0 ? (
+                                        historyJadwal.map((jadwal) =>
+                                          renderJadwalRow(jadwal, true),
+                                        )
+                                      ) : (
+                                        <div className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
+                                          Belum ada riwayat praktikum pada kelompok ini.
+                                        </div>
+                                      )}
+                                    </div>
+                                  </>
+                                );
+                              })()}
                             </div>
                           )}
                         </div>
@@ -1976,21 +2499,21 @@ export default function ManajemenAssignmentPage() {
         {/* TAB 3: RINGKASAN DOSEN                                           */}
         {/* ================================================================ */}
         <TabsContent value="ringkasan" className="space-y-4">
-          {dosenSummary.length === 0 ? (
+          {dosenSummaryView.length === 0 ? (
             <Card>
               <CardContent className="pt-6">
                 <div className="text-center text-muted-foreground py-8">
                   <Users className="h-10 w-10 mx-auto mb-3 opacity-40" />
                   <p className="font-medium">Belum ada data dosen</p>
                   <p className="text-sm">
-                    Data akan muncul setelah assignment dibuat
+                    Data akan muncul setelah jadwal praktikum dibuat
                   </p>
                 </div>
               </CardContent>
             </Card>
           ) : (
             <div className="space-y-4">
-              {dosenSummary.map((dosen) => (
+              {dosenSummaryView.map((dosen) => (
                 <Card key={dosen.dosen_id}>
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">
@@ -2030,13 +2553,13 @@ export default function ManajemenAssignmentPage() {
                           <div className="font-bold text-green-600 text-lg">
                             {dosen.jadwalCompleted}
                           </div>
-                          <div className="text-xs">Selesai</div>
+                          <div className="text-xs">Approved</div>
                         </div>
                         <div className="text-center">
                           <div className="font-bold text-blue-600 text-lg">
                             {dosen.jadwalScheduled}
                           </div>
-                          <div className="text-xs">Dijadwalkan</div>
+                          <div className="text-xs">Pending</div>
                         </div>
                       </div>
                     </div>
@@ -2093,10 +2616,12 @@ export default function ManajemenAssignmentPage() {
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Konfirmasi Hapus Assignment</DialogTitle>
+            <DialogTitle>Konfirmasi Hapus Referensi Praktikum</DialogTitle>
             <DialogDescription>
-              Tindakan ini akan menghapus assignment dan semua data terkait.
-              Tindakan tidak dapat dibatalkan.
+              Tindakan ini akan menghapus referensi praktikum dan jadwal
+              terkait. Penghapusan akan ditolak jika referensi ini sudah
+              dipakai untuk proses akademik seperti presensi, logbook, materi,
+              kuis, atau nilai.
             </DialogDescription>
           </DialogHeader>
 
@@ -2108,7 +2633,7 @@ export default function ManajemenAssignmentPage() {
                   <strong>Perhatian:</strong> Ini akan menghapus:
                   <ul className="mt-2 list-disc list-inside text-sm">
                     <li>
-                      Assignment untuk{" "}
+                      Referensi untuk{" "}
                       <strong>
                         {deleteConfirmation.assignment.dosen.full_name}
                       </strong>
@@ -2128,27 +2653,15 @@ export default function ManajemenAssignmentPage() {
                     <li>
                       {deleteConfirmation.totalJadwal} jadwal praktikum terkait
                     </li>
+                    <li>
+                      Jika sudah ada aktivitas akademik, penghapusan akan
+                      diblok untuk menjaga riwayat data
+                    </li>
                   </ul>
                 </AlertDescription>
               </Alert>
 
               <div className="space-y-3">
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="alsoDeleteKelas"
-                    checked={deleteOptions.alsoDeleteKelas}
-                    onCheckedChange={(checked) =>
-                      setDeleteOptions((prev) => ({
-                        ...prev,
-                        alsoDeleteKelas: checked as boolean,
-                      }))
-                    }
-                  />
-                  <label htmlFor="alsoDeleteKelas" className="text-sm">
-                    Hapus juga data kelas (jika tidak ada mahasiswa terdaftar)
-                  </label>
-                </div>
-
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="notifyDosen"
@@ -2176,7 +2689,7 @@ export default function ManajemenAssignmentPage() {
               Batal
             </Button>
             <Button variant="destructive" onClick={confirmDeleteAssignment}>
-              Hapus Assignment
+              Hapus Referensi
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -2187,17 +2700,18 @@ export default function ManajemenAssignmentPage() {
         open={editJadwalDialogOpen}
         onOpenChange={setEditJadwalDialogOpen}
       >
-        <DialogContent className="sm:max-w-125">
-          <DialogHeader>
-            <DialogTitle>Edit Jadwal Praktikum</DialogTitle>
+        <DialogContent className="flex flex-col sm:max-w-md max-h-[90vh] overflow-hidden p-0">
+          <DialogHeader className="shrink-0 px-6 pt-6">
+            <DialogTitle>Koreksi Jadwal Praktikum</DialogTitle>
             <DialogDescription>
-              Ubah detail jadwal praktikum. Perubahan akan diberitahukan ke
-              dosen dan mahasiswa.
+              Lakukan koreksi terbatas pada detail jadwal praktikum. Perubahan
+              akan diberitahukan ke dosen dan mahasiswa.
             </DialogDescription>
           </DialogHeader>
 
           {editJadwalData && (
-            <div className="space-y-4 py-4">
+            <div className="min-h-0 flex-1 overflow-y-auto px-6 py-4">
+              <div className="space-y-4">
               <div className="space-y-2">
                 <label htmlFor="tanggal" className="text-sm font-medium">
                   Tanggal Praktikum
@@ -2215,7 +2729,7 @@ export default function ManajemenAssignmentPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label htmlFor="jam_mulai" className="text-sm font-medium">
                     Jam Mulai
@@ -2296,14 +2810,15 @@ export default function ManajemenAssignmentPage() {
               <Alert>
                 <AlertTriangle className="h-4 w-4" />
                 <AlertDescription>
-                  Notifikasi akan dikirim ke dosen pengajar dan semua mahasiswa
-                  di kelas ini.
+                  Notifikasi koreksi akan dikirim ke dosen pengajar dan semua
+                  mahasiswa di kelas ini.
                 </AlertDescription>
               </Alert>
+              </div>
             </div>
           )}
 
-          <DialogFooter>
+          <DialogFooter className="shrink-0 border-t bg-background px-6 py-4">
             <Button
               variant="outline"
               onClick={() => setEditJadwalDialogOpen(false)}
@@ -2318,109 +2833,77 @@ export default function ManajemenAssignmentPage() {
                   Menyimpan...
                 </>
               ) : (
-                "Simpan Perubahan"
+                "Simpan Koreksi"
               )}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* Edit Kelas (Assignment Dosen) Dialog */}
-      <Dialog open={isEditKelasOpen} onOpenChange={setIsEditKelasOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Edit Assignment Dosen</DialogTitle>
-            <DialogDescription>
-              Assign atau ganti dosen dan mata kuliah untuk kelas{" "}
-              <strong>{selectedKelas?.nama_kelas}</strong>.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="edit_kelas_dosen">Dosen</Label>
-              <Select
-                value={editKelasDosenId}
-                onValueChange={setEditKelasDosenId}
-              >
-                <SelectTrigger id="edit_kelas_dosen">
-                  <SelectValue placeholder="Pilih dosen" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">— Tidak ada dosen —</SelectItem>
-                  {dosenList.map((dosen: any) => (
-                    <SelectItem key={dosen.id} value={dosen.id}>
-                      {dosen.users?.full_name ||
-                        dosen.user?.full_name ||
-                        dosen.nip}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="edit_kelas_mk">Mata Kuliah</Label>
-              <Select value={editKelasMkId} onValueChange={setEditKelasMkId}>
-                <SelectTrigger id="edit_kelas_mk">
-                  <SelectValue placeholder="Pilih mata kuliah" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">
-                    — Tidak ada mata kuliah —
-                  </SelectItem>
-                  {mataKuliahList.map((mk: any) => (
-                    <SelectItem key={mk.id} value={mk.id}>
-                      {mk.nama_mk} ({mk.kode_mk})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsEditKelasOpen(false)}
-              disabled={isSubmittingKelas}
-            >
-              Batal
-            </Button>
-            <Button
-              onClick={handleEditKelasSubmit}
-              disabled={isSubmittingKelas}
-            >
-              {isSubmittingKelas ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  Menyimpan...
-                </>
-              ) : (
-                "Simpan"
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
       {/* Edit Assignment Dialog */}
       <Dialog
         open={editAssignmentDialogOpen}
         onOpenChange={setEditAssignmentDialogOpen}
       >
-        <DialogContent className="sm:max-w-125">
-          <DialogHeader>
-            <DialogTitle>Edit Assignment</DialogTitle>
+        <DialogContent className="flex flex-col sm:max-w-md max-h-[90vh] overflow-hidden p-0">
+          <DialogHeader className="shrink-0 px-6 pt-6">
+            <DialogTitle>Koreksi Referensi Praktikum</DialogTitle>
             <DialogDescription>
-              Ubah dosen, kelas, atau mata kuliah untuk assignment ini. Dosen
-              lama dan mahasiswa akan diberitahu.
+              Perbarui kelas, mata kuliah, atau dosen pengampu untuk praktikum
+              ini bila ada data yang salah.
             </DialogDescription>
           </DialogHeader>
 
           {editAssignmentData && (
-            <div className="space-y-4 py-4">
-              {/* Dropdown Dosen */}
+            <div className="min-h-0 flex-1 overflow-y-auto px-6 py-4">
+              <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="kelas_assignment_info">Kelas</Label>
+                <Select
+                  value={editAssignmentData.kelas_id}
+                  onValueChange={(value) =>
+                    setEditAssignmentData({
+                      ...editAssignmentData,
+                      kelas_id: value,
+                    })
+                  }
+                >
+                  <SelectTrigger id="kelas_assignment_info">
+                    <SelectValue placeholder="Pilih kelas" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-72">
+                    {kelasDropdownList.map((kelas) => (
+                      <SelectItem key={kelas.id} value={kelas.id}>
+                        {kelas.nama_kelas} ({kelas.kode_kelas})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="mata_kuliah_assignment_info">Mata Kuliah</Label>
+                <Select
+                  value={editAssignmentData.mata_kuliah_id}
+                  onValueChange={(value) =>
+                    setEditAssignmentData({
+                      ...editAssignmentData,
+                      mata_kuliah_id: value,
+                    })
+                  }
+                >
+                  <SelectTrigger id="mata_kuliah_assignment_info">
+                    <SelectValue placeholder="Pilih mata kuliah" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-72">
+                    {mataKuliahList.map((mk) => (
+                      <SelectItem key={mk.id} value={mk.id}>
+                        {mk.nama_mk} ({mk.kode_mk})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div className="space-y-2">
                 <label htmlFor="dosen_baru" className="text-sm font-medium">
                   Dosen
@@ -2437,67 +2920,10 @@ export default function ManajemenAssignmentPage() {
                   <SelectTrigger id="dosen_baru">
                     <SelectValue placeholder="Pilih dosen" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="max-h-72">
                     {dosenList.map((dosen) => (
                       <SelectItem key={dosen.id} value={dosen.id}>
-                        {dosen.user?.full_name || dosen.user?.email}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Dropdown Kelas */}
-              <div className="space-y-2">
-                <label htmlFor="kelas_baru" className="text-sm font-medium">
-                  Kelas
-                </label>
-                <Select
-                  value={editAssignmentData.kelas_id}
-                  onValueChange={(value) =>
-                    setEditAssignmentData({
-                      ...editAssignmentData,
-                      kelas_id: value,
-                    })
-                  }
-                >
-                  <SelectTrigger id="kelas_baru">
-                    <SelectValue placeholder="Pilih kelas" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {kelasDropdownList.map((kelas) => (
-                      <SelectItem key={kelas.id} value={kelas.id}>
-                        {kelas.nama_kelas} ({kelas.kode_kelas})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Dropdown Mata Kuliah */}
-              <div className="space-y-2">
-                <label
-                  htmlFor="mata_kuliah_baru"
-                  className="text-sm font-medium"
-                >
-                  Mata Kuliah
-                </label>
-                <Select
-                  value={editAssignmentData.mata_kuliah_id}
-                  onValueChange={(value) =>
-                    setEditAssignmentData({
-                      ...editAssignmentData,
-                      mata_kuliah_id: value,
-                    })
-                  }
-                >
-                  <SelectTrigger id="mata_kuliah_baru">
-                    <SelectValue placeholder="Pilih mata kuliah" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {mataKuliahList.map((mk) => (
-                      <SelectItem key={mk.id} value={mk.id}>
-                        {mk.nama_mk} ({mk.kode_mk})
+                        {getDosenDisplayName(dosen)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -2509,22 +2935,42 @@ export default function ManajemenAssignmentPage() {
                 <AlertDescription>
                   <strong>Perhatian:</strong>
                   <ul className="mt-2 list-disc list-inside text-sm">
-                    <li>Semua jadwal untuk assignment ini akan diperbarui</li>
                     <li>
-                      Dosen lama akan menerima notifikasi perubahan assignment
+                      Hanya jadwal pada referensi praktikum yang dipilih ini
+                      yang akan diperbarui
                     </li>
-                    <li>Dosen baru akan menerima notifikasi penugasan</li>
                     <li>
-                      Semua mahasiswa di kelas ini akan diberitahu tentang
-                      perubahan
+                      Jika kelas berubah, mahasiswa pada kelas lama dan kelas
+                      baru akan menerima notifikasi
+                    </li>
+                    <li>
+                      Jika dosen berubah, dosen lama dan dosen baru akan
+                      menerima notifikasi
+                    </li>
+                    <li>
+                      Koreksi mata kuliah juga akan disinkronkan ke jadwal
+                      praktikum terkait
+                    </li>
+                    <li>
+                      Jika ada sesi praktikum yang sudah lewat tanggal, koreksi
+                      referensi tidak bisa dilakukan
+                    </li>
+                    <li>
+                      Jika salah satu jadwal sudah memiliki presensi, koreksi
+                      referensi akan ditolak untuk menjaga riwayat kehadiran
+                    </li>
+                    <li>
+                      Jika sudah ada materi, kuis, nilai, atau logbook pada
+                      referensi lama, koreksi referensi juga akan ditolak
                     </li>
                   </ul>
                 </AlertDescription>
               </Alert>
+              </div>
             </div>
           )}
 
-          <DialogFooter>
+          <DialogFooter className="shrink-0 border-t bg-background px-6 py-4">
             <Button
               variant="outline"
               onClick={() => setEditAssignmentDialogOpen(false)}
@@ -2542,7 +2988,7 @@ export default function ManajemenAssignmentPage() {
                   Menyimpan...
                 </>
               ) : (
-                "Simpan Perubahan"
+                "Simpan Koreksi"
               )}
             </Button>
           </DialogFooter>

@@ -4,6 +4,8 @@ import { useAuth } from "@/lib/hooks/useAuth";
 import { supabase } from "@/lib/supabase/client";
 import { networkDetector } from "@/lib/offline/network-detector";
 import { cacheAPI, getCachedData } from "@/lib/offline/api-cache";
+import { getLogbookStats } from "@/lib/api/logbook.api";
+import type { LogbookStats } from "@/types/logbook.types";
 import { RefreshCw } from "lucide-react";
 import {
   Card,
@@ -14,9 +16,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { StatusBadge } from "@/components/ui/status-badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { DashboardCard } from "@/components/ui/dashboard-card";
 import { DashboardSkeleton } from "@/components/ui/dashboard-skeleton";
 import { GlassCard } from "@/components/ui/glass-card";
 import {
@@ -38,9 +38,6 @@ import {
   Eye,
   Edit,
   CheckCircle,
-  XCircle,
-  AlertTriangle,
-  Award,
   Sparkles,
 } from "lucide-react";
 import {
@@ -86,6 +83,7 @@ interface DosenAssignment {
 export function DashboardPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const currentDosenId = user?.dosen?.id || null;
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -98,6 +96,7 @@ export function DashboardPage() {
   const [pendingGrading, setPendingGrading] = useState<PendingGradingType[]>(
     [],
   );
+  const [logbookStats, setLogbookStats] = useState<LogbookStats | null>(null);
   const [activeKuis, setActiveKuis] = useState<KuisWithStats[]>([]);
   const [selectedKelas, setSelectedKelas] = useState<KelasWithStats | null>(
     null,
@@ -124,7 +123,7 @@ export function DashboardPage() {
   }, [lastOfflineSnapshotAt]);
 
   useEffect(() => {
-    if (user?.id) {
+    if (user?.id && currentDosenId) {
       fetchAssignments();
       fetchDashboardData();
 
@@ -139,7 +138,7 @@ export function DashboardPage() {
               event: "*", // INSERT, UPDATE, DELETE
               schema: "public",
               table: "kelas",
-              filter: `dosen_id=eq.${user.id}`,
+              filter: `dosen_id=eq.${currentDosenId}`,
             },
             () => {
               console.log("Kelas changed, refreshing dashboard...");
@@ -202,8 +201,8 @@ export function DashboardPage() {
                 const newData = payload.new as any;
 
                 if (
-                  (oldData && (oldData as any).dosen_id === user.id) ||
-                  (newData && (newData as any).dosen_id === user.id)
+                  (oldData && (oldData as any).dosen_id === currentDosenId) ||
+                  (newData && (newData as any).dosen_id === currentDosenId)
                 ) {
                   setHasDataChanges(true);
                   setIsRefreshing(true);
@@ -358,16 +357,17 @@ export function DashboardPage() {
       setMyKelas([]);
       setUpcomingPracticum([]);
       setPendingGrading([]);
+      setLogbookStats(null);
       setActiveKuis([]);
       setIsOfflineData(false);
       setLastOfflineSnapshotAt(null);
     }
-  }, [user?.id]);
+  }, [user?.id, currentDosenId]);
 
   // Fetch assignments yang diberikan admin kepada dosen ini
   const fetchAssignments = async (forceRefresh = false) => {
     try {
-      if (!user?.id) {
+      if (!currentDosenId) {
         setAssignments([]);
         setIsOfflineData(false);
         return;
@@ -375,7 +375,7 @@ export function DashboardPage() {
 
       // Use cacheAPI for assignments with offline support
       const assignmentsData = await cacheAPI(
-        `dosen_assignments_${user?.id}`,
+        `dosen_assignments_${currentDosenId}`,
         async () => {
           // Get assignments for this dosen (similar logic to admin page)
           const { data: rawData, error } = await (supabase as any)
@@ -389,7 +389,7 @@ export function DashboardPage() {
               kelas:kelas!inner(id, nama_kelas, kode_kelas, tahun_ajaran, semester_ajaran)
             `,
             )
-            .eq("dosen_id", user.id)
+            .eq("dosen_id", currentDosenId)
             .eq("is_active", true);
 
           if (error) throw error;
@@ -504,18 +504,21 @@ export function DashboardPage() {
       setLoading(true);
       setError(null);
 
-      const statsCacheKey = `dosen_stats_${user?.id}`;
-      const kelasCacheKey = `dosen_kelas_${user?.id}`;
-      const practicumCacheKey = `dosen_practicum_${user?.id}`;
-      const gradingCacheKey = `dosen_grading_${user?.id}`;
-      const kuisCacheKey = `dosen_kuis_${user?.id}`;
-      const assignmentsCacheKey = `dosen_assignments_${user?.id}`;
+      const cacheIdentity = currentDosenId || user?.id || "anonymous";
+      const statsCacheKey = `dosen_stats_${cacheIdentity}`;
+      const kelasCacheKey = `dosen_kelas_${cacheIdentity}`;
+      const practicumCacheKey = `dosen_practicum_${cacheIdentity}`;
+      const gradingCacheKey = `dosen_grading_${cacheIdentity}`;
+      const logbookCacheKey = `dosen_logbook_${cacheIdentity}`;
+      const kuisCacheKey = `dosen_kuis_${cacheIdentity}`;
+      const assignmentsCacheKey = `dosen_assignments_${cacheIdentity}`;
 
       const [
         cachedStatsEntry,
         cachedKelasEntry,
         cachedPracticumEntry,
         cachedGradingEntry,
+        cachedLogbookEntry,
         cachedKuisEntry,
         cachedAssignmentsEntry,
       ] = await Promise.all([
@@ -523,6 +526,7 @@ export function DashboardPage() {
         getCachedData<KelasWithStats[]>(kelasCacheKey),
         getCachedData<UpcomingPracticumType[]>(practicumCacheKey),
         getCachedData<PendingGradingType[]>(gradingCacheKey),
+        getCachedData<LogbookStats>(logbookCacheKey),
         getCachedData<KuisWithStats[]>(kuisCacheKey),
         getCachedData<DosenAssignment[]>(assignmentsCacheKey),
       ]);
@@ -532,6 +536,7 @@ export function DashboardPage() {
         Array.isArray(cachedKelasEntry?.data) ||
         Array.isArray(cachedPracticumEntry?.data) ||
         Array.isArray(cachedGradingEntry?.data) ||
+        !!cachedLogbookEntry?.data ||
         Array.isArray(cachedKuisEntry?.data) ||
         Array.isArray(cachedAssignmentsEntry?.data);
 
@@ -550,6 +555,7 @@ export function DashboardPage() {
             ? cachedGradingEntry.data
             : [],
         );
+        setLogbookStats(cachedLogbookEntry?.data ?? null);
         setActiveKuis(
           Array.isArray(cachedKuisEntry?.data) ? cachedKuisEntry.data : [],
         );
@@ -565,6 +571,7 @@ export function DashboardPage() {
             cachedKelasEntry?.timestamp || 0,
             cachedPracticumEntry?.timestamp || 0,
             cachedGradingEntry?.timestamp || 0,
+            cachedLogbookEntry?.timestamp || 0,
             cachedKuisEntry?.timestamp || 0,
             cachedAssignmentsEntry?.timestamp || 0,
           ) || null,
@@ -585,7 +592,7 @@ export function DashboardPage() {
 
       console.log("📞 Calling dashboard APIs with caching...");
       // Use cacheAPI with stale-while-revalidate for offline support
-      const [statsData, kelasData, practicumData, gradingData, kuisData] =
+      const [statsData, kelasData, practicumData, gradingData, logbookData, kuisData] =
         await Promise.all([
           cacheAPI(statsCacheKey, () => getDosenStats(forceRefresh), {
             ttl: 10 * 60 * 1000, // 10 minutes
@@ -607,6 +614,18 @@ export function DashboardPage() {
             forceRefresh,
             staleWhileRevalidate: true,
           }),
+          cacheAPI(
+            logbookCacheKey,
+            () =>
+              getLogbookStats({
+                dosen_id: currentDosenId || undefined,
+              }),
+            {
+              ttl: 5 * 60 * 1000,
+              forceRefresh,
+              staleWhileRevalidate: true,
+            },
+          ),
           cacheAPI(kuisCacheKey, () => getActiveKuis(20), {
             ttl: 5 * 60 * 1000,
             forceRefresh,
@@ -618,6 +637,7 @@ export function DashboardPage() {
       setMyKelas(kelasData || []);
       setUpcomingPracticum(practicumData || []);
       setPendingGrading(gradingData || []);
+      setLogbookStats(logbookData || null);
       setActiveKuis(kuisData || []);
       setIsOfflineData(false);
       setLastOfflineSnapshotAt(Date.now());
@@ -654,19 +674,32 @@ export function DashboardPage() {
         .from("kelas_mahasiswa" as any)
         .select(
           `
-          mahasiswa:nim(
+          mahasiswa:mahasiswa_id(
             nim,
-            full_name,
-            email,
-            phone
+            users:user_id(
+              full_name,
+              email
+            )
           )
         `,
         )
-        .eq("kelas_id", kelasId);
+        .eq("kelas_id", kelasId)
+        .eq("is_active", true);
 
       if (error) throw error;
       setKelasMahasiswa(
-        data?.map((item) => (item as any).mahasiswa).filter(Boolean) || [],
+        data
+          ?.map((item: any) => {
+            const mahasiswa = item?.mahasiswa;
+            if (!mahasiswa) return null;
+
+            return {
+              nim: mahasiswa.nim,
+              full_name: mahasiswa.users?.full_name || "Unknown",
+              email: mahasiswa.users?.email || "",
+            };
+          })
+          .filter(Boolean) || [],
       );
     } catch (err) {
       // Silently fail in offline mode
@@ -710,6 +743,25 @@ export function DashboardPage() {
     sunday: "Minggu",
   };
 
+  const totalAssignedStudents = assignments.reduce(
+    (sum, assignment) => sum + assignment.total_mahasiswa,
+    0,
+  );
+  const totalStudentsInActiveClasses = myKelas.reduce(
+    (sum, kelas) => sum + kelas.totalMahasiswa,
+    0,
+  );
+  const upcomingPrimary = upcomingPracticum[0] || null;
+  const upcomingSecondary = upcomingPracticum.slice(1, 4);
+  const kelasPreview = myKelas.slice(0, 4);
+  const draftKuisCount = activeKuis.filter((kuis) => kuis.status === "draft").length;
+  const publishedKuisCount = activeKuis.filter(
+    (kuis) => kuis.status === "published",
+  ).length;
+  const pendingLogbookCount =
+    (logbookStats?.submitted || 0) + (logbookStats?.reviewed || 0);
+  const needsAttentionCount = pendingLogbookCount + activeKuis.length;
+
   if (loading) {
     return (
       <div className="app-container py-4 sm:py-6 lg:py-8">
@@ -736,32 +788,43 @@ export function DashboardPage() {
                 <div className="flex-1">
                   <div className="mb-3 flex flex-col gap-4 sm:flex-row sm:items-center">
                     <div className="rounded-3xl bg-linear-to-br from-primary via-primary/90 to-accent/80 p-3 shadow-lg shadow-primary/25">
-                      <Users className="h-8 w-8 text-primary-foreground" />
+                      <Sparkles className="h-7 w-7 text-primary-foreground" />
                     </div>
-                    <div>
-                      <h1 className="bg-linear-to-r from-foreground via-primary to-accent bg-clip-text text-2xl font-extrabold text-transparent sm:text-4xl lg:text-5xl">
-                        Dashboard Dosen
-                      </h1>
-                      <p className="mt-1 text-sm font-bold text-muted-foreground sm:text-lg">
-                        Selamat datang,{" "}
-                        <span className="text-primary">
-                          {user?.full_name || user?.email}
-                        </span>
+                    <div className="space-y-2">
+                      <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary/80">
+                        Ringkasan Mengajar
                       </p>
-                    </div>
-                    {hasDataChanges && (
-                      <div className="inline-flex items-center gap-2 rounded-full border border-warning/40 bg-warning/15 px-4 py-2 text-sm font-bold text-foreground shadow-sm">
-                        <div className="h-2.5 w-2.5 rounded-full bg-warning animate-pulse"></div>
-                        Data diperbarui
+                      <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+                        Selamat datang, {user?.full_name || user?.email}
+                      </h1>
+                      <p className="max-w-2xl text-sm text-muted-foreground sm:text-base">
+                        {upcomingPrimary
+                          ? `Praktikum terdekat Anda adalah ${upcomingPrimary.mata_kuliah_nama} untuk ${upcomingPrimary.kelas_nama}.`
+                          : myKelas.length > 0
+                            ? "Belum ada praktikum terdekat yang terjadwal, tetapi kelas aktif Anda sudah siap dikelola."
+                            : "Dashboard ini merangkum jadwal, kelas aktif, dan tindak lanjut penting secara singkat."}
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        <Badge
+                          variant="secondary"
+                          className="rounded-full px-3 py-1 text-xs font-semibold"
+                        >
+                          {myKelas.length} kelas aktif
+                        </Badge>
+                        <Badge
+                          variant="secondary"
+                          className="rounded-full px-3 py-1 text-xs font-semibold"
+                        >
+                          {totalStudentsInActiveClasses} mahasiswa dalam kelas aktif
+                        </Badge>
+                        {hasDataChanges && (
+                          <Badge className="rounded-full bg-warning/15 px-3 py-1 text-xs font-semibold text-warning hover:bg-warning/15">
+                            Ada pembaruan data
+                          </Badge>
+                        )}
                       </div>
-                    )}
+                    </div>
                   </div>
-                  {lastRefresh && (
-                    <p className="ml-1 text-sm font-semibold text-muted-foreground sm:text-base">
-                      Terakhir diperbarui:{" "}
-                      {lastRefresh.toLocaleTimeString("id-ID")}
-                    </p>
-                  )}
                 </div>
                 <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
                   {isRefreshing && (
@@ -769,24 +832,6 @@ export function DashboardPage() {
                       <RefreshCw className="h-4 w-4 animate-spin" />
                       <span>Memperbarui data...</span>
                     </div>
-                  )}
-                  {hasDataChanges && !isRefreshing && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setHasDataChanges(false);
-                        setIsRefreshing(true);
-                        fetchDashboardData().finally(() => {
-                          setIsRefreshing(false);
-                          setLastRefresh(new Date());
-                        });
-                      }}
-                      className="border-warning/40 text-warning hover:bg-warning/5 font-semibold border-2 w-full sm:w-auto"
-                    >
-                      <RefreshCw className="h-4 w-4" />
-                      Perbarui
-                    </Button>
                   )}
                   <Button
                     variant="outline"
@@ -808,8 +853,21 @@ export function DashboardPage() {
                     />
                     Refresh
                   </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => navigate("/dosen/jadwal")}
+                    className="w-full sm:w-auto"
+                  >
+                    Lihat Jadwal
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
+              {lastRefresh && (
+                <p className="mt-4 text-xs font-medium text-muted-foreground sm:text-sm">
+                  Terakhir diperbarui {lastRefresh.toLocaleTimeString("id-ID")}
+                </p>
+              )}
             </GlassCard>
 
             {error && (
@@ -833,457 +891,356 @@ export function DashboardPage() {
               </Alert>
             )}
 
-            {/* Quick Stats Cards */}
-            <div className="grid gap-4 sm:gap-5 md:grid-cols-2 xl:grid-cols-4">
-              <DashboardCard
-                title="Total Assignment"
-                value={assignments.length}
-                description="Kelas dan mata kuliah yang sedang Anda ampu"
-                icon={Users}
-                color="blue"
-              />
-              <DashboardCard
-                title="Jadwal Minggu Ini"
-                value={upcomingPracticum.length}
-                description="Praktikum terjadwal dalam 7 hari ke depan"
-                icon={Calendar}
-                color="blue"
-              />
-              <DashboardCard
-                title="Perlu Dinilai"
-                value={pendingGrading.length}
-                description="Submission yang menunggu proses penilaian"
-                icon={Edit}
-                color="amber"
-              />
-              <DashboardCard
-                title="Kuis Aktif"
-                value={activeKuis.length}
-                description="Kuis yang masih berjalan atau dipublikasikan"
-                icon={Target}
-                color="green"
-              />
+            <div className="grid gap-4 md:grid-cols-3">
+              <Card className="border-border/60 bg-card/90 shadow-sm">
+                <CardContent className="flex items-start gap-3 p-5">
+                  <div className="rounded-2xl bg-primary/10 p-2.5 text-primary">
+                    <Users className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">
+                      Kelas Aktif
+                    </p>
+                    <p className="mt-1 text-2xl font-bold text-foreground">
+                      {myKelas.length}
+                    </p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      kelas yang sedang Anda tangani
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="border-border/60 bg-card/90 shadow-sm">
+                <CardContent className="flex items-start gap-3 p-5">
+                  <div className="rounded-2xl bg-accent/15 p-2.5 text-accent">
+                    <Calendar className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">
+                      Praktikum Terdekat
+                    </p>
+                    <p className="mt-1 text-2xl font-bold text-foreground">
+                      {upcomingPracticum.length}
+                    </p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      sesi dalam 7 hari ke depan
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="border-border/60 bg-card/90 shadow-sm">
+                <CardContent className="flex items-start gap-3 p-5">
+                  <div className="rounded-2xl bg-warning/15 p-2.5 text-warning">
+                    <Edit className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">
+                      Perlu Diperhatikan
+                    </p>
+                    <p className="mt-1 text-2xl font-bold text-foreground">
+                      {needsAttentionCount}
+                    </p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      item tindak lanjut aktif
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
 
-            {/* Welcome Banner */}
-            {assignments.length > 0 && (
-              <GlassCard
-                intensity="high"
-                glow
-                className="interactive-card overflow-hidden border-white/20 bg-linear-to-r from-primary via-primary/90 to-accent/85 text-primary-foreground shadow-xl"
-              >
-                <div className="absolute inset-0 bg-grid-white/10" />
-                <CardContent className="p-8 relative">
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
-                    <div className="w-20 h-20 bg-white/20 rounded-3xl flex items-center justify-center backdrop-blur-sm">
-                      <Sparkles className="h-10 w-10" />
+            <div className="grid gap-6 xl:grid-cols-[1.35fr_1fr]">
+              <Card className="border-border/60 bg-card/90 shadow-sm">
+                <CardHeader className="space-y-1">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <CardTitle className="text-xl">Praktikum Berikutnya</CardTitle>
+                      <CardDescription>
+                        Fokus utama saat Anda membuka dashboard
+                      </CardDescription>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => navigate('/dosen/jadwal')}
+                    >
+                      Semua jadwal
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {!upcomingPrimary ? (
+                    <div className="rounded-2xl border border-dashed border-border bg-muted/30 p-6 text-center">
+                      <Calendar className="mx-auto h-10 w-10 text-muted-foreground/50" />
+                      <p className="mt-3 font-semibold text-foreground">
+                        Belum ada praktikum terjadwal
+                      </p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        Jadwal praktikum yang aktif akan muncul di sini.
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="rounded-3xl border border-primary/15 bg-linear-to-br from-primary/8 to-accent/10 p-5">
+                        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                          <div className="space-y-2">
+                            <Badge
+                              variant="secondary"
+                              className="rounded-full bg-primary/10 px-3 py-1 text-primary"
+                            >
+                              Sesi terdekat
+                            </Badge>
+                            <div>
+                              <h3 className="text-xl font-bold text-foreground">
+                                {upcomingPrimary.mata_kuliah_nama}
+                              </h3>
+                              <p className="text-sm text-muted-foreground">
+                                {upcomingPrimary.kelas_nama}
+                                {upcomingPrimary.topik
+                                  ? ` • ${upcomingPrimary.topik}`
+                                  : ""}
+                              </p>
+                            </div>
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => navigate('/dosen/jadwal')}
+                          >
+                            Buka jadwal
+                          </Button>
+                        </div>
+                        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                          <div className="rounded-2xl bg-background/70 p-3">
+                            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                              Hari
+                            </p>
+                            <p className="mt-1 text-sm font-semibold text-foreground">
+                              {dayNames[upcomingPrimary.hari.toLowerCase()] ||
+                                upcomingPrimary.hari}
+                              , {formatDate(upcomingPrimary.tanggal_praktikum)}
+                            </p>
+                          </div>
+                          <div className="rounded-2xl bg-background/70 p-3">
+                            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                              Jam
+                            </p>
+                            <p className="mt-1 text-sm font-semibold text-foreground">
+                              {formatTime(upcomingPrimary.jam_mulai)} -{' '}
+                              {formatTime(upcomingPrimary.jam_selesai)}
+                            </p>
+                          </div>
+                          <div className="rounded-2xl bg-background/70 p-3">
+                            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                              Laboratorium
+                            </p>
+                            <p className="mt-1 text-sm font-semibold text-foreground">
+                              {upcomingPrimary.lab_nama}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {upcomingSecondary.length > 0 && (
+                        <div className="space-y-2">
+                          <p className="text-sm font-semibold text-muted-foreground">
+                            Jadwal sesudahnya
+                          </p>
+                          {upcomingSecondary.map((jadwal) => (
+                            <button
+                              key={jadwal.id}
+                              type="button"
+                              onClick={() => navigate('/dosen/jadwal')}
+                              className="flex w-full items-center justify-between rounded-2xl border border-border bg-background px-4 py-3 text-left transition-colors hover:bg-muted/40"
+                            >
+                              <div>
+                                <p className="font-semibold text-foreground">
+                                  {jadwal.mata_kuliah_nama}
+                                </p>
+                                <p className="text-sm text-muted-foreground">
+                                  {jadwal.kelas_nama} •{" "}
+                                  {formatDate(jadwal.tanggal_praktikum)}
+                                </p>
+                              </div>
+                              <div className="text-right">
+                                <p className="text-sm font-semibold text-foreground">
+                                  {formatTime(jadwal.jam_mulai)}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  {jadwal.lab_nama}
+                                </p>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card className="border-border/60 bg-card/90 shadow-sm">
+                <CardHeader className="space-y-1">
+                  <CardTitle className="text-xl">Perlu Diperhatikan</CardTitle>
+                  <CardDescription>
+                    Tindak lanjut yang paling relevan saat ini
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <button
+                    type="button"
+                    onClick={() => navigate('/dosen/logbook-review')}
+                    className="flex w-full items-start gap-3 rounded-2xl border border-border bg-background p-4 text-left transition-colors hover:bg-muted/40"
+                  >
+                    <div className="rounded-2xl bg-warning/15 p-2.5 text-warning">
+                      <Edit className="h-5 w-5" />
                     </div>
                     <div className="flex-1">
-                      <h2 className="text-3xl font-extrabold mb-2">
-                        Selamat Mengajar! 👨‍🏫
-                      </h2>
-                      <p className="text-lg font-semibold text-primary-foreground/80">
-                        Kamu memiliki{" "}
-                        <span className="font-extrabold text-white">
-                          {assignments.length} assignment
-                        </span>{" "}
-                        dengan{" "}
-                        <span className="font-extrabold text-white">
-                          {assignments.reduce(
-                            (sum, a) => sum + a.total_mahasiswa,
-                            0,
-                          )}{" "}
-                          mahasiswa
+                      <p className="font-semibold text-foreground">
+                        Logbook perlu direview
+                      </p>
+                      <p className="mt-1 text-2xl font-bold text-foreground">
+                        {pendingLogbookCount}
+                      </p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {pendingLogbookCount > 0
+                          ? `${logbookStats?.submitted || 0} diajukan, ${logbookStats?.reviewed || 0} siap diberi nilai.`
+                          : 'Belum ada logbook yang menunggu review.'}
+                      </p>
+                    </div>
+                    <ArrowRight className="mt-1 h-4 w-4 text-muted-foreground" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => navigate('/dosen/kuis')}
+                    className="flex w-full items-start gap-3 rounded-2xl border border-border bg-background p-4 text-left transition-colors hover:bg-muted/40"
+                  >
+                    <div className="rounded-2xl bg-primary/10 p-2.5 text-primary">
+                      <Target className="h-5 w-5" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-semibold text-foreground">
+                        Tugas Praktikum
+                      </p>
+                      <p className="mt-1 text-2xl font-bold text-foreground">
+                        {activeKuis.length}
+                      </p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {activeKuis.length > 0
+                          ? `${draftKuisCount} draft, ${publishedKuisCount} dipublikasikan. ${activeKuis[0].judul} termasuk di dalamnya.`
+                          : 'Belum ada tugas praktikum pada kelas yang Anda tangani.'}
+                      </p>
+                    </div>
+                    <ArrowRight className="mt-1 h-4 w-4 text-muted-foreground" />
+                  </button>
+
+                  <div className="rounded-2xl bg-muted/35 p-4">
+                    <p className="text-sm font-semibold text-foreground">
+                      Ringkasan cepat
+                    </p>
+                    <div className="mt-3 space-y-2 text-sm text-muted-foreground">
+                      <div className="flex items-center justify-between">
+                        <span>Assignment aktif</span>
+                        <span className="font-semibold text-foreground">
+                          {assignments.length}
                         </span>
-                        . Semua berjalan lancar!
-                      </p>
-                    </div>
-                    <div className="hidden md:block">
-                      <Award className="h-24 w-24 text-white/20" />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span>Mahasiswa terjangkau</span>
+                        <span className="font-semibold text-foreground">
+                          {totalAssignedStudents}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span>Status dashboard</span>
+                        <span className="font-semibold text-foreground">
+                          {isOfflineData || !navigator.onLine
+                            ? 'Snapshot lokal'
+                            : 'Online'}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </CardContent>
-              </GlassCard>
-            )}
-
-            <div className="grid gap-6 lg:grid-cols-2">
-              {/* Assignment Saya */}
-              <Card className="interactive-card group hover:shadow-2xl transition-all duration-300 border-0 shadow-xl bg-linear-to-br from-primary/5 to-accent/10 dark:from-primary/10 dark:to-accent/20 backdrop-blur-sm overflow-hidden relative">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-linear-to-br from-primary/20 to-accent/20 rounded-full blur-3xl -mr-16 -mt-16" />
-                <CardHeader className="relative">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="p-2.5 bg-linear-to-br from-primary to-accent rounded-xl shadow-lg shadow-primary/30">
-                          <Users className="h-5 w-5 text-primary-foreground" />
-                        </div>
-                        <CardTitle className="text-xl font-bold text-primary dark:text-primary/80">
-                          Assignment Diberikan
-                        </CardTitle>
-                      </div>
-                      <CardDescription className="text-base font-semibold text-muted-foreground">
-                        {assignments.length} assignment dengan{" "}
-                        {assignments.reduce(
-                          (sum, a) => sum + a.total_mahasiswa,
-                          0,
-                        )}{" "}
-                        mahasiswa
-                      </CardDescription>
-                    </div>
-                    {assignments.length > 0 && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => navigate("/dosen/jadwal")}
-                        className="hover:bg-primary/10 font-semibold"
-                      >
-                        <Eye className="h-4 w-4 mr-1" />
-                        Kelola Jadwal
-                      </Button>
-                    )}
-                  </div>
-                </CardHeader>
-                <CardContent className="relative">
-                  {assignments.length === 0 ? (
-                    <div className="text-center py-12">
-                      <div className="inline-flex p-4 bg-primary/10 rounded-full mb-4">
-                        <Users className="h-12 w-12 text-primary" />
-                      </div>
-                      <p className="text-lg font-bold text-foreground mb-2">
-                        Belum ada assignment yang diberikan
-                      </p>
-                      <p className="text-base font-medium text-muted-foreground">
-                        Hubungi admin untuk penugasan assignment
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {assignments.map((assignment, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center gap-3 p-4 border-2 border-primary/10 rounded-xl hover:bg-primary/5 hover:border-primary/20 transition-all duration-300 cursor-pointer shadow-sm hover:shadow-md group"
-                          onClick={() => navigate("/dosen/jadwal")}
-                        >
-                          <div className="shrink-0">
-                            <div className="w-12 h-12 bg-linear-to-br from-primary to-accent rounded-xl shadow-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                              <BookOpen className="h-5 w-5 text-primary-foreground" />
-                            </div>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <h4 className="font-bold text-base text-foreground">
-                                {assignment.mata_kuliah.nama_mk}
-                              </h4>
-                              <Badge
-                                variant="secondary"
-                                className="text-sm bg-primary/10 text-primary font-semibold"
-                              >
-                                {assignment.mata_kuliah.kode_mk}
-                              </Badge>
-                            </div>
-                            <p className="text-sm font-semibold text-muted-foreground mt-1">
-                              {assignment.kelas.nama_kelas} •{" "}
-                              {assignment.kelas.tahun_ajaran}
-                            </p>
-                            <div className="flex items-center gap-4 mt-2">
-                              <span className="text-sm font-bold text-primary">
-                                <Users className="h-3 w-3 mr-1" />
-                                {assignment.total_mahasiswa} mahasiswa
-                              </span>
-                              <span className="text-sm font-bold text-success">
-                                <Calendar className="h-3 w-3 mr-1" />
-                                {assignment.total_jadwal} jadwal
-                              </span>
-                              <span className="text-sm font-semibold text-muted-foreground">
-                                {assignment.kelas.semester_ajaran} semester
-                              </span>
-                            </div>
-                          </div>
-                          <ArrowRight className="h-5 w-5 text-primary group-hover:translate-x-1 transition-transform" />
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Jadwal Mengajar */}
-              <Card className="group hover:shadow-2xl transition-all duration-300 border-0 shadow-xl bg-linear-to-br from-accent/5 to-primary/10 dark:from-accent/10 dark:to-primary/20 backdrop-blur-sm overflow-hidden relative">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-linear-to-br from-accent/20 to-primary/20 rounded-full blur-3xl -mr-16 -mt-16" />
-                <CardHeader className="relative">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="p-2.5 bg-linear-to-br from-accent to-primary rounded-xl shadow-lg shadow-accent/30">
-                          <Calendar className="h-5 w-5 text-primary-foreground" />
-                        </div>
-                        <CardTitle className="text-xl font-bold text-accent/80 dark:text-accent/70">
-                          Jadwal Mengajar
-                        </CardTitle>
-                      </div>
-                      <CardDescription className="text-base font-semibold text-muted-foreground">
-                        Praktikum 7 hari ke depan
-                      </CardDescription>
-                    </div>
-                    {upcomingPracticum.length > 0 && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => navigate("/dosen/jadwal")}
-                        className="hover:bg-accent/10 font-semibold"
-                      >
-                        <Eye className="h-4 w-4 mr-1" />
-                        Lihat Semua
-                      </Button>
-                    )}
-                  </div>
-                </CardHeader>
-                <CardContent className="relative">
-                  {upcomingPracticum.length === 0 ? (
-                    <div className="text-center py-12">
-                      <div className="inline-flex p-4 bg-accent/10 rounded-full mb-4">
-                        <Calendar className="h-12 w-12 text-accent/60" />
-                      </div>
-                      <p className="text-lg font-bold text-foreground mb-2">
-                        Tidak ada jadwal minggu ini
-                      </p>
-                      <p className="text-base font-medium text-muted-foreground">
-                        Jadwal praktikum akan muncul di sini
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {upcomingPracticum.map((jadwal) => (
-                        <div
-                          key={jadwal.id}
-                          className="flex gap-3 p-4 border-2 border-accent/10 rounded-xl hover:bg-accent/5 hover:border-accent/20 transition-all duration-300 cursor-pointer shadow-sm hover:shadow-md group"
-                        >
-                          <div className="shrink-0">
-                            <div className="w-12 h-12 bg-linear-to-br from-accent to-primary rounded-xl shadow-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                              <Calendar className="h-5 w-5 text-primary-foreground" />
-                            </div>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-bold text-base truncate text-foreground">
-                              {jadwal.mata_kuliah_nama}
-                            </h4>
-                            <p className="text-sm font-semibold text-muted-foreground mt-1">
-                              {jadwal.kelas_nama} • {jadwal.topik}
-                            </p>
-                            <div className="flex items-center gap-3 mt-2">
-                              <span className="text-sm font-bold text-accent">
-                                <Clock className="h-3 w-3 mr-1" />
-                                {dayNames[jadwal.hari.toLowerCase()] ||
-                                  jadwal.hari}
-                                , {formatDate(jadwal.tanggal_praktikum)}
-                              </span>
-                              <span className="text-sm font-bold text-accent">
-                                {formatTime(jadwal.jam_mulai)} -{" "}
-                                {formatTime(jadwal.jam_selesai)}
-                              </span>
-                            </div>
-                            <p className="text-sm font-semibold text-muted-foreground">
-                              📍 {jadwal.lab_nama}
-                            </p>
-                          </div>
-                          <ArrowRight className="h-5 w-5 text-accent group-hover:translate-x-1 transition-transform" />
-                        </div>
-                      ))}
-                    </div>
-                  )}
                 </CardContent>
               </Card>
             </div>
 
-            <div className="grid gap-6 lg:grid-cols-2">
-              {/* Menunggu Penilaian */}
-              <Card className="group hover:shadow-2xl transition-all duration-300 border-0 shadow-xl bg-linear-to-br from-warning/5 to-warning/10 dark:from-warning/10 dark:to-warning/20 backdrop-blur-sm overflow-hidden relative">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-linear-to-br from-warning/10 to-warning/5 rounded-full blur-3xl -mr-16 -mt-16" />
-                <CardHeader className="relative">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="p-2.5 bg-linear-to-br from-warning to-warning/80 rounded-xl shadow-lg shadow-warning/30">
-                          <AlertTriangle className="h-5 w-5 text-primary-foreground" />
-                        </div>
-                        <CardTitle className="text-xl font-bold">
-                          Menunggu Penilaian
-                        </CardTitle>
-                      </div>
-                      <CardDescription className="text-base font-semibold text-muted-foreground">
-                        {stats?.pendingGrading || 0} tugas perlu dinilai
-                      </CardDescription>
-                    </div>
-                    {pendingGrading.length > 0 && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => navigate("/dosen/penilaian")}
-                        className="hover:bg-warning/10 font-semibold"
-                      >
-                        <Eye className="h-4 w-4 mr-1" />
-                        Lihat Semua
-                      </Button>
-                    )}
+            <Card className="border-border/60 bg-card/90 shadow-sm">
+              <CardHeader className="space-y-1">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <CardTitle className="text-xl">Kelas Aktif</CardTitle>
+                    <CardDescription>
+                      Ringkasan kelas yang sedang Anda tangani
+                    </CardDescription>
                   </div>
-                </CardHeader>
-                <CardContent className="relative">
-                  {pendingGrading.length === 0 ? (
-                    <div className="text-center py-12">
-                      <div className="inline-flex p-4 bg-success/10 rounded-full mb-4">
-                        <CheckCircle className="h-12 w-12 text-success" />
-                      </div>
-                      <p className="text-lg font-bold text-foreground mb-2">
-                        Semua tugas sudah dinilai
-                      </p>
-                      <p className="text-base font-medium text-muted-foreground">
-                        Kerja bagus! 🎉
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {pendingGrading.map((item) => (
-                        <div
-                          key={item.id}
-                          className="flex items-center gap-3 p-4 border-2 border-warning/20 rounded-xl hover:bg-warning/5 hover:border-warning/40 transition-all duration-300 cursor-pointer shadow-sm hover:shadow-md group"
-                          onClick={() =>
-                            navigate(`/dosen/penilaian?task=${item.id}`)
-                          }
-                        >
-                          <div className="shrink-0">
-                            <div className="w-10 h-10 bg-linear-to-br from-warning to-warning/80 rounded-xl shadow-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                              <Edit className="h-5 w-5 text-primary-foreground" />
-                            </div>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-bold text-base truncate text-foreground">
-                              {item.mahasiswa_nama}
-                            </h4>
-                            <p className="text-sm font-semibold text-muted-foreground mt-0.5">
-                              NIM: {item.mahasiswa_nim}
-                            </p>
-                            <p className="text-sm font-semibold text-muted-foreground mt-0.5">
-                              {item.mata_kuliah_nama} • {item.kuis_judul}
-                            </p>
-                            <div className="flex items-center gap-3 mt-2">
-                              <span className="text-sm text-warning font-bold">
-                                Attempt #{item.attempt_number}
-                              </span>
-                              <span className="text-sm text-muted-foreground/60">
-                                📅 {formatDate(item.submitted_at)}
-                              </span>
-                            </div>
-                          </div>
-                          <ArrowRight className="h-5 w-5 text-warning group-hover:translate-x-1 transition-transform" />
-                        </div>
-                      ))}
-                    </div>
+                  {myKelas.length > 0 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => navigate('/dosen/penilaian')}
+                    >
+                      Buka penilaian
+                    </Button>
                   )}
-                </CardContent>
-              </Card>
-
-              {/* Tugas Aktif */}
-              <Card className="group hover:shadow-2xl transition-all duration-300 border-0 shadow-xl bg-linear-to-br from-primary/5 to-info/10 dark:from-primary/10 dark:to-info/20 backdrop-blur-sm overflow-hidden relative">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-linear-to-br from-primary/20 to-info/20 rounded-full blur-3xl -mr-16 -mt-16" />
-                <CardHeader className="relative">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="p-2.5 bg-linear-to-br from-primary to-info rounded-xl shadow-lg shadow-primary/30">
-                          <Target className="h-5 w-5 text-primary-foreground" />
-                        </div>
-                        <CardTitle className="text-xl font-bold text-primary dark:text-primary/80">
-                          Tugas Aktif
-                        </CardTitle>
-                      </div>
-                      <CardDescription className="text-base font-semibold text-muted-foreground">
-                        {stats?.activeKuis || 0} kuis sedang berjalan
-                      </CardDescription>
-                    </div>
-                    {activeKuis.length > 0 && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => navigate("/dosen/kuis")}
-                        className="hover:bg-accent/10 font-semibold"
-                      >
-                        <Eye className="h-4 w-4 mr-1" />
-                        Kelola
-                      </Button>
-                    )}
+                </div>
+              </CardHeader>
+              <CardContent>
+                {myKelas.length === 0 ? (
+                  <div className="rounded-2xl border border-dashed border-border bg-muted/30 p-6 text-center">
+                    <BookOpen className="mx-auto h-10 w-10 text-muted-foreground/50" />
+                    <p className="mt-3 font-semibold text-foreground">
+                      Belum ada kelas aktif
+                    </p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Kelas akan muncul setelah ada jadwal praktikum aktif untuk dosen ini.
+                    </p>
                   </div>
-                </CardHeader>
-                <CardContent className="relative">
-                  {activeKuis.length === 0 ? (
-                    <div className="text-center py-12">
-                      <div className="inline-flex p-4 bg-accent/10 rounded-full mb-4">
-                        <XCircle className="h-12 w-12 text-accent/60" />
-                      </div>
-                      <p className="text-lg font-bold text-foreground mb-2">
-                        Tidak ada tugas aktif
-                      </p>
-                      <p className="text-base font-medium text-muted-foreground">
-                        Buat tugas baru untuk memulai kembali
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {activeKuis.map((kuis) => (
-                        <div
-                          key={kuis.id}
-                          className="flex items-center gap-3 p-4 border-2 border-primary/10 rounded-xl hover:bg-primary/5 hover:border-primary/20 transition-all duration-300 cursor-pointer shadow-sm hover:shadow-md group"
-                          onClick={() => navigate(`/dosen/kuis/${kuis.id}`)}
-                        >
-                          <div className="shrink-0">
-                            <div className="w-10 h-10 bg-linear-to-br from-primary to-info rounded-xl shadow-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                              <Eye className="h-5 w-5 text-primary-foreground" />
-                            </div>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <h4 className="font-bold text-base truncate text-foreground">
-                                {kuis.judul}
-                              </h4>
-                              <StatusBadge
-                                status={
-                                  kuis.status === "published"
-                                    ? "success"
-                                    : "warning"
-                                }
-                                pulse={false}
-                                className="font-bold"
-                              >
-                                {kuis.status === "published"
-                                  ? "Published"
-                                  : "Draft"}
-                              </StatusBadge>
-                            </div>
-                            <p className="text-sm font-semibold text-muted-foreground mt-1">
-                              {kuis.kelas_nama}
+                ) : (
+                  <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                    {kelasPreview.map((kelas) => (
+                      <button
+                        key={kelas.id}
+                        type="button"
+                        onClick={() => handleKelasClick(kelas)}
+                        className="rounded-2xl border border-border bg-background p-4 text-left transition-colors hover:bg-muted/40"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="font-semibold text-foreground">
+                              {kelas.mata_kuliah_nama || 'Praktikum'}
                             </p>
-                            <div className="flex items-center gap-4 mt-2">
-                              <span className="text-sm font-bold text-accent">
-                                ⏰ {formatDate(kuis.tanggal_mulai)} -{" "}
-                                {formatDate(kuis.tanggal_selesai)}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-3 mt-1">
-                              <span className="text-sm font-bold text-success">
-                                ✅ {kuis.submitted_count}/{kuis.total_attempts}
-                              </span>
-                              <span className="text-sm font-semibold text-muted-foreground">
-                                Dikumpulkan
-                              </span>
-                            </div>
+                            <p className="mt-1 text-sm text-muted-foreground">
+                              {kelas.nama_kelas}
+                            </p>
                           </div>
-                          <ArrowRight className="h-5 w-5 text-accent group-hover:translate-x-1 transition-transform" />
+                          <BookOpen className="h-4 w-4 text-muted-foreground" />
                         </div>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
+                        <div className="mt-4 space-y-2 text-sm">
+                          <div className="flex items-center justify-between">
+                            <span className="text-muted-foreground">Mahasiswa</span>
+                            <span className="font-semibold text-foreground">
+                              {kelas.totalMahasiswa}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-muted-foreground">Tahun ajaran</span>
+                            <span className="font-semibold text-foreground">
+                              {kelas.tahun_ajaran}
+                            </span>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {myKelas.length > kelasPreview.length && (
+                  <p className="mt-4 text-sm text-muted-foreground">
+                    {myKelas.length - kelasPreview.length} kelas lainnya tersedia di halaman penilaian.
+                  </p>
+                )}
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>
@@ -1418,7 +1375,7 @@ export function DashboardPage() {
                     navigate(`/dosen/penilaian?kelas=${selectedKelas.id}`);
                   }}
                 >
-                  Lihat Penilaian
+                  Buka Penilaian
                 </Button>
               </div>
             </div>

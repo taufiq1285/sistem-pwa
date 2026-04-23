@@ -150,7 +150,7 @@ interface Laboratorium {
 const jadwalSchema = z
   .object({
     mata_kuliah_nama: z.string().min(1, "Mata kuliah harus diisi"),
-    kelas_nama: z.string().min(1, "Kelas harus diisi"),
+    kelas_id: z.string().min(1, "Kelas harus diisi"),
     laboratorium_id: z.string().min(1, "Laboratorium harus dipilih"),
     tanggal_praktikum: z.date({ message: "Tanggal praktikum harus dipilih" }),
     jam_mulai: z.string().min(1, "Jam mulai harus dipilih"),
@@ -197,7 +197,11 @@ export default function JadwalPage() {
   const [currentView, setCurrentView] = useState<"calendar" | "list">(
     "calendar",
   );
+  const [listTab, setListTab] = useState<"pending" | "approved" | "history">(
+    "pending",
+  );
   const [currentDate] = useState(new Date());
+  const todayDate = format(new Date(), "yyyy-MM-dd");
 
   // Filter state
   const [filterKelas, setFilterKelas] = useState<string>("");
@@ -217,6 +221,56 @@ export default function JadwalPage() {
   // Loading states
   const [isCreating, setIsCreating] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+
+  const getMataKuliahById = (mataKuliahId?: string | null) =>
+    mataKuliahId
+      ? mataKuliahList.find((mk) => mk.id === mataKuliahId) || null
+      : null;
+
+  const latestMataKuliahIdByKelas = useMemo(() => {
+    const latestMap = new Map<string, { mataKuliahId: string; sortKey: string }>();
+
+    jadwalList.forEach((jadwal) => {
+      const kelasId = jadwal.kelas_id;
+      const mataKuliahId = jadwal.mata_kuliah?.id || jadwal.mata_kuliah_id;
+
+      if (!kelasId || !mataKuliahId) {
+        return;
+      }
+
+      const sortKey =
+        jadwal.tanggal_praktikum ||
+        jadwal.created_at ||
+        jadwal.updated_at ||
+        jadwal.id;
+      const existing = latestMap.get(kelasId);
+
+      if (!existing || sortKey > existing.sortKey) {
+        latestMap.set(kelasId, { mataKuliahId, sortKey });
+      }
+    });
+
+    return latestMap;
+  }, [jadwalList]);
+
+  const getMataKuliahForJadwal = (jadwal?: Jadwal | null) => {
+    if (!jadwal) return null;
+
+    return (
+      getMataKuliahById(jadwal.mata_kuliah?.id || jadwal.mata_kuliah_id) ||
+      getMataKuliahById(
+        jadwal.kelas_id
+          ? latestMataKuliahIdByKelas.get(jadwal.kelas_id)?.mataKuliahId
+          : null,
+      ) ||
+      getMataKuliahById(
+        kelasList.find((k) => k.id === jadwal.kelas_id)?.mata_kuliah_id,
+      )
+    );
+  };
+  const isPastJadwal = (jadwal?: Jadwal | null) =>
+    Boolean(jadwal?.tanggal_praktikum) &&
+    (jadwal?.tanggal_praktikum || "") < todayDate;
   const [isDeleting, setIsDeleting] = useState(false);
 
   const referenceCacheKeys = useMemo(
@@ -256,6 +310,204 @@ export default function JadwalPage() {
       timeStyle: "short",
     });
   }, [lastUpdatedAt]);
+
+  const pendingJadwal = useMemo(
+    () => jadwalList.filter((jadwal) => jadwal.status === "pending"),
+    [jadwalList],
+  );
+
+  const approvedJadwal = useMemo(
+    () =>
+      jadwalList.filter(
+        (jadwal) =>
+          jadwal.status === "approved" &&
+          (!jadwal.tanggal_praktikum || jadwal.tanggal_praktikum >= todayDate),
+      ),
+    [jadwalList, todayDate],
+  );
+
+  const historyJadwal = useMemo(
+    () =>
+      jadwalList.filter((jadwal) => {
+        if (jadwal.status === "cancelled" || jadwal.status === "rejected") {
+          return true;
+        }
+
+        return (
+          jadwal.status === "approved" &&
+          Boolean(jadwal.tanggal_praktikum) &&
+          jadwal.tanggal_praktikum < todayDate
+        );
+      }),
+    [jadwalList, todayDate],
+  );
+
+  const renderJadwalCards = (
+    data: Jadwal[],
+    emptyTitle: string,
+    emptyDescription: string,
+  ) => {
+    if (data.length === 0) {
+      return (
+        <Card className="border-0 shadow-xl bg-linear-to-br from-gray-50 to-blue-50/30 dark:from-slate-900 dark:to-blue-950/20">
+          <CardContent className="p-12">
+            <EmptyState
+              title={emptyTitle}
+              description={emptyDescription}
+              action={{
+                label: "Tambah Jadwal",
+                onClick: () => setIsCreateOpen(true),
+              }}
+            />
+          </CardContent>
+        </Card>
+      );
+    }
+
+    return (
+      <div className="grid gap-4">
+        {data.map((jadwal) => {
+          const kelas = kelasList.find((k) => k.id === jadwal.kelas_id);
+          const mataKuliah = getMataKuliahForJadwal(jadwal);
+
+          const isOwner = jadwal.dosen_id === currentDosenId;
+          const creatorName =
+            (jadwal as any).dosen?.user?.full_name || "Unknown";
+
+          return (
+            <Card
+              key={jadwal.id}
+              className={`group hover:shadow-2xl transition-all duration-300 border-2 shadow-xl bg-linear-to-br from-white via-primary/5 to-accent/5 dark:from-slate-900 dark:via-primary/10 dark:to-accent/10 backdrop-blur-sm overflow-hidden relative ${
+                isOwner
+                  ? "border-primary/30 dark:border-primary/30"
+                  : "border-border/50 dark:border-border/30"
+              }`}
+            >
+              <div
+                className={`absolute top-0 right-0 w-32 h-32 bg-linear-to-br ${
+                  isOwner
+                    ? "from-primary/20 to-accent/20"
+                    : "from-gray-300/10 to-gray-400/10"
+                } rounded-full blur-3xl -mr-16 -mt-16`}
+              />
+              <CardContent className="relative p-6">
+                <div className="flex items-start gap-6">
+                  <div className="shrink-0">
+                    <div
+                      className={`w-20 h-20 rounded-2xl shadow-lg flex flex-col items-center justify-center text-primary-foreground ${
+                        isOwner
+                          ? "bg-linear-to-br from-primary to-accent shadow-primary/30"
+                          : "bg-linear-to-br from-gray-400 to-gray-500 shadow-gray-400/30"
+                      }`}
+                    >
+                      <div className="text-2xl font-bold">
+                        {jadwal.tanggal_praktikum
+                          ? format(new Date(jadwal.tanggal_praktikum), "dd")
+                          : "-"}
+                      </div>
+                      <div className="text-xs font-medium uppercase">
+                        {jadwal.tanggal_praktikum
+                          ? format(new Date(jadwal.tanggal_praktikum), "MMM", {
+                              locale: id,
+                            })
+                          : "-"}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-4 mb-3">
+                      <div className="flex-1">
+                        <h3 className="text-xl font-bold text-foreground mb-2">
+                          {mataKuliah?.nama_mk || "Mata Kuliah"}
+                        </h3>
+                        <div className="flex flex-wrap items-center gap-3 text-sm">
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 text-primary rounded-full font-semibold">
+                            <BookOpen className="h-3.5 w-3.5" />
+                            {kelas?.kode_kelas} - {kelas?.nama_kelas}
+                          </span>
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-accent/10 text-accent rounded-full font-semibold">
+                            <Users className="h-3.5 w-3.5" />
+                            {kelas?.tahun_ajaran}
+                          </span>
+                          <span
+                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-semibold ${
+                              isOwner
+                                ? "bg-success/10 text-success"
+                                : "bg-muted text-muted-foreground"
+                            }`}
+                          >
+                            {isOwner ? "Anda" : creatorName}
+                          </span>
+                          <StatusBadge
+                            status={jadwal.status || "pending"}
+                            size="sm"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2 mb-3">
+                      {jadwal.topik && (
+                        <div className="flex items-start gap-2">
+                          <div className="w-1 h-1 bg-primary rounded-full mt-2"></div>
+                          <p className="text-sm font-semibold text-muted-foreground">
+                            <span className="text-primary">Topik:</span>{" "}
+                            {jadwal.topik}
+                          </p>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-2 text-sm">
+                        <Clock className="h-4 w-4 text-success" />
+                        <span className="font-bold text-success">
+                          {jadwal.jam_mulai} - {jadwal.jam_selesai}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm">
+                        <MapPin className="h-4 w-4 text-warning" />
+                        <span className="font-bold text-warning">
+                          {jadwal.laboratorium?.nama_lab || "-"}
+                        </span>
+                      </div>
+                    </div>
+
+                    {jadwal.catatan && (
+                      <div className="mt-3 p-3 bg-muted/40 rounded-lg border border-border/50">
+                        <p className="text-xs font-semibold text-muted-foreground">
+                          Catatan: {jadwal.catatan}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {isOwner ? (
+                    <div className="flex flex-col gap-2 shrink-0">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleEdit(jadwal)}
+                        className="border-2 hover:bg-primary/5 font-semibold"
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => handleDelete(jadwal)}
+                        className="font-semibold"
+                      >
+                        Hapus
+                      </Button>
+                    </div>
+                  ) : null}
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+    );
+  };
 
   // ============================================================================
   // FETCH DATA
@@ -509,9 +761,16 @@ export default function JadwalPage() {
     try {
       const { data } = await supabase
         .from("kelas_mahasiswa")
-        .select("mahasiswa_id")
-        .eq("kelas_id", kelasId);
-      return data?.map((km: any) => km.mahasiswa_id) || [];
+        .select("mahasiswa:mahasiswa_id(user_id)")
+        .eq("kelas_id", kelasId)
+        .eq("is_active", true);
+      return (
+        data
+          ?.map((km: any) => km.mahasiswa?.user_id)
+          .filter((userId: string | undefined): userId is string =>
+            Boolean(userId),
+          ) || []
+      );
     } catch (error) {
       console.error("Failed to fetch mahasiswa IDs:", error);
       return [];
@@ -622,7 +881,7 @@ export default function JadwalPage() {
     resolver: zodResolver(jadwalSchema),
     defaultValues: {
       mata_kuliah_nama: "",
-      kelas_nama: "",
+      kelas_id: "",
       laboratorium_id: "",
       tanggal_praktikum: new Date(),
       jam_mulai: "08:00",
@@ -657,9 +916,7 @@ export default function JadwalPage() {
       setIsCreating(true);
 
       // Cari kelas dari list
-      const selectedKelas = kelasList.find(
-        (k) => k.nama_kelas === data.kelas_nama,
-      );
+      const selectedKelas = kelasList.find((k) => k.id === data.kelas_id);
 
       if (!selectedKelas) {
         toast.error("Kelas tidak ditemukan", {
@@ -669,11 +926,21 @@ export default function JadwalPage() {
         return;
       }
 
+      const selectedMataKuliah = getMataKuliahById(data.mata_kuliah_nama);
+
+      if (!selectedMataKuliah) {
+        toast.error("Mata kuliah tidak ditemukan", {
+          description: "Pilih mata kuliah yang tersedia dari data admin.",
+        });
+        return;
+      }
+
       const kelasId = selectedKelas.id;
 
       // ✅ Dosen memilih kelas yang sudah ada (dibuat Admin)
       const createData: CreateJadwalData = {
         kelas_id: kelasId, // ✅ Gunakan kelas yang dipilih
+        mata_kuliah_id: selectedMataKuliah.id,
         laboratorium_id: data.laboratorium_id,
         tanggal_praktikum: format(data.tanggal_praktikum, "yyyy-MM-dd"),
         jam_mulai: data.jam_mulai,
@@ -694,15 +961,12 @@ export default function JadwalPage() {
       // Notify laboran (best-effort, non-blocking)
       const laboranIds = await getLaboranUserIds();
       if (laboranIds.length > 0 && mataKuliahList) {
-        const mataKuliah = mataKuliahList.find(
-          (mk) => mk.id === selectedKelas.mata_kuliah_id,
-        );
         const lab = laboratoriumList.find((l) => l.id === data.laboratorium_id);
 
         notifyLaboranJadwalBaru(
           laboranIds,
           user?.full_name || "Dosen",
-          mataKuliah?.nama_mk || "Mata Kuliah",
+          selectedMataKuliah.nama_mk || "Mata Kuliah",
           selectedKelas.nama_kelas,
           data.tanggal_praktikum instanceof Date
             ? data.tanggal_praktikum.toISOString()
@@ -717,7 +981,7 @@ export default function JadwalPage() {
         if (mahasiswaIds.length > 0) {
           notifyMahasiswaJadwalChange(
             mahasiswaIds,
-            mataKuliah?.nama_mk || "Mata Kuliah",
+            selectedMataKuliah.nama_mk || "Mata Kuliah",
             selectedKelas.nama_kelas,
             data.tanggal_praktikum instanceof Date
               ? data.tanggal_praktikum.toISOString()
@@ -742,17 +1006,22 @@ export default function JadwalPage() {
   };
 
   const handleEdit = (jadwal: Jadwal) => {
+    if (isPastJadwal(jadwal)) {
+      toast.error("Praktikum yang sudah lewat tidak bisa diubah lagi", {
+        description: "Jadwal ini sudah menjadi riwayat tetap.",
+      });
+      return;
+    }
+
     setSelectedJadwal(jadwal);
 
     // ✅ PERBAIKAN DITERAPKAN: Ganti 'jadwal.kelas' menjadi 'jadwal.kelas_id'
     const kelas = kelasList.find((k) => k.id === jadwal.kelas_id); // ✅ Diubah sesuai instruksi Anda
-    const mataKuliah = mataKuliahList.find(
-      (mk) => mk.id === kelas?.mata_kuliah_id,
-    );
+    const mataKuliah = getMataKuliahForJadwal(jadwal);
 
     editForm.reset({
-      mata_kuliah_nama: mataKuliah?.nama_mk || "",
-      kelas_nama: kelas?.nama_kelas || "",
+      mata_kuliah_nama: mataKuliah?.id || "",
+      kelas_id: kelas?.id || "",
       laboratorium_id: jadwal.laboratorium_id || "",
       tanggal_praktikum: jadwal.tanggal_praktikum
         ? new Date(jadwal.tanggal_praktikum)
@@ -781,14 +1050,21 @@ export default function JadwalPage() {
       setIsUpdating(true);
 
       // Dosen HANYA bisa memilih kelas yang sudah ada
-      const selectedKelas = kelasList.find(
-        (k) => k.nama_kelas === data.kelas_nama,
-      );
+      const selectedKelas = kelasList.find((k) => k.id === data.kelas_id);
 
       if (!selectedKelas) {
         toast.error("Kelas tidak ditemukan", {
           description:
             "Pilih kelas yang sudah ada. Jika tidak ada, hubungi Admin.",
+        });
+        return;
+      }
+
+      const selectedMataKuliah = getMataKuliahById(data.mata_kuliah_nama);
+
+      if (!selectedMataKuliah) {
+        toast.error("Mata kuliah tidak ditemukan", {
+          description: "Pilih mata kuliah yang tersedia dari data admin.",
         });
         return;
       }
@@ -800,6 +1076,7 @@ export default function JadwalPage() {
         hari?: string;
       } = {
         kelas_id: kelasId, // ✅ Gunakan kelas yang dipilih
+        mata_kuliah_id: selectedMataKuliah.id,
         laboratorium_id: data.laboratorium_id,
         hari: format(data.tanggal_praktikum, "EEEE", {
           locale: id,
@@ -818,19 +1095,16 @@ export default function JadwalPage() {
 
       // Notify laboran and mahasiswa about the update (best-effort, non-blocking)
       const kelas = kelasList.find((k) => k.id === selectedKelas?.id);
-      const mataKuliah = kelas
-        ? mataKuliahList.find((mk) => mk.id === kelas.mata_kuliah_id)
-        : null;
       const lab = laboratoriumList.find((l) => l.id === data.laboratorium_id);
 
-      if (kelas && mataKuliah) {
+      if (kelas) {
         // Notify laboran
         const laboranIds = await getLaboranUserIds();
         if (laboranIds.length > 0) {
           notifyLaboranJadwalBaru(
             laboranIds,
             user?.full_name || "Dosen",
-            mataKuliah.nama_mk,
+            selectedMataKuliah.nama_mk,
             kelas.nama_kelas,
             data.tanggal_praktikum instanceof Date
               ? data.tanggal_praktikum.toISOString()
@@ -846,7 +1120,7 @@ export default function JadwalPage() {
         if (mahasiswaIds.length > 0) {
           notifyMahasiswaJadwalChange(
             mahasiswaIds,
-            mataKuliah.nama_mk,
+            selectedMataKuliah.nama_mk,
             kelas.nama_kelas,
             data.tanggal_praktikum instanceof Date
               ? data.tanggal_praktikum.toISOString()
@@ -879,6 +1153,13 @@ export default function JadwalPage() {
   const handleConfirmDelete = async () => {
     if (!selectedJadwal) return;
 
+    if (isPastJadwal(selectedJadwal)) {
+      toast.error("Praktikum yang sudah lewat tidak bisa diubah lagi", {
+        description: "Riwayat praktikum tidak dapat dihapus.",
+      });
+      return;
+    }
+
     if (!navigator.onLine) {
       toast.error(
         "Penghapusan jadwal belum didukung saat offline. Sambungkan internet terlebih dahulu.",
@@ -894,9 +1175,7 @@ export default function JadwalPage() {
 
       // Notify mahasiswa about the cancellation (best-effort, non-blocking)
       const kelas = kelasList.find((k) => k.id === selectedJadwal.kelas_id);
-      const mataKuliah = kelas
-        ? mataKuliahList.find((mk) => mk.id === kelas.mata_kuliah_id)
-        : null;
+      const mataKuliah = getMataKuliahForJadwal(selectedJadwal);
 
       if (kelas && mataKuliah) {
         const mahasiswaIds = await getMahasiswaIds(kelas.id);
@@ -976,12 +1255,16 @@ export default function JadwalPage() {
               </FormControl>
               <SelectContent>
                 {mataKuliahList.map((mk) => (
-                  <SelectItem key={mk.id} value={mk.nama_mk}>
+                  <SelectItem key={mk.id} value={mk.id}>
                     {mk.kode_mk} - {mk.nama_mk}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+            <FormDescription>
+              Pilih mata kuliah dari master Admin. Pilihan ini tidak otomatis
+              mengunci kelas tertentu.
+            </FormDescription>
             <FormMessage />
           </FormItem>
         )}
@@ -990,7 +1273,7 @@ export default function JadwalPage() {
       {/* Kelas Select - SIMPLE VERSION */}
       <FormField
         control={form.control}
-        name="kelas_nama"
+        name="kelas_id"
         render={({ field }) => (
           <FormItem>
             <FormLabel>Kelas *</FormLabel>
@@ -1002,13 +1285,17 @@ export default function JadwalPage() {
               </FormControl>
               <SelectContent>
                 {kelasList.map((kelas) => (
-                  <SelectItem key={kelas.id} value={kelas.nama_kelas}>
+                  <SelectItem key={kelas.id} value={kelas.id}>
                     {kelas.kode_kelas} - {kelas.nama_kelas} (
                     {kelas.tahun_ajaran})
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+            <FormDescription>
+              Pilih kelas dari master Admin sesuai kebutuhan praktikum. Kelas
+              tidak dibatasi otomatis oleh mata kuliah.
+            </FormDescription>
             <FormMessage />
           </FormItem>
         )}
@@ -1197,7 +1484,7 @@ export default function JadwalPage() {
               </div>
             </div>
             <p className="text-sm sm:text-base font-semibold text-muted-foreground ml-1">
-              Atur dan pantau semua jadwal praktikum dengan mudah
+              Atur jadwal yang belum lewat dan pantau riwayat praktikum yang sudah terkunci
             </p>
           </div>
           <Button
@@ -1216,10 +1503,10 @@ export default function JadwalPage() {
             <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-full blur-2xl -mr-10 -mt-10" />
             <CardContent className="p-5 relative">
               <p className="text-sm font-bold text-primary dark:text-primary/80">
-                Total Jadwal
+                Menunggu Approval
               </p>
               <p className="mt-2 text-3xl font-black text-primary/90 dark:text-primary/70">
-                {jadwalList.length}
+                {pendingJadwal.length}
               </p>
             </CardContent>
           </Card>
@@ -1228,10 +1515,10 @@ export default function JadwalPage() {
             <div className="absolute top-0 right-0 w-24 h-24 bg-info/10 rounded-full blur-2xl -mr-10 -mt-10" />
             <CardContent className="p-5 relative">
               <p className="text-sm font-bold text-info dark:text-info/80">
-                Event Bulan Ini
+                Jadwal Disetujui
               </p>
               <p className="mt-2 text-3xl font-black text-info/90 dark:text-info/70">
-                {calendarEvents.length}
+                {approvedJadwal.length}
               </p>
             </CardContent>
           </Card>
@@ -1240,10 +1527,10 @@ export default function JadwalPage() {
             <div className="absolute top-0 right-0 w-24 h-24 bg-success/10 rounded-full blur-2xl -mr-10 -mt-10" />
             <CardContent className="p-5 relative">
               <p className="text-sm font-bold text-success dark:text-success/80">
-                Tampilan Aktif
+                Riwayat
               </p>
-              <p className="mt-2 text-lg sm:text-xl font-extrabold text-success/90 dark:text-success/70">
-                {currentView === "calendar" ? "Calendar View" : "List View"}
+              <p className="mt-2 text-3xl font-black text-success/90 dark:text-success/70">
+                {historyJadwal.length}
               </p>
             </CardContent>
           </Card>
@@ -1252,11 +1539,28 @@ export default function JadwalPage() {
         {/* Enhanced Filters */}
         <Card className="border-0 shadow-xl bg-linear-to-br from-white via-primary/5 to-accent/5 dark:from-slate-900 dark:via-primary/10 dark:to-accent/10 backdrop-blur-sm">
           <CardContent className="p-6">
+            <p className="mb-4 text-sm font-medium text-muted-foreground">
+              Praktikum yang tanggalnya sudah lewat otomatis menjadi riwayat tetap dan tidak bisa diubah lagi.
+            </p>
             <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3 sm:gap-4">
               <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
                 <CalendarIcon className="h-4 w-4 text-primary" />
                 Filter:
               </div>
+              <Select value={filterKelas || "all"} onValueChange={(value) => setFilterKelas(value === "all" ? "" : value)}>
+                <SelectTrigger className="w-full sm:w-60 border-2">
+                  <SelectValue placeholder="Filter Kelas" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Semua Kelas</SelectItem>
+                  {kelasList.map((kelas) => (
+                    <SelectItem key={kelas.id} value={kelas.id}>
+                      {kelas.kode_kelas} - {kelas.nama_kelas}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
               <Select value={filterLab} onValueChange={setFilterLab}>
                 <SelectTrigger className="w-full sm:w-55 border-2">
                   <SelectValue placeholder="Filter Laboratorium" />
@@ -1365,12 +1669,60 @@ export default function JadwalPage() {
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid gap-4">
-                {jadwalList.map((jadwal) => {
+              <>
+                <Tabs
+                  value={listTab}
+                  onValueChange={(value) =>
+                    setListTab(value as "pending" | "approved" | "history")
+                  }
+                  className="space-y-4"
+                >
+                  <TabsList className="grid w-full grid-cols-3 rounded-xl p-1 h-auto bg-linear-to-r from-primary/10 to-accent/10 dark:from-primary/20 dark:to-accent/20">
+                    <TabsTrigger value="pending" className="gap-2 rounded-lg py-2.5 font-semibold data-[state=active]:bg-white data-[state=active]:shadow-md dark:data-[state=active]:bg-card">
+                      Menunggu ({pendingJadwal.length})
+                    </TabsTrigger>
+                    <TabsTrigger value="approved" className="gap-2 rounded-lg py-2.5 font-semibold data-[state=active]:bg-white data-[state=active]:shadow-md dark:data-[state=active]:bg-card">
+                      Disetujui ({approvedJadwal.length})
+                    </TabsTrigger>
+                    <TabsTrigger value="history" className="gap-2 rounded-lg py-2.5 font-semibold data-[state=active]:bg-white data-[state=active]:shadow-md dark:data-[state=active]:bg-card">
+                      Riwayat ({historyJadwal.length})
+                    </TabsTrigger>
+                  </TabsList>
+                </Tabs>
+
+                {(listTab === "pending"
+                  ? pendingJadwal
+                  : listTab === "approved"
+                    ? approvedJadwal
+                    : historyJadwal
+                ).length === 0 ? (
+                  renderJadwalCards(
+                    listTab === "pending"
+                      ? pendingJadwal
+                      : listTab === "approved"
+                        ? approvedJadwal
+                        : historyJadwal,
+                    listTab === "pending"
+                      ? "Tidak ada jadwal menunggu"
+                      : listTab === "approved"
+                        ? "Tidak ada jadwal disetujui"
+                        : "Tidak ada riwayat jadwal",
+                    listTab === "pending"
+                      ? "Belum ada jadwal praktikum yang menunggu persetujuan laboran."
+                      : listTab === "approved"
+                        ? "Belum ada jadwal praktikum hari ini atau mendatang yang sudah disetujui."
+                        : "Belum ada jadwal yang selesai, ditolak, atau dibatalkan.",
+                  )
+                ) : (
+                  <div className="grid gap-4">
+                {(listTab === "pending"
+                  ? pendingJadwal
+                  : listTab === "approved"
+                    ? approvedJadwal
+                    : historyJadwal
+                ).map((jadwal) => {
                   const kelas = kelasList.find((k) => k.id === jadwal.kelas_id);
-                  const mataKuliah = mataKuliahList.find(
-                    (mk) => mk.id === kelas?.mata_kuliah_id,
-                  );
+                  const mataKuliah = getMataKuliahForJadwal(jadwal);
 
                   // ✅ NEW: Check if this jadwal belongs to current dosen
                   const isOwner = jadwal.dosen_id === currentDosenId;
@@ -1494,8 +1846,8 @@ export default function JadwalPage() {
                           </div>
 
                           {/* Actions */}
-                          {isOwner ? (
-                            <div className="flex flex-col gap-2 shrink-0">
+                  {isOwner && !isPastJadwal(jadwal) ? (
+                    <div className="flex flex-col gap-2 shrink-0">
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -1519,7 +1871,9 @@ export default function JadwalPage() {
                     </Card>
                   );
                 })}
-              </div>
+                  </div>
+                )}
+              </>
             )}
           </TabsContent>
         </Tabs>

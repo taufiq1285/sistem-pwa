@@ -9,7 +9,11 @@ export type NotificationType =
   | "tugas_graded" // Dosen grades tugas
   | "kuis_baru" // Dosen creates new kuis
   | "kuis_published" // Kuis published to mahasiswa
+  | "materi_baru" // Dosen publishes new materi
   | "dosen_changed" // Dosen reassignment by admin
+  | "assignment_added" // Admin assigns praktikum reference to dosen
+  | "assignment_deleted" // Admin deletes praktikum reference
+  | "assignment_reassigned" // Admin removes/reassigns praktikum reference
   | "perbaikan_nilai_request" // Mahasiswa requests grade revision
   | "perbaikan_nilai_response" // Dosen approves/rejects grade revision
   | "pengumuman" // General announcement
@@ -22,7 +26,10 @@ export type NotificationType =
   // Jadwal notifications
   | "jadwal_baru" // New jadwal created
   | "jadwal_diupdate" // Jadwal updated
+  | "jadwal_updated" // Legacy/admin jadwal update notification
   | "jadwal_pending_approval" // Jadwal waiting for laboran approval
+  | "jadwal_disetujui" // Jadwal approved by laboran
+  | "jadwal_ditolak" // Jadwal rejected by laboran
   | "jadwal_dibatalkan" // Jadwal cancelled
   // Logbook notifications
   | "logbook_submitted" // Logbook submitted by mahasiswa
@@ -74,6 +81,7 @@ export interface NotificationFilters {
   type?: NotificationType;
   is_read?: boolean;
   limit?: number;
+  forceRefresh?: boolean;
 }
 
 export interface NotificationSummary {

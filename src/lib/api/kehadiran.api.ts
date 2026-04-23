@@ -68,6 +68,82 @@ export interface KehadiranStats {
   persentase_kehadiran: number;
 }
 
+async function resolveKehadiranJadwalId(
+  data: BulkKehadiranData,
+): Promise<string> {
+  if (data.jadwal_id) {
+    return data.jadwal_id;
+  }
+
+  if (!data.kelas_id || !data.tanggal) {
+    throw new Error("Kelas dan tanggal wajib diisi untuk menyimpan kehadiran.");
+  }
+
+  let query: any = supabase
+    .from("jadwal_praktikum")
+    .select("id, mata_kuliah_id, created_at")
+    .eq("kelas_id", data.kelas_id)
+    .eq("tanggal_praktikum", data.tanggal)
+    .eq("is_active", true);
+
+  if (data.mata_kuliah_id) {
+    query = query.eq("mata_kuliah_id", data.mata_kuliah_id);
+  }
+
+  const { data: jadwalList, error } = await query.order("created_at", {
+    ascending: false,
+  });
+
+  if (error) throw error;
+
+  if (!Array.isArray(jadwalList) || jadwalList.length === 0) {
+    throw new Error(
+      "Jadwal praktikum untuk kelas, mata kuliah, dan tanggal tersebut belum ditemukan.",
+    );
+  }
+
+  if (!data.mata_kuliah_id && jadwalList.length > 1) {
+    throw new Error(
+      "Jadwal praktikum tidak unik. Pilih mata kuliah terlebih dahulu.",
+    );
+  }
+
+  return jadwalList[0].id;
+}
+
+async function resolveKehadiranMataKuliahId(
+  jadwal: { kelas_id?: string | null; mata_kuliah_id?: string | null } | null,
+): Promise<string | null> {
+  if (jadwal?.mata_kuliah_id) {
+    return jadwal.mata_kuliah_id;
+  }
+
+  if (!jadwal?.kelas_id) {
+    return null;
+  }
+
+  const { data: latestJadwalMkData } = await (supabase as any)
+    .from("jadwal_praktikum")
+    .select("mata_kuliah_id")
+    .eq("kelas_id", jadwal.kelas_id)
+    .eq("is_active", true)
+    .not("mata_kuliah_id", "is", null)
+    .order("tanggal_praktikum", { ascending: false })
+    .limit(1);
+
+  if (latestJadwalMkData?.[0]?.mata_kuliah_id) {
+    return latestJadwalMkData[0].mata_kuliah_id;
+  }
+
+  const { data: kelasData } = await supabase
+    .from("kelas")
+    .select("mata_kuliah_id")
+    .eq("id", jadwal.kelas_id)
+    .maybeSingle();
+
+  return kelasData?.mata_kuliah_id || null;
+}
+
 // ============================================================================
 // API FUNCTIONS
 // ============================================================================
@@ -201,22 +277,19 @@ export const createKehadiran = requirePermission(
  */
 async function saveKehadiranBulkImpl(data: BulkKehadiranData): Promise<void> {
   try {
-    // Determine if we're using jadwal_id or kelas_id
-    const identifier = data.kelas_id || data.jadwal_id;
-    const identifierType = data.kelas_id ? "kelas_id" : "jadwal_id";
+    const resolvedJadwalId = await resolveKehadiranJadwalId(data);
 
     const records = data.kehadiran.map((item) => ({
-      jadwal_id: data.jadwal_id!, // Use jadwal_id as required field
+      jadwal_id: resolvedJadwalId,
       mahasiswa_id: item.mahasiswa_id,
       status: item.status,
       keterangan: item.keterangan || null,
     }));
 
-    // Check if records exist for this jadwal_id
     const { data: existing } = await supabase
       .from("kehadiran")
       .select("id, mahasiswa_id")
-      .eq("jadwal_id", data.jadwal_id!);
+      .eq("jadwal_id", resolvedJadwalId);
 
     if (existing && existing.length > 0) {
       // Update existing records
@@ -242,6 +315,9 @@ async function saveKehadiranBulkImpl(data: BulkKehadiranData): Promise<void> {
   } catch (error) {
     logger.error("Failed to save bulk kehadiran", {
       jadwal_id: data.jadwal_id,
+      kelas_id: data.kelas_id,
+      mata_kuliah_id: data.mata_kuliah_id,
+      tanggal: data.tanggal,
       error,
     });
     throw handleSupabaseError(error);
@@ -382,6 +458,9 @@ export interface MahasiswaKehadiranRecord {
     jam_mulai: string;
     jam_selesai: string;
     topik: string | null;
+    mata_kuliah?: {
+      nama_mk: string;
+    } | null;
     kelas: {
       nama_kelas: string;
       mata_kuliah: {
@@ -398,38 +477,88 @@ export async function getMahasiswaKehadiran(
   mahasiswaId: string,
 ): Promise<MahasiswaKehadiranRecord[]> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("kehadiran")
       .select(
-        `
-        id,
-        status,
-        keterangan,
-        created_at,
-        jadwal:jadwal_praktikum!inner (
-          id,
-          tanggal_praktikum,
-          jam_mulai,
-          jam_selesai,
-          topik,
-          kelas:kelas_id (
-            nama_kelas,
-            mata_kuliah:mata_kuliah_id (
-              nama_mk
-            )
-          ),
-          laboratorium:laboratorium_id (
-            nama_lab
-          )
-        )
-      `,
+        "id, status, keterangan, created_at, jadwal:jadwal_praktikum!inner(id, tanggal_praktikum, jam_mulai, jam_selesai, topik, kelas_id, laboratorium_id, mata_kuliah_id)",
       )
       .eq("mahasiswa_id", mahasiswaId)
       .order("jadwal(tanggal_praktikum)", { ascending: false })
       .limit(100);
 
     if (error) throw error;
-    return (data || []) as unknown as MahasiswaKehadiranRecord[];
+
+    const records = Array.isArray(data) ? data : [];
+
+    const result = await Promise.all(
+      records.map(async (item: any) => {
+        const jadwal = item?.jadwal;
+
+        const { data: kelasData } = jadwal?.kelas_id
+          ? await supabase
+              .from("kelas")
+              .select("nama_kelas")
+              .eq("id", jadwal.kelas_id)
+              .maybeSingle()
+          : { data: null };
+
+        const mataKuliahId = await resolveKehadiranMataKuliahId(jadwal || null);
+
+        const { data: mataKuliahData } = mataKuliahId
+          ? await supabase
+              .from("mata_kuliah")
+              .select("nama_mk")
+              .eq("id", mataKuliahId)
+              .maybeSingle()
+          : { data: null };
+
+        const { data: laboratoriumData } = jadwal?.laboratorium_id
+          ? await supabase
+              .from("laboratorium")
+              .select("nama_lab")
+              .eq("id", jadwal.laboratorium_id)
+              .maybeSingle()
+          : { data: null };
+
+        return {
+          id: item.id,
+          status: item.status,
+          keterangan: item.keterangan,
+          created_at: item.created_at,
+          jadwal: jadwal
+            ? {
+                id: jadwal.id,
+                tanggal_praktikum: jadwal.tanggal_praktikum,
+                jam_mulai: jadwal.jam_mulai,
+                jam_selesai: jadwal.jam_selesai,
+                topik: jadwal.topik,
+                mata_kuliah: mataKuliahData
+                  ? {
+                      nama_mk: mataKuliahData.nama_mk,
+                    }
+                  : null,
+                kelas: kelasData
+                  ? {
+                      nama_kelas: kelasData.nama_kelas,
+                      mata_kuliah: mataKuliahId
+                        ? {
+                            nama_mk: mataKuliahData?.nama_mk || "-",
+                          }
+                        : null,
+                    }
+                  : null,
+                laboratorium: laboratoriumData
+                  ? {
+                      nama_lab: laboratoriumData.nama_lab,
+                    }
+                  : null,
+              }
+            : null,
+        } as MahasiswaKehadiranRecord;
+      }),
+    );
+
+    return result;
   } catch (error) {
     logger.error("Failed to fetch mahasiswa kehadiran", { mahasiswaId, error });
     throw handleSupabaseError(error);
@@ -445,31 +574,31 @@ export async function getKehadiranForExport(
   tanggal: string,
 ): Promise<any[]> {
   try {
-    // Get kelas info
-    const { data: kelasData } = await supabase
-      .from("kelas")
-      .select("nama_kelas")
-      .eq("id", kelasId)
-      .single();
-
-    // Get kehadiran records with mata kuliah
     const result: any = await (supabase as any)
       .from("kehadiran")
       .select(
         `
+        jadwal:jadwal_praktikum!inner (
+          tanggal_praktikum,
+          kelas_id,
+          mata_kuliah_id,
+          kelas:kelas_id (
+            nama_kelas
+          ),
+          mata_kuliah:mata_kuliah_id (
+            nama_mk
+          )
+        ),
         status,
         keterangan,
-        mata_kuliah:mata_kuliah_id (
-          nama_mk
-        ),
         mahasiswa:mahasiswa_id (
           nim,
           users:user_id (full_name)
         )
       `,
       )
-      .eq("kelas_id", kelasId)
-      .eq("tanggal", tanggal)
+      .eq("jadwal.kelas_id", kelasId)
+      .eq("jadwal.tanggal_praktikum", tanggal)
       .order("mahasiswa(nim)");
 
     const { data: kehadiranData, error } = result;
@@ -477,9 +606,9 @@ export async function getKehadiranForExport(
     if (error) throw error;
 
     return (kehadiranData || []).map((item: any) => ({
-      tanggal,
-      kelas: kelasData?.nama_kelas || "-",
-      mata_kuliah: item.mata_kuliah?.nama_mk || "-",
+      tanggal: item.jadwal?.tanggal_praktikum || tanggal,
+      kelas: item.jadwal?.kelas?.nama_kelas || "-",
+      mata_kuliah: item.jadwal?.mata_kuliah?.nama_mk || "-",
       nim: item.mahasiswa?.nim || "-",
       nama_mahasiswa: item.mahasiswa?.users?.full_name || "-",
       status: item.status,
@@ -523,19 +652,22 @@ export async function getKehadiranHistory(
       .from("kehadiran")
       .select(
         `
-        tanggal,
         status,
-        kelas:kelas_id (
-          id,
-          nama_kelas
+        jadwal:jadwal_praktikum!inner (
+          tanggal_praktikum,
+          kelas_id,
+          kelas:kelas_id (
+            id,
+            nama_kelas
+          )
         )
       `,
       )
-      .eq("kelas_id", kelasId)
-      .order("tanggal", { ascending: false });
+      .eq("jadwal.kelas_id", kelasId)
+      .order("jadwal(tanggal_praktikum)", { ascending: false });
 
-    if (startDate) query = query.gte("tanggal", startDate);
-    if (endDate) query = query.lte("tanggal", endDate);
+    if (startDate) query = query.gte("jadwal.tanggal_praktikum", startDate);
+    if (endDate) query = query.lte("jadwal.tanggal_praktikum", endDate);
 
     const { data, error } = await query;
     if (error) throw error;
@@ -544,12 +676,16 @@ export async function getKehadiranHistory(
     const historyMap = new Map<string, any>();
 
     (data || []).forEach((record: any) => {
-      const tanggal = record.tanggal;
+      const tanggal = record.jadwal?.tanggal_praktikum;
+      if (!tanggal) {
+        return;
+      }
+
       if (!historyMap.has(tanggal)) {
         historyMap.set(tanggal, {
           tanggal,
-          kelas_id: record.kelas?.id || kelasId,
-          kelas_nama: record.kelas?.nama_kelas || "-",
+          kelas_id: record.jadwal?.kelas?.id || record.jadwal?.kelas_id || kelasId,
+          kelas_nama: record.jadwal?.kelas?.nama_kelas || "-",
           total_mahasiswa: 0,
           hadir: 0,
           izin: 0,

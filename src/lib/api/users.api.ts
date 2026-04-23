@@ -55,7 +55,7 @@ async function getAllUsersImpl(): Promise<SystemUser[]> {
     // Step 2: Get role-specific data
     const userIds = users.map((u) => u.id);
 
-    const [mahasiswaData, dosenData] = await Promise.all([
+    const [mahasiswaData, dosenData, laboranData] = await Promise.all([
       supabase
         .from("mahasiswa")
         .select("user_id, nim, phone")
@@ -63,6 +63,10 @@ async function getAllUsersImpl(): Promise<SystemUser[]> {
       supabase
         .from("dosen")
         .select("user_id, nip, nidn, phone")
+        .in("user_id", userIds),
+      supabase
+        .from("laboran")
+        .select("user_id, nip, phone")
         .in("user_id", userIds),
     ]);
 
@@ -73,11 +77,15 @@ async function getAllUsersImpl(): Promise<SystemUser[]> {
     const dosenMap = new Map(
       (dosenData.data || []).map((d: any) => [d.user_id, d]),
     );
+    const laboranMap = new Map(
+      (laboranData.data || []).map((l: any) => [l.user_id, l]),
+    );
 
     // Step 4: Combine data
     return users.map((user: any) => {
       const mahasiswa = mahasiswaMap.get(user.id);
       const dosen = dosenMap.get(user.id);
+      const laboran = laboranMap.get(user.id);
 
       return {
         id: user.id,
@@ -87,9 +95,9 @@ async function getAllUsersImpl(): Promise<SystemUser[]> {
         is_active: user.is_active ?? true,
         created_at: user.created_at,
         nim: mahasiswa?.nim,
-        nip: dosen?.nip,
+        nip: dosen?.nip || laboran?.nip,
         nidn: dosen?.nidn,
-        phone: mahasiswa?.phone || dosen?.phone,
+        phone: mahasiswa?.phone || dosen?.phone || laboran?.phone,
       };
     });
   } catch (error) {
@@ -169,11 +177,42 @@ export interface UpdateUserData {
   full_name?: string;
   role?: "admin" | "dosen" | "mahasiswa" | "laboran";
   is_active?: boolean;
+  nim?: string;
 }
 
 async function updateUserImpl(id: string, data: UpdateUserData): Promise<void> {
   try {
-    const { error } = await supabase.from("users").update(data).eq("id", id);
+    const { data: existingUser, error: userError } = await supabase
+      .from("users")
+      .select("role")
+      .eq("id", id)
+      .single();
+
+    if (userError) throw userError;
+
+    if (existingUser?.role === "mahasiswa" && data.nim !== undefined) {
+      const trimmedNim = data.nim.trim();
+
+      if (!trimmedNim) {
+        throw new Error("NIM wajib diisi untuk user mahasiswa");
+      }
+
+      const { error: mahasiswaError } = await supabase
+        .from("mahasiswa")
+        .update({ nim: trimmedNim })
+        .eq("user_id", id);
+
+      if (mahasiswaError) throw mahasiswaError;
+    }
+
+    // Role is source-of-truth at account creation and must not be mutated here.
+    const { role: _ignoredRole, nim: _ignoredNim, ...safeData } = data;
+
+    if (Object.keys(safeData).length === 0) {
+      return;
+    }
+
+    const { error } = await supabase.from("users").update(safeData).eq("id", id);
 
     if (error) throw error;
   } catch (error) {
@@ -200,6 +239,18 @@ export interface CreateUserData {
 
 async function createUserImpl(data: CreateUserData): Promise<void> {
   try {
+    if (data.role === "mahasiswa" && !data.nim?.trim()) {
+      throw new Error("NIM wajib diisi untuk user mahasiswa");
+    }
+
+    if (data.role === "dosen" && !data.nip?.trim() && !data.nidn?.trim()) {
+      throw new Error("NIP atau NIDN wajib diisi untuk user dosen");
+    }
+
+    if (data.role === "laboran" && !data.nip?.trim()) {
+      throw new Error("NIP wajib diisi untuk user laboran");
+    }
+
     // Step 1: Create user in auth and users table
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email: data.email,
@@ -254,7 +305,7 @@ async function createUserImpl(data: CreateUserData): Promise<void> {
     } else if (data.role === "laboran") {
       const { error: laboranError } = await supabase.from("laboran").insert({
         user_id: userId,
-        nip: data.phone || "", // temporary fix - should be actual NIP
+        nip: data.nip || "",
         phone: data.phone || null,
       } as any);
 
@@ -274,6 +325,133 @@ export const createUser = requirePermission("manage:users", createUserImpl);
  */
 async function deleteUserImpl(userId: string): Promise<void> {
   try {
+    type UserScopedCleanupTable =
+      | "notifications"
+      | "offline_queue"
+      | "cache_metadata"
+      | "conflict_log"
+      | "sync_history";
+
+    const cleanupUserScopedTable = async (table: UserScopedCleanupTable) => {
+      const { error } = await supabase.from(table).delete().eq("user_id", userId);
+      if (error) {
+        console.warn(`[deleteUserImpl] Failed to cleanup ${table}:`, error);
+      }
+    };
+
+    const ensureNoBlockingDependencies = async (
+      role: "admin" | "dosen" | "mahasiswa" | "laboran",
+    ) => {
+      if (role === "admin") {
+        return;
+      }
+
+      if (role === "mahasiswa") {
+        const { data: mahasiswa, error: mahasiswaError } = await supabase
+          .from("mahasiswa")
+          .select("id")
+          .eq("user_id", userId)
+          .maybeSingle();
+
+        if (mahasiswaError) throw mahasiswaError;
+        if (!mahasiswa?.id) return;
+
+        const [
+          kelasMahasiswaRes,
+          nilaiRes,
+          kehadiranRes,
+          attemptKuisRes,
+          peminjamanRes,
+        ] = await Promise.all([
+          supabase
+            .from("kelas_mahasiswa")
+            .select("id", { count: "exact", head: true })
+            .eq("mahasiswa_id", mahasiswa.id),
+          supabase
+            .from("nilai")
+            .select("id", { count: "exact", head: true })
+            .eq("mahasiswa_id", mahasiswa.id),
+          supabase
+            .from("kehadiran")
+            .select("id", { count: "exact", head: true })
+            .eq("mahasiswa_id", mahasiswa.id),
+          supabase
+            .from("attempt_kuis")
+            .select("id", { count: "exact", head: true })
+            .eq("mahasiswa_id", mahasiswa.id),
+          supabase
+            .from("peminjaman")
+            .select("id", { count: "exact", head: true })
+            .eq("peminjam_id", mahasiswa.id),
+        ]);
+
+        const hasDependencies = [
+          kelasMahasiswaRes,
+          nilaiRes,
+          kehadiranRes,
+          attemptKuisRes,
+          peminjamanRes,
+        ].some((result) => (result.count || 0) > 0);
+
+        if (hasDependencies) {
+          throw new Error(
+            "User mahasiswa sudah memiliki riwayat akademik/operasional. Gunakan nonaktifkan akun, bukan hapus permanen.",
+          );
+        }
+
+        return;
+      }
+
+      if (role === "dosen") {
+        const { data: dosen, error: dosenError } = await supabase
+          .from("dosen")
+          .select("id")
+          .eq("user_id", userId)
+          .maybeSingle();
+
+        if (dosenError) throw dosenError;
+        if (!dosen?.id) return;
+
+        const [kelasRes, kuisRes, materiRes, bankSoalRes, peminjamanRes] =
+          await Promise.all([
+            supabase
+              .from("kelas")
+              .select("id", { count: "exact", head: true })
+              .eq("dosen_id", dosen.id),
+            supabase
+              .from("kuis")
+              .select("id", { count: "exact", head: true })
+              .eq("dosen_id", dosen.id),
+            supabase
+              .from("materi")
+              .select("id", { count: "exact", head: true })
+              .eq("dosen_id", dosen.id),
+            supabase
+              .from("bank_soal")
+              .select("id", { count: "exact", head: true })
+              .eq("dosen_id", dosen.id),
+            supabase
+              .from("peminjaman")
+              .select("id", { count: "exact", head: true })
+              .eq("dosen_id", dosen.id),
+          ]);
+
+        const hasDependencies = [
+          kelasRes,
+          kuisRes,
+          materiRes,
+          bankSoalRes,
+          peminjamanRes,
+        ].some((result) => (result.count || 0) > 0);
+
+        if (hasDependencies) {
+          throw new Error(
+            "User dosen sudah memiliki riwayat akademik/operasional. Gunakan nonaktifkan akun, bukan hapus permanen.",
+          );
+        }
+      }
+    };
+
     // Check current auth state
     const {
       data: { user: currentUser },
@@ -301,6 +479,18 @@ async function deleteUserImpl(userId: string): Promise<void> {
       throw getUserError;
     }
     if (!user) throw new Error("User not found");
+
+    await ensureNoBlockingDependencies(user.role);
+
+    // Cleanup light-weight user scoped records first so hard delete is not
+    // blocked by technical tables.
+    await Promise.all([
+      cleanupUserScopedTable("notifications"),
+      cleanupUserScopedTable("offline_queue"),
+      cleanupUserScopedTable("cache_metadata"),
+      cleanupUserScopedTable("conflict_log"),
+      cleanupUserScopedTable("sync_history"),
+    ]);
 
     // Step 2: Delete from role-specific tables
     console.log(

@@ -53,6 +53,7 @@ const routeModuleImporters = {
   adminLaboratories: () => import("@/pages/admin/LaboratoriesPage"),
   adminEquipments: () => import("@/pages/admin/EquipmentsPage"),
   adminAnnouncements: () => import("@/pages/admin/AnnouncementsPage"),
+  adminNotifications: () => import("@/pages/admin/NotificationCenterPage"),
   peminjamanApproval: () => import("@/pages/admin/PeminjamanApprovalPage"),
   adminProfile: () => import("@/pages/admin/ProfilePage"),
   manajemenAssignment: () => import("@/pages/admin/ManajemenAssignmentPage"),
@@ -249,6 +250,9 @@ const AdminLaboratoriesPage = lazy(
 const AdminEquipmentsPage = lazy(() => import("@/pages/admin/EquipmentsPage"));
 const AdminAnnouncementsPage = lazy(
   () => import("@/pages/admin/AnnouncementsPage"),
+);
+const AdminNotificationCenterPage = lazy(
+  () => import("@/pages/admin/NotificationCenterPage"),
 );
 const PeminjamanApprovalPage = lazy(
   () => import("@/pages/admin/PeminjamanApprovalPage"),
@@ -548,7 +552,7 @@ export function AppRouter() {
               <ProtectedRoute>
                 <RoleGuard allowedRoles={["admin"]}>
                   <AppLayout>
-                    <AdminAnnouncementsPage />
+                    <AdminNotificationCenterPage />
                   </AppLayout>
                 </RoleGuard>
               </ProtectedRoute>

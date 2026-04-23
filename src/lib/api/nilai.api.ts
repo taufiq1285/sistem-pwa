@@ -115,6 +115,7 @@ export async function getNilai(filters?: NilaiFilters): Promise<Nilai[]> {
           nama_kelas,
           kode_kelas,
           mata_kuliah:mata_kuliah_id (
+            id,
             nama_mk,
             kode_mk
           )
@@ -186,6 +187,7 @@ export async function getNilaiByMahasiswa(
           semester_ajaran,
           is_active,
           mata_kuliah:mata_kuliah_id (
+            id,
             nama_mk,
             kode_mk,
             sks,
@@ -199,7 +201,97 @@ export async function getNilaiByMahasiswa(
 
     if (error) throw handleError(error);
 
-    return (data || []) as Nilai[];
+    const nilaiList = ((data || []) as Nilai[]) || [];
+    if (nilaiList.length === 0) {
+      return [];
+    }
+
+    const kelasIds = Array.from(
+      new Set(
+        nilaiList
+          .map((item) => item.kelas?.id || item.kelas_id)
+          .filter((value): value is string => Boolean(value)),
+      ),
+    );
+
+    const missingMataKuliahKelasIds = Array.from(
+      new Set(
+        nilaiList
+          .filter((item) => !item.kelas?.mata_kuliah)
+          .map((item) => item.kelas?.id || item.kelas_id)
+          .filter((value): value is string => Boolean(value)),
+      ),
+    );
+
+    if (missingMataKuliahKelasIds.length === 0) {
+      return nilaiList;
+    }
+
+    const { data: jadwalData } = await (supabase as any)
+      .from("jadwal_praktikum")
+      .select("kelas_id, mata_kuliah_id, tanggal_praktikum")
+      .in("kelas_id", kelasIds)
+      .not("mata_kuliah_id", "is", null)
+      .eq("is_active", true)
+      .order("tanggal_praktikum", { ascending: false });
+
+    const jadwalMataKuliahMap = new Map<string, string>();
+    for (const item of jadwalData || []) {
+      if (item?.kelas_id && item?.mata_kuliah_id && !jadwalMataKuliahMap.has(item.kelas_id)) {
+        jadwalMataKuliahMap.set(item.kelas_id, item.mata_kuliah_id);
+      }
+    }
+
+    const mataKuliahIds = Array.from(
+      new Set(
+        missingMataKuliahKelasIds
+          .map((kelasId) => jadwalMataKuliahMap.get(kelasId))
+          .filter((value): value is string => Boolean(value)),
+      ),
+    );
+
+    if (mataKuliahIds.length === 0) {
+      return nilaiList;
+    }
+
+    const { data: mataKuliahData } = await supabase
+      .from("mata_kuliah")
+      .select("id, nama_mk, kode_mk, sks, is_active")
+      .in("id", mataKuliahIds);
+
+    const mataKuliahMap = new Map(
+      (mataKuliahData || []).map((item) => [item.id, item]),
+    );
+
+    return nilaiList.map((item) => {
+      if (item.kelas?.mata_kuliah) {
+        return item;
+      }
+
+      const kelasId = item.kelas?.id || item.kelas_id;
+      const mataKuliahId = kelasId ? jadwalMataKuliahMap.get(kelasId) : null;
+      const fallbackMataKuliah = mataKuliahId
+        ? mataKuliahMap.get(mataKuliahId)
+        : null;
+
+      if (!item.kelas || !fallbackMataKuliah) {
+        return item;
+      }
+
+      return {
+        ...item,
+        kelas: {
+          ...item.kelas,
+          mata_kuliah: {
+            id: fallbackMataKuliah.id,
+            nama_mk: fallbackMataKuliah.nama_mk,
+            kode_mk: fallbackMataKuliah.kode_mk,
+            sks: fallbackMataKuliah.sks,
+            is_active: fallbackMataKuliah.is_active,
+          },
+        },
+      };
+    });
   } catch (error) {
     console.error("getNilaiByMahasiswa error:", error);
     throw handleError(error);

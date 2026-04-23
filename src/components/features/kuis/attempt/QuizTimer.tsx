@@ -308,14 +308,14 @@ export function QuizTimer({
 /**
  * Clear timer data from localStorage
  */
-export function clearTimerData(attemptId: string): void {
+function clearTimerData(attemptId: string): void {
   localStorage.removeItem(`${STORAGE_KEY_PREFIX}${attemptId}`);
 }
 
 /**
  * Get remaining time from localStorage
  */
-export function getStoredTimeRemaining(attemptId: string): number | null {
+function getStoredTimeRemaining(attemptId: string): number | null {
   const stored = localStorage.getItem(`${STORAGE_KEY_PREFIX}${attemptId}`);
   if (!stored) return null;
 
@@ -330,7 +330,7 @@ export function getStoredTimeRemaining(attemptId: string): number | null {
 /**
  * Calculate time remaining from start time
  */
-export function calculateTimeRemaining(
+function calculateTimeRemaining(
   startTime: Date,
   durationMinutes: number,
 ): number {

@@ -4,12 +4,12 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, act } from "@testing-library/react";
+import { QuizTimer } from "@/components/features/kuis/attempt/QuizTimer";
 import {
-  QuizTimer,
   clearTimerData,
   getStoredTimeRemaining,
   calculateTimeRemaining,
-} from "@/components/features/kuis/attempt/QuizTimer";
+} from "@/components/features/kuis/attempt/quiz-timer.utils";
 
 vi.useFakeTimers();
 

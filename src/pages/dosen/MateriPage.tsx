@@ -65,6 +65,8 @@ import {
   invalidateCache,
 } from "@/lib/offline/api-cache";
 import { MAX_FILE_SIZE, formatFileSize } from "@/lib/supabase/storage";
+import { supabase } from "@/lib/supabase/client";
+import { notifyMahasiswaMateriBaru } from "@/lib/api/notification.api";
 
 // ============================================================================
 // COMPONENT
@@ -155,6 +157,27 @@ export default function DosenMateriPage() {
   // ============================================================================
   // DATA LOADING
   // ============================================================================
+
+  const getMahasiswaIds = async (kelasId: string): Promise<string[]> => {
+    try {
+      const { data } = await supabase
+        .from("kelas_mahasiswa")
+        .select("mahasiswa:mahasiswa_id(user_id)")
+        .eq("kelas_id", kelasId)
+        .eq("is_active", true);
+
+      return (
+        data
+          ?.map((item: any) => item.mahasiswa?.user_id)
+          .filter((userId: string | undefined): userId is string =>
+            Boolean(userId),
+          ) || []
+      );
+    } catch (error) {
+      console.error("Failed to fetch mahasiswa IDs:", error);
+      return [];
+    }
+  };
 
   async function loadData(forceRefresh = false) {
     if (!user?.dosen?.id) return;
@@ -316,6 +339,23 @@ export default function DosenMateriPage() {
       // Add to list and publish
       await publishMateri(newMateri.id);
       setMateriList((prev) => [newMateri, ...prev]);
+
+      // Notify mahasiswa in the kelas (best-effort, non-blocking)
+      const mahasiswaIds = await getMahasiswaIds(kelasId);
+      if (mahasiswaIds.length > 0) {
+        const kelasNama =
+          kelasList.find((kelas) => kelas.id === kelasId)?.nama_kelas || "Kelas";
+
+        notifyMahasiswaMateriBaru(
+          mahasiswaIds,
+          user?.full_name || "Dosen",
+          judul,
+          kelasNama,
+          newMateri.id,
+        ).catch((err) => {
+          console.error("Failed to notify mahasiswa:", err);
+        });
+      }
 
       toast.success("Materi berhasil diupload");
       setShowUploadDialog(false);

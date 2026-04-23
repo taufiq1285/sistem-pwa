@@ -66,6 +66,7 @@ vi.mock("@/lib/api/bank-soal.api", () => ({
 vi.mock("@/lib/api/kuis.api", () => ({
   getKuisResults: vi.fn(),
   getKuisAttempts: vi.fn(),
+  getAttemptsByKuis: vi.fn(),
   getAttempts: vi.fn(),
   getAttemptDetail: vi.fn(),
   getKuisById: vi.fn(),
@@ -304,12 +305,12 @@ describe("Dosen KuisResultsPage", () => {
     {
       id: "att-1",
       mahasiswa_id: "mhs-1",
-      nama_mahasiswa: "Andi",
-      nim: "001",
+      mahasiswa: { nim: "001", user: { full_name: "Andi" } },
       total_poin: 80,
-      status: "submitted",
+      status: "graded",
       attempt_number: 1,
       started_at: new Date().toISOString(),
+      submitted_at: new Date().toISOString(),
     },
   ];
 
@@ -319,10 +320,16 @@ describe("Dosen KuisResultsPage", () => {
     vi.spyOn(console, "error").mockImplementation(() => undefined);
     mockUseAuth.mockReturnValue({ user: mockDosenUser });
     vi.mocked(kuisApi.getKuisAttempts).mockResolvedValue(mockAttempts as any);
+    vi.mocked(kuisApi.getAttemptsByKuis).mockResolvedValue(mockAttempts as any);
     vi.mocked(kuisApi.getAttempts).mockResolvedValue(mockAttempts as any);
     vi.mocked(kuisApi.getKuisById).mockResolvedValue({
       id: "kuis-1",
       judul: "Pre-Test Anatomi",
+      passing_score: 70,
+      soal: [
+        { id: "s1", poin: 40, tipe_soal: "pilihan_ganda" },
+        { id: "s2", poin: 40, tipe_soal: "pilihan_ganda" },
+      ],
     } as any);
     mockCacheAPI.mockResolvedValue(mockAttempts);
   });
@@ -342,6 +349,9 @@ describe("Dosen KuisResultsPage", () => {
     vi.mocked(kuisApi.getKuisAttempts).mockRejectedValue(
       new Error("Server Error"),
     );
+    vi.mocked(kuisApi.getAttemptsByKuis).mockRejectedValue(
+      new Error("Server Error"),
+    );
     vi.mocked(kuisApi.getAttempts).mockRejectedValue(new Error("Server Error"));
     expect(() =>
       wrap(
@@ -351,6 +361,46 @@ describe("Dosen KuisResultsPage", () => {
       ),
     ).not.toThrow();
     await new Promise((r) => setTimeout(r, 100));
+  });
+
+  it("menghitung kelulusan CBT berdasarkan persentase total poin kuis", async () => {
+    vi.mocked(kuisApi.getAttemptsByKuis).mockResolvedValue([
+      {
+        id: "att-1",
+        mahasiswa_id: "mhs-1",
+        mahasiswa: { nim: "001", user: { full_name: "Andi" } },
+        total_poin: 60,
+        status: "graded",
+        attempt_number: 1,
+        started_at: new Date().toISOString(),
+        submitted_at: new Date().toISOString(),
+      },
+    ] as any);
+    vi.mocked(kuisApi.getKuisById).mockResolvedValue({
+      id: "kuis-1",
+      judul: "Pre-Test Anatomi",
+      passing_score: 70,
+      soal: [
+        { id: "s1", poin: 40, tipe_soal: "pilihan_ganda" },
+        { id: "s2", poin: 40, tipe_soal: "pilihan_ganda" },
+      ],
+    } as any);
+
+    wrap(
+      <DosenKuisResultsPage />,
+      "/dosen/kuis/kuis-1/results",
+      "/dosen/kuis/:kuisId/results",
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getAllByText(
+          (_, element) => element?.textContent?.includes("60 / 80") ?? false,
+        ).length,
+      ).toBeGreaterThan(0);
+    });
+    expect(screen.getAllByText("75.0%").length).toBeGreaterThan(0);
+    expect(screen.getByText("Lulus")).toBeInTheDocument();
   });
 });
 

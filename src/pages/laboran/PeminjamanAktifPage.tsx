@@ -11,6 +11,7 @@
  */
 
 import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import {
   Package,
   CheckCircle,
@@ -69,6 +70,8 @@ import { cacheAPI, invalidateCache } from "@/lib/offline/api-cache";
 // ============================================================================
 
 export default function PeminjamanAktifPage() {
+  const location = useLocation();
+  const isAdminView = location.pathname.startsWith("/admin/");
   const [activeBorrowings, setActiveBorrowings] = useState<ActiveBorrowing[]>(
     [],
   );
@@ -236,7 +239,9 @@ export default function PeminjamanAktifPage() {
             <div className="space-y-4">
               <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/70 px-3 py-1 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur-sm">
                 <Package className="h-3.5 w-3.5 text-primary" />
-                Monitoring pengembalian alat
+                {isAdminView
+                  ? "Backup pengelolaan peminjaman alat"
+                  : "Monitoring pengembalian alat"}
               </div>
               <div className="flex items-start gap-4">
                 <div className="rounded-2xl bg-primary/10 p-3 text-primary ring-1 ring-primary/20 shadow-sm">
@@ -247,16 +252,17 @@ export default function PeminjamanAktifPage() {
                     Kelola Peminjaman Aktif
                   </h1>
                   <p className="max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
-                    Pantau alat yang masih dipinjam, identifikasi keterlambatan,
-                    dan proses pengembalian dengan catatan kondisi barang serta
-                    denda bila diperlukan.
+                    {isAdminView
+                      ? "Admin memakai halaman ini sebagai backup operasional saat laboran tidak hadir. Pantau alat yang masih dipinjam dan proses pengembalian tanpa mengubah alur data utama."
+                      : "Pantau alat yang masih dipinjam, identifikasi keterlambatan, dan proses pengembalian dengan catatan kondisi barang serta denda bila diperlukan."}
                   </p>
                 </div>
               </div>
             </div>
             <div className="rounded-2xl border border-warning/30 bg-warning/10 px-4 py-3 text-sm text-warning lg:max-w-sm">
-              Pastikan kondisi barang diperiksa sebelum menandai pengembalian
-              agar stok inventaris dan riwayat peminjaman tetap akurat.
+              {isAdminView
+                ? "Gunakan fitur ini hanya saat backup laboran. Pastikan kondisi barang diperiksa sebelum menandai pengembalian agar stok inventaris dan riwayat tetap akurat."
+                : "Pastikan kondisi barang diperiksa sebelum menandai pengembalian agar stok inventaris dan riwayat peminjaman tetap akurat."}
             </div>
           </div>
         </GlassCard>

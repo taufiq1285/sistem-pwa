@@ -87,6 +87,10 @@ export interface GradedAnswer extends Jawaban {
   grading: GradingResult;
 }
 
+function getStoredStudentAnswer(jawaban?: Jawaban | null): string {
+  return jawaban?.jawaban ?? jawaban?.jawaban_mahasiswa ?? "";
+}
+
 // ============================================================================
 // AUTO-GRADING FUNCTIONS
 // ============================================================================
@@ -321,8 +325,9 @@ export function calculateQuizScore(
   // Grade each question
   questions.forEach((soal) => {
     const jawaban = answerMap.get(soal.id);
+    const studentAnswer = getStoredStudentAnswer(jawaban);
 
-    if (!jawaban || !jawaban.jawaban) {
+    if (!jawaban || !studentAnswer) {
       unansweredCount++;
       return;
     }
@@ -333,7 +338,7 @@ export function calculateQuizScore(
       soal.tipe_soal === TIPE_SOAL.BENAR_SALAH ||
       soal.tipe_soal === TIPE_SOAL.JAWABAN_SINGKAT
     ) {
-      const result = gradeAnswer(soal, jawaban.jawaban);
+      const result = gradeAnswer(soal, studentAnswer);
       totalPoin += result.poin_diperoleh;
 
       if (result.is_correct) {
@@ -433,7 +438,7 @@ export function gradeAllAnswers(
     const soal = questionMap.get(jawaban.soal_id);
     if (!soal) return;
 
-    const grading = gradeAnswer(soal, jawaban.jawaban || "");
+    const grading = gradeAnswer(soal, getStoredStudentAnswer(jawaban));
 
     gradedAnswers.push({
       ...jawaban,
@@ -505,8 +510,9 @@ export function getQuizStats(questions: Soal[], answers: Jawaban[]): QuizStats {
 
   questions.forEach((soal) => {
     const jawaban = answerMap.get(soal.id);
+    const studentAnswer = getStoredStudentAnswer(jawaban);
 
-    if (!jawaban || !jawaban.jawaban) {
+    if (!jawaban || !studentAnswer) {
       return; // Unanswered
     }
 
@@ -521,7 +527,7 @@ export function getQuizStats(questions: Soal[], answers: Jawaban[]): QuizStats {
       }
     } else if (autoGradableTypes.includes(soal.tipe_soal as any)) {
       // Can auto-grade
-      const result = gradeAnswer(soal, jawaban.jawaban);
+      const result = gradeAnswer(soal, studentAnswer);
       if (result.is_correct) {
         correct++;
       } else {

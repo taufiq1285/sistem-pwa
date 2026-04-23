@@ -44,8 +44,11 @@ import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { getAttemptById } from "@/lib/api/kuis.api";
 import { gradeAnswer } from "@/lib/api/kuis.api";
+import { notifyMahasiswaTugasGraded } from "@/lib/api/notification.api";
+import { supabase } from "@/lib/supabase/client";
 import type { AttemptKuis, Soal, Jawaban } from "@/types/kuis.types";
 import { TIPE_SOAL_LABELS, ATTEMPT_STATUS_LABELS } from "@/types/kuis.types";
+import { checkAnswerCorrect } from "@/lib/utils/quiz-scoring";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -155,6 +158,8 @@ export default function AttemptDetailPage() {
     setIsSaving(true);
 
     try {
+      const scoreAfterSave = calculateTotalScore();
+
       // Save grading for each jawaban
       const promises = attempt.jawaban.map((jawaban) => {
         const grading = gradingState[jawaban.id];
@@ -173,6 +178,14 @@ export default function AttemptDetailPage() {
       });
 
       await Promise.all(promises);
+      await notifyMahasiswaGradeResult(attempt, scoreAfterSave).catch(
+        (notifError) => {
+          console.error(
+            "Failed to notify mahasiswa after tugas grading:",
+            notifError,
+          );
+        },
+      );
 
       toast.success("Penilaian berhasil disimpan");
       setHasChanges(false);
@@ -220,9 +233,35 @@ export default function AttemptDetailPage() {
 
   const checkAnswer = (jawaban: Jawaban, soal: Soal) => {
     if (soal.tipe_soal === "pilihan_ganda") {
-      return jawaban.jawaban_mahasiswa === soal.jawaban_benar;
+      return checkAnswerCorrect(
+        soal,
+        jawaban.jawaban || jawaban.jawaban_mahasiswa || "",
+      );
     }
     return jawaban.is_correct || false;
+  };
+
+  const notifyMahasiswaGradeResult = async (
+    currentAttempt: AttemptKuis,
+    nilaiAkhir: number,
+  ) => {
+    const { data: mahasiswaData, error } = await supabase
+      .from("mahasiswa")
+      .select("user_id")
+      .eq("id", currentAttempt.mahasiswa_id)
+      .single();
+
+    if (error) throw error;
+    if (!mahasiswaData?.user_id) return;
+
+    await notifyMahasiswaTugasGraded(
+      mahasiswaData.user_id,
+      currentAttempt.kuis?.judul || "Tugas Praktikum",
+      nilaiAkhir,
+      currentAttempt.id,
+      currentAttempt.kuis_id,
+      (currentAttempt.kuis as any)?.tipe_kuis ?? null,
+    );
   };
 
   // ============================================================================
@@ -274,6 +313,9 @@ export default function AttemptDetailPage() {
 
   const mahasiswa = attempt.mahasiswa;
   const kuis = attempt.kuis;
+  const kuisMataKuliah =
+    (kuis as any)?.mata_kuliah || (kuis as any)?.kelas?.mata_kuliah || null;
+  const namaKelas = (kuis as any)?.kelas?.nama_kelas || "-";
   const totalScore = calculateTotalScore();
   const maxScore = calculateMaxScore();
   const percentage = maxScore > 0 ? (totalScore / maxScore) * 100 : 0;
@@ -418,6 +460,16 @@ export default function AttemptDetailPage() {
               <Separator className="my-3" />
 
               <div className="space-y-2 text-sm">
+                <div className="flex justify-between gap-3">
+                  <span className="text-muted-foreground">Mata Kuliah:</span>
+                  <span className="text-right font-medium">
+                    {kuisMataKuliah?.nama_mk || "-"}
+                  </span>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <span className="text-muted-foreground">Kelas:</span>
+                  <span className="text-right font-medium">{namaKelas}</span>
+                </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Total Soal:</span>
                   <span className="font-medium">{kuis?.soal?.length || 0}</span>

@@ -122,6 +122,26 @@ export default function KuisResultsPage() {
   };
 
   /**
+   * Detect laporan mode from structured data, not from free-text title.
+   */
+  const isLaporanQuiz = (quizData: Kuis | null): boolean => {
+    if (!quizData) return false;
+
+    if (quizData.tipe_kuis === "essay") {
+      return true;
+    }
+
+    if (!quizData.soal || quizData.soal.length === 0) {
+      return false;
+    }
+
+    return quizData.soal.every((s: any) => {
+      const tipe = s.tipe_soal || s.tipe;
+      return tipe === "file_upload";
+    });
+  };
+
+  /**
    * Calculate duration between two dates
    */
   const calculateDuration = (start: string, end: string): string => {
@@ -336,8 +356,7 @@ export default function KuisResultsPage() {
   // RENDER - MAIN
   // ============================================================================
 
-  // Detect laporan mode from judul
-  const laporanMode = quiz?.judul?.toLowerCase().includes("laporan") || false;
+  const laporanMode = isLaporanQuiz(quiz);
 
   return (
     <div className="role-page-shell p-4 sm:p-6 lg:p-8">
@@ -380,178 +399,171 @@ export default function KuisResultsPage() {
           </div>
         </section>
 
-        {/* Statistics Cards - Hide for CBT mode */}
-        {!isAutoGradedQuiz(quiz) && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            {laporanMode ? (
-              // LAPORAN MODE: Show submission status
-              <>
-                {/* Total Submissions */}
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between pb-2">
-                    <CardTitle className="text-sm font-medium">
-                      Total Submission
-                    </CardTitle>
-                    <Users className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">
-                      {statistics.totalAttempts}
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      {statistics.completedAttempts} mahasiswa
-                    </p>
-                  </CardContent>
-                </Card>
+        {/* Statistics Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          {laporanMode ? (
+            // LAPORAN MODE: Show submission status
+            <>
+              {/* Total Submissions */}
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    Total Submission
+                  </CardTitle>
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {statistics.totalAttempts}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {statistics.completedAttempts} mahasiswa
+                  </p>
+                </CardContent>
+              </Card>
 
-                {/* Sudah Upload */}
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between pb-2">
-                    <CardTitle className="text-sm font-medium">
-                      Sudah Upload
-                    </CardTitle>
-                    <CheckCircle2 className="h-4 w-4 text-success" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold text-success">
-                      {statistics.completedAttempts}
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      Laporan diterima
-                    </p>
-                  </CardContent>
-                </Card>
+              {/* Sudah Upload */}
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    Sudah Upload
+                  </CardTitle>
+                  <CheckCircle2 className="h-4 w-4 text-success" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-success">
+                    {statistics.completedAttempts}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Laporan diterima
+                  </p>
+                </CardContent>
+              </Card>
 
-                {/* Belum Upload */}
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between pb-2">
-                    <CardTitle className="text-sm font-medium">
-                      Belum Upload
-                    </CardTitle>
-                    <AlertCircle className="h-4 w-4 text-warning" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold text-warning">
-                      {statistics.totalAttempts - statistics.completedAttempts}
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      Menunggu submission
-                    </p>
-                  </CardContent>
-                </Card>
+              {/* Belum Upload */}
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    Belum Upload
+                  </CardTitle>
+                  <AlertCircle className="h-4 w-4 text-warning" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-warning">
+                    {statistics.totalAttempts - statistics.completedAttempts}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Menunggu submission
+                  </p>
+                </CardContent>
+              </Card>
 
-                {/* Completion Rate */}
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between pb-2">
-                    <CardTitle className="text-sm font-medium">
-                      Tingkat Penyelesaian
-                    </CardTitle>
-                    <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">
-                      {statistics.totalAttempts > 0
-                        ? (
-                            (statistics.completedAttempts /
-                              statistics.totalAttempts) *
-                            100
-                          ).toFixed(0)
-                        : 0}
-                      %
-                    </div>
-                    <Progress
-                      value={
-                        statistics.totalAttempts > 0
-                          ? (statistics.completedAttempts /
-                              statistics.totalAttempts) *
-                            100
-                          : 0
-                      }
-                      className="mt-2"
-                    />
-                  </CardContent>
-                </Card>
-              </>
-            ) : (
-              // CBT MODE: Show score statistics
-              <>
-                {/* Total Students */}
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between pb-2">
-                    <CardTitle className="text-sm font-medium">
-                      Total Peserta
-                    </CardTitle>
-                    <Users className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">
-                      {statistics.totalAttempts}
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      {statistics.completedAttempts} sudah mengerjakan
-                    </p>
-                  </CardContent>
-                </Card>
+              {/* Completion Rate */}
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    Tingkat Penyelesaian
+                  </CardTitle>
+                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {statistics.totalAttempts > 0
+                      ? (
+                          (statistics.completedAttempts / statistics.totalAttempts) *
+                          100
+                        ).toFixed(0)
+                      : 0}
+                    %
+                  </div>
+                  <Progress
+                    value={
+                      statistics.totalAttempts > 0
+                        ? (statistics.completedAttempts / statistics.totalAttempts) *
+                          100
+                        : 0
+                    }
+                    className="mt-2"
+                  />
+                </CardContent>
+              </Card>
+            </>
+          ) : (
+            // CBT MODE: Show score statistics
+            <>
+              {/* Total Students */}
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    Total Peserta
+                  </CardTitle>
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {statistics.totalAttempts}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {statistics.completedAttempts} sudah mengerjakan
+                  </p>
+                </CardContent>
+              </Card>
 
-                {/* Average Score */}
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between pb-2">
-                    <CardTitle className="text-sm font-medium">
-                      Rata-rata Skor
-                    </CardTitle>
-                    <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">
-                      {statistics.averageScore.toFixed(1)}
-                    </div>
-                    <p className="text-xs text-muted-foreground mb-2">
-                      dari 100 poin
-                    </p>
-                    <Progress
-                      value={statistics.averageScore}
-                      className="mt-1"
-                    />
-                  </CardContent>
-                </Card>
+              {/* Average Score */}
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    Rata-rata Skor
+                  </CardTitle>
+                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {statistics.averageScore.toFixed(1)}%
+                  </div>
+                  <p className="text-xs text-muted-foreground mb-2">
+                    berbasis total poin kuis
+                  </p>
+                  <Progress value={statistics.averageScore} className="mt-1" />
+                </CardContent>
+              </Card>
 
-                {/* Highest Score */}
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between pb-2">
-                    <CardTitle className="text-sm font-medium">
-                      Skor Tertinggi
-                    </CardTitle>
-                    <Award className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold text-success">
-                      {statistics.highestScore}
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      Terendah: {statistics.lowestScore}
-                    </p>
-                  </CardContent>
-                </Card>
+              {/* Highest Score */}
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    Skor Tertinggi
+                  </CardTitle>
+                  <Award className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-success">
+                    {statistics.highestScore.toFixed(1)}%
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Terendah: {statistics.lowestScore.toFixed(1)}%
+                  </p>
+                </CardContent>
+              </Card>
 
-                {/* Pass Rate */}
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between pb-2">
-                    <CardTitle className="text-sm font-medium">
-                      Tingkat Kelulusan
-                    </CardTitle>
-                    <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">
-                      {statistics.passRate.toFixed(0)}%
-                    </div>
-                    <Progress value={statistics.passRate} className="mt-2" />
-                  </CardContent>
-                </Card>
-              </>
-            )}
-          </div>
-        )}
+              {/* Pass Rate */}
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    Tingkat Kelulusan
+                  </CardTitle>
+                  <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {statistics.passRate.toFixed(0)}%
+                  </div>
+                  <Progress value={statistics.passRate} className="mt-2" />
+                </CardContent>
+              </Card>
+            </>
+          )}
+        </div>
 
         {/* For CBT mode: Show attempts table directly (no tabs) */}
         {isAutoGradedQuiz(quiz) && (
@@ -593,9 +605,12 @@ export default function KuisResultsPage() {
                   </TableHeader>
                   <TableBody>
                     {filteredAttempts.map((attempt) => {
-                      const isPassed =
-                        (attempt.total_poin || 0) >=
-                        ((quiz as any).passing_grade || 60);
+                      const isPassed = isAttemptPassed(attempt, quiz);
+                      const quizMaxPoin = getQuizMaxPoin(quiz);
+                      const scorePercentage = getAttemptPercentage(
+                        attempt,
+                        quiz,
+                      );
 
                       return (
                         <TableRow key={attempt.id}>
@@ -660,8 +675,11 @@ export default function KuisResultsPage() {
                             </span>
                             <span className="text-muted-foreground">
                               {" / "}
-                              {(quiz as any).total_poin || 100}
+                              {quizMaxPoin}
                             </span>
+                            <div className="text-xs text-muted-foreground">
+                              {scorePercentage.toFixed(1)}%
+                            </div>
                           </TableCell>
 
                           <TableCell className="text-right text-sm text-muted-foreground">
@@ -764,7 +782,7 @@ export default function KuisResultsPage() {
                           Total Poin
                         </Label>
                         <p className="text-2xl font-bold">
-                          {(quiz as any).total_poin || 100}
+                          {getQuizMaxPoin(quiz)}
                         </p>
                       </div>
                       <div>
@@ -797,7 +815,7 @@ export default function KuisResultsPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      {getScoreDistribution(attempts).map((range) => (
+                      {getScoreDistribution(attempts, quiz).map((range) => (
                         <div key={range.label}>
                           <div className="flex items-center justify-between mb-2">
                             <span className="text-sm font-medium">
@@ -870,10 +888,12 @@ export default function KuisResultsPage() {
                       </TableHeader>
                       <TableBody>
                         {filteredAttempts.map((attempt) => {
-                          // FIXED: Changed nilai to total_poin
-                          const isPassed =
-                            (attempt.total_poin || 0) >=
-                            ((quiz as any).passing_grade || 60);
+                          const isPassed = isAttemptPassed(attempt, quiz);
+                          const quizMaxPoin = getQuizMaxPoin(quiz);
+                          const scorePercentage = getAttemptPercentage(
+                            attempt,
+                            quiz,
+                          );
 
                           return (
                             <TableRow key={attempt.id}>
@@ -969,8 +989,11 @@ export default function KuisResultsPage() {
                                     </span>
                                     <span className="text-muted-foreground">
                                       {" / "}
-                                      {(quiz as any).total_poin || 100}
+                                      {quizMaxPoin}
                                     </span>
+                                    <div className="text-xs text-muted-foreground">
+                                      {scorePercentage.toFixed(1)}%
+                                    </div>
                                   </TableCell>
 
                                   <TableCell className="text-right text-sm text-muted-foreground">
@@ -1071,16 +1094,13 @@ function calculateStatistics(
     };
   }
 
-  // FIXED: Changed nilai to total_poin
-  const scores = completedAttempts.map((a) => a.total_poin || 0);
+  const scores = completedAttempts.map((a) => getAttemptPercentage(a, quiz));
   const averageScore = scores.reduce((a, b) => a + b, 0) / scores.length;
   const highestScore = Math.max(...scores);
   const lowestScore = Math.min(...scores);
 
-  const passingGrade = (quiz as any).passing_grade || 60;
   const passedCount = completedAttempts.filter(
-    // FIXED: Changed nilai to total_poin
-    (a) => (a.total_poin || 0) >= passingGrade,
+    (a) => isAttemptPassed(a, quiz),
   ).length;
   const passRate = (passedCount / completedAttempts.length) * 100;
 
@@ -1113,8 +1133,7 @@ function calculateStatistics(
 /**
  * Get score distribution
  */
-function getScoreDistribution(attempts: AttemptWithStudent[]) {
-  // FIXED: Changed status check from 'completed' to 'graded'
+function getScoreDistribution(attempts: AttemptWithStudent[], quiz: Kuis) {
   const completed = attempts.filter((a) => a.status === "graded");
 
   const ranges = [
@@ -1126,13 +1145,49 @@ function getScoreDistribution(attempts: AttemptWithStudent[]) {
   ];
 
   completed.forEach((attempt) => {
-    // FIXED: Changed nilai to total_poin
-    const score = attempt.total_poin || 0;
+    const score = getAttemptPercentage(attempt, quiz);
     const range = ranges.find((r) => score >= r.min && score <= r.max);
     if (range) range.count++;
   });
 
   return ranges;
+}
+
+function getQuizMaxPoin(quiz: Kuis | null): number {
+  if (!quiz) return 100;
+
+  const soal = Array.isArray(quiz.soal) ? quiz.soal : [];
+  const maxFromQuestions = soal.reduce(
+    (sum, item: any) => sum + (item?.poin || 0),
+    0,
+  );
+
+  if (maxFromQuestions > 0) {
+    return maxFromQuestions;
+  }
+
+  return (quiz as any).total_poin || 100;
+}
+
+function getQuizPassingPercentage(quiz: Kuis | null): number {
+  return (quiz as any)?.passing_score ?? (quiz as any)?.passing_grade ?? 60;
+}
+
+function getAttemptPercentage(
+  attempt: Pick<AttemptWithStudent, "total_poin">,
+  quiz: Kuis | null,
+): number {
+  const maxPoin = getQuizMaxPoin(quiz);
+  if (maxPoin <= 0) return 0;
+
+  return ((attempt.total_poin || 0) / maxPoin) * 100;
+}
+
+function isAttemptPassed(
+  attempt: Pick<AttemptWithStudent, "total_poin">,
+  quiz: Kuis | null,
+): boolean {
+  return getAttemptPercentage(attempt, quiz) >= getQuizPassingPercentage(quiz);
 }
 
 /**

@@ -1,0 +1,3022 @@
+﻿<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
+  <p:cSld>
+    <p:spTree>
+      <p:nvGrpSpPr>
+        <p:cNvPr id="1" name="">
+          <a:extLst>
+            <a:ext uri="{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}">
+              <a16:creationId xmlns:a16="http://schemas.microsoft.com/office/drawing/2014/main" id="{A4B9FF68-9C45-2FC7-5F10-9204FB5FCB63}" />
+            </a:ext>
+          </a:extLst>
+        </p:cNvPr>
+        <p:cNvGrpSpPr />
+        <p:nvPr />
+      </p:nvGrpSpPr>
+      <p:grpSpPr>
+        <a:xfrm>
+          <a:off x="0" y="0" />
+          <a:ext cx="0" cy="0" />
+          <a:chOff x="0" y="0" />
+          <a:chExt cx="0" cy="0" />
+        </a:xfrm>
+      </p:grpSpPr>
+      <p:grpSp>
+        <p:nvGrpSpPr>
+          <p:cNvPr id="2" name="Group 2">
+            <a:extLst>
+              <a:ext uri="{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}">
+                <a16:creationId xmlns:a16="http://schemas.microsoft.com/office/drawing/2014/main" id="{A86F97E9-98F1-8444-A0BE-AAE94E4862E3}" />
+              </a:ext>
+            </a:extLst>
+          </p:cNvPr>
+          <p:cNvGrpSpPr />
+          <p:nvPr />
+        </p:nvGrpSpPr>
+        <p:grpSpPr>
+          <a:xfrm rot="10800000">
+            <a:off x="7199051" y="-2747828" />
+            <a:ext cx="11652553" cy="11891876" />
+            <a:chOff x="0" y="0" />
+            <a:chExt cx="15536737" cy="15855835" />
+          </a:xfrm>
+        </p:grpSpPr>
+        <p:sp>
+          <p:nvSpPr>
+            <p:cNvPr id="3" name="TextBox 3">
+              <a:extLst>
+                <a:ext uri="{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}">
+                  <a16:creationId xmlns:a16="http://schemas.microsoft.com/office/drawing/2014/main" id="{4A8E47B3-A128-481E-3CE3-5F96D2715E13}" />
+                </a:ext>
+              </a:extLst>
+            </p:cNvPr>
+            <p:cNvSpPr txBox="1" />
+            <p:nvPr />
+          </p:nvSpPr>
+          <p:spPr>
+            <a:xfrm>
+              <a:off x="7765082" y="7847337" />
+              <a:ext cx="49015" cy="68065" />
+            </a:xfrm>
+            <a:prstGeom prst="rect">
+              <a:avLst />
+            </a:prstGeom>
+          </p:spPr>
+          <p:txBody>
+            <a:bodyPr lIns="0" tIns="0" rIns="0" bIns="0" rtlCol="0" anchor="t">
+              <a:spAutoFit />
+            </a:bodyPr>
+            <a:lstStyle />
+            <a:p>
+              <a:pPr algn="ctr">
+                <a:lnSpc>
+                  <a:spcPts val="540" />
+                </a:lnSpc>
+              </a:pPr>
+              <a:r>
+                <a:rPr lang="en-US" sz="385">
+                  <a:solidFill>
+                    <a:srgbClr val="EEEFEF" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>6</a:t>
+              </a:r>
+            </a:p>
+          </p:txBody>
+        </p:sp>
+        <p:sp>
+          <p:nvSpPr>
+            <p:cNvPr id="4" name="Freeform 4">
+              <a:extLst>
+                <a:ext uri="{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}">
+                  <a16:creationId xmlns:a16="http://schemas.microsoft.com/office/drawing/2014/main" id="{3158454F-1EC5-4A39-3AF1-D9EB187162D6}" />
+                </a:ext>
+              </a:extLst>
+            </p:cNvPr>
+            <p:cNvSpPr />
+            <p:nvPr />
+          </p:nvSpPr>
+          <p:spPr>
+            <a:xfrm>
+              <a:off x="0" y="0" />
+              <a:ext cx="15536737" cy="15855835" />
+            </a:xfrm>
+            <a:custGeom>
+              <a:avLst />
+              <a:gdLst />
+              <a:ahLst />
+              <a:cxnLst />
+              <a:rect l="l" t="t" r="r" b="b" />
+              <a:pathLst>
+                <a:path w="15536737" h="15855835">
+                  <a:moveTo>
+                    <a:pt x="0" y="0" />
+                  </a:moveTo>
+                  <a:lnTo>
+                    <a:pt x="15536737" y="0" />
+                  </a:lnTo>
+                  <a:lnTo>
+                    <a:pt x="15536737" y="15855835" />
+                  </a:lnTo>
+                  <a:lnTo>
+                    <a:pt x="0" y="15855835" />
+                  </a:lnTo>
+                  <a:lnTo>
+                    <a:pt x="0" y="0" />
+                  </a:lnTo>
+                  <a:close />
+                </a:path>
+              </a:pathLst>
+            </a:custGeom>
+            <a:blipFill>
+              <a:blip r:embed="rId2">
+                <a:alphaModFix amt="31999" />
+                <a:extLst>
+                  <a:ext uri="{96DAC541-7B7A-43D3-8B79-37D633B846F1}">
+                    <asvg:svgBlip xmlns:asvg="http://schemas.microsoft.com/office/drawing/2016/SVG/main" r:embed="rId3" />
+                  </a:ext>
+                </a:extLst>
+              </a:blip>
+              <a:stretch>
+                <a:fillRect t="-100" b="-100" />
+              </a:stretch>
+            </a:blipFill>
+          </p:spPr>
+          <p:txBody>
+            <a:bodyPr />
+            <a:lstStyle />
+            <a:p>
+              <a:endParaRPr lang="en-US" dirty="0" />
+            </a:p>
+          </p:txBody>
+        </p:sp>
+      </p:grpSp>
+      <p:grpSp>
+        <p:nvGrpSpPr>
+          <p:cNvPr id="10" name="Group 10">
+            <a:extLst>
+              <a:ext uri="{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}">
+                <a16:creationId xmlns:a16="http://schemas.microsoft.com/office/drawing/2014/main" id="{34B36CC1-1817-DAFA-D1FA-9325E2B2CF3B}" />
+              </a:ext>
+            </a:extLst>
+          </p:cNvPr>
+          <p:cNvGrpSpPr />
+          <p:nvPr />
+        </p:nvGrpSpPr>
+        <p:grpSpPr>
+          <a:xfrm rot="-10800000">
+            <a:off x="-354732" y="2285965" />
+            <a:ext cx="3123170" cy="3107383" />
+            <a:chOff x="0" y="0" />
+            <a:chExt cx="4164227" cy="4143177" />
+          </a:xfrm>
+        </p:grpSpPr>
+        <p:sp>
+          <p:nvSpPr>
+            <p:cNvPr id="11" name="TextBox 11">
+              <a:extLst>
+                <a:ext uri="{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}">
+                  <a16:creationId xmlns:a16="http://schemas.microsoft.com/office/drawing/2014/main" id="{ED60FC60-1174-2D62-944F-116740D2BD70}" />
+                </a:ext>
+              </a:extLst>
+            </p:cNvPr>
+            <p:cNvSpPr txBox="1" />
+            <p:nvPr />
+          </p:nvSpPr>
+          <p:spPr>
+            <a:xfrm>
+              <a:off x="2351639" y="2038043" />
+              <a:ext cx="26722" cy="26722" />
+            </a:xfrm>
+            <a:prstGeom prst="rect">
+              <a:avLst />
+            </a:prstGeom>
+          </p:spPr>
+          <p:txBody>
+            <a:bodyPr lIns="0" tIns="0" rIns="0" bIns="0" rtlCol="0" anchor="t">
+              <a:spAutoFit />
+            </a:bodyPr>
+            <a:lstStyle />
+            <a:p>
+              <a:pPr algn="ctr">
+                <a:lnSpc>
+                  <a:spcPts val="294" />
+                </a:lnSpc>
+              </a:pPr>
+              <a:r>
+                <a:rPr lang="en-US" sz="210">
+                  <a:solidFill>
+                    <a:srgbClr val="EEEFEF" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>3</a:t>
+              </a:r>
+            </a:p>
+          </p:txBody>
+        </p:sp>
+        <p:sp>
+          <p:nvSpPr>
+            <p:cNvPr id="12" name="Freeform 12">
+              <a:extLst>
+                <a:ext uri="{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}">
+                  <a16:creationId xmlns:a16="http://schemas.microsoft.com/office/drawing/2014/main" id="{8E42E15D-7256-D52B-977C-C2260A9FBF7A}" />
+                </a:ext>
+              </a:extLst>
+            </p:cNvPr>
+            <p:cNvSpPr />
+            <p:nvPr />
+          </p:nvSpPr>
+          <p:spPr>
+            <a:xfrm>
+              <a:off x="0" y="0" />
+              <a:ext cx="4164227" cy="4143177" />
+            </a:xfrm>
+            <a:custGeom>
+              <a:avLst />
+              <a:gdLst />
+              <a:ahLst />
+              <a:cxnLst />
+              <a:rect l="l" t="t" r="r" b="b" />
+              <a:pathLst>
+                <a:path w="4164227" h="4143177">
+                  <a:moveTo>
+                    <a:pt x="0" y="0" />
+                  </a:moveTo>
+                  <a:lnTo>
+                    <a:pt x="4164227" y="0" />
+                  </a:lnTo>
+                  <a:lnTo>
+                    <a:pt x="4164227" y="4143177" />
+                  </a:lnTo>
+                  <a:lnTo>
+                    <a:pt x="0" y="4143177" />
+                  </a:lnTo>
+                  <a:lnTo>
+                    <a:pt x="0" y="0" />
+                  </a:lnTo>
+                  <a:close />
+                </a:path>
+              </a:pathLst>
+            </a:custGeom>
+            <a:blipFill>
+              <a:blip r:embed="rId4">
+                <a:extLst>
+                  <a:ext uri="{96DAC541-7B7A-43D3-8B79-37D633B846F1}">
+                    <asvg:svgBlip xmlns:asvg="http://schemas.microsoft.com/office/drawing/2016/SVG/main" r:embed="rId5" />
+                  </a:ext>
+                </a:extLst>
+              </a:blip>
+              <a:stretch>
+                <a:fillRect t="-233" b="-233" />
+              </a:stretch>
+            </a:blipFill>
+          </p:spPr>
+        </p:sp>
+      </p:grpSp>
+      <p:grpSp>
+        <p:nvGrpSpPr>
+          <p:cNvPr id="13" name="Group 13">
+            <a:extLst>
+              <a:ext uri="{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}">
+                <a16:creationId xmlns:a16="http://schemas.microsoft.com/office/drawing/2014/main" id="{549F6325-6871-E88A-2696-438573E7F236}" />
+              </a:ext>
+            </a:extLst>
+          </p:cNvPr>
+          <p:cNvGrpSpPr />
+          <p:nvPr />
+        </p:nvGrpSpPr>
+        <p:grpSpPr>
+          <a:xfrm>
+            <a:off x="-894213" y="-1637953" />
+            <a:ext cx="5971464" cy="5954822" />
+            <a:chOff x="0" y="0" />
+            <a:chExt cx="7961952" cy="7939762" />
+          </a:xfrm>
+        </p:grpSpPr>
+        <p:sp>
+          <p:nvSpPr>
+            <p:cNvPr id="14" name="TextBox 14">
+              <a:extLst>
+                <a:ext uri="{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}">
+                  <a16:creationId xmlns:a16="http://schemas.microsoft.com/office/drawing/2014/main" id="{0D840939-33F3-6B7C-4772-31A20997D34E}" />
+                </a:ext>
+              </a:extLst>
+            </p:cNvPr>
+            <p:cNvSpPr txBox="1" />
+            <p:nvPr />
+          </p:nvSpPr>
+          <p:spPr>
+            <a:xfrm>
+              <a:off x="2248854" y="3924006" />
+              <a:ext cx="28956" cy="38481" />
+            </a:xfrm>
+            <a:prstGeom prst="rect">
+              <a:avLst />
+            </a:prstGeom>
+          </p:spPr>
+          <p:txBody>
+            <a:bodyPr lIns="0" tIns="0" rIns="0" bIns="0" rtlCol="0" anchor="t">
+              <a:spAutoFit />
+            </a:bodyPr>
+            <a:lstStyle />
+            <a:p>
+              <a:pPr algn="ctr">
+                <a:lnSpc>
+                  <a:spcPts val="319" />
+                </a:lnSpc>
+              </a:pPr>
+              <a:r>
+                <a:rPr lang="en-US" sz="228">
+                  <a:solidFill>
+                    <a:srgbClr val="EEEFEF" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>2</a:t>
+              </a:r>
+            </a:p>
+          </p:txBody>
+        </p:sp>
+        <p:grpSp>
+          <p:nvGrpSpPr>
+            <p:cNvPr id="15" name="Group 15">
+              <a:extLst>
+                <a:ext uri="{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}">
+                  <a16:creationId xmlns:a16="http://schemas.microsoft.com/office/drawing/2014/main" id="{B2ADA0EC-592F-60DD-1E07-B8CE7E72E0E8}" />
+                </a:ext>
+              </a:extLst>
+            </p:cNvPr>
+            <p:cNvGrpSpPr />
+            <p:nvPr />
+          </p:nvGrpSpPr>
+          <p:grpSpPr>
+            <a:xfrm>
+              <a:off x="0" y="0" />
+              <a:ext cx="7961952" cy="7939762" />
+              <a:chOff x="0" y="0" />
+              <a:chExt cx="813556" cy="811289" />
+            </a:xfrm>
+          </p:grpSpPr>
+          <p:sp>
+            <p:nvSpPr>
+              <p:cNvPr id="16" name="Freeform 16">
+                <a:extLst>
+                  <a:ext uri="{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}">
+                    <a16:creationId xmlns:a16="http://schemas.microsoft.com/office/drawing/2014/main" id="{CEC73DDE-2EE1-EBC2-0000-E7E84A195415}" />
+                  </a:ext>
+                </a:extLst>
+              </p:cNvPr>
+              <p:cNvSpPr />
+              <p:nvPr />
+            </p:nvSpPr>
+            <p:spPr>
+              <a:xfrm>
+                <a:off x="0" y="0" />
+                <a:ext cx="813556" cy="811289" />
+              </a:xfrm>
+              <a:custGeom>
+                <a:avLst />
+                <a:gdLst />
+                <a:ahLst />
+                <a:cxnLst />
+                <a:rect l="l" t="t" r="r" b="b" />
+                <a:pathLst>
+                  <a:path w="813556" h="811289">
+                    <a:moveTo>
+                      <a:pt x="406778" y="0" />
+                    </a:moveTo>
+                    <a:cubicBezTo>
+                      <a:pt x="182121" y="0" />
+                      <a:pt x="0" y="181613" />
+                      <a:pt x="0" y="405645" />
+                    </a:cubicBezTo>
+                    <a:cubicBezTo>
+                      <a:pt x="0" y="629676" />
+                      <a:pt x="182121" y="811289" />
+                      <a:pt x="406778" y="811289" />
+                    </a:cubicBezTo>
+                    <a:cubicBezTo>
+                      <a:pt x="631436" y="811289" />
+                      <a:pt x="813556" y="629676" />
+                      <a:pt x="813556" y="405645" />
+                    </a:cubicBezTo>
+                    <a:cubicBezTo>
+                      <a:pt x="813556" y="181613" />
+                      <a:pt x="631436" y="0" />
+                      <a:pt x="406778" y="0" />
+                    </a:cubicBezTo>
+                    <a:close />
+                  </a:path>
+                </a:pathLst>
+              </a:custGeom>
+              <a:solidFill>
+                <a:srgbClr val="9DBED7" />
+              </a:solidFill>
+            </p:spPr>
+          </p:sp>
+          <p:sp>
+            <p:nvSpPr>
+              <p:cNvPr id="17" name="TextBox 17">
+                <a:extLst>
+                  <a:ext uri="{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}">
+                    <a16:creationId xmlns:a16="http://schemas.microsoft.com/office/drawing/2014/main" id="{03E9F786-2D78-53CA-AEE1-3319C4F3700E}" />
+                  </a:ext>
+                </a:extLst>
+              </p:cNvPr>
+              <p:cNvSpPr txBox="1" />
+              <p:nvPr />
+            </p:nvSpPr>
+            <p:spPr>
+              <a:xfrm>
+                <a:off x="76271" y="37958" />
+                <a:ext cx="661015" cy="697272" />
+              </a:xfrm>
+              <a:prstGeom prst="rect">
+                <a:avLst />
+              </a:prstGeom>
+            </p:spPr>
+            <p:txBody>
+              <a:bodyPr lIns="50800" tIns="50800" rIns="50800" bIns="50800" rtlCol="0" anchor="ctr" />
+              <a:lstStyle />
+              <a:p>
+                <a:pPr algn="ctr">
+                  <a:lnSpc>
+                    <a:spcPts val="2659" />
+                  </a:lnSpc>
+                </a:pPr>
+                <a:endParaRPr />
+              </a:p>
+            </p:txBody>
+          </p:sp>
+        </p:grpSp>
+      </p:grpSp>
+      <p:grpSp>
+        <p:nvGrpSpPr>
+          <p:cNvPr id="24" name="Group 24">
+            <a:extLst>
+              <a:ext uri="{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}">
+                <a16:creationId xmlns:a16="http://schemas.microsoft.com/office/drawing/2014/main" id="{B1FADA6D-7575-0965-9380-7C46537BC6CD}" />
+              </a:ext>
+            </a:extLst>
+          </p:cNvPr>
+          <p:cNvGrpSpPr />
+          <p:nvPr />
+        </p:nvGrpSpPr>
+        <p:grpSpPr>
+          <a:xfrm>
+            <a:off x="10515600" y="-91942" />
+            <a:ext cx="3999219" cy="1644063" />
+            <a:chOff x="-257654" y="-38100" />
+            <a:chExt cx="1053292" cy="433004" />
+          </a:xfrm>
+        </p:grpSpPr>
+        <p:sp>
+          <p:nvSpPr>
+            <p:cNvPr id="25" name="Freeform 25">
+              <a:extLst>
+                <a:ext uri="{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}">
+                  <a16:creationId xmlns:a16="http://schemas.microsoft.com/office/drawing/2014/main" id="{BCDA2999-BD7D-8801-15B1-1299DDCE03D0}" />
+                </a:ext>
+              </a:extLst>
+            </p:cNvPr>
+            <p:cNvSpPr />
+            <p:nvPr />
+          </p:nvSpPr>
+          <p:spPr>
+            <a:xfrm>
+              <a:off x="-257654" y="132041" />
+              <a:ext cx="892422" cy="262863" />
+            </a:xfrm>
+            <a:custGeom>
+              <a:avLst />
+              <a:gdLst />
+              <a:ahLst />
+              <a:cxnLst />
+              <a:rect l="l" t="t" r="r" b="b" />
+              <a:pathLst>
+                <a:path w="795638" h="163691">
+                  <a:moveTo>
+                    <a:pt x="81846" y="0" />
+                  </a:moveTo>
+                  <a:lnTo>
+                    <a:pt x="713793" y="0" />
+                  </a:lnTo>
+                  <a:cubicBezTo>
+                    <a:pt x="735499" y="0" />
+                    <a:pt x="756317" y="8623" />
+                    <a:pt x="771666" y="23972" />
+                  </a:cubicBezTo>
+                  <a:cubicBezTo>
+                    <a:pt x="787015" y="39321" />
+                    <a:pt x="795638" y="60139" />
+                    <a:pt x="795638" y="81846" />
+                  </a:cubicBezTo>
+                  <a:lnTo>
+                    <a:pt x="795638" y="81846" />
+                  </a:lnTo>
+                  <a:cubicBezTo>
+                    <a:pt x="795638" y="103552" />
+                    <a:pt x="787015" y="124370" />
+                    <a:pt x="771666" y="139719" />
+                  </a:cubicBezTo>
+                  <a:cubicBezTo>
+                    <a:pt x="756317" y="155068" />
+                    <a:pt x="735499" y="163691" />
+                    <a:pt x="713793" y="163691" />
+                  </a:cubicBezTo>
+                  <a:lnTo>
+                    <a:pt x="81846" y="163691" />
+                  </a:lnTo>
+                  <a:cubicBezTo>
+                    <a:pt x="60139" y="163691" />
+                    <a:pt x="39321" y="155068" />
+                    <a:pt x="23972" y="139719" />
+                  </a:cubicBezTo>
+                  <a:cubicBezTo>
+                    <a:pt x="8623" y="124370" />
+                    <a:pt x="0" y="103552" />
+                    <a:pt x="0" y="81846" />
+                  </a:cubicBezTo>
+                  <a:lnTo>
+                    <a:pt x="0" y="81846" />
+                  </a:lnTo>
+                  <a:cubicBezTo>
+                    <a:pt x="0" y="60139" />
+                    <a:pt x="8623" y="39321" />
+                    <a:pt x="23972" y="23972" />
+                  </a:cubicBezTo>
+                  <a:cubicBezTo>
+                    <a:pt x="39321" y="8623" />
+                    <a:pt x="60139" y="0" />
+                    <a:pt x="81846" y="0" />
+                  </a:cubicBezTo>
+                  <a:close />
+                </a:path>
+              </a:pathLst>
+            </a:custGeom>
+            <a:ln />
+          </p:spPr>
+          <p:style>
+            <a:lnRef idx="2">
+              <a:schemeClr val="accent5">
+                <a:shade val="15000" />
+              </a:schemeClr>
+            </a:lnRef>
+            <a:fillRef idx="1">
+              <a:schemeClr val="accent5" />
+            </a:fillRef>
+            <a:effectRef idx="0">
+              <a:schemeClr val="accent5" />
+            </a:effectRef>
+            <a:fontRef idx="minor">
+              <a:schemeClr val="lt1" />
+            </a:fontRef>
+          </p:style>
+          <p:txBody>
+            <a:bodyPr />
+            <a:lstStyle />
+            <a:p>
+              <a:pPr algn="ctr" />
+              <a:r>
+                <a:rPr lang="en-US" sz="2800" dirty="0">
+                  <a:solidFill>
+                    <a:schemeClr val="tx1" />
+                  </a:solidFill>
+                  <a:latin typeface="Arial Black" panose="020B0A04020102020204" pitchFamily="34" charset="0" />
+                </a:rPr>
+                <a:t>ALUR PRESENTASI SKRIPSI</a:t>
+              </a:r>
+            </a:p>
+          </p:txBody>
+        </p:sp>
+        <p:sp>
+          <p:nvSpPr>
+            <p:cNvPr id="26" name="TextBox 26">
+              <a:extLst>
+                <a:ext uri="{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}">
+                  <a16:creationId xmlns:a16="http://schemas.microsoft.com/office/drawing/2014/main" id="{ECC5ACB7-8DA0-CD43-3600-9E538D4F0228}" />
+                </a:ext>
+              </a:extLst>
+            </p:cNvPr>
+            <p:cNvSpPr txBox="1" />
+            <p:nvPr />
+          </p:nvSpPr>
+          <p:spPr>
+            <a:xfrm>
+              <a:off x="0" y="-38100" />
+              <a:ext cx="795638" cy="201791" />
+            </a:xfrm>
+            <a:prstGeom prst="rect">
+              <a:avLst />
+            </a:prstGeom>
+          </p:spPr>
+          <p:txBody>
+            <a:bodyPr lIns="50800" tIns="50800" rIns="50800" bIns="50800" rtlCol="0" anchor="ctr" />
+            <a:lstStyle />
+            <a:p>
+              <a:pPr marL="0" lvl="0" indent="0" algn="ctr">
+                <a:lnSpc>
+                  <a:spcPts val="3079" />
+                </a:lnSpc>
+                <a:spcBef>
+                  <a:spcPct val="0" />
+                </a:spcBef>
+              </a:pPr>
+              <a:endParaRPr />
+            </a:p>
+          </p:txBody>
+        </p:sp>
+      </p:grpSp>
+      <p:grpSp>
+        <p:nvGrpSpPr>
+          <p:cNvPr id="31" name="Group 31">
+            <a:extLst>
+              <a:ext uri="{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}">
+                <a16:creationId xmlns:a16="http://schemas.microsoft.com/office/drawing/2014/main" id="{D3AA574C-EE65-FA26-28AD-3649EBB85DC6}" />
+              </a:ext>
+            </a:extLst>
+          </p:cNvPr>
+          <p:cNvGrpSpPr />
+          <p:nvPr />
+        </p:nvGrpSpPr>
+        <p:grpSpPr>
+          <a:xfrm>
+            <a:off x="17349979" y="7394522" />
+            <a:ext cx="242156" cy="1463579" />
+            <a:chOff x="0" y="0" />
+            <a:chExt cx="322874" cy="1951438" />
+          </a:xfrm>
+        </p:grpSpPr>
+        <p:sp>
+          <p:nvSpPr>
+            <p:cNvPr id="32" name="Freeform 32">
+              <a:extLst>
+                <a:ext uri="{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}">
+                  <a16:creationId xmlns:a16="http://schemas.microsoft.com/office/drawing/2014/main" id="{9D5638DB-C3F2-7D47-3258-72D268D25329}" />
+                </a:ext>
+              </a:extLst>
+            </p:cNvPr>
+            <p:cNvSpPr />
+            <p:nvPr />
+          </p:nvSpPr>
+          <p:spPr>
+            <a:xfrm rot="-5400000">
+              <a:off x="-814282" y="814282" />
+              <a:ext cx="1951438" cy="322874" />
+            </a:xfrm>
+            <a:custGeom>
+              <a:avLst />
+              <a:gdLst />
+              <a:ahLst />
+              <a:cxnLst />
+              <a:rect l="l" t="t" r="r" b="b" />
+              <a:pathLst>
+                <a:path w="1951438" h="322874">
+                  <a:moveTo>
+                    <a:pt x="0" y="0" />
+                  </a:moveTo>
+                  <a:lnTo>
+                    <a:pt x="1951438" y="0" />
+                  </a:lnTo>
+                  <a:lnTo>
+                    <a:pt x="1951438" y="322874" />
+                  </a:lnTo>
+                  <a:lnTo>
+                    <a:pt x="0" y="322874" />
+                  </a:lnTo>
+                  <a:lnTo>
+                    <a:pt x="0" y="0" />
+                  </a:lnTo>
+                  <a:close />
+                </a:path>
+              </a:pathLst>
+            </a:custGeom>
+            <a:blipFill>
+              <a:blip r:embed="rId6">
+                <a:extLst>
+                  <a:ext uri="{96DAC541-7B7A-43D3-8B79-37D633B846F1}">
+                    <asvg:svgBlip xmlns:asvg="http://schemas.microsoft.com/office/drawing/2016/SVG/main" r:embed="rId7" />
+                  </a:ext>
+                </a:extLst>
+              </a:blip>
+              <a:stretch>
+                <a:fillRect />
+              </a:stretch>
+            </a:blipFill>
+          </p:spPr>
+        </p:sp>
+        <p:sp>
+          <p:nvSpPr>
+            <p:cNvPr id="33" name="TextBox 33">
+              <a:extLst>
+                <a:ext uri="{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}">
+                  <a16:creationId xmlns:a16="http://schemas.microsoft.com/office/drawing/2014/main" id="{162BB676-EB18-034D-E81E-84757F30509C}" />
+                </a:ext>
+              </a:extLst>
+            </p:cNvPr>
+            <p:cNvSpPr txBox="1" />
+            <p:nvPr />
+          </p:nvSpPr>
+          <p:spPr>
+            <a:xfrm>
+              <a:off x="148737" y="666872" />
+              <a:ext cx="12700" cy="22225" />
+            </a:xfrm>
+            <a:prstGeom prst="rect">
+              <a:avLst />
+            </a:prstGeom>
+          </p:spPr>
+          <p:txBody>
+            <a:bodyPr lIns="0" tIns="0" rIns="0" bIns="0" rtlCol="0" anchor="t">
+              <a:spAutoFit />
+            </a:bodyPr>
+            <a:lstStyle />
+            <a:p>
+              <a:pPr algn="ctr">
+                <a:lnSpc>
+                  <a:spcPts val="139" />
+                </a:lnSpc>
+              </a:pPr>
+              <a:r>
+                <a:rPr lang="en-US" sz="100">
+                  <a:solidFill>
+                    <a:srgbClr val="82A3BB" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>8</a:t>
+              </a:r>
+            </a:p>
+          </p:txBody>
+        </p:sp>
+      </p:grpSp>
+      <p:grpSp>
+        <p:nvGrpSpPr>
+          <p:cNvPr id="43" name="Group 42">
+            <a:extLst>
+              <a:ext uri="{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}">
+                <a16:creationId xmlns:a16="http://schemas.microsoft.com/office/drawing/2014/main" id="{3A64E441-68E9-44FE-E434-32866A02AB00}" />
+              </a:ext>
+            </a:extLst>
+          </p:cNvPr>
+          <p:cNvGrpSpPr />
+          <p:nvPr />
+        </p:nvGrpSpPr>
+        <p:grpSpPr>
+          <a:xfrm>
+            <a:off x="20878800" y="981075" />
+            <a:ext cx="7066995" cy="7889888" />
+            <a:chOff x="10359238" y="981075" />
+            <a:chExt cx="7066995" cy="7889888" />
+          </a:xfrm>
+        </p:grpSpPr>
+        <p:sp>
+          <p:nvSpPr>
+            <p:cNvPr id="44" name="TextBox 22">
+              <a:extLst>
+                <a:ext uri="{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}">
+                  <a16:creationId xmlns:a16="http://schemas.microsoft.com/office/drawing/2014/main" id="{DB0D7569-DF38-801B-6675-E5A45ACE5C6D}" />
+                </a:ext>
+              </a:extLst>
+            </p:cNvPr>
+            <p:cNvSpPr txBox="1" />
+            <p:nvPr />
+          </p:nvSpPr>
+          <p:spPr>
+            <a:xfrm>
+              <a:off x="10359238" y="2050487" />
+              <a:ext cx="6832486" cy="3544654" />
+            </a:xfrm>
+            <a:prstGeom prst="rect">
+              <a:avLst />
+            </a:prstGeom>
+          </p:spPr>
+          <p:txBody>
+            <a:bodyPr lIns="0" tIns="0" rIns="0" bIns="0" rtlCol="0" anchor="t">
+              <a:spAutoFit />
+            </a:bodyPr>
+            <a:lstStyle />
+            <a:p>
+              <a:pPr algn="r">
+                <a:lnSpc>
+                  <a:spcPts val="13904" />
+                </a:lnSpc>
+              </a:pPr>
+              <a:r>
+                <a:rPr lang="en-US" sz="11783" b="1">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce Heavy" />
+                  <a:ea typeface="Open Sauce Heavy" />
+                  <a:cs typeface="Open Sauce Heavy" />
+                  <a:sym typeface="Open Sauce Heavy" />
+                </a:rPr>
+                <a:t>JUDUL SKRIPSI</a:t>
+              </a:r>
+            </a:p>
+          </p:txBody>
+        </p:sp>
+        <p:sp>
+          <p:nvSpPr>
+            <p:cNvPr id="45" name="TextBox 23">
+              <a:extLst>
+                <a:ext uri="{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}">
+                  <a16:creationId xmlns:a16="http://schemas.microsoft.com/office/drawing/2014/main" id="{14B720DF-833A-06BE-4892-0D2D0796B917}" />
+                </a:ext>
+              </a:extLst>
+            </p:cNvPr>
+            <p:cNvSpPr txBox="1" />
+            <p:nvPr />
+          </p:nvSpPr>
+          <p:spPr>
+            <a:xfrm>
+              <a:off x="12562425" y="8182683" />
+              <a:ext cx="4665791" cy="330633" />
+            </a:xfrm>
+            <a:prstGeom prst="rect">
+              <a:avLst />
+            </a:prstGeom>
+          </p:spPr>
+          <p:txBody>
+            <a:bodyPr lIns="0" tIns="0" rIns="0" bIns="0" rtlCol="0" anchor="t">
+              <a:spAutoFit />
+            </a:bodyPr>
+            <a:lstStyle />
+            <a:p>
+              <a:pPr algn="r">
+                <a:lnSpc>
+                  <a:spcPts val="2774" />
+                </a:lnSpc>
+              </a:pPr>
+              <a:r>
+                <a:rPr lang="en-US" sz="1981">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>Pembimbing I : Nama Pembimbing I</a:t>
+              </a:r>
+            </a:p>
+          </p:txBody>
+        </p:sp>
+        <p:sp>
+          <p:nvSpPr>
+            <p:cNvPr id="46" name="TextBox 24">
+              <a:extLst>
+                <a:ext uri="{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}">
+                  <a16:creationId xmlns:a16="http://schemas.microsoft.com/office/drawing/2014/main" id="{540B7B3C-5A30-9707-7140-A44CBEBE0B9B}" />
+                </a:ext>
+              </a:extLst>
+            </p:cNvPr>
+            <p:cNvSpPr txBox="1" />
+            <p:nvPr />
+          </p:nvSpPr>
+          <p:spPr>
+            <a:xfrm>
+              <a:off x="12650360" y="8565790" />
+              <a:ext cx="4577857" cy="305173" />
+            </a:xfrm>
+            <a:prstGeom prst="rect">
+              <a:avLst />
+            </a:prstGeom>
+          </p:spPr>
+          <p:txBody>
+            <a:bodyPr lIns="0" tIns="0" rIns="0" bIns="0" rtlCol="0" anchor="t">
+              <a:spAutoFit />
+            </a:bodyPr>
+            <a:lstStyle />
+            <a:p>
+              <a:pPr algn="r">
+                <a:lnSpc>
+                  <a:spcPts val="2596" />
+                </a:lnSpc>
+              </a:pPr>
+              <a:r>
+                <a:rPr lang="en-US" sz="1854">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>Pembimbing II : Nama Pembimbing II</a:t>
+              </a:r>
+            </a:p>
+          </p:txBody>
+        </p:sp>
+        <p:sp>
+          <p:nvSpPr>
+            <p:cNvPr id="47" name="TextBox 25">
+              <a:extLst>
+                <a:ext uri="{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}">
+                  <a16:creationId xmlns:a16="http://schemas.microsoft.com/office/drawing/2014/main" id="{E10BEDD8-955A-DB53-154B-8A17DDF1BD89}" />
+                </a:ext>
+              </a:extLst>
+            </p:cNvPr>
+            <p:cNvSpPr txBox="1" />
+            <p:nvPr />
+          </p:nvSpPr>
+          <p:spPr>
+            <a:xfrm>
+              <a:off x="17030201" y="981075" />
+              <a:ext cx="396032" cy="365611" />
+            </a:xfrm>
+            <a:prstGeom prst="rect">
+              <a:avLst />
+            </a:prstGeom>
+          </p:spPr>
+          <p:txBody>
+            <a:bodyPr lIns="0" tIns="0" rIns="0" bIns="0" rtlCol="0" anchor="t">
+              <a:spAutoFit />
+            </a:bodyPr>
+            <a:lstStyle />
+            <a:p>
+              <a:pPr marL="0" lvl="0" indent="0" algn="r">
+                <a:lnSpc>
+                  <a:spcPts val="2940" />
+                </a:lnSpc>
+                <a:spcBef>
+                  <a:spcPct val="0" />
+                </a:spcBef>
+              </a:pPr>
+              <a:r>
+                <a:rPr lang="en-US" sz="2100" dirty="0">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>01</a:t>
+              </a:r>
+            </a:p>
+          </p:txBody>
+        </p:sp>
+        <p:sp>
+          <p:nvSpPr>
+            <p:cNvPr id="48" name="TextBox 26">
+              <a:extLst>
+                <a:ext uri="{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}">
+                  <a16:creationId xmlns:a16="http://schemas.microsoft.com/office/drawing/2014/main" id="{B398296A-E40A-26EF-99BF-A83DD1166ED3}" />
+                </a:ext>
+              </a:extLst>
+            </p:cNvPr>
+            <p:cNvSpPr txBox="1" />
+            <p:nvPr />
+          </p:nvSpPr>
+          <p:spPr>
+            <a:xfrm>
+              <a:off x="13417223" y="981075" />
+              <a:ext cx="3440162" cy="365611" />
+            </a:xfrm>
+            <a:prstGeom prst="rect">
+              <a:avLst />
+            </a:prstGeom>
+          </p:spPr>
+          <p:txBody>
+            <a:bodyPr lIns="0" tIns="0" rIns="0" bIns="0" rtlCol="0" anchor="t">
+              <a:spAutoFit />
+            </a:bodyPr>
+            <a:lstStyle />
+            <a:p>
+              <a:pPr marL="0" lvl="0" indent="0" algn="r">
+                <a:lnSpc>
+                  <a:spcPts val="2940" />
+                </a:lnSpc>
+                <a:spcBef>
+                  <a:spcPct val="0" />
+                </a:spcBef>
+              </a:pPr>
+              <a:r>
+                <a:rPr lang="en-US" sz="2100" dirty="0">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>Pillow Creative ID</a:t>
+              </a:r>
+            </a:p>
+          </p:txBody>
+        </p:sp>
+        <p:sp>
+          <p:nvSpPr>
+            <p:cNvPr id="49" name="TextBox 27">
+              <a:extLst>
+                <a:ext uri="{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}">
+                  <a16:creationId xmlns:a16="http://schemas.microsoft.com/office/drawing/2014/main" id="{6D616DDF-399A-9E28-C4D2-0A92E8C6C820}" />
+                </a:ext>
+              </a:extLst>
+            </p:cNvPr>
+            <p:cNvSpPr txBox="1" />
+            <p:nvPr />
+          </p:nvSpPr>
+          <p:spPr>
+            <a:xfrm>
+              <a:off x="12616479" y="5819193" />
+              <a:ext cx="4575245" cy="1082148" />
+            </a:xfrm>
+            <a:prstGeom prst="rect">
+              <a:avLst />
+            </a:prstGeom>
+          </p:spPr>
+          <p:txBody>
+            <a:bodyPr lIns="0" tIns="0" rIns="0" bIns="0" rtlCol="0" anchor="t">
+              <a:spAutoFit />
+            </a:bodyPr>
+            <a:lstStyle />
+            <a:p>
+              <a:pPr algn="r">
+                <a:lnSpc>
+                  <a:spcPts val="4391" />
+                </a:lnSpc>
+              </a:pPr>
+              <a:r>
+                <a:rPr lang="en-US" sz="3136" b="1">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce Heavy" />
+                  <a:ea typeface="Open Sauce Heavy" />
+                  <a:cs typeface="Open Sauce Heavy" />
+                  <a:sym typeface="Open Sauce Heavy" />
+                </a:rPr>
+                <a:t>Pillow Creative Student</a:t>
+              </a:r>
+            </a:p>
+          </p:txBody>
+        </p:sp>
+        <p:sp>
+          <p:nvSpPr>
+            <p:cNvPr id="50" name="TextBox 28">
+              <a:extLst>
+                <a:ext uri="{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}">
+                  <a16:creationId xmlns:a16="http://schemas.microsoft.com/office/drawing/2014/main" id="{29D1C8CD-CB00-561B-FF00-62233BA6D395}" />
+                </a:ext>
+              </a:extLst>
+            </p:cNvPr>
+            <p:cNvSpPr txBox="1" />
+            <p:nvPr />
+          </p:nvSpPr>
+          <p:spPr>
+            <a:xfrm>
+              <a:off x="12918564" y="7120416" />
+              <a:ext cx="4340736" cy="506166" />
+            </a:xfrm>
+            <a:prstGeom prst="rect">
+              <a:avLst />
+            </a:prstGeom>
+          </p:spPr>
+          <p:txBody>
+            <a:bodyPr lIns="0" tIns="0" rIns="0" bIns="0" rtlCol="0" anchor="t">
+              <a:spAutoFit />
+            </a:bodyPr>
+            <a:lstStyle />
+            <a:p>
+              <a:pPr algn="r">
+                <a:lnSpc>
+                  <a:spcPts val="4117" />
+                </a:lnSpc>
+              </a:pPr>
+              <a:r>
+                <a:rPr lang="en-US" sz="2941">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>NIM: 123456789</a:t>
+              </a:r>
+            </a:p>
+          </p:txBody>
+        </p:sp>
+      </p:grpSp>
+      <p:grpSp>
+        <p:nvGrpSpPr>
+          <p:cNvPr id="51" name="Group 18">
+            <a:extLst>
+              <a:ext uri="{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}">
+                <a16:creationId xmlns:a16="http://schemas.microsoft.com/office/drawing/2014/main" id="{3F5A6E23-EB4A-2817-4178-B54A57F1201A}" />
+              </a:ext>
+            </a:extLst>
+          </p:cNvPr>
+          <p:cNvGrpSpPr />
+          <p:nvPr />
+        </p:nvGrpSpPr>
+        <p:grpSpPr>
+          <a:xfrm>
+            <a:off x="-14573408" y="3758600" />
+            <a:ext cx="2917855" cy="2918562" />
+            <a:chOff x="0" y="0" />
+            <a:chExt cx="11258510" cy="11261238" />
+          </a:xfrm>
+        </p:grpSpPr>
+        <p:sp>
+          <p:nvSpPr>
+            <p:cNvPr id="52" name="TextBox 19">
+              <a:extLst>
+                <a:ext uri="{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}">
+                  <a16:creationId xmlns:a16="http://schemas.microsoft.com/office/drawing/2014/main" id="{BB16E9CF-B064-1A2A-3E1C-64AA4B925C71}" />
+                </a:ext>
+              </a:extLst>
+            </p:cNvPr>
+            <p:cNvSpPr txBox="1" />
+            <p:nvPr />
+          </p:nvSpPr>
+          <p:spPr>
+            <a:xfrm>
+              <a:off x="6972685" y="4828802" />
+              <a:ext cx="21249" cy="31439" />
+            </a:xfrm>
+            <a:prstGeom prst="rect">
+              <a:avLst />
+            </a:prstGeom>
+          </p:spPr>
+          <p:txBody>
+            <a:bodyPr lIns="0" tIns="0" rIns="0" bIns="0" rtlCol="0" anchor="t">
+              <a:spAutoFit />
+            </a:bodyPr>
+            <a:lstStyle />
+            <a:p>
+              <a:pPr algn="ctr">
+                <a:lnSpc>
+                  <a:spcPts val="139" />
+                </a:lnSpc>
+              </a:pPr>
+              <a:r>
+                <a:rPr lang="en-US" sz="100">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>20</a:t>
+              </a:r>
+            </a:p>
+          </p:txBody>
+        </p:sp>
+        <p:grpSp>
+          <p:nvGrpSpPr>
+            <p:cNvPr id="53" name="Group 20">
+              <a:extLst>
+                <a:ext uri="{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}">
+                  <a16:creationId xmlns:a16="http://schemas.microsoft.com/office/drawing/2014/main" id="{D20D70F9-40CE-645B-0E6D-5885A1282C74}" />
+                </a:ext>
+              </a:extLst>
+            </p:cNvPr>
+            <p:cNvGrpSpPr />
+            <p:nvPr />
+          </p:nvGrpSpPr>
+          <p:grpSpPr>
+            <a:xfrm>
+              <a:off x="0" y="0" />
+              <a:ext cx="11258510" cy="11261238" />
+              <a:chOff x="0" y="0" />
+              <a:chExt cx="812800" cy="812997" />
+            </a:xfrm>
+          </p:grpSpPr>
+          <p:sp>
+            <p:nvSpPr>
+              <p:cNvPr id="54" name="Freeform 21">
+                <a:extLst>
+                  <a:ext uri="{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}">
+                    <a16:creationId xmlns:a16="http://schemas.microsoft.com/office/drawing/2014/main" id="{BB10A552-3C57-347E-0B47-08F9D76DFE6F}" />
+                  </a:ext>
+                </a:extLst>
+              </p:cNvPr>
+              <p:cNvSpPr />
+              <p:nvPr />
+            </p:nvSpPr>
+            <p:spPr>
+              <a:xfrm>
+                <a:off x="0" y="0" />
+                <a:ext cx="812800" cy="812997" />
+              </a:xfrm>
+              <a:custGeom>
+                <a:avLst />
+                <a:gdLst />
+                <a:ahLst />
+                <a:cxnLst />
+                <a:rect l="l" t="t" r="r" b="b" />
+                <a:pathLst>
+                  <a:path w="812800" h="812997">
+                    <a:moveTo>
+                      <a:pt x="406400" y="0" />
+                    </a:moveTo>
+                    <a:cubicBezTo>
+                      <a:pt x="181951" y="0" />
+                      <a:pt x="0" y="181996" />
+                      <a:pt x="0" y="406498" />
+                    </a:cubicBezTo>
+                    <a:cubicBezTo>
+                      <a:pt x="0" y="631001" />
+                      <a:pt x="181951" y="812997" />
+                      <a:pt x="406400" y="812997" />
+                    </a:cubicBezTo>
+                    <a:cubicBezTo>
+                      <a:pt x="630849" y="812997" />
+                      <a:pt x="812800" y="631001" />
+                      <a:pt x="812800" y="406498" />
+                    </a:cubicBezTo>
+                    <a:cubicBezTo>
+                      <a:pt x="812800" y="181996" />
+                      <a:pt x="630849" y="0" />
+                      <a:pt x="406400" y="0" />
+                    </a:cubicBezTo>
+                    <a:close />
+                  </a:path>
+                </a:pathLst>
+              </a:custGeom>
+              <a:blipFill>
+                <a:blip r:embed="rId8" />
+                <a:stretch>
+                  <a:fillRect l="-38910" r="-38910" />
+                </a:stretch>
+              </a:blipFill>
+            </p:spPr>
+          </p:sp>
+        </p:grpSp>
+      </p:grpSp>
+      <p:grpSp>
+        <p:nvGrpSpPr>
+          <p:cNvPr id="55" name="Group 54">
+            <a:extLst>
+              <a:ext uri="{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}">
+                <a16:creationId xmlns:a16="http://schemas.microsoft.com/office/drawing/2014/main" id="{3C73433F-FA8C-C2FE-238D-F01AE2BBE680}" />
+              </a:ext>
+            </a:extLst>
+          </p:cNvPr>
+          <p:cNvGrpSpPr />
+          <p:nvPr />
+        </p:nvGrpSpPr>
+        <p:grpSpPr>
+          <a:xfrm rot="16200000">
+            <a:off x="-9236280" y="1652711" />
+            <a:ext cx="6063325" cy="6195674" />
+            <a:chOff x="11206698" y="2006970" />
+            <a:chExt cx="6063325" cy="6195674" />
+          </a:xfrm>
+        </p:grpSpPr>
+        <p:sp>
+          <p:nvSpPr>
+            <p:cNvPr id="56" name="TextBox 38">
+              <a:extLst>
+                <a:ext uri="{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}">
+                  <a16:creationId xmlns:a16="http://schemas.microsoft.com/office/drawing/2014/main" id="{8CD2823A-93F9-AE6C-D965-4EE4261DDA7E}" />
+                </a:ext>
+              </a:extLst>
+            </p:cNvPr>
+            <p:cNvSpPr txBox="1" />
+            <p:nvPr />
+          </p:nvSpPr>
+          <p:spPr>
+            <a:xfrm>
+              <a:off x="11526960" y="2006970" />
+              <a:ext cx="4437033" cy="580299" />
+            </a:xfrm>
+            <a:prstGeom prst="rect">
+              <a:avLst />
+            </a:prstGeom>
+          </p:spPr>
+          <p:txBody>
+            <a:bodyPr lIns="0" tIns="0" rIns="0" bIns="0" rtlCol="0" anchor="t">
+              <a:spAutoFit />
+            </a:bodyPr>
+            <a:lstStyle />
+            <a:p>
+              <a:pPr algn="r">
+                <a:lnSpc>
+                  <a:spcPts val="4758" />
+                </a:lnSpc>
+              </a:pPr>
+              <a:r>
+                <a:rPr lang="en-US" sz="3399" b="1" dirty="0">
+                  <a:solidFill>
+                    <a:srgbClr val="FFFFFF" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce Heavy" />
+                  <a:ea typeface="Open Sauce Heavy" />
+                  <a:cs typeface="Open Sauce Heavy" />
+                  <a:sym typeface="Open Sauce Heavy" />
+                </a:rPr>
+                <a:t>LATAR BELAKANG</a:t>
+              </a:r>
+            </a:p>
+          </p:txBody>
+        </p:sp>
+        <p:sp>
+          <p:nvSpPr>
+            <p:cNvPr id="57" name="TextBox 39">
+              <a:extLst>
+                <a:ext uri="{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}">
+                  <a16:creationId xmlns:a16="http://schemas.microsoft.com/office/drawing/2014/main" id="{FFE1B6FF-2D0A-7BD1-C0D9-E122A8C6589F}" />
+                </a:ext>
+              </a:extLst>
+            </p:cNvPr>
+            <p:cNvSpPr txBox="1" />
+            <p:nvPr />
+          </p:nvSpPr>
+          <p:spPr>
+            <a:xfrm>
+              <a:off x="11206698" y="3986774" />
+              <a:ext cx="6063325" cy="4215870" />
+            </a:xfrm>
+            <a:prstGeom prst="rect">
+              <a:avLst />
+            </a:prstGeom>
+          </p:spPr>
+          <p:txBody>
+            <a:bodyPr lIns="0" tIns="0" rIns="0" bIns="0" rtlCol="0" anchor="t">
+              <a:spAutoFit />
+            </a:bodyPr>
+            <a:lstStyle />
+            <a:p>
+              <a:pPr algn="just">
+                <a:lnSpc>
+                  <a:spcPts val="2780" />
+                </a:lnSpc>
+              </a:pPr>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>Lorem ipsum dolor sit </a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0" err="1">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>amet</a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>, </a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0" err="1">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>consectetur</a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>
+                </a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0" err="1">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>adipiscing</a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>
+                </a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0" err="1">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>elit</a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>. Donec non </a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0" err="1">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>feugiat</a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>
+                </a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0" err="1">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>tortor</a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>. Proin </a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0" err="1">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>rhoncus</a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t> ac ligula </a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0" err="1">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>ut</a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>
+                </a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0" err="1">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>laoreet</a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>. </a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0" err="1">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>Quisque</a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>
+                </a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0" err="1">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>consectetur</a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>, </a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0" err="1">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>urna</a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t> id semper pharetra, </a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0" err="1">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>tellus</a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>
+                </a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0" err="1">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>urna</a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>
+                </a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0" err="1">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>ultricies</a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t> lorem, at </a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0" err="1">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>luctus</a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>
+                </a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0" err="1">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>elit</a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t> ex </a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0" err="1">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>quis</a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t> mi. Sed </a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0" err="1">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>aliquam</a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>
+                </a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0" err="1">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>varius</a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>
+                </a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0" err="1">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>nisl</a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>, </a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0" err="1">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>eget</a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>
+                </a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0" err="1">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>scelerisque</a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>
+                </a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0" err="1">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>sem</a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>
+                </a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0" err="1">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>rhoncus</a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t> in. </a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0" err="1">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>Suspendisse</a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>
+                </a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0" err="1">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>potenti</a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>. </a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0" err="1">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>Etiam</a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t> vitae </a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0" err="1">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>felis</a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>
+                </a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0" err="1">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>massa</a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>. Ut </a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0" err="1">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>consequat</a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>
+                </a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0" err="1">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>quam</a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t> mi, </a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0" err="1">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>eget</a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>
+                </a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0" err="1">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>congue</a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>
+                </a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0" err="1">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>enim</a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>
+                </a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0" err="1">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>tincidunt</a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t> a. </a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0" err="1">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>Interdum</a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t> et </a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0" err="1">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>malesuada</a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t> fames ac ante ipsum </a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0" err="1">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>primis</a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t> in </a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0" err="1">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>faucibus</a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>. Nam </a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0" err="1">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>eget</a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t> libero </a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0" err="1">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>facilisis</a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>, </a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0" err="1">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>feugiat</a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>
+                </a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0" err="1">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>lacus</a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t> sit </a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0" err="1">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>amet</a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>, semper </a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0" err="1">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>elit</a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>. Morbi </a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0" err="1">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>consequat</a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>
+                </a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0" err="1">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>felis</a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>
+                </a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0" err="1">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>ut</a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>
+                </a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0" err="1">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>justo</a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t> maximus </a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0" err="1">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>ullamcorper</a:t>
+              </a:r>
+              <a:r>
+                <a:rPr lang="en-US" sz="1985" dirty="0">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>..</a:t>
+              </a:r>
+            </a:p>
+          </p:txBody>
+        </p:sp>
+      </p:grpSp>
+      <p:pic>
+        <p:nvPicPr>
+          <p:cNvPr id="59" name="Picture 58">
+            <a:extLst>
+              <a:ext uri="{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}">
+                <a16:creationId xmlns:a16="http://schemas.microsoft.com/office/drawing/2014/main" id="{47DBAB1F-C3C3-7911-72FD-20DE733F6EBC}" />
+              </a:ext>
+            </a:extLst>
+          </p:cNvPr>
+          <p:cNvPicPr>
+            <a:picLocks noChangeAspect="1" />
+          </p:cNvPicPr>
+          <p:nvPr />
+        </p:nvPicPr>
+        <p:blipFill>
+          <a:blip r:embed="rId9">
+            <a:extLst>
+              <a:ext uri="{28A0092B-C50C-407E-A947-70E740481C1C}">
+                <a14:useLocalDpi xmlns:a14="http://schemas.microsoft.com/office/drawing/2010/main" val="0" />
+              </a:ext>
+            </a:extLst>
+          </a:blip>
+          <a:stretch>
+            <a:fillRect />
+          </a:stretch>
+        </p:blipFill>
+        <p:spPr>
+          <a:xfrm>
+            <a:off x="1085820" y="-91942" />
+            <a:ext cx="3859741" cy="3843682" />
+          </a:xfrm>
+          <a:prstGeom prst="rect">
+            <a:avLst />
+          </a:prstGeom>
+        </p:spPr>
+      </p:pic>
+      <p:sp>
+        <p:nvSpPr>
+          <p:cNvPr id="65" name="TextBox 64">
+            <a:extLst>
+              <a:ext uri="{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}">
+                <a16:creationId xmlns:a16="http://schemas.microsoft.com/office/drawing/2014/main" id="{9DD567CB-C610-693F-F427-047F777A85C7}" />
+              </a:ext>
+            </a:extLst>
+          </p:cNvPr>
+          <p:cNvSpPr txBox="1" />
+          <p:nvPr />
+        </p:nvSpPr>
+        <p:spPr>
+          <a:xfrm>
+            <a:off x="9361688" y="2198125" />
+            <a:ext cx="7867212" cy="5262979" />
+          </a:xfrm>
+          <a:prstGeom prst="rect">
+            <a:avLst />
+          </a:prstGeom>
+          <a:noFill />
+        </p:spPr>
+        <p:txBody>
+          <a:bodyPr wrap="square" rtlCol="0">
+            <a:spAutoFit />
+          </a:bodyPr>
+          <a:lstStyle />
+          <a:p>
+            <a:pPr marL="457200" indent="-457200">
+              <a:buFont typeface="Wingdings" panose="05000000000000000000" pitchFamily="2" charset="2" />
+              <a:buChar char="q" />
+            </a:pPr>
+            <a:r>
+              <a:rPr lang="en-US" sz="2800" dirty="0" err="1">
+                <a:latin typeface="Arial Black" panose="020B0A04020102020204" pitchFamily="34" charset="0" />
+              </a:rPr>
+              <a:t>Masalah</a:t>
+            </a:r>
+            <a:endParaRPr lang="en-US" sz="2800" dirty="0">
+              <a:latin typeface="Arial Black" panose="020B0A04020102020204" pitchFamily="34" charset="0" />
+            </a:endParaRPr>
+          </a:p>
+          <a:p>
+            <a:pPr marL="457200" indent="-457200">
+              <a:buFont typeface="Wingdings" panose="05000000000000000000" pitchFamily="2" charset="2" />
+              <a:buChar char="v" />
+            </a:pPr>
+            <a:r>
+              <a:rPr lang="en-US" sz="2800" dirty="0">
+                <a:latin typeface="Arial Black" panose="020B0A04020102020204" pitchFamily="34" charset="0" />
+              </a:rPr>
+              <a:t>Latar </a:t>
+            </a:r>
+            <a:r>
+              <a:rPr lang="en-US" sz="2800" dirty="0" err="1">
+                <a:latin typeface="Arial Black" panose="020B0A04020102020204" pitchFamily="34" charset="0" />
+              </a:rPr>
+              <a:t>PWA</a:t>
+            </a:r>
+            <a:endParaRPr lang="en-US" sz="2800" dirty="0">
+              <a:latin typeface="Arial Black" panose="020B0A04020102020204" pitchFamily="34" charset="0" />
+            </a:endParaRPr>
+          </a:p>
+          <a:p>
+            <a:pPr marL="457200" indent="-457200">
+              <a:buFont typeface="Wingdings" panose="05000000000000000000" pitchFamily="2" charset="2" />
+              <a:buChar char="v" />
+            </a:pPr>
+            <a:r>
+              <a:rPr lang="en-US" sz="2800" dirty="0" err="1">
+                <a:latin typeface="Arial Black" panose="020B0A04020102020204" pitchFamily="34" charset="0" />
+              </a:rPr>
+              <a:t>Metode</a:t>
+            </a:r>
+            <a:r>
+              <a:rPr lang="en-US" sz="2800" dirty="0">
+                <a:latin typeface="Arial Black" panose="020B0A04020102020204" pitchFamily="34" charset="0" />
+              </a:rPr>
+              <a:t>
+              </a:t>
+            </a:r>
+            <a:r>
+              <a:rPr lang="en-US" sz="2800" dirty="0" err="1">
+                <a:latin typeface="Arial Black" panose="020B0A04020102020204" pitchFamily="34" charset="0" />
+              </a:rPr>
+              <a:t>R&amp;D</a:t>
+            </a:r>
+            <a:endParaRPr lang="en-US" sz="2800" dirty="0">
+              <a:latin typeface="Arial Black" panose="020B0A04020102020204" pitchFamily="34" charset="0" />
+            </a:endParaRPr>
+          </a:p>
+          <a:p>
+            <a:pPr marL="457200" indent="-457200">
+              <a:buFont typeface="Wingdings" panose="05000000000000000000" pitchFamily="2" charset="2" />
+              <a:buChar char="v" />
+            </a:pPr>
+            <a:r>
+              <a:rPr lang="en-US" sz="2800" dirty="0">
+                <a:latin typeface="Arial Black" panose="020B0A04020102020204" pitchFamily="34" charset="0" />
+              </a:rPr>
+              <a:t>Tujuan &amp; Manfaat </a:t>
+            </a:r>
+            <a:r>
+              <a:rPr lang="en-US" sz="2800" dirty="0" err="1">
+                <a:latin typeface="Arial Black" panose="020B0A04020102020204" pitchFamily="34" charset="0" />
+              </a:rPr>
+              <a:t>sistem</a:t>
+            </a:r>
+            <a:endParaRPr lang="en-US" sz="2800" dirty="0">
+              <a:latin typeface="Arial Black" panose="020B0A04020102020204" pitchFamily="34" charset="0" />
+            </a:endParaRPr>
+          </a:p>
+          <a:p>
+            <a:pPr marL="457200" indent="-457200">
+              <a:buFont typeface="Wingdings" panose="05000000000000000000" pitchFamily="2" charset="2" />
+              <a:buChar char="v" />
+            </a:pPr>
+            <a:r>
+              <a:rPr lang="en-US" sz="2800" dirty="0">
+                <a:latin typeface="Arial Black" panose="020B0A04020102020204" pitchFamily="34" charset="0" />
+              </a:rPr>
+              <a:t>Ruang </a:t>
+            </a:r>
+            <a:r>
+              <a:rPr lang="en-US" sz="2800" dirty="0" err="1">
+                <a:latin typeface="Arial Black" panose="020B0A04020102020204" pitchFamily="34" charset="0" />
+              </a:rPr>
+              <a:t>fitur</a:t>
+            </a:r>
+            <a:r>
+              <a:rPr lang="en-US" sz="2800" dirty="0">
+                <a:latin typeface="Arial Black" panose="020B0A04020102020204" pitchFamily="34" charset="0" />
+              </a:rPr>
+              <a:t> &amp; </a:t>
+            </a:r>
+            <a:r>
+              <a:rPr lang="en-US" sz="2800" dirty="0" err="1">
+                <a:latin typeface="Arial Black" panose="020B0A04020102020204" pitchFamily="34" charset="0" />
+              </a:rPr>
+              <a:t>Pengujian</a:t>
+            </a:r>
+            <a:endParaRPr lang="en-US" sz="2800" dirty="0">
+              <a:latin typeface="Arial Black" panose="020B0A04020102020204" pitchFamily="34" charset="0" />
+            </a:endParaRPr>
+          </a:p>
+          <a:p>
+            <a:pPr marL="457200" indent="-457200">
+              <a:buFont typeface="Wingdings" panose="05000000000000000000" pitchFamily="2" charset="2" />
+              <a:buChar char="q" />
+            </a:pPr>
+            <a:r>
+              <a:rPr lang="en-US" sz="2800" dirty="0" err="1">
+                <a:latin typeface="Arial Black" panose="020B0A04020102020204" pitchFamily="34" charset="0" />
+              </a:rPr>
+              <a:t>Hasil</a:t>
+            </a:r>
+            <a:r>
+              <a:rPr lang="en-US" sz="2800" dirty="0">
+                <a:latin typeface="Arial Black" panose="020B0A04020102020204" pitchFamily="34" charset="0" />
+              </a:rPr>
+              <a:t> Pustaka &amp; </a:t>
+            </a:r>
+            <a:r>
+              <a:rPr lang="en-US" sz="2800" dirty="0" err="1">
+                <a:latin typeface="Arial Black" panose="020B0A04020102020204" pitchFamily="34" charset="0" />
+              </a:rPr>
+              <a:t>pembahasan</a:t>
+            </a:r>
+            <a:r>
+              <a:rPr lang="en-US" sz="2800" dirty="0">
+                <a:latin typeface="Arial Black" panose="020B0A04020102020204" pitchFamily="34" charset="0" />
+              </a:rPr>
+              <a:t> Teori</a:t>
+            </a:r>
+          </a:p>
+          <a:p>
+            <a:pPr marL="457200" indent="-457200">
+              <a:buFont typeface="Wingdings" panose="05000000000000000000" pitchFamily="2" charset="2" />
+              <a:buChar char="q" />
+            </a:pPr>
+            <a:r>
+              <a:rPr lang="en-US" sz="2800" dirty="0" err="1">
+                <a:latin typeface="Arial Black" panose="020B0A04020102020204" pitchFamily="34" charset="0" />
+              </a:rPr>
+              <a:t>Kesimpulan</a:t>
+            </a:r>
+            <a:r>
+              <a:rPr lang="en-US" sz="2800" dirty="0">
+                <a:latin typeface="Arial Black" panose="020B0A04020102020204" pitchFamily="34" charset="0" />
+              </a:rPr>
+              <a:t>
+              </a:t>
+            </a:r>
+            <a:r>
+              <a:rPr lang="en-US" sz="2800" dirty="0" err="1">
+                <a:latin typeface="Arial Black" panose="020B0A04020102020204" pitchFamily="34" charset="0" />
+              </a:rPr>
+              <a:t>sistem</a:t>
+            </a:r>
+            <a:endParaRPr lang="en-US" sz="2800" dirty="0">
+              <a:latin typeface="Arial Black" panose="020B0A04020102020204" pitchFamily="34" charset="0" />
+            </a:endParaRPr>
+          </a:p>
+          <a:p>
+            <a:pPr marL="457200" indent="-457200">
+              <a:buFont typeface="Wingdings" panose="05000000000000000000" pitchFamily="2" charset="2" />
+              <a:buChar char="q" />
+            </a:pPr>
+            <a:r>
+              <a:rPr lang="en-US" sz="2800" dirty="0">
+                <a:latin typeface="Arial Black" panose="020B0A04020102020204" pitchFamily="34" charset="0" />
+              </a:rPr>
+              <a:t>Desain </a:t>
+            </a:r>
+            <a:r>
+              <a:rPr lang="en-US" sz="2800" dirty="0" err="1">
+                <a:latin typeface="Arial Black" panose="020B0A04020102020204" pitchFamily="34" charset="0" />
+              </a:rPr>
+              <a:t>Sistem</a:t>
+            </a:r>
+            <a:r>
+              <a:rPr lang="en-US" sz="2800" dirty="0">
+                <a:latin typeface="Arial Black" panose="020B0A04020102020204" pitchFamily="34" charset="0" />
+              </a:rPr>
+              <a:t> &amp; </a:t>
+            </a:r>
+            <a:r>
+              <a:rPr lang="en-US" sz="2800" dirty="0" err="1">
+                <a:latin typeface="Arial Black" panose="020B0A04020102020204" pitchFamily="34" charset="0" />
+              </a:rPr>
+              <a:t>
+              </a:t>
+            </a:r>
+            <a:endParaRPr lang="en-US" sz="2800" dirty="0">
+              <a:latin typeface="Arial Black" panose="020B0A04020102020204" pitchFamily="34" charset="0" />
+            </a:endParaRPr>
+          </a:p>
+          <a:p>
+            <a:pPr marL="457200" indent="-457200">
+              <a:buFont typeface="Wingdings" panose="05000000000000000000" pitchFamily="2" charset="2" />
+              <a:buChar char="q" />
+            </a:pPr>
+            <a:r>
+              <a:rPr lang="en-US" sz="2800" dirty="0">
+                <a:latin typeface="Arial Black" panose="020B0A04020102020204" pitchFamily="34" charset="0" />
+              </a:rPr>
+              <a:t>Jadwal </a:t>
+            </a:r>
+            <a:r>
+              <a:rPr lang="en-US" sz="2800" dirty="0" err="1">
+                <a:latin typeface="Arial Black" panose="020B0A04020102020204" pitchFamily="34" charset="0" />
+              </a:rPr>
+              <a:t>sistem</a:t>
+            </a:r>
+            <a:endParaRPr lang="en-US" sz="2800" dirty="0">
+              <a:latin typeface="Arial Black" panose="020B0A04020102020204" pitchFamily="34" charset="0" />
+            </a:endParaRPr>
+          </a:p>
+          <a:p>
+            <a:pPr marL="457200" indent="-457200">
+              <a:buFont typeface="Wingdings" panose="05000000000000000000" pitchFamily="2" charset="2" />
+              <a:buChar char="q" />
+            </a:pPr>
+            <a:r>
+              <a:rPr lang="en-US" sz="2800" dirty="0">
+                <a:latin typeface="Arial Black" panose="020B0A04020102020204" pitchFamily="34" charset="0" />
+              </a:rPr>
+              <a:t>Kesimpulan Awal &amp; Hasil yang </a:t>
+            </a:r>
+            <a:r>
+              <a:rPr lang="en-US" sz="2800" dirty="0" err="1">
+                <a:latin typeface="Arial Black" panose="020B0A04020102020204" pitchFamily="34" charset="0" />
+              </a:rPr>
+              <a:t>
+              </a:t>
+            </a:r>
+            <a:endParaRPr lang="en-US" sz="2800" dirty="0">
+              <a:latin typeface="Arial Black" panose="020B0A04020102020204" pitchFamily="34" charset="0" />
+            </a:endParaRPr>
+          </a:p>
+          <a:p>
+            <a:pPr marL="457200" indent="-457200">
+              <a:buFont typeface="Wingdings" panose="05000000000000000000" pitchFamily="2" charset="2" />
+              <a:buChar char="q" />
+            </a:pPr>
+            <a:r>
+              <a:rPr lang="en-US" sz="2800" dirty="0">
+                <a:latin typeface="Arial Black" panose="020B0A04020102020204" pitchFamily="34" charset="0" />
+              </a:rPr>
+              <a:t>Tanya jawab</a:t>
+            </a:r>
+          </a:p>
+        </p:txBody>
+      </p:sp>
+      <p:pic>
+        <p:nvPicPr>
+          <p:cNvPr id="6" name="Picture 5">
+            <a:extLst>
+              <a:ext uri="{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}">
+                <a16:creationId xmlns:a16="http://schemas.microsoft.com/office/drawing/2014/main" id="{3CA21C05-DB23-267E-A916-38695A9CFA9B}" />
+              </a:ext>
+            </a:extLst>
+          </p:cNvPr>
+          <p:cNvPicPr>
+            <a:picLocks noChangeAspect="1" />
+          </p:cNvPicPr>
+          <p:nvPr />
+        </p:nvPicPr>
+        <p:blipFill>
+          <a:blip r:embed="rId10" cstate="print">
+            <a:extLst>
+              <a:ext uri="{28A0092B-C50C-407E-A947-70E740481C1C}">
+                <a14:useLocalDpi xmlns:a14="http://schemas.microsoft.com/office/drawing/2010/main" val="0" />
+              </a:ext>
+            </a:extLst>
+          </a:blip>
+          <a:stretch>
+            <a:fillRect />
+          </a:stretch>
+        </p:blipFill>
+        <p:spPr>
+          <a:xfrm>
+            <a:off x="20828034" y="7891991" />
+            <a:ext cx="2610092" cy="2752597" />
+          </a:xfrm>
+          <a:prstGeom prst="rect">
+            <a:avLst />
+          </a:prstGeom>
+        </p:spPr>
+      </p:pic>
+    </p:spTree>
+    <p:extLst>
+      <p:ext uri="{BB962C8B-B14F-4D97-AF65-F5344CB8AC3E}">
+        <p14:creationId xmlns:p14="http://schemas.microsoft.com/office/powerpoint/2010/main" val="3340233909" />
+      </p:ext>
+    </p:extLst>
+  </p:cSld>
+  <p:clrMapOvr>
+    <a:masterClrMapping />
+  </p:clrMapOvr>
+  <mc:AlternateContent xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:p159="http://schemas.microsoft.com/office/powerpoint/2015/09/main">
+    <mc:Choice Requires="p159">
+      <p:transition spd="slow" xmlns:p14="http://schemas.microsoft.com/office/powerpoint/2010/main" p14:dur="2000" advTm="173">
+        <p159:morph option="byObject" />
+      </p:transition>
+    </mc:Choice>
+    <mc:Fallback xmlns="">
+      <p:transition spd="slow" advTm="173">
+        <p:fade />
+      </p:transition>
+    </mc:Fallback>
+  </mc:AlternateContent>
+</p:sld>

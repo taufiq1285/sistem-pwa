@@ -28,6 +28,7 @@ import {
   getCachedQuiz,
   getCachedQuestions,
   getOfflineAnswers,
+  syncPendingOfflineQuizSubmission,
 } from "@/lib/api/kuis.api";
 // ✅ SECURITY FIX: Import secure API to show jawaban_benar in results
 import { getSoalForResult } from "@/lib/api/kuis-secure.api";
@@ -98,9 +99,9 @@ export default function KuisResultPage() {
       setLoading(true);
       setError(null);
 
-      if (!navigator.onLine) {
-        const cachedAttempt = await getCachedAttempt(attemptId);
+      const cachedAttempt = await getCachedAttempt(attemptId);
 
+      if (!navigator.onLine) {
         if (!cachedAttempt) {
           throw new Error(
             "Perangkat sedang offline dan hasil tugas praktikum ini belum pernah disimpan di perangkat.",
@@ -149,14 +150,66 @@ export default function KuisResultPage() {
         return;
       }
 
+      if (cachedAttempt?.offline_submit_pending) {
+        try {
+          await syncPendingOfflineQuizSubmission(attemptId);
+        } catch (syncError) {
+          console.warn(
+            "Pending offline submission belum berhasil disinkronkan, menampilkan cache lokal:",
+            syncError,
+          );
+
+          const cachedQuiz =
+            ((cachedAttempt.kuis as Kuis | undefined) ?? null) ||
+            (kuisId ? await getCachedQuiz(kuisId) : null);
+          const cachedQuestions =
+            (await getCachedQuestions(kuisId || "")) ||
+            ((cachedQuiz?.soal as Soal[]) ?? []);
+          const cachedAnswers =
+            ((cachedAttempt.jawaban as Jawaban[] | undefined) ?? []).length > 0
+              ? ((cachedAttempt.jawaban as Jawaban[]) ?? [])
+              : await Promise.all(
+                  Object.entries(await getOfflineAnswers(attemptId)).map(
+                    async ([soalId, jawaban]) =>
+                      ({
+                        id: `${attemptId}-${soalId}`,
+                        attempt_id: attemptId,
+                        soal_id: soalId,
+                        jawaban_mahasiswa: jawaban,
+                        jawaban,
+                        poin_diperoleh: null,
+                        is_correct: null,
+                        feedback: null,
+                        is_synced: false,
+                      }) as Jawaban,
+                  ),
+                );
+
+          if (cachedQuiz) {
+            setAttempt(cachedAttempt);
+            setQuiz(cachedQuiz);
+            setQuestions(cachedQuestions);
+            setAnswers(cachedAnswers);
+            setIsOfflineData(true);
+            return;
+          }
+        }
+      }
+
       // Load attempt with all related data
       const attemptData = await getAttemptByIdForMahasiswa(attemptId);
 
-      // ✅ FIX: For laporan mode (FILE_UPLOAD), allow viewing results even if status is "in_progress"
-      // This is because laporan doesn't have auto-grading, so students should see their submission immediately
-      const isLaporanMode = (attemptData.kuis as Kuis)?.soal?.every(
-        (s: any) => s.tipe_soal === "file_upload",
-      );
+      // Source of truth: laporan/CBT follows quiz.tipe_kuis.
+      // Fallback to question structure only for legacy data.
+      const quizMeta = attemptData.kuis as Kuis;
+      const isLaporanMode =
+        quizMeta?.tipe_kuis === "essay" ||
+        (!quizMeta?.tipe_kuis &&
+          (quizMeta?.soal?.every(
+            (s: any) =>
+              s.tipe_soal === "file_upload" || s.tipe_soal === "essay",
+          ) ??
+            false));
 
       // Block results access before submission (unless it's laporan mode)
       if ((attemptData as any).status === "in_progress" && !isLaporanMode) {
@@ -237,7 +290,10 @@ export default function KuisResultPage() {
         }
 
         // Grade the answer
-        const result = gradeAnswer(soal, jawaban.jawaban || "");
+        const result = gradeAnswer(
+          soal,
+          jawaban.jawaban || jawaban.jawaban_mahasiswa || "",
+        );
 
         // Save to database
         const promise = gradeAnswerApi(

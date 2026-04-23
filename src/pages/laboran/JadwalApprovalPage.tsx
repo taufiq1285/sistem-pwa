@@ -8,7 +8,7 @@
  * 3. Tidak ada 2 sistem terpisah
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
 import { toast } from "sonner";
@@ -63,7 +63,12 @@ import {
   cancelJadwal,
   reactivateJadwal,
 } from "@/lib/api/jadwal.api";
+import {
+  notifyDosenJadwalStatus,
+  notifyMahasiswaJadwalChange,
+} from "@/lib/api/notification.api";
 import { getLaboratoriumList } from "@/lib/api/laboran.api";
+import { supabase } from "@/lib/supabase/client";
 import type { Jadwal, Laboratorium } from "@/types/jadwal.types";
 
 // ============================================================================
@@ -94,6 +99,8 @@ export default function JadwalApprovalPage() {
 
   const [showReactivateDialog, setShowReactivateDialog] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
+  const todayDate = format(new Date(), "yyyy-MM-dd");
 
   // ============================================================================
   // EFFECTS
@@ -133,11 +140,101 @@ export default function JadwalApprovalPage() {
     loadJadwalData();
   };
 
+  const isPastJadwal = (jadwal?: Jadwal | null) =>
+    Boolean(jadwal?.tanggal_praktikum) &&
+    (jadwal?.tanggal_praktikum || "") < todayDate;
+
+  const latestMataKuliahNameByKelas = useMemo(() => {
+    const latestMap = new Map<string, { namaMk: string; sortKey: string }>();
+
+    jadwalList.forEach((jadwal) => {
+      const kelasId = jadwal.kelas_id;
+      const namaMk = jadwal.mata_kuliah?.nama_mk;
+
+      if (!kelasId || !namaMk) {
+        return;
+      }
+
+      const sortKey =
+        jadwal.tanggal_praktikum ||
+        jadwal.created_at ||
+        jadwal.updated_at ||
+        jadwal.id;
+      const existing = latestMap.get(kelasId);
+
+      if (!existing || sortKey > existing.sortKey) {
+        latestMap.set(kelasId, { namaMk, sortKey });
+      }
+    });
+
+    return latestMap;
+  }, [jadwalList]);
+
+  const getMataKuliahNameForJadwal = (jadwal?: Jadwal | null) => {
+    if (!jadwal) return "Mata Kuliah";
+
+    return (
+      jadwal.mata_kuliah?.nama_mk ||
+      (jadwal.kelas_id
+        ? latestMataKuliahNameByKelas.get(jadwal.kelas_id)?.namaMk
+        : null) ||
+      (jadwal.kelas as any)?.mata_kuliah?.nama_mk ||
+      "Mata Kuliah"
+    );
+  };
+
+  const getDosenUserId = async (dosenId?: string | null) => {
+    if (!dosenId) return null;
+
+    const { data, error } = await supabase
+      .from("dosen")
+      .select("user_id")
+      .eq("id", dosenId)
+      .maybeSingle();
+
+    if (error) {
+      console.error("Error fetching dosen user id:", error);
+      return null;
+    }
+
+    return data?.user_id || null;
+  };
+
+  const getMahasiswaIds = async (kelasId?: string | null): Promise<string[]> => {
+    if (!kelasId) return [];
+
+    const { data, error } = await supabase
+      .from("kelas_mahasiswa")
+      .select("mahasiswa:mahasiswa_id(user_id)")
+      .eq("kelas_id", kelasId)
+      .eq("is_active", true);
+
+    if (error) {
+      console.error("Error fetching mahasiswa ids:", error);
+      return [];
+    }
+
+    return (
+      data
+        ?.map((item: any) => item.mahasiswa?.user_id)
+        .filter((userId: string | undefined): userId is string =>
+          Boolean(userId),
+        ) || []
+    );
+  };
+
   // ============================================================================
   // JADWAL APPROVAL HANDLERS
   // ============================================================================
 
   const handleApproveJadwalClick = (jadwal: Jadwal) => {
+    if (isPastJadwal(jadwal)) {
+      toast.error("Praktikum yang sudah lewat tidak bisa diproses lagi", {
+        description: "Jadwal ini sudah menjadi riwayat tetap.",
+      });
+      return;
+    }
+
     setSelectedJadwal(jadwal);
     setShowApproveDialog(true);
   };
@@ -148,6 +245,20 @@ export default function JadwalApprovalPage() {
     try {
       setSubmitting(true);
       await approveJadwal(selectedJadwal.id);
+
+      const dosenUserId = await getDosenUserId(selectedJadwal.dosen_id);
+      if (dosenUserId) {
+        notifyDosenJadwalStatus(
+          dosenUserId,
+          getMataKuliahNameForJadwal(selectedJadwal),
+          (selectedJadwal.kelas as any)?.nama_kelas || "-",
+          selectedJadwal.tanggal_praktikum || todayDate,
+          "disetujui",
+        ).catch((error) => {
+          console.error("Failed to notify dosen about jadwal approval:", error);
+        });
+      }
+
       toast.success("Jadwal praktikum berhasil disetujui", {
         description: `Lab ${selectedJadwal.laboratorium?.nama_lab} telah di-booking untuk jadwal ini.`,
       });
@@ -163,6 +274,13 @@ export default function JadwalApprovalPage() {
   };
 
   const handleRejectJadwalClick = (jadwal: Jadwal) => {
+    if (isPastJadwal(jadwal)) {
+      toast.error("Praktikum yang sudah lewat tidak bisa diproses lagi", {
+        description: "Jadwal ini sudah menjadi riwayat tetap.",
+      });
+      return;
+    }
+
     setSelectedJadwal(jadwal);
     setRejectionReason("");
     setShowRejectDialog(true);
@@ -179,6 +297,38 @@ export default function JadwalApprovalPage() {
     try {
       setSubmitting(true);
       await rejectJadwal(selectedJadwal.id, rejectionReason.trim());
+
+      const dosenUserId = await getDosenUserId(selectedJadwal.dosen_id);
+      if (dosenUserId) {
+        notifyDosenJadwalStatus(
+          dosenUserId,
+          getMataKuliahNameForJadwal(selectedJadwal),
+          (selectedJadwal.kelas as any)?.nama_kelas || "-",
+          selectedJadwal.tanggal_praktikum || todayDate,
+          "ditolak",
+          `Alasan: ${rejectionReason.trim()}`,
+        ).catch((error) => {
+          console.error("Failed to notify dosen about jadwal rejection:", error);
+        });
+      }
+
+      const mahasiswaIds = await getMahasiswaIds(selectedJadwal.kelas_id);
+      if (mahasiswaIds.length > 0) {
+        notifyMahasiswaJadwalChange(
+          mahasiswaIds,
+          getMataKuliahNameForJadwal(selectedJadwal),
+          (selectedJadwal.kelas as any)?.nama_kelas || "-",
+          selectedJadwal.tanggal_praktikum || todayDate,
+          "dibatalkan",
+          `Jadwal tidak jadi dilaksanakan karena ditolak laboran. Alasan: ${rejectionReason.trim()}`,
+        ).catch((error) => {
+          console.error(
+            "Failed to notify mahasiswa about jadwal rejection:",
+            error,
+          );
+        });
+      }
+
       toast.success("Jadwal praktikum berhasil ditolak", {
         description: "Booking lab dibatalkan.",
       });
@@ -199,6 +349,13 @@ export default function JadwalApprovalPage() {
   // ============================================================================
 
   const handleCancelClick = (jadwal: Jadwal) => {
+    if (isPastJadwal(jadwal)) {
+      toast.error("Praktikum yang sudah lewat tidak bisa dibatalkan lagi", {
+        description: "Jadwal ini sudah menjadi riwayat tetap.",
+      });
+      return;
+    }
+
     setSelectedJadwal(jadwal);
     setCancellationReason("");
     setShowCancelDialog(true);
@@ -215,6 +372,41 @@ export default function JadwalApprovalPage() {
     try {
       setSubmitting(true);
       await cancelJadwal(selectedJadwal.id, cancellationReason.trim());
+
+      const dosenUserId = await getDosenUserId(selectedJadwal.dosen_id);
+      if (dosenUserId) {
+        notifyDosenJadwalStatus(
+          dosenUserId,
+          getMataKuliahNameForJadwal(selectedJadwal),
+          (selectedJadwal.kelas as any)?.nama_kelas || "-",
+          selectedJadwal.tanggal_praktikum || todayDate,
+          "dibatalkan",
+          `Alasan: ${cancellationReason.trim()}`,
+        ).catch((error) => {
+          console.error(
+            "Failed to notify dosen about jadwal cancellation:",
+            error,
+          );
+        });
+      }
+
+      const mahasiswaIds = await getMahasiswaIds(selectedJadwal.kelas_id);
+      if (mahasiswaIds.length > 0) {
+        notifyMahasiswaJadwalChange(
+          mahasiswaIds,
+          getMataKuliahNameForJadwal(selectedJadwal),
+          (selectedJadwal.kelas as any)?.nama_kelas || "-",
+          selectedJadwal.tanggal_praktikum || todayDate,
+          "dibatalkan",
+          `Jadwal dibatalkan oleh laboran. Alasan: ${cancellationReason.trim()}`,
+        ).catch((error) => {
+          console.error(
+            "Failed to notify mahasiswa about jadwal cancellation:",
+            error,
+          );
+        });
+      }
+
       toast.success("Jadwal praktikum berhasil dibatalkan");
       setShowCancelDialog(false);
       setSelectedJadwal(null);
@@ -229,6 +421,13 @@ export default function JadwalApprovalPage() {
   };
 
   const handleReactivateClick = (jadwal: Jadwal) => {
+    if (isPastJadwal(jadwal)) {
+      toast.error("Praktikum yang sudah lewat tidak bisa diaktifkan kembali", {
+        description: "Riwayat praktikum tidak dapat diubah menjadi aktif lagi.",
+      });
+      return;
+    }
+
     setSelectedJadwal(jadwal);
     setShowReactivateDialog(true);
   };
@@ -239,6 +438,40 @@ export default function JadwalApprovalPage() {
     try {
       setSubmitting(true);
       await reactivateJadwal(selectedJadwal.id);
+
+      const dosenUserId = await getDosenUserId(selectedJadwal.dosen_id);
+      if (dosenUserId) {
+        notifyDosenJadwalStatus(
+          dosenUserId,
+          getMataKuliahNameForJadwal(selectedJadwal),
+          (selectedJadwal.kelas as any)?.nama_kelas || "-",
+          selectedJadwal.tanggal_praktikum || todayDate,
+          "diaktifkan_kembali",
+        ).catch((error) => {
+          console.error(
+            "Failed to notify dosen about jadwal reactivation:",
+            error,
+          );
+        });
+      }
+
+      const mahasiswaIds = await getMahasiswaIds(selectedJadwal.kelas_id);
+      if (mahasiswaIds.length > 0) {
+        notifyMahasiswaJadwalChange(
+          mahasiswaIds,
+          getMataKuliahNameForJadwal(selectedJadwal),
+          (selectedJadwal.kelas as any)?.nama_kelas || "-",
+          selectedJadwal.tanggal_praktikum || todayDate,
+          "diupdate",
+          "Jadwal diaktifkan kembali oleh laboran.",
+        ).catch((error) => {
+          console.error(
+            "Failed to notify mahasiswa about jadwal reactivation:",
+            error,
+          );
+        });
+      }
+
       toast.success("Jadwal praktikum berhasil diaktifkan kembali");
       setShowReactivateDialog(false);
       setSelectedJadwal(null);
@@ -255,11 +488,28 @@ export default function JadwalApprovalPage() {
   // STATS
   // ============================================================================
 
+  const pendingJadwal = jadwalList.filter((j) => j.status === "pending");
+  const approvedJadwal = jadwalList.filter(
+    (j) =>
+      j.status === "approved" &&
+      (!j.tanggal_praktikum || j.tanggal_praktikum >= todayDate),
+  );
+  const historyJadwal = jadwalList.filter((j) => {
+    if (j.status === "cancelled" || j.status === "rejected") {
+      return true;
+    }
+
+    return (
+      j.status === "approved" &&
+      Boolean(j.tanggal_praktikum) &&
+      j.tanggal_praktikum < todayDate
+    );
+  });
+
   const stats = {
-    pending: jadwalList.filter((j) => j.status === "pending").length,
-    approved: jadwalList.filter((j) => j.status === "approved").length,
-    cancelled: jadwalList.filter((j) => j.status === "cancelled").length,
-    rejected: jadwalList.filter((j) => j.status === "rejected").length,
+    pending: pendingJadwal.length,
+    approved: approvedJadwal.length,
+    history: historyJadwal.length,
   };
 
   // ============================================================================
@@ -287,6 +537,9 @@ export default function JadwalApprovalPage() {
                     Approve jadwal praktikum dosen termasuk booking laboratorium
                     otomatis.
                   </p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Praktikum yang sudah lewat otomatis menjadi riwayat tetap dan tidak dapat diproses ulang.
+                  </p>
                 </div>
               </div>
             </div>
@@ -305,14 +558,14 @@ export default function JadwalApprovalPage() {
             color="amber"
           />
           <DashboardCard
-            title="Jadwal Aktif"
+            title="Jadwal Disetujui"
             value={stats.approved}
             icon={CheckCircle2}
             color="green"
           />
           <DashboardCard
             title="Riwayat"
-            value={stats.cancelled + stats.rejected}
+            value={stats.history}
             icon={History}
             color="purple"
           />
@@ -354,11 +607,11 @@ export default function JadwalApprovalPage() {
             </TabsTrigger>
             <TabsTrigger value="active" className="gap-2">
               <Calendar className="h-4 w-4" />
-              Jadwal Aktif ({stats.approved})
+              Jadwal Disetujui ({stats.approved})
             </TabsTrigger>
             <TabsTrigger value="history" className="gap-2">
               <History className="h-4 w-4" />
-              Riwayat ({stats.cancelled + stats.rejected})
+              Riwayat ({stats.history})
             </TabsTrigger>
           </TabsList>
 
@@ -366,8 +619,7 @@ export default function JadwalApprovalPage() {
           <TabsContent value="pending" className="space-y-4">
             {loading ? (
               <DashboardSkeleton />
-            ) : jadwalList.filter((j) => j.status === "pending").length ===
-              0 ? (
+            ) : pendingJadwal.length === 0 ? (
               <GlassCard className="border-white/40 bg-white/85 dark:border-white/10 dark:bg-card">
                 <div className="py-12 text-center">
                   <Clock className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
@@ -397,9 +649,7 @@ export default function JadwalApprovalPage() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {jadwalList
-                          .filter((j) => j.status === "pending")
-                          .map((jadwal) => {
+                        {pendingJadwal.map((jadwal) => {
                             const kelas = jadwal.kelas as any;
                             const lab = jadwal.laboratorium as any;
                             const dosen = jadwal.dosen_user as any;
@@ -426,7 +676,7 @@ export default function JadwalApprovalPage() {
                                 <TableCell>
                                   <div>
                                     <div className="font-medium">
-                                      {kelas?.mata_kuliah?.nama_mk || "-"}
+                                      {getMataKuliahNameForJadwal(jadwal)}
                                     </div>
                                     <div className="text-sm text-muted-foreground">
                                       {kelas?.nama_kelas || "-"}
@@ -484,16 +734,15 @@ export default function JadwalApprovalPage() {
           <TabsContent value="active" className="space-y-4">
             {loading ? (
               <DashboardSkeleton />
-            ) : jadwalList.filter((j) => j.status === "approved").length ===
-              0 ? (
+            ) : approvedJadwal.length === 0 ? (
               <GlassCard className="border-white/40 bg-white/85 dark:border-white/10 dark:bg-card">
                 <div className="py-12 text-center">
                   <CheckCircle2 className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
                   <h3 className="text-lg font-semibold">
-                    Tidak ada jadwal aktif
+                    Tidak ada jadwal disetujui
                   </h3>
                   <p className="text-sm text-muted-foreground">
-                    Belum ada jadwal praktikum yang disetujui
+                    Belum ada jadwal praktikum hari ini atau mendatang yang disetujui
                   </p>
                 </div>
               </GlassCard>
@@ -515,9 +764,7 @@ export default function JadwalApprovalPage() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {jadwalList
-                          .filter((j) => j.status === "approved")
-                          .map((jadwal) => {
+                        {approvedJadwal.map((jadwal) => {
                             const kelas = jadwal.kelas as any;
                             const lab = jadwal.laboratorium as any;
                             const dosen = jadwal.dosen_user as any;
@@ -544,7 +791,7 @@ export default function JadwalApprovalPage() {
                                 <TableCell>
                                   <div>
                                     <div className="font-medium">
-                                      {kelas?.mata_kuliah?.nama_mk || "-"}
+                                      {getMataKuliahNameForJadwal(jadwal)}
                                     </div>
                                     <div className="text-sm text-muted-foreground">
                                       {kelas?.nama_kelas || "-"}
@@ -589,15 +836,13 @@ export default function JadwalApprovalPage() {
           <TabsContent value="history" className="space-y-4">
             {loading ? (
               <DashboardSkeleton />
-            ) : jadwalList.filter(
-                (j) => j.status === "cancelled" || j.status === "rejected",
-              ).length === 0 ? (
+            ) : historyJadwal.length === 0 ? (
               <GlassCard className="border-white/40 bg-white/85 dark:border-white/10 dark:bg-card">
                 <div className="py-12 text-center">
                   <History className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
                   <h3 className="text-lg font-semibold">Tidak ada riwayat</h3>
                   <p className="text-sm text-muted-foreground">
-                    Belum ada jadwal yang dibatalkan atau ditolak
+                    Belum ada jadwal yang selesai, dibatalkan, atau ditolak
                   </p>
                 </div>
               </GlassCard>
@@ -620,13 +865,7 @@ export default function JadwalApprovalPage() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {jadwalList
-                          .filter(
-                            (j) =>
-                              j.status === "cancelled" ||
-                              j.status === "rejected",
-                          )
-                          .map((jadwal) => {
+                        {historyJadwal.map((jadwal) => {
                             const kelas = jadwal.kelas as any;
                             const lab = jadwal.laboratorium as any;
                             const dosen = jadwal.dosen_user as any;
@@ -649,13 +888,17 @@ export default function JadwalApprovalPage() {
                                     status={
                                       jadwal.status === "rejected"
                                         ? "error"
-                                        : "offline"
+                                        : jadwal.status === "cancelled"
+                                          ? "offline"
+                                          : "success"
                                     }
                                     pulse={false}
                                   >
                                     {jadwal.status === "rejected"
                                       ? "Ditolak"
-                                      : "Dibatalkan"}
+                                      : jadwal.status === "cancelled"
+                                        ? "Dibatalkan"
+                                        : "Selesai"}
                                   </StatusBadge>
                                 </TableCell>
                                 <TableCell>
@@ -666,7 +909,7 @@ export default function JadwalApprovalPage() {
                                 <TableCell>
                                   <div>
                                     <div className="font-medium">
-                                      {kelas?.mata_kuliah?.nama_mk || "-"}
+                                      {getMataKuliahNameForJadwal(jadwal)}
                                     </div>
                                     <div className="text-sm text-muted-foreground">
                                       {kelas?.nama_kelas || "-"}
@@ -690,7 +933,9 @@ export default function JadwalApprovalPage() {
                                 <TableCell className="max-w-xs truncate">
                                   {jadwal.cancellation_reason ||
                                     jadwal.rejection_reason ||
-                                    "-"}
+                                    (jadwal.status === "approved"
+                                      ? "Praktikum telah lewat dari tanggal pelaksanaan"
+                                      : "-")}
                                 </TableCell>
                                 <TableCell className="text-right">
                                   {jadwal.status === "cancelled" && (
@@ -702,7 +947,7 @@ export default function JadwalApprovalPage() {
                                       }
                                     >
                                       <RotateCcw className="h-4 w-4 mr-2" />
-                                      Aktifkan
+                                      Aktifkan Kembali
                                     </Button>
                                   )}
                                 </TableCell>

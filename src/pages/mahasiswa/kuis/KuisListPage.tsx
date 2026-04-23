@@ -44,7 +44,12 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 // API & Hooks
 import { useAuth } from "@/lib/hooks/useAuth";
-import { getUpcomingQuizzes } from "@/lib/api/kuis.api";
+import {
+  getUpcomingQuizzes,
+  getAttempts,
+  getOfflineAttemptSummariesForMahasiswa,
+  syncPendingOfflineQuizSubmissions,
+} from "@/lib/api/kuis.api";
 import type { UpcomingQuiz } from "@/types/kuis.types";
 import { toast } from "sonner";
 import { cacheAPI, getCachedData } from "@/lib/offline/api-cache";
@@ -58,9 +63,12 @@ type QuizStatus = "all" | "upcoming" | "ongoing" | "completed" | "missed";
 type TaskKind = "tes" | "laporan" | "tugas";
 
 function detectTaskKind(quiz: UpcomingQuiz): TaskKind {
+  if (quiz.tipe_kuis === "essay") return "laporan";
+  if (quiz.tipe_kuis === "pilihan_ganda") return "tes";
+
   const judul = quiz.judul?.toLowerCase() || "";
 
-  // Strong hint: laporan biasanya tidak punya timer
+  // Fallback lama untuk data yang belum punya tipe_kuis
   const durasi = quiz.durasi_menit;
   if (durasi == null || durasi <= 0) return "laporan";
 
@@ -88,6 +96,61 @@ export default function KuisListPage() {
   const quizzesCacheKey = user?.mahasiswa?.id
     ? `mahasiswa_kuis_${user.mahasiswa.id}`
     : null;
+
+  const applyOfflineAttemptOverrides = async (
+    items: UpcomingQuiz[],
+  ): Promise<UpcomingQuiz[]> => {
+    if (!user?.mahasiswa?.id || items.length === 0) {
+      return items;
+    }
+
+    const offlineAttempts = await getOfflineAttemptSummariesForMahasiswa(
+      user.mahasiswa.id,
+    );
+
+    return items.map((quiz) => {
+      const latestAttempt = offlineAttempts
+        .filter((attempt) => attempt.kuis_id === quiz.id)
+        .sort((a, b) => {
+          const aTime =
+            a.offline_submitted_at ||
+            a.submitted_at ||
+            a.updated_at ||
+            a.started_at ||
+            "";
+          const bTime =
+            b.offline_submitted_at ||
+            b.submitted_at ||
+            b.updated_at ||
+            b.started_at ||
+            "";
+          return new Date(bTime).getTime() - new Date(aTime).getTime();
+        })[0];
+
+      if (!latestAttempt) {
+        return quiz;
+      }
+
+      if (
+        latestAttempt.offline_submit_pending ||
+        latestAttempt.status === "submitted" ||
+        latestAttempt.status === "graded"
+      ) {
+        return {
+          ...quiz,
+          status: "completed",
+          can_attempt: false,
+          last_attempt_at:
+            latestAttempt.offline_submitted_at ||
+            latestAttempt.submitted_at ||
+            latestAttempt.started_at ||
+            quiz.last_attempt_at,
+        };
+      }
+
+      return quiz;
+    });
+  };
 
   useEffect(() => {
     if (user?.mahasiswa?.id) loadQuizzes();
@@ -146,9 +209,11 @@ export default function KuisListPage() {
         return;
       }
 
-      setQuizzes(nextQuizzes);
-      setIsOfflineData(false);
-      setLastUpdatedAt(Date.now());
+      applyOfflineAttemptOverrides(nextQuizzes).then((updatedQuizzes) => {
+        setQuizzes(updatedQuizzes);
+        setIsOfflineData(false);
+        setLastUpdatedAt(Date.now());
+      });
     };
 
     window.addEventListener("cache:updated", handleCacheUpdated);
@@ -175,6 +240,10 @@ export default function KuisListPage() {
     setIsLoading(true);
     setError(null);
     try {
+      if (navigator.onLine) {
+        await syncPendingOfflineQuizSubmissions(user.mahasiswa.id);
+      }
+
       const cachedQuizzesEntry =
         await getCachedData<UpcomingQuiz[]>(quizzesCacheKey);
       const cachedQuizzes = Array.isArray(cachedQuizzesEntry?.data)
@@ -182,7 +251,7 @@ export default function KuisListPage() {
         : [];
 
       if (cachedQuizzes.length > 0) {
-        setQuizzes(cachedQuizzes);
+        setQuizzes(await applyOfflineAttemptOverrides(cachedQuizzes));
         setIsOfflineData(!navigator.onLine);
         setLastUpdatedAt(cachedQuizzesEntry?.timestamp || null);
         setIsLoading(false);
@@ -206,7 +275,7 @@ export default function KuisListPage() {
           staleWhileRevalidate: true,
         },
       );
-      setQuizzes(data);
+      setQuizzes(await applyOfflineAttemptOverrides(data));
       setIsOfflineData(false);
       setLastUpdatedAt(Date.now());
       console.log("[KuisList] Data loaded:", data.length, "quizzes");
@@ -245,11 +314,65 @@ export default function KuisListPage() {
 
   const handleStartQuiz = (quizId: string) =>
     navigate(`/mahasiswa/kuis/${quizId}/attempt`);
-  const handleViewResults = (quizId: string) => {
-    // ⚠️ TODO: Need to get the attempt_id first
-    // Route requires both kuisId AND attemptId: /mahasiswa/kuis/:kuisId/result/:attemptId
-    // For now, navigate to attempt page which will redirect to result if already submitted
-    navigate(`/mahasiswa/kuis/${quizId}/attempt`);
+  const handleViewResults = async (quizId: string) => {
+    if (!user?.mahasiswa?.id) {
+      toast.error("Data mahasiswa tidak ditemukan");
+      return;
+    }
+
+    try {
+      const offlineAttempts = await getOfflineAttemptSummariesForMahasiswa(
+        user.mahasiswa.id,
+      );
+
+      let candidateAttempts = offlineAttempts.filter(
+        (attempt) => attempt.kuis_id === quizId,
+      );
+
+      if (navigator.onLine) {
+        const onlineAttempts = await getAttempts({
+          kuis_id: quizId,
+          mahasiswa_id: user.mahasiswa.id,
+        });
+
+        candidateAttempts = [...onlineAttempts, ...candidateAttempts];
+      }
+
+      const latestAttempt = candidateAttempts
+        .filter(
+          (attempt) =>
+            attempt.status === "submitted" ||
+            attempt.status === "graded" ||
+            attempt.offline_submit_pending,
+        )
+        .sort((a, b) => {
+          const aTime =
+            a.offline_submitted_at ||
+            a.submitted_at ||
+            a.updated_at ||
+            a.started_at ||
+            "";
+          const bTime =
+            b.offline_submitted_at ||
+            b.submitted_at ||
+            b.updated_at ||
+            b.started_at ||
+            "";
+          return new Date(bTime).getTime() - new Date(aTime).getTime();
+        })[0];
+
+      if (!latestAttempt?.id) {
+        toast.warning("Hasil tugas belum ditemukan. Membuka halaman tugas...");
+        navigate(`/mahasiswa/kuis/${quizId}/attempt`);
+        return;
+      }
+
+      navigate(`/mahasiswa/kuis/${quizId}/result/${latestAttempt.id}`);
+    } catch (error) {
+      console.error("Failed to open quiz result:", error);
+      toast.error("Gagal membuka hasil tugas");
+      navigate(`/mahasiswa/kuis/${quizId}/attempt`);
+    }
   };
   const handleStatusChange = (status: QuizStatus) => {
     setStatusFilter(status);
@@ -443,7 +566,9 @@ export default function KuisListPage() {
                     isPassed ? "text-success" : "text-danger",
                   )}
                 />
-                <span className="font-medium">Nilai Terbaik</span>
+                <span className="font-medium">
+                  {isLaporan ? "Nilai Laporan" : "Nilai Terbaik"}
+                </span>
               </div>
               <span
                 className={cn(
@@ -486,7 +611,7 @@ export default function KuisListPage() {
                     className="flex-1 gap-2 bg-primary hover:bg-primary/90"
                   >
                     <Play className="h-4 w-4" />
-                    {quiz.attempts_used > 0 ? "Lanjutkan Tes" : "Mulai Tes"}
+                    {quiz.attempts_used > 0 ? "Lanjutkan CBT" : "Mulai CBT"}
                   </Button>
                 )}
                 {isCompleted && quiz.attempts_used > 0 && (

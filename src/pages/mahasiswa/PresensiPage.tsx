@@ -392,7 +392,8 @@ export default function PresensiPage() {
                         <TableCell>
                           <div>
                             <p className="font-medium">
-                              {record.jadwal?.kelas?.mata_kuliah?.nama_mk ||
+                              {record.jadwal?.mata_kuliah?.nama_mk ||
+                                record.jadwal?.kelas?.mata_kuliah?.nama_mk ||
                                 "Unknown"}
                             </p>
                             <p className="text-sm text-muted-foreground">

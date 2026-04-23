@@ -67,8 +67,8 @@ export default function KuisAttemptPage() {
         : await getKuisByIdOffline(kuisId);
       setQuiz(quizData);
 
-      // ✅ SIMPLIFIED: Only check status, no date validation
-      // Tugas aktif = sudah dipublish oleh dosen (status = "published")
+      // Tugas aktif harus published dan berada dalam jendela waktu yang valid,
+      // agar akses direct URL tetap konsisten dengan status pada daftar tugas.
       const status = quizData.status || "draft";
 
       debugLog("🔵 Task status:", status);
@@ -81,8 +81,28 @@ export default function KuisAttemptPage() {
         return;
       }
 
+      const now = new Date();
+      const startDate = quizData.tanggal_mulai
+        ? new Date(quizData.tanggal_mulai)
+        : null;
+      const endDate = quizData.tanggal_selesai
+        ? new Date(quizData.tanggal_selesai)
+        : null;
+
+      if (startDate && now < startDate) {
+        setError("Tugas praktikum ini belum dimulai");
+        setCanAttempt(false);
+        return;
+      }
+
+      if (endDate && now > endDate) {
+        setError("Tugas praktikum ini sudah melewati batas waktu");
+        setCanAttempt(false);
+        return;
+      }
+
       // All checks passed - tugas sudah dipublish, mahasiswa bisa akses
-      debugLog("✅ Tugas sudah dipublish, mahasiswa bisa mengakses");
+      debugLog("✅ Tugas aktif, mahasiswa bisa mengakses");
       setCanAttempt(true);
       setIsOfflineData(!navigator.onLine);
     } catch (err: any) {

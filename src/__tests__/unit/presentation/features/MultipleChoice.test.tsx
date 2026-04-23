@@ -5,11 +5,11 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MultipleChoice } from "@/components/features/kuis/question-types/MultipleChoice";
 import {
-  MultipleChoice,
   validateMultipleChoice,
   generateDefaultOptions,
-} from "@/components/features/kuis/question-types/MultipleChoice";
+} from "@/components/features/kuis/question-types/multiple-choice.utils";
 import type { OpsiJawaban } from "@/types/kuis.types";
 
 function makeOptions(count = 4, correctIndex = 0): OpsiJawaban[] {

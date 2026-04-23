@@ -211,7 +211,7 @@ export async function getMataKuliahWithRelations(
 
     // Get kelas with mahasiswa count
     const kelasList = await query("kelas", {
-      select: "id, kode_kelas, nama_kelas, dosen_id",
+      select: "id, kode_kelas, nama_kelas, dosen_id, mata_kuliah_id",
       order: { column: "kode_kelas", ascending: true },
     });
 

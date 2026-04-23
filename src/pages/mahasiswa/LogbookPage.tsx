@@ -549,31 +549,58 @@ export default function MahasiswaLogbookPage() {
       toast.success("Logbook berhasil diserahkan untuk direview");
 
       // Notify dosen (best-effort, non-blocking)
-      if (selectedLogbook.jadwal?.kelas_id) {
+      if (selectedLogbook.jadwal_id) {
         try {
-          // Get kelas data to find dosen
-          const { data: kelasData } = await supabase
-            .from("kelas")
-            .select("dosen_id, mata_kuliah_id, nama_kelas")
-            .eq("id", selectedLogbook.jadwal.kelas_id)
-            .eq("is_active", true)
+          const { data: jadwalData } = await (supabase as any)
+            .from("jadwal_praktikum")
+            .select("kelas_id, dosen_id, mata_kuliah_id, tanggal_praktikum")
+            .eq("id", selectedLogbook.jadwal_id)
             .maybeSingle();
 
-          if (kelasData?.dosen_id) {
+          const { data: kelasData } = jadwalData?.kelas_id
+            ? await supabase
+                .from("kelas")
+                .select("dosen_id, mata_kuliah_id, nama_kelas")
+                .eq("id", jadwalData.kelas_id)
+                .eq("is_active", true)
+                .maybeSingle()
+            : { data: null };
+
+          const dosenId = jadwalData?.dosen_id || kelasData?.dosen_id;
+          let mataKuliahId = jadwalData?.mata_kuliah_id || null;
+
+          if (!mataKuliahId && jadwalData?.kelas_id) {
+            const { data: latestJadwalMkData } = await (supabase as any)
+              .from("jadwal_praktikum")
+              .select("mata_kuliah_id")
+              .eq("kelas_id", jadwalData.kelas_id)
+              .eq("is_active", true)
+              .not("mata_kuliah_id", "is", null)
+              .order("tanggal_praktikum", { ascending: false })
+              .limit(1);
+
+            mataKuliahId = latestJadwalMkData?.[0]?.mata_kuliah_id || null;
+          }
+
+          if (!mataKuliahId) {
+            mataKuliahId = kelasData?.mata_kuliah_id || null;
+          }
+
+          if (dosenId) {
             // Get dosen's user_id
             const { data: dosenData } = await supabase
               .from("dosen")
               .select("user_id")
-              .eq("id", kelasData.dosen_id)
+              .eq("id", dosenId)
               .single();
 
             if (dosenData?.user_id) {
               // Get mata kuliah name
-              const mataKuliahData = kelasData.mata_kuliah_id
+              const mataKuliahData = mataKuliahId
                 ? await supabase
                     .from("mata_kuliah")
                     .select("nama_mk")
-                    .eq("id", kelasData.mata_kuliah_id)
+                    .eq("id", mataKuliahId)
                     .eq("is_active", true)
                     .maybeSingle()
                 : null;
@@ -581,9 +608,10 @@ export default function MahasiswaLogbookPage() {
               notifyDosenLogbookSubmitted(
                 dosenData.user_id,
                 user?.full_name || "Mahasiswa",
-                kelasData.nama_kelas,
+                kelasData?.nama_kelas || "Kelas",
                 mataKuliahData?.data?.nama_mk || "Mata Kuliah",
-                selectedLogbook.jadwal?.tanggal_praktikum ||
+                jadwalData?.tanggal_praktikum ||
+                  selectedLogbook.jadwal?.tanggal_praktikum ||
                   new Date().toISOString(),
                 selectedLogbook.id,
               ).catch((err) => {

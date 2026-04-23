@@ -12,6 +12,7 @@
  */
 
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   Save,
   Loader2,
@@ -80,9 +81,8 @@ import {
   getNilaiSummary,
   type BatchUpdateNilaiData,
 } from "@/lib/api/nilai.api";
-import { getKelas, updateKelas } from "@/lib/api/kelas.api";
-import { getMyKelas } from "@/lib/api/dosen.api";
-import { getMataKuliah } from "@/lib/api/mata-kuliah.api";
+import { updateKelas } from "@/lib/api/kelas.api";
+import { getMyKelas, type KelasWithStats } from "@/lib/api/dosen.api";
 import type { NilaiWithMahasiswa, NilaiSummary } from "@/types/nilai.types";
 import type { Kelas, BobotNilai } from "@/types/kelas.types";
 import { toast } from "sonner";
@@ -102,6 +102,8 @@ import { useNetworkStatus } from "@/lib/hooks/useNetworkStatus";
 export default function DosenPenilaianPage() {
   const { user } = useAuth();
   const { isOnline } = useNetworkStatus();
+  const [searchParams] = useSearchParams();
+  const kelasFromQuery = searchParams.get("kelas") || "";
 
   // ============================================================================
   // STATE
@@ -112,6 +114,7 @@ export default function DosenPenilaianPage() {
   const [mataKuliahList, setMataKuliahList] = useState<
     Array<{ id: string; nama_mk: string; kode_mk: string }>
   >([]);
+  const [dosenKelasList, setDosenKelasList] = useState<KelasWithStats[]>([]);
   const [selectedMataKuliah, setSelectedMataKuliah] = useState<string>("");
   const [kelasList, setKelasList] = useState<Kelas[]>([]);
   const [selectedKelas, setSelectedKelas] = useState<string>("");
@@ -171,13 +174,38 @@ export default function DosenPenilaianPage() {
       setKelasList([]);
       setSelectedKelas("");
     }
-  }, [selectedMataKuliah]);
+  }, [selectedMataKuliah, dosenKelasList]);
 
   useEffect(() => {
     if (selectedKelas) {
       loadAllKelasData();
     }
   }, [selectedKelas]);
+
+  useEffect(() => {
+    if (!kelasFromQuery || dosenKelasList.length === 0) {
+      return;
+    }
+
+    const targetKelas = dosenKelasList.find((kelas) => kelas.id === kelasFromQuery);
+    if (!targetKelas?.mata_kuliah_id) {
+      return;
+    }
+
+    if (selectedMataKuliah !== targetKelas.mata_kuliah_id) {
+      setSelectedMataKuliah(targetKelas.mata_kuliah_id);
+      return;
+    }
+
+    if (selectedKelas !== targetKelas.id) {
+      setSelectedKelas(targetKelas.id);
+    }
+  }, [
+    dosenKelasList,
+    kelasFromQuery,
+    selectedKelas,
+    selectedMataKuliah,
+  ]);
 
   // ============================================================================
   // DATA LOADING
@@ -191,10 +219,11 @@ export default function DosenPenilaianPage() {
       setLoading(true);
       if (!user?.dosen?.id) return;
 
-      // 🎯 Fetch mata kuliah with offline caching
-      const mataKuliahData = await cacheAPI(
+      // Ambil dari source dosen yang sama dengan dashboard/fitur lain:
+      // jadwal_praktikum aktif dosen yang sudah diturunkan menjadi daftar kelas dosen.
+      const dosenKelasData = await cacheAPI(
         `dosen_mata_kuliah_${user?.dosen?.id}`,
-        () => getMataKuliah({ is_active: true }),
+        () => getMyKelas(),
         {
           ttl: 20 * 60 * 1000, // 20 minutes (mata kuliah jarang berubah)
           forceRefresh,
@@ -202,11 +231,28 @@ export default function DosenPenilaianPage() {
         },
       );
 
-      const mataKuliahArray = mataKuliahData.map((mk: any) => ({
-        id: mk.id,
-        nama_mk: mk.nama_mk,
-        kode_mk: mk.kode_mk,
-      }));
+      setDosenKelasList(dosenKelasData);
+
+      const mataKuliahMap = new Map<
+        string,
+        { id: string; nama_mk: string; kode_mk: string }
+      >();
+
+      dosenKelasData.forEach((kelas) => {
+        if (!kelas.mata_kuliah_id || !kelas.mata_kuliah_nama) {
+          return;
+        }
+
+        if (!mataKuliahMap.has(kelas.mata_kuliah_id)) {
+          mataKuliahMap.set(kelas.mata_kuliah_id, {
+            id: kelas.mata_kuliah_id,
+            nama_mk: kelas.mata_kuliah_nama,
+            kode_mk: kelas.mata_kuliah_kode || "",
+          });
+        }
+      });
+
+      const mataKuliahArray = Array.from(mataKuliahMap.values());
       setMataKuliahList(mataKuliahArray);
 
       console.log("[Penilaian] Mata kuliah loaded:", mataKuliahArray.length);
@@ -226,19 +272,52 @@ export default function DosenPenilaianPage() {
       setLoading(true);
       if (!user?.dosen?.id || !selectedMataKuliah) return;
 
-      // 🎯 Load all kelas with offline caching
-      const allKelas = await cacheAPI(
-        `dosen_kelas_penilaian_${user?.dosen?.id}`,
-        () => getMyKelas(),
-        {
-          ttl: 15 * 60 * 1000, // 15 minutes
-          forceRefresh,
-          staleWhileRevalidate: true,
-        },
-      );
+      const allKelas =
+        dosenKelasList.length > 0
+          ? dosenKelasList
+          : await cacheAPI(
+              `dosen_kelas_penilaian_${user?.dosen?.id}`,
+              () => getMyKelas(),
+              {
+                ttl: 15 * 60 * 1000, // 15 minutes
+                forceRefresh,
+                staleWhileRevalidate: true,
+              },
+            );
 
-      setKelasList(allKelas as unknown as Kelas[]);
-      console.log("[Penilaian] Kelas loaded:", allKelas.length);
+      const filteredKelas = allKelas
+        .filter((kelas) => kelas.mata_kuliah_id === selectedMataKuliah)
+        .map(
+          (kelas): Kelas => ({
+            id: kelas.id,
+            nama_kelas: kelas.nama_kelas,
+            kode_kelas: kelas.kode_kelas,
+            mata_kuliah_id: kelas.mata_kuliah_id || null,
+            dosen_id: user.dosen?.id || null,
+            ruangan: null,
+            kuota: null,
+            is_active: true,
+            semester_ajaran: kelas.semester_ajaran,
+            tahun_ajaran: kelas.tahun_ajaran,
+            created_at: null,
+            updated_at: null,
+            mata_kuliah: kelas.mata_kuliah_id
+              ? {
+                  id: kelas.mata_kuliah_id,
+                  nama_mk: kelas.mata_kuliah_nama || "",
+                  kode_mk: kelas.mata_kuliah_kode || "",
+                }
+              : undefined,
+          }),
+        );
+
+      setKelasList(filteredKelas);
+      setSelectedKelas((currentSelectedKelas) =>
+        filteredKelas.some((kelas) => kelas.id === currentSelectedKelas)
+          ? currentSelectedKelas
+          : "",
+      );
+      console.log("[Penilaian] Kelas loaded:", filteredKelas.length);
     } catch (error) {
       console.error("Error loading kelas:", error);
       toast.error("Gagal memuat data kelas");

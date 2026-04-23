@@ -187,7 +187,7 @@ export function QuizTypeSelector({
 /**
  * Get allowed question types for a quiz type
  */
-export function getAllowedQuestionTypes(quizType: TipeKuis): string[] {
+function getAllowedQuestionTypes(quizType: TipeKuis): string[] {
   const option = QUIZ_TYPE_OPTIONS.find((opt) => opt.type === quizType);
   return option?.questionTypes || [];
 }
@@ -195,7 +195,7 @@ export function getAllowedQuestionTypes(quizType: TipeKuis): string[] {
 /**
  * Check if a question type is allowed for a quiz type
  */
-export function isQuestionTypeAllowed(
+function isQuestionTypeAllowed(
   quizType: TipeKuis,
   questionType: string,
 ): boolean {

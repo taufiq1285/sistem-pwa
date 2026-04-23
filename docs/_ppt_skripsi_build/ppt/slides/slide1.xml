@@ -1,0 +1,1107 @@
+﻿<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
+  <p:cSld>
+    <p:spTree>
+      <p:nvGrpSpPr>
+        <p:cNvPr id="1" name="" />
+        <p:cNvGrpSpPr />
+        <p:nvPr />
+      </p:nvGrpSpPr>
+      <p:grpSpPr>
+        <a:xfrm>
+          <a:off x="0" y="0" />
+          <a:ext cx="0" cy="0" />
+          <a:chOff x="0" y="0" />
+          <a:chExt cx="0" cy="0" />
+        </a:xfrm>
+      </p:grpSpPr>
+      <p:pic>
+        <p:nvPicPr>
+          <p:cNvPr id="4" name="Picture 3">
+            <a:extLst>
+              <a:ext uri="{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}">
+                <a16:creationId xmlns:a16="http://schemas.microsoft.com/office/drawing/2014/main" id="{045CF898-2ECB-2D19-5F0F-69BC15FD0BD0}" />
+              </a:ext>
+            </a:extLst>
+          </p:cNvPr>
+          <p:cNvPicPr>
+            <a:picLocks noChangeAspect="1" />
+          </p:cNvPicPr>
+          <p:nvPr />
+        </p:nvPicPr>
+        <p:blipFill>
+          <a:blip r:embed="rId3">
+            <a:extLst>
+              <a:ext uri="{BEBA8EAE-BF5A-486C-A8C5-ECC9F3942E4B}">
+                <a14:imgProps xmlns:a14="http://schemas.microsoft.com/office/drawing/2010/main">
+                  <a14:imgLayer r:embed="rId4">
+                    <a14:imgEffect>
+                      <a14:sharpenSoften amount="25000" />
+                    </a14:imgEffect>
+                  </a14:imgLayer>
+                </a14:imgProps>
+              </a:ext>
+              <a:ext uri="{28A0092B-C50C-407E-A947-70E740481C1C}">
+                <a14:useLocalDpi xmlns:a14="http://schemas.microsoft.com/office/drawing/2010/main" val="0" />
+              </a:ext>
+            </a:extLst>
+          </a:blip>
+          <a:stretch>
+            <a:fillRect />
+          </a:stretch>
+        </p:blipFill>
+        <p:spPr>
+          <a:xfrm>
+            <a:off x="-65770" y="-83113" />
+            <a:ext cx="18287999" cy="10287000" />
+          </a:xfrm>
+          <a:prstGeom prst="ellipse">
+            <a:avLst />
+          </a:prstGeom>
+          <a:ln w="190500" cap="rnd">
+            <a:solidFill>
+              <a:srgbClr val="C8C6BD" />
+            </a:solidFill>
+            <a:prstDash val="solid" />
+          </a:ln>
+          <a:effectLst>
+            <a:outerShdw blurRad="127000" algn="bl" rotWithShape="0">
+              <a:srgbClr val="000000" />
+            </a:outerShdw>
+          </a:effectLst>
+          <a:scene3d>
+            <a:camera prst="perspectiveFront" fov="5400000" />
+            <a:lightRig rig="threePt" dir="t">
+              <a:rot lat="0" lon="0" rev="19200000" />
+            </a:lightRig>
+          </a:scene3d>
+          <a:sp3d extrusionH="25400">
+            <a:bevelT w="304800" h="152400" prst="hardEdge" />
+            <a:extrusionClr>
+              <a:srgbClr val="000000" />
+            </a:extrusionClr>
+          </a:sp3d>
+        </p:spPr>
+      </p:pic>
+      <p:grpSp>
+        <p:nvGrpSpPr>
+          <p:cNvPr id="32" name="Group 3">
+            <a:extLst>
+              <a:ext uri="{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}">
+                <a16:creationId xmlns:a16="http://schemas.microsoft.com/office/drawing/2014/main" id="{47897D05-34E3-988C-2919-CD90EB52C3E2}" />
+              </a:ext>
+            </a:extLst>
+          </p:cNvPr>
+          <p:cNvGrpSpPr />
+          <p:nvPr />
+        </p:nvGrpSpPr>
+        <p:grpSpPr>
+          <a:xfrm>
+            <a:off x="19739005" y="-502868" />
+            <a:ext cx="15275883" cy="11401914" />
+            <a:chOff x="0" y="0" />
+            <a:chExt cx="20367844" cy="15202551" />
+          </a:xfrm>
+        </p:grpSpPr>
+        <p:sp>
+          <p:nvSpPr>
+            <p:cNvPr id="33" name="TextBox 4">
+              <a:extLst>
+                <a:ext uri="{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}">
+                  <a16:creationId xmlns:a16="http://schemas.microsoft.com/office/drawing/2014/main" id="{9628107F-AA8D-0EA9-9D69-E88AC62F2800}" />
+                </a:ext>
+              </a:extLst>
+            </p:cNvPr>
+            <p:cNvSpPr txBox="1" />
+            <p:nvPr />
+          </p:nvSpPr>
+          <p:spPr>
+            <a:xfrm>
+              <a:off x="4739121" y="5096130" />
+              <a:ext cx="12700" cy="22225" />
+            </a:xfrm>
+            <a:prstGeom prst="rect">
+              <a:avLst />
+            </a:prstGeom>
+          </p:spPr>
+          <p:txBody>
+            <a:bodyPr lIns="0" tIns="0" rIns="0" bIns="0" rtlCol="0" anchor="t">
+              <a:spAutoFit />
+            </a:bodyPr>
+            <a:lstStyle />
+            <a:p>
+              <a:pPr algn="ctr">
+                <a:lnSpc>
+                  <a:spcPts val="139" />
+                </a:lnSpc>
+              </a:pPr>
+              <a:r>
+                <a:rPr lang="en-US" sz="100">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>4</a:t>
+              </a:r>
+            </a:p>
+          </p:txBody>
+        </p:sp>
+        <p:grpSp>
+          <p:nvGrpSpPr>
+            <p:cNvPr id="34" name="Group 5">
+              <a:extLst>
+                <a:ext uri="{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}">
+                  <a16:creationId xmlns:a16="http://schemas.microsoft.com/office/drawing/2014/main" id="{3A4CCF55-8C05-62D1-20E1-5BB9B63DFF6C}" />
+                </a:ext>
+              </a:extLst>
+            </p:cNvPr>
+            <p:cNvGrpSpPr />
+            <p:nvPr />
+          </p:nvGrpSpPr>
+          <p:grpSpPr>
+            <a:xfrm rot="-5400000">
+              <a:off x="2582646" y="-2582646" />
+              <a:ext cx="15202551" cy="20367844" />
+              <a:chOff x="0" y="0" />
+              <a:chExt cx="660400" cy="884781" />
+            </a:xfrm>
+          </p:grpSpPr>
+          <p:sp>
+            <p:nvSpPr>
+              <p:cNvPr id="35" name="Freeform 6">
+                <a:extLst>
+                  <a:ext uri="{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}">
+                    <a16:creationId xmlns:a16="http://schemas.microsoft.com/office/drawing/2014/main" id="{6A881AED-A3FC-4D24-42B7-F45E275455DF}" />
+                  </a:ext>
+                </a:extLst>
+              </p:cNvPr>
+              <p:cNvSpPr />
+              <p:nvPr />
+            </p:nvSpPr>
+            <p:spPr>
+              <a:xfrm>
+                <a:off x="0" y="0" />
+                <a:ext cx="660400" cy="884781" />
+              </a:xfrm>
+              <a:custGeom>
+                <a:avLst />
+                <a:gdLst />
+                <a:ahLst />
+                <a:cxnLst />
+                <a:rect l="l" t="t" r="r" b="b" />
+                <a:pathLst>
+                  <a:path w="660400" h="884781">
+                    <a:moveTo>
+                      <a:pt x="220252" y="19070" />
+                    </a:moveTo>
+                    <a:cubicBezTo>
+                      <a:pt x="254000" y="7556" />
+                      <a:pt x="292600" y="0" />
+                      <a:pt x="330378" y="0" />
+                    </a:cubicBezTo>
+                    <a:cubicBezTo>
+                      <a:pt x="368157" y="0" />
+                      <a:pt x="404509" y="6476" />
+                      <a:pt x="438009" y="17990" />
+                    </a:cubicBezTo>
+                    <a:cubicBezTo>
+                      <a:pt x="438723" y="18350" />
+                      <a:pt x="439435" y="18350" />
+                      <a:pt x="440148" y="18710" />
+                    </a:cubicBezTo>
+                    <a:cubicBezTo>
+                      <a:pt x="565955" y="64765" />
+                      <a:pt x="658618" y="186379" />
+                      <a:pt x="660400" y="330101" />
+                    </a:cubicBezTo>
+                    <a:lnTo>
+                      <a:pt x="660400" y="884781" />
+                    </a:lnTo>
+                    <a:lnTo>
+                      <a:pt x="0" y="884781" />
+                    </a:lnTo>
+                    <a:lnTo>
+                      <a:pt x="0" y="330513" />
+                    </a:lnTo>
+                    <a:cubicBezTo>
+                      <a:pt x="1782" y="185660" />
+                      <a:pt x="93019" y="64045" />
+                      <a:pt x="220252" y="19070" />
+                    </a:cubicBezTo>
+                    <a:close />
+                  </a:path>
+                </a:pathLst>
+              </a:custGeom>
+              <a:solidFill>
+                <a:srgbClr val="FFFFFF" />
+              </a:solidFill>
+            </p:spPr>
+          </p:sp>
+          <p:sp>
+            <p:nvSpPr>
+              <p:cNvPr id="36" name="TextBox 7">
+                <a:extLst>
+                  <a:ext uri="{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}">
+                    <a16:creationId xmlns:a16="http://schemas.microsoft.com/office/drawing/2014/main" id="{330B451F-A0D5-7121-7A72-C0D2B21082EA}" />
+                  </a:ext>
+                </a:extLst>
+              </p:cNvPr>
+              <p:cNvSpPr txBox="1" />
+              <p:nvPr />
+            </p:nvSpPr>
+            <p:spPr>
+              <a:xfrm>
+                <a:off x="0" y="88900" />
+                <a:ext cx="660400" cy="795881" />
+              </a:xfrm>
+              <a:prstGeom prst="rect">
+                <a:avLst />
+              </a:prstGeom>
+            </p:spPr>
+            <p:txBody>
+              <a:bodyPr lIns="50800" tIns="50800" rIns="50800" bIns="50800" rtlCol="0" anchor="ctr" />
+              <a:lstStyle />
+              <a:p>
+                <a:pPr algn="ctr">
+                  <a:lnSpc>
+                    <a:spcPts val="2659" />
+                  </a:lnSpc>
+                </a:pPr>
+                <a:endParaRPr />
+              </a:p>
+            </p:txBody>
+          </p:sp>
+        </p:grpSp>
+      </p:grpSp>
+      <p:grpSp>
+        <p:nvGrpSpPr>
+          <p:cNvPr id="7" name="Group 7" />
+          <p:cNvGrpSpPr />
+          <p:nvPr />
+        </p:nvGrpSpPr>
+        <p:grpSpPr>
+          <a:xfrm>
+            <a:off x="8991377" y="5123855" />
+            <a:ext cx="242647" cy="39290" />
+            <a:chOff x="0" y="0" />
+            <a:chExt cx="323529" cy="52387" />
+          </a:xfrm>
+        </p:grpSpPr>
+        <p:sp>
+          <p:nvSpPr>
+            <p:cNvPr id="8" name="Freeform 8" />
+            <p:cNvSpPr />
+            <p:nvPr />
+          </p:nvSpPr>
+          <p:spPr>
+            <a:xfrm>
+              <a:off x="0" y="0" />
+              <a:ext cx="323529" cy="52387" />
+            </a:xfrm>
+            <a:custGeom>
+              <a:avLst />
+              <a:gdLst />
+              <a:ahLst />
+              <a:cxnLst />
+              <a:rect l="l" t="t" r="r" b="b" />
+              <a:pathLst>
+                <a:path w="323529" h="52387">
+                  <a:moveTo>
+                    <a:pt x="0" y="0" />
+                  </a:moveTo>
+                  <a:lnTo>
+                    <a:pt x="323529" y="0" />
+                  </a:lnTo>
+                  <a:lnTo>
+                    <a:pt x="323529" y="52387" />
+                  </a:lnTo>
+                  <a:lnTo>
+                    <a:pt x="0" y="52387" />
+                  </a:lnTo>
+                  <a:lnTo>
+                    <a:pt x="0" y="0" />
+                  </a:lnTo>
+                  <a:close />
+                </a:path>
+              </a:pathLst>
+            </a:custGeom>
+            <a:blipFill>
+              <a:blip r:embed="rId5">
+                <a:extLst>
+                  <a:ext uri="{96DAC541-7B7A-43D3-8B79-37D633B846F1}">
+                    <asvg:svgBlip xmlns:asvg="http://schemas.microsoft.com/office/drawing/2016/SVG/main" r:embed="rId6" />
+                  </a:ext>
+                </a:extLst>
+              </a:blip>
+              <a:stretch>
+                <a:fillRect t="-1090" b="-1090" />
+              </a:stretch>
+            </a:blipFill>
+          </p:spPr>
+        </p:sp>
+        <p:sp>
+          <p:nvSpPr>
+            <p:cNvPr id="9" name="TextBox 9" />
+            <p:cNvSpPr txBox="1" />
+            <p:nvPr />
+          </p:nvSpPr>
+          <p:spPr>
+            <a:xfrm>
+              <a:off x="115804" y="47516" />
+              <a:ext cx="2103" cy="2103" />
+            </a:xfrm>
+            <a:prstGeom prst="rect">
+              <a:avLst />
+            </a:prstGeom>
+          </p:spPr>
+          <p:txBody>
+            <a:bodyPr lIns="0" tIns="0" rIns="0" bIns="0" rtlCol="0" anchor="t">
+              <a:spAutoFit />
+            </a:bodyPr>
+            <a:lstStyle />
+            <a:p>
+              <a:pPr algn="ctr">
+                <a:lnSpc>
+                  <a:spcPts val="23" />
+                </a:lnSpc>
+              </a:pPr>
+              <a:r>
+                <a:rPr lang="en-US" sz="100">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>5</a:t>
+              </a:r>
+            </a:p>
+          </p:txBody>
+        </p:sp>
+      </p:grpSp>
+      <p:grpSp>
+        <p:nvGrpSpPr>
+          <p:cNvPr id="10" name="Group 10" />
+          <p:cNvGrpSpPr />
+          <p:nvPr />
+        </p:nvGrpSpPr>
+        <p:grpSpPr>
+          <a:xfrm rot="5508975">
+            <a:off x="8726329" y="4759082" />
+            <a:ext cx="772742" cy="768836" />
+            <a:chOff x="0" y="0" />
+            <a:chExt cx="1030323" cy="1025115" />
+          </a:xfrm>
+        </p:grpSpPr>
+        <p:sp>
+          <p:nvSpPr>
+            <p:cNvPr id="11" name="TextBox 11" />
+            <p:cNvSpPr txBox="1" />
+            <p:nvPr />
+          </p:nvSpPr>
+          <p:spPr>
+            <a:xfrm>
+              <a:off x="581848" y="504258" />
+              <a:ext cx="6612" cy="6612" />
+            </a:xfrm>
+            <a:prstGeom prst="rect">
+              <a:avLst />
+            </a:prstGeom>
+          </p:spPr>
+          <p:txBody>
+            <a:bodyPr lIns="0" tIns="0" rIns="0" bIns="0" rtlCol="0" anchor="t">
+              <a:spAutoFit />
+            </a:bodyPr>
+            <a:lstStyle />
+            <a:p>
+              <a:pPr algn="ctr">
+                <a:lnSpc>
+                  <a:spcPts val="72" />
+                </a:lnSpc>
+              </a:pPr>
+              <a:r>
+                <a:rPr lang="en-US" sz="100">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>3</a:t>
+              </a:r>
+            </a:p>
+          </p:txBody>
+        </p:sp>
+        <p:sp>
+          <p:nvSpPr>
+            <p:cNvPr id="12" name="Freeform 12" />
+            <p:cNvSpPr />
+            <p:nvPr />
+          </p:nvSpPr>
+          <p:spPr>
+            <a:xfrm>
+              <a:off x="0" y="0" />
+              <a:ext cx="1030323" cy="1025115" />
+            </a:xfrm>
+            <a:custGeom>
+              <a:avLst />
+              <a:gdLst />
+              <a:ahLst />
+              <a:cxnLst />
+              <a:rect l="l" t="t" r="r" b="b" />
+              <a:pathLst>
+                <a:path w="1030323" h="1025115">
+                  <a:moveTo>
+                    <a:pt x="0" y="0" />
+                  </a:moveTo>
+                  <a:lnTo>
+                    <a:pt x="1030323" y="0" />
+                  </a:lnTo>
+                  <a:lnTo>
+                    <a:pt x="1030323" y="1025115" />
+                  </a:lnTo>
+                  <a:lnTo>
+                    <a:pt x="0" y="1025115" />
+                  </a:lnTo>
+                  <a:lnTo>
+                    <a:pt x="0" y="0" />
+                  </a:lnTo>
+                  <a:close />
+                </a:path>
+              </a:pathLst>
+            </a:custGeom>
+            <a:blipFill>
+              <a:blip r:embed="rId7">
+                <a:extLst>
+                  <a:ext uri="{96DAC541-7B7A-43D3-8B79-37D633B846F1}">
+                    <asvg:svgBlip xmlns:asvg="http://schemas.microsoft.com/office/drawing/2016/SVG/main" r:embed="rId8" />
+                  </a:ext>
+                </a:extLst>
+              </a:blip>
+              <a:stretch>
+                <a:fillRect t="-233" b="-233" />
+              </a:stretch>
+            </a:blipFill>
+          </p:spPr>
+        </p:sp>
+      </p:grpSp>
+      <p:sp>
+        <p:nvSpPr>
+          <p:cNvPr id="22" name="TextBox 22" />
+          <p:cNvSpPr txBox="1" />
+          <p:nvPr />
+        </p:nvSpPr>
+        <p:spPr>
+          <a:xfrm>
+            <a:off x="5852117" y="4986185" />
+            <a:ext cx="12190" cy="12190" />
+          </a:xfrm>
+          <a:prstGeom prst="rect">
+            <a:avLst />
+          </a:prstGeom>
+        </p:spPr>
+        <p:txBody>
+          <a:bodyPr lIns="0" tIns="0" rIns="0" bIns="0" rtlCol="0" anchor="t">
+            <a:spAutoFit />
+          </a:bodyPr>
+          <a:lstStyle />
+          <a:p>
+            <a:pPr algn="ctr">
+              <a:lnSpc>
+                <a:spcPts val="179" />
+              </a:lnSpc>
+            </a:pPr>
+            <a:r>
+              <a:rPr lang="en-US" sz="127" b="1">
+                <a:solidFill>
+                  <a:srgbClr val="FFFFFF" />
+                </a:solidFill>
+                <a:latin typeface="Open Sauce Heavy" />
+                <a:ea typeface="Open Sauce Heavy" />
+                <a:cs typeface="Open Sauce Heavy" />
+                <a:sym typeface="Open Sauce Heavy" />
+              </a:rPr>
+              <a:t>1</a:t>
+            </a:r>
+          </a:p>
+        </p:txBody>
+      </p:sp>
+      <p:grpSp>
+        <p:nvGrpSpPr>
+          <p:cNvPr id="24" name="Group 23">
+            <a:extLst>
+              <a:ext uri="{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}">
+                <a16:creationId xmlns:a16="http://schemas.microsoft.com/office/drawing/2014/main" id="{B87CCCA7-6FEA-EA06-8AFC-95113C12306B}" />
+              </a:ext>
+            </a:extLst>
+          </p:cNvPr>
+          <p:cNvGrpSpPr />
+          <p:nvPr />
+        </p:nvGrpSpPr>
+        <p:grpSpPr>
+          <a:xfrm>
+            <a:off x="20878800" y="981075" />
+            <a:ext cx="7066995" cy="7889888" />
+            <a:chOff x="10359238" y="981075" />
+            <a:chExt cx="7066995" cy="7889888" />
+          </a:xfrm>
+        </p:grpSpPr>
+        <p:sp>
+          <p:nvSpPr>
+            <p:cNvPr id="25" name="TextBox 22">
+              <a:extLst>
+                <a:ext uri="{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}">
+                  <a16:creationId xmlns:a16="http://schemas.microsoft.com/office/drawing/2014/main" id="{1121D190-3382-0FF9-00E8-D6AEA3ECBF66}" />
+                </a:ext>
+              </a:extLst>
+            </p:cNvPr>
+            <p:cNvSpPr txBox="1" />
+            <p:nvPr />
+          </p:nvSpPr>
+          <p:spPr>
+            <a:xfrm>
+              <a:off x="10359238" y="2050487" />
+              <a:ext cx="6832486" cy="3544654" />
+            </a:xfrm>
+            <a:prstGeom prst="rect">
+              <a:avLst />
+            </a:prstGeom>
+          </p:spPr>
+          <p:txBody>
+            <a:bodyPr lIns="0" tIns="0" rIns="0" bIns="0" rtlCol="0" anchor="t">
+              <a:spAutoFit />
+            </a:bodyPr>
+            <a:lstStyle />
+            <a:p>
+              <a:pPr algn="r">
+                <a:lnSpc>
+                  <a:spcPts val="13904" />
+                </a:lnSpc>
+              </a:pPr>
+              <a:r>
+                <a:rPr lang="en-US" sz="11783" b="1">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce Heavy" />
+                  <a:ea typeface="Open Sauce Heavy" />
+                  <a:cs typeface="Open Sauce Heavy" />
+                  <a:sym typeface="Open Sauce Heavy" />
+                </a:rPr>
+                <a:t>ANALISIS DAN PERANCANGAN SISTEM INFORMASI PRAKTIKUM BERBASIS PWA</a:t>
+              </a:r>
+            </a:p>
+          </p:txBody>
+        </p:sp>
+        <p:sp>
+          <p:nvSpPr>
+            <p:cNvPr id="26" name="TextBox 23">
+              <a:extLst>
+                <a:ext uri="{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}">
+                  <a16:creationId xmlns:a16="http://schemas.microsoft.com/office/drawing/2014/main" id="{9EB68F92-0D46-70CC-5C59-67AFC08F84F3}" />
+                </a:ext>
+              </a:extLst>
+            </p:cNvPr>
+            <p:cNvSpPr txBox="1" />
+            <p:nvPr />
+          </p:nvSpPr>
+          <p:spPr>
+            <a:xfrm>
+              <a:off x="12562425" y="8182683" />
+              <a:ext cx="4665791" cy="330633" />
+            </a:xfrm>
+            <a:prstGeom prst="rect">
+              <a:avLst />
+            </a:prstGeom>
+          </p:spPr>
+          <p:txBody>
+            <a:bodyPr lIns="0" tIns="0" rIns="0" bIns="0" rtlCol="0" anchor="t">
+              <a:spAutoFit />
+            </a:bodyPr>
+            <a:lstStyle />
+            <a:p>
+              <a:pPr algn="r">
+                <a:lnSpc>
+                  <a:spcPts val="2774" />
+                </a:lnSpc>
+              </a:pPr>
+              <a:r>
+                <a:rPr lang="en-US" sz="1981">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>Pembimbing I : Abdul Malik, S.Kom., M.Cs</a:t>
+              </a:r>
+            </a:p>
+          </p:txBody>
+        </p:sp>
+        <p:sp>
+          <p:nvSpPr>
+            <p:cNvPr id="27" name="TextBox 24">
+              <a:extLst>
+                <a:ext uri="{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}">
+                  <a16:creationId xmlns:a16="http://schemas.microsoft.com/office/drawing/2014/main" id="{FFCB604B-7376-CA5B-E243-1EBC36BA8BA0}" />
+                </a:ext>
+              </a:extLst>
+            </p:cNvPr>
+            <p:cNvSpPr txBox="1" />
+            <p:nvPr />
+          </p:nvSpPr>
+          <p:spPr>
+            <a:xfrm>
+              <a:off x="12650360" y="8565790" />
+              <a:ext cx="4577857" cy="305173" />
+            </a:xfrm>
+            <a:prstGeom prst="rect">
+              <a:avLst />
+            </a:prstGeom>
+          </p:spPr>
+          <p:txBody>
+            <a:bodyPr lIns="0" tIns="0" rIns="0" bIns="0" rtlCol="0" anchor="t">
+              <a:spAutoFit />
+            </a:bodyPr>
+            <a:lstStyle />
+            <a:p>
+              <a:pPr algn="r">
+                <a:lnSpc>
+                  <a:spcPts val="2596" />
+                </a:lnSpc>
+              </a:pPr>
+              <a:r>
+                <a:rPr lang="en-US" sz="1854">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>Pembimbing II : Fahmi Kurniawan, S.Kom., M.M</a:t>
+              </a:r>
+            </a:p>
+          </p:txBody>
+        </p:sp>
+        <p:sp>
+          <p:nvSpPr>
+            <p:cNvPr id="28" name="TextBox 25">
+              <a:extLst>
+                <a:ext uri="{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}">
+                  <a16:creationId xmlns:a16="http://schemas.microsoft.com/office/drawing/2014/main" id="{72BFFAF3-D5AE-C8CD-6B33-5FF361CF9BEA}" />
+                </a:ext>
+              </a:extLst>
+            </p:cNvPr>
+            <p:cNvSpPr txBox="1" />
+            <p:nvPr />
+          </p:nvSpPr>
+          <p:spPr>
+            <a:xfrm>
+              <a:off x="17030201" y="981075" />
+              <a:ext cx="396032" cy="365611" />
+            </a:xfrm>
+            <a:prstGeom prst="rect">
+              <a:avLst />
+            </a:prstGeom>
+          </p:spPr>
+          <p:txBody>
+            <a:bodyPr lIns="0" tIns="0" rIns="0" bIns="0" rtlCol="0" anchor="t">
+              <a:spAutoFit />
+            </a:bodyPr>
+            <a:lstStyle />
+            <a:p>
+              <a:pPr marL="0" lvl="0" indent="0" algn="r">
+                <a:lnSpc>
+                  <a:spcPts val="2940" />
+                </a:lnSpc>
+                <a:spcBef>
+                  <a:spcPct val="0" />
+                </a:spcBef>
+              </a:pPr>
+              <a:r>
+                <a:rPr lang="en-US" sz="2100" dirty="0">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>01</a:t>
+              </a:r>
+            </a:p>
+          </p:txBody>
+        </p:sp>
+        <p:sp>
+          <p:nvSpPr>
+            <p:cNvPr id="29" name="TextBox 26">
+              <a:extLst>
+                <a:ext uri="{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}">
+                  <a16:creationId xmlns:a16="http://schemas.microsoft.com/office/drawing/2014/main" id="{67C79709-4105-F2EE-70C2-C59A3F068E3C}" />
+                </a:ext>
+              </a:extLst>
+            </p:cNvPr>
+            <p:cNvSpPr txBox="1" />
+            <p:nvPr />
+          </p:nvSpPr>
+          <p:spPr>
+            <a:xfrm>
+              <a:off x="13417223" y="981075" />
+              <a:ext cx="3440162" cy="365611" />
+            </a:xfrm>
+            <a:prstGeom prst="rect">
+              <a:avLst />
+            </a:prstGeom>
+          </p:spPr>
+          <p:txBody>
+            <a:bodyPr lIns="0" tIns="0" rIns="0" bIns="0" rtlCol="0" anchor="t">
+              <a:spAutoFit />
+            </a:bodyPr>
+            <a:lstStyle />
+            <a:p>
+              <a:pPr marL="0" lvl="0" indent="0" algn="r">
+                <a:lnSpc>
+                  <a:spcPts val="2940" />
+                </a:lnSpc>
+                <a:spcBef>
+                  <a:spcPct val="0" />
+                </a:spcBef>
+              </a:pPr>
+              <a:r>
+                <a:rPr lang="en-US" sz="2100" dirty="0">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>Pillow Creative ID</a:t>
+              </a:r>
+            </a:p>
+          </p:txBody>
+        </p:sp>
+        <p:sp>
+          <p:nvSpPr>
+            <p:cNvPr id="30" name="TextBox 27">
+              <a:extLst>
+                <a:ext uri="{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}">
+                  <a16:creationId xmlns:a16="http://schemas.microsoft.com/office/drawing/2014/main" id="{944F7D29-755E-41FD-4D42-25E108CE1006}" />
+                </a:ext>
+              </a:extLst>
+            </p:cNvPr>
+            <p:cNvSpPr txBox="1" />
+            <p:nvPr />
+          </p:nvSpPr>
+          <p:spPr>
+            <a:xfrm>
+              <a:off x="12616479" y="5819193" />
+              <a:ext cx="4575245" cy="1082148" />
+            </a:xfrm>
+            <a:prstGeom prst="rect">
+              <a:avLst />
+            </a:prstGeom>
+          </p:spPr>
+          <p:txBody>
+            <a:bodyPr lIns="0" tIns="0" rIns="0" bIns="0" rtlCol="0" anchor="t">
+              <a:spAutoFit />
+            </a:bodyPr>
+            <a:lstStyle />
+            <a:p>
+              <a:pPr algn="r">
+                <a:lnSpc>
+                  <a:spcPts val="4391" />
+                </a:lnSpc>
+              </a:pPr>
+              <a:r>
+                <a:rPr lang="en-US" sz="3136" b="1">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce Heavy" />
+                  <a:ea typeface="Open Sauce Heavy" />
+                  <a:cs typeface="Open Sauce Heavy" />
+                  <a:sym typeface="Open Sauce Heavy" />
+                </a:rPr>
+                <a:t>TAUFIQ</a:t>
+              </a:r>
+            </a:p>
+          </p:txBody>
+        </p:sp>
+        <p:sp>
+          <p:nvSpPr>
+            <p:cNvPr id="31" name="TextBox 28">
+              <a:extLst>
+                <a:ext uri="{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}">
+                  <a16:creationId xmlns:a16="http://schemas.microsoft.com/office/drawing/2014/main" id="{F6E6A9FD-8EF2-CE45-11D5-DB83EDA39E8F}" />
+                </a:ext>
+              </a:extLst>
+            </p:cNvPr>
+            <p:cNvSpPr txBox="1" />
+            <p:nvPr />
+          </p:nvSpPr>
+          <p:spPr>
+            <a:xfrm>
+              <a:off x="12918564" y="7120416" />
+              <a:ext cx="4340736" cy="506166" />
+            </a:xfrm>
+            <a:prstGeom prst="rect">
+              <a:avLst />
+            </a:prstGeom>
+          </p:spPr>
+          <p:txBody>
+            <a:bodyPr lIns="0" tIns="0" rIns="0" bIns="0" rtlCol="0" anchor="t">
+              <a:spAutoFit />
+            </a:bodyPr>
+            <a:lstStyle />
+            <a:p>
+              <a:pPr algn="r">
+                <a:lnSpc>
+                  <a:spcPts val="4117" />
+                </a:lnSpc>
+              </a:pPr>
+              <a:r>
+                <a:rPr lang="en-US" sz="2941">
+                  <a:solidFill>
+                    <a:srgbClr val="000000" />
+                  </a:solidFill>
+                  <a:latin typeface="Open Sauce" />
+                  <a:ea typeface="Open Sauce" />
+                  <a:cs typeface="Open Sauce" />
+                  <a:sym typeface="Open Sauce" />
+                </a:rPr>
+                <a:t>NIM: IK.22.11.009</a:t>
+              </a:r>
+            </a:p>
+          </p:txBody>
+        </p:sp>
+      </p:grpSp>
+      <p:pic>
+        <p:nvPicPr>
+          <p:cNvPr id="3" name="Picture 2">
+            <a:extLst>
+              <a:ext uri="{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}">
+                <a16:creationId xmlns:a16="http://schemas.microsoft.com/office/drawing/2014/main" id="{563C9562-21CF-8673-1022-D7068B0C6A9C}" />
+              </a:ext>
+            </a:extLst>
+          </p:cNvPr>
+          <p:cNvPicPr>
+            <a:picLocks noChangeAspect="1" />
+          </p:cNvPicPr>
+          <p:nvPr />
+        </p:nvPicPr>
+        <p:blipFill>
+          <a:blip r:embed="rId9">
+            <a:extLst>
+              <a:ext uri="{28A0092B-C50C-407E-A947-70E740481C1C}">
+                <a14:useLocalDpi xmlns:a14="http://schemas.microsoft.com/office/drawing/2010/main" val="0" />
+              </a:ext>
+            </a:extLst>
+          </a:blip>
+          <a:stretch>
+            <a:fillRect />
+          </a:stretch>
+        </p:blipFill>
+        <p:spPr>
+          <a:xfrm>
+            <a:off x="13809707" y="237378" />
+            <a:ext cx="3763787" cy="3748127" />
+          </a:xfrm>
+          <a:prstGeom prst="rect">
+            <a:avLst />
+          </a:prstGeom>
+        </p:spPr>
+      </p:pic>
+      <p:sp>
+        <p:nvSpPr>
+          <p:cNvPr id="5" name="TextBox 4">
+            <a:extLst>
+              <a:ext uri="{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}">
+                <a16:creationId xmlns:a16="http://schemas.microsoft.com/office/drawing/2014/main" id="{FEC8C4BE-3C8A-D7B6-48CC-5C2289A07E7E}" />
+              </a:ext>
+            </a:extLst>
+          </p:cNvPr>
+          <p:cNvSpPr txBox="1" />
+          <p:nvPr />
+        </p:nvSpPr>
+        <p:spPr>
+          <a:xfrm>
+            <a:off x="990599" y="647700" />
+            <a:ext cx="4873707" cy="769441" />
+          </a:xfrm>
+          <a:prstGeom prst="rect">
+            <a:avLst />
+          </a:prstGeom>
+          <a:noFill />
+        </p:spPr>
+        <p:txBody>
+          <a:bodyPr wrap="square" rtlCol="0">
+            <a:spAutoFit />
+          </a:bodyPr>
+          <a:lstStyle />
+          <a:p>
+            <a:r>
+              <a:rPr lang="en-US" sz="4400" b="1" dirty="0">
+                <a:solidFill>
+                  <a:srgbClr val="FF0000" />
+                </a:solidFill>
+                <a:latin typeface="Bernard MT Condensed" panose="02050806060905020404" pitchFamily="18" charset="0" />
+              </a:rPr>
+              <a:t>UJIAN SKRIPSI</a:t>
+            </a:r>
+          </a:p>
+        </p:txBody>
+      </p:sp>
+    </p:spTree>
+  </p:cSld>
+  <p:clrMapOvr>
+    <a:masterClrMapping />
+  </p:clrMapOvr>
+  <mc:AlternateContent xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:p159="http://schemas.microsoft.com/office/powerpoint/2015/09/main">
+    <mc:Choice Requires="p159">
+      <p:transition spd="slow" xmlns:p14="http://schemas.microsoft.com/office/powerpoint/2010/main" p14:dur="2000" advTm="320">
+        <p159:morph option="byObject" />
+      </p:transition>
+    </mc:Choice>
+    <mc:Fallback xmlns="">
+      <p:transition spd="slow" advTm="320">
+        <p:fade />
+      </p:transition>
+    </mc:Fallback>
+  </mc:AlternateContent>
+  <p:timing>
+    <p:tnLst>
+      <p:par>
+        <p:cTn id="1" dur="indefinite" restart="never" nodeType="tmRoot">
+          <p:childTnLst>
+            <p:seq concurrent="1" nextAc="seek">
+              <p:cTn id="2" dur="indefinite" nodeType="mainSeq">
+                <p:childTnLst>
+                  <p:par>
+                    <p:cTn id="3" fill="hold">
+                      <p:stCondLst>
+                        <p:cond delay="indefinite" />
+                      </p:stCondLst>
+                      <p:childTnLst>
+                        <p:par>
+                          <p:cTn id="4" fill="hold">
+                            <p:stCondLst>
+                              <p:cond delay="0" />
+                            </p:stCondLst>
+                            <p:childTnLst>
+                              <p:par>
+                                <p:cTn id="5" presetID="2" presetClass="entr" presetSubtype="12" fill="hold" nodeType="clickEffect">
+                                  <p:stCondLst>
+                                    <p:cond delay="0" />
+                                  </p:stCondLst>
+                                  <p:childTnLst>
+                                    <p:set>
+                                      <p:cBhvr>
+                                        <p:cTn id="6" dur="1" fill="hold">
+                                          <p:stCondLst>
+                                            <p:cond delay="0" />
+                                          </p:stCondLst>
+                                        </p:cTn>
+                                        <p:tgtEl>
+                                          <p:spTgt spid="3" />
+                                        </p:tgtEl>
+                                        <p:attrNameLst>
+                                          <p:attrName>style.visibility</p:attrName>
+                                        </p:attrNameLst>
+                                      </p:cBhvr>
+                                      <p:to>
+                                        <p:strVal val="visible" />
+                                      </p:to>
+                                    </p:set>
+                                    <p:anim calcmode="lin" valueType="num">
+                                      <p:cBhvr additive="base">
+                                        <p:cTn id="7" dur="2000" fill="hold" />
+                                        <p:tgtEl>
+                                          <p:spTgt spid="3" />
+                                        </p:tgtEl>
+                                        <p:attrNameLst>
+                                          <p:attrName>ppt_x</p:attrName>
+                                        </p:attrNameLst>
+                                      </p:cBhvr>
+                                      <p:tavLst>
+                                        <p:tav tm="0">
+                                          <p:val>
+                                            <p:strVal val="0-#ppt_w/2" />
+                                          </p:val>
+                                        </p:tav>
+                                        <p:tav tm="100000">
+                                          <p:val>
+                                            <p:strVal val="#ppt_x" />
+                                          </p:val>
+                                        </p:tav>
+                                      </p:tavLst>
+                                    </p:anim>
+                                    <p:anim calcmode="lin" valueType="num">
+                                      <p:cBhvr additive="base">
+                                        <p:cTn id="8" dur="2000" fill="hold" />
+                                        <p:tgtEl>
+                                          <p:spTgt spid="3" />
+                                        </p:tgtEl>
+                                        <p:attrNameLst>
+                                          <p:attrName>ppt_y</p:attrName>
+                                        </p:attrNameLst>
+                                      </p:cBhvr>
+                                      <p:tavLst>
+                                        <p:tav tm="0">
+                                          <p:val>
+                                            <p:strVal val="1+#ppt_h/2" />
+                                          </p:val>
+                                        </p:tav>
+                                        <p:tav tm="100000">
+                                          <p:val>
+                                            <p:strVal val="#ppt_y" />
+                                          </p:val>
+                                        </p:tav>
+                                      </p:tavLst>
+                                    </p:anim>
+                                  </p:childTnLst>
+                                </p:cTn>
+                              </p:par>
+                            </p:childTnLst>
+                          </p:cTn>
+                        </p:par>
+                      </p:childTnLst>
+                    </p:cTn>
+                  </p:par>
+                </p:childTnLst>
+              </p:cTn>
+              <p:prevCondLst>
+                <p:cond evt="onPrev" delay="0">
+                  <p:tgtEl>
+                    <p:sldTgt />
+                  </p:tgtEl>
+                </p:cond>
+              </p:prevCondLst>
+              <p:nextCondLst>
+                <p:cond evt="onNext" delay="0">
+                  <p:tgtEl>
+                    <p:sldTgt />
+                  </p:tgtEl>
+                </p:cond>
+              </p:nextCondLst>
+            </p:seq>
+          </p:childTnLst>
+        </p:cTn>
+      </p:par>
+    </p:tnLst>
+  </p:timing>
+</p:sld>
