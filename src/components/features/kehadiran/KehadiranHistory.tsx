@@ -23,14 +23,20 @@ import { cn } from "@/lib/utils";
 
 interface KehadiranHistoryProps {
   kelasId: string;
+  mataKuliahId?: string;
+  refreshKey?: number;
   kelasNama: string;
   onSelectDate?: (date: string) => void;
+  onSelectRecord?: (record: KehadiranHistoryRecord) => void;
 }
 
 export function KehadiranHistory({
   kelasId,
+  mataKuliahId,
+  refreshKey = 0,
   kelasNama,
   onSelectDate,
+  onSelectRecord,
 }: KehadiranHistoryProps) {
   const [history, setHistory] = useState<KehadiranHistoryRecord[]>([]);
   const [loading, setLoading] = useState(false);
@@ -38,12 +44,12 @@ export function KehadiranHistory({
 
   useEffect(() => {
     loadHistory();
-  }, [kelasId]);
+  }, [kelasId, mataKuliahId, refreshKey]);
 
   const loadHistory = async () => {
     try {
       setLoading(true);
-      const data = await getKehadiranHistory(kelasId);
+      const data = await getKehadiranHistory(kelasId, mataKuliahId);
       setHistory(data);
     } catch (error: any) {
       console.error("Error loading history:", error);
@@ -64,6 +70,9 @@ export function KehadiranHistory({
       return newSet;
     });
   };
+
+  const getRecordKey = (record: KehadiranHistoryRecord) =>
+    `${record.tanggal}-${record.mata_kuliah_id || "tanpa-mata-kuliah"}`;
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("id-ID", {
@@ -115,13 +124,17 @@ export function KehadiranHistory({
           Riwayat Kehadiran
         </CardTitle>
         <CardDescription>
-          {kelasNama} • {history.length} pertemuan tercatat
+          {kelasNama} | {history.length} pertemuan tercatat
+          {mataKuliahId
+            ? " untuk mata kuliah aktif"
+            : " dari semua mata kuliah"}
         </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-2">
           {history.map((record) => {
-            const isExpanded = expandedDates.has(record.tanggal);
+            const recordKey = getRecordKey(record);
+            const isExpanded = expandedDates.has(recordKey);
             const percentage = calculatePercentage(
               record.hadir,
               record.total_mahasiswa,
@@ -129,20 +142,28 @@ export function KehadiranHistory({
 
             return (
               <div
-                key={record.tanggal}
+                key={recordKey}
                 className="border rounded-lg overflow-hidden transition-all hover:shadow-md"
               >
                 <button
-                  onClick={() => toggleExpand(record.tanggal)}
+                  onClick={() => toggleExpand(recordKey)}
                   className="w-full p-4 hover:bg-muted/50 transition-colors flex items-center justify-between text-left"
                 >
                   <div className="flex-1">
                     <div className="font-medium text-base">
                       {formatDate(record.tanggal)}
                     </div>
+                    {record.mata_kuliah_nama && (
+                      <div className="mt-1 text-sm font-semibold text-primary">
+                        {record.mata_kuliah_nama}
+                        {record.mata_kuliah_kode
+                          ? ` (${record.mata_kuliah_kode})`
+                          : ""}
+                      </div>
+                    )}
                     <div className="text-sm text-muted-foreground mt-1 flex items-center gap-2">
                       <Users className="h-3 w-3" />
-                      {record.total_mahasiswa} mahasiswa • {percentage}%
+                      {record.total_mahasiswa} mahasiswa | {percentage}%
                       kehadiran
                     </div>
                   </div>
@@ -152,14 +173,14 @@ export function KehadiranHistory({
                       variant="outline"
                       className="bg-green-50 text-green-700 border-green-200"
                     >
-                      ✓ {record.hadir}
+                      Hadir {record.hadir}
                     </Badge>
                     {record.izin > 0 && (
                       <Badge
                         variant="outline"
                         className="bg-blue-50 text-blue-700 border-blue-200"
                       >
-                        📝 {record.izin}
+                        Izin {record.izin}
                       </Badge>
                     )}
                     {record.sakit > 0 && (
@@ -167,7 +188,7 @@ export function KehadiranHistory({
                         variant="outline"
                         className="bg-yellow-50 text-yellow-700 border-yellow-200"
                       >
-                        🏥 {record.sakit}
+                        Sakit {record.sakit}
                       </Badge>
                     )}
                     {record.alpha > 0 && (
@@ -175,7 +196,7 @@ export function KehadiranHistory({
                         variant="outline"
                         className="bg-red-50 text-red-700 border-red-200"
                       >
-                        ✗ {record.alpha}
+                        Alpha {record.alpha}
                       </Badge>
                     )}
                     {isExpanded ? (
@@ -251,12 +272,15 @@ export function KehadiranHistory({
                       </div>
                     </div>
 
-                    {onSelectDate && (
+                    {(onSelectDate || onSelectRecord) && (
                       <Button
                         variant="outline"
                         size="sm"
                         className="w-full mt-4"
-                        onClick={() => onSelectDate(record.tanggal)}
+                        onClick={() => {
+                          onSelectRecord?.(record);
+                          onSelectDate?.(record.tanggal);
+                        }}
                       >
                         Lihat Detail / Edit Kehadiran
                       </Button>

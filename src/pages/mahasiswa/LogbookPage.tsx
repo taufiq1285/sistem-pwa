@@ -6,7 +6,7 @@
  * - Create logbook per jadwal praktikum
  * - Edit draft logbook
  * - Submit logbook for review
- * - View feedback and grades from dosen
+ * - View nilai and feedback from dosen
  * - Track logbook status (draft → submitted → reviewed → graded)
  */
 
@@ -42,7 +42,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { StatusBadge } from "@/components/ui/status-badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/lib/hooks/useAuth";
 import {
@@ -52,8 +51,6 @@ import {
   submitLogbook,
   deleteLogbook,
 } from "@/lib/api/logbook.api";
-import { getJadwal } from "@/lib/api/jadwal.api";
-import { getKelas } from "@/lib/api/kelas.api";
 import { notifyDosenLogbookSubmitted } from "@/lib/api/notification.api";
 import {
   cacheAPI,
@@ -69,8 +66,6 @@ import type {
 import type { Jadwal } from "@/types/jadwal.types";
 import { toast } from "sonner";
 import {
-  LOGBOOK_STATUS_LABELS,
-  LOGBOOK_STATUS_COLORS,
   SKILL_KEBIDANAN,
 } from "@/types/logbook.types";
 
@@ -114,9 +109,6 @@ export default function MahasiswaLogbookPage() {
   // Submit validation
   const [submitting, setSubmitting] = useState(false);
 
-  const enrollmentsCacheKey = user?.mahasiswa?.id
-    ? `mahasiswa_logbook_enrollments_${user.mahasiswa.id}`
-    : null;
   const jadwalCacheKey = user?.mahasiswa?.id
     ? `mahasiswa_logbook_jadwal_${user.mahasiswa.id}`
     : null;
@@ -130,9 +122,65 @@ export default function MahasiswaLogbookPage() {
 
   useEffect(() => {
     if (user?.mahasiswa?.id) {
-      loadData();
+      loadData(true);
     }
   }, [user?.mahasiswa?.id]);
+
+  useEffect(() => {
+    if (!user?.mahasiswa?.id || !logbookCacheKey) {
+      return;
+    }
+
+    const refreshLogbookEntries = () => {
+      Promise.all([
+        logbookCacheKey ? invalidateCache(logbookCacheKey) : Promise.resolve(),
+        jadwalCacheKey ? invalidateCache(jadwalCacheKey) : Promise.resolve(),
+      ]).finally(() => {
+        loadData(true);
+      });
+    };
+
+    const subscription = supabase
+      .channel(`mahasiswa-logbook-${user.mahasiswa.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "logbook_entries",
+          filter: `mahasiswa_id=eq.${user.mahasiswa.id}`,
+        },
+        refreshLogbookEntries,
+      )
+      .subscribe();
+
+    const handleLogbookChanged = (event: Event) => {
+      const customEvent = event as CustomEvent<{ mahasiswa_id?: string }>;
+      if (
+        !customEvent.detail?.mahasiswa_id ||
+        customEvent.detail.mahasiswa_id === user.mahasiswa.id
+      ) {
+        refreshLogbookEntries();
+      }
+    };
+
+    const handleWindowFocus = () => {
+      refreshLogbookEntries();
+    };
+
+    window.addEventListener("logbook:changed", handleLogbookChanged);
+    window.addEventListener("focus", handleWindowFocus);
+
+    return () => {
+      subscription.unsubscribe();
+      window.removeEventListener("logbook:changed", handleLogbookChanged);
+      window.removeEventListener("focus", handleWindowFocus);
+    };
+  }, [
+    user?.mahasiswa?.id,
+    jadwalCacheKey,
+    logbookCacheKey,
+  ]);
 
   useEffect(() => {
     if (!jadwalCacheKey && !logbookCacheKey) {
@@ -173,6 +221,20 @@ export default function MahasiswaLogbookPage() {
       window.removeEventListener("cache:updated", handleCacheUpdated);
   }, [jadwalCacheKey, logbookCacheKey]);
 
+  useEffect(() => {
+    if (!selectedLogbook) {
+      return;
+    }
+
+    const latestLogbook = logbookList.find(
+      (logbook) => logbook.id === selectedLogbook.id,
+    );
+
+    if (latestLogbook && latestLogbook !== selectedLogbook) {
+      setSelectedLogbook(latestLogbook);
+    }
+  }, [logbookList, selectedLogbook]);
+
   // ============================================================================
   // DATA LOADING
   // ============================================================================
@@ -183,16 +245,14 @@ export default function MahasiswaLogbookPage() {
     try {
       setLoading(true);
 
-      if (!enrollmentsCacheKey || !jadwalCacheKey || !logbookCacheKey) {
+      if (!jadwalCacheKey || !logbookCacheKey) {
         return;
       }
 
-      const [cachedEnrollmentsEntry, cachedJadwalEntry, cachedLogbookEntry] =
-        await Promise.all([
-          getCachedData<Array<{ kelas_id: string }>>(enrollmentsCacheKey),
-          getCachedData<Jadwal[]>(jadwalCacheKey),
-          getCachedData<LogbookEntry[]>(logbookCacheKey),
-        ]);
+      const [cachedJadwalEntry, cachedLogbookEntry] = await Promise.all([
+        getCachedData<Jadwal[]>(jadwalCacheKey),
+        getCachedData<LogbookEntry[]>(logbookCacheKey),
+      ]);
 
       const cachedJadwal = Array.isArray(cachedJadwalEntry?.data)
         ? cachedJadwalEntry.data
@@ -203,7 +263,6 @@ export default function MahasiswaLogbookPage() {
           )
         : [];
       const hasCachedData =
-        Array.isArray(cachedEnrollmentsEntry?.data) ||
         cachedJadwal.length > 0 ||
         cachedLogbook.length > 0;
 
@@ -238,69 +297,59 @@ export default function MahasiswaLogbookPage() {
         );
       }
 
-      const enrollments = await cacheAPI(
-        enrollmentsCacheKey,
+      const allJadwalData = await cacheAPI(
+        jadwalCacheKey,
         async () => {
-          const { data, error } = await supabase
-            .from("kelas_mahasiswa")
-            .select("kelas_id")
-            .eq("mahasiswa_id", user.mahasiswa.id)
-            .eq("is_active", true);
+          const { data, error } = await (supabase as any)
+            .from("jadwal_praktikum")
+            .select(
+              `
+                *,
+                mata_kuliah:mata_kuliah_id (
+                  id,
+                  nama_mk,
+                  kode_mk,
+                  sks
+                ),
+                laboratorium:laboratorium_id (
+                  id,
+                  nama_lab,
+                  kode_lab,
+                  kapasitas
+                ),
+                kelas:kelas_id (
+                  nama_kelas,
+                  kode_kelas,
+                  mata_kuliah:mata_kuliah_id (
+                    nama_mk
+                  )
+                ),
+                dosen:dosen_id (
+                  id,
+                  user:user_id (
+                    full_name
+                  )
+                )
+              `,
+            )
+            .eq("status", "approved")
+            .eq("is_active", true)
+            .order("tanggal_praktikum", { ascending: true });
 
           if (error) {
             throw error;
           }
 
-          const enrolledKelasIds = (data || []).map((item) => item.kelas_id);
-
-          if (enrolledKelasIds.length === 0) {
-            return [] as Array<{ kelas_id: string }>;
-          }
-
-          const { data: activeKelas, error: activeKelasError } = await supabase
-            .from("kelas")
-            .select("id")
-            .in("id", enrolledKelasIds)
-            .eq("is_active", true);
-
-          if (activeKelasError) {
-            throw activeKelasError;
-          }
-
-          return (activeKelas || []).map((kelas) => ({ kelas_id: kelas.id }));
+          return (data || []) as Jadwal[];
         },
         {
-          ttl: 20 * 60 * 1000,
+          ttl: 10 * 60 * 1000,
           forceRefresh,
           staleWhileRevalidate: true,
         },
       );
 
-      let myJadwal: Jadwal[] = [];
-      if (enrollments.length > 0) {
-        const kelasIds = enrollments.map((e) => e.kelas_id);
-
-        const allJadwalData = await cacheAPI(
-          jadwalCacheKey,
-          async () => {
-            const fetched = await getJadwal({
-              is_active: true,
-            });
-
-            const approvedOnly = fetched.filter((j) => j.status === "approved");
-            return approvedOnly.filter((jadwal) => {
-              return kelasIds.includes(jadwal.kelas_id || "");
-            });
-          },
-          {
-            ttl: 10 * 60 * 1000,
-            forceRefresh,
-            staleWhileRevalidate: true,
-          },
-        );
-
-        myJadwal = Array.isArray(allJadwalData) ? allJadwalData : [];
-      }
+      const myJadwal = Array.isArray(allJadwalData) ? allJadwalData : [];
 
       const logbookData = await cacheAPI(
         logbookCacheKey,
@@ -409,7 +458,8 @@ export default function MahasiswaLogbookPage() {
 
       toast.success("Logbook berhasil dibuat");
       setShowCreateDialog(false);
-      loadData();
+      if (logbookCacheKey) await invalidateCache(logbookCacheKey);
+      loadData(true);
     } catch (error: any) {
       console.error("Error creating logbook:", error);
       toast.error(error.message || "Gagal membuat logbook");
@@ -452,7 +502,9 @@ export default function MahasiswaLogbookPage() {
           ),
         );
         setShowEditDialog(false);
-        toast.success("Perubahan disimpan lokal. Akan disinkronkan saat online.");
+        toast.success(
+          "Perubahan disimpan lokal. Akan disinkronkan saat online.",
+        );
       } catch (err: any) {
         toast.error(err.message || "Gagal menyimpan perubahan secara lokal");
       } finally {
@@ -471,7 +523,8 @@ export default function MahasiswaLogbookPage() {
 
       toast.success("Logbook berhasil diperbarui");
       setShowEditDialog(false);
-      loadData();
+      if (logbookCacheKey) await invalidateCache(logbookCacheKey);
+      loadData(true);
     } catch (error: any) {
       console.error("Error updating logbook:", error);
       toast.error(error.message || "Gagal memperbarui logbook");
@@ -525,7 +578,9 @@ export default function MahasiswaLogbookPage() {
           ),
         );
         setShowSubmitDialog(false);
-        toast.success("Logbook dikantri untuk pengiriman. Akan dikirim saat online.");
+        toast.success(
+          "Logbook dikantri untuk pengiriman. Akan dikirim saat online.",
+        );
       } catch (err: any) {
         toast.error(err.message || "Gagal mengantri logbook");
       } finally {
@@ -625,7 +680,8 @@ export default function MahasiswaLogbookPage() {
       }
 
       setShowSubmitDialog(false);
-      loadData();
+      if (logbookCacheKey) await invalidateCache(logbookCacheKey);
+      loadData(true);
     } catch (error: any) {
       console.error("Error submitting logbook:", error);
       toast.error(error.message || "Gagal menyerahkan logbook");
@@ -680,21 +736,56 @@ export default function MahasiswaLogbookPage() {
   // ============================================================================
 
   function getStatusBadge(status: string) {
-    const label = LOGBOOK_STATUS_LABELS[status] || status;
-    const statusMap: Record<
+    const config: Record<
       string,
-      "success" | "warning" | "error" | "info" | "offline"
+      {
+        label: string;
+        icon: typeof Clock;
+        className: string;
+        dotClassName: string;
+      }
     > = {
-      submitted: "info",
-      reviewed: "warning",
-      graded: "success",
-      rejected: "error",
-      draft: "offline",
+      draft: {
+        label: "Draft",
+        icon: FileText,
+        className: "border-slate-200 bg-slate-50 text-slate-700",
+        dotClassName: "bg-slate-400",
+      },
+      submitted: {
+        label: "Menunggu Dinilai",
+        icon: Clock,
+        className: "border-sky-200 bg-sky-50 text-sky-800",
+        dotClassName: "bg-sky-500",
+      },
+      reviewed: {
+        label: "Menunggu Dinilai",
+        icon: Clock,
+        className: "border-amber-200 bg-amber-50 text-amber-800",
+        dotClassName: "bg-amber-500",
+      },
+      graded: {
+        label: "Dinilai",
+        icon: CheckCircle2,
+        className: "border-emerald-200 bg-emerald-50 text-emerald-800",
+        dotClassName: "bg-emerald-500",
+      },
     };
+    const badge = config[status] || {
+      label: status,
+      icon: AlertCircle,
+      className: "border-slate-200 bg-slate-50 text-slate-700",
+      dotClassName: "bg-slate-400",
+    };
+    const Icon = badge.icon;
+
     return (
-      <StatusBadge status={statusMap[status] || "info"} pulse={false}>
-        {label}
-      </StatusBadge>
+      <span
+        className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold shadow-sm ${badge.className}`}
+      >
+        <span className={`h-1.5 w-1.5 rounded-full ${badge.dotClassName}`} />
+        <Icon className="h-3 w-3" />
+        {badge.label}
+      </span>
     );
   }
 
@@ -918,8 +1009,8 @@ export default function MahasiswaLogbookPage() {
                         )}
 
                       {logbook.dosen_feedback && (
-                        <div className="mt-3 p-3 bg-primary/5 rounded-lg border border-primary/20">
-                          <p className="text-xs font-medium text-primary mb-1">
+                        <div className="mt-3 rounded-lg border border-primary/20 bg-primary/5 p-3">
+                          <p className="mb-1 text-xs font-medium text-primary">
                             Feedback Dosen:
                           </p>
                           <p className="text-sm text-primary">
@@ -1450,28 +1541,21 @@ export default function MahasiswaLogbookPage() {
               </div>
             )}
 
-            {selectedLogbook?.dosen_feedback && (
-              <div className="p-3 bg-primary/5 rounded-lg border border-primary/20">
-                <p className="text-sm font-medium text-primary mb-1">
-                  Feedback Dosen:
-                </p>
-                <p className="text-sm text-primary">
-                  {selectedLogbook.dosen_feedback}
-                </p>
-                <p className="text-xs text-primary/70 mt-2">
-                  {selectedLogbook.reviewed_at &&
-                    format(
-                      new Date(selectedLogbook.reviewed_at),
-                      "dd MMM yyyy, HH:mm",
-                    )}
-                </p>
-              </div>
-            )}
-
             {selectedLogbook?.nilai != null && (
               <div className="p-3 bg-success/10 rounded-lg border border-success/30">
                 <p className="text-sm font-medium text-success mb-1">
                   Nilai: {selectedLogbook.nilai}
+                </p>
+              </div>
+            )}
+
+            {selectedLogbook?.dosen_feedback && (
+              <div className="rounded-lg border border-primary/20 bg-primary/5 p-3">
+                <p className="mb-1 text-sm font-medium text-primary">
+                  Feedback Dosen:
+                </p>
+                <p className="text-sm text-primary">
+                  {selectedLogbook.dosen_feedback}
                 </p>
               </div>
             )}

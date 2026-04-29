@@ -123,6 +123,12 @@ export interface KuisWithStats {
   kelas_nama: string;
 }
 
+type AssignedKelasSnapshot = {
+  kelasIds: string[];
+  jadwalData: any[];
+  kelasData: any[];
+};
+
 export interface MyBorrowingRequest {
   id: string;
   inventaris_nama: string;
@@ -143,36 +149,39 @@ export interface MyBorrowingRequest {
 
 // Cache for dosen ID to reduce redundant calls
 let cachedDosenId: string | null = null;
+let cachedDosenUserId: string | null = null;
 let cachedDosenIdTimestamp: number = 0;
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 const DOSEN_ID_STORAGE_KEY = "cached_dosen_id";
+const DOSEN_ID_STORAGE_PREFIX = "cached_dosen_id:";
 
 // Test helper to reset cache (exported for testing)
 export function __resetDosenIdCache() {
   cachedDosenId = null;
+  cachedDosenUserId = null;
   cachedDosenIdTimestamp = 0;
 }
 
 // Test helper to set cache (exported for testing)
 export function __setDosenIdCache(dosenId: string) {
   cachedDosenId = dosenId;
+  cachedDosenUserId = null;
   cachedDosenIdTimestamp = Date.now();
 }
 
 async function getDosenId(): Promise<string | null> {
   try {
     // Return cached value if still valid (in-memory cache)
-    if (cachedDosenId && Date.now() - cachedDosenIdTimestamp < CACHE_DURATION) {
+    if (
+      cachedDosenId &&
+      cachedDosenUserId === "__legacy_offline__" &&
+      Date.now() - cachedDosenIdTimestamp < CACHE_DURATION
+    ) {
       return cachedDosenId;
     }
 
-    // Try to get from localStorage (persistent cache for offline)
+    // Try to get from localStorage later as an offline fallback.
     const storedDosenId = localStorage.getItem(DOSEN_ID_STORAGE_KEY);
-    if (storedDosenId) {
-      cachedDosenId = storedDosenId;
-      cachedDosenIdTimestamp = Date.now();
-      return storedDosenId;
-    }
 
     const {
       data: { user },
@@ -183,6 +192,23 @@ async function getDosenId(): Promise<string | null> {
       console.log("❌ DEBUG: No authenticated user");
       // No user - return stored dosen ID if available
       return storedDosenId || cachedDosenId;
+    }
+
+    if (
+      cachedDosenId &&
+      cachedDosenUserId === user.id &&
+      Date.now() - cachedDosenIdTimestamp < CACHE_DURATION
+    ) {
+      return cachedDosenId;
+    }
+
+    const userStorageKey = `${DOSEN_ID_STORAGE_PREFIX}${user.id}`;
+    const storedUserDosenId = localStorage.getItem(userStorageKey);
+    if (storedUserDosenId) {
+      cachedDosenId = storedUserDosenId;
+      cachedDosenUserId = user.id;
+      cachedDosenIdTimestamp = Date.now();
+      return storedUserDosenId;
     }
 
     try {
@@ -197,28 +223,172 @@ async function getDosenId(): Promise<string | null> {
       if (error) {
         console.log("❌ DEBUG: Dosen query error =", error);
         // Suppress error logging - might be offline
-        return storedDosenId || cachedDosenId; // Return cached if available
+        return storedUserDosenId || null; // Return only current-user cache
       }
 
       if (!data) {
-        return storedDosenId || cachedDosenId; // Return cached if available
+        return storedUserDosenId || null; // Return only current-user cache
       }
 
       // Cache the result (in-memory and localStorage)
       cachedDosenId = data.id;
+      cachedDosenUserId = user.id;
       cachedDosenIdTimestamp = Date.now();
+      localStorage.setItem(userStorageKey, data.id);
       localStorage.setItem(DOSEN_ID_STORAGE_KEY, data.id);
 
       return data.id;
     } catch (fetchError) {
       // Network error - return cached if available
-      return storedDosenId || cachedDosenId;
+      return storedUserDosenId || null;
     }
   } catch (error) {
     // Suppress error - return cached/stored if available
     const storedDosenId = localStorage.getItem(DOSEN_ID_STORAGE_KEY);
     return storedDosenId || cachedDosenId;
   }
+}
+
+async function getAssignedKelasSnapshot(
+  dosenId: string,
+): Promise<AssignedKelasSnapshot> {
+  const [directKelasResult, jadwalResult, kuisResult] = await Promise.all([
+    supabase
+      .from("kelas")
+      .select(
+        "id, kode_kelas, nama_kelas, tahun_ajaran, semester_ajaran, mata_kuliah_id, kuota, is_active",
+      )
+      .eq("dosen_id", dosenId)
+      .eq("is_active", true)
+      .order("nama_kelas", { ascending: true }),
+    (supabase as any)
+      .from("jadwal_praktikum")
+      .select("kelas_id, mata_kuliah_id, tanggal_praktikum, status")
+      .eq("dosen_id", dosenId)
+      .eq("is_active", true)
+      .order("tanggal_praktikum", { ascending: false }),
+    supabase
+      .from("kuis")
+      .select("kelas_id, mata_kuliah_id, tanggal_selesai, status")
+      .eq("dosen_id", dosenId)
+      .in("status", ["draft", "published"])
+      .order("created_at", { ascending: false }),
+  ]);
+
+  if (directKelasResult.error) {
+    throw directKelasResult.error;
+  }
+
+  if (jadwalResult.error) {
+    throw jadwalResult.error;
+  }
+
+  if (kuisResult.error) {
+    throw kuisResult.error;
+  }
+
+  const jadwalData = ((jadwalResult.data as any[]) || []).filter(
+    (jadwal: any) =>
+      jadwal?.kelas_id &&
+      (!jadwal?.status ||
+        ["approved", "scheduled", "published"].includes(jadwal.status)),
+  );
+
+  const directKelasData = (directKelasResult.data as any[]) || [];
+  const directKelasIds = directKelasData
+    .map((kelas: any) => kelas?.id)
+    .filter((id): id is string => Boolean(id));
+  const kuisData = ((kuisResult.data as any[]) || []).filter(
+    (kuis: any) => kuis?.kelas_id,
+  );
+  const fallbackKelasIds = Array.from(
+    new Set(
+      [...jadwalData, ...kuisData]
+        .map((item: any) => item?.kelas_id)
+        .filter(
+          (id): id is string => Boolean(id) && !directKelasIds.includes(id),
+        ),
+    ),
+  );
+
+  let fallbackKelasData: any[] = [];
+  if (fallbackKelasIds.length > 0) {
+    const { data, error } = await supabase
+      .from("kelas")
+      .select(
+        "id, kode_kelas, nama_kelas, tahun_ajaran, semester_ajaran, mata_kuliah_id, kuota, is_active",
+      )
+      .in("id", fallbackKelasIds)
+      .eq("is_active", true)
+      .order("nama_kelas", { ascending: true });
+
+    if (error) {
+      throw error;
+    }
+
+    fallbackKelasData = (data as any[]) || [];
+  }
+
+  const kelasData = Array.from(
+    new Map(
+      [...directKelasData, ...fallbackKelasData]
+        .filter((kelas) => kelas?.id)
+        .map((kelas) => [kelas.id, kelas]),
+    ).values(),
+  );
+
+  return {
+    kelasIds: kelasData.map((kelas: any) => kelas.id),
+    jadwalData,
+    kelasData,
+  };
+}
+
+async function getDashboardActiveKelasIds(dosenId: string): Promise<string[]> {
+  const { jadwalData, kelasData } = await getAssignedKelasSnapshot(dosenId);
+  const kelasIds = kelasData
+    .map((kelas: any) => kelas?.id)
+    .filter((id: any): id is string => typeof id === "string" && id.length > 0);
+
+  if (kelasIds.length === 0) {
+    return [];
+  }
+
+  const today = new Date().toISOString().split("T")[0];
+
+  const dashboardKelasIds = new Set<string>();
+
+  (jadwalData || []).forEach((jadwal: any) => {
+    if (
+      kelasIds.includes(jadwal?.kelas_id) &&
+      typeof jadwal?.tanggal_praktikum === "string" &&
+      jadwal.tanggal_praktikum >= today
+    ) {
+      dashboardKelasIds.add(jadwal.kelas_id);
+    }
+  });
+
+  const { data: activeQuizClasses, error: activeQuizClassesError } =
+    await supabase
+      .from("kuis")
+      .select("kelas_id")
+      .eq("dosen_id", dosenId)
+      .in("status", ["draft", "published"]);
+
+  if (activeQuizClassesError) {
+    throw activeQuizClassesError;
+  }
+
+  ((activeQuizClasses as any[]) || []).forEach((item: any) => {
+    if (
+      typeof item?.kelas_id === "string" &&
+      kelasIds.includes(item.kelas_id)
+    ) {
+      dashboardKelasIds.add(item.kelas_id);
+    }
+  });
+
+  return Array.from(dashboardKelasIds);
 }
 
 // ============================================================================
@@ -240,35 +410,39 @@ export async function getDosenStats(forceRefresh = false): Promise<DosenStats> {
           };
         }
 
-        // 🔄 FIXED: Count kelas by querying jadwal_praktikum assigned to this dosen
-        const { data: jadwalData } = await (supabase as any)
-          .from("jadwal_praktikum")
-          .select("kelas_id")
-          .eq("dosen_id", dosenId)
-          .eq("is_active", true)
-          .eq("status", "approved");
-
-        // Get unique kelas IDs from jadwal
-        const uniqueKelasIds = Array.from(
-          new Set(jadwalData?.map((j: any) => j.kelas_id) || []),
-        );
-        const totalKelas = uniqueKelasIds.length;
+        const kelasIds = await getDashboardActiveKelasIds(dosenId);
+        const totalKelas = kelasIds.length;
 
         let totalMahasiswa = 0;
-        if (uniqueKelasIds.length > 0) {
+        if (kelasIds.length > 0) {
           const { count } = await supabase
             .from("kelas_mahasiswa" as any)
             .select("mahasiswa_id", { count: "exact", head: true })
-            .in("kelas_id", uniqueKelasIds);
+            .in("kelas_id", kelasIds)
+            .eq("is_active", true);
           totalMahasiswa = count || 0;
         }
 
-        // ✅ FIX: Count both draft and published kuis (exclude archived)
-        const { count: activeKuis } = await supabase
+        const now = new Date().toISOString();
+
+        const { data: activeKuisRows } = await supabase
           .from("kuis")
-          .select("*", { count: "exact", head: true })
+          .select("id, status, tanggal_selesai")
           .eq("dosen_id", dosenId)
           .in("status", ["draft", "published"]);
+
+        const activeKuis =
+          ((activeKuisRows as any[]) || []).filter((kuis: any) => {
+            if (kuis?.status === "draft") {
+              return true;
+            }
+
+            return (
+              kuis?.status === "published" &&
+              typeof kuis?.tanggal_selesai === "string" &&
+              kuis.tanggal_selesai >= now
+            );
+          }).length;
 
         // ✅ FIX: Exclude archived kuis from pending grading count
         const { data: kuisData } = await supabase
@@ -372,31 +546,7 @@ export async function getMyKelas(limit?: number): Promise<KelasWithStats[]> {
     if (!dosenId) {
       return [];
     }
-    const { data: jadwalData, error: jadwalError } = await (supabase as any)
-      .from("jadwal_praktikum")
-      .select("kelas_id, mata_kuliah_id, tanggal_praktikum")
-      .eq("dosen_id", dosenId)
-      .eq("is_active", true)
-      .order("tanggal_praktikum", { ascending: false });
-    if (jadwalError) throw jadwalError;
-    if (!jadwalData || jadwalData.length === 0) return [];
-    const kelasIds = Array.from(
-      new Set<string>(
-        (jadwalData || [])
-          .map((jadwal: any) => jadwal.kelas_id)
-          .filter((id): id is string => Boolean(id)),
-      ),
-    );
-    if (kelasIds.length === 0) return [];
-    const { data: kelasData, error: kelasError } = await supabase
-      .from("kelas")
-      .select(
-        "id, kode_kelas, nama_kelas, tahun_ajaran, semester_ajaran, is_active",
-      )
-      .in("id", kelasIds)
-      .eq("is_active", true)
-      .order("nama_kelas", { ascending: true });
-    if (kelasError) throw kelasError;
+    const { jadwalData, kelasData } = await getAssignedKelasSnapshot(dosenId);
     if (!kelasData || kelasData.length === 0) return [];
     const jadwalMkMap = new Map<string, string>();
     (jadwalData || []).forEach((jadwal: any) => {
@@ -412,15 +562,24 @@ export async function getMyKelas(limit?: number): Promise<KelasWithStats[]> {
       new Set(
         (jadwalData || [])
           .map((jadwal: any) => jadwal?.mata_kuliah_id)
-          .filter((id): id is string => typeof id === "string" && id.length > 0),
+          .filter(
+            (id): id is string => typeof id === "string" && id.length > 0,
+          ),
       ),
     );
+    const missingMkIds = kelasData
+      .map((kelas: any) => kelas?.mata_kuliah_id)
+      .filter(
+        (id: any): id is string =>
+          typeof id === "string" && id.length > 0 && !mkIds.includes(id),
+      );
+    const resolvedMkIds = [...new Set([...mkIds, ...missingMkIds])];
     const { data: mataKuliahData, error: mkError } =
-      mkIds.length > 0
+      resolvedMkIds.length > 0
         ? await supabase
             .from("mata_kuliah")
             .select("id, kode_mk, nama_mk")
-            .in("id", mkIds)
+            .in("id", resolvedMkIds)
         : { data: [], error: null };
     if (mkError) {
       console.error("Error fetching mata kuliah for dosen kelas:", mkError);
@@ -433,8 +592,11 @@ export async function getMyKelas(limit?: number): Promise<KelasWithStats[]> {
           .select("*", { count: "exact", head: true })
           .eq("kelas_id", kelas.id)
           .eq("is_active", true);
-        const resolvedMataKuliahId = jadwalMkMap.get(kelas.id) || null;
-        const mk = resolvedMataKuliahId ? mkMap.get(resolvedMataKuliahId) : null;
+        const resolvedMataKuliahId =
+          jadwalMkMap.get(kelas.id) || kelas.mata_kuliah_id || null;
+        const mk = resolvedMataKuliahId
+          ? mkMap.get(resolvedMataKuliahId)
+          : null;
         return {
           id: kelas.id,
           kode_kelas: kelas.kode_kelas || "",
@@ -454,6 +616,33 @@ export async function getMyKelas(limit?: number): Promise<KelasWithStats[]> {
     return limit ? finalResult.slice(0, limit) : finalResult;
   } catch (error) {
     console.error("Error fetching my kelas:", error);
+    return [];
+  }
+}
+
+export async function getDashboardKelas(
+  limit?: number,
+): Promise<KelasWithStats[]> {
+  try {
+    const dosenId = await getDosenId();
+    if (!dosenId) {
+      return [];
+    }
+
+    const [kelasList, activeKelasIds] = await Promise.all([
+      getMyKelas(),
+      getDashboardActiveKelasIds(dosenId),
+    ]);
+
+    if (activeKelasIds.length === 0) {
+      return [];
+    }
+
+    const activeKelasIdSet = new Set(activeKelasIds);
+    const filtered = kelasList.filter((kelas) => activeKelasIdSet.has(kelas.id));
+    return limit ? filtered.slice(0, limit) : filtered;
+  } catch (error) {
+    console.error("Error fetching dashboard kelas:", error);
     return [];
   }
 }
@@ -880,7 +1069,6 @@ export async function getActiveKuis(limit?: number): Promise<KuisWithStats[]> {
     if (!dosenId) {
       return [];
     }
-
     let query = supabase
       .from("kuis")
       .select(
@@ -896,7 +1084,6 @@ export async function getActiveKuis(limit?: number): Promise<KuisWithStats[]> {
       `,
       )
       .eq("dosen_id", dosenId)
-      // ✅ FIXED: Tampilkan draft DAN published, kecuali archived
       .in("status", ["draft", "published"])
       .order("created_at", { ascending: false });
 
@@ -907,8 +1094,12 @@ export async function getActiveKuis(limit?: number): Promise<KuisWithStats[]> {
     const { data, error } = await query;
     if (error) throw error;
 
+    const visibleKuis = ((data as KuisData[]) || []).filter((kuis) => {
+      return kuis.status === "draft" || kuis.status === "published";
+    });
+
     const kuisWithStats = await Promise.all(
-      ((data as KuisData[]) || []).map(async (kuis) => {
+      visibleKuis.map(async (kuis) => {
         const { count: totalAttempts } = await supabase
           .from("attempt_kuis" as any)
           .select("*", { count: "exact", head: true })
@@ -918,7 +1109,7 @@ export async function getActiveKuis(limit?: number): Promise<KuisWithStats[]> {
           .from("attempt_kuis" as any)
           .select("*", { count: "exact", head: true })
           .eq("kuis_id", kuis.id)
-          .eq("status", "submitted");
+          .in("status", ["submitted", "graded"]);
 
         return {
           id: kuis.id,
@@ -1077,21 +1268,8 @@ export async function getMyKelasWithStudents(): Promise<KelasWithStudents[]> {
   try {
     const dosenId = await getDosenId();
     if (!dosenId) return [];
-    const { data: jadwalData, error: jadwalError } = await (supabase as any)
-      .from("jadwal_praktikum")
-      .select("kelas_id, mata_kuliah_id, tanggal_praktikum")
-      .eq("dosen_id", dosenId)
-      .eq("is_active", true)
-      .order("tanggal_praktikum", { ascending: false });
-    if (jadwalError) throw jadwalError;
-    if (!jadwalData || jadwalData.length === 0) return [];
-    const kelasIds = Array.from(
-      new Set<string>(
-        (jadwalData || [])
-          .map((jadwal: any) => jadwal.kelas_id)
-          .filter((id): id is string => Boolean(id)),
-      ),
-    );
+    const { jadwalData, kelasData } = await getAssignedKelasSnapshot(dosenId);
+    if (!kelasData || kelasData.length === 0) return [];
     const kelasMkMap = new Map<string, string>();
     (jadwalData || []).forEach((jadwal: any) => {
       if (
@@ -1104,36 +1282,33 @@ export async function getMyKelasWithStudents(): Promise<KelasWithStudents[]> {
     });
     const mkIds: string[] = [
       ...new Set(
-        Array.from(kelasMkMap.values()).filter(
-          (id): id is string => Boolean(id),
+        Array.from(kelasMkMap.values()).filter((id): id is string =>
+          Boolean(id),
         ),
       ),
     ];
-    const [kelasDataResult, mataKuliahResult] = await Promise.all([
-      supabase
-        .from("kelas")
-        .select(
-          "id, kode_kelas, nama_kelas, tahun_ajaran, semester_ajaran, kuota",
-        )
-        .in("id", kelasIds)
-        .eq("is_active", true),
-      mkIds.length > 0
-        ? supabase
+    const missingMkIds = kelasData
+      .map((kelas: any) => kelas?.mata_kuliah_id)
+      .filter(
+        (id: any): id is string =>
+          typeof id === "string" && id.length > 0 && !mkIds.includes(id),
+      );
+    const resolvedMkIds = [...new Set([...mkIds, ...missingMkIds])];
+    const mataKuliahResult =
+      resolvedMkIds.length > 0
+        ? await supabase
             .from("mata_kuliah")
             .select("id, nama_mk, kode_mk")
-            .in("id", mkIds)
-        : Promise.resolve({ data: [], error: null }),
-    ]);
-    if (kelasDataResult.error) throw kelasDataResult.error;
+            .in("id", resolvedMkIds)
+        : { data: [], error: null };
     if (mataKuliahResult.error) throw mataKuliahResult.error;
-    const kelasData = kelasDataResult.data;
-    if (!kelasData) return [];
     const mkMap = new Map(
       ((mataKuliahResult.data as any[]) || []).map((mk: any) => [mk.id, mk]),
     );
     const result = await Promise.all(
       (kelasData || []).map(async (kelas: any) => {
-        const resolvedMataKuliahId = kelasMkMap.get(kelas.id) || null;
+        const resolvedMataKuliahId =
+          kelasMkMap.get(kelas.id) || kelas.mata_kuliah_id || null;
         const mataKuliah = resolvedMataKuliahId
           ? mkMap.get(resolvedMataKuliahId)
           : null;
@@ -1404,6 +1579,12 @@ async function returnBorrowingRequestImpl(data: {
 
     if (peminjamanData.status === "returned") {
       throw new Error("Peminjaman sudah dikembalikan sebelumnya");
+    }
+
+    if (peminjamanData.status !== "approved") {
+      throw new Error(
+        "Peminjaman hanya dapat dikembalikan setelah disetujui laboran",
+      );
     }
 
     // Update peminjaman status to returned
@@ -1851,4 +2032,3 @@ export const checkDosenAssignmentChanges = requirePermission(
   "read:dashboard",
   checkDosenAssignmentChangesImpl,
 );
-

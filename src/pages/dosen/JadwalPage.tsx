@@ -15,6 +15,7 @@ import {
   BookOpen,
   Filter,
   WifiOff,
+  RefreshCw,
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -176,6 +177,8 @@ type JadwalFormData = z.infer<typeof jadwalSchema>;
 // MAIN COMPONENT
 // ============================================================================
 
+const MASTER_DATA_CACHE_TTL = 60 * 1000;
+
 export default function JadwalPage() {
   // ✅ NEW: Get current dosen for ownership check
   const { user } = useAuth();
@@ -228,7 +231,10 @@ export default function JadwalPage() {
       : null;
 
   const latestMataKuliahIdByKelas = useMemo(() => {
-    const latestMap = new Map<string, { mataKuliahId: string; sortKey: string }>();
+    const latestMap = new Map<
+      string,
+      { mataKuliahId: string; sortKey: string }
+    >();
 
     jadwalList.forEach((jadwal) => {
       const kelasId = jadwal.kelas_id;
@@ -276,8 +282,8 @@ export default function JadwalPage() {
   const referenceCacheKeys = useMemo(
     () => ({
       laboratorium: user?.id ? `dosen_jadwal_laboratorium_${user.id}` : null,
-      mataKuliah: user?.id ? `dosen_jadwal_mata_kuliah_${user.id}` : null,
-      kelas: user?.id ? `dosen_jadwal_kelas_${user.id}` : null,
+      mataKuliah: "admin_master_mata_kuliah_jadwal",
+      kelas: "admin_master_kelas_jadwal",
     }),
     [user?.id],
   );
@@ -639,7 +645,7 @@ export default function JadwalPage() {
             order: { column: "nama_lab", ascending: true },
           }) as Promise<Laboratorium[]>,
         {
-          ttl: 10 * 60 * 1000,
+          ttl: MASTER_DATA_CACHE_TTL,
           forceRefresh,
           staleWhileRevalidate: true,
         },
@@ -688,7 +694,7 @@ export default function JadwalPage() {
           return response.filter((mk: any) => mk.is_active) as MataKuliah[];
         },
         {
-          ttl: 10 * 60 * 1000,
+          ttl: MASTER_DATA_CACHE_TTL,
           forceRefresh,
           staleWhileRevalidate: true,
         },
@@ -868,6 +874,20 @@ export default function JadwalPage() {
   useEffect(() => {
     Promise.all([fetchLaboratorium(), fetchMataKuliah(), fetchKelas()]);
   }, [referenceCacheKeys]);
+
+  const refreshReferenceData = async () => {
+    if (!navigator.onLine) {
+      toast.error("Tidak dapat refresh data master saat offline");
+      return;
+    }
+
+    await Promise.all([
+      fetchLaboratorium(true),
+      fetchMataKuliah(true),
+      fetchKelas(true),
+    ]);
+    toast.success("Data master jadwal diperbarui");
+  };
 
   useEffect(() => {
     fetchJadwal();
@@ -1484,17 +1504,37 @@ export default function JadwalPage() {
               </div>
             </div>
             <p className="text-sm sm:text-base font-semibold text-muted-foreground ml-1">
-              Atur jadwal yang belum lewat dan pantau riwayat praktikum yang sudah terkunci
+              Atur jadwal yang belum lewat dan pantau riwayat praktikum yang
+              sudah terkunci
             </p>
           </div>
-          <Button
-            onClick={() => setIsCreateOpen(true)}
-            className="w-full sm:w-auto bg-linear-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground shadow-lg shadow-primary/30 font-semibold px-6"
-            size="lg"
-          >
-            <Plus className="mr-2 h-5 w-5" />
-            Tambah Jadwal
-          </Button>
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+            <Button
+              variant="outline"
+              onClick={refreshReferenceData}
+              disabled={loading || !navigator.onLine}
+              className="w-full border-2 font-semibold sm:w-auto"
+              size="lg"
+              title="Ambil ulang data master terbaru dari admin"
+            >
+              <RefreshCw
+                className={cn("mr-2 h-5 w-5", loading && "animate-spin")}
+              />
+              Refresh Data
+            </Button>
+            <Button
+              onClick={async () => {
+                await refreshReferenceData();
+                setIsCreateOpen(true);
+              }}
+              className="w-full sm:w-auto bg-linear-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground shadow-lg shadow-primary/30 font-semibold px-6"
+              size="lg"
+              disabled={!navigator.onLine}
+            >
+              <Plus className="mr-2 h-5 w-5" />
+              Tambah Jadwal
+            </Button>
+          </div>
         </div>
 
         {/* Quick Stats */}
@@ -1540,14 +1580,20 @@ export default function JadwalPage() {
         <Card className="border-0 shadow-xl bg-linear-to-br from-white via-primary/5 to-accent/5 dark:from-slate-900 dark:via-primary/10 dark:to-accent/10 backdrop-blur-sm">
           <CardContent className="p-6">
             <p className="mb-4 text-sm font-medium text-muted-foreground">
-              Praktikum yang tanggalnya sudah lewat otomatis menjadi riwayat tetap dan tidak bisa diubah lagi.
+              Praktikum yang tanggalnya sudah lewat otomatis menjadi riwayat
+              tetap dan tidak bisa diubah lagi.
             </p>
             <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3 sm:gap-4">
               <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
                 <CalendarIcon className="h-4 w-4 text-primary" />
                 Filter:
               </div>
-              <Select value={filterKelas || "all"} onValueChange={(value) => setFilterKelas(value === "all" ? "" : value)}>
+              <Select
+                value={filterKelas || "all"}
+                onValueChange={(value) =>
+                  setFilterKelas(value === "all" ? "" : value)
+                }
+              >
                 <SelectTrigger className="w-full sm:w-60 border-2">
                   <SelectValue placeholder="Filter Kelas" />
                 </SelectTrigger>
@@ -1678,13 +1724,22 @@ export default function JadwalPage() {
                   className="space-y-4"
                 >
                   <TabsList className="grid w-full grid-cols-3 rounded-xl p-1 h-auto bg-linear-to-r from-primary/10 to-accent/10 dark:from-primary/20 dark:to-accent/20">
-                    <TabsTrigger value="pending" className="gap-2 rounded-lg py-2.5 font-semibold data-[state=active]:bg-white data-[state=active]:shadow-md dark:data-[state=active]:bg-card">
+                    <TabsTrigger
+                      value="pending"
+                      className="gap-2 rounded-lg py-2.5 font-semibold data-[state=active]:bg-white data-[state=active]:shadow-md dark:data-[state=active]:bg-card"
+                    >
                       Menunggu ({pendingJadwal.length})
                     </TabsTrigger>
-                    <TabsTrigger value="approved" className="gap-2 rounded-lg py-2.5 font-semibold data-[state=active]:bg-white data-[state=active]:shadow-md dark:data-[state=active]:bg-card">
+                    <TabsTrigger
+                      value="approved"
+                      className="gap-2 rounded-lg py-2.5 font-semibold data-[state=active]:bg-white data-[state=active]:shadow-md dark:data-[state=active]:bg-card"
+                    >
                       Disetujui ({approvedJadwal.length})
                     </TabsTrigger>
-                    <TabsTrigger value="history" className="gap-2 rounded-lg py-2.5 font-semibold data-[state=active]:bg-white data-[state=active]:shadow-md dark:data-[state=active]:bg-card">
+                    <TabsTrigger
+                      value="history"
+                      className="gap-2 rounded-lg py-2.5 font-semibold data-[state=active]:bg-white data-[state=active]:shadow-md dark:data-[state=active]:bg-card"
+                    >
                       Riwayat ({historyJadwal.length})
                     </TabsTrigger>
                   </TabsList>
@@ -1715,162 +1770,169 @@ export default function JadwalPage() {
                   )
                 ) : (
                   <div className="grid gap-4">
-                {(listTab === "pending"
-                  ? pendingJadwal
-                  : listTab === "approved"
-                    ? approvedJadwal
-                    : historyJadwal
-                ).map((jadwal) => {
-                  const kelas = kelasList.find((k) => k.id === jadwal.kelas_id);
-                  const mataKuliah = getMataKuliahForJadwal(jadwal);
+                    {(listTab === "pending"
+                      ? pendingJadwal
+                      : listTab === "approved"
+                        ? approvedJadwal
+                        : historyJadwal
+                    ).map((jadwal) => {
+                      const kelas = kelasList.find(
+                        (k) => k.id === jadwal.kelas_id,
+                      );
+                      const mataKuliah = getMataKuliahForJadwal(jadwal);
 
-                  // ✅ NEW: Check if this jadwal belongs to current dosen
-                  const isOwner = jadwal.dosen_id === currentDosenId;
-                  const creatorName =
-                    (jadwal as any).dosen?.user?.full_name || "Unknown";
+                      // ✅ NEW: Check if this jadwal belongs to current dosen
+                      const isOwner = jadwal.dosen_id === currentDosenId;
+                      const creatorName =
+                        (jadwal as any).dosen?.user?.full_name || "Unknown";
 
-                  return (
-                    <Card
-                      key={jadwal.id}
-                      className={`group hover:shadow-2xl transition-all duration-300 border-2 shadow-xl bg-linear-to-br from-white via-primary/5 to-accent/5 dark:from-slate-900 dark:via-primary/10 dark:to-accent/10 backdrop-blur-sm overflow-hidden relative ${
-                        isOwner
-                          ? "border-primary/30 dark:border-primary/30"
-                          : "border-border/50 dark:border-border/30"
-                      }`}
-                    >
-                      <div
-                        className={`absolute top-0 right-0 w-32 h-32 bg-linear-to-br ${
-                          isOwner
-                            ? "from-primary/20 to-accent/20"
-                            : "from-gray-300/10 to-gray-400/10"
-                        } rounded-full blur-3xl -mr-16 -mt-16`}
-                      />
-                      <CardContent className="relative p-6">
-                        <div className="flex items-start gap-6">
-                          {/* Date Badge */}
-                          <div className="shrink-0">
-                            <div
-                              className={`w-20 h-20 rounded-2xl shadow-lg flex flex-col items-center justify-center text-primary-foreground ${
-                                isOwner
-                                  ? "bg-linear-to-br from-primary to-accent shadow-primary/30"
-                                  : "bg-linear-to-br from-gray-400 to-gray-500 shadow-gray-400/30"
-                              }`}
-                            >
-                              <div className="text-2xl font-bold">
-                                {jadwal.tanggal_praktikum
-                                  ? format(
-                                      new Date(jadwal.tanggal_praktikum),
-                                      "dd",
-                                    )
-                                  : "-"}
+                      return (
+                        <Card
+                          key={jadwal.id}
+                          className={`group hover:shadow-2xl transition-all duration-300 border-2 shadow-xl bg-linear-to-br from-white via-primary/5 to-accent/5 dark:from-slate-900 dark:via-primary/10 dark:to-accent/10 backdrop-blur-sm overflow-hidden relative ${
+                            isOwner
+                              ? "border-primary/30 dark:border-primary/30"
+                              : "border-border/50 dark:border-border/30"
+                          }`}
+                        >
+                          <div
+                            className={`absolute top-0 right-0 w-32 h-32 bg-linear-to-br ${
+                              isOwner
+                                ? "from-primary/20 to-accent/20"
+                                : "from-gray-300/10 to-gray-400/10"
+                            } rounded-full blur-3xl -mr-16 -mt-16`}
+                          />
+                          <CardContent className="relative p-6">
+                            <div className="flex items-start gap-6">
+                              {/* Date Badge */}
+                              <div className="shrink-0">
+                                <div
+                                  className={`w-20 h-20 rounded-2xl shadow-lg flex flex-col items-center justify-center text-primary-foreground ${
+                                    isOwner
+                                      ? "bg-linear-to-br from-primary to-accent shadow-primary/30"
+                                      : "bg-linear-to-br from-gray-400 to-gray-500 shadow-gray-400/30"
+                                  }`}
+                                >
+                                  <div className="text-2xl font-bold">
+                                    {jadwal.tanggal_praktikum
+                                      ? format(
+                                          new Date(jadwal.tanggal_praktikum),
+                                          "dd",
+                                        )
+                                      : "-"}
+                                  </div>
+                                  <div className="text-xs font-medium uppercase">
+                                    {jadwal.tanggal_praktikum
+                                      ? format(
+                                          new Date(jadwal.tanggal_praktikum),
+                                          "MMM",
+                                          { locale: id },
+                                        )
+                                      : "-"}
+                                  </div>
+                                </div>
                               </div>
-                              <div className="text-xs font-medium uppercase">
-                                {jadwal.tanggal_praktikum
-                                  ? format(
-                                      new Date(jadwal.tanggal_praktikum),
-                                      "MMM",
-                                      { locale: id },
-                                    )
-                                  : "-"}
-                              </div>
-                            </div>
-                          </div>
 
-                          {/* Content */}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-start justify-between gap-4 mb-3">
-                              <div className="flex-1">
-                                <h3 className="text-xl font-bold text-foreground mb-2">
-                                  {mataKuliah?.nama_mk || "Mata Kuliah"}
-                                </h3>
-                                <div className="flex flex-wrap items-center gap-3 text-sm">
-                                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 text-primary rounded-full font-semibold">
-                                    <BookOpen className="h-3.5 w-3.5" />
-                                    {kelas?.kode_kelas} - {kelas?.nama_kelas}
-                                  </span>
-                                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-accent/10 text-accent rounded-full font-semibold">
-                                    <Users className="h-3.5 w-3.5" />
-                                    {kelas?.tahun_ajaran}
-                                  </span>
-                                  {/* ✅ NEW: Creator Badge */}
-                                  <span
-                                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-semibold ${
-                                      isOwner
-                                        ? "bg-success/10 text-success"
-                                        : "bg-muted text-muted-foreground"
-                                    }`}
-                                  >
-                                    {isOwner ? "👤 Anda" : `👤 ${creatorName}`}
-                                  </span>
-                                  {/* ✅ NEW: Status Badge */}
-                                  <StatusBadge
-                                    status={jadwal.status || "pending"}
+                              {/* Content */}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-start justify-between gap-4 mb-3">
+                                  <div className="flex-1">
+                                    <h3 className="text-xl font-bold text-foreground mb-2">
+                                      {mataKuliah?.nama_mk || "Mata Kuliah"}
+                                    </h3>
+                                    <div className="flex flex-wrap items-center gap-3 text-sm">
+                                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 text-primary rounded-full font-semibold">
+                                        <BookOpen className="h-3.5 w-3.5" />
+                                        {kelas?.kode_kelas} -{" "}
+                                        {kelas?.nama_kelas}
+                                      </span>
+                                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-accent/10 text-accent rounded-full font-semibold">
+                                        <Users className="h-3.5 w-3.5" />
+                                        {kelas?.tahun_ajaran}
+                                      </span>
+                                      {/* ✅ NEW: Creator Badge */}
+                                      <span
+                                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-semibold ${
+                                          isOwner
+                                            ? "bg-success/10 text-success"
+                                            : "bg-muted text-muted-foreground"
+                                        }`}
+                                      >
+                                        {isOwner
+                                          ? "👤 Anda"
+                                          : `👤 ${creatorName}`}
+                                      </span>
+                                      {/* ✅ NEW: Status Badge */}
+                                      <StatusBadge
+                                        status={jadwal.status || "pending"}
+                                        size="sm"
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Details */}
+                                <div className="space-y-2 mb-3">
+                                  {jadwal.topik && (
+                                    <div className="flex items-start gap-2">
+                                      <div className="w-1 h-1 bg-primary rounded-full mt-2"></div>
+                                      <p className="text-sm font-semibold text-muted-foreground">
+                                        <span className="text-primary">
+                                          Topik:
+                                        </span>{" "}
+                                        {jadwal.topik}
+                                      </p>
+                                    </div>
+                                  )}
+                                  <div className="flex items-center gap-2 text-sm">
+                                    <Clock className="h-4 w-4 text-success" />
+                                    <span className="font-bold text-success">
+                                      {jadwal.jam_mulai} - {jadwal.jam_selesai}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center gap-2 text-sm">
+                                    <MapPin className="h-4 w-4 text-warning" />
+                                    <span className="font-bold text-warning">
+                                      {jadwal.laboratorium?.nama_lab || "-"}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                {jadwal.catatan && (
+                                  <div className="mt-3 p-3 bg-muted/40 rounded-lg border border-border/50">
+                                    <p className="text-xs font-semibold text-muted-foreground">
+                                      📝 {jadwal.catatan}
+                                    </p>
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Actions */}
+                              {isOwner && !isPastJadwal(jadwal) ? (
+                                <div className="flex flex-col gap-2 shrink-0">
+                                  <Button
+                                    variant="outline"
                                     size="sm"
-                                  />
+                                    onClick={() => handleEdit(jadwal)}
+                                    className="border-2 hover:bg-primary/5 font-semibold"
+                                  >
+                                    Edit
+                                  </Button>
+                                  <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    onClick={() => handleDelete(jadwal)}
+                                    className="font-semibold"
+                                  >
+                                    Hapus
+                                  </Button>
                                 </div>
-                              </div>
+                              ) : null}
                             </div>
-
-                            {/* Details */}
-                            <div className="space-y-2 mb-3">
-                              {jadwal.topik && (
-                                <div className="flex items-start gap-2">
-                                  <div className="w-1 h-1 bg-primary rounded-full mt-2"></div>
-                                  <p className="text-sm font-semibold text-muted-foreground">
-                                    <span className="text-primary">Topik:</span>{" "}
-                                    {jadwal.topik}
-                                  </p>
-                                </div>
-                              )}
-                              <div className="flex items-center gap-2 text-sm">
-                                <Clock className="h-4 w-4 text-success" />
-                                <span className="font-bold text-success">
-                                  {jadwal.jam_mulai} - {jadwal.jam_selesai}
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-2 text-sm">
-                                <MapPin className="h-4 w-4 text-warning" />
-                                <span className="font-bold text-warning">
-                                  {jadwal.laboratorium?.nama_lab || "-"}
-                                </span>
-                              </div>
-                            </div>
-
-                            {jadwal.catatan && (
-                              <div className="mt-3 p-3 bg-muted/40 rounded-lg border border-border/50">
-                                <p className="text-xs font-semibold text-muted-foreground">
-                                  📝 {jadwal.catatan}
-                                </p>
-                              </div>
-                            )}
-                          </div>
-
-                          {/* Actions */}
-                  {isOwner && !isPastJadwal(jadwal) ? (
-                    <div className="flex flex-col gap-2 shrink-0">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleEdit(jadwal)}
-                                className="border-2 hover:bg-primary/5 font-semibold"
-                              >
-                                Edit
-                              </Button>
-                              <Button
-                                variant="destructive"
-                                size="sm"
-                                onClick={() => handleDelete(jadwal)}
-                                className="font-semibold"
-                              >
-                                Hapus
-                              </Button>
-                            </div>
-                          ) : null}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
                   </div>
                 )}
               </>

@@ -19,7 +19,7 @@ export function getNotificationNavigationTarget(
     notification.data?.attempt_id &&
     notification.data?.kuis_id
   ) {
-    return `/dosen/kuis/${notification.data.kuis_id}/attempt/${notification.data.attempt_id}`;
+    return `/dosen/kuis/${notification.data.kuis_id}/results?attempt=${notification.data.attempt_id}`;
   }
 
   if (
@@ -55,7 +55,7 @@ export function getNotificationNavigationTarget(
   }
 
   if (notification.type === "peminjaman_baru") {
-    return "/laboran/persetujuan";
+    return "/laboran/peminjaman";
   }
 
   if (
@@ -73,7 +73,10 @@ export function getNotificationNavigationTarget(
     return `/${role}/jadwal`;
   }
 
-  if ((notification.type === "pengumuman" || notification.type === "sistem") && role) {
+  if (
+    (notification.type === "pengumuman" || notification.type === "sistem") &&
+    role
+  ) {
     return `/${role}/notifikasi`;
   }
 

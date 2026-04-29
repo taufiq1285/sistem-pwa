@@ -12,6 +12,7 @@ type MateriTable = Database["public"]["Tables"] extends {
       // Fallback shape (update to match actual 'materi' table once added to Database types)
       id: string;
       kelas_id: string;
+      mata_kuliah_id?: string | null;
       dosen_id: string;
       judul: string;
       deskripsi?: string | null;
@@ -42,10 +43,16 @@ export interface Materi extends MateriTable {
       kode_mk?: string;
     };
   };
+  mata_kuliah?: {
+    id: string;
+    nama_mk: string;
+    kode_mk?: string;
+  } | null;
 }
 
 export interface CreateMateriData {
   kelas_id: string;
+  mata_kuliah_id?: string | null;
   dosen_id: string;
   judul: string;
   deskripsi?: string;

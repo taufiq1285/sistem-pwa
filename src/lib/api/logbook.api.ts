@@ -82,13 +82,8 @@ export async function getLogbook(
       });
     }
 
-    if (filters?.kelas_id) {
-      filterConditions.push({
-        column: "mahasiswa.kelas_id", // Join through mahasiswa
-        operator: "eq" as const,
-        value: filters.kelas_id,
-      });
-    }
+    // kelas_id and mata_kuliah_id live on jadwal_praktikum. Keep them out of
+    // the direct PostgREST filter and apply after fetch to avoid alias/RLS issues.
 
     if (filters?.dosen_id) {
       filterConditions.push({
@@ -105,7 +100,18 @@ export async function getLogbook(
           id,
           topik,
           tanggal_praktikum,
+          kelas_id,
+          mata_kuliah_id,
           laboratorium_id,
+          kelas:kelas_id (
+            id,
+            nama_kelas
+          ),
+          mata_kuliah:mata_kuliah_id (
+            id,
+            kode_mk,
+            nama_mk
+          ),
           laboratorium:laboratorium_id (
             nama_lab
           )
@@ -134,7 +140,22 @@ export async function getLogbook(
 
     if (DEBUG_LOGBOOK)
       console.log(`📖 getLogbook returning ${data?.length || 0} items`);
-    return data;
+    const filteredData = data.filter((item) => {
+      if (filters?.kelas_id && item.jadwal?.kelas_id !== filters.kelas_id) {
+        return false;
+      }
+
+      if (
+        filters?.mata_kuliah_id &&
+        item.jadwal?.mata_kuliah_id !== filters.mata_kuliah_id
+      ) {
+        return false;
+      }
+
+      return true;
+    });
+
+    return filteredData;
   } catch (error) {
     const apiError = handleError(error);
     logError(apiError, "getLogbook");
@@ -156,6 +177,17 @@ export async function getLogbookById(id: string): Promise<LogbookEntry> {
           id,
           topik,
           tanggal_praktikum,
+          kelas_id,
+          mata_kuliah_id,
+          kelas:kelas_id (
+            id,
+            nama_kelas
+          ),
+          mata_kuliah:mata_kuliah_id (
+            id,
+            kode_mk,
+            nama_mk
+          ),
           laboratorium:laboratorium_id (
             nama_lab
           )
@@ -187,7 +219,7 @@ export async function getLogbookById(id: string): Promise<LogbookEntry> {
  * Get logbook statistics
  */
 export async function getLogbookStats(
-  filters?: Pick<LogbookFilters, "kelas_id" | "dosen_id">,
+  filters?: Pick<LogbookFilters, "kelas_id" | "mata_kuliah_id" | "dosen_id">,
 ): Promise<LogbookStats> {
   try {
     if (DEBUG_LOGBOOK)
@@ -531,12 +563,24 @@ export async function gradeLogbook(
       throw new Error("Logbook not found");
     }
 
-    // Grade logbook
-    const graded = await update<LogbookEntry>("logbook_entries", data.id, {
+    const updatePayload: Partial<LogbookEntry> = {
       dosen_id: dosen.id,
       nilai: data.nilai,
       status: "graded",
-    });
+      graded_at: new Date().toISOString(),
+    };
+
+    if (data.feedback?.trim()) {
+      updatePayload.dosen_feedback = data.feedback.trim();
+      updatePayload.reviewed_at = new Date().toISOString();
+    }
+
+    // Grade logbook
+    const graded = await update<LogbookEntry>(
+      "logbook_entries",
+      data.id,
+      updatePayload,
+    );
 
     if (DEBUG_LOGBOOK) console.log("✅ Logbook graded:", graded);
     return graded;
@@ -609,7 +653,9 @@ export const logbookApi = {
 
   getLogbookById: (id: string) => withApiResponse(() => getLogbookById(id)),
 
-  getLogbookStats: (filters?: Pick<LogbookFilters, "kelas_id" | "dosen_id">) =>
+  getLogbookStats: (
+    filters?: Pick<LogbookFilters, "kelas_id" | "mata_kuliah_id" | "dosen_id">,
+  ) =>
     withApiResponse(() => getLogbookStats(filters)),
 
   // Mahasiswa operations

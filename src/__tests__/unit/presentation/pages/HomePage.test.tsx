@@ -23,7 +23,7 @@ describe("Public HomePage", () => {
 
     expect(
       screen.getByRole("heading", {
-        name: /sistem informasi praktikum akademi kebidanan mega buana/i,
+        name: /Kelola Praktikum/i,
       }),
     ).toBeInTheDocument();
 

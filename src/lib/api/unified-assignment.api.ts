@@ -71,6 +71,89 @@ export interface DeleteAssignmentOptions {
   notifyDosen?: boolean;
 }
 
+type AssignmentDependencySummary = {
+  kehadiranCount: number;
+  logbookCount: number;
+  materiCount: number;
+  kuisCount: number;
+  nilaiCount: number;
+};
+
+type CountFilterOperator = "eq" | "in";
+
+type CountFilter = {
+  column: string;
+  operator: CountFilterOperator;
+  value: unknown;
+};
+
+async function countRows(
+  table: string,
+  filters: CountFilter[],
+): Promise<number> {
+  let queryBuilder = (supabase as any)
+    .from(table)
+    .select("id", { count: "exact", head: true });
+
+  filters.forEach((filter) => {
+    if (filter.operator === "eq") {
+      queryBuilder = queryBuilder.eq(filter.column, filter.value);
+      return;
+    }
+
+    queryBuilder = queryBuilder.in(filter.column, filter.value);
+  });
+
+  const { count, error } = await queryBuilder;
+
+  if (error) throw error;
+
+  return count || 0;
+}
+
+async function getAssignmentDependencySummary(
+  jadwalIds: string[],
+  dosenId: string,
+  mataKuliahId: string,
+  kelasId: string,
+): Promise<AssignmentDependencySummary> {
+  const [
+    kehadiranCount,
+    logbookCount,
+    materiCount,
+    kuisCount,
+    nilaiCount,
+  ] = await Promise.all([
+    countRows("kehadiran", [
+      { column: "jadwal_id", operator: "in", value: jadwalIds },
+    ]),
+    countRows("logbook_entries", [
+      { column: "jadwal_id", operator: "in", value: jadwalIds },
+    ]),
+    countRows("materi", [
+      { column: "kelas_id", operator: "eq", value: kelasId },
+      { column: "dosen_id", operator: "eq", value: dosenId },
+    ]),
+    countRows("kuis", [
+      { column: "kelas_id", operator: "eq", value: kelasId },
+      { column: "dosen_id", operator: "eq", value: dosenId },
+      { column: "mata_kuliah_id", operator: "eq", value: mataKuliahId },
+    ]),
+    countRows("nilai", [
+      { column: "kelas_id", operator: "eq", value: kelasId },
+      { column: "mata_kuliah_id", operator: "eq", value: mataKuliahId },
+    ]),
+  ]);
+
+  return {
+    kehadiranCount,
+    logbookCount,
+    materiCount,
+    kuisCount,
+    nilaiCount,
+  };
+}
+
 // ============================================================================
 // CORE FUNCTIONS
 // ============================================================================
@@ -282,7 +365,7 @@ export async function deleteAssignmentCascade(
       options,
     });
 
-    // Start by counting what will be deleted
+    // Start by counting what will be archived
     const { data: jadwalToDelete, error: countError } = await (supabase as any)
       .from("jadwal_praktikum")
       .select("id, tanggal_praktikum, topik")
@@ -314,21 +397,68 @@ export async function deleteAssignmentCascade(
     }
 
     const totalJadwal = normalizedJadwalToDelete.length;
-    console.log(`Found ${totalJadwal} jadwal to delete`);
+    console.log(`Found ${totalJadwal} jadwal to archive`);
 
-    // Step 1: Delete all jadwal praktikum for this assignment
-    const { error: jadwalDeleteError } = await (supabase as any)
+    if (totalJadwal === 0) {
+      throw new Error(
+        "Referensi praktikum tidak ditemukan atau sudah tidak aktif.",
+      );
+    }
+
+    const jadwalIdsToArchive = normalizedJadwalToDelete.map(
+      (jadwal: any) => jadwal.id,
+    );
+
+    const hasPastJadwal = normalizedJadwalToDelete.some((jadwal: any) => {
+      const tanggal = jadwal?.tanggal_praktikum;
+      if (!tanggal) return false;
+      return new Date(tanggal) < new Date(new Date().toDateString());
+    });
+
+    if (hasPastJadwal) {
+      throw new Error(
+        "Referensi praktikum ini sudah memiliki sesi yang lewat tanggal. Untuk menjaga riwayat tetap valid, referensi tidak bisa dihapus.",
+      );
+    }
+
+    const dependencySummary = await getAssignmentDependencySummary(
+      jadwalIdsToArchive,
+      dosenId,
+      mataKuliahId,
+      kelasId,
+    );
+
+    const blockedDataLabels = [
+      dependencySummary.kehadiranCount > 0 ? "presensi" : null,
+      dependencySummary.logbookCount > 0 ? "logbook" : null,
+      dependencySummary.materiCount > 0 ? "materi" : null,
+      dependencySummary.kuisCount > 0 ? "kuis/tugas" : null,
+      dependencySummary.nilaiCount > 0 ? "nilai" : null,
+    ].filter(Boolean);
+
+    if (blockedDataLabels.length > 0) {
+      throw new Error(
+        `Referensi praktikum tidak dapat dihapus karena sudah ada data ${blockedDataLabels.join(", ")}. Untuk menjaga riwayat akademik tetap valid, koreksi detail jadwal atau arsipkan data referensi yang masih aman saja.`,
+      );
+    }
+
+    // Step 1: Archive all jadwal praktikum for this assignment
+    const jadwalArchiveBuilder = (supabase as any)
       .from("jadwal_praktikum")
-      .delete()
-      .eq("dosen_id", dosenId)
-      .eq("mata_kuliah_id", mataKuliahId)
-      .eq("kelas_id", kelasId);
+      .update?.({ is_active: false });
 
-    if (jadwalDeleteError) throw jadwalDeleteError;
+    const jadwalArchiveResult = jadwalArchiveBuilder
+      ? await jadwalArchiveBuilder.in("id", jadwalIdsToArchive)
+      : await (supabase as any)
+          .from("jadwal_praktikum")
+          .delete()
+          .in("id", jadwalIdsToArchive);
 
-    console.log(`✅ Deleted ${totalJadwal} jadwal praktikum`);
+    if (jadwalArchiveResult?.error) throw jadwalArchiveResult.error;
 
-    // Step 2: Check if we should also clean up the kelas
+    console.log(`✅ Archived ${totalJadwal} jadwal praktikum`);
+
+    // Step 2: Check if we should also archive the kelas
     let kelasDeleted = false;
     if (options?.alsoDeleteKelas) {
       // Check if kelas has any students
@@ -351,15 +481,17 @@ export async function deleteAssignmentCascade(
         if (otherJadwalError) throw otherJadwalError;
 
         if (otherJadwalCount === 0) {
-          // Safe to delete the kelas
-          const { error: kelasDeleteError } = await supabase
+          const kelasArchiveBuilder = supabase
             .from("kelas")
-            .delete()
-            .eq("id", kelasId);
+            .update?.({ is_active: false });
 
-          if (kelasDeleteError) throw kelasDeleteError;
+          const kelasArchiveResult = kelasArchiveBuilder
+            ? await kelasArchiveBuilder.eq("id", kelasId)
+            : await supabase.from("kelas").delete().eq("id", kelasId);
+
+          if (kelasArchiveResult?.error) throw kelasArchiveResult.error;
           kelasDeleted = true;
-          console.log(`✅ Deleted kelas ${kelasId}`);
+          console.log(`✅ Archived kelas ${kelasId}`);
         }
       }
     }
@@ -411,9 +543,9 @@ export async function deleteAssignmentCascade(
       // Create notification
       await supabase.from("notifications").insert({
         user_id: dosenId,
-        title: "Assignment Dihapus",
-        message: `Assignment untuk mata kuliah ${mkData?.nama_mk} di kelas ${kelasData?.nama_kelas} telah dihapus oleh admin.`,
-        type: "assignment_deleted",
+        title: "Referensi Praktikum Diarsipkan",
+        message: `Referensi praktikum untuk mata kuliah ${mkData?.nama_mk} di kelas ${kelasData?.nama_kelas} telah diarsipkan oleh admin.`,
+        type: "assignment_archived",
         metadata: {
           dosen_id: dosenId,
           mata_kuliah_id: mataKuliahId,
@@ -428,7 +560,7 @@ export async function deleteAssignmentCascade(
 
     return {
       success: true,
-      message: `Assignment berhasil dihapus`,
+      message: `Assignment berhasil diarsipkan`,
       details: {
         deleted_jadwal_count: totalJadwal,
         kelas_deleted: kelasDeleted,

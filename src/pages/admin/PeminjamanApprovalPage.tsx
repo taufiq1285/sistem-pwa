@@ -42,6 +42,18 @@ import {
   getApprovalHistory,
   type ApprovalHistory,
 } from "@/lib/api/laboran.api";
+import { invalidateCache } from "@/lib/offline/api-cache";
+
+const invalidatePeminjamanCaches = async () => {
+  await Promise.all([
+    invalidateCache("laboran_pending_approvals"),
+    invalidateCache("laboran_active_borrowings"),
+    invalidateCache("laboran_returned_borrowings"),
+    invalidateCache("dosen_my_borrowings"),
+    invalidateCache("dosen_available_equipment"),
+  ]);
+  window.dispatchEvent(new CustomEvent("peminjaman:changed"));
+};
 
 // ============================================================================
 // TYPES
@@ -159,7 +171,7 @@ export default function PeminjamanApprovalPage() {
       setProcessing(requestId);
       await approvePeminjaman(requestId);
       toast.success("Peminjaman disetujui dan stok otomatis berkurang");
-      // Reload both lists after successful approve
+      await invalidatePeminjamanCaches();
       await Promise.all([loadRequests(), loadHistory()]);
     } catch (error: any) {
       console.error(error);
@@ -188,7 +200,7 @@ export default function PeminjamanApprovalPage() {
       toast.success("Peminjaman ditolak");
       setRejectDialogOpen(false);
       setRejectReason("");
-      // Reload both lists after successful reject
+      await invalidatePeminjamanCaches();
       await Promise.all([loadRequests(), loadHistory()]);
     } catch (error: any) {
       console.error(error);

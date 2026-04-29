@@ -71,6 +71,7 @@ export const ROUTES = {
     ROOT: "/laboran",
     DASHBOARD: "/laboran/dashboard",
     INVENTARIS: "/laboran/inventaris",
+    PEMINJAMAN: "/laboran/peminjaman",
     PERSETUJUAN: "/laboran/persetujuan",
     LABORATORIUM: "/laboran/laboratorium",
     LAPORAN: "/laboran/laporan",

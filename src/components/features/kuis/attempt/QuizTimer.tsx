@@ -210,7 +210,7 @@ export function QuizTimer({
     return (
       <div
         className={cn(
-          "flex items-center gap-2 px-3 py-1.5 rounded-lg border",
+          "flex flex-col items-end gap-1 rounded-lg border px-3 py-1.5",
           isCritical &&
             "border-red-300 bg-red-50 dark:border-red-800 dark:bg-red-950",
           isWarning &&
@@ -221,10 +221,13 @@ export function QuizTimer({
             "border-green-300 bg-green-50 dark:border-green-800 dark:bg-green-950",
         )}
       >
-        <Clock className={cn("h-4 w-4", getColorClass())} />
-        <span
-          className={cn("font-mono font-semibold text-sm", getColorClass())}
-        >
+        <div className="flex items-center gap-2">
+          <Clock className={cn("h-4 w-4", getColorClass())} />
+          <span className={cn("text-[11px] font-medium", getColorClass())}>
+            Sisa waktu
+          </span>
+        </div>
+        <span className={cn("font-mono text-sm font-semibold", getColorClass())}>
           {formatTime(timeRemaining)}
         </span>
       </div>

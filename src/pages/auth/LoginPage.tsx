@@ -9,11 +9,7 @@ import { LoginForm } from "@/components/forms/LoginForm";
 import { GlassCard } from "@/components/ui/glass-card";
 import { useState, useEffect } from "react";
 import akbidLogo from "@/assets/akbid-logo-asli.png";
-import {
-  Sparkles,
-  ArrowLeft,
-  Shield,
-} from "lucide-react";
+import { Sparkles, ArrowLeft, Shield } from "lucide-react";
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -141,23 +137,23 @@ export function LoginPage() {
 
                 {/* Sign Up Link */}
                 <div className="text-center">
-                    <Link
-                      to="/register"
-                      className="inline-flex items-center space-x-2 text-[#7B1D3A] hover:text-[#9B2448] font-semibold text-base group transition-all duration-200"
-                    >
-                      <span>Daftar Sekarang</span>
-                      <Sparkles className="h-4 w-4 text-[#7B1D3A] group-hover:scale-125 group-hover:rotate-12 transition-all duration-200" />
-                    </Link>
-                  </div>
+                  <Link
+                    to="/register"
+                    className="inline-flex items-center space-x-2 text-[#7B1D3A] hover:text-[#9B2448] font-semibold text-base group transition-all duration-200"
+                  >
+                    <span>Daftar Sekarang</span>
+                    <Sparkles className="h-4 w-4 text-[#7B1D3A] group-hover:scale-125 group-hover:rotate-12 transition-all duration-200" />
+                  </Link>
+                </div>
 
                 {/* Forgot Password */}
                 <div className="text-center pt-2">
-                    <Link
-                      to="/forgot-password"
-                      className="text-sm text-slate-500 hover:text-[#7B1D3A] transition-colors duration-200"
-                    >
-                      Lupa password?
-                    </Link>
+                  <Link
+                    to="/forgot-password"
+                    className="text-sm text-slate-500 hover:text-[#7B1D3A] transition-colors duration-200"
+                  >
+                    Lupa password?
+                  </Link>
                 </div>
               </div>
             </div>
@@ -188,4 +184,3 @@ export function LoginPage() {
     </div>
   );
 }
-

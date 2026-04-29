@@ -3,13 +3,19 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import DosenPengumumanPage from "@/pages/dosen/PengumumanPage";
 
-const { mockUseAuth, mockCacheAPI, mockGetAllAnnouncements } = vi.hoisted(
-  () => ({
-    mockUseAuth: vi.fn(),
-    mockCacheAPI: vi.fn(),
-    mockGetAllAnnouncements: vi.fn(),
-  }),
-);
+const {
+  mockUseAuth,
+  mockCacheAPI,
+  mockGetCachedData,
+  mockGetAllAnnouncements,
+  mockGetNotifications,
+} = vi.hoisted(() => ({
+  mockUseAuth: vi.fn(),
+  mockCacheAPI: vi.fn(),
+  mockGetCachedData: vi.fn(),
+  mockGetAllAnnouncements: vi.fn(),
+  mockGetNotifications: vi.fn(),
+}));
 
 vi.mock("@/lib/hooks/useAuth", () => ({
   useAuth: () => mockUseAuth(),
@@ -17,11 +23,17 @@ vi.mock("@/lib/hooks/useAuth", () => ({
 
 vi.mock("@/lib/offline/api-cache", () => ({
   cacheAPI: (...args: unknown[]) => mockCacheAPI(...args),
-  getCachedData: vi.fn().mockResolvedValue(null),
+  getCachedData: (...args: unknown[]) => mockGetCachedData(...args),
 }));
 
 vi.mock("@/lib/api/announcements.api", () => ({
   getAllAnnouncements: (...args: unknown[]) => mockGetAllAnnouncements(...args),
+}));
+
+vi.mock("@/lib/api/notification.api", () => ({
+  getNotifications: (...args: unknown[]) => mockGetNotifications(...args),
+  markAllAsRead: vi.fn(),
+  markAsRead: vi.fn(),
 }));
 
 describe("DosenPengumumanPage", () => {
@@ -31,6 +43,8 @@ describe("DosenPengumumanPage", () => {
     mockUseAuth.mockReturnValue({
       user: { id: "dosen-1", role: "dosen" },
     });
+    mockGetCachedData.mockResolvedValue(null);
+    mockGetNotifications.mockResolvedValue([]);
 
     mockCacheAPI.mockImplementation(
       async (_key: string, fn: () => Promise<any>) => {
@@ -104,7 +118,9 @@ describe("DosenPengumumanPage", () => {
 
     expect(screen.queryByText("Khusus Mahasiswa")).not.toBeInTheDocument();
     expect(screen.queryByText("Sudah Expired")).not.toBeInTheDocument();
-    expect(screen.getByText(/2 Notifikasi Aktif/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: /Pengumuman Admin/i }),
+    ).toBeInTheDocument();
   });
 
   it("menampilkan empty state saat tidak ada notifikasi aktif", async () => {
@@ -118,13 +134,13 @@ describe("DosenPengumumanPage", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText(/Tidak ada notifikasi aktif/i),
+        screen.getByText(/Belum ada pengumuman aktif/i),
       ).toBeInTheDocument();
     });
   });
 
   it("menampilkan error state saat load gagal", async () => {
-    mockCacheAPI.mockRejectedValue(new Error("load gagal"));
+    mockGetCachedData.mockRejectedValue(new Error("load gagal"));
 
     render(
       <MemoryRouter>

@@ -342,9 +342,9 @@ export default function LaboratoriesPage() {
       <Card className="border-warning/30 bg-warning/5">
         <CardContent className="p-4">
           <p className="text-sm text-foreground">
-            Halaman ini berfungsi sebagai master data laboratorium.
-            Laboratorium hanya bisa dihapus jika belum dipakai oleh inventaris
-            maupun jadwal praktikum.
+            Halaman ini berfungsi sebagai master data laboratorium. Laboratorium
+            hanya bisa dihapus jika belum dipakai oleh inventaris maupun jadwal
+            praktikum.
           </p>
         </CardContent>
       </Card>

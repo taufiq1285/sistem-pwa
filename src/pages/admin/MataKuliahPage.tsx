@@ -46,7 +46,7 @@ import type {
 import {
   cacheAPI,
   getCachedData,
-  invalidateCache,
+  invalidateCachePatternSync,
 } from "@/lib/offline/api-cache";
 
 export default function MataKuliahPage() {
@@ -54,9 +54,9 @@ export default function MataKuliahPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isOfflineData, setIsOfflineData] = useState(false);
   const [lastUpdatedAt, setLastUpdatedAt] = useState<number | null>(null);
-  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">(
-    "active",
-  );
+  const [statusFilter, setStatusFilter] = useState<
+    "all" | "active" | "inactive"
+  >("active");
 
   const [showDialog, setShowDialog] = useState(false);
   const [editingMK, setEditingMK] = useState<MataKuliah | null>(null);
@@ -95,7 +95,8 @@ export default function MataKuliahPage() {
     setIsLoading(true);
     try {
       const cacheKey = "admin_mata_kuliah_list";
-      const cachedEntry = await getCachedData<MataKuliah[]>(cacheKey);
+      const scopedCacheKey = `${cacheKey}_${statusFilter}`;
+      const cachedEntry = await getCachedData<MataKuliah[]>(scopedCacheKey);
       const hasCachedData = Array.isArray(cachedEntry?.data);
 
       if (hasCachedData && !forceRefresh) {
@@ -114,12 +115,10 @@ export default function MataKuliahPage() {
       }
 
       const isActiveFilter =
-        statusFilter === "all"
-          ? undefined
-          : statusFilter === "active";
+        statusFilter === "all" ? undefined : statusFilter === "active";
 
       const data = await cacheAPI(
-        `${cacheKey}_${statusFilter}`,
+        scopedCacheKey,
         () =>
           getMataKuliah(
             isActiveFilter === undefined
@@ -144,6 +143,17 @@ export default function MataKuliahPage() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const invalidateMataKuliahCaches = async () => {
+    await Promise.all([
+      invalidateCachePatternSync("admin_mata_kuliah_list"),
+      invalidateCachePatternSync("admin_master_mata_kuliah"),
+      invalidateCachePatternSync("dosen_mata_kuliah"),
+      invalidateCachePatternSync("dosen_jadwal_mata_kuliah"),
+      invalidateCachePatternSync("dosen_kelas_penilaian"),
+      invalidateCachePatternSync("dosen_kelas_"),
+    ]);
   };
 
   const handleAdd = () => {
@@ -195,7 +205,7 @@ export default function MataKuliahPage() {
         toast.success("Mata kuliah berhasil ditambahkan");
       }
 
-      await invalidateCache("admin_mata_kuliah_list");
+      await invalidateMataKuliahCaches();
       await loadMataKuliah(true);
       setShowDialog(false);
     } catch (error: any) {
@@ -231,10 +241,7 @@ export default function MataKuliahPage() {
       );
       setIsDeleteDialogOpen(false);
       setDeletingMK(null);
-      await invalidateCache("admin_mata_kuliah_list");
-      await invalidateCache("admin_mata_kuliah_list_active");
-      await invalidateCache("admin_mata_kuliah_list_inactive");
-      await invalidateCache("admin_mata_kuliah_list_all");
+      await invalidateMataKuliahCaches();
       await loadMataKuliah(true);
     } catch (error: any) {
       toast.error("Gagal menghapus", { description: error.message });

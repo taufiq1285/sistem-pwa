@@ -89,6 +89,11 @@ vi.mock("@/lib/api/kuis.api", () => ({
   getCachedAttempt: vi.fn().mockResolvedValue(null),
 }));
 
+vi.mock("@/lib/offline/api-cache", () => ({
+  clearAllCacheSync: vi.fn().mockResolvedValue(0),
+  invalidateCache: vi.fn().mockResolvedValue(undefined),
+}));
+
 describe("Kuis Versioned Simple API - Simplified Auto-Save", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -298,6 +303,7 @@ describe("Kuis Versioned Simple API - Simplified Auto-Save", () => {
         kuis: {
           id: "kuis-1",
           judul: "Biologi Quiz 1",
+          dosen_id: "dosen-1",
           kelas_id: "kelas-1",
           kelas: {
             id: "kelas-1",
@@ -322,17 +328,32 @@ describe("Kuis Versioned Simple API - Simplified Auto-Save", () => {
         await import("@/lib/api/notification.api");
       vi.mocked(notifyDosenTugasSubmitted).mockResolvedValue({} as any);
 
-      (supabase.from as any).mockReturnValue({
-        update: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
+      (supabase.from as any).mockImplementation((table: string) => {
+        if (table === "dosen") {
+          return {
             select: vi.fn().mockReturnValue({
-              single: vi.fn().mockResolvedValue({
-                data: mockAttempt,
-                error: null,
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: { user_id: "user-dosen-1" },
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        }
+
+        return {
+          update: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              select: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: mockAttempt,
+                  error: null,
+                }),
               }),
             }),
           }),
-        }),
+        };
       });
 
       const result = await submitQuizSafe({
@@ -427,6 +448,126 @@ describe("Kuis Versioned Simple API - Simplified Auto-Save", () => {
           sisa_waktu: 300,
         }),
       ).rejects.toThrow("Submit failed");
+    });
+
+    it("should auto-grade CBT answers and update attempt summary", async () => {
+      const submittedAttempt: AttemptKuis = {
+        id: "attempt-1",
+        kuis_id: "kuis-1",
+        mahasiswa_id: "mhs-1",
+        status: "submitted",
+        kuis: {
+          id: "kuis-1",
+          judul: "CBT Quiz",
+          kelas_id: "kelas-1",
+          kelas: {
+            id: "kelas-1",
+            dosen_id: "dosen-1",
+            dosen: {
+              id: "dosen-1",
+              user_id: "user-dosen-1",
+            },
+          } as any,
+        } as any,
+        mahasiswa: {
+          id: "mhs-1",
+          user: {
+            full_name: "Ahmad",
+          },
+        } as any,
+      } as any;
+
+      const recalculatedAttempt: AttemptKuis = {
+        ...submittedAttempt,
+        status: "graded",
+        total_poin: 10,
+        nilai_akhir: 100,
+      } as any;
+
+      const jawabanUpdate = vi.fn().mockReturnValue({
+        eq: vi.fn().mockResolvedValue({ error: null }),
+      });
+
+      const attemptUpdate = vi
+        .fn()
+        .mockReturnValueOnce({
+          eq: vi.fn().mockReturnValue({
+            select: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({
+                data: submittedAttempt,
+                error: null,
+              }),
+            }),
+          }),
+        })
+        .mockReturnValueOnce({
+          eq: vi.fn().mockReturnValue({
+            select: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({
+                data: recalculatedAttempt,
+                error: null,
+              }),
+            }),
+          }),
+        });
+
+      (supabase.from as any).mockImplementation((table: string) => {
+        if (table === "attempt_kuis") {
+          return {
+            update: attemptUpdate,
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: {
+                    id: "attempt-1",
+                    kuis_id: "kuis-1",
+                    jawaban: [
+                      {
+                        id: "jawaban-1",
+                        soal_id: "soal-1",
+                        jawaban: "A",
+                        jawaban_mahasiswa: "A",
+                        poin_diperoleh: 0,
+                      },
+                    ],
+                    kuis: {
+                      id: "kuis-1",
+                      soal: [
+                        {
+                          id: "soal-1",
+                          tipe_soal: "pilihan_ganda",
+                          jawaban_benar: "A",
+                          poin: 10,
+                        },
+                      ],
+                    },
+                  },
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        }
+
+        if (table === "jawaban") {
+          return {
+            update: jawabanUpdate,
+          };
+        }
+
+        return createMockQuery();
+      });
+
+      const result = await submitQuizSafe({
+        attempt_id: "attempt-1",
+        sisa_waktu: 120,
+      });
+
+      expect(result.status).toBe("graded");
+      expect(result.total_poin).toBe(10);
+      expect(result.nilai_akhir).toBe(100);
+      expect(jawabanUpdate).toHaveBeenCalled();
+      expect(attemptUpdate).toHaveBeenCalledTimes(2);
     });
   });
 
@@ -630,17 +771,51 @@ describe("Kuis Versioned Simple API - Simplified Auto-Save", () => {
         updated_at: "2025-01-21T11:00:00Z",
       };
 
-      (supabase.from as any).mockReturnValue({
-        update: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
+      (supabase.from as any).mockImplementation((table: string) => {
+        if (table === "jawaban") {
+          return {
+            update: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                select: vi.fn().mockReturnValue({
+                  single: vi.fn().mockResolvedValue({
+                    data: mockGradedAnswer,
+                    error: null,
+                  }),
+                }),
+              }),
+            }),
             select: vi.fn().mockReturnValue({
-              single: vi.fn().mockResolvedValue({
-                data: mockGradedAnswer,
+              eq: vi.fn().mockResolvedValue({
+                data: [{ poin_diperoleh: 10 }],
                 error: null,
               }),
             }),
-          }),
-        }),
+          };
+        }
+
+        if (table === "attempt_kuis") {
+          return {
+            update: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                select: vi.fn().mockResolvedValue({
+                  data: [{ id: "attempt-1", status: "graded" }],
+                  error: null,
+                  count: 1,
+                }),
+              }),
+            }),
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: { id: "attempt-1", status: "graded" },
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        }
+
+        return createMockQuery();
       });
 
       const result = await gradeAnswerWithVersion(
@@ -668,17 +843,51 @@ describe("Kuis Versioned Simple API - Simplified Auto-Save", () => {
         updated_at: "2025-01-21T11:00:00Z",
       };
 
-      (supabase.from as any).mockReturnValue({
-        update: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
+      (supabase.from as any).mockImplementation((table: string) => {
+        if (table === "jawaban") {
+          return {
+            update: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                select: vi.fn().mockReturnValue({
+                  single: vi.fn().mockResolvedValue({
+                    data: mockGradedAnswer,
+                    error: null,
+                  }),
+                }),
+              }),
+            }),
             select: vi.fn().mockReturnValue({
-              single: vi.fn().mockResolvedValue({
-                data: mockGradedAnswer,
+              eq: vi.fn().mockResolvedValue({
+                data: [{ poin_diperoleh: 0 }],
                 error: null,
               }),
             }),
-          }),
-        }),
+          };
+        }
+
+        if (table === "attempt_kuis") {
+          return {
+            update: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                select: vi.fn().mockResolvedValue({
+                  data: [{ id: "attempt-1", status: "graded" }],
+                  error: null,
+                  count: 1,
+                }),
+              }),
+            }),
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: { id: "attempt-1", status: "graded" },
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        }
+
+        return createMockQuery();
       });
 
       const result = await gradeAnswerWithVersion("jawaban-1", 0, false);

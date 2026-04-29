@@ -78,20 +78,62 @@ describe("KehadiranHistory", () => {
     it("menampilkan badge jumlah hadir", async () => {
       render(<KehadiranHistory kelasId="kelas-1" kelasNama="Kelas A" />);
       await waitFor(() => {
-        expect(screen.getByText(/✓ 25/)).toBeInTheDocument();
+        expect(screen.getByText(/Hadir 25/)).toBeInTheDocument();
+      });
+    });
+
+    it("menampilkan konteks mata kuliah jika tersedia", async () => {
+      mockGetKehadiranHistory.mockResolvedValue([
+        makeRecord({
+          mata_kuliah_id: "mk-1",
+          mata_kuliah_nama: "Askeb Kehamilan",
+          mata_kuliah_kode: "AK",
+        }),
+      ]);
+
+      render(<KehadiranHistory kelasId="kelas-1" kelasNama="Kelas A" />);
+
+      await waitFor(() => {
+        expect(screen.getByText("Askeb Kehamilan (AK)")).toBeInTheDocument();
+      });
+    });
+
+    it("menampilkan dua mata kuliah pada tanggal yang sama sebagai riwayat terpisah", async () => {
+      mockGetKehadiranHistory.mockResolvedValue([
+        makeRecord({
+          mata_kuliah_id: "mk-1",
+          mata_kuliah_nama: "Askeb Kehamilan",
+          mata_kuliah_kode: "AK",
+          hadir: 20,
+        }),
+        makeRecord({
+          mata_kuliah_id: "mk-2",
+          mata_kuliah_nama: "Kesehatan Reproduksi",
+          mata_kuliah_kode: "KR",
+          hadir: 18,
+        }),
+      ]);
+
+      render(<KehadiranHistory kelasId="kelas-1" kelasNama="Kelas A" />);
+
+      await waitFor(() => {
+        expect(screen.getByText("Askeb Kehamilan (AK)")).toBeInTheDocument();
+        expect(
+          screen.getByText("Kesehatan Reproduksi (KR)"),
+        ).toBeInTheDocument();
       });
     });
 
     it("menampilkan badge alpha saat ada mahasiswa alpha", async () => {
       render(<KehadiranHistory kelasId="kelas-1" kelasNama="Kelas A" />);
       await waitFor(() => {
-        expect(screen.getByText(/✗ 2/)).toBeInTheDocument();
+        expect(screen.getByText(/Alpha 2/)).toBeInTheDocument();
       });
     });
 
     it("expand detail saat baris diklik", async () => {
       render(<KehadiranHistory kelasId="kelas-1" kelasNama="Kelas A" />);
-      await waitFor(() => screen.getByText(/✓ 25/));
+      await waitFor(() => screen.getByText(/Hadir 25/));
 
       // Klik baris tanggal untuk expand
       const row = screen.getByRole("button", { name: /Rabu/ });
@@ -112,7 +154,7 @@ describe("KehadiranHistory", () => {
           onSelectDate={onSelectDate}
         />,
       );
-      await waitFor(() => screen.getByText(/✓ 25/));
+      await waitFor(() => screen.getByText(/Hadir 25/));
 
       const row = screen.getByRole("button", { name: /Rabu/ });
       await userEvent.click(row);
@@ -133,7 +175,7 @@ describe("KehadiranHistory", () => {
           onSelectDate={onSelectDate}
         />,
       );
-      await waitFor(() => screen.getByText(/✓ 25/));
+      await waitFor(() => screen.getByText(/Hadir 25/));
 
       const row = screen.getByRole("button", { name: /Rabu/ });
       await userEvent.click(row);

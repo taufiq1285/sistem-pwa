@@ -27,6 +27,32 @@ vi.mock("../../../../lib/middleware", () => ({
   requirePermission: vi.fn((permission, fn) => fn),
 }));
 
+const createSupabaseBuilder = () => {
+  const builder: any = {
+    select: vi.fn().mockReturnThis(),
+    insert: vi.fn().mockReturnThis(),
+    update: vi.fn().mockReturnThis(),
+    delete: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    in: vi.fn().mockReturnThis(),
+    not: vi.fn().mockReturnThis(),
+    order: vi.fn().mockReturnThis(),
+    limit: vi.fn(),
+    single: vi.fn(),
+    maybeSingle: vi.fn(),
+  };
+
+  return builder;
+};
+
+const mockSupabaseFromByTable = (
+  router: (table: string) => any | undefined,
+) => {
+  vi.mocked(supabase.from).mockImplementation((table: string) => {
+    return router(table) ?? createSupabaseBuilder();
+  });
+};
+
 describe("Laboran API", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -671,17 +697,30 @@ describe("Laboran API", () => {
         error: null,
       } as any);
 
-      const updateMock = vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            error: null,
-          }),
-        }),
+      const peminjamanBuilder = createSupabaseBuilder();
+      peminjamanBuilder.single.mockResolvedValueOnce({
+        data: { dosen_id: "d-1", inventaris_id: "inv-1" },
+        error: null,
       });
 
-      vi.mocked(supabase.from).mockReturnValue({
-        update: updateMock,
-      } as any);
+      const updateMock = vi.fn().mockReturnValue(peminjamanBuilder);
+      peminjamanBuilder.update = updateMock;
+      peminjamanBuilder.eq
+        .mockReturnValueOnce(peminjamanBuilder)
+        .mockReturnValueOnce(peminjamanBuilder)
+        .mockReturnValueOnce(peminjamanBuilder)
+        .mockResolvedValueOnce({ error: null });
+
+      const inventarisBuilder = createSupabaseBuilder();
+      inventarisBuilder.single.mockResolvedValue({
+        data: { nama_barang: "Mikroskop" },
+        error: null,
+      });
+
+      mockSupabaseFromByTable((table) => {
+        if (table === "peminjaman") return peminjamanBuilder;
+        if (table === "inventaris") return inventarisBuilder;
+      });
 
       await laboranAPI.rejectPeminjaman("pem-1", "Barang tidak tersedia");
 
@@ -689,17 +728,35 @@ describe("Laboran API", () => {
     });
 
     it("should process rejected approval action", async () => {
-      const updateMock = vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({ error: null }),
-        }),
-      });
-
       vi.mocked(supabase.auth.getUser).mockResolvedValue({
         data: { user: { id: "user-123" } },
         error: null,
       } as any);
-      vi.mocked(supabase.from).mockReturnValue({ update: updateMock } as any);
+
+      const peminjamanBuilder = createSupabaseBuilder();
+      peminjamanBuilder.single.mockResolvedValueOnce({
+        data: { dosen_id: "d-1", inventaris_id: "inv-1" },
+        error: null,
+      });
+
+      const updateMock = vi.fn().mockReturnValue(peminjamanBuilder);
+      peminjamanBuilder.update = updateMock;
+      peminjamanBuilder.eq
+        .mockReturnValueOnce(peminjamanBuilder)
+        .mockReturnValueOnce(peminjamanBuilder)
+        .mockReturnValueOnce(peminjamanBuilder)
+        .mockResolvedValueOnce({ error: null });
+
+      const inventarisBuilder = createSupabaseBuilder();
+      inventarisBuilder.single.mockResolvedValue({
+        data: { nama_barang: "Mikroskop" },
+        error: null,
+      });
+
+      mockSupabaseFromByTable((table) => {
+        if (table === "peminjaman") return peminjamanBuilder;
+        if (table === "inventaris") return inventarisBuilder;
+      });
 
       await expect(
         laboranAPI.processApproval({
@@ -1644,93 +1701,91 @@ describe("Laboran API", () => {
     });
 
     it("should map lab schedule today with related entities", async () => {
-      vi.mocked(supabase.from).mockImplementation((table: string) => {
+      let jadwalPraktikumCallCount = 0;
+
+      mockSupabaseFromByTable((table) => {
         if (table === "jadwal_praktikum") {
-          return {
-            select: vi.fn().mockReturnValue({
-              eq: vi.fn().mockReturnValue({
-                eq: vi.fn().mockReturnValue({
-                  order: vi.fn().mockReturnValue({
-                    limit: vi.fn().mockResolvedValue({
-                      data: [
-                        {
-                          id: "jp-1",
-                          hari: "Senin",
-                          jam_mulai: "08:00",
-                          jam_selesai: "10:00",
-                          tanggal_praktikum: "2024-01-01",
-                          topik: "Topik A",
-                          kelas_id: "k-1",
-                          laboratorium_id: "lab-1",
-                        },
-                      ],
-                      error: null,
-                    }),
-                  }),
-                }),
-              }),
-            }),
-          } as any;
+          jadwalPraktikumCallCount += 1;
+
+          const builder = createSupabaseBuilder();
+          builder.eq.mockReturnValue(builder);
+          builder.order.mockReturnValue(builder);
+
+          if (jadwalPraktikumCallCount === 1) {
+            builder.limit.mockResolvedValue({
+              data: [
+                {
+                  id: "jp-1",
+                  hari: "Senin",
+                  jam_mulai: "08:00",
+                  jam_selesai: "10:00",
+                  tanggal_praktikum: "2024-01-01",
+                  topik: "Topik A",
+                  kelas_id: "k-1",
+                  laboratorium_id: "lab-1",
+                },
+              ],
+              error: null,
+            });
+            return builder;
+          }
+
+          builder.not.mockReturnValue(builder);
+          builder.limit.mockResolvedValue({
+            data: [{ mata_kuliah_id: "mk-1" }],
+            error: null,
+          });
+          return builder;
         }
 
         if (table === "kelas") {
-          return {
-            select: vi.fn().mockReturnValue({
-              in: vi.fn().mockResolvedValue({
-                data: [
-                  {
-                    id: "k-1",
-                    nama_kelas: "TI-1A",
-                    mata_kuliah_id: "mk-1",
-                    dosen_id: "d-1",
-                  },
-                ],
-                error: null,
-              }),
-            }),
-          } as any;
+          const builder = createSupabaseBuilder();
+          builder.in.mockResolvedValue({
+            data: [
+              {
+                id: "k-1",
+                nama_kelas: "TI-1A",
+                mata_kuliah_id: "mk-1",
+                dosen_id: "d-1",
+              },
+            ],
+            error: null,
+          });
+          return builder;
         }
 
         if (table === "laboratorium") {
-          return {
-            select: vi.fn().mockReturnValue({
-              in: vi.fn().mockResolvedValue({
-                data: [{ id: "lab-1", nama_lab: "Lab Komputer" }],
-                error: null,
-              }),
-            }),
-          } as any;
+          const builder = createSupabaseBuilder();
+          builder.in.mockResolvedValue({
+            data: [{ id: "lab-1", nama_lab: "Lab Komputer" }],
+            error: null,
+          });
+          return builder;
         }
 
         if (table === "mata_kuliah") {
-          return {
-            select: vi.fn().mockReturnValue({
-              in: vi.fn().mockResolvedValue({
-                data: [{ id: "mk-1", nama_mk: "Pemrograman" }],
-                error: null,
-              }),
-            }),
-          } as any;
+          const builder = createSupabaseBuilder();
+          builder.in.mockResolvedValue({
+            data: [{ id: "mk-1", nama_mk: "Pemrograman" }],
+            error: null,
+          });
+          return builder;
         }
 
         if (table === "dosen") {
-          return {
-            select: vi.fn().mockReturnValue({
-              in: vi.fn().mockResolvedValue({
-                data: [
-                  {
-                    id: "d-1",
-                    user_id: "u-1",
-                    users: { full_name: "Dosen Pengampu" },
-                  },
-                ],
-                error: null,
-              }),
-            }),
-          } as any;
+          const builder = createSupabaseBuilder();
+          builder.in.mockResolvedValue({
+            data: [
+              {
+                id: "d-1",
+                user_id: "u-1",
+                users: { full_name: "Dosen Pengampu" },
+              },
+            ],
+            error: null,
+          });
+          return builder;
         }
-
-        return {} as any;
       });
 
       const result = await laboranAPI.getLabScheduleToday(5);

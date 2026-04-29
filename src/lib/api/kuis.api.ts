@@ -44,6 +44,10 @@ import {
   clearAllCacheSync,
 } from "@/lib/offline/api-cache";
 import {
+  calculateQuizScore,
+  gradeAnswer as gradeQuizAnswer,
+} from "@/lib/utils/quiz-scoring";
+import {
   requirePermission,
   requirePermissionAndOwnership,
   getCurrentDosenId,
@@ -165,6 +169,76 @@ export interface AttemptWithStudent extends AttemptKuis {
   submitted_at: string | null;
 }
 
+function normalizeSoalRecord(soal: any): Soal {
+  return {
+    ...soal,
+    tipe_soal: soal?.tipe_soal || soal?.tipe,
+    opsi_jawaban: soal?.opsi_jawaban || soal?.pilihan_jawaban || null,
+  } as Soal;
+}
+
+function isAutoGradableSoal(soal?: Soal | null): soal is Soal {
+  const tipeSoal = soal?.tipe_soal;
+  return (
+    tipeSoal === "pilihan_ganda" ||
+    tipeSoal === "benar_salah" ||
+    tipeSoal === "jawaban_singkat"
+  );
+}
+
+function normalizeJawabanRecord(
+  jawaban: any,
+  soalMap?: Map<string, Soal>,
+): Jawaban {
+  const normalizedSoal = jawaban?.soal
+    ? normalizeSoalRecord(jawaban.soal)
+    : soalMap?.get(jawaban?.soal_id);
+  const jawabanMahasiswa =
+    jawaban?.jawaban_mahasiswa ?? jawaban?.jawaban ?? "";
+  const normalizedJawaban: Jawaban = {
+    ...jawaban,
+    jawaban: jawaban?.jawaban ?? jawabanMahasiswa,
+    jawaban_mahasiswa: jawabanMahasiswa,
+    soal: normalizedSoal,
+  };
+
+  if (
+    typeof normalizedJawaban.is_correct !== "boolean" &&
+    normalizedSoal &&
+    isAutoGradableSoal(normalizedSoal) &&
+    jawabanMahasiswa.trim()
+  ) {
+    const grading = gradeQuizAnswer(normalizedSoal, jawabanMahasiswa);
+    normalizedJawaban.is_correct = grading.is_correct;
+
+    if (normalizedJawaban.poin_diperoleh == null) {
+      normalizedJawaban.poin_diperoleh = grading.poin_diperoleh;
+    }
+  }
+
+  return normalizedJawaban;
+}
+
+function normalizeAttemptRecord<T extends AttemptKuis>(attempt: T): T {
+  const normalizedSoal = ((attempt.kuis?.soal || []) as any[]).map(
+    normalizeSoalRecord,
+  );
+  const soalMap = new Map(normalizedSoal.map((soal) => [soal.id, soal]));
+
+  return {
+    ...attempt,
+    kuis: attempt.kuis
+      ? {
+          ...attempt.kuis,
+          soal: normalizedSoal,
+        }
+      : attempt.kuis,
+    jawaban: ((attempt.jawaban || []) as any[]).map((jawaban) =>
+      normalizeJawabanRecord(jawaban, soalMap),
+    ),
+  } as T;
+}
+
 // ============================================================================
 // KUIS (QUIZ) OPERATIONS
 // ============================================================================
@@ -192,6 +266,14 @@ export async function getKuis(
         column: "kelas_id",
         operator: "eq" as const,
         value: filters.kelas_id,
+      });
+    }
+
+    if (filters?.mata_kuliah_id) {
+      filterConditions.push({
+        column: "mata_kuliah_id",
+        operator: "eq" as const,
+        value: filters.mata_kuliah_id,
       });
     }
 
@@ -244,8 +326,8 @@ export async function getKuis(
         )
       `,
       order: {
-        column: "tanggal_mulai",
-        ascending: false,
+        column: "created_at",
+        ascending: false, // Terbaru di atas
       },
       // ✅ Enable caching for better offline support
       // IMPORTANT: When forceRefresh is true, disable caching at query level too
@@ -328,12 +410,21 @@ export async function getKuisById(id: string): Promise<Kuis> {
   }
 }
 
-export async function getKuisByKelas(kelasId: string): Promise<Kuis[]> {
+export async function getKuisByKelas(
+  kelasId: string,
+  mataKuliahId?: string,
+): Promise<Kuis[]> {
   try {
-    return await getKuis({ kelas_id: kelasId });
+    return await getKuis({
+      kelas_id: kelasId,
+      ...(mataKuliahId ? { mata_kuliah_id: mataKuliahId } : {}),
+    });
   } catch (error) {
     const apiError = handleError(error);
-    logError(apiError, `getKuisByKelas:${kelasId}`);
+    logError(
+      apiError,
+      `getKuisByKelas:${kelasId}${mataKuliahId ? `:${mataKuliahId}` : ""}`,
+    );
     throw apiError;
   }
 }
@@ -347,14 +438,8 @@ async function createKuisImpl(data: CreateKuisData): Promise<Kuis> {
     const dataWithDefaults = {
       ...data,
       status: data.status || "draft", // Default to draft if not provided
-      tanggal_mulai: data.tanggal_mulai || new Date().toISOString(),
-      tanggal_selesai:
-        data.tanggal_selesai ||
-        (() => {
-          const oneMonthLater = new Date();
-          oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
-          return oneMonthLater.toISOString();
-        })(),
+      tanggal_mulai: data.tanggal_mulai || null,
+      tanggal_selesai: data.tanggal_selesai || null,
     };
 
     const result = await insert<Kuis>("kuis", dataWithDefaults);
@@ -605,67 +690,81 @@ export async function publishKuis(id: string): Promise<Kuis> {
       status: "published",
     } as Partial<CreateKuisData>);
 
-    // Notify mahasiswa after successful publish (best-effort, non-blocking)
-    // Get kuis data for notification
-    getKuisById(id)
-      .then(async (kuis) => {
-        try {
-          // Get dosen name
-          const { data: dosenData } = await supabase
+    try {
+      const kuis = await getKuisById(id);
+
+      const [{ data: dosenData, error: dosenError }, { data: kelasData, error: kelasError }] =
+        await Promise.all([
+          supabase
             .from("dosen")
-            .select("user:user_id(full_name)")
+            .select("user_id, user:user_id(full_name)")
             .eq("id", kuis.dosen_id)
-            .single();
-
-          const dosenNama = dosenData?.user?.full_name || "Dosen";
-
-          // Get kelas name
-          const { data: kelasData } = await supabase
+            .single(),
+          supabase
             .from("kelas")
             .select("nama_kelas")
             .eq("id", kuis.kelas_id)
-            .single();
+            .single(),
+        ]);
 
-          const kelasNama = kelasData?.nama_kelas || "Kelas";
+      if (dosenError) {
+        console.error("[NOTIFICATION] Failed to load dosen for publish:", dosenError);
+      }
+      if (kelasError) {
+        console.error("[NOTIFICATION] Failed to load kelas for publish:", kelasError);
+      }
 
-          // Get mahasiswa user IDs in this kelas
-          const { data: kelasMahasiswa } = await supabase
-            .from("kelas_mahasiswa")
-            .select("mahasiswa:mahasiswa_id(user_id)")
-            .eq("kelas_id", kuis.kelas_id)
-            .eq("is_active", true);
+      const dosenNama = dosenData?.user?.full_name || "Dosen";
+      const kelasNama = kelasData?.nama_kelas || "Kelas";
 
-          const mahasiswaIds =
-            kelasMahasiswa
-              ?.map((km: any) => km.mahasiswa?.user_id)
-              .filter((userId: string | undefined): userId is string =>
-                Boolean(userId),
-              ) || [];
+      const { data: kelasMahasiswa, error: kelasMahasiswaError } = await supabase
+        .from("kelas_mahasiswa")
+        .select("mahasiswa:mahasiswa_id(user_id)")
+        .eq("kelas_id", kuis.kelas_id)
+        .eq("is_active", true);
 
-          if (mahasiswaIds.length > 0) {
-            notifyMahasiswaKuisPublished(
-              mahasiswaIds,
-              dosenNama,
-              kuis.judul,
-              kelasNama,
-              kuis.tanggal_selesai || new Date().toISOString(),
-              kuis.id,
-              (kuis as any).tipe_kuis ?? null,
-            ).catch((err) => {
-              console.error("Failed to notify mahasiswa about kuis:", err);
-            });
-          }
-        } catch (notifError) {
-          console.error(
-            "Failed to send kuis published notification:",
-            notifError,
-          );
-          // Don't throw - notification is best-effort
-        }
-      })
-      .catch((err) => {
-        console.error("Failed to fetch kuis for notification:", err);
-      });
+      if (kelasMahasiswaError) {
+        console.error(
+          "[NOTIFICATION] Failed to load mahasiswa targets for publish:",
+          kelasMahasiswaError,
+        );
+      }
+
+      const mahasiswaIds =
+        kelasMahasiswa
+          ?.map((km: any) => km.mahasiswa?.user_id)
+          .filter((userId: string | undefined): userId is string =>
+            Boolean(userId),
+          ) || [];
+
+      if (mahasiswaIds.length === 0) {
+        console.warn("[NOTIFICATION] No mahasiswa targets found for published kuis", {
+          kuisId: kuis.id,
+          kelasId: kuis.kelas_id,
+        });
+      } else {
+        const notifications = await notifyMahasiswaKuisPublished(
+          mahasiswaIds,
+          dosenNama,
+          kuis.judul,
+          kelasNama,
+          kuis.tanggal_selesai || new Date().toISOString(),
+          kuis.id,
+          (kuis as any).tipe_kuis ?? null,
+        );
+
+        console.log("[NOTIFICATION] Published kuis notifications created:", {
+          kuisId: kuis.id,
+          targetCount: mahasiswaIds.length,
+          insertedCount: notifications.length,
+        });
+      }
+    } catch (notifError) {
+      console.error(
+        "[NOTIFICATION] Failed to send kuis published notification:",
+        notifError,
+      );
+    }
 
     return result;
   } catch (error) {
@@ -808,6 +907,32 @@ export async function getSoalById(id: string): Promise<Soal> {
 // Internal implementation (unwrapped)
 async function createSoalImpl(data: CreateSoalData): Promise<Soal> {
   try {
+    if (
+      data.tipe_soal === TIPE_SOAL.PILIHAN_GANDA &&
+      !data.penjelasan?.trim()
+    ) {
+      throw new Error("Keterangan jawaban wajib diisi untuk soal CBT");
+    }
+
+    const normalizedOptions =
+      data.tipe_soal === TIPE_SOAL.PILIHAN_GANDA && data.opsi_jawaban
+        ? data.opsi_jawaban.map((option) => ({
+            ...option,
+            is_correct:
+              option.is_correct === true ||
+              (data.jawaban_benar
+                ? option.id === data.jawaban_benar ||
+                  option.label === data.jawaban_benar
+                : false),
+          }))
+        : data.opsi_jawaban;
+    const normalizedJawabanBenar =
+      data.tipe_soal === TIPE_SOAL.PILIHAN_GANDA
+        ? normalizedOptions?.find((option) => option.is_correct)?.id ||
+          data.jawaban_benar ||
+          null
+        : data.jawaban_benar;
+
     const dbData: any = {
       kuis_id: data.kuis_id,
       tipe: data.tipe_soal,
@@ -816,11 +941,14 @@ async function createSoalImpl(data: CreateSoalData): Promise<Soal> {
       urutan: data.urutan,
     };
 
-    if (data.opsi_jawaban !== undefined && data.opsi_jawaban !== null) {
-      dbData.pilihan_jawaban = data.opsi_jawaban;
+    if (normalizedOptions !== undefined && normalizedOptions !== null) {
+      dbData.pilihan_jawaban = normalizedOptions;
     }
-    if (data.jawaban_benar !== undefined && data.jawaban_benar !== null) {
-      dbData.jawaban_benar = data.jawaban_benar;
+    if (
+      normalizedJawabanBenar !== undefined &&
+      normalizedJawabanBenar !== null
+    ) {
+      dbData.jawaban_benar = normalizedJawabanBenar;
     }
     if (data.penjelasan !== undefined && data.penjelasan !== null) {
       dbData.pembahasan = data.penjelasan;
@@ -882,16 +1010,42 @@ async function updateSoalImpl(
   data: Partial<CreateSoalData>,
 ): Promise<Soal> {
   try {
+    if (
+      data.tipe_soal === TIPE_SOAL.PILIHAN_GANDA &&
+      data.penjelasan !== undefined &&
+      !data.penjelasan?.trim()
+    ) {
+      throw new Error("Keterangan jawaban wajib diisi untuk soal CBT");
+    }
+
+    const normalizedOptions =
+      data.tipe_soal === TIPE_SOAL.PILIHAN_GANDA && data.opsi_jawaban
+        ? data.opsi_jawaban.map((option) => ({
+            ...option,
+            is_correct:
+              option.is_correct === true ||
+              (data.jawaban_benar
+                ? option.id === data.jawaban_benar ||
+                  option.label === data.jawaban_benar
+                : false),
+          }))
+        : data.opsi_jawaban;
+    const normalizedJawabanBenar =
+      data.tipe_soal === TIPE_SOAL.PILIHAN_GANDA
+        ? normalizedOptions?.find((option) => option.is_correct)?.id ||
+          data.jawaban_benar
+        : data.jawaban_benar;
+
     const dbData: any = {};
 
     if (data.tipe_soal !== undefined) dbData.tipe = data.tipe_soal;
     if (data.pertanyaan !== undefined) dbData.pertanyaan = data.pertanyaan;
     if (data.poin !== undefined) dbData.poin = data.poin;
     if (data.urutan !== undefined) dbData.urutan = data.urutan;
-    if (data.opsi_jawaban !== undefined)
-      dbData.pilihan_jawaban = data.opsi_jawaban;
-    if (data.jawaban_benar !== undefined)
-      dbData.jawaban_benar = data.jawaban_benar;
+    if (normalizedOptions !== undefined)
+      dbData.pilihan_jawaban = normalizedOptions;
+    if (normalizedJawabanBenar !== undefined)
+      dbData.jawaban_benar = normalizedJawabanBenar;
     if (data.penjelasan !== undefined) dbData.pembahasan = data.penjelasan;
 
     const result = await update<Soal>("soal", id, dbData);
@@ -1194,7 +1348,9 @@ export async function getAttemptsByKuis(
 
     // ✅ Use unknown first to bypass TypeScript type checking
     // The Supabase query returns all fields including total_poin, started_at, submitted_at
-    return (attempts || []) as unknown as AttemptWithStudent[];
+    return (((attempts || []) as unknown) as AttemptWithStudent[]).map((attempt) =>
+      normalizeAttemptRecord(attempt),
+    );
   } catch (error) {
     const apiError = handleError(error);
     logError(apiError, `getAttemptsByKuis:${kuisId}`);
@@ -1204,7 +1360,7 @@ export async function getAttemptsByKuis(
 
 export async function getAttemptById(id: string): Promise<AttemptKuis> {
   try {
-    return await getById<AttemptKuis>("attempt_kuis", id, {
+    const attempt = await getById<AttemptKuis>("attempt_kuis", id, {
       select: `
         *,
         kuis:kuis_id (
@@ -1226,13 +1382,15 @@ export async function getAttemptById(id: string): Promise<AttemptKuis> {
         ),
         mahasiswa:mahasiswa_id (
           nim,
-          users:user_id (
+          user:user_id (
             full_name
           )
         ),
         jawaban:jawaban(*)
       `,
     });
+
+    return normalizeAttemptRecord(attempt as AttemptKuis);
   } catch (error) {
     const apiError = handleError(error);
     logError(apiError, `getAttemptById:${id}`);
@@ -1501,6 +1659,102 @@ export const gradeAnswer = requirePermission(
   gradeAnswerImpl,
 );
 
+async function finalizeAttemptGradingImpl(
+  attemptId: string,
+): Promise<AttemptKuis> {
+  try {
+    const { data: answers, error: answersError } = await supabase
+      .from("jawaban")
+      .select("poin_diperoleh")
+      .eq("attempt_id", attemptId);
+
+    if (answersError) {
+      throw handleError(answersError);
+    }
+
+    const answerList = (answers as Array<{ poin_diperoleh: number | null }> | null) || [];
+    const hasAnswers = answerList.length > 0;
+    const allAnswersGraded =
+      hasAnswers &&
+      answerList.every(
+        (answer) =>
+          answer.poin_diperoleh !== null && answer.poin_diperoleh !== undefined,
+      );
+    const hasAnyScore = answerList.some(
+      (answer) =>
+        answer.poin_diperoleh !== null && answer.poin_diperoleh !== undefined,
+    );
+    const totalPoin = hasAnyScore
+      ? Math.round(
+          answerList.reduce(
+            (sum, answer) => sum + Number(answer.poin_diperoleh || 0),
+            0,
+          ) * 100,
+        ) / 100
+      : null;
+
+    const updatePayload = {
+      status: allAnswersGraded ? ("graded" as const) : ("submitted" as const),
+      total_poin: totalPoin,
+      updated_at: new Date().toISOString(),
+    };
+
+    const { data: updatedAttempt, error: updateError } = await supabase
+      .from("attempt_kuis")
+      .update(updatePayload)
+      .eq("id", attemptId)
+      .select(
+        `
+        *,
+        kuis:kuis_id (
+          *,
+          kelas:kelas_id (
+            id,
+            nama_kelas,
+            mata_kuliah:mata_kuliah_id (
+              nama_mk,
+              kode_mk
+            )
+          ),
+          mata_kuliah:mata_kuliah_id (
+            id,
+            nama_mk,
+            kode_mk
+          ),
+          soal:soal(*)
+        ),
+        mahasiswa:mahasiswa_id (
+          nim,
+          user:user_id (
+            full_name
+          )
+        ),
+        jawaban:jawaban(*)
+      `,
+      )
+      .single();
+
+    if (updateError) {
+      throw handleError(updateError);
+    }
+
+    await invalidateCachePatternSync("attempt_kuis");
+    await invalidateCachePatternSync("jawaban");
+    await clearAllCacheSync();
+
+    return normalizeAttemptRecord(updatedAttempt as AttemptKuis);
+  } catch (error) {
+    const apiError = handleError(error);
+    logError(apiError, `finalizeAttemptGrading:${attemptId}`);
+    throw apiError;
+  }
+}
+
+export const finalizeAttemptGrading = requirePermission(
+  "grade:attempt_kuis",
+  finalizeAttemptGradingImpl,
+);
+
 // ============================================================================
 // MAHASISWA DASHBOARD OPERATIONS
 // ============================================================================
@@ -1529,8 +1783,6 @@ export async function getUpcomingQuizzes(
 ): Promise<UpcomingQuiz[]> {
   try {
     await assertCurrentMahasiswaMatches(mahasiswaId, "view:kuis");
-
-    const now = new Date().toISOString();
 
     // ✅ STEP 1: Get enrolled kelas IDs (client-side filtering approach)
     const enrolledKelasIds = await getEnrolledKelasIds(mahasiswaId);
@@ -1573,8 +1825,7 @@ export async function getUpcomingQuizzes(
       `,
       )
       .eq("status", "published") // Only published quizzes
-      .gte("tanggal_selesai", now)
-      .order("tanggal_mulai", { ascending: true });
+      .order("created_at", { ascending: false }); // Terbaru di atas, tanggal_mulai bisa null
 
     if (error) {
       console.error("❌ [getUpcomingQuizzes] Query error:", error);
@@ -1602,12 +1853,26 @@ export async function getUpcomingQuizzes(
       enrolledQuizzes.map(async (quiz) => {
         const quizMataKuliah =
           (quiz as any).mata_kuliah || quiz.kelas?.mata_kuliah || null;
+        const quizDosen =
+          (quiz as any).dosen?.users?.full_name ||
+          (quiz as any).dosen?.user?.full_name ||
+          (quiz as any).dosen?.full_name ||
+          "";
         const attempts = await getAttempts({
           kuis_id: quiz.id,
           mahasiswa_id: mahasiswaId,
         });
+        const normalizedSoal = ((quiz.soal || []) as any[]).map((soal) => ({
+          ...soal,
+          tipe_soal: soal.tipe_soal || soal.tipe,
+          opsi_jawaban: soal.opsi_jawaban || soal.pilihan_jawaban || null,
+        }));
 
-        const totalSoal = quiz.soal?.length || 0;
+        const totalSoal = normalizedSoal.length;
+        const maxPoin = normalizedSoal.reduce(
+          (sum, soal) => sum + (soal?.poin ?? 0),
+          0,
+        );
         const attemptsUsed = attempts.length;
         const maxAttempts = quiz.max_attempts ?? 1;
 
@@ -1626,24 +1891,72 @@ export async function getUpcomingQuizzes(
           ? attemptsUsed < maxAttempts // Can start new attempt only if previous was submitted
           : true; // Can always resume/continue if attempt is still in_progress
 
+        // ✅ FIXED: Handle null tanggal (laporan tanpa deadline)
+        // new Date(null) = epoch 1970 which breaks all date comparisons
         let status: "upcoming" | "ongoing" | "completed" | "missed";
-        const startDate = new Date(quiz.tanggal_mulai);
-        const endDate = new Date(quiz.tanggal_selesai);
-        const nowDate = new Date();
 
-        if (nowDate < startDate) {
-          status = "upcoming";
-        } else if (nowDate > endDate) {
-          // After deadline: only "completed" if actually submitted
-          status = hasSubmittedAttempt ? "completed" : "missed";
-        } else {
-          // During quiz period: "completed" only if submitted, otherwise "ongoing"
+        if (!quiz.tanggal_mulai && !quiz.tanggal_selesai) {
+          // Tugas tanpa tanggal (Laporan): selalu ongoing selama published
           status = hasSubmittedAttempt ? "completed" : "ongoing";
+        } else {
+          const startDate = quiz.tanggal_mulai
+            ? new Date(quiz.tanggal_mulai)
+            : null;
+          const endDate = quiz.tanggal_selesai
+            ? new Date(quiz.tanggal_selesai)
+            : null;
+          const nowDate = new Date();
+
+          if (startDate && nowDate < startDate) {
+            status = "upcoming";
+          } else if (endDate && nowDate > endDate) {
+            // After deadline: only "completed" if actually submitted
+            status = hasSubmittedAttempt ? "completed" : "missed";
+          } else {
+            // During quiz period (or no start date = sudah bisa dikerjakan):
+            // "completed" only if submitted, otherwise "ongoing"
+            status = hasSubmittedAttempt ? "completed" : "ongoing";
+          }
         }
 
         const bestScore =
           attempts.length > 0
-            ? Math.max(...attempts.map((a) => a.total_poin ?? 0))
+            ? Math.max(
+                ...attempts.map((a) =>
+                  (() => {
+                    if (typeof a.nilai_akhir === "number") {
+                      return a.nilai_akhir;
+                    }
+
+                    if (normalizedSoal.length > 0 && Array.isArray(a.jawaban)) {
+                      const derivedScore = calculateQuizScore(
+                        normalizedSoal,
+                        a.jawaban,
+                        (quiz as any).passing_score ?? 70,
+                      ).percentage;
+
+                      if (
+                        typeof derivedScore === "number" &&
+                        derivedScore > 0
+                      ) {
+                        return derivedScore;
+                      }
+                    }
+
+                    if (
+                      maxPoin > 0 &&
+                      typeof a.total_poin === "number" &&
+                      a.total_poin > 0
+                    ) {
+                      return (
+                        Math.round((a.total_poin / maxPoin) * 100 * 100) / 100
+                      );
+                    }
+
+                    return a.total_poin ?? 0;
+                  })(),
+                ),
+              )
             : undefined;
 
         return {
@@ -1653,7 +1966,7 @@ export async function getUpcomingQuizzes(
           nama_mk: quizMataKuliah?.nama_mk || "",
           kode_mk: quizMataKuliah?.kode_mk || "",
           nama_kelas: quiz.kelas?.nama_kelas || "",
-          dosen_name: quiz.dosen?.users?.full_name || "",
+          dosen_name: quizDosen,
           tipe_kuis: (quiz as any).tipe_kuis ?? "campuran",
           durasi_menit: (quiz as any).durasi_menit ?? (quiz as any).durasi ?? 0,
           tanggal_mulai: quiz.tanggal_mulai,
@@ -1918,11 +2231,7 @@ export interface OfflineAttemptSyncItem {
   last_activity_at: string | null;
   answer_count: number;
   attempt_status: AttemptKuis["status"];
-  display_status:
-    | "draft_local"
-    | "answers_local"
-    | "pending_submit"
-    | "synced";
+  display_status: "draft_local" | "answers_local" | "pending_submit" | "synced";
   sync_status: "synced" | "pending_submit";
   offline_submit_pending: boolean;
 }
@@ -2134,7 +2443,7 @@ export async function cacheAttemptOffline(attempt: AttemptKuis): Promise<void> {
       synced:
         attempt.sync_status === "synced"
           ? true
-          : existing?.synced ?? attempt.is_synced ?? true,
+          : (existing?.synced ?? attempt.is_synced ?? true),
       pending_submit:
         attempt.offline_submit_pending ?? existing?.pending_submit ?? false,
       offline_submitted_at:
@@ -2265,17 +2574,20 @@ export async function getOfflineAttemptSyncItemsForMahasiswa(
           (record.data?.kuis as Kuis | undefined) ||
           null;
         const mataKuliah =
-          (kuis as any)?.mata_kuliah || (kuis as any)?.kelas?.mata_kuliah || null;
+          (kuis as any)?.mata_kuliah ||
+          (kuis as any)?.kelas?.mata_kuliah ||
+          null;
         const attemptAnswers = allAnswers.filter(
           (answer: any) => answer?.attempt_id === attempt.id,
         );
         const answerCount = attemptAnswers.length;
-        const latestAnswerSavedAt = attemptAnswers
-          .map((answer: any) => answer?.savedAt || null)
-          .filter(Boolean)
-          .sort((a: string, b: string) => {
-            return new Date(b).getTime() - new Date(a).getTime();
-          })[0] || null;
+        const latestAnswerSavedAt =
+          attemptAnswers
+            .map((answer: any) => answer?.savedAt || null)
+            .filter(Boolean)
+            .sort((a: string, b: string) => {
+              return new Date(b).getTime() - new Date(a).getTime();
+            })[0] || null;
         const displayStatus: OfflineAttemptSyncItem["display_status"] =
           attempt.offline_submit_pending
             ? "pending_submit"
@@ -2582,8 +2894,8 @@ export async function syncPendingOfflineQuizSubmissions(
 export const kuisApi = {
   getAll: (filters?: KuisFilters) => withApiResponse(() => getKuis(filters)),
   getById: (id: string) => withApiResponse(() => getKuisById(id)),
-  getByKelas: (kelasId: string) =>
-    withApiResponse(() => getKuisByKelas(kelasId)),
+  getByKelas: (kelasId: string, mataKuliahId?: string) =>
+    withApiResponse(() => getKuisByKelas(kelasId, mataKuliahId)),
   create: (data: CreateKuisData) => withApiResponse(() => createKuis(data)),
   update: (id: string, data: Partial<CreateKuisData>) =>
     withApiResponse(() => updateKuis(id, data)),

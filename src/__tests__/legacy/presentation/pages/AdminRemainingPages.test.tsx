@@ -181,7 +181,9 @@ describe("Admin AssignmentManagementPage", () => {
     wrap(<AssignmentManagementPage />);
     await waitFor(() =>
       expect(
-        screen.getByRole("heading", { name: /Management Assignment Dosen/i }),
+        screen.getByRole("heading", {
+          name: /Monitoring Praktikum & Referensi Akademik/i,
+        }),
       ).toBeInTheDocument(),
     );
   });

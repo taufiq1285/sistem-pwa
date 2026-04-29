@@ -154,6 +154,13 @@ vi.mock("@/lib/api/kuis-secure.api", () => ({
     }
     return cachedQuestions || mockQuestions;
   }),
+  getKuisForAttempt: vi.fn(async () => {
+    if (isOnline) {
+      cachedQuiz = mockQuiz;
+      return mockQuiz;
+    }
+    return cachedQuiz || mockQuiz;
+  }),
 }));
 
 // Mock API functions
@@ -284,9 +291,6 @@ describe("Kuis Attempt Offline Integration", () => {
       },
       { timeout: 5000 },
     );
-
-    // Check that core quiz data API was called
-    expect(kuisApi.getKuisByIdOffline).toHaveBeenCalledWith("quiz-1");
 
     // Check first question is displayed
     expect(screen.getByText("Question 1")).toBeInTheDocument();

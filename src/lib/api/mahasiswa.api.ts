@@ -97,6 +97,76 @@ export interface MyKelas {
   enrolled_at: string;
 }
 
+async function getDashboardActiveKelasIds(
+  mahasiswaId: string,
+): Promise<string[]> {
+  const { data: enrollmentData, error: enrollmentError } = await supabase
+    .from("kelas_mahasiswa")
+    .select("kelas_id")
+    .eq("mahasiswa_id", mahasiswaId)
+    .eq("is_active", true);
+
+  if (enrollmentError) throw enrollmentError;
+
+  const enrolledKelasIds = (enrollmentData || [])
+    .map((item: any) => item.kelas_id)
+    .filter((id: any): id is string => typeof id === "string" && id.length > 0);
+
+  if (enrolledKelasIds.length === 0) {
+    return [];
+  }
+
+  const today = new Date().toISOString().split("T")[0];
+  const now = new Date().toISOString();
+
+  const [activeKelasResult, upcomingJadwalResult, activeQuizResult] =
+    await Promise.all([
+      supabase
+        .from("kelas")
+        .select("id")
+        .in("id", enrolledKelasIds)
+        .eq("is_active", true),
+      (supabase as any)
+        .from("jadwal_praktikum")
+        .select("kelas_id")
+        .in("kelas_id", enrolledKelasIds)
+        .eq("is_active", true)
+        .gte("tanggal_praktikum", today),
+      supabase
+        .from("kuis")
+        .select("kelas_id")
+        .in("kelas_id", enrolledKelasIds)
+        .eq("status", "published")
+        .gte("tanggal_selesai", now),
+    ]);
+
+  if (activeKelasResult.error) throw activeKelasResult.error;
+  if (upcomingJadwalResult.error) throw upcomingJadwalResult.error;
+  if (activeQuizResult.error) throw activeQuizResult.error;
+
+  const activeKelasIds = new Set(
+    ((activeKelasResult.data as any[]) || [])
+      .map((item: any) => item.id)
+      .filter((id: any): id is string => typeof id === "string" && id.length > 0),
+  );
+
+  const dashboardKelasIds = new Set<string>();
+
+  ((upcomingJadwalResult.data as any[]) || []).forEach((item: any) => {
+    if (activeKelasIds.has(item.kelas_id)) {
+      dashboardKelasIds.add(item.kelas_id);
+    }
+  });
+
+  ((activeQuizResult.data as any[]) || []).forEach((item: any) => {
+    if (activeKelasIds.has(item.kelas_id)) {
+      dashboardKelasIds.add(item.kelas_id);
+    }
+  });
+
+  return Array.from(dashboardKelasIds);
+}
+
 export interface JadwalMahasiswa {
   id: string;
   tanggal_praktikum: string;
@@ -203,24 +273,20 @@ export async function getMahasiswaStats(): Promise<MahasiswaStats> {
           };
         }
 
-        // 1️⃣ GET ENROLLED CLASSES
-        const { data: kelasData } = await supabase
-          .from("kelas_mahasiswa")
-          .select("kelas_id")
-          .eq("mahasiswa_id", mahasiswaId)
-          .eq("is_active", true);
-
-        const totalKelasPraktikum = kelasData?.length || 0;
-        const kelasIds = kelasData?.map((k: any) => k.kelas_id) || [];
+        const kelasIds = await getDashboardActiveKelasIds(mahasiswaId);
+        const totalKelasPraktikum = kelasIds.length;
 
         // 2️⃣ GET TODAY'S SCHEDULE
         const today = new Date().toISOString().split("T")[0];
-        const { data: jadwalData } = await supabase
-          .from("jadwal_praktikum")
-          .select("id")
-          .eq("tanggal_praktikum", today)
-          .in("kelas_id", kelasIds)
-          .eq("is_active", true);
+        const { data: jadwalData } =
+          kelasIds.length > 0
+            ? await supabase
+                .from("jadwal_praktikum")
+                .select("id")
+                .eq("tanggal_praktikum", today)
+                .in("kelas_id", kelasIds)
+                .eq("is_active", true)
+            : { data: [] };
 
         const jadwalHariIni = jadwalData?.length || 0;
 
@@ -230,13 +296,16 @@ export async function getMahasiswaStats(): Promise<MahasiswaStats> {
         // - Kelas: enrolled kelas
         // - Status berlangsung: tanggal_mulai <= NOW <= tanggal_selesai
         const now = new Date().toISOString();
-        const { data: kuisData } = await supabase
-          .from("kuis")
-          .select("id")
-          .in("kelas_id", kelasIds)
-          .eq("status", "published")
-          .lte("tanggal_mulai", now) // started
-          .gte("tanggal_selesai", now); // not ended yet
+        const { data: kuisData } =
+          kelasIds.length > 0
+            ? await supabase
+                .from("kuis")
+                .select("id")
+                .in("kelas_id", kelasIds)
+                .eq("status", "published")
+                .lte("tanggal_mulai", now)
+                .gte("tanggal_selesai", now)
+            : { data: [] };
 
         const totalKuis = kuisData?.length || 0;
 
@@ -561,6 +630,28 @@ export async function getMyKelas(): Promise<MyKelas[]> {
     return result.filter((item): item is MyKelas => item !== null);
   } catch (error: unknown) {
     console.error("Error fetching my kelas:", error);
+    return [];
+  }
+}
+
+export async function getDashboardKelas(): Promise<MyKelas[]> {
+  try {
+    const mahasiswaId = await getMahasiswaId();
+    if (!mahasiswaId) return [];
+
+    const [kelasList, dashboardKelasIds] = await Promise.all([
+      getMyKelas(),
+      getDashboardActiveKelasIds(mahasiswaId),
+    ]);
+
+    if (dashboardKelasIds.length === 0) {
+      return [];
+    }
+
+    const activeKelasIdSet = new Set(dashboardKelasIds);
+    return kelasList.filter((kelas) => activeKelasIdSet.has(kelas.id));
+  } catch (error: unknown) {
+    console.error("Error fetching dashboard kelas:", error);
     return [];
   }
 }

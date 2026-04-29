@@ -85,17 +85,26 @@ describe("Logbook API", () => {
     (supabase.from as any).mockReturnValue({
       select: vi.fn().mockReturnValue({
         eq: vi.fn().mockReturnValue({
+          maybeSingle: vi
+            .fn()
+            .mockResolvedValue({ data: { id: mockMahasiswaId }, error: null }),
           single: vi
             .fn()
             .mockResolvedValue({ data: { id: mockMahasiswaId }, error: null }),
         }),
       }),
       eq: vi.fn().mockReturnValue({
+        maybeSingle: vi
+          .fn()
+          .mockResolvedValue({ data: { id: mockMahasiswaId }, error: null }),
         single: vi
           .fn()
           .mockResolvedValue({ data: { id: mockMahasiswaId }, error: null }),
       }),
       single: vi
+        .fn()
+        .mockResolvedValue({ data: { id: mockMahasiswaId }, error: null }),
+      maybeSingle: vi
         .fn()
         .mockResolvedValue({ data: { id: mockMahasiswaId }, error: null }),
     });
@@ -110,7 +119,7 @@ describe("Logbook API", () => {
           return {
             select: vi.fn().mockReturnValue({
               eq: vi.fn().mockReturnValue({
-                single: vi.fn().mockResolvedValue({
+                maybeSingle: vi.fn().mockResolvedValue({
                   data: { id: mockMahasiswaId },
                   error: null,
                 }),
@@ -122,7 +131,7 @@ describe("Logbook API", () => {
           return {
             select: vi.fn().mockReturnValue({
               eq: vi.fn().mockReturnValue({
-                single: vi.fn().mockResolvedValue({
+                maybeSingle: vi.fn().mockResolvedValue({
                   data: { id: mockJadwalId, status: "approved" },
                   error: null,
                 }),
@@ -133,7 +142,7 @@ describe("Logbook API", () => {
         return {
           select: vi.fn(),
           eq: vi.fn(),
-          single: vi.fn(),
+          maybeSingle: vi.fn(),
         };
       });
 
@@ -182,7 +191,7 @@ describe("Logbook API", () => {
           return {
             select: vi.fn().mockReturnValue({
               eq: vi.fn().mockReturnValue({
-                single: vi.fn().mockResolvedValue({
+                maybeSingle: vi.fn().mockResolvedValue({
                   data: { id: mockMahasiswaId },
                   error: null,
                 }),
@@ -195,13 +204,15 @@ describe("Logbook API", () => {
           return {
             select: vi.fn().mockReturnValue({
               eq: vi.fn().mockReturnValue({
-                single: vi.fn().mockResolvedValue({ data: null, error: null }),
+                maybeSingle: vi
+                  .fn()
+                  .mockResolvedValue({ data: null, error: null }),
               }),
             }),
           };
         }
 
-        return { select: vi.fn(), eq: vi.fn(), single: vi.fn() };
+        return { select: vi.fn(), eq: vi.fn(), maybeSingle: vi.fn() };
       });
 
       await expect(
@@ -215,7 +226,7 @@ describe("Logbook API", () => {
           return {
             select: vi.fn().mockReturnValue({
               eq: vi.fn().mockReturnValue({
-                single: vi.fn().mockResolvedValue({
+                maybeSingle: vi.fn().mockResolvedValue({
                   data: { id: mockMahasiswaId },
                   error: null,
                 }),
@@ -228,7 +239,7 @@ describe("Logbook API", () => {
           return {
             select: vi.fn().mockReturnValue({
               eq: vi.fn().mockReturnValue({
-                single: vi.fn().mockResolvedValue({
+                maybeSingle: vi.fn().mockResolvedValue({
                   data: { id: mockJadwalId, status: "pending" },
                   error: null,
                 }),
@@ -237,7 +248,7 @@ describe("Logbook API", () => {
           };
         }
 
-        return { select: vi.fn(), eq: vi.fn(), single: vi.fn() };
+        return { select: vi.fn(), eq: vi.fn(), maybeSingle: vi.fn() };
       });
 
       await expect(
@@ -259,7 +270,7 @@ describe("Logbook API", () => {
       (supabase.from as any).mockReturnValueOnce({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
-            single: vi
+            maybeSingle: vi
               .fn()
               .mockResolvedValue({ data: { id: mockMahasiswaId } }),
           }),
@@ -301,7 +312,7 @@ describe("Logbook API", () => {
       (supabase.from as any).mockReturnValueOnce({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
-            single: vi
+            maybeSingle: vi
               .fn()
               .mockResolvedValue({ data: { id: mockMahasiswaId } }),
           }),
@@ -333,7 +344,7 @@ describe("Logbook API", () => {
       (supabase.from as any).mockReturnValueOnce({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
-            single: vi
+            maybeSingle: vi
               .fn()
               .mockResolvedValue({ data: { id: mockMahasiswaId } }),
           }),
@@ -410,7 +421,7 @@ describe("Logbook API", () => {
       (supabase.from as any).mockReturnValueOnce({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
-            single: vi
+            maybeSingle: vi
               .fn()
               .mockResolvedValue({ data: { id: mockMahasiswaId } }),
           }),
@@ -450,7 +461,7 @@ describe("Logbook API", () => {
       (supabase.from as any).mockReturnValueOnce({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
-            single: vi
+            maybeSingle: vi
               .fn()
               .mockResolvedValue({ data: { id: mockMahasiswaId } }),
           }),
@@ -493,7 +504,9 @@ describe("Logbook API", () => {
 
     it("should build getLogbook filters correctly", async () => {
       const { queryWithFilters } = await import("@/lib/api/base.api");
-      (queryWithFilters as any).mockResolvedValue([{ id: mockLogbookId }]);
+      (queryWithFilters as any).mockResolvedValue([
+        { id: mockLogbookId, jadwal: { kelas_id: "kelas-1" } },
+      ]);
 
       const result = await getLogbook({
         jadwal_id: mockJadwalId,
@@ -509,24 +522,26 @@ describe("Logbook API", () => {
           { column: "jadwal_id", operator: "eq", value: mockJadwalId },
           { column: "mahasiswa_id", operator: "eq", value: mockMahasiswaId },
           { column: "status", operator: "eq", value: "submitted" },
-          { column: "mahasiswa.kelas_id", operator: "eq", value: "kelas-1" },
           { column: "dosen_id", operator: "eq", value: "dosen-1" },
         ]),
         expect.objectContaining({
           order: { column: "created_at", ascending: false },
+          select: expect.stringContaining("kelas_id"),
         }),
       );
-      expect(result).toEqual([{ id: mockLogbookId }]);
+      expect(result).toEqual([
+        { id: mockLogbookId, jadwal: { kelas_id: "kelas-1" } },
+      ]);
     });
 
     it("should summarize logbook stats including average grade", async () => {
       const { queryWithFilters } = await import("@/lib/api/base.api");
       (queryWithFilters as any).mockResolvedValue([
-        { status: "draft", nilai: null },
-        { status: "submitted", nilai: null },
-        { status: "reviewed", nilai: null },
-        { status: "graded", nilai: 80 },
-        { status: "graded", nilai: 90 },
+        { status: "draft", nilai: null, jadwal: { kelas_id: "kelas-1" } },
+        { status: "submitted", nilai: null, jadwal: { kelas_id: "kelas-1" } },
+        { status: "reviewed", nilai: null, jadwal: { kelas_id: "kelas-1" } },
+        { status: "graded", nilai: 80, jadwal: { kelas_id: "kelas-1" } },
+        { status: "graded", nilai: 90, jadwal: { kelas_id: "kelas-1" } },
       ]);
 
       const result = await getLogbookStats({ kelas_id: "kelas-1" } as any);
@@ -564,7 +579,7 @@ describe("Logbook API", () => {
           return {
             select: vi.fn().mockReturnValue({
               eq: vi.fn().mockReturnValue({
-                single: vi
+                maybeSingle: vi
                   .fn()
                   .mockResolvedValue({ data: { id: "dosen-1" }, error: null }),
               }),
@@ -574,7 +589,7 @@ describe("Logbook API", () => {
         return {
           select: vi.fn().mockReturnValue({
             eq: vi.fn().mockReturnValue({
-              single: vi.fn().mockResolvedValue({
+              maybeSingle: vi.fn().mockResolvedValue({
                 data: { id: mockMahasiswaId },
                 error: null,
               }),
@@ -616,7 +631,7 @@ describe("Logbook API", () => {
           return {
             select: vi.fn().mockReturnValue({
               eq: vi.fn().mockReturnValue({
-                single: vi
+                maybeSingle: vi
                   .fn()
                   .mockResolvedValue({ data: { id: "dosen-1" }, error: null }),
               }),
@@ -626,7 +641,7 @@ describe("Logbook API", () => {
         return {
           select: vi.fn().mockReturnValue({
             eq: vi.fn().mockReturnValue({
-              single: vi.fn().mockResolvedValue({
+              maybeSingle: vi.fn().mockResolvedValue({
                 data: { id: mockMahasiswaId },
                 error: null,
               }),
@@ -652,7 +667,7 @@ describe("Logbook API", () => {
           return {
             select: vi.fn().mockReturnValue({
               eq: vi.fn().mockReturnValue({
-                single: vi
+                maybeSingle: vi
                   .fn()
                   .mockResolvedValue({ data: { id: "dosen-1" }, error: null }),
               }),
@@ -662,7 +677,7 @@ describe("Logbook API", () => {
         return {
           select: vi.fn().mockReturnValue({
             eq: vi.fn().mockReturnValue({
-              single: vi.fn().mockResolvedValue({
+              maybeSingle: vi.fn().mockResolvedValue({
                 data: { id: mockMahasiswaId },
                 error: null,
               }),
@@ -740,7 +755,7 @@ describe("Logbook API", () => {
       (supabase.from as any).mockReturnValueOnce({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({ data: null, error: null }),
+            maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
           }),
         }),
       });

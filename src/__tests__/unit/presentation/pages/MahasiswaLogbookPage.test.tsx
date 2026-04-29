@@ -5,7 +5,6 @@ import MahasiswaLogbookPage from "@/pages/mahasiswa/LogbookPage";
 const {
   mockUseAuth,
   mockToast,
-  mockGetJadwal,
   mockGetLogbook,
   mockSupabaseFrom,
   mockCacheAPI,
@@ -13,7 +12,6 @@ const {
 } = vi.hoisted(() => ({
   mockUseAuth: vi.fn(),
   mockToast: { success: vi.fn(), error: vi.fn() },
-  mockGetJadwal: vi.fn(),
   mockGetLogbook: vi.fn(),
   mockSupabaseFrom: vi.fn(),
   mockCacheAPI: vi.fn(),
@@ -26,10 +24,6 @@ vi.mock("@/lib/hooks/useAuth", () => ({
 
 vi.mock("sonner", () => ({
   toast: mockToast,
-}));
-
-vi.mock("@/lib/api/jadwal.api", () => ({
-  getJadwal: (...args: unknown[]) => mockGetJadwal(...args),
 }));
 
 vi.mock("@/lib/api/logbook.api", () => ({
@@ -51,6 +45,11 @@ vi.mock("@/lib/api/notification.api", () => ({
 vi.mock("@/lib/supabase/client", () => ({
   supabase: {
     from: (...args: unknown[]) => mockSupabaseFrom(...args),
+    channel: vi.fn(() => ({
+      on: vi.fn().mockReturnThis(),
+      subscribe: vi.fn().mockReturnThis(),
+      unsubscribe: vi.fn(),
+    })),
   },
 }));
 
@@ -103,6 +102,28 @@ describe("Mahasiswa LogbookPage", () => {
         return chain;
       }
 
+      if (table === "jadwal_praktikum") {
+        const chain = {
+          select: vi.fn().mockReturnThis(),
+          in: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          order: vi.fn().mockResolvedValue({
+            data: [
+              {
+                id: "j1",
+                kelas_id: "k1",
+                status: "approved",
+                topik: "Praktikum ANC",
+                tanggal_praktikum: "2025-01-10",
+                laboratorium: { nama_lab: "Lab Kebidanan" },
+              },
+            ],
+            error: null,
+          }),
+        };
+        return chain;
+      }
+
       return {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
@@ -110,17 +131,6 @@ describe("Mahasiswa LogbookPage", () => {
         maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
       };
     });
-
-    mockGetJadwal.mockResolvedValue([
-      {
-        id: "j1",
-        kelas_id: "k1",
-        status: "approved",
-        topik: "Praktikum ANC",
-        tanggal_praktikum: "2025-01-10",
-        laboratorium: { nama_lab: "Lab Kebidanan" },
-      },
-    ]);
 
     mockGetLogbook.mockResolvedValue([
       {
@@ -175,6 +185,28 @@ describe("Mahasiswa LogbookPage", () => {
         return chain;
       }
 
+      if (table === "jadwal_praktikum") {
+        const chain = {
+          select: vi.fn().mockReturnThis(),
+          in: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          order: vi.fn().mockResolvedValue({
+            data: [
+              {
+                id: "j1",
+                kelas_id: "k1",
+                status: "approved",
+                topik: "Praktikum ANC",
+                tanggal_praktikum: "2025-01-10",
+                laboratorium: { nama_lab: "Lab Kebidanan" },
+              },
+            ],
+            error: null,
+          }),
+        };
+        return chain;
+      }
+
       return {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
@@ -182,17 +214,6 @@ describe("Mahasiswa LogbookPage", () => {
         maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
       };
     });
-
-    mockGetJadwal.mockResolvedValue([
-      {
-        id: "j1",
-        kelas_id: "k1",
-        status: "approved",
-        topik: "Praktikum ANC",
-        tanggal_praktikum: "2025-01-10",
-        laboratorium: { nama_lab: "Lab Kebidanan" },
-      },
-    ]);
 
     mockGetLogbook.mockResolvedValue([]);
 
@@ -212,7 +233,6 @@ describe("Mahasiswa LogbookPage", () => {
       };
     });
 
-    mockGetJadwal.mockResolvedValue([]);
     mockGetLogbook.mockResolvedValue([]);
 
     render(<MahasiswaLogbookPage />);

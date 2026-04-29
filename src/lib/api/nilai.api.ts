@@ -18,6 +18,7 @@ import type {
   NilaiWithMahasiswa,
   NilaiSummary,
 } from "@/types/nilai.types";
+import type { BobotNilai } from "@/types/kelas.types";
 import { handleError } from "@/lib/utils/errors";
 import {
   calculateNilaiAkhir,
@@ -34,6 +35,7 @@ import { requirePermission } from "@/lib/middleware/permission.middleware";
 export interface NilaiFilters {
   kelas_id?: string;
   mahasiswa_id?: string;
+  mata_kuliah_id?: string;
   min_nilai_akhir?: number;
   max_nilai_akhir?: number;
 }
@@ -52,7 +54,108 @@ export interface BatchUpdateNilaiItem {
 export interface BatchUpdateNilaiData {
   kelas_id: string;
   mata_kuliah_id?: string; // Mata kuliah yang dipilih dosen
+  dosen_id?: string | null; // Dosen yang menyimpan nilai
+  bobot_nilai?: BobotNilai | null;
   nilai_list: BatchUpdateNilaiItem[];
+}
+
+export interface NilaiHistoryByDosenItem {
+  kelas_id: string;
+  mata_kuliah_id: string;
+  nama_kelas: string;
+  kode_kelas?: string | null;
+  nama_mk: string;
+  kode_mk?: string | null;
+  total_nilai: number;
+  rata_rata: number;
+  terakhir_update: string | null;
+}
+
+interface NilaiLookupContext {
+  mahasiswaId: string;
+  kelasId: string;
+  mataKuliahId?: string | null;
+}
+
+async function findExistingNilaiRecord({
+  mahasiswaId,
+  kelasId,
+  mataKuliahId,
+}: NilaiLookupContext): Promise<Nilai | null> {
+  const baseQuery = (supabase as any)
+    .from("nilai")
+    .select("*")
+    .eq("mahasiswa_id", mahasiswaId)
+    .eq("kelas_id", kelasId)
+    .order("updated_at", { ascending: false })
+    .limit(1);
+
+  if (mataKuliahId) {
+    const { data: exactMatches, error: exactError } = await baseQuery.eq(
+      "mata_kuliah_id",
+      mataKuliahId,
+    );
+
+    if (exactError) throw handleError(exactError);
+    const exactMatch = ((exactMatches as Nilai[] | null) || [])[0];
+    if (exactMatch) {
+      return exactMatch as Nilai;
+    }
+
+    const { data: legacyMatches, error: legacyError } = await (supabase as any)
+      .from("nilai")
+      .select("*")
+      .eq("mahasiswa_id", mahasiswaId)
+      .eq("kelas_id", kelasId)
+      .is("mata_kuliah_id", null)
+      .order("updated_at", { ascending: false })
+      .limit(1);
+
+    if (legacyError) throw handleError(legacyError);
+    const legacyMatch = ((legacyMatches as Nilai[] | null) || [])[0];
+    return (legacyMatch as Nilai | null) || null;
+  }
+
+  const { data, error } = await baseQuery;
+  if (error) throw handleError(error);
+
+  return (((data as Nilai[] | null) || [])[0] as Nilai | null) || null;
+}
+
+async function findAnyNilaiRecordForMahasiswaKelas(
+  mahasiswaId: string,
+  kelasId: string,
+): Promise<Nilai | null> {
+  const { data, error } = await (supabase as any)
+    .from("nilai")
+    .select("*")
+    .eq("mahasiswa_id", mahasiswaId)
+    .eq("kelas_id", kelasId)
+    .order("updated_at", { ascending: false })
+    .limit(1);
+
+  if (error) throw handleError(error);
+
+  return ((data as Nilai[] | null) || [])[0] || null;
+}
+
+function pickNilaiRecord(
+  nilaiList: Nilai[],
+  mahasiswaId: string,
+  mataKuliahId?: string | null,
+): Nilai | undefined {
+  const kandidat = nilaiList.filter(
+    (item) => item.mahasiswa_id === mahasiswaId,
+  );
+
+  if (mataKuliahId) {
+    return (
+      kandidat.find((item) => item.mata_kuliah_id === mataKuliahId) ||
+      kandidat.find((item) => !item.mata_kuliah_id)
+    );
+  }
+
+  return kandidat[0];
 }
 
 // ============================================================================
@@ -79,6 +182,14 @@ export async function getNilai(filters?: NilaiFilters): Promise<Nilai[]> {
         column: "mahasiswa_id",
         operator: "eq" as const,
         value: filters.mahasiswa_id,
+      });
+    }
+
+    if (filters?.mata_kuliah_id) {
+      filterConditions.push({
+        column: "mata_kuliah_id",
+        operator: "eq" as const,
+        value: filters.mata_kuliah_id,
       });
     }
 
@@ -137,9 +248,10 @@ export async function getNilai(filters?: NilaiFilters): Promise<Nilai[]> {
  */
 export async function getNilaiByKelas(
   kelasId: string,
+  mataKuliahId?: string,
 ): Promise<NilaiWithMahasiswa[]> {
   try {
-    const { data, error } = await supabase
+    let query = (supabase as any)
       .from("nilai")
       .select(
         `
@@ -155,8 +267,15 @@ export async function getNilaiByKelas(
         )
       `,
       )
-      .eq("kelas_id", kelasId)
-      .order("mahasiswa(user(full_name))", { ascending: true });
+      .eq("kelas_id", kelasId);
+
+    if (mataKuliahId) {
+      query = query.eq("mata_kuliah_id", mataKuliahId);
+    }
+
+    const { data, error } = await query.order("mahasiswa(user(full_name))", {
+      ascending: true,
+    });
 
     if (error) throw handleError(error);
 
@@ -193,6 +312,14 @@ export async function getNilaiByMahasiswa(
             sks,
             is_active
           )
+        ),
+        dosen:dosen_id (
+          id,
+          nip,
+          user:user_id (
+            full_name,
+            email
+          )
         )
       `,
       )
@@ -217,37 +344,42 @@ export async function getNilaiByMahasiswa(
     const missingMataKuliahKelasIds = Array.from(
       new Set(
         nilaiList
-          .filter((item) => !item.kelas?.mata_kuliah)
+          .filter((item) => !item.mata_kuliah_id)
           .map((item) => item.kelas?.id || item.kelas_id)
           .filter((value): value is string => Boolean(value)),
       ),
     );
 
-    if (missingMataKuliahKelasIds.length === 0) {
-      return nilaiList;
-    }
-
-    const { data: jadwalData } = await (supabase as any)
-      .from("jadwal_praktikum")
-      .select("kelas_id, mata_kuliah_id, tanggal_praktikum")
-      .in("kelas_id", kelasIds)
-      .not("mata_kuliah_id", "is", null)
-      .eq("is_active", true)
-      .order("tanggal_praktikum", { ascending: false });
-
     const jadwalMataKuliahMap = new Map<string, string>();
-    for (const item of jadwalData || []) {
-      if (item?.kelas_id && item?.mata_kuliah_id && !jadwalMataKuliahMap.has(item.kelas_id)) {
-        jadwalMataKuliahMap.set(item.kelas_id, item.mata_kuliah_id);
+    if (missingMataKuliahKelasIds.length > 0) {
+      const { data: jadwalData } = await (supabase as any)
+        .from("jadwal_praktikum")
+        .select("kelas_id, mata_kuliah_id, tanggal_praktikum")
+        .in("kelas_id", kelasIds)
+        .not("mata_kuliah_id", "is", null)
+        .eq("is_active", true)
+        .order("tanggal_praktikum", { ascending: false });
+
+      for (const item of jadwalData || []) {
+        if (
+          item?.kelas_id &&
+          item?.mata_kuliah_id &&
+          !jadwalMataKuliahMap.has(item.kelas_id)
+        ) {
+          jadwalMataKuliahMap.set(item.kelas_id, item.mata_kuliah_id);
+        }
       }
     }
 
     const mataKuliahIds = Array.from(
-      new Set(
-        missingMataKuliahKelasIds
+      new Set([
+        ...nilaiList
+          .map((item) => item.mata_kuliah_id)
+          .filter((value): value is string => Boolean(value)),
+        ...missingMataKuliahKelasIds
           .map((kelasId) => jadwalMataKuliahMap.get(kelasId))
           .filter((value): value is string => Boolean(value)),
-      ),
+      ]),
     );
 
     if (mataKuliahIds.length === 0) {
@@ -264,12 +396,10 @@ export async function getNilaiByMahasiswa(
     );
 
     return nilaiList.map((item) => {
-      if (item.kelas?.mata_kuliah) {
-        return item;
-      }
-
       const kelasId = item.kelas?.id || item.kelas_id;
-      const mataKuliahId = kelasId ? jadwalMataKuliahMap.get(kelasId) : null;
+      const mataKuliahId =
+        item.mata_kuliah_id ||
+        (kelasId ? jadwalMataKuliahMap.get(kelasId) : null);
       const fallbackMataKuliah = mataKuliahId
         ? mataKuliahMap.get(mataKuliahId)
         : null;
@@ -282,6 +412,9 @@ export async function getNilaiByMahasiswa(
         ...item,
         kelas: {
           ...item.kelas,
+          // Nilai dosen disimpan per kombinasi kelas + mata kuliah. Karena
+          // kelas bisa dipakai untuk banyak mata kuliah, label di mahasiswa
+          // harus mengikuti nilai.mata_kuliah_id, bukan mata kuliah bawaan kelas.
           mata_kuliah: {
             id: fallbackMataKuliah.id,
             nama_mk: fallbackMataKuliah.nama_mk,
@@ -336,17 +469,14 @@ export async function getNilaiById(id: string): Promise<Nilai> {
 async function getOrCreateNilaiImpl(
   mahasiswaId: string,
   kelasId: string,
+  mataKuliahId?: string | null,
 ): Promise<Nilai> {
   try {
-    // Try to get existing nilai
-    const { data: existing, error: fetchError } = await supabase
-      .from("nilai")
-      .select("*")
-      .eq("mahasiswa_id", mahasiswaId)
-      .eq("kelas_id", kelasId)
-      .maybeSingle();
-
-    if (fetchError) throw handleError(fetchError);
+    const existing = await findExistingNilaiRecord({
+      mahasiswaId,
+      kelasId,
+      mataKuliahId,
+    });
 
     if (existing) {
       return existing as Nilai;
@@ -356,6 +486,8 @@ async function getOrCreateNilaiImpl(
     const newNilai: CreateNilaiData = {
       mahasiswa_id: mahasiswaId,
       kelas_id: kelasId,
+      mata_kuliah_id: mataKuliahId || null,
+      dosen_id: null,
       nilai_kuis: 0,
       nilai_tugas: 0,
       nilai_uts: 0,
@@ -389,12 +521,15 @@ async function createNilaiImpl(data: CreateNilaiData): Promise<Nilai> {
       data.nilai_uas || 0,
       data.nilai_praktikum || 0,
       data.nilai_kehadiran || 0,
+      data.bobot_nilai,
     );
 
     const nilaiHuruf = getNilaiHuruf(nilaiAkhir);
 
+    const { bobot_nilai: _createBobotNilai, ...createPayload } = data;
+
     const nilaiData = {
-      ...data,
+      ...createPayload,
       nilai_akhir: nilaiAkhir,
       nilai_huruf: nilaiHuruf,
     };
@@ -419,20 +554,13 @@ async function updateNilaiImpl(
   data: Partial<UpdateNilaiData>,
 ): Promise<Nilai> {
   try {
-    // ✅ FIX: Use .maybeSingle() instead of .single()
-    // maybeSingle() returns null if not found, doesn't error
-    const { data: current, error: fetchError } = await supabase
-      .from("nilai")
-      .select("*")
-      .eq("mahasiswa_id", mahasiswaId)
-      .eq("kelas_id", kelasId)
-      .maybeSingle();
+    const resolvedMataKuliahId = data.mata_kuliah_id;
+    const current = await findExistingNilaiRecord({
+      mahasiswaId,
+      kelasId,
+      mataKuliahId: resolvedMataKuliahId,
+    });
 
-    // If error other than not found, throw it
-    if (fetchError) throw handleError(fetchError);
-
-    // ✅ FIX: Use optional chaining for null safety
-    // current?.nilai_kuis will be null if current is null
     const merged = {
       nilai_kuis: data.nilai_kuis ?? current?.nilai_kuis ?? 0,
       nilai_tugas: data.nilai_tugas ?? current?.nilai_tugas ?? 0,
@@ -450,37 +578,89 @@ async function updateNilaiImpl(
       merged.nilai_uas,
       merged.nilai_praktikum,
       merged.nilai_kehadiran,
+      data.bobot_nilai,
     );
 
     const nilaiHuruf = getNilaiHuruf(nilaiAkhir);
 
-    // ✅ FIX: Include mahasiswa_id and kelas_id in data for UPSERT
-    const upsertData = {
+    const { bobot_nilai: _updateBobotNilai, ...persistedData } = data;
+
+    const payload = {
       mahasiswa_id: mahasiswaId,
       kelas_id: kelasId,
-      ...data,
+      mata_kuliah_id: resolvedMataKuliahId ?? current?.mata_kuliah_id ?? null,
+      dosen_id: data.dosen_id ?? current?.dosen_id ?? null,
+      ...persistedData,
       nilai_akhir: nilaiAkhir,
       nilai_huruf: nilaiHuruf,
       updated_at: new Date().toISOString(),
     };
 
-    // ✅ FIX: Use .upsert() instead of .update()
-    // UPSERT = UPDATE if exists, INSERT if not
-    const { data: upserted, error: upsertError } = await supabase
-      .from("nilai")
-      .upsert(upsertData, {
-        onConflict: "mahasiswa_id,kelas_id",
-      })
-      .select()
-      .maybeSingle(); // ✅ FIXED: null-safe — .single() would PGRST116 if RLS filters it out
+    const isUpdate = Boolean(current?.id);
+    const query = isUpdate
+      ? (supabase as any).from("nilai").update(payload).eq("id", current.id)
+      : (supabase as any).from("nilai").insert(payload);
 
-    if (upsertError) throw handleError(upsertError);
-
-    if (!upserted) {
-      throw new Error("Gagal menyimpan nilai — data tidak dikembalikan server");
+    let saved;
+    let saveError;
+    if (isUpdate) {
+      const result = await query.select().maybeSingle();
+      saved = result.data;
+      saveError = result.error;
+    } else {
+      const result = await query.select().maybeSingle();
+      saved = result.data ?? null;
+      saveError = result.error;
     }
 
-    return upserted as Nilai;
+    if (saveError) {
+      if ((saveError as any)?.code === "23505" && !isUpdate) {
+        const fallbackCurrent =
+          (await findExistingNilaiRecord({
+            mahasiswaId,
+            kelasId,
+            mataKuliahId: resolvedMataKuliahId,
+          })) || (await findAnyNilaiRecordForMahasiswaKelas(mahasiswaId, kelasId));
+
+        if (fallbackCurrent?.id) {
+          const retryPayload = {
+            ...payload,
+            mata_kuliah_id:
+              resolvedMataKuliahId ?? fallbackCurrent.mata_kuliah_id ?? null,
+          };
+
+          const retryResult = await (supabase as any)
+            .from("nilai")
+            .update(retryPayload)
+            .eq("id", fallbackCurrent.id)
+            .select()
+            .maybeSingle();
+
+          if (retryResult.error) {
+            throw handleError(retryResult.error);
+          }
+
+          if (retryResult.data) {
+            return retryResult.data as Nilai;
+          }
+        }
+      }
+
+      throw handleError(saveError);
+    }
+
+    // If insert returned nothing, the RLS blocked the insert
+    if (!isUpdate && !saved) {
+      throw new Error(
+        "Gagal menyimpan nilai - akses ditolak atau mahasiswa tidak ditemukan di kelas ini",
+      );
+    }
+
+    if (!saved) {
+      throw new Error("Gagal menyimpan nilai - data tidak dikembalikan server");
+    }
+
+    return saved as Nilai;
   } catch (error) {
     console.error("updateNilai error:", error);
     throw handleError(error);
@@ -497,12 +677,15 @@ async function batchUpdateNilaiImpl(
 ): Promise<Nilai[]> {
   try {
     const results: Nilai[] = [];
+    const failures: Array<{ mahasiswa_id: string; error: unknown }> = [];
 
     for (const item of batchData.nilai_list) {
       try {
         const itemWithMK = {
           ...item,
           mata_kuliah_id: batchData.mata_kuliah_id, // Include mata kuliah
+          dosen_id: batchData.dosen_id ?? null,
+          bobot_nilai: batchData.bobot_nilai ?? null,
         };
         const updated = await updateNilaiImpl(
           item.mahasiswa_id,
@@ -512,8 +695,17 @@ async function batchUpdateNilaiImpl(
         results.push(updated);
       } catch (error) {
         console.error("batchUpdateNilai - single update failed:", error);
-        // Continue with other updates even if one fails
+        failures.push({
+          mahasiswa_id: item.mahasiswa_id,
+          error,
+        });
       }
+    }
+
+    if (failures.length > 0) {
+      throw new Error(
+        `${failures.length} dari ${batchData.nilai_list.length} nilai gagal tersimpan. Periksa koneksi, struktur tabel nilai, atau akses Supabase.`,
+      );
     }
 
     return results;
@@ -542,6 +734,93 @@ async function deleteNilaiImpl(id: string): Promise<void> {
 
 export const deleteNilai = requirePermission("manage:nilai", deleteNilaiImpl);
 
+export async function getNilaiHistoryByDosen(
+  dosenId: string,
+): Promise<NilaiHistoryByDosenItem[]> {
+  try {
+    const { data, error } = await (supabase as any)
+      .from("nilai")
+      .select(
+        `
+        id,
+        kelas_id,
+        mata_kuliah_id,
+        nilai_akhir,
+        updated_at,
+        kelas:kelas_id (
+          id,
+          nama_kelas,
+          kode_kelas
+        ),
+        mata_kuliah:mata_kuliah_id (
+          id,
+          nama_mk,
+          kode_mk
+        )
+      `,
+      )
+      .eq("dosen_id", dosenId)
+      .not("mata_kuliah_id", "is", null)
+      .order("updated_at", { ascending: false });
+
+    if (error) throw handleError(error);
+
+    const grouped = new Map<string, NilaiHistoryByDosenItem & { total: number }>();
+
+    for (const item of data || []) {
+      if (!item?.kelas_id || !item?.mata_kuliah_id) continue;
+
+      const key = `${item.kelas_id}-${item.mata_kuliah_id}`;
+      const existing = grouped.get(key);
+      const nilaiAkhir = Number(item.nilai_akhir ?? 0);
+      const updatedAt = item.updated_at || null;
+
+      if (existing) {
+        existing.total_nilai += 1;
+        existing.total += nilaiAkhir;
+        existing.rata_rata =
+          Math.round((existing.total / existing.total_nilai) * 100) / 100;
+        if (
+          updatedAt &&
+          (!existing.terakhir_update ||
+            new Date(updatedAt) > new Date(existing.terakhir_update))
+        ) {
+          existing.terakhir_update = updatedAt;
+        }
+        continue;
+      }
+
+      grouped.set(key, {
+        kelas_id: item.kelas_id,
+        mata_kuliah_id: item.mata_kuliah_id,
+        nama_kelas: item.kelas?.nama_kelas || "Kelas tidak diketahui",
+        kode_kelas: item.kelas?.kode_kelas || null,
+        nama_mk: item.mata_kuliah?.nama_mk || "Mata kuliah tidak diketahui",
+        kode_mk: item.mata_kuliah?.kode_mk || null,
+        total_nilai: 1,
+        total: nilaiAkhir,
+        rata_rata: nilaiAkhir,
+        terakhir_update: updatedAt,
+      });
+    }
+
+    return Array.from(grouped.values())
+      .map(({ total: _total, ...item }) => item)
+      .sort((a, b) => {
+        const aTime = a.terakhir_update
+          ? new Date(a.terakhir_update).getTime()
+          : 0;
+        const bTime = b.terakhir_update
+          ? new Date(b.terakhir_update).getTime()
+          : 0;
+        return bTime - aTime;
+      });
+  } catch (error) {
+    console.error("getNilaiHistoryByDosen error:", error);
+    throw handleError(error);
+  }
+}
+
 // ============================================================================
 // AUTO-SYNC NILAI PRAKTIKUM FROM TUGAS PRAKTIKUM
 // ============================================================================
@@ -557,6 +836,7 @@ export const deleteNilai = requirePermission("manage:nilai", deleteNilaiImpl);
 async function syncNilaiPraktikumFromAttemptsImpl(
   mahasiswaId: string,
   kelasId: string,
+  mataKuliahId?: string | null,
 ): Promise<Nilai> {
   try {
     // Get all graded attempts for this mahasiswa in this kelas
@@ -565,30 +845,55 @@ async function syncNilaiPraktikumFromAttemptsImpl(
       .select(
         `
         id,
-        nilai_akhir,
+        total_score,
+        total_poin,
+        percentage,
         status,
         kuis:kuis_id (
           id,
-          kelas_id
+          kelas_id,
+          mata_kuliah_id
         )
       `,
       )
       .eq("mahasiswa_id", mahasiswaId)
-      .eq("status", "graded") // Only count graded attempts
-      .not("nilai_akhir", "is", null); // Ensure nilai_akhir exists
+      .in("status", ["graded", "completed"] as any); // Support both status values
 
     if (attemptsError) throw handleError(attemptsError);
 
     // Filter attempts by kelas_id (since join doesn't support eq on nested field)
-    const kelasAttempts = (attempts || []).filter(
-      (attempt: any) => attempt.kuis?.kelas_id === kelasId,
-    );
+    const kelasAttempts = (attempts || []).filter((attempt: any) => {
+      if (attempt.kuis?.kelas_id !== kelasId) {
+        return false;
+      }
+
+      if (!mataKuliahId) {
+        return (
+          attempt.total_score != null ||
+          attempt.total_poin != null ||
+          attempt.percentage != null
+        );
+      }
+
+      return (
+        (!attempt.kuis?.mata_kuliah_id ||
+          attempt.kuis.mata_kuliah_id === mataKuliahId) &&
+        (attempt.total_score != null ||
+          attempt.total_poin != null ||
+          attempt.percentage != null)
+      );
+    });
 
     // Calculate average nilai_praktikum
     let nilaiPraktikum = 0;
     if (kelasAttempts.length > 0) {
       const totalNilai = kelasAttempts.reduce(
-        (sum: number, attempt: any) => sum + (attempt.nilai_akhir || 0),
+        (sum: number, attempt: any) =>
+          sum +
+          (attempt.total_score ??
+            attempt.total_poin ??
+            attempt.percentage ??
+            0),
         0,
       );
       nilaiPraktikum = totalNilai / kelasAttempts.length;
@@ -598,11 +903,12 @@ async function syncNilaiPraktikumFromAttemptsImpl(
 
     // Update nilai record with auto-synced nilai_praktikum
     const updated = await updateNilaiImpl(mahasiswaId, kelasId, {
+      mata_kuliah_id: mataKuliahId,
       nilai_praktikum: nilaiPraktikum,
     });
 
     console.log(
-      `[AUTO-SYNC] Nilai praktikum synced for mahasiswa ${mahasiswaId} in kelas ${kelasId}: ${nilaiPraktikum} (from ${kelasAttempts.length} attempts)`,
+      `[AUTO-SYNC] Nilai praktikum synced for mahasiswa ${mahasiswaId} in kelas ${kelasId}${mataKuliahId ? ` mata kuliah ${mataKuliahId}` : ""}: ${nilaiPraktikum} (from ${kelasAttempts.length} attempts)`,
     );
 
     return updated;
@@ -622,10 +928,10 @@ export const syncNilaiPraktikumFromAttempts = requirePermission(
 // STATISTICS & ANALYTICS
 // ============================================================================
 
-/**
- * Get nilai summary for a kelas
- */
-export async function getNilaiSummary(kelasId: string): Promise<NilaiSummary> {
+export async function getNilaiSummary(
+  kelasId: string,
+  mataKuliahId?: string,
+): Promise<NilaiSummary> {
   try {
     // Get total mahasiswa in kelas
     const { count: totalMahasiswa, error: countError } = await supabase
@@ -636,12 +942,21 @@ export async function getNilaiSummary(kelasId: string): Promise<NilaiSummary> {
     if (countError) throw handleError(countError);
 
     // Get nilai for this kelas
-    const { data: nilaiData, error: nilaiError } = await supabase
+    const { data: rawNilaiData, error: nilaiError } = await (supabase as any)
       .from("nilai")
-      .select("nilai_akhir")
+      .select("nilai_akhir, mata_kuliah_id")
       .eq("kelas_id", kelasId);
 
     if (nilaiError) throw handleError(nilaiError);
+
+    const nilaiData = mataKuliahId
+      ? (
+          (rawNilaiData || []) as Array<{
+            nilai_akhir: number | null;
+            mata_kuliah_id?: string | null;
+          }>
+        ).filter((item) => item.mata_kuliah_id === mataKuliahId)
+      : rawNilaiData || [];
 
     const sudahDinilai = nilaiData?.length || 0;
     const belumDinilai = (totalMahasiswa || 0) - sudahDinilai;
@@ -672,6 +987,7 @@ export async function getNilaiSummary(kelasId: string): Promise<NilaiSummary> {
  */
 export async function getMahasiswaForGrading(
   kelasId: string,
+  mataKuliahId?: string,
 ): Promise<NilaiWithMahasiswa[]> {
   try {
     // Get all mahasiswa enrolled in the kelas
@@ -701,7 +1017,7 @@ export async function getMahasiswaForGrading(
     const mahasiswaIds = enrollment.map((e) => e.mahasiswa.id);
 
     // Get existing nilai for these mahasiswa
-    const { data: nilaiData, error: nilaiError } = await supabase
+    const { data: rawNilaiData, error: nilaiError } = await (supabase as any)
       .from("nilai")
       .select("*")
       .eq("kelas_id", kelasId)
@@ -709,17 +1025,27 @@ export async function getMahasiswaForGrading(
 
     if (nilaiError) throw handleError(nilaiError);
 
-    // Create a map of mahasiswa_id to nilai
-    const nilaiMap = new Map((nilaiData || []).map((n) => [n.mahasiswa_id, n]));
+    const nilaiData =
+      (mataKuliahId
+        ? ((rawNilaiData || []) as Nilai[]).filter(
+            (item) => item.mata_kuliah_id === mataKuliahId,
+          )
+        : (rawNilaiData as Nilai[] | null)) || [];
 
+    // Create a map of mahasiswa_id to nilai
     // Combine enrollment with nilai
     const result: NilaiWithMahasiswa[] = enrollment.map((e) => {
-      const existingNilai = nilaiMap.get(e.mahasiswa.id);
+      const existingNilai = pickNilaiRecord(
+        nilaiData,
+        e.mahasiswa.id,
+        mataKuliahId,
+      );
 
       return {
         id: existingNilai?.id || "",
         mahasiswa_id: e.mahasiswa.id,
         kelas_id: kelasId,
+        mata_kuliah_id: existingNilai?.mata_kuliah_id ?? mataKuliahId ?? null,
         nilai_kuis: existingNilai?.nilai_kuis || 0,
         nilai_tugas: existingNilai?.nilai_tugas || 0,
         nilai_uts: existingNilai?.nilai_uts || 0,

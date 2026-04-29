@@ -1017,6 +1017,7 @@ export type Database = {
           judul: string;
           kelas_id: string;
           last_cached_at: string | null;
+          mata_kuliah_id: string | null;
           minggu_ke: number | null;
           published_at: string | null;
           tipe_file: string | null;
@@ -1036,6 +1037,7 @@ export type Database = {
           judul: string;
           kelas_id: string;
           last_cached_at?: string | null;
+          mata_kuliah_id?: string | null;
           minggu_ke?: number | null;
           published_at?: string | null;
           tipe_file?: string | null;
@@ -1055,6 +1057,7 @@ export type Database = {
           judul?: string;
           kelas_id?: string;
           last_cached_at?: string | null;
+          mata_kuliah_id?: string | null;
           minggu_ke?: number | null;
           published_at?: string | null;
           tipe_file?: string | null;
@@ -1073,6 +1076,13 @@ export type Database = {
             columns: ["kelas_id"];
             isOneToOne: false;
             referencedRelation: "kelas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "materi_mata_kuliah_id_fkey";
+            columns: ["mata_kuliah_id"];
+            isOneToOne: false;
+            referencedRelation: "mata_kuliah";
             referencedColumns: ["id"];
           },
         ];

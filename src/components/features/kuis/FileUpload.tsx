@@ -280,19 +280,19 @@ export function FileUpload({
 
   if (value) {
     return (
-      <div className="border rounded-lg p-4 bg-muted/30">
+      <div className="rounded-[22px] border border-emerald-200 bg-emerald-50/60 p-4 shadow-sm">
         <div className="flex items-center gap-4">
           {/* File Icon */}
-          <div className="shrink-0ite rounded-lg border shadow-sm">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-white bg-white shadow-sm">
             {getFileIcon(value.type)}
           </div>
 
           {/* File Info */}
           <div className="flex-1 min-w-0">
-            <p className="font-medium truncate" title={value.name}>
+            <p className="truncate font-semibold text-slate-900" title={value.name}>
               {value.name}
             </p>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <div className="flex items-center gap-2 text-sm text-slate-600">
               <span>{getFileExtension(value.name)}</span>
               <span>•</span>
               <span>{formatFileSize(value.size)}</span>
@@ -326,7 +326,7 @@ export function FileUpload({
         </div>
 
         {/* Success indicator */}
-        <div className="mt-3 flex items-center gap-2 text-sm text-green-600">
+        <div className="mt-3 flex items-center gap-2 text-sm font-medium text-emerald-700">
           <CheckCircle2 className="h-4 w-4" />
           <span>File berhasil diupload</span>
         </div>
@@ -347,11 +347,11 @@ export function FileUpload({
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         className={cn(
-          "relative border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-all",
-          isDragging && "border-primary bg-primary/5",
+          "relative cursor-pointer rounded-[24px] border-2 border-dashed p-8 text-center transition-all sm:p-10",
+          isDragging && "border-primary bg-primary/5 shadow-sm",
           !isDragging &&
             !disabled &&
-            "border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/50",
+            "border-slate-300/90 bg-white hover:border-primary/50 hover:bg-slate-50/90",
           disabled && "cursor-not-allowed opacity-50 bg-muted",
           isUploading && "pointer-events-none",
         )}
@@ -369,9 +369,9 @@ export function FileUpload({
           <div className="space-y-4">
             <Loader2 className="h-10 w-10 mx-auto animate-spin text-primary" />
             <div>
-              <p className="font-medium">Mengupload file...</p>
+              <p className="font-semibold text-slate-900">Mengupload file...</p>
               <Progress value={uploadProgress} className="mt-2 h-2" />
-              <p className="text-sm text-muted-foreground mt-1">
+              <p className="mt-1 text-sm text-slate-500">
                 {uploadProgress}%
               </p>
             </div>
@@ -381,27 +381,32 @@ export function FileUpload({
             <div className="flex justify-center">
               <div
                 className={cn(
-                  "p-4 rounded-full",
-                  isDragging ? "bg-primary/10" : "bg-muted",
+                  "flex h-16 w-16 items-center justify-center rounded-full",
+                  isDragging ? "bg-primary/10" : "bg-stone-100",
                 )}
               >
                 <Upload
                   className={cn(
                     "h-8 w-8",
-                    isDragging ? "text-primary" : "text-muted-foreground",
+                    isDragging ? "text-primary" : "text-slate-500",
                   )}
                 />
               </div>
             </div>
             <div>
-              <p className="font-medium text-foreground">
+              <p className="text-lg font-semibold text-slate-900">
                 {isDragging ? "Lepaskan file di sini" : placeholder}
               </p>
               <p className="text-sm text-muted-foreground mt-1">
                 PDF, Word, Gambar, atau ZIP • Maks. {formatFileSize(maxSize)}
               </p>
             </div>
-            <Button variant="outline" size="sm" disabled={disabled}>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={disabled}
+              className="rounded-full border-slate-300 bg-white px-5 font-semibold text-slate-800 hover:bg-slate-50"
+            >
               Pilih File
             </Button>
           </div>

@@ -51,10 +51,9 @@ export function useInstallPrompt(): UseInstallPromptResult {
     const isCurrentlyStandalone =
       standaloneQuery.matches ||
       // Safari iOS: navigator.standalone
-      (
-        "standalone" in navigator &&
-        (navigator as Navigator & { standalone?: boolean }).standalone === true
-      );
+      ("standalone" in navigator &&
+        (navigator as Navigator & { standalone?: boolean }).standalone ===
+          true);
 
     if (isCurrentlyStandalone) {
       setIsInstalled(true);

@@ -1200,6 +1200,7 @@ describe("useNotificationPolling", () => {
       await advanceTimersAndFlush(0);
 
       expect(mockGetNotifications).toHaveBeenCalledWith({
+        forceRefresh: true,
         user_id: "user-123",
         limit: 10,
       });

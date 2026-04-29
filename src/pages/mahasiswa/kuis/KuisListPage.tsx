@@ -58,7 +58,13 @@ import { supabase } from "@/lib/supabase/client";
 // Utils
 import { cn } from "@/lib/utils";
 
-type QuizStatus = "all" | "upcoming" | "ongoing" | "completed" | "missed";
+type QuizStatus =
+  | "all"
+  | "upcoming"
+  | "ongoing"
+  | "completed"
+  | "missed"
+  | "history";
 
 type TaskKind = "tes" | "laporan" | "tugas";
 
@@ -78,6 +84,25 @@ function detectTaskKind(quiz: UpcomingQuiz): TaskKind {
     return "tes";
 
   return "tugas";
+}
+
+/**
+ * Hitung sisa waktu hingga tanggal_selesai
+ * Returns: string seperti "2 hari 3 jam" atau null jika sudah lewat
+ */
+function getDeadlineCountdown(tanggalSelesai: string): string | null {
+  const end = new Date(tanggalSelesai).getTime();
+  const now = Date.now();
+  const diff = end - now;
+  if (diff <= 0) return null;
+
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+  if (days > 0) return `${days} hari ${hours} jam lagi`;
+  if (hours > 0) return `${hours} jam ${minutes} menit lagi`;
+  return `${minutes} menit lagi`;
 }
 
 export default function KuisListPage() {
@@ -109,6 +134,9 @@ export default function KuisListPage() {
     );
 
     return items.map((quiz) => {
+      const relatedAttempts = offlineAttempts.filter(
+        (attempt) => attempt.kuis_id === quiz.id,
+      );
       const latestAttempt = offlineAttempts
         .filter((attempt) => attempt.kuis_id === quiz.id)
         .sort((a, b) => {
@@ -131,6 +159,17 @@ export default function KuisListPage() {
         return quiz;
       }
 
+      const bestOfflineScore =
+        relatedAttempts.length > 0
+          ? Math.max(
+              ...relatedAttempts.map((attempt) =>
+                typeof attempt.nilai_akhir === "number"
+                  ? attempt.nilai_akhir
+                  : (attempt.total_poin ?? 0),
+              ),
+            )
+          : quiz.best_score;
+
       if (
         latestAttempt.offline_submit_pending ||
         latestAttempt.status === "submitted" ||
@@ -140,6 +179,10 @@ export default function KuisListPage() {
           ...quiz,
           status: "completed",
           can_attempt: false,
+          best_score:
+            typeof bestOfflineScore === "number"
+              ? bestOfflineScore
+              : quiz.best_score,
           last_attempt_at:
             latestAttempt.offline_submitted_at ||
             latestAttempt.submitted_at ||
@@ -148,7 +191,13 @@ export default function KuisListPage() {
         };
       }
 
-      return quiz;
+      return {
+        ...quiz,
+        best_score:
+          typeof bestOfflineScore === "number"
+            ? bestOfflineScore
+            : quiz.best_score,
+      };
     });
   };
 
@@ -177,11 +226,18 @@ export default function KuisListPage() {
         .subscribe();
     }
 
+    const handleKuisChanged = () => {
+      loadQuizzes(true);
+    };
+
+    window.addEventListener("kuis:changed", handleKuisChanged);
+
     // Cleanup subscription on unmount
     return () => {
       if (subscription) {
         subscription.unsubscribe();
       }
+      window.removeEventListener("kuis:changed", handleKuisChanged);
     };
   }, [user?.mahasiswa?.id]);
 
@@ -225,9 +281,15 @@ export default function KuisListPage() {
     const status = searchParams.get("status");
     if (
       status &&
-      ["all", "upcoming", "ongoing", "completed", "missed"].includes(status)
+      ["all", "upcoming", "ongoing", "completed", "missed", "history"].includes(
+        status,
+      )
     ) {
-      setStatusFilter(status as QuizStatus);
+      setStatusFilter(
+        status === "completed" || status === "missed"
+          ? "history"
+          : (status as QuizStatus),
+      );
     }
   }, [searchParams]);
 
@@ -244,13 +306,15 @@ export default function KuisListPage() {
         await syncPendingOfflineQuizSubmissions(user.mahasiswa.id);
       }
 
-      const cachedQuizzesEntry =
-        await getCachedData<UpcomingQuiz[]>(quizzesCacheKey);
+      const shouldUseCachedSnapshot = !forceRefresh || !navigator.onLine;
+      const cachedQuizzesEntry = shouldUseCachedSnapshot
+        ? await getCachedData<UpcomingQuiz[]>(quizzesCacheKey)
+        : null;
       const cachedQuizzes = Array.isArray(cachedQuizzesEntry?.data)
         ? cachedQuizzesEntry.data
         : [];
 
-      if (cachedQuizzes.length > 0) {
+      if (shouldUseCachedSnapshot && cachedQuizzes.length > 0) {
         setQuizzes(await applyOfflineAttemptOverrides(cachedQuizzes));
         setIsOfflineData(!navigator.onLine);
         setLastUpdatedAt(cachedQuizzesEntry?.timestamp || null);
@@ -297,8 +361,13 @@ export default function KuisListPage() {
 
   const applyFilters = () => {
     let filtered = [...quizzes];
-    if (statusFilter !== "all")
-      filtered = filtered.filter((quiz) => quiz.status === statusFilter);
+    if (statusFilter !== "all") {
+      filtered = filtered.filter((quiz) =>
+        statusFilter === "history"
+          ? quiz.status === "completed" || quiz.status === "missed"
+          : quiz.status === statusFilter,
+      );
+    }
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(
@@ -384,8 +453,6 @@ export default function KuisListPage() {
       day: "numeric",
       month: "short",
       year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
     }).format(new Date(dateString));
   };
 
@@ -430,6 +497,11 @@ export default function KuisListPage() {
 
   const getCountByStatus = (status: QuizStatus): number => {
     if (status === "all") return quizzes.length;
+    if (status === "history") {
+      return quizzes.filter(
+        (q) => q.status === "completed" || q.status === "missed",
+      ).length;
+    }
     return quizzes.filter((q) => q.status === status).length;
   };
 
@@ -437,6 +509,9 @@ export default function KuisListPage() {
     const canStart = quiz.status === "ongoing" && quiz.can_attempt;
     const isCompleted = quiz.status === "completed";
     const hasBestScore = typeof quiz.best_score === "number";
+    const hasAttemptHistory = (quiz.attempts_used || 0) > 0;
+    const canViewResult =
+      hasAttemptHistory && (isCompleted || !quiz.can_attempt || hasBestScore);
     const isPassed =
       hasBestScore && quiz.best_score! >= (quiz.passing_score || 0);
 
@@ -444,27 +519,11 @@ export default function KuisListPage() {
     const isLaporan = taskKind === "laporan";
     const isTes = taskKind === "tes";
 
-    // Get border color based on task type
-    const getBorderColor = () => {
-      if (isTes) return "border-l-primary";
-      if (isLaporan) return "border-l-warning";
-      return "border-l-border";
-    };
-
-    // Get type badge style
-    const getTypeBadgeStyle = () => {
-      if (isTes)
-        return "bg-primary/10 text-primary border-primary/30 font-semibold";
-      if (isLaporan)
-        return "bg-warning/10 text-warning border-warning/30 font-semibold";
-      return "bg-muted/50 text-muted-foreground border-border/50";
-    };
-
     // Get type label
     const getTypeLabel = () => {
-      if (isTes) return "🧪 TES";
-      if (isLaporan) return "📄 LAPORAN";
-      return "📋 TUGAS";
+      if (isTes) return "CBT";
+      if (isLaporan) return "LAPORAN";
+      return "TUGAS";
     };
 
     const formatDuration = (): string => {
@@ -473,58 +532,139 @@ export default function KuisListPage() {
       return `${durasi} menit`;
     };
 
+    const getDeadlineLabel = (): string => {
+      if (!quiz.tanggal_selesai) return "Batas akhir fleksibel";
+
+      return `Batas akhir: ${formatDate(quiz.tanggal_selesai)}`;
+    };
+
+    const typeConfig = isLaporan
+      ? {
+          cardClass:
+            "border border-amber-300/70 bg-[#2f2b27] text-white shadow-[0_18px_40px_-24px_rgba(245,158,11,0.35)]",
+          strip: "bg-gradient-to-r from-amber-700 via-amber-500 to-amber-200",
+          chip: "border border-amber-300 bg-[#fff2d8] text-amber-900",
+          summary:
+            "border border-amber-300 bg-gradient-to-r from-[#f6e6ca] to-[#f3e5d5] text-amber-900",
+          surface: "border-white/10 bg-[#24211d]",
+          meta: "text-amber-50/78",
+          action: "bg-warning hover:bg-warning/90 text-white",
+          ghostButton:
+            "border-white/10 bg-white/5 text-amber-50 hover:bg-white/10 hover:text-white",
+        }
+      : {
+          cardClass:
+            "border border-blue-300/80 bg-[#2f2f2b] text-white shadow-[0_18px_40px_-24px_rgba(59,130,246,0.35)]",
+          strip: "bg-gradient-to-r from-blue-800 via-blue-500 to-blue-300",
+          chip: "border border-blue-200 bg-blue-50 text-blue-800",
+          summary:
+            "border border-blue-200 bg-gradient-to-r from-[#d7e9fb] to-[#cfe2f7] text-blue-900",
+          surface: "border-white/10 bg-[#262823]",
+          meta: "text-white/72",
+          action: "bg-primary hover:bg-primary/90 text-primary-foreground",
+          ghostButton:
+            "border-white/10 bg-white/5 text-white hover:bg-white/10 hover:text-white",
+        };
+
     return (
       <Card
         className={cn(
-          "hover:shadow-lg transition-all duration-200 border-l-4",
-          getBorderColor(),
+          "relative overflow-hidden rounded-2xl transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg",
+          typeConfig.cardClass,
         )}
       >
-        <CardHeader className="pb-3">
+        <div className={cn("absolute inset-x-0 top-0 h-[3px]", typeConfig.strip)} />
+        <CardHeader className="pb-0 pt-5">
           <div className="flex items-start justify-between gap-4">
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-2 flex-wrap">
+            <div className="min-w-0 flex-1">
+              <div className="mb-2.5 flex flex-wrap items-center gap-2">
                 {getStatusBadge(quiz.status)}
                 <Badge
                   variant="outline"
-                  className={cn("border-2", getTypeBadgeStyle())}
+                  className={cn("border px-2.5 py-1 font-semibold", typeConfig.chip)}
                 >
                   {getTypeLabel()}
                 </Badge>
               </div>
-              <CardTitle className="text-lg mb-1">{quiz.judul}</CardTitle>
-              <CardDescription>
+              <CardTitle className="mb-1 text-lg leading-tight text-white">
+                {quiz.judul}
+              </CardTitle>
+              <CardDescription className={cn("text-sm", typeConfig.meta)}>
                 {quiz.kode_mk} - {quiz.nama_mk}
                 {quiz.nama_kelas && ` • ${quiz.nama_kelas}`}
               </CardDescription>
+              {quiz.dosen_name && (
+                <p className={cn("mt-1 text-xs font-medium", typeConfig.meta)}>
+                  Dosen: {quiz.dosen_name}
+                </p>
+              )}
+              {/* Label tipe penilaian */}
+              <p
+                className={cn(
+                  "mt-3 rounded-xl px-3.5 py-2 text-xs font-medium shadow-sm",
+                  isLaporan
+                    ? "border border-amber-300 bg-gradient-to-r from-[#f6e6ca] to-[#f3e5d5] text-amber-900"
+                    : "border border-blue-200 bg-gradient-to-r from-[#d7e9fb] to-[#cfe2f7] text-blue-900",
+                )}
+              >
+                {isLaporan
+                  ? "📄 Laporan • Dinilai Manual oleh Dosen"
+                  : "🖥️ CBT • Nilai Otomatis oleh Sistem"}
+              </p>
             </div>
-            <div className="shrink-0 p-2 bg-muted/50 rounded-full">
+            <div className="shrink-0 rounded-full bg-white/10 p-2.5">
               {getStatusIcon(quiz.status)}
             </div>
           </div>
         </CardHeader>
 
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-3 text-sm">
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Timer className="h-4 w-4" />
-              <span>{formatDuration()}</span>
+        <CardContent className="space-y-4 pt-4">
+          <div className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
+            <div className={cn("rounded-xl border px-3 py-2.5", typeConfig.surface)}>
+              <div className={cn("flex items-center gap-2 text-[10px] font-medium uppercase tracking-wider", typeConfig.meta)}>
+                <Timer className="h-3.5 w-3.5" />
+                {isLaporan ? "Rentang tugas" : "Durasi CBT"}
+              </div>
+              <p className="mt-1 font-semibold text-white">{formatDuration()}</p>
             </div>
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <FileQuestion className="h-4 w-4" />
-              <span>{quiz.total_soal} soal</span>
+            <div className={cn("rounded-xl border px-3 py-2.5", typeConfig.surface)}>
+              <div className={cn("flex items-center gap-2 text-[10px] font-medium uppercase tracking-wider", typeConfig.meta)}>
+                <FileQuestion className="h-3.5 w-3.5" />
+                Soal
+              </div>
+              <p className="mt-1 font-semibold text-white">{quiz.total_soal} soal</p>
             </div>
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Calendar className="h-4 w-4" />
-              <span className="text-xs">
-                Mulai: {formatDate(quiz.tanggal_mulai)}
-              </span>
+            <div className={cn("rounded-xl border px-3 py-2.5", typeConfig.surface)}>
+              <div className={cn("flex items-center gap-2 text-[10px] font-medium uppercase tracking-wider", typeConfig.meta)}>
+                <Calendar className="h-3.5 w-3.5" />
+                Mulai
+              </div>
+              <p className="mt-1 text-xs font-semibold text-white">
+                {formatDate(quiz.tanggal_mulai)}
+              </p>
             </div>
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Calendar className="h-4 w-4" />
-              <span className="text-xs">
-                Deadline: {formatDate(quiz.tanggal_selesai)}
-              </span>
+            <div className={cn("rounded-xl border px-3 py-2.5", typeConfig.surface)}>
+              <div
+                className={cn(
+                  "flex items-center gap-2 text-[10px] font-medium uppercase tracking-wider",
+                  quiz.status === "ongoing" && quiz.tanggal_selesai
+                    ? "text-warning"
+                    : typeConfig.meta,
+                )}
+              >
+                <Calendar className="h-3.5 w-3.5" />
+                Batas akhir
+              </div>
+              <p
+                className={cn(
+                  "mt-1 text-xs font-semibold",
+                  quiz.status === "ongoing" && quiz.tanggal_selesai
+                    ? "text-warning"
+                    : "text-white",
+                )}
+              >
+                {getDeadlineLabel()}
+              </p>
             </div>
           </div>
 
@@ -540,11 +680,11 @@ export default function KuisListPage() {
 
           {/* For LAPORAN, show submission status */}
           {isLaporan && (
-            <div className="flex items-center justify-between p-3 bg-warning/5 border border-warning/30 rounded-lg text-sm">
-              <span className="text-warning font-medium">Status</span>
-              <span className="font-semibold text-warning">
+            <div className="flex items-center justify-between rounded-xl border border-amber-300/40 bg-amber-50/10 p-3 text-sm">
+              <span className="font-medium text-amber-200">Status</span>
+              <span className="font-semibold text-amber-100">
                 {quiz.status === "completed"
-                  ? "✓ Sudah Dikirim"
+                  ? "Sudah Dikirim"
                   : "Belum Dikirim"}
               </span>
             </div>
@@ -563,7 +703,7 @@ export default function KuisListPage() {
                 <Trophy
                   className={cn(
                     "h-4 w-4",
-                    isPassed ? "text-success" : "text-danger",
+                    isPassed ? "text-emerald-300" : "text-rose-300",
                   )}
                 />
                 <span className="font-medium">
@@ -573,7 +713,7 @@ export default function KuisListPage() {
               <span
                 className={cn(
                   "font-bold text-lg",
-                  isPassed ? "text-success" : "text-danger",
+                  isPassed ? "text-emerald-300" : "text-rose-300",
                 )}
               >
                 {quiz.best_score}
@@ -581,14 +721,14 @@ export default function KuisListPage() {
             </div>
           )}
 
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {/* LAPORAN: If completed (submitted), show "Lihat Hasil", otherwise show "Kirim Laporan" */}
             {isLaporan ? (
               quiz.status === "completed" ? (
                 <Button
                   variant="outline"
                   onClick={() => handleViewResults(quiz.id)}
-                  className="flex-1 gap-2"
+                  className={cn("min-h-10 flex-1 gap-2", typeConfig.ghostButton)}
                 >
                   <Eye className="h-4 w-4" />
                   Lihat Hasil
@@ -596,7 +736,7 @@ export default function KuisListPage() {
               ) : canStart ? (
                 <Button
                   onClick={() => handleStartQuiz(quiz.id)}
-                  className="flex-1 gap-2 bg-warning hover:bg-warning/90"
+                  className={cn("min-h-10 flex-1 gap-2", typeConfig.action)}
                 >
                   <Upload className="h-4 w-4" />
                   Kirim Laporan
@@ -608,17 +748,17 @@ export default function KuisListPage() {
                 {canStart && (
                   <Button
                     onClick={() => handleStartQuiz(quiz.id)}
-                    className="flex-1 gap-2 bg-primary hover:bg-primary/90"
+                    className={cn("min-h-10 flex-1 gap-2", typeConfig.action)}
                   >
                     <Play className="h-4 w-4" />
                     {quiz.attempts_used > 0 ? "Lanjutkan CBT" : "Mulai CBT"}
                   </Button>
                 )}
-                {isCompleted && quiz.attempts_used > 0 && (
+                {canViewResult && (
                   <Button
                     variant="outline"
                     onClick={() => handleViewResults(quiz.id)}
-                    className="flex-1 gap-2"
+                    className={cn("min-h-10 flex-1 gap-2", typeConfig.ghostButton)}
                   >
                     <Eye className="h-4 w-4" />
                     Lihat Hasil
@@ -630,23 +770,33 @@ export default function KuisListPage() {
               <Button
                 variant="outline"
                 disabled
-                className="flex-1 text-primary"
+                className={cn("min-h-10 flex-1", typeConfig.ghostButton)}
               >
                 <Clock className="h-4 w-4 mr-2" />
                 Belum Dimulai
               </Button>
             )}
             {quiz.status === "missed" && (
-              <Button variant="outline" disabled className="flex-1 text-danger">
+              <Button
+                variant="outline"
+                disabled
+                className="min-h-10 flex-1 border-rose-400/30 bg-rose-500/10 text-rose-200"
+              >
                 <XCircle className="h-4 w-4 mr-2" />
                 Terlewat
               </Button>
             )}
-            {quiz.status === "ongoing" && !quiz.can_attempt && (
-              <Button variant="outline" disabled className="flex-1">
-                Percobaan Habis
-              </Button>
-            )}
+            {quiz.status === "ongoing" &&
+              !quiz.can_attempt &&
+              !canViewResult && (
+                <Button
+                  variant="outline"
+                  disabled
+                  className={cn("min-h-10 flex-1", typeConfig.ghostButton)}
+                >
+                  Percobaan Habis
+                </Button>
+              )}
           </div>
         </CardContent>
       </Card>
@@ -760,18 +910,11 @@ export default function KuisListPage() {
             iconColor: "text-success",
           },
           {
-            status: "completed" as const,
-            label: "Selesai",
+            status: "history" as const,
+            label: "Riwayat",
             Icon: CheckCircle2,
             iconWrap: "bg-muted/60",
             iconColor: "text-muted-foreground",
-          },
-          {
-            status: "missed" as const,
-            label: "Terlewat",
-            Icon: XCircle,
-            iconWrap: "bg-danger/10",
-            iconColor: "text-danger",
           },
         ].map(({ status, label, Icon, iconWrap, iconColor }) => (
           <Card key={status}>
@@ -816,8 +959,9 @@ export default function KuisListPage() {
                 </TabsTrigger>
                 <TabsTrigger value="upcoming">Akan Datang</TabsTrigger>
                 <TabsTrigger value="ongoing">Berlangsung</TabsTrigger>
-                <TabsTrigger value="completed">Selesai</TabsTrigger>
-                <TabsTrigger value="missed">Terlewat</TabsTrigger>
+                <TabsTrigger value="history">
+                  Riwayat ({getCountByStatus("history")})
+                </TabsTrigger>
               </TabsList>
             </Tabs>
           </div>
@@ -840,7 +984,9 @@ export default function KuisListPage() {
                     ? "Tidak ada tugas praktikum yang sesuai dengan pencarian Anda"
                     : statusFilter === "all"
                       ? "Belum ada tugas praktikum yang tersedia"
-                      : `Tidak ada tugas praktikum dengan status "${statusFilter}"`}
+                      : statusFilter === "history"
+                        ? "Belum ada tugas praktikum yang masuk riwayat"
+                        : `Tidak ada tugas praktikum dengan status "${statusFilter}"`}
                 </p>
               </div>
             </div>

@@ -25,6 +25,7 @@ import {
   ClipboardCheck,
   Users,
   WifiOff,
+  RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -79,14 +80,18 @@ import {
   updateNilai,
   batchUpdateNilai,
   getNilaiSummary,
+  getNilaiHistoryByDosen,
   type BatchUpdateNilaiData,
+  type NilaiHistoryByDosenItem,
 } from "@/lib/api/nilai.api";
-import { updateKelas } from "@/lib/api/kelas.api";
-import { getMyKelas, type KelasWithStats } from "@/lib/api/dosen.api";
+import { getKelas, updateKelas } from "@/lib/api/kelas.api";
+import { getMataKuliah } from "@/lib/api/mata-kuliah.api";
 import type { NilaiWithMahasiswa, NilaiSummary } from "@/types/nilai.types";
 import type { Kelas, BobotNilai } from "@/types/kelas.types";
+import type { MataKuliah } from "@/types/mata-kuliah.types";
 import { toast } from "sonner";
-import { cacheAPI, invalidateCache } from "@/lib/offline/api-cache";
+import { cacheAPI } from "@/lib/offline/api-cache";
+import { supabase } from "@/lib/supabase/client";
 import {
   calculateNilaiAkhir,
   getNilaiHuruf,
@@ -98,6 +103,69 @@ import { useNetworkStatus } from "@/lib/hooks/useNetworkStatus";
 // ============================================================================
 // COMPONENT
 // ============================================================================
+
+const MASTER_DATA_CACHE_TTL = 60 * 1000;
+
+const normalizePenilaianBobot = (bobot?: BobotNilai | null): BobotNilai => {
+  const defaultBobot = getDefaultBobotNilai();
+  if (!bobot) {
+    return defaultBobot;
+  }
+
+  const normalized: BobotNilai = {
+    kuis: Number(bobot.kuis ?? defaultBobot.kuis) || 0,
+    tugas: Number(bobot.tugas ?? defaultBobot.tugas) || 0,
+    uts: Number(bobot.uts ?? defaultBobot.uts) || 0,
+    uas: Number(bobot.uas ?? defaultBobot.uas) || 0,
+    praktikum: Number(bobot.praktikum ?? defaultBobot.praktikum) || 0,
+    kehadiran: Number(bobot.kehadiran ?? defaultBobot.kehadiran) || 0,
+  };
+
+  const total =
+    normalized.kuis +
+    normalized.tugas +
+    normalized.uts +
+    normalized.uas +
+    normalized.praktikum +
+    normalized.kehadiran;
+
+  normalized.praktikum = Math.max(
+    0,
+    Math.min(100, normalized.praktikum + (100 - total)),
+  );
+
+  return normalized;
+};
+
+async function getActiveKelasForPenilaianDirect(): Promise<Kelas[]> {
+  const { data, error } = await supabase
+    .from("kelas")
+    .select(
+      `
+        id,
+        nama_kelas,
+        kode_kelas,
+        mata_kuliah_id,
+        dosen_id,
+        ruangan,
+        kuota,
+        is_active,
+        semester_ajaran,
+        tahun_ajaran,
+        bobot_nilai,
+        created_at,
+        updated_at
+      `,
+    )
+    .eq("is_active", true)
+    .order("nama_kelas", { ascending: true });
+
+  if (error) {
+    throw error;
+  }
+
+  return (data || []) as Kelas[];
+}
 
 export default function DosenPenilaianPage() {
   const { user } = useAuth();
@@ -111,15 +179,18 @@ export default function DosenPenilaianPage() {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [mataKuliahList, setMataKuliahList] = useState<
-    Array<{ id: string; nama_mk: string; kode_mk: string }>
-  >([]);
-  const [dosenKelasList, setDosenKelasList] = useState<KelasWithStats[]>([]);
+  const [mataKuliahList, setMataKuliahList] = useState<MataKuliah[]>([]);
+  const [dosenKelasList, setDosenKelasList] = useState<Kelas[]>([]);
   const [selectedMataKuliah, setSelectedMataKuliah] = useState<string>("");
   const [kelasList, setKelasList] = useState<Kelas[]>([]);
   const [selectedKelas, setSelectedKelas] = useState<string>("");
   const [mahasiswaList, setMahasiswaList] = useState<NilaiWithMahasiswa[]>([]);
   const [summary, setSummary] = useState<NilaiSummary | null>(null);
+  const [nilaiHistory, setNilaiHistory] = useState<NilaiHistoryByDosenItem[]>(
+    [],
+  );
+  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [activeTab, setActiveTab] = useState("penilaian");
   const [searchQuery, setSearchQuery] = useState("");
   const [editedGrades, setEditedGrades] = useState<
     Map<string, Partial<NilaiWithMahasiswa>>
@@ -164,30 +235,54 @@ export default function DosenPenilaianPage() {
   useEffect(() => {
     if (user?.dosen?.id) {
       loadMataKuliahDiajarkan();
+      loadNilaiHistory();
     }
   }, [user?.dosen?.id]);
 
   useEffect(() => {
     if (selectedMataKuliah) {
-      loadKelas();
+      loadKelas(true);
     } else {
-      setKelasList([]);
       setSelectedKelas("");
     }
   }, [selectedMataKuliah, dosenKelasList]);
 
   useEffect(() => {
-    if (selectedKelas) {
-      loadAllKelasData();
+    if (!user?.dosen?.id || selectedMataKuliah || kelasList.length > 0) {
+      return;
     }
-  }, [selectedKelas]);
+
+    getActiveKelasForPenilaianDirect()
+      .then((kelasData) => {
+        if (kelasData.length > 0) {
+          setDosenKelasList(kelasData);
+          setKelasList(kelasData);
+        }
+      })
+      .catch((error) => {
+        console.error("[Penilaian] Direct kelas preload failed:", error);
+      });
+  }, [user?.dosen?.id, selectedMataKuliah, kelasList.length]);
+
+  useEffect(() => {
+    if (selectedKelas && selectedMataKuliah) {
+      loadAllKelasData();
+      return;
+    }
+
+    setMahasiswaList([]);
+    setSummary(null);
+    setEditedGrades(new Map());
+  }, [selectedKelas, selectedMataKuliah]);
 
   useEffect(() => {
     if (!kelasFromQuery || dosenKelasList.length === 0) {
       return;
     }
 
-    const targetKelas = dosenKelasList.find((kelas) => kelas.id === kelasFromQuery);
+    const targetKelas = dosenKelasList.find(
+      (kelas) => kelas.id === kelasFromQuery,
+    );
     if (!targetKelas?.mata_kuliah_id) {
       return;
     }
@@ -200,116 +295,122 @@ export default function DosenPenilaianPage() {
     if (selectedKelas !== targetKelas.id) {
       setSelectedKelas(targetKelas.id);
     }
-  }, [
-    dosenKelasList,
-    kelasFromQuery,
-    selectedKelas,
-    selectedMataKuliah,
-  ]);
+  }, [dosenKelasList, kelasFromQuery, selectedKelas, selectedMataKuliah]);
 
   // ============================================================================
   // DATA LOADING
   // ============================================================================
 
   /**
-   * Load mata kuliah yang diajarkan oleh dosen
+   * Load master mata kuliah dan kelas dari admin.
+   * Penilaian sengaja tidak dikunci ke assignment dosen agar dosen bisa
+   * menilai kombinasi kelas + mata kuliah sesuai kebutuhan akademik.
    */
   const loadMataKuliahDiajarkan = async (forceRefresh = false) => {
     try {
       setLoading(true);
       if (!user?.dosen?.id) return;
 
-      // Ambil dari source dosen yang sama dengan dashboard/fitur lain:
-      // jadwal_praktikum aktif dosen yang sudah diturunkan menjadi daftar kelas dosen.
-      const dosenKelasData = await cacheAPI(
-        `dosen_mata_kuliah_${user?.dosen?.id}`,
-        () => getMyKelas(),
-        {
-          ttl: 20 * 60 * 1000, // 20 minutes (mata kuliah jarang berubah)
-          forceRefresh,
-          staleWhileRevalidate: true,
-        },
+      const [mataKuliahData, kelasData] = await Promise.all([
+        cacheAPI(
+          "admin_master_mata_kuliah_penilaian",
+          () => getMataKuliah({ is_active: true }),
+          {
+            ttl: MASTER_DATA_CACHE_TTL,
+            forceRefresh,
+            staleWhileRevalidate: true,
+          },
+        ),
+        cacheAPI(
+          "admin_master_kelas_penilaian",
+          () => getKelas({ is_active: true }),
+          {
+            ttl: MASTER_DATA_CACHE_TTL,
+            forceRefresh,
+            staleWhileRevalidate: true,
+          },
+        ),
+      ]);
+
+      let resolvedKelasData = Array.isArray(kelasData) ? kelasData : [];
+      if (resolvedKelasData.length === 0) {
+        resolvedKelasData = await getActiveKelasForPenilaianDirect();
+      }
+
+      setMataKuliahList(Array.isArray(mataKuliahData) ? mataKuliahData : []);
+      setDosenKelasList(resolvedKelasData);
+      setKelasList(resolvedKelasData);
+
+      console.log(
+        "[Penilaian] Master data loaded:",
+        Array.isArray(mataKuliahData) ? mataKuliahData.length : 0,
+        "mata kuliah,",
+        resolvedKelasData.length,
+        "kelas",
       );
-
-      setDosenKelasList(dosenKelasData);
-
-      const mataKuliahMap = new Map<
-        string,
-        { id: string; nama_mk: string; kode_mk: string }
-      >();
-
-      dosenKelasData.forEach((kelas) => {
-        if (!kelas.mata_kuliah_id || !kelas.mata_kuliah_nama) {
-          return;
-        }
-
-        if (!mataKuliahMap.has(kelas.mata_kuliah_id)) {
-          mataKuliahMap.set(kelas.mata_kuliah_id, {
-            id: kelas.mata_kuliah_id,
-            nama_mk: kelas.mata_kuliah_nama,
-            kode_mk: kelas.mata_kuliah_kode || "",
-          });
-        }
-      });
-
-      const mataKuliahArray = Array.from(mataKuliahMap.values());
-      setMataKuliahList(mataKuliahArray);
-
-      console.log("[Penilaian] Mata kuliah loaded:", mataKuliahArray.length);
     } catch (error) {
       console.error("Error loading mata kuliah:", error);
-      toast.error("Gagal memuat data mata kuliah");
+      toast.error("Gagal memuat master mata kuliah dan kelas");
     } finally {
       setLoading(false);
     }
   };
 
+  const loadNilaiHistory = async () => {
+    if (!user?.dosen?.id) return;
+
+    try {
+      setLoadingHistory(true);
+      const historyData = await getNilaiHistoryByDosen(user.dosen.id);
+      setNilaiHistory(historyData);
+    } catch (error) {
+      console.error("Error loading nilai history:", error);
+      toast.error("Gagal memuat riwayat nilai tersimpan");
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
+
   /**
-   * Load kelas untuk mata kuliah yang dipilih
+   * Load kelas aktif dari master admin.
+   * Kelas tidak difilter berdasarkan mata kuliah karena penilaian memakai
+   * kombinasi bebas: mata kuliah pilihan dosen + kelas aktif pilihan dosen.
    */
   const loadKelas = async (forceRefresh = false) => {
     try {
       setLoading(true);
       if (!user?.dosen?.id || !selectedMataKuliah) return;
 
-      const allKelas =
+      let allKelas =
         dosenKelasList.length > 0
           ? dosenKelasList
           : await cacheAPI(
-              `dosen_kelas_penilaian_${user?.dosen?.id}`,
-              () => getMyKelas(),
+              "admin_master_kelas_penilaian",
+              () => getKelas({ is_active: true }),
               {
-                ttl: 15 * 60 * 1000, // 15 minutes
+                ttl: MASTER_DATA_CACHE_TTL,
                 forceRefresh,
                 staleWhileRevalidate: true,
               },
             );
 
-      const filteredKelas = allKelas
-        .filter((kelas) => kelas.mata_kuliah_id === selectedMataKuliah)
-        .map(
-          (kelas): Kelas => ({
-            id: kelas.id,
-            nama_kelas: kelas.nama_kelas,
-            kode_kelas: kelas.kode_kelas,
-            mata_kuliah_id: kelas.mata_kuliah_id || null,
-            dosen_id: user.dosen?.id || null,
-            ruangan: null,
-            kuota: null,
-            is_active: true,
-            semester_ajaran: kelas.semester_ajaran,
-            tahun_ajaran: kelas.tahun_ajaran,
-            created_at: null,
-            updated_at: null,
-            mata_kuliah: kelas.mata_kuliah_id
-              ? {
-                  id: kelas.mata_kuliah_id,
-                  nama_mk: kelas.mata_kuliah_nama || "",
-                  kode_mk: kelas.mata_kuliah_kode || "",
-                }
-              : undefined,
-          }),
+      if ((!Array.isArray(allKelas) || allKelas.length === 0) && isOnline) {
+        allKelas = await cacheAPI(
+          "admin_master_kelas_penilaian",
+          () => getKelas({ is_active: true }),
+          {
+            ttl: MASTER_DATA_CACHE_TTL,
+            forceRefresh: true,
+            staleWhileRevalidate: true,
+          },
         );
+      }
+
+      if (!Array.isArray(allKelas) || allKelas.length === 0) {
+        allKelas = await getActiveKelasForPenilaianDirect();
+      }
+
+      const filteredKelas = allKelas.map((kelas): Kelas => kelas);
 
       setKelasList(filteredKelas);
       setSelectedKelas((currentSelectedKelas) =>
@@ -332,27 +433,16 @@ export default function DosenPenilaianPage() {
   const loadAllKelasData = async (forceRefresh = false) => {
     try {
       setLoading(true);
+      if (!selectedKelas || !selectedMataKuliah) {
+        setMahasiswaList([]);
+        setSummary(null);
+        setEditedGrades(new Map());
+        return;
+      }
 
-      // Run all API calls in PARALLEL using cacheAPI
       const [mahasiswaData, summaryData] = await Promise.all([
-        cacheAPI(
-          `dosen_mahasiswa_${selectedKelas}`,
-          () => getMahasiswaForGrading(selectedKelas),
-          {
-            ttl: 5 * 60 * 1000, // 5 minutes (grading changes frequently)
-            forceRefresh,
-            staleWhileRevalidate: true,
-          },
-        ),
-        cacheAPI(
-          `dosen_nilai_summary_${selectedKelas}`,
-          () => getNilaiSummary(selectedKelas),
-          {
-            ttl: 5 * 60 * 1000, // 5 minutes
-            forceRefresh,
-            staleWhileRevalidate: true,
-          },
-        ),
+        getMahasiswaForGrading(selectedKelas, selectedMataKuliah),
+        getNilaiSummary(selectedKelas, selectedMataKuliah),
       ]);
 
       // Update states
@@ -382,14 +472,9 @@ export default function DosenPenilaianPage() {
 
   const loadBobotNilai = () => {
     const kelas = kelasList.find((k) => k.id === selectedKelas);
-    if (kelas?.bobot_nilai) {
-      setCurrentBobot(kelas.bobot_nilai);
-      setEditingBobot(kelas.bobot_nilai);
-    } else {
-      const defaultBobot = getDefaultBobotNilai();
-      setCurrentBobot(defaultBobot);
-      setEditingBobot(defaultBobot);
-    }
+    const nextBobot = normalizePenilaianBobot(kelas?.bobot_nilai);
+    setCurrentBobot(nextBobot);
+    setEditingBobot(nextBobot);
   };
 
   // ============================================================================
@@ -421,7 +506,8 @@ export default function DosenPenilaianPage() {
 
     try {
       // Validate total = 100%
-      const validation = validateBobotNilai(editingBobot);
+      const normalizedBobot = normalizePenilaianBobot(editingBobot);
+      const validation = validateBobotNilai(normalizedBobot);
       if (!validation.valid) {
         toast.error(`Total bobot harus 100%. Saat ini: ${validation.total}%`);
         return;
@@ -431,10 +517,11 @@ export default function DosenPenilaianPage() {
 
       // Update kelas with new bobot
       await updateKelas(selectedKelas, {
-        bobot_nilai: editingBobot,
+        bobot_nilai: normalizedBobot,
       });
 
-      setCurrentBobot(editingBobot);
+      setCurrentBobot(normalizedBobot);
+      setEditingBobot(normalizedBobot);
       setShowBobotDialog(false);
       toast.success("Bobot nilai berhasil diperbarui");
 
@@ -535,12 +622,14 @@ export default function DosenPenilaianPage() {
       setShowSwitchKelasWarning(true);
     } else {
       setSelectedKelas(newKelasId);
+      setActiveTab("penilaian");
     }
   };
 
   const confirmKelasSwitch = () => {
     setEditedGrades(new Map()); // Discard unsaved changes
     setSelectedKelas(pendingKelasSwitch);
+    setActiveTab("penilaian");
     setShowSwitchKelasWarning(false);
     setPendingKelasSwitch("");
   };
@@ -548,6 +637,29 @@ export default function DosenPenilaianPage() {
   const cancelKelasSwitch = () => {
     setShowSwitchKelasWarning(false);
     setPendingKelasSwitch("");
+  };
+
+  const handleRefreshMasterData = async () => {
+    if (!isOnline) {
+      toast.error("Tidak dapat refresh data master saat offline");
+      return;
+    }
+
+    await Promise.all([loadMataKuliahDiajarkan(true), loadNilaiHistory()]);
+    toast.success("Master mata kuliah dan kelas diperbarui");
+  };
+
+  const handleOpenNilaiHistory = (item: NilaiHistoryByDosenItem) => {
+    if (editedGrades.size > 0) {
+      toast.warning(
+        "Simpan atau batalkan perubahan nilai sebelum membuka riwayat lain.",
+      );
+      return;
+    }
+
+    setSelectedMataKuliah(item.mata_kuliah_id);
+    setSelectedKelas(item.kelas_id);
+    setActiveTab("penilaian");
   };
 
   // ============================================================================
@@ -577,6 +689,8 @@ export default function DosenPenilaianPage() {
       const batchData: BatchUpdateNilaiData = {
         kelas_id: selectedKelas,
         mata_kuliah_id: selectedMataKuliah,
+        dosen_id: user?.dosen?.id ?? null,
+        bobot_nilai: currentBobot,
         nilai_list: Array.from(editedGrades.entries()).map(
           ([mahasiswaId, data]) => ({
             mahasiswa_id: mahasiswaId,
@@ -591,14 +705,26 @@ export default function DosenPenilaianPage() {
         ),
       };
 
-      await batchUpdateNilai(batchData);
+      const savedNilai = await batchUpdateNilai(batchData);
+
+      if (savedNilai.length !== batchData.nilai_list.length) {
+        throw new Error(
+          `${batchData.nilai_list.length - savedNilai.length} nilai belum tersimpan.`,
+        );
+      }
 
       toast.success("Nilai berhasil disimpan");
       setEditedGrades(new Map());
-      await loadAllKelasData();
+      await loadAllKelasData(true);
+      await loadNilaiHistory();
     } catch (error) {
       console.error("Error saving grades:", error);
-      toast.error("Gagal menyimpan nilai");
+      toast.error("Gagal menyimpan nilai", {
+        description:
+          error instanceof Error
+            ? error.message
+            : "Periksa koneksi atau akses Supabase.",
+      });
     } finally {
       setSaving(false);
     }
@@ -621,6 +747,9 @@ export default function DosenPenilaianPage() {
       await updateNilai(mahasiswaId, selectedKelas, {
         mahasiswa_id: mahasiswaId,
         kelas_id: selectedKelas,
+        mata_kuliah_id: selectedMataKuliah,
+        dosen_id: user?.dosen?.id ?? null,
+        bobot_nilai: currentBobot,
         nilai_kuis: data.nilai_kuis,
         nilai_tugas: data.nilai_tugas,
         nilai_uts: data.nilai_uts,
@@ -637,10 +766,16 @@ export default function DosenPenilaianPage() {
       newEditedGrades.delete(mahasiswaId);
       setEditedGrades(newEditedGrades);
 
-      await loadAllKelasData();
+      await loadAllKelasData(true);
+      await loadNilaiHistory();
     } catch (error) {
       console.error("Error saving grade:", error);
-      toast.error("Gagal menyimpan nilai");
+      toast.error("Gagal menyimpan nilai", {
+        description:
+          error instanceof Error
+            ? error.message
+            : "Periksa koneksi atau akses Supabase.",
+      });
     } finally {
       setSaving(false);
     }
@@ -694,6 +829,9 @@ export default function DosenPenilaianPage() {
       await updateNilai(editingMahasiswa.mahasiswa_id, selectedKelas, {
         mahasiswa_id: editingMahasiswa.mahasiswa_id,
         kelas_id: selectedKelas,
+        mata_kuliah_id: selectedMataKuliah,
+        dosen_id: user?.dosen?.id ?? null,
+        bobot_nilai: currentBobot,
         nilai_kuis: editFormData.nilai_kuis,
         nilai_tugas: editFormData.nilai_tugas,
         nilai_uts: editFormData.nilai_uts,
@@ -713,10 +851,16 @@ export default function DosenPenilaianPage() {
       setShowEditDialog(false);
       setEditingMahasiswa(null);
 
-      await loadAllKelasData();
+      await loadAllKelasData(true);
+      await loadNilaiHistory();
     } catch (error) {
       console.error("Error saving grade:", error);
-      toast.error("Gagal menyimpan nilai");
+      toast.error("Gagal menyimpan nilai", {
+        description:
+          error instanceof Error
+            ? error.message
+            : "Periksa koneksi atau akses Supabase.",
+      });
     } finally {
       setSaving(false);
     }
@@ -740,6 +884,19 @@ export default function DosenPenilaianPage() {
   // Get current selected kelas info
   const currentKelas = kelasList.find((k) => k.id === selectedKelas);
   const currentNamaKelas = currentKelas?.nama_kelas || "";
+  const totalHistoryNilai = nilaiHistory.reduce(
+    (sum, item) => sum + item.total_nilai,
+    0,
+  );
+
+  const formatHistoryDate = (date?: string | null) => {
+    if (!date) return "Belum ada tanggal";
+    return new Date(date).toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+  };
 
   const getDisplayValue = (
     mahasiswa: NilaiWithMahasiswa,
@@ -813,6 +970,28 @@ export default function DosenPenilaianPage() {
   });
 
   const hasChanges = editedGrades.size > 0;
+  const activeTabConfig = {
+    penilaian: {
+      title: "Penilaian Mahasiswa",
+      description: selectedKelas
+        ? "Input dan pantau nilai sesuai kombinasi kelas + mata kuliah."
+        : "Pilih mata kuliah dan kelas aktif dari master admin.",
+      icon: ClipboardCheck,
+    },
+    permintaan: {
+      title: "Permintaan Perbaikan Nilai",
+      description:
+        "Review pengajuan mahasiswa, pilih bentuk perbaikan, lalu beri instruksi yang jelas.",
+      icon: ClipboardCheck,
+    },
+    history: {
+      title: "History Nilai Tersimpan",
+      description:
+        "Buka kembali nilai yang pernah disimpan tanpa harus mencari kombinasi dari awal.",
+      icon: CheckCircle,
+    },
+  }[activeTab];
+  const HeaderIcon = activeTabConfig.icon;
 
   // ============================================================================
   // RENDER
@@ -830,31 +1009,43 @@ export default function DosenPenilaianPage() {
 
   return (
     <div className="role-page-shell">
-      <div className="role-page-content space-y-8">
+      <div className="role-page-content space-y-6">
         {/* Enhanced Header */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="rounded-[28px] border border-primary/10 bg-white/80 p-5 shadow-[0_18px_50px_-32px_rgba(15,23,42,0.45)] backdrop-blur dark:bg-card/80 sm:flex sm:items-center sm:justify-between">
           <div className="flex-1">
-            <div className="flex items-start sm:items-center gap-3 sm:gap-4 mb-3">
-              <div className="p-3 bg-linear-to-br from-primary to-accent rounded-2xl shadow-lg shadow-primary/30">
-                <ClipboardCheck className="h-8 w-8 text-primary-foreground" />
+            <div className="flex items-start gap-3 sm:items-center sm:gap-4">
+              <div className="rounded-2xl bg-linear-to-br from-primary to-accent p-3 shadow-lg shadow-primary/25">
+                <HeaderIcon className="h-7 w-7 text-primary-foreground" />
               </div>
               <div>
-                <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-linear-to-r from-primary to-accent dark:from-primary/80 dark:to-accent/80">
-                  Penilaian Mahasiswa
+                <h1 className="bg-linear-to-r from-primary to-accent bg-clip-text text-2xl font-extrabold tracking-tight text-transparent dark:from-primary/80 dark:to-accent/80 sm:text-3xl">
+                  {activeTabConfig.title}
                 </h1>
-                <p className="text-sm sm:text-base md:text-lg font-bold text-muted-foreground mt-1">
-                  {selectedKelas
-                    ? "Input nilai mahasiswa dengan visual indicators untuk kemudahan tracking"
-                    : "Pilih mata kuliah dan kelas untuk memulai penilaian"}
+                <p className="mt-1 text-sm font-semibold text-muted-foreground sm:text-base">
+                  {activeTabConfig.description}
                 </p>
               </div>
             </div>
-            <p className="text-sm sm:text-base font-semibold text-muted-foreground dark:text-muted-foreground/60 ml-1">
-              Kelola nilai mahasiswa dengan mudah dan akurat
-            </p>
           </div>
-          {selectedKelas && (
-            <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto">
+          <div className="mt-4 flex w-full flex-col gap-2 sm:mt-0 sm:w-auto sm:flex-row sm:items-center">
+            <Button
+              variant="outline"
+              onClick={handleRefreshMasterData}
+              disabled={loading || !isOnline}
+              title={
+                !isOnline
+                  ? "Tidak dapat refresh data master saat offline"
+                  : "Ambil ulang mata kuliah dan kelas dari master admin"
+              }
+              className="flex items-center gap-2 rounded-xl border-2 bg-white/70 font-semibold hover:bg-primary/5"
+            >
+              <RefreshCw
+                className={`w-4 h-4 ${loading ? "animate-spin" : ""}`}
+              />
+              Refresh Data
+            </Button>
+            {selectedKelas && (
+              <>
               {!isOnline && (
                 <span className="flex items-center gap-1.5 text-xs font-semibold text-warning bg-warning/10 border border-warning/30 rounded-lg px-3 py-1.5">
                   <WifiOff className="w-3.5 h-3.5" /> Offline — simpan
@@ -868,7 +1059,7 @@ export default function DosenPenilaianPage() {
                 title={
                   !isOnline ? "Tidak dapat mengubah bobot saat offline" : ""
                 }
-                className="flex items-center gap-2 border-2 hover:bg-primary/5 font-semibold"
+                className="flex items-center gap-2 rounded-xl border-2 bg-white/70 font-semibold hover:bg-primary/5"
               >
                 <Settings className="w-4 h-4" />
                 Atur Bobot
@@ -877,7 +1068,7 @@ export default function DosenPenilaianPage() {
                 onClick={handleSaveAll}
                 disabled={!hasChanges || saving || !isOnline}
                 title={!isOnline ? "Tidak dapat menyimpan saat offline" : ""}
-                className="flex items-center gap-2 bg-linear-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground shadow-lg shadow-primary/30 font-semibold px-6"
+                className="flex items-center gap-2 rounded-xl bg-linear-to-r from-primary to-accent px-6 font-semibold text-primary-foreground shadow-lg shadow-primary/25 hover:from-primary/90 hover:to-accent/90"
               >
                 {saving ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -890,57 +1081,65 @@ export default function DosenPenilaianPage() {
                   ? "Offline"
                   : `Simpan Semua ${hasChanges ? `(${editedGrades.size})` : ""}`}
               </Button>
-            </div>
-          )}
+              </>
+            )}
+          </div>
         </div>
 
         {/* Empty State - Belum Pilih Kelas */}
-        {!selectedKelas && (
-          <div className="space-y-8">
+        {!selectedKelas && activeTab !== "permintaan" && (
+          <div className="space-y-4">
             {/* Welcome Card - Enhanced */}
-            <Card className="group hover:shadow-2xl transition-all duration-300 border-0 shadow-xl bg-linear-to-br from-primary/5 to-accent/10 dark:from-primary/10 dark:to-accent/20 backdrop-blur-sm overflow-hidden relative">
-              <div className="absolute top-0 right-0 w-40 h-40 bg-linear-to-br from-primary/10 to-accent/10 rounded-full blur-3xl -mr-20 -mt-20" />
-              <CardContent className="flex flex-col items-center justify-center py-16 relative">
-                <div className="bg-linear-to-br from-primary to-accent p-5 rounded-full mb-6 shadow-xl shadow-primary/30">
-                  <ClipboardCheck className="w-16 h-16 text-primary-foreground" />
+            <Card className="hidden">
+              <div className="absolute -right-14 -top-14 h-44 w-44 rounded-full bg-primary/10 blur-3xl" />
+              <CardContent className="relative flex flex-col gap-5 p-6 sm:flex-row sm:items-center sm:justify-between sm:p-8">
+                <div className="flex items-start gap-4">
+                  <div className="rounded-3xl bg-linear-to-br from-primary to-accent p-4 shadow-xl shadow-primary/25">
+                    <ClipboardCheck className="h-10 w-10 text-primary-foreground" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl">
+                      Mulai Penilaian
+                    </h2>
+                    <p className="mt-2 max-w-2xl text-sm font-medium leading-relaxed text-muted-foreground sm:text-base">
+                      Pilih mata kuliah dan kelas aktif dari master admin.
+                      Nilai akan tersimpan khusus untuk kombinasi yang dipilih.
+                    </p>
+                  </div>
                 </div>
-                <h2 className="text-3xl font-extrabold text-foreground dark:text-white mb-3">
-                  Selamat Datang di Halaman Penilaian
-                </h2>
-                <p className="text-lg text-muted-foreground text-center max-w-2xl mb-8">
-                  Untuk memulai memberikan nilai, silakan pilih mata kuliah dan
-                  kelas yang Anda ajarkan
-                </p>
+                <div className="rounded-2xl border border-primary/15 bg-white/80 px-4 py-3 text-sm font-semibold text-primary shadow-sm">
+                  Kelas + Mata Kuliah
+                </div>
               </CardContent>
             </Card>
 
             {/* Selection Steps Card - Enhanced */}
-            <Card className="border-0 shadow-xl bg-linear-to-br from-white via-primary/5 to-accent/5 dark:from-card dark:via-primary/10 dark:to-accent/10 backdrop-blur-sm">
-              <CardHeader className="border-b bg-linear-to-r from-primary/5 to-accent/5 dark:from-primary/10 dark:to-accent/10">
-                <CardTitle className="flex items-center gap-3 text-xl font-bold">
-                  <div className="p-2.5 bg-linear-to-br from-primary to-accent rounded-xl shadow-lg shadow-primary/30">
-                    <FileText className="w-5 h-5 text-primary-foreground" />
+            <Card className="overflow-hidden rounded-[26px] border border-slate-200/80 bg-white/95 shadow-[0_18px_46px_-34px_rgba(15,23,42,0.45)] backdrop-blur-sm dark:bg-card/90">
+              <CardHeader className="border-b border-slate-100 bg-linear-to-r from-sky-50 via-white to-emerald-50 px-5 py-4 dark:from-primary/10 dark:to-accent/10">
+                <CardTitle className="flex items-center gap-3 text-base font-extrabold sm:text-lg">
+                  <div className="rounded-2xl bg-linear-to-br from-primary to-accent p-2 shadow-lg shadow-primary/20">
+                    <FileText className="h-4 w-4 text-primary-foreground" />
                   </div>
-                  Langkah 1: Pilih Mata Kuliah & Kelas
+                  Mulai Penilaian
                 </CardTitle>
-                <CardDescription className="text-base font-semibold">
-                  Pilih mata kuliah dan kelas yang akan dinilai. Pastikan Anda
-                  memilih yang benar.
+                <CardDescription className="text-xs font-semibold sm:text-sm">
+                  Pilih mata kuliah dan kelas. History nilai tetap tersedia di
+                  bawah agar dosen bisa lanjut tanpa mencari ulang.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="pt-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <CardContent className="p-4 sm:p-5">
+                <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
                   {/* Mata Kuliah Selection - Enhanced */}
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-3 mb-3">
-                      <span className="flex items-center justify-center w-10 h-10 bg-linear-to-br from-primary to-accent text-primary-foreground rounded-full text-lg font-bold shadow-lg shadow-primary/30">
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-3 shadow-sm">
+                    <div className="mb-2 flex items-center gap-2">
+                      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground shadow-sm">
                         1
                       </span>
                       <Label
                         htmlFor="mata-kuliah-select"
-                        className="text-lg font-bold"
+                        className="text-sm font-extrabold"
                       >
-                        Pilih Mata Kuliah
+                        Mata Kuliah
                       </Label>
                     </div>
                     <Select
@@ -949,7 +1148,7 @@ export default function DosenPenilaianPage() {
                     >
                       <SelectTrigger
                         id="mata-kuliah-select"
-                        className="h-12 border-2 text-base"
+                        className="h-11 rounded-xl border-slate-200 bg-white"
                       >
                         <SelectValue placeholder="-- Pilih Mata Kuliah --" />
                       </SelectTrigger>
@@ -977,20 +1176,20 @@ export default function DosenPenilaianPage() {
                       </SelectContent>
                     </Select>
                     {selectedMataKuliah && (
-                      <div className="flex items-center gap-2 text-base font-semibold text-success bg-success/5 px-4 py-2 rounded-lg border-2 border-success/40">
-                        <CheckCircle className="w-5 h-5" />
+                      <div className="mt-2 flex items-center gap-2 rounded-xl border border-success/30 bg-success/5 px-3 py-1.5 text-xs font-semibold text-success">
+                        <CheckCircle className="h-4 w-4" />
                         <span>Mata kuliah dipilih</span>
                       </div>
                     )}
                   </div>
 
                   {/* Kelas Selection - Enhanced */}
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-3 mb-3">
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-3 shadow-sm">
+                    <div className="mb-2 flex items-center gap-2">
                       <span
-                        className={`flex items-center justify-center w-10 h-10 rounded-full text-lg font-bold shadow-lg ${
+                        className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold shadow-sm ${
                           selectedMataKuliah
-                            ? "bg-linear-to-br from-primary to-accent text-primary-foreground shadow-primary/30"
+                            ? "bg-primary text-primary-foreground"
                             : "bg-muted text-muted-foreground"
                         }`}
                       >
@@ -998,19 +1197,29 @@ export default function DosenPenilaianPage() {
                       </span>
                       <Label
                         htmlFor="kelas-select"
-                        className="text-lg font-bold"
+                        className="text-sm font-extrabold"
                       >
-                        Pilih Kelas
+                        Kelas
                       </Label>
                     </div>
                     <Select
                       value={selectedKelas}
                       onValueChange={handleKelasChange}
+                      onOpenChange={(open) => {
+                        if (
+                          open &&
+                          selectedMataKuliah &&
+                          kelasList.length === 0 &&
+                          isOnline
+                        ) {
+                          void loadKelas(true);
+                        }
+                      }}
                       disabled={!selectedMataKuliah}
                     >
                       <SelectTrigger
                         id="kelas-select"
-                        className="h-12 border-2 text-base"
+                        className="h-11 rounded-xl border-slate-200 bg-white"
                         disabled={!selectedMataKuliah}
                       >
                         <SelectValue
@@ -1027,7 +1236,7 @@ export default function DosenPenilaianPage() {
                         {kelasList.length === 0 ? (
                           <div className="p-4 text-center text-muted-foreground">
                             {selectedMataKuliah
-                              ? "Tidak ada kelas untuk mata kuliah ini"
+                              ? "Tidak ada kelas aktif tersedia"
                               : "Pilih mata kuliah terlebih dahulu"}
                           </div>
                         ) : (
@@ -1040,9 +1249,9 @@ export default function DosenPenilaianPage() {
                       </SelectContent>
                     </Select>
                     {!selectedMataKuliah && (
-                      <div className="flex items-center gap-2 text-base font-semibold text-muted-foreground bg-muted/60 px-4 py-2 rounded-lg border-2 border-border/70">
-                        <AlertTriangle className="w-5 h-5" />
-                        <span>Pilih mata kuliah terlebih dahulu</span>
+                      <div className="mt-2 flex items-center gap-2 rounded-xl border border-border/70 bg-white/80 px-3 py-1.5 text-xs font-semibold text-muted-foreground">
+                        <AlertTriangle className="h-4 w-4" />
+                        <span>Pilih mata kuliah agar nilai masuk ke konteks yang benar</span>
                       </div>
                     )}
                   </div>
@@ -1050,9 +1259,9 @@ export default function DosenPenilaianPage() {
 
                 {/* Info Helper - Enhanced */}
                 {selectedMataKuliah && kelasList.length > 0 && (
-                  <Alert className="mt-8 border-2 border-primary/20 bg-linear-to-r from-primary/5 to-accent/5 shadow-lg">
-                    <CheckCircle className="h-5 w-5 text-primary" />
-                    <AlertDescription className="text-base font-semibold">
+                  <Alert className="mt-3 border border-primary/20 bg-primary/5">
+                    <CheckCircle className="h-4 w-4 text-primary" />
+                    <AlertDescription className="text-sm font-semibold">
                       <strong>Siap!</strong> Silakan pilih kelas untuk{" "}
                       <span className="text-primary">
                         {currentMataKuliahInfo?.nama_mk}
@@ -1063,49 +1272,125 @@ export default function DosenPenilaianPage() {
                 )}
 
                 {selectedMataKuliah && kelasList.length === 0 && (
-                  <Alert className="mt-8 border-2 border-warning/40 bg-linear-to-r from-warning/5 to-warning/10 shadow-lg">
-                    <AlertTriangle className="h-5 w-5 text-warning" />
-                    <AlertDescription className="text-base font-semibold">
-                      Belum ada kelas untuk mata kuliah{" "}
-                      <strong>{currentMataKuliahInfo?.nama_mk}</strong>. Silakan
-                      hubungi admin untuk menambahkan kelas.
+                  <Alert className="mt-3 border border-warning/40 bg-warning/5">
+                    <AlertTriangle className="h-4 w-4 text-warning" />
+                    <AlertDescription className="text-sm font-semibold">
+                      Belum ada kelas aktif dari master admin. Silakan hubungi
+                      admin untuk menambahkan atau mengaktifkan kelas.
                     </AlertDescription>
                   </Alert>
                 )}
               </CardContent>
             </Card>
 
+            {/* History Nilai Tersimpan */}
+            <Card className="hidden">
+              <CardHeader className="border-b border-emerald-100 bg-linear-to-r from-emerald-50 via-white to-sky-50 px-5 py-4">
+                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-3 text-base font-extrabold sm:text-lg">
+                      <div className="rounded-2xl bg-linear-to-br from-emerald-600 to-sky-600 p-2 shadow-lg shadow-emerald-600/20">
+                        <CheckCircle className="h-4 w-4 text-white" />
+                      </div>
+                      History Nilai Tersimpan
+                    </CardTitle>
+                    <CardDescription className="mt-1 text-xs font-semibold sm:text-sm">
+                      Nilai yang sudah pernah Anda simpan akan muncul di sini,
+                      tanpa harus memilih mata kuliah dan kelas dulu.
+                    </CardDescription>
+                  </div>
+                  <div className="w-fit rounded-full border border-emerald-200 bg-white px-3 py-1.5 text-xs font-extrabold text-emerald-700 shadow-sm">
+                    {nilaiHistory.length} kombinasi | {totalHistoryNilai} nilai
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="p-4 sm:p-5">
+                {loadingHistory ? (
+                  <div className="flex items-center gap-3 rounded-xl border border-border bg-muted/40 p-3 text-sm font-semibold text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Memuat history nilai...
+                  </div>
+                ) : nilaiHistory.length === 0 ? (
+                  <div className="rounded-xl border border-dashed border-border bg-muted/30 p-4 text-sm font-semibold text-muted-foreground">
+                    Belum ada nilai tersimpan untuk dosen ini. Setelah dosen
+                    menyimpan nilai, history akan muncul otomatis di sini.
+                  </div>
+                ) : (
+                  <div className="grid max-h-[280px] gap-2 overflow-y-auto pr-1 md:grid-cols-2 xl:grid-cols-3">
+                    {nilaiHistory.map((item) => (
+                      <button
+                        key={`${item.kelas_id}-${item.mata_kuliah_id}`}
+                        type="button"
+                        onClick={() => handleOpenNilaiHistory(item)}
+                        className="group rounded-xl border border-slate-200 bg-linear-to-br from-white to-slate-50 p-3 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-md"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-extrabold text-slate-900">
+                              {item.nama_mk}
+                            </p>
+                            <p className="mt-0.5 text-[11px] font-semibold text-muted-foreground">
+                              {item.kode_mk || "Tanpa kode"} | Kelas{" "}
+                              {item.nama_kelas}
+                            </p>
+                          </div>
+                          <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-bold text-emerald-700">
+                            Buka
+                          </span>
+                        </div>
+                        <div className="mt-3 grid grid-cols-3 gap-1.5">
+                          <div className="rounded-lg bg-sky-50 px-2 py-1.5">
+                            <p className="text-[9px] font-bold uppercase text-sky-700">
+                              Dinilai
+                            </p>
+                            <p className="text-sm font-black text-slate-900">
+                              {item.total_nilai}
+                            </p>
+                          </div>
+                          <div className="rounded-lg bg-emerald-50 px-2 py-1.5">
+                            <p className="text-[9px] font-bold uppercase text-emerald-700">
+                              Rata
+                            </p>
+                            <p className="text-sm font-black text-slate-900">
+                              {item.rata_rata.toFixed(1)}
+                            </p>
+                          </div>
+                          <div className="rounded-lg bg-amber-50 px-2 py-1.5">
+                            <p className="text-[9px] font-bold uppercase text-amber-700">
+                              Update
+                            </p>
+                            <p className="truncate text-[11px] font-black text-slate-900">
+                              {formatHistoryDate(item.terakhir_update)}
+                            </p>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
             {/* Info Card - Enhanced */}
-            <Card className="border-2 border-primary/20 bg-linear-to-br from-primary/5 to-accent/5 shadow-xl">
-              <CardContent className="py-6">
+            <Card className="hidden">
+              <CardContent className="p-5">
                 <div className="flex items-start gap-4">
-                  <div className="bg-linear-to-br from-primary to-accent p-3 rounded-xl shadow-lg shadow-primary/30">
-                    <Settings className="w-6 h-6 text-primary-foreground" />
+                  <div className="rounded-2xl bg-linear-to-br from-primary to-accent p-3 shadow-lg shadow-primary/25">
+                    <Settings className="h-5 w-5 text-primary-foreground" />
                   </div>
                   <div className="flex-1">
-                    <h4 className="text-xl font-bold text-foreground mb-3">
+                    <h4 className="mb-3 text-lg font-extrabold text-foreground">
                       Informasi Penting
                     </h4>
-                    <ul className="text-base font-semibold text-muted-foreground space-y-2">
-                      <li className="flex items-start gap-2">
-                        <span className="text-primary">•</span>
-                        <span>
-                          Setiap mata kuliah dapat memiliki bobot nilai yang
-                          berbeda
-                        </span>
+                    <ul className="flex flex-wrap gap-2 text-sm font-semibold text-muted-foreground">
+                      <li className="rounded-full border border-primary/15 bg-primary/5 px-3 py-1.5">
+                        Bobot dapat berbeda per mata kuliah
                       </li>
-                      <li className="flex items-start gap-2">
-                        <span className="text-primary">•</span>
-                        <span>
-                          Anda dapat mengatur bobot nilai setelah memilih kelas
-                        </span>
+                      <li className="rounded-full border border-primary/15 bg-primary/5 px-3 py-1.5">
+                        Atur bobot setelah memilih kelas
                       </li>
-                      <li className="flex items-start gap-2">
-                        <span className="text-primary">•</span>
-                        <span>
-                          Pastikan memilih mata kuliah dan kelas yang benar
-                          sebelum input nilai
-                        </span>
+                      <li className="rounded-full border border-primary/15 bg-primary/5 px-3 py-1.5">
+                        Pastikan kombinasi sudah benar
                       </li>
                     </ul>
                   </div>
@@ -1116,8 +1401,12 @@ export default function DosenPenilaianPage() {
         )}
 
         {/* Tabs Container */}
-        <Tabs defaultValue="penilaian" className="space-y-6">
-          <TabsList className="grid w-full max-w-xl grid-cols-2 rounded-xl p-1 h-auto bg-linear-to-r from-primary/10 to-accent/10 dark:from-primary/20 dark:to-accent/20">
+        <Tabs
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="rounded-[24px] border border-slate-200/80 bg-white/75 p-3 shadow-[0_18px_46px_-34px_rgba(15,23,42,0.45)] backdrop-blur sm:p-4"
+        >
+          <TabsList className="grid h-auto w-full grid-cols-3 rounded-2xl bg-slate-100/80 p-1">
             <TabsTrigger
               value="penilaian"
               className="gap-2 rounded-lg py-2.5 font-semibold data-[state=active]:bg-white data-[state=active]:shadow-md dark:data-[state=active]:bg-card"
@@ -1131,6 +1420,13 @@ export default function DosenPenilaianPage() {
             >
               <ClipboardCheck className="h-4 w-4" />
               Permintaan Perbaikan
+            </TabsTrigger>
+            <TabsTrigger
+              value="history"
+              className="gap-2 rounded-lg py-2.5 font-semibold data-[state=active]:bg-white data-[state=active]:shadow-md dark:data-[state=active]:bg-card"
+            >
+              <CheckCircle className="h-4 w-4" />
+              History Nilai
             </TabsTrigger>
           </TabsList>
 
@@ -1163,11 +1459,17 @@ export default function DosenPenilaianPage() {
                             <span className="text-primary font-bold">
                               {currentNamaKelas}
                             </span>{" "}
-                            •{" "}
+                            |{" "}
                             <span className="text-accent font-bold">
                               {mahasiswaList?.length || 0}
                             </span>{" "}
                             mahasiswa terdaftar
+                          </p>
+                          <p className="max-w-3xl text-sm font-semibold text-muted-foreground">
+                            Mahasiswa yang sama dapat memiliki nilai berbeda
+                            untuk mata kuliah berbeda. Data di halaman ini hanya
+                            untuk kombinasi mata kuliah dan kelas yang sedang
+                            aktif.
                           </p>
                         </div>
                       </div>
@@ -1226,6 +1528,30 @@ export default function DosenPenilaianPage() {
                       <div className="grid grid-cols-2 gap-3">
                         <div className="flex justify-between items-center p-3 bg-background rounded-xl border-2 border-primary/20 shadow-sm hover:shadow-md transition-shadow">
                           <span className="text-sm font-bold text-muted-foreground">
+                            Hadir
+                          </span>
+                          <span className="text-lg font-black text-primary">
+                            {currentBobot.kehadiran}%
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center p-3 bg-background rounded-xl border-2 border-primary/20 shadow-sm hover:shadow-md transition-shadow">
+                          <span className="text-sm font-bold text-muted-foreground">
+                            Tugas
+                          </span>
+                          <span className="text-lg font-black text-primary">
+                            {currentBobot.tugas}%
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center p-3 bg-background rounded-xl border-2 border-primary/20 shadow-sm hover:shadow-md transition-shadow">
+                          <span className="text-sm font-bold text-muted-foreground">
+                            Kuis
+                          </span>
+                          <span className="text-lg font-black text-primary">
+                            {currentBobot.kuis}%
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center p-3 bg-background rounded-xl border-2 border-primary/20 shadow-sm hover:shadow-md transition-shadow">
+                          <span className="text-sm font-bold text-muted-foreground">
                             UTS
                           </span>
                           <span className="text-lg font-black text-primary">
@@ -1246,14 +1572,6 @@ export default function DosenPenilaianPage() {
                           </span>
                           <span className="text-lg font-black text-primary">
                             {currentBobot.praktikum}%
-                          </span>
-                        </div>
-                        <div className="flex justify-between items-center p-3 bg-background rounded-xl border-2 border-primary/20 shadow-sm hover:shadow-md transition-shadow">
-                          <span className="text-sm font-bold text-muted-foreground">
-                            Kehadiran
-                          </span>
-                          <span className="text-lg font-black text-primary">
-                            {currentBobot.kehadiran}%
                           </span>
                         </div>
                       </div>
@@ -1353,7 +1671,44 @@ export default function DosenPenilaianPage() {
 
             {/* Search */}
             {selectedKelas && (
-              <div className="flex items-center gap-4">
+              <div className="space-y-3 rounded-2xl border border-primary/15 bg-primary/5 p-4">
+                <div className="grid gap-3 md:grid-cols-3">
+                  <div className="rounded-xl bg-white/80 p-3 shadow-sm">
+                    <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                      Mata Kuliah Aktif
+                    </p>
+                    <p className="mt-1 text-sm font-extrabold text-foreground">
+                      {currentMataKuliahInfo?.nama_mk || "Belum dipilih"}
+                    </p>
+                    {currentKodeMataKuliah && (
+                      <p className="text-xs font-semibold text-muted-foreground">
+                        {currentKodeMataKuliah}
+                      </p>
+                    )}
+                  </div>
+                  <div className="rounded-xl bg-white/80 p-3 shadow-sm">
+                    <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                      Kelas Aktif
+                    </p>
+                    <p className="mt-1 text-sm font-extrabold text-foreground">
+                      {currentNamaKelas || "-"}
+                    </p>
+                  </div>
+                  <div className="rounded-xl bg-white/80 p-3 shadow-sm">
+                    <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                      Roster Ditampilkan
+                    </p>
+                    <p className="mt-1 text-sm font-extrabold text-foreground">
+                      {filteredMahasiswa.length} dari {mahasiswaList.length}{" "}
+                      mahasiswa
+                    </p>
+                  </div>
+                </div>
+                <p className="text-xs font-semibold text-muted-foreground">
+                  Catatan: roster mahasiswa boleh sama saat mata kuliah diganti,
+                  tetapi nilai yang dimuat mengikuti mata kuliah aktif.
+                </p>
+                <div className="flex items-center gap-4">
                 <div className="flex-1 relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60" />
                   <Input
@@ -1364,6 +1719,7 @@ export default function DosenPenilaianPage() {
                   />
                 </div>
               </div>
+              </div>
             )}
 
             {/* Grades Table */}
@@ -1373,11 +1729,14 @@ export default function DosenPenilaianPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <CardTitle className="text-xl">
-                        Daftar Nilai Mahasiswa
+                        Daftar Nilai Mahasiswa -{" "}
+                        {currentMataKuliahInfo?.nama_mk || "Mata Kuliah"} /{" "}
+                        Kelas {currentNamaKelas || "-"}
                       </CardTitle>
                       <CardDescription className="mt-1">
-                        {filteredMahasiswa.length} mahasiswa • Double-click
-                        baris untuk edit detail
+                        {filteredMahasiswa.length} mahasiswa dalam konteks
+                        mata kuliah aktif | Double-click baris untuk edit
+                        detail
                       </CardDescription>
                     </div>
                     {searchQuery && (
@@ -1435,21 +1794,29 @@ export default function DosenPenilaianPage() {
                             <TableHead>Status</TableHead>
                             <TableHead>NIM</TableHead>
                             <TableHead>Nama</TableHead>
-                            {/* HIDDEN: Kuis & Tugas (bobot 0%) */}
-                            {/* <TableHead className="text-center">Kuis</TableHead>
-                      <TableHead className="text-center">Tugas</TableHead> */}
-                            <TableHead className="text-center">UTS</TableHead>
-                            <TableHead className="text-center">UAS</TableHead>
                             <TableHead className="text-center">
-                              Praktikum
+                              Hadir ({currentBobot.kehadiran}%)
                             </TableHead>
                             <TableHead className="text-center">
-                              Kehadiran
+                              Tugas ({currentBobot.tugas}%)
+                            </TableHead>
+                            <TableHead className="text-center">
+                              Kuis ({currentBobot.kuis}%)
+                            </TableHead>
+                            <TableHead className="text-center">
+                              Praktikum ({currentBobot.praktikum}%)
+                            </TableHead>
+                            <TableHead className="text-center">
+                              UTS ({currentBobot.uts}%)
+                            </TableHead>
+                            <TableHead className="text-center">
+                              UAS ({currentBobot.uas}%)
                             </TableHead>
                             <TableHead className="text-center">
                               Nilai Akhir
                             </TableHead>
                             <TableHead className="text-center">Grade</TableHead>
+                            <TableHead className="text-center">Lulus</TableHead>
                             <TableHead className="w-32">Aksi</TableHead>
                           </TableRow>
                         </TableHeader>
@@ -1462,14 +1829,20 @@ export default function DosenPenilaianPage() {
                               mahasiswa.mahasiswa_id,
                             );
 
-                            const nilaiAkhir =
-                              editedData?.nilai_akhir ??
-                              mahasiswa.nilai_akhir ??
-                              0;
-                            const nilaiHuruf =
-                              editedData?.nilai_huruf ??
-                              mahasiswa.nilai_huruf ??
-                              "-";
+                            const nilaiAkhir = calculateNilaiAkhir(
+                              editedData?.nilai_kuis ?? mahasiswa.nilai_kuis ?? 0,
+                              editedData?.nilai_tugas ?? mahasiswa.nilai_tugas ?? 0,
+                              editedData?.nilai_uts ?? mahasiswa.nilai_uts ?? 0,
+                              editedData?.nilai_uas ?? mahasiswa.nilai_uas ?? 0,
+                              editedData?.nilai_praktikum ??
+                                mahasiswa.nilai_praktikum ??
+                                0,
+                              editedData?.nilai_kehadiran ??
+                                mahasiswa.nilai_kehadiran ??
+                                0,
+                              currentBobot,
+                            );
+                            const nilaiHuruf = getNilaiHuruf(nilaiAkhir);
 
                             return (
                               <TableRow
@@ -1506,41 +1879,102 @@ export default function DosenPenilaianPage() {
                                 <TableCell className="font-medium">
                                   {mahasiswa.mahasiswa.user.full_name}
                                 </TableCell>
-                                {/* HIDDEN: Nilai Kuis & Tugas (bobot 0%) */}
-                                {/* <TableCell>
-                            <Input
-                              type="number"
-                              min="0"
-                              max="100"
-                              step="0.01"
-                              value={getDisplayValue(mahasiswa, "nilai_kuis")}
-                              onChange={(e) =>
-                                handleGradeChange(
-                                  mahasiswa.mahasiswa_id,
-                                  "nilai_kuis",
-                                  e.target.value,
-                                )
-                              }
-                              className="w-20 text-center"
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Input
-                              type="number"
-                              min="0"
-                              max="100"
-                              step="0.01"
-                              value={getDisplayValue(mahasiswa, "nilai_tugas")}
-                              onChange={(e) =>
-                                handleGradeChange(
-                                  mahasiswa.mahasiswa_id,
-                                  "nilai_tugas",
-                                  e.target.value,
-                                )
-                              }
-                              className="w-20 text-center"
-                            />
-                          </TableCell> */}
+                                <TableCell>
+                                  <Input
+                                    type="number"
+                                    min="0"
+                                    max="100"
+                                    step="0.01"
+                                    placeholder="-"
+                                    value={getDisplayValue(
+                                      mahasiswa,
+                                      "nilai_kehadiran",
+                                    )}
+                                    onChange={(e) =>
+                                      handleGradeChange(
+                                        mahasiswa.mahasiswa_id,
+                                        "nilai_kehadiran",
+                                        e.target.value,
+                                      )
+                                    }
+                                    className={getInputClass(
+                                      mahasiswa,
+                                      "nilai_kehadiran",
+                                    )}
+                                  />
+                                </TableCell>
+                                <TableCell>
+                                  <Input
+                                    type="number"
+                                    min="0"
+                                    max="100"
+                                    step="0.01"
+                                    placeholder="-"
+                                    value={getDisplayValue(
+                                      mahasiswa,
+                                      "nilai_tugas",
+                                    )}
+                                    onChange={(e) =>
+                                      handleGradeChange(
+                                        mahasiswa.mahasiswa_id,
+                                        "nilai_tugas",
+                                        e.target.value,
+                                      )
+                                    }
+                                    className={getInputClass(
+                                      mahasiswa,
+                                      "nilai_tugas",
+                                    )}
+                                  />
+                                </TableCell>
+                                <TableCell>
+                                  <Input
+                                    type="number"
+                                    min="0"
+                                    max="100"
+                                    step="0.01"
+                                    placeholder="-"
+                                    value={getDisplayValue(
+                                      mahasiswa,
+                                      "nilai_kuis",
+                                    )}
+                                    onChange={(e) =>
+                                      handleGradeChange(
+                                        mahasiswa.mahasiswa_id,
+                                        "nilai_kuis",
+                                        e.target.value,
+                                      )
+                                    }
+                                    className={getInputClass(
+                                      mahasiswa,
+                                      "nilai_kuis",
+                                    )}
+                                  />
+                                </TableCell>
+                                <TableCell>
+                                  <Input
+                                    type="number"
+                                    min="0"
+                                    max="100"
+                                    step="0.01"
+                                    placeholder="-"
+                                    value={getDisplayValue(
+                                      mahasiswa,
+                                      "nilai_praktikum",
+                                    )}
+                                    onChange={(e) =>
+                                      handleGradeChange(
+                                        mahasiswa.mahasiswa_id,
+                                        "nilai_praktikum",
+                                        e.target.value,
+                                      )
+                                    }
+                                    className={getInputClass(
+                                      mahasiswa,
+                                      "nilai_praktikum",
+                                    )}
+                                  />
+                                </TableCell>
                                 <TableCell>
                                   <Input
                                     type="number"
@@ -1589,54 +2023,6 @@ export default function DosenPenilaianPage() {
                                     )}
                                   />
                                 </TableCell>
-                                <TableCell>
-                                  <Input
-                                    type="number"
-                                    min="0"
-                                    max="100"
-                                    step="0.01"
-                                    placeholder="-"
-                                    value={getDisplayValue(
-                                      mahasiswa,
-                                      "nilai_praktikum",
-                                    )}
-                                    onChange={(e) =>
-                                      handleGradeChange(
-                                        mahasiswa.mahasiswa_id,
-                                        "nilai_praktikum",
-                                        e.target.value,
-                                      )
-                                    }
-                                    className={getInputClass(
-                                      mahasiswa,
-                                      "nilai_praktikum",
-                                    )}
-                                  />
-                                </TableCell>
-                                <TableCell>
-                                  <Input
-                                    type="number"
-                                    min="0"
-                                    max="100"
-                                    step="0.01"
-                                    placeholder="-"
-                                    value={getDisplayValue(
-                                      mahasiswa,
-                                      "nilai_kehadiran",
-                                    )}
-                                    onChange={(e) =>
-                                      handleGradeChange(
-                                        mahasiswa.mahasiswa_id,
-                                        "nilai_kehadiran",
-                                        e.target.value,
-                                      )
-                                    }
-                                    className={getInputClass(
-                                      mahasiswa,
-                                      "nilai_kehadiran",
-                                    )}
-                                  />
-                                </TableCell>
                                 <TableCell className="text-center font-bold">
                                   {typeof nilaiAkhir === "number"
                                     ? nilaiAkhir.toFixed(2)
@@ -1657,6 +2043,17 @@ export default function DosenPenilaianPage() {
                                     }`}
                                   >
                                     {nilaiHuruf}
+                                  </span>
+                                </TableCell>
+                                <TableCell className="text-center">
+                                  <span
+                                    className={`rounded-full px-2 py-1 text-xs font-bold ${
+                                      nilaiAkhir >= 60
+                                        ? "bg-success/10 text-success"
+                                        : "bg-danger/10 text-danger"
+                                    }`}
+                                  >
+                                    {nilaiAkhir >= 60 ? "Lulus" : "Tidak"}
                                   </span>
                                 </TableCell>
                                 <TableCell>
@@ -1681,7 +2078,8 @@ export default function DosenPenilaianPage() {
                                             mahasiswa.mahasiswa_id,
                                           );
                                         }}
-                                        disabled={saving || !isOnline}                                      >
+                                        disabled={saving || !isOnline}
+                                      >
                                         <Save className="w-3 h-3 mr-1" />
                                         Simpan
                                       </Button>
@@ -1715,6 +2113,95 @@ export default function DosenPenilaianPage() {
             )}
           </TabsContent>
 
+          <TabsContent value="history" className="mt-4">
+            <Card className="overflow-hidden rounded-[22px] border border-emerald-100 bg-white/95 shadow-sm">
+              <CardHeader className="border-b border-emerald-100 bg-linear-to-r from-emerald-50 via-white to-sky-50 px-5 py-4">
+                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-3 text-base font-extrabold sm:text-lg">
+                      <div className="rounded-2xl bg-linear-to-br from-emerald-600 to-sky-600 p-2 shadow-lg shadow-emerald-600/20">
+                        <CheckCircle className="h-4 w-4 text-white" />
+                      </div>
+                      History Nilai Tersimpan
+                    </CardTitle>
+                    <CardDescription className="mt-1 text-xs font-semibold sm:text-sm">
+                      Pilih salah satu history untuk membuka detail nilai pada
+                      kombinasi mata kuliah dan kelas tersebut.
+                    </CardDescription>
+                  </div>
+                  <div className="w-fit rounded-full border border-emerald-200 bg-white px-3 py-1.5 text-xs font-extrabold text-emerald-700 shadow-sm">
+                    {nilaiHistory.length} kombinasi | {totalHistoryNilai} nilai
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="p-4 sm:p-5">
+                {loadingHistory ? (
+                  <div className="flex items-center gap-3 rounded-xl border border-border bg-muted/40 p-3 text-sm font-semibold text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Memuat history nilai...
+                  </div>
+                ) : nilaiHistory.length === 0 ? (
+                  <div className="rounded-xl border border-dashed border-border bg-muted/30 p-4 text-sm font-semibold text-muted-foreground">
+                    Belum ada nilai tersimpan untuk dosen ini. Setelah dosen
+                    menyimpan nilai, history akan muncul otomatis di sini.
+                  </div>
+                ) : (
+                  <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+                    {nilaiHistory.map((item) => (
+                      <button
+                        key={`${item.kelas_id}-${item.mata_kuliah_id}`}
+                        type="button"
+                        onClick={() => handleOpenNilaiHistory(item)}
+                        className="group rounded-xl border border-slate-200 bg-linear-to-br from-white to-slate-50 p-3 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-md"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-extrabold text-slate-900">
+                              {item.nama_mk}
+                            </p>
+                            <p className="mt-0.5 text-[11px] font-semibold text-muted-foreground">
+                              {item.kode_mk || "Tanpa kode"} | Kelas{" "}
+                              {item.nama_kelas}
+                            </p>
+                          </div>
+                          <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-bold text-emerald-700">
+                            Buka
+                          </span>
+                        </div>
+                        <div className="mt-3 grid grid-cols-3 gap-1.5">
+                          <div className="rounded-lg bg-sky-50 px-2 py-1.5">
+                            <p className="text-[9px] font-bold uppercase text-sky-700">
+                              Dinilai
+                            </p>
+                            <p className="text-sm font-black text-slate-900">
+                              {item.total_nilai}
+                            </p>
+                          </div>
+                          <div className="rounded-lg bg-emerald-50 px-2 py-1.5">
+                            <p className="text-[9px] font-bold uppercase text-emerald-700">
+                              Rata
+                            </p>
+                            <p className="text-sm font-black text-slate-900">
+                              {item.rata_rata.toFixed(1)}
+                            </p>
+                          </div>
+                          <div className="rounded-lg bg-amber-50 px-2 py-1.5">
+                            <p className="text-[9px] font-bold uppercase text-amber-700">
+                              Update
+                            </p>
+                            <p className="truncate text-[11px] font-black text-slate-900">
+                              {formatHistoryDate(item.terakhir_update)}
+                            </p>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           {/* Tab 2: Permintaan Perbaikan (NEW) */}
           <TabsContent value="permintaan">
             {user?.dosen?.id ? (
@@ -1744,6 +2231,28 @@ export default function DosenPenilaianPage() {
             </div>
 
             <div className="p-6 space-y-5 overflow-y-auto flex-1">
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <p className="font-extrabold">Komponen tidak dipakai?</p>
+                    <p className="mt-1 font-medium leading-relaxed">
+                      Isi bobot komponen tersebut dengan <strong>0%</strong>,
+                      lalu pindahkan bobotnya ke komponen lain sampai total
+                      tetap <strong>100%</strong>.
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setEditingBobot(getDefaultBobotNilai())}
+                    className="shrink-0 border-amber-300 bg-white font-bold text-amber-900 hover:bg-amber-100"
+                  >
+                    Pakai Default
+                  </Button>
+                </div>
+              </div>
+
               {/* Kuis */}
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="kuis" className="text-right font-bold">
@@ -1906,7 +2415,9 @@ export default function DosenPenilaianPage() {
               </Button>
               <Button
                 onClick={handleSaveBobot}
-                disabled={!validateBobotNilai(editingBobot).valid || saving || !isOnline}
+                disabled={
+                  !validateBobotNilai(editingBobot).valid || saving || !isOnline
+                }
                 className="bg-linear-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground font-semibold"
               >
                 {saving ? (

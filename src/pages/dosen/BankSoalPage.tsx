@@ -25,13 +25,27 @@ import type {
   BankSoalStats,
   CreateBankSoalData,
 } from "@/types/bank-soal.types";
-import { TIPE_SOAL, TIPE_SOAL_LABELS } from "@/types/kuis.types";
+import { TIPE_SOAL } from "@/types/kuis.types";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/ui/status-badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Plus,
   Search,
@@ -40,6 +54,10 @@ import {
   BookOpen,
   TrendingUp,
   Target,
+  CheckCircle2,
+  MessageSquareText,
+  CircleDashed,
+  Eye,
 } from "lucide-react";
 import { toast } from "sonner";
 import { QuestionEditor } from "@/components/features/kuis/builder/QuestionEditor";
@@ -53,12 +71,45 @@ export default function BankSoalPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedTipeSoal, setSelectedTipeSoal] = useState<string>(
-    TIPE_SOAL.PILIHAN_GANDA,
-  ); // Only pilihan ganda
+  const [discussionFilter, setDiscussionFilter] = useState<
+    "all" | "with" | "without"
+  >("all");
+  const [visibleCount, setVisibleCount] = useState(20);
 
   const [showEditor, setShowEditor] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState<BankSoal | null>(null);
+  const [selectedQuestion, setSelectedQuestion] = useState<BankSoal | null>(
+    null,
+  );
+
+  const getCorrectOption = (question: BankSoal) => {
+    const options = question.opsi_jawaban || [];
+    return (
+      options.find(
+        (option) =>
+          option.is_correct === true ||
+          option.id === question.jawaban_benar ||
+          option.label === question.jawaban_benar,
+      ) || null
+    );
+  };
+
+  const filteredQuestions = questions.filter((question) => {
+    if (discussionFilter === "with") {
+      return Boolean(question.penjelasan?.trim());
+    }
+
+    if (discussionFilter === "without") {
+      return !question.penjelasan?.trim();
+    }
+
+    return true;
+  });
+
+  const visibleQuestions = filteredQuestions.slice(0, visibleCount);
+  const questionsWithoutDiscussion = questions.filter(
+    (question) => !question.penjelasan?.trim(),
+  ).length;
 
   // Fetch dosen ID
   useEffect(() => {
@@ -85,9 +136,10 @@ export default function BankSoalPage() {
   // Load questions
   useEffect(() => {
     if (!dosenId) return;
+    setVisibleCount(20);
     loadQuestions();
     loadStats();
-  }, [dosenId, searchQuery, selectedTipeSoal]);
+  }, [dosenId, searchQuery]);
 
   const loadQuestions = async () => {
     try {
@@ -95,6 +147,7 @@ export default function BankSoalPage() {
 
       const filters: BankSoalFilters = {
         dosen_id: dosenId,
+        include_public: false,
         sortBy: "created_at",
         sortOrder: "desc",
       };
@@ -167,10 +220,12 @@ export default function BankSoalPage() {
         await createBankSoal({
           ...bankSoalData,
           dosen_id: dosenId,
+          is_public: true,
         } as CreateBankSoalData);
         toast.success("Soal berhasil ditambahkan ke bank");
       }
 
+      setSearchQuery("");
       setShowEditor(false);
       setEditingQuestion(null);
       loadQuestions();
@@ -269,18 +324,14 @@ export default function BankSoalPage() {
             <Card className="interactive-card border-0 shadow-lg bg-linear-to-br from-success/5 to-success/10 dark:from-success/10 dark:to-success/20">
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-bold text-success">
-                  Rata-rata Poin
+                  Belum Ada Pembahasan
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center gap-2">
                   <Target className="h-5 w-5 text-success" />
                   <div className="text-3xl sm:text-4xl font-bold text-success/90">
-                    {stats.pilihan_ganda_count > 0
-                      ? Math.round(
-                          stats.total_usage / stats.pilihan_ganda_count,
-                        )
-                      : 0}
+                    {questionsWithoutDiscussion}
                   </div>
                 </div>
               </CardContent>
@@ -296,14 +347,38 @@ export default function BankSoalPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Cari soal pilihan ganda..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9"
-              />
+            <div className="space-y-3">
+              <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_220px]">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Cari soal pilihan ganda..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
+                <Select
+                  value={discussionFilter}
+                  onValueChange={(value) =>
+                    setDiscussionFilter(value as "all" | "with" | "without")
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Filter pembahasan" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Semua Pembahasan</SelectItem>
+                    <SelectItem value="with">Ada Pembahasan</SelectItem>
+                    <SelectItem value="without">Belum Ada Pembahasan</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <p className="text-sm font-medium text-muted-foreground">
+                {searchQuery.trim()
+                  ? `Menampilkan ${filteredQuestions.length} hasil dari total ${stats?.pilihan_ganda_count || 0} soal`
+                  : `Menampilkan ${visibleQuestions.length} dari ${filteredQuestions.length} soal milik Anda`}
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -316,7 +391,7 @@ export default function BankSoalPage() {
                 <p className="text-base font-semibold">Memuat soal...</p>
               </CardContent>
             </Card>
-          ) : questions.length === 0 ? (
+          ) : filteredQuestions.length === 0 ? (
             <Card className="interactive-card border-0 shadow-xl bg-linear-to-br from-white to-primary/5 dark:from-slate-900 dark:to-primary/10 p-8 sm:p-12 overflow-hidden relative">
               <div className="absolute top-0 right-0 h-40 w-40 rounded-full bg-linear-to-br from-primary/20 to-accent/20 blur-3xl -mr-20 -mt-20" />
               <CardContent className="text-center relative">
@@ -338,7 +413,7 @@ export default function BankSoalPage() {
               </CardContent>
             </Card>
           ) : (
-            questions.map((q) => (
+            visibleQuestions.map((q) => (
               <Card
                 key={q.id}
                 className="interactive-card border-0 shadow-xl p-4 sm:p-6"
@@ -346,42 +421,106 @@ export default function BankSoalPage() {
                 <CardContent>
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div className="flex-1">
-                      <div className="mb-2 flex flex-wrap items-center gap-2">
+                      <div className="mb-3 flex flex-wrap items-center gap-2">
                         <Badge variant="outline" className="font-semibold">
                           {q.poin} poin
                         </Badge>
                         <Badge variant="secondary" className="font-semibold">
-                          {
-                            TIPE_SOAL_LABELS[
-                              q.tipe_soal as keyof typeof TIPE_SOAL_LABELS
-                            ]
-                          }
+                          CBT
                         </Badge>
-                        {q.usage_count && q.usage_count > 0 && (
-                          <StatusBadge status="info" pulse={false} dot={false}>
-                            {q.usage_count}x digunakan
-                          </StatusBadge>
+                        <StatusBadge status="info" pulse={false} dot={false}>
+                          Dipakai {q.usage_count || 0}x
+                        </StatusBadge>
+                        {q.penjelasan ? (
+                          <Badge className="bg-emerald-50 text-emerald-700 hover:bg-emerald-50 dark:bg-emerald-950 dark:text-emerald-200">
+                            <MessageSquareText className="mr-1 h-3 w-3" />
+                            Ada Pembahasan
+                          </Badge>
+                        ) : (
+                          <Badge
+                            variant="outline"
+                            className="border-amber-300 text-amber-700 dark:border-amber-800 dark:text-amber-200"
+                          >
+                            <CircleDashed className="mr-1 h-3 w-3" />
+                            Belum Ada Pembahasan
+                          </Badge>
                         )}
                       </div>
-                      <p className="text-sm sm:text-base font-medium">
+                      <p className="text-sm sm:text-base font-semibold">
                         {q.pertanyaan}
                       </p>
-                      {q.tags && q.tags.length > 0 && (
-                        <div className="mt-2 flex flex-wrap gap-1">
-                          {q.tags.map((tag) => (
-                            <Badge
-                              key={tag}
-                              variant="outline"
-                              className="text-sm font-semibold"
-                            >
-                              {tag}
-                            </Badge>
-                          ))}
+
+                      {!!q.opsi_jawaban?.length && (
+                        <div className="mt-4 rounded-lg border border-slate-200/80 bg-slate-50/70 p-3 dark:border-slate-800 dark:bg-slate-900/40">
+                          <div className="mb-2 flex items-center justify-between gap-3">
+                            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                              Preview Opsi
+                            </p>
+                            {getCorrectOption(q) && (
+                              <div className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2.5 py-1 text-xs font-semibold text-green-700 dark:bg-green-950 dark:text-green-200">
+                                <CheckCircle2 className="h-3.5 w-3.5" />
+                                Jawaban benar:{" "}
+                                {getCorrectOption(q)?.label ||
+                                  getCorrectOption(q)?.id}
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="grid gap-2">
+                            {q.opsi_jawaban.slice(0, 2).map((option) => {
+                              const isCorrect =
+                                option.is_correct === true ||
+                                option.id === q.jawaban_benar ||
+                                option.label === q.jawaban_benar;
+
+                              return (
+                                <div
+                                  key={option.id}
+                                  className={`flex items-start gap-2 rounded-md border px-3 py-2 text-sm ${
+                                    isCorrect
+                                      ? "border-green-300 bg-green-50 text-green-900 dark:border-green-800 dark:bg-green-950/40 dark:text-green-100"
+                                      : "border-slate-200 bg-white text-slate-700 dark:border-slate-800 dark:bg-slate-950/40 dark:text-slate-200"
+                                  }`}
+                                >
+                                  <span className="min-w-5 font-semibold">
+                                    {option.label}.
+                                  </span>
+                                  <span className="flex-1">
+                                    {option.text || "(opsi kosong)"}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                            {q.opsi_jawaban.length > 2 && (
+                              <p className="text-xs font-medium text-muted-foreground">
+                                +{q.opsi_jawaban.length - 2} opsi lain
+                              </p>
+                            )}
+                          </div>
                         </div>
                       )}
+
+                      <div className="mt-4 rounded-lg border border-dashed border-blue-200 bg-blue-50/70 p-3 dark:border-blue-900 dark:bg-blue-950/30">
+                        <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-blue-700 dark:text-blue-200">
+                          Pembahasan Untuk Mahasiswa
+                        </p>
+                        <p className="line-clamp-2 text-sm text-slate-700 dark:text-slate-200">
+                          {q.penjelasan?.trim()
+                            ? q.penjelasan
+                            : "Belum ada pembahasan. Tambahkan pembahasan agar mahasiswa mendapat penjelasan setelah menjawab."}
+                        </p>
+                      </div>
                     </div>
 
                     <div className="flex items-center gap-2 self-end sm:self-auto">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setSelectedQuestion(q)}
+                        className="font-semibold"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
                       <Button
                         variant="ghost"
                         size="sm"
@@ -404,8 +543,94 @@ export default function BankSoalPage() {
               </Card>
             ))
           )}
+
+          {visibleCount < filteredQuestions.length && (
+            <div className="flex justify-center pt-2">
+              <Button
+                variant="outline"
+                onClick={() => setVisibleCount((count) => count + 20)}
+                className="font-semibold"
+              >
+                Muat Lagi
+              </Button>
+            </div>
+          )}
         </div>
       </div>
+
+      <Dialog
+        open={!!selectedQuestion}
+        onOpenChange={(open) => !open && setSelectedQuestion(null)}
+      >
+        <DialogContent className="max-w-2xl">
+          {selectedQuestion && (
+            <>
+              <DialogHeader>
+                <DialogTitle>Detail Soal CBT</DialogTitle>
+                <DialogDescription>
+                  {selectedQuestion.poin} poin | Dipakai{" "}
+                  {selectedQuestion.usage_count || 0}x
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="space-y-4">
+                <div>
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Pertanyaan
+                  </p>
+                  <p className="font-semibold">{selectedQuestion.pertanyaan}</p>
+                </div>
+
+                {!!selectedQuestion.opsi_jawaban?.length && (
+                  <div className="space-y-2">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      Opsi Jawaban
+                    </p>
+                    {selectedQuestion.opsi_jawaban.map((option) => {
+                      const isCorrect =
+                        option.is_correct === true ||
+                        option.id === selectedQuestion.jawaban_benar ||
+                        option.label === selectedQuestion.jawaban_benar;
+
+                      return (
+                        <div
+                          key={option.id}
+                          className={`flex items-start gap-2 rounded-md border px-3 py-2 text-sm ${
+                            isCorrect
+                              ? "border-green-300 bg-green-50 text-green-900 dark:border-green-800 dark:bg-green-950/40 dark:text-green-100"
+                              : "border-slate-200 bg-white text-slate-700 dark:border-slate-800 dark:bg-slate-950/40 dark:text-slate-200"
+                          }`}
+                        >
+                          <span className="min-w-5 font-semibold">
+                            {option.label}.
+                          </span>
+                          <span className="flex-1">
+                            {option.text || "(opsi kosong)"}
+                          </span>
+                          {isCorrect && (
+                            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                <div className="rounded-lg border border-dashed border-blue-200 bg-blue-50/70 p-3 dark:border-blue-900 dark:bg-blue-950/30">
+                  <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-blue-700 dark:text-blue-200">
+                    Pembahasan Untuk Mahasiswa
+                  </p>
+                  <p className="whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-200">
+                    {selectedQuestion.penjelasan?.trim()
+                      ? selectedQuestion.penjelasan
+                      : "Belum ada pembahasan."}
+                  </p>
+                </div>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

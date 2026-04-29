@@ -10,7 +10,7 @@
  */
 
 import { supabase } from "@/lib/supabase/client";
-import { cacheAPI, invalidateCachePatternSync } from "@/lib/offline/api-cache";
+import { invalidateCachePatternSync } from "@/lib/offline/api-cache";
 import type {
   BankSoal,
   CreateBankSoalData,
@@ -30,108 +30,96 @@ import type { TipeSoal, Soal, OpsiJawaban } from "@/types/kuis.types";
 export async function getBankSoal(
   filters?: BankSoalFilters,
 ): Promise<BankSoal[]> {
-  // Create cache key from filters
-  const cacheKey = `bank_soal_${JSON.stringify(filters)}`;
-
-  return cacheAPI(
-    cacheKey,
-    async () => {
-      let query = supabase
-        .from("bank_soal")
-        .select(
-          `
+  let query = supabase
+    .from("bank_soal")
+    .select(
+      `
           *,
           mata_kuliah:mata_kuliah_id (
             nama_mk,
             kode_mk
+          ),
+          dosen:dosen_id (
+            user:users (
+              full_name
+            )
           )
         `,
-        )
-        .order(filters?.sortBy || "created_at", {
-          ascending: filters?.sortOrder === "asc",
-        });
+    )
+    .order(filters?.sortBy || "created_at", {
+      ascending: filters?.sortOrder === "asc",
+    });
 
-      // Apply filters
-      if (filters?.dosen_id) {
-        // Global bank access: tampilkan soal milik dosen + soal publik dosen lain
-        query = query.or(`dosen_id.eq.${filters.dosen_id},is_public.eq.true`);
-      }
+  // Apply filters
+  if (filters?.dosen_id) {
+    if (filters.include_public === false) {
+      query = query.eq("dosen_id", filters.dosen_id);
+    } else {
+      // Global bank access: tampilkan soal milik dosen + soal publik dosen lain
+      query = query.or(`dosen_id.eq.${filters.dosen_id},is_public.eq.true`);
+    }
+  }
 
-      if (filters?.mata_kuliah_id) {
-        query = query.eq("mata_kuliah_id", filters.mata_kuliah_id);
-      }
+  if (filters?.mata_kuliah_id) {
+    query = query.eq("mata_kuliah_id", filters.mata_kuliah_id);
+  }
 
-      if (filters?.tipe_soal) {
-        query = query.eq("tipe_soal", filters.tipe_soal);
-      }
+  if (filters?.tipe_soal) {
+    query = query.eq("tipe_soal", filters.tipe_soal);
+  }
 
-      if (filters?.tags && filters.tags.length > 0) {
-        query = query.contains("tags", filters.tags);
-      }
+  if (filters?.tags && filters.tags.length > 0) {
+    query = query.contains("tags", filters.tags);
+  }
 
-      if (filters?.search) {
-        query = query.ilike("pertanyaan", `%${filters.search}%`);
-      }
+  if (filters?.search) {
+    query = query.ilike("pertanyaan", `%${filters.search}%`);
+  }
 
-      if (filters?.is_public !== undefined) {
-        query = query.eq("is_public", filters.is_public);
-      }
+  if (filters?.is_public !== undefined) {
+    query = query.eq("is_public", filters.is_public);
+  }
 
-      const { data, error } = await query;
+  const { data, error } = await query;
 
-      if (error) throw error;
-      return (data || []).map((item) => ({
-        ...item,
-        tipe_soal: item.tipe_soal as TipeSoal,
-        opsi_jawaban: item.opsi_jawaban as unknown as OpsiJawaban[] | null,
-        is_public: item.is_public || false,
-        usage_count: item.usage_count || 0,
-      }));
-    },
-    {
-      ttl: 5 * 60 * 1000, // 5 minutes cache
-      staleWhileRevalidate: true,
-    },
-  );
+  if (error) throw error;
+  return (data || []).map((item) => ({
+    ...item,
+    tipe_soal: item.tipe_soal as TipeSoal,
+    opsi_jawaban: item.opsi_jawaban as unknown as OpsiJawaban[] | null,
+    is_public: item.is_public || false,
+    usage_count: item.usage_count || 0,
+  }));
 }
 
 /**
  * Get single question from bank by ID
  */
 export async function getBankSoalById(id: string): Promise<BankSoal> {
-  return cacheAPI(
-    `bank_soal_${id}`,
-    async () => {
-      const { data, error } = await supabase
-        .from("bank_soal")
-        .select(
-          `
+  const { data, error } = await supabase
+    .from("bank_soal")
+    .select(
+      `
           *,
           mata_kuliah:mata_kuliah_id (
             nama_mk,
             kode_mk
           )
         `,
-        )
-        .eq("id", id)
-        .single();
+    )
+    .eq("id", id)
+    .single();
 
-      if (error) throw error;
-      if (!data) throw new Error("Question not found");
+  if (error) throw error;
+  if (!data) throw new Error("Question not found");
 
-      return {
-        ...data,
-        tipe_soal: data.tipe_soal as TipeSoal,
-        opsi_jawaban: data.opsi_jawaban as unknown as OpsiJawaban[] | null,
-        is_public: data.is_public || false,
-        usage_count: data.usage_count || 0,
-      };
-    },
-    {
-      ttl: 10 * 60 * 1000, // 10 minutes
-      staleWhileRevalidate: true,
-    },
-  );
+  return {
+    ...data,
+    tipe_soal: data.tipe_soal as TipeSoal,
+    opsi_jawaban: data.opsi_jawaban as unknown as OpsiJawaban[] | null,
+    is_public: data.is_public || false,
+    usage_count: data.usage_count || 0,
+  };
 }
 
 /**
@@ -193,6 +181,15 @@ export async function getBankSoalStats(
 export async function createBankSoal(
   data: CreateBankSoalData,
 ): Promise<BankSoal> {
+  if (!data.dosen_id) {
+    throw new Error(
+      "Gagal menyimpan ke Bank Soal: profil dosen tidak ditemukan.",
+    );
+  }
+  if (data.tipe_soal === "pilihan_ganda" && !data.penjelasan?.trim()) {
+    throw new Error("Keterangan jawaban wajib diisi untuk soal CBT");
+  }
+
   const { data: newQuestion, error } = await supabase
     .from("bank_soal")
     .insert([data as any])
@@ -303,6 +300,12 @@ export async function saveSoalToBank(
   dosenId: string,
   tags?: string[],
 ): Promise<{ bankSoal: BankSoal; duplicates: BankSoal[] }> {
+  if (!dosenId) {
+    throw new Error(
+      "Gagal menyimpan ke Bank Soal: dosen_id tidak tersedia.",
+    );
+  }
+
   // Handle both: objects from database (with 'tipe') and objects with 'tipe_soal'
   const tipeSoal = (soal as any).tipe || soal.tipe_soal;
   const opsiJawaban = (soal as any).pilihan_jawaban || soal.opsi_jawaban;
@@ -334,7 +337,11 @@ export async function saveSoalToBank(
       d.tipe_soal === tipeSoal,
   );
 
-  if (exactDuplicate) {
+  // Hanya reuse jika duplicate itu memang milik dosen yang sama.
+  // Jika duplicate milik dosen lain, walaupun public, tetap buat row baru
+  // agar dosen yang sedang membuat soal punya salinan sendiri dan
+  // pertanyaan terbaru muncul jelas di daftar bank soal miliknya.
+  if (exactDuplicate && exactDuplicate.dosen_id === dosenId) {
     return { bankSoal: exactDuplicate, duplicates };
   }
 
@@ -357,6 +364,14 @@ export async function updateBankSoal(
   id: string,
   data: Partial<UpdateBankSoalData>,
 ): Promise<BankSoal> {
+  if (
+    data.tipe_soal === "pilihan_ganda" &&
+    data.penjelasan !== undefined &&
+    !data.penjelasan?.trim()
+  ) {
+    throw new Error("Keterangan jawaban wajib diisi untuk soal CBT");
+  }
+
   const { data: updated, error } = await supabase
     .from("bank_soal")
     .update(data as any)
@@ -439,6 +454,17 @@ export async function addQuestionsFromBank(
   if (fetchError) throw fetchError;
   if (!bankQuestions || bankQuestions.length === 0) {
     throw new Error("No questions found in bank");
+  }
+
+  const questionsWithoutExplanation = bankQuestions.filter(
+    (question) =>
+      question.tipe_soal === "pilihan_ganda" && !question.penjelasan?.trim(),
+  );
+
+  if (questionsWithoutExplanation.length > 0) {
+    throw new Error(
+      "Ada soal CBT di Bank Soal yang belum memiliki keterangan jawaban. Lengkapi dulu sebelum digunakan.",
+    );
   }
 
   // Convert bank questions to quiz questions

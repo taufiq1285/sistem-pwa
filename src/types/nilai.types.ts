@@ -2,11 +2,15 @@
  * Nilai (Grades) Types
  */
 
+import type { BobotNilai } from "./kelas.types";
+
 // Local fallback NilaiTable definition because 'nilai' table is missing in generated Database types.
 interface NilaiTable {
   id: string;
   mahasiswa_id: string;
   kelas_id: string;
+  mata_kuliah_id?: string | null;
+  dosen_id?: string | null;
   nilai_kuis: number;
   nilai_tugas: number;
   nilai_uts: number;
@@ -42,6 +46,14 @@ export interface Nilai extends NilaiTable {
       is_active?: boolean | null;
     };
   };
+  dosen?: {
+    id: string;
+    nip?: string | null;
+    user?: {
+      full_name: string;
+      email?: string | null;
+    };
+  } | null;
 }
 
 export interface NilaiComponents {
@@ -56,12 +68,18 @@ export interface NilaiComponents {
 export interface UpdateNilaiData extends Partial<NilaiComponents> {
   mahasiswa_id: string;
   kelas_id: string;
+  mata_kuliah_id?: string | null;
+  dosen_id?: string | null;
+  bobot_nilai?: BobotNilai | null;
   keterangan?: string;
 }
 
 export interface CreateNilaiData {
   mahasiswa_id: string;
   kelas_id: string;
+  mata_kuliah_id?: string | null;
+  dosen_id?: string | null;
+  bobot_nilai?: BobotNilai | null;
   nilai_kuis?: number;
   nilai_tugas?: number;
   nilai_uts?: number;

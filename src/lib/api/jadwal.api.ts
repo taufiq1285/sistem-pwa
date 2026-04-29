@@ -108,6 +108,14 @@ export async function getJadwal(filters?: JadwalFilters): Promise<Jadwal[]> {
       });
     }
 
+    if (filters?.mata_kuliah_id) {
+      filterConditions.push({
+        column: "mata_kuliah_id",
+        operator: "eq" as const,
+        value: filters.mata_kuliah_id,
+      });
+    }
+
     if (filters?.laboratorium_id) {
       filterConditions.push({
         column: "laboratorium_id",
@@ -258,6 +266,7 @@ export async function getCalendarEvents(
   endDate: Date,
   additionalFilters?: {
     kelas_id?: string;
+    mata_kuliah_id?: string;
     laboratorium_id?: string;
     hari?: string;
   },
@@ -335,6 +344,14 @@ export async function getCalendarEvents(
         column: "kelas_id",
         operator: "eq" as const,
         value: additionalFilters.kelas_id,
+      });
+    }
+
+    if (additionalFilters?.mata_kuliah_id) {
+      filterConditions.push({
+        column: "mata_kuliah_id",
+        operator: "eq" as const,
+        value: additionalFilters.mata_kuliah_id,
       });
     }
 

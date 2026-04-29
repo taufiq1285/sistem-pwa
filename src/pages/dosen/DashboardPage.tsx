@@ -42,7 +42,7 @@ import {
 } from "lucide-react";
 import {
   getDosenStats,
-  getMyKelas,
+  getDashboardKelas,
   getUpcomingPracticum,
   getPendingGrading,
   getActiveKuis,
@@ -124,8 +124,9 @@ export function DashboardPage() {
 
   useEffect(() => {
     if (user?.id && currentDosenId) {
-      fetchAssignments();
-      fetchDashboardData();
+      const shouldForceInitialRefresh = networkDetector.isOnline();
+      fetchAssignments(shouldForceInitialRefresh);
+      fetchDashboardData(shouldForceInitialRefresh);
 
       // Set up real-time subscription untuk dashboard data
       const setupRealtimeSubscriptions = () => {
@@ -166,9 +167,8 @@ export function DashboardPage() {
               console.log("Kuis changed, refreshing dashboard...", payload);
               setHasDataChanges(true);
               setIsRefreshing(true);
-              // Force refresh on DELETE to ensure cache is cleared
-              const shouldForceRefresh = payload.eventType === "DELETE";
-              fetchDashboardData(shouldForceRefresh).finally(() => {
+              // Kuis affects the "Tugas Praktikum" count, so always bypass cache.
+              fetchDashboardData(true).finally(() => {
                 setIsRefreshing(false);
                 setLastRefresh(new Date());
               });
@@ -254,13 +254,13 @@ export function DashboardPage() {
             {
               event: "*",
               schema: "public",
-              table: "kuis_attempt",
+              table: "attempt_kuis",
             },
             () => {
               console.log("Kuis attempt changed, refreshing dashboard...");
               setHasDataChanges(true);
               setIsRefreshing(true);
-              fetchDashboardData().finally(() => {
+              fetchDashboardData(true).finally(() => {
                 setIsRefreshing(false);
                 setLastRefresh(new Date());
               });
@@ -293,6 +293,17 @@ export function DashboardPage() {
       } else {
         console.log("ℹ️ Offline mode - skipping real-time subscriptions");
       }
+
+      const handleKuisChanged = () => {
+        setHasDataChanges(true);
+        setIsRefreshing(true);
+        fetchDashboardData(true).finally(() => {
+          setIsRefreshing(false);
+          setLastRefresh(new Date());
+        });
+      };
+
+      window.addEventListener("kuis:changed", handleKuisChanged);
 
       // Check for data changes setiap 10 detik (only when online)
       const changeCheckInterval = setInterval(async () => {
@@ -347,6 +358,7 @@ export function DashboardPage() {
       // Cleanup on unmount
       return () => {
         cleanup?.();
+        window.removeEventListener("kuis:changed", handleKuisChanged);
         clearInterval(intervalId);
         clearInterval(changeCheckInterval);
       };
@@ -377,23 +389,62 @@ export function DashboardPage() {
       const assignmentsData = await cacheAPI(
         `dosen_assignments_${currentDosenId}`,
         async () => {
-          // Get assignments for this dosen (similar logic to admin page)
-          const { data: rawData, error } = await (supabase as any)
-            .from("jadwal_praktikum")
-            .select(
-              `
-              dosen_id,
-              mata_kuliah_id,
-              kelas_id,
-              mata_kuliah:mata_kuliah!inner(id, nama_mk, kode_mk),
-              kelas:kelas!inner(id, nama_kelas, kode_kelas, tahun_ajaran, semester_ajaran)
-            `,
-            )
-            .eq("dosen_id", currentDosenId)
-            .eq("is_active", true);
+          // Assignment dashboard must include both scheduled practicum and
+          // standalone tugas/kuis. Otherwise a class with only active tasks
+          // appears as "0 assignment".
+          const [jadwalResult, kuisResult] = await Promise.all([
+            (supabase as any)
+              .from("jadwal_praktikum")
+              .select(
+                `
+                dosen_id,
+                mata_kuliah_id,
+                kelas_id,
+                mata_kuliah:mata_kuliah_id(id, nama_mk, kode_mk),
+                kelas:kelas_id(
+                  id,
+                  nama_kelas,
+                  kode_kelas,
+                  tahun_ajaran,
+                  semester_ajaran,
+                  mata_kuliah:mata_kuliah_id(id, nama_mk, kode_mk)
+                )
+              `,
+              )
+              .eq("dosen_id", currentDosenId)
+              .eq("is_active", true),
+            (supabase as any)
+              .from("kuis")
+              .select(
+                `
+                dosen_id,
+                mata_kuliah_id,
+                kelas_id,
+                status,
+                mata_kuliah:mata_kuliah_id(id, nama_mk, kode_mk),
+                kelas:kelas_id(
+                  id,
+                  nama_kelas,
+                  kode_kelas,
+                  tahun_ajaran,
+                  semester_ajaran,
+                  mata_kuliah:mata_kuliah_id(id, nama_mk, kode_mk)
+                )
+              `,
+              )
+              .eq("dosen_id", currentDosenId)
+              .in("status", ["draft", "published"]),
+          ]);
 
-          if (error) throw error;
-          if (!rawData || rawData.length === 0) {
+          if (jadwalResult.error) throw jadwalResult.error;
+          if (kuisResult.error) throw kuisResult.error;
+
+          const rawData = [
+            ...(jadwalResult.data || []),
+            ...(kuisResult.data || []),
+          ].filter((item: any) => item?.kelas_id);
+
+          if (rawData.length === 0) {
             return [];
           }
 
@@ -401,18 +452,25 @@ export function DashboardPage() {
           const assignmentMap = new Map<string, any>();
 
           rawData.forEach((item: any) => {
-            const key = `${item.dosen_id}-${item.mata_kuliah_id}-${item.kelas_id}`;
+            const mataKuliah =
+              item.mata_kuliah || item.kelas?.mata_kuliah || {
+                id: item.mata_kuliah_id || "",
+                nama_mk: "Mata Kuliah",
+                kode_mk: "-",
+              };
+            const mataKuliahId = item.mata_kuliah_id || mataKuliah.id || "";
+            const key = `${item.dosen_id}-${mataKuliahId}-${item.kelas_id}`;
 
             if (!assignmentMap.has(key)) {
               assignmentMap.set(key, {
                 dosen_id: item.dosen_id,
-                mata_kuliah_id: item.mata_kuliah_id,
+                mata_kuliah_id: mataKuliahId,
                 kelas_id: item.kelas_id,
                 total_jadwal: 0,
                 total_mahasiswa: 0,
                 tanggal_mulai: "",
                 tanggal_selesai: "",
-                mata_kuliah: item.mata_kuliah,
+                mata_kuliah: mataKuliah,
                 kelas: item.kelas,
                 jadwalDetail: [],
               });
@@ -447,8 +505,8 @@ export function DashboardPage() {
 
             // Get mahasiswa count for this kelas
             const mahasiswaResult: any = await (supabase as any)
-              .from("mahasiswa")
-              .select("*", { count: "exact", head: true })
+              .from("kelas_mahasiswa")
+              .select("mahasiswa_id", { count: "exact", head: true })
               .eq("kelas_id", assignment.kelas_id)
               .eq("is_active", true);
 
@@ -592,46 +650,52 @@ export function DashboardPage() {
 
       console.log("📞 Calling dashboard APIs with caching...");
       // Use cacheAPI with stale-while-revalidate for offline support
-      const [statsData, kelasData, practicumData, gradingData, logbookData, kuisData] =
-        await Promise.all([
-          cacheAPI(statsCacheKey, () => getDosenStats(forceRefresh), {
-            ttl: 10 * 60 * 1000, // 10 minutes
-            forceRefresh,
-            staleWhileRevalidate: true,
-          }),
-          cacheAPI(kelasCacheKey, () => getMyKelas(5), {
-            ttl: 10 * 60 * 1000,
-            forceRefresh,
-            staleWhileRevalidate: true,
-          }),
-          cacheAPI(practicumCacheKey, () => getUpcomingPracticum(5), {
-            ttl: 5 * 60 * 1000, // 5 minutes (schedule changes frequently)
-            forceRefresh,
-            staleWhileRevalidate: true,
-          }),
-          cacheAPI(gradingCacheKey, () => getPendingGrading(5), {
+      const [
+        statsData,
+        kelasData,
+        practicumData,
+        gradingData,
+        logbookData,
+        kuisData,
+      ] = await Promise.all([
+        cacheAPI(statsCacheKey, () => getDosenStats(forceRefresh), {
+          ttl: 10 * 60 * 1000, // 10 minutes
+          forceRefresh,
+          staleWhileRevalidate: true,
+        }),
+        cacheAPI(kelasCacheKey, () => getDashboardKelas(5), {
+          ttl: 10 * 60 * 1000,
+          forceRefresh,
+          staleWhileRevalidate: true,
+        }),
+        cacheAPI(practicumCacheKey, () => getUpcomingPracticum(5), {
+          ttl: 5 * 60 * 1000, // 5 minutes (schedule changes frequently)
+          forceRefresh,
+          staleWhileRevalidate: true,
+        }),
+        cacheAPI(gradingCacheKey, () => getPendingGrading(5), {
+          ttl: 5 * 60 * 1000,
+          forceRefresh,
+          staleWhileRevalidate: true,
+        }),
+        cacheAPI(
+          logbookCacheKey,
+          () =>
+            getLogbookStats({
+              dosen_id: currentDosenId || undefined,
+            }),
+          {
             ttl: 5 * 60 * 1000,
             forceRefresh,
             staleWhileRevalidate: true,
-          }),
-          cacheAPI(
-            logbookCacheKey,
-            () =>
-              getLogbookStats({
-                dosen_id: currentDosenId || undefined,
-              }),
-            {
-              ttl: 5 * 60 * 1000,
-              forceRefresh,
-              staleWhileRevalidate: true,
-            },
-          ),
-          cacheAPI(kuisCacheKey, () => getActiveKuis(20), {
-            ttl: 5 * 60 * 1000,
-            forceRefresh,
-            staleWhileRevalidate: true,
-          }),
-        ]);
+          },
+        ),
+        cacheAPI(kuisCacheKey, () => getActiveKuis(20), {
+          ttl: 5 * 60 * 1000,
+          forceRefresh,
+          staleWhileRevalidate: true,
+        }),
+      ]);
 
       setStats(statsData);
       setMyKelas(kelasData || []);
@@ -743,10 +807,14 @@ export function DashboardPage() {
     sunday: "Minggu",
   };
 
-  const totalAssignedStudents = assignments.reduce(
-    (sum, assignment) => sum + assignment.total_mahasiswa,
-    0,
-  );
+  const totalAssignedStudents = Array.from(
+    new Map(
+      assignments.map((assignment) => [
+        assignment.kelas_id,
+        assignment.total_mahasiswa,
+      ]),
+    ).values(),
+  ).reduce((sum, totalMahasiswa) => sum + totalMahasiswa, 0);
   const totalStudentsInActiveClasses = myKelas.reduce(
     (sum, kelas) => sum + kelas.totalMahasiswa,
     0,
@@ -754,7 +822,9 @@ export function DashboardPage() {
   const upcomingPrimary = upcomingPracticum[0] || null;
   const upcomingSecondary = upcomingPracticum.slice(1, 4);
   const kelasPreview = myKelas.slice(0, 4);
-  const draftKuisCount = activeKuis.filter((kuis) => kuis.status === "draft").length;
+  const draftKuisCount = activeKuis.filter(
+    (kuis) => kuis.status === "draft",
+  ).length;
   const publishedKuisCount = activeKuis.filter(
     (kuis) => kuis.status === "published",
   ).length;
@@ -801,7 +871,7 @@ export function DashboardPage() {
                         {upcomingPrimary
                           ? `Praktikum terdekat Anda adalah ${upcomingPrimary.mata_kuliah_nama} untuk ${upcomingPrimary.kelas_nama}.`
                           : myKelas.length > 0
-                            ? "Belum ada praktikum terdekat yang terjadwal, tetapi kelas aktif Anda sudah siap dikelola."
+                            ? "Belum ada praktikum atau tugas aktif terdekat. Aktivitas yang sudah selesai akan berpindah ke riwayat."
                             : "Dashboard ini merangkum jadwal, kelas aktif, dan tindak lanjut penting secara singkat."}
                       </p>
                       <div className="flex flex-wrap gap-2">
@@ -815,7 +885,8 @@ export function DashboardPage() {
                           variant="secondary"
                           className="rounded-full px-3 py-1 text-xs font-semibold"
                         >
-                          {totalStudentsInActiveClasses} mahasiswa dalam kelas aktif
+                          {totalStudentsInActiveClasses} mahasiswa dalam kelas
+                          aktif
                         </Badge>
                         {hasDataChanges && (
                           <Badge className="rounded-full bg-warning/15 px-3 py-1 text-xs font-semibold text-warning hover:bg-warning/15">
@@ -905,7 +976,7 @@ export function DashboardPage() {
                       {myKelas.length}
                     </p>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      kelas yang sedang Anda tangani
+                      kelas yang masih memiliki aktivitas aktif
                     </p>
                   </div>
                 </CardContent>
@@ -953,7 +1024,9 @@ export function DashboardPage() {
                 <CardHeader className="space-y-1">
                   <div className="flex items-center justify-between gap-4">
                     <div>
-                      <CardTitle className="text-xl">Praktikum Berikutnya</CardTitle>
+                      <CardTitle className="text-xl">
+                        Praktikum Berikutnya
+                      </CardTitle>
                       <CardDescription>
                         Fokus utama saat Anda membuka dashboard
                       </CardDescription>
@@ -961,7 +1034,7 @@ export function DashboardPage() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => navigate('/dosen/jadwal')}
+                      onClick={() => navigate("/dosen/jadwal")}
                     >
                       Semua jadwal
                     </Button>
@@ -1004,7 +1077,7 @@ export function DashboardPage() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => navigate('/dosen/jadwal')}
+                            onClick={() => navigate("/dosen/jadwal")}
                           >
                             Buka jadwal
                           </Button>
@@ -1025,7 +1098,7 @@ export function DashboardPage() {
                               Jam
                             </p>
                             <p className="mt-1 text-sm font-semibold text-foreground">
-                              {formatTime(upcomingPrimary.jam_mulai)} -{' '}
+                              {formatTime(upcomingPrimary.jam_mulai)} -{" "}
                               {formatTime(upcomingPrimary.jam_selesai)}
                             </p>
                           </div>
@@ -1049,7 +1122,7 @@ export function DashboardPage() {
                             <button
                               key={jadwal.id}
                               type="button"
-                              onClick={() => navigate('/dosen/jadwal')}
+                              onClick={() => navigate("/dosen/jadwal")}
                               className="flex w-full items-center justify-between rounded-2xl border border-border bg-background px-4 py-3 text-left transition-colors hover:bg-muted/40"
                             >
                               <div>
@@ -1088,7 +1161,7 @@ export function DashboardPage() {
                 <CardContent className="space-y-3">
                   <button
                     type="button"
-                    onClick={() => navigate('/dosen/logbook-review')}
+                    onClick={() => navigate("/dosen/logbook-review")}
                     className="flex w-full items-start gap-3 rounded-2xl border border-border bg-background p-4 text-left transition-colors hover:bg-muted/40"
                   >
                     <div className="rounded-2xl bg-warning/15 p-2.5 text-warning">
@@ -1104,7 +1177,7 @@ export function DashboardPage() {
                       <p className="mt-1 text-sm text-muted-foreground">
                         {pendingLogbookCount > 0
                           ? `${logbookStats?.submitted || 0} diajukan, ${logbookStats?.reviewed || 0} siap diberi nilai.`
-                          : 'Belum ada logbook yang menunggu review.'}
+                          : "Belum ada logbook yang menunggu review."}
                       </p>
                     </div>
                     <ArrowRight className="mt-1 h-4 w-4 text-muted-foreground" />
@@ -1112,7 +1185,7 @@ export function DashboardPage() {
 
                   <button
                     type="button"
-                    onClick={() => navigate('/dosen/kuis')}
+                    onClick={() => navigate("/dosen/kuis")}
                     className="flex w-full items-start gap-3 rounded-2xl border border-border bg-background p-4 text-left transition-colors hover:bg-muted/40"
                   >
                     <div className="rounded-2xl bg-primary/10 p-2.5 text-primary">
@@ -1128,7 +1201,7 @@ export function DashboardPage() {
                       <p className="mt-1 text-sm text-muted-foreground">
                         {activeKuis.length > 0
                           ? `${draftKuisCount} draft, ${publishedKuisCount} dipublikasikan. ${activeKuis[0].judul} termasuk di dalamnya.`
-                          : 'Belum ada tugas praktikum pada kelas yang Anda tangani.'}
+                          : "Belum ada tugas praktikum pada kelas yang Anda tangani."}
                       </p>
                     </div>
                     <ArrowRight className="mt-1 h-4 w-4 text-muted-foreground" />
@@ -1146,7 +1219,7 @@ export function DashboardPage() {
                         </span>
                       </div>
                       <div className="flex items-center justify-between">
-                        <span>Mahasiswa terjangkau</span>
+                        <span>Mahasiswa di kelas aktif</span>
                         <span className="font-semibold text-foreground">
                           {totalAssignedStudents}
                         </span>
@@ -1155,8 +1228,8 @@ export function DashboardPage() {
                         <span>Status dashboard</span>
                         <span className="font-semibold text-foreground">
                           {isOfflineData || !navigator.onLine
-                            ? 'Snapshot lokal'
-                            : 'Online'}
+                            ? "Snapshot lokal"
+                            : "Online"}
                         </span>
                       </div>
                     </div>
@@ -1178,7 +1251,7 @@ export function DashboardPage() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => navigate('/dosen/penilaian')}
+                      onClick={() => navigate("/dosen/penilaian")}
                     >
                       Buka penilaian
                     </Button>
@@ -1193,7 +1266,8 @@ export function DashboardPage() {
                       Belum ada kelas aktif
                     </p>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      Kelas akan muncul setelah ada jadwal praktikum aktif untuk dosen ini.
+                      Kelas akan muncul setelah ada jadwal atau tugas praktikum
+                      yang masih aktif untuk dosen ini.
                     </p>
                   </div>
                 ) : (
@@ -1208,7 +1282,7 @@ export function DashboardPage() {
                         <div className="flex items-start justify-between gap-3">
                           <div>
                             <p className="font-semibold text-foreground">
-                              {kelas.mata_kuliah_nama || 'Praktikum'}
+                              {kelas.mata_kuliah_nama || "Praktikum"}
                             </p>
                             <p className="mt-1 text-sm text-muted-foreground">
                               {kelas.nama_kelas}
@@ -1218,13 +1292,17 @@ export function DashboardPage() {
                         </div>
                         <div className="mt-4 space-y-2 text-sm">
                           <div className="flex items-center justify-between">
-                            <span className="text-muted-foreground">Mahasiswa</span>
+                            <span className="text-muted-foreground">
+                              Mahasiswa
+                            </span>
                             <span className="font-semibold text-foreground">
                               {kelas.totalMahasiswa}
                             </span>
                           </div>
                           <div className="flex items-center justify-between">
-                            <span className="text-muted-foreground">Tahun ajaran</span>
+                            <span className="text-muted-foreground">
+                              Tahun ajaran
+                            </span>
                             <span className="font-semibold text-foreground">
                               {kelas.tahun_ajaran}
                             </span>
@@ -1236,7 +1314,8 @@ export function DashboardPage() {
                 )}
                 {myKelas.length > kelasPreview.length && (
                   <p className="mt-4 text-sm text-muted-foreground">
-                    {myKelas.length - kelasPreview.length} kelas lainnya tersedia di halaman penilaian.
+                    {myKelas.length - kelasPreview.length} kelas lainnya
+                    tersedia di halaman penilaian.
                   </p>
                 )}
               </CardContent>

@@ -78,20 +78,44 @@ vi.mock("@/lib/api/nilai.api", () => ({
 }));
 vi.mock("@/lib/api/permintaan-perbaikan.api", () => ({
   getPermintaanByKelas: vi.fn().mockResolvedValue([]),
+  getPermintaanPendingForDosen: vi.fn().mockResolvedValue([]),
+  getPermintaanStatsForDosen: vi.fn().mockResolvedValue({
+    total_pending: 0,
+    total_reviewed: 0,
+    approval_rate: 0,
+    by_komponen: {
+      kuis: 0,
+      tugas: 0,
+      uts: 0,
+      uas: 0,
+      praktikum: 0,
+      kehadiran: 0,
+    },
+  }),
+  approvePermintaan: vi.fn(),
+  rejectPermintaan: vi.fn(),
   updatePermintaan: vi.fn(),
   createPermintaan: vi.fn(),
 }));
 vi.mock("@/lib/utils/quiz-scoring", () => ({
   calculateQuizScore: vi.fn(() => ({
-    score: 80,
-    correct: 8,
-    total: 10,
     percentage: 80,
+    total_poin: 80,
+    max_poin: 100,
+    correct_count: 1,
+    incorrect_count: 0,
+    unanswered_count: 0,
+    passed: true,
+    grade: "B",
   })),
   isLaporanMode: vi.fn(() => false),
   getGradeColor: vi.fn(() => "text-green-600"),
   calculateGradeLetter: vi.fn(() => "B"),
-  gradeAnswer: vi.fn(() => ({ isCorrect: true, score: 10 })),
+  gradeAnswer: vi.fn(() => ({
+    is_correct: true,
+    poin_diperoleh: 10,
+    feedback: "Jawaban Anda benar!",
+  })),
   checkAnswerCorrect: vi.fn(() => true),
   getCorrectAnswerLabel: vi.fn(() => "A"),
   getAnswerLabel: vi.fn(() => "A"),
@@ -199,6 +223,52 @@ describe("QuizResult", () => {
         />,
       ),
     ).not.toThrow();
+  });
+
+  it("menormalkan review jawaban auto-grade agar konsisten dengan skor", () => {
+    wrap(
+      <QuizResult
+        quiz={mockKuis as any}
+        questions={[
+          {
+            id: "s1",
+            kuis_id: "k1",
+            pertanyaan: "Pertanyaan 1",
+            tipe_soal: "pilihan_ganda",
+            poin: 100,
+            urutan: 1,
+            jawaban_benar: "A",
+            opsi_jawaban: [{ id: "A", label: "A", text: "Jawaban A" }],
+          },
+        ]}
+        answers={[
+          {
+            id: "j1",
+            attempt_id: "att-1",
+            soal_id: "s1",
+            jawaban: "A",
+            jawaban_mahasiswa: "A",
+            poin_diperoleh: 0,
+            is_correct: false,
+          },
+        ]}
+        attempt={mockAttempt as any}
+      />,
+    );
+
+    expect(screen.getAllByText(/Benar!/i).length).toBeGreaterThan(0);
+    expect(
+      screen.queryByText(
+        (_, node) =>
+          node?.textContent?.replace(/\s+/g, " ").trim() === "0 / 100",
+      ),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByText(
+        (_, node) =>
+          node?.textContent?.replace(/\s+/g, " ").trim() === "10 / 100",
+      ),
+    ).toBeInTheDocument();
   });
 });
 

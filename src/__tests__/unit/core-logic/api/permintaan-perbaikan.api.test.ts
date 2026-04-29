@@ -344,15 +344,31 @@ describe("Permintaan Perbaikan Nilai API - Approval Workflow", () => {
               }),
             }),
           };
-        } else {
-          // Get pending permintaan
+        } else if (callCount === 2) {
+          // Get targeted pending permintaan
           return {
             select: vi.fn().mockReturnValue({
-              in: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
                 eq: vi.fn().mockReturnValue({
                   order: vi.fn().mockResolvedValue({
                     data: mockPermintaan,
                     error: null,
+                  }),
+                }),
+              }),
+            }),
+          };
+        } else {
+          // Get legacy pending permintaan for old rows without target_dosen_id
+          return {
+            select: vi.fn().mockReturnValue({
+              is: vi.fn().mockReturnValue({
+                in: vi.fn().mockReturnValue({
+                  eq: vi.fn().mockReturnValue({
+                    order: vi.fn().mockResolvedValue({
+                      data: [],
+                      error: null,
+                    }),
                   }),
                 }),
               }),
@@ -713,6 +729,8 @@ describe("Permintaan Perbaikan Nilai API - Approval Workflow", () => {
       const result = await approvePermintaan({
         permintaan_id: "permintaan-1",
         nilai_baru: 85,
+        bentuk_perbaikan: "remedial",
+        instruksi_perbaikan: "Ikuti remedial pekan ini.",
         response_dosen: "Disetujui setelah review",
         reviewed_by: "dosen-1",
       });
@@ -744,10 +762,36 @@ describe("Permintaan Perbaikan Nilai API - Approval Workflow", () => {
         approvePermintaan({
           permintaan_id: "permintaan-1",
           nilai_baru: 85,
+          bentuk_perbaikan: "remedial",
+          instruksi_perbaikan: "Ikuti remedial pekan ini.",
           response_dosen: "Disetujui",
           reviewed_by: "dosen-1",
         }),
       ).rejects.toThrow("Failed to update permintaan perbaikan nilai");
+    });
+
+    it("should require bentuk perbaikan when approving", async () => {
+      await expect(
+        approvePermintaan({
+          permintaan_id: "permintaan-1",
+          nilai_baru: null,
+          instruksi_perbaikan: "Ikuti remedial pekan ini.",
+          response_dosen: "Ikuti remedial pekan ini.",
+          reviewed_by: "dosen-1",
+        }),
+      ).rejects.toThrow("Bentuk perbaikan harus dipilih");
+    });
+
+    it("should require instruksi perbaikan when approving", async () => {
+      await expect(
+        approvePermintaan({
+          permintaan_id: "permintaan-1",
+          nilai_baru: null,
+          bentuk_perbaikan: "remedial",
+          response_dosen: "",
+          reviewed_by: "dosen-1",
+        }),
+      ).rejects.toThrow("Instruksi perbaikan harus diisi");
     });
 
     it("should notify mahasiswa after approval", async () => {
@@ -871,6 +915,8 @@ describe("Permintaan Perbaikan Nilai API - Approval Workflow", () => {
       await approvePermintaan({
         permintaan_id: "permintaan-1",
         nilai_baru: 85,
+        bentuk_perbaikan: "remedial",
+        instruksi_perbaikan: "Ikuti remedial pekan ini.",
         response_dosen: "Disetujui",
         reviewed_by: "dosen-1",
       });
@@ -879,12 +925,14 @@ describe("Permintaan Perbaikan Nilai API - Approval Workflow", () => {
       expect(createNotificationSpy).toHaveBeenCalledWith({
         user_id: "user-mhs-1",
         title: "Permintaan Perbaikan Nilai Disetujui",
-        message: `Permintaan perbaikan nilai KUIS Anda untuk Biologi Dasar telah disetujui. Nilai baru: 85`,
+        message: `Permintaan perbaikan nilai Anda untuk Biologi Dasar telah disetujui. Bentuk perbaikan: Remedial. Instruksi: Ikuti remedial pekan ini.`,
         type: "perbaikan_nilai_response",
         data: {
           permintaan_id: "permintaan-1",
           status: "approved",
           nilai_baru: 85,
+          bentuk_perbaikan: "remedial",
+          instruksi_perbaikan: "Ikuti remedial pekan ini.",
         },
       });
 
@@ -1368,12 +1416,23 @@ describe("Permintaan Perbaikan Nilai API - Approval Workflow", () => {
               }),
             }),
           };
+        } else if (callCount === 2) {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockResolvedValue({
+                data: mockPermintaanData,
+                error: null,
+              }),
+            }),
+          };
         } else {
           return {
             select: vi.fn().mockReturnValue({
-              in: vi.fn().mockResolvedValue({
-                data: mockPermintaanData,
-                error: null,
+              is: vi.fn().mockReturnValue({
+                in: vi.fn().mockResolvedValue({
+                  data: [],
+                  error: null,
+                }),
               }),
             }),
           };
@@ -1668,6 +1727,8 @@ describe("Permintaan Perbaikan Nilai API - Approval Workflow", () => {
       const result = await approvePermintaan({
         permintaan_id: "permintaan-1",
         nilai_baru: 85,
+        bentuk_perbaikan: "remedial",
+        instruksi_perbaikan: "Ikuti remedial pekan ini.",
         response_dosen: "Disetujui",
         reviewed_by: "dosen-1",
       });
@@ -1810,6 +1871,8 @@ describe("Permintaan Perbaikan Nilai API - Approval Workflow", () => {
       const approved = await approvePermintaan({
         permintaan_id: "permintaan-1",
         nilai_baru: 85,
+        bentuk_perbaikan: "remedial",
+        instruksi_perbaikan: "Ikuti remedial pekan ini.",
         response_dosen: "Disetujui",
         reviewed_by: "dosen-1",
       });

@@ -8,13 +8,64 @@ vi.mock("react-router-dom", () => ({
   Link: ({ to, children }: any) => <a href={to}>{children}</a>,
 }));
 
+vi.mock("@/components/ui/button-enhanced", () => ({
+  ButtonEnhanced: ({ asChild, children, leadingIcon, ...props }: any) =>
+    asChild ? (
+      children
+    ) : (
+      <button {...props}>
+        {leadingIcon}
+        {children}
+      </button>
+    ),
+}));
+
+vi.mock("@/lib/hooks/useAuth", () => ({
+  useAuth: () => ({
+    user: null,
+  }),
+}));
+
+vi.mock("@/lib/hooks/useSync", () => ({
+  useSync: () => ({
+    processQueue: vi.fn().mockResolvedValue(undefined),
+    stats: { pending: 0, failed: 0, completed: 0 },
+    isProcessing: false,
+    isReady: true,
+  }),
+}));
+
+vi.mock("@/lib/hooks/useNetworkStatus", () => ({
+  useNetworkStatus: () => ({
+    isOnline: false,
+    isOffline: true,
+    isUnstable: false,
+    status: "offline",
+    quality: undefined,
+    lastChanged: Date.now(),
+    isReady: true,
+  }),
+}));
+
+vi.mock("@/lib/api/kuis.api", () => ({
+  getOfflineAttemptSyncItemsForMahasiswa: vi.fn().mockResolvedValue([]),
+  syncPendingOfflineQuizSubmissions: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock("sonner", () => ({
+  toast: {
+    success: vi.fn(),
+    error: vi.fn(),
+  },
+}));
+
 describe("Public + Offline Placeholder Pages", () => {
   it("HomePage menampilkan hero utama dan tombol auth", () => {
     render(<HomePage />);
 
     expect(
       screen.getByRole("heading", {
-        name: /sistem informasi praktikum akademi kebidanan mega buana/i,
+        name: /kelola praktikum lebih mudah/i,
       }),
     ).toBeInTheDocument();
     expect(

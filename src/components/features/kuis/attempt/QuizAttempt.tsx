@@ -15,7 +15,6 @@ import {
   Send,
   AlertCircle,
   Loader2,
-  Upload,
   FileText,
 } from "lucide-react";
 
@@ -40,14 +39,8 @@ import {
 
 // Custom Components
 import { QuizTimer } from "./QuizTimer";
-import {
-  clearTimerData,
-  getStoredTimeRemaining,
-} from "./quiz-timer.utils";
-import {
-  QuizNavigation,
-  type QuestionStatus,
-} from "./QuizNavigation";
+import { clearTimerData, getStoredTimeRemaining } from "./quiz-timer.utils";
+import { QuizNavigation, type QuestionStatus } from "./QuizNavigation";
 import {
   createQuestionStatusList,
   areAllQuestionsAnswered,
@@ -68,12 +61,17 @@ import {
   getOfflineAnswers,
   syncOfflineAnswers,
   cacheAttemptOffline,
+  cacheQuizOffline,
+  cacheQuestionsOffline,
   markAttemptSubmittedOffline,
   getLatestCachedAttemptForQuiz,
   syncPendingOfflineQuizSubmission,
 } from "@/lib/api/kuis.api";
 // ✅ SECURITY FIX: Import secure API untuk hide jawaban_benar
-import { getSoalForAttempt } from "@/lib/api/kuis-secure.api";
+import {
+  getKuisForAttempt,
+  getSoalForAttempt,
+} from "@/lib/api/kuis-secure.api";
 import { submitAllAnswersWithVersion } from "@/lib/api/kuis-versioned-simple.api";
 // ✅ FIX: Dynamic import untuk menghindari circular dependency warning
 import { createLaporanUploader } from "@/lib/api/laporan-storage.api";
@@ -151,11 +149,6 @@ export function QuizAttempt({
   const [flaggedQuestions, setFlaggedQuestions] = useState<Set<string>>(
     new Set(),
   );
-  // Track answer mode for FILE_UPLOAD: "upload" | "type"
-  const [fileUploadAnswerMode, setFileUploadAnswerMode] = useState<
-    Record<string, "upload" | "type">
-  >({});
-
   // UI state
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -262,10 +255,9 @@ export function QuizAttempt({
         }
       };
 
-      syncAttempt()
-        .catch((err) => {
-          console.error("Failed to sync offline quiz state:", err);
-        });
+      syncAttempt().catch((err) => {
+        console.error("Failed to sync offline quiz state:", err);
+      });
     }
   }, [isOnline, attempt]);
 
@@ -282,15 +274,28 @@ export function QuizAttempt({
 
     try {
       // Load quiz (offline-first)
-      const quizData = await getKuisByIdOffline(kuisId);
+      const quizData = isOnline
+        ? await getKuisForAttempt(kuisId)
+        : await getKuisByIdOffline(kuisId);
       setQuiz(quizData);
 
       // ✅ SECURITY FIX: Load questions WITHOUT jawaban_benar
       // Use secure API to prevent cheating
       let questionsData: Soal[];
+      const hasFreshSecureQuizPayload =
+        isOnline && Array.isArray(quizData.soal) && quizData.soal.length > 0;
       try {
         // Try secure API first (online)
-        questionsData = await getSoalForAttempt(kuisId);
+        if (hasFreshSecureQuizPayload) {
+          questionsData = quizData.soal as Soal[];
+          await cacheQuizOffline(quizData);
+          await cacheQuestionsOffline(kuisId, questionsData);
+        } else if (isOnline) {
+          questionsData = await getSoalForAttempt(kuisId);
+          await cacheQuestionsOffline(kuisId, questionsData);
+        } else {
+          questionsData = await getSoalByKuisOffline(kuisId);
+        }
         console.log("✅ Loaded soal securely (jawaban_benar hidden)");
       } catch (err) {
         // Fallback: Load from soal table directly and hide jawaban_benar on client
@@ -336,6 +341,9 @@ export function QuizAttempt({
 
             return mapped as Soal;
           });
+          if (isOnline) {
+            await cacheQuestionsOffline(kuisId, questionsData);
+          }
 
           console.log(
             `✅ Loaded ${questionsData.length} soal from soal table (jawaban_benar removed)`,
@@ -413,7 +421,6 @@ export function QuizAttempt({
             "Perangkat sedang offline dan attempt tugas ini belum pernah dimulai di perangkat ini.",
           );
         } else {
-
           // ✅ LAPORAN MODE: Check if already submitted, prevent retake
           // Source of truth stays on quiz.tipe_kuis, with a safe fallback for legacy data.
           const isThisLaporanMode =
@@ -452,7 +459,9 @@ export function QuizAttempt({
               toast.info(
                 "Anda sudah mengirim laporan ini. Mengarahkan ke hasil...",
               );
-              navigate(`/mahasiswa/kuis/${kuisId}/result/${existingAttempt.id}`);
+              navigate(
+                `/mahasiswa/kuis/${kuisId}/result/${existingAttempt.id}`,
+              );
               setIsLoading(false);
               return; // Stop here, already redirected
             }
@@ -472,60 +481,60 @@ export function QuizAttempt({
                 : "Tugas CBT praktikum dimulai!",
             );
           } catch (startError: any) {
-          // ✅ FIX: Handle max attempts reached error
-          const errorMessage = startError?.message || "";
+            // ✅ FIX: Handle max attempts reached error
+            const errorMessage = startError?.message || "";
 
-          if (
-            errorMessage.includes("mencapai batas maksimal") ||
-            errorMessage.includes("max attempts") ||
-            errorMessage.includes("percobaan")
-          ) {
-            // Max attempts reached - try to find existing submitted attempt
-            console.log(
-              "⚠️ Max attempts reached, checking for existing attempts...",
-            );
+            if (
+              errorMessage.includes("mencapai batas maksimal") ||
+              errorMessage.includes("max attempts") ||
+              errorMessage.includes("percobaan")
+            ) {
+              // Max attempts reached - try to find existing submitted attempt
+              console.log(
+                "⚠️ Max attempts reached, checking for existing attempts...",
+              );
 
-            try {
-              // Fetch attempts for this quiz and mahasiswa
-              const { data: attempts } = await supabase
-                .from("attempt_kuis")
-                .select("*")
-                .eq("kuis_id", kuisId)
-                .eq("mahasiswa_id", mahasiswaId)
-                .in("status", ["submitted", "graded"])
-                .order("submitted_at", { ascending: false })
-                .limit(1);
+              try {
+                // Fetch attempts for this quiz and mahasiswa
+                const { data: attempts } = await supabase
+                  .from("attempt_kuis")
+                  .select("*")
+                  .eq("kuis_id", kuisId)
+                  .eq("mahasiswa_id", mahasiswaId)
+                  .in("status", ["submitted", "graded"])
+                  .order("submitted_at", { ascending: false })
+                  .limit(1);
 
-              if (attempts && attempts.length > 0) {
-                const existingAttempt = attempts[0];
-                console.log(
-                  "✅ Found existing attempt, redirecting to results:",
-                  existingAttempt.id,
+                if (attempts && attempts.length > 0) {
+                  const existingAttempt = attempts[0];
+                  console.log(
+                    "✅ Found existing attempt, redirecting to results:",
+                    existingAttempt.id,
+                  );
+                  toast.info(
+                    "Anda sudah menyelesaikan tugas ini. Mengarahkan ke hasil...",
+                  );
+                  navigate(
+                    `/mahasiswa/kuis/${kuisId}/result/${existingAttempt.id}`,
+                  );
+                  return;
+                }
+
+                // No submitted attempt found but can't start new one
+                setError(
+                  "Anda sudah mencapai batas maksimal percobaan, namun tidak ada hasil yang ditemukan.",
                 );
-                toast.info(
-                  "Anda sudah menyelesaikan tugas ini. Mengarahkan ke hasil...",
+                setIsLoading(false);
+                return;
+              } catch (fetchError) {
+                console.error("Error fetching existing attempts:", fetchError);
+                setError(
+                  "Gagal memeriksa status percobaan. Silakan kembali ke daftar tugas.",
                 );
-                navigate(
-                  `/mahasiswa/kuis/${kuisId}/result/${existingAttempt.id}`,
-                );
+                setIsLoading(false);
                 return;
               }
-
-              // No submitted attempt found but can't start new one
-              setError(
-                "Anda sudah mencapai batas maksimal percobaan, namun tidak ada hasil yang ditemukan.",
-              );
-              setIsLoading(false);
-              return;
-            } catch (fetchError) {
-              console.error("Error fetching existing attempts:", fetchError);
-              setError(
-                "Gagal memeriksa status percobaan. Silakan kembali ke daftar tugas.",
-              );
-              setIsLoading(false);
-              return;
             }
-          }
 
             // Other errors - rethrow
             throw startError;
@@ -948,11 +957,33 @@ export function QuizAttempt({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between gap-4">
+      <div className={cn("flex items-start justify-between gap-4", isLaporanMode && "flex-col gap-5")}>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold mb-2">{quiz.judul}</h1>
+          <h1
+            className={cn(
+              "mb-2 font-bold tracking-tight text-foreground",
+              isLaporanMode ? "text-3xl sm:text-4xl" : "text-2xl",
+            )}
+          >
+            {quiz.judul}
+          </h1>
           {quiz.deskripsi && (
-            <p className="text-muted-foreground">{quiz.deskripsi}</p>
+            <p
+              className={cn(
+                "max-w-3xl text-muted-foreground",
+                isLaporanMode && "text-base leading-relaxed text-slate-600",
+              )}
+            >
+              {quiz.deskripsi}
+            </p>
+          )}
+          {!isLaporanMode && (
+            <p className="mt-2 text-sm font-medium text-muted-foreground">
+              Durasi awal CBT:{" "}
+              <span className="text-foreground">
+                {(quiz as any).durasi || (quiz as any).durasi_menit || 60} menit
+              </span>
+            </p>
           )}
         </div>
 
@@ -995,26 +1026,66 @@ export function QuizAttempt({
       />
 
       {/* Main Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div
+        className={cn(
+          "grid grid-cols-1 gap-6",
+          isLaporanMode ? "lg:grid-cols-1" : "lg:grid-cols-3",
+        )}
+      >
         {/* Question Area */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className={cn("space-y-6", !isLaporanMode && "lg:col-span-2", isLaporanMode && "mx-auto w-full max-w-[980px]")}>
           {/* Question Card */}
-          <Card>
-            <CardHeader>
+          <Card
+            className={cn(
+              isLaporanMode &&
+                "overflow-hidden rounded-[28px] border-slate-200/80 bg-white/95 shadow-[0_20px_60px_-28px_rgba(15,23,42,0.25)] backdrop-blur",
+            )}
+          >
+            <CardHeader className={cn(isLaporanMode && "px-6 pb-0 pt-6 sm:px-7 sm:pt-7")}>
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Badge variant="outline">
+                  <div className={cn("mb-2 flex items-center gap-2", isLaporanMode && "mb-3 flex-wrap gap-2.5")}>
+                    <Badge
+                      variant="outline"
+                      className={cn(
+                        isLaporanMode &&
+                          "rounded-full border-slate-300 bg-white px-3 py-1 text-[11px] font-semibold text-slate-700 shadow-sm",
+                      )}
+                    >
                       Soal {currentQuestionIndex + 1}/{totalQuestions}
                     </Badge>
-                    <Badge variant="secondary">
+                    <Badge
+                      variant="secondary"
+                      className={cn(
+                        isLaporanMode &&
+                          "rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-[11px] font-semibold text-amber-800 shadow-sm",
+                      )}
+                    >
                       {currentQuestion?.poin || 0} poin
                     </Badge>
-                    <Badge variant="secondary">
-                      {currentQuestion?.tipe_soal}
+                    <Badge
+                      variant="secondary"
+                      className={cn(
+                        isLaporanMode &&
+                          "rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-[11px] font-semibold text-blue-800 shadow-sm",
+                      )}
+                    >
+                      {currentQuestion?.tipe_soal === "file_upload"
+                        ? "Upload File"
+                        : currentQuestion?.tipe_soal === "pilihan_ganda"
+                          ? "Pilihan Ganda"
+                          : currentQuestion?.tipe_soal === "essay"
+                            ? "Essay"
+                            : currentQuestion?.tipe_soal || ""}
                     </Badge>
                   </div>
-                  <CardTitle className="text-lg">
+                  <CardTitle
+                    className={cn(
+                      "text-lg",
+                      isLaporanMode &&
+                        "text-[1.7rem] font-semibold leading-tight text-slate-950",
+                    )}
+                  >
                     {currentQuestion?.pertanyaan}
                   </CardTitle>
                 </div>
@@ -1024,6 +1095,8 @@ export function QuizAttempt({
                   size="icon"
                   onClick={handleToggleFlag}
                   className={cn(
+                    isLaporanMode &&
+                      "rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900",
                     flaggedQuestions.has(currentQuestion?.id || "") &&
                       "text-yellow-600",
                   )}
@@ -1033,7 +1106,7 @@ export function QuizAttempt({
               </div>
             </CardHeader>
 
-            <CardContent className="space-y-4">
+            <CardContent className={cn("space-y-4", isLaporanMode && "space-y-5 px-6 pb-8 pt-5 sm:px-7 sm:pb-9")}>
               {/* Answer Input based on question type */}
               {currentQuestion?.tipe_soal === TIPE_SOAL.PILIHAN_GANDA && (
                 <RadioGroup
@@ -1079,10 +1152,21 @@ export function QuizAttempt({
                 <div className="space-y-4">
                   {/* Instructions */}
                   {currentQuestion.jawaban_benar && (
-                    <Alert className="bg-blue-50 border-blue-200">
+                    <Alert
+                      className={cn(
+                        "bg-blue-50 border-blue-200",
+                        isLaporanMode &&
+                          "rounded-2xl border-blue-200 bg-[#eaf3ff] px-4 py-4 text-blue-900 shadow-sm",
+                      )}
+                    >
                       <FileText className="h-4 w-4 text-blue-600" />
-                      <AlertDescription className="text-blue-800">
-                        <strong>Instruksi:</strong>{" "}
+                      <AlertDescription
+                        className={cn(
+                          "text-blue-800",
+                          isLaporanMode && "leading-relaxed text-blue-900",
+                        )}
+                      >
+                        <strong className="mr-1">Instruksi:</strong>
                         {(() => {
                           try {
                             const settings = JSON.parse(
@@ -1090,64 +1174,23 @@ export function QuizAttempt({
                             );
                             return (
                               settings.instructions ||
-                              "Upload file laporan praktikum Anda atau ketik hasil laporan langsung."
+                              "Upload file laporan praktikum Anda dalam format yang diminta."
                             );
                           } catch {
-                            return "Upload file laporan praktikum Anda atau ketik hasil laporan langsung.";
+                            return "Upload file laporan praktikum Anda dalam format yang diminta.";
                           }
                         })()}
                       </AlertDescription>
                     </Alert>
                   )}
 
-                  {/* Mode Toggle: Upload File or Type Answer */}
-                  <div className="flex gap-2 p-1 bg-muted rounded-lg">
-                    <Button
-                      type="button"
-                      variant={
-                        fileUploadAnswerMode[currentQuestion.id] !== "type"
-                          ? "default"
-                          : "ghost"
-                      }
-                      size="sm"
-                      className="flex-1"
-                      onClick={() => {
-                        setFileUploadAnswerMode((prev) => ({
-                          ...prev,
-                          [currentQuestion.id]: "upload",
-                        }));
-                      }}
-                    >
-                      <Upload className="h-4 w-4 mr-2" />
-                      Upload File
-                    </Button>
-                    <Button
-                      type="button"
-                      variant={
-                        fileUploadAnswerMode[currentQuestion.id] === "type"
-                          ? "default"
-                          : "ghost"
-                      }
-                      size="sm"
-                      className="flex-1"
-                      onClick={() => {
-                        setFileUploadAnswerMode((prev) => ({
-                          ...prev,
-                          [currentQuestion.id]: "type",
-                        }));
-                        // Clear file upload when switching to type mode
-                        if (currentFileUpload) {
-                          handleFileRemove();
-                        }
-                      }}
-                    >
-                      <FileText className="h-4 w-4 mr-2" />
-                      Ketik Jawaban
-                    </Button>
-                  </div>
-
-                  {/* File Upload Component - Only show in upload mode */}
-                  {fileUploadAnswerMode[currentQuestion.id] !== "type" && (
+                  <div
+                    className={cn(
+                      "rounded-lg border border-dashed border-border bg-muted/20 p-3",
+                      isLaporanMode &&
+                        "rounded-[26px] border-slate-200 bg-[#fcfaf6] p-4 sm:p-5",
+                    )}
+                  >
                     <FileUpload
                       value={currentFileUpload}
                       onUpload={handleFileUpload}
@@ -1193,35 +1236,7 @@ export function QuizAttempt({
                       })()}
                       placeholder="Seret file laporan ke sini atau klik untuk memilih"
                     />
-                  )}
-
-                  {/* Textarea for typing answer - Only show in type mode */}
-                  {fileUploadAnswerMode[currentQuestion.id] === "type" && (
-                    <div className="space-y-2">
-                      <Label htmlFor="typed-answer">
-                        Ketik hasil laporan praktikum Anda di sini:
-                      </Label>
-                      <Textarea
-                        id="typed-answer"
-                        value={currentAnswer}
-                        onChange={(e) => handleAnswerChange(e.target.value)}
-                        placeholder="Tulis hasil laporan praktikum Anda di sini...
-Contoh:
-- Tujuan Praktikum
-- Teori Dasar
-- Metode/Alat
-- Hasil dan Pembahasan
-- Kesimpulan"
-                        rows={12}
-                        className="resize-none"
-                      />
-                      <p className="text-sm text-muted-foreground">
-                        💡 Tip: Anda bisa mengetik laporan lengkap dengan format
-                        yang terstruktur. Gunakan bullet points atau paragraf
-                        sesuai kebutuhan.
-                      </p>
-                    </div>
-                  )}
+                  </div>
                 </div>
               )}
             </CardContent>
@@ -1255,22 +1270,21 @@ Contoh:
 
           {/* Submit Button - Only show for LAPORAN mode (immediate submit) */}
           {isLaporanMode && (
-            <div className="flex items-center justify-between">
-              <div></div>
+            <div className="flex items-center justify-end">
               <Button
                 onClick={handleOpenSubmitDialog}
-                className="gap-2"
+                className="h-12 rounded-full bg-blue-700 px-6 text-sm font-semibold text-white shadow-[0_18px_32px_-18px_rgba(29,78,216,0.75)] transition hover:bg-blue-800"
                 size="lg"
               >
                 <Send className="h-4 w-4" />
-                Submit Laporan
+                Kirim Laporan
               </Button>
             </div>
           )}
         </div>
 
         {/* Sidebar */}
-        <div className="space-y-6">
+        <div className={cn("space-y-6", isLaporanMode && "hidden")}>
           {/* Timer (Full) - Hide for LAPORAN */}
           {!isLaporanMode && (
             <QuizTimer
@@ -1310,16 +1324,25 @@ Contoh:
       <AlertDialog open={showSubmitDialog} onOpenChange={setShowSubmitDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Submit Tugas?</AlertDialogTitle>
+            <AlertDialogTitle>
+              {isLaporanMode ? "Kirim Laporan?" : "Submit Tugas?"}
+            </AlertDialogTitle>
             <AlertDialogDescription>
               {!navigator.onLine ? (
                 <>
                   Perangkat sedang offline.
                   <br />
                   <br />
-                  Jika Anda lanjutkan, tugas akan disimpan sebagai sudah
+                  Jika Anda lanjutkan, {isLaporanMode ? "laporan" : "tugas"} akan disimpan sebagai sudah
                   dikumpulkan di perangkat ini dan otomatis disinkronkan saat
                   koneksi kembali.
+                </>
+              ) : isLaporanMode ? (
+                <>
+                  Pastikan file laporan yang Anda unggah sudah benar.
+                  <br />
+                  <br />
+                  Setelah dikirim, Anda tidak dapat mengubah laporan ini.
                 </>
               ) : areAllQuestionsAnswered(questionStatus) ? (
                 <>
@@ -1352,10 +1375,12 @@ Contoh:
               {isSubmitting ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Submitting...
+                  {isLaporanMode ? "Mengirim..." : "Submitting..."}
                 </>
+              ) : navigator.onLine ? (
+                isLaporanMode ? "Ya, Kirim" : "Ya, Submit"
               ) : (
-                navigator.onLine ? "Ya, Submit" : "Ya, Simpan Offline"
+                "Ya, Simpan Offline"
               )}
             </AlertDialogAction>
           </AlertDialogFooter>

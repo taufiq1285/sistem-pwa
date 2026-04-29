@@ -187,7 +187,8 @@ export default function JadwalPage() {
         jam_selesai: jadwal.jam_selesai,
         topik: jadwal.topik,
         kelas_nama: kelasInfo?.nama_kelas || "-",
-        mata_kuliah_nama: mataKuliahInfo?.nama_mk || kelasInfo?.mata_kuliah_nama || "-",
+        mata_kuliah_nama:
+          mataKuliahInfo?.nama_mk || kelasInfo?.mata_kuliah_nama || "-",
         dosen_nama: dosenInfo?.user?.full_name || "-",
         lab_nama: labInfo?.nama_lab || "-",
         lab_kode: labInfo?.kode_lab || "-",
@@ -336,7 +337,8 @@ export default function JadwalPage() {
                   Jadwal Praktikum
                 </h1>
                 <p className="mt-2 text-sm sm:text-base text-muted-foreground">
-                  Lihat jadwal praktikum untuk semua kelas yang Anda ikuti
+                  Lihat jadwal aktif dan riwayat praktikum dari kelas yang Anda
+                  ikuti
                 </p>
                 {(isOfflineData || lastUpdatedLabel) && (
                   <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
@@ -408,7 +410,8 @@ export default function JadwalPage() {
               <AlertDescription className="text-primary dark:text-primary/80">
                 Jadwal praktikum diatur oleh dosen pengampu kelas Anda. Jika ada
                 pertanyaan terkait jadwal, silakan hubungi dosen yang
-                bersangkutan.
+                bersangkutan. Sesi yang sudah lewat akan otomatis masuk ke
+                tab riwayat.
               </AlertDescription>
             </Alert>
           </CardContent>
@@ -427,9 +430,9 @@ export default function JadwalPage() {
                   Belum Ada Jadwal Praktikum
                 </h3>
                 <p className="mx-auto max-w-md text-muted-foreground">
-                  Anda belum terdaftar di kelas praktikum manapun. Hubungi dosen
-                  pengampu atau koordinator program studi untuk informasi
-                  pendaftaran kelas.
+                  Anda belum memiliki jadwal praktikum aktif. Jika sebelumnya
+                  pernah mengikuti praktikum, sesi yang sudah selesai akan tetap
+                  muncul di tab riwayat saat data tersedia.
                 </p>
                 {/* ❌ REMOVED: Daftar Kelas Button */}
               </div>
@@ -575,7 +578,8 @@ export default function JadwalPage() {
                                     📝 {jadwal.topik}
                                   </p>
                                 )}
-                                {jadwal.dosen_nama && jadwal.dosen_nama !== "-" ? (
+                                {jadwal.dosen_nama &&
+                                jadwal.dosen_nama !== "-" ? (
                                   <p className="text-sm text-muted-foreground mb-2">
                                     Dosen: {jadwal.dosen_nama}
                                   </p>

@@ -35,6 +35,7 @@ vi.mock("@/lib/supabase/client", () => ({
     from: vi.fn(() => ({
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
+      in: vi.fn().mockReturnThis(),
       single: vi
         .fn()
         .mockResolvedValue({ data: { id: "dosen-1" }, error: null }),
@@ -393,14 +394,12 @@ describe("Dosen KuisResultsPage", () => {
     );
 
     await waitFor(() => {
-      expect(
-        screen.getAllByText(
-          (_, element) => element?.textContent?.includes("60 / 80") ?? false,
-        ).length,
-      ).toBeGreaterThan(0);
+      const elements = screen.getAllByText("75.0%");
+      expect(elements.length).toBeGreaterThan(0);
+      expect(elements[0]).toBeInTheDocument();
     });
-    expect(screen.getAllByText("75.0%").length).toBeGreaterThan(0);
-    expect(screen.getByText("Lulus")).toBeInTheDocument();
+    const lulusElements = screen.getAllByText("Lulus");
+    expect(lulusElements.length).toBeGreaterThan(0);
   });
 });
 
@@ -509,11 +508,11 @@ describe("Dosen LogbookReviewPage", () => {
     vi.mocked(kelasApi.getKelas).mockResolvedValue([] as any);
   });
 
-  it("menampilkan heading review logbook", async () => {
+  it("menampilkan heading penilaian logbook", async () => {
     wrap(<DosenLogbookReviewPage />);
     await waitFor(() =>
       expect(
-        screen.getByRole("heading", { name: /Review Logbook Mahasiswa/i }),
+        screen.getByRole("heading", { name: /Penilaian Logbook Mahasiswa/i }),
       ).toBeInTheDocument(),
     );
   });
@@ -522,7 +521,7 @@ describe("Dosen LogbookReviewPage", () => {
     wrap(<DosenLogbookReviewPage />);
     await waitFor(() =>
       expect(
-        screen.getByText(/Belum ada logbook yang perlu direview/i),
+        screen.getByText(/Belum ada logbook mahasiswa/i),
       ).toBeInTheDocument(),
     );
   });

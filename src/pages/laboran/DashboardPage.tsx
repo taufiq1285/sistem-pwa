@@ -505,19 +505,19 @@ export function DashboardPage() {
                       <ClipboardCheck className="h-5 w-5" />
                     </div>
                     <CardTitle className="text-xl font-bold text-foreground">
-                      Persetujuan Peminjaman
+                      Peminjaman Alat
                     </CardTitle>
                   </div>
                   <CardDescription className="text-sm font-medium text-muted-foreground sm:text-base">
-                    {stats?.pendingApprovals || 0} peminjaman yang menunggu
-                    approval
+                    {stats?.pendingApprovals || 0} permintaan menunggu
+                    persetujuan
                   </CardDescription>
                 </div>
                 {pendingApprovals.length > 0 && (
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => navigate("/laboran/persetujuan")}
+                    onClick={() => navigate("/laboran/peminjaman")}
                     className="font-semibold"
                   >
                     Lihat Semua

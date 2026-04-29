@@ -23,7 +23,6 @@ import { supabase } from "@/lib/supabase/client";
 import type { Materi, CreateMateriData } from "@/types/materi.types";
 import {
   uploadMateriFile,
-  deleteFile,
   downloadFileAsBlob,
   STORAGE_BUCKETS,
   type UploadOptions,
@@ -40,6 +39,7 @@ import {
 
 export interface MateriFilters {
   kelas_id?: string;
+  mata_kuliah_id?: string;
   dosen_id?: string;
   minggu_ke?: number;
   is_active?: boolean;
@@ -48,6 +48,7 @@ export interface MateriFilters {
 
 export interface UploadMateriData {
   kelas_id: string;
+  mata_kuliah_id?: string | null;
   dosen_id: string;
   judul: string;
   deskripsi?: string;
@@ -72,6 +73,14 @@ export async function getMateri(filters?: MateriFilters): Promise<Materi[]> {
         column: "kelas_id",
         operator: "eq" as const,
         value: filters.kelas_id,
+      });
+    }
+
+    if (filters?.mata_kuliah_id) {
+      filterConditions.push({
+        column: "mata_kuliah_id",
+        operator: "eq" as const,
+        value: filters.mata_kuliah_id,
       });
     }
 
@@ -110,6 +119,11 @@ export async function getMateri(filters?: MateriFilters): Promise<Materi[]> {
             kode_mk
           )
         ),
+        mata_kuliah:mata_kuliah_id (
+          id,
+          nama_mk,
+          kode_mk
+        ),
         dosen:dosen_id (
           id,
           users:user_id (
@@ -124,9 +138,7 @@ export async function getMateri(filters?: MateriFilters): Promise<Materi[]> {
         ascending: false,
       },
       // ✅ Enable caching for better offline support
-      enableCache: true,
-      cacheTTL: 5 * 60 * 1000, // 5 minutes
-      staleWhileRevalidate: true,
+      enableCache: false,
     };
 
     const data =
@@ -168,6 +180,11 @@ export async function getMateriById(id: string): Promise<Materi> {
             kode_mk
           )
         ),
+        mata_kuliah:mata_kuliah_id (
+          id,
+          nama_mk,
+          kode_mk
+        ),
         dosen:dosen_id (
           id,
           users:user_id (
@@ -192,12 +209,74 @@ export async function getMateriById(id: string): Promise<Materi> {
 /**
  * Get materi by kelas
  */
-export async function getMateriByKelas(kelasId: string): Promise<Materi[]> {
+export async function getMateriByKelas(
+  kelasId: string,
+  mataKuliahId?: string,
+): Promise<Materi[]> {
   try {
-    return await getMateri({ kelas_id: kelasId, is_active: true });
+    return await getMateri({
+      kelas_id: kelasId,
+      ...(mataKuliahId ? { mata_kuliah_id: mataKuliahId } : {}),
+      is_active: true,
+    });
   } catch (error) {
     const apiError = handleError(error);
-    logError(apiError, `getMateriByKelas:${kelasId}`);
+    logError(
+      apiError,
+      `getMateriByKelas:${kelasId}${mataKuliahId ? `:${mataKuliahId}` : ""}`,
+    );
+    throw apiError;
+  }
+}
+
+/**
+ * Get materi by multiple kelas IDs
+ */
+export async function getMateriByKelasIds(
+  kelasIds: string[],
+): Promise<Materi[]> {
+  try {
+    if (!kelasIds.length) {
+      return [];
+    }
+
+    const { data, error } = await supabase
+      .from("materi")
+      .select(
+        `
+        *,
+        kelas:kelas_id (
+          id,
+          nama_kelas,
+          mata_kuliah:mata_kuliah_id (
+            nama_mk,
+            kode_mk
+          )
+        ),
+        mata_kuliah:mata_kuliah_id (
+          id,
+          nama_mk,
+          kode_mk
+        ),
+        dosen:dosen_id (
+          id,
+          users:user_id (
+            full_name
+          ),
+          gelar_depan,
+          gelar_belakang
+        )
+      `,
+      )
+      .in("kelas_id", kelasIds)
+      .eq("is_active", true)
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+    return (data || []) as Materi[];
+  } catch (error) {
+    const apiError = handleError(error);
+    logError(apiError, `getMateriByKelasIds:${kelasIds.join(",")}`);
     throw apiError;
   }
 }
@@ -207,7 +286,43 @@ export async function getMateriByKelas(kelasId: string): Promise<Materi[]> {
  */
 export async function getMateriByDosen(dosenId: string): Promise<Materi[]> {
   try {
-    return await getMateri({ dosen_id: dosenId });
+    if (typeof (supabase as any).from !== "function") {
+      return await getMateri({ dosen_id: dosenId });
+    }
+
+    const { data, error } = await supabase
+      .from("materi")
+      .select(
+        `
+        *,
+        kelas:kelas_id (
+          id,
+          nama_kelas,
+          mata_kuliah:mata_kuliah_id (
+            nama_mk,
+            kode_mk
+          )
+        ),
+        mata_kuliah:mata_kuliah_id (
+          id,
+          nama_mk,
+          kode_mk
+        ),
+        dosen:dosen_id (
+          id,
+          users:user_id (
+            full_name
+          ),
+          gelar_depan,
+          gelar_belakang
+        )
+      `,
+      )
+      .eq("dosen_id", dosenId)
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+    return (data || []) as Materi[];
   } catch (error) {
     const apiError = handleError(error);
     logError(apiError, `getMateriByDosen:${dosenId}`);
@@ -234,6 +349,7 @@ async function createMateriImpl(
     // Create materi record
     const materiData: CreateMateriData = {
       kelas_id: data.kelas_id,
+      mata_kuliah_id: data.mata_kuliah_id || null,
       dosen_id: data.dosen_id,
       judul: data.judul,
       deskripsi: data.deskripsi,
@@ -285,31 +401,11 @@ export const updateMateri = requirePermissionAndOwnership(
 );
 
 /**
- * Delete materi (including file from storage)
+ * Delete materi
+ * Keep materi record via soft delete so riwayat kelas tetap sinkron lintas role.
  */
 async function deleteMateriImpl(id: string): Promise<boolean> {
   try {
-    // Get materi to get file path
-    const materi = await getMateriById(id);
-
-    // Extract file path from URL
-    const urlParts = materi.file_url.split("/");
-    const bucketIndex = urlParts.findIndex((part) =>
-      part.includes(STORAGE_BUCKETS.MATERI),
-    );
-    const filePath = urlParts.slice(bucketIndex + 1).join("/");
-
-    // Delete file from storage
-    if (filePath) {
-      try {
-        await deleteFile(STORAGE_BUCKETS.MATERI, filePath);
-      } catch (err) {
-        console.warn("Failed to delete file from storage:", err);
-        // Continue even if storage deletion fails
-      }
-    }
-
-    // Delete materi record
     return await remove("materi", id);
   } catch (error) {
     const apiError = handleError(error);
@@ -392,7 +488,7 @@ export async function incrementDownloadCount(id: string): Promise<void> {
 /**
  * Publish materi (make it visible to students)
  */
-export async function publishMateri(id: string): Promise<Materi> {
+async function publishMateriImpl(id: string): Promise<Materi> {
   try {
     return await updateMateriImpl(id, {
       is_active: true,
@@ -405,10 +501,17 @@ export async function publishMateri(id: string): Promise<Materi> {
   }
 }
 
+export const publishMateri = requirePermissionAndOwnership(
+  "manage:materi",
+  { table: "materi", ownerField: "dosen_id" },
+  0,
+  publishMateriImpl,
+);
+
 /**
  * Unpublish materi (hide from students)
  */
-export async function unpublishMateri(id: string): Promise<Materi> {
+async function unpublishMateriImpl(id: string): Promise<Materi> {
   try {
     return await updateMateriImpl(id, {
       is_active: false,
@@ -419,6 +522,13 @@ export async function unpublishMateri(id: string): Promise<Materi> {
     throw apiError;
   }
 }
+
+export const unpublishMateri = requirePermissionAndOwnership(
+  "manage:materi",
+  { table: "materi", ownerField: "dosen_id" },
+  0,
+  unpublishMateriImpl,
+);
 
 // ============================================================================
 // STATISTICS

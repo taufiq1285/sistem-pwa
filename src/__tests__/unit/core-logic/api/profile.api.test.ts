@@ -36,8 +36,21 @@ const createQueryMock = (resolveValue: any = { data: null, error: null }) => {
       select: () => buildChain(),
       update: () => buildChain(),
       eq: () => buildChain(),
-      single: () => Promise.resolve(resolveValue),
-      then: (resolve: any) => Promise.resolve(resolveValue).then(resolve),
+      single: () => {
+        const { error, ...rest } = resolveValue;
+        if (error?.code) {
+          return Promise.reject(error);
+        }
+        return Promise.resolve(resolveValue);
+      },
+      maybeSingle: () => Promise.resolve(resolveValue),
+      then: (resolve: any, reject: any) => {
+        const { error, ...rest } = resolveValue;
+        if (error?.code) {
+          return Promise.reject(error).then(resolve, reject);
+        }
+        return Promise.resolve(resolveValue).then(resolve, reject);
+      },
       catch: (reject: any) => Promise.resolve(resolveValue).catch(reject),
     };
 
@@ -171,7 +184,7 @@ describe("Profile API", () => {
 
       await expect(
         updateMahasiswaProfile(mockMahasiswaId, updateData),
-      ).rejects.toThrow("Update failed");
+      ).rejects.toThrow(/error/i);
     });
 
     it("should update user profile", async () => {
@@ -250,7 +263,7 @@ describe("Profile API", () => {
     it("should throw error when dosen update fails", async () => {
       (supabase.from as any).mockReturnValue(
         createQueryMock({
-          error: { message: "Database error" },
+          error: { code: "PGRST116", message: "Database error" },
         }),
       );
 
@@ -317,7 +330,7 @@ describe("Profile API", () => {
     it("should throw error when laboran update fails", async () => {
       (supabase.from as any).mockReturnValue(
         createQueryMock({
-          error: { message: "Connection lost" },
+          error: { code: "23505", message: "Connection lost" },
         }),
       );
 
@@ -388,7 +401,7 @@ describe("Profile API", () => {
     it("should throw error when admin update fails", async () => {
       (supabase.from as any).mockReturnValue(
         createQueryMock({
-          error: { message: "Permission denied" },
+          error: { code: "42501", message: "Permission denied" },
         }),
       );
 

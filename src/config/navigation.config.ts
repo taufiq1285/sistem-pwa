@@ -288,16 +288,10 @@ const laboranNavigation: NavigationItem[] = [
     description: "Kelola inventaris",
   },
   {
-    label: "Persetujuan",
-    href: "/laboran/persetujuan",
-    icon: ClipboardCheck,
-    description: "Persetujuan peminjaman alat",
-  },
-  {
-    label: "Kelola Peminjaman",
-    href: "/laboran/peminjaman-aktif",
+    label: "Peminjaman Alat",
+    href: "/laboran/peminjaman",
     icon: PackageCheck,
-    description: "Kelola peminjaman aktif & pengembalian",
+    description: "Persetujuan, peminjaman aktif, dan pengembalian",
   },
   {
     label: "Laboratorium",

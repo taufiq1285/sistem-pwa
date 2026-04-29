@@ -24,7 +24,10 @@ vi.mock("react-router-dom", async (orig) => {
 });
 vi.mock("@/lib/api/kuis.api", () => ({
   getUpcomingQuizzes: vi.fn(),
+  getAttempts: vi.fn(),
   getAttemptByIdForMahasiswa: vi.fn(),
+  getOfflineAttemptSummariesForMahasiswa: vi.fn().mockResolvedValue([]),
+  syncPendingOfflineQuizSubmissions: vi.fn().mockResolvedValue(undefined),
   cacheAttemptOffline: vi.fn(),
   syncOfflineAnswers: vi.fn(),
   getCachedAttempt: vi.fn().mockResolvedValue(null),
@@ -164,6 +167,62 @@ describe("Mahasiswa KuisListPage", () => {
     await waitFor(() =>
       expect(screen.getByText(/Tidak ada tugas/i)).toBeInTheDocument(),
     );
+  });
+
+  it("tetap menampilkan tombol Lihat Hasil saat CBT sudah pernah dikerjakan", async () => {
+    mockCacheAPI.mockResolvedValue([
+      {
+        ...mockQuizzes[0],
+        status: "ongoing",
+        can_attempt: false,
+        attempts_used: 1,
+        best_score: 100,
+      },
+    ]);
+
+    renderPage(<KuisListPage />, "/mahasiswa/kuis", "/mahasiswa/kuis");
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: /Lihat Hasil/i }),
+      ).toBeInTheDocument(),
+    );
+    expect(
+      screen.queryByRole("button", { name: /Percobaan Habis/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("menampilkan nilai terbaik dari nilai_akhir offline saat total poin lama masih 0", async () => {
+    mockCacheAPI.mockResolvedValue([
+      {
+        ...mockQuizzes[0],
+        status: "ongoing",
+        can_attempt: false,
+        attempts_used: 1,
+        best_score: 0,
+      },
+    ]);
+
+    vi.mocked(kuisApi.getOfflineAttemptSummariesForMahasiswa).mockResolvedValue(
+      [
+        {
+          id: "attempt-1",
+          kuis_id: "kuis-1",
+          mahasiswa_id: "mhs-1",
+          status: "graded",
+          total_poin: 0,
+          nilai_akhir: 100,
+          submitted_at: new Date().toISOString(),
+        } as any,
+      ],
+    );
+
+    renderPage(<KuisListPage />, "/mahasiswa/kuis", "/mahasiswa/kuis");
+
+    await waitFor(() => {
+      expect(screen.getByText("Nilai Terbaik")).toBeInTheDocument();
+      expect(screen.getByText("100")).toBeInTheDocument();
+    });
   });
 
   it("tidak memanggil cacheAPI saat user null", async () => {

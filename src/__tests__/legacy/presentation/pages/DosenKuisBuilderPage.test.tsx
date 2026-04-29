@@ -87,7 +87,6 @@ describe("Dosen KuisBuilderPage", () => {
       expect.objectContaining({
         dosenId: "dosen-1",
         quiz: undefined,
-        laporanMode: false,
       }),
     );
   });
@@ -108,13 +107,14 @@ describe("Dosen KuisBuilderPage", () => {
     expect(
       screen.getByRole("heading", { name: /Edit Tugas Praktikum/i }),
     ).toBeInTheDocument();
-    expect(mockQuizBuilder).toHaveBeenCalledWith(
-      expect.objectContaining({
-        dosenId: "dosen-1",
-        quiz: expect.objectContaining({ id: "kuis-1" }),
-        laporanMode: true,
-      }),
-    );
+
+    await waitFor(() => {
+      expect(mockQuizBuilder).toHaveBeenCalledWith(
+        expect.objectContaining({
+          quiz: expect.objectContaining({ id: "kuis-1" }),
+        }),
+      );
+    });
   });
 
   it("redirect ke root bila user bukan dosen", () => {

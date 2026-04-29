@@ -256,6 +256,13 @@ describe("usePdfBlobUrl Hook", () => {
 
       const firstUrl = result.current.blobUrl;
 
+      // Reset mock counter between renders to ensure unique URLs
+      mockCreateObjectURL.mockClear();
+      let urlCounter = 1;
+      mockCreateObjectURL.mockImplementation(
+        () => `blob:test-pdf-url-${urlCounter++}`,
+      );
+
       // Rerender with different materi
       act(() => {
         rerender({
@@ -270,7 +277,7 @@ describe("usePdfBlobUrl Hook", () => {
 
       const secondUrl = result.current.blobUrl;
 
-      // URLs should be different
+      // URLs should be different (new materi, new counter reset)
       expect(secondUrl).not.toBe(firstUrl);
 
       unmount();

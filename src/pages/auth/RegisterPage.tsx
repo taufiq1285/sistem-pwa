@@ -8,11 +8,7 @@ import { RegisterForm } from "@/components/forms/RegisterForm";
 import { GlassCard } from "@/components/ui/glass-card";
 import { useState, useEffect } from "react";
 import akbidLogo from "@/assets/akbid-logo-asli.png";
-import {
-  Sparkles,
-  ArrowLeft,
-  Shield,
-} from "lucide-react";
+import { Sparkles, ArrowLeft, Shield } from "lucide-react";
 
 export function RegisterPage() {
   const navigate = useNavigate();
@@ -114,9 +110,7 @@ export function RegisterPage() {
                 <span>Kembali ke Beranda</span>
               </Link>
               <div className="text-sm">
-                <span className="text-slate-600">
-                  Sudah punya akun?{" "}
-                </span>
+                <span className="text-slate-600">Sudah punya akun? </span>
                 <Link
                   to="/login"
                   className="font-bold text-[#7B1D3A] hover:text-[#9B2448] transition-colors duration-200"
@@ -141,5 +135,3 @@ export function RegisterPage() {
     </div>
   );
 }
-
-

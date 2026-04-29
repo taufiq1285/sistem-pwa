@@ -19,6 +19,7 @@ vi.mock("@/lib/offline/api-cache", () => ({
   cacheAPI: (...a: unknown[]) => mockCacheAPI(...a),
   getCachedData: vi.fn().mockResolvedValue(null),
   invalidateCache: vi.fn(),
+  invalidateCachePatternSync: vi.fn().mockResolvedValue(0),
 }));
 vi.mock("react-router-dom", async (orig) => {
   const a = await orig<typeof import("react-router-dom")>();
@@ -44,6 +45,9 @@ vi.mock("@/lib/api/nilai.api", () => ({
 vi.mock("@/lib/api/mata-kuliah.api", () => ({
   getMataKuliah: vi.fn(),
 }));
+vi.mock("@/lib/api/kelas.api", () => ({
+  getKelas: vi.fn(),
+}));
 vi.mock("@/lib/api/kuis.api", () => ({
   getKuis: vi.fn(),
   cacheAttemptOffline: vi.fn(),
@@ -60,6 +64,7 @@ vi.mock("@/lib/supabase/client", () => ({
     from: vi.fn(() => ({
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
+      in: vi.fn().mockReturnThis(),
       single: vi
         .fn()
         .mockResolvedValue({ data: { id: "dosen-1" }, error: null }),
@@ -98,6 +103,7 @@ import * as materiApi from "@/lib/api/materi.api";
 import * as dosenApi from "@/lib/api/dosen.api";
 import * as nilaiApi from "@/lib/api/nilai.api";
 import * as mkApi from "@/lib/api/mata-kuliah.api";
+import * as kelasApi from "@/lib/api/kelas.api";
 import * as kuisApi from "@/lib/api/kuis.api";
 
 const mockDosenUser = {
@@ -148,6 +154,9 @@ describe("Dosen MateriPage", () => {
     vi.spyOn(console, "error").mockImplementation(() => undefined);
     mockUseAuth.mockReturnValue({ user: mockDosenUser });
     vi.mocked(materiApi.getMateriByDosen).mockResolvedValue(mockMateri as any);
+    vi.mocked(kelasApi.getKelas).mockResolvedValue([
+      { id: "k1", nama_kelas: "TI-1A" },
+    ] as any);
     vi.mocked(dosenApi.getMyKelas).mockResolvedValue([
       { id: "k1", nama_kelas: "TI-1A" },
     ] as any);
@@ -259,8 +268,8 @@ describe("Dosen KehadiranPage", () => {
     vi.spyOn(console, "error").mockImplementation(() => undefined);
     mockUseAuth.mockReturnValue({ user: mockDosenUser });
     mockCacheAPI.mockResolvedValue([]);
-    vi.mocked(dosenApi.getMyKelas).mockResolvedValue([
-      { id: "k1", nama_kelas: "TI-1A", mata_kuliah_id: "mk1" },
+    vi.mocked(kelasApi.getKelas).mockResolvedValue([
+      { id: "k1", nama_kelas: "TI-1A", kode_kelas: "TI-1A" },
     ] as any);
     vi.mocked(mkApi.getMataKuliah).mockResolvedValue([
       { id: "mk1", kode_mk: "ANT101", nama_mk: "Anatomi" },
@@ -277,7 +286,7 @@ describe("Dosen KehadiranPage", () => {
     wrap(<DosenKehadiranPage />);
     await waitFor(() =>
       expect(
-        screen.getByRole("heading", { name: /Kehadiran Praktikum/i }),
+        screen.getByRole("heading", { name: /Kehadiran Mahasiswa/i }),
       ).toBeInTheDocument(),
     );
   });
@@ -286,7 +295,7 @@ describe("Dosen KehadiranPage", () => {
     wrap(<DosenKehadiranPage />);
     await waitFor(() => {
       expect(
-        screen.getByRole("heading", { name: /Pilih Mata Kuliah dan Kelas/i }),
+        screen.getByRole("heading", { name: /Pilih Kelas untuk Cek Riwayat/i }),
       ).toBeInTheDocument();
     });
   });

@@ -20,6 +20,7 @@ import {
   X,
   Loader2,
   WifiOff,
+  RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -60,13 +61,14 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { getNilaiByMahasiswa } from "@/lib/api/nilai.api";
 import {
   getPermintaanByMahasiswa,
   createPermintaan,
+  getDosenOptionsForPermintaan,
+  type DosenPermintaanOption,
 } from "@/lib/api/permintaan-perbaikan.api";
 import type { Nilai } from "@/types/nilai.types";
 import type {
@@ -74,9 +76,8 @@ import type {
   KomponenNilai,
 } from "@/types/permintaan-perbaikan.types";
 import {
-  KOMPONEN_NILAI_LABELS,
+  BENTUK_PERBAIKAN_LABELS,
   STATUS_PERMINTAAN_LABELS,
-  STATUS_COLORS,
 } from "@/types/permintaan-perbaikan.types";
 import { toast } from "sonner";
 import { getGradeStatus } from "@/lib/validations/nilai.schema";
@@ -96,6 +97,8 @@ interface NilaiKumulatifPerMK {
   nilai_huruf: string;
   kelas_list: Nilai[];
 }
+
+const DEFAULT_KOMPONEN_PERBAIKAN: KomponenNilai = "praktikum";
 
 // ============================================================================
 // COMPONENT
@@ -119,10 +122,10 @@ export default function MahasiswaNilaiPageEnhanced() {
   // Permintaan Perbaikan Dialog
   const [permintaanDialogOpen, setPermintaanDialogOpen] = useState(false);
   const [selectedNilai, setSelectedNilai] = useState<Nilai | null>(null);
-  const [komponenNilai, setKomponenNilai] = useState<KomponenNilai>("kuis");
-  const [nilaiUsulan, setNilaiUsulan] = useState("");
   const [alasanPermintaan, setAlasanPermintaan] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [dosenOptions, setDosenOptions] = useState<DosenPermintaanOption[]>([]);
+  const [selectedTargetDosenId, setSelectedTargetDosenId] = useState("");
 
   const nilaiCacheKey = user?.mahasiswa?.id
     ? `mahasiswa_nilai_${user.mahasiswa.id}`
@@ -214,11 +217,13 @@ export default function MahasiswaNilaiPageEnhanced() {
         );
       }
 
+      const shouldForceServerRefresh = forceRefresh || navigator.onLine;
+
       // Use cacheAPI with stale-while-revalidate for offline support
       const [nilaiData, permintaanData] = await Promise.all([
         cacheAPI(nilaiCacheKey, () => getNilaiByMahasiswa(user.mahasiswa.id), {
           ttl: 15 * 60 * 1000,
-          forceRefresh,
+          forceRefresh: shouldForceServerRefresh,
           staleWhileRevalidate: true,
         }),
         cacheAPI(
@@ -226,7 +231,7 @@ export default function MahasiswaNilaiPageEnhanced() {
           () => getPermintaanByMahasiswa(user.mahasiswa.id),
           {
             ttl: 5 * 60 * 1000,
-            forceRefresh,
+            forceRefresh: shouldForceServerRefresh,
             staleWhileRevalidate: true,
           },
         ),
@@ -250,6 +255,10 @@ export default function MahasiswaNilaiPageEnhanced() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleRefreshData = async () => {
+    await loadData(true);
   };
 
   const activeNilaiList = useMemo(
@@ -284,27 +293,50 @@ export default function MahasiswaNilaiPageEnhanced() {
   // Group nilai per mata kuliah
   const getNilaiKumulatifPerMK = (): NilaiKumulatifPerMK[] => {
     const filtered = getFilteredNilai();
-    const grouped = new Map<string, Nilai[]>();
+    const grouped = new Map<
+      string,
+      {
+        mata_kuliah_id: string;
+        kode_mk: string;
+        nama_mk: string;
+        sks: number;
+        kelas_list: Nilai[];
+      }
+    >();
 
     filtered.forEach((nilai) => {
-      const mkId =
+      const mataKuliahId =
         nilai.kelas?.mata_kuliah?.id ||
-        nilai.kelas?.mata_kuliah?.kode_mk ||
-        nilai.kelas?.mata_kuliah?.nama_mk ||
+        nilai.mata_kuliah_id ||
         `kelas-${nilai.kelas?.id || nilai.kelas_id}`;
-      if (!grouped.has(mkId)) {
-        grouped.set(mkId, []);
+      const kodeMk =
+        nilai.kelas?.mata_kuliah?.kode_mk || nilai.kelas?.kode_kelas || "-";
+      const namaMk =
+        nilai.kelas?.mata_kuliah?.nama_mk ||
+        nilai.kelas?.nama_kelas ||
+        "Mata kuliah tidak diketahui";
+      const sks = nilai.kelas?.mata_kuliah?.sks || 0;
+
+      if (!grouped.has(mataKuliahId)) {
+        grouped.set(mataKuliahId, {
+          mata_kuliah_id: mataKuliahId,
+          kode_mk: kodeMk,
+          nama_mk: namaMk,
+          sks,
+          kelas_list: [],
+        });
       }
-      grouped.get(mkId)!.push(nilai);
+
+      grouped.get(mataKuliahId)!.kelas_list.push(nilai);
     });
 
-    return Array.from(grouped.entries()).map(([mkName, kelasList]) => {
-      const firstKelas = kelasList[0];
-      const totalNilai = kelasList.reduce(
+    return Array.from(grouped.values()).map((group) => {
+      const totalNilai = group.kelas_list.reduce(
         (sum, n) => sum + (n.nilai_akhir || 0),
         0,
       );
-      const avgNilai = totalNilai / kelasList.length;
+      const avgNilai =
+        group.kelas_list.length > 0 ? totalNilai / group.kelas_list.length : 0;
 
       // Calculate letter grade from average
       let nilaiHuruf = "E";
@@ -314,17 +346,14 @@ export default function MahasiswaNilaiPageEnhanced() {
       else if (avgNilai >= 40) nilaiHuruf = "D";
 
       return {
-        mata_kuliah_id:
-          firstKelas.kelas?.mata_kuliah?.id ||
-          firstKelas.kelas?.mata_kuliah?.kode_mk ||
-          mkName,
-        kode_mk: firstKelas.kelas?.mata_kuliah?.kode_mk || "",
-        nama_mk: mkName,
-        sks: firstKelas.kelas?.mata_kuliah?.sks || 0,
-        total_kelas: kelasList.length,
+        mata_kuliah_id: group.mata_kuliah_id,
+        kode_mk: group.kode_mk,
+        nama_mk: group.nama_mk,
+        sks: group.sks,
+        total_kelas: group.kelas_list.length,
         nilai_kumulatif: avgNilai,
         nilai_huruf: nilaiHuruf,
-        kelas_list: kelasList,
+        kelas_list: group.kelas_list,
       };
     });
   };
@@ -332,16 +361,38 @@ export default function MahasiswaNilaiPageEnhanced() {
   // Open permintaan dialog
   const handleAjukanPerbaikan = (nilai: Nilai) => {
     setSelectedNilai(nilai);
-    setKomponenNilai("kuis");
-    setNilaiUsulan("");
     setAlasanPermintaan("");
+    setSelectedTargetDosenId(nilai.dosen_id || "");
     setPermintaanDialogOpen(true);
+
+    if (nilai.dosen_id) {
+      setDosenOptions([]);
+      return;
+    }
+
+    getDosenOptionsForPermintaan()
+      .then((options) => {
+        setDosenOptions(options);
+        if (options.length === 1) {
+          setSelectedTargetDosenId(options[0].id);
+        }
+      })
+      .catch((error) => {
+        console.error("Error loading dosen options:", error);
+        toast.error("Gagal memuat pilihan dosen tujuan");
+      });
   };
 
   // Submit permintaan
   const handleSubmitPermintaan = async () => {
     if (!selectedNilai || !alasanPermintaan.trim()) {
       toast.error("Alasan permintaan harus diisi");
+      return;
+    }
+
+    const targetDosenId = selectedNilai.dosen_id || selectedTargetDosenId;
+    if (!targetDosenId) {
+      toast.error("Pilih dosen tujuan perbaikan nilai");
       return;
     }
 
@@ -355,17 +406,17 @@ export default function MahasiswaNilaiPageEnhanced() {
     try {
       setSubmitting(true);
 
-      const nilaiLama = selectedNilai[
-        `nilai_${komponenNilai}` as keyof Nilai
-      ] as number;
+      const nilaiLama = Number(selectedNilai.nilai_akhir ?? 0);
 
       await createPermintaan({
         mahasiswa_id: user?.mahasiswa?.id ?? "",
         nilai_id: selectedNilai.id,
         kelas_id: selectedNilai.kelas_id,
-        komponen_nilai: komponenNilai,
+        mata_kuliah_id:
+          selectedNilai.mata_kuliah_id || selectedNilai.kelas?.mata_kuliah?.id,
+        target_dosen_id: targetDosenId,
+        komponen_nilai: DEFAULT_KOMPONEN_PERBAIKAN,
         nilai_lama: nilaiLama,
-        nilai_usulan: nilaiUsulan ? parseFloat(nilaiUsulan) : undefined,
         alasan_permintaan: alasanPermintaan,
       });
 
@@ -418,6 +469,22 @@ export default function MahasiswaNilaiPageEnhanced() {
     });
   }, [lastUpdatedAt]);
 
+  const getDosenPenilaiLabel = (nilai: Nilai) => {
+    if (nilai.dosen?.user?.full_name) {
+      return nilai.dosen.user.full_name;
+    }
+
+    if (nilai.dosen_id) {
+      return "Dosen penilai";
+    }
+
+    return "Belum tercatat";
+  };
+
+  const getDosenPenilaiMeta = (nilai: Nilai) => {
+    return nilai.dosen?.nip || nilai.dosen?.user?.email || null;
+  };
+
   if (loading) {
     return (
       <div className="app-container py-4 sm:py-6 lg:py-8">
@@ -459,20 +526,25 @@ export default function MahasiswaNilaiPageEnhanced() {
 
   return (
     <div className="app-container py-4 sm:py-6 lg:py-8">
-      <div className="mx-auto max-w-7xl space-y-6">
+      <div className="mx-auto max-w-7xl space-y-5">
         {/* Header */}
         <GlassCard
           intensity="medium"
-          className="border-white/40 bg-white/80 shadow-xl dark:border-white/10 dark:bg-card"
+          className="overflow-hidden rounded-[30px] border-white/40 bg-linear-to-br from-white via-[#f5fbff] to-[#eefaf7] shadow-xl shadow-slate-900/5 dark:border-white/10 dark:bg-card"
         >
-          <CardContent className="p-6 sm:p-8">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-4xl font-extrabold tracking-tight text-foreground">
+          <CardContent className="relative p-6 sm:p-8">
+            <div className="absolute -right-16 -top-16 h-44 w-44 rounded-full bg-primary/10 blur-3xl" />
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="relative">
+                <div className="mb-3 inline-flex items-center rounded-full border border-primary/15 bg-white/80 px-3 py-1 text-xs font-bold uppercase tracking-wide text-primary">
+                  Ringkasan nilai mahasiswa
+                </div>
+                <h1 className="text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl">
                   Nilai Akademik
                 </h1>
-                <p className="text-muted-foreground">
-                  Lihat nilai per kelas, per mata kuliah, dan ajukan perbaikan
+                <p className="mt-1 max-w-2xl text-sm font-medium leading-relaxed text-muted-foreground sm:text-base">
+                  Nilai ditampilkan sesuai kelas dan mata kuliah yang dipilih
+                  dosen saat penilaian.
                 </p>
                 {(isOfflineData || lastUpdatedLabel) && (
                   <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
@@ -488,6 +560,17 @@ export default function MahasiswaNilaiPageEnhanced() {
                   </div>
                 )}
               </div>
+              <Button
+                variant="outline"
+                onClick={handleRefreshData}
+                disabled={loading}
+                className="relative w-full gap-2 rounded-xl border-2 bg-white/80 font-semibold shadow-sm sm:w-auto"
+              >
+                <RefreshCw
+                  className={`h-4 w-4 ${loading ? "animate-spin" : ""}`}
+                />
+                Refresh Nilai
+              </Button>
             </div>
           </CardContent>
         </GlassCard>
@@ -536,15 +619,26 @@ export default function MahasiswaNilaiPageEnhanced() {
         {/* Filters */}
         <GlassCard
           intensity="low"
-          className="border-white/40 bg-white/90 shadow-lg dark:border-white/10 dark:bg-card"
+          className="rounded-[24px] border-white/40 bg-white/90 shadow-lg shadow-slate-900/5 dark:border-white/10 dark:bg-card"
         >
-          <CardContent className="p-4 sm:p-6">
-            <div className="grid gap-4 md:grid-cols-2">
+          <CardContent className="p-4 sm:p-5">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <div>
+                <h2 className="text-base font-extrabold">Filter Tampilan</h2>
+                <p className="text-xs font-medium text-muted-foreground">
+                  Saring nilai berdasarkan semester dan tahun ajaran.
+                </p>
+              </div>
+              <Badge variant="outline" className="rounded-full">
+                {filteredNilai.length} nilai
+              </Badge>
+            </div>
+            <div className="grid gap-3 md:grid-cols-2">
               <Select
                 value={selectedSemester}
                 onValueChange={setSelectedSemester}
               >
-                <SelectTrigger>
+                <SelectTrigger className="rounded-xl border-2 bg-white">
                   <SelectValue placeholder="Semua Semester" />
                 </SelectTrigger>
                 <SelectContent>
@@ -561,7 +655,7 @@ export default function MahasiswaNilaiPageEnhanced() {
                 value={selectedTahunAjaran}
                 onValueChange={setSelectedTahunAjaran}
               >
-                <SelectTrigger>
+                <SelectTrigger className="rounded-xl border-2 bg-white">
                   <SelectValue placeholder="Semua Tahun" />
                 </SelectTrigger>
                 <SelectContent>
@@ -579,16 +673,16 @@ export default function MahasiswaNilaiPageEnhanced() {
 
         {/* Tabs */}
         <Tabs defaultValue="per-kelas" className="space-y-4">
-          <TabsList className="grid h-auto w-full grid-cols-1 gap-2 rounded-2xl bg-muted/60 p-1 md:grid-cols-3">
-            <TabsTrigger value="per-kelas" className="gap-2 rounded-xl">
+          <TabsList className="grid h-auto w-full grid-cols-1 gap-2 rounded-2xl bg-white/80 p-1 shadow-sm md:grid-cols-3">
+            <TabsTrigger value="per-kelas" className="gap-2 rounded-xl py-2.5 font-semibold">
               <FileText className="h-4 w-4" />
               Per Kelas
             </TabsTrigger>
-            <TabsTrigger value="per-mk" className="gap-2 rounded-xl">
+            <TabsTrigger value="per-mk" className="gap-2 rounded-xl py-2.5 font-semibold">
               <BookOpen className="h-4 w-4" />
-              Per Mata Kuliah (Kumulatif)
+              Rekap Mata Kuliah
             </TabsTrigger>
-            <TabsTrigger value="permintaan" className="gap-2 rounded-xl">
+            <TabsTrigger value="permintaan" className="gap-2 rounded-xl py-2.5 font-semibold">
               <History className="h-4 w-4" />
               Riwayat Permintaan ({permintaanList.length})
             </TabsTrigger>
@@ -598,15 +692,18 @@ export default function MahasiswaNilaiPageEnhanced() {
           <TabsContent value="per-kelas">
             <GlassCard
               intensity="low"
-              className="border-white/40 bg-white/90 p-6 shadow-lg dark:border-white/10 dark:bg-card"
+              className="overflow-hidden rounded-[26px] border-white/40 bg-white/95 p-0 shadow-lg shadow-slate-900/5 dark:border-white/10 dark:bg-card"
             >
-              <CardHeader>
-                <CardTitle>Nilai Per Kelas</CardTitle>
+              <CardHeader className="border-b bg-linear-to-r from-primary/5 to-accent/5 p-5">
+                <CardTitle className="text-xl font-extrabold">
+                  Nilai Per Kelas
+                </CardTitle>
                 <CardDescription>
-                  Nilai untuk setiap kelas praktikum yang Anda ikuti
+                  Nilai yang tersimpan untuk setiap kombinasi kelas dan mata
+                  kuliah.
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-5">
                 {filteredNilai.length === 0 ? (
                   <Alert className="border-border/60 bg-muted/30">
                     <AlertDescription className="text-muted-foreground">
@@ -614,14 +711,16 @@ export default function MahasiswaNilaiPageEnhanced() {
                     </AlertDescription>
                   </Alert>
                 ) : (
-                  <div className="overflow-x-auto">
+                  <div className="overflow-hidden rounded-2xl border border-border/60">
+                    <div className="overflow-x-auto">
                     <Table>
-                      <TableHeader>
+                      <TableHeader className="bg-muted/40">
                         <TableRow>
                           <TableHead className="w-12">No</TableHead>
                           <TableHead>Kode MK</TableHead>
                           <TableHead>Mata Kuliah</TableHead>
                           <TableHead>Kelas</TableHead>
+                          <TableHead>Dosen Penilai</TableHead>
                           <TableHead className="text-center">
                             Praktikum
                           </TableHead>
@@ -634,20 +733,43 @@ export default function MahasiswaNilaiPageEnhanced() {
                       </TableHeader>
                       <TableBody>
                         {filteredNilai.map((nilai, index) => (
-                          <TableRow key={nilai.id}>
+                          <TableRow key={nilai.id} className="hover:bg-primary/5">
                             <TableCell>{index + 1}</TableCell>
-                            <TableCell className="font-mono">
-                              {nilai.kelas?.mata_kuliah?.kode_mk}
+                            <TableCell>
+                              <Badge variant="outline" className="rounded-full font-mono">
+                                {nilai.kelas?.mata_kuliah?.kode_mk || "-"}
+                              </Badge>
                             </TableCell>
-                            <TableCell className="font-medium">
-                              {nilai.kelas?.mata_kuliah?.nama_mk}
+                            <TableCell className="min-w-[220px] font-semibold">
+                              {nilai.kelas?.mata_kuliah?.nama_mk ||
+                                "Mata kuliah tidak diketahui"}
                             </TableCell>
-                            <TableCell>{nilai.kelas?.nama_kelas}</TableCell>
+                            <TableCell>
+                              <span className="rounded-full bg-muted px-3 py-1 text-xs font-bold">
+                                Kelas {nilai.kelas?.nama_kelas || "-"}
+                              </span>
+                            </TableCell>
+                            <TableCell className="min-w-[160px]">
+                              <div className="font-semibold">
+                                {getDosenPenilaiLabel(nilai)}
+                              </div>
+                              {getDosenPenilaiMeta(nilai) ? (
+                                <div className="text-xs text-muted-foreground">
+                                  {getDosenPenilaiMeta(nilai)}
+                                </div>
+                              ) : (
+                                <div className="text-xs text-muted-foreground">
+                                  Nilai lama atau belum disimpan dosen
+                                </div>
+                              )}
+                            </TableCell>
                             <TableCell className="text-center">
                               {nilai.nilai_praktikum?.toFixed(1) || "0.0"}
                             </TableCell>
-                            <TableCell className="text-center font-bold">
-                              {nilai.nilai_akhir?.toFixed(2) || "0.00"}
+                            <TableCell className="text-center">
+                              <span className="text-lg font-black text-primary">
+                                {nilai.nilai_akhir?.toFixed(2) || "0.00"}
+                              </span>
                             </TableCell>
                             <TableCell className="text-center">
                               <StatusBadge
@@ -669,7 +791,7 @@ export default function MahasiswaNilaiPageEnhanced() {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className="gap-1"
+                                className="gap-1 rounded-xl"
                                 onClick={() => handleAjukanPerbaikan(nilai)}
                               >
                                 <Edit className="h-3 w-3" />
@@ -680,25 +802,30 @@ export default function MahasiswaNilaiPageEnhanced() {
                         ))}
                       </TableBody>
                     </Table>
+                    </div>
                   </div>
                 )}
               </CardContent>
             </GlassCard>
           </TabsContent>
 
-          {/* Tab: Per Mata Kuliah (Kumulatif) */}
+          {/* Tab: Rekap Mata Kuliah */}
           <TabsContent value="per-mk">
             <GlassCard
               intensity="low"
-              className="border-white/40 bg-white/90 p-6 shadow-lg dark:border-white/10 dark:bg-card"
+              className="overflow-hidden rounded-[26px] border-white/40 bg-white/95 p-0 shadow-lg shadow-slate-900/5 dark:border-white/10 dark:bg-card"
             >
-              <CardHeader>
-                <CardTitle>Nilai Per Mata Kuliah (Kumulatif)</CardTitle>
+              <CardHeader className="border-b bg-linear-to-r from-primary/5 to-accent/5 p-5">
+                <CardTitle className="text-xl font-extrabold">
+                  Rekap Nilai Per Mata Kuliah
+                </CardTitle>
                 <CardDescription>
-                  Rata-rata nilai dari semua kelas untuk setiap mata kuliah
+                  Jika satu mata kuliah memiliki beberapa record nilai, bagian
+                  ini menampilkan rata-ratanya. Detail tiap record tetap ada di
+                  tab Per Kelas.
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-5">
                 {nilaiKumulatif.length === 0 ? (
                   <Alert className="border-border/60 bg-muted/30">
                     <AlertDescription className="text-muted-foreground">
@@ -706,31 +833,34 @@ export default function MahasiswaNilaiPageEnhanced() {
                     </AlertDescription>
                   </Alert>
                 ) : (
-                  <div className="overflow-x-auto">
+                  <div className="overflow-hidden rounded-2xl border border-border/60">
+                    <div className="overflow-x-auto">
                     <Table>
-                      <TableHeader>
+                      <TableHeader className="bg-muted/40">
                         <TableRow>
                           <TableHead className="w-12">No</TableHead>
                           <TableHead>Kode MK</TableHead>
                           <TableHead>Mata Kuliah</TableHead>
                           <TableHead className="text-center">SKS</TableHead>
                           <TableHead className="text-center">
-                            Total Kelas
+                            Total Record
                           </TableHead>
                           <TableHead className="text-center">
-                            Nilai Kumulatif
+                            Rata-rata Nilai
                           </TableHead>
                           <TableHead className="text-center">Grade</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {nilaiKumulatif.map((mk, index) => (
-                          <TableRow key={mk.mata_kuliah_id}>
+                          <TableRow key={mk.mata_kuliah_id} className="hover:bg-primary/5">
                             <TableCell>{index + 1}</TableCell>
-                            <TableCell className="font-mono">
-                              {mk.kode_mk}
+                            <TableCell>
+                              <Badge variant="outline" className="rounded-full font-mono">
+                                {mk.kode_mk || "-"}
+                              </Badge>
                             </TableCell>
-                            <TableCell className="font-medium">
+                            <TableCell className="min-w-[220px] font-semibold">
                               {mk.nama_mk}
                             </TableCell>
                             <TableCell className="text-center">
@@ -739,8 +869,10 @@ export default function MahasiswaNilaiPageEnhanced() {
                             <TableCell className="text-center">
                               <Badge variant="outline">{mk.total_kelas}</Badge>
                             </TableCell>
-                            <TableCell className="text-center font-bold text-lg">
-                              {mk.nilai_kumulatif.toFixed(2)}
+                            <TableCell className="text-center">
+                              <span className="text-lg font-black text-primary">
+                                {mk.nilai_kumulatif.toFixed(2)}
+                              </span>
                             </TableCell>
                             <TableCell className="text-center">
                               <StatusBadge
@@ -762,6 +894,7 @@ export default function MahasiswaNilaiPageEnhanced() {
                         ))}
                       </TableBody>
                     </Table>
+                    </div>
                   </div>
                 )}
               </CardContent>
@@ -772,15 +905,17 @@ export default function MahasiswaNilaiPageEnhanced() {
           <TabsContent value="permintaan">
             <GlassCard
               intensity="low"
-              className="border-white/40 bg-white/90 p-6 shadow-lg dark:border-white/10 dark:bg-card"
+              className="overflow-hidden rounded-[26px] border-white/40 bg-white/95 p-0 shadow-lg shadow-slate-900/5 dark:border-white/10 dark:bg-card"
             >
-              <CardHeader>
-                <CardTitle>Riwayat Permintaan Perbaikan Nilai</CardTitle>
+              <CardHeader className="border-b bg-linear-to-r from-primary/5 to-accent/5 p-5">
+                <CardTitle className="text-xl font-extrabold">
+                  Riwayat Permintaan Perbaikan Nilai
+                </CardTitle>
                 <CardDescription>
                   Status permintaan perbaikan nilai yang pernah Anda ajukan
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-5">
                 {permintaanList.length === 0 ? (
                   <Alert className="border-border/60 bg-muted/30">
                     <AlertDescription className="text-muted-foreground">
@@ -793,7 +928,8 @@ export default function MahasiswaNilaiPageEnhanced() {
                       <TableHeader>
                         <TableRow>
                           <TableHead>Mata Kuliah</TableHead>
-                          <TableHead>Komponen</TableHead>
+                          <TableHead>Dosen Tujuan</TableHead>
+                          <TableHead>Konteks</TableHead>
                           <TableHead className="text-center">
                             Nilai Lama
                           </TableHead>
@@ -802,17 +938,31 @@ export default function MahasiswaNilaiPageEnhanced() {
                           </TableHead>
                           <TableHead>Status</TableHead>
                           <TableHead>Tanggal</TableHead>
-                          <TableHead>Response</TableHead>
+                          <TableHead>Bentuk Perbaikan</TableHead>
+                          <TableHead>Instruksi Dosen</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {permintaanList.map((req) => (
                           <TableRow key={req.id}>
                             <TableCell className="font-medium">
-                              {req.kelas?.mata_kuliah?.nama_mk}
+                              {req.mata_kuliah?.nama_mk ||
+                                req.kelas?.mata_kuliah?.nama_mk}
                             </TableCell>
                             <TableCell>
-                              {KOMPONEN_NILAI_LABELS[req.komponen_nilai]}
+                              <div className="font-medium">
+                                {req.target_dosen?.user?.full_name || "-"}
+                              </div>
+                              {req.target_dosen?.nip && (
+                                <div className="text-xs text-muted-foreground">
+                                  {req.target_dosen.nip}
+                                </div>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className="rounded-full">
+                                Nilai Mata Kuliah
+                              </Badge>
                             </TableCell>
                             <TableCell className="text-center">
                               {req.nilai_lama}
@@ -854,8 +1004,28 @@ export default function MahasiswaNilaiPageEnhanced() {
                             <TableCell className="text-sm">
                               {formatDate(req.created_at)}
                             </TableCell>
-                            <TableCell className="text-sm max-w-xs truncate">
-                              {req.response_dosen || "-"}
+                            <TableCell>
+                              {req.bentuk_perbaikan ? (
+                                <Badge
+                                  variant="outline"
+                                  className="rounded-full"
+                                >
+                                  {
+                                    BENTUK_PERBAIKAN_LABELS[
+                                      req.bentuk_perbaikan
+                                    ]
+                                  }
+                                </Badge>
+                              ) : (
+                                "-"
+                              )}
+                            </TableCell>
+                            <TableCell className="max-w-xs text-sm">
+                              <span className="line-clamp-2">
+                                {req.instruksi_perbaikan ||
+                                  req.response_dosen ||
+                                  "-"}
+                              </span>
                             </TableCell>
                           </TableRow>
                         ))}
@@ -876,53 +1046,86 @@ export default function MahasiswaNilaiPageEnhanced() {
           <DialogContent className="sm:max-w-125">
             <DialogHeader>
               <DialogTitle>Ajukan Permintaan Perbaikan Nilai</DialogTitle>
-              <DialogDescription>
-                {selectedNilai?.kelas?.mata_kuliah?.nama_mk} -{" "}
-                {selectedNilai?.kelas?.nama_kelas}
-              </DialogDescription>
-            </DialogHeader>
+            <DialogDescription>
+              {selectedNilai?.kelas?.mata_kuliah?.nama_mk} -{" "}
+              {selectedNilai?.kelas?.nama_kelas}
+            </DialogDescription>
+          </DialogHeader>
 
-            <div className="space-y-4">
+          <div className="space-y-4">
+            <div className="grid gap-3 rounded-2xl border border-primary/15 bg-primary/5 p-4 sm:grid-cols-2">
               <div>
-                <Label>Komponen Nilai</Label>
-                <Select
-                  value={komponenNilai}
-                  onValueChange={(v) => setKomponenNilai(v as KomponenNilai)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(KOMPONEN_NILAI_LABELS).map(
-                      ([key, label]) => (
-                        <SelectItem key={key} value={key}>
-                          {label} (
-                          {String(
-                            selectedNilai?.[`nilai_${key}` as keyof Nilai] || 0,
-                          )}
-                          )
-                        </SelectItem>
-                      ),
-                    )}
-                  </SelectContent>
-                </Select>
+                <Label className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                  Mata Kuliah
+                </Label>
+                <div className="mt-1 rounded-xl bg-white px-3 py-2 text-sm font-semibold">
+                  {selectedNilai?.kelas?.mata_kuliah?.nama_mk ||
+                    "Mata kuliah tidak diketahui"}
+                </div>
               </div>
+              <div>
+                <Label className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                  Dosen Tujuan
+                </Label>
+                {selectedNilai?.dosen_id ? (
+                  <div className="mt-1 rounded-xl bg-white px-3 py-2 text-sm">
+                    <div className="font-semibold">
+                      {selectedNilai.dosen?.user?.full_name || "Dosen penilai"}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      Otomatis mengikuti dosen yang memasukkan nilai ini.
+                    </div>
+                  </div>
+                ) : (
+                  <Select
+                    value={selectedTargetDosenId}
+                    onValueChange={setSelectedTargetDosenId}
+                  >
+                    <SelectTrigger className="mt-1 rounded-xl bg-white">
+                      <SelectValue placeholder="Pilih dosen tujuan" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {dosenOptions.length === 0 ? (
+                        <div className="p-3 text-sm text-muted-foreground">
+                          Tidak ada dosen tersedia
+                        </div>
+                      ) : (
+                        dosenOptions.map((dosen) => (
+                          <SelectItem key={dosen.id} value={dosen.id}>
+                            <div className="flex flex-col">
+                              <span className="font-semibold">
+                                {dosen.full_name}
+                              </span>
+                              <span className="text-xs text-muted-foreground">
+                                {dosen.nip || dosen.email || "Dosen"}
+                              </span>
+                            </div>
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+            </div>
 
-              <div>
-                <Label>Nilai Usulan (Opsional)</Label>
-                <Input
-                  type="text"
-                  inputMode="numeric"
-                  value={nilaiUsulan}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    if (value === "" || /^\d*\.?\d*$/.test(value)) {
-                      setNilaiUsulan(value);
-                    }
-                  }}
-                  placeholder="Contoh: 85"
-                />
+            <div className="rounded-2xl border border-border/60 bg-muted/30 p-4">
+              <Label className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                Nilai Saat Ini
+              </Label>
+              <div className="mt-1 flex items-end justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold">Nilai Mata Kuliah</p>
+                  <p className="text-xs text-muted-foreground">
+                    Pengajuan akan direview dosen, lalu nilai diperbarui lewat
+                    halaman Penilaian.
+                  </p>
+                </div>
+                <span className="text-2xl font-black text-primary">
+                  {Number(selectedNilai?.nilai_akhir ?? 0).toFixed(2)}
+                </span>
               </div>
+            </div>
 
               <div>
                 <Label>
@@ -947,7 +1150,12 @@ export default function MahasiswaNilaiPageEnhanced() {
               </Button>
               <Button
                 onClick={handleSubmitPermintaan}
-                disabled={submitting || !alasanPermintaan.trim() || !navigator.onLine}
+                disabled={
+                  submitting ||
+                  !alasanPermintaan.trim() ||
+                  !(selectedNilai?.dosen_id || selectedTargetDosenId) ||
+                  !navigator.onLine
+                }
               >
                 {submitting ? (
                   <Loader2 className="h-4 w-4 mr-1 animate-spin" />

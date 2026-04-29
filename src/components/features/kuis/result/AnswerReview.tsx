@@ -10,6 +10,7 @@
  * - Points earned
  */
 
+import { useState } from "react";
 import {
   CheckCircle2,
   XCircle,
@@ -17,10 +18,12 @@ import {
   AlertCircle,
   FileText,
   ExternalLink,
+  ChevronDown,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { Soal, Jawaban } from "@/types/kuis.types";
 import { TIPE_SOAL } from "@/types/kuis.types";
@@ -58,6 +61,16 @@ interface AnswerReviewProps {
    * Additional CSS classes
    */
   className?: string;
+
+  /**
+   * Start with detail expanded
+   */
+  defaultExpanded?: boolean;
+
+  /**
+   * Controlled expanded state from parent
+   */
+  expanded?: boolean;
 }
 
 // ============================================================================
@@ -70,11 +83,18 @@ export function AnswerReview({
   number,
   showCorrectAnswer = true,
   className,
+  defaultExpanded = false,
+  expanded,
 }: AnswerReviewProps) {
+  const [localExpanded, setLocalExpanded] = useState(defaultExpanded);
   const isAnswered = !!(jawaban?.jawaban || jawaban?.jawaban_mahasiswa);
   const isCorrect = jawaban?.is_correct ?? false;
   const poinDiperoleh = jawaban?.poin_diperoleh ?? 0;
   const needsManualGrading = soal.tipe_soal !== TIPE_SOAL.PILIHAN_GANDA;
+  const explanation = soal.penjelasan || (soal as any).pembahasan || "";
+  const shouldShowManualFeedback =
+    Boolean(jawaban?.feedback?.trim()) && needsManualGrading;
+  const isExpanded = expanded ?? localExpanded;
 
   // For manually graded questions
   const isManuallyGraded =
@@ -84,13 +104,17 @@ export function AnswerReview({
 
   return (
     <Card className={cn("overflow-hidden", className)}>
-      <CardHeader className="pb-4">
+      <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-2">
               <Badge variant="outline">Soal {number}</Badge>
               <Badge variant="secondary">{soal.poin} poin</Badge>
-              <Badge variant="outline">{soal.tipe_soal}</Badge>
+              <Badge variant="outline">
+                {soal.tipe_soal === TIPE_SOAL.PILIHAN_GANDA
+                  ? "CBT"
+                  : soal.tipe_soal}
+              </Badge>
             </div>
             <CardTitle className="text-base font-medium">
               {soal.pertanyaan}
@@ -98,7 +122,23 @@ export function AnswerReview({
           </div>
 
           {/* Status Icon */}
-          <div>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setLocalExpanded((value) => !value)}
+              className="h-8 px-2 text-xs font-semibold"
+              disabled={expanded !== undefined}
+            >
+              Detail
+              <ChevronDown
+                className={cn(
+                  "ml-1 h-4 w-4 transition-transform",
+                  isExpanded && "rotate-180",
+                )}
+              />
+            </Button>
             {!isAnswered ? (
               <Circle className="h-6 w-6 text-gray-400" />
             ) : isCorrect ? (
@@ -110,9 +150,41 @@ export function AnswerReview({
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-4">
+      {!isExpanded && (
+        <CardContent className="pb-4">
+          <div className="flex flex-col gap-2 rounded-lg bg-muted/60 px-3 py-2.5 text-sm sm:flex-row sm:items-center sm:justify-between">
+            <span className="font-medium text-muted-foreground">
+              Jawaban Anda
+            </span>
+            <span
+              className={cn(
+                "font-semibold",
+                isCorrect ? "text-green-700" : "text-red-700",
+              )}
+            >
+              {isAnswered
+                ? getAnswerLabel(
+                    soal,
+                    jawaban?.jawaban || jawaban?.jawaban_mahasiswa || "",
+                  )
+                : "Tidak dijawab"}
+            </span>
+            <span
+              className={cn(
+                "font-bold",
+                isCorrect ? "text-green-700" : "text-red-700",
+              )}
+            >
+              {poinDiperoleh} / {soal.poin}
+            </span>
+          </div>
+        </CardContent>
+      )}
+
+      {isExpanded && (
+      <CardContent className="space-y-3">
         {/* Points Earned */}
-        <div className="flex items-center justify-between p-3 rounded-lg bg-muted">
+        <div className="flex items-center justify-between rounded-lg bg-muted px-3 py-2.5">
           <span className="text-sm font-medium">Poin Diperoleh</span>
           <span
             className={cn(
@@ -136,7 +208,7 @@ export function AnswerReview({
             </Alert>
           ) : soal.tipe_soal === TIPE_SOAL.FILE_UPLOAD ? (
             // FILE_UPLOAD: Show file link or typed text
-            <div className="p-4 rounded-lg border-2 border-blue-300 bg-blue-50 dark:bg-blue-950">
+            <div className="p-3 rounded-lg border-2 border-blue-300 bg-blue-50 dark:bg-blue-950">
               {(jawaban.jawaban || jawaban.jawaban_mahasiswa)?.startsWith(
                 "http",
               ) ? (
@@ -162,7 +234,7 @@ export function AnswerReview({
             // Other types - show answer with coloring
             <div
               className={cn(
-                "p-4 rounded-lg border-2",
+                "p-3 rounded-lg border-2",
                 isCorrect
                   ? "border-green-300 bg-green-50 dark:bg-green-950"
                   : "border-red-300 bg-red-50 dark:bg-red-950",
@@ -187,7 +259,7 @@ export function AnswerReview({
               <p className="text-sm font-medium text-muted-foreground mb-2">
                 Jawaban yang Benar:
               </p>
-              <div className="p-4 rounded-lg border-2 border-green-300 bg-green-50 dark:bg-green-950">
+              <div className="p-3 rounded-lg border-2 border-green-300 bg-green-50 dark:bg-green-950">
                 <p className="font-medium text-green-900 dark:text-green-100">
                   {getCorrectAnswerLabel(soal)}
                 </p>
@@ -196,21 +268,21 @@ export function AnswerReview({
           )}
 
         {/* Explanation/Feedback */}
-        {soal.penjelasan && (
+        {!needsManualGrading && explanation.trim() && (
           <div>
             <p className="text-sm font-medium text-muted-foreground mb-2">
-              Penjelasan:
+              Keterangan Jawaban:
             </p>
             <Alert className="bg-blue-50 border-blue-200 text-blue-900 dark:bg-blue-950 dark:border-blue-800 dark:text-blue-100">
               <AlertDescription className="whitespace-pre-wrap">
-                {soal.penjelasan}
+                {explanation}
               </AlertDescription>
             </Alert>
           </div>
         )}
 
         {/* Manual Grading Feedback */}
-        {jawaban?.feedback && (
+        {shouldShowManualFeedback && (
           <div>
             <p className="text-sm font-medium text-muted-foreground mb-2">
               Feedback dari Dosen:
@@ -239,10 +311,13 @@ export function AnswerReview({
             <CheckCircle2 className="h-4 w-4" />
             <AlertDescription>
               <strong>Benar!</strong> Jawaban Anda tepat.
+              {!explanation.trim() &&
+                " Dosen belum menambahkan keterangan untuk soal ini."}
             </AlertDescription>
           </Alert>
         )}
       </CardContent>
+      )}
     </Card>
   );
 }
@@ -271,6 +346,11 @@ interface AnswerReviewListProps {
    * Additional CSS classes
    */
   className?: string;
+
+  /**
+   * Expand every answer card
+   */
+  expandAll?: boolean;
 }
 
 /**
@@ -281,6 +361,7 @@ export function AnswerReviewList({
   answers,
   showCorrectAnswers = true,
   className,
+  expandAll = false,
 }: AnswerReviewListProps) {
   // Create answer map for quick lookup
   const answerMap = new Map<string, Jawaban>();
@@ -290,11 +371,13 @@ export function AnswerReviewList({
     <div className={cn("space-y-4", className)}>
       {questions.map((soal, index) => (
         <AnswerReview
-          key={soal.id}
+          key={`${soal.id}-${expandAll ? "expanded" : "compact"}`}
           soal={soal}
           jawaban={answerMap.get(soal.id)}
           number={index + 1}
           showCorrectAnswer={showCorrectAnswers}
+          defaultExpanded={expandAll || questions.length <= 3 || index === 0}
+          expanded={expandAll ? true : undefined}
         />
       ))}
     </div>

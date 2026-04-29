@@ -21,6 +21,7 @@ import {
   FileText,
   Download,
   TrendingUp,
+  RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -55,22 +56,27 @@ import {
   type UploadMateriData,
 } from "@/lib/api/materi.api";
 import { getKelas } from "@/lib/api/kelas.api";
-import { getMyKelas } from "@/lib/api/dosen.api";
+import { getMataKuliah } from "@/lib/api/mata-kuliah.api";
 import type { Materi } from "@/types/materi.types";
 import type { Kelas } from "@/types/kelas.types";
+import type { MataKuliah } from "@/types/mata-kuliah.types";
 import { toast } from "sonner";
 import {
   cacheAPI,
   getCachedData,
   invalidateCache,
+  invalidateCachePatternSync,
 } from "@/lib/offline/api-cache";
 import { MAX_FILE_SIZE, formatFileSize } from "@/lib/supabase/storage";
 import { supabase } from "@/lib/supabase/client";
 import { notifyMahasiswaMateriBaru } from "@/lib/api/notification.api";
+import { cn } from "@/lib/utils";
 
 // ============================================================================
 // COMPONENT
 // ============================================================================
+
+const MASTER_DATA_CACHE_TTL = 60 * 1000;
 
 export default function DosenMateriPage() {
   const { user } = useAuth();
@@ -81,12 +87,15 @@ export default function DosenMateriPage() {
 
   const [loading, setLoading] = useState(true);
   const [materiList, setMateriList] = useState<Materi[]>([]);
+  const [mataKuliahList, setMataKuliahList] = useState<MataKuliah[]>([]);
   const [kelasList, setKelasList] = useState<Kelas[]>([]);
   const [filteredMateri, setFilteredMateri] = useState<Materi[]>([]);
+  const [resolvedDosenId, setResolvedDosenId] = useState<string | null>(null);
   const [isOfflineData, setIsOfflineData] = useState(false);
   const [lastUpdatedAt, setLastUpdatedAt] = useState<number | null>(null);
 
   // Filters
+  const [selectedMataKuliah, setSelectedMataKuliah] = useState<string>("all");
   const [selectedKelas, setSelectedKelas] = useState<string>("all");
   const [selectedMinggu, setSelectedMinggu] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -119,8 +128,9 @@ export default function DosenMateriPage() {
       return;
     }
 
-    const materiCacheKey = `dosen_materi_${user.dosen.id}`;
-    const kelasCacheKey = `dosen_kelas_materi_${user.dosen.id}`;
+    const materiCacheKey = `dosen_materi_${resolvedDosenId || user.dosen.id}`;
+    const mataKuliahCacheKey = "admin_master_mata_kuliah_materi";
+    const kelasCacheKey = "admin_master_kelas_materi";
 
     const handleCacheUpdated = (event: Event) => {
       const customEvent = event as CustomEvent<{
@@ -132,6 +142,15 @@ export default function DosenMateriPage() {
         const nextMateri = customEvent.detail?.data;
         if (Array.isArray(nextMateri)) {
           setMateriList(nextMateri as Materi[]);
+          setIsOfflineData(false);
+          setLastUpdatedAt(Date.now());
+        }
+      }
+
+      if (customEvent.detail?.key === mataKuliahCacheKey) {
+        const nextMataKuliah = customEvent.detail?.data;
+        if (Array.isArray(nextMataKuliah)) {
+          setMataKuliahList(nextMataKuliah as MataKuliah[]);
           setIsOfflineData(false);
           setLastUpdatedAt(Date.now());
         }
@@ -152,7 +171,7 @@ export default function DosenMateriPage() {
     return () => {
       window.removeEventListener("cache:updated", handleCacheUpdated);
     };
-  }, [user?.dosen?.id]);
+  }, [user?.dosen?.id, resolvedDosenId]);
 
   // ============================================================================
   // DATA LOADING
@@ -179,21 +198,78 @@ export default function DosenMateriPage() {
     }
   };
 
+  const resolveDosenId = async (): Promise<string | null> => {
+    if (!user?.id) {
+      return user?.dosen?.id || null;
+    }
+
+    if (!navigator.onLine) {
+      return resolvedDosenId || user?.dosen?.id || null;
+    }
+
+    try {
+      const query = supabase
+        .from("dosen")
+        .select("id")
+        .eq("user_id", user.id);
+
+      if (typeof (query as any).maybeSingle !== "function") {
+        return resolvedDosenId || user?.dosen?.id || null;
+      }
+
+      const { data, error } = await (query as any).maybeSingle();
+
+      if (error) {
+        throw error;
+      }
+
+      const nextDosenId = data?.id || user?.dosen?.id || null;
+      setResolvedDosenId(nextDosenId);
+      return nextDosenId;
+    } catch (error) {
+      console.warn("[Dosen MateriPage] Failed to resolve fresh dosen_id", error);
+      return resolvedDosenId || user?.dosen?.id || null;
+    }
+  };
+
+  const invalidateMateriCaches = async () => {
+    const dosenId = resolvedDosenId || user?.dosen?.id;
+    if (!dosenId) return;
+
+    await Promise.all([
+      invalidateCache(`dosen_materi_${dosenId}`),
+      user?.dosen?.id && user.dosen.id !== dosenId
+        ? invalidateCache(`dosen_materi_${user.dosen.id}`)
+        : Promise.resolve(),
+      invalidateCachePatternSync("query_filtered_materi"),
+      invalidateCachePatternSync("query_materi"),
+      invalidateCachePatternSync("mahasiswa_materi_"),
+    ]);
+  };
+
   async function loadData(forceRefresh = false) {
     if (!user?.dosen?.id) return;
 
     try {
       setLoading(true);
 
-      const materiCacheKey = `dosen_materi_${user.dosen.id}`;
-      const kelasCacheKey = `dosen_kelas_materi_${user.dosen.id}`;
+      const dosenId = (await resolveDosenId()) || user.dosen.id;
+      const dosenIds = Array.from(
+        new Set([dosenId, user.dosen.id].filter(Boolean)),
+      ) as string[];
+      const materiCacheKey = `dosen_materi_${dosenId}`;
+      const mataKuliahCacheKey = "admin_master_mata_kuliah_materi";
+      const kelasCacheKey = "admin_master_kelas_materi";
 
-      const [cachedMateriEntry, cachedKelasEntry] = await Promise.all([
-        getCachedData<Materi[]>(materiCacheKey),
-        getCachedData<Kelas[]>(kelasCacheKey),
-      ]);
+      const [cachedMateriEntry, cachedMataKuliahEntry, cachedKelasEntry] =
+        await Promise.all([
+          getCachedData<Materi[]>(materiCacheKey),
+          getCachedData<MataKuliah[]>(mataKuliahCacheKey),
+          getCachedData<Kelas[]>(kelasCacheKey),
+        ]);
 
       const hasCachedMateri = Array.isArray(cachedMateriEntry?.data);
+      const hasCachedMataKuliah = Array.isArray(cachedMataKuliahEntry?.data);
       const hasCachedKelas = Array.isArray(cachedKelasEntry?.data);
 
       if (hasCachedMateri) {
@@ -204,11 +280,16 @@ export default function DosenMateriPage() {
         setKelasList(cachedKelasEntry.data);
       }
 
-      if (hasCachedMateri || hasCachedKelas) {
+      if (hasCachedMataKuliah) {
+        setMataKuliahList(cachedMataKuliahEntry.data);
+      }
+
+      if (hasCachedMateri || hasCachedMataKuliah || hasCachedKelas) {
         setIsOfflineData(!navigator.onLine);
         setLastUpdatedAt(
           Math.max(
             cachedMateriEntry?.timestamp || 0,
+            cachedMataKuliahEntry?.timestamp || 0,
             cachedKelasEntry?.timestamp || 0,
           ) || null,
         );
@@ -217,34 +298,78 @@ export default function DosenMateriPage() {
 
       if (forceRefresh && !navigator.onLine) {
         throw new Error(
-          hasCachedMateri || hasCachedKelas
+          hasCachedMateri || hasCachedMataKuliah || hasCachedKelas
             ? "Perangkat sedang offline. Menampilkan snapshot materi terakhir."
             : "Perangkat sedang offline dan belum ada snapshot materi tersimpan.",
         );
       }
 
       // Use cacheAPI with stale-while-revalidate for offline support
-      const [materiData, kelasData] = await Promise.all([
-        cacheAPI(materiCacheKey, () => getMateriByDosen(user.dosen.id), {
-          ttl: 10 * 60 * 1000, // 10 minutes
-          forceRefresh,
-          staleWhileRevalidate: true,
-        }),
-        cacheAPI(kelasCacheKey, () => getMyKelas(), {
-          ttl: 15 * 60 * 1000, // 15 minutes (kelas jarang berubah)
-          forceRefresh,
-          staleWhileRevalidate: true,
-        }),
+      const [materiData, mataKuliahData, kelasData] = await Promise.all([
+        cacheAPI(
+          materiCacheKey,
+          async () => {
+            const materiByDosen = await Promise.all(
+              dosenIds.map((id) => getMateriByDosen(id)),
+            );
+            const materiMap = new Map<string, Materi>();
+            materiByDosen.flat().forEach((materi) => {
+              materiMap.set(materi.id, materi);
+            });
+            return Array.from(materiMap.values()).sort(
+              (a, b) =>
+                new Date((b as any).created_at || 0).getTime() -
+                new Date((a as any).created_at || 0).getTime(),
+            );
+          },
+          {
+            ttl: 10 * 60 * 1000, // 10 minutes
+            forceRefresh,
+            staleWhileRevalidate: true,
+          },
+        ),
+        cacheAPI(
+          mataKuliahCacheKey,
+          () => getMataKuliah({ is_active: true }),
+          {
+            ttl: MASTER_DATA_CACHE_TTL,
+            forceRefresh,
+            staleWhileRevalidate: true,
+          },
+        ),
+        cacheAPI(
+          kelasCacheKey,
+          () =>
+            getKelas({
+              is_active: true,
+            }),
+          {
+            ttl: MASTER_DATA_CACHE_TTL,
+            forceRefresh,
+            staleWhileRevalidate: true,
+          },
+        ),
       ]);
 
-      setMateriList(materiData);
-      setKelasList(kelasData as unknown as Kelas[]);
+      const safeMateriData = Array.isArray(materiData) ? materiData : [];
+      const safeMataKuliahData = Array.isArray(mataKuliahData)
+        ? mataKuliahData
+        : [];
+      const safeKelasData = Array.isArray(kelasData) ? kelasData : [];
+
+      setMateriList(safeMateriData);
+      setMataKuliahList(safeMataKuliahData);
+      setKelasList(safeKelasData);
       setIsOfflineData(false);
       setLastUpdatedAt(Date.now());
       console.log(
         "[Dosen MateriPage] Data loaded:",
-        materiData.length,
+        safeMateriData.length,
         "materi",
+        "for dosen_id",
+        dosenId,
+        "checked ids",
+        dosenIds,
       );
     } catch (error: any) {
       console.error("Error loading data:", error);
@@ -261,8 +386,23 @@ export default function DosenMateriPage() {
   // FILTERING
   // ============================================================================
 
+  function getMateriMataKuliahId(materi: Materi): string | null {
+    return (
+      (materi as any).mata_kuliah_id ||
+      (materi as any).mata_kuliah?.id ||
+      null
+    );
+  }
+
   const filterMateri = useCallback(() => {
     let filtered = [...materiList];
+
+    // Filter by mata kuliah selected by dosen saat upload.
+    if (selectedMataKuliah !== "all") {
+      filtered = filtered.filter(
+        (m) => getMateriMataKuliahId(m) === selectedMataKuliah,
+      );
+    }
 
     // Filter by kelas
     if (selectedKelas !== "all") {
@@ -286,7 +426,7 @@ export default function DosenMateriPage() {
     }
 
     setFilteredMateri(filtered);
-  }, [materiList, selectedKelas, selectedMinggu, searchQuery]);
+  }, [materiList, selectedMataKuliah, selectedKelas, selectedMinggu, searchQuery]);
 
   useEffect(() => {
     filterMateri();
@@ -311,20 +451,23 @@ export default function DosenMateriPage() {
       setUploadProgress(0);
 
       const file = formData.get("file") as File;
+      const mataKuliahId = formData.get("mata_kuliah_id") as string;
       const kelasId = formData.get("kelas_id") as string;
       const judul = formData.get("judul") as string;
       const deskripsi = formData.get("deskripsi") as string;
       const mingguKe = formData.get("minggu_ke") as string;
+      const dosenId = await resolveDosenId();
 
       // Validate
-      if (!file || !kelasId || !judul) {
+      if (!file || !mataKuliahId || !kelasId || !judul || !dosenId) {
         toast.error("Semua field harus diisi");
         return;
       }
 
       const uploadData: UploadMateriData = {
         kelas_id: kelasId,
-        dosen_id: user.dosen.id,
+        mata_kuliah_id: mataKuliahId,
+        dosen_id: dosenId,
         judul,
         deskripsi,
         file,
@@ -337,14 +480,15 @@ export default function DosenMateriPage() {
       });
 
       // Add to list and publish
-      await publishMateri(newMateri.id);
-      setMateriList((prev) => [newMateri, ...prev]);
+      const publishedMateri = await publishMateri(newMateri.id);
+      setMateriList((prev) => [publishedMateri, ...prev]);
 
       // Notify mahasiswa in the kelas (best-effort, non-blocking)
       const mahasiswaIds = await getMahasiswaIds(kelasId);
       if (mahasiswaIds.length > 0) {
         const kelasNama =
-          kelasList.find((kelas) => kelas.id === kelasId)?.nama_kelas || "Kelas";
+          kelasList.find((kelas) => kelas.id === kelasId)?.nama_kelas ||
+          "Kelas";
 
         notifyMahasiswaMateriBaru(
           mahasiswaIds,
@@ -359,7 +503,12 @@ export default function DosenMateriPage() {
 
       toast.success("Materi berhasil diupload");
       setShowUploadDialog(false);
-      loadData(); // Reload to get updated data
+      setSelectedMataKuliah("all");
+      setSelectedKelas("all");
+      setSelectedMinggu("all");
+      setSearchQuery("");
+      await invalidateMateriCaches();
+      loadData(true); // Reload fresh data so mahasiswa cache stays in sync
     } catch (error: any) {
       console.error("Error uploading materi:", error);
       toast.error(error.message || "Gagal mengupload materi");
@@ -367,6 +516,13 @@ export default function DosenMateriPage() {
       setUploading(false);
       setUploadProgress(0);
     }
+  }
+
+  async function handleOpenUploadDialog() {
+    if (navigator.onLine) {
+      await loadData(true);
+    }
+    setShowUploadDialog(true);
   }
 
   // ============================================================================
@@ -402,7 +558,8 @@ export default function DosenMateriPage() {
       toast.success("Materi berhasil diupdate");
       setShowEditDialog(false);
       setEditingMateri(null);
-      loadData();
+      await invalidateMateriCaches();
+      loadData(true);
     } catch (error: any) {
       console.error("Error updating materi:", error);
       toast.error(error.message || "Gagal mengupdate materi");
@@ -423,6 +580,7 @@ export default function DosenMateriPage() {
       await deleteMateri(materi.id);
       setMateriList((prev) => prev.filter((m) => m.id !== materi.id));
       toast.success("Materi berhasil dihapus");
+      await invalidateMateriCaches();
     } catch (error: any) {
       console.error("Error deleting materi:", error);
       toast.error(error.message || "Gagal menghapus materi");
@@ -499,15 +657,30 @@ export default function DosenMateriPage() {
               Upload dan atur materi pembelajaran dengan mudah
             </p>
           </div>
-          <Button
-            onClick={() => setShowUploadDialog(true)}
-            disabled={!navigator.onLine}
-            className="w-full sm:w-auto bg-linear-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground shadow-lg shadow-primary/30 font-semibold px-6"
-            size="lg"
-          >
-            <Plus className="mr-2 h-5 w-5" />
-            Upload Materi
-          </Button>
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+            <Button
+              variant="outline"
+              onClick={() => loadData(true)}
+              disabled={loading || !navigator.onLine}
+              className="w-full border-2 font-semibold sm:w-auto"
+              size="lg"
+              title="Ambil ulang data master terbaru dari admin"
+            >
+              <RefreshCw
+                className={cn("mr-2 h-5 w-5", loading && "animate-spin")}
+              />
+              Refresh Data
+            </Button>
+            <Button
+              onClick={handleOpenUploadDialog}
+              disabled={!navigator.onLine}
+              className="w-full sm:w-auto bg-linear-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground shadow-lg shadow-primary/30 font-semibold px-6"
+              size="lg"
+            >
+              <Plus className="mr-2 h-5 w-5" />
+              Upload Materi
+            </Button>
+          </div>
         </div>
 
         {(isOfflineData || !navigator.onLine) && (
@@ -598,7 +771,7 @@ export default function DosenMateriPage() {
         {/* Enhanced Filters */}
         <Card className="border-0 shadow-xl bg-linear-to-br from-white via-primary/5 to-accent/5 dark:from-slate-900 dark:via-primary/10 dark:to-accent/10 backdrop-blur-sm">
           <CardContent className="p-4 sm:p-6">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
               <div className="md:col-span-2">
                 <div className="relative">
                   <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
@@ -610,6 +783,25 @@ export default function DosenMateriPage() {
                   />
                 </div>
               </div>
+
+              <Select
+                value={selectedMataKuliah}
+                onValueChange={setSelectedMataKuliah}
+              >
+                <SelectTrigger className="h-12 border-2 font-semibold bg-white/90 dark:bg-card">
+                  <SelectValue placeholder="Semua Mata Kuliah" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Semua Mata Kuliah</SelectItem>
+                  {mataKuliahList.map((mataKuliah) => (
+                    <SelectItem key={mataKuliah.id} value={mataKuliah.id}>
+                      {mataKuliah.kode_mk
+                        ? `${mataKuliah.kode_mk} - ${mataKuliah.nama_mk}`
+                        : mataKuliah.nama_mk}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
               <Select value={selectedKelas} onValueChange={setSelectedKelas}>
                 <SelectTrigger className="h-12 border-2 font-semibold bg-white/90 dark:bg-card">
@@ -646,6 +838,7 @@ export default function DosenMateriPage() {
         <div className="rounded-2xl border-0 shadow-xl bg-linear-to-br from-white to-primary/5 dark:from-slate-900 dark:to-primary/10 p-1">
           <MateriList
             materiList={filteredMateri}
+            variant="dosen"
             showActions={true}
             showDosenActions={true}
             onView={handleView}
@@ -661,6 +854,7 @@ export default function DosenMateriPage() {
           open={showUploadDialog}
           onClose={() => setShowUploadDialog(false)}
           onUpload={handleUpload}
+          mataKuliahList={mataKuliahList}
           kelasList={kelasList}
           uploading={uploading}
           uploadProgress={uploadProgress}
@@ -700,6 +894,7 @@ interface UploadDialogProps {
   open: boolean;
   onClose: () => void;
   onUpload: (formData: FormData) => void;
+  mataKuliahList: MataKuliah[];
   kelasList: Kelas[];
   uploading: boolean;
   uploadProgress: number;
@@ -709,11 +904,14 @@ function UploadDialog({
   open,
   onClose,
   onUpload,
+  mataKuliahList,
   kelasList,
   uploading,
   uploadProgress,
 }: UploadDialogProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedMataKuliahId, setSelectedMataKuliahId] =
+    useState<string>("");
   const [selectedKelasId, setSelectedKelasId] = useState<string>("");
   const [selectedMingguKe, setSelectedMingguKe] = useState<string>("");
 
@@ -751,6 +949,33 @@ function UploadDialog({
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
+          <div>
+            <Label htmlFor="mata_kuliah_id">Mata Kuliah *</Label>
+            <Select
+              value={selectedMataKuliahId}
+              onValueChange={setSelectedMataKuliahId}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Pilih mata kuliah" />
+              </SelectTrigger>
+              <SelectContent>
+                {mataKuliahList.map((mataKuliah) => (
+                  <SelectItem key={mataKuliah.id} value={mataKuliah.id}>
+                    {mataKuliah.kode_mk
+                      ? `${mataKuliah.kode_mk} - ${mataKuliah.nama_mk}`
+                      : mataKuliah.nama_mk}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <input
+              type="hidden"
+              name="mata_kuliah_id"
+              value={selectedMataKuliahId}
+              required
+            />
+          </div>
+
           <div>
             <Label htmlFor="kelas_id">Kelas *</Label>
             <Select value={selectedKelasId} onValueChange={setSelectedKelasId}>

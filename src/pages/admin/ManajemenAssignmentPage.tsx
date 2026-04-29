@@ -269,7 +269,7 @@ export default function ManajemenAssignmentPage() {
 
       // Build master assignment query
       // FIX: Add dosen_id to select and include dosen relation
-      let query = supabase
+      const query = supabase
         .from("jadwal_praktikum")
         .select(
           `
@@ -369,7 +369,12 @@ export default function ManajemenAssignmentPage() {
       const assignmentMap = new Map<string, any>();
 
       rawData.forEach((item: any) => {
-        if (!item.dosen_id || !item.kelas_id || !item.mata_kuliah_id || !item.mata_kuliah) {
+        if (
+          !item.dosen_id ||
+          !item.kelas_id ||
+          !item.mata_kuliah_id ||
+          !item.mata_kuliah
+        ) {
           return;
         }
 
@@ -504,10 +509,10 @@ export default function ManajemenAssignmentPage() {
 
       const [kelasResponse, dosenForTab1, mkForTab1, jadwalAssignmentResponse] =
         await Promise.all([
-        supabase
-          .from("kelas")
-          .select(
-            `
+          supabase
+            .from("kelas")
+            .select(
+              `
             *,
             mata_kuliah:mata_kuliah_id (
               id,
@@ -525,14 +530,14 @@ export default function ManajemenAssignmentPage() {
               )
             )
           `,
-          )
-          .eq("is_active", true)
-          .order("tahun_ajaran", { ascending: false })
-          .order("nama_kelas"),
-        supabase
-          .from("dosen")
-          .select(
-            `
+            )
+            .eq("is_active", true)
+            .order("tahun_ajaran", { ascending: false })
+            .order("nama_kelas"),
+          supabase
+            .from("dosen")
+            .select(
+              `
             id,
             nip,
             users:user_id (
@@ -541,17 +546,17 @@ export default function ManajemenAssignmentPage() {
               email
             )
           `,
-          )
-          .order("users(full_name)"),
-        supabase
-          .from("mata_kuliah")
-          .select("id, nama_mk, kode_mk, sks, is_active")
-          .eq("is_active", true)
-          .order("nama_mk"),
-        (supabase as any)
-          .from("jadwal_praktikum")
-          .select(
-            `
+            )
+            .order("users(full_name)"),
+          supabase
+            .from("mata_kuliah")
+            .select("id, nama_mk, kode_mk, sks, is_active")
+            .eq("is_active", true)
+            .order("nama_mk"),
+          (supabase as any)
+            .from("jadwal_praktikum")
+            .select(
+              `
             id,
             kelas_id,
             dosen_id,
@@ -574,11 +579,11 @@ export default function ManajemenAssignmentPage() {
               sks
             )
           `,
-          )
-          .eq("is_active", true)
-          .order("updated_at", { ascending: false })
-          .order("created_at", { ascending: false }),
-      ]);
+            )
+            .eq("is_active", true)
+            .order("updated_at", { ascending: false })
+            .order("created_at", { ascending: false }),
+        ]);
 
       if (kelasResponse.error) throw kelasResponse.error;
 
@@ -633,7 +638,9 @@ export default function ManajemenAssignmentPage() {
     let filtered = [...praktikumReferences];
 
     if (filterDosen !== "all") {
-      filtered = filtered.filter((reference) => reference.dosen_id === filterDosen);
+      filtered = filtered.filter(
+        (reference) => reference.dosen_id === filterDosen,
+      );
     }
     if (filterMataKuliah !== "all") {
       filtered = filtered.filter(
@@ -674,9 +681,8 @@ export default function ManajemenAssignmentPage() {
         0,
       ),
       dosenAktif: new Set(praktikumReferences.map((r) => r.dosen_id)).size,
-      mataKuliahAktif: new Set(
-        praktikumReferences.map((r) => r.mata_kuliah_id),
-      ).size,
+      mataKuliahAktif: new Set(praktikumReferences.map((r) => r.mata_kuliah_id))
+        .size,
     };
   }, [praktikumReferences]);
 
@@ -837,12 +843,18 @@ export default function ManajemenAssignmentPage() {
         );
       }
 
-      const { error: jadwalDeleteError } = await supabaseAny
+      const jadwalArchiveBuilder = supabaseAny
         .from("jadwal_praktikum")
-        .delete()
-        .in("id", jadwalIdsToDelete);
+        .update?.({ is_active: false });
 
-      if (jadwalDeleteError) throw jadwalDeleteError;
+      const jadwalArchiveResult = jadwalArchiveBuilder
+        ? await jadwalArchiveBuilder.in("id", jadwalIdsToDelete)
+        : await supabaseAny
+            .from("jadwal_praktikum")
+            .delete()
+            .in("id", jadwalIdsToDelete);
+
+      if (jadwalArchiveResult?.error) throw jadwalArchiveResult.error;
 
       const kelasDeleted = false;
 
@@ -911,9 +923,9 @@ export default function ManajemenAssignmentPage() {
             .from("notifications")
             .insert({
               user_id: dosenUserId,
-              title: "Referensi Praktikum Dihapus",
-              message: `Assignment untuk mata kuliah ${mkData?.nama_mk} di kelas ${kelasData?.nama_kelas} telah dihapus oleh admin.`,
-              type: "assignment_deleted",
+              title: "Referensi Praktikum Diarsipkan",
+              message: `Assignment untuk mata kuliah ${mkData?.nama_mk} di kelas ${kelasData?.nama_kelas} telah diarsipkan oleh admin.`,
+              type: "assignment_archived",
               data: {
                 dosen_id,
                 mata_kuliah_id,
@@ -946,8 +958,8 @@ export default function ManajemenAssignmentPage() {
           .filter((m: any) => m.mahasiswa?.user?.id)
           .map((m: any) => ({
             user_id: m.mahasiswa.user.id,
-            title: "Praktikum Dibatalkan",
-            message: `Admin membatalkan referensi praktikum ${deleteConfirmation.assignment.mata_kuliah.nama_mk} - ${deleteConfirmation.assignment.kelas.nama_kelas}. Jadwal yang belum berjalan untuk referensi ini tidak lagi berlaku.`,
+            title: "Referensi Praktikum Diarsipkan",
+            message: `Admin mengarsipkan referensi praktikum ${deleteConfirmation.assignment.mata_kuliah.nama_mk} - ${deleteConfirmation.assignment.kelas.nama_kelas}. Jadwal yang belum berjalan untuk referensi ini tidak lagi berlaku.`,
             type: "jadwal_updated",
             data: {
               dosen_id,
@@ -978,7 +990,7 @@ export default function ManajemenAssignmentPage() {
         .from("audit_logs")
         .insert({
           user_id: user.id,
-          action: "DELETE_ASSIGNMENT_CASCADE",
+          action: "ARCHIVE_ASSIGNMENT_CASCADE",
           table_name: "jadwal_praktikum",
           record_id: `${dosen_id}-${mata_kuliah_id}-${kelas_id}`,
           old_data: {
@@ -1000,8 +1012,8 @@ export default function ManajemenAssignmentPage() {
         console.warn("Failed to write audit log:", auditError);
       }
 
-      toast.success("Assignment berhasil dihapus", {
-        description: `${deleteConfirmation.totalJadwal} jadwal praktikum juga dihapus`,
+      toast.success("Assignment berhasil diarsipkan", {
+        description: `${deleteConfirmation.totalJadwal} jadwal praktikum dinonaktifkan`,
       });
 
       setDeleteDialogOpen(false);
@@ -1075,7 +1087,8 @@ export default function ManajemenAssignmentPage() {
       if (dosenResult.data) {
         setDosenList(
           dosenResult.data.filter(
-            (dosen: any) => Boolean(dosen?.id) && Boolean(getDosenDisplayName(dosen)),
+            (dosen: any) =>
+              Boolean(dosen?.id) && Boolean(getDosenDisplayName(dosen)),
           ),
         );
       }
@@ -1088,7 +1101,9 @@ export default function ManajemenAssignmentPage() {
   }, []);
 
   const todayDate = format(new Date(), "yyyy-MM-dd");
-  const isPastJadwal = (jadwal?: { tanggal_praktikum?: string | null } | null) =>
+  const isPastJadwal = (
+    jadwal?: { tanggal_praktikum?: string | null } | null,
+  ) =>
     Boolean(jadwal?.tanggal_praktikum) &&
     (jadwal?.tanggal_praktikum || "") < todayDate;
 
@@ -1296,10 +1311,13 @@ export default function ManajemenAssignmentPage() {
     );
 
     if (hasPastJadwal) {
-      toast.error("Referensi dengan sesi yang sudah lewat tidak bisa dikoreksi", {
-        description:
-          "Riwayat praktikum yang sudah lewat tanggal tetap dikunci untuk menjaga konsistensi data.",
-      });
+      toast.error(
+        "Referensi dengan sesi yang sudah lewat tidak bisa dikoreksi",
+        {
+          description:
+            "Riwayat praktikum yang sudah lewat tanggal tetap dikunci untuk menjaga konsistensi data.",
+        },
+      );
       return;
     }
 
@@ -1402,7 +1420,8 @@ export default function ManajemenAssignmentPage() {
 
       const jadwalIdsToUpdate = (jadwalCandidates || [])
         .filter(
-          (jadwal: any) => jadwal.mata_kuliah_id === editAssignmentData.old_mata_kuliah_id,
+          (jadwal: any) =>
+            jadwal.mata_kuliah_id === editAssignmentData.old_mata_kuliah_id,
         )
         .map((jadwal: any) => jadwal.id);
 
@@ -1514,10 +1533,11 @@ export default function ManajemenAssignmentPage() {
       if (updateError) throw updateError;
 
       const kelasNotifIds = Array.from(
-        new Set([
-          editAssignmentData.old_kelas_id,
-          editAssignmentData.kelas_id,
-        ].filter(Boolean)),
+        new Set(
+          [editAssignmentData.old_kelas_id, editAssignmentData.kelas_id].filter(
+            Boolean,
+          ),
+        ),
       );
 
       const { data: mahasiswaList } = await supabaseAny
@@ -1538,19 +1558,19 @@ export default function ManajemenAssignmentPage() {
         const { error: oldDosenNotifError } = await supabaseAny
           .from("notifications")
           .insert({
-          user_id: oldDosen.user.id,
-          title: "Referensi Praktikum Dikoreksi",
-          message: `Referensi praktikum ${oldMataKuliahInfo?.nama_mk || "-"} - ${oldKelasInfo?.nama_kelas || "-"} tidak lagi ditugaskan kepada Anda.`,
-          type: "assignment_reassigned",
-          data: {
-            old_kelas_id: editAssignmentData.old_kelas_id,
-            new_kelas_id: editAssignmentData.kelas_id,
-            old_mata_kuliah_id: editAssignmentData.old_mata_kuliah_id,
-            new_mata_kuliah_id: editAssignmentData.mata_kuliah_id,
-            old_dosen_id: editAssignmentData.old_dosen_id,
-            new_dosen_id: editAssignmentData.dosen_id,
-          },
-        });
+            user_id: oldDosen.user.id,
+            title: "Referensi Praktikum Dikoreksi",
+            message: `Referensi praktikum ${oldMataKuliahInfo?.nama_mk || "-"} - ${oldKelasInfo?.nama_kelas || "-"} tidak lagi ditugaskan kepada Anda.`,
+            type: "assignment_reassigned",
+            data: {
+              old_kelas_id: editAssignmentData.old_kelas_id,
+              new_kelas_id: editAssignmentData.kelas_id,
+              old_mata_kuliah_id: editAssignmentData.old_mata_kuliah_id,
+              new_mata_kuliah_id: editAssignmentData.mata_kuliah_id,
+              old_dosen_id: editAssignmentData.old_dosen_id,
+              new_dosen_id: editAssignmentData.dosen_id,
+            },
+          });
 
         if (oldDosenNotifError) {
           console.warn(
@@ -1568,19 +1588,19 @@ export default function ManajemenAssignmentPage() {
         const { error: newDosenNotifError } = await supabaseAny
           .from("notifications")
           .insert({
-          user_id: newDosen.user.id,
-          title: "Referensi Praktikum Dikoreksi",
-          message: dosenNotificationMessage,
-          type: dosenChanged ? "assignment_added" : "jadwal_updated",
-          data: {
-            old_kelas_id: editAssignmentData.old_kelas_id,
-            new_kelas_id: editAssignmentData.kelas_id,
-            old_mata_kuliah_id: editAssignmentData.old_mata_kuliah_id,
-            new_mata_kuliah_id: editAssignmentData.mata_kuliah_id,
-            old_dosen_id: editAssignmentData.old_dosen_id,
-            new_dosen_id: editAssignmentData.dosen_id,
-          },
-        });
+            user_id: newDosen.user.id,
+            title: "Referensi Praktikum Dikoreksi",
+            message: dosenNotificationMessage,
+            type: dosenChanged ? "assignment_added" : "jadwal_updated",
+            data: {
+              old_kelas_id: editAssignmentData.old_kelas_id,
+              new_kelas_id: editAssignmentData.kelas_id,
+              old_mata_kuliah_id: editAssignmentData.old_mata_kuliah_id,
+              new_mata_kuliah_id: editAssignmentData.mata_kuliah_id,
+              old_dosen_id: editAssignmentData.old_dosen_id,
+              new_dosen_id: editAssignmentData.dosen_id,
+            },
+          });
 
         if (newDosenNotifError) {
           console.warn(
@@ -1858,13 +1878,17 @@ export default function ManajemenAssignmentPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalJadwal}</div>
-            <p className="text-xs text-muted-foreground">Detail jadwal praktikum</p>
+            <p className="text-xs text-muted-foreground">
+              Detail jadwal praktikum
+            </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Jadwal Disetujui</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Jadwal Disetujui
+            </CardTitle>
             <CheckCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -1880,18 +1904,24 @@ export default function ManajemenAssignmentPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.historyJadwal}</div>
-            <p className="text-xs text-muted-foreground">Praktikum yang sudah lewat</p>
+            <p className="text-xs text-muted-foreground">
+              Praktikum yang sudah lewat
+            </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Dosen Terlibat</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Dosen Terlibat
+            </CardTitle>
             <BarChart3 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.uniqueDosen}</div>
-            <p className="text-xs text-muted-foreground">Pengampu pada jadwal aktif</p>
+            <p className="text-xs text-muted-foreground">
+              Pengampu pada jadwal aktif
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -2053,7 +2083,9 @@ export default function ManajemenAssignmentPage() {
               ) : filteredReferences.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground">
                   <Users className="h-10 w-10 mx-auto mb-3 opacity-40" />
-                  <p className="font-medium">Tidak ada referensi praktikum ditemukan</p>
+                  <p className="font-medium">
+                    Tidak ada referensi praktikum ditemukan
+                  </p>
                   <p className="text-sm">
                     Coba ubah filter atau kata kunci pencarian
                   </p>
@@ -2073,85 +2105,87 @@ export default function ManajemenAssignmentPage() {
                   <TableBody>
                     {filteredReferences.map((reference) => (
                       <TableRow key={reference.key}>
-                          <TableCell>
-                            <div className="font-medium">
-                              {reference.kelas_nama}
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                              {reference.kelas_kode}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            {reference.mata_kuliah_nama ? (
-                              <div>
-                                <div className="font-medium">
-                                  {reference.mata_kuliah_nama}
-                                </div>
-                                <div className="text-xs text-muted-foreground">
-                                  {reference.mata_kuliah_kode}
-                                  {typeof reference.mata_kuliah_sks === "number"
-                                    ? ` · ${reference.mata_kuliah_sks} SKS`
-                                    : ""}
-                                </div>
+                        <TableCell>
+                          <div className="font-medium">
+                            {reference.kelas_nama}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {reference.kelas_kode}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {reference.mata_kuliah_nama ? (
+                            <div>
+                              <div className="font-medium">
+                                {reference.mata_kuliah_nama}
                               </div>
-                            ) : (
-                              <span className="text-muted-foreground text-sm">
-                                —
-                              </span>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            {reference.dosen_nama ? (
-                              <div>
-                                <div className="font-medium">
-                                  {reference.dosen_nama}
-                                </div>
-                                <div className="text-xs text-muted-foreground">
-                                  {reference.dosen_email}
-                                </div>
+                              <div className="text-xs text-muted-foreground">
+                                {reference.mata_kuliah_kode}
+                                {typeof reference.mata_kuliah_sks === "number"
+                                  ? ` · ${reference.mata_kuliah_sks} SKS`
+                                  : ""}
                               </div>
-                            ) : (
-                              <span className="text-muted-foreground text-sm">
-                                —
-                              </span>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <div className="text-sm">{reference.tahun_ajaran}</div>
-                            <div className="text-xs text-muted-foreground">
-                              Sem {reference.semester_ajaran}
                             </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge className="bg-green-100 text-green-800 border-green-200">
-                              <CheckCircle className="h-3 w-3 mr-1" />
-                              {reference.total_jadwal} jadwal
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex justify-end gap-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() =>
-                                  handleEditAssignment(reference.assignment)
-                                }
-                              >
-                                <Edit className="h-4 w-4 mr-1" />
-                                Koreksi Relasi
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() =>
-                                  handleDeleteAssignment(reference.assignment)
-                                }
-                              >
-                                <Trash2 className="h-4 w-4 mr-1" />
-                                Hapus
-                              </Button>
+                          ) : (
+                            <span className="text-muted-foreground text-sm">
+                              —
+                            </span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {reference.dosen_nama ? (
+                            <div>
+                              <div className="font-medium">
+                                {reference.dosen_nama}
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                {reference.dosen_email}
+                              </div>
                             </div>
-                          </TableCell>
+                          ) : (
+                            <span className="text-muted-foreground text-sm">
+                              —
+                            </span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm">
+                            {reference.tahun_ajaran}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            Sem {reference.semester_ajaran}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge className="bg-green-100 text-green-800 border-green-200">
+                            <CheckCircle className="h-3 w-3 mr-1" />
+                            {reference.total_jadwal} jadwal
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() =>
+                                handleEditAssignment(reference.assignment)
+                              }
+                            >
+                              <Edit className="h-4 w-4 mr-1" />
+                              Koreksi Relasi
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() =>
+                                handleDeleteAssignment(reference.assignment)
+                              }
+                            >
+                              <Trash2 className="h-4 w-4 mr-1" />
+                              Hapus
+                            </Button>
+                          </div>
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -2368,12 +2402,14 @@ export default function ManajemenAssignmentPage() {
                           ) : (
                             <div className="space-y-4">
                               {(() => {
-                                const upcomingJadwal = assignment.jadwalDetail.filter(
-                                  (jadwal) => !isPastJadwal(jadwal),
-                                );
-                                const historyJadwal = assignment.jadwalDetail.filter(
-                                  (jadwal) => isPastJadwal(jadwal),
-                                );
+                                const upcomingJadwal =
+                                  assignment.jadwalDetail.filter(
+                                    (jadwal) => !isPastJadwal(jadwal),
+                                  );
+                                const historyJadwal =
+                                  assignment.jadwalDetail.filter((jadwal) =>
+                                    isPastJadwal(jadwal),
+                                  );
 
                                 const renderJadwalRow = (
                                   jadwal: Jadwal,
@@ -2389,7 +2425,9 @@ export default function ManajemenAssignmentPage() {
                                           <Calendar className="h-4 w-4" />
                                           <span>
                                             {format(
-                                              new Date(jadwal.tanggal_praktikum),
+                                              new Date(
+                                                jadwal.tanggal_praktikum,
+                                              ),
                                               "dd MMM yyyy",
                                               { locale: localeId },
                                             )}
@@ -2410,7 +2448,9 @@ export default function ManajemenAssignmentPage() {
                                       <div className="text-sm">
                                         <div className="flex items-center gap-2">
                                           <MapPin className="h-4 w-4" />
-                                          <span>{jadwal.laboratorium.nama_lab}</span>
+                                          <span>
+                                            {jadwal.laboratorium.nama_lab}
+                                          </span>
                                         </div>
                                         {jadwal.topik && (
                                           <div className="text-muted-foreground">
@@ -2424,12 +2464,16 @@ export default function ManajemenAssignmentPage() {
                                       {getStatusBadge(jadwal.status)}
 
                                       {readOnly ? (
-                                        <Badge variant="secondary">Riwayat Tetap</Badge>
+                                        <Badge variant="secondary">
+                                          Riwayat Tetap
+                                        </Badge>
                                       ) : (
                                         <Button
                                           variant="ghost"
                                           size="sm"
-                                          onClick={() => handleEditJadwal(jadwal)}
+                                          onClick={() =>
+                                            handleEditJadwal(jadwal)
+                                          }
                                         >
                                           <Edit className="h-3 w-3 mr-1" />
                                           Koreksi Jadwal
@@ -2476,7 +2520,8 @@ export default function ManajemenAssignmentPage() {
                                         )
                                       ) : (
                                         <div className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
-                                          Belum ada riwayat praktikum pada kelompok ini.
+                                          Belum ada riwayat praktikum pada
+                                          kelompok ini.
                                         </div>
                                       )}
                                     </div>
@@ -2619,9 +2664,9 @@ export default function ManajemenAssignmentPage() {
             <DialogTitle>Konfirmasi Hapus Referensi Praktikum</DialogTitle>
             <DialogDescription>
               Tindakan ini akan menghapus referensi praktikum dan jadwal
-              terkait. Penghapusan akan ditolak jika referensi ini sudah
-              dipakai untuk proses akademik seperti presensi, logbook, materi,
-              kuis, atau nilai.
+              terkait. Penghapusan akan ditolak jika referensi ini sudah dipakai
+              untuk proses akademik seperti presensi, logbook, materi, kuis,
+              atau nilai.
             </DialogDescription>
           </DialogHeader>
 
@@ -2654,8 +2699,8 @@ export default function ManajemenAssignmentPage() {
                       {deleteConfirmation.totalJadwal} jadwal praktikum terkait
                     </li>
                     <li>
-                      Jika sudah ada aktivitas akademik, penghapusan akan
-                      diblok untuk menjaga riwayat data
+                      Jika sudah ada aktivitas akademik, penghapusan akan diblok
+                      untuk menjaga riwayat data
                     </li>
                   </ul>
                 </AlertDescription>
@@ -2712,108 +2757,111 @@ export default function ManajemenAssignmentPage() {
           {editJadwalData && (
             <div className="min-h-0 flex-1 overflow-y-auto px-6 py-4">
               <div className="space-y-4">
-              <div className="space-y-2">
-                <label htmlFor="tanggal" className="text-sm font-medium">
-                  Tanggal Praktikum
-                </label>
-                <Input
-                  id="tanggal"
-                  type="date"
-                  value={editJadwalData.tanggal_praktikum}
-                  onChange={(e) =>
-                    setEditJadwalData({
-                      ...editJadwalData,
-                      tanggal_praktikum: e.target.value,
-                    })
-                  }
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label htmlFor="jam_mulai" className="text-sm font-medium">
-                    Jam Mulai
+                  <label htmlFor="tanggal" className="text-sm font-medium">
+                    Tanggal Praktikum
                   </label>
                   <Input
-                    id="jam_mulai"
-                    type="time"
-                    value={editJadwalData.jam_mulai.substring(0, 5)}
+                    id="tanggal"
+                    type="date"
+                    value={editJadwalData.tanggal_praktikum}
                     onChange={(e) =>
                       setEditJadwalData({
                         ...editJadwalData,
-                        jam_mulai: e.target.value + ":00",
+                        tanggal_praktikum: e.target.value,
                       })
                     }
                   />
                 </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label htmlFor="jam_mulai" className="text-sm font-medium">
+                      Jam Mulai
+                    </label>
+                    <Input
+                      id="jam_mulai"
+                      type="time"
+                      value={editJadwalData.jam_mulai.substring(0, 5)}
+                      onChange={(e) =>
+                        setEditJadwalData({
+                          ...editJadwalData,
+                          jam_mulai: e.target.value + ":00",
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label
+                      htmlFor="jam_selesai"
+                      className="text-sm font-medium"
+                    >
+                      Jam Selesai
+                    </label>
+                    <Input
+                      id="jam_selesai"
+                      type="time"
+                      value={editJadwalData.jam_selesai.substring(0, 5)}
+                      onChange={(e) =>
+                        setEditJadwalData({
+                          ...editJadwalData,
+                          jam_selesai: e.target.value + ":00",
+                        })
+                      }
+                    />
+                  </div>
+                </div>
+
                 <div className="space-y-2">
-                  <label htmlFor="jam_selesai" className="text-sm font-medium">
-                    Jam Selesai
+                  <label htmlFor="laboratorium" className="text-sm font-medium">
+                    Laboratorium
+                  </label>
+                  <Select
+                    value={editJadwalData.laboratorium_id}
+                    onValueChange={(value) =>
+                      setEditJadwalData({
+                        ...editJadwalData,
+                        laboratorium_id: value,
+                      })
+                    }
+                  >
+                    <SelectTrigger id="laboratorium">
+                      <SelectValue placeholder="Pilih laboratorium" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {labList.map((lab) => (
+                        <SelectItem key={lab.id} value={lab.id}>
+                          {lab.nama_lab}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <label htmlFor="topik" className="text-sm font-medium">
+                    Topik
                   </label>
                   <Input
-                    id="jam_selesai"
-                    type="time"
-                    value={editJadwalData.jam_selesai.substring(0, 5)}
+                    id="topik"
+                    placeholder="Topik praktikum"
+                    value={editJadwalData.topik}
                     onChange={(e) =>
                       setEditJadwalData({
                         ...editJadwalData,
-                        jam_selesai: e.target.value + ":00",
+                        topik: e.target.value,
                       })
                     }
                   />
                 </div>
-              </div>
 
-              <div className="space-y-2">
-                <label htmlFor="laboratorium" className="text-sm font-medium">
-                  Laboratorium
-                </label>
-                <Select
-                  value={editJadwalData.laboratorium_id}
-                  onValueChange={(value) =>
-                    setEditJadwalData({
-                      ...editJadwalData,
-                      laboratorium_id: value,
-                    })
-                  }
-                >
-                  <SelectTrigger id="laboratorium">
-                    <SelectValue placeholder="Pilih laboratorium" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {labList.map((lab) => (
-                      <SelectItem key={lab.id} value={lab.id}>
-                        {lab.nama_lab}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <label htmlFor="topik" className="text-sm font-medium">
-                  Topik
-                </label>
-                <Input
-                  id="topik"
-                  placeholder="Topik praktikum"
-                  value={editJadwalData.topik}
-                  onChange={(e) =>
-                    setEditJadwalData({
-                      ...editJadwalData,
-                      topik: e.target.value,
-                    })
-                  }
-                />
-              </div>
-
-              <Alert>
-                <AlertTriangle className="h-4 w-4" />
-                <AlertDescription>
-                  Notifikasi koreksi akan dikirim ke dosen pengajar dan semua
-                  mahasiswa di kelas ini.
-                </AlertDescription>
-              </Alert>
+                <Alert>
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription>
+                    Notifikasi koreksi akan dikirim ke dosen pengajar dan semua
+                    mahasiswa di kelas ini.
+                  </AlertDescription>
+                </Alert>
               </div>
             </div>
           )}
@@ -2856,116 +2904,118 @@ export default function ManajemenAssignmentPage() {
           {editAssignmentData && (
             <div className="min-h-0 flex-1 overflow-y-auto px-6 py-4">
               <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="kelas_assignment_info">Kelas</Label>
-                <Select
-                  value={editAssignmentData.kelas_id}
-                  onValueChange={(value) =>
-                    setEditAssignmentData({
-                      ...editAssignmentData,
-                      kelas_id: value,
-                    })
-                  }
-                >
-                  <SelectTrigger id="kelas_assignment_info">
-                    <SelectValue placeholder="Pilih kelas" />
-                  </SelectTrigger>
-                  <SelectContent className="max-h-72">
-                    {kelasDropdownList.map((kelas) => (
-                      <SelectItem key={kelas.id} value={kelas.id}>
-                        {kelas.nama_kelas} ({kelas.kode_kelas})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+                <div className="space-y-2">
+                  <Label htmlFor="kelas_assignment_info">Kelas</Label>
+                  <Select
+                    value={editAssignmentData.kelas_id}
+                    onValueChange={(value) =>
+                      setEditAssignmentData({
+                        ...editAssignmentData,
+                        kelas_id: value,
+                      })
+                    }
+                  >
+                    <SelectTrigger id="kelas_assignment_info">
+                      <SelectValue placeholder="Pilih kelas" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-72">
+                      {kelasDropdownList.map((kelas) => (
+                        <SelectItem key={kelas.id} value={kelas.id}>
+                          {kelas.nama_kelas} ({kelas.kode_kelas})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="mata_kuliah_assignment_info">Mata Kuliah</Label>
-                <Select
-                  value={editAssignmentData.mata_kuliah_id}
-                  onValueChange={(value) =>
-                    setEditAssignmentData({
-                      ...editAssignmentData,
-                      mata_kuliah_id: value,
-                    })
-                  }
-                >
-                  <SelectTrigger id="mata_kuliah_assignment_info">
-                    <SelectValue placeholder="Pilih mata kuliah" />
-                  </SelectTrigger>
-                  <SelectContent className="max-h-72">
-                    {mataKuliahList.map((mk) => (
-                      <SelectItem key={mk.id} value={mk.id}>
-                        {mk.nama_mk} ({mk.kode_mk})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+                <div className="space-y-2">
+                  <Label htmlFor="mata_kuliah_assignment_info">
+                    Mata Kuliah
+                  </Label>
+                  <Select
+                    value={editAssignmentData.mata_kuliah_id}
+                    onValueChange={(value) =>
+                      setEditAssignmentData({
+                        ...editAssignmentData,
+                        mata_kuliah_id: value,
+                      })
+                    }
+                  >
+                    <SelectTrigger id="mata_kuliah_assignment_info">
+                      <SelectValue placeholder="Pilih mata kuliah" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-72">
+                      {mataKuliahList.map((mk) => (
+                        <SelectItem key={mk.id} value={mk.id}>
+                          {mk.nama_mk} ({mk.kode_mk})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-              <div className="space-y-2">
-                <label htmlFor="dosen_baru" className="text-sm font-medium">
-                  Dosen
-                </label>
-                <Select
-                  value={editAssignmentData.dosen_id}
-                  onValueChange={(value) =>
-                    setEditAssignmentData({
-                      ...editAssignmentData,
-                      dosen_id: value,
-                    })
-                  }
-                >
-                  <SelectTrigger id="dosen_baru">
-                    <SelectValue placeholder="Pilih dosen" />
-                  </SelectTrigger>
-                  <SelectContent className="max-h-72">
-                    {dosenList.map((dosen) => (
-                      <SelectItem key={dosen.id} value={dosen.id}>
-                        {getDosenDisplayName(dosen)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+                <div className="space-y-2">
+                  <label htmlFor="dosen_baru" className="text-sm font-medium">
+                    Dosen
+                  </label>
+                  <Select
+                    value={editAssignmentData.dosen_id}
+                    onValueChange={(value) =>
+                      setEditAssignmentData({
+                        ...editAssignmentData,
+                        dosen_id: value,
+                      })
+                    }
+                  >
+                    <SelectTrigger id="dosen_baru">
+                      <SelectValue placeholder="Pilih dosen" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-72">
+                      {dosenList.map((dosen) => (
+                        <SelectItem key={dosen.id} value={dosen.id}>
+                          {getDosenDisplayName(dosen)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-              <Alert className="border-primary/20 bg-primary/5">
-                <AlertTriangle className="h-4 w-4" />
-                <AlertDescription>
-                  <strong>Perhatian:</strong>
-                  <ul className="mt-2 list-disc list-inside text-sm">
-                    <li>
-                      Hanya jadwal pada referensi praktikum yang dipilih ini
-                      yang akan diperbarui
-                    </li>
-                    <li>
-                      Jika kelas berubah, mahasiswa pada kelas lama dan kelas
-                      baru akan menerima notifikasi
-                    </li>
-                    <li>
-                      Jika dosen berubah, dosen lama dan dosen baru akan
-                      menerima notifikasi
-                    </li>
-                    <li>
-                      Koreksi mata kuliah juga akan disinkronkan ke jadwal
-                      praktikum terkait
-                    </li>
-                    <li>
-                      Jika ada sesi praktikum yang sudah lewat tanggal, koreksi
-                      referensi tidak bisa dilakukan
-                    </li>
-                    <li>
-                      Jika salah satu jadwal sudah memiliki presensi, koreksi
-                      referensi akan ditolak untuk menjaga riwayat kehadiran
-                    </li>
-                    <li>
-                      Jika sudah ada materi, kuis, nilai, atau logbook pada
-                      referensi lama, koreksi referensi juga akan ditolak
-                    </li>
-                  </ul>
-                </AlertDescription>
-              </Alert>
+                <Alert className="border-primary/20 bg-primary/5">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription>
+                    <strong>Perhatian:</strong>
+                    <ul className="mt-2 list-disc list-inside text-sm">
+                      <li>
+                        Hanya jadwal pada referensi praktikum yang dipilih ini
+                        yang akan diperbarui
+                      </li>
+                      <li>
+                        Jika kelas berubah, mahasiswa pada kelas lama dan kelas
+                        baru akan menerima notifikasi
+                      </li>
+                      <li>
+                        Jika dosen berubah, dosen lama dan dosen baru akan
+                        menerima notifikasi
+                      </li>
+                      <li>
+                        Koreksi mata kuliah juga akan disinkronkan ke jadwal
+                        praktikum terkait
+                      </li>
+                      <li>
+                        Jika ada sesi praktikum yang sudah lewat tanggal,
+                        koreksi referensi tidak bisa dilakukan
+                      </li>
+                      <li>
+                        Jika salah satu jadwal sudah memiliki presensi, koreksi
+                        referensi akan ditolak untuk menjaga riwayat kehadiran
+                      </li>
+                      <li>
+                        Jika sudah ada materi, kuis, nilai, atau logbook pada
+                        referensi lama, koreksi referensi juga akan ditolak
+                      </li>
+                    </ul>
+                  </AlertDescription>
+                </Alert>
               </div>
             </div>
           )}

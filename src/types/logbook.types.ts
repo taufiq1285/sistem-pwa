@@ -31,6 +31,7 @@ export interface LogbookEntry {
   // Metadata
   submitted_at?: string | null;
   reviewed_at?: string | null;
+  graded_at?: string | null;
   created_at: string;
   updated_at: string;
 
@@ -40,6 +41,16 @@ export interface LogbookEntry {
     topik?: string | null;
     tanggal_praktikum?: string | null;
     kelas_id?: string | null; // Kelas ID from jadwal
+    mata_kuliah_id?: string | null;
+    kelas?: {
+      id?: string;
+      nama_kelas?: string | null;
+    } | null;
+    mata_kuliah?: {
+      id?: string;
+      kode_mk?: string | null;
+      nama_mk?: string | null;
+    } | null;
     laboratorium?: {
       nama_lab: string;
     } | null;
@@ -95,6 +106,7 @@ export interface DosenReviewData {
 export interface GradeLogbookData {
   id: string;
   nilai: number; // 0-100
+  feedback?: string;
 }
 
 // ========================================
@@ -105,6 +117,7 @@ export interface LogbookFilters {
   jadwal_id?: string;
   mahasiswa_id?: string;
   kelas_id?: string; // Filter by kelas mahasiswa
+  mata_kuliah_id?: string; // Filter by mata kuliah on jadwal_praktikum
   dosen_id?: string; // Filter by dosen reviewer
   status?: "draft" | "submitted" | "reviewed" | "graded";
   tanggal_mulai?: string;
@@ -138,8 +151,8 @@ export const LOGBOOK_STATUS = {
 
 export const LOGBOOK_STATUS_LABELS: Record<string, string> = {
   draft: "Draft",
-  submitted: "Diserahkan",
-  reviewed: "Direview",
+  submitted: "Menunggu Dinilai",
+  reviewed: "Menunggu Dinilai",
   graded: "Dinilai",
 };
 

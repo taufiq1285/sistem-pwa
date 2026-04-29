@@ -90,7 +90,11 @@ import {
   type KelasMahasiswa,
 } from "@/lib/api/kelas.api";
 import type { Kelas } from "@/types/kelas.types";
-import { cacheAPI, invalidateCache } from "@/lib/offline/api-cache";
+import {
+  cacheAPI,
+  invalidateCache,
+  invalidateCachePatternSync,
+} from "@/lib/offline/api-cache";
 
 export default function KelasPage() {
   // Ref untuk prevent double load di strict mode
@@ -192,6 +196,20 @@ export default function KelasPage() {
     }
   };
 
+  const invalidateKelasCaches = async () => {
+    await Promise.all([
+      invalidateCachePatternSync("admin_all_kelas"),
+      invalidateCachePatternSync("admin_master_kelas"),
+      invalidateCachePatternSync("dosen_kelas_materi"),
+      invalidateCachePatternSync("dosen_jadwal_kelas"),
+      invalidateCachePatternSync("dosen_mata_kuliah"),
+      invalidateCachePatternSync("dosen_kelas_penilaian"),
+      invalidateCachePatternSync("dosen_kelas_"),
+      invalidateCachePatternSync("mahasiswa_kelas_"),
+      invalidateCachePatternSync("mahasiswa_materi_"),
+    ]);
+  };
+
   const handleCreate = () => {
     setEditingKelas(null);
     setFormData({
@@ -252,7 +270,7 @@ export default function KelasPage() {
       }
       setShowFormDialog(false);
       // Invalidate cache and reload
-      await invalidateCache("admin_all_kelas");
+      await invalidateKelasCaches();
       await loadKelas(true);
     } catch (error: any) {
       toast.error(error.message || "Gagal menyimpan kelas");
@@ -282,7 +300,7 @@ export default function KelasPage() {
       setIsDeleteDialogOpen(false);
       setDeletingKelas(null);
       // Invalidate cache and reload
-      await invalidateCache("admin_all_kelas");
+      await invalidateKelasCaches();
       await loadKelas(true);
     } catch (error: any) {
       toast.error(error.message || "Gagal menghapus kelas");
@@ -319,7 +337,7 @@ export default function KelasPage() {
     try {
       await Promise.all(selectedKelas.map((kelas) => deleteKelas(kelas.id)));
       toast.success(`Berhasil menghapus ${selectedKelas.length} kelas`);
-      await invalidateCache("admin_all_kelas");
+      await invalidateKelasCaches();
       await loadKelas(true);
     } catch (error: any) {
       toast.error("Gagal menghapus kelas: " + error.message);
@@ -340,7 +358,7 @@ export default function KelasPage() {
       toast.success(
         `Berhasil ${newStatus ? "mengaktifkan" : "menonaktifkan"} ${selectedKelas.length} kelas`,
       );
-      await invalidateCache("admin_all_kelas");
+      await invalidateKelasCaches();
       await loadKelas(true);
     } catch (error: any) {
       toast.error("Gagal mengupdate status kelas: " + error.message);
@@ -1025,7 +1043,10 @@ export default function KelasPage() {
             >
               Batal
             </Button>
-            <Button onClick={handleAddStudent} disabled={isProcessing || !navigator.onLine}>
+            <Button
+              onClick={handleAddStudent}
+              disabled={isProcessing || !navigator.onLine}
+            >
               {isProcessing && (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               )}

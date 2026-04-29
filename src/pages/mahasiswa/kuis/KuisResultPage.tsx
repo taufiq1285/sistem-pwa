@@ -22,7 +22,6 @@ import { QuizResult } from "@/components/features/kuis/result/QuizResult";
 import {
   getAttemptByIdForMahasiswa,
   canAttemptQuiz,
-  gradeAnswer as gradeAnswerApi,
   cacheAttemptOffline,
   getCachedAttempt,
   getCachedQuiz,
@@ -32,7 +31,6 @@ import {
 } from "@/lib/api/kuis.api";
 // ✅ SECURITY FIX: Import secure API to show jawaban_benar in results
 import { getSoalForResult } from "@/lib/api/kuis-secure.api";
-import { gradeAnswer, canAutoGrade } from "@/lib/utils/quiz-scoring";
 import { useAuth } from "@/lib/hooks/useAuth";
 import type { AttemptKuis, Soal, Jawaban, Kuis } from "@/types/kuis.types";
 
@@ -54,8 +52,6 @@ export default function KuisResultPage() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [grading, setGrading] = useState(false);
-
   const [quiz, setQuiz] = useState<Kuis | null>(null);
   const [questions, setQuestions] = useState<Soal[]>([]);
   const [answers, setAnswers] = useState<Jawaban[]>([]);
@@ -244,9 +240,6 @@ export default function KuisResultPage() {
       setQuestions(questionsData);
       setAnswers(answersData);
       setIsOfflineData(false);
-
-      // Auto-grade if needed
-      await autoGradeAnswers(questionsData, answersData);
     } catch (err) {
       console.error("Error loading attempt:", err);
       setError(
@@ -256,73 +249,6 @@ export default function KuisResultPage() {
       );
     } finally {
       setLoading(false);
-    }
-  }
-
-  /**
-   * Auto-grade MC/TF questions that haven't been graded yet
-   */
-  async function autoGradeAnswers(
-    questionsData: Soal[],
-    answersData: Jawaban[],
-  ) {
-    try {
-      setGrading(true);
-
-      const gradingPromises: Promise<Jawaban>[] = [];
-
-      answersData.forEach((jawaban) => {
-        // Skip if already graded
-        if (
-          jawaban.poin_diperoleh !== null &&
-          jawaban.poin_diperoleh !== undefined
-        ) {
-          return;
-        }
-
-        // Find question
-        const soal = questionsData.find((q) => q.id === jawaban.soal_id);
-        if (!soal) return;
-
-        // Skip if can't auto-grade (Essay/Short Answer)
-        if (!canAutoGrade([soal])) {
-          return;
-        }
-
-        // Grade the answer
-        const result = gradeAnswer(
-          soal,
-          jawaban.jawaban || jawaban.jawaban_mahasiswa || "",
-        );
-
-        // Save to database
-        const promise = gradeAnswerApi(
-          jawaban.id,
-          result.poin_diperoleh,
-          result.is_correct,
-          result.feedback,
-        );
-
-        gradingPromises.push(promise);
-      });
-
-      // Wait for all grading to complete
-      if (gradingPromises.length > 0) {
-        const gradedAnswers = await Promise.all(gradingPromises);
-
-        // Update local state with graded answers
-        setAnswers((prev) =>
-          prev.map((jawaban) => {
-            const graded = gradedAnswers.find((g) => g.id === jawaban.id);
-            return graded || jawaban;
-          }),
-        );
-      }
-    } catch (err) {
-      console.error("Error auto-grading answers:", err);
-      // Don't block the UI if auto-grading fails
-    } finally {
-      setGrading(false);
     }
   }
 
@@ -374,9 +300,6 @@ export default function KuisResultPage() {
           <p className="text-muted-foreground">
             Memuat hasil tugas praktikum...
           </p>
-          {grading && (
-            <p className="text-sm text-muted-foreground">Menilai jawaban...</p>
-          )}
         </div>
       </div>
     );

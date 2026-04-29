@@ -144,7 +144,7 @@ describe("Mahasiswa DashboardPage", () => {
       render(<DashboardPage />);
       await waitFor(() => {
         expect(
-          screen.getByText(/belum terdaftar di kelas praktikum/i),
+          screen.getByText(/Saat ini tidak ada kelas aktif/i),
         ).toBeInTheDocument();
       });
     });

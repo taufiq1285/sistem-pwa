@@ -64,7 +64,7 @@ describe("AnswerReview", () => {
 
     it("menampilkan badge tipe soal", () => {
       render(<AnswerReview soal={makeSoal()} number={1} />);
-      expect(screen.getByText(TIPE_SOAL.PILIHAN_GANDA)).toBeInTheDocument();
+      expect(screen.getByText("CBT")).toBeInTheDocument();
     });
   });
 
@@ -104,6 +104,7 @@ describe("AnswerReview", () => {
           soal={makeSoal()}
           jawaban={makeJawaban({ is_correct: true })}
           number={1}
+          defaultExpanded={true}
         />,
       );
       expect(screen.getByText(/Benar!/)).toBeInTheDocument();
@@ -115,6 +116,7 @@ describe("AnswerReview", () => {
           soal={makeSoal()}
           jawaban={makeJawaban({ is_correct: false, poin_diperoleh: 0 })}
           number={1}
+          defaultExpanded={true}
         />,
       );
       expect(screen.getByText("Jawaban yang Benar:")).toBeInTheDocument();
@@ -127,6 +129,7 @@ describe("AnswerReview", () => {
           jawaban={makeJawaban({ is_correct: false })}
           number={1}
           showCorrectAnswer={false}
+          defaultExpanded={true}
         />,
       );
       expect(screen.queryByText("Jawaban yang Benar:")).not.toBeInTheDocument();
@@ -146,7 +149,7 @@ describe("AnswerReview", () => {
         is_correct: null,
       });
       render(
-        <AnswerReview soal={essaySoal} jawaban={essayJawaban} number={1} />,
+        <AnswerReview soal={essaySoal} jawaban={essayJawaban} number={1} defaultExpanded={true} />,
       );
       expect(
         screen.getByText(/menunggu penilaian dari dosen/),
@@ -164,7 +167,7 @@ describe("AnswerReview", () => {
         poin_diperoleh: 0,
       });
       render(
-        <AnswerReview soal={essaySoal} jawaban={essayJawaban} number={1} />,
+        <AnswerReview soal={essaySoal} jawaban={essayJawaban} number={1} defaultExpanded={true} />,
       );
       expect(screen.queryByText("Jawaban yang Benar:")).not.toBeInTheDocument();
     });
@@ -179,7 +182,7 @@ describe("AnswerReview", () => {
         poin_diperoleh: null,
       });
       render(
-        <AnswerReview soal={fileUploadSoal} jawaban={fileJawaban} number={1} />,
+        <AnswerReview soal={fileUploadSoal} jawaban={fileJawaban} number={1} defaultExpanded={true} />,
       );
       expect(screen.getByText("Lihat File Laporan")).toBeInTheDocument();
     });
@@ -195,6 +198,7 @@ describe("AnswerReview", () => {
           soal={soalDenganPenjelasan}
           jawaban={makeJawaban()}
           number={1}
+          defaultExpanded={true}
         />,
       );
       expect(
@@ -205,9 +209,10 @@ describe("AnswerReview", () => {
     it("menampilkan feedback dari dosen jika ada", () => {
       render(
         <AnswerReview
-          soal={makeSoal()}
+          soal={makeSoal({ tipe_soal: TIPE_SOAL.ESSAY })}
           jawaban={makeJawaban({ feedback: "Jawaban sudah bagus!" })}
           number={1}
+          defaultExpanded={true}
         />,
       );
       expect(screen.getByText("Jawaban sudah bagus!")).toBeInTheDocument();

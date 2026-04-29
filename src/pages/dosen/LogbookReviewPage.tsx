@@ -1,11 +1,11 @@
 /**
  * LogbookReviewPage - Dosen
  *
- * Purpose: Review dan nilai logbook mahasiswa
+ * Purpose: Nilai logbook mahasiswa
  * Features:
  * - View submitted logbooks from students
+ * - Input nilai logbook
  * - Provide feedback on logbook entries
- * - Grade logbooks
  * - Filter by kelas, status, mahasiswa
  */
 
@@ -14,7 +14,6 @@ import { format } from "date-fns";
 import {
   Loader2,
   FileText,
-  Send,
   Star,
   Eye,
   Filter,
@@ -37,7 +36,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { StatusBadge } from "@/components/ui/status-badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
@@ -50,26 +48,18 @@ import { useAuth } from "@/lib/hooks/useAuth";
 import {
   getLogbook,
   getLogbookStats,
-  reviewLogbook,
   gradeLogbook,
 } from "@/lib/api/logbook.api";
-import {
-  notifyMahasiswaLogbookApproved,
-  notifyMahasiswaLogbookRevision,
-} from "@/lib/api/notification.api";
+import { notifyMahasiswaLogbookApproved } from "@/lib/api/notification.api";
+import { invalidateCache } from "@/lib/offline/api-cache";
 import { queueManager } from "@/lib/offline/queue-manager";
 import { getKelas } from "@/lib/api/kelas.api";
 import type {
   LogbookEntry,
   LogbookStats,
-  DosenReviewData,
   GradeLogbookData,
 } from "@/types/logbook.types";
 import { toast } from "sonner";
-import {
-  LOGBOOK_STATUS_LABELS,
-  LOGBOOK_STATUS_COLORS,
-} from "@/types/logbook.types";
 import { supabase } from "@/lib/supabase/client";
 import { PageHeader } from "@/components/common/PageHeader";
 
@@ -90,7 +80,6 @@ export default function DosenLogbookReviewPage() {
   const [kelasList, setKelasList] = useState<any[]>([]);
 
   // Dialog states
-  const [showReviewDialog, setShowReviewDialog] = useState(false);
   const [showGradeDialog, setShowGradeDialog] = useState(false);
   const [showViewDialog, setShowViewDialog] = useState(false);
   const [selectedLogbook, setSelectedLogbook] = useState<LogbookEntry | null>(
@@ -98,13 +87,14 @@ export default function DosenLogbookReviewPage() {
   );
 
   // Form states
-  const [feedback, setFeedback] = useState("");
   const [nilai, setNilai] = useState<number>(0);
+  const [feedback, setFeedback] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   // Filters
   const [selectedKelas, setSelectedKelas] = useState<string>("all");
-  const [selectedStatus, setSelectedStatus] = useState<string>("submitted");
+  const [selectedMataKuliah, setSelectedMataKuliah] = useState<string>("all");
+  const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
 
   // ============================================================================
@@ -122,26 +112,18 @@ export default function DosenLogbookReviewPage() {
     if (user?.dosen?.id) {
       loadStats();
     }
-  }, [user?.dosen?.id, selectedKelas]);
+  }, [user?.dosen?.id, selectedKelas, selectedMataKuliah]);
 
   // Sync nilai state when selectedLogbook changes
   useEffect(() => {
     if (selectedLogbook) {
       setNilai(selectedLogbook.nilai ?? 0);
+      setFeedback(selectedLogbook.dosen_feedback || "");
     }
   }, [selectedLogbook]);
 
-  // Sync feedback state when review dialog opens
-  useEffect(() => {
-    if (showReviewDialog && selectedLogbook) {
-      setFeedback(selectedLogbook.dosen_feedback || "");
-    }
-  }, [showReviewDialog, selectedLogbook]);
-
   async function notifyMahasiswaLogbookStatus(
     logbookId: string,
-    status: "approved" | "revision",
-    catatan?: string,
   ) {
     const supabaseAny = supabase as any;
     const { data: logbookNotifData, error } = await supabaseAny
@@ -184,23 +166,29 @@ export default function DosenLogbookReviewPage() {
       (logbookNotifData as any)?.jadwal?.tanggal_praktikum ||
       new Date().toISOString();
 
-    if (status === "approved") {
-      await notifyMahasiswaLogbookApproved(
-        mahasiswaUserId,
-        kelasNama,
-        mataKuliahNama,
-        tanggalPraktikum,
-      );
-      return;
-    }
-
-    await notifyMahasiswaLogbookRevision(
+    await notifyMahasiswaLogbookApproved(
       mahasiswaUserId,
       kelasNama,
       mataKuliahNama,
       tanggalPraktikum,
-      catatan?.trim() || "Silakan periksa feedback dosen pada logbook Anda.",
     );
+  }
+
+  async function refreshAfterLogbookMutation(logbook?: LogbookEntry | null) {
+    if (logbook?.mahasiswa_id) {
+      await invalidateCache(`mahasiswa_logbook_entries_${logbook.mahasiswa_id}`);
+    }
+
+    window.dispatchEvent(
+      new CustomEvent("logbook:changed", {
+        detail: {
+          id: logbook?.id,
+          mahasiswa_id: logbook?.mahasiswa_id,
+        },
+      }),
+    );
+
+    await Promise.all([loadData(), loadStats()]);
   }
 
   // ============================================================================
@@ -231,6 +219,8 @@ export default function DosenLogbookReviewPage() {
     try {
       const statsData = await getLogbookStats({
         kelas_id: selectedKelas !== "all" ? selectedKelas : undefined,
+        mata_kuliah_id:
+          selectedMataKuliah !== "all" ? selectedMataKuliah : undefined,
       });
 
       setStats(statsData);
@@ -249,87 +239,7 @@ export default function DosenLogbookReviewPage() {
   }
 
   // ============================================================================
-  // REVIEW LOGBOOK
-  // ============================================================================
-
-  function openReviewDialog(logbook: LogbookEntry | null) {
-    if (!logbook) return;
-    setSelectedLogbook(logbook);
-    setShowReviewDialog(true);
-  }
-
-  async function handleReview() {
-    if (!selectedLogbook) return;
-
-    if (!feedback.trim()) {
-      toast.error("Feedback harus diisi");
-      return;
-    }
-
-    if (!navigator.onLine) {
-      try {
-        setSubmitting(true);
-        const reviewedAt = new Date().toISOString();
-        await queueManager.enqueue("logbook_entry", "update", {
-          id: selectedLogbook.id,
-          dosen_id: user?.dosen?.id,
-          dosen_feedback: feedback.trim(),
-          status: "reviewed",
-          reviewed_at: reviewedAt,
-        });
-        setLogbookList((prev) =>
-          prev.map((l) =>
-            l.id === selectedLogbook.id
-              ? { ...l, dosen_feedback: feedback.trim(), status: "reviewed", reviewed_at: reviewedAt }
-              : l,
-          ),
-        );
-        setShowReviewDialog(false);
-        setFeedback("");
-        toast.success("Feedback disimpan lokal. Akan dikirim saat online.");
-      } catch (err: any) {
-        toast.error(err.message || "Gagal menyimpan feedback secara lokal");
-      } finally {
-        setSubmitting(false);
-      }
-      return;
-    }
-
-    try {
-      setSubmitting(true);
-
-      const data: DosenReviewData = {
-        id: selectedLogbook.id,
-        feedback: feedback.trim(),
-      };
-
-      await reviewLogbook(data);
-      await notifyMahasiswaLogbookStatus(
-        selectedLogbook.id,
-        "revision",
-        feedback,
-      ).catch((notifError) => {
-        console.error(
-          "Failed to notify mahasiswa after logbook review:",
-          notifError,
-        );
-      });
-
-      toast.success("Logbook berhasil direview");
-      setShowReviewDialog(false);
-      setFeedback("");
-      loadData();
-      loadStats();
-    } catch (error: any) {
-      console.error("Error reviewing logbook:", error);
-      toast.error(error.message || "Gagal mereview logbook");
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
-  // ============================================================================
-  // GRADE LOGBOOK
+  // NILAI LOGBOOK
   // ============================================================================
 
   function openGradeDialog(logbook: LogbookEntry | null) {
@@ -346,6 +256,11 @@ export default function DosenLogbookReviewPage() {
       return;
     }
 
+    if (!feedback.trim()) {
+      toast.error("Feedback pemeriksaan logbook harus diisi");
+      return;
+    }
+
     if (!navigator.onLine) {
       try {
         setSubmitting(true);
@@ -353,12 +268,18 @@ export default function DosenLogbookReviewPage() {
           id: selectedLogbook.id,
           dosen_id: user?.dosen?.id,
           nilai: nilai,
+          dosen_feedback: feedback.trim() || null,
           status: "graded",
         });
         setLogbookList((prev) =>
           prev.map((l) =>
             l.id === selectedLogbook.id
-              ? { ...l, nilai, status: "graded" }
+              ? {
+                  ...l,
+                  nilai,
+                  dosen_feedback: feedback.trim() || null,
+                  status: "graded",
+                }
               : l,
           ),
         );
@@ -378,13 +299,14 @@ export default function DosenLogbookReviewPage() {
       const data: GradeLogbookData = {
         id: selectedLogbook.id,
         nilai: nilai,
+        feedback: feedback.trim() || undefined,
       };
 
       await gradeLogbook(data);
-      await notifyMahasiswaLogbookStatus(selectedLogbook.id, "approved").catch(
+      await notifyMahasiswaLogbookStatus(selectedLogbook.id).catch(
         (notifError) => {
           console.error(
-            "Failed to notify mahasiswa after logbook grading:",
+            "Failed to notify mahasiswa after logbook scoring:",
             notifError,
           );
         },
@@ -392,8 +314,9 @@ export default function DosenLogbookReviewPage() {
 
       toast.success("Logbook berhasil dinilai");
       setShowGradeDialog(false);
-      loadData();
-      loadStats();
+      setFeedback("");
+      setSelectedStatus("all");
+      await refreshAfterLogbookMutation(selectedLogbook);
     } catch (error: any) {
       console.error("Error grading logbook:", error);
       toast.error(error.message || "Gagal menilai logbook");
@@ -417,22 +340,56 @@ export default function DosenLogbookReviewPage() {
   // ============================================================================
 
   function getStatusBadge(status: string) {
-    const label = LOGBOOK_STATUS_LABELS[status] || status;
-    const statusMap: Record<
+    const config: Record<
       string,
-      "success" | "warning" | "error" | "info" | "offline"
+      {
+        label: string;
+        icon: typeof Clock;
+        className: string;
+        dotClassName: string;
+      }
     > = {
-      submitted: "info",
-      reviewed: "warning",
-      graded: "success",
-      rejected: "error",
-      draft: "offline",
+      draft: {
+        label: "Draft",
+        icon: FileText,
+        className: "border-slate-200 bg-slate-50 text-slate-700",
+        dotClassName: "bg-slate-400",
+      },
+      submitted: {
+        label: "Perlu Dinilai",
+        icon: Clock,
+        className: "border-sky-200 bg-sky-50 text-sky-800",
+        dotClassName: "bg-sky-500",
+      },
+      reviewed: {
+        label: "Perlu Dinilai",
+        icon: Clock,
+        className: "border-amber-200 bg-amber-50 text-amber-800",
+        dotClassName: "bg-amber-500",
+      },
+      graded: {
+        label: "Dinilai",
+        icon: CheckCircle2,
+        className: "border-emerald-200 bg-emerald-50 text-emerald-800",
+        dotClassName: "bg-emerald-500",
+      },
     };
-    const badgeStatus = statusMap[status] || "info";
+    const badge = config[status] || {
+      label: status,
+      icon: AlertCircle,
+      className: "border-slate-200 bg-slate-50 text-slate-700",
+      dotClassName: "bg-slate-400",
+    };
+    const Icon = badge.icon;
+
     return (
-      <StatusBadge status={badgeStatus} pulse={false}>
-        {label}
-      </StatusBadge>
+      <span
+        className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold shadow-sm ${badge.className}`}
+      >
+        <span className={`h-1.5 w-1.5 rounded-full ${badge.dotClassName}`} />
+        <Icon className="h-3 w-3" />
+        {badge.label}
+      </span>
     );
   }
 
@@ -443,15 +400,22 @@ export default function DosenLogbookReviewPage() {
 
     // Filter by kelas
     if (selectedKelas !== "all") {
-      filtered = filtered.filter((l) => {
-        // Need to get mahasiswa kelas from the data
-        // This is a simplified approach
-        return true; // TODO: Implement proper filtering
-      });
+      filtered = filtered.filter((l) => l.jadwal?.kelas_id === selectedKelas);
+    }
+
+    // Filter by mata kuliah so the same class can be reviewed per subject.
+    if (selectedMataKuliah !== "all") {
+      filtered = filtered.filter(
+        (l) => l.jadwal?.mata_kuliah_id === selectedMataKuliah,
+      );
     }
 
     // Filter by status
-    if (selectedStatus !== "all") {
+    if (selectedStatus === "needs_score") {
+      filtered = filtered.filter(
+        (l) => l.status === "submitted" || l.status === "reviewed",
+      );
+    } else if (selectedStatus !== "all") {
       filtered = filtered.filter((l) => l.status === selectedStatus);
     }
 
@@ -466,6 +430,25 @@ export default function DosenLogbookReviewPage() {
     return filtered;
   }
 
+  const mataKuliahOptions = Array.from(
+    new Map(
+      logbookList
+        .filter((logbook) => logbook.jadwal?.mata_kuliah_id)
+        .filter(
+          (logbook) =>
+            selectedKelas === "all" || logbook.jadwal?.kelas_id === selectedKelas,
+        )
+        .map((logbook) => [
+          logbook.jadwal?.mata_kuliah_id,
+          {
+            id: logbook.jadwal?.mata_kuliah_id || "",
+            nama_mk: logbook.jadwal?.mata_kuliah?.nama_mk || "Mata Kuliah",
+            kode_mk: logbook.jadwal?.mata_kuliah?.kode_mk || "",
+          },
+        ]),
+    ).values(),
+  );
+
   // ============================================================================
   // RENDER
   // ============================================================================
@@ -477,7 +460,7 @@ export default function DosenLogbookReviewPage() {
           <div className="flex min-h-[50vh] items-center justify-center rounded-3xl border border-slate-200/70 bg-white/85 px-6 shadow-lg shadow-slate-200/60">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
             <span className="ml-3 text-sm font-medium text-muted-foreground sm:text-base">
-              Memuat data review logbook...
+              Memuat data penilaian logbook...
             </span>
           </div>
         </div>
@@ -491,8 +474,8 @@ export default function DosenLogbookReviewPage() {
     <div className="role-page-shell">
       <div className="role-page-content app-container space-y-6 py-4 sm:space-y-8 sm:py-6 lg:py-8">
         <PageHeader
-          title="Review Logbook Mahasiswa"
-          description="Tinjau catatan praktikum mahasiswa, berikan umpan balik, dan input nilai dengan tampilan yang lebih fokus dan responsif."
+          title="Penilaian Logbook Mahasiswa"
+          description="Tinjau catatan praktikum mahasiswa, beri nilai angka, dan tulis feedback untuk mahasiswa."
           className="section-shell"
         />
 
@@ -511,16 +494,9 @@ export default function DosenLogbookReviewPage() {
             <Card className="overflow-hidden rounded-3xl border border-warning/20 bg-linear-to-br from-warning/5 to-warning/10 shadow-lg shadow-warning/10">
               <CardContent className="p-4">
                 <p className="text-2xl font-bold text-warning">
-                  {stats.submitted}
+                  {stats.submitted + stats.reviewed}
                 </p>
-                <p className="text-xs text-muted-foreground">Menunggu Review</p>
-              </CardContent>
-            </Card>
-
-            <Card className="overflow-hidden rounded-3xl border border-info/20 bg-linear-to-br from-info/5 to-info/10 shadow-lg shadow-info/10">
-              <CardContent className="p-4">
-                <p className="text-2xl font-bold text-info">{stats.reviewed}</p>
-                <p className="text-xs text-muted-foreground">Sudah Direview</p>
+                <p className="text-xs text-muted-foreground">Perlu Dinilai</p>
               </CardContent>
             </Card>
 
@@ -547,13 +523,19 @@ export default function DosenLogbookReviewPage() {
         {/* Filters */}
         <Card className="interactive-card overflow-hidden rounded-3xl border border-slate-200/70 bg-white/90 shadow-lg shadow-slate-200/60">
           <CardContent className="p-4 sm:p-5 lg:p-6">
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <div className="flex items-center gap-2 sm:col-span-2 lg:col-span-1">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
+              <div className="flex items-center gap-2 sm:col-span-2 xl:col-span-1">
                 <Filter className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm font-medium">Filter:</span>
               </div>
 
-              <Select value={selectedKelas} onValueChange={setSelectedKelas}>
+              <Select
+                value={selectedKelas}
+                onValueChange={(value) => {
+                  setSelectedKelas(value);
+                  setSelectedMataKuliah("all");
+                }}
+              >
                 <SelectTrigger className="w-full sm:w-55">
                   <SelectValue placeholder="Pilih Kelas" />
                 </SelectTrigger>
@@ -567,14 +549,32 @@ export default function DosenLogbookReviewPage() {
                 </SelectContent>
               </Select>
 
+              <Select
+                value={selectedMataKuliah}
+                onValueChange={setSelectedMataKuliah}
+              >
+                <SelectTrigger className="w-full sm:w-60">
+                  <SelectValue placeholder="Pilih Mata Kuliah" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Semua Mata Kuliah</SelectItem>
+                  {mataKuliahOptions.map((mk) => (
+                    <SelectItem key={mk.id} value={mk.id}>
+                      {mk.nama_mk}
+                      {mk.kode_mk ? ` - ${mk.kode_mk}` : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
               <Select value={selectedStatus} onValueChange={setSelectedStatus}>
                 <SelectTrigger className="w-full sm:w-50">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Semua Status</SelectItem>
-                  <SelectItem value="submitted">Menunggu Review</SelectItem>
-                  <SelectItem value="reviewed">Sudah Direview</SelectItem>
+                  <SelectItem value="needs_score">Perlu Dinilai</SelectItem>
+                  <SelectItem value="submitted">Baru Dikirim</SelectItem>
                   <SelectItem value="graded">Sudah Dinilai</SelectItem>
                 </SelectContent>
               </Select>
@@ -600,9 +600,10 @@ export default function DosenLogbookReviewPage() {
                 <p className="max-w-md text-sm leading-6 text-muted-foreground sm:text-base">
                   {searchQuery ||
                   selectedKelas !== "all" ||
-                  selectedStatus !== "submitted"
+                  selectedMataKuliah !== "all" ||
+                  selectedStatus !== "all"
                     ? "Tidak ada logbook yang sesuai dengan filter"
-                    : "Belum ada logbook yang perlu direview"}
+                    : "Belum ada logbook mahasiswa"}
                 </p>
               </CardContent>
             </Card>
@@ -610,7 +611,11 @@ export default function DosenLogbookReviewPage() {
             filteredLogbooks.map((logbook) => (
               <Card
                 key={logbook.id}
-                className="interactive-card overflow-hidden rounded-3xl border border-slate-200/70 bg-white/90 shadow-lg shadow-slate-200/60"
+                className={
+                  logbook.status === "graded"
+                    ? "interactive-card overflow-hidden rounded-3xl border border-success/30 bg-success/5 shadow-lg shadow-success/10"
+                    : "interactive-card overflow-hidden rounded-3xl border border-slate-200/70 bg-white/90 shadow-lg shadow-slate-200/60"
+                }
               >
                 <CardContent className="p-4 sm:p-6">
                   <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -625,6 +630,10 @@ export default function DosenLogbookReviewPage() {
 
                       <p className="text-sm text-muted-foreground mb-1">
                         {logbook.jadwal?.topik || "Praktikum"}
+                      </p>
+
+                      <p className="text-xs font-medium text-primary mb-1">
+                        {logbook.jadwal?.mata_kuliah?.nama_mk || "Mata Kuliah"}
                       </p>
 
                       <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
@@ -652,6 +661,12 @@ export default function DosenLogbookReviewPage() {
                           )}
                         </p>
                       )}
+
+                      {logbook.status === "graded" && (
+                        <p className="mt-2 inline-flex rounded-full bg-success/10 px-2.5 py-1 text-xs font-medium text-success">
+                          Logbook telah dinilai dan tetap tersimpan di riwayat dosen
+                        </p>
+                      )}
                     </div>
 
                     <div className="flex flex-wrap justify-end gap-2">
@@ -663,24 +678,17 @@ export default function DosenLogbookReviewPage() {
                         <Eye className="h-4 w-4" />
                       </Button>
 
-                      {logbook.status === "submitted" && (
-                        <Button
-                          size="sm"
-                          onClick={() => openReviewDialog(logbook)}
-                        >
-                          <Send className="h-4 w-4 mr-2" />
-                          Review
-                        </Button>
-                      )}
-
-                      {(logbook.status === "reviewed" ||
+                      {(logbook.status === "submitted" ||
+                        logbook.status === "reviewed" ||
                         logbook.status === "graded") && (
                         <Button
                           size="sm"
                           onClick={() => openGradeDialog(logbook)}
                         >
                           <Star className="h-4 w-4 mr-2" />
-                          Nilai
+                          {logbook.status === "graded"
+                            ? "Ubah Nilai & Feedback"
+                            : "Nilai & Feedback"}
                         </Button>
                       )}
                     </div>
@@ -711,17 +719,6 @@ export default function DosenLogbookReviewPage() {
                       </div>
                     )}
 
-                  {logbook.dosen_feedback && (
-                    <div className="mt-3 p-3 bg-primary/5 rounded-lg border border-primary/20">
-                      <p className="text-xs font-medium text-primary mb-1">
-                        Feedback Anda:
-                      </p>
-                      <p className="text-sm text-primary/80">
-                        {logbook.dosen_feedback}
-                      </p>
-                    </div>
-                  )}
-
                   {logbook.nilai !== null && logbook.nilai !== undefined && (
                     <div className="mt-3 flex items-center gap-2">
                       <span className="text-sm font-medium text-muted-foreground">
@@ -732,142 +729,30 @@ export default function DosenLogbookReviewPage() {
                       </span>
                     </div>
                   )}
+
+                  {logbook.dosen_feedback && (
+                    <div className="mt-3 rounded-lg border border-primary/20 bg-primary/5 p-3">
+                      <p className="mb-1 text-xs font-medium text-primary">
+                        Feedback:
+                      </p>
+                      <p className="text-sm text-primary/80">
+                        {logbook.dosen_feedback}
+                      </p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             ))
           )}
         </div>
 
-        {/* Review Dialog */}
-        <Dialog open={showReviewDialog} onOpenChange={setShowReviewDialog}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Review Logbook</DialogTitle>
-              <DialogDescription>
-                Berikan feedback pada logbook mahasiswa
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="space-y-4 py-4">
-              {/* Student Info */}
-              <div className="p-3 bg-muted/40 rounded-lg">
-                <p className="text-sm font-medium">
-                  Mahasiswa: {selectedLogbook?.mahasiswa?.user?.full_name}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {selectedLogbook?.jadwal?.topik} -{" "}
-                  {selectedLogbook?.jadwal?.tanggal_praktikum &&
-                    format(
-                      new Date(selectedLogbook.jadwal.tanggal_praktikum),
-                      "dd MMM yyyy",
-                    )}
-                </p>
-              </div>
-
-              {/* Logbook Content */}
-              <div className="space-y-3">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">
-                    Prosedur:
-                  </p>
-                  <p className="text-sm bg-white p-2 rounded border">
-                    {selectedLogbook?.prosedur_dilakukan || "-"}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">
-                    Hasil Observasi:
-                  </p>
-                  <p className="text-sm bg-white p-2 rounded border">
-                    {selectedLogbook?.hasil_observasi || "-"}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">
-                    Skill:
-                  </p>
-                  <div className="flex flex-wrap gap-1">
-                    {selectedLogbook?.skill_dipelajari?.map((skill) => (
-                      <Badge
-                        key={skill}
-                        variant="secondary"
-                        className="text-xs"
-                      >
-                        {skill}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-
-                {selectedLogbook?.kendala_dihadapi && (
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">
-                      Kendala:
-                    </p>
-                    <p className="text-sm bg-white p-2 rounded border">
-                      {selectedLogbook.kendala_dihadapi}
-                    </p>
-                  </div>
-                )}
-
-                {selectedLogbook?.refleksi && (
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">
-                      Refleksi:
-                    </p>
-                    <p className="text-sm bg-white p-2 rounded border">
-                      {selectedLogbook.refleksi}
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {/* Feedback Form */}
-              <div>
-                <Label htmlFor="feedback">
-                  Feedback Dosen <span className="text-danger">*</span>
-                </Label>
-                <Textarea
-                  id="feedback"
-                  placeholder="Berikan feedback untuk logbook mahasiswa ini..."
-                  value={feedback}
-                  onChange={(e) => setFeedback(e.target.value)}
-                  rows={4}
-                />
-              </div>
-            </div>
-
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => setShowReviewDialog(false)}
-                disabled={submitting}
-              >
-                Batal
-              </Button>
-              <Button onClick={handleReview} disabled={submitting}>
-                {submitting ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Menyimpan...
-                  </>
-                ) : (
-                  "Kirim Feedback"
-                )}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        {/* Grade Dialog */}
+        {/* Nilai Dialog */}
         <Dialog open={showGradeDialog} onOpenChange={setShowGradeDialog}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Beri Nilai Logbook</DialogTitle>
+              <DialogTitle>Nilai Logbook</DialogTitle>
               <DialogDescription>
-                Berikan nilai 0-100 untuk logbook ini
+                Periksa isi logbook mahasiswa, lalu simpan nilai dan feedback pemeriksaan.
               </DialogDescription>
             </DialogHeader>
 
@@ -881,11 +766,6 @@ export default function DosenLogbookReviewPage() {
                   <p className="text-xs text-muted-foreground">
                     {selectedLogbook?.jadwal?.topik || "Praktikum"}
                   </p>
-                  {selectedLogbook?.dosen_feedback && (
-                    <p className="text-xs text-primary mt-1">
-                      Sudah diberi feedback
-                    </p>
-                  )}
                 </div>
 
                 <div>
@@ -901,16 +781,23 @@ export default function DosenLogbookReviewPage() {
                   />
                 </div>
 
-                {/* Grade Guide */}
-                <div className="text-xs text-muted-foreground space-y-1">
-                  <p>Panduan penilaian:</p>
-                  <ul className="list-disc list-inside ml-4 space-y-1">
-                    <li>90-100: Sangat Baik</li>
-                    <li>80-89: Baik</li>
-                    <li>70-79: Cukup</li>
-                    <li>60-69: Kurang</li>
-                    <li>&lt;60: Kurang Sekali</li>
-                  </ul>
+                <div>
+                  <Label htmlFor="feedback-nilai">
+                    Feedback Pemeriksaan <span className="text-danger">*</span>
+                  </Label>
+                  <Textarea
+                    id="feedback-nilai"
+                    placeholder="Contoh: Prosedur sudah runtut, namun refleksi perlu diperjelas pada bagian kendala praktikum."
+                    value={feedback}
+                    onChange={(e) => setFeedback(e.target.value)}
+                    rows={4}
+                  />
+                </div>
+
+                <div className="rounded-lg border border-muted bg-muted/30 p-3 text-xs text-muted-foreground">
+                  Simpan nilai dalam angka 0-100. Mahasiswa hanya akan melihat
+                  nilai angka dan feedback pemeriksaan, tanpa grade huruf atau
+                  predikat.
                 </div>
               </div>
             )}
@@ -932,7 +819,7 @@ export default function DosenLogbookReviewPage() {
                 ) : (
                   <>
                     <Star className="h-4 w-4 mr-2" />
-                    Simpan Nilai
+                    Simpan Nilai & Feedback
                   </>
                 )}
               </Button>
@@ -1039,20 +926,6 @@ export default function DosenLogbookReviewPage() {
                 )}
               </div>
 
-              {selectedLogbook?.dosen_feedback && (
-                <>
-                  <hr />
-                  <div className="p-3 bg-primary/5 rounded-lg border border-primary/20">
-                    <p className="text-sm font-medium text-primary mb-1">
-                      Feedback Dosen:
-                    </p>
-                    <p className="text-sm text-primary/80">
-                      {selectedLogbook.dosen_feedback}
-                    </p>
-                  </div>
-                </>
-              )}
-
               {selectedLogbook?.nilai !== null &&
                 selectedLogbook?.nilai !== undefined && (
                   <>
@@ -1064,6 +937,20 @@ export default function DosenLogbookReviewPage() {
                     </div>
                   </>
                 )}
+
+              {selectedLogbook?.dosen_feedback && (
+                <>
+                  <hr />
+                  <div className="rounded-lg border border-primary/20 bg-primary/5 p-3">
+                    <p className="mb-1 text-sm font-medium text-primary">
+                      Feedback Dosen:
+                    </p>
+                    <p className="text-sm text-primary/80">
+                      {selectedLogbook.dosen_feedback}
+                    </p>
+                  </div>
+                </>
+              )}
             </div>
 
             <DialogFooter>

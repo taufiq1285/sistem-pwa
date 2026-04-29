@@ -191,6 +191,7 @@ export interface JadwalPraktikum {
 export interface JadwalFilters {
   kelas?: string; // ❌ OLD: String filter
   kelas_id?: string; // ✅ NEW: UUID filter
+  mata_kuliah_id?: string;
   laboratorium_id?: string;
   tanggal_praktikum?: string;
   tanggal_mulai?: string;

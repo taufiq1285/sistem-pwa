@@ -90,9 +90,9 @@ export default function KelasPageEnhanced() {
   // State
   const [kelasList, setKelasList] = useState<Kelas[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [statusFilter, setStatusFilter] = useState<"active" | "inactive" | "all">(
-    "active",
-  );
+  const [statusFilter, setStatusFilter] = useState<
+    "active" | "inactive" | "all"
+  >("active");
 
   // Form state
   const [showFormDialog, setShowFormDialog] = useState(false);
@@ -135,9 +135,7 @@ export default function KelasPageEnhanced() {
   const loadKelas = async () => {
     try {
       const data = await getKelas(
-        statusFilter === "all"
-          ? {}
-          : { is_active: statusFilter === "active" },
+        statusFilter === "all" ? {} : { is_active: statusFilter === "active" },
       );
       setKelasList(data);
     } catch (error: any) {
@@ -345,7 +343,9 @@ export default function KelasPageEnhanced() {
                     </TableCell>
                     <TableCell>{kelas.kuota || "-"}</TableCell>
                     <TableCell>
-                      <Badge variant={kelas.is_active ? "default" : "secondary"}>
+                      <Badge
+                        variant={kelas.is_active ? "default" : "secondary"}
+                      >
                         {kelas.is_active ? "Aktif" : "Arsip"}
                       </Badge>
                     </TableCell>

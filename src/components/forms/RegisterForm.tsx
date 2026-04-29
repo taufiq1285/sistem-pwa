@@ -126,7 +126,10 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
       setTimeout(() => setShowAlert(true), 10);
       setTimeout(() => {
         if (alertRef.current) {
-          alertRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+          alertRef.current.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+          });
         }
       }, 100);
     }
@@ -149,7 +152,9 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
         ...pendingData,
         full_name: normalize.fullName(pendingData.full_name),
         email: normalize.email(pendingData.email),
-        phone: pendingData.phone ? normalize.phone(pendingData.phone) : undefined,
+        phone: pendingData.phone
+          ? normalize.phone(pendingData.phone)
+          : undefined,
         ...(pendingData.role === "mahasiswa" && {
           nim: pendingData.nim ? normalize.nim(pendingData.nim) : undefined,
           program_studi: pendingData.program_studi
@@ -162,7 +167,9 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
       };
 
       await registerUser(normalizedData);
-      setSuccess("Registrasi berhasil! Silakan cek email Anda untuk verifikasi akun.");
+      setSuccess(
+        "Registrasi berhasil! Silakan cek email Anda untuk verifikasi akun.",
+      );
       setTimeout(() => onSuccess?.(), 2000);
     } catch (err: unknown) {
       let errorMessage = "Registrasi gagal. Silakan coba lagi.";
@@ -189,11 +196,16 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
             ref={alertRef}
             style={{ animation: "shake 0.5s ease-in-out, fadeIn 0.3s ease-in" }}
           >
-            <Alert variant="destructive" className="relative overflow-hidden border border-red-200 bg-red-50 p-4 shadow-sm">
+            <Alert
+              variant="destructive"
+              className="relative overflow-hidden border border-red-200 bg-red-50 p-4 shadow-sm"
+            >
               <div className="relative flex items-start gap-3">
                 <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-600" />
                 <div className="flex-1">
-                  <h3 className="mb-1 text-base font-semibold text-red-900">Registrasi Gagal</h3>
+                  <h3 className="mb-1 text-base font-semibold text-red-900">
+                    Registrasi Gagal
+                  </h3>
                   <AlertDescription className="text-sm font-medium text-red-700">
                     {error}
                   </AlertDescription>
@@ -206,13 +218,17 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
         {success && showAlert && (
           <div
             ref={alertRef}
-            style={{ animation: "slideDown 0.4s ease-out, fadeIn 0.3s ease-in" }}
+            style={{
+              animation: "slideDown 0.4s ease-out, fadeIn 0.3s ease-in",
+            }}
           >
             <Alert className="relative overflow-hidden border border-emerald-200 bg-emerald-50 p-4 shadow-sm">
               <div className="relative flex items-start gap-3">
                 <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
                 <div className="flex-1">
-                  <h3 className="mb-1 text-base font-semibold text-emerald-900">Registrasi Berhasil</h3>
+                  <h3 className="mb-1 text-base font-semibold text-emerald-900">
+                    Registrasi Berhasil
+                  </h3>
                   <AlertDescription className="text-sm font-medium text-emerald-700">
                     {success}
                   </AlertDescription>
@@ -228,7 +244,9 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
               <GraduationCap className="h-5 w-5 text-[#7B1D3A]" />
               Pilih Role Anda
             </Label>
-            <p className="text-sm text-slate-600">Pilih sesuai status Anda di akademi</p>
+            <p className="text-sm text-slate-600">
+              Pilih sesuai status Anda di akademi
+            </p>
           </div>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -244,11 +262,18 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
                     config.bgClass,
                     isSelected && config.selectedClass,
                   )}
-                  onClick={() => setValue("role", config.value, { shouldValidate: true })}
+                  onClick={() =>
+                    setValue("role", config.value, { shouldValidate: true })
+                  }
                 >
                   <CardContent className="p-3.5">
                     <div className="flex flex-col items-center gap-2 text-center">
-                      <div className={cn("rounded-xl p-2.5", isSelected ? "bg-white shadow" : "bg-white/70") }>
+                      <div
+                        className={cn(
+                          "rounded-xl p-2.5",
+                          isSelected ? "bg-white shadow" : "bg-white/70",
+                        )}
+                      >
                         <Icon className={cn("h-5 w-5", config.iconClass)} />
                       </div>
 
@@ -257,9 +282,18 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
                           <CardTitle className="text-[15px] font-semibold text-[#0F172A]">
                             {config.label}
                           </CardTitle>
-                          {isSelected && <CheckCircle2 className={cn("h-4 w-4 shrink-0", config.iconClass)} />}
+                          {isSelected && (
+                            <CheckCircle2
+                              className={cn(
+                                "h-4 w-4 shrink-0",
+                                config.iconClass,
+                              )}
+                            />
+                          )}
                         </div>
-                        <p className="mt-1 text-[13px] text-slate-500">{config.helperText}</p>
+                        <p className="mt-1 text-[13px] text-slate-500">
+                          {config.helperText}
+                        </p>
                         <CardDescription className="mt-1.5 text-[13px] leading-5 text-slate-600">
                           {config.description}
                         </CardDescription>
@@ -285,7 +319,10 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
               <GraduationCap className={cn("h-4 w-4", roleConfig.iconClass)} />
             </span>
             <span>
-              Role dipilih: <span className={cn("font-semibold", roleConfig.iconClass)}>{roleConfig.label}</span>
+              Role dipilih:{" "}
+              <span className={cn("font-semibold", roleConfig.iconClass)}>
+                {roleConfig.label}
+              </span>
             </span>
           </AlertDescription>
         </Alert>
@@ -297,7 +334,12 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
           </h3>
 
           <div className="space-y-2">
-            <Label htmlFor="full_name" className="text-sm font-semibold text-[#0F172A]">Nama Lengkap *</Label>
+            <Label
+              htmlFor="full_name"
+              className="text-sm font-semibold text-[#0F172A]"
+            >
+              Nama Lengkap *
+            </Label>
             <Input
               id="full_name"
               placeholder="Nama lengkap sesuai identitas"
@@ -314,7 +356,12 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="email" className="text-sm font-semibold text-[#0F172A]">Email *</Label>
+            <Label
+              htmlFor="email"
+              className="text-sm font-semibold text-[#0F172A]"
+            >
+              Email *
+            </Label>
             <Input
               id="email"
               type="email"
@@ -332,7 +379,12 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="phone" className="text-sm font-semibold text-[#0F172A]">Nomor Telepon (Opsional)</Label>
+            <Label
+              htmlFor="phone"
+              className="text-sm font-semibold text-[#0F172A]"
+            >
+              Nomor Telepon (Opsional)
+            </Label>
             <Input
               id="phone"
               type="tel"
@@ -351,7 +403,12 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm font-semibold text-[#0F172A]">Password *</Label>
+              <Label
+                htmlFor="password"
+                className="text-sm font-semibold text-[#0F172A]"
+              >
+                Password *
+              </Label>
               <Input
                 id="password"
                 type="password"
@@ -369,7 +426,12 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword" className="text-sm font-semibold text-[#0F172A]">Konfirmasi Password *</Label>
+              <Label
+                htmlFor="confirmPassword"
+                className="text-sm font-semibold text-[#0F172A]"
+              >
+                Konfirmasi Password *
+              </Label>
               <Input
                 id="confirmPassword"
                 type="password"
@@ -398,7 +460,12 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
             </h3>
 
             <div className="space-y-2">
-              <Label htmlFor="nim" className="text-sm font-semibold text-[#0F172A]">NIM *</Label>
+              <Label
+                htmlFor="nim"
+                className="text-sm font-semibold text-[#0F172A]"
+              >
+                NIM *
+              </Label>
               <Input
                 id="nim"
                 placeholder="Contoh: BD2321001"
@@ -415,7 +482,12 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="program_studi" className="text-sm font-semibold text-[#0F172A]">Program Studi *</Label>
+              <Label
+                htmlFor="program_studi"
+                className="text-sm font-semibold text-[#0F172A]"
+              >
+                Program Studi *
+              </Label>
               <Input
                 id="program_studi"
                 placeholder="Contoh: Kebidanan"
@@ -433,7 +505,12 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="angkatan" className="text-sm font-semibold text-[#0F172A]">Angkatan *</Label>
+                <Label
+                  htmlFor="angkatan"
+                  className="text-sm font-semibold text-[#0F172A]"
+                >
+                  Angkatan *
+                </Label>
                 <Input
                   id="angkatan"
                   type="number"
@@ -451,7 +528,12 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="semester" className="text-sm font-semibold text-[#0F172A]">Semester *</Label>
+                <Label
+                  htmlFor="semester"
+                  className="text-sm font-semibold text-[#0F172A]"
+                >
+                  Semester *
+                </Label>
                 <Input
                   id="semester"
                   type="number"
@@ -481,7 +563,12 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
             </h3>
 
             <div className="space-y-2">
-              <Label htmlFor="nidn" className="text-sm font-semibold text-[#0F172A]">NIDN *</Label>
+              <Label
+                htmlFor="nidn"
+                className="text-sm font-semibold text-[#0F172A]"
+              >
+                NIDN *
+              </Label>
               <Input
                 id="nidn"
                 placeholder="10 digit nomor NIDN"
@@ -499,7 +586,12 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="nuptk" className="text-sm font-semibold text-[#0F172A]">NUPTK (Opsional)</Label>
+              <Label
+                htmlFor="nuptk"
+                className="text-sm font-semibold text-[#0F172A]"
+              >
+                NUPTK (Opsional)
+              </Label>
               <Input
                 id="nuptk"
                 placeholder="16 digit nomor NUPTK"
@@ -517,7 +609,12 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="nip" className="text-sm font-semibold text-[#0F172A]">NIP (Opsional - Hanya PNS)</Label>
+              <Label
+                htmlFor="nip"
+                className="text-sm font-semibold text-[#0F172A]"
+              >
+                NIP (Opsional - Hanya PNS)
+              </Label>
               <Input
                 id="nip"
                 placeholder="18 digit NIP PNS"
@@ -535,7 +632,12 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="gelar_depan" className="text-sm font-semibold text-[#0F172A]">Gelar Depan (Opsional)</Label>
+                <Label
+                  htmlFor="gelar_depan"
+                  className="text-sm font-semibold text-[#0F172A]"
+                >
+                  Gelar Depan (Opsional)
+                </Label>
                 <Input
                   id="gelar_depan"
                   placeholder="Dr."
@@ -546,7 +648,12 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="gelar_belakang" className="text-sm font-semibold text-[#0F172A]">Gelar Belakang (Opsional)</Label>
+                <Label
+                  htmlFor="gelar_belakang"
+                  className="text-sm font-semibold text-[#0F172A]"
+                >
+                  Gelar Belakang (Opsional)
+                </Label>
                 <Input
                   id="gelar_belakang"
                   placeholder="M.Keb"
@@ -569,7 +676,12 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
             </h3>
 
             <div className="space-y-2">
-              <Label htmlFor="nip" className="text-sm font-semibold text-[#0F172A]">NIP *</Label>
+              <Label
+                htmlFor="nip"
+                className="text-sm font-semibold text-[#0F172A]"
+              >
+                NIP *
+              </Label>
               <Input
                 id="nip"
                 placeholder="Nomor Induk Pegawai"
@@ -615,7 +727,9 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
             </AlertDialogTitle>
             <AlertDialogDescription className="text-[15px]">
               <div className="space-y-4">
-                <div className="font-medium text-slate-700">Pastikan data Anda sudah benar sebelum melanjutkan:</div>
+                <div className="font-medium text-slate-700">
+                  Pastikan data Anda sudah benar sebelum melanjutkan:
+                </div>
                 <div className="space-y-2.5 rounded-xl border border-[#E8E0D8] bg-[#F8F3EE] p-4 text-[15px]">
                   <div className="flex items-center justify-between">
                     <span className="font-semibold text-slate-600">Role:</span>
@@ -629,25 +743,36 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="font-semibold text-slate-600">Nama:</span>
-                    <span className="font-medium text-[#0F172A]">{pendingData?.full_name}</span>
+                    <span className="font-medium text-[#0F172A]">
+                      {pendingData?.full_name}
+                    </span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="font-semibold text-slate-600">Email:</span>
-                    <span className="font-medium text-[#0F172A]">{pendingData?.email}</span>
+                    <span className="font-medium text-[#0F172A]">
+                      {pendingData?.email}
+                    </span>
                   </div>
                 </div>
                 <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3.5 font-medium text-red-700">
                   <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
-                  Pastikan role yang dipilih sudah benar. Role tidak bisa diubah setelah registrasi.
+                  Pastikan role yang dipilih sudah benar. Role tidak bisa diubah
+                  setelah registrasi.
                 </div>
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setPendingData(null)} className="px-6 text-sm font-semibold">
+            <AlertDialogCancel
+              onClick={() => setPendingData(null)}
+              className="px-6 text-sm font-semibold"
+            >
               Cek Lagi
             </AlertDialogCancel>
-            <AlertDialogAction onClick={confirmSubmit} className="bg-linear-to-r from-[#7B1D3A] to-[#1E293B] px-6 text-sm font-semibold">
+            <AlertDialogAction
+              onClick={confirmSubmit}
+              className="bg-linear-to-r from-[#7B1D3A] to-[#1E293B] px-6 text-sm font-semibold"
+            >
               Ya, Daftar Sekarang
             </AlertDialogAction>
           </AlertDialogFooter>

@@ -18,7 +18,10 @@ import { cacheAPI, getCachedData } from "@/lib/offline/api-cache";
 import { formatRelativeTime } from "@/lib/utils/format";
 import { getNotificationNavigationTarget } from "@/lib/utils/notification-navigation";
 import type { Pengumuman } from "@/types/common.types";
-import type { Notification, NotificationType } from "@/types/notification.types";
+import type {
+  Notification,
+  NotificationType,
+} from "@/types/notification.types";
 
 type NotificationRole = "mahasiswa" | "dosen" | "laboran" | "admin";
 
@@ -394,7 +397,7 @@ export function RoleNotificationCenter({
       notification.data?.kuis_id
     ) {
       navigate(
-        `/dosen/kuis/${notification.data.kuis_id}/attempt/${notification.data.attempt_id}`,
+        `/dosen/kuis/${notification.data.kuis_id}/results?attempt=${notification.data.attempt_id}`,
       );
     } else if (
       notification.type === "tugas_graded" &&
@@ -419,7 +422,7 @@ export function RoleNotificationCenter({
     ) {
       navigate(`/mahasiswa/logbook`);
     } else if (notification.type === "peminjaman_baru") {
-      navigate(`/laboran/persetujuan`);
+      navigate(`/laboran/peminjaman`);
     } else if (
       notification.type === "peminjaman_disetujui" ||
       notification.type === "peminjaman_ditolak"
@@ -507,7 +510,9 @@ export function RoleNotificationCenter({
         <Alert className="rounded-2xl border-warning/40 bg-warning/10 text-foreground shadow-sm">
           <AlertDescription>
             Menampilkan data lokal yang tersedia.
-            {lastUpdatedLabel ? ` Pembaruan terakhir: ${lastUpdatedLabel}.` : ""}
+            {lastUpdatedLabel
+              ? ` Pembaruan terakhir: ${lastUpdatedLabel}.`
+              : ""}
           </AlertDescription>
         </Alert>
       ) : null}
@@ -517,7 +522,9 @@ export function RoleNotificationCenter({
           <CardContent className="flex items-center justify-between p-5">
             <div>
               <p className="text-sm text-muted-foreground">Notifikasi Event</p>
-              <p className="mt-1 text-2xl font-semibold">{notifications.length}</p>
+              <p className="mt-1 text-2xl font-semibold">
+                {notifications.length}
+              </p>
             </div>
             <Bell className="h-5 w-5 text-primary" />
           </CardContent>
@@ -526,7 +533,9 @@ export function RoleNotificationCenter({
           <CardContent className="flex items-center justify-between p-5">
             <div>
               <p className="text-sm text-muted-foreground">Belum Dibaca</p>
-              <p className="mt-1 text-2xl font-semibold">{unreadNotifications}</p>
+              <p className="mt-1 text-2xl font-semibold">
+                {unreadNotifications}
+              </p>
             </div>
             <Calendar className="h-5 w-5 text-primary" />
           </CardContent>
@@ -535,7 +544,9 @@ export function RoleNotificationCenter({
           <CardContent className="flex items-center justify-between p-5">
             <div>
               <p className="text-sm text-muted-foreground">Pengumuman Admin</p>
-              <p className="mt-1 text-2xl font-semibold">{announcements.length}</p>
+              <p className="mt-1 text-2xl font-semibold">
+                {announcements.length}
+              </p>
             </div>
             <BookOpen className="h-5 w-5 text-primary" />
           </CardContent>
@@ -581,7 +592,9 @@ export function RoleNotificationCenter({
                       </StatusBadge>
                     ) : null}
                   </div>
-                  <CardTitle className="text-base">{notification.title}</CardTitle>
+                  <CardTitle className="text-base">
+                    {notification.title}
+                  </CardTitle>
                   <p className="text-sm text-muted-foreground">
                     {formatRelativeTime(notification.created_at)}
                   </p>
@@ -633,7 +646,9 @@ export function RoleNotificationCenter({
                     {getAnnouncementPriorityBadge(announcement.prioritas)}
                     {getAnnouncementTypeBadge(announcement.tipe)}
                   </div>
-                  <CardTitle className="text-base">{announcement.judul}</CardTitle>
+                  <CardTitle className="text-base">
+                    {announcement.judul}
+                  </CardTitle>
                   <p className="text-sm text-muted-foreground">
                     {announcement.created_at
                       ? formatRelativeTime(announcement.created_at)

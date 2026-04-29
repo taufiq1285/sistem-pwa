@@ -130,9 +130,12 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
         {!isOnline && (
           <Alert className="border-[#C7D2FE] bg-[#EEF2FF] shadow-sm">
             <WifiOff className="h-5 w-5 text-[#3730A3]" />
-            <AlertTitle className="text-base font-semibold text-[#1E293B]">Mode Offline</AlertTitle>
+            <AlertTitle className="text-base font-semibold text-[#1E293B]">
+              Mode Offline
+            </AlertTitle>
             <AlertDescription className="text-sm text-[#334155]">
-              Anda sedang offline. Sistem akan memakai kredensial tersimpan untuk login.
+              Anda sedang offline. Sistem akan memakai kredensial tersimpan
+              untuk login.
             </AlertDescription>
           </Alert>
         )}
@@ -140,13 +143,18 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
         {error && (
           <Alert variant="destructive" className="shadow-sm">
             <AlertCircle className="h-5 w-5" />
-            <AlertTitle className="text-base font-semibold">Login Gagal</AlertTitle>
+            <AlertTitle className="text-base font-semibold">
+              Login Gagal
+            </AlertTitle>
             <AlertDescription className="text-sm">{error}</AlertDescription>
           </Alert>
         )}
 
         <div className="space-y-2">
-          <Label htmlFor="email" className="flex items-center gap-2 text-sm font-semibold text-[#0F172A]">
+          <Label
+            htmlFor="email"
+            className="flex items-center gap-2 text-sm font-semibold text-[#0F172A]"
+          >
             <Mail className="h-4 w-4 text-[#7B1D3A]" />
             Email
           </Label>
@@ -170,7 +178,10 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="password" className="flex items-center gap-2 text-sm font-semibold text-[#0F172A]">
+          <Label
+            htmlFor="password"
+            className="flex items-center gap-2 text-sm font-semibold text-[#0F172A]"
+          >
             <Lock className="h-4 w-4 text-[#7B1D3A]" />
             Password
           </Label>
@@ -190,7 +201,11 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
               className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 transition-colors hover:text-[#7B1D3A]"
               disabled={isSubmitting}
             >
-              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              {showPassword ? (
+                <EyeOff className="h-4 w-4" />
+              ) : (
+                <Eye className="h-4 w-4" />
+              )}
             </button>
           </div>
           {errors.password && (
@@ -228,7 +243,8 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
         {!isOnline && (
           <Alert className="border-[#C7D2FE] bg-[#EEF2FF]">
             <AlertDescription className="text-sm text-[#1E293B]">
-              <strong>Tips Login Offline:</strong> Masukkan email dan password yang sama dengan login online terakhir.
+              <strong>Tips Login Offline:</strong> Masukkan email dan password
+              yang sama dengan login online terakhir.
             </AlertDescription>
           </Alert>
         )}
@@ -240,13 +256,19 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
               <p>
                 {isOnline ? (
                   <>
-                    <span className="font-semibold text-[#0F172A]">Login Aman:</span>{" "}
-                    Kredensial terenkripsi dan disimpan aman di perangkat untuk login offline.
+                    <span className="font-semibold text-[#0F172A]">
+                      Login Aman:
+                    </span>{" "}
+                    Kredensial terenkripsi dan disimpan aman di perangkat untuk
+                    login offline.
                   </>
                 ) : (
                   <>
-                    <span className="font-semibold text-[#0F172A]">Mode Offline:</span>{" "}
-                    Login memakai kredensial tersimpan terenkripsi, bukan password asli.
+                    <span className="font-semibold text-[#0F172A]">
+                      Mode Offline:
+                    </span>{" "}
+                    Login memakai kredensial tersimpan terenkripsi, bukan
+                    password asli.
                   </>
                 )}
               </p>
@@ -262,7 +284,10 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
         </p>
         <ul className="space-y-1.5 text-sm text-slate-700">
           <li>Gunakan email dan password yang didaftarkan saat registrasi.</li>
-          <li>Login bisa dilakukan online, dan offline setelah login online pertama.</li>
+          <li>
+            Login bisa dilakukan online, dan offline setelah login online
+            pertama.
+          </li>
           <li>Role akan otomatis terdeteksi setelah login berhasil.</li>
         </ul>
       </div>

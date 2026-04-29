@@ -5,6 +5,9 @@ import PeminjamanAktifPage from "@/pages/laboran/PeminjamanAktifPage";
 const {
   mockCacheAPI,
   mockInvalidateCache,
+  mockGetPendingApprovals,
+  mockApprovePeminjaman,
+  mockRejectPeminjaman,
   mockGetActiveBorrowings,
   mockGetReturnedBorrowings,
   mockMarkBorrowingReturned,
@@ -12,6 +15,9 @@ const {
 } = vi.hoisted(() => ({
   mockCacheAPI: vi.fn(),
   mockInvalidateCache: vi.fn(),
+  mockGetPendingApprovals: vi.fn(),
+  mockApprovePeminjaman: vi.fn(),
+  mockRejectPeminjaman: vi.fn(),
   mockGetActiveBorrowings: vi.fn(),
   mockGetReturnedBorrowings: vi.fn(),
   mockMarkBorrowingReturned: vi.fn(),
@@ -25,6 +31,9 @@ vi.mock("@/lib/offline/api-cache", () => ({
 }));
 
 vi.mock("@/lib/api/laboran.api", () => ({
+  getPendingApprovals: (...args: unknown[]) => mockGetPendingApprovals(...args),
+  approvePeminjaman: (...args: unknown[]) => mockApprovePeminjaman(...args),
+  rejectPeminjaman: (...args: unknown[]) => mockRejectPeminjaman(...args),
   getActiveBorrowings: (...args: unknown[]) => mockGetActiveBorrowings(...args),
   getReturnedBorrowings: (...args: unknown[]) =>
     mockGetReturnedBorrowings(...args),
@@ -38,6 +47,10 @@ vi.mock("@/lib/errors/permission.errors", () => ({
 
 vi.mock("sonner", () => ({
   toast: mockToast,
+}));
+
+vi.mock("react-router-dom", () => ({
+  useLocation: () => ({ pathname: "/laboran/peminjaman" }),
 }));
 
 describe("Laboran PeminjamanAktifPage", () => {
@@ -67,8 +80,11 @@ describe("Laboran PeminjamanAktifPage", () => {
       },
     ]);
 
+    mockGetPendingApprovals.mockResolvedValue([]);
     mockGetReturnedBorrowings.mockResolvedValue([]);
     mockMarkBorrowingReturned.mockResolvedValue(undefined);
+    mockApprovePeminjaman.mockResolvedValue(undefined);
+    mockRejectPeminjaman.mockResolvedValue(undefined);
     mockInvalidateCache.mockResolvedValue(undefined);
   });
 
@@ -77,9 +93,11 @@ describe("Laboran PeminjamanAktifPage", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByRole("heading", { name: /Kelola Peminjaman Aktif/i }),
+        screen.getByRole("heading", { name: /Peminjaman Alat/i }),
       ).toBeInTheDocument();
     });
+
+    fireEvent.click(screen.getByRole("tab", { name: /Masih Dipinjam/i }));
 
     expect(screen.getByText("Andi")).toBeInTheDocument();
     expect(screen.getByText("Mikroskop")).toBeInTheDocument();
@@ -88,18 +106,22 @@ describe("Laboran PeminjamanAktifPage", () => {
   it("buka dialog pengembalian dan submit return", async () => {
     render(<PeminjamanAktifPage />);
 
+    fireEvent.click(screen.getByRole("tab", { name: /Masih Dipinjam/i }));
+
     await waitFor(() => {
       expect(screen.getByText("Andi")).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole("button", { name: /Sudah Kembali/i }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /Terima Pengembalian/i }),
+    );
 
     await waitFor(() => {
       expect(screen.getByRole("dialog")).toBeInTheDocument();
     });
 
     fireEvent.click(
-      screen.getByRole("button", { name: /Tandai Sudah Kembali/i }),
+      screen.getByRole("button", { name: /Simpan Pengembalian/i }),
     );
 
     await waitFor(() => {

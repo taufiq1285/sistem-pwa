@@ -1,15 +1,24 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import MahasiswaPengumumanPage from "@/pages/mahasiswa/PengumumanPage";
 import LaboranPengumumanPage from "@/pages/laboran/PengumumanPage";
 
-const { mockUseAuth, mockCacheAPI, mockGetAllAnnouncements } = vi.hoisted(
-  () => ({
-    mockUseAuth: vi.fn(),
-    mockCacheAPI: vi.fn(),
-    mockGetAllAnnouncements: vi.fn(),
-  }),
-);
+const {
+  mockUseAuth,
+  mockCacheAPI,
+  mockGetAllAnnouncements,
+  mockGetNotifications,
+  mockMarkAllAsRead,
+  mockMarkAsRead,
+} = vi.hoisted(() => ({
+  mockUseAuth: vi.fn(),
+  mockCacheAPI: vi.fn(),
+  mockGetAllAnnouncements: vi.fn(),
+  mockGetNotifications: vi.fn(),
+  mockMarkAllAsRead: vi.fn(),
+  mockMarkAsRead: vi.fn(),
+}));
 
 vi.mock("@/lib/hooks/useAuth", () => ({
   useAuth: () => mockUseAuth(),
@@ -22,6 +31,12 @@ vi.mock("@/lib/offline/api-cache", () => ({
 
 vi.mock("@/lib/api/announcements.api", () => ({
   getAllAnnouncements: (...args: unknown[]) => mockGetAllAnnouncements(...args),
+}));
+
+vi.mock("@/lib/api/notification.api", () => ({
+  getNotifications: (...args: unknown[]) => mockGetNotifications(...args),
+  markAllAsRead: (...args: unknown[]) => mockMarkAllAsRead(...args),
+  markAsRead: (...args: unknown[]) => mockMarkAsRead(...args),
 }));
 
 const announcements = [
@@ -63,11 +78,18 @@ const announcements = [
   },
 ];
 
+function renderPage(ui: React.ReactElement) {
+  return render(<MemoryRouter>{ui}</MemoryRouter>);
+}
+
 describe("Pengumuman Pages", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockUseAuth.mockReturnValue({ user: { id: "u1", role: "mahasiswa" } });
     mockGetAllAnnouncements.mockResolvedValue(announcements);
+    mockGetNotifications.mockResolvedValue([]);
+    mockMarkAllAsRead.mockResolvedValue(undefined);
+    mockMarkAsRead.mockResolvedValue(undefined);
     mockCacheAPI.mockImplementation(
       async (_key: string, fn: () => Promise<any>) => {
         return await fn();
@@ -76,7 +98,7 @@ describe("Pengumuman Pages", () => {
   });
 
   it("MahasiswaPengumumanPage memfilter pengumuman untuk mahasiswa + umum", async () => {
-    render(<MahasiswaPengumumanPage />);
+    renderPage(<MahasiswaPengumumanPage />);
 
     await waitFor(() => {
       expect(screen.getByText("Khusus Mahasiswa")).toBeInTheDocument();
@@ -89,7 +111,7 @@ describe("Pengumuman Pages", () => {
   it("LaboranPengumumanPage memfilter pengumuman untuk laboran + umum", async () => {
     mockUseAuth.mockReturnValue({ user: { id: "u2", role: "laboran" } });
 
-    render(<LaboranPengumumanPage />);
+    renderPage(<LaboranPengumumanPage />);
 
     await waitFor(() => {
       expect(screen.getByText("Khusus Laboran")).toBeInTheDocument();
@@ -101,11 +123,12 @@ describe("Pengumuman Pages", () => {
 
   it("menampilkan error state saat cache/API gagal", async () => {
     mockCacheAPI.mockRejectedValue(new Error("boom"));
+    mockGetNotifications.mockRejectedValue(new Error("boom"));
 
-    render(<MahasiswaPengumumanPage />);
+    renderPage(<MahasiswaPengumumanPage />);
 
     await waitFor(() => {
-      expect(screen.getByText(/boom/i)).toBeInTheDocument();
+      expect(screen.getByText(/Gagal memuat notifikasi/i)).toBeInTheDocument();
     });
   });
 });

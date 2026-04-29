@@ -380,18 +380,18 @@ describe("Nilai Schema Validation", () => {
 
   describe("Grade Calculation - calculateNilaiAkhir", () => {
     it("should calculate final grade with default weights", () => {
-      // New default: kuis 0%, tugas 0%, uts 25%, uas 30%, praktikum 40%, kehadiran 5%
+      // Default: hadir 15%, tugas 10%, kuis 5%, praktikum 30%, uts 20%, uas 20%
       const result = calculateNilaiAkhir(
-        80, // kuis: 80 * 0.00 = 0 (NOT USED)
-        85, // tugas: 85 * 0.00 = 0 (NOT USED)
-        90, // uts: 90 * 0.25 = 22.5
-        95, // uas: 95 * 0.30 = 28.5
-        100, // praktikum: 100 * 0.40 = 40
-        100, // kehadiran: 100 * 0.05 = 5
+        80, // kuis: 80 * 0.05 = 4
+        85, // tugas: 85 * 0.10 = 8.5
+        90, // uts: 90 * 0.20 = 18
+        95, // uas: 95 * 0.20 = 19
+        100, // praktikum: 100 * 0.30 = 30
+        100, // kehadiran: 100 * 0.15 = 15
       );
-      // Total = 0 + 0 + 22.5 + 28.5 + 40 + 5 = 96
+      // Total = 4 + 8.5 + 18 + 19 + 30 + 15 = 94.5
 
-      expect(result).toBe(96);
+      expect(result).toBe(94.5);
     });
 
     it("should calculate final grade with all zeros", () => {
@@ -430,17 +430,16 @@ describe("Nilai Schema Validation", () => {
 
     it("should round result to 2 decimal places", () => {
       const result = calculateNilaiAkhir(
-        83.33, // kuis: NOT USED (0%)
-        88.88, // tugas: NOT USED (0%)
-        91.11, // uts: 91.11 * 0.25 = 22.7775
-        95.55, // uas: 95.55 * 0.30 = 28.665
-        97.77, // praktikum: 97.77 * 0.40 = 39.108
-        99.99, // kehadiran: 99.99 * 0.05 = 4.9995
+        83.33, // kuis: 83.33 * 0.05 = 4.1665
+        88.88, // tugas: 88.88 * 0.10 = 8.888
+        91.11, // uts: 91.11 * 0.20 = 18.222
+        95.55, // uas: 95.55 * 0.20 = 19.11
+        97.77, // praktikum: 97.77 * 0.30 = 29.331
+        99.99, // kehadiran: 99.99 * 0.15 = 14.9985
       );
-      // Total = 0 + 0 + 22.7775 + 28.665 + 39.108 + 4.9995 = 95.55
-      // Rounded to 2 decimal places = 95.55
+      // Rounded to 2 decimal places = 94.72
 
-      expect(result).toBeCloseTo(95.55, 2);
+      expect(result).toBeCloseTo(94.72, 2);
     });
 
     it("should use default values when parameters are undefined", () => {
@@ -449,23 +448,21 @@ describe("Nilai Schema Validation", () => {
     });
 
     it("should handle null customWeights", () => {
-      // With null customWeights, uses default: kuis 0%, tugas 0%, uts 25%, uas 30%, praktikum 40%, kehadiran 5%
+      // With null customWeights, uses the academic default weights.
       const result = calculateNilaiAkhir(80, 85, 90, 95, 100, 100, null);
-      // = 0 + 0 + (90*0.25) + (95*0.30) + (100*0.40) + (100*0.05)
-      // = 0 + 0 + 22.5 + 28.5 + 40 + 5 = 96
-      expect(result).toBe(96);
+      expect(result).toBe(94.5);
     });
 
     it("should calculate realistic passing grade (60)", () => {
       const result = calculateNilaiAkhir(
-        60, // kuis: NOT USED (0%)
-        60, // tugas: NOT USED (0%)
-        60, // uts: 60 * 0.25 = 15
-        60, // uas: 60 * 0.30 = 18
-        60, // praktikum: 60 * 0.40 = 24
-        60, // kehadiran: 60 * 0.05 = 3
+        60, // kuis: 60 * 0.05 = 3
+        60, // tugas: 60 * 0.10 = 6
+        60, // uts: 60 * 0.20 = 12
+        60, // uas: 60 * 0.20 = 12
+        60, // praktikum: 60 * 0.30 = 18
+        60, // kehadiran: 60 * 0.15 = 9
       );
-      // Total = 0 + 0 + 15 + 18 + 24 + 3 = 60
+      // Total = 3 + 6 + 12 + 12 + 18 + 9 = 60
 
       expect(result).toBe(60);
     });
@@ -475,14 +472,13 @@ describe("Nilai Schema Validation", () => {
     it("should return correct default weights", () => {
       const defaults = getDefaultBobotNilai();
 
-      // Updated weights: kuis & tugas NOT USED, praktikum increased to 40%
       expect(defaults).toEqual({
-        kuis: 0,
-        tugas: 0,
-        uts: 25,
-        uas: 30,
-        praktikum: 40,
-        kehadiran: 5,
+        kuis: 5,
+        tugas: 10,
+        uts: 20,
+        uas: 20,
+        praktikum: 30,
+        kehadiran: 15,
       });
     });
 

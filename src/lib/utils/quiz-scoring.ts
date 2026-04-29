@@ -91,6 +91,14 @@ function getStoredStudentAnswer(jawaban?: Jawaban | null): string {
   return jawaban?.jawaban ?? jawaban?.jawaban_mahasiswa ?? "";
 }
 
+function getQuestionOptions(soal: Soal) {
+  return (
+    soal.opsi_jawaban ||
+    ((soal as any).pilihan_jawaban as any[]) ||
+    []
+  );
+}
+
 // ============================================================================
 // AUTO-GRADING FUNCTIONS
 // ============================================================================
@@ -136,16 +144,16 @@ export function checkAnswerCorrect(soal: Soal, jawaban: string): boolean {
   const tipeSoal = soal.tipe_soal;
 
   if (tipeSoal === TIPE_SOAL.PILIHAN_GANDA) {
+    const options = getQuestionOptions(soal);
+
     // ✅ STRATEGY 1: Use jawaban_benar field if exists
     if (soal.jawaban_benar) {
       return jawaban.trim() === soal.jawaban_benar.trim();
     }
 
     // ✅ STRATEGY 2: Find correct option using is_correct: true
-    if (soal.opsi_jawaban && soal.opsi_jawaban.length > 0) {
-      const correctOption = soal.opsi_jawaban.find(
-        (opt) => opt.is_correct === true,
-      );
+    if (options.length > 0) {
+      const correctOption = options.find((opt) => opt.is_correct === true);
       if (correctOption) {
         // Compare by ID or label
         return (
@@ -182,32 +190,25 @@ export function checkAnswerCorrect(soal: Soal, jawaban: string): boolean {
  */
 export function getCorrectAnswerLabel(soal: Soal): string {
   const tipeSoal = soal.tipe_soal;
+  const options = getQuestionOptions(soal);
 
-  if (
-    tipeSoal === TIPE_SOAL.PILIHAN_GANDA &&
-    soal.opsi_jawaban &&
-    soal.opsi_jawaban.length > 0
-  ) {
+  if (tipeSoal === TIPE_SOAL.PILIHAN_GANDA && options.length > 0) {
     let correctOption = null;
 
     // ✅ STRATEGY 1: Use jawaban_benar field if exists
     if (soal.jawaban_benar) {
       // Try matching by ID first
-      correctOption = soal.opsi_jawaban.find(
-        (opt) => opt.id === soal.jawaban_benar,
-      );
+      correctOption = options.find((opt) => opt.id === soal.jawaban_benar);
 
       // If not found by ID, try matching by label (A, B, C, D, etc.)
       if (!correctOption) {
-        correctOption = soal.opsi_jawaban.find(
-          (opt) => opt.label === soal.jawaban_benar,
-        );
+        correctOption = options.find((opt) => opt.label === soal.jawaban_benar);
       }
     }
 
     // ✅ STRATEGY 2: Find option with is_correct: true (when jawaban_benar is null)
     if (!correctOption) {
-      correctOption = soal.opsi_jawaban.find((opt) => opt.is_correct === true);
+      correctOption = options.find((opt) => opt.is_correct === true);
     }
 
     // If found, format as "A. Answer text"
@@ -220,7 +221,7 @@ export function getCorrectAnswerLabel(soal: Soal): string {
       "⚠️ [getCorrectAnswerLabel] Correct answer not found in options:",
       {
         jawaban_benar: soal.jawaban_benar,
-        opsi_jawaban: soal.opsi_jawaban,
+        opsi_jawaban: options,
         pertanyaan: soal.pertanyaan?.substring(0, 50),
       },
     );
@@ -249,18 +250,15 @@ export function getAnswerLabel(soal: Soal, jawaban: string): string {
   if (!jawaban) return "Tidak dijawab";
 
   const tipeSoal = soal.tipe_soal;
+  const options = getQuestionOptions(soal);
 
-  if (
-    tipeSoal === TIPE_SOAL.PILIHAN_GANDA &&
-    soal.opsi_jawaban &&
-    soal.opsi_jawaban.length > 0
-  ) {
+  if (tipeSoal === TIPE_SOAL.PILIHAN_GANDA && options.length > 0) {
     // ✅ FIX: Try multiple matching strategies for robustness
-    let selectedOption = soal.opsi_jawaban.find((opt) => opt.id === jawaban);
+    let selectedOption = options.find((opt) => opt.id === jawaban);
 
     // If not found by ID, try matching by label (A, B, C, D, etc.)
     if (!selectedOption) {
-      selectedOption = soal.opsi_jawaban.find((opt) => opt.label === jawaban);
+      selectedOption = options.find((opt) => opt.label === jawaban);
     }
 
     if (selectedOption) {

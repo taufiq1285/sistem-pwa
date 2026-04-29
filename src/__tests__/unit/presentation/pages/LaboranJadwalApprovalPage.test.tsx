@@ -83,7 +83,7 @@ describe("Laboran JadwalApprovalPage", () => {
     expect(screen.getAllByText(/Menunggu Persetujuan/i).length).toBeGreaterThan(
       0,
     );
-    expect(screen.getAllByText(/Jadwal Aktif/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Jadwal Disetujui/i).length).toBeGreaterThan(0);
   });
 
   it("menampilkan data jadwal pending pada tab default", async () => {

@@ -83,6 +83,7 @@ const mockQueryBuilder = () => {
     limit: vi.fn().mockReturnThis(),
     range: vi.fn().mockReturnThis(),
     single: vi.fn(),
+    maybeSingle: vi.fn(),
     // Make builder awaitable - returns a promise that resolves to resolveValue
     then: vi.fn((onFulfilled) =>
       Promise.resolve(resolveValue).then(onFulfilled),
@@ -251,19 +252,19 @@ describe("Base API - Query Functions", () => {
   describe("getById", () => {
     it("should fetch single record by ID", async () => {
       const builder = mockQueryBuilder();
-      builder.single.mockResolvedValue({ data: mockData[0], error: null });
+      builder.maybeSingle.mockResolvedValue({ data: mockData[0], error: null });
       (supabase.from as any).mockReturnValue(builder);
 
       const result = await getById("test_table", "1");
 
       expect(builder.eq).toHaveBeenCalledWith("id", "1");
-      expect(builder.single).toHaveBeenCalled();
+      expect(builder.maybeSingle).toHaveBeenCalled();
       expect(result).toEqual(mockData[0]);
     });
 
     it("should throw NotFoundError when record not found", async () => {
       const builder = mockQueryBuilder();
-      builder.single.mockResolvedValue({ data: null, error: null });
+      builder.maybeSingle.mockResolvedValue({ data: null, error: null });
       (supabase.from as any).mockReturnValue(builder);
 
       await expect(getById("test_table", "nonexistent")).rejects.toThrow(
@@ -622,11 +623,12 @@ describe("Base API - Integration", () => {
     expect(inserted.id).toBe("new-id");
 
     // Read
-    builder.single.mockResolvedValueOnce({
+    builder.maybeSingle.mockResolvedValueOnce({
       data: { id: "new-id", name: "Test" },
       error: null,
     });
     const fetched = await getById("test_table", "new-id");
+    expect(builder.maybeSingle).toHaveBeenCalled();
     expect(fetched.name).toBe("Test");
 
     // Update

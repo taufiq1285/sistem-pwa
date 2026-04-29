@@ -452,16 +452,14 @@ export async function getLabScheduleToday(
 
     // Fetch mata kuliah and dosen if we have kelas data
     const mataKuliahIds: string[] = [
-      ...new Set(
-        [
-          ...(data
-            .map((item: any) => item.mata_kuliah_id)
-            .filter((id: unknown): id is string => Boolean(id)) || []),
-          ...(kelasData.data
-            ?.map((k: any) => k.mata_kuliah_id)
-            .filter((id: unknown): id is string => Boolean(id)) || []),
-        ],
-      ),
+      ...new Set([
+        ...(data
+          .map((item: any) => item.mata_kuliah_id)
+          .filter((id: unknown): id is string => Boolean(id)) || []),
+        ...(kelasData.data
+          ?.map((k: any) => k.mata_kuliah_id)
+          .filter((id: unknown): id is string => Boolean(id)) || []),
+      ]),
     ];
     const dosenIds: string[] = [
       ...new Set(
@@ -505,28 +503,28 @@ export async function getLabScheduleToday(
 
     const mappedItems = await Promise.all(
       data.map(async (item: any) => {
-      const kelas = kelasMap.get(item.kelas_id);
-      const lab = labMap.get(item.laboratorium_id);
-      const mataKuliahId = await resolveLaboranMataKuliahId(
-        item.kelas_id,
-        item.mata_kuliah_id,
-        kelas?.mata_kuliah_id,
-      );
-      const mataKuliah = mataKuliahMap.get(mataKuliahId);
-      const dosen = kelas ? dosenMap.get(kelas.dosen_id) : null;
+        const kelas = kelasMap.get(item.kelas_id);
+        const lab = labMap.get(item.laboratorium_id);
+        const mataKuliahId = await resolveLaboranMataKuliahId(
+          item.kelas_id,
+          item.mata_kuliah_id,
+          kelas?.mata_kuliah_id,
+        );
+        const mataKuliah = mataKuliahMap.get(mataKuliahId);
+        const dosen = kelas ? dosenMap.get(kelas.dosen_id) : null;
 
-      return {
-        id: item.id,
-        mata_kuliah_nama: mataKuliah?.nama_mk || "Unknown",
-        kelas_nama: kelas?.nama_kelas || "-",
-        dosen_nama: dosen?.users?.full_name || "Unknown",
-        laboratorium_nama: lab?.nama_lab || "-",
-        hari: item.hari,
-        jam_mulai: item.jam_mulai,
-        jam_selesai: item.jam_selesai,
-        tanggal_praktikum: item.tanggal_praktikum,
-        topik: item.topik || "-",
-      };
+        return {
+          id: item.id,
+          mata_kuliah_nama: mataKuliah?.nama_mk || "Unknown",
+          kelas_nama: kelas?.nama_kelas || "-",
+          dosen_nama: dosen?.users?.full_name || "Unknown",
+          laboratorium_nama: lab?.nama_lab || "-",
+          hari: item.hari,
+          jam_mulai: item.jam_mulai,
+          jam_selesai: item.jam_selesai,
+          tanggal_praktikum: item.tanggal_praktikum,
+          topik: item.topik || "-",
+        };
       }),
     );
 

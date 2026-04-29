@@ -24,6 +24,7 @@ import type {
   PermintaanStatsForDosen,
   KomponenNilai,
 } from "@/types/permintaan-perbaikan.types";
+import { BENTUK_PERBAIKAN_LABELS } from "@/types/permintaan-perbaikan.types";
 import {
   createNotification,
   createBulkNotifications,
@@ -32,6 +33,13 @@ import {
 // Type helper for Supabase query results with complex relationships
 type SupabaseResult<T> = T | null;
 type SupabaseResultArray<T> = T[];
+
+export interface DosenPermintaanOption {
+  id: string;
+  nip?: string | null;
+  full_name: string;
+  email?: string | null;
+}
 
 // ============================================================================
 // QUERY OPERATIONS
@@ -74,6 +82,19 @@ export async function getPermintaan(
             )
           )
         ),
+        mata_kuliah:mata_kuliah_id (
+          id,
+          nama_mk,
+          kode_mk
+        ),
+        target_dosen:target_dosen_id (
+          id,
+          nip,
+          user:user_id (
+            full_name,
+            email
+          )
+        ),
         reviewer:reviewed_by (
           id,
           nip,
@@ -91,6 +112,10 @@ export async function getPermintaan(
 
     if (filters.kelas_id) {
       query = query.eq("kelas_id", filters.kelas_id);
+    }
+
+    if (filters.mata_kuliah_id) {
+      query = query.eq("mata_kuliah_id", filters.mata_kuliah_id);
     }
 
     if (filters.status) {
@@ -138,8 +163,46 @@ export async function getPermintaanByMahasiswa(
  */
 export async function getPermintaanByKelas(
   kelasId: string,
+  mataKuliahId?: string,
 ): Promise<PermintaanPerbaikanWithRelations[]> {
-  return getPermintaan({ kelas_id: kelasId });
+  return getPermintaan({
+    kelas_id: kelasId,
+    ...(mataKuliahId ? { mata_kuliah_id: mataKuliahId } : {}),
+  });
+}
+
+export async function getDosenOptionsForPermintaan(): Promise<
+  DosenPermintaanOption[]
+> {
+  try {
+    const { data, error } = await supabase
+      .from("dosen")
+      .select(
+        `
+        id,
+        nip,
+        user:user_id (
+          full_name,
+          email
+        )
+      `,
+      )
+      .order("created_at", { ascending: false });
+
+    if (error) throw handleError(error);
+
+    return ((data || []) as any[])
+      .map((item) => ({
+        id: item.id,
+        nip: item.nip,
+        full_name: item.user?.full_name || "Dosen",
+        email: item.user?.email || null,
+      }))
+      .filter((item) => Boolean(item.id));
+  } catch (error) {
+    console.error("getDosenOptionsForPermintaan error:", error);
+    throw handleError(error);
+  }
 }
 
 /**
@@ -157,17 +220,9 @@ export async function getPermintaanPendingForDosen(
 
     if (kelasError) throw handleError(kelasError);
 
-    if (!kelasList || kelasList.length === 0) {
-      return [];
-    }
+    const kelasIds = (kelasList || []).map((k) => k.id);
 
-    const kelasIds = kelasList.map((k) => k.id);
-
-    // Get pending permintaan for these classes
-    const { data, error } = await supabase
-      .from("permintaan_perbaikan_nilai" as any)
-      .select(
-        `
+    const selectQuery = `
         *,
         mahasiswa:mahasiswa_id (
           id,
@@ -185,16 +240,52 @@ export async function getPermintaanPendingForDosen(
             nama_mk,
             kode_mk
           )
+        ),
+        mata_kuliah:mata_kuliah_id (
+          id,
+          nama_mk,
+          kode_mk
+        ),
+        target_dosen:target_dosen_id (
+          id,
+          nip,
+          user:user_id (
+            full_name,
+            email
+          )
         )
-      `,
-      )
-      .in("kelas_id", kelasIds)
+      `;
+
+    const { data: targetedData, error: targetedError } = await supabase
+      .from("permintaan_perbaikan_nilai" as any)
+      .select(selectQuery)
+      .eq("target_dosen_id", dosenId)
       .eq("status", "pending")
       .order("created_at", { ascending: false });
 
-    if (error) throw handleError(error);
+    if (targetedError) throw handleError(targetedError);
 
-    return (data ||
+    let legacyData: unknown[] = [];
+    if (kelasIds.length > 0) {
+      const { data: fallbackData, error: fallbackError } = await supabase
+        .from("permintaan_perbaikan_nilai" as any)
+        .select(selectQuery)
+        .is("target_dosen_id", null)
+        .in("kelas_id", kelasIds)
+        .eq("status", "pending")
+        .order("created_at", { ascending: false });
+
+      if (fallbackError) throw handleError(fallbackError);
+      legacyData = fallbackData || [];
+    }
+
+    const byId = new Map<string, unknown>();
+    for (const item of [...((targetedData || []) as unknown[]), ...legacyData]) {
+      const id = (item as { id?: string }).id;
+      if (id) byId.set(id, item);
+    }
+
+    return (Array.from(byId.values()) ||
       []) as unknown as SupabaseResultArray<PermintaanPerbaikanWithRelations>;
   } catch (error) {
     console.error("getPermintaanPendingForDosen error:", error);
@@ -239,6 +330,19 @@ export async function getPermintaanById(
             )
           )
         ),
+        mata_kuliah:mata_kuliah_id (
+          id,
+          nama_mk,
+          kode_mk
+        ),
+        target_dosen:target_dosen_id (
+          id,
+          nip,
+          user:user_id (
+            full_name,
+            email
+          )
+        ),
         reviewer:reviewed_by (
           id,
           nip,
@@ -277,6 +381,8 @@ async function createPermintaanImpl(
         mahasiswa_id: data.mahasiswa_id,
         nilai_id: data.nilai_id,
         kelas_id: data.kelas_id,
+        mata_kuliah_id: data.mata_kuliah_id || null,
+        target_dosen_id: data.target_dosen_id || null,
         komponen_nilai: data.komponen_nilai,
         nilai_lama: data.nilai_lama,
         nilai_usulan: data.nilai_usulan || null,
@@ -289,14 +395,25 @@ async function createPermintaanImpl(
 
     if (error) throw handleError(error);
 
-    // Get kelas info for notification
-    const { data: kelasInfo, error: kelasError } = await supabase
-      .from("kelas")
+    // Get request destination info for notification. Prefer the explicitly
+    // selected target dosen; fallback to legacy kelas.dosen_id.
+    const { data: requestInfo, error: requestInfoError } = await supabase
+      .from("permintaan_perbaikan_nilai" as any)
       .select(
         `
-        nama_kelas,
+        id,
+        kelas:kelas_id (
+          nama_kelas,
+          mata_kuliah:mata_kuliah_id (nama_mk),
+          dosen:dosen_id (
+            user:user_id (
+              id,
+              full_name
+            )
+          )
+        ),
         mata_kuliah:mata_kuliah_id (nama_mk),
-        dosen:dosen_id (
+        target_dosen:target_dosen_id (
           user:user_id (
             id,
             full_name
@@ -304,10 +421,10 @@ async function createPermintaanImpl(
         )
       `,
       )
-      .eq("id", data.kelas_id)
+      .eq("id", (permintaan as unknown as PermintaanPerbaikanNilai).id)
       .single();
 
-    if (!kelasError && kelasInfo) {
+    if (!requestInfoError && requestInfo) {
       // Get mahasiswa info
       const { data: mahasiswaInfo } = await supabase
         .from("mahasiswa")
@@ -317,17 +434,25 @@ async function createPermintaanImpl(
 
       // Notify dosen (best effort - don't fail if notification fails)
       try {
-        const dosenUserId = kelasInfo.dosen?.user?.id;
+        const dosenUserId =
+          requestInfo.target_dosen?.user?.id ||
+          requestInfo.kelas?.dosen?.user?.id;
+        const mataKuliahName =
+          requestInfo.mata_kuliah?.nama_mk ||
+          requestInfo.kelas?.mata_kuliah?.nama_mk ||
+          "mata kuliah";
         if (dosenUserId) {
           await createNotification({
             user_id: dosenUserId,
             title: "Permintaan Perbaikan Nilai",
-            message: `${mahasiswaInfo?.user?.full_name || "Mahasiswa"} mengajukan permintaan perbaikan nilai ${data.komponen_nilai.toUpperCase()} untuk kelas ${kelasInfo.mata_kuliah?.nama_mk}`,
+            message: `${mahasiswaInfo?.user?.full_name || "Mahasiswa"} mengajukan permintaan perbaikan nilai untuk ${mataKuliahName}`,
             type: "perbaikan_nilai_request",
             data: {
               permintaan_id: (permintaan as unknown as PermintaanPerbaikanNilai)
                 .id,
               kelas_id: data.kelas_id,
+              mata_kuliah_id: data.mata_kuliah_id,
+              target_dosen_id: data.target_dosen_id,
               komponen_nilai: data.komponen_nilai,
             },
           });
@@ -361,12 +486,26 @@ async function approvePermintaanImpl(
   data: ApprovePermintaanData,
 ): Promise<PermintaanPerbaikanNilai> {
   try {
+    const nilaiBaru = data.nilai_baru ?? null;
+    const bentukPerbaikan = data.bentuk_perbaikan ?? null;
+    const instruksiPerbaikan = data.instruksi_perbaikan?.trim() || null;
+
+    if (!bentukPerbaikan) {
+      throw new Error("Bentuk perbaikan harus dipilih");
+    }
+
+    if (!instruksiPerbaikan) {
+      throw new Error("Instruksi perbaikan harus diisi");
+    }
+
     const { data: updated, error } = await supabase
       .from("permintaan_perbaikan_nilai" as any)
       .update({
         status: "approved",
-        nilai_baru: data.nilai_baru,
-        response_dosen: data.response_dosen || null,
+        nilai_baru: nilaiBaru,
+        bentuk_perbaikan: bentukPerbaikan,
+        instruksi_perbaikan: instruksiPerbaikan,
+        response_dosen: data.response_dosen || instruksiPerbaikan,
         reviewed_by: data.reviewed_by,
         reviewed_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -396,15 +535,25 @@ async function approvePermintaanImpl(
           .single();
 
         if (mahasiswa?.user_id) {
+          const mataKuliahName =
+            permintaan.mata_kuliah?.nama_mk ||
+            permintaan.kelas?.mata_kuliah?.nama_mk ||
+            "mata kuliah";
+          const bentukLabel =
+            BENTUK_PERBAIKAN_LABELS[bentukPerbaikan] || "Perbaikan nilai";
+          const message = `Permintaan perbaikan nilai Anda untuk ${mataKuliahName} telah disetujui. Bentuk perbaikan: ${bentukLabel}. Instruksi: ${instruksiPerbaikan}`;
+
           await createNotification({
             user_id: mahasiswa.user_id,
             title: "Permintaan Perbaikan Nilai Disetujui",
-            message: `Permintaan perbaikan nilai ${permintaan.komponen_nilai.toUpperCase()} Anda untuk ${permintaan.kelas?.mata_kuliah?.nama_mk} telah disetujui. Nilai baru: ${data.nilai_baru}`,
+            message,
             type: "perbaikan_nilai_response",
             data: {
               permintaan_id: data.permintaan_id,
               status: "approved",
-              nilai_baru: data.nilai_baru,
+              nilai_baru: nilaiBaru,
+              bentuk_perbaikan: bentukPerbaikan,
+              instruksi_perbaikan: instruksiPerbaikan,
             },
           });
         }
@@ -470,7 +619,7 @@ async function rejectPermintaanImpl(
           await createNotification({
             user_id: mahasiswa.user_id,
             title: "Permintaan Perbaikan Nilai Ditolak",
-            message: `Permintaan perbaikan nilai ${permintaan.komponen_nilai.toUpperCase()} Anda untuk ${permintaan.kelas?.mata_kuliah?.nama_mk} ditolak. Alasan: ${data.response_dosen}`,
+            message: `Permintaan perbaikan nilai ${permintaan.komponen_nilai.toUpperCase()} Anda untuk ${permintaan.mata_kuliah?.nama_mk || permintaan.kelas?.mata_kuliah?.nama_mk || "mata kuliah"} ditolak. Alasan: ${data.response_dosen}`,
             type: "perbaikan_nilai_response",
             data: {
               permintaan_id: data.permintaan_id,
@@ -558,6 +707,10 @@ export async function getPermintaanSummary(
       query = query.eq("kelas_id", filters.kelas_id);
     }
 
+    if (filters.mata_kuliah_id) {
+      query = query.eq("mata_kuliah_id", filters.mata_kuliah_id);
+    }
+
     const { data, error } = await query;
 
     if (error) throw handleError(error);
@@ -595,33 +748,30 @@ export async function getPermintaanStatsForDosen(
 
     if (kelasError) throw handleError(kelasError);
 
-    if (!kelasList || kelasList.length === 0) {
-      return {
-        total_pending: 0,
-        total_reviewed: 0,
-        approval_rate: 0,
-        by_komponen: {
-          kuis: 0,
-          tugas: 0,
-          uts: 0,
-          uas: 0,
-          praktikum: 0,
-          kehadiran: 0,
-        },
-      };
-    }
+    const kelasIds = (kelasList || []).map((k) => k.id);
 
-    const kelasIds = kelasList.map((k) => k.id);
-
-    // Get all permintaan for these classes
-    const { data, error } = await supabase
+    const { data: targetedData, error: targetedError } = await supabase
       .from("permintaan_perbaikan_nilai" as any)
       .select("status, komponen_nilai")
-      .in("kelas_id", kelasIds);
+      .eq("target_dosen_id", dosenId);
 
-    if (error) throw handleError(error);
+    if (targetedError) throw handleError(targetedError);
 
-    const allPermintaan = (data || []) as unknown as Array<{
+    let legacyData: unknown[] = [];
+    if (kelasIds.length > 0) {
+      const { data: fallbackData, error: fallbackError } = await supabase
+        .from("permintaan_perbaikan_nilai" as any)
+        .select("id, status, komponen_nilai")
+        .is("target_dosen_id", null)
+        .in("kelas_id", kelasIds);
+
+      if (fallbackError) throw handleError(fallbackError);
+      legacyData = fallbackData || [];
+    }
+
+    const allRows = [...((targetedData || []) as unknown[]), ...legacyData];
+
+    const allPermintaan = allRows as Array<{
       status: string;
       komponen_nilai: string;
     }>;

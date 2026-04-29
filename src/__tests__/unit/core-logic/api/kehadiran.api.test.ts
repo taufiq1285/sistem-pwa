@@ -515,25 +515,22 @@ describe("Kehadiran API", () => {
       const mockKehadiranRows = [
         {
           id: "kehadiran-1",
+          tanggal: "2025-01-15",
+          kelas_id: "kelas-1",
+          mata_kuliah_id: "mk-1",
           status: "hadir",
           keterangan: null,
           created_at: "2025-01-15T08:00:00Z",
-          jadwal: {
-            id: "jadwal-1",
-            tanggal_praktikum: "2025-01-15",
-            jam_mulai: "08:00",
-            jam_selesai: "10:00",
-            topik: "Praktikum Dasar",
-            kelas_id: "kelas-1",
-            laboratorium_id: "lab-1",
-            mata_kuliah_id: "mk-1",
-          },
+          jadwal_id: "jadwal-1",
         },
       ];
 
       const mockData: MahasiswaKehadiranRecord[] = [
         {
           id: "kehadiran-1",
+          tanggal: "2025-01-15",
+          kelas_id: "kelas-1",
+          mata_kuliah_id: "mk-1",
           status: "hadir",
           keterangan: null,
           created_at: "2025-01-15T08:00:00Z",
@@ -544,7 +541,9 @@ describe("Kehadiran API", () => {
             jam_selesai: "10:00",
             topik: "Praktikum Dasar",
             mata_kuliah: {
+              id: undefined,
               nama_mk: "Kebidanan",
+              kode_mk: undefined,
             },
             kelas: {
               nama_kelas: "Kelas A",
@@ -576,7 +575,26 @@ describe("Kehadiran API", () => {
           select: vi.fn().mockReturnValue({
             eq: vi.fn().mockReturnValue({
               maybeSingle: vi.fn().mockResolvedValue({
-                data: { nama_kelas: "Kelas A", mata_kuliah_id: "mk-1" },
+                data: {
+                  id: "jadwal-1",
+                  tanggal_praktikum: "2025-01-15",
+                  jam_mulai: "08:00",
+                  jam_selesai: "10:00",
+                  topik: "Praktikum Dasar",
+                  kelas_id: "kelas-1",
+                  laboratorium_id: "lab-1",
+                  mata_kuliah_id: "mk-1",
+                },
+                error: null,
+              }),
+            }),
+          }),
+        } as any)
+        .mockReturnValueOnce({
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              maybeSingle: vi.fn().mockResolvedValue({
+                data: { nama_kelas: "Kelas A" },
                 error: null,
               }),
             }),
@@ -642,7 +660,7 @@ describe("Kehadiran API", () => {
 
       await getMahasiswaKehadiran("mhs-1");
 
-      expect(orderMock).toHaveBeenCalledWith("jadwal(tanggal_praktikum)", {
+      expect(orderMock).toHaveBeenCalledWith("tanggal", {
         ascending: false,
       });
     });
@@ -1011,6 +1029,18 @@ describe("Kehadiran API", () => {
   });
 
   describe("saveKehadiranBulk", () => {
+    it("should require mata kuliah when saving attendance without jadwal", async () => {
+      const mockBulkData: BulkKehadiranData = {
+        kelas_id: "kelas-1",
+        tanggal: "2025-01-15",
+        kehadiran: [{ mahasiswa_id: "mhs-1", status: "hadir" }],
+      };
+
+      await expect(saveKehadiranBulk(mockBulkData)).rejects.toThrow(
+        "Mata kuliah wajib dipilih saat menyimpan kehadiran tanpa jadwal praktikum.",
+      );
+    });
+
     it("should insert bulk kehadiran for new records", async () => {
       const mockBulkData: BulkKehadiranData = {
         jadwal_id: "jadwal-1",
@@ -1025,9 +1055,26 @@ describe("Kehadiran API", () => {
       vi.mocked(supabase.from)
         .mockReturnValueOnce({
           select: vi.fn().mockReturnValue({
-            eq: vi.fn().mockResolvedValue({
-              data: [],
-              error: null,
+            eq: vi.fn().mockReturnValue({
+              maybeSingle: vi.fn().mockResolvedValue({
+                data: {
+                  id: "jadwal-1",
+                  kelas_id: "kelas-1",
+                  tanggal_praktikum: "2025-01-15",
+                  mata_kuliah_id: null,
+                },
+                error: null,
+              }),
+            }),
+          }),
+        } as any)
+        .mockReturnValueOnce({
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              eq: vi.fn().mockResolvedValue({
+                data: [],
+                error: null,
+              }),
             }),
           }),
         } as any)
@@ -1055,9 +1102,26 @@ describe("Kehadiran API", () => {
       vi.mocked(supabase.from)
         .mockReturnValueOnce({
           select: vi.fn().mockReturnValue({
-            eq: vi.fn().mockResolvedValue({
-              data: existingRecords,
-              error: null,
+            eq: vi.fn().mockReturnValue({
+              maybeSingle: vi.fn().mockResolvedValue({
+                data: {
+                  id: "jadwal-1",
+                  kelas_id: "kelas-1",
+                  tanggal_praktikum: "2025-01-15",
+                  mata_kuliah_id: null,
+                },
+                error: null,
+              }),
+            }),
+          }),
+        } as any)
+        .mockReturnValueOnce({
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              eq: vi.fn().mockResolvedValue({
+                data: existingRecords,
+                error: null,
+              }),
             }),
           }),
         } as any)
@@ -1106,25 +1170,46 @@ describe("Kehadiran API", () => {
 
       const existingRecords = [{ id: "kehadiran-1", mahasiswa_id: "mhs-1" }];
 
-      // Mock checking existing records
-      vi.mocked(supabase.from).mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockResolvedValue({
-            data: existingRecords,
-            error: null,
+      vi.mocked(supabase.from)
+        .mockReturnValueOnce({
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              maybeSingle: vi.fn().mockResolvedValue({
+                data: {
+                  id: "jadwal-1",
+                  kelas_id: "kelas-1",
+                  tanggal_praktikum: "2025-01-15",
+                  mata_kuliah_id: null,
+                },
+                error: null,
+              }),
+            }),
           }),
-        }),
-        update: vi.fn().mockReturnValue({
-          eq: vi.fn().mockResolvedValue({
+        } as any)
+        .mockReturnValueOnce({
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              eq: vi.fn().mockResolvedValue({
+                data: existingRecords,
+                error: null,
+              }),
+            }),
+          }),
+        } as any)
+        .mockReturnValueOnce({
+          update: vi.fn().mockReturnValue({
+            eq: vi.fn().mockResolvedValue({
+              data: null,
+              error: null,
+            }),
+          }),
+        } as any)
+        .mockReturnValueOnce({
+          insert: vi.fn().mockResolvedValue({
             data: null,
             error: null,
           }),
-        }),
-        insert: vi.fn().mockResolvedValue({
-          data: null,
-          error: null,
-        }),
-      } as any);
+        } as any);
 
       await expect(saveKehadiranBulk(mockBulkData)).resolves.not.toThrow();
     });
@@ -1134,11 +1219,9 @@ describe("Kehadiran API", () => {
     it("should fetch formatted data for CSV export", async () => {
       const mockKehadiranData = [
         {
-          jadwal: {
-            tanggal_praktikum: "2025-01-15",
-            kelas: { nama_kelas: "Kelas A" },
-            mata_kuliah: { nama_mk: "Kebidanan" },
-          },
+          tanggal: "2025-01-15",
+          kelas_id: "kelas-1",
+          mata_kuliah_id: "mk-1",
           status: "hadir",
           keterangan: null,
           mahasiswa: {
@@ -1148,18 +1231,39 @@ describe("Kehadiran API", () => {
         },
       ];
 
-      vi.mocked(supabase.from).mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
+      vi.mocked(supabase.from)
+        .mockReturnValueOnce({
+          select: vi.fn().mockReturnValue({
             eq: vi.fn().mockReturnValue({
-              order: vi.fn().mockResolvedValue({
-                data: mockKehadiranData,
+              eq: vi.fn().mockReturnValue({
+                order: vi.fn().mockResolvedValue({
+                  data: mockKehadiranData,
+                  error: null,
+                }),
+              }),
+            }),
+          }),
+        } as any)
+        .mockReturnValueOnce({
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              maybeSingle: vi.fn().mockResolvedValue({
+                data: { nama_kelas: "Kelas A" },
                 error: null,
               }),
             }),
           }),
-        }),
-      } as any);
+        } as any)
+        .mockReturnValueOnce({
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              maybeSingle: vi.fn().mockResolvedValue({
+                data: { nama_mk: "Kebidanan" },
+                error: null,
+              }),
+            }),
+          }),
+        } as any);
 
       const result = await getKehadiranForExport("kelas-1", "2025-01-15");
 
@@ -1220,40 +1324,42 @@ describe("Kehadiran API", () => {
       const mockRecords = [
         {
           status: "hadir",
-          jadwal: {
-            tanggal_praktikum: "2025-01-15",
-            kelas_id: "kelas-1",
-            kelas: { id: "kelas-1", nama_kelas: "Kelas A" },
-          },
+          tanggal: "2025-01-15",
+          kelas_id: "kelas-1",
         },
         {
           status: "izin",
-          jadwal: {
-            tanggal_praktikum: "2025-01-15",
-            kelas_id: "kelas-1",
-            kelas: { id: "kelas-1", nama_kelas: "Kelas A" },
-          },
+          tanggal: "2025-01-15",
+          kelas_id: "kelas-1",
         },
         {
           status: "hadir",
-          jadwal: {
-            tanggal_praktikum: "2025-01-14",
-            kelas_id: "kelas-1",
-            kelas: { id: "kelas-1", nama_kelas: "Kelas A" },
-          },
+          tanggal: "2025-01-14",
+          kelas_id: "kelas-1",
         },
       ];
 
-      vi.mocked(supabase.from).mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            order: vi.fn().mockResolvedValue({
-              data: mockRecords,
-              error: null,
+      vi.mocked(supabase.from)
+        .mockReturnValueOnce({
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              order: vi.fn().mockResolvedValue({
+                data: mockRecords,
+                error: null,
+              }),
             }),
           }),
-        }),
-      } as any);
+        } as any)
+        .mockReturnValueOnce({
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              maybeSingle: vi.fn().mockResolvedValue({
+                data: { id: "kelas-1", nama_kelas: "Kelas A" },
+                error: null,
+              }),
+            }),
+          }),
+        } as any);
 
       const result = await getKehadiranHistory("kelas-1");
 
@@ -1264,6 +1370,67 @@ describe("Kehadiran API", () => {
       expect(result[0].izin).toBe(1);
       expect(result[1].tanggal).toBe("2025-01-14");
       expect(result[1].total_mahasiswa).toBe(1);
+    });
+
+    it("should keep same date attendance separated by mata kuliah", async () => {
+      const mockRecords = [
+        {
+          status: "hadir",
+          tanggal: "2025-01-15",
+          kelas_id: "kelas-1",
+          mata_kuliah_id: "mk-1",
+        },
+        {
+          status: "izin",
+          tanggal: "2025-01-15",
+          kelas_id: "kelas-1",
+          mata_kuliah_id: "mk-2",
+        },
+      ];
+
+      vi.mocked(supabase.from)
+        .mockReturnValueOnce({
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              order: vi.fn().mockResolvedValue({
+                data: mockRecords,
+                error: null,
+              }),
+            }),
+          }),
+        } as any)
+        .mockReturnValueOnce({
+          select: vi.fn().mockReturnValue({
+            in: vi.fn().mockResolvedValue({
+              data: [
+                { id: "mk-1", nama_mk: "Askeb Kehamilan", kode_mk: "AK" },
+                { id: "mk-2", nama_mk: "ASKBE 3", kode_mk: "A3" },
+              ],
+              error: null,
+            }),
+          }),
+        } as any)
+        .mockReturnValueOnce({
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              maybeSingle: vi.fn().mockResolvedValue({
+                data: { id: "kelas-1", nama_kelas: "Kelas A" },
+                error: null,
+              }),
+            }),
+          }),
+        } as any);
+
+      const result = await getKehadiranHistory("kelas-1");
+
+      expect(result).toHaveLength(2);
+      expect(result.map((item) => item.mata_kuliah_id)).toEqual([
+        "mk-1",
+        "mk-2",
+      ]);
+      expect(result.map((item) => item.total_mahasiswa)).toEqual([1, 1]);
+      expect(result[0].mata_kuliah_nama).toBe("Askeb Kehamilan");
+      expect(result[1].mata_kuliah_nama).toBe("ASKBE 3");
     });
 
     it("should apply date range filters", async () => {
@@ -1291,45 +1458,65 @@ describe("Kehadiran API", () => {
         eq: eqMock,
       });
 
-      vi.mocked(supabase.from).mockReturnValue({
-        select: selectMock,
-      } as any);
+      vi.mocked(supabase.from)
+        .mockReturnValueOnce({
+          select: selectMock,
+        } as any)
+        .mockReturnValueOnce({
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              maybeSingle: vi.fn().mockResolvedValue({
+                data: { id: "kelas-1", nama_kelas: "Kelas A" },
+                error: null,
+              }),
+            }),
+          }),
+        } as any);
 
-      await getKehadiranHistory("kelas-1", "2025-01-01", "2025-01-31", 30);
-
-      expect(gteMock).toHaveBeenCalledWith(
-        "jadwal.tanggal_praktikum",
+      await getKehadiranHistory(
+        "kelas-1",
+        undefined,
         "2025-01-01",
-      );
-      expect(lteMock).toHaveBeenCalledWith(
-        "jadwal.tanggal_praktikum",
         "2025-01-31",
+        30,
       );
+
+      expect(gteMock).toHaveBeenCalledWith("tanggal", "2025-01-01");
+      expect(lteMock).toHaveBeenCalledWith("tanggal", "2025-01-31");
     });
 
     it("should limit results", async () => {
       const mockRecords = Array(50).fill({
         status: "hadir",
-        jadwal: {
-          tanggal_praktikum: "2025-01-15",
-          kelas_id: "kelas-1",
-          kelas: { id: "kelas-1", nama_kelas: "Kelas A" },
-        },
+        tanggal: "2025-01-15",
+        kelas_id: "kelas-1",
       });
 
-      vi.mocked(supabase.from).mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            order: vi.fn().mockResolvedValue({
-              data: mockRecords,
-              error: null,
+      vi.mocked(supabase.from)
+        .mockReturnValueOnce({
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              order: vi.fn().mockResolvedValue({
+                data: mockRecords,
+                error: null,
+              }),
             }),
           }),
-        }),
-      } as any);
+        } as any)
+        .mockReturnValueOnce({
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              maybeSingle: vi.fn().mockResolvedValue({
+                data: { id: "kelas-1", nama_kelas: "Kelas A" },
+                error: null,
+              }),
+            }),
+          }),
+        } as any);
 
       const result = await getKehadiranHistory(
         "kelas-1",
+        undefined,
         undefined,
         undefined,
         10,
@@ -1358,56 +1545,52 @@ describe("Kehadiran API", () => {
       const mockRecords = [
         {
           status: "hadir",
-          jadwal: {
-            tanggal_praktikum: "2025-01-15",
-            kelas_id: "kelas-1",
-            kelas: { id: "kelas-1", nama_kelas: "Kelas A" },
-          },
+          tanggal: "2025-01-15",
+          kelas_id: "kelas-1",
         },
         {
           status: "hadir",
-          jadwal: {
-            tanggal_praktikum: "2025-01-15",
-            kelas_id: "kelas-1",
-            kelas: { id: "kelas-1", nama_kelas: "Kelas A" },
-          },
+          tanggal: "2025-01-15",
+          kelas_id: "kelas-1",
         },
         {
           status: "izin",
-          jadwal: {
-            tanggal_praktikum: "2025-01-15",
-            kelas_id: "kelas-1",
-            kelas: { id: "kelas-1", nama_kelas: "Kelas A" },
-          },
+          tanggal: "2025-01-15",
+          kelas_id: "kelas-1",
         },
         {
           status: "sakit",
-          jadwal: {
-            tanggal_praktikum: "2025-01-15",
-            kelas_id: "kelas-1",
-            kelas: { id: "kelas-1", nama_kelas: "Kelas A" },
-          },
+          tanggal: "2025-01-15",
+          kelas_id: "kelas-1",
         },
         {
           status: "alpha",
-          jadwal: {
-            tanggal_praktikum: "2025-01-15",
-            kelas_id: "kelas-1",
-            kelas: { id: "kelas-1", nama_kelas: "Kelas A" },
-          },
+          tanggal: "2025-01-15",
+          kelas_id: "kelas-1",
         },
       ];
 
-      vi.mocked(supabase.from).mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            order: vi.fn().mockResolvedValue({
-              data: mockRecords,
-              error: null,
+      vi.mocked(supabase.from)
+        .mockReturnValueOnce({
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              order: vi.fn().mockResolvedValue({
+                data: mockRecords,
+                error: null,
+              }),
             }),
           }),
-        }),
-      } as any);
+        } as any)
+        .mockReturnValueOnce({
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              maybeSingle: vi.fn().mockResolvedValue({
+                data: { id: "kelas-1", nama_kelas: "Kelas A" },
+                error: null,
+              }),
+            }),
+          }),
+        } as any);
 
       const result = await getKehadiranHistory("kelas-1");
 
@@ -1516,9 +1699,26 @@ describe("Kehadiran API", () => {
       vi.mocked(supabase.from)
         .mockReturnValueOnce({
           select: vi.fn().mockReturnValue({
-            eq: vi.fn().mockResolvedValue({
-              data: existingRecords,
-              error: null,
+            eq: vi.fn().mockReturnValue({
+              maybeSingle: vi.fn().mockResolvedValue({
+                data: {
+                  id: "jadwal-1",
+                  kelas_id: "kelas-1",
+                  tanggal_praktikum: "2025-01-15",
+                  mata_kuliah_id: null,
+                },
+                error: null,
+              }),
+            }),
+          }),
+        } as any)
+        .mockReturnValueOnce({
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              eq: vi.fn().mockResolvedValue({
+                data: existingRecords,
+                error: null,
+              }),
             }),
           }),
         } as any)
@@ -1588,18 +1788,38 @@ describe("Kehadiran API", () => {
         kehadiran: [],
       };
 
-      vi.mocked(supabase.from).mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockResolvedValue({
-            data: [],
+      vi.mocked(supabase.from)
+        .mockReturnValueOnce({
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              maybeSingle: vi.fn().mockResolvedValue({
+                data: {
+                  id: "jadwal-1",
+                  kelas_id: "kelas-1",
+                  tanggal_praktikum: "2025-01-15",
+                  mata_kuliah_id: null,
+                },
+                error: null,
+              }),
+            }),
+          }),
+        } as any)
+        .mockReturnValueOnce({
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              eq: vi.fn().mockResolvedValue({
+                data: [],
+                error: null,
+              }),
+            }),
+          }),
+        } as any)
+        .mockReturnValueOnce({
+          insert: vi.fn().mockResolvedValue({
+            data: null,
             error: null,
           }),
-        }),
-        insert: vi.fn().mockResolvedValue({
-          data: null,
-          error: null,
-        }),
-      } as any);
+        } as any);
 
       await expect(saveKehadiranBulk(mockBulkData)).resolves.not.toThrow();
     });
@@ -1616,18 +1836,38 @@ describe("Kehadiran API", () => {
           })),
       };
 
-      vi.mocked(supabase.from).mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockResolvedValue({
-            data: [],
+      vi.mocked(supabase.from)
+        .mockReturnValueOnce({
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              maybeSingle: vi.fn().mockResolvedValue({
+                data: {
+                  id: "jadwal-1",
+                  kelas_id: "kelas-1",
+                  tanggal_praktikum: "2025-01-15",
+                  mata_kuliah_id: null,
+                },
+                error: null,
+              }),
+            }),
+          }),
+        } as any)
+        .mockReturnValueOnce({
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              eq: vi.fn().mockResolvedValue({
+                data: [],
+                error: null,
+              }),
+            }),
+          }),
+        } as any)
+        .mockReturnValueOnce({
+          insert: vi.fn().mockResolvedValue({
+            data: null,
             error: null,
           }),
-        }),
-        insert: vi.fn().mockResolvedValue({
-          data: null,
-          error: null,
-        }),
-      } as any);
+        } as any);
 
       await expect(saveKehadiranBulk(mockBulkData)).resolves.not.toThrow();
     });

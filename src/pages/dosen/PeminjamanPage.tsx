@@ -8,7 +8,6 @@ import {
   RotateCcw,
   Search,
   Plus,
-  Download,
   Edit,
   Trash2,
 } from "lucide-react";
@@ -73,7 +72,6 @@ import {
   cancelBorrowingRequest,
   getAvailableEquipment,
   returnBorrowingRequest,
-  markBorrowingAsTaken,
 } from "@/lib/api/dosen.api";
 import { cacheAPI, invalidateCache } from "@/lib/offline/api-cache";
 import { notifyLaboranPeminjamanBaru } from "@/lib/api/notification.api";
@@ -163,13 +161,36 @@ const STATUS_CONFIG: Record<
   menunggu: { label: "Menunggu", variant: "secondary", icon: Clock },
   approved: { label: "Disetujui", variant: "default", icon: CheckCircle },
   disetujui: { label: "Disetujui", variant: "default", icon: CheckCircle },
-  in_use: { label: "Sedang Dipinjam", variant: "default", icon: Download },
+  in_use: { label: "Sedang Dipinjam", variant: "default", icon: Package },
   dipinjam: { label: "Dipinjam", variant: "default", icon: Package },
   returned: { label: "Dikembalikan", variant: "outline", icon: RotateCcw },
   dikembalikan: { label: "Dikembalikan", variant: "outline", icon: RotateCcw },
   rejected: { label: "Ditolak", variant: "destructive", icon: XCircle },
   ditolak: { label: "Ditolak", variant: "destructive", icon: XCircle },
   overdue: { label: "Terlambat", variant: "destructive", icon: Clock },
+};
+
+const normalizeBorrowingStatus = (status: string) => {
+  const statusMap: Record<string, string> = {
+    menunggu: "pending",
+    disetujui: "approved",
+    dipinjam: "approved",
+    in_use: "approved",
+    dikembalikan: "returned",
+    ditolak: "rejected",
+  };
+
+  return statusMap[status] || status;
+};
+
+const invalidateBorrowingCaches = async () => {
+  await Promise.all([
+    invalidateCache("dosen_my_borrowings"),
+    invalidateCache("dosen_available_equipment"),
+    invalidateCache("laboran_pending_approvals"),
+    invalidateCache("laboran_active_borrowings"),
+    invalidateCache("laboran_returned_borrowings"),
+  ]);
 };
 
 // ============================================================================
@@ -216,11 +237,6 @@ export default function PeminjamanPage() {
   // Return Form State
   const [returnDialogOpen, setReturnDialogOpen] = useState(false);
   const [returningLoading, setReturningLoading] = useState(false);
-
-  // Mark as Taken State
-  const [takenDialogOpen, setTakenDialogOpen] = useState(false);
-  const [takenLoading, setTakenLoading] = useState(false);
-  const [selectedTakenId, setSelectedTakenId] = useState<string | null>(null);
 
   // Edit Peminjaman State
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -277,6 +293,42 @@ export default function PeminjamanPage() {
     loadEquipment(false);
   }, []);
 
+  useEffect(() => {
+    const refreshBorrowingData = () => {
+      void refreshBorrowings(true);
+    };
+
+    const subscription = supabase
+      .channel("dosen-peminjaman-sync")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "peminjaman",
+        },
+        refreshBorrowingData,
+      )
+      .subscribe();
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        refreshBorrowingData();
+      }
+    };
+
+    window.addEventListener("focus", refreshBorrowingData);
+    window.addEventListener("peminjaman:changed", refreshBorrowingData);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      subscription.unsubscribe();
+      window.removeEventListener("focus", refreshBorrowingData);
+      window.removeEventListener("peminjaman:changed", refreshBorrowingData);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
+
   const loadBorrowings = async (forceRefresh = false) => {
     try {
       setLoadingHistory(true);
@@ -319,25 +371,90 @@ export default function PeminjamanPage() {
     }
   };
 
+  const refreshBorrowings = async (includeEquipment = false) => {
+    await Promise.all([
+      invalidateCache("dosen_my_borrowings"),
+      includeEquipment
+        ? invalidateCache("dosen_available_equipment")
+        : Promise.resolve(),
+    ]);
+
+    await Promise.all([
+      loadBorrowings(true),
+      includeEquipment ? loadEquipment(true) : Promise.resolve(),
+    ]);
+  };
+
   // Filtered data
   const filteredBorrowings = borrowings.filter((b) => {
     const match =
       b.inventaris_nama.toLowerCase().includes(searchQuery.toLowerCase()) ||
       b.inventaris_kode.toLowerCase().includes(searchQuery.toLowerCase());
-    const status = statusFilter === "all" || b.status === statusFilter;
+    const status =
+      statusFilter === "all" ||
+      normalizeBorrowingStatus(b.status) === statusFilter;
     return match && status;
   });
 
   // Stats
   const stats = {
     total: borrowings.length,
-    menunggu: borrowings.filter((b) => b.status === "menunggu").length,
-    disetujui: borrowings.filter(
-      (b) => b.status === "disetujui" || b.status === "dipinjam",
+    menunggu: borrowings.filter(
+      (b) => normalizeBorrowingStatus(b.status) === "pending",
     ).length,
-    dikembalikan: borrowings.filter((b) => b.status === "dikembalikan").length,
-    ditolak: borrowings.filter((b) => b.status === "ditolak").length,
+    disetujui: borrowings.filter(
+      (b) => normalizeBorrowingStatus(b.status) === "approved",
+    ).length,
+    dikembalikan: borrowings.filter(
+      (b) => normalizeBorrowingStatus(b.status) === "returned",
+    ).length,
+    ditolak: borrowings.filter(
+      (b) => normalizeBorrowingStatus(b.status) === "rejected",
+    ).length,
   };
+
+  const statCards = [
+    {
+      title: "Total",
+      value: stats.total,
+      helper: "Semua riwayat pengajuan",
+      icon: Package,
+      className:
+        "border-primary/10 bg-linear-to-br from-primary/5 to-accent/10 text-primary",
+    },
+    {
+      title: "Menunggu",
+      value: stats.menunggu,
+      helper: "Belum diproses laboran",
+      icon: Clock,
+      className:
+        "border-warning/20 bg-linear-to-br from-warning/5 to-warning/10 text-warning",
+    },
+    {
+      title: "Disetujui",
+      value: stats.disetujui,
+      helper: "Siap diambil/dikembalikan",
+      icon: CheckCircle,
+      className:
+        "border-emerald-100/80 bg-linear-to-br from-emerald-50 to-green-50 text-success",
+    },
+    {
+      title: "Dikembalikan",
+      value: stats.dikembalikan,
+      helper: "Selesai diproses",
+      icon: RotateCcw,
+      className:
+        "border-sky-100/80 bg-linear-to-br from-sky-50 to-blue-50 text-sky-700",
+    },
+    {
+      title: "Ditolak",
+      value: stats.ditolak,
+      helper: "Tidak disetujui",
+      icon: XCircle,
+      className:
+        "border-rose-100/80 bg-linear-to-br from-rose-50 to-red-50 text-rose-700",
+    },
+  ];
 
   const onEquipmentChange = (equipmentId: string) => {
     const selected = equipment.find((e) => e.id === equipmentId);
@@ -407,9 +524,7 @@ export default function PeminjamanPage() {
       form.reset();
       setSelectedEquipment(null);
 
-      // Invalidate cache and reload both data
-      await invalidateCache("dosen_my_borrowings");
-      await invalidateCache("dosen_available_equipment");
+      await invalidateBorrowingCaches();
       await loadBorrowings(true);
       await loadEquipment(true);
     } catch (error) {
@@ -417,32 +532,6 @@ export default function PeminjamanPage() {
       toast.error("Gagal membuat pengajuan peminjaman");
     } finally {
       setSubmitting(false);
-    }
-  };
-
-  const handleMarkAsTaken = async (borrowingId: string) => {
-    if (!navigator.onLine) {
-      toast.error(
-        "Konfirmasi pengambilan belum didukung saat offline. Sambungkan internet terlebih dahulu.",
-      );
-      return;
-    }
-
-    try {
-      setTakenLoading(true);
-      setSelectedTakenId(borrowingId);
-      await markBorrowingAsTaken(borrowingId);
-      toast.success("Konfirmasi pengambilan berhasil dicek");
-      setTakenDialogOpen(false);
-      // Invalidate cache and reload
-      await invalidateCache("dosen_my_borrowings");
-      await loadBorrowings(true);
-    } catch (error) {
-      console.error(error);
-      toast.error("Gagal menandai alat sebagai diambil");
-    } finally {
-      setTakenLoading(false);
-      setSelectedTakenId(null);
     }
   };
 
@@ -466,10 +555,9 @@ export default function PeminjamanPage() {
       setReturnDialogOpen(false);
       returnForm.reset();
 
-      // Invalidate cache and reload data
-      await invalidateCache("dosen_my_borrowings");
-      await invalidateCache("dosen_available_equipment");
+      await invalidateBorrowingCaches();
       await loadBorrowings(true);
+      await loadEquipment(true);
     } catch (error) {
       console.error(error);
       toast.error("Gagal mengembalikan alat");
@@ -560,9 +648,7 @@ export default function PeminjamanPage() {
       setSelectedEditEquipment(null);
       editForm.reset();
 
-      // Invalidate cache and reload data
-      await invalidateCache("dosen_my_borrowings");
-      await invalidateCache("dosen_available_equipment");
+      await invalidateBorrowingCaches();
       await loadBorrowings(true);
       await loadEquipment(true);
     } catch (error: any) {
@@ -604,9 +690,7 @@ export default function PeminjamanPage() {
       setCancelingId(null);
       setCancelingData(null);
 
-      // Invalidate cache and reload data
-      await invalidateCache("dosen_my_borrowings");
-      await invalidateCache("dosen_available_equipment");
+      await invalidateBorrowingCaches();
       await loadBorrowings(true);
       await loadEquipment(true);
     } catch (error: any) {
@@ -628,85 +712,92 @@ export default function PeminjamanPage() {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
-          <Card className="interactive-card overflow-hidden rounded-3xl border border-primary/10 bg-linear-to-br from-primary/5 to-accent/10 shadow-lg shadow-primary/10">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-bold">Total</CardTitle>
-              <Package className="h-4 w-4 text-primary" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-4xl font-extrabold text-primary/90">
-                {stats.total}
-              </div>
-            </CardContent>
-          </Card>
+          {statCards.map((item) => {
+            const Icon = item.icon;
 
-          <Card className="interactive-card overflow-hidden rounded-3xl border border-warning/20 bg-linear-to-br from-warning/5 to-warning/10 shadow-lg shadow-warning/10">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-bold">Menunggu</CardTitle>
-              <Clock className="h-4 w-4 text-warning" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-4xl font-extrabold text-warning">
-                {stats.menunggu}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="interactive-card overflow-hidden rounded-3xl border border-emerald-100/80 bg-linear-to-br from-emerald-50 to-green-50 shadow-lg shadow-emerald-100/60">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-bold">Disetujui</CardTitle>
-              <CheckCircle className="h-4 w-4 text-success" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-4xl font-extrabold text-success">
-                {stats.disetujui}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="interactive-card overflow-hidden rounded-3xl border border-sky-100/80 bg-linear-to-br from-sky-50 to-blue-50 shadow-lg shadow-sky-100/60">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-bold">Dikembalikan</CardTitle>
-              <RotateCcw className="h-4 w-4 text-sky-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-4xl font-extrabold text-sky-700">
-                {stats.dikembalikan}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="interactive-card overflow-hidden rounded-3xl border border-rose-100/80 bg-linear-to-br from-rose-50 to-red-50 shadow-lg shadow-rose-100/60">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-bold">Ditolak</CardTitle>
-              <XCircle className="h-4 w-4 text-rose-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-4xl font-extrabold text-rose-700">
-                {stats.ditolak}
-              </div>
-            </CardContent>
-          </Card>
+            return (
+              <Card
+                key={item.title}
+                className={`interactive-card overflow-hidden rounded-3xl border shadow-lg shadow-slate-200/50 ${item.className}`}
+              >
+                <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
+                  <div>
+                    <CardTitle className="text-sm font-bold text-foreground">
+                      {item.title}
+                    </CardTitle>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {item.helper}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl bg-white/70 p-2 shadow-sm">
+                    <Icon className="h-4 w-4" />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-4xl font-extrabold">{item.value}</div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
 
         {/* Tabs */}
-        <Tabs defaultValue="history" className="w-full space-y-4">
-          <TabsList className="grid h-auto w-full grid-cols-2 rounded-2xl border border-slate-200/70 bg-white/85 p-1 shadow-sm backdrop-blur">
-            <TabsTrigger
-              value="history"
-              className="rounded-xl text-xs sm:text-sm"
-            >
-              Riwayat Peminjaman
-            </TabsTrigger>
+        <Tabs defaultValue="request" className="w-full space-y-4">
+          <TabsList className="grid h-auto w-full grid-cols-2 gap-1.5 rounded-3xl border border-slate-200/70 bg-white/85 p-1.5 shadow-sm backdrop-blur">
             <TabsTrigger
               value="request"
-              className="rounded-xl text-xs sm:text-sm"
+              className="flex min-h-14 flex-col items-center justify-center gap-0.5 rounded-2xl text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:text-sm"
             >
-              Ajukan Peminjaman
+              <span className="inline-flex items-center gap-1.5 font-semibold">
+                <Plus className="h-3.5 w-3.5" />
+                Ajukan Peminjaman
+              </span>
+              <span className="hidden text-[11px] font-normal opacity-80 sm:block">
+                Buat permintaan alat baru
+              </span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="history"
+              className="flex min-h-14 flex-col items-center justify-center gap-0.5 rounded-2xl text-xs data-[state=active]:bg-slate-900 data-[state=active]:text-white sm:text-sm"
+            >
+              <span className="inline-flex items-center gap-1.5 font-semibold">
+                <Package className="h-3.5 w-3.5" />
+                Riwayat Peminjaman
+              </span>
+              <span className="hidden text-[11px] font-normal opacity-80 sm:block">
+                Pantau {stats.total} pengajuan
+              </span>
             </TabsTrigger>
           </TabsList>
 
-          {/* Tab 1: Riwayat Peminjaman */}
+          {/* Tab 1: Ajukan Peminjaman */}
+          <TabsContent value="request" className="space-y-4">
+            <Card className="interactive-card overflow-hidden rounded-3xl border-2 border-dashed border-primary/20 bg-linear-to-br from-primary/5 via-white to-warning/5 shadow-lg shadow-primary/10">
+              <CardContent className="flex flex-col items-center justify-center py-16">
+                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+                  <Plus className="h-8 w-8 text-primary" />
+                </div>
+                <h3 className="text-xl font-semibold mb-2">
+                  Buat Pengajuan Baru
+                </h3>
+                <p className="text-muted-foreground text-center mb-6 max-w-md">
+                  Mulai dari sini untuk membuat permintaan peminjaman alat.
+                  Setelah laboran menyetujui, statusnya bisa dipantau di tab
+                  riwayat.
+                </p>
+                <Button
+                  onClick={() => setDialogOpen(true)}
+                  size="lg"
+                  className="gap-2"
+                >
+                  <Plus className="h-5 w-5" />
+                  Buat Pengajuan Peminjaman
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Tab 2: Riwayat Peminjaman */}
           <TabsContent value="history" className="space-y-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
               <div className="flex-1 relative">
@@ -724,31 +815,42 @@ export default function PeminjamanPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Semua Status</SelectItem>
-                  <SelectItem value="menunggu">Menunggu</SelectItem>
-                  <SelectItem value="disetujui">Disetujui</SelectItem>
-                  <SelectItem value="dipinjam">Dipinjam</SelectItem>
-                  <SelectItem value="dikembalikan">Dikembalikan</SelectItem>
-                  <SelectItem value="ditolak">Ditolak</SelectItem>
+                  <SelectItem value="pending">Menunggu</SelectItem>
+                  <SelectItem value="approved">Disetujui</SelectItem>
+                  <SelectItem value="returned">Dikembalikan</SelectItem>
+                  <SelectItem value="rejected">Ditolak</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <Card className="interactive-card overflow-hidden rounded-3xl border border-slate-200/70 bg-white/90 shadow-lg shadow-slate-200/60">
-              <CardHeader>
+              <CardHeader className="space-y-1">
                 <CardTitle>Daftar Peminjaman</CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Status akan ikut berubah setelah laboran/admin memproses
+                  permintaan.
+                </p>
               </CardHeader>
               <CardContent>
                 {loadingHistory ? (
-                  <div className="text-center py-8">
-                    <p className="text-warning">Memuat data...</p>
+                  <div className="rounded-2xl border border-dashed border-warning/30 bg-warning/5 py-10 text-center">
+                    <p className="text-sm font-medium text-warning">
+                      Memuat data peminjaman...
+                    </p>
                   </div>
                 ) : filteredBorrowings.length === 0 ? (
-                  <div className="text-center py-8">
-                    <p className="text-warning">Tidak ada data</p>
+                  <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 py-10 text-center">
+                    <Package className="mx-auto mb-3 h-8 w-8 text-muted-foreground/70" />
+                    <p className="text-sm font-medium text-foreground">
+                      Belum ada data peminjaman
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Ajukan peminjaman alat melalui tab di sebelahnya.
+                    </p>
                   </div>
                 ) : (
-                  <div className="overflow-x-auto rounded-xl border border-border/70">
-                    <Table className="min-w-190">
+                  <div className="overflow-x-auto rounded-2xl border border-border/70 bg-white">
+                    <Table className="min-w-210">
                       <TableHeader>
                         <TableRow>
                           <TableHead>Kode</TableHead>
@@ -765,21 +867,40 @@ export default function PeminjamanPage() {
                             STATUS_CONFIG[b.status as BorrowingStatus] ||
                             STATUS_CONFIG.menunggu;
                           const Icon = cfg.icon;
-                          const isPending =
-                            b.status === "menunggu" || b.status === "pending";
+                          const normalizedStatus = normalizeBorrowingStatus(
+                            b.status,
+                          );
+                          const isPending = normalizedStatus === "pending";
                           const isApproved =
-                            b.status === "disetujui" || b.status === "approved";
-                          const isInUse =
-                            b.status === "dipinjam" || b.status === "in_use";
+                            normalizedStatus === "approved";
+                          const isInUse = b.status === "in_use";
 
                           return (
                             <TableRow key={b.id}>
                               <TableCell className="font-mono">
                                 {b.inventaris_kode}
                               </TableCell>
-                              <TableCell>{b.inventaris_nama}</TableCell>
-                              <TableCell>{b.laboratorium_nama}</TableCell>
-                              <TableCell>{b.jumlah_pinjam}</TableCell>
+                              <TableCell>
+                                <div className="font-medium text-foreground">
+                                  {b.inventaris_nama}
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  {b.tanggal_pinjam} -{" "}
+                                  {b.tanggal_kembali_rencana}
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                {b.laboratorium_nama || (
+                                  <span className="text-muted-foreground">
+                                    Belum ditentukan
+                                  </span>
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                <Badge variant="secondary">
+                                  {b.jumlah_pinjam}
+                                </Badge>
+                              </TableCell>
                               <TableCell>
                                 <StatusBadge
                                   status={
@@ -792,9 +913,10 @@ export default function PeminjamanPage() {
                                   {cfg.label}
                                 </StatusBadge>
                               </TableCell>
-                              <TableCell>
+                              <TableCell className="min-w-52">
+                                <div className="flex flex-wrap items-center gap-2">
                                 {isPending && (
-                                  <div className="flex gap-2">
+                                  <>
                                     <Button
                                       size="sm"
                                       variant="outline"
@@ -813,21 +935,7 @@ export default function PeminjamanPage() {
                                       <Trash2 className="h-3 w-3" />
                                       Batal
                                     </Button>
-                                  </div>
-                                )}
-                                {isApproved && (
-                                  <Button
-                                    size="sm"
-                                    variant="default"
-                                    onClick={() => {
-                                      setSelectedTakenId(b.id);
-                                      setTakenDialogOpen(true);
-                                    }}
-                                    className="h-8 gap-1"
-                                  >
-                                    <Download className="h-3 w-3" />
-                                    Ambil Alat
-                                  </Button>
+                                  </>
                                 )}
                                 {(isApproved || isInUse) && (
                                   <Button
@@ -846,6 +954,12 @@ export default function PeminjamanPage() {
                                     Kembalikan
                                   </Button>
                                 )}
+                                {!isPending && !isApproved && !isInUse && (
+                                  <span className="text-xs text-muted-foreground">
+                                    Tidak ada aksi
+                                  </span>
+                                )}
+                                </div>
                               </TableCell>
                             </TableRow>
                           );
@@ -858,32 +972,6 @@ export default function PeminjamanPage() {
             </Card>
           </TabsContent>
 
-          {/* Tab 2: Ajukan Peminjaman */}
-          <TabsContent value="request" className="space-y-4">
-            <Card className="interactive-card overflow-hidden rounded-3xl border-2 border-dashed border-primary/20 bg-linear-to-br from-primary/5 via-white to-warning/5 shadow-lg shadow-primary/10">
-              <CardContent className="flex flex-col items-center justify-center py-16">
-                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-                  <Plus className="h-8 w-8 text-primary" />
-                </div>
-                <h3 className="text-xl font-semibold mb-2">
-                  Ajukan Peminjaman Alat
-                </h3>
-                <p className="text-muted-foreground text-center mb-6 max-w-md">
-                  Klik tombol di bawah untuk mengajukan peminjaman alat
-                  laboratorium. Pilih alat dan isi detail peminjaman pada form
-                  yang muncul.
-                </p>
-                <Button
-                  onClick={() => setDialogOpen(true)}
-                  size="lg"
-                  className="gap-2"
-                >
-                  <Plus className="h-5 w-5" />
-                  Buat Pengajuan Peminjaman
-                </Button>
-              </CardContent>
-            </Card>
-          </TabsContent>
         </Tabs>
 
         {/* Request Dialog */}
@@ -1022,7 +1110,11 @@ export default function PeminjamanPage() {
                   >
                     Batal
                   </Button>
-                  <Button type="submit" disabled={submitting || !navigator.onLine} className="gap-2">
+                  <Button
+                    type="submit"
+                    disabled={submitting || !navigator.onLine}
+                    className="gap-2"
+                  >
                     {submitting ? (
                       <>
                         <span className="animate-spin">⌛</span>
@@ -1145,56 +1237,6 @@ export default function PeminjamanPage() {
                 </DialogFooter>
               </form>
             </Form>
-          </DialogContent>
-        </Dialog>
-
-        {/* Mark as Taken Dialog */}
-        <Dialog open={takenDialogOpen} onOpenChange={setTakenDialogOpen}>
-          <DialogContent className="w-[95vw] max-w-100 sm:max-w-100">
-            <DialogHeader>
-              <DialogTitle>Konfirmasi Pengambilan Alat</DialogTitle>
-              <DialogDescription>
-                Pengambilan alat tidak mengubah status. Peminjaman yang sudah
-                disetujui tetap dianggap aktif sampai dikembalikan.
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="space-y-4">
-              <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg">
-                <p className="text-sm text-primary/90">
-                  Stok alat sudah dialokasikan saat permintaan disetujui
-                  laboran. Setelah alat selesai digunakan, lanjutkan dengan
-                  proses pengembalian.
-                </p>
-              </div>
-            </div>
-
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => setTakenDialogOpen(false)}
-                disabled={takenLoading}
-              >
-                Batal
-              </Button>
-              <Button
-                onClick={() => handleMarkAsTaken(selectedTakenId || "")}
-                disabled={takenLoading || !navigator.onLine}
-                className="gap-2"
-              >
-                {takenLoading ? (
-                  <>
-                    <span className="animate-spin">⌛</span>
-                    Memproses...
-                  </>
-                ) : (
-                  <>
-                    <Download className="h-4 w-4" />
-                    Ambil Alat
-                  </>
-                )}
-              </Button>
-            </DialogFooter>
           </DialogContent>
         </Dialog>
 
@@ -1328,7 +1370,11 @@ export default function PeminjamanPage() {
                   >
                     Batal
                   </Button>
-                  <Button type="submit" disabled={submitting || !navigator.onLine} className="gap-2">
+                  <Button
+                    type="submit"
+                    disabled={submitting || !navigator.onLine}
+                    className="gap-2"
+                  >
                     {submitting ? (
                       <>
                         <span className="animate-spin">⌛</span>

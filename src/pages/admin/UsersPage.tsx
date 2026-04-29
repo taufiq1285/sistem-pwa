@@ -266,10 +266,7 @@ export default function UsersPage() {
   const handleUpdate = async () => {
     if (!editingUser) return;
     try {
-      if (
-        editingUser.role === "mahasiswa" &&
-        !editFormData.nim?.trim()
-      ) {
+      if (editingUser.role === "mahasiswa" && !editFormData.nim?.trim()) {
         toast.error("NIM wajib diisi untuk user mahasiswa");
         return;
       }

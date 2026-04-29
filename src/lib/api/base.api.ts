@@ -604,12 +604,14 @@ export async function remove(table: string, id: string): Promise<boolean> {
       "admin",
       "laboratorium",
       "inventaris",
+      "kelas",
       "mata_kuliah",
+      "materi",
       "jadwal_praktikum", // ✅ FIX: Add jadwal_praktikum for soft delete
     ];
 
     // Tables that should use hard delete
-    const hardDeleteTables = ["kelas"];
+    const hardDeleteTables: string[] = [];
 
     // Tables with 'status' column (kuis, bank_soal)
     const hasStatus = ["kuis", "bank_soal"];

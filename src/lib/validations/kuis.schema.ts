@@ -174,12 +174,12 @@ export const createKuisSchema = baseKuisSchema
       if (data.tanggal_mulai && data.tanggal_selesai) {
         const mulai = new Date(data.tanggal_mulai);
         const selesai = new Date(data.tanggal_selesai);
-        return selesai > mulai;
+        return selesai >= mulai;
       }
       return true;
     },
     {
-      message: "Tanggal selesai harus lebih besar dari tanggal mulai",
+      message: "Tanggal selesai tidak boleh lebih awal dari tanggal mulai",
       path: ["tanggal_selesai"],
     },
   );
@@ -203,12 +203,12 @@ export const updateKuisSchema = baseKuisSchema
       if (data.tanggal_mulai && data.tanggal_selesai) {
         const start = new Date(data.tanggal_mulai);
         const end = new Date(data.tanggal_selesai);
-        return end > start;
+        return end >= start;
       }
       return true;
     },
     {
-      message: "Tanggal selesai harus setelah tanggal mulai",
+      message: "Tanggal selesai tidak boleh lebih awal dari tanggal mulai",
       path: ["tanggal_selesai"],
     },
   );

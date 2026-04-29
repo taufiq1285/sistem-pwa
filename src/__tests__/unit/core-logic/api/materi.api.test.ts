@@ -30,7 +30,6 @@ vi.mock("../../../../lib/api/base.api", () => ({
 
 vi.mock("../../../../lib/supabase/storage", () => ({
   uploadMateriFile: vi.fn(),
-  deleteFile: vi.fn(),
   downloadFileAsBlob: vi.fn(),
   STORAGE_BUCKETS: { MATERI: "materi" },
 }));
@@ -63,7 +62,6 @@ import {
 } from "@/lib/api/base.api";
 import {
   uploadMateriFile,
-  deleteFile,
   downloadFileAsBlob,
 } from "@/lib/supabase/storage";
 import { supabase } from "@/lib/supabase/client";
@@ -330,35 +328,16 @@ describe("Materi API", () => {
     });
 
     describe("TC005: deleteMateri()", () => {
-      it("TC005: should delete file from storage and database", async () => {
-        vi.mocked(getById).mockResolvedValue(mockMateri);
-        vi.mocked(deleteFile).mockResolvedValue();
+      it("TC005: should soft delete materi record", async () => {
         vi.mocked(remove).mockResolvedValue(true);
 
         const result = await deleteMateri("materi-1");
 
-        expect(deleteFile).toHaveBeenCalledWith(
-          "materi",
-          "kelas-1/dosen-1/file.pdf",
-        );
         expect(remove).toHaveBeenCalledWith("materi", "materi-1");
         expect(result).toBe(true);
       });
 
-      it("TC005: should continue if storage deletion fails", async () => {
-        vi.mocked(getById).mockResolvedValue(mockMateri);
-        vi.mocked(deleteFile).mockRejectedValue(new Error("Storage error"));
-        vi.mocked(remove).mockResolvedValue(true);
-
-        const result = await deleteMateri("materi-1");
-
-        expect(deleteFile).toHaveBeenCalled();
-        expect(result).toBe(true);
-      });
-
       it("TC005: should handle database deletion errors", async () => {
-        vi.mocked(getById).mockResolvedValue(mockMateri);
-        vi.mocked(deleteFile).mockResolvedValue();
         vi.mocked(remove).mockRejectedValue(new Error("Database error"));
 
         await expect(deleteMateri("materi-1")).rejects.toThrow();
@@ -511,19 +490,6 @@ describe("Materi API", () => {
     });
 
     describe("File Path Extraction Branches", () => {
-      it("Branch: valid file path with bucket in URL", async () => {
-        vi.mocked(getById).mockResolvedValue(mockMateri);
-        vi.mocked(deleteFile).mockResolvedValue();
-        vi.mocked(remove).mockResolvedValue(true);
-
-        await deleteMateri("materi-1");
-
-        expect(deleteFile).toHaveBeenCalledWith(
-          "materi",
-          "kelas-1/dosen-1/file.pdf",
-        );
-      });
-
       it("Branch: invalid file path (bucket not found)", async () => {
         const invalidMateri = {
           ...mockMateri,
@@ -534,31 +500,6 @@ describe("Materi API", () => {
         await expect(downloadMateri("materi-1")).rejects.toThrow(
           "File path tidak valid",
         );
-      });
-    });
-
-    describe("Storage Deletion Branches", () => {
-      it("Branch: storage deletion succeeds", async () => {
-        vi.mocked(getById).mockResolvedValue(mockMateri);
-        vi.mocked(deleteFile).mockResolvedValue();
-        vi.mocked(remove).mockResolvedValue(true);
-
-        await deleteMateri("materi-1");
-
-        expect(deleteFile).toHaveBeenCalled();
-        expect(remove).toHaveBeenCalled();
-      });
-
-      it("Branch: storage deletion fails (continue with warning)", async () => {
-        vi.mocked(getById).mockResolvedValue(mockMateri);
-        vi.mocked(deleteFile).mockRejectedValue(new Error("Storage error"));
-        vi.mocked(remove).mockResolvedValue(true);
-
-        const result = await deleteMateri("materi-1");
-
-        expect(deleteFile).toHaveBeenCalled();
-        expect(remove).toHaveBeenCalled();
-        expect(result).toBe(true);
       });
     });
 
@@ -730,51 +671,20 @@ describe("Materi API", () => {
 
     describe("Delete Materi Paths", () => {
       it("Path 7: Delete success path", async () => {
-        vi.mocked(getById).mockResolvedValue(mockMateri);
-        vi.mocked(deleteFile).mockResolvedValue();
         vi.mocked(remove).mockResolvedValue(true);
 
         const result = await deleteMateri("materi-1");
 
-        expect(getById).toHaveBeenCalled();
-        expect(deleteFile).toHaveBeenCalled();
         expect(remove).toHaveBeenCalled();
         expect(result).toBe(true);
       });
 
-      it("Path 8: Delete with storage error path (continue)", async () => {
-        vi.mocked(getById).mockResolvedValue(mockMateri);
-        vi.mocked(deleteFile).mockRejectedValue(new Error("Storage error"));
-        vi.mocked(remove).mockResolvedValue(true);
-
-        const result = await deleteMateri("materi-1");
-
-        expect(getById).toHaveBeenCalled();
-        expect(deleteFile).toHaveBeenCalled();
-        expect(remove).toHaveBeenCalled();
-        expect(result).toBe(true);
-      });
-
-      it("Path 9: Delete error path (database error)", async () => {
-        vi.mocked(getById).mockResolvedValue(mockMateri);
-        vi.mocked(deleteFile).mockResolvedValue();
+      it("Path 8: Delete error path (database error)", async () => {
         vi.mocked(remove).mockRejectedValue(new Error("Database error"));
 
         await expect(deleteMateri("materi-1")).rejects.toThrow();
 
-        expect(getById).toHaveBeenCalled();
-        expect(deleteFile).toHaveBeenCalled();
         expect(remove).toHaveBeenCalled();
-      });
-
-      it("Path 10: Delete error path (get failed)", async () => {
-        vi.mocked(getById).mockRejectedValue(new Error("Not found"));
-
-        await expect(deleteMateri("materi-1")).rejects.toThrow();
-
-        expect(getById).toHaveBeenCalled();
-        expect(deleteFile).not.toHaveBeenCalled();
-        expect(remove).not.toHaveBeenCalled();
       });
     });
   });
@@ -893,19 +803,6 @@ describe("Materi API", () => {
     });
 
     describe("File Path Conditions", () => {
-      it("Condition: bucket index found in URL", async () => {
-        vi.mocked(getById).mockResolvedValue(mockMateri);
-        vi.mocked(deleteFile).mockResolvedValue();
-        vi.mocked(remove).mockResolvedValue(true);
-
-        await deleteMateri("materi-1");
-
-        expect(deleteFile).toHaveBeenCalledWith(
-          "materi",
-          expect.stringContaining("kelas-1"),
-        );
-      });
-
       it("Condition: bucket index not found (filePath = empty)", async () => {
         const invalidMateri = {
           ...mockMateri,
@@ -918,27 +815,11 @@ describe("Materi API", () => {
         );
       });
 
-      it("Condition: filePath exists (proceed with delete)", async () => {
-        vi.mocked(getById).mockResolvedValue(mockMateri);
-        vi.mocked(deleteFile).mockResolvedValue();
+      it("Condition: delete delegates directly to remove", async () => {
         vi.mocked(remove).mockResolvedValue(true);
 
         await deleteMateri("materi-1");
 
-        expect(deleteFile).toHaveBeenCalled();
-      });
-
-      it("Condition: filePath empty (skip delete)", async () => {
-        const noFileMateri = {
-          ...mockMateri,
-          file_url: "http://example.com/storage/materi/",
-        };
-        vi.mocked(getById).mockResolvedValue(noFileMateri);
-        vi.mocked(remove).mockResolvedValue(true);
-
-        await deleteMateri("materi-1");
-
-        expect(deleteFile).not.toHaveBeenCalled();
         expect(remove).toHaveBeenCalled();
       });
     });
@@ -1195,8 +1076,6 @@ describe("Materi API", () => {
     });
 
     it("TC007: should execute deleteMateri with permission wrapper", async () => {
-      vi.mocked(getById).mockResolvedValue(mockMateri);
-      vi.mocked(deleteFile).mockResolvedValue();
       vi.mocked(remove).mockResolvedValue(true);
 
       const result = await deleteMateri("materi-1");

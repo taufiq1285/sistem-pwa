@@ -277,7 +277,7 @@ export function NotificationDropdown() {
       notification.data?.kuis_id
     ) {
       navigate(
-        `/dosen/kuis/${notification.data.kuis_id}/attempt/${notification.data.attempt_id}`,
+        `/dosen/kuis/${notification.data.kuis_id}/results?attempt=${notification.data.attempt_id}`,
       );
       setOpen(false);
     } else if (
@@ -312,7 +312,7 @@ export function NotificationDropdown() {
       navigate(`/mahasiswa/logbook`);
       setOpen(false);
     } else if (notification.type === "peminjaman_baru") {
-      navigate(`/laboran/persetujuan`);
+      navigate(`/laboran/peminjaman`);
       setOpen(false);
     } else if (
       notification.type === "peminjaman_disetujui" ||

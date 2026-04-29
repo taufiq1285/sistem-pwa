@@ -104,6 +104,8 @@ const mockQueryBuilder = (defaultResolves?: {
   select?: any;
   delete?: any;
   eq?: any;
+  single?: any;
+  maybeSingle?: any;
 }) => {
   const builder: any = {
     select: vi.fn().mockReturnThis(),
@@ -114,6 +116,7 @@ const mockQueryBuilder = (defaultResolves?: {
     in: vi.fn().mockReturnThis(),
     order: vi.fn().mockReturnThis(),
     single: vi.fn(),
+    maybeSingle: vi.fn(),
   };
   // Allow overriding default behavior for specific operations
   if (defaultResolves?.select) {
@@ -125,7 +128,31 @@ const mockQueryBuilder = (defaultResolves?: {
   if (defaultResolves?.eq) {
     builder.eq.mockResolvedValue(defaultResolves.eq);
   }
+  if (defaultResolves?.single) {
+    builder.single.mockResolvedValue(defaultResolves.single);
+  }
+  if (defaultResolves?.maybeSingle) {
+    builder.maybeSingle.mockResolvedValue(defaultResolves.maybeSingle);
+  }
   return builder;
+};
+
+const createDefaultFromBuilder = () =>
+  mockQueryBuilder({
+    single: { data: null, error: null },
+    maybeSingle: { data: null, error: null },
+  });
+
+const resetSupabaseFromDefault = () => {
+  vi.mocked(supabase.from).mockImplementation(() => createDefaultFromBuilder());
+};
+
+const mockSupabaseFromByTable = (
+  router: (table: string) => any | undefined,
+) => {
+  vi.mocked(supabase.from).mockImplementation((table: string) => {
+    return router(table) ?? createDefaultFromBuilder();
+  });
 };
 
 // ============================================================================
@@ -135,6 +162,7 @@ const mockQueryBuilder = (defaultResolves?: {
 describe("Users API - Get All Users", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    resetSupabaseFromDefault();
   });
 
   describe("getAllUsers", () => {
@@ -323,6 +351,7 @@ describe("Users API - Get All Users", () => {
 describe("Users API - Statistics", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    resetSupabaseFromDefault();
   });
 
   describe("getUserStats", () => {
@@ -410,6 +439,7 @@ describe("Users API - Statistics", () => {
 describe("Users API - CRUD Operations", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    resetSupabaseFromDefault();
   });
 
   describe("toggleUserStatus", () => {
@@ -445,9 +475,16 @@ describe("Users API - CRUD Operations", () => {
 
   describe("updateUser", () => {
     it("should update user data", async () => {
-      const builder = mockQueryBuilder();
-      builder.eq.mockResolvedValue({ error: null });
-      vi.mocked(supabase.from).mockReturnValue(builder);
+      const getUserBuilder = mockQueryBuilder();
+      getUserBuilder.single.mockResolvedValue({
+        data: { role: "admin" },
+        error: null,
+      });
+      const updateBuilder = mockQueryBuilder();
+      updateBuilder.eq.mockResolvedValue({ error: null });
+      vi.mocked(supabase.from)
+        .mockReturnValueOnce(getUserBuilder)
+        .mockReturnValueOnce(updateBuilder);
 
       const updateData = {
         full_name: "Updated Name",
@@ -456,18 +493,21 @@ describe("Users API - CRUD Operations", () => {
 
       await updateUser("user-1", updateData);
 
-      expect(builder.update).toHaveBeenCalledWith(updateData);
-      expect(builder.eq).toHaveBeenCalledWith("id", "user-1");
+      expect(updateBuilder.update).toHaveBeenCalledWith(updateData);
+      expect(updateBuilder.eq).toHaveBeenCalledWith("id", "user-1");
     });
 
-    it("should update user role", async () => {
-      const builder = mockQueryBuilder();
-      builder.eq.mockResolvedValue({ error: null });
-      vi.mocked(supabase.from).mockReturnValue(builder);
+    it("should ignore role-only updates", async () => {
+      const getUserBuilder = mockQueryBuilder();
+      getUserBuilder.single.mockResolvedValue({
+        data: { role: "admin" },
+        error: null,
+      });
+      vi.mocked(supabase.from).mockReturnValueOnce(getUserBuilder);
 
       await updateUser("user-1", { role: "dosen" });
 
-      expect(builder.update).toHaveBeenCalledWith({ role: "dosen" });
+      expect(getUserBuilder.update).not.toHaveBeenCalled();
     });
   });
 
@@ -610,6 +650,7 @@ describe("Users API - CRUD Operations", () => {
     beforeEach(() => {
       // Clear all mocks first to prevent interference from other tests
       vi.clearAllMocks();
+      resetSupabaseFromDefault();
 
       // Mock auth.getUser for current user check
       vi.mocked(supabase.auth.getUser).mockResolvedValue({
@@ -645,33 +686,40 @@ describe("Users API - CRUD Operations", () => {
     });
 
     it("should delete mahasiswa from role table then users table", async () => {
-      // Get user role
       const getUserBuilder = mockQueryBuilder();
       getUserBuilder.single.mockResolvedValue({
         data: { role: "mahasiswa" },
         error: null,
       });
 
-      // Delete from mahasiswa table - eq() must resolve for delete operations
+      const mahasiswaLookupBuilder = mockQueryBuilder();
+      mahasiswaLookupBuilder.maybeSingle.mockResolvedValue({
+        data: null,
+        error: null,
+      });
+
       const deleteMhsBuilder = mockQueryBuilder();
-      deleteMhsBuilder.delete.mockReturnThis();
-      deleteMhsBuilder.eq.mockReturnThis();
-      // Set up the chain: .delete().eq() should resolve
       deleteMhsBuilder.eq.mockImplementation(() =>
         Promise.resolve({ error: null }),
       );
 
-      // Delete from users table - need to return builder for chaining .delete().eq().select()
       const deleteUserBuilder = mockQueryBuilder();
-      deleteUserBuilder.delete.mockReturnThis();
-      deleteUserBuilder.eq.mockReturnThis();
       const finalResult = { data: [{ id: "user-3" }], error: null, count: 1 };
       deleteUserBuilder.select.mockResolvedValue(finalResult);
 
-      vi.mocked(supabase.from)
-        .mockReturnValueOnce(getUserBuilder)
-        .mockReturnValueOnce(deleteMhsBuilder)
-        .mockReturnValueOnce(deleteUserBuilder);
+      let usersCallCount = 0;
+      let mahasiswaCallCount = 0;
+      mockSupabaseFromByTable((table) => {
+        if (table === "users") {
+          return usersCallCount++ === 0 ? getUserBuilder : deleteUserBuilder;
+        }
+        if (table === "mahasiswa") {
+          return mahasiswaCallCount++ === 0
+            ? mahasiswaLookupBuilder
+            : deleteMhsBuilder;
+        }
+        return undefined;
+      });
 
       await deleteUser("user-3");
 
@@ -687,26 +735,37 @@ describe("Users API - CRUD Operations", () => {
         error: null,
       });
 
+      const dosenLookupBuilder = mockQueryBuilder();
+      dosenLookupBuilder.maybeSingle.mockResolvedValue({
+        data: null,
+        error: null,
+      });
+
       const deleteDosenBuilder = mockQueryBuilder();
-      deleteDosenBuilder.delete.mockReturnThis();
-      deleteDosenBuilder.eq.mockReturnThis();
       deleteDosenBuilder.eq.mockImplementation(() =>
         Promise.resolve({ error: null }),
       );
 
       const deleteUserBuilder = mockQueryBuilder();
-      deleteUserBuilder.delete.mockReturnThis();
-      deleteUserBuilder.eq.mockReturnThis();
       deleteUserBuilder.select.mockResolvedValue({
         data: [{ id: "user-2" }],
         error: null,
         count: 1,
       });
 
-      vi.mocked(supabase.from)
-        .mockReturnValueOnce(getUserBuilder)
-        .mockReturnValueOnce(deleteDosenBuilder)
-        .mockReturnValueOnce(deleteUserBuilder);
+      let usersCallCount = 0;
+      let dosenCallCount = 0;
+      mockSupabaseFromByTable((table) => {
+        if (table === "users") {
+          return usersCallCount++ === 0 ? getUserBuilder : deleteUserBuilder;
+        }
+        if (table === "dosen") {
+          return dosenCallCount++ === 0
+            ? dosenLookupBuilder
+            : deleteDosenBuilder;
+        }
+        return undefined;
+      });
 
       await deleteUser("user-2");
 
@@ -722,25 +781,27 @@ describe("Users API - CRUD Operations", () => {
       });
 
       const deleteLaboranBuilder = mockQueryBuilder();
-      deleteLaboranBuilder.delete.mockReturnThis();
-      deleteLaboranBuilder.eq.mockReturnThis();
       deleteLaboranBuilder.eq.mockImplementation(() =>
         Promise.resolve({ error: null }),
       );
 
       const deleteUserBuilder = mockQueryBuilder();
-      deleteUserBuilder.delete.mockReturnThis();
-      deleteUserBuilder.eq.mockReturnThis();
       deleteUserBuilder.select.mockResolvedValue({
         data: [{ id: "user-4" }],
         error: null,
         count: 1,
       });
 
-      vi.mocked(supabase.from)
-        .mockReturnValueOnce(getUserBuilder)
-        .mockReturnValueOnce(deleteLaboranBuilder)
-        .mockReturnValueOnce(deleteUserBuilder);
+      let usersCallCount = 0;
+      mockSupabaseFromByTable((table) => {
+        if (table === "users") {
+          return usersCallCount++ === 0 ? getUserBuilder : deleteUserBuilder;
+        }
+        if (table === "laboran") {
+          return deleteLaboranBuilder;
+        }
+        return undefined;
+      });
 
       await deleteUser("user-4");
 
@@ -755,14 +816,32 @@ describe("Users API - CRUD Operations", () => {
         error: null,
       });
 
+      const mahasiswaLookupBuilder = mockQueryBuilder();
+      mahasiswaLookupBuilder.maybeSingle.mockResolvedValue({
+        data: null,
+        error: null,
+      });
+
       const deleteMhsBuilder = mockQueryBuilder();
       deleteMhsBuilder.eq.mockResolvedValue({
         error: new Error("Foreign key constraint"),
       });
 
-      vi.mocked(supabase.from)
-        .mockReturnValueOnce(getUserBuilder)
-        .mockReturnValueOnce(deleteMhsBuilder);
+      let usersCallCount = 0;
+      let mahasiswaCallCount = 0;
+      mockSupabaseFromByTable((table) => {
+        if (table === "users") {
+          return usersCallCount++ === 0
+            ? getUserBuilder
+            : createDefaultFromBuilder();
+        }
+        if (table === "mahasiswa") {
+          return mahasiswaCallCount++ === 0
+            ? mahasiswaLookupBuilder
+            : deleteMhsBuilder;
+        }
+        return undefined;
+      });
 
       // Should throw when role-specific delete fails
       await expect(deleteUser("user-3")).rejects.toThrow(
@@ -791,6 +870,7 @@ describe("Users API - CRUD Operations", () => {
 describe("Users API - White-Box Testing", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    resetSupabaseFromDefault();
   });
 
   // ============================================================================
@@ -810,6 +890,7 @@ describe("Users API - White-Box Testing", () => {
           password: "password123",
           full_name: "Test User",
           role: "mahasiswa",
+          nim: "BD2321001",
         }),
       ).rejects.toThrow("User already registered");
     });
@@ -849,6 +930,7 @@ describe("Users API - White-Box Testing", () => {
           password: "password123",
           full_name: "Unique User",
           role: "dosen",
+          nip: "198501012010121001",
         }),
       ).resolves.not.toThrow();
     });
@@ -860,54 +942,81 @@ describe("Users API - White-Box Testing", () => {
 
   describe("TC003: Update Profile Validation", () => {
     it("TC003: should update user full_name", async () => {
-      const builder = mockQueryBuilder();
-      builder.eq.mockResolvedValue({ error: null });
-      vi.mocked(supabase.from).mockReturnValue(builder);
+      const getUserBuilder = mockQueryBuilder();
+      getUserBuilder.single.mockResolvedValue({
+        data: { role: "admin" },
+        error: null,
+      });
+      const updateBuilder = mockQueryBuilder();
+      updateBuilder.eq.mockResolvedValue({ error: null });
+      vi.mocked(supabase.from)
+        .mockReturnValueOnce(getUserBuilder)
+        .mockReturnValueOnce(updateBuilder);
 
       await updateUser("user-1", { full_name: "Updated Name" });
 
-      expect(builder.update).toHaveBeenCalledWith({
+      expect(updateBuilder.update).toHaveBeenCalledWith({
         full_name: "Updated Name",
       });
-      expect(builder.eq).toHaveBeenCalledWith("id", "user-1");
+      expect(updateBuilder.eq).toHaveBeenCalledWith("id", "user-1");
     });
 
     it("TC003: should update user email", async () => {
-      const builder = mockQueryBuilder();
-      builder.eq.mockResolvedValue({ error: null });
-      vi.mocked(supabase.from).mockReturnValue(builder);
+      const getUserBuilder = mockQueryBuilder();
+      getUserBuilder.single.mockResolvedValue({
+        data: { role: "admin" },
+        error: null,
+      });
+      const updateBuilder = mockQueryBuilder();
+      updateBuilder.eq.mockResolvedValue({ error: null });
+      vi.mocked(supabase.from)
+        .mockReturnValueOnce(getUserBuilder)
+        .mockReturnValueOnce(updateBuilder);
 
       await updateUser("user-1", { email: "newemail@test.com" });
 
-      expect(builder.update).toHaveBeenCalledWith({
+      expect(updateBuilder.update).toHaveBeenCalledWith({
         email: "newemail@test.com",
       });
     });
 
     it("TC003: should update user is_active status", async () => {
-      const builder = mockQueryBuilder();
-      builder.eq.mockResolvedValue({ error: null });
-      vi.mocked(supabase.from).mockReturnValue(builder);
+      const getUserBuilder = mockQueryBuilder();
+      getUserBuilder.single.mockResolvedValue({
+        data: { role: "admin" },
+        error: null,
+      });
+      const updateBuilder = mockQueryBuilder();
+      updateBuilder.eq.mockResolvedValue({ error: null });
+      vi.mocked(supabase.from)
+        .mockReturnValueOnce(getUserBuilder)
+        .mockReturnValueOnce(updateBuilder);
 
       await updateUser("user-1", { is_active: false });
 
-      expect(builder.update).toHaveBeenCalledWith({ is_active: false });
+      expect(updateBuilder.update).toHaveBeenCalledWith({ is_active: false });
     });
 
     it("should validate role transition (admin to dosen)", async () => {
-      const builder = mockQueryBuilder();
-      builder.eq.mockResolvedValue({ error: null });
-      vi.mocked(supabase.from).mockReturnValue(builder);
+      const getUserBuilder = mockQueryBuilder();
+      getUserBuilder.single.mockResolvedValue({
+        data: { role: "admin" },
+        error: null,
+      });
+      vi.mocked(supabase.from).mockReturnValueOnce(getUserBuilder);
 
       await updateUser("user-1", { role: "dosen" });
 
-      expect(builder.update).toHaveBeenCalledWith({ role: "dosen" });
+      expect(getUserBuilder.update).not.toHaveBeenCalled();
     });
 
     it("should handle invalid user ID on update", async () => {
-      const builder = mockQueryBuilder();
-      builder.eq.mockResolvedValue({ error: new Error("User not found") });
-      vi.mocked(supabase.from).mockReturnValue(builder);
+      const getUserBuilder = mockQueryBuilder();
+      getUserBuilder.single.mockResolvedValue({
+        data: null,
+        error: new Error("User not found"),
+      });
+      vi.mocked(supabase.from).mockReturnValue(getUserBuilder);
 
       await expect(
         updateUser("nonexistent", { full_name: "Test" }),
@@ -1115,14 +1224,21 @@ describe("Users API - White-Box Testing", () => {
     it("TC007: should execute updateUser with permission wrapper", async () => {
       // updateUser uses requirePermission("manage:users", updateUserImpl)
       // If wrapper wasn't applied, this test would fail
-      const builder = mockQueryBuilder();
-      builder.eq.mockResolvedValue({ error: null });
-      vi.mocked(supabase.from).mockReturnValue(builder);
+      const getUserBuilder = mockQueryBuilder();
+      getUserBuilder.single.mockResolvedValue({
+        data: { role: "admin" },
+        error: null,
+      });
+      const updateBuilder = mockQueryBuilder();
+      updateBuilder.eq.mockResolvedValue({ error: null });
+      vi.mocked(supabase.from)
+        .mockReturnValueOnce(getUserBuilder)
+        .mockReturnValueOnce(updateBuilder);
 
       await updateUser("user-1", { full_name: "Test" });
 
       // If function executed successfully, permission wrapper is in place
-      expect(builder.update).toHaveBeenCalled();
+      expect(updateBuilder.update).toHaveBeenCalled();
     });
 
     it("TC007: should execute deleteUser with permission wrapper", async () => {
@@ -1172,9 +1288,13 @@ describe("Users API - White-Box Testing", () => {
         count: 1,
       });
 
-      vi.mocked(supabase.from)
-        .mockReturnValueOnce(getUserBuilder)
-        .mockReturnValueOnce(deleteUserBuilder);
+      let usersCallCount = 0;
+      mockSupabaseFromByTable((table) => {
+        if (table === "users") {
+          return usersCallCount++ === 0 ? getUserBuilder : deleteUserBuilder;
+        }
+        return undefined;
+      });
 
       await deleteUser("user-1");
 
@@ -1288,33 +1408,22 @@ describe("Users API - White-Box Testing", () => {
         password: "password123",
         full_name: "Laboran User",
         role: "laboran",
+        nip: "198501012010121555",
         phone: "081234567890",
       });
 
       expect(insertBuilder.insert).toHaveBeenCalled();
     });
 
-    it("should handle dosen without NIP/NIDN (skip insert)", async () => {
-      vi.mocked(supabase.auth.signUp).mockResolvedValue({
-        data: { user: { id: "new-dosen-id" } },
-        error: null,
-      } as any);
-
-      const updateBuilder = mockQueryBuilder();
-      updateBuilder.eq.mockResolvedValue({ error: null });
-
-      vi.mocked(supabase.from).mockReturnValue(updateBuilder);
-
-      await createUser({
-        email: "dosen@test.com",
-        password: "password123",
-        full_name: "Dosen User",
-        role: "dosen",
-        // No NIP or NIDN provided
-      });
-
-      // Should not insert into dosen table without NIP/NIDN
-      expect(updateBuilder.insert).not.toHaveBeenCalled();
+    it("should reject dosen without NIP/NIDN", async () => {
+      await expect(
+        createUser({
+          email: "dosen@test.com",
+          password: "password123",
+          full_name: "Dosen User",
+          role: "dosen",
+        }),
+      ).rejects.toThrow("NIP atau NIDN wajib diisi untuk user dosen");
     });
   });
 
@@ -1324,6 +1433,7 @@ describe("Users API - White-Box Testing", () => {
 
   describe("Path Coverage - Delete User Cascade", () => {
     beforeEach(() => {
+      resetSupabaseFromDefault();
       vi.mocked(supabase.auth.getUser).mockResolvedValue({
         data: {
           user: {
@@ -1370,9 +1480,13 @@ describe("Users API - White-Box Testing", () => {
         count: 1,
       });
 
-      vi.mocked(supabase.from)
-        .mockReturnValueOnce(getUserBuilder)
-        .mockReturnValueOnce(deleteUserBuilder);
+      let usersCallCount = 0;
+      mockSupabaseFromByTable((table) => {
+        if (table === "users") {
+          return usersCallCount++ === 0 ? getUserBuilder : deleteUserBuilder;
+        }
+        return undefined;
+      });
 
       await deleteUser("user-1");
 
@@ -1387,26 +1501,37 @@ describe("Users API - White-Box Testing", () => {
         error: null,
       });
 
+      const mahasiswaLookupBuilder = mockQueryBuilder();
+      mahasiswaLookupBuilder.maybeSingle.mockResolvedValue({
+        data: null,
+        error: null,
+      });
+
       const deleteMhsBuilder = mockQueryBuilder();
-      deleteMhsBuilder.delete.mockReturnThis();
-      deleteMhsBuilder.eq.mockReturnThis();
       deleteMhsBuilder.eq.mockImplementation(() =>
         Promise.resolve({ error: null }),
       );
 
       const deleteUserBuilder = mockQueryBuilder();
-      deleteUserBuilder.delete.mockReturnThis();
-      deleteUserBuilder.eq.mockReturnThis();
       deleteUserBuilder.select.mockResolvedValue({
         data: [{ id: "user-3" }],
         error: null,
         count: 1,
       });
 
-      vi.mocked(supabase.from)
-        .mockReturnValueOnce(getUserBuilder)
-        .mockReturnValueOnce(deleteMhsBuilder)
-        .mockReturnValueOnce(deleteUserBuilder);
+      let usersCallCount = 0;
+      let mahasiswaCallCount = 0;
+      mockSupabaseFromByTable((table) => {
+        if (table === "users") {
+          return usersCallCount++ === 0 ? getUserBuilder : deleteUserBuilder;
+        }
+        if (table === "mahasiswa") {
+          return mahasiswaCallCount++ === 0
+            ? mahasiswaLookupBuilder
+            : deleteMhsBuilder;
+        }
+        return undefined;
+      });
 
       await deleteUser("user-3");
 
@@ -1433,6 +1558,12 @@ describe("Users API - White-Box Testing", () => {
         error: null,
       });
 
+      const mahasiswaLookupBuilder = mockQueryBuilder();
+      mahasiswaLookupBuilder.maybeSingle.mockResolvedValue({
+        data: null,
+        error: null,
+      });
+
       const deleteMhsBuilder = mockQueryBuilder();
       deleteMhsBuilder.eq.mockResolvedValue({ error: null });
 
@@ -1443,10 +1574,19 @@ describe("Users API - White-Box Testing", () => {
         count: 0,
       });
 
-      vi.mocked(supabase.from)
-        .mockReturnValueOnce(getUserBuilder)
-        .mockReturnValueOnce(deleteMhsBuilder)
-        .mockReturnValueOnce(deleteUserBuilder);
+      let usersCallCount = 0;
+      let mahasiswaCallCount = 0;
+      mockSupabaseFromByTable((table) => {
+        if (table === "users") {
+          return usersCallCount++ === 0 ? getUserBuilder : deleteUserBuilder;
+        }
+        if (table === "mahasiswa") {
+          return mahasiswaCallCount++ === 0
+            ? mahasiswaLookupBuilder
+            : deleteMhsBuilder;
+        }
+        return undefined;
+      });
 
       await expect(deleteUser("user-3")).rejects.toThrow(
         "Delete blocked by security policy",
@@ -1607,7 +1747,7 @@ describe("Users API - White-Box Testing", () => {
           email: "test@test.com",
           password: "password123",
           full_name: specialName,
-          role: "dosen",
+          role: "admin",
         }),
       ).resolves.not.toThrow();
     });

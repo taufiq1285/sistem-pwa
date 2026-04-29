@@ -83,7 +83,11 @@ export function ForgotPasswordPage() {
           >
             <CardHeader className="space-y-4 bg-linear-to-br from-[#0F172A] via-[#1E293B] to-[#7B1D3A] px-6 py-8 text-center sm:px-8">
               <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-white/15 backdrop-blur-sm">
-                <img src={akbidLogo} alt="Logo Akademi Kebidanan Mega Buana" className="h-12 w-12 rounded-xl bg-white p-1 object-contain" />
+                <img
+                  src={akbidLogo}
+                  alt="Logo Akademi Kebidanan Mega Buana"
+                  className="h-12 w-12 rounded-xl bg-white p-1 object-contain"
+                />
               </div>
               <div className="space-y-2">
                 <div className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-[13px] font-semibold text-white/80">
@@ -154,7 +158,11 @@ export function ForgotPasswordPage() {
         >
           <CardHeader className="space-y-4 bg-linear-to-br from-[#0F172A] via-[#1E293B] to-[#7B1D3A] px-6 py-8 text-center sm:px-8">
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-white/15 backdrop-blur-sm">
-              <img src={akbidLogo} alt="Logo Akademi Kebidanan Mega Buana" className="h-12 w-12 rounded-xl bg-white p-1 object-contain" />
+              <img
+                src={akbidLogo}
+                alt="Logo Akademi Kebidanan Mega Buana"
+                className="h-12 w-12 rounded-xl bg-white p-1 object-contain"
+              />
             </div>
             <div className="space-y-2">
               <div className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-[13px] font-semibold text-white/80">
@@ -184,7 +192,10 @@ export function ForgotPasswordPage() {
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm font-semibold text-[#0F172A]">
+                <Label
+                  htmlFor="email"
+                  className="text-sm font-semibold text-[#0F172A]"
+                >
                   Alamat Email
                 </Label>
                 <Input
@@ -227,4 +238,3 @@ export function ForgotPasswordPage() {
     </div>
   );
 }
-

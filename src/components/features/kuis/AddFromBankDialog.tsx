@@ -12,7 +12,7 @@
 import { useState, useEffect } from "react";
 import { getBankSoal, addQuestionsFromBank } from "@/lib/api/bank-soal.api";
 import type { BankSoal, BankSoalFilters } from "@/types/bank-soal.types";
-import { TIPE_SOAL, TIPE_SOAL_LABELS } from "@/types/kuis.types";
+import { TIPE_SOAL } from "@/types/kuis.types";
 
 import {
   Dialog,
@@ -27,7 +27,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Search, BookOpen } from "lucide-react";
+import { Search, BookOpen, CheckCircle2, MessageSquareText } from "lucide-react";
 import { toast } from "sonner";
 
 interface AddFromBankDialogProps {
@@ -53,16 +53,25 @@ export function AddFromBankDialog({
   const [isAdding, setIsAdding] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedTipeSoal, setSelectedTipeSoal] = useState<string>(
-    TIPE_SOAL.PILIHAN_GANDA,
-  ); // Only pilihan ganda
+
+  const getCorrectOption = (question: BankSoal) => {
+    const options = question.opsi_jawaban || [];
+    return (
+      options.find(
+        (option) =>
+          option.is_correct === true ||
+          option.id === question.jawaban_benar ||
+          option.label === question.jawaban_benar,
+      ) || null
+    );
+  };
 
   useEffect(() => {
     if (open) {
       loadQuestions();
       setSelectedIds([]); // Reset selection
     }
-  }, [open, dosenId, searchQuery, selectedTipeSoal]);
+  }, [open, dosenId, searchQuery]);
 
   const loadQuestions = async () => {
     try {
@@ -70,8 +79,8 @@ export function AddFromBankDialog({
 
       const filters: BankSoalFilters = {
         dosen_id: dosenId,
-        is_public: true,
-        sortBy: "usage_count",
+        include_public: true,
+        sortBy: "created_at",
         sortOrder: "desc",
       };
 
@@ -93,6 +102,15 @@ export function AddFromBankDialog({
   };
 
   const toggleSelection = (id: string) => {
+    const question = questions.find((item) => item.id === id);
+    if (
+      question?.tipe_soal === TIPE_SOAL.PILIHAN_GANDA &&
+      !question.penjelasan?.trim()
+    ) {
+      toast.warning("Soal ini belum memiliki keterangan jawaban");
+      return;
+    }
+
     setSelectedIds((prev) =>
       prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
     );
@@ -102,7 +120,15 @@ export function AddFromBankDialog({
     if (selectedIds.length === questions.length) {
       setSelectedIds([]);
     } else {
-      setSelectedIds(questions.map((q) => q.id));
+      const selectableIds = questions
+        .filter(
+          (question) =>
+            question.tipe_soal !== TIPE_SOAL.PILIHAN_GANDA ||
+            Boolean(question.penjelasan?.trim()),
+        )
+        .map((q) => q.id);
+
+      setSelectedIds(selectableIds);
     }
   };
 
@@ -190,6 +216,9 @@ export function AddFromBankDialog({
             <div className="space-y-3">
               {questions.map((q) => {
                 const isSelected = selectedIds.includes(q.id);
+                const isOwnQuestion = q.dosen_id === dosenId;
+                const ownerName =
+                  q.dosen?.user?.full_name || "Dosen lain";
 
                 return (
                   <div
@@ -211,16 +240,48 @@ export function AddFromBankDialog({
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
                           <Badge variant="outline">{q.poin} poin</Badge>
-                          <Badge variant="secondary">
-                            {
-                              TIPE_SOAL_LABELS[
-                                q.tipe_soal as keyof typeof TIPE_SOAL_LABELS
-                              ]
+                          <Badge variant="secondary">CBT</Badge>
+                          <Badge
+                            variant={isOwnQuestion ? "default" : "outline"}
+                            className={
+                              isOwnQuestion
+                                ? "bg-primary text-primary-foreground"
+                                : "border-blue-200 text-blue-700"
                             }
+                          >
+                            {isOwnQuestion ? "Milik Saya" : ownerName}
                           </Badge>
                           {q.usage_count && q.usage_count > 0 && (
                             <Badge variant="outline" className="text-xs">
                               {q.usage_count}x digunakan
+                            </Badge>
+                          )}
+                          {q.penjelasan?.trim() && (
+                            <Badge
+                              variant="outline"
+                              className="border-emerald-200 text-emerald-700"
+                            >
+                              <MessageSquareText className="mr-1 h-3 w-3" />
+                              Ada Pembahasan
+                            </Badge>
+                          )}
+                          {!q.penjelasan?.trim() && (
+                            <Badge
+                              variant="outline"
+                              className="border-amber-200 text-amber-700"
+                            >
+                              Wajib Lengkapi Keterangan
+                            </Badge>
+                          )}
+                          {getCorrectOption(q) && (
+                            <Badge
+                              variant="outline"
+                              className="border-green-200 text-green-700"
+                            >
+                              <CheckCircle2 className="mr-1 h-3 w-3" />
+                              Benar:{" "}
+                              {getCorrectOption(q)?.label ||
+                                getCorrectOption(q)?.id}
                             </Badge>
                           )}
                         </div>

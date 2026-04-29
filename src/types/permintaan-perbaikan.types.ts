@@ -28,6 +28,14 @@ export type StatusPermintaan =
   | "rejected"
   | "cancelled";
 
+export type BentukPerbaikanNilai =
+  | "remedial"
+  | "tugas_tambahan"
+  | "ujian_ulang"
+  | "koreksi_nilai"
+  | "konsultasi_dosen"
+  | "lainnya";
+
 // ============================================================================
 // MAIN TYPES
 // ============================================================================
@@ -40,6 +48,8 @@ export interface PermintaanPerbaikanNilai {
   mahasiswa_id: string;
   nilai_id: string;
   kelas_id: string;
+  mata_kuliah_id?: string | null;
+  target_dosen_id?: string | null;
 
   // What to fix
   komponen_nilai: KomponenNilai;
@@ -54,6 +64,8 @@ export interface PermintaanPerbaikanNilai {
   status: StatusPermintaan;
   response_dosen: string | null;
   nilai_baru: number | null;
+  bentuk_perbaikan?: BentukPerbaikanNilai | null;
+  instruksi_perbaikan?: string | null;
 
   // Reviewer
   reviewed_by: string | null;
@@ -93,6 +105,19 @@ export interface PermintaanPerbaikanWithRelations extends PermintaanPerbaikanNil
       };
     };
   };
+  mata_kuliah?: {
+    id: string;
+    nama_mk: string;
+    kode_mk: string;
+  } | null;
+  target_dosen?: {
+    id: string;
+    nip: string;
+    user: {
+      full_name: string;
+      email: string;
+    };
+  } | null;
   reviewer?: {
     id: string;
     nip: string;
@@ -113,6 +138,8 @@ export interface CreatePermintaanPerbaikanData {
   mahasiswa_id: string;
   nilai_id: string;
   kelas_id: string;
+  mata_kuliah_id?: string | null;
+  target_dosen_id?: string | null;
   komponen_nilai: KomponenNilai;
   nilai_lama: number;
   nilai_usulan?: number;
@@ -125,8 +152,10 @@ export interface CreatePermintaanPerbaikanData {
  */
 export interface ApprovePermintaanData {
   permintaan_id: string;
-  nilai_baru: number;
+  nilai_baru?: number | null;
   response_dosen?: string;
+  bentuk_perbaikan?: BentukPerbaikanNilai | null;
+  instruksi_perbaikan?: string | null;
   reviewed_by: string; // dosen_id
 }
 
@@ -156,6 +185,7 @@ export interface CancelPermintaanData {
 export interface PermintaanFilters {
   mahasiswa_id?: string;
   kelas_id?: string;
+  mata_kuliah_id?: string;
   dosen_id?: string;
   status?: StatusPermintaan;
   komponen_nilai?: KomponenNilai;
@@ -241,4 +271,13 @@ export const STATUS_COLORS: Record<
     text: "text-gray-700",
     border: "border-gray-200",
   },
+};
+
+export const BENTUK_PERBAIKAN_LABELS: Record<BentukPerbaikanNilai, string> = {
+  remedial: "Remedial",
+  tugas_tambahan: "Tugas Tambahan",
+  ujian_ulang: "Ujian Ulang",
+  koreksi_nilai: "Koreksi Nilai",
+  konsultasi_dosen: "Konsultasi Dosen",
+  lainnya: "Lainnya",
 };

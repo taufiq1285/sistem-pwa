@@ -44,19 +44,19 @@ import {
 
 /* ─── Design Tokens (ui-ux-pro-max Educational App palette) ──── */
 const C = {
-  primary:   "#4F46E5",
+  primary: "#4F46E5",
   secondary: "#818CF8",
-  cta:       "#F97316",
-  ctaDark:   "#EA580C",
-  bg:        "#EEF2FF",
-  surface:   "#FFFFFF",
-  alt:       "#F8FAFC",
-  dark:      "#1E1B4B",
-  body:      "#374151",
-  muted:     "#6B7280",
-  border:    "#E0E7FF",
-  success:   "#059669",
-  purple:    "#7C3AED",
+  cta: "#F97316",
+  ctaDark: "#EA580C",
+  bg: "#EEF2FF",
+  surface: "#FFFFFF",
+  alt: "#F8FAFC",
+  dark: "#1E1B4B",
+  body: "#374151",
+  muted: "#6B7280",
+  border: "#E0E7FF",
+  success: "#059669",
+  purple: "#7C3AED",
 } as const;
 
 /* ─── SVG Wave Divider ─────────────────────────────────────────── */
@@ -66,7 +66,12 @@ function WaveDivider({ from, to }: { from: string; to: string }) {
       <svg
         viewBox="0 0 1440 72"
         preserveAspectRatio="none"
-        style={{ display: "block", width: "100%", height: "72px", background: from }}
+        style={{
+          display: "block",
+          width: "100%",
+          height: "72px",
+          background: from,
+        }}
       >
         <path
           d="M0,36 C240,72 480,0 720,36 C960,72 1200,0 1440,36 L1440,0 L0,0 Z"
@@ -113,13 +118,13 @@ function CountUp({
 /* ─── App UI Mockup ────────────────────────────────────────────── */
 function AppMockup() {
   const schedule = [
-    { label: "Praktikum Anatomi",      time: "08:00–10:00", color: C.primary },
-    { label: "Logbook Midwifery",      time: "10:30–12:00", color: C.cta },
-    { label: "Evaluasi Laboratorium",  time: "13:00–15:00", color: C.purple },
+    { label: "Praktikum Anatomi", time: "08:00–10:00", color: C.primary },
+    { label: "Logbook Midwifery", time: "10:30–12:00", color: C.cta },
+    { label: "Evaluasi Laboratorium", time: "13:00–15:00", color: C.purple },
   ];
   const stats = [
-    { v: "12",  l: "Jadwal",    c: C.primary, bg: "#EEF2FF" },
-    { v: "3",   l: "Tugas",     c: C.cta,     bg: "#FFF7ED" },
+    { v: "12", l: "Jadwal", c: C.primary, bg: "#EEF2FF" },
+    { v: "3", l: "Tugas", c: C.cta, bg: "#FFF7ED" },
     { v: "98%", l: "Kehadiran", c: C.success, bg: "#F0FDF4" },
   ];
 
@@ -224,7 +229,9 @@ function AppMockup() {
                   height: 34,
                   borderRadius: "9px",
                   background: active ? C.primary : "transparent",
-                  border: active ? "none" : "1.5px solid rgba(255,255,255,0.12)",
+                  border: active
+                    ? "none"
+                    : "1.5px solid rgba(255,255,255,0.12)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -492,15 +499,15 @@ function AppMockup() {
 
 /* ─── Marquee Ticker ───────────────────────────────────────────── */
 const MARQUEE_ITEMS = [
-  { icon: <Calendar className="h-4 w-4" />,       text: "Jadwal Praktikum" },
-  { icon: <BookOpen className="h-4 w-4" />,        text: "Logbook Digital" },
+  { icon: <Calendar className="h-4 w-4" />, text: "Jadwal Praktikum" },
+  { icon: <BookOpen className="h-4 w-4" />, text: "Logbook Digital" },
   { icon: <ClipboardCheck className="h-4 w-4" />, text: "Presensi Otomatis" },
-  { icon: <BarChart3 className="h-4 w-4" />,       text: "Penilaian Real-time" },
-  { icon: <Bell className="h-4 w-4" />,            text: "Notifikasi Push" },
-  { icon: <Smartphone className="h-4 w-4" />,      text: "Installable PWA" },
-  { icon: <Lock className="h-4 w-4" />,            text: "RBAC Security" },
-  { icon: <Zap className="h-4 w-4" />,             text: "Offline Mode" },
-  { icon: <Download className="h-4 w-4" />,        text: "Export Laporan" },
+  { icon: <BarChart3 className="h-4 w-4" />, text: "Penilaian Real-time" },
+  { icon: <Bell className="h-4 w-4" />, text: "Notifikasi Push" },
+  { icon: <Smartphone className="h-4 w-4" />, text: "Installable PWA" },
+  { icon: <Lock className="h-4 w-4" />, text: "RBAC Security" },
+  { icon: <Zap className="h-4 w-4" />, text: "Offline Mode" },
+  { icon: <Download className="h-4 w-4" />, text: "Export Laporan" },
 ];
 
 function MarqueeTicker() {
@@ -569,7 +576,7 @@ export function HomePage() {
           }
         });
       },
-      { threshold: 0.12 }
+      { threshold: 0.12 },
     );
     elements.forEach((el) => observer.observe(el));
     return () => observer.disconnect();
@@ -586,7 +593,7 @@ export function HomePage() {
           obs.disconnect();
         }
       },
-      { threshold: 0.5 }
+      { threshold: 0.5 },
     );
     obs.observe(el);
     return () => obs.disconnect();
@@ -594,25 +601,133 @@ export function HomePage() {
 
   /* ── Data (logic unchanged) ─────────────────────────────────── */
   const modules = [
-    { no: "01", title: "Jadwal Praktikum", desc: "Penjadwalan sesi lab lintas kelas, dosen, dan laboran secara terpusat.", tag: "Jadwal", icon: <Calendar className="h-6 w-6" style={{ color: C.primary }} />, bg: "#EEF2FF", border: "#C7D2FE" },
-    { no: "02", title: "Logbook Digital", desc: "Dokumentasi kegiatan praktikum, mudah diisi mahasiswa dan direview dosen.", tag: "Dokumentasi", icon: <BookOpen className="h-6 w-6" style={{ color: C.cta }} />, bg: "#FFF7ED", border: "#FED7AA" },
-    { no: "03", title: "Presensi dan Kehadiran", desc: "Kehadiran tercatat cepat dan tersinkronisasi otomatis ke semua pihak.", tag: "Kehadiran", icon: <ClipboardCheck className="h-6 w-6" style={{ color: C.success }} />, bg: "#F0FDF4", border: "#BBF7D0" },
-    { no: "04", title: "Materi dan Bank Soal", desc: "Dosen upload materi dan kelola bank soal untuk evaluasi berkelanjutan.", tag: "Akademik", icon: <BarChart3 className="h-6 w-6" style={{ color: C.purple }} />, bg: "#F5F3FF", border: "#DDD6FE" },
-    { no: "05", title: "Tugas dan Penilaian", desc: "Pre-test, post-test, dan laporan tugas dalam satu alur penilaian terintegrasi.", tag: "Evaluasi", icon: <ClipboardList className="h-6 w-6" style={{ color: "#0891B2" }} />, bg: "#ECFEFF", border: "#A5F3FC" },
-    { no: "06", title: "Notifikasi Real-time", desc: "Informasi jadwal, tugas, dan pengumuman tersampaikan tepat waktu ke semua peran.", tag: "Komunikasi", icon: <Bell className="h-6 w-6" style={{ color: C.cta }} />, bg: "#FFF7ED", border: "#FED7AA" },
+    {
+      no: "01",
+      title: "Jadwal Praktikum",
+      desc: "Penjadwalan sesi lab lintas kelas, dosen, dan laboran secara terpusat.",
+      tag: "Jadwal",
+      icon: <Calendar className="h-6 w-6" style={{ color: C.primary }} />,
+      bg: "#EEF2FF",
+      border: "#C7D2FE",
+    },
+    {
+      no: "02",
+      title: "Logbook Digital",
+      desc: "Dokumentasi kegiatan praktikum, mudah diisi mahasiswa dan direview dosen.",
+      tag: "Dokumentasi",
+      icon: <BookOpen className="h-6 w-6" style={{ color: C.cta }} />,
+      bg: "#FFF7ED",
+      border: "#FED7AA",
+    },
+    {
+      no: "03",
+      title: "Presensi dan Kehadiran",
+      desc: "Kehadiran tercatat cepat dan tersinkronisasi otomatis ke semua pihak.",
+      tag: "Kehadiran",
+      icon: <ClipboardCheck className="h-6 w-6" style={{ color: C.success }} />,
+      bg: "#F0FDF4",
+      border: "#BBF7D0",
+    },
+    {
+      no: "04",
+      title: "Materi dan Bank Soal",
+      desc: "Dosen upload materi dan kelola bank soal untuk evaluasi berkelanjutan.",
+      tag: "Akademik",
+      icon: <BarChart3 className="h-6 w-6" style={{ color: C.purple }} />,
+      bg: "#F5F3FF",
+      border: "#DDD6FE",
+    },
+    {
+      no: "05",
+      title: "Tugas dan Penilaian",
+      desc: "Pre-test, post-test, dan laporan tugas dalam satu alur penilaian terintegrasi.",
+      tag: "Evaluasi",
+      icon: <ClipboardList className="h-6 w-6" style={{ color: "#0891B2" }} />,
+      bg: "#ECFEFF",
+      border: "#A5F3FC",
+    },
+    {
+      no: "06",
+      title: "Notifikasi Real-time",
+      desc: "Informasi jadwal, tugas, dan pengumuman tersampaikan tepat waktu ke semua peran.",
+      tag: "Komunikasi",
+      icon: <Bell className="h-6 w-6" style={{ color: C.cta }} />,
+      bg: "#FFF7ED",
+      border: "#FED7AA",
+    },
   ];
 
   const flow = [
-    { no: "01", title: "Perencanaan", desc: "Dosen dan laboran menyiapkan jadwal, ruang, dan kebutuhan alat laboratorium.", color: C.primary, bg: "#EEF2FF" },
-    { no: "02", title: "Pelaksanaan", desc: "Mahasiswa menjalankan praktikum, mengisi presensi dan logbook secara langsung.", color: C.cta, bg: "#FFF7ED" },
-    { no: "03", title: "Evaluasi", desc: "Dosen review logbook, memberi penilaian, dan umpan balik secara terstruktur.", color: C.purple, bg: "#F5F3FF" },
-    { no: "04", title: "Sinkronisasi", desc: "Data tersimpan dan tersinkron aman ke server saat koneksi internet tersedia.", color: C.success, bg: "#F0FDF4" },
+    {
+      no: "01",
+      title: "Perencanaan",
+      desc: "Dosen dan laboran menyiapkan jadwal, ruang, dan kebutuhan alat laboratorium.",
+      color: C.primary,
+      bg: "#EEF2FF",
+    },
+    {
+      no: "02",
+      title: "Pelaksanaan",
+      desc: "Mahasiswa menjalankan praktikum, mengisi presensi dan logbook secara langsung.",
+      color: C.cta,
+      bg: "#FFF7ED",
+    },
+    {
+      no: "03",
+      title: "Evaluasi",
+      desc: "Dosen review logbook, memberi penilaian, dan umpan balik secara terstruktur.",
+      color: C.purple,
+      bg: "#F5F3FF",
+    },
+    {
+      no: "04",
+      title: "Sinkronisasi",
+      desc: "Data tersimpan dan tersinkron aman ke server saat koneksi internet tersedia.",
+      color: C.success,
+      bg: "#F0FDF4",
+    },
   ];
 
   const roles = [
-    { label: "Mahasiswa", title: "Pelajar", icon: <GraduationCap className="h-7 w-7 text-white" />, color: C.primary, features: ["Akses jadwal praktikum", "Isi dan lihat logbook digital", "Kerjakan tugas dan lihat nilai", "Presensi otomatis", "Unduh materi praktikum"] },
-    { label: "Dosen", title: "Pengajar", icon: <BookOpen className="h-7 w-7 text-white" />, color: C.cta, features: ["Kelola jadwal dan tugas", "Review dan nilai logbook", "Buat dan kelola bank soal", "Pantau kehadiran kelas", "Upload materi evaluasi"] },
-    { label: "Laboran", title: "Teknisi Lab", icon: <FlaskConical className="h-7 w-7 text-white" />, color: C.purple, features: ["Kelola inventaris alat", "Persetujuan peminjaman", "Manajemen laboratorium", "Laporan operasional harian", "Koordinasi jadwal lab"] },
+    {
+      label: "Mahasiswa",
+      title: "Pelajar",
+      icon: <GraduationCap className="h-7 w-7 text-white" />,
+      color: C.primary,
+      features: [
+        "Akses jadwal praktikum",
+        "Isi dan lihat logbook digital",
+        "Kerjakan tugas dan lihat nilai",
+        "Presensi otomatis",
+        "Unduh materi praktikum",
+      ],
+    },
+    {
+      label: "Dosen",
+      title: "Pengajar",
+      icon: <BookOpen className="h-7 w-7 text-white" />,
+      color: C.cta,
+      features: [
+        "Kelola jadwal dan tugas",
+        "Review dan nilai logbook",
+        "Buat dan kelola bank soal",
+        "Pantau kehadiran kelas",
+        "Upload materi evaluasi",
+      ],
+    },
+    {
+      label: "Laboran",
+      title: "Teknisi Lab",
+      icon: <FlaskConical className="h-7 w-7 text-white" />,
+      color: C.purple,
+      features: [
+        "Kelola inventaris alat",
+        "Persetujuan peminjaman",
+        "Manajemen laboratorium",
+        "Laporan operasional harian",
+        "Koordinasi jadwal lab",
+      ],
+    },
   ];
 
   /* ── JSX ────────────────────────────────────────────────────── */
@@ -648,7 +763,11 @@ export function HomePage() {
                 boxShadow: `0 4px 14px rgba(79,70,229,0.32)`,
               }}
             >
-              <img src={akbidLogo} alt="Logo" className="h-7 w-7 object-contain" />
+              <img
+                src={akbidLogo}
+                alt="Logo"
+                className="h-7 w-7 object-contain"
+              />
             </div>
             <div>
               <p
@@ -666,7 +785,9 @@ export function HomePage() {
             </div>
             <span
               className="hidden md:inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-white"
-              style={{ background: `linear-gradient(90deg, ${C.primary}, ${C.secondary})` }}
+              style={{
+                background: `linear-gradient(90deg, ${C.primary}, ${C.secondary})`,
+              }}
             >
               PWA
             </span>
@@ -704,21 +825,41 @@ export function HomePage() {
       {/* ── HERO ───────────────────────────────────────────────── */}
       <section
         className="relative overflow-hidden"
-        style={{ backgroundColor: C.bg, minHeight: "90vh", display: "flex", alignItems: "center" }}
+        style={{
+          backgroundColor: C.bg,
+          minHeight: "90vh",
+          display: "flex",
+          alignItems: "center",
+        }}
       >
         {/* Ambient blobs */}
         <div
           className="pointer-events-none absolute right-0 top-0 rounded-full"
-          style={{ width: 600, height: 600, opacity: 0.22, background: `radial-gradient(circle, ${C.primary}, transparent 70%)`, filter: "blur(80px)" }}
+          style={{
+            width: 600,
+            height: 600,
+            opacity: 0.22,
+            background: `radial-gradient(circle, ${C.primary}, transparent 70%)`,
+            filter: "blur(80px)",
+          }}
         />
         <div
           className="pointer-events-none absolute -left-32 bottom-0 rounded-full"
-          style={{ width: 400, height: 400, opacity: 0.14, background: `radial-gradient(circle, ${C.cta}, transparent 70%)`, filter: "blur(80px)" }}
+          style={{
+            width: 400,
+            height: 400,
+            opacity: 0.14,
+            background: `radial-gradient(circle, ${C.cta}, transparent 70%)`,
+            filter: "blur(80px)",
+          }}
         />
 
         <div
           className="relative mx-auto grid max-w-[1100px] grid-cols-1 gap-12 px-4 py-16 sm:px-6 lg:gap-10 lg:py-20"
-          style={{ width: "100%", gridTemplateColumns: "repeat(1, minmax(0, 1fr))" }}
+          style={{
+            width: "100%",
+            gridTemplateColumns: "repeat(1, minmax(0, 1fr))",
+          }}
         >
           <div className="grid grid-cols-1 gap-12 lg:gap-10 lg:grid-cols-[1.2fr_1fr]">
             {/* Left: Copy */}
@@ -731,10 +872,16 @@ export function HomePage() {
                   border: `1px solid ${C.border}`,
                 }}
               >
-                <span className="h-2 w-2 animate-pulse rounded-full" style={{ backgroundColor: C.primary }} />
+                <span
+                  className="h-2 w-2 animate-pulse rounded-full"
+                  style={{ backgroundColor: C.primary }}
+                />
                 <span
                   className="text-[12px] font-semibold uppercase tracking-widest"
-                  style={{ color: C.primary, fontFamily: "'Outfit', sans-serif" }}
+                  style={{
+                    color: C.primary,
+                    fontFamily: "'Outfit', sans-serif",
+                  }}
                 >
                   Sistem Informasi Praktikum · AKBID Mega Buana
                 </span>
@@ -776,8 +923,9 @@ export function HomePage() {
                 className="mb-8 max-w-[460px] text-[16px] leading-[1.8]"
                 style={{ color: C.body }}
               >
-                Platform berbasis web untuk jadwal, logbook, tugas, presensi, dan
-                pengelolaan laboratorium yang dirancang khusus untuk AKBID Mega Buana.
+                Platform berbasis web untuk jadwal, logbook, tugas, presensi,
+                dan pengelolaan laboratorium yang dirancang khusus untuk AKBID
+                Mega Buana.
               </p>
 
               <div className="flex flex-wrap items-center gap-4">
@@ -804,11 +952,27 @@ export function HomePage() {
 
               <div className="mt-10 flex flex-wrap items-center gap-6">
                 {[
-                  { icon: <Shield className="h-4 w-4" />, label: "RBAC Security",   color: C.primary },
-                  { icon: <Wifi className="h-4 w-4" />,   label: "Offline Ready",   color: C.success },
-                  { icon: <Smartphone className="h-4 w-4" />, label: "Installable PWA", color: C.cta },
+                  {
+                    icon: <Shield className="h-4 w-4" />,
+                    label: "RBAC Security",
+                    color: C.primary,
+                  },
+                  {
+                    icon: <Wifi className="h-4 w-4" />,
+                    label: "Offline Ready",
+                    color: C.success,
+                  },
+                  {
+                    icon: <Smartphone className="h-4 w-4" />,
+                    label: "Installable PWA",
+                    color: C.cta,
+                  },
                 ].map((b) => (
-                  <div key={b.label} className="flex items-center gap-1.5" style={{ color: C.muted }}>
+                  <div
+                    key={b.label}
+                    className="flex items-center gap-1.5"
+                    style={{ color: C.muted }}
+                  >
                     <span style={{ color: b.color }}>{b.icon}</span>
                     <span className="text-[13px] font-medium">{b.label}</span>
                   </div>
@@ -817,7 +981,11 @@ export function HomePage() {
             </div>
 
             {/* Right: Stats + Mockup */}
-            <div className="hidden lg:flex flex-col gap-5" data-reveal data-delay="2">
+            <div
+              className="hidden lg:flex flex-col gap-5"
+              data-reveal
+              data-delay="2"
+            >
               {/* Animated stats bar */}
               <div
                 ref={statsRef}
@@ -830,20 +998,34 @@ export function HomePage() {
               >
                 <div className="grid grid-cols-3">
                   {[
-                    { target: 4,   suffix: "",  label: "Peran",   color: C.primary },
-                    { target: 7,   suffix: "+", label: "Modul",   color: C.cta },
-                    { target: 100, suffix: "%", label: "Digital", color: C.success },
+                    { target: 4, suffix: "", label: "Peran", color: C.primary },
+                    { target: 7, suffix: "+", label: "Modul", color: C.cta },
+                    {
+                      target: 100,
+                      suffix: "%",
+                      label: "Digital",
+                      color: C.success,
+                    },
                   ].map((s, i) => (
                     <div
                       key={s.label}
                       className="px-4 py-5 text-center"
-                      style={{ borderRight: i < 2 ? `1px solid ${C.border}` : "none" }}
+                      style={{
+                        borderRight: i < 2 ? `1px solid ${C.border}` : "none",
+                      }}
                     >
                       <p
                         className="text-[34px] font-extrabold leading-none"
-                        style={{ fontFamily: "'Outfit', sans-serif", color: s.color }}
+                        style={{
+                          fontFamily: "'Outfit', sans-serif",
+                          color: s.color,
+                        }}
                       >
-                        <CountUp target={s.target} suffix={s.suffix} active={statsActive} />
+                        <CountUp
+                          target={s.target}
+                          suffix={s.suffix}
+                          active={statsActive}
+                        />
                       </p>
                       <p
                         className="mt-1 text-[11px] font-semibold uppercase tracking-widest"
@@ -876,9 +1058,21 @@ export function HomePage() {
       <section style={{ background: C.primary }}>
         <div className="mx-auto grid max-w-[1100px] grid-cols-1 sm:grid-cols-3 px-4 sm:px-6">
           {[
-            { icon: <CheckCircle2 className="h-5 w-5 text-white" />, t: "Data Tersinkron",     s: "Semua aktivitas tercatat real-time" },
-            { icon: <Shield className="h-5 w-5 text-white" />,        t: "Akses Berbasis Peran", s: "Setiap pengguna lihat yang relevan" },
-            { icon: <Smartphone className="h-5 w-5 text-white" />,    t: "Bisa Diinstal di HP", s: "PWA tanpa perlu Play Store" },
+            {
+              icon: <CheckCircle2 className="h-5 w-5 text-white" />,
+              t: "Data Tersinkron",
+              s: "Semua aktivitas tercatat real-time",
+            },
+            {
+              icon: <Shield className="h-5 w-5 text-white" />,
+              t: "Akses Berbasis Peran",
+              s: "Setiap pengguna lihat yang relevan",
+            },
+            {
+              icon: <Smartphone className="h-5 w-5 text-white" />,
+              t: "Bisa Diinstal di HP",
+              s: "PWA tanpa perlu Play Store",
+            },
           ].map((item, idx) => (
             <div
               key={item.t}
@@ -945,7 +1139,10 @@ export function HomePage() {
                 </p>
                 <div
                   className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl"
-                  style={{ background: C.surface, boxShadow: "0 2px 10px rgba(0,0,0,0.08)" }}
+                  style={{
+                    background: C.surface,
+                    boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
+                  }}
                 >
                   {m.icon}
                 </div>
@@ -955,7 +1152,10 @@ export function HomePage() {
                 >
                   {m.title}
                 </h3>
-                <p className="mb-4 text-[14px] leading-[1.7]" style={{ color: C.body }}>
+                <p
+                  className="mb-4 text-[14px] leading-[1.7]"
+                  style={{ color: C.body }}
+                >
                   {m.desc}
                 </p>
                 <span
@@ -1031,7 +1231,10 @@ export function HomePage() {
                 >
                   {f.title}
                 </h3>
-                <p className="text-[14px] leading-[1.7]" style={{ color: C.body }}>
+                <p
+                  className="text-[14px] leading-[1.7]"
+                  style={{ color: C.body }}
+                >
                   {f.desc}
                 </p>
               </div>
@@ -1041,10 +1244,7 @@ export function HomePage() {
       </section>
 
       {/* ── QUOTE (editorial section) ──────────────────────────── */}
-      <section
-        data-reveal
-        style={{ background: C.dark, padding: "80px 24px" }}
-      >
+      <section data-reveal style={{ background: C.dark, padding: "80px 24px" }}>
         <div className="mx-auto max-w-[860px]">
           {/* Blockquote */}
           <div
@@ -1092,12 +1292,10 @@ export function HomePage() {
           </div>
 
           {/* Mini stats row */}
-          <div
-            className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-3"
-          >
+          <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-3">
             {[
-              { v: "100%",   l: "Data terdigitalisasi",       c: C.secondary },
-              { v: "4 Peran", l: "Pengguna terintegrasi",     c: C.cta },
+              { v: "100%", l: "Data terdigitalisasi", c: C.secondary },
+              { v: "4 Peran", l: "Pengguna terintegrasi", c: C.cta },
               { v: "Offline", l: "Bisa diakses tanpa internet", c: C.success },
             ].map((s) => (
               <div
@@ -1115,7 +1313,13 @@ export function HomePage() {
                 >
                   {s.v}
                 </p>
-                <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.40)", margin: 0 }}>
+                <p
+                  style={{
+                    fontSize: "13px",
+                    color: "rgba(255,255,255,0.40)",
+                    margin: 0,
+                  }}
+                >
                   {s.l}
                 </p>
               </div>
@@ -1141,8 +1345,7 @@ export function HomePage() {
               className="text-[38px] font-extrabold leading-tight sm:text-[44px]"
               style={{ fontFamily: "'Outfit', sans-serif", color: C.dark }}
             >
-              Dibuat untuk{" "}
-              <span style={{ color: C.purple }}>semua peran.</span>
+              Dibuat untuk <span style={{ color: C.purple }}>semua peran.</span>
             </h2>
           </div>
 
@@ -1187,7 +1390,10 @@ export function HomePage() {
                   </span>
                   <h3
                     className="mt-2 text-[22px] font-bold"
-                    style={{ fontFamily: "'Outfit', sans-serif", color: C.dark }}
+                    style={{
+                      fontFamily: "'Outfit', sans-serif",
+                      color: C.dark,
+                    }}
                   >
                     {r.title}
                   </h3>
@@ -1199,7 +1405,10 @@ export function HomePage() {
                       className="flex items-center gap-3 border-b py-2.5 last:border-b-0"
                       style={{ borderColor: "#F1F5F9" }}
                     >
-                      <CheckCircle2 className="h-4 w-4 shrink-0" style={{ color: r.color }} />
+                      <CheckCircle2
+                        className="h-4 w-4 shrink-0"
+                        style={{ color: r.color }}
+                      />
                       <span className="text-[14px]" style={{ color: C.body }}>
                         {ft}
                       </span>
@@ -1225,7 +1434,8 @@ export function HomePage() {
         <div
           className="pointer-events-none absolute inset-0 opacity-[0.06]"
           style={{
-            backgroundImage: "radial-gradient(circle, #fff 1.5px, transparent 1.5px)",
+            backgroundImage:
+              "radial-gradient(circle, #fff 1.5px, transparent 1.5px)",
             backgroundSize: "28px 28px",
           }}
         />
@@ -1252,8 +1462,8 @@ export function HomePage() {
             <span className="opacity-75">yang lebih terorganisir?</span>
           </h2>
           <p className="mb-8 text-[15px] leading-[1.75] text-white/70">
-            Sistem ini dikelola institusi. Akun diberikan oleh admin AKBID Mega Buana.
-            Hubungi administrator untuk mendapatkan akses.
+            Sistem ini dikelola institusi. Akun diberikan oleh admin AKBID Mega
+            Buana. Hubungi administrator untuk mendapatkan akses.
           </p>
           <Link to="/login">
             <ButtonEnhanced
@@ -1299,7 +1509,11 @@ export function HomePage() {
                     boxShadow: `0 4px 14px rgba(79,70,229,0.40)`,
                   }}
                 >
-                  <img src={akbidLogo} alt="Logo" className="h-7 w-7 object-contain" />
+                  <img
+                    src={akbidLogo}
+                    alt="Logo"
+                    className="h-7 w-7 object-contain"
+                  />
                 </div>
                 <div>
                   <p
@@ -1314,8 +1528,8 @@ export function HomePage() {
                 </div>
               </div>
               <p className="max-w-[320px] text-[14px] leading-[1.8] text-white/35">
-                Platform digital untuk mendukung pembelajaran praktikum kebidanan
-                yang efisien dan terstruktur di AKBID Mega Buana.
+                Platform digital untuk mendukung pembelajaran praktikum
+                kebidanan yang efisien dan terstruktur di AKBID Mega Buana.
               </p>
             </div>
 
@@ -1325,15 +1539,24 @@ export function HomePage() {
               </p>
               <div className="space-y-3 text-[14px] text-white/35">
                 <div className="flex items-start gap-2">
-                  <MapPin className="mt-[2px] h-3.5 w-3.5 shrink-0" style={{ color: C.cta }} />
+                  <MapPin
+                    className="mt-[2px] h-3.5 w-3.5 shrink-0"
+                    style={{ color: C.cta }}
+                  />
                   Akademi Kebidanan Mega Buana, Indonesia
                 </div>
                 <div className="flex items-start gap-2">
-                  <Users className="mt-[2px] h-3.5 w-3.5 shrink-0" style={{ color: C.cta }} />
+                  <Users
+                    className="mt-[2px] h-3.5 w-3.5 shrink-0"
+                    style={{ color: C.cta }}
+                  />
                   Mahasiswa · Dosen · Laboran · Admin
                 </div>
                 <div className="flex items-start gap-2">
-                  <Smartphone className="mt-[2px] h-3.5 w-3.5 shrink-0" style={{ color: C.cta }} />
+                  <Smartphone
+                    className="mt-[2px] h-3.5 w-3.5 shrink-0"
+                    style={{ color: C.cta }}
+                  />
                   Dapat diinstal sebagai PWA di perangkat mobile
                 </div>
               </div>
@@ -1341,7 +1564,8 @@ export function HomePage() {
           </div>
 
           <p className="text-center text-[13px] text-white/15">
-            &copy; {new Date().getFullYear()} Akademi Kebidanan Mega Buana. All rights reserved.
+            &copy; {new Date().getFullYear()} Akademi Kebidanan Mega Buana. All
+            rights reserved.
           </p>
         </div>
       </footer>

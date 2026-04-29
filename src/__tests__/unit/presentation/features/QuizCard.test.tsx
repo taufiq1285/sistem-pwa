@@ -78,7 +78,7 @@ describe("QuizCard", () => {
       renderWithRouter(
         <QuizCard quiz={makeKuis({ tipe_kuis: "pilihan_ganda" })} />,
       );
-      expect(screen.getByText("Tes CBT")).toBeInTheDocument();
+      expect(screen.getByText("CBT")).toBeInTheDocument();
     });
 
     it("menampilkan badge Laporan Praktikum untuk tipe essay", () => {

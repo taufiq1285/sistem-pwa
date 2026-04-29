@@ -29,7 +29,7 @@ import { networkDetector } from "@/lib/offline/network-detector";
 import { cacheAPI, getCachedData } from "@/lib/offline/api-cache";
 import {
   getMahasiswaStats,
-  getMyKelas,
+  getDashboardKelas,
   getMyJadwal,
   type MahasiswaStats,
   type MyKelas,
@@ -164,7 +164,7 @@ export function DashboardPage() {
           forceRefresh,
           staleWhileRevalidate: true,
         }),
-        cacheAPI(kelasCacheKey, () => getMyKelas(), {
+        cacheAPI(kelasCacheKey, () => getDashboardKelas(), {
           ttl: 10 * 60 * 1000,
           forceRefresh,
           staleWhileRevalidate: true,
@@ -310,8 +310,9 @@ export function DashboardPage() {
             <Alert className="border-info/20 bg-info/10 text-info shadow-sm">
               <Info className="h-4 w-4" />
               <AlertDescription className="font-medium text-info/90">
-                Anda belum terdaftar di kelas praktikum manapun. Hubungi dosen
-                pengampu atau koordinator program studi untuk pendaftaran kelas.
+                Saat ini tidak ada kelas aktif di dashboard. Kelas dengan
+                praktikum atau tugas yang sudah selesai bisa dilihat melalui
+                halaman riwayat terkait.
               </AlertDescription>
             </Alert>
           )}
@@ -323,7 +324,7 @@ export function DashboardPage() {
               value={stats?.totalKelasPraktikum || 0}
               icon={BookOpen}
               color="green"
-              description="Kelas yang diikuti"
+              description="Kelas yang masih aktif"
             />
             <DashboardCard
               title="Praktikum Hari Ini"
@@ -408,8 +409,8 @@ export function DashboardPage() {
                       Kelas Saya
                     </CardTitle>
                     <CardDescription className="mt-1 text-base font-medium text-muted-foreground">
-                      {stats?.totalKelasPraktikum || 0} kelas yang sedang Anda
-                      ikuti
+                      {stats?.totalKelasPraktikum || 0} kelas yang masih aktif
+                      untuk Anda ikuti
                     </CardDescription>
                   </div>
                 </div>
@@ -421,11 +422,12 @@ export function DashboardPage() {
                       <BookOpen className="h-12 w-12 text-primary" />
                     </div>
                     <p className="mb-2 text-lg font-bold text-foreground">
-                      Belum ada kelas yang diikuti
+                      Belum ada kelas aktif
                     </p>
                     <p className="mx-auto max-w-sm text-base font-medium text-muted-foreground">
-                      Pendaftaran kelas dilakukan oleh dosen atau admin. Silakan
-                      hubungi dosen pengampu untuk informasi lebih lanjut.
+                      Jika semua praktikum dan tugas sudah selesai, kelas akan
+                      keluar dari dashboard utama dan tetap tersimpan di
+                      riwayat.
                     </p>
                   </div>
                 ) : (

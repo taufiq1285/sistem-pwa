@@ -13,6 +13,7 @@ import { ArrowLeft, Loader2, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { QuizBuilder } from "@/components/features/kuis/builder/QuizBuilder";
 import { useAuth } from "@/lib/hooks/useAuth";
+import { supabase } from "@/lib/supabase/client";
 import { getKuisById } from "@/lib/api/kuis.api";
 import type { Kuis } from "@/types/kuis.types";
 import { toast } from "sonner";
@@ -24,18 +25,49 @@ export default function KuisBuilderPage() {
 
   const [quiz, setQuiz] = useState<Kuis | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [dosenId, setDosenId] = useState<string>("");
+  const [isLoadingDosenId, setIsLoadingDosenId] = useState(false);
 
   const isEditing = !!kuisId;
 
-  // Get dosen_id from user.dosen.id (primary key of dosen table)
-  const dosenId = user?.dosen?.id || "";
+  useEffect(() => {
+    async function fetchDosenId() {
+      if (user?.dosen?.id) {
+        setDosenId(user.dosen.id);
+        return;
+      }
+
+      if (user?.id && user?.role === "dosen") {
+        setIsLoadingDosenId(true);
+        try {
+          const { data, error } = await supabase
+            .from("dosen")
+            .select("id")
+            .eq("user_id", user.id)
+            .single();
+
+          if (error) throw error;
+
+          if (data?.id) {
+            setDosenId(data.id);
+          }
+        } catch (error) {
+          console.error("Error fetching dosen_id:", error);
+        } finally {
+          setIsLoadingDosenId(false);
+        }
+      }
+    }
+
+    void fetchDosenId();
+  }, [user]);
 
   // Load quiz data when editing
   useEffect(() => {
-    if (isEditing && kuisId) {
+    if (isEditing && kuisId && dosenId) {
       loadQuizData(kuisId);
     }
-  }, [kuisId, isEditing]);
+  }, [kuisId, isEditing, dosenId]);
 
   async function loadQuizData(id: string) {
     try {
@@ -85,8 +117,39 @@ export default function KuisBuilderPage() {
 
   // Redirect if not dosen or dosen profile not loaded
   if (user && (user.role !== "dosen" || !user.dosen?.id)) {
-    navigate("/");
-    return null;
+    if (user.role !== "dosen") {
+      navigate("/");
+      return null;
+    }
+  }
+
+  if (isLoadingDosenId) {
+    return (
+      <div className="role-page-shell p-4 sm:p-6 lg:p-8">
+        <div className="role-page-content space-y-6">
+          <div className="rounded-3xl border border-white/60 bg-white/90 p-10 text-center shadow-2xl dark:border-border/60 dark:bg-card">
+            <Loader2 className="h-10 w-10 animate-spin mx-auto text-primary" />
+            <p className="mt-4 text-base font-semibold text-muted-foreground">
+              Memuat profil dosen...
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!dosenId && user?.role === "dosen") {
+    return (
+      <div className="role-page-shell p-4 sm:p-6 lg:p-8">
+        <div className="role-page-content space-y-6">
+          <div className="rounded-3xl border border-destructive/30 bg-destructive/5 p-10 text-center shadow-2xl dark:border-destructive/20">
+            <p className="text-base font-semibold text-destructive">
+              Data dosen tidak ditemukan. Silakan logout lalu login kembali.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   // Show loading state when fetching task data

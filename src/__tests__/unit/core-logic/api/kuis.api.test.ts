@@ -663,6 +663,88 @@ describe("kuis.api - CORE LOGIC", () => {
       expect(result).toEqual([]);
     });
 
+    it("getUpcomingQuizzes menghitung best_score dari jawaban CBT saat summary attempt masih 0", async () => {
+      const permission = await import("@/lib/middleware/permission.middleware");
+      vi.mocked(permission.getCurrentMahasiswaId).mockResolvedValue("mhs-1");
+
+      const enrollBuilder = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+      };
+      const quizzesBuilder = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        order: vi.fn().mockResolvedValue({
+          data: [
+            {
+              id: "kuis-1",
+              kelas_id: "kelas-1",
+              judul: "Tes CBT",
+              tanggal_mulai: "2025-01-01T10:00:00.000Z",
+              tanggal_selesai: "2999-01-02T10:00:00.000Z",
+              max_attempts: 1,
+              tipe_kuis: "pilihan_ganda",
+              soal: [
+                {
+                  id: "s1",
+                  poin: 10,
+                  tipe_soal: "pilihan_ganda",
+                  jawaban_benar: "A",
+                },
+              ],
+              kelas: {
+                nama_kelas: "A",
+                mata_kuliah: { nama_mk: "Algoritma", kode_mk: "ALG" },
+              },
+              dosen: { users: { full_name: "Dosen A" } },
+              passing_score: 70,
+            },
+          ],
+          error: null,
+        }),
+      };
+
+      (enrollBuilder.eq as any)
+        .mockReturnValueOnce(enrollBuilder)
+        .mockResolvedValueOnce({
+          data: [{ kelas_id: "kelas-1" }],
+          error: null,
+        });
+
+      const { supabase } = await import("@/lib/supabase/client");
+      (supabase.from as any)
+        .mockReturnValueOnce(enrollBuilder)
+        .mockReturnValueOnce(quizzesBuilder);
+
+      vi.mocked(queryWithFilters).mockResolvedValueOnce([
+        {
+          id: "attempt-1",
+          kuis_id: "kuis-1",
+          mahasiswa_id: "mhs-1",
+          status: "graded",
+          total_poin: 0,
+          nilai_akhir: null,
+          submitted_at: "2025-01-01T10:10:00.000Z",
+          started_at: "2025-01-01T10:00:00.000Z",
+          jawaban: [
+            {
+              id: "j1",
+              soal_id: "s1",
+              jawaban: "A",
+              jawaban_mahasiswa: "A",
+              poin_diperoleh: 0,
+              is_correct: null,
+            },
+          ],
+        },
+      ] as any);
+
+      const result = await kuisApi.getUpcomingQuizzes("mhs-1");
+
+      expect(result).toHaveLength(1);
+      expect(result[0].best_score).toBe(100);
+    });
+
     it("getQuizStats dan getRecentQuizResults menghitung ringkasan dashboard", async () => {
       const permission = await import("@/lib/middleware/permission.middleware");
       vi.mocked(permission.getCurrentMahasiswaId).mockResolvedValue("mhs-1");

@@ -14,8 +14,6 @@ import {
   CheckCircle2,
   XCircle,
   Circle,
-  Trophy,
-  TrendingUp,
   Clock,
   FileCheck,
 } from "lucide-react";
@@ -24,7 +22,6 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import type { QuizScore } from "@/lib/utils/quiz-scoring";
-import { getGradeColor } from "@/lib/utils/quiz-scoring";
 
 // ============================================================================
 // TYPES
@@ -52,6 +49,17 @@ interface ScoreCardProps {
   isLaporanMode?: boolean;
 
   /**
+   * Feedback dari dosen (laporan mode only)
+   */
+  dosenFeedback?: string;
+
+  /**
+   * Apakah laporan sudah dinilai dosen? (attempt.status === 'graded')
+   * Digunakan untuk membedakan laporan dinilai 0 vs belum dinilai
+   */
+  isGraded?: boolean;
+
+  /**
    * Additional CSS classes
    */
   className?: string;
@@ -66,12 +74,10 @@ export function ScoreCard({
   quizTitle,
   showDetails = true,
   isLaporanMode = false,
+  dosenFeedback,
+  isGraded = false,
   className,
 }: ScoreCardProps) {
-  const isExcellent = score.percentage >= 90;
-  const isGood = score.percentage >= 70 && score.percentage < 90;
-  const isPoor = score.percentage < 60;
-
   return (
     <Card className={cn("overflow-hidden", className)}>
       {/* Header */}
@@ -88,7 +94,9 @@ export function ScoreCard({
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1">
             <CardTitle className="text-lg mb-1">
-              {isLaporanMode ? "Hasil Laporan Praktikum" : "Hasil CBT Praktikum"}
+              {isLaporanMode
+                ? "Hasil Laporan Praktikum"
+                : "Hasil CBT Praktikum"}
             </CardTitle>
             {quizTitle && (
               <p className="text-sm text-muted-foreground">{quizTitle}</p>
@@ -97,10 +105,21 @@ export function ScoreCard({
 
           {/* Status Badge */}
           {isLaporanMode ? (
-            <Badge className="text-sm px-3 py-1 bg-blue-600">
-              <Clock className="h-3 w-3 mr-1" />
-              Menunggu Penilaian
-            </Badge>
+            isGraded ? (
+              <Badge
+                className={cn(
+                  "text-sm px-3 py-1",
+                  score.passed ? "bg-green-600" : "bg-red-600",
+                )}
+              >
+                {score.passed ? "✓ Lulus" : "✗ Perlu Ditingkatkan"}
+              </Badge>
+            ) : (
+              <Badge className="text-sm px-3 py-1 bg-blue-600">
+                <Clock className="h-3 w-3 mr-1" />
+                Menunggu Penilaian
+              </Badge>
+            )
           ) : (
             <Badge
               variant={score.passed ? "default" : "destructive"}
@@ -116,28 +135,74 @@ export function ScoreCard({
         {/* Score Display */}
         <div className="text-center space-y-2">
           {isLaporanMode ? (
-            // LAPORAN MODE: Show "Menunggu Penilaian" or just points (no letter grade)
+            // LAPORAN MODE: Show "Menunggu Penilaian" or graded score
             <>
-              {score.total_poin > 0 ? (
-                // Graded: Show only points, no letter grade
+              {isGraded ? (
+                // Graded: Show poin, persentase, dan lulus/tidak lulus
                 <>
                   <div className="flex justify-center">
-                    <div className="inline-flex items-center justify-center w-20 h-20 rounded-full border-4 border-blue-300 bg-blue-50 dark:border-blue-700 dark:bg-blue-950">
-                      <FileCheck className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+                    <div
+                      className={cn(
+                        "inline-flex items-center justify-center w-20 h-20 rounded-full border-4",
+                        score.passed
+                          ? "border-green-400 bg-green-50 dark:border-green-600 dark:bg-green-950"
+                          : "border-red-400 bg-red-50 dark:border-red-600 dark:bg-red-950",
+                      )}
+                    >
+                      {score.passed ? (
+                        <FileCheck
+                          className={cn(
+                            "h-8 w-8",
+                            score.passed ? "text-green-600" : "text-red-500",
+                          )}
+                        />
+                      ) : (
+                        <FileCheck className="h-8 w-8 text-red-500" />
+                      )}
                     </div>
                   </div>
-                  <div>
-                    <div className="text-5xl font-bold text-blue-600 dark:text-blue-400">
-                      {score.total_poin}
-                      <span className="text-2xl text-muted-foreground">
-                        {" "}
-                        / {score.max_poin}
-                      </span>
+                  <div className="space-y-1">
+                    <div
+                      className="text-5xl font-bold"
+                      style={{
+                        color: score.passed
+                          ? "var(--color-success, #16a34a)"
+                          : "var(--color-destructive, #dc2626)",
+                      }}
+                    >
+                      {score.percentage.toFixed(0)}
+                      <span className="text-2xl text-muted-foreground">%</span>
                     </div>
-                    <p className="text-sm text-muted-foreground mt-2">
-                      Poin Diperoleh
+                    <p className="text-sm text-muted-foreground">
+                      {score.total_poin} dari {score.max_poin} poin
                     </p>
+                    <div className="max-w-xs mx-auto">
+                      <Progress value={score.percentage} className="h-2 mt-2" />
+                    </div>
                   </div>
+                  <div className="pt-2">
+                    <Badge
+                      className={cn(
+                        "text-sm px-4 py-1",
+                        score.passed
+                          ? "bg-green-600 hover:bg-green-700"
+                          : "bg-red-600 hover:bg-red-700",
+                      )}
+                    >
+                      {score.passed ? "✓ Lulus" : "✗ Perlu Ditingkatkan"}
+                    </Badge>
+                  </div>
+                  {/* Feedback dosen */}
+                  {dosenFeedback && (
+                    <div className="mt-3 mx-auto max-w-md rounded-lg border border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/40 px-4 py-3 text-left">
+                      <p className="text-xs font-semibold text-blue-700 dark:text-blue-300 mb-1">
+                        💬 Feedback Dosen
+                      </p>
+                      <p className="text-sm text-blue-800 dark:text-blue-200">
+                        {dosenFeedback}
+                      </p>
+                    </div>
+                  )}
                 </>
               ) : (
                 // Not graded yet
@@ -159,55 +224,42 @@ export function ScoreCard({
               )}
             </>
           ) : (
-            // NORMAL MODE: Show grade and percentage
+            // NORMAL MODE: Show points and percentage only
             <>
-              {/* Grade Letter */}
               <div className="flex justify-center">
                 <div
                   className={cn(
-                    "inline-flex items-center justify-center w-20 h-20 rounded-full border-4 text-3xl font-bold",
-                    getGradeColor(score.grade),
+                    "inline-flex min-w-[150px] items-center justify-center rounded-3xl border px-6 py-4 text-center",
+                    score.passed
+                      ? "border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-300"
+                      : "border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-300",
                   )}
                 >
-                  {score.grade}
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] opacity-80">
+                      Poin Diperoleh
+                    </p>
+                    <p className="mt-1 text-3xl font-bold leading-none">
+                      {score.total_poin}
+                    </p>
+                  </div>
                 </div>
               </div>
 
-              {/* Percentage */}
-              <div>
-                <div className="text-5xl font-bold">
-                  {score.percentage.toFixed(1)}
-                  <span className="text-2xl text-muted-foreground">%</span>
+              <div className="space-y-3">
+                <div>
+                  <div className="text-5xl font-bold">
+                    {score.percentage.toFixed(0)}
+                    <span className="text-2xl text-muted-foreground">%</span>
+                  </div>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {score.total_poin} dari {score.max_poin} poin
+                  </p>
                 </div>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {score.total_poin} dari {score.max_poin} poin
-                </p>
-              </div>
 
-              {/* Progress Bar */}
-              <div className="max-w-md mx-auto">
-                <Progress value={score.percentage} className="h-3" />
-              </div>
-
-              {/* Status Message */}
-              <div className="pt-2">
-                {isExcellent && (
-                  <div className="flex items-center justify-center gap-2 text-green-600">
-                    <Trophy className="h-5 w-5" />
-                    <span className="font-semibold">Luar Biasa!</span>
-                  </div>
-                )}
-                {isGood && (
-                  <div className="flex items-center justify-center gap-2 text-blue-600">
-                    <TrendingUp className="h-5 w-5" />
-                    <span className="font-semibold">Bagus!</span>
-                  </div>
-                )}
-                {isPoor && (
-                  <div className="flex items-center justify-center gap-2 text-orange-600">
-                    <span className="font-semibold">Perlu Ditingkatkan</span>
-                  </div>
-                )}
+                <div className="mx-auto max-w-md">
+                  <Progress value={score.percentage} className="h-3" />
+                </div>
               </div>
             </>
           )}

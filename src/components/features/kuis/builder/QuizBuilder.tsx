@@ -49,6 +49,7 @@ import { toast } from "sonner";
 
 import { QuestionEditor } from "./QuestionEditor";
 import { AddFromBankDialog } from "../AddFromBankDialog";
+import { getDefaultFileUploadSettings } from "../question-types/file-upload-question.utils";
 import {
   createKuisSchema,
   type CreateKuisFormData,
@@ -56,18 +57,18 @@ import {
 import {
   createKuis,
   updateKuis,
+  publishKuis,
   createSoal,
   updateSoal,
   deleteSoal,
   getKuisById,
 } from "@/lib/api/kuis.api";
-import { getKelas, createKelas } from "@/lib/api/kelas.api";
+import { getKelas } from "@/lib/api/kelas.api";
 import { getMataKuliah } from "@/lib/api/mata-kuliah.api";
 import { saveSoalToBank } from "@/lib/api/bank-soal.api";
-import { supabase } from "@/lib/supabase/client";
 import type { Kuis, Soal } from "@/types/kuis.types";
+import { TIPE_SOAL } from "@/types/kuis.types";
 import type { Kelas } from "@/types/kelas.types";
-import type { MataKuliah } from "@/types/mata-kuliah.types";
 import { cn } from "@/lib/utils";
 import { useNetworkStatus } from "@/lib/hooks/useNetworkStatus";
 
@@ -127,19 +128,54 @@ export function QuizBuilder({
 
   const [kelasList, setKelasList] = useState<Kelas[]>([]);
   const [isLoadingKelas, setIsLoadingKelas] = useState(false);
-  const [mataKuliahList, setMataKuliahList] = useState<MataKuliah[]>([]);
-  const [selectedMataKuliah, setSelectedMataKuliah] = useState<string>("");
+  const [dosenKelasList, setDosenKelasList] = useState<Kelas[]>([]);
+  const [mataKuliahList, setMataKuliahList] = useState<
+    Array<{ id: string; nama_mk: string; kode_mk?: string }>
+  >([]);
+  const [selectedMataKuliah, setSelectedMataKuliah] = useState<string>(
+    quiz?.mata_kuliah_id || quiz?.mata_kuliah?.id || "",
+  );
 
-  // Helper to convert ISO date to datetime-local format (kept for editing if needed later)
-  const formatDateTimeLocal = (isoString: string) => {
+  const formatDateInput = (isoString: string) => {
     const date = new Date(isoString);
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, "0");
     const day = String(date.getDate()).padStart(2, "0");
-    const hours = String(date.getHours()).padStart(2, "0");
-    const minutes = String(date.getMinutes()).padStart(2, "0");
-    return `${year}-${month}-${day}T${hours}:${minutes}`;
+    return `${year}-${month}-${day}`;
   };
+
+  const toStartOfDayIso = (dateString: string) => {
+    return new Date(`${dateString}T00:00:00`).toISOString();
+  };
+
+  const toEndOfDayIso = (dateString: string) => {
+    return new Date(`${dateString}T23:59:59`).toISOString();
+  };
+
+  async function ensureDefaultLaporanComponent(savedQuiz: Kuis) {
+    if (!effectiveLaporanMode) {
+      return false;
+    }
+
+    const existingQuestions = savedQuiz.soal || questions;
+    if (existingQuestions.length > 0) {
+      return false;
+    }
+
+    const defaultQuestion = await createSoal({
+      kuis_id: savedQuiz.id,
+      pertanyaan: "Unggah laporan praktikum Anda pada komponen ini.",
+      tipe_soal: TIPE_SOAL.FILE_UPLOAD,
+      poin: 100,
+      urutan: 1,
+      penjelasan:
+        "Gunakan komponen ini untuk mengirim file laporan sesuai instruksi dosen.",
+      jawaban_benar: JSON.stringify(getDefaultFileUploadSettings()),
+    } as any);
+
+    setQuestions([defaultQuestion]);
+    return true;
+  }
 
   const resolveQuizMataKuliahId = async (): Promise<string | null> => {
     if (quiz?.mata_kuliah_id) {
@@ -150,12 +186,14 @@ export function QuizBuilder({
       return quiz.mata_kuliah.id;
     }
 
-    if (!quiz?.kelas_id) {
+    return null;
+
+    /* if (!quiz?.kelas_id) {
       return null;
     }
 
     try {
-      const { data: jadwalData } = await (supabase as any)
+      return null;
         .from("jadwal_praktikum")
         .select("mata_kuliah_id")
         .eq("kelas_id", quiz.kelas_id)
@@ -171,7 +209,7 @@ export function QuizBuilder({
       console.warn("⚠️ [QuizBuilder] Failed to resolve mata kuliah:", error);
     }
 
-    return null;
+    return null; */
   };
 
   useEffect(() => {
@@ -185,15 +223,11 @@ export function QuizBuilder({
       return;
     }
 
-    const syncSelectedMataKuliah = async () => {
-      const mataKuliahId = await resolveQuizMataKuliahId();
+    const mataKuliahId = quiz?.mata_kuliah_id || quiz?.mata_kuliah?.id || null;
 
-      if (mataKuliahId && mataKuliahId !== selectedMataKuliah) {
-        setSelectedMataKuliah(mataKuliahId);
-      }
-    };
-
-    syncSelectedMataKuliah();
+    if (mataKuliahId && mataKuliahId !== selectedMataKuliah) {
+      setSelectedMataKuliah(mataKuliahId);
+    }
   }, [quiz?.id, quiz?.kelas_id, quiz?.mata_kuliah_id, selectedMataKuliah]);
 
   const {
@@ -209,6 +243,12 @@ export function QuizBuilder({
           dosen_id: quiz.dosen_id,
           judul: quiz.judul,
           deskripsi: quiz.deskripsi || "",
+          tanggal_mulai: quiz.tanggal_mulai
+            ? formatDateInput(quiz.tanggal_mulai)
+            : "",
+          tanggal_selesai: quiz.tanggal_selesai
+            ? formatDateInput(quiz.tanggal_selesai)
+            : "",
           durasi_menit:
             quiz.durasi_menit || (effectiveLaporanMode ? 10080 : 60),
           passing_score: quiz.passing_score ?? null,
@@ -223,6 +263,8 @@ export function QuizBuilder({
           dosen_id: dosenId,
           judul: "",
           deskripsi: "",
+          tanggal_mulai: "",
+          tanggal_selesai: "",
           // Laporan: 1 minggu (10080 menit), CBT: 60 menit
           durasi_menit: effectiveLaporanMode ? 10080 : 60,
           passing_score: 70,
@@ -238,12 +280,37 @@ export function QuizBuilder({
   const formData = watch();
 
   useEffect(() => {
-    loadMataKuliah();
-    // FIXED: Load ALL global kelas (not tied to mata kuliah)
-    loadKelas();
-  }, [dosenId]);
+    const loadMasterData = async () => {
+      setIsLoadingKelas(true);
+      try {
+        const [kelasData, mataKuliahData] = await Promise.all([
+          getKelas({
+            is_active: true,
+          }),
+          getMataKuliah(),
+        ]);
 
-  const loadKelas = async (mataKuliahId?: string) => {
+        setDosenKelasList(kelasData);
+        setKelasList(kelasData);
+        setMataKuliahList(mataKuliahData);
+
+        if (kelasData.length === 0) {
+          toast.warning("Belum ada kelas", {
+            description: "Kelas aktif diambil dari master Admin.",
+          });
+        }
+      } catch (error: unknown) {
+        console.error("Error loading quiz master data:", error);
+        toast.error("Gagal memuat kelas dan mata kuliah");
+      } finally {
+        setIsLoadingKelas(false);
+      }
+    };
+
+    void loadMasterData();
+  }, []);
+
+  /* const loadKelas = async (mataKuliahId?: string) => {
     setIsLoadingKelas(true);
     try {
       console.log(
@@ -296,7 +363,18 @@ export function QuizBuilder({
       // ✅ FIXED: Unused variable
       console.error("Failed to load mata kuliah");
     }
-  };
+  }; */
+
+  useEffect(() => {
+    setKelasList(dosenKelasList);
+
+    if (
+      formData.kelas_id &&
+      !dosenKelasList.some((kelas) => kelas.id === formData.kelas_id)
+    ) {
+      setValue("kelas_id", "");
+    }
+  }, [dosenKelasList, formData.kelas_id, setValue]);
 
   // REMOVED: handleQuickCreateKelas - Kelas dibuat oleh admin, dosen hanya memilih
 
@@ -315,6 +393,18 @@ export function QuizBuilder({
     }
     if (!selectedMataKuliah) {
       toast.error("Pilih mata kuliah terlebih dahulu");
+      return;
+    }
+    if (!formData.tanggal_mulai) {
+      toast.error("Tanggal mulai harus diisi dosen");
+      return;
+    }
+    if (!formData.tanggal_selesai) {
+      toast.error("Deadline harus diisi dosen");
+      return;
+    }
+    if (new Date(formData.tanggal_selesai) < new Date(formData.tanggal_mulai)) {
+      toast.error("Deadline tidak boleh lebih awal dari tanggal mulai");
       return;
     }
     // Skip durasi validation for laporan (no time limit needed)
@@ -338,6 +428,8 @@ export function QuizBuilder({
 
       const dataToSave = {
         ...formData,
+        tanggal_mulai: toStartOfDayIso(formData.tanggal_mulai),
+        tanggal_selesai: toEndOfDayIso(formData.tanggal_selesai),
         mata_kuliah_id: selectedMataKuliah || null,
         tipe_kuis: tipeKuisValue, // ✅ Set tipe_kuis based on mode
         status: "draft" as const, // Always start as draft
@@ -347,12 +439,24 @@ export function QuizBuilder({
         // Update existing quiz
         const updated = await updateKuis(currentQuiz.id, dataToSave);
         setCurrentQuiz(updated);
-        toast.success("Informasi tugas berhasil diperbarui");
+        const defaultComponentCreated =
+          await ensureDefaultLaporanComponent(updated);
+        toast.success(
+          defaultComponentCreated
+            ? "Informasi laporan diperbarui dan komponen upload otomatis dibuat"
+            : "Informasi tugas berhasil diperbarui",
+        );
       } else {
         // Create new quiz
         const savedQuiz = await createKuis(dataToSave);
         setCurrentQuiz(savedQuiz);
-        toast.success("Tugas berhasil disimpan! Sekarang tambahkan soal.");
+        const defaultComponentCreated =
+          await ensureDefaultLaporanComponent(savedQuiz);
+        toast.success(
+          defaultComponentCreated
+            ? "Laporan berhasil disimpan. Komponen upload laporan sudah dibuat otomatis."
+            : "Tugas berhasil disimpan! Sekarang tambahkan soal.",
+        );
       }
     } catch (error) {
       console.error("Error saving quiz:", error);
@@ -398,6 +502,16 @@ export function QuizBuilder({
       return;
     }
 
+    if (!currentQuiz.tanggal_mulai) {
+      toast.error("Tanggal mulai harus diisi sebelum publish");
+      return;
+    }
+
+    if (!currentQuiz.tanggal_selesai) {
+      toast.error("Deadline harus diisi sebelum publish");
+      return;
+    }
+
     const confirmMsg = effectiveLaporanMode
       ? "Yakin ingin publish laporan ini? Mahasiswa akan bisa mengirim isian laporan atau upload berkas."
       : "Yakin ingin publish tes ini? Mahasiswa akan bisa mengerjakan soal tes.";
@@ -412,8 +526,8 @@ export function QuizBuilder({
 
     setIsPublishing(true);
     try {
-      console.log("🔵 Calling updateKuis with status: published");
-      const updated = await updateKuis(currentQuiz.id, { status: "published" });
+      console.log("🔵 Calling publishKuis");
+      const updated = await publishKuis(currentQuiz.id);
       console.log("✅ Updated quiz:", updated);
       setCurrentQuiz(updated);
       toast.success(
@@ -603,7 +717,8 @@ export function QuizBuilder({
         {currentQuiz && (
           <div className="flex items-center gap-3">
             <span className="text-sm text-muted-foreground">
-              {questions.length} soal • {totalPoints} poin
+              {questions.length}{" "}
+              {effectiveLaporanMode ? "komponen" : "soal"} • {totalPoints} poin
             </span>
             {quizStatus === "draft" ? (
               <Badge className="bg-yellow-100 text-yellow-700 border-yellow-300 px-4 py-1">
@@ -655,8 +770,8 @@ export function QuizBuilder({
               <div className="md:col-span-2 space-y-2">
                 <Label htmlFor="mata_kuliah">Pilih Mata Kuliah *</Label>
                 <p className="text-xs text-muted-foreground">
-                  Mata kuliah dipilih dari master Admin sebagai konteks tugas,
-                  tetapi tidak mengunci pilihan kelas tertentu.
+                  Mata kuliah diambil dari master Admin, lalu dosen memilih
+                  sendiri mata kuliah yang menjadi konteks tugas ini.
                 </p>
                 <Select
                   value={selectedMataKuliah}
@@ -684,8 +799,8 @@ export function QuizBuilder({
               <div className="md:col-span-2 space-y-2">
                 <Label htmlFor="kelas_id">Pilih Kelas *</Label>
                 <p className="text-xs text-muted-foreground">
-                  Kelas dipilih bebas dari master Admin sesuai kebutuhan
-                  praktikum, tidak dibatasi otomatis oleh mata kuliah.
+                  Kelas diambil dari master Admin dan dipilih terpisah dari mata
+                  kuliah, sesuai kebutuhan tugas atau praktikum.
                 </p>
                 <Select
                   value={formData.kelas_id || ""}
@@ -729,10 +844,9 @@ export function QuizBuilder({
                         Belum ada kelas aktif yang bisa dipilih
                       </p>
                       <p className="text-sm mb-3">
-                        Kelas bersifat <strong>UMUM</strong> dan dibuat oleh{" "}
-                        <strong>Admin</strong> di menu Manajemen Kelas. Dosen
-                        hanya memilih kelas yang sudah tersedia untuk diberikan
-                        tugas.
+                        Pastikan Admin sudah membuat data kelas aktif di master
+                        kelas. Dosen memilih kelas yang akan menerima tugas
+                        secara langsung dari daftar tersebut.
                       </p>
                       <div className="flex gap-2 text-xs">
                         <Badge variant="outline" className="bg-white">
@@ -782,6 +896,26 @@ export function QuizBuilder({
                 />
               </div>
 
+              <div className="space-y-2">
+                <Label htmlFor="tanggal_mulai">Tanggal Mulai *</Label>
+                <Input
+                  id="tanggal_mulai"
+                  type="date"
+                  {...register("tanggal_mulai")}
+                  className={cn(errors.tanggal_mulai && "border-destructive")}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="tanggal_selesai">Deadline *</Label>
+                <Input
+                  id="tanggal_selesai"
+                  type="date"
+                  {...register("tanggal_selesai")}
+                  className={cn(errors.tanggal_selesai && "border-destructive")}
+                />
+              </div>
+
               {/* HIDDEN: Durasi tidak ditampilkan untuk laporan (no time limit) */}
               {!effectiveLaporanMode && (
                 <div className="space-y-2">
@@ -807,8 +941,16 @@ export function QuizBuilder({
                       </p>
                       <ul className="text-sm space-y-1 list-disc list-inside">
                         <li>Informasi tugas masih bisa diedit</li>
-                        <li>Soal TIDAK bisa diedit/dihapus</li>
-                        <li>Untuk edit soal, unpublish terlebih dahulu</li>
+                        <li>
+                          {effectiveLaporanMode
+                            ? "Komponen laporan tidak bisa diedit/dihapus"
+                            : "Soal TIDAK bisa diedit/dihapus"}
+                        </li>
+                        <li>
+                          {effectiveLaporanMode
+                            ? "Untuk edit komponen laporan, unpublish terlebih dahulu"
+                            : "Untuk edit soal, unpublish terlebih dahulu"}
+                        </li>
                       </ul>
                     </AlertDescription>
                   </Alert>
@@ -818,7 +960,7 @@ export function QuizBuilder({
                     <CheckCircle className="h-4 w-4 text-green-600" />
                     <AlertDescription className="text-green-900">
                       {effectiveLaporanMode
-                        ? "✓ Laporan tersimpan. Tambahkan minimal satu isian laporan atau upload berkas sebelum publish."
+                        ? "Laporan tersimpan. Form pengumpulan laporan sudah disiapkan dan siap dicek sebelum dipublish."
                         : "✓ Tes tersimpan. Tambahkan soal pilihan ganda."}
                     </AlertDescription>
                   </Alert>
@@ -861,15 +1003,16 @@ export function QuizBuilder({
               <div>
                 <CardTitle className="text-lg flex items-center gap-2">
                   {effectiveLaporanMode
-                    ? "📄 Soal Laporan"
+                    ? "📄 Komponen Laporan"
                     : "📋 Soal Pilihan Ganda"}
                   <Badge variant="secondary" className="ml-2">
-                    {questions.length} soal
+                    {questions.length}{" "}
+                    {effectiveLaporanMode ? "komponen" : "soal"}
                   </Badge>
                 </CardTitle>
                 <p className="text-sm text-muted-foreground mt-1">
                   {effectiveLaporanMode
-                    ? "Buat minimal satu isian laporan atau komponen upload berkas"
+                    ? "Form pengumpulan laporan disiapkan otomatis saat laporan disimpan."
                     : "Buat soal manual atau ambil dari Bank Soal"}
                 </p>
               </div>
@@ -886,22 +1029,25 @@ export function QuizBuilder({
                     Bank Soal
                   </Button>
                 )}
-                <Button
-                  onClick={handleAddQuestion}
-                  size="sm"
-                  disabled={currentQuiz.status === "published"}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Buat Soal
-                </Button>
+                {(!effectiveLaporanMode || questions.length === 0) && (
+                  <Button
+                    onClick={handleAddQuestion}
+                    size="sm"
+                    disabled={currentQuiz.status === "published"}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    {effectiveLaporanMode ? "Tambah Komponen" : "Buat Soal"}
+                  </Button>
+                )}
               </div>
             </div>
             {currentQuiz.status === "published" && (
               <Alert className="mt-3 bg-orange-50 border-orange-200">
                 <AlertCircle className="h-4 w-4 text-orange-600" />
                 <AlertDescription className="text-orange-900 text-xs">
-                  Soal tidak dapat diubah saat tugas aktif. Unpublish terlebih
-                  dahulu untuk mengedit soal.
+                  {effectiveLaporanMode
+                    ? "Komponen laporan tidak dapat diubah saat tugas aktif. Unpublish terlebih dahulu untuk mengedit komponen."
+                    : "Soal tidak dapat diubah saat tugas aktif. Unpublish terlebih dahulu untuk mengedit soal."}
                 </AlertDescription>
               </Alert>
             )}
@@ -910,10 +1056,12 @@ export function QuizBuilder({
             {questions.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <FileText className="h-10 w-10 mx-auto mb-3 opacity-50" />
-                <p>Belum ada soal</p>
+                <p>
+                  Belum ada {effectiveLaporanMode ? "komponen laporan" : "soal"}
+                </p>
                 <p className="text-sm">
                   {effectiveLaporanMode
-                    ? "Klik 'Buat Soal' untuk membuat minimal satu isian laporan atau komponen upload berkas"
+                    ? "Form pengumpulan laporan akan dibuat otomatis saat laporan pertama kali disimpan."
                     : "Klik 'Buat Soal' untuk membuat soal baru atau ambil dari Bank Soal"}
                 </p>
               </div>
@@ -934,7 +1082,7 @@ export function QuizBuilder({
                       <p className="font-medium truncate">{q.pertanyaan}</p>
                       <div className="flex gap-2 mt-1">
                         <Badge variant="secondary" className="text-xs">
-                          {q.tipe_soal}
+                          {effectiveLaporanMode ? "upload laporan" : q.tipe_soal}
                         </Badge>
                         <span className="text-xs text-muted-foreground">
                           {q.poin} poin
@@ -946,7 +1094,9 @@ export function QuizBuilder({
                         variant="ghost"
                         size="sm"
                         onClick={() => handleEditQuestion(q, i)}
-                        disabled={currentQuiz.status === "published" || !isOnline}
+                        disabled={
+                          currentQuiz.status === "published" || !isOnline
+                        }
                       >
                         Edit
                       </Button>
@@ -955,7 +1105,9 @@ export function QuizBuilder({
                         size="sm"
                         onClick={() => handleDeleteQuestion(q.id)}
                         className="text-destructive hover:text-destructive"
-                        disabled={currentQuiz.status === "published" || !isOnline}
+                        disabled={
+                          currentQuiz.status === "published" || !isOnline
+                        }
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -1005,22 +1157,20 @@ export function QuizBuilder({
               </div>
               <div className="flex gap-2">
                 {quizStatus === "draft" && questions.length > 0 && (
-                    <Button
-                      onClick={handlePublishQuiz}
-                      disabled={isPublishing || !isOnline}
-                      title={
-                        !isOnline ? "Tidak dapat publish saat offline" : ""
-                      }
-                      className="bg-green-600 hover:bg-green-700"
-                    >
-                      <CheckCircle className="h-4 w-4 mr-2" />
-                      {isPublishing
-                        ? "Publishing..."
-                        : !isOnline
-                          ? "Offline"
-                          : "Publish"}
-                    </Button>
-                  )}
+                  <Button
+                    onClick={handlePublishQuiz}
+                    disabled={isPublishing || !isOnline}
+                    title={!isOnline ? "Tidak dapat publish saat offline" : ""}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    {isPublishing
+                      ? "Publishing..."
+                      : !isOnline
+                        ? "Offline"
+                        : "Publish"}
+                  </Button>
+                )}
                 {/* Unpublish button - only show when published */}
                 {quizStatus === "published" && (
                   <Button

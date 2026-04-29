@@ -391,18 +391,21 @@ describe("Notification API - Auto-Notification System", () => {
       });
 
       expect(result).not.toBeNull();
-      expect(result?.id).toBe("notif-1");
+      expect(result).toMatchObject({
+        user_id: "user-1",
+        title: "Tugas Baru",
+        message: "Ada tugas baru",
+        type: "tugas_baru",
+        data: { kuis_id: "kuis-1" },
+        is_read: false,
+        read_at: null,
+      });
     });
 
     it("should return null on create error (best-effort)", async () => {
       (supabase.from as any).mockReturnValue({
-        insert: vi.fn().mockReturnValue({
-          select: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({
-              data: null,
-              error: { message: "Insert failed" },
-            }),
-          }),
+        insert: vi.fn().mockResolvedValue({
+          error: { message: "Insert failed" },
         }),
       });
 
@@ -443,11 +446,8 @@ describe("Notification API - Auto-Notification System", () => {
       ];
 
       (supabase.from as any).mockReturnValue({
-        insert: vi.fn().mockReturnValue({
-          select: vi.fn().mockResolvedValue({
-            data: mockNotifications,
-            error: null,
-          }),
+        insert: vi.fn().mockResolvedValue({
+          error: null,
         }),
       });
 
@@ -471,11 +471,8 @@ describe("Notification API - Auto-Notification System", () => {
 
     it("should return empty array on bulk create error", async () => {
       (supabase.from as any).mockReturnValue({
-        insert: vi.fn().mockReturnValue({
-          select: vi.fn().mockResolvedValue({
-            data: null,
-            error: { message: "Bulk insert failed" },
-          }),
+        insert: vi.fn().mockResolvedValue({
+          error: { message: "Bulk insert failed" },
         }),
       });
 
@@ -866,13 +863,8 @@ describe("Notification API - Auto-Notification System", () => {
   describe("Best-Effort Error Handling", () => {
     it("should not throw when create notification fails", async () => {
       (supabase.from as any).mockReturnValue({
-        insert: vi.fn().mockReturnValue({
-          select: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({
-              data: null,
-              error: { message: "Database error" },
-            }),
-          }),
+        insert: vi.fn().mockResolvedValue({
+          error: { message: "Database error" },
         }),
       });
 
@@ -889,11 +881,8 @@ describe("Notification API - Auto-Notification System", () => {
 
     it("should not throw when bulk create fails", async () => {
       (supabase.from as any).mockReturnValue({
-        insert: vi.fn().mockReturnValue({
-          select: vi.fn().mockResolvedValue({
-            data: null,
-            error: { message: "Bulk insert failed" },
-          }),
+        insert: vi.fn().mockResolvedValue({
+          error: { message: "Bulk insert failed" },
         }),
       });
 
@@ -912,13 +901,8 @@ describe("Notification API - Auto-Notification System", () => {
 
     it("should not throw when auto-notification helper fails", async () => {
       (supabase.from as any).mockReturnValue({
-        insert: vi.fn().mockReturnValue({
-          select: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({
-              data: null,
-              error: { message: "Notification failed" },
-            }),
-          }),
+        insert: vi.fn().mockResolvedValue({
+          error: { message: "Notification failed" },
         }),
       });
 

@@ -153,7 +153,9 @@ export default function EquipmentsPage() {
 
   const { exportToCSV } = useTableExport<InventarisListItem>();
 
-  const hasBorrowingHistory = async (inventarisId: string): Promise<boolean> => {
+  const hasBorrowingHistory = async (
+    inventarisId: string,
+  ): Promise<boolean> => {
     const { count, error } = await supabase
       .from("peminjaman")
       .select("id", { count: "exact", head: true })
@@ -189,7 +191,8 @@ export default function EquipmentsPage() {
         items.map(async (item) => ({
           item,
           hasHistory:
-            borrowingHistoryIds.has(item.id) || (await hasBorrowingHistory(item.id)),
+            borrowingHistoryIds.has(item.id) ||
+            (await hasBorrowingHistory(item.id)),
         })),
       );
 
@@ -202,7 +205,8 @@ export default function EquipmentsPage() {
         return;
       }
 
-      if (!confirm(`Hapus ${items.length} inventaris monitoring admin?`)) return;
+      if (!confirm(`Hapus ${items.length} inventaris monitoring admin?`))
+        return;
 
       await Promise.all(items.map((item) => deleteInventaris(item.id)));
       toast.success(`${items.length} inventaris berhasil dihapus`);
@@ -223,20 +227,17 @@ export default function EquipmentsPage() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [
-        inventarisResult,
-        borrowingHistoryResult,
-        categoryResult,
-      ] = await Promise.all([
-        getInventarisList({
-          search: searchQuery || undefined,
-        }),
-        supabase
-          .from("peminjaman")
-          .select("inventaris_id")
-          .not("inventaris_id", "is", null),
-        getInventarisCategories(),
-      ]);
+      const [inventarisResult, borrowingHistoryResult, categoryResult] =
+        await Promise.all([
+          getInventarisList({
+            search: searchQuery || undefined,
+          }),
+          supabase
+            .from("peminjaman")
+            .select("inventaris_id")
+            .not("inventaris_id", "is", null),
+          getInventarisCategories(),
+        ]);
 
       if (borrowingHistoryResult.error) {
         throw borrowingHistoryResult.error;
@@ -271,27 +272,22 @@ export default function EquipmentsPage() {
     return "aman";
   };
 
-  const filteredInventaris = inventaris.filter(
-    (item) => {
-      const matchesSearch =
-        item.nama_barang.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.kode_barang.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesCategory =
-        selectedCategory === "all" || item.kategori === selectedCategory;
-      const matchesCondition =
-        selectedCondition === "all" || item.kondisi === selectedCondition;
-      const matchesStockStatus =
-        selectedStockStatus === "all" ||
-        getStockStatus(item) === selectedStockStatus;
+  const filteredInventaris = inventaris.filter((item) => {
+    const matchesSearch =
+      item.nama_barang.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.kode_barang.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory =
+      selectedCategory === "all" || item.kategori === selectedCategory;
+    const matchesCondition =
+      selectedCondition === "all" || item.kondisi === selectedCondition;
+    const matchesStockStatus =
+      selectedStockStatus === "all" ||
+      getStockStatus(item) === selectedStockStatus;
 
-      return (
-        matchesSearch &&
-        matchesCategory &&
-        matchesCondition &&
-        matchesStockStatus
-      );
-    },
-  );
+    return (
+      matchesSearch && matchesCategory && matchesCondition && matchesStockStatus
+    );
+  });
 
   const totalPages = Math.max(
     1,
@@ -427,7 +423,8 @@ export default function EquipmentsPage() {
         setIsDeleteDialogOpen(true);
       } catch (error: any) {
         toast.error("Gagal memeriksa riwayat inventaris", {
-          description: error.message || "Terjadi kesalahan yang tidak diketahui",
+          description:
+            error.message || "Terjadi kesalahan yang tidak diketahui",
         });
         console.error(error);
       }
@@ -484,7 +481,9 @@ export default function EquipmentsPage() {
       }
 
       await deleteInventaris(deletingItem.id);
-      toast.success(`Inventaris "${deletingItem.nama_barang}" berhasil dihapus`);
+      toast.success(
+        `Inventaris "${deletingItem.nama_barang}" berhasil dihapus`,
+      );
       setIsDeleteDialogOpen(false);
       setDeletingItem(null);
       await loadData();
@@ -533,7 +532,8 @@ export default function EquipmentsPage() {
             Manajemen Peralatan
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Pantau inventaris laboratorium yang dikelola laboran dan lakukan koreksi bila diperlukan
+            Pantau inventaris laboratorium yang dikelola laboran dan lakukan
+            koreksi bila diperlukan
           </p>
         </div>
         <div className="flex gap-2">
@@ -617,7 +617,10 @@ export default function EquipmentsPage() {
             ))}
           </SelectContent>
         </Select>
-        <Select value={selectedStockStatus} onValueChange={setSelectedStockStatus}>
+        <Select
+          value={selectedStockStatus}
+          onValueChange={setSelectedStockStatus}
+        >
           <SelectTrigger>
             <SelectValue placeholder="Semua status stok" />
           </SelectTrigger>
@@ -630,7 +633,10 @@ export default function EquipmentsPage() {
           </SelectContent>
         </Select>
         <div className="flex gap-2">
-          <Select value={selectedCondition} onValueChange={setSelectedCondition}>
+          <Select
+            value={selectedCondition}
+            onValueChange={setSelectedCondition}
+          >
             <SelectTrigger>
               <SelectValue placeholder="Semua kondisi" />
             </SelectTrigger>
@@ -743,7 +749,11 @@ export default function EquipmentsPage() {
                   </Button>
                   <ColumnVisibilityDropdown
                     columns={[
-                      { id: "select", label: "Pilih", visible: columnVisibility.select },
+                      {
+                        id: "select",
+                        label: "Pilih",
+                        visible: columnVisibility.select,
+                      },
                       {
                         id: "code",
                         label: "Kode",
@@ -876,18 +886,22 @@ export default function EquipmentsPage() {
                               >
                                 {item.jumlah_tersedia}
                               </span>
-                              <span className="text-muted-foreground mx-1">/</span>
+                              <span className="text-muted-foreground mx-1">
+                                /
+                              </span>
                               <span className="text-muted-foreground">
                                 {item.jumlah}
                               </span>
                             </div>
                             <div className="flex items-center gap-2 text-xs text-muted-foreground">
                               <span>
-                                Dipinjam: {Math.max(item.jumlah - item.jumlah_tersedia, 0)}
+                                Dipinjam:{" "}
+                                {Math.max(
+                                  item.jumlah - item.jumlah_tersedia,
+                                  0,
+                                )}
                               </span>
-                              <span>
-                                •
-                              </span>
+                              <span>•</span>
                               <span>
                                 {getStockStatus(item) === "aman"
                                   ? "Status aman"
@@ -970,7 +984,9 @@ export default function EquipmentsPage() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() => setCurrentPage((page) => Math.max(page - 1, 1))}
+                    onClick={() =>
+                      setCurrentPage((page) => Math.max(page - 1, 1))
+                    }
                     disabled={safeCurrentPage <= 1}
                   >
                     Sebelumnya
@@ -997,12 +1013,12 @@ export default function EquipmentsPage() {
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-6">
           <DialogHeader>
-              <DialogTitle className="text-xl font-bold">
+            <DialogTitle className="text-xl font-bold">
               Tambah Inventaris
-              </DialogTitle>
-              <DialogDescription className="text-base font-semibold">
+            </DialogTitle>
+            <DialogDescription className="text-base font-semibold">
               Input data inventaris sebagai backup admin bila diperlukan
-              </DialogDescription>
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="border-b pb-4">
@@ -1059,9 +1075,7 @@ export default function EquipmentsPage() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="new_jumlah_tersedia">
-                    Jumlah Tersedia *
-                  </Label>
+                  <Label htmlFor="new_jumlah_tersedia">Jumlah Tersedia *</Label>
                   <Input
                     id="new_jumlah_tersedia"
                     type="number"
@@ -1251,12 +1265,20 @@ export default function EquipmentsPage() {
 
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="rounded-xl border p-4">
-                  <div className="text-xs text-muted-foreground">Kode Barang</div>
-                  <div className="mt-1 font-mono text-sm">{detailItem.kode_barang}</div>
+                  <div className="text-xs text-muted-foreground">
+                    Kode Barang
+                  </div>
+                  <div className="mt-1 font-mono text-sm">
+                    {detailItem.kode_barang}
+                  </div>
                 </div>
                 <div className="rounded-xl border p-4">
-                  <div className="text-xs text-muted-foreground">Nama Barang</div>
-                  <div className="mt-1 font-semibold">{detailItem.nama_barang}</div>
+                  <div className="text-xs text-muted-foreground">
+                    Nama Barang
+                  </div>
+                  <div className="mt-1 font-semibold">
+                    {detailItem.nama_barang}
+                  </div>
                 </div>
                 <div className="rounded-xl border p-4">
                   <div className="text-xs text-muted-foreground">Kategori</div>
@@ -1267,16 +1289,26 @@ export default function EquipmentsPage() {
                   <div className="mt-1">{detailItem.merk || "-"}</div>
                 </div>
                 <div className="rounded-xl border p-4">
-                  <div className="text-xs text-muted-foreground">Tahun Pengadaan</div>
-                  <div className="mt-1">{detailItem.tahun_pengadaan || "-"}</div>
+                  <div className="text-xs text-muted-foreground">
+                    Tahun Pengadaan
+                  </div>
+                  <div className="mt-1">
+                    {detailItem.tahun_pengadaan || "-"}
+                  </div>
                 </div>
                 <div className="rounded-xl border p-4">
-                  <div className="text-xs text-muted-foreground">Sisa / Total</div>
+                  <div className="text-xs text-muted-foreground">
+                    Sisa / Total
+                  </div>
                   <div className="mt-1 font-semibold">
                     {detailItem.jumlah_tersedia} / {detailItem.jumlah}
                   </div>
                   <div className="mt-1 text-xs text-muted-foreground">
-                    Dipinjam: {Math.max(detailItem.jumlah - detailItem.jumlah_tersedia, 0)}
+                    Dipinjam:{" "}
+                    {Math.max(
+                      detailItem.jumlah - detailItem.jumlah_tersedia,
+                      0,
+                    )}
                   </div>
                 </div>
                 <div className="rounded-xl border p-4">
@@ -1325,7 +1357,9 @@ export default function EquipmentsPage() {
               </div>
 
               <div className="rounded-xl border p-4">
-                <div className="text-xs text-muted-foreground">Riwayat Peminjaman</div>
+                <div className="text-xs text-muted-foreground">
+                  Riwayat Peminjaman
+                </div>
                 <div className="mt-2 text-sm">
                   {borrowingHistoryIds.has(detailItem.id)
                     ? "Inventaris ini sudah memiliki riwayat peminjaman."
@@ -1348,12 +1382,12 @@ export default function EquipmentsPage() {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-6">
           <DialogHeader>
-             <DialogTitle className="text-xl font-bold">
+            <DialogTitle className="text-xl font-bold">
               Koreksi Inventaris
-              </DialogTitle>
-              <DialogDescription className="text-base font-semibold">
+            </DialogTitle>
+            <DialogDescription className="text-base font-semibold">
               Koreksi data inventaris yang dikelola laboran
-              </DialogDescription>
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">

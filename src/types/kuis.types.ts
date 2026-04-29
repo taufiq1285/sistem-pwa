@@ -226,6 +226,7 @@ export interface AttemptKuis {
   submitted_at?: string | null;
   sisa_waktu?: number | null;
   total_poin?: number | null;
+  nilai_akhir?: number | null;
   status: "in_progress" | "submitted" | "graded";
   is_synced?: boolean;
   offline_submit_pending?: boolean;
@@ -445,6 +446,7 @@ export interface SubmitQuizData {
 
 export interface KuisFilters {
   kelas_id?: string;
+  mata_kuliah_id?: string;
   dosen_id?: string;
   status?: QuizStatus; // ✅ UPDATED
   status_waktu?: "upcoming" | "ongoing" | "past";

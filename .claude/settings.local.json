@@ -83,7 +83,8 @@
       "Bash(sed -n '314,325p' src/pages/dosen/KehadiranPage.tsx)",
       "Bash(sed 's/<[^>]*>//g')",
       "Bash(unzip -o \"TEMPLATE 107.pptx\" -d temp_pptx_latest/)",
-      "Bash(python -c ':*)"
+      "Bash(python -c ':*)",
+      "Bash(npm test *)"
     ]
   }
 }

@@ -28,7 +28,7 @@ import { GlassCard } from "@/components/ui/glass-card";
 import { MateriList } from "@/components/features/materi/MateriCard";
 import { MateriViewer } from "@/components/features/materi/MateriViewer";
 import { useAuth } from "@/lib/hooks/useAuth";
-import { getMateri, downloadMateri } from "@/lib/api/materi.api";
+import { getMateriByKelasIds, downloadMateri } from "@/lib/api/materi.api";
 import type { Materi } from "@/types/materi.types";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase/client";
@@ -178,11 +178,8 @@ export default function MahasiswaMateriPage() {
           const kelasIds = (activeKelas || []).map((kelas) => kelas.id);
           setEnrolledKelasIds(kelasIds);
 
-          // Get all materi and filter by enrolled kelas
-          const allMateri = await getMateri({ is_active: true });
-
-          // Filter materi by enrolled kelas
-          return allMateri.filter((m) => kelasIds.includes(m.kelas_id));
+          // Fetch only materi that belongs to enrolled active classes
+          return await getMateriByKelasIds(kelasIds);
         },
         {
           ttl: 15 * 60 * 1000, // 15 minutes (materi changes less frequently)
@@ -213,6 +210,24 @@ export default function MahasiswaMateriPage() {
   // FILTERING
   // ============================================================================
 
+  function getMateriMataKuliahInfo(materi: Materi) {
+    const materiAny = materi as any;
+    return {
+      id:
+        materiAny.mata_kuliah_id ||
+        materiAny.mata_kuliah?.id ||
+        materi.kelas?.mata_kuliah?.nama_mk,
+      nama:
+        materiAny.mata_kuliah?.nama_mk ||
+        materi.kelas?.mata_kuliah?.nama_mk ||
+        "",
+      kode:
+        materiAny.mata_kuliah?.kode_mk ||
+        materi.kelas?.mata_kuliah?.kode_mk ||
+        "",
+    };
+  }
+
   function filterMateri() {
     let filtered = [...materiList];
 
@@ -227,7 +242,7 @@ export default function MahasiswaMateriPage() {
     // Filter by mata kuliah
     if (selectedMataKuliah !== "all") {
       filtered = filtered.filter(
-        (m) => m.kelas?.mata_kuliah?.nama_mk === selectedMataKuliah,
+        (m) => getMateriMataKuliahInfo(m).id === selectedMataKuliah,
       );
       console.log("After mata kuliah filter:", filtered.length);
     }
@@ -283,12 +298,17 @@ export default function MahasiswaMateriPage() {
   // GET UNIQUE KELAS AND MATA KULIAH LIST
   // ============================================================================
 
-  // Get unique mata kuliah
-  const uniqueMataKuliah = Array.from(
-    new Set(
-      materiList.map((m) => m.kelas?.mata_kuliah?.nama_mk).filter(Boolean),
-    ),
+  const uniqueMataKuliahOptions = Array.from(
+    new Map(
+      materiList
+        .map((m) => {
+          const { id, nama, kode } = getMateriMataKuliahInfo(m);
+          return id && nama ? [id, { id, nama, kode }] : null;
+        })
+        .filter(Boolean) as Array<[string, { id: string; nama: string; kode?: string }]>,
+    ).values(),
   );
+  const uniqueMataKuliah = uniqueMataKuliahOptions.map((mk) => mk.nama);
 
   // Get unique kelas with more info
   const uniqueKelas = Array.from(
@@ -298,8 +318,8 @@ export default function MahasiswaMateriPage() {
         {
           id: m.kelas_id,
           nama: m.kelas?.nama_kelas || "Unknown",
-          mataKuliah: m.kelas?.mata_kuliah?.nama_mk || "-",
-          kodeMk: m.kelas?.mata_kuliah?.kode_mk || "",
+          mataKuliah: getMateriMataKuliahInfo(m).nama || "-",
+          kodeMk: getMateriMataKuliahInfo(m).kode || "",
         },
       ]),
     ).values(),
@@ -406,9 +426,9 @@ export default function MahasiswaMateriPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Semua Mata Kuliah</SelectItem>
-                  {uniqueMataKuliah.map((mk) => (
-                    <SelectItem key={mk} value={mk}>
-                      {mk}
+                  {uniqueMataKuliahOptions.map((mk) => (
+                    <SelectItem key={mk.id} value={mk.id}>
+                      {mk.kode ? `${mk.kode} - ${mk.nama}` : mk.nama}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -494,6 +514,7 @@ export default function MahasiswaMateriPage() {
         {/* Materi List */}
         <MateriList
           materiList={filteredMateri}
+          variant="mahasiswa"
           showActions={true}
           showDosenActions={false}
           onView={handleView}

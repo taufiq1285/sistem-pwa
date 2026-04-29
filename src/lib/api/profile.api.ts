@@ -175,10 +175,7 @@ export async function updateDosenProfile(
   dosenId: string,
   data: Partial<DosenProfile>,
 ): Promise<void> {
-  const { error } = await supabase
-    .from("dosen")
-    .update(data)
-    .eq("id", dosenId);
+  const { error } = await supabase.from("dosen").update(data).eq("id", dosenId);
 
   if (error) throw handleError(error); // ✅ FIXED
 }

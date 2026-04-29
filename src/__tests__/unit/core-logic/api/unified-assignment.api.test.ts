@@ -818,12 +818,12 @@ describe("Unified Assignment API - Master-Detail Management", () => {
       const mockJadwalToDelete = [
         {
           id: "jadwal-1",
-          tanggal_praktikum: "2025-01-21",
+          tanggal_praktikum: "2099-01-21",
           topik: "Praktikum 1",
         },
         {
           id: "jadwal-2",
-          tanggal_praktikum: "2025-01-28",
+          tanggal_praktikum: "2099-01-28",
           topik: "Praktikum 2",
         },
       ];
@@ -839,17 +839,29 @@ describe("Unified Assignment API - Master-Detail Management", () => {
         }),
       });
 
-      const mockDelete = vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            eq: vi.fn().mockResolvedValue({ error: null }),
-          }),
-        }),
+      const mockUpdate = vi.fn().mockReturnValue({
+        in: vi.fn().mockResolvedValue({ error: null }),
       });
 
       (supabase.from as any).mockImplementation((table: string) => {
         if (table === "jadwal_praktikum") {
-          return { select: mockSelect, delete: mockDelete };
+          return { select: mockSelect, update: mockUpdate };
+        }
+        if (
+          ["kehadiran", "logbook_entries", "materi", "kuis", "nilai"].includes(
+            table,
+          )
+        ) {
+          return {
+            select: vi.fn().mockReturnValue({
+              in: vi.fn().mockResolvedValue({ count: 0, error: null }),
+              eq: vi.fn().mockReturnValue({
+                eq: vi.fn().mockReturnValue({
+                  eq: vi.fn().mockResolvedValue({ count: 0, error: null }),
+                }),
+              }),
+            }),
+          };
         }
         return createMockQuery();
       });
@@ -868,7 +880,7 @@ describe("Unified Assignment API - Master-Detail Management", () => {
       const mockJadwalToDelete = [
         {
           id: "jadwal-1",
-          tanggal_praktikum: "2025-01-21",
+          tanggal_praktikum: "2099-01-21",
           topik: "Praktikum 1",
         },
       ];
@@ -877,8 +889,10 @@ describe("Unified Assignment API - Master-Detail Management", () => {
       const createMockQueryChain = (data: any, error: any = null) => {
         const mockChain: any = {
           select: vi.fn().mockReturnThis(),
+          update: vi.fn().mockReturnThis(),
           delete: vi.fn().mockReturnThis(),
           eq: vi.fn().mockReturnThis(),
+          in: vi.fn().mockReturnThis(),
           order: vi.fn().mockReturnThis(),
           // For count queries with { count: "exact", head: true }
           then: (resolve: any) => resolve({ count: 0, data: null, error }),
@@ -891,8 +905,10 @@ describe("Unified Assignment API - Master-Detail Management", () => {
       const createMockQueryChainWithData = (data: any, error: any = null) => {
         const mockChain: any = {
           select: vi.fn().mockReturnThis(),
+          update: vi.fn().mockReturnThis(),
           delete: vi.fn().mockReturnThis(),
           eq: vi.fn().mockReturnThis(),
+          in: vi.fn().mockReturnThis(),
           order: vi.fn().mockReturnThis(),
           then: (resolve: any) => resolve({ data, error }),
           catch: vi.fn().mockReturnThis(),
@@ -904,8 +920,10 @@ describe("Unified Assignment API - Master-Detail Management", () => {
       const createMockDeleteChain = (error: any = null) => {
         const mockChain: any = {
           select: vi.fn().mockReturnThis(),
+          update: vi.fn().mockReturnThis(),
           delete: vi.fn().mockReturnThis(),
           eq: vi.fn().mockReturnThis(),
+          in: vi.fn().mockReturnThis(),
           then: (resolve: any) => resolve({ error }),
           catch: vi.fn().mockReturnThis(),
         };
@@ -942,6 +960,21 @@ describe("Unified Assignment API - Master-Detail Management", () => {
         } else if (table === "dosen_mata_kuliah") {
           // Delete dosen_mata_kuliah (no other assignments)
           return createMockDeleteChain(null);
+        } else if (
+          ["kehadiran", "logbook_entries", "materi", "kuis", "nilai"].includes(
+            table,
+          )
+        ) {
+          return {
+            select: vi.fn().mockReturnValue({
+              in: vi.fn().mockResolvedValue({ count: 0, error: null }),
+              eq: vi.fn().mockReturnValue({
+                eq: vi.fn().mockReturnValue({
+                  eq: vi.fn().mockResolvedValue({ count: 0, error: null }),
+                }),
+              }),
+            }),
+          };
         }
         return createMockQueryChainWithData([], null);
       });
@@ -961,17 +994,17 @@ describe("Unified Assignment API - Master-Detail Management", () => {
       const mockJadwalToDelete = [
         {
           id: "jadwal-1",
-          tanggal_praktikum: "2025-01-21",
+          tanggal_praktikum: "2099-01-21",
           topik: "Praktikum 1",
         },
       ];
 
-      let callCount = 0;
+      let jadwalCallCount = 0;
       (supabase.from as any).mockImplementation((table: string) => {
-        callCount++;
         if (table === "jadwal_praktikum") {
+          jadwalCallCount++;
           // First call: count jadwal to delete
-          if (callCount === 1) {
+          if (jadwalCallCount === 1) {
             return {
               select: vi.fn().mockReturnValue({
                 eq: vi.fn().mockReturnValue({
@@ -986,21 +1019,17 @@ describe("Unified Assignment API - Master-Detail Management", () => {
             };
           }
           // Second call: delete jadwal
-          if (callCount === 2) {
+          if (jadwalCallCount === 2) {
             return {
-              delete: vi.fn().mockReturnValue({
-                eq: vi.fn().mockReturnValue({
-                  eq: vi.fn().mockReturnValue({
-                    eq: vi.fn().mockResolvedValue({
-                      error: null,
-                    }),
-                  }),
+              update: vi.fn().mockReturnValue({
+                in: vi.fn().mockResolvedValue({
+                  error: null,
                 }),
               }),
             };
           }
           // Fourth call: check other assignments for dosen_mata_kuliah cleanup (no kelas delete because has students)
-          if (callCount === 4) {
+          if (jadwalCallCount === 3) {
             return {
               select: vi.fn().mockReturnValue({
                 eq: vi.fn().mockReturnValue({
@@ -1046,6 +1075,21 @@ describe("Unified Assignment API - Master-Detail Management", () => {
               }),
             }),
           };
+        } else if (
+          ["kehadiran", "logbook_entries", "materi", "kuis", "nilai"].includes(
+            table,
+          )
+        ) {
+          return {
+            select: vi.fn().mockReturnValue({
+              in: vi.fn().mockResolvedValue({ count: 0, error: null }),
+              eq: vi.fn().mockReturnValue({
+                eq: vi.fn().mockReturnValue({
+                  eq: vi.fn().mockResolvedValue({ count: 0, error: null }),
+                }),
+              }),
+            }),
+          };
         }
         return {
           select: vi.fn().mockReturnValue({
@@ -1072,7 +1116,7 @@ describe("Unified Assignment API - Master-Detail Management", () => {
       const mockJadwalToDelete = [
         {
           id: "jadwal-1",
-          tanggal_praktikum: "2025-01-21",
+          tanggal_praktikum: "2099-01-21",
           topik: "Praktikum 1",
         },
       ];
@@ -1090,13 +1134,9 @@ describe("Unified Assignment API - Master-Detail Management", () => {
                 }),
               }),
             }),
-            delete: vi.fn().mockReturnValue({
-              eq: vi.fn().mockReturnValue({
-                eq: vi.fn().mockReturnValue({
-                  eq: vi.fn().mockReturnValue({
-                    error: null,
-                  }),
-                }),
+            update: vi.fn().mockReturnValue({
+              in: vi.fn().mockResolvedValue({
+                error: null,
               }),
             }),
           };
@@ -1106,6 +1146,21 @@ describe("Unified Assignment API - Master-Detail Management", () => {
               eq: vi.fn().mockReturnValue({
                 eq: vi.fn().mockResolvedValue({
                   error: null,
+                }),
+              }),
+            }),
+          };
+        } else if (
+          ["kehadiran", "logbook_entries", "materi", "kuis", "nilai"].includes(
+            table,
+          )
+        ) {
+          return {
+            select: vi.fn().mockReturnValue({
+              in: vi.fn().mockResolvedValue({ count: 0, error: null }),
+              eq: vi.fn().mockReturnValue({
+                eq: vi.fn().mockReturnValue({
+                  eq: vi.fn().mockResolvedValue({ count: 0, error: null }),
                 }),
               }),
             }),
@@ -1134,7 +1189,7 @@ describe("Unified Assignment API - Master-Detail Management", () => {
       const mockJadwalToDelete = [
         {
           id: "jadwal-1",
-          tanggal_praktikum: "2025-01-21",
+          tanggal_praktikum: "2099-01-21",
           topik: "Praktikum 1",
         },
       ];
@@ -1152,13 +1207,9 @@ describe("Unified Assignment API - Master-Detail Management", () => {
                 }),
               }),
             }),
-            delete: vi.fn().mockReturnValue({
-              eq: vi.fn().mockReturnValue({
-                eq: vi.fn().mockReturnValue({
-                  eq: vi.fn().mockReturnValue({
-                    error: null,
-                  }),
-                }),
+            update: vi.fn().mockReturnValue({
+              in: vi.fn().mockResolvedValue({
+                error: null,
               }),
             }),
           };
@@ -1202,6 +1253,21 @@ describe("Unified Assignment API - Master-Detail Management", () => {
                 single: vi.fn().mockResolvedValue({
                   data: { id: "notif-1" },
                   error: null,
+                }),
+              }),
+            }),
+          };
+        } else if (
+          ["kehadiran", "logbook_entries", "materi", "kuis", "nilai"].includes(
+            table,
+          )
+        ) {
+          return {
+            select: vi.fn().mockReturnValue({
+              in: vi.fn().mockResolvedValue({ count: 0, error: null }),
+              eq: vi.fn().mockReturnValue({
+                eq: vi.fn().mockReturnValue({
+                  eq: vi.fn().mockResolvedValue({ count: 0, error: null }),
                 }),
               }),
             }),
@@ -1573,7 +1639,7 @@ describe("Unified Assignment API - Master-Detail Management", () => {
       ];
 
       const jadwalToDelete = [
-        { id: "jadwal-1", tanggal_praktikum: "2025-01-21" },
+        { id: "jadwal-1", tanggal_praktikum: "2099-01-21" },
       ];
 
       // Create thenable mock query
@@ -1583,92 +1649,59 @@ describe("Unified Assignment API - Master-Detail Management", () => {
         eq: vi.fn().mockReturnThis(),
         order: vi.fn().mockReturnThis(),
         delete: vi.fn().mockReturnThis(),
+        in: vi.fn().mockReturnThis(),
+        update: vi.fn().mockReturnThis(),
       });
 
-      let callCount = 0;
+      let jadwalCallCount = 0;
       (supabase.from as any).mockImplementation((table: string) => {
-        callCount++;
         if (table === "jadwal_praktikum") {
+          jadwalCallCount++;
           // Calls 1-2: getUnifiedAssignments
-          if (callCount === 1) {
-            // First call: get master assignments
-            return {
-              select: vi
-                .fn()
-                .mockReturnValue(createThenableQuery(mockAssignments)),
-            };
+          if (jadwalCallCount === 1) {
+            return { select: vi.fn().mockReturnValue(createThenableQuery(mockAssignments)) };
           }
-          if (callCount === 2) {
-            // Second call: get jadwal details (empty)
-            return {
-              select: vi.fn().mockReturnValue(createThenableQuery([])),
-            };
+          if (jadwalCallCount === 2) {
+            return { select: vi.fn().mockReturnValue(createThenableQuery([])) };
           }
           // Calls 3-5: deleteAssignmentCascade
-          if (callCount === 3) {
-            // Count jadwal to delete
-            return {
-              select: vi.fn().mockReturnValue({
-                eq: vi.fn().mockReturnValue({
-                  eq: vi.fn().mockReturnValue({
-                    eq: vi.fn().mockResolvedValue({
-                      data: jadwalToDelete,
-                      error: null,
-                    }),
-                  }),
-                }),
-              }),
-            };
+          if (jadwalCallCount === 3) {
+            return { select: vi.fn().mockReturnValue(createThenableQuery(jadwalToDelete)) };
           }
-          if (callCount === 4) {
+          if (jadwalCallCount === 4) {
             // Delete jadwal
             return {
-              delete: vi.fn().mockReturnValue({
-                eq: vi.fn().mockReturnValue({
-                  eq: vi.fn().mockReturnValue({
-                    eq: vi.fn().mockResolvedValue({
-                      error: null,
-                    }),
-                  }),
-                }),
-              }),
+              delete: vi.fn().mockReturnValue(createThenableQuery([])),
+              update: vi.fn().mockReturnValue(createThenableQuery([])),
             };
           }
-          if (callCount === 5) {
+          if (jadwalCallCount === 5) {
             // Check other assignments
-            return {
-              select: vi.fn().mockReturnValue({
-                eq: vi.fn().mockReturnValue({
-                  eq: vi.fn().mockReturnValue({
-                    eq: vi.fn().mockResolvedValue({
-                      data: [], // No other assignments
-                      error: null,
-                    }),
-                  }),
-                }),
-              }),
-            };
+            return { select: vi.fn().mockReturnValue(createThenableQuery([])) };
           }
+        } else if (
+          ["kehadiran", "logbook_entries", "materi", "kuis", "nilai"].includes(
+            table,
+          )
+        ) {
+          const mockQuery = {
+            eq: vi.fn().mockReturnThis(),
+            in: vi.fn().mockReturnThis(),
+            then: (resolve: any) => resolve({ count: 0, error: null }),
+            catch: () => ({ count: 0, error: null }),
+          };
+          return {
+            select: vi.fn().mockReturnValue(mockQuery),
+          };
         }
-        // Call 6: deleteAssignmentCascade (dosen_mata_kuliah table)
+        // deleteAssignmentCascade (dosen_mata_kuliah table)
         if (table === "dosen_mata_kuliah") {
           // Delete dosen_mata_kuliah (no other assignments)
           return {
-            delete: vi.fn().mockReturnValue({
-              eq: vi.fn().mockReturnValue({
-                eq: vi.fn().mockResolvedValue({
-                  error: null,
-                }),
-              }),
-            }),
+            delete: vi.fn().mockReturnValue(createThenableQuery([])),
           };
         }
-        return {
-          select: vi.fn().mockResolvedValue({
-            data: [],
-            error: null,
-          }),
-        };
+        return { select: vi.fn().mockReturnValue(createThenableQuery([])) };
       });
 
       const assignments = await getUnifiedAssignments();

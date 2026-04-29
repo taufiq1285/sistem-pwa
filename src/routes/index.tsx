@@ -8,7 +8,7 @@
  */
 
 import { lazy, Suspense, useEffect } from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useParams } from "react-router-dom";
 import { ProtectedRoute } from "@/components/common/ProtectedRoute";
 import { RoleGuard } from "@/components/common/RoleGuard";
 import { AppLayout } from "@/components/layout/AppLayout";
@@ -97,7 +97,7 @@ const routeModuleImporters = {
       default: m.DashboardPage,
     })),
   laboranInventaris: () => import("@/pages/laboran/InventarisPage"),
-  laboranPersetujuan: () => import("@/pages/laboran/PersetujuanPage"),
+  laboranPersetujuan: () => import("@/pages/laboran/PeminjamanAktifPage"),
   laboranPeminjamanAktif: () => import("@/pages/laboran/PeminjamanAktifPage"),
   laboranLaboratorium: () => import("@/pages/laboran/LaboratoriumPage"),
   laboranJadwalApproval: () => import("@/pages/laboran/JadwalApprovalPage"),
@@ -288,6 +288,24 @@ const DosenPeminjamanPage = lazy(() => import("@/pages/dosen/PeminjamanPage"));
 const DosenKehadiranPage = lazy(() => import("@/pages/dosen/KehadiranPage"));
 const DosenPengumumanPage = lazy(() => import("@/pages/dosen/PengumumanPage"));
 const DosenProfilePage = lazy(() => import("@/pages/dosen/ProfilePage"));
+
+function LegacyDosenAttemptRedirect() {
+  const { kuisId, attemptId } = useParams<{
+    kuisId: string;
+    attemptId: string;
+  }>();
+
+  if (!kuisId || !attemptId) {
+    return <Navigate to="/dosen/kuis" replace />;
+  }
+
+  return (
+    <Navigate
+      to={`/dosen/kuis/${kuisId}/results?attempt=${attemptId}`}
+      replace
+    />
+  );
+}
 const DosenLogbookReviewPage = lazy(
   () => import("@/pages/dosen/LogbookReviewPage"),
 );
@@ -335,9 +353,6 @@ const LaboranDashboard = lazy(() =>
 );
 const LaboranInventarisPage = lazy(
   () => import("@/pages/laboran/InventarisPage"),
-);
-const LaboranPersetujuanPage = lazy(
-  () => import("@/pages/laboran/PersetujuanPage"),
 );
 const LaboranPeminjamanAktifPage = lazy(
   () => import("@/pages/laboran/PeminjamanAktifPage"),
@@ -698,7 +713,7 @@ export function AppRouter() {
               <ProtectedRoute>
                 <RoleGuard allowedRoles={["dosen"]}>
                   <AppLayout>
-                    <AttemptDetailPage />
+                    <LegacyDosenAttemptRedirect />
                   </AppLayout>
                 </RoleGuard>
               </ProtectedRoute>
@@ -1073,14 +1088,26 @@ export function AppRouter() {
             }
           />
 
-          {/* Laboran - Persetujuan */}
+          {/* Laboran - Peminjaman Alat */}
+          <Route
+            path="/laboran/peminjaman"
+            element={
+              <ProtectedRoute>
+                <RoleGuard allowedRoles={["laboran"]}>
+                  <AppLayout>
+                    <LaboranPeminjamanAktifPage />
+                  </AppLayout>
+                </RoleGuard>
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/laboran/persetujuan"
             element={
               <ProtectedRoute>
                 <RoleGuard allowedRoles={["laboran"]}>
                   <AppLayout>
-                    <LaboranPersetujuanPage />
+                    <LaboranPeminjamanAktifPage />
                   </AppLayout>
                 </RoleGuard>
               </ProtectedRoute>

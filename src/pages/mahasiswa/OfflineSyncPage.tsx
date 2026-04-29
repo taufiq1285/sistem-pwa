@@ -36,7 +36,9 @@ export default function OfflineSyncPage() {
   const { user } = useAuth();
   const { isOnline } = useNetworkStatus();
   const { processQueue, stats, isProcessing, isReady } = useSync();
-  const [offlineTasks, setOfflineTasks] = useState<OfflineAttemptSyncItem[]>([]);
+  const [offlineTasks, setOfflineTasks] = useState<OfflineAttemptSyncItem[]>(
+    [],
+  );
   const [isLoadingTasks, setIsLoadingTasks] = useState(true);
 
   const pendingCount = stats?.pending ?? 0;
@@ -319,10 +321,12 @@ export default function OfflineSyncPage() {
                       <p className="text-sm text-muted-foreground">
                         {[task.nama_mk, task.nama_kelas]
                           .filter(Boolean)
-                          .join(" • ") || "Informasi kelas belum tersimpan lengkap"}
+                          .join(" • ") ||
+                          "Informasi kelas belum tersimpan lengkap"}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        Aktivitas terakhir: {formatDateTime(task.last_activity_at)}
+                        Aktivitas terakhir:{" "}
+                        {formatDateTime(task.last_activity_at)}
                       </p>
                       {task.answer_count > 0 && (
                         <p className="text-xs text-muted-foreground">

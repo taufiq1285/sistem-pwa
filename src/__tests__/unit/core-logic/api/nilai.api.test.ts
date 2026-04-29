@@ -117,9 +117,14 @@ const mockQueryBuilder = () => {
     select: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
     in: vi.fn().mockReturnThis(),
+    is: vi.fn().mockReturnThis(),
+    not: vi.fn().mockReturnThis(),
     order: vi.fn().mockReturnThis(),
-    maybeSingle: vi.fn(),
-    single: vi.fn(),
+    limit: vi.fn().mockReturnThis(),
+    maybeSingle: vi.fn(() => Promise.resolve(resolveValue)),
+    single: vi.fn(() => Promise.resolve(resolveValue)),
+    update: vi.fn().mockReturnThis(),
+    insert: vi.fn().mockReturnThis(),
     upsert: vi.fn().mockReturnThis(),
     then: vi.fn((onFulfilled) =>
       Promise.resolve(resolveValue).then(onFulfilled),
@@ -264,7 +269,23 @@ describe("Nilai API - CRUD Operations", () => {
   describe("getNilaiByMahasiswa", () => {
     it("should get all nilai for a mahasiswa", async () => {
       const builder = mockQueryBuilder();
-      builder._setResolveValue({ data: [mockNilai], error: null });
+      builder._setResolveValue({
+        data: [
+          {
+            ...mockNilai,
+            kelas: {
+              id: "kelas-1",
+              nama_kelas: "Kelas A",
+              mata_kuliah: {
+                id: "mk-1",
+                nama_mk: "Anatomi",
+                kode_mk: "MK001",
+              },
+            },
+          },
+        ],
+        error: null,
+      });
       (supabase.from as any).mockReturnValue(builder);
 
       const result = await getNilaiByMahasiswa("mhs-1");
@@ -274,7 +295,72 @@ describe("Nilai API - CRUD Operations", () => {
       expect(builder.order).toHaveBeenCalledWith("created_at", {
         ascending: false,
       });
-      expect(result).toEqual([mockNilai]);
+      expect(result).toEqual([
+        expect.objectContaining({
+          ...mockNilai,
+          kelas: {
+            id: "kelas-1",
+            nama_kelas: "Kelas A",
+            mata_kuliah: {
+              id: "mk-1",
+              nama_mk: "Anatomi",
+              kode_mk: "MK001",
+            },
+          },
+        }),
+      ]);
+    });
+
+    it("should show mata kuliah from nilai.mata_kuliah_id instead of kelas default", async () => {
+      const nilaiBuilder = mockQueryBuilder();
+      nilaiBuilder._setResolveValue({
+        data: [
+          {
+            ...mockNilai,
+            mata_kuliah_id: "mk-askeb",
+            kelas: {
+              id: "kelas-1",
+              nama_kelas: "Kelas A",
+              mata_kuliah: {
+                id: "mk-pancasila",
+                nama_mk: "Pancasila",
+                kode_mk: "PKN001",
+              },
+            },
+          },
+        ],
+        error: null,
+      });
+
+      const mataKuliahBuilder = mockQueryBuilder();
+      mataKuliahBuilder._setResolveValue({
+        data: [
+          {
+            id: "mk-askeb",
+            nama_mk: "ASKEB 3",
+            kode_mk: "ASK3",
+            sks: 2,
+            is_active: true,
+          },
+        ],
+        error: null,
+      });
+
+      (supabase.from as any)
+        .mockReturnValueOnce(nilaiBuilder)
+        .mockReturnValueOnce(mataKuliahBuilder);
+
+      const result = await getNilaiByMahasiswa("mhs-1");
+
+      expect(supabase.from).toHaveBeenNthCalledWith(1, "nilai");
+      expect(supabase.from).toHaveBeenNthCalledWith(2, "mata_kuliah");
+      expect(result[0].kelas?.mata_kuliah).toEqual(
+        expect.objectContaining({
+          id: "mk-askeb",
+          nama_mk: "ASKEB 3",
+          kode_mk: "ASK3",
+        }),
+      );
     });
 
     it("should return empty array when no nilai found", async () => {
@@ -429,6 +515,36 @@ describe("Nilai API - Statistics", () => {
 
       // (80 + 85 + 90) / 3 = 85
       expect(result.rata_rata).toBe(85);
+    });
+
+    it("should only count nilai from selected mata kuliah", async () => {
+      const countBuilder = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockResolvedValue({ count: 3, error: null }),
+      };
+
+      const nilaiBuilder = mockQueryBuilder();
+      nilaiBuilder._setResolveValue({
+        data: [
+          { nilai_akhir: 80, mata_kuliah_id: "mk-1" },
+          { nilai_akhir: 90, mata_kuliah_id: "mk-2" },
+          { nilai_akhir: 70, mata_kuliah_id: null },
+        ],
+        error: null,
+      });
+
+      (supabase.from as any)
+        .mockReturnValueOnce(countBuilder)
+        .mockReturnValueOnce(nilaiBuilder);
+
+      const result = await getNilaiSummary("kelas-1", "mk-1");
+
+      expect(result).toEqual({
+        total_mahasiswa: 3,
+        sudah_dinilai: 1,
+        belum_dinilai: 2,
+        rata_rata: 80,
+      });
     });
 
     it("should throw when count query fails", async () => {
@@ -604,6 +720,47 @@ describe("Nilai API - Statistics", () => {
       expect(result[1].nilai_akhir).toBe(null); // No nilai yet
     });
 
+    it("should not load nilai from another or legacy mata kuliah when grading selected mata kuliah", async () => {
+      const enrollmentBuilder = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockResolvedValue({
+          data: [
+            {
+              mahasiswa: {
+                id: "mhs-1",
+                nim: "BD2321001",
+                user_id: "user-1",
+                user: { full_name: "John Doe", email: "john@example.com" },
+              },
+            },
+          ],
+          error: null,
+        }),
+      };
+
+      const nilaiBuilder = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        in: vi.fn().mockResolvedValue({
+          data: [
+            { ...mockNilai, mahasiswa_id: "mhs-1", mata_kuliah_id: "mk-2" },
+            { ...mockNilai, mahasiswa_id: "mhs-1", mata_kuliah_id: null },
+          ],
+          error: null,
+        }),
+      };
+
+      (supabase.from as any)
+        .mockReturnValueOnce(enrollmentBuilder)
+        .mockReturnValueOnce(nilaiBuilder);
+
+      const result = await getMahasiswaForGrading("kelas-1", "mk-1");
+
+      expect(result).toHaveLength(1);
+      expect(result[0].mata_kuliah_id).toBe("mk-1");
+      expect(result[0].nilai_akhir).toBe(null);
+    });
+
     it("should throw when enrollment query fails", async () => {
       const enrollmentBuilder = {
         select: vi.fn().mockReturnThis(),
@@ -680,27 +837,23 @@ describe("Nilai API - Statistics", () => {
       expect(result.nilai_huruf).toBe("A");
     });
 
-    it("should update nilai with upsert when existing record found", async () => {
-      const fromBuilder = {
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        maybeSingle: vi
-          .fn()
-          .mockResolvedValue({ data: mockNilai, error: null }),
-        upsert: vi.fn().mockReturnValue({
-          select: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({ data: mockNilai, error: null }),
-          }),
-        }),
-      };
-      (supabase.from as any).mockReturnValue(fromBuilder);
+    it("should update nilai ketika existing record ditemukan", async () => {
+      const fetchBuilder = mockQueryBuilder()._setResolveValue({ data: [mockNilai], error: null });
+      const updateBuilder = mockQueryBuilder()._setResolveValue({
+        data: { ...mockNilai, nilai_kuis: 88 },
+        error: null,
+      });
+
+      (supabase.from as any)
+        .mockReturnValueOnce(fetchBuilder)
+        .mockReturnValueOnce(updateBuilder);
 
       const result = await updateNilai("mhs-1", "kelas-1", {
         nilai_kuis: 88,
       } as any);
 
       expect(result).toBeDefined();
-      expect(fromBuilder.upsert).toHaveBeenCalled();
+      expect(updateBuilder.update).toHaveBeenCalled();
     });
 
     it("should create via updateNilai when no existing nilai", async () => {
@@ -710,19 +863,12 @@ describe("Nilai API - Statistics", () => {
         nilai_akhir: 70,
         nilai_huruf: "B",
       };
-      const fromBuilder = {
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
-        upsert: vi.fn().mockReturnValue({
-          select: vi.fn().mockReturnValue({
-            single: vi
-              .fn()
-              .mockResolvedValue({ data: freshNilai, error: null }),
-          }),
-        }),
-      };
-      (supabase.from as any).mockReturnValue(fromBuilder);
+      const fetchBuilder = mockQueryBuilder()._setResolveValue({ data: [], error: null });
+      const insertBuilder = mockQueryBuilder()._setResolveValue({ data: freshNilai, error: null });
+      
+      (supabase.from as any)
+        .mockReturnValueOnce(fetchBuilder)
+        .mockReturnValueOnce(insertBuilder);
 
       const result = await updateNilai("mhs-2", "kelas-1", {
         nilai_tugas: 70,
@@ -731,89 +877,68 @@ describe("Nilai API - Statistics", () => {
       expect(result.id).toBe("nilai-new");
     });
 
-    it("should batch update and continue when one item fails", async () => {
-      const firstFetchBuilder = {
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        maybeSingle: vi
-          .fn()
-          .mockResolvedValue({ data: mockNilai, error: null }),
-      };
-      const firstUpsertBuilder = {
-        upsert: vi.fn().mockReturnValue({
-          select: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({ data: mockNilai, error: null }),
-          }),
-        }),
-      };
-      const secondFetchBuilder = {
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        maybeSingle: vi
-          .fn()
-          .mockResolvedValue({ data: null, error: new Error("fail") }),
-      };
+    it("should fail batch update when one item fails", async () => {
+      const firstFetchBuilder = mockQueryBuilder()._setResolveValue({ data: [mockNilai], error: null });
+      const firstUpdateBuilder = mockQueryBuilder()._setResolveValue({ data: mockNilai, error: null });
+      const secondFetchBuilder = mockQueryBuilder()._setResolveValue({ data: null, error: new Error("fail") });
 
       (supabase.from as any)
         .mockReturnValueOnce(firstFetchBuilder)
-        .mockReturnValueOnce(firstUpsertBuilder)
+        .mockReturnValueOnce(firstUpdateBuilder)
         .mockReturnValueOnce(secondFetchBuilder);
 
-      const result = await batchUpdateNilai({
+      await expect(batchUpdateNilai({
         kelas_id: "kelas-1",
         mata_kuliah_id: "mk-1",
         nilai_list: [
           { mahasiswa_id: "mhs-1", nilai_kuis: 80 },
           { mahasiswa_id: "mhs-2", nilai_kuis: 90 },
         ],
-      });
-
-      expect(result).toHaveLength(1);
-      expect(result[0].mahasiswa_id).toBe("mhs-1");
+      })).rejects.toThrow("1 dari 2 nilai gagal tersimpan");
     });
 
     it("should sync nilai praktikum from graded attempts", async () => {
-      const attemptsBuilder = {
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        not: vi.fn().mockResolvedValue({
-          data: [
-            { nilai_akhir: 80, kuis: { kelas_id: "kelas-1" } },
-            { nilai_akhir: 90, kuis: { kelas_id: "kelas-1" } },
-            { nilai_akhir: 70, kuis: { kelas_id: "kelas-2" } },
-          ],
-          error: null,
-        }),
-      };
+      const attemptsBuilder = mockQueryBuilder()._setResolveValue({
+        data: [
+          {
+            total_score: 80,
+            kuis: { kelas_id: "kelas-1", mata_kuliah_id: "mk-1" },
+          },
+          {
+            percentage: 90,
+            kuis: { kelas_id: "kelas-1", mata_kuliah_id: "mk-1" },
+          },
+          {
+            total_poin: 70,
+            kuis: { kelas_id: "kelas-1", mata_kuliah_id: "mk-2" },
+          },
+          {
+            percentage: 60,
+            kuis: { kelas_id: "kelas-2", mata_kuliah_id: "mk-1" },
+          },
+        ],
+        error: null,
+      });
 
-      const nilaiFetchBuilder = {
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        maybeSingle: vi
-          .fn()
-          .mockResolvedValue({ data: mockNilai, error: null }),
-      };
-
-      const nilaiUpsertBuilder = {
-        upsert: vi.fn().mockReturnValue({
-          select: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({
-              data: { ...mockNilai, nilai_praktikum: 85 },
-              error: null,
-            }),
-          }),
-        }),
-      };
+      const nilaiFetchBuilder = mockQueryBuilder()._setResolveValue({ data: [mockNilai], error: null });
+      const nilaiUpdateBuilder = mockQueryBuilder()._setResolveValue({
+        data: { ...mockNilai, nilai_praktikum: 85 },
+        error: null,
+      });
 
       (supabase.from as any)
         .mockReturnValueOnce(attemptsBuilder)
         .mockReturnValueOnce(nilaiFetchBuilder)
-        .mockReturnValueOnce(nilaiUpsertBuilder);
+        .mockReturnValueOnce(nilaiUpdateBuilder);
 
-      const result = await syncNilaiPraktikumFromAttempts("mhs-1", "kelas-1");
+      const result = await syncNilaiPraktikumFromAttempts(
+        "mhs-1",
+        "kelas-1",
+        "mk-1",
+      );
 
       expect(result).toBeDefined();
-      expect(nilaiUpsertBuilder.upsert).toHaveBeenCalled();
+      expect(nilaiUpdateBuilder.update).toHaveBeenCalled();
     });
 
     it("should delete nilai", async () => {

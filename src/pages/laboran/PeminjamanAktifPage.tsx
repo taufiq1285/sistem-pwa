@@ -15,16 +15,23 @@ import { useLocation } from "react-router-dom";
 import {
   Package,
   CheckCircle,
+  XCircle,
   AlertTriangle,
   Loader2,
   History,
+  Clock,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { DashboardCard } from "@/components/ui/dashboard-card";
 import { DashboardSkeleton } from "@/components/ui/dashboard-skeleton";
 import { GlassCard } from "@/components/ui/glass-card";
-import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Table,
@@ -45,7 +52,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -56,14 +62,29 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
+  getPendingApprovals,
+  approvePeminjaman,
+  rejectPeminjaman,
   getActiveBorrowings,
   getReturnedBorrowings,
   markBorrowingReturned,
+  type PendingApproval,
   type ActiveBorrowing,
   type ReturnedBorrowing,
 } from "@/lib/api/laboran.api";
 import { getRBACErrorMessage } from "@/lib/errors/permission.errors";
 import { cacheAPI, invalidateCache } from "@/lib/offline/api-cache";
+
+const invalidatePeminjamanCaches = async () => {
+  await Promise.all([
+    invalidateCache("laboran_pending_approvals"),
+    invalidateCache("laboran_active_borrowings"),
+    invalidateCache("laboran_returned_borrowings"),
+    invalidateCache("dosen_my_borrowings"),
+    invalidateCache("dosen_available_equipment"),
+  ]);
+  window.dispatchEvent(new CustomEvent("peminjaman:changed"));
+};
 
 // ============================================================================
 // COMPONENT
@@ -72,6 +93,9 @@ import { cacheAPI, invalidateCache } from "@/lib/offline/api-cache";
 export default function PeminjamanAktifPage() {
   const location = useLocation();
   const isAdminView = location.pathname.startsWith("/admin/");
+  const [pendingApprovals, setPendingApprovals] = useState<PendingApproval[]>(
+    [],
+  );
   const [activeBorrowings, setActiveBorrowings] = useState<ActiveBorrowing[]>(
     [],
   );
@@ -79,8 +103,33 @@ export default function PeminjamanAktifPage() {
     ReturnedBorrowing[]
   >([]);
   const [loading, setLoading] = useState(true);
+  const [pendingLoading, setPendingLoading] = useState(true);
   const [returnedLoading, setReturnedLoading] = useState(false);
   const [processing, setProcessing] = useState(false);
+  const [rejectionReason, setRejectionReason] = useState("");
+  const [activeTab, setActiveTab] = useState("active");
+
+  const [approveDialog, setApproveDialog] = useState<{
+    open: boolean;
+    id: string;
+    name: string;
+    request?: PendingApproval;
+  }>({
+    open: false,
+    id: "",
+    name: "",
+  });
+
+  const [rejectDialog, setRejectDialog] = useState<{
+    open: boolean;
+    id: string;
+    name: string;
+    request?: PendingApproval;
+  }>({
+    open: false,
+    id: "",
+    name: "",
+  });
 
   // Return dialog state
   const [returnDialog, setReturnDialog] = useState<{
@@ -94,12 +143,36 @@ export default function PeminjamanAktifPage() {
   const [returnForm, setReturnForm] = useState({
     kondisi: "baik" as "baik" | "rusak_ringan" | "rusak_berat" | "maintenance",
     keterangan: "",
-    denda: 0,
   });
 
   useEffect(() => {
+    loadPendingApprovals(false);
     loadActiveBorrowings(false);
   }, []);
+
+  const loadPendingApprovals = async (forceRefresh = false) => {
+    try {
+      setPendingLoading(true);
+      const data = await cacheAPI(
+        "laboran_pending_approvals",
+        () => getPendingApprovals(100),
+        {
+          ttl: 3 * 60 * 1000,
+          forceRefresh,
+          staleWhileRevalidate: true,
+        },
+      );
+      setPendingApprovals(data);
+      if (data.length > 0) {
+        setActiveTab("pending");
+      }
+    } catch (error) {
+      toast.error("Gagal memuat permintaan peminjaman alat");
+      console.error("Error loading pending approvals:", error);
+    } finally {
+      setPendingLoading(false);
+    }
+  };
 
   const loadActiveBorrowings = async (forceRefresh = false) => {
     try {
@@ -145,15 +218,72 @@ export default function PeminjamanAktifPage() {
 
   const handleOpenReturnDialog = (borrowing: ActiveBorrowing) => {
     setReturnDialog({ open: true, borrowing });
-    // Auto calculate denda if overdue
-    const suggestedDenda = borrowing.is_overdue
-      ? borrowing.days_overdue * 5000 // Rp 5.000 per hari
-      : 0;
     setReturnForm({
       kondisi: "baik",
       keterangan: "",
-      denda: suggestedDenda,
     });
+  };
+
+  const openApproveDialog = (request: PendingApproval) => {
+    setApproveDialog({
+      open: true,
+      id: request.id,
+      name: request.inventaris_nama,
+      request,
+    });
+  };
+
+  const handleApprove = async () => {
+    try {
+      setProcessing(true);
+      await approvePeminjaman(approveDialog.id);
+      toast.success("Peminjaman alat berhasil disetujui");
+
+      await invalidatePeminjamanCaches();
+      await Promise.all([
+        loadPendingApprovals(true),
+        loadActiveBorrowings(true),
+      ]);
+      setApproveDialog({ open: false, id: "", name: "" });
+    } catch (error) {
+      toast.error("Gagal menyetujui permintaan");
+      console.error("Error approving request:", error);
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const openRejectDialog = (request: PendingApproval) => {
+    setRejectDialog({
+      open: true,
+      id: request.id,
+      name: request.inventaris_nama,
+      request,
+    });
+    setRejectionReason("");
+  };
+
+  const handleReject = async () => {
+    if (!rejectionReason.trim()) {
+      toast.error("Alasan penolakan wajib diisi");
+      return;
+    }
+
+    try {
+      setProcessing(true);
+      await rejectPeminjaman(rejectDialog.id, rejectionReason);
+      toast.success("Peminjaman alat berhasil ditolak");
+
+      await invalidatePeminjamanCaches();
+      await loadPendingApprovals(true);
+      setRejectDialog({ open: false, id: "", name: "" });
+      setRejectionReason("");
+    } catch (error) {
+      toast.error("Gagal menolak permintaan");
+      console.error("Error rejecting request:", error);
+    } finally {
+      setProcessing(false);
+    }
   };
 
   const handleMarkAsReturned = async () => {
@@ -165,16 +295,14 @@ export default function PeminjamanAktifPage() {
         returnDialog.borrowing.id,
         returnForm.kondisi,
         returnForm.keterangan,
-        returnForm.denda,
+        0,
       );
 
-      toast.success("Peminjaman berhasil ditandai sebagai dikembalikan");
+      toast.success("Pengembalian alat berhasil dicatat");
       setReturnDialog({ open: false, borrowing: null });
-      setReturnForm({ kondisi: "baik", keterangan: "", denda: 0 });
+      setReturnForm({ kondisi: "baik", keterangan: "" });
 
-      // Invalidate cache and reload data
-      await invalidateCache("laboran_active_borrowings");
-      await invalidateCache("laboran_returned_borrowings");
+      await invalidatePeminjamanCaches();
       await loadActiveBorrowings(true);
       if (returnedBorrowings.length > 0) {
         await loadReturnedBorrowings(true);
@@ -194,14 +322,6 @@ export default function PeminjamanAktifPage() {
       month: "short",
       day: "numeric",
     });
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("id-ID", {
-      style: "currency",
-      currency: "IDR",
-      minimumFractionDigits: 0,
-    }).format(amount);
   };
 
   const getKondisiBadge = (kondisi: string) => {
@@ -226,6 +346,11 @@ export default function PeminjamanAktifPage() {
   };
 
   const overdueCount = activeBorrowings.filter((b) => b.is_overdue).length;
+  const returnedTodayCount = returnedBorrowings.filter((r) => {
+    const today = new Date().toDateString();
+    const returnDate = new Date(r.tanggal_kembali_aktual).toDateString();
+    return today === returnDate;
+  }).length;
 
   return (
     <div className="app-container py-4 sm:py-6 lg:py-8">
@@ -241,7 +366,7 @@ export default function PeminjamanAktifPage() {
                 <Package className="h-3.5 w-3.5 text-primary" />
                 {isAdminView
                   ? "Backup pengelolaan peminjaman alat"
-                  : "Monitoring pengembalian alat"}
+                  : "Satu pusat peminjaman alat"}
               </div>
               <div className="flex items-start gap-4">
                 <div className="rounded-2xl bg-primary/10 p-3 text-primary ring-1 ring-primary/20 shadow-sm">
@@ -249,26 +374,32 @@ export default function PeminjamanAktifPage() {
                 </div>
                 <div className="space-y-2">
                   <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-                    Kelola Peminjaman Aktif
+                    Peminjaman Alat
                   </h1>
                   <p className="max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
                     {isAdminView
-                      ? "Admin memakai halaman ini sebagai backup operasional saat laboran tidak hadir. Pantau alat yang masih dipinjam dan proses pengembalian tanpa mengubah alur data utama."
-                      : "Pantau alat yang masih dipinjam, identifikasi keterlambatan, dan proses pengembalian dengan catatan kondisi barang serta denda bila diperlukan."}
+                      ? "Admin memakai halaman ini sebagai backup operasional saat laboran tidak hadir. Setujui permintaan, pantau alat yang dipinjam, dan proses pengembalian tanpa mengubah alur data utama."
+                      : "Kelola seluruh alur peminjaman alat dari satu tempat: persetujuan permintaan baru, peminjaman aktif, sampai riwayat pengembalian."}
                   </p>
                 </div>
               </div>
             </div>
             <div className="rounded-2xl border border-warning/30 bg-warning/10 px-4 py-3 text-sm text-warning lg:max-w-sm">
               {isAdminView
-                ? "Gunakan fitur ini hanya saat backup laboran. Pastikan kondisi barang diperiksa sebelum menandai pengembalian agar stok inventaris dan riwayat tetap akurat."
-                : "Pastikan kondisi barang diperiksa sebelum menandai pengembalian agar stok inventaris dan riwayat peminjaman tetap akurat."}
+                ? "Gunakan fitur ini hanya saat backup laboran. Pastikan permintaan dan kondisi barang diperiksa agar stok inventaris tetap akurat."
+                : "Alurnya sekarang disatukan: permintaan masuk diproses di tab pertama, lalu otomatis berpindah ke peminjaman aktif setelah disetujui."}
             </div>
           </div>
         </GlassCard>
 
         {/* Stats Cards */}
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <DashboardCard
+            title="Menunggu Persetujuan"
+            value={pendingApprovals.length}
+            icon={Clock}
+            color="amber"
+          />
           <DashboardCard
             title="Sedang Dipinjam"
             value={activeBorrowings.length}
@@ -283,43 +414,183 @@ export default function PeminjamanAktifPage() {
           />
           <DashboardCard
             title="Dikembalikan Hari Ini"
-            value={
-              returnedBorrowings.filter((r) => {
-                const today = new Date().toDateString();
-                const returnDate = new Date(
-                  r.tanggal_kembali_aktual,
-                ).toDateString();
-                return today === returnDate;
-              }).length
-            }
+            value={returnedTodayCount}
             icon={CheckCircle}
             color="green"
           />
         </div>
 
         {/* Tabs */}
-        <Tabs defaultValue="active" className="space-y-4">
-          <TabsList className="h-auto w-full flex-wrap justify-start gap-2 rounded-2xl border border-border/60 bg-background/80 p-2">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+          <TabsList className="grid h-auto w-full grid-cols-1 gap-1.5 rounded-3xl border border-slate-200/70 bg-white/85 p-1.5 shadow-sm backdrop-blur md:grid-cols-3">
+            <TabsTrigger
+              value="pending"
+              className="flex min-h-16 flex-col items-center justify-center gap-0.5 rounded-2xl text-xs data-[state=active]:bg-amber-500 data-[state=active]:text-white sm:text-sm"
+            >
+              <span className="inline-flex items-center gap-1.5 font-semibold">
+                <Clock className="h-3.5 w-3.5" />
+                Menunggu Persetujuan
+                <span className="rounded-full bg-current/10 px-1.5 py-0.5 text-[10px]">
+                  {pendingApprovals.length}
+                </span>
+              </span>
+              <span className="hidden text-[11px] font-normal opacity-80 sm:block">
+                Review permintaan baru
+              </span>
+            </TabsTrigger>
             <TabsTrigger
               value="active"
-              className="gap-2 rounded-xl px-4 py-2 text-sm"
+              className="flex min-h-16 flex-col items-center justify-center gap-0.5 rounded-2xl text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:text-sm"
             >
-              <Package className="h-4 w-4" />
-              Sedang Dipinjam ({activeBorrowings.length})
+              <span className="inline-flex items-center gap-1.5 font-semibold">
+                <Package className="h-3.5 w-3.5" />
+                Masih Dipinjam
+                <span className="rounded-full bg-current/10 px-1.5 py-0.5 text-[10px]">
+                  {activeBorrowings.length}
+                </span>
+              </span>
+              <span className="hidden text-[11px] font-normal opacity-80 sm:block">
+                Terima pengembalian alat
+              </span>
             </TabsTrigger>
             <TabsTrigger
               value="returned"
-              className="gap-2 rounded-xl px-4 py-2 text-sm"
+              className="flex min-h-16 flex-col items-center justify-center gap-0.5 rounded-2xl text-xs data-[state=active]:bg-slate-900 data-[state=active]:text-white sm:text-sm"
               onClick={() => {
                 if (returnedBorrowings.length === 0) {
                   loadReturnedBorrowings(false);
                 }
               }}
             >
-              <History className="h-4 w-4" />
-              Riwayat Pengembalian
+              <span className="inline-flex items-center gap-1.5 font-semibold">
+                <History className="h-3.5 w-3.5" />
+                Riwayat Pengembalian
+              </span>
+              <span className="hidden text-[11px] font-normal opacity-80 sm:block">
+                Arsip alat selesai
+              </span>
             </TabsTrigger>
           </TabsList>
+
+          {/* Pending Approvals Tab */}
+          <TabsContent value="pending">
+            <GlassCard
+              intensity="low"
+              className="border-border/60 bg-background/85 shadow-lg"
+            >
+              <CardHeader className="space-y-2 px-0 pt-0">
+                <CardTitle className="text-xl font-semibold text-foreground">
+                  Permintaan Menunggu Persetujuan
+                </CardTitle>
+                <CardDescription>
+                  Tinjau pengajuan baru dari dosen. Jika disetujui, data akan
+                  masuk ke tab peminjaman aktif.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="px-0 pb-0">
+                {pendingLoading ? (
+                  <DashboardSkeleton />
+                ) : pendingApprovals.length === 0 ? (
+                  <Alert className="border-border/60 bg-muted/40">
+                    <Clock className="h-4 w-4" />
+                    <AlertDescription className="text-sm text-muted-foreground">
+                      Tidak ada permintaan baru. Semua pengajuan peminjaman alat
+                      sudah diproses.
+                    </AlertDescription>
+                  </Alert>
+                ) : (
+                  <div className="overflow-x-auto rounded-2xl border border-border/60 bg-background/70">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Peminjam</TableHead>
+                          <TableHead>Alat</TableHead>
+                          <TableHead>Laboratorium</TableHead>
+                          <TableHead>Jumlah</TableHead>
+                          <TableHead>Tanggal Pinjam</TableHead>
+                          <TableHead>Tanggal Kembali</TableHead>
+                          <TableHead>Keperluan</TableHead>
+                          <TableHead className="text-right">Aksi</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {pendingApprovals.map((request) => (
+                          <TableRow key={request.id} className="align-top">
+                            <TableCell>
+                              <div>
+                                <div className="text-sm font-medium text-foreground">
+                                  {request.peminjam_nama}
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  {request.peminjam_nim}
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div>
+                                <div className="text-sm font-medium text-foreground">
+                                  {request.inventaris_nama}
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  {request.inventaris_kode}
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {request.laboratorium_nama || (
+                                <span className="text-muted-foreground">
+                                  Belum ditentukan
+                                </span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="secondary">
+                                {request.jumlah_pinjam}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {formatDate(request.tanggal_pinjam)}
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {formatDate(request.tanggal_kembali_rencana)}
+                            </TableCell>
+                            <TableCell
+                              className="max-w-xs truncate text-sm text-muted-foreground"
+                              title={request.keperluan}
+                            >
+                              {request.keperluan}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex flex-wrap justify-end gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="border-success/50 text-success hover:bg-success/10"
+                                  onClick={() => openApproveDialog(request)}
+                                >
+                                  <CheckCircle className="mr-1 h-4 w-4" />
+                                  Setujui
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="border-destructive text-destructive hover:bg-destructive/10"
+                                  onClick={() => openRejectDialog(request)}
+                                >
+                                  <XCircle className="mr-1 h-4 w-4" />
+                                  Tolak
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </CardContent>
+            </GlassCard>
+          </TabsContent>
 
           {/* Active Borrowings Tab */}
           <TabsContent value="active">
@@ -329,11 +600,11 @@ export default function PeminjamanAktifPage() {
             >
               <CardHeader className="space-y-2 px-0 pt-0">
                 <CardTitle className="text-xl font-semibold text-foreground">
-                  Daftar Peminjaman Aktif
+                  Daftar Alat Masih Dipinjam
                 </CardTitle>
                 <p className="text-sm text-muted-foreground">
-                  Daftar alat yang belum dikembalikan, termasuk status
-                  keterlambatan dan kondisi saat dipinjam.
+                  Data pada tabel ini adalah peminjaman yang sudah disetujui
+                  dan belum dicatat kembali oleh laboran.
                 </p>
               </CardHeader>
               <CardContent className="px-0 pb-0">
@@ -365,7 +636,7 @@ export default function PeminjamanAktifPage() {
                       </TableHeader>
                       <TableBody>
                         {activeBorrowings.map((borrowing) => (
-                          <TableRow key={borrowing.id}>
+                          <TableRow key={borrowing.id} className="align-top">
                             <TableCell>
                               <div>
                                 <div className="text-sm font-medium text-foreground">
@@ -387,7 +658,11 @@ export default function PeminjamanAktifPage() {
                               </div>
                             </TableCell>
                             <TableCell className="text-sm text-muted-foreground">
-                              {borrowing.laboratorium_nama}
+                              {borrowing.laboratorium_nama || (
+                                <span className="text-muted-foreground">
+                                  Belum ditentukan
+                                </span>
+                              )}
                             </TableCell>
                             <TableCell>
                               <Badge variant="secondary">
@@ -408,7 +683,7 @@ export default function PeminjamanAktifPage() {
                                 </StatusBadge>
                               ) : (
                                 <StatusBadge status="success" pulse={false}>
-                                  Sedang Dipinjam
+                                  Masih Dipinjam
                                 </StatusBadge>
                               )}
                             </TableCell>
@@ -419,13 +694,13 @@ export default function PeminjamanAktifPage() {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className="border-success/40 text-success hover:bg-success/10"
+                                className="whitespace-nowrap border-success/40 text-success hover:bg-success/10"
                                 onClick={() =>
                                   handleOpenReturnDialog(borrowing)
                                 }
                               >
                                 <CheckCircle className="mr-1 h-4 w-4" />
-                                Sudah Kembali
+                                Terima Pengembalian
                               </Button>
                             </TableCell>
                           </TableRow>
@@ -450,7 +725,7 @@ export default function PeminjamanAktifPage() {
                 </CardTitle>
                 <p className="text-sm text-muted-foreground">
                   Rekap alat yang sudah dikembalikan lengkap dengan kondisi
-                  akhir, catatan, dan nominal denda.
+                  akhir dan catatan dari laboran.
                 </p>
               </CardHeader>
               <CardContent className="px-0 pb-0">
@@ -476,13 +751,12 @@ export default function PeminjamanAktifPage() {
                           <TableHead>Tgl Dikembalikan</TableHead>
                           <TableHead>Kondisi Pinjam</TableHead>
                           <TableHead>Kondisi Kembali</TableHead>
-                          <TableHead>Denda</TableHead>
                           <TableHead>Keterangan</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {returnedBorrowings.map((borrowing) => (
-                          <TableRow key={borrowing.id}>
+                          <TableRow key={borrowing.id} className="align-top">
                             <TableCell>
                               <div>
                                 <div className="text-sm font-medium text-foreground">
@@ -533,17 +807,6 @@ export default function PeminjamanAktifPage() {
                             <TableCell>
                               {getKondisiBadge(borrowing.kondisi_kembali)}
                             </TableCell>
-                            <TableCell>
-                              {borrowing.denda > 0 ? (
-                                <span className="text-sm font-semibold text-destructive">
-                                  {formatCurrency(borrowing.denda)}
-                                </span>
-                              ) : (
-                                <span className="text-sm text-muted-foreground">
-                                  -
-                                </span>
-                              )}
-                            </TableCell>
                             <TableCell className="max-w-xs">
                               <span
                                 className="block truncate text-sm text-muted-foreground"
@@ -563,6 +826,131 @@ export default function PeminjamanAktifPage() {
           </TabsContent>
         </Tabs>
 
+        {/* Approve Confirmation Dialog */}
+        <Dialog
+          open={approveDialog.open}
+          onOpenChange={(open) => {
+            if (!processing) {
+              setApproveDialog({ ...approveDialog, open });
+            }
+          }}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Konfirmasi Persetujuan</DialogTitle>
+              <DialogDescription>
+                Permintaan yang disetujui akan masuk ke tab peminjaman aktif.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="rounded-2xl border border-border/60 bg-muted/40 p-4 text-sm">
+              <span className="font-medium">Peminjaman Alat:</span>{" "}
+              {approveDialog.name}
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() =>
+                  setApproveDialog({ ...approveDialog, open: false })
+                }
+                disabled={processing}
+              >
+                Batal
+              </Button>
+              <Button
+                onClick={handleApprove}
+                disabled={processing}
+                className="bg-success hover:bg-success/90"
+              >
+                {processing ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Memproses...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="mr-2 h-4 w-4" />
+                    Ya, Setujui
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Reject Dialog */}
+        <Dialog
+          open={rejectDialog.open}
+          onOpenChange={(open) => {
+            if (!processing) {
+              setRejectDialog({ ...rejectDialog, open });
+              if (!open) setRejectionReason("");
+            }
+          }}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Tolak Permintaan</DialogTitle>
+              <DialogDescription>
+                Berikan alasan penolakan agar peminjam mengetahui penyebabnya.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              <div className="rounded-2xl border border-border/60 bg-muted/40 p-4 text-sm">
+                <span className="font-medium">Peminjaman Alat:</span>{" "}
+                {rejectDialog.name}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="rejection-reason">
+                  Alasan Penolakan <span className="text-destructive">*</span>
+                </Label>
+                <Textarea
+                  id="rejection-reason"
+                  placeholder="Masukkan alasan penolakan..."
+                  value={rejectionReason}
+                  onChange={(e) => setRejectionReason(e.target.value)}
+                  disabled={processing}
+                  rows={4}
+                  className="resize-none"
+                />
+                {!rejectionReason.trim() && (
+                  <p className="text-xs text-muted-foreground">
+                    Alasan penolakan wajib diisi.
+                  </p>
+                )}
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setRejectDialog({ ...rejectDialog, open: false });
+                  setRejectionReason("");
+                }}
+                disabled={processing}
+              >
+                Batal
+              </Button>
+              <Button
+                onClick={handleReject}
+                disabled={processing || !rejectionReason.trim()}
+                variant="destructive"
+              >
+                {processing ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Memproses...
+                  </>
+                ) : (
+                  <>
+                    <XCircle className="mr-2 h-4 w-4" />
+                    Tolak Permintaan
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
         {/* Return Dialog */}
         <Dialog
           open={returnDialog.open}
@@ -574,10 +962,11 @@ export default function PeminjamanAktifPage() {
         >
           <DialogContent className="sm:max-w-2xl">
             <DialogHeader>
-              <DialogTitle>Tandai Sebagai Dikembalikan</DialogTitle>
+              <DialogTitle>Catat Pengembalian Alat</DialogTitle>
               <DialogDescription>
-                Isi detail pengembalian alat. Stok inventaris akan otomatis
-                dikembalikan setelah proses disimpan.
+                Gunakan form ini hanya saat alat sudah benar-benar diterima
+                kembali oleh laboran. Stok inventaris akan otomatis bertambah
+                setelah catatan pengembalian disimpan.
               </DialogDescription>
             </DialogHeader>
 
@@ -641,7 +1030,7 @@ export default function PeminjamanAktifPage() {
                 {/* Kondisi Kembali */}
                 <div className="space-y-2">
                   <Label htmlFor="kondisi">
-                    Kondisi Barang Saat Dikembalikan{" "}
+                    Kondisi Barang Saat Diterima{" "}
                     <span className="text-destructive">*</span>
                   </Label>
                   <Select
@@ -678,35 +1067,6 @@ export default function PeminjamanAktifPage() {
                     rows={3}
                   />
                 </div>
-
-                {/* Denda */}
-                <div className="space-y-2">
-                  <Label htmlFor="denda">Denda (Rp)</Label>
-                  <Input
-                    id="denda"
-                    type="text"
-                    inputMode="numeric"
-                    value={returnForm.denda}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      if (value === "" || /^\d+$/.test(value)) {
-                        setReturnForm({
-                          ...returnForm,
-                          denda: value === "" ? 0 : parseInt(value, 10),
-                        });
-                      }
-                    }}
-                  />
-                  {returnDialog.borrowing.is_overdue && (
-                    <p className="text-xs text-muted-foreground">
-                      Saran: Rp 5.000/hari ×{" "}
-                      {returnDialog.borrowing.days_overdue} hari ={" "}
-                      {formatCurrency(
-                        returnDialog.borrowing.days_overdue * 5000,
-                      )}
-                    </p>
-                  )}
-                </div>
               </div>
             )}
 
@@ -733,7 +1093,7 @@ export default function PeminjamanAktifPage() {
                 ) : (
                   <>
                     <CheckCircle className="mr-2 h-4 w-4" />
-                    Tandai Sudah Kembali
+                    Simpan Pengembalian
                   </>
                 )}
               </Button>

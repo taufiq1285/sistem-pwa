@@ -13,9 +13,37 @@ import type {
   Jawaban,
   SubmitQuizData,
   SubmitAnswerData,
+  Soal,
 } from "@/types/kuis.types";
+import { TIPE_SOAL } from "@/types/kuis.types";
 import { supabase } from "@/lib/supabase/client";
 import { clearAllCacheSync, invalidateCache } from "@/lib/offline/api-cache";
+import { gradeAnswer } from "@/lib/utils/quiz-scoring";
+
+function sumAttemptPoints(
+  answers: Array<{ poin_diperoleh?: number | null }> | null | undefined,
+): number {
+  return (answers || []).reduce(
+    (total, item) => total + (item.poin_diperoleh ?? 0),
+    0,
+  );
+}
+
+function isAutoGradableQuestion(soal?: Soal | null): soal is Soal {
+  if (!soal) return false;
+  const autoGradableTypes: Array<
+    | typeof TIPE_SOAL.PILIHAN_GANDA
+    | typeof TIPE_SOAL.BENAR_SALAH
+    | typeof TIPE_SOAL.JAWABAN_SINGKAT
+  > = [
+    TIPE_SOAL.PILIHAN_GANDA,
+    TIPE_SOAL.BENAR_SALAH,
+    TIPE_SOAL.JAWABAN_SINGKAT,
+  ];
+  return autoGradableTypes.includes(
+    soal.tipe_soal as (typeof autoGradableTypes)[number],
+  );
+}
 
 /**
  * Submit answer - simplified without version checking
@@ -126,7 +154,7 @@ export async function submitQuizSafe(
   data: SubmitQuizData,
 ): Promise<AttemptKuis> {
   try {
-    const { data: updatedAttempt, error } = await supabase
+    const { data: submittedAttempt, error } = await supabase
       .from("attempt_kuis")
       .update({
         status: "submitted",
@@ -141,17 +169,11 @@ export async function submitQuizSafe(
           id,
           judul,
           kelas_id,
-          kelas:kelas_id (
-            id,
-            dosen_id,
-            dosen:dosen_id (
-              id,
-              user_id
-            )
-          )
+          dosen_id
         ),
         mahasiswa:mahasiswa_id (
           id,
+          user_id,
           user:user_id (
             full_name
           )
@@ -165,15 +187,277 @@ export async function submitQuizSafe(
       throw new Error(error.message);
     }
 
+    let finalAttempt = submittedAttempt as any;
+    let allQuestionsAutoGradable = false;
+
+    try {
+      const { data: attemptDetails, error: detailError } = await supabase
+        .from("attempt_kuis")
+        .select(
+          `
+          id,
+          status,
+          total_poin,
+          nilai_akhir,
+          kuis_id,
+          jawaban:jawaban(*),
+          kuis:kuis_id (
+            id,
+            passing_score,
+            soal:soal(*)
+          )
+        `,
+        )
+        .eq("id", data.attempt_id)
+        .single();
+
+      if (detailError) {
+        throw new Error(detailError.message);
+      }
+
+      const soalList = (
+        ((attemptDetails as any)?.kuis?.soal || []) as Soal[]
+      ).map((soal: any) => ({
+        ...soal,
+        tipe_soal: soal.tipe_soal || soal.tipe,
+        opsi_jawaban: soal.opsi_jawaban || soal.pilihan_jawaban || null,
+      }));
+      const jawabanList = (
+        ((attemptDetails as any)?.jawaban || []) as Jawaban[]
+      ).map((jawaban) => ({
+        ...jawaban,
+        jawaban: jawaban.jawaban ?? jawaban.jawaban_mahasiswa,
+      }));
+
+      const autoGradedAnswers = jawabanList
+        .map((jawaban) => {
+          const soal = soalList.find((item) => item.id === jawaban.soal_id);
+          if (!isAutoGradableQuestion(soal)) {
+            return null;
+          }
+
+          const studentAnswer =
+            jawaban.jawaban ?? jawaban.jawaban_mahasiswa ?? "";
+
+          const grading = studentAnswer.trim()
+            ? gradeAnswer(soal, studentAnswer)
+            : {
+                poin_diperoleh: 0,
+                is_correct: false,
+                feedback: jawaban.feedback ?? undefined,
+              };
+
+          return { jawaban, grading };
+        })
+        .filter(Boolean) as Array<{
+        jawaban: Jawaban;
+        grading: {
+          poin_diperoleh: number;
+          is_correct: boolean;
+          feedback?: string;
+        };
+      }>;
+
+      if (autoGradedAnswers.length > 0) {
+        await Promise.all(
+          autoGradedAnswers.map(({ jawaban, grading }) =>
+            supabase
+              .from("jawaban")
+              .update({
+                poin_diperoleh: grading.poin_diperoleh,
+                is_correct: grading.is_correct,
+                feedback: grading.feedback ?? jawaban.feedback ?? null,
+                updated_at: new Date().toISOString(),
+              })
+              .eq("id", jawaban.id),
+          ),
+        );
+      }
+
+      const autoGradedIds = new Set(
+        autoGradedAnswers.map(({ jawaban }) => jawaban.id),
+      );
+      const totalPoin =
+        autoGradedAnswers.reduce(
+          (sum, item) => sum + item.grading.poin_diperoleh,
+          0,
+        ) +
+        jawabanList
+          .filter((jawaban) => !autoGradedIds.has(jawaban.id))
+          .reduce((sum, jawaban) => sum + (jawaban.poin_diperoleh ?? 0), 0);
+      const maxPoin = soalList.reduce((sum, soal) => sum + (soal.poin ?? 0), 0);
+      const nilaiAkhir = maxPoin > 0 ? (totalPoin / maxPoin) * 100 : 0;
+      allQuestionsAutoGradable =
+        soalList.length > 0 &&
+        soalList.every((soal) => isAutoGradableQuestion(soal));
+
+      const { data: recalculatedAttempt, error: updateAttemptError } =
+        await supabase
+          .from("attempt_kuis")
+          .update({
+            total_poin: totalPoin,
+            nilai_akhir: nilaiAkhir,
+            status: allQuestionsAutoGradable ? "graded" : "submitted",
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", data.attempt_id)
+          .select(
+            `
+          *,
+          kuis:kuis_id (
+            id,
+            judul,
+            kelas_id,
+            dosen_id
+          ),
+          mahasiswa:mahasiswa_id (
+            id,
+            user_id,
+            user:user_id (
+              full_name
+            )
+          )
+        `,
+          )
+          .single();
+
+      if (updateAttemptError) {
+        throw new Error(updateAttemptError.message);
+      }
+
+      finalAttempt = recalculatedAttempt as any;
+    } catch (gradingError) {
+      console.warn(
+        "[KuisAPI] Submit succeeded but auto-grade/recalculate failed:",
+        gradingError,
+      );
+
+      try {
+        const { data: fallbackDetails, error: fallbackDetailError } =
+          await supabase
+            .from("attempt_kuis")
+            .select(
+              `
+              id,
+              jawaban:jawaban(poin_diperoleh),
+              kuis:kuis_id(
+                passing_score,
+                soal:soal(*)
+              )
+            `,
+            )
+            .eq("id", data.attempt_id)
+            .single();
+
+        if (fallbackDetailError) {
+          throw new Error(fallbackDetailError.message);
+        }
+
+        const fallbackSoal = (((fallbackDetails as any)?.kuis?.soal || []) as Soal[]).map(
+          (soal: any) => ({
+            ...soal,
+            tipe_soal: soal.tipe_soal || soal.tipe,
+            opsi_jawaban: soal.opsi_jawaban || soal.pilihan_jawaban || null,
+          }),
+        );
+        const fallbackJawaban =
+          (((fallbackDetails as any)?.jawaban || []) as Array<{
+            poin_diperoleh?: number | null;
+          }>) || [];
+
+        const fallbackAllAutoGradable =
+          fallbackSoal.length > 0 &&
+          fallbackSoal.every((soal) => isAutoGradableQuestion(soal));
+        const fallbackTotalPoin = fallbackJawaban.reduce(
+          (sum, jawaban) => sum + Number(jawaban.poin_diperoleh || 0),
+          0,
+        );
+        const fallbackMaxPoin = fallbackSoal.reduce(
+          (sum, soal) => sum + (soal.poin ?? 0),
+          0,
+        );
+        const fallbackNilaiAkhir =
+          fallbackMaxPoin > 0 ? (fallbackTotalPoin / fallbackMaxPoin) * 100 : 0;
+
+        const { data: recoveredAttempt, error: recoveryError } = await supabase
+          .from("attempt_kuis")
+          .update({
+            total_poin: fallbackTotalPoin,
+            nilai_akhir: fallbackNilaiAkhir,
+            status: fallbackAllAutoGradable ? "graded" : "submitted",
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", data.attempt_id)
+          .select(
+            `
+            *,
+            kuis:kuis_id (
+              id,
+              judul,
+              kelas_id,
+              dosen_id
+            ),
+            mahasiswa:mahasiswa_id (
+              id,
+              user_id,
+              user:user_id (
+                full_name
+              )
+            )
+          `,
+          )
+          .single();
+
+        if (recoveryError) {
+          throw new Error(recoveryError.message);
+        }
+
+        finalAttempt = recoveredAttempt as any;
+        allQuestionsAutoGradable = fallbackAllAutoGradable;
+        console.log(
+          "[KuisAPI] Recovery sync after submit succeeded:",
+          finalAttempt?.id,
+          finalAttempt?.status,
+          finalAttempt?.total_poin,
+        );
+      } catch (recoveryError) {
+        console.error(
+          "[KuisAPI] Recovery sync after submit failed:",
+          recoveryError,
+        );
+
+        if (allQuestionsAutoGradable) {
+          throw recoveryError;
+        }
+      }
+    }
+
     // ✅ AUTO-NOTIFICATION: Notify dosen when mahasiswa submits tugas
     try {
-      const attempt = updatedAttempt as any;
-      const dosenUserId = attempt?.kuis?.kelas?.dosen?.user_id;
+      const attempt = finalAttempt as any;
       const mahasiswaNama = attempt?.mahasiswa?.user?.full_name || "Mahasiswa";
       const tugasNama = attempt?.kuis?.judul || "Tugas Praktikum";
+      let dosenUserId: string | null = null;
+
+      if (attempt?.kuis?.dosen_id) {
+        const { data: dosenData, error: dosenError } = await supabase
+          .from("dosen")
+          .select("user_id")
+          .eq("id", attempt.kuis.dosen_id)
+          .single();
+
+        if (dosenError) {
+          console.error(
+            "[NOTIFICATION] Failed to load dosen target after submit:",
+            dosenError,
+          );
+        }
+
+        dosenUserId = dosenData?.user_id || null;
+      }
 
       if (dosenUserId) {
-        await notifyDosenTugasSubmitted(
+        const notification = await notifyDosenTugasSubmitted(
           dosenUserId,
           mahasiswaNama,
           tugasNama,
@@ -181,15 +465,27 @@ export async function submitQuizSafe(
           attempt.kuis_id,
         );
         console.log(
-          `[NOTIFICATION] Dosen notified: ${mahasiswaNama} submitted ${tugasNama}`,
+          "[NOTIFICATION] Submit tugas notification result:",
+          {
+            attemptId: data.attempt_id,
+            kuisId: attempt.kuis_id,
+            dosenUserId,
+            created: Boolean(notification),
+          },
         );
+      } else {
+        console.warn("[NOTIFICATION] Missing dosen user target for submitted tugas", {
+          attemptId: data.attempt_id,
+          kuisId: attempt?.kuis_id,
+          dosenId: attempt?.kuis?.dosen_id,
+        });
       }
     } catch (notifError) {
       // Don't fail the submission if notification fails
       console.error("[NOTIFICATION] Failed to notify dosen:", notifError);
     }
 
-    return updatedAttempt as unknown as AttemptKuis;
+    return finalAttempt as AttemptKuis;
   } catch (error) {
     console.error("[KuisAPI] submitQuizSafe error:", error);
     throw error;
@@ -308,11 +604,28 @@ export async function gradeAnswerWithVersion(
     // ✅ FIX: Update attempt status to "graded" and total_poin after grading
     const attemptId = (gradedAnswer as any).attempt_id;
     if (attemptId) {
+      const { data: attemptAnswers, error: answersError } = await supabase
+        .from("jawaban")
+        .select("poin_diperoleh")
+        .eq("attempt_id", attemptId);
+
+      if (answersError) {
+        console.error(
+          "[KuisAPI] Failed to recalculate attempt total:",
+          answersError,
+        );
+        throw new Error(
+          `Gagal menghitung ulang total attempt: ${answersError.message}`,
+        );
+      }
+
+      const totalPoin = sumAttemptPoints(attemptAnswers as any[]);
+
       console.log(
         "[KuisAPI] Updating attempt:",
         attemptId,
-        "with poin:",
-        poinDiperoleh,
+        "with total:",
+        totalPoin,
       );
 
       // ✅ FIX: Don't use .select() to avoid potential RLS issues
@@ -325,7 +638,8 @@ export async function gradeAnswerWithVersion(
         .from("attempt_kuis")
         .update({
           status: "graded",
-          total_poin: poinDiperoleh,
+          total_poin: totalPoin,
+          updated_at: new Date().toISOString(),
         })
         .eq("id", attemptId)
         .select();

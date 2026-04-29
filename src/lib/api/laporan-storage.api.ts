@@ -46,6 +46,10 @@ interface LaporanFileInfo {
   path: string;
 }
 
+const STORAGE_PUBLIC_SEGMENT = `/storage/v1/object/public/${BUCKET_NAME}/`;
+const STORAGE_SIGN_SEGMENT = `/storage/v1/object/sign/${BUCKET_NAME}/`;
+const STORAGE_AUTH_SEGMENT = `/storage/v1/object/authenticated/${BUCKET_NAME}/`;
+
 // ============================================================================
 // VALIDATION
 // ============================================================================
@@ -209,6 +213,143 @@ export async function getLaporanSignedUrl(
   }
 
   return data.signedUrl;
+}
+
+function extractLaporanPath(source: string): string | null {
+  const value = source.trim();
+  if (!value) return null;
+
+  if (!/^https?:\/\//i.test(value)) {
+    return value.replace(/^\/+/, "");
+  }
+
+  try {
+    const parsed = new URL(value);
+    const pathname = parsed.pathname;
+
+    for (const segment of [
+      STORAGE_PUBLIC_SEGMENT,
+      STORAGE_SIGN_SEGMENT,
+      STORAGE_AUTH_SEGMENT,
+    ]) {
+      const index = pathname.indexOf(segment);
+      if (index >= 0) {
+        return pathname.slice(index + segment.length);
+      }
+    }
+  } catch (error) {
+    console.warn("Failed to parse laporan URL:", error);
+  }
+
+  return null;
+}
+
+export async function resolveLaporanAccessUrl(
+  storedValue?: string | null,
+): Promise<string | null> {
+  if (!storedValue) {
+    return null;
+  }
+
+  const normalized = storedValue.trim();
+  if (!normalized) {
+    return null;
+  }
+
+  const filePath = extractLaporanPath(normalized);
+
+  if (!filePath) {
+    return normalized;
+  }
+
+  try {
+    return await getLaporanSignedUrl(filePath, 60 * 60 * 24);
+  } catch (signedError) {
+    console.warn("Failed to generate signed URL for laporan:", signedError);
+
+    const { data } = supabase.storage.from(BUCKET_NAME).getPublicUrl(filePath);
+    return data?.publicUrl || normalized;
+  }
+}
+
+function inferLaporanMimeType(
+  fileUrl?: string | null,
+  fileType?: string | null,
+  fileName?: string | null,
+): string {
+  const normalizedType = fileType?.trim().toLowerCase();
+  if (normalizedType) {
+    return normalizedType;
+  }
+
+  const source = `${fileName || ""} ${fileUrl || ""}`.toLowerCase();
+
+  if (source.includes(".pdf")) return "application/pdf";
+  if (source.includes(".docx")) {
+    return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+  }
+  if (source.includes(".doc")) return "application/msword";
+  if (source.includes(".png")) return "image/png";
+  if (source.includes(".jpeg") || source.includes(".jpg")) return "image/jpeg";
+  if (source.includes(".zip")) return "application/zip";
+
+  return "application/octet-stream";
+}
+
+export async function openLaporanFileInNewTab(params: {
+  fileUrl?: string | null;
+  fileType?: string | null;
+  fileName?: string | null;
+}): Promise<void> {
+  // Browser hanya mengizinkan tab baru jika dibuka langsung dari gesture klik.
+  // Buka tab kosong dulu, lalu isi URL setelah signed URL/blob selesai disiapkan.
+  const openedWindow = window.open("", "_blank");
+
+  if (!openedWindow) {
+    throw new Error("Tab baru gagal dibuka. Periksa popup blocker browser.");
+  }
+
+  openedWindow.document.write(
+    "<!doctype html><title>Membuka laporan...</title><body style=\"font-family: sans-serif; padding: 24px;\">Membuka file laporan...</body>",
+  );
+
+  const showOpenError = (message: string) => {
+    try {
+      openedWindow.document.body.innerHTML = `<p style="font-family: sans-serif; padding: 24px;">${message}</p>`;
+    } catch {
+      // Ignore cross-window rendering errors. The caller will still show a toast.
+    }
+  };
+
+  try {
+    const accessUrl = await resolveLaporanAccessUrl(params.fileUrl);
+
+    if (!accessUrl) {
+      showOpenError("URL file laporan belum tersedia.");
+      throw new Error("URL file laporan belum tersedia.");
+    }
+
+    const response = await fetch(accessUrl);
+    if (!response.ok) {
+      showOpenError(`Gagal memuat file laporan (${response.status}).`);
+      throw new Error(`Gagal memuat file laporan (${response.status}).`);
+    }
+
+    const blob = await response.blob();
+    const safeBlob = new Blob([blob], {
+      type: inferLaporanMimeType(accessUrl, params.fileType, params.fileName),
+    });
+    const blobUrl = URL.createObjectURL(safeBlob);
+
+    openedWindow.location.href = blobUrl;
+
+    setTimeout(() => {
+      URL.revokeObjectURL(blobUrl);
+    }, 60000);
+  } catch (error) {
+    showOpenError((error as Error).message || "Gagal membuka file laporan.");
+    throw error;
+  }
 }
 
 /**

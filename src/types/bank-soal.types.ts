@@ -85,6 +85,7 @@ export interface BankSoalFilters {
   tags?: string[];
   search?: string; // Search in pertanyaan
   is_public?: boolean;
+  include_public?: boolean;
   sortBy?: "created_at" | "usage_count" | "pertanyaan";
   sortOrder?: "asc" | "desc";
 }

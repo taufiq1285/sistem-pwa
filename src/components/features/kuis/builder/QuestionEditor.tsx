@@ -27,17 +27,12 @@ import {
 } from "lucide-react";
 
 // Question type components
-import {
-  MultipleChoice,
-} from "../question-types/MultipleChoice";
+import { MultipleChoice } from "../question-types/MultipleChoice";
 import {
   validateMultipleChoice,
   generateDefaultOptions,
 } from "../question-types/multiple-choice.utils";
-import {
-  Essay,
-  type EssaySettings,
-} from "../question-types/Essay";
+import { Essay, type EssaySettings } from "../question-types/Essay";
 import {
   validateEssay,
   getDefaultEssaySettings,
@@ -139,7 +134,7 @@ export function QuestionEditor({
   // Determine default type based on mode
   const getDefaultType = () => {
     if (cbtMode) return TIPE_SOAL.PILIHAN_GANDA;
-    if (laporanMode) return TIPE_SOAL.ESSAY;
+    if (laporanMode) return TIPE_SOAL.FILE_UPLOAD;
     return question?.tipe_soal || TIPE_SOAL.PILIHAN_GANDA;
   };
 
@@ -265,6 +260,9 @@ export function QuestionEditor({
     if (pertanyaan.trim().length < 10) {
       errors.push("Pertanyaan minimal 10 karakter");
     }
+    if (questionType === TIPE_SOAL.PILIHAN_GANDA && !penjelasan.trim()) {
+      errors.push("Keterangan jawaban wajib diisi");
+    }
 
     // ✅ Poin wajib untuk PILIHAN_GANDA dan ESSAY
     // FILE_UPLOAD pakai default 100 (bisa diubah saat penilaian)
@@ -327,7 +325,16 @@ export function QuestionEditor({
 
     // Add type-specific data
     if (questionType === TIPE_SOAL.PILIHAN_GANDA) {
-      questionData.opsi_jawaban = options;
+      const normalizedOptions = options.map((option) => ({
+        ...option,
+        is_correct: option.id === correctAnswerId,
+      }));
+      const selectedCorrectOption = normalizedOptions.find(
+        (option) => option.is_correct,
+      );
+
+      questionData.opsi_jawaban = normalizedOptions;
+      questionData.jawaban_benar = selectedCorrectOption?.id || "";
     } else if (questionType === TIPE_SOAL.ESSAY) {
       questionData.jawaban_benar = JSON.stringify(essaySettings);
     } else if (questionType === TIPE_SOAL.FILE_UPLOAD) {
@@ -358,6 +365,28 @@ export function QuestionEditor({
   // ============================================================================
 
   const validation = validateQuestion();
+  const itemLabel = laporanMode ? "Komponen" : "Soal";
+  const editorTitle = laporanMode
+    ? isEditing
+      ? "Edit Komponen Laporan"
+      : "Buat Komponen Laporan"
+    : isEditing
+      ? "Edit Soal"
+      : "Buat Soal Baru";
+  const saveLabel = laporanMode ? "Simpan Komponen" : "Simpan Soal";
+  const questionTextLabel = laporanMode ? "Instruksi Laporan" : "Pertanyaan";
+  const questionPlaceholder = laporanMode
+    ? "Tulis instruksi pengumpulan laporan di sini..."
+    : "Tulis pertanyaan di sini...";
+  const explanationLabel = laporanMode
+    ? "Catatan Tambahan"
+    : "Keterangan Jawaban";
+  const explanationPlaceholder = laporanMode
+    ? "Tambahkan catatan tambahan untuk mahasiswa bila diperlukan..."
+    : "Tulis keterangan jawaban yang akan dibaca mahasiswa setelah menyelesaikan CBT...";
+  const explanationDescription = laporanMode
+    ? "Catatan ini akan tampil sebagai informasi tambahan pada form pengumpulan laporan"
+    : "Keterangan wajib untuk soal CBT dan akan tampil di hasil mahasiswa sebagai bahan belajar";
 
   return (
     <Card className="w-full">
@@ -365,11 +394,9 @@ export function QuestionEditor({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Badge variant="outline" className="text-lg px-3 py-1">
-              Soal #{urutan}
+              {itemLabel} #{urutan}
             </Badge>
-            <CardTitle className="text-xl">
-              {isEditing ? "Edit Soal" : "Buat Soal Baru"}
-            </CardTitle>
+            <CardTitle className="text-xl">{editorTitle}</CardTitle>
           </div>
 
           <div className="flex items-center gap-2">
@@ -390,7 +417,7 @@ export function QuestionEditor({
               size="sm"
             >
               <Save className="h-4 w-4 mr-2" />
-              {isSaving ? "Menyimpan..." : "Simpan Soal"}
+              {isSaving ? "Menyimpan..." : saveLabel}
             </Button>
           </div>
         </div>
@@ -413,32 +440,14 @@ export function QuestionEditor({
             </div>
           ) : laporanMode ? (
             <div className="md:col-span-2 space-y-2">
-              <Label htmlFor="tipe_soal">
-                Tipe Soal
-                <span className="text-destructive ml-1">*</span>
-              </Label>
-              <Select
-                value={questionType}
-                onValueChange={handleTypeChange}
-                disabled={isEditing}
-              >
-                <SelectTrigger id="tipe_soal">
-                  <SelectValue placeholder="Pilih tipe soal" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={TIPE_SOAL.ESSAY}>
-                    {TIPE_SOAL_LABELS.essay}
-                  </SelectItem>
-                  <SelectItem value={TIPE_SOAL.FILE_UPLOAD}>
-                    <div className="flex items-center gap-2">
-                      <Upload className="h-4 w-4 text-orange-500" />
-                      {TIPE_SOAL_LABELS.file_upload}
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+              <Label>Tipe Soal</Label>
+              <div className="flex items-center gap-2 h-10 px-3 rounded-md border bg-muted/50">
+                <Upload className="h-4 w-4 text-orange-500" />
+                <span className="text-sm">{TIPE_SOAL_LABELS.file_upload}</span>
+              </div>
               <p className="text-xs text-muted-foreground">
-                Mode Laporan mendukung isian laporan atau upload berkas
+                Mode laporan dikunci ke upload file agar mahasiswa langsung
+                mengirim berkas laporan, tanpa opsi essay.
               </p>
             </div>
           ) : (
@@ -514,12 +523,12 @@ export function QuestionEditor({
         {/* Question Text */}
         <div className="space-y-2">
           <Label htmlFor="pertanyaan">
-            Pertanyaan
+            {questionTextLabel}
             <span className="text-destructive ml-1">*</span>
           </Label>
           <Textarea
             id="pertanyaan"
-            placeholder="Tulis pertanyaan di sini..."
+            placeholder={questionPlaceholder}
             rows={4}
             value={pertanyaan}
             onChange={(e) => setPertanyaan(e.target.value)}
@@ -617,21 +626,31 @@ export function QuestionEditor({
 
         <Separator />
 
-        {/* Explanation (Optional) */}
+        {/* Explanation */}
         <div className="space-y-2">
           <Label htmlFor="penjelasan">
-            Penjelasan / Pembahasan{" "}
-            <span className="text-muted-foreground">(Opsional)</span>
+            {explanationLabel}
+            {questionType === TIPE_SOAL.PILIHAN_GANDA ? (
+              <span className="text-destructive ml-1">*</span>
+            ) : (
+              <span className="text-muted-foreground"> (Opsional)</span>
+            )}
           </Label>
           <Textarea
             id="penjelasan"
-            placeholder="Tambahkan penjelasan atau pembahasan untuk soal ini..."
+            placeholder={explanationPlaceholder}
             rows={3}
             value={penjelasan}
             onChange={(e) => setPenjelasan(e.target.value)}
+            className={cn(
+              showErrors &&
+                questionType === TIPE_SOAL.PILIHAN_GANDA &&
+                !penjelasan.trim() &&
+                "border-destructive",
+            )}
           />
           <p className="text-xs text-muted-foreground">
-            Penjelasan akan ditampilkan setelah mahasiswa menyelesaikan kuis
+            {explanationDescription}
           </p>
         </div>
 
@@ -697,7 +716,7 @@ export function QuestionEditor({
             disabled={isSaving}
             className="flex-1"
           >
-            {isSaving ? "Menyimpan..." : "Simpan Soal"}
+            {isSaving ? "Menyimpan..." : saveLabel}
           </Button>
         </div>
       </CardContent>

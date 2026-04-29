@@ -13,8 +13,13 @@
 import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { toast } from "sonner";
-import { getMyKelas, type KelasWithStats } from "@/lib/api/dosen.api";
-import { cacheAPI, getCachedData } from "@/lib/offline/api-cache";
+import { getKelas } from "@/lib/api/kelas.api";
+import { getMataKuliah } from "@/lib/api/mata-kuliah.api";
+import {
+  cacheAPI,
+  getCachedData,
+  invalidateCache,
+} from "@/lib/offline/api-cache";
 import { supabase } from "@/lib/supabase/client";
 import {
   BookOpen,
@@ -30,6 +35,8 @@ import {
   Download,
   History,
   WifiOff,
+  XCircle,
+  RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -59,7 +66,6 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  getKehadiranByJadwal,
   saveKehadiranBulk,
   getKehadiranForExport,
   type KehadiranStatus,
@@ -70,6 +76,8 @@ import {
 } from "@/lib/utils/kehadiran-export";
 import { KehadiranHistory } from "@/components/features/kehadiran/KehadiranHistory";
 import { cn } from "@/lib/utils";
+import type { Kelas } from "@/types/kelas.types";
+import type { MataKuliah } from "@/types/mata-kuliah.types";
 
 // ============================================================================
 // TYPES
@@ -96,36 +104,22 @@ interface KelasOption {
   kode_kelas: string;
 }
 
-const buildMataKuliahOptions = (kelasData: Array<Partial<KelasWithStats>>) => {
-  const mataKuliahMap = new Map<string, MataKuliahOption>();
-
-  kelasData.forEach((kelas) => {
-    if (!kelas.mata_kuliah_id || !kelas.mata_kuliah_nama) {
-      return;
-    }
-
-    if (!mataKuliahMap.has(kelas.mata_kuliah_id)) {
-      mataKuliahMap.set(kelas.mata_kuliah_id, {
-        id: kelas.mata_kuliah_id,
-        nama_mk: kelas.mata_kuliah_nama,
-        kode_mk: kelas.mata_kuliah_kode || "",
-      });
-    }
-  });
-
-  return Array.from(mataKuliahMap.values());
-};
+const buildMataKuliahOptions = (mataKuliahData: MataKuliah[]) =>
+  mataKuliahData
+    .map((mataKuliah) => ({
+      id: mataKuliah.id,
+      nama_mk: mataKuliah.nama_mk,
+      kode_mk: mataKuliah.kode_mk || "",
+    }))
+    .filter((mataKuliah) => Boolean(mataKuliah.id && mataKuliah.nama_mk));
 
 const buildKelasOptions = (
-  kelasData: Array<Partial<KelasWithStats>>,
-  mataKuliahId: string,
+  kelasData: Kelas[],
   tahunAjaranFilter: string,
   semesterFilter: string,
 ) =>
   kelasData
     .filter((kelas) => {
-      if (kelas.mata_kuliah_id !== mataKuliahId) return false;
-
       if (
         tahunAjaranFilter &&
         tahunAjaranFilter !== "__all__" &&
@@ -155,6 +149,41 @@ const buildKelasOptions = (
 // STATUS CONSTANTS
 // ============================================================================
 
+const MASTER_DATA_CACHE_TTL = 60 * 1000;
+const D3_SEMESTER_OPTIONS = [1, 2, 3, 4, 5, 6];
+
+const buildTahunAjaranOptions = (kelasData: Kelas[]) => {
+  const tahunAjaranSet = new Set<string>();
+  kelasData.forEach((kelas) => {
+    if (kelas.tahun_ajaran) {
+      tahunAjaranSet.add(kelas.tahun_ajaran);
+    }
+  });
+
+  const now = new Date();
+  const academicStartYear =
+    now.getMonth() >= 6 ? now.getFullYear() : now.getFullYear() - 1;
+
+  [academicStartYear - 1, academicStartYear, academicStartYear + 1].forEach(
+    (year) => {
+      tahunAjaranSet.add(`${year}/${year + 1}`);
+    },
+  );
+
+  return Array.from(tahunAjaranSet).sort().reverse();
+};
+
+const buildSemesterOptions = (kelasData: Kelas[]) => {
+  const semesterSet = new Set<number>(D3_SEMESTER_OPTIONS);
+  kelasData.forEach((kelas) => {
+    if (kelas.semester_ajaran) {
+      semesterSet.add(kelas.semester_ajaran);
+    }
+  });
+
+  return Array.from(semesterSet).sort((a, b) => a - b);
+};
+
 const STATUS_OPTIONS: {
   value: KehadiranStatus;
   label: string;
@@ -165,25 +194,25 @@ const STATUS_OPTIONS: {
     value: "hadir",
     label: "Hadir",
     color: "bg-success/10 text-success border-success/30",
-    icon: "✓",
+    icon: "H",
   },
   {
     value: "izin",
     label: "Izin",
     color: "bg-info/10 text-info border-info/30",
-    icon: "📝",
+    icon: "I",
   },
   {
     value: "sakit",
     label: "Sakit",
     color: "bg-warning/10 text-warning border-warning/40",
-    icon: "🏥",
+    icon: "S",
   },
   {
     value: "alpha",
     label: "Alpha",
     color: "bg-danger/10 text-danger border-danger/40",
-    icon: "✗",
+    icon: "A",
   },
 ];
 
@@ -203,7 +232,7 @@ export default function DosenKehadiranPage() {
 
   // Step selections
   const [mataKuliahList, setMataKuliahList] = useState<MataKuliahOption[]>([]);
-  const [dosenKelasList, setDosenKelasList] = useState<KelasWithStats[]>([]);
+  const [dosenKelasList, setDosenKelasList] = useState<Kelas[]>([]);
   const [selectedMataKuliah, setSelectedMataKuliah] = useState<string>("");
 
   const [kelasList, setKelasList] = useState<KelasOption[]>([]);
@@ -229,16 +258,16 @@ export default function DosenKehadiranPage() {
 
   // Tabs
   const [activeTab, setActiveTab] = useState<"input" | "history">("input");
+  const [historyRefreshKey, setHistoryRefreshKey] = useState(0);
 
   const cacheKeys = useMemo(
     () => ({
-      mataKuliah: user?.dosen?.id
-        ? `dosen_mk_kehadiran_${user.dosen.id}`
-        : null,
-      kelas: user?.dosen?.id ? `dosen_kelas_kehadiran_${user.dosen.id}` : null,
-      mahasiswa: selectedKelas && selectedTanggal
-        ? `dosen_kehadiran_mahasiswa_${selectedKelas}_${selectedMataKuliah || "all"}_${selectedTanggal}`
-        : null,
+      mataKuliah: "admin_master_mata_kuliah_kehadiran",
+      kelas: "admin_master_kelas_kehadiran",
+      mahasiswa:
+        selectedKelas && selectedTanggal
+          ? `dosen_kehadiran_mahasiswa_${selectedKelas}_${selectedMataKuliah || "all"}_${selectedTanggal}`
+          : null,
     }),
     [selectedKelas, selectedMataKuliah, selectedTanggal, user?.dosen?.id],
   );
@@ -265,15 +294,10 @@ export default function DosenKehadiranPage() {
   }, [user?.dosen?.id]);
 
   useEffect(() => {
-    if (selectedMataKuliah) {
-      loadKelas(selectedMataKuliah);
-    } else {
-      setKelasList([]);
-    }
-  }, [selectedMataKuliah, dosenKelasList, tahunAjaranFilter, semesterFilter]);
+    loadKelas();
+  }, [dosenKelasList, tahunAjaranFilter, semesterFilter]);
 
   useEffect(() => {
-    setSelectedKelas("");
     setAttendanceRecords([]);
     setHasUnsavedChanges(false);
   }, [selectedMataKuliah]);
@@ -282,8 +306,10 @@ export default function DosenKehadiranPage() {
     if (!selectedKelas) {
       setAttendanceRecords([]);
       setHasUnsavedChanges(false);
+    } else if (!selectedMataKuliah) {
+      setActiveTab("history");
     }
-  }, [selectedKelas]);
+  }, [selectedKelas, selectedMataKuliah]);
 
   // Load mahasiswa when kelas changes
   useEffect(() => {
@@ -304,73 +330,75 @@ export default function DosenKehadiranPage() {
       }
 
       const [cachedMataKuliahEntry, cachedKelasEntry] = await Promise.all([
-        getCachedData<any[]>(cacheKeys.mataKuliah),
-        getCachedData<any[]>(cacheKeys.kelas),
+        getCachedData<MataKuliah[]>(cacheKeys.mataKuliah),
+        getCachedData<Kelas[]>(cacheKeys.kelas),
       ]);
 
       if (cachedMataKuliahEntry?.data) {
-        const cachedMataKuliah = buildMataKuliahOptions(
-          cachedMataKuliahEntry.data,
-        );
-        setMataKuliahList(cachedMataKuliah);
+        setMataKuliahList(buildMataKuliahOptions(cachedMataKuliahEntry.data));
         setIsOfflineData(true);
         setLastUpdatedAt(cachedMataKuliahEntry.timestamp);
       }
 
       if (cachedKelasEntry?.data) {
-        const tahunAjaranSet = new Set<string>();
-        const semesterSet = new Set<number>();
-        cachedKelasEntry.data.forEach((k: any) => {
-          if (k.tahun_ajaran) tahunAjaranSet.add(k.tahun_ajaran);
-          if (k.semester_ajaran) semesterSet.add(k.semester_ajaran);
-        });
-        setTahunAjaranOptions(Array.from(tahunAjaranSet).sort().reverse());
-        setSemesterOptions(Array.from(semesterSet).sort((a, b) => a - b));
+        setDosenKelasList(cachedKelasEntry.data);
+
+        setTahunAjaranOptions(buildTahunAjaranOptions(cachedKelasEntry.data));
+        setSemesterOptions(buildSemesterOptions(cachedKelasEntry.data));
         setLastUpdatedAt((current) =>
           Math.max(current ?? 0, cachedKelasEntry.timestamp),
         );
       }
 
-      const [, kelasData] = await Promise.all([
-        cacheAPI(cacheKeys.kelas, () => getMyKelas(), {
-          ttl: 15 * 60 * 1000,
-          forceRefresh,
-          staleWhileRevalidate: true,
-        }),
-        cacheAPI(cacheKeys.mataKuliah, () => getMyKelas(), {
-          ttl: 15 * 60 * 1000,
-          forceRefresh,
-          staleWhileRevalidate: true,
-        }),
+      const [mataKuliahData, kelasData] = await Promise.all([
+        cacheAPI(
+          cacheKeys.mataKuliah,
+          () =>
+            getMataKuliah({
+              is_active: true,
+            }),
+          {
+            ttl: MASTER_DATA_CACHE_TTL,
+            forceRefresh,
+            staleWhileRevalidate: true,
+          },
+        ),
+        cacheAPI(
+          cacheKeys.kelas,
+          () =>
+            getKelas({
+              is_active: true,
+            }),
+          {
+            ttl: MASTER_DATA_CACHE_TTL,
+            forceRefresh,
+            staleWhileRevalidate: true,
+          },
+        ),
       ]);
 
-      const dosenKelasData = kelasData as KelasWithStats[];
+      const dosenKelasData = kelasData as Kelas[];
       setDosenKelasList(dosenKelasData);
 
-      const mataKuliahArray = buildMataKuliahOptions(dosenKelasData);
+      const mataKuliahArray = buildMataKuliahOptions(
+        mataKuliahData as MataKuliah[],
+      );
 
       setMataKuliahList(mataKuliahArray);
       setIsOfflineData(false);
       setLastUpdatedAt(Date.now());
 
-      const tahunAjaranSet = new Set<string>();
-      const semesterSet = new Set<number>();
-      dosenKelasData.forEach((k: any) => {
-        if (k.tahun_ajaran) tahunAjaranSet.add(k.tahun_ajaran);
-        if (k.semester_ajaran) semesterSet.add(k.semester_ajaran);
-      });
-
-      setTahunAjaranOptions(Array.from(tahunAjaranSet).sort().reverse());
-      setSemesterOptions(Array.from(semesterSet).sort((a, b) => a - b));
+      setTahunAjaranOptions(buildTahunAjaranOptions(dosenKelasData));
+      setSemesterOptions(buildSemesterOptions(dosenKelasData));
     } catch (error) {
       console.error("Error loading mata kuliah:", error);
-      toast.error("Gagal memuat daftar mata kuliah");
+      toast.error("Gagal memuat master mata kuliah dan kelas dari admin");
     } finally {
       setLoading(false);
     }
   };
 
-  const loadKelas = async (mataKuliahId: string, forceRefresh = false) => {
+  const loadKelas = async (forceRefresh = false) => {
     try {
       setLoading(true);
       if (!cacheKeys.kelas) {
@@ -381,7 +409,6 @@ export default function DosenKehadiranPage() {
       if (cachedKelasEntry?.data) {
         const filteredCachedKelas = buildKelasOptions(
           cachedKelasEntry.data,
-          mataKuliahId,
           tahunAjaranFilter,
           semesterFilter,
         );
@@ -398,15 +425,21 @@ export default function DosenKehadiranPage() {
         );
       }
 
-      const allKelas = await cacheAPI(cacheKeys.kelas, () => getMyKelas(), {
-        ttl: 15 * 60 * 1000,
-        forceRefresh,
-        staleWhileRevalidate: true,
-      });
+      const allKelas = await cacheAPI(
+        cacheKeys.kelas,
+        () =>
+          getKelas({
+            is_active: true,
+          }),
+        {
+          ttl: MASTER_DATA_CACHE_TTL,
+          forceRefresh,
+          staleWhileRevalidate: true,
+        },
+      );
 
       const uniqueKelas = buildKelasOptions(
         allKelas,
-        mataKuliahId,
         tahunAjaranFilter,
         semesterFilter,
       );
@@ -437,8 +470,9 @@ export default function DosenKehadiranPage() {
         cacheKeys.mahasiswa ||
         `dosen_kehadiran_mahasiswa_${kelasId}_${selectedMataKuliah || "all"}_${selectedTanggal || "today"}`;
 
-      const cachedMahasiswaEntry =
-        await getCachedData<AttendanceRecord[]>(mahasiswaCacheKey);
+      const cachedMahasiswaEntry = forceRefresh
+        ? null
+        : await getCachedData<AttendanceRecord[]>(mahasiswaCacheKey);
       if (cachedMahasiswaEntry?.data) {
         setAttendanceRecords(cachedMahasiswaEntry.data);
         setHasUnsavedChanges(false);
@@ -484,34 +518,38 @@ export default function DosenKehadiranPage() {
             return baseRecords;
           }
 
-          let jadwalQuery: any = supabase
-            .from("jadwal_praktikum")
-            .select("id")
+          let kehadiranQuery: any = (supabase as any)
+            .from("kehadiran")
+            .select("id, mahasiswa_id, status, keterangan")
             .eq("kelas_id", kelasId)
-            .eq("tanggal_praktikum", selectedTanggal)
-            .eq("is_active", true);
+            .eq("tanggal", selectedTanggal);
 
           if (selectedMataKuliah) {
-            jadwalQuery = jadwalQuery.eq("mata_kuliah_id", selectedMataKuliah);
+            kehadiranQuery = kehadiranQuery.eq(
+              "mata_kuliah_id",
+              selectedMataKuliah,
+            );
           }
 
-          const { data: jadwalData, error: jadwalError } = await jadwalQuery
-            .order("created_at", { ascending: false })
-            .limit(1)
-            .maybeSingle();
+          const { data: existingKehadiran, error: kehadiranError } =
+            await kehadiranQuery;
 
-          if (jadwalError) throw jadwalError;
-          if (!jadwalData?.id) {
-            return baseRecords;
-          }
-
-          const existingKehadiran = await getKehadiranByJadwal(jadwalData.id);
+          if (kehadiranError) throw kehadiranError;
           const kehadiranMap = new Map(
-            existingKehadiran.map((item) => [item.mahasiswa_id, item]),
+            (existingKehadiran || []).map((item: any) => [
+              item.mahasiswa_id,
+              item,
+            ]),
           );
 
           return baseRecords.map((record) => {
-            const existing = kehadiranMap.get(record.mahasiswa_id);
+            const existing = kehadiranMap.get(record.mahasiswa_id) as
+              | {
+                  status?: KehadiranStatus;
+                  keterangan?: string | null;
+                  id?: string;
+                }
+              | undefined;
             if (!existing) {
               return record;
             }
@@ -602,6 +640,11 @@ export default function DosenKehadiranPage() {
 
       toast.success("Kehadiran berhasil disimpan");
       setHasUnsavedChanges(false);
+      if (cacheKeys.mahasiswa) {
+        await invalidateCache(cacheKeys.mahasiswa);
+      }
+      await loadMahasiswaForKehadiran(selectedKelas, true);
+      setHistoryRefreshKey((key) => key + 1);
     } catch (error: any) {
       console.error("Error saving attendance:", error);
       toast.error(
@@ -631,6 +674,7 @@ export default function DosenKehadiranPage() {
       const exportData = await getKehadiranForExport(
         selectedKelas,
         selectedTanggal,
+        selectedMataKuliah,
       );
 
       if (exportData.length === 0) {
@@ -691,7 +735,7 @@ export default function DosenKehadiranPage() {
         updatedKey === cacheKeys.mataKuliah &&
         Array.isArray(customEvent.detail.data)
       ) {
-        const mataKuliahData = customEvent.detail.data as KelasWithStats[];
+        const mataKuliahData = customEvent.detail.data as MataKuliah[];
         setMataKuliahList(buildMataKuliahOptions(mataKuliahData));
         setIsOfflineData(false);
         setLastUpdatedAt(Date.now());
@@ -702,16 +746,16 @@ export default function DosenKehadiranPage() {
         updatedKey === cacheKeys.kelas &&
         Array.isArray(customEvent.detail.data)
       ) {
-        const kelasData = customEvent.detail.data as any[];
+        const kelasData = customEvent.detail.data as Kelas[];
         const filteredKelas = selectedMataKuliah
           ? buildKelasOptions(
               kelasData,
-              selectedMataKuliah,
               tahunAjaranFilter,
               semesterFilter,
             )
           : [];
 
+        setDosenKelasList(kelasData);
         setKelasList(filteredKelas);
         setSelectedKelas((currentSelectedKelas) =>
           filteredKelas.some((kelas) => kelas.id === currentSelectedKelas)
@@ -761,6 +805,11 @@ export default function DosenKehadiranPage() {
     sakit: attendanceRecords.filter((r) => r.status === "sakit").length,
     alpha: attendanceRecords.filter((r) => r.status === "alpha").length,
   };
+  const hasSavedAttendance = attendanceRecords.some((r) => r.kehadiran_id);
+  const selectedMataKuliahInfo = mataKuliahList.find(
+    (mk) => mk.id === selectedMataKuliah,
+  );
+  const selectedKelasInfo = kelasList.find((kelas) => kelas.id === selectedKelas);
 
   // ============================================================================
   // RENDER
@@ -774,14 +823,30 @@ export default function DosenKehadiranPage() {
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-32 translate-x-32 blur-3xl" />
           <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full translate-y-24 -translate-x-24 blur-2xl" />
 
-          <div className="relative">
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold flex items-center gap-3">
-              📋 Kehadiran Praktikum
-            </h1>
-            <p className="text-sm sm:text-base md:text-lg font-semibold mt-2 max-w-xl">
-              Input kehadiran mahasiswa praktikum. Pilih mata kuliah, kelas, dan
-              tanggal kehadiran.
-            </p>
+          <div className="relative flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold flex items-center gap-3">
+                <BookOpen className="h-8 w-8" />
+                Kehadiran Mahasiswa
+              </h1>
+              <p className="text-sm sm:text-base md:text-lg font-semibold mt-2 max-w-xl">
+                Catat presensi per mata kuliah, kelas, dan tanggal. Satu kelas
+                dapat memiliki beberapa mata kuliah dengan riwayat kehadiran
+                yang berbeda.
+              </p>
+            </div>
+            <Button
+              variant="secondary"
+              onClick={() => loadMataKuliah(true)}
+              disabled={loading || !navigator.onLine}
+              className="w-full bg-white/90 text-primary hover:bg-white sm:w-auto"
+              title="Ambil ulang data master terbaru dari admin"
+            >
+              <RefreshCw
+                className={cn("mr-2 h-4 w-4", loading && "animate-spin")}
+              />
+              Refresh Data
+            </Button>
           </div>
         </div>
 
@@ -824,7 +889,8 @@ export default function DosenKehadiranPage() {
                 )}
               </div>
               <CardDescription>
-                Filter kelas berdasarkan tahun ajaran dan semester
+                Tahun ajaran mengikuti data kelas aktif. Semester disiapkan
+                lengkap untuk D3: semester 1-6, ganjil dan genap.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -870,7 +936,7 @@ export default function DosenKehadiranPage() {
                       <SelectItem value="__all__">Semua Semester</SelectItem>
                       {semesterOptions.map((sem) => (
                         <SelectItem key={sem} value={sem.toString()}>
-                          Semester {sem}
+                          Semester {sem} ({sem % 2 === 1 ? "Ganjil" : "Genap"})
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -906,6 +972,9 @@ export default function DosenKehadiranPage() {
                 </div>
                 <CardTitle className="text-base">Mata Kuliah</CardTitle>
               </div>
+              <CardDescription>
+                Pilih saat ingin input atau edit kehadiran mata kuliah tertentu.
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <Select
@@ -933,7 +1002,12 @@ export default function DosenKehadiranPage() {
               {selectedMataKuliah && (
                 <div className="mt-2 flex items-center gap-1 text-xs text-success">
                   <CheckCircle2 className="h-3 w-3" />
-                  <span>Mata kuliah dipilih</span>
+                  <span>Mata kuliah dari master admin dipilih</span>
+                </div>
+              )}
+              {!selectedMataKuliah && selectedKelas && (
+                <div className="mt-2 text-xs font-semibold text-muted-foreground">
+                  Mode cek riwayat: semua mata kuliah pada kelas aktif.
                 </div>
               )}
             </CardContent>
@@ -943,7 +1017,6 @@ export default function DosenKehadiranPage() {
           <Card
             className={cn(
               "border-2 transition-all shadow-lg hover:shadow-xl",
-              !selectedMataKuliah && "opacity-50",
               selectedKelas
                 ? "border-success/50 bg-success/5"
                 : "border-border/50",
@@ -963,23 +1036,20 @@ export default function DosenKehadiranPage() {
                 </div>
                 <CardTitle className="text-base">Kelas</CardTitle>
               </div>
+              <CardDescription>
+                Bisa dipilih lebih dulu untuk cek riwayat semua mata kuliah di
+                kelas ini.
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <Select
                 value={selectedKelas}
                 onValueChange={setSelectedKelas}
-                disabled={!selectedMataKuliah}
               >
                 <SelectTrigger
                   className={cn(selectedKelas && "border-success/60")}
                 >
-                  <SelectValue
-                    placeholder={
-                      selectedMataKuliah
-                        ? "Pilih kelas..."
-                        : "Pilih mata kuliah dulu"
-                    }
-                  />
+                  <SelectValue placeholder="Pilih kelas..." />
                 </SelectTrigger>
                 <SelectContent>
                   {kelasList.map((kelas) => (
@@ -992,7 +1062,7 @@ export default function DosenKehadiranPage() {
               {selectedKelas && (
                 <div className="mt-2 flex items-center gap-1 text-xs text-success">
                   <CheckCircle2 className="h-3 w-3" />
-                  <span>Kelas dipilih</span>
+                  <span>Kelas dari master admin dipilih</span>
                 </div>
               )}
             </CardContent>
@@ -1022,6 +1092,9 @@ export default function DosenKehadiranPage() {
                 </div>
                 <CardTitle className="text-base">Tanggal Kehadiran</CardTitle>
               </div>
+              <CardDescription>
+                Bebas tentukan tanggal pertemuan yang ingin dicatat.
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <Input
@@ -1041,13 +1114,114 @@ export default function DosenKehadiranPage() {
           </Card>
         </div>
 
+        {selectedKelas && (
+          <Card className="overflow-hidden border-primary/15 bg-primary/5 shadow-lg">
+            <CardContent className="p-4 sm:p-5">
+              <div className="grid gap-3 md:grid-cols-4">
+                <div className="rounded-xl bg-white/85 p-3 shadow-sm">
+                  <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                    Mata Kuliah Aktif
+                  </p>
+                  <p className="mt-1 text-sm font-extrabold text-foreground">
+                    {selectedMataKuliahInfo?.nama_mk ||
+                      "Semua mata kuliah untuk cek riwayat"}
+                  </p>
+                  {selectedMataKuliahInfo?.kode_mk && (
+                    <p className="text-xs font-semibold text-muted-foreground">
+                      {selectedMataKuliahInfo.kode_mk}
+                    </p>
+                  )}
+                </div>
+                <div className="rounded-xl bg-white/85 p-3 shadow-sm">
+                  <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                    Kelas Aktif
+                  </p>
+                  <p className="mt-1 text-sm font-extrabold text-foreground">
+                    {selectedKelasInfo?.nama_kelas || "-"}
+                  </p>
+                  {selectedKelasInfo?.kode_kelas && (
+                    <p className="text-xs font-semibold text-muted-foreground">
+                      {selectedKelasInfo.kode_kelas}
+                    </p>
+                  )}
+                </div>
+                <div className="rounded-xl bg-white/85 p-3 shadow-sm">
+                  <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                    Tanggal
+                  </p>
+                  <p className="mt-1 text-sm font-extrabold text-foreground">
+                    {formatDate(selectedTanggal)}
+                  </p>
+                </div>
+                <div className="rounded-xl bg-white/85 p-3 shadow-sm">
+                  <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                    Roster Ditampilkan
+                  </p>
+                  <p className="mt-1 text-sm font-extrabold text-foreground">
+                    {attendanceRecords.length} mahasiswa
+                  </p>
+                </div>
+              </div>
+              <p className="mt-3 text-xs font-semibold text-muted-foreground">
+                Mahasiswa yang sama dapat memiliki kehadiran berbeda untuk mata
+                kuliah berbeda. Untuk cek riwayat, cukup pilih kelas; untuk
+                input atau edit detail, pilih mata kuliah aktif.
+              </p>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Statistics Cards */}
         {selectedKelas && attendanceRecords.length > 0 && (
-          <div className="grid gap-4 md:grid-cols-4">
+          <div className="space-y-4">
+            {hasSavedAttendance && (
+              <Card className="overflow-hidden border-success/30 bg-success/5 shadow-lg shadow-success/10">
+                <CardContent className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="space-y-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <StatusBadge status="success" pulse={false}>
+                        <CheckCircle2 className="mr-1 h-3 w-3" />
+                        Kehadiran sudah tersimpan
+                      </StatusBadge>
+                      <span className="text-xs font-semibold text-muted-foreground">
+                        {formatDate(selectedTanggal)}
+                      </span>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Data untuk mata kuliah, kelas, dan tanggal ini sudah ada.
+                      Anda bisa mengubah status lalu simpan ulang jika perlu.
+                    </p>
+                  </div>
+                  <div className="flex flex-col gap-2 sm:flex-row">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setActiveTab("history")}
+                      className="gap-2"
+                    >
+                      <History className="h-4 w-4" />
+                      Lihat Riwayat
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={() => setActiveTab("input")}
+                      className="gap-2"
+                    >
+                      <Calendar className="h-4 w-4" />
+                      Edit Kehadiran Tanggal Ini
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            <div className="grid gap-4 md:grid-cols-4">
             <Card className="border-0 shadow-xl bg-linear-to-br from-success/5 to-success/10 dark:from-success/10 dark:to-success/20">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Hadir</CardTitle>
-                <div className="text-2xl">✓</div>
+                <CheckCircle2 className="h-5 w-5 text-success" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-success">
@@ -1060,7 +1234,7 @@ export default function DosenKehadiranPage() {
             <Card className="border-0 shadow-xl bg-linear-to-br from-info/5 to-info/10 dark:from-info/10 dark:to-info/20">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Izin</CardTitle>
-                <div className="text-2xl">📝</div>
+                <Clock className="h-5 w-5 text-info" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-info">{stats.izin}</div>
@@ -1071,7 +1245,7 @@ export default function DosenKehadiranPage() {
             <Card className="border-0 shadow-xl bg-linear-to-br from-warning/5 to-warning/10 dark:from-warning/10 dark:to-warning/20">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Sakit</CardTitle>
-                <div className="text-2xl">🏥</div>
+                <AlertCircle className="h-5 w-5 text-warning" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-warning">
@@ -1084,7 +1258,7 @@ export default function DosenKehadiranPage() {
             <Card className="border-0 shadow-xl bg-linear-to-br from-danger/5 to-danger/10 dark:from-danger/10 dark:to-danger/20">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Alpha</CardTitle>
-                <div className="text-2xl">✗</div>
+                <XCircle className="h-5 w-5 text-danger" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-danger">
@@ -1093,6 +1267,7 @@ export default function DosenKehadiranPage() {
                 <p className="text-xs text-muted-foreground">mahasiswa</p>
               </CardContent>
             </Card>
+            </div>
           </div>
         )}
 
@@ -1102,20 +1277,32 @@ export default function DosenKehadiranPage() {
             value={activeTab}
             onValueChange={(v) => setActiveTab(v as "input" | "history")}
           >
-            <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-6 rounded-xl p-1 h-auto bg-linear-to-r from-primary/10 to-accent/10 dark:from-primary/20 dark:to-accent/20">
+            <TabsList className="mb-6 grid h-auto w-full grid-cols-1 gap-1.5 rounded-3xl border border-slate-200/70 bg-white/85 p-1.5 shadow-sm backdrop-blur sm:grid-cols-2">
               <TabsTrigger
                 value="input"
-                className="gap-2 rounded-lg py-2.5 font-semibold data-[state=active]:bg-white data-[state=active]:shadow-md dark:data-[state=active]:bg-card"
+                className="flex min-h-14 flex-col items-center justify-center gap-0.5 rounded-2xl text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:text-sm"
               >
-                <Calendar className="h-4 w-4" />
-                Input Kehadiran
+                <span className="inline-flex items-center gap-1.5 font-semibold">
+                  <Calendar className="h-3.5 w-3.5" />
+                  {hasSavedAttendance
+                    ? "Edit Kehadiran Tersimpan"
+                    : "Input Kehadiran Baru"}
+                </span>
+                <span className="hidden text-[11px] font-normal opacity-80 sm:block">
+                  Catat presensi per tanggal
+                </span>
               </TabsTrigger>
               <TabsTrigger
                 value="history"
-                className="gap-2 rounded-lg py-2.5 font-semibold data-[state=active]:bg-white data-[state=active]:shadow-md dark:data-[state=active]:bg-card"
+                className="flex min-h-14 flex-col items-center justify-center gap-0.5 rounded-2xl text-xs data-[state=active]:bg-slate-900 data-[state=active]:text-white sm:text-sm"
               >
-                <History className="h-4 w-4" />
-                Riwayat
+                <span className="inline-flex items-center gap-1.5 font-semibold">
+                  <History className="h-3.5 w-3.5" />
+                  Riwayat
+                </span>
+                <span className="hidden text-[11px] font-normal opacity-80 sm:block">
+                  Lihat dan edit pertemuan
+                </span>
               </TabsTrigger>
             </TabsList>
 
@@ -1125,10 +1312,17 @@ export default function DosenKehadiranPage() {
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div>
-                      <CardTitle>Input Kehadiran</CardTitle>
+                      <CardTitle>
+                        {!selectedMataKuliah
+                          ? "Pilih Mata Kuliah untuk Input Kehadiran"
+                          : hasSavedAttendance
+                            ? "Edit Kehadiran Tersimpan"
+                            : "Input Kehadiran Baru"}{" "}
+                        - Kelas {selectedKelasInfo?.nama_kelas || "-"}
+                      </CardTitle>
                       <CardDescription>
-                        {attendanceRecords.length} mahasiswa •{" "}
-                        {formatDate(selectedTanggal)}
+                        {attendanceRecords.length} mahasiswa dalam konteks mata
+                        kuliah aktif | {formatDate(selectedTanggal)}
                       </CardDescription>
                     </div>
                     <div className="flex gap-2 items-center">
@@ -1152,7 +1346,16 @@ export default function DosenKehadiranPage() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  {loading ? (
+                  {!selectedMataKuliah ? (
+                    <Alert>
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>
+                        Pilih mata kuliah dulu untuk input atau edit kehadiran.
+                        Jika hanya ingin mengecek apakah kelas ini sudah pernah
+                        diabsen, buka tab Riwayat.
+                      </AlertDescription>
+                    </Alert>
+                  ) : loading ? (
                     <div className="text-center py-8">
                       <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-2" />
                       <p className="text-muted-foreground">Memuat data...</p>
@@ -1235,15 +1438,21 @@ export default function DosenKehadiranPage() {
                         <Button
                           variant="outline"
                           onClick={() => {
-                            setAttendanceRecords([]);
-                            setHasUnsavedChanges(false);
+                            if (selectedKelas) {
+                              loadMahasiswaForKehadiran(selectedKelas, true);
+                            }
                           }}
+                          disabled={loading}
                         >
-                          Reset
+                          Reset ke Data Tersimpan
                         </Button>
                         <Button
                           onClick={handleSaveAttendance}
-                          disabled={isSavingAttendance || !hasUnsavedChanges || !navigator.onLine}
+                          disabled={
+                            isSavingAttendance ||
+                            !hasUnsavedChanges ||
+                            !navigator.onLine
+                          }
                           size="lg"
                           className="gap-2"
                         >
@@ -1269,12 +1478,17 @@ export default function DosenKehadiranPage() {
             <TabsContent value="history">
               <KehadiranHistory
                 kelasId={selectedKelas}
+                mataKuliahId={selectedMataKuliah || undefined}
+                refreshKey={historyRefreshKey}
                 kelasNama={
                   kelasList.find((k) => k.id === selectedKelas)?.nama_kelas ||
                   ""
                 }
-                onSelectDate={(date) => {
-                  setSelectedTanggal(date);
+                onSelectRecord={(record) => {
+                  if (record.mata_kuliah_id) {
+                    setSelectedMataKuliah(record.mata_kuliah_id);
+                  }
+                  setSelectedTanggal(record.tanggal);
                   setActiveTab("input");
                 }}
               />
@@ -1284,20 +1498,44 @@ export default function DosenKehadiranPage() {
 
         {/* Empty State */}
         {!selectedKelas && (
-          <Card className="border-2 border-dashed">
-            <CardContent className="flex flex-col items-center justify-center py-16">
-              <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
-                <Users className="h-8 w-8 text-muted-foreground" />
-              </div>
-              <h3 className="text-lg font-semibold mb-2">
-                Pilih Mata Kuliah dan Kelas
-              </h3>
-              <p className="text-muted-foreground text-center max-w-md">
-                Ikuti langkah di atas untuk mulai input kehadiran mahasiswa
-                praktikum.
-              </p>
-            </CardContent>
-          </Card>
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_420px]">
+            <Card className="border-2 border-dashed">
+              <CardContent className="flex flex-col items-center justify-center py-16">
+                <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
+                  <Users className="h-8 w-8 text-muted-foreground" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2">
+                  Pilih Kelas untuk Cek Riwayat
+                </h3>
+                <p className="text-muted-foreground text-center max-w-md">
+                  Untuk melihat apakah kehadiran sudah pernah dibuat, cukup
+                  pilih kelas. Mata kuliah baru wajib dipilih saat input atau
+                  edit presensi.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-2 border-dashed border-primary/20 bg-white/85">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <History className="h-5 w-5 text-primary" />
+                  Riwayat Kehadiran
+                </CardTitle>
+                <CardDescription>
+                  Riwayat akan muncul setelah kelas dipilih. Jika mata kuliah
+                  belum dipilih, riwayat menampilkan semua mata kuliah di kelas
+                  tersebut.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="rounded-2xl bg-primary/5 p-4 text-sm text-muted-foreground">
+                  Pilih <strong>kelas</strong> untuk melihat tanggal yang sudah
+                  pernah diisi. Klik riwayatnya untuk otomatis membuka mata
+                  kuliah dan tanggal yang sesuai.
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         )}
       </div>
     </div>

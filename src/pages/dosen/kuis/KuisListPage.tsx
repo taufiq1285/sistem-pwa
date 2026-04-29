@@ -46,6 +46,101 @@ import { supabase } from "@/lib/supabase/client";
 
 type ViewMode = "grid" | "list";
 type StatusFilter = "all" | "draft" | "active" | "ended";
+const CONTEXT_SEPARATOR = "::";
+
+async function enrichQuizListStats(quizzes: Kuis[]): Promise<Kuis[]> {
+  if (quizzes.length === 0) {
+    return quizzes;
+  }
+
+  const quizIds = quizzes.map((quiz) => quiz.id);
+
+  const [{ data: soalRows, error: soalError }, { data: attemptRows, error: attemptError }] =
+    await Promise.all([
+      supabase
+        .from("soal")
+        .select("id, kuis_id, poin")
+        .in("kuis_id", quizIds),
+      supabase
+        .from("attempt_kuis")
+        .select("id, kuis_id, status, total_poin, jawaban(poin_diperoleh, feedback)")
+        .in("kuis_id", quizIds),
+    ]);
+
+  if (soalError) {
+    throw soalError;
+  }
+
+  if (attemptError) {
+    throw attemptError;
+  }
+
+  const soalStats = new Map<string, { totalSoal: number; totalPoin: number }>();
+  for (const row of soalRows || []) {
+    const current = soalStats.get(row.kuis_id) || {
+      totalSoal: 0,
+      totalPoin: 0,
+    };
+    current.totalSoal += 1;
+    current.totalPoin += row.poin || 0;
+    soalStats.set(row.kuis_id, current);
+  }
+
+  const attemptStats = new Map<
+    string,
+    {
+      totalAttempts: number;
+      submittedCount: number;
+      pendingReviewCount: number;
+      gradedCount: number;
+    }
+  >();
+  for (const row of attemptRows || []) {
+    const current = attemptStats.get(row.kuis_id) || {
+      totalAttempts: 0,
+      submittedCount: 0,
+      pendingReviewCount: 0,
+      gradedCount: 0,
+    };
+
+    const hasReviewResult =
+      row.status === "graded" ||
+      row.total_poin != null ||
+      (row.jawaban || []).some(
+        (jawaban: any) =>
+          jawaban.poin_diperoleh != null ||
+          Boolean(jawaban.feedback?.trim?.()),
+      );
+
+    if (row.status === "submitted" || row.status === "graded") {
+      current.totalAttempts += 1;
+      current.submittedCount += 1;
+    }
+    if (row.status === "submitted" && !hasReviewResult) {
+      current.pendingReviewCount += 1;
+    }
+    if (hasReviewResult) {
+      current.gradedCount += 1;
+    }
+
+    attemptStats.set(row.kuis_id, current);
+  }
+
+  return quizzes.map((quiz) => {
+    const quizSoalStats = soalStats.get(quiz.id);
+    const quizAttemptStats = attemptStats.get(quiz.id);
+
+    return {
+      ...quiz,
+      total_soal: quizSoalStats?.totalSoal || 0,
+      total_poin: quizSoalStats?.totalPoin || 0,
+      total_attempts: quizAttemptStats?.totalAttempts || 0,
+      submitted_count: quizAttemptStats?.submittedCount || 0,
+      pending_review_count: quizAttemptStats?.pendingReviewCount || 0,
+      graded_count: quizAttemptStats?.gradedCount || 0,
+    } as Kuis;
+  });
+}
 
 // ============================================================================
 // COMPONENT
@@ -129,6 +224,20 @@ export default function KuisListPage() {
             }
           },
         )
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "attempt_kuis",
+          },
+          () => {
+            console.log(
+              "[Dosen KuisList] Attempt changed, refreshing quiz stats...",
+            );
+            debouncedLoad(true);
+          },
+        )
         .subscribe();
 
       console.log(
@@ -203,7 +312,7 @@ export default function KuisListPage() {
         "[Dosen KuisList] 🔁 Auto-refreshing on mount to ensure fresh data...",
       );
       loadQuizzes(true);
-    }, 800); // Wait for cache invalidation to complete
+    }, 300); // ✅ Dipercepat dari 800ms ke 300ms
 
     return () => clearTimeout(refreshTimer);
   }, [user?.dosen?.id]);
@@ -279,7 +388,8 @@ export default function KuisListPage() {
         );
       }
 
-      setQuizzes(data);
+      const enrichedData = await enrichQuizListStats(data);
+      setQuizzes(enrichedData);
     } catch (err: any) {
       setError(err.message || "Gagal memuat daftar tugas praktikum");
       toast.error("Gagal memuat daftar tugas praktikum", {
@@ -314,9 +424,16 @@ export default function KuisListPage() {
       });
     }
 
-    // Kelas filter
+    // Kelas + mata kuliah filter. The same class can contain multiple
+    // mata kuliah, so kelas_id alone is not enough context.
     if (kelasFilter !== "all") {
-      filtered = filtered.filter((quiz) => quiz.kelas_id === kelasFilter);
+      const [kelasId, mataKuliahId = "no-mk"] =
+        kelasFilter.split(CONTEXT_SEPARATOR);
+      filtered = filtered.filter((quiz) => {
+        const quizMataKuliahId =
+          quiz.mata_kuliah_id || quiz.mata_kuliah?.id || "no-mk";
+        return quiz.kelas_id === kelasId && quizMataKuliahId === mataKuliahId;
+      });
     }
 
     setFilteredQuizzes(filtered);
@@ -337,15 +454,15 @@ export default function KuisListPage() {
   // COMPUTED VALUES
   // ============================================================================
 
-  // Get unique kelas for filter with tugas context
+  // Get unique kelas + mata kuliah contexts for filter.
   const kelasOptions = Array.from(
     new Map(
       quizzes
         .filter((q) => q.kelas)
         .map((q) => [
-          q.kelas_id,
+          `${q.kelas_id}${CONTEXT_SEPARATOR}${q.mata_kuliah_id || q.mata_kuliah?.id || "no-mk"}`,
           {
-            kelas_id: q.kelas_id,
+            value: `${q.kelas_id}${CONTEXT_SEPARATOR}${q.mata_kuliah_id || q.mata_kuliah?.id || "no-mk"}`,
             nama_kelas: q.kelas?.nama_kelas || "-",
             mata_kuliah: q.mata_kuliah || q.kelas?.mata_kuliah,
           },
@@ -449,6 +566,15 @@ export default function KuisListPage() {
 
             <div className="flex gap-3">
               <Button
+                onClick={() => loadQuizzes(true)}
+                size="lg"
+                variant="ghost"
+                className="gap-2 bg-white/10 backdrop-blur-sm border border-white/20 text-primary-foreground hover:bg-white/20 shadow-lg"
+                title="Refresh daftar tugas"
+              >
+                <RefreshCw className="h-5 w-5" />
+              </Button>
+              <Button
                 onClick={handleCreateQuiz}
                 size="lg"
                 className="gap-3 bg-white/15 backdrop-blur-sm border border-white/30 text-primary-foreground hover:bg-white/25 shadow-xl font-bold text-lg px-8 py-6"
@@ -504,13 +630,16 @@ export default function KuisListPage() {
                   <SelectValue placeholder="Filter Kelas" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Semua Kelas</SelectItem>
+                  <SelectItem value="all">Semua Kelas & Mata Kuliah</SelectItem>
                   {kelasOptions.map((kelas: any) => {
-                    const kelasValue = String(kelas.kelas_id);
+                    const kelasValue = String(kelas.value);
                     return (
                       <SelectItem key={kelasValue} value={kelasValue}>
                         {kelas.nama_kelas}
-                        {kelas.mata_kuliah?.kode_mk
+                        {kelas.mata_kuliah?.nama_mk
+                          ? ` - ${kelas.mata_kuliah.nama_mk}`
+                          : ""}
+                        {false && kelas.mata_kuliah?.nama_mk
                           ? ` • ${kelas.mata_kuliah.kode_mk}`
                           : ""}
                       </SelectItem>

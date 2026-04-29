@@ -212,7 +212,10 @@ async function updateUserImpl(id: string, data: UpdateUserData): Promise<void> {
       return;
     }
 
-    const { error } = await supabase.from("users").update(safeData).eq("id", id);
+    const { error } = await supabase
+      .from("users")
+      .update(safeData)
+      .eq("id", id);
 
     if (error) throw error;
   } catch (error) {
@@ -333,7 +336,10 @@ async function deleteUserImpl(userId: string): Promise<void> {
       | "sync_history";
 
     const cleanupUserScopedTable = async (table: UserScopedCleanupTable) => {
-      const { error } = await supabase.from(table).delete().eq("user_id", userId);
+      const { error } = await supabase
+        .from(table)
+        .delete()
+        .eq("user_id", userId);
       if (error) {
         console.warn(`[deleteUserImpl] Failed to cleanup ${table}:`, error);
       }

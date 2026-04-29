@@ -16,9 +16,15 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Card,
   CardContent,
@@ -50,14 +56,11 @@ import {
   getPermintaanStatsForDosen,
 } from "@/lib/api/permintaan-perbaikan.api";
 import type {
+  BentukPerbaikanNilai,
   PermintaanPerbaikanWithRelations,
   PermintaanStatsForDosen,
 } from "@/types/permintaan-perbaikan.types";
-import {
-  KOMPONEN_NILAI_LABELS,
-  STATUS_PERMINTAAN_LABELS,
-  STATUS_COLORS,
-} from "@/types/permintaan-perbaikan.types";
+import { BENTUK_PERBAIKAN_LABELS } from "@/types/permintaan-perbaikan.types";
 import { toast } from "sonner";
 
 // ============================================================================
@@ -89,8 +92,11 @@ export function PermintaanPerbaikanTab({
   const [reviewAction, setReviewAction] = useState<"approve" | "reject">(
     "approve",
   );
-  const [nilaiBaru, setNilaiBaru] = useState("");
   const [responseDosen, setResponseDosen] = useState("");
+  const [bentukPerbaikan, setBentukPerbaikan] = useState<
+    BentukPerbaikanNilai | ""
+  >("");
+  const [instruksiPerbaikan, setInstruksiPerbaikan] = useState("");
   const [processing, setProcessing] = useState(false);
 
   // Load data
@@ -123,8 +129,9 @@ export function PermintaanPerbaikanTab({
   ) => {
     setSelectedPermintaan(permintaan);
     setReviewAction(action);
-    setNilaiBaru(permintaan.nilai_usulan?.toString() || "");
     setResponseDosen("");
+    setBentukPerbaikan("");
+    setInstruksiPerbaikan("");
     setReviewDialogOpen(true);
   };
 
@@ -132,17 +139,19 @@ export function PermintaanPerbaikanTab({
   const handleSubmitReview = async () => {
     if (!selectedPermintaan) return;
 
-    // Validation
     if (reviewAction === "approve") {
-      if (
-        !nilaiBaru ||
-        parseFloat(nilaiBaru) < 0 ||
-        parseFloat(nilaiBaru) > 100
-      ) {
-        toast.error("Nilai baru harus diisi (0-100)");
+      if (!bentukPerbaikan) {
+        toast.error("Pilih bentuk perbaikan nilai");
         return;
       }
-    } else {
+
+      if (!instruksiPerbaikan.trim()) {
+        toast.error("Instruksi perbaikan untuk mahasiswa harus diisi");
+        return;
+      }
+    }
+
+    if (reviewAction === "reject") {
       if (!responseDosen.trim()) {
         toast.error("Alasan penolakan harus diisi");
         return;
@@ -155,12 +164,14 @@ export function PermintaanPerbaikanTab({
       if (reviewAction === "approve") {
         await approvePermintaan({
           permintaan_id: selectedPermintaan.id,
-          nilai_baru: parseFloat(nilaiBaru),
-          response_dosen: responseDosen || undefined,
+          nilai_baru: null,
+          bentuk_perbaikan: bentukPerbaikan,
+          instruksi_perbaikan: instruksiPerbaikan.trim(),
+          response_dosen: instruksiPerbaikan.trim(),
           reviewed_by: dosenId,
         });
         toast.success(
-          `Permintaan disetujui. Nilai ${KOMPONEN_NILAI_LABELS[selectedPermintaan.komponen_nilai]} diupdate ke ${nilaiBaru}`,
+          "Permintaan disetujui. Silakan perbarui nilai melalui tab Penilaian Mahasiswa.",
         );
       } else {
         await rejectPermintaan({
@@ -248,27 +259,21 @@ export function PermintaanPerbaikanTab({
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">
-              Komponen Terbanyak
+              Konteks Pengajuan
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-sm">
               {stats?.by_komponen ? (
-                Object.entries(stats.by_komponen)
-                  .sort(([, a], [, b]) => b - a)
-                  .slice(0, 2)
-                  .map(([key, count]) => (
-                    <div key={key} className="flex justify-between">
-                      <span className="text-gray-600">
-                        {
-                          KOMPONEN_NILAI_LABELS[
-                            key as keyof typeof KOMPONEN_NILAI_LABELS
-                          ]
-                        }
-                      </span>
-                      <span className="font-semibold">{count}</span>
-                    </div>
-                  ))
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Nilai mata kuliah</span>
+                  <span className="font-semibold">
+                    {Object.values(stats.by_komponen).reduce(
+                      (total, count) => total + count,
+                      0,
+                    )}
+                  </span>
+                </div>
               ) : (
                 <span className="text-gray-400">Tidak ada data</span>
               )}
@@ -281,9 +286,9 @@ export function PermintaanPerbaikanTab({
       <Alert>
         <AlertCircle className="h-4 w-4" />
         <AlertDescription>
-          <strong>Catatan:</strong> Saat Anda menyetujui permintaan, nilai
-          mahasiswa akan <strong>otomatis diupdate</strong> dan mahasiswa akan
-          menerima notifikasi.
+          <strong>Catatan:</strong> Persetujuan hanya menandai pengajuan sebagai
+          diterima. Nilai akhir tetap diperbarui manual melalui tab{" "}
+          <strong>Penilaian Mahasiswa</strong> agar kalkulasi bobot tetap aman.
         </AlertDescription>
       </Alert>
 
@@ -310,9 +315,8 @@ export function PermintaanPerbaikanTab({
                     <TableHead>Mahasiswa</TableHead>
                     <TableHead>Mata Kuliah</TableHead>
                     <TableHead>Kelas</TableHead>
-                    <TableHead>Komponen</TableHead>
+                    <TableHead>Konteks</TableHead>
                     <TableHead className="text-center">Nilai Lama</TableHead>
-                    <TableHead className="text-center">Nilai Usulan</TableHead>
                     <TableHead>Tanggal</TableHead>
                     <TableHead>Aksi</TableHead>
                   </TableRow>
@@ -330,29 +334,27 @@ export function PermintaanPerbaikanTab({
                       </TableCell>
                       <TableCell>
                         <div className="font-medium">
-                          {req.kelas?.mata_kuliah?.nama_mk}
+                          {req.mata_kuliah?.nama_mk ||
+                            req.kelas?.mata_kuliah?.nama_mk}
                         </div>
                         <div className="text-xs text-gray-500">
-                          {req.kelas?.mata_kuliah?.kode_mk}
+                          {req.mata_kuliah?.kode_mk ||
+                            req.kelas?.mata_kuliah?.kode_mk}
+                          {req.target_dosen?.user?.full_name && (
+                            <span className="ml-2">
+                              Tujuan: {req.target_dosen.user.full_name}
+                            </span>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell>{req.kelas?.nama_kelas}</TableCell>
                       <TableCell>
-                        <Badge variant="outline">
-                          {KOMPONEN_NILAI_LABELS[req.komponen_nilai]}
+                        <Badge variant="outline" className="rounded-full">
+                          Nilai Mata Kuliah
                         </Badge>
                       </TableCell>
                       <TableCell className="text-center font-semibold">
                         {req.nilai_lama}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        {req.nilai_usulan ? (
-                          <span className="font-semibold text-blue-600">
-                            {req.nilai_usulan}
-                          </span>
-                        ) : (
-                          <span className="text-gray-400">-</span>
-                        )}
                       </TableCell>
                       <TableCell className="text-sm">
                         {formatDate(req.created_at)}
@@ -381,55 +383,62 @@ export function PermintaanPerbaikanTab({
 
       {/* Review Dialog */}
       <Dialog open={reviewDialogOpen} onOpenChange={setReviewDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent className="max-h-[86vh] overflow-y-auto p-5 sm:max-w-[520px]">
           <DialogHeader>
-            <DialogTitle>Review Permintaan Perbaikan Nilai</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-lg">
+              Review Permintaan Perbaikan
+            </DialogTitle>
+            <DialogDescription className="text-sm">
               {selectedPermintaan?.mahasiswa?.user.full_name} (
               {selectedPermintaan?.mahasiswa?.nim})
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4">
+          <div className="space-y-3">
             {/* Permintaan Details */}
             <Card className="border-blue-200 bg-blue-50/50">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm">Detail Permintaan</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Mata Kuliah:</span>
-                  <span className="font-medium">
-                    {selectedPermintaan?.kelas?.mata_kuliah?.nama_mk}
+              <CardContent className="grid gap-2 p-3 text-sm sm:grid-cols-2">
+                <div>
+                  <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                    Mata Kuliah
                   </span>
+                  <p className="font-medium">
+                    {selectedPermintaan?.mata_kuliah?.nama_mk ||
+                      selectedPermintaan?.kelas?.mata_kuliah?.nama_mk}
+                  </p>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Kelas:</span>
-                  <span className="font-medium">
+                <div>
+                  <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                    Dosen Tujuan
+                  </span>
+                  <p className="font-medium">
+                    {selectedPermintaan?.target_dosen?.user?.full_name || "-"}
+                  </p>
+                </div>
+                <div>
+                  <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                    Kelas
+                  </span>
+                  <p className="font-medium">
                     {selectedPermintaan?.kelas?.nama_kelas}
-                  </span>
+                  </p>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Komponen:</span>
-                  <Badge variant="outline">
-                    {selectedPermintaan &&
-                      KOMPONEN_NILAI_LABELS[selectedPermintaan.komponen_nilai]}
+                <div>
+                  <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                    Konteks
+                  </span>
+                  <Badge variant="outline" className="mt-1 rounded-full">
+                    Nilai Mata Kuliah
                   </Badge>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Nilai Saat Ini:</span>
-                  <span className="font-bold text-lg">
-                    {selectedPermintaan?.nilai_lama}
+                <div className="sm:col-span-2">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                    Nilai Saat Ini
                   </span>
+                  <p className="text-lg font-bold">
+                    {selectedPermintaan?.nilai_lama}
+                  </p>
                 </div>
-                {selectedPermintaan?.nilai_usulan && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Nilai Usulan:</span>
-                    <span className="font-bold text-lg text-blue-600">
-                      {selectedPermintaan.nilai_usulan}
-                    </span>
-                  </div>
-                )}
               </CardContent>
             </Card>
 
@@ -440,7 +449,7 @@ export function PermintaanPerbaikanTab({
                 value={selectedPermintaan?.alasan_permintaan || ""}
                 readOnly
                 className="mt-1 bg-gray-50"
-                rows={3}
+                rows={2}
               />
             </div>
 
@@ -473,31 +482,48 @@ export function PermintaanPerbaikanTab({
             {/* Approve Form */}
             {reviewAction === "approve" && (
               <div className="space-y-3">
+                <Alert className="border-green-200 bg-green-50 text-green-900">
+                  <CheckCircle className="h-4 w-4" />
+                  <AlertDescription className="text-sm">
+                    Persetujuan ini tidak mengubah nilai otomatis. Setelah
+                    disetujui, perbarui nilai final mahasiswa dari tab Penilaian
+                    Mahasiswa.
+                  </AlertDescription>
+                </Alert>
                 <div>
                   <Label>
-                    Nilai Baru <span className="text-red-500">*</span>
+                    Bentuk Perbaikan <span className="text-red-500">*</span>
                   </Label>
-                  <Input
-                    type="text"
-                    inputMode="numeric"
-                    value={nilaiBaru}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      if (value === "" || /^\d*\.?\d*$/.test(value)) {
-                        setNilaiBaru(value);
-                      }
-                    }}
-                    placeholder="0-100"
-                    className="mt-1"
-                  />
+                  <Select
+                    value={bentukPerbaikan}
+                    onValueChange={(value) =>
+                      setBentukPerbaikan(value as BentukPerbaikanNilai)
+                    }
+                  >
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Pilih bentuk perbaikan" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(BENTUK_PERBAIKAN_LABELS).map(
+                        ([value, label]) => (
+                          <SelectItem key={value} value={value}>
+                            {label}
+                          </SelectItem>
+                        ),
+                      )}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
-                  <Label>Catatan untuk Mahasiswa (Opsional)</Label>
+                  <Label>
+                    Instruksi untuk Mahasiswa{" "}
+                    <span className="text-red-500">*</span>
+                  </Label>
                   <Textarea
-                    value={responseDosen}
-                    onChange={(e) => setResponseDosen(e.target.value)}
-                    placeholder="Contoh: Setelah review ulang jawaban Anda..."
-                    rows={2}
+                    value={instruksiPerbaikan}
+                    onChange={(e) => setInstruksiPerbaikan(e.target.value)}
+                    placeholder="Contoh: Ikuti remedial pada Jumat pukul 10.00, pelajari kembali materi bab 2 dan 3."
+                    rows={3}
                     className="mt-1"
                   />
                 </div>
@@ -531,7 +557,11 @@ export function PermintaanPerbaikanTab({
             </Button>
             <Button
               onClick={handleSubmitReview}
-              disabled={processing}
+              disabled={
+                processing ||
+                (reviewAction === "approve" &&
+                  (!bentukPerbaikan || !instruksiPerbaikan.trim()))
+              }
               variant={reviewAction === "approve" ? "default" : "destructive"}
               className="gap-2"
             >
@@ -539,7 +569,7 @@ export function PermintaanPerbaikanTab({
               {reviewAction === "approve" ? (
                 <>
                   <CheckCircle className="h-4 w-4" />
-                  Setujui & Update Nilai
+                  Tandai Disetujui
                 </>
               ) : (
                 <>

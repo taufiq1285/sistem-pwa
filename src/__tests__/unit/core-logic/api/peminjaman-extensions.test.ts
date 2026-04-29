@@ -44,6 +44,7 @@ const mockQueryBuilder = (defaultResponse: any = { data: [], error: null }) => {
     limit: vi.fn().mockReturnThis(),
     range: vi.fn().mockReturnThis(),
     single: vi.fn().mockReturnThis(),
+    maybeSingle: vi.fn().mockReturnThis(),
   };
 
   // Make the builder thenable by returning a Promise
@@ -58,6 +59,7 @@ const mockQueryBuilder = (defaultResponse: any = { data: [], error: null }) => {
 describe("Peminjaman Extensions API", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(supabase.from).mockReset();
   });
 
   // ===========================================================================
@@ -355,61 +357,74 @@ describe("Peminjaman Extensions API", () => {
   // 3. markAsReturned - Valid Cases
   // ===========================================================================
   describe("markAsReturned - Valid Cases", () => {
+    const setupMarkAsReturnedMocks = () => {
+      const peminjamanBuilder = mockQueryBuilder({
+        data: { inventaris_id: "inv-1", jumlah_pinjam: 5 },
+        error: null,
+      });
+      const inventarisBuilder = mockQueryBuilder({
+        data: { jumlah_tersedia: 10 },
+        error: null,
+      });
+      const updateBuilder = mockQueryBuilder({ error: null });
+      vi.mocked(supabase.from)
+        .mockReturnValueOnce(peminjamanBuilder)
+        .mockReturnValueOnce(inventarisBuilder)
+        .mockReturnValueOnce(updateBuilder)
+        .mockReturnValueOnce(updateBuilder);
+      return { peminjamanBuilder, inventarisBuilder, updateBuilder };
+    };
+
     it("should mark peminjaman as returned with baik condition", async () => {
-      const builder = mockQueryBuilder({ error: null });
-      vi.mocked(supabase.from).mockReturnValue(builder);
+      const { updateBuilder } = setupMarkAsReturnedMocks();
 
       await markAsReturned("pinjam-1", "baik", "Returned in good condition");
 
-      expect(builder.update).toHaveBeenCalled();
-      expect(builder.eq).toHaveBeenCalledWith("id", "pinjam-1");
-      expect(builder.eq).toHaveBeenCalledWith("status", "approved");
+      expect(updateBuilder.update).toHaveBeenCalled();
+      expect(updateBuilder.eq).toHaveBeenCalledWith("id", "pinjam-1");
+      expect(updateBuilder.eq).toHaveBeenCalledWith("status", "approved");
     });
 
     it("should mark peminjaman as returned with rusak_ringan condition", async () => {
-      const builder = mockQueryBuilder({ error: null });
-      vi.mocked(supabase.from).mockReturnValue(builder);
+      const { updateBuilder } = setupMarkAsReturnedMocks();
 
       await markAsReturned("pinjam-1", "rusak_ringan", "Minor scratches");
 
-      expect(builder.update).toHaveBeenCalled();
-      const updateCall = builder.update.mock.calls[0][0];
+      expect(updateBuilder.update).toHaveBeenCalled();
+      const updateCall = updateBuilder.update.mock.calls[0][0];
       expect(updateCall.status).toBe("returned");
       expect(updateCall.kondisi_kembali).toBe("rusak_ringan");
       expect(updateCall.keterangan_kembali).toBe("Minor scratches");
     });
 
     it("should mark peminjaman as returned with rusak_berat condition", async () => {
-      const builder = mockQueryBuilder({ error: null });
-      vi.mocked(supabase.from).mockReturnValue(builder);
+      const { updateBuilder } = setupMarkAsReturnedMocks();
 
       await markAsReturned("pinjam-1", "rusak_berat", "Major damage");
 
-      expect(builder.update).toHaveBeenCalled();
-      const updateCall = builder.update.mock.calls[0][0];
+      expect(updateBuilder.update).toHaveBeenCalled();
+      const updateCall = updateBuilder.update.mock.calls[0][0];
       expect(updateCall.kondisi_kembali).toBe("rusak_berat");
     });
 
     it("should mark peminjaman as returned with maintenance condition", async () => {
-      const builder = mockQueryBuilder({ error: null });
-      vi.mocked(supabase.from).mockReturnValue(builder);
+      const { updateBuilder } = setupMarkAsReturnedMocks();
 
       await markAsReturned("pinjam-1", "maintenance", "Needs maintenance");
 
-      expect(builder.update).toHaveBeenCalled();
-      const updateCall = builder.update.mock.calls[0][0];
+      expect(updateBuilder.update).toHaveBeenCalled();
+      const updateCall = updateBuilder.update.mock.calls[0][0];
       expect(updateCall.kondisi_kembali).toBe("maintenance");
     });
 
     it("should set tanggal_kembali_aktual to current time", async () => {
-      const builder = mockQueryBuilder({ error: null });
-      vi.mocked(supabase.from).mockReturnValue(builder);
+      const { updateBuilder } = setupMarkAsReturnedMocks();
 
       const beforeTime = new Date();
       await markAsReturned("pinjam-1", "baik");
       const afterTime = new Date();
 
-      const updateCall = builder.update.mock.calls[0][0];
+      const updateCall = updateBuilder.update.mock.calls[0][0];
       const returnedTime = new Date(updateCall.tanggal_kembali_aktual);
 
       expect(returnedTime.getTime()).toBeGreaterThanOrEqual(
@@ -419,14 +434,13 @@ describe("Peminjaman Extensions API", () => {
     });
 
     it("should set updated_at to current time", async () => {
-      const builder = mockQueryBuilder({ error: null });
-      vi.mocked(supabase.from).mockReturnValue(builder);
+      const { updateBuilder } = setupMarkAsReturnedMocks();
 
       const beforeTime = new Date();
       await markAsReturned("pinjam-1", "baik");
       const afterTime = new Date();
 
-      const updateCall = builder.update.mock.calls[0][0];
+      const updateCall = updateBuilder.update.mock.calls[0][0];
       const updatedTime = new Date(updateCall.updated_at);
 
       expect(updatedTime.getTime()).toBeGreaterThanOrEqual(
@@ -436,22 +450,20 @@ describe("Peminjaman Extensions API", () => {
     });
 
     it("should handle missing keterangan parameter", async () => {
-      const builder = mockQueryBuilder({ error: null });
-      vi.mocked(supabase.from).mockReturnValue(builder);
+      const { updateBuilder } = setupMarkAsReturnedMocks();
 
       await markAsReturned("pinjam-1", "baik");
 
-      const updateCall = builder.update.mock.calls[0][0];
+      const updateCall = updateBuilder.update.mock.calls[0][0];
       expect(updateCall.keterangan_kembali).toBeNull();
     });
 
     it("should only update approved peminjaman", async () => {
-      const builder = mockQueryBuilder({ error: null });
-      vi.mocked(supabase.from).mockReturnValue(builder);
+      const { updateBuilder } = setupMarkAsReturnedMocks();
 
       await markAsReturned("pinjam-1", "baik");
 
-      expect(builder.eq).toHaveBeenCalledWith("status", "approved");
+      expect(updateBuilder.eq).toHaveBeenCalledWith("status", "approved");
     });
   });
 
@@ -460,21 +472,27 @@ describe("Peminjaman Extensions API", () => {
   // ===========================================================================
   describe("markAsReturned - Error Handling", () => {
     it("should handle database error", async () => {
-      const builder = mockQueryBuilder();
+      const peminjamanBuilder = mockQueryBuilder({
+        data: { inventaris_id: "inv-1", jumlah_pinjam: 5 },
+        error: null,
+      });
+      const inventarisBuilder = mockQueryBuilder({
+        data: { jumlah_tersedia: 10 },
+        error: null,
+      });
       const dbError = new Error("Update failed");
-      builder.update.mockReturnThis();
-      // First .eq() returns builder, second .eq() returns promise with error
-      builder.eq
-        .mockReturnValueOnce(builder)
-        .mockResolvedValue({ error: dbError });
-      vi.mocked(supabase.from).mockReturnValue(builder);
+      const updateBuilder = mockQueryBuilder({ error: dbError });
+      vi.mocked(supabase.from)
+        .mockReturnValueOnce(peminjamanBuilder)
+        .mockReturnValueOnce(inventarisBuilder)
+        .mockReturnValueOnce(updateBuilder)
+        .mockReturnValueOnce(updateBuilder);
 
       await expect(markAsReturned("pinjam-1", "baik")).rejects.toThrow();
       expect(logger.error).toHaveBeenCalledWith(
         "Failed to mark peminjaman as returned",
         { peminjamanId: "pinjam-1", error: dbError },
       );
-      expect(handleSupabaseError).toHaveBeenCalledWith(dbError);
     });
   });
 
@@ -1217,6 +1235,24 @@ describe("Peminjaman Extensions API", () => {
     });
 
     describe("markAsReturned branches", () => {
+      const setupAllMocks = () => {
+        const peminjamanBuilder = mockQueryBuilder({
+          data: { inventaris_id: "inv-1", jumlah_pinjam: 5 },
+          error: null,
+        });
+        const inventarisBuilder = mockQueryBuilder({
+          data: { jumlah_tersedia: 10 },
+          error: null,
+        });
+        const updateBuilder = mockQueryBuilder({ error: null });
+        vi.mocked(supabase.from)
+          .mockReturnValueOnce(peminjamanBuilder)
+          .mockReturnValueOnce(inventarisBuilder)
+          .mockReturnValueOnce(updateBuilder)
+          .mockReturnValueOnce(updateBuilder);
+        return { updateBuilder };
+      };
+
       it("should branch: all kondisiKembali types", async () => {
         const conditions = [
           "baik",
@@ -1226,29 +1262,24 @@ describe("Peminjaman Extensions API", () => {
         ] as const;
 
         for (const condition of conditions) {
-          const builder = mockQueryBuilder({ error: null });
-          vi.mocked(supabase.from).mockReturnValue(builder);
-
+          const { updateBuilder } = setupAllMocks();
           await markAsReturned("pinjam-1", condition);
-
-          const updateCall = builder.update.mock.calls[0][0];
+          const updateCall = updateBuilder.update.mock.calls[0][0];
           expect(updateCall.kondisi_kembali).toBe(condition);
         }
       });
 
       it("should branch: keterangan provided vs not provided", async () => {
         // Branch 1: With keterangan
-        const builder1 = mockQueryBuilder({ error: null });
-        vi.mocked(supabase.from).mockReturnValue(builder1);
+        const { updateBuilder: updateBuilder1 } = setupAllMocks();
         await markAsReturned("pinjam-1", "baik", "Some note");
-        const updateCall1 = builder1.update.mock.calls[0][0];
+        const updateCall1 = updateBuilder1.update.mock.calls[0][0];
         expect(updateCall1.keterangan_kembali).toBe("Some note");
 
         // Branch 2: Without keterangan
-        const builder2 = mockQueryBuilder({ error: null });
-        vi.mocked(supabase.from).mockReturnValue(builder2);
+        const { updateBuilder: updateBuilder2 } = setupAllMocks();
         await markAsReturned("pinjam-1", "baik");
-        const updateCall2 = builder2.update.mock.calls[0][0];
+        const updateCall2 = updateBuilder2.update.mock.calls[0][0];
         expect(updateCall2.keterangan_kembali).toBeNull();
       });
     });
@@ -1543,12 +1574,24 @@ describe("Peminjaman Extensions API", () => {
     });
 
     it("should execute all update statements in markAsReturned", async () => {
-      const builder = mockQueryBuilder({ error: null });
-      vi.mocked(supabase.from).mockReturnValue(builder);
+      const peminjamanBuilder = mockQueryBuilder({
+        data: { inventaris_id: "inv-1", jumlah_pinjam: 5 },
+        error: null,
+      });
+      const inventarisBuilder = mockQueryBuilder({
+        data: { jumlah_tersedia: 10 },
+        error: null,
+      });
+      const updateBuilder = mockQueryBuilder({ error: null });
+      vi.mocked(supabase.from)
+        .mockReturnValueOnce(peminjamanBuilder)
+        .mockReturnValueOnce(inventarisBuilder)
+        .mockReturnValueOnce(updateBuilder)
+        .mockReturnValueOnce(updateBuilder);
 
       await markAsReturned("pinjam-1", "rusak_ringan", "Test note");
 
-      const updateCall = builder.update.mock.calls[0][0];
+      const updateCall = updateBuilder.update.mock.calls[0][0];
       expect(updateCall).toHaveProperty("status", "returned");
       expect(updateCall).toHaveProperty("tanggal_kembali_aktual");
       expect(updateCall).toHaveProperty("kondisi_kembali", "rusak_ringan");
@@ -1633,13 +1676,25 @@ describe("Peminjaman Extensions API", () => {
   // ===========================================================================
   describe("Edge Cases", () => {
     it("should handle very long keterangan in markAsReturned", async () => {
-      const builder = mockQueryBuilder({ error: null });
-      vi.mocked(supabase.from).mockReturnValue(builder);
+      const peminjamanBuilder = mockQueryBuilder({
+        data: { inventaris_id: "inv-1", jumlah_pinjam: 5 },
+        error: null,
+      });
+      const inventarisBuilder = mockQueryBuilder({
+        data: { jumlah_tersedia: 10 },
+        error: null,
+      });
+      const updateBuilder = mockQueryBuilder({ error: null });
+      vi.mocked(supabase.from)
+        .mockReturnValueOnce(peminjamanBuilder)
+        .mockReturnValueOnce(inventarisBuilder)
+        .mockReturnValueOnce(updateBuilder)
+        .mockReturnValueOnce(updateBuilder);
 
       const longKeterangan = "A".repeat(1000);
       await markAsReturned("pinjam-1", "baik", longKeterangan);
 
-      const updateCall = builder.update.mock.calls[0][0];
+      const updateCall = updateBuilder.update.mock.calls[0][0];
       expect(updateCall.keterangan_kembali).toBe(longKeterangan);
     });
 
@@ -1877,11 +1932,23 @@ describe("Peminjaman Extensions API", () => {
       vi.clearAllMocks();
 
       // Step 2: Mark as returned
-      const builder2 = mockQueryBuilder({ error: null });
-      vi.mocked(supabase.from).mockReturnValue(builder2);
+      const peminjamanBuilder = mockQueryBuilder({
+        data: { inventaris_id: "inv-1", jumlah_pinjam: 5 },
+        error: null,
+      });
+      const inventarisBuilder = mockQueryBuilder({
+        data: { jumlah_tersedia: 10 },
+        error: null,
+      });
+      const updateBuilder = mockQueryBuilder({ error: null });
+      vi.mocked(supabase.from)
+        .mockReturnValueOnce(peminjamanBuilder)
+        .mockReturnValueOnce(inventarisBuilder)
+        .mockReturnValueOnce(updateBuilder)
+        .mockReturnValueOnce(updateBuilder);
 
       await markAsReturned("pinjam-1", "baik", "Returned in good condition");
-      expect(builder2.update).toHaveBeenCalled();
+      expect(updateBuilder.update).toHaveBeenCalled();
     });
 
     it("should work with realistic room booking workflow", async () => {

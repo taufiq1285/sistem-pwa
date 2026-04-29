@@ -27,6 +27,9 @@ import {
   Calendar,
   User,
   BookOpen,
+  CheckCircle2,
+  GraduationCap,
+  BarChart3,
 } from "lucide-react";
 import {
   Card,
@@ -54,6 +57,7 @@ import { id as localeId } from "date-fns/locale";
 
 interface MateriCardProps {
   materi: Materi;
+  variant?: "dosen" | "mahasiswa";
   showActions?: boolean;
   showDosenActions?: boolean;
   onDownload?: (materi: Materi) => void;
@@ -97,6 +101,7 @@ function getFileIcon(tipeFile: string): React.ReactNode {
 
 export function MateriCard({
   materi,
+  variant = "mahasiswa",
   showActions = true,
   showDosenActions = false,
   onDownload,
@@ -108,6 +113,7 @@ export function MateriCard({
   const [isDownloading, setIsDownloading] = useState(false);
 
   const materiAny = materi as any;
+  const isDosenVariant = variant === "dosen";
   const isActive = materiAny.is_active ?? true;
   const downloadCount = materiAny.download_count ?? 0;
   const mingguKe = materi.minggu_ke;
@@ -124,7 +130,8 @@ export function MateriCard({
     ? `${materi.dosen.gelar_depan || ""} ${materi.dosen.users.full_name} ${materi.dosen.gelar_belakang || ""}`.trim()
     : "Unknown";
 
-  const mataKuliahName = materi.kelas?.mata_kuliah?.nama_mk || "-";
+  const mataKuliahName =
+    materi.mata_kuliah?.nama_mk || materi.kelas?.mata_kuliah?.nama_mk || "-";
 
   const handleDownload = async () => {
     if (!onDownload) return;
@@ -140,7 +147,10 @@ export function MateriCard({
   return (
     <Card
       className={cn(
-        "overflow-hidden hover:shadow-lg transition-shadow",
+        "overflow-hidden transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg",
+        isDosenVariant
+          ? "border-sky-200/80 bg-linear-to-br from-white via-sky-50/60 to-slate-50"
+          : "border-emerald-200/80 bg-linear-to-br from-white via-emerald-50/50 to-amber-50/40",
         className,
       )}
     >
@@ -192,14 +202,35 @@ export function MateriCard({
             </div>
 
             <div className="flex flex-wrap gap-2 mt-3">
-              <Badge variant={isActive ? "default" : "secondary"}>
-                {isActive ? "Published" : "Draft"}
-              </Badge>
+              {isDosenVariant ? (
+                <Badge
+                  variant={isActive ? "default" : "secondary"}
+                  className={cn(
+                    "gap-1.5",
+                    isActive
+                      ? "bg-sky-600 text-white hover:bg-sky-600"
+                      : "bg-slate-200 text-slate-700",
+                  )}
+                >
+                  <BarChart3 className="h-3 w-3" />
+                  {isActive ? "Aktif untuk mahasiswa" : "Draft dosen"}
+                </Badge>
+              ) : (
+                <Badge className="gap-1.5 bg-emerald-600 text-white hover:bg-emerald-600">
+                  <CheckCircle2 className="h-3 w-3" />
+                  Materi tersedia
+                </Badge>
+              )}
 
               {mataKuliahName && mataKuliahName !== "-" && (
                 <Badge
                   variant="secondary"
-                  className="bg-primary/10 text-primary border-primary/20"
+                  className={cn(
+                    "border",
+                    isDosenVariant
+                      ? "border-sky-200 bg-sky-100 text-sky-800"
+                      : "border-emerald-200 bg-emerald-100 text-emerald-800",
+                  )}
                 >
                   {mataKuliahName}
                 </Badge>
@@ -207,6 +238,7 @@ export function MateriCard({
 
               {materi.kelas?.nama_kelas && (
                 <Badge variant="outline" className="text-xs">
+                  {isDosenVariant ? "Kelas" : "Kelas saya"}{" "}
                   {materi.kelas.nama_kelas}
                 </Badge>
               )}
@@ -224,7 +256,11 @@ export function MateriCard({
       <CardContent className="pb-4">
         <div className="grid grid-cols-2 gap-3 text-sm">
           <div className="flex items-center gap-2 text-muted-foreground">
-            <User className="h-4 w-4" />
+            {isDosenVariant ? (
+              <GraduationCap className="h-4 w-4" />
+            ) : (
+              <User className="h-4 w-4" />
+            )}
             <span className="truncate">{dosenName}</span>
           </div>
           <div className="flex items-center gap-2 text-muted-foreground">
@@ -237,7 +273,11 @@ export function MateriCard({
           </div>
           <div className="flex items-center gap-2 text-muted-foreground">
             <Download className="h-4 w-4" />
-            <span>{downloadCount} downloads</span>
+            <span>
+              {isDosenVariant
+                ? `${downloadCount} kali diunduh`
+                : `${downloadCount} unduhan`}
+            </span>
           </div>
         </div>
       </CardContent>
@@ -266,7 +306,7 @@ export function MateriCard({
                 className="flex-1"
               >
                 <Download className="h-4 w-4 mr-2" />
-                {isDownloading ? "Downloading..." : "Download"}
+                {isDownloading ? "Mengunduh..." : "Download"}
               </Button>
             )}
           </div>
@@ -282,6 +322,7 @@ export function MateriCard({
 
 interface MateriListProps {
   materiList: Materi[];
+  variant?: "dosen" | "mahasiswa";
   showActions?: boolean;
   showDosenActions?: boolean;
   onDownload?: (materi: Materi) => void;
@@ -294,6 +335,7 @@ interface MateriListProps {
 
 export function MateriList({
   materiList,
+  variant = "mahasiswa",
   showActions,
   showDosenActions,
   onDownload,
@@ -318,6 +360,7 @@ export function MateriList({
         <MateriCard
           key={materi.id}
           materi={materi}
+          variant={variant}
           showActions={showActions}
           showDosenActions={showDosenActions}
           onDownload={onDownload}

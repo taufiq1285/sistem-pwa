@@ -3,6 +3,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 
 const { mockUseAuth, mockCacheAPI, mockToast } = vi.hoisted(() => ({
@@ -216,6 +217,46 @@ describe("Mahasiswa NilaiPage", () => {
     await waitFor(() => expect(screen.getByText("B")).toBeInTheDocument());
   });
 
+  it("menjelaskan rekap saat satu mata kuliah punya beberapa record nilai", async () => {
+    const multiNilai = [
+      mockNilai[0],
+      {
+        ...mockNilai[0],
+        id: "n2",
+        kelas_id: "k2",
+        nilai_akhir: 90,
+        nilai_huruf: "A",
+        kelas: {
+          ...mockNilai[0].kelas,
+          id: "k2",
+          nama_kelas: "TI-1B",
+        },
+      },
+    ];
+
+    mockCacheAPI.mockImplementation((key: string) => {
+      if (key.includes("nilai")) return Promise.resolve(multiNilai);
+      if (key.includes("permintaan")) return Promise.resolve([]);
+      return Promise.resolve([]);
+    });
+    vi.mocked(nilaiApi.getNilaiByMahasiswa).mockResolvedValue(
+      multiNilai as any,
+    );
+
+    wrap(<NilaiPage />);
+
+    await waitFor(() =>
+      expect(screen.getByText("Rekap Mata Kuliah")).toBeInTheDocument(),
+    );
+
+    await userEvent.click(screen.getByText("Rekap Mata Kuliah"));
+
+    await waitFor(() => {
+      expect(screen.getByText("Total Record")).toBeInTheDocument();
+      expect(screen.getByText("Rata-rata Nilai")).toBeInTheDocument();
+    });
+  });
+
   it("tidak crash saat user null", () => {
     mockUseAuth.mockReturnValue({ user: null });
     expect(() => wrap(<NilaiPage />)).not.toThrow();
@@ -291,23 +332,21 @@ describe("Mahasiswa PresensiPage", () => {
       id: "p1",
       tanggal: "2025-01-06",
       status: "hadir",
-      keterangan: null,
+      keterangan: "Presensi awal semester",
+      created_at: "2025-01-06T08:15:00",
+      mata_kuliah_id: "mk-1",
       nama_mk: "Anatomi",
       nama_kelas: "TI-1A",
-      jam_mulai: "08:00",
-      jam_selesai: "10:00",
-      nama_lab: "Lab 1",
     },
     {
       id: "p2",
       tanggal: "2025-01-13",
       status: "alpha",
       keterangan: null,
+      created_at: "2025-01-13T09:30:00",
+      mata_kuliah_id: "mk-1",
       nama_mk: "Anatomi",
       nama_kelas: "TI-1A",
-      jam_mulai: "08:00",
-      jam_selesai: "10:00",
-      nama_lab: "Lab 1",
     },
   ];
 
@@ -351,6 +390,25 @@ describe("Mahasiswa PresensiPage", () => {
     await waitFor(() => {
       const els = screen.getAllByText(/Hadir/i);
       expect(els.length).toBeGreaterThan(0);
+    });
+  });
+
+  it("menampilkan tabel presensi umum tanpa kolom lab", async () => {
+    wrap(<PresensiPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Waktu Dicatat")).toBeInTheDocument();
+      expect(screen.getByText("Topik/Keterangan")).toBeInTheDocument();
+      expect(screen.queryByText("Lab")).not.toBeInTheDocument();
+    });
+  });
+
+  it("menampilkan waktu dicatat dan keterangan dari record kehadiran", async () => {
+    wrap(<PresensiPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Presensi awal semester")).toBeInTheDocument();
+      expect(screen.getByText(/08[.:]15/)).toBeInTheDocument();
     });
   });
 

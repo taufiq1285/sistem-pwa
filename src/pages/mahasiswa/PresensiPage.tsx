@@ -12,7 +12,6 @@ import {
   XCircle,
   Clock,
   AlertCircle,
-  MapPin,
   WifiOff,
 } from "lucide-react";
 import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,6 +19,13 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { DashboardCard } from "@/components/ui/dashboard-card";
 import { DashboardSkeleton } from "@/components/ui/dashboard-skeleton";
 import { GlassCard } from "@/components/ui/glass-card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -45,6 +51,8 @@ export default function PresensiPage() {
   const [records, setRecords] = useState<MahasiswaKehadiranRecord[]>([]);
   const [isOfflineData, setIsOfflineData] = useState(false);
   const [lastUpdatedAt, setLastUpdatedAt] = useState<number | null>(null);
+  const [selectedMataKuliah, setSelectedMataKuliah] =
+    useState<string>("__all__");
 
   const presensiCacheKey = user?.mahasiswa?.id
     ? `mahasiswa_presensi_${user.mahasiswa.id}`
@@ -152,12 +160,58 @@ export default function PresensiPage() {
     }
   };
 
+  const getRecordMataKuliahName = (record: MahasiswaKehadiranRecord) =>
+    record.jadwal?.mata_kuliah?.nama_mk ||
+    record.jadwal?.kelas?.mata_kuliah?.nama_mk ||
+    (record as any).nama_mk ||
+    "Mata kuliah tidak diketahui";
+
+  const getRecordMataKuliahKode = (record: MahasiswaKehadiranRecord) =>
+    record.jadwal?.mata_kuliah?.kode_mk || (record as any).kode_mk || "";
+
+  const getRecordMataKuliahKey = (record: MahasiswaKehadiranRecord) =>
+    record.mata_kuliah_id ||
+    record.jadwal?.mata_kuliah?.id ||
+    `nama:${getRecordMataKuliahName(record)}`;
+
+  const mataKuliahOptions = useMemo(() => {
+    const optionMap = new Map<
+      string,
+      { id: string; nama: string; kode: string; total: number }
+    >();
+
+    records.forEach((record) => {
+      const id = getRecordMataKuliahKey(record);
+      const existing = optionMap.get(id);
+      optionMap.set(id, {
+        id,
+        nama: getRecordMataKuliahName(record),
+        kode: getRecordMataKuliahKode(record),
+        total: (existing?.total || 0) + 1,
+      });
+    });
+
+    return Array.from(optionMap.values()).sort((a, b) =>
+      a.nama.localeCompare(b.nama),
+    );
+  }, [records]);
+
+  const filteredRecords = useMemo(() => {
+    if (selectedMataKuliah === "__all__") {
+      return records;
+    }
+
+    return records.filter(
+      (record) => getRecordMataKuliahKey(record) === selectedMataKuliah,
+    );
+  }, [records, selectedMataKuliah]);
+
   const calculateStats = () => {
-    const total = records.length;
-    const hadir = records.filter((r) => r.status === "hadir").length;
-    const izin = records.filter((r) => r.status === "izin").length;
-    const sakit = records.filter((r) => r.status === "sakit").length;
-    const alpha = records.filter((r) => r.status === "alpha").length;
+    const total = filteredRecords.length;
+    const hadir = filteredRecords.filter((r) => r.status === "hadir").length;
+    const izin = filteredRecords.filter((r) => r.status === "izin").length;
+    const sakit = filteredRecords.filter((r) => r.status === "sakit").length;
+    const alpha = filteredRecords.filter((r) => r.status === "alpha").length;
     const persentase = total > 0 ? Math.round((hadir / total) * 100) : 0;
 
     return { total, hadir, izin, sakit, alpha, persentase };
@@ -203,11 +257,26 @@ export default function PresensiPage() {
     });
   };
 
-  const formatTime = (timeString: string) => {
-    return timeString.slice(0, 5);
+  const formatRecordedTime = (dateTimeString?: string | null) => {
+    if (!dateTimeString) {
+      return "-";
+    }
+
+    const date = new Date(dateTimeString);
+    if (Number.isNaN(date.getTime())) {
+      return "-";
+    }
+
+    return date.toLocaleTimeString("id-ID", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   };
 
   const stats = calculateStats();
+  const selectedMataKuliahInfo = mataKuliahOptions.find(
+    (mk) => mk.id === selectedMataKuliah,
+  );
   const lastUpdatedLabel = useMemo(() => {
     if (!lastUpdatedAt) {
       return null;
@@ -246,11 +315,11 @@ export default function PresensiPage() {
                 </div>
                 <div>
                   <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-                    Presensi Praktikum
+                    Presensi Kehadiran
                   </h1>
                   <p className="text-muted-foreground">
-                    Rekap kehadiran praktikum Anda secara ringkas dan
-                    terstruktur.
+                    Rekap kehadiran per mata kuliah agar sesuai dengan absensi
+                    yang dibuat dosen.
                   </p>
                   {(isOfflineData || lastUpdatedLabel) && (
                     <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
@@ -281,10 +350,51 @@ export default function PresensiPage() {
           </Alert>
         )}
 
+        {records.length > 0 && (
+          <GlassCard
+            intensity="low"
+            className="border-white/40 bg-white/85 shadow-lg dark:border-white/10 dark:bg-card"
+          >
+            <CardHeader>
+              <CardTitle>Filter Mata Kuliah</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-3 lg:grid-cols-[minmax(0,360px)_1fr] lg:items-center">
+                <Select
+                  value={selectedMataKuliah}
+                  onValueChange={setSelectedMataKuliah}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Pilih mata kuliah" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__all__">
+                      Semua mata kuliah ({records.length} catatan)
+                    </SelectItem>
+                    {mataKuliahOptions.map((mk) => (
+                      <SelectItem key={mk.id} value={mk.id}>
+                        {mk.nama}
+                        {mk.kode ? ` (${mk.kode})` : ""} - {mk.total} catatan
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-sm text-muted-foreground">
+                  {selectedMataKuliah === "__all__"
+                    ? "Menampilkan seluruh presensi. Jika satu tanggal memiliki beberapa mata kuliah, setiap mata kuliah dihitung sebagai satu catatan presensi terpisah."
+                    : `Menampilkan presensi untuk ${
+                        selectedMataKuliahInfo?.nama || "mata kuliah aktif"
+                      } saja.`}
+                </p>
+              </div>
+            </CardContent>
+          </GlassCard>
+        )}
+
         {/* Summary Stats */}
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
           <DashboardCard
-            title="Total Pertemuan"
+            title="Catatan Presensi"
             value={stats.total}
             icon={Calendar}
             color="blue"
@@ -321,7 +431,10 @@ export default function PresensiPage() {
           className="border-white/40 bg-white/85 shadow-lg dark:border-white/10 dark:bg-card"
         >
           <CardHeader>
-            <CardTitle>Persentase Kehadiran</CardTitle>
+            <CardTitle>
+              Persentase Kehadiran
+              {selectedMataKuliahInfo ? ` - ${selectedMataKuliahInfo.nama}` : ""}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex flex-col gap-4 md:flex-row md:items-center">
@@ -367,7 +480,14 @@ export default function PresensiPage() {
                 <Calendar className="h-4 w-4 text-muted-foreground" />
                 <AlertDescription className="text-muted-foreground">
                   Belum ada data presensi. Data akan muncul setelah dosen
-                  melakukan absensi.
+                  mengisi kehadiran kelas Anda.
+                </AlertDescription>
+              </Alert>
+            ) : filteredRecords.length === 0 ? (
+              <Alert className="border-border/60 bg-muted/30">
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+                <AlertDescription className="text-muted-foreground">
+                  Belum ada presensi untuk mata kuliah yang dipilih.
                 </AlertDescription>
               </Alert>
             ) : (
@@ -377,42 +497,44 @@ export default function PresensiPage() {
                     <TableRow>
                       <TableHead>Tanggal</TableHead>
                       <TableHead>Mata Kuliah</TableHead>
-                      <TableHead>Topik</TableHead>
-                      <TableHead>Lab</TableHead>
-                      <TableHead>Waktu</TableHead>
+                      <TableHead>Kelas</TableHead>
+                      <TableHead>Topik/Keterangan</TableHead>
+                      <TableHead>Waktu Dicatat</TableHead>
                       <TableHead className="text-center">Status</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {records.map((record) => (
+                    {filteredRecords.map((record) => (
                       <TableRow key={record.id}>
                         <TableCell className="font-medium text-foreground">
-                          {formatDate(record.jadwal?.tanggal_praktikum || "")}
+                          {formatDate(
+                            record.jadwal?.tanggal_praktikum ||
+                              record.tanggal ||
+                              "",
+                          )}
                         </TableCell>
                         <TableCell>
                           <div>
                             <p className="font-medium">
-                              {record.jadwal?.mata_kuliah?.nama_mk ||
-                                record.jadwal?.kelas?.mata_kuliah?.nama_mk ||
-                                "Unknown"}
+                              {getRecordMataKuliahName(record)}
                             </p>
                             <p className="text-sm text-muted-foreground">
-                              {record.jadwal?.kelas?.nama_kelas || "-"}
+                              {getRecordMataKuliahKode(record) || "Presensi"}
                             </p>
                           </div>
                         </TableCell>
                         <TableCell>
-                          {record.jadwal?.topik || "Praktikum"}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1 text-sm">
-                            <MapPin className="h-3 w-3" />
-                            {record.jadwal?.laboratorium?.nama_lab || "-"}
-                          </div>
+                          {record.jadwal?.kelas?.nama_kelas ||
+                            (record as any).nama_kelas ||
+                            "-"}
                         </TableCell>
                         <TableCell className="text-sm">
-                          {formatTime(record.jadwal?.jam_mulai || "")} -{" "}
-                          {formatTime(record.jadwal?.jam_selesai || "")}
+                          {record.keterangan ||
+                            record.jadwal?.topik ||
+                            "Kehadiran Kelas"}
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          {formatRecordedTime(record.created_at)}
                         </TableCell>
                         <TableCell className="text-center">
                           {getStatusBadge(record.status)}

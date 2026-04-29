@@ -139,22 +139,16 @@ export type BobotNilaiData = z.infer<typeof bobotNilaiSchema>;
 // ============================================================================
 
 /**
- * Calculate final grade (nilai_akhir) based on components
- * UPDATED WEIGHTS (nilai_kuis & nilai_tugas NOT USED):
- * - Kuis: 0% (NOT USED - field kept for backward compatibility)
- * - Tugas: 0% (NOT USED - field kept for backward compatibility)
- * - UTS: 25%
- * - UAS: 30%
- * - Praktikum: 40% (AUTO-SYNCED from tugas praktikum attempts)
- * - Kehadiran: 5%
+ * Calculate final grade (nilai_akhir) based on components.
+ * Default weights follow the academic assessment format:
+ * - Kehadiran: 15%
+ * - Tugas: 10%
+ * - Kuis: 5%
+ * - Praktikum: 30%
+ * - UTS: 20%
+ * - UAS: 20%
  *
- * @param nilai_kuis - NOT USED (kept for backward compatibility)
- * @param nilai_tugas - NOT USED (kept for backward compatibility)
- * @param nilai_uts - Midterm grade (0-100)
- * @param nilai_uas - Final exam grade (0-100)
- * @param nilai_praktikum - Practicum grade (0-100) - AUTO from attempts
- * @param nilai_kehadiran - Attendance grade (0-100)
- * @param customWeights - Custom weights (optional, must total to 100%)
+ * Dosen-defined custom weights are still supported and take precedence.
  */
 export function calculateNilaiAkhir(
   nilai_kuis: number = 0,
@@ -165,40 +159,38 @@ export function calculateNilaiAkhir(
   nilai_kehadiran: number = 0,
   customWeights?: BobotNilai | null,
 ): number {
-  // Convert percentage weights to decimal (e.g., 25% -> 0.25)
-  // NOTE: nilai_kuis & nilai_tugas weights set to 0 (NOT USED)
+  const defaultWeights = getDefaultBobotNilai();
   const weights = {
-    kuis: (customWeights?.kuis ?? 0) / 100, // ❌ NOT USED
-    tugas: (customWeights?.tugas ?? 0) / 100, // ❌ NOT USED
-    uts: (customWeights?.uts ?? 25) / 100,
-    uas: (customWeights?.uas ?? 30) / 100,
-    praktikum: (customWeights?.praktikum ?? 40) / 100, // ✅ AUTO-SYNCED
-    kehadiran: (customWeights?.kehadiran ?? 5) / 100,
+    kuis: (customWeights?.kuis ?? defaultWeights.kuis) / 100,
+    tugas: (customWeights?.tugas ?? defaultWeights.tugas) / 100,
+    uts: (customWeights?.uts ?? defaultWeights.uts) / 100,
+    uas: (customWeights?.uas ?? defaultWeights.uas) / 100,
+    praktikum: (customWeights?.praktikum ?? defaultWeights.praktikum) / 100,
+    kehadiran: (customWeights?.kehadiran ?? defaultWeights.kehadiran) / 100,
   };
 
   const nilaiAkhir =
-    nilai_kuis * weights.kuis + // Will be 0
-    nilai_tugas * weights.tugas + // Will be 0
+    nilai_kuis * weights.kuis +
+    nilai_tugas * weights.tugas +
     nilai_uts * weights.uts +
     nilai_uas * weights.uas +
     nilai_praktikum * weights.praktikum +
     nilai_kehadiran * weights.kehadiran;
 
-  return Math.round(nilaiAkhir * 100) / 100; // Round to 2 decimal places
+  return Math.round(nilaiAkhir * 100) / 100;
 }
 
 /**
- * Get default bobot nilai (grade weights)
- * UPDATED: nilai_kuis & nilai_tugas set to 0
+ * Get default bobot nilai (grade weights) used before dosen customizes it.
  */
 export function getDefaultBobotNilai(): BobotNilai {
   return {
-    kuis: 0, // ❌ NOT USED
-    tugas: 0, // ❌ NOT USED
-    uts: 25,
-    uas: 30,
-    praktikum: 40, // ✅ AUTO-SYNCED from tugas praktikum
-    kehadiran: 5,
+    kuis: 5,
+    tugas: 10,
+    uts: 20,
+    uas: 20,
+    praktikum: 30,
+    kehadiran: 15,
   };
 }
 

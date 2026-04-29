@@ -108,7 +108,10 @@ export default function ProfilePage() {
     }
 
     const handleCacheUpdated = (event: Event) => {
-      const customEvent = event as CustomEvent<{ key?: string; data?: MahasiswaProfileRaw }>;
+      const customEvent = event as CustomEvent<{
+        key?: string;
+        data?: MahasiswaProfileRaw;
+      }>;
 
       if (
         customEvent.detail?.key !== profileCacheKey ||
@@ -153,7 +156,8 @@ export default function ProfilePage() {
         return;
       }
 
-      const cachedProfileEntry = await getCachedData<MahasiswaProfileRaw>(profileCacheKey);
+      const cachedProfileEntry =
+        await getCachedData<MahasiswaProfileRaw>(profileCacheKey);
       const cachedProfile = cachedProfileEntry?.data;
 
       if (cachedProfile) {

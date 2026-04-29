@@ -60,10 +60,18 @@ import {
   rejectPeminjaman,
   type PendingApproval,
 } from "@/lib/api/laboran.api";
-import {
-  notifyDosenPeminjamanDisetujui,
-  notifyDosenPeminjamanDitolak,
-} from "@/lib/api/notification.api";
+import { invalidateCache } from "@/lib/offline/api-cache";
+
+const invalidatePeminjamanCaches = async () => {
+  await Promise.all([
+    invalidateCache("laboran_pending_approvals"),
+    invalidateCache("laboran_active_borrowings"),
+    invalidateCache("laboran_returned_borrowings"),
+    invalidateCache("dosen_my_borrowings"),
+    invalidateCache("dosen_available_equipment"),
+  ]);
+  window.dispatchEvent(new CustomEvent("peminjaman:changed"));
+};
 
 export default function PersetujuanPage() {
   // State for equipment borrowing
@@ -136,19 +144,7 @@ export default function PersetujuanPage() {
       await approvePeminjaman(approveDialog.id);
       toast.success("Peminjaman alat berhasil disetujui");
 
-      // Notify dosen (best-effort, non-blocking)
-      if (approveDialog.request?.dosen_user_id) {
-        notifyDosenPeminjamanDisetujui(
-          approveDialog.request.dosen_user_id,
-          approveDialog.request.inventaris_nama,
-          approveDialog.request.jumlah_pinjam,
-          approveDialog.request.tanggal_pinjam,
-          approveDialog.request.tanggal_kembali_rencana,
-        ).catch((err) => {
-          console.error("Failed to notify dosen:", err);
-        });
-      }
-
+      await invalidatePeminjamanCaches();
       await loadEquipmentRequests();
       setApproveDialog({ open: false, id: "", name: "" });
     } catch (error) {
@@ -181,17 +177,7 @@ export default function PersetujuanPage() {
       await rejectPeminjaman(rejectDialog.id, rejectionReason);
       toast.success("Peminjaman alat berhasil ditolak");
 
-      // Notify dosen (best-effort, non-blocking)
-      if (rejectDialog.request?.dosen_user_id) {
-        notifyDosenPeminjamanDitolak(
-          rejectDialog.request.dosen_user_id,
-          rejectDialog.request.inventaris_nama,
-          rejectionReason,
-        ).catch((err) => {
-          console.error("Failed to notify dosen:", err);
-        });
-      }
-
+      await invalidatePeminjamanCaches();
       await loadEquipmentRequests();
       setRejectDialog({ open: false, id: "", name: "" });
       setRejectionReason("");
@@ -227,12 +213,13 @@ export default function PersetujuanPage() {
                     Persetujuan Peminjaman Alat
                   </h1>
                   <p className="text-sm text-muted-foreground sm:text-base">
-                    Kelola permintaan peminjaman alat laboratorium yang sedang
+                    Fokus halaman ini hanya untuk permintaan baru yang masih
                     menunggu keputusan laboran.
                   </p>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    Untuk persetujuan booking ruangan, gunakan menu
-                    <strong> "Kelola Jadwal Praktikum"</strong>.
+                    Setelah disetujui, data pindah ke menu
+                    <strong> "Kelola Peminjaman Aktif"</strong> untuk proses
+                    pengembalian alat.
                   </p>
                 </div>
               </div>
@@ -272,6 +259,33 @@ export default function PersetujuanPage() {
           </GlassCard>
         )}
 
+        <div className="grid gap-4 lg:grid-cols-2">
+          <Card className="rounded-3xl border-warning/20 bg-warning/5">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Clock className="h-4 w-4 text-warning" />
+                Tahap 1: Persetujuan
+              </CardTitle>
+              <CardDescription>
+                Laboran/admin memutuskan permintaan dosen: disetujui atau
+                ditolak dengan alasan.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+          <Card className="rounded-3xl border-primary/20 bg-primary/5">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Package className="h-4 w-4 text-primary" />
+                Tahap 2: Peminjaman Aktif
+              </CardTitle>
+              <CardDescription>
+                Permintaan yang sudah disetujui dikelola di halaman aktif
+                sampai alat dikembalikan dan stok tercatat lagi.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        </div>
+
         <div className="grid gap-4 md:grid-cols-3">
           <DashboardCard
             title="Pending Peminjaman"
@@ -304,8 +318,8 @@ export default function PersetujuanPage() {
               Permintaan Peminjaman Alat
             </CardTitle>
             <CardDescription>
-              Daftar permintaan peminjaman alat yang menunggu persetujuan
-              laboran.
+              Hanya menampilkan permintaan dengan status pending/menunggu.
+              Peminjaman yang sudah disetujui tidak tampil di tabel ini.
             </CardDescription>
           </CardHeader>
           <CardContent className="px-0 pb-0">
@@ -336,7 +350,7 @@ export default function PersetujuanPage() {
                   </TableHeader>
                   <TableBody>
                     {equipmentRequests.map((request) => (
-                      <TableRow key={request.id}>
+                        <TableRow key={request.id} className="align-top">
                         <TableCell>
                           <div>
                             <div className="font-medium">
@@ -357,7 +371,13 @@ export default function PersetujuanPage() {
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell>{request.laboratorium_nama}</TableCell>
+                        <TableCell>
+                          {request.laboratorium_nama || (
+                            <span className="text-muted-foreground">
+                              Belum ditentukan
+                            </span>
+                          )}
+                        </TableCell>
                         <TableCell>
                           <Badge variant="secondary">
                             {request.jumlah_pinjam}
@@ -376,7 +396,7 @@ export default function PersetujuanPage() {
                           {request.keperluan}
                         </TableCell>
                         <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
+                          <div className="flex flex-wrap justify-end gap-2">
                             <Button
                               size="sm"
                               variant="outline"

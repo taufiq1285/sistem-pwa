@@ -140,7 +140,7 @@ export async function createNotification(
   data: CreateNotificationData,
 ): Promise<Notification | null> {
   try {
-    const { data: notification, error } = await supabase
+    const { error } = await supabase
       .from("notifications")
       .insert({
         user_id: data.user_id,
@@ -149,9 +149,7 @@ export async function createNotification(
         type: data.type,
         data: data.data || {},
         is_read: false,
-      })
-      .select()
-      .single();
+      });
 
     if (error) {
       console.error("createNotification error:", error);
@@ -159,7 +157,25 @@ export async function createNotification(
       return null;
     }
 
-    return notification as Notification;
+    console.log("[NOTIFICATION] Single notification created:", {
+      user_id: data.user_id,
+      type: data.type,
+      title: data.title,
+    });
+
+    return {
+      id:
+        globalThis.crypto?.randomUUID?.() ??
+        `notification-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      user_id: data.user_id,
+      title: data.title,
+      message: data.message,
+      type: data.type,
+      data: data.data || {},
+      is_read: false,
+      read_at: null,
+      created_at: new Date().toISOString(),
+    };
   } catch (error) {
     console.error("createNotification error:", error);
     // Don't throw - return null to prevent blocking main operations
@@ -175,7 +191,7 @@ export async function createBulkNotifications(
   notifications: CreateNotificationData[],
 ): Promise<Notification[]> {
   try {
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from("notifications")
       .insert(
         notifications.map((n) => ({
@@ -186,8 +202,7 @@ export async function createBulkNotifications(
           data: n.data || {},
           is_read: false,
         })),
-      )
-      .select();
+      );
 
     if (error) {
       console.error("createBulkNotifications error:", error);
@@ -196,7 +211,27 @@ export async function createBulkNotifications(
       return [];
     }
 
-    return (data || []) as Notification[];
+    console.log(
+      "[NOTIFICATION] Bulk notifications created:",
+      notifications.length,
+    );
+
+    const createdAt = new Date().toISOString();
+    return notifications.map((notification, index) => ({
+      id:
+        globalThis.crypto?.randomUUID?.() ??
+        `notification-${Date.now()}-${index}-${Math.random()
+          .toString(36)
+          .slice(2)}`,
+      user_id: notification.user_id,
+      title: notification.title,
+      message: notification.message,
+      type: notification.type,
+      data: notification.data || {},
+      is_read: false,
+      read_at: null,
+      created_at: createdAt,
+    }));
   } catch (error) {
     console.error("createBulkNotifications error:", error);
     // Don't throw - return empty array to prevent blocking main operations
@@ -765,7 +800,9 @@ export async function notifyMahasiswaKuisPublished(
   tipeKuis?: "essay" | "pilihan_ganda" | "campuran" | null,
 ): Promise<Notification[]> {
   const isLaporan = tipeKuis === "essay";
-  const taskLabel = isLaporan ? "Tugas Laporan Praktikum" : "Tugas CBT Praktikum";
+  const taskLabel = isLaporan
+    ? "Tugas Laporan Praktikum"
+    : "Tugas CBT Praktikum";
   const notifications: CreateNotificationData[] = mahasiswaUserIds.map(
     (mahasiswaId) => ({
       user_id: mahasiswaId,
@@ -855,8 +892,8 @@ export async function notifyMahasiswaLogbookApproved(
 ): Promise<Notification> {
   return createNotification({
     user_id: mahasiswaUserId,
-    title: "Logbook Disetujui",
-    message: `Logbook praktikum "${mataKuliahNama} - ${kelasNama}" (${tanggalPraktikum}) telah disetujui.`,
+    title: "Logbook Dinilai",
+    message: `Logbook praktikum "${mataKuliahNama} - ${kelasNama}" (${tanggalPraktikum}) telah dinilai dosen.`,
     type: "logbook_approved",
     data: {
       kelas: kelasNama,

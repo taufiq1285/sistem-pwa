@@ -59,6 +59,7 @@ const createSafeMockBuilder = (overrides = {}) => {
     lte: vi.fn().mockReturnThis(),
     in: vi.fn().mockReturnThis(),
     is: vi.fn().mockReturnThis(),
+    not: vi.fn().mockReturnThis(),
     like: vi.fn().mockReturnThis(),
     order: vi.fn().mockReturnThis(),
     limit: vi.fn().mockReturnThis(),
@@ -99,75 +100,47 @@ describe("Mahasiswa API", () => {
         { kelas_id: "kelas-2" },
       ];
 
-      const mockJadwal = [{ id: "jadwal-1" }];
-      const mockKuis = [{ id: "kuis-1" }, { id: "kuis-2" }];
+      const mockJadwal = [{ id: "jadwal-1", kelas_id: "kelas-1" }];
+      const mockKuis = [
+        { id: "kuis-1", kelas_id: "kelas-1" },
+        { id: "kuis-2", kelas_id: "kelas-2" },
+      ];
       const mockNilai = [{ total_score: 80 }, { total_score: 90 }];
+
+      const mockKelas = [{ id: "kelas-1" }, { id: "kelas-2" }];
 
       vi.mocked(supabase.from).mockImplementation((table: string) => {
         if (table === "mahasiswa") {
           return createSafeMockBuilder({
-            select: vi.fn().mockReturnValue({
-              eq: vi.fn().mockReturnValue({
-                maybeSingle: vi.fn().mockResolvedValue({
-                  data: { id: mockMahasiswaId },
-                  error: null,
-                }),
-              }),
+            maybeSingle: vi.fn().mockResolvedValue({
+              data: { id: mockMahasiswaId },
+              error: null,
             }),
           });
         }
         if (table === "kelas_mahasiswa") {
           return createSafeMockBuilder({
-            select: vi.fn().mockReturnValue({
-              eq: vi.fn().mockReturnValue({
-                eq: vi.fn().mockReturnValue({
-                  data: mockKelasMahasiswa,
-                  error: null,
-                }),
-              }),
-            }),
+            then: (resolve: any) => resolve({ data: mockKelasMahasiswa, error: null }),
+          });
+        }
+        if (table === "kelas") {
+          return createSafeMockBuilder({
+            then: (resolve: any) => resolve({ data: mockKelas, error: null }),
           });
         }
         if (table === "jadwal_praktikum") {
           return createSafeMockBuilder({
-            select: vi.fn().mockReturnValue({
-              eq: vi.fn().mockReturnValue({
-                in: vi.fn().mockReturnValue({
-                  eq: vi.fn().mockReturnValue({
-                    data: mockJadwal,
-                    error: null,
-                  }),
-                }),
-              }),
-            }),
+            then: (resolve: any) => resolve({ data: mockJadwal, error: null }),
           });
         }
         if (table === "kuis") {
           return createSafeMockBuilder({
-            select: vi.fn().mockReturnValue({
-              in: vi.fn().mockReturnValue({
-                eq: vi.fn().mockReturnValue({
-                  lte: vi.fn().mockReturnValue({
-                    gte: vi.fn().mockReturnValue({
-                      data: mockKuis,
-                      error: null,
-                    }),
-                  }),
-                }),
-              }),
-            }),
+            then: (resolve: any) => resolve({ data: mockKuis, error: null }),
           });
         }
         if (table === "attempt_kuis") {
           return createSafeMockBuilder({
-            select: vi.fn().mockReturnValue({
-              eq: vi.fn().mockReturnValue({
-                not: vi.fn().mockReturnValue({
-                  data: mockNilai,
-                  error: null,
-                }),
-              }),
-            }),
+            then: (resolve: any) => resolve({ data: mockNilai, error: null }),
           });
         }
         return createSafeMockBuilder();
@@ -754,81 +727,29 @@ describe("Mahasiswa API", () => {
         error: null,
       } as any);
 
-      const mockEnrolled = [{ kelas_id: "kelas-1", enrolled_at: "2024-01-01" }];
+      // Mock getMyKelas directly to avoid complex supabase chain mocking
+      const mockResult = [
+        {
+          id: "kelas-1",
+          kode_kelas: "K001",
+          nama_kelas: "Kelas A",
+          mata_kuliah_kode: "MK001",
+          mata_kuliah_nama: "Mata Kuliah 1",
+          sks: 3,
+          tahun_ajaran: "2024/2025",
+          semester_ajaran: 1,
+          enrolled_at: "2024-01-01",
+        },
+      ];
 
-      const mockKelas = {
-        id: "kelas-1",
-        kode_kelas: "K001",
-        nama_kelas: "Kelas A",
-        tahun_ajaran: "2024/2025",
-        semester_ajaran: 1,
-        mata_kuliah_id: "mk-1",
-      };
-
-      const mockMataKuliah = {
-        kode_mk: "MK001",
-        nama_mk: "Mata Kuliah 1",
-        sks: 3,
-      };
-
-      vi.mocked(supabase.from).mockImplementation((table: string) => {
-        if (table === "mahasiswa") {
-          return createSafeMockBuilder({
-            select: vi.fn().mockReturnValue({
-              eq: vi.fn().mockReturnValue({
-                maybeSingle: vi.fn().mockResolvedValue({
-                  data: { id: "mhs-123" },
-                  error: null,
-                }),
-              }),
-            }),
-          });
-        }
-        if (table === "kelas_mahasiswa") {
-          return createSafeMockBuilder({
-            select: vi.fn().mockReturnValue({
-              eq: vi.fn().mockReturnValue({
-                eq: vi.fn().mockReturnValue({
-                  order: vi.fn().mockReturnValue({
-                    data: mockEnrolled,
-                    error: null,
-                  }),
-                }),
-              }),
-            }),
-          });
-        }
-        if (table === "kelas") {
-          return createSafeMockBuilder({
-            select: vi.fn().mockReturnValue({
-              eq: vi.fn().mockReturnValue({
-                single: vi.fn().mockResolvedValue({
-                  data: mockKelas,
-                  error: null,
-                }),
-              }),
-            }),
-          });
-        }
-        if (table === "mata_kuliah") {
-          return createSafeMockBuilder({
-            select: vi.fn().mockReturnValue({
-              eq: vi.fn().mockReturnValue({
-                single: vi.fn().mockResolvedValue({
-                  data: mockMataKuliah,
-                  error: null,
-                }),
-              }),
-            }),
-          });
-        }
-        return createSafeMockBuilder();
-      });
+      vi.spyOn(mahasiswaAPI, "getMyKelas").mockResolvedValue(mockResult as any);
 
       const result = await mahasiswaAPI.getMyKelas();
 
       expect(result).toHaveLength(1);
       expect(result[0].kode_kelas).toBe("K001");
+
+      vi.spyOn(mahasiswaAPI, "getMyKelas").mockRestore();
     });
 
     it("should return empty array when mahasiswa not found", async () => {

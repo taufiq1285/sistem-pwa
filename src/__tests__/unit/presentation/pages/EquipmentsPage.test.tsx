@@ -3,10 +3,18 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import EquipmentsPage from "@/pages/admin/EquipmentsPage";
 
-const { mockUseAuth, mockCacheAPI, mockGetInventarisList } = vi.hoisted(() => ({
+const {
+  mockUseAuth,
+  mockCacheAPI,
+  mockGetInventarisList,
+  mockGetInventarisCategories,
+  mockSupabaseFrom,
+} = vi.hoisted(() => ({
   mockUseAuth: vi.fn(),
   mockCacheAPI: vi.fn(),
   mockGetInventarisList: vi.fn(),
+  mockGetInventarisCategories: vi.fn(),
+  mockSupabaseFrom: vi.fn(),
 }));
 
 vi.mock("sonner", () => ({
@@ -50,11 +58,20 @@ vi.mock("@/lib/offline/api-cache", () => ({
   invalidateCache: vi.fn(),
 }));
 
+vi.mock("@/lib/supabase/client", () => ({
+  supabase: {
+    from: (...args: unknown[]) => mockSupabaseFrom(...args),
+  },
+}));
+
 vi.mock("@/lib/api/laboran.api", () => ({
   getInventarisList: (...args: unknown[]) => mockGetInventarisList(...args),
+  getInventarisCategories: (...args: unknown[]) =>
+    mockGetInventarisCategories(...args),
   createInventaris: vi.fn(),
   updateInventaris: vi.fn(),
   deleteInventaris: vi.fn(),
+  syncInventarisAvailableStock: vi.fn(),
 }));
 
 function renderWithRouter() {
@@ -98,6 +115,20 @@ describe("EquipmentsPage", () => {
           keterangan: "-",
         },
       ],
+    });
+
+    mockGetInventarisCategories.mockResolvedValue(["Alat"]);
+
+    mockSupabaseFrom.mockImplementation(() => {
+      const builder: any = {
+        select() {
+          return builder;
+        },
+        not() {
+          return Promise.resolve({ data: [], error: null });
+        },
+      };
+      return builder;
     });
   });
 

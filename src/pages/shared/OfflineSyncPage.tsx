@@ -56,8 +56,7 @@ export default function OfflineSyncPage() {
         statusTitle: "Status Sinkronisasi",
         securityTitle: "Keamanan Data",
         securityPointOne: "Data lokal disimpan aman pada perangkat.",
-        securityPointTwo:
-          "Sinkronisasi otomatis berjalan saat kembali online.",
+        securityPointTwo: "Sinkronisasi otomatis berjalan saat kembali online.",
       };
 
   const handleSync = async () => {

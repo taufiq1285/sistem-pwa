@@ -58,7 +58,7 @@ describe("ManajemenAssignmentPage", () => {
           return builder;
         },
         order() {
-          return Promise.resolve({ data: [], error: null });
+          return builder;
         },
         insert() {
           return Promise.resolve({ error: null });
@@ -70,7 +70,7 @@ describe("ManajemenAssignmentPage", () => {
           return Promise.resolve({ data: null, error: null });
         },
         then(resolve: any) {
-          resolve({ data: [], error: null });
+          return Promise.resolve(resolve({ data: [], error: null }));
         },
       };
       return builder;
@@ -82,7 +82,9 @@ describe("ManajemenAssignmentPage", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByRole("heading", { name: /manajemen assignment/i }),
+        screen.getByRole("heading", {
+          name: /monitoring praktikum & referensi akademik/i,
+        }),
       ).toBeInTheDocument();
     });
 
